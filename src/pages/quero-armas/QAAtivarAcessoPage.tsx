@@ -236,9 +236,16 @@ export default function QAAtivarAcessoPage() {
             <div className="flex flex-col gap-2">
               <FieldLabel>E-MAIL / CPF / CNPJ</FieldLabel>
               <TacticalInput
+                type="text"
+                name="username"
                 value={identificador}
                 onChange={(e) => setIdentificador(e.target.value)}
                 placeholder="seu@email.com ou 000.000.000-00"
+                inputMode="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 autoFocus
               />
             </div>
@@ -266,9 +273,14 @@ export default function QAAtivarAcessoPage() {
               <FieldLabel>E-MAIL PARA ACESSO</FieldLabel>
               <TacticalInput
                 type="email"
+                name="email"
                 value={emailAlt}
                 onChange={(e) => setEmailAlt(e.target.value)}
                 placeholder="seu@email.com"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
               />
             </div>
             <PrimaryButton onClick={() => requestOtp({ withEmail: true })} disabled={loading}>
@@ -305,10 +317,13 @@ export default function QAAtivarAcessoPage() {
               <FieldLabel>CÓDIGO 6 DÍGITOS</FieldLabel>
               <div className="border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
                 <input
+                  type="text"
+                  name="one-time-code"
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                   placeholder="000000"
                   inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
                   className="w-full bg-transparent p-3 text-center text-2xl tracking-[0.5em] text-white outline-none placeholder:text-zinc-700"
                   style={MONO}
