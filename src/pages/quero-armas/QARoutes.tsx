@@ -29,7 +29,6 @@ const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviar
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
-const QACursoOperadorPistolaPage = lazyRetry(() => import("./QACursoOperadorPistolaPage"), "QACursoOperadorPistolaPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
 const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
@@ -54,7 +53,6 @@ export default function QARoutes() {
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
         <Route path="cadastro/foto" element={<QAEnviarFotoPage />} />
         <Route path="enviar-foto" element={<QAEnviarFotoPage />} />
-        <Route path="curso-operador-pistola" element={<QACursoOperadorPistolaPage />} />
         
         {/* Client portal (separate auth flow) */}
         <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
