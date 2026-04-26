@@ -2906,7 +2906,12 @@ export default function QAClientesPage() {
         </div>
       ) : tabView === "cadastros" ? (
         <div className="space-y-1.5">
-          {filteredCadastros.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cadastro público encontrado.</div>}
+          {filteredCadastros.length === 0 && (
+            <EmptyState
+              title="Nenhum cadastro público encontrado"
+              description="Cadastros enviados pela página pública aparecerão aqui para triagem."
+            />
+          )}
           {filteredCadastros.map(c => (
             <button
               key={c.id}
