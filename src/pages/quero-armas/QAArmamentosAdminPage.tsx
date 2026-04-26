@@ -455,7 +455,7 @@ function Kpi({ label, value, tone }: { label: string; value: number; tone?: "suc
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs uppercase tracking-wide text-muted-foreground">{label}</Label>
+      <Label className="text-xs uppercase tracking-wide text-white">{label}</Label>
       {children}
     </div>
   );
