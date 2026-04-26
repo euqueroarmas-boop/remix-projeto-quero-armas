@@ -1064,6 +1064,7 @@ export default function QAGerarPecaPage() {
           stream: true,
           usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco, caso_id: casoId || null,
+          cliente_id: clienteIdVinculado ?? null,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null, cliente_cep: clienteCep.trim() || null,
           nome_requerente: nomeRequerente.trim(),
