@@ -352,10 +352,30 @@ export default function QAGerarPecaPage() {
       if (!data) return;
       const c = data as any;
       setCasoId(c.id);
-      // Vínculo com cliente: prioriza cliente_id real; mantém snapshot histórico
+      // 1) Hidrata pelo snapshot histórico do caso (sempre presente)
+      setNomeRequerente(c.nome_requerente || "");
+      setCpfCnpj(c.cpf_cnpj || "");
+      setEntradaCaso(c.descricao_caso || "");
+      setTipoPeca(c.tipo_peca || "defesa_posse_arma");
+      setFoco(c.foco_argumentativo || "legalidade");
+      setClienteCidade(c.cidade || "");
+      setClienteUf(c.uf || "");
+      setClienteCep(c.cep || "");
+      setClienteEndereco(c.endereco || "");
+      setClienteBairro(c.bairro || "");
+      if (c.minuta_gerada) setResultado({ minuta_gerada: c.minuta_gerada, geracao_id: c.geracao_id, score_confianca: 0, fontes_utilizadas: [] });
+      // Try to match tipo_servico
+      // tipo_servico derivado de tipo_peca
+      const matchPeca = TIPOS_PECA.find(t => t.label === c.tipo_servico || t.value === c.tipo_peca);
+      if (matchPeca) setTipoPeca(matchPeca.value);
+      if (c.unidade_pf) {
+        setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
+        setCircunscricaoStatus("resolved");
+      }
+
+      // 2) Se houver vínculo real com cliente, hidrata dados frescos (sobrepõe snapshot apenas onde houver valor)
       if (c.cliente_id) {
         setClienteIdVinculado(Number(c.cliente_id));
-        // Hidrata dados frescos do cliente vinculado (sobrepõe snapshot se houver atualização)
         try {
           const { data: clienteData } = await supabase
             .from("qa_clientes" as any)
@@ -375,26 +395,6 @@ export default function QAGerarPecaPage() {
         } catch (err) {
           console.warn("[QAGerarPeca] Falha ao hidratar cliente vinculado:", err);
         }
-      }
-      // titulo auto-gerado a partir do nome
-      setNomeRequerente(c.nome_requerente || "");
-      setCpfCnpj(c.cpf_cnpj || "");
-      setEntradaCaso(c.descricao_caso || "");
-      setTipoPeca(c.tipo_peca || "defesa_posse_arma");
-      setFoco(c.foco_argumentativo || "legalidade");
-      setClienteCidade(c.cidade || "");
-      setClienteUf(c.uf || "");
-      setClienteCep(c.cep || "");
-      setClienteEndereco(c.endereco || "");
-      setClienteBairro(c.bairro || "");
-      if (c.minuta_gerada) setResultado({ minuta_gerada: c.minuta_gerada, geracao_id: c.geracao_id, score_confianca: 0, fontes_utilizadas: [] });
-      // Try to match tipo_servico
-      // tipo_servico derivado de tipo_peca
-      const matchPeca = TIPOS_PECA.find(t => t.label === c.tipo_servico || t.value === c.tipo_peca);
-      if (matchPeca) setTipoPeca(matchPeca.value);
-      if (c.unidade_pf) {
-        setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
-        setCircunscricaoStatus("resolved");
       }
     };
     loadCase();
