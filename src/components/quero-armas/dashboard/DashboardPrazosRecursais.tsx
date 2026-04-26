@@ -33,6 +33,7 @@ interface ItemRow {
   data_notificacao: string | null;
   data_recurso_administrativo: string | null;
   numero_processo: string | null;
+  numero_requerimento: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; cpf: string | null; }
@@ -163,7 +164,11 @@ export default function DashboardPrazosRecursais() {
         clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
         cpf: cliente.cpf ?? null,
         senhaGov: cliente.id != null ? senhaMap.get(cliente.id) ?? null : null,
-        protocolo: it.numero_processo ?? null,
+        protocolo:
+          (it.servico_id === 3 ? it.numero_requerimento : it.numero_processo) ??
+          it.numero_requerimento ??
+          it.numero_processo ??
+          null,
         tipo,
         evento,
         dataEvento: dEvento,
