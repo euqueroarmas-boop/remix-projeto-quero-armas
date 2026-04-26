@@ -2457,6 +2457,7 @@ export type Database = {
           end2_tipo: string | null
           estado_civil: string | null
           id: string
+          motivo_recusa: string | null
           nacionalidade: string | null
           nome_completo: string
           nome_mae: string | null
@@ -2545,6 +2546,7 @@ export type Database = {
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
+          motivo_recusa?: string | null
           nacionalidade?: string | null
           nome_completo: string
           nome_mae?: string | null
@@ -2633,6 +2635,7 @@ export type Database = {
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
+          motivo_recusa?: string | null
           nacionalidade?: string | null
           nome_completo?: string
           nome_mae?: string | null
