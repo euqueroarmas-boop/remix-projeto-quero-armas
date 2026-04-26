@@ -1,8 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { logSistema } from "@/lib/logSistema";
-import { buildWmtiError, formatErrorForClipboard, type WmtiError } from "@/lib/errorLogger";
+import { buildAppError, formatErrorForClipboard, type AppError } from "@/lib/errorLogger";
 import { isChunkError } from "@/lib/lazyRetry";
-import i18n from "@/i18n";
 
 interface Props {
   children: ReactNode;
@@ -11,7 +10,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  wmtiError: WmtiError | null;
+  appError: AppError | null;
   copied: boolean;
   isChunkError: boolean;
 }
@@ -19,7 +18,7 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, wmtiError: null, copied: false, isChunkError: false };
+    this.state = { hasError: false, error: null, appError: null, copied: false, isChunkError: false };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
@@ -27,13 +26,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    const wmtiErr = buildWmtiError({
+    const appErr = buildAppError({
       action: this.state.isChunkError ? "ChunkLoadError" : "ErrorBoundary",
       message: error.message,
       error,
     });
 
-    this.setState({ wmtiError: wmtiErr });
+    this.setState({ appError: appErr });
 
     logSistema({
       tipo: "erro",
@@ -43,16 +42,16 @@ export class ErrorBoundary extends Component<Props, State> {
         stack: error.stack?.substring(0, 2000),
         componentStack: errorInfo.componentStack?.substring(0, 2000),
         url: window.location.href,
-        browser_info: wmtiErr.browserInfo,
+        browser_info: appErr.browserInfo,
         is_chunk_error: this.state.isChunkError,
       },
     });
   }
 
   handleCopy = async () => {
-    if (!this.state.wmtiError) return;
+    if (!this.state.appError) return;
     try {
-      await navigator.clipboard.writeText(formatErrorForClipboard(this.state.wmtiError));
+      await navigator.clipboard.writeText(formatErrorForClipboard(this.state.appError));
       this.setState({ copied: true });
       setTimeout(() => this.setState({ copied: false }), 2000);
     } catch {}
@@ -65,17 +64,18 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       const { isChunkError: isChunk } = this.state;
-      const t = i18n.t.bind(i18n);
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-6">
           <div className="max-w-md text-center space-y-4">
             <div className="text-5xl">{isChunk ? "🔄" : "⚠️"}</div>
             <h1 className="text-xl font-bold text-foreground">
-              {isChunk ? t("errors.updateDetected") : t("errors.somethingWrong")}
+              {isChunk ? "Atualização detectada" : "Algo deu errado"}
             </h1>
             <p className="text-muted-foreground text-sm">
-              {isChunk ? t("errors.updateDesc") : t("errors.errorDesc")}
+              {isChunk
+                ? "Uma nova versão do sistema foi publicada. Recarregue para continuar."
+                : "Ocorreu um erro inesperado. Tente recarregar a página."}
             </p>
             {!isChunk && this.state.error && (
               <p className="text-xs text-destructive font-mono bg-destructive/10 p-2 rounded break-all">
@@ -87,9 +87,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReload}
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium"
               >
-                {t("errors.reload")}
+                Recarregar
               </button>
-              {this.state.wmtiError && (
+              {this.state.appError && (
                 <button
                   onClick={this.handleCopy}
                   className="px-4 py-2 border border-border text-foreground rounded-md text-xs font-medium hover:bg-muted transition-colors"

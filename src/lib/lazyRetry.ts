@@ -1,7 +1,7 @@
 import { lazy, type ComponentType } from "react";
 import { logSistema } from "@/lib/logSistema";
 
-const RELOAD_KEY = "wmti_chunk_reload";
+const RELOAD_KEY = "qa_chunk_reload";
 
 function isChunkError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
