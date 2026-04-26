@@ -226,7 +226,7 @@ export default function QAHistoricoPage() {
 
       {/* Detail Dialog */}
       <Dialog open={!!detailItem} onOpenChange={() => setDetailItem(null)}>
-        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[90dvh] overflow-y-auto rounded-xl">
+        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>
               {detailItem?.titulo_geracao || detailItem?.caso_titulo || "Detalhes"}
@@ -299,7 +299,7 @@ export default function QAHistoricoPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[90dvh] overflow-y-auto rounded-xl">
+        <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Revisão</DialogTitle>
           </DialogHeader>

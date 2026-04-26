@@ -367,7 +367,7 @@ export default function QAArmamentosAdminPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Editar arma" : "Nova arma"}</DialogTitle>
           </DialogHeader>
