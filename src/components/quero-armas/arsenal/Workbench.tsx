@@ -48,9 +48,10 @@ const toneClasses = {
 
 function urgencyText(days: number | null): string {
   if (days === null) return "SEM DATA";
-  if (days < 0) return `VENCIDO ${Math.abs(days)}D`;
+  const fmt = (n: number) => n.toLocaleString("pt-BR");
+  if (days < 0) return `VENCIDO ${fmt(Math.abs(days))} DIAS`;
   if (days === 0) return "VENCE HOJE";
-  return `${days}D RESTANTES`;
+  return `${fmt(days)} DIAS RESTANTES`;
 }
 
 function WeaponCard({
