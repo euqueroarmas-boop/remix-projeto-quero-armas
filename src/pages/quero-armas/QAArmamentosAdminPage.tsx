@@ -35,6 +35,7 @@ interface Arma {
   imagem_status: "pendente" | "gerando" | "pronta" | "erro" | null;
   imagem_aprovada?: boolean | null;
   imagem_validacao_motivo?: string | null;
+  imagens?: string[] | null;
 }
 
 const TIPOS = ["pistola","revolver","espingarda","carabina","fuzil","submetralhadora","outra"];
