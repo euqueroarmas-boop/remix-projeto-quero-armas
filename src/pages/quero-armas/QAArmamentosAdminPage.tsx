@@ -824,7 +824,7 @@ const TIPO_ICON: Record<string, string> = {
 };
 
 function WeaponCard({
-  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen,
+  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando,
 }: {
   it: Arma;
   busy: boolean;
@@ -833,6 +833,8 @@ function WeaponCard({
   onVerificar: () => void;
   onRemove: () => void;
   onFullscreen: (src: string) => void;
+  onRevalidarImagem: () => void;
+  revalidando: boolean;
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
@@ -897,11 +899,22 @@ function WeaponCard({
 
         {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
         {it.imagem && it.imagem_aprovada === false && (
-          <div
-            className="absolute bottom-2 left-2 z-20 px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
-            title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
-          >
-            <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+          <div className="absolute bottom-2 left-2 right-2 z-20 flex flex-wrap items-center gap-1">
+            <div
+              className="px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
+              title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
+            >
+              <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+            </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onRevalidarImagem(); }}
+              className="rounded-md border border-zinc-300 bg-white/95 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-[0.14em] text-zinc-800 shadow-md hover:border-amber-500 hover:text-amber-700 disabled:opacity-60"
+              disabled={revalidando}
+              title="Revalidar imagem com a nova regra tolerante"
+            >
+              {revalidando ? "Revalidando…" : "Revalidar imagem"}
+            </button>
           </div>
         )}
       </div>
