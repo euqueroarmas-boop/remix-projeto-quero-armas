@@ -1,12 +1,10 @@
 // qa-processo-criar
-// Cria processo + checklist GRANULAR (1 documento = 1 item).
-// Cada item carrega: tipo_documento, validade_dias, formato_aceito, regra_validacao,
-// link_emissao (botão amigável), etapa, obrigatorio, status independente.
-//
-// Regras de validade (definidas pelo cliente/produto):
-//  - Documentos de identificação (RG, CPF, CNH): SEM validade  -> validade_dias = NULL
-//  - Demais documentos: 30 dias
-//  - Certidões: cada uma com seu prazo próprio (definido por item)
+// Cria processo + checklist 100% GRANULAR (1 documento = 1 item).
+// - 8 certidões individuais (TSE, STM, TRF3 Regional, TRF3 SJSP, TJSP Execuções,
+//   TJSP Distribuição, Polícia Civil SP, TJM-SP) com link de emissão e botão próprios.
+// - Identificação por alternativas (RG+CPF / CNH / CTPS) — pelo menos 1.
+// - Renda/ocupação CONDICIONAL: CLT, autônomo, empresário, aposentado.
+// - Sem item agrupado "certidoes_negativas".
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireQAStaff } from "../_shared/qaAuth.ts";
@@ -23,6 +21,8 @@ function json(body: unknown, status = 200) {
   });
 }
 
+type CondicaoProf = "clt" | "autonomo" | "empresario" | "aposentado" | "indefinido";
+
 type ChecklistItem = {
   tipo_documento: string;
   nome_documento: string;
@@ -34,15 +34,23 @@ type ChecklistItem = {
   link_emissao: string | null;
 };
 
-// Itens reutilizáveis ----------------------------------------------------------
-const ID_RG: ChecklistItem = {
-  tipo_documento: "rg",
-  nome_documento: "RG (Carteira de Identidade)",
+// ============================================================================
+// IDENTIFICAÇÃO — alternativas aceitas (pelo menos 1 deve ser aprovada)
+// Marcadas como obrigatorio=false individualmente; "grupo_alternativo" agrupa.
+// ============================================================================
+const ID_RG_CPF: ChecklistItem = {
+  tipo_documento: "rg_com_cpf",
+  nome_documento: "RG com CPF",
   etapa: "base",
-  obrigatorio: true,
+  obrigatorio: false,
   validade_dias: null,
   formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-  regra_validacao: { exige: ["nome_completo", "rg", "data_nascimento", "orgao_emissor"] },
+  regra_validacao: {
+    grupo_alternativo: "identificacao",
+    minimo_grupo: 1,
+    exige: ["nome_completo", "rg", "cpf", "data_nascimento", "orgao_emissor"],
+    label_botao: "Enviar RG com CPF",
+  },
   link_emissao: null,
 };
 const ID_CNH: ChecklistItem = {
@@ -50,21 +58,35 @@ const ID_CNH: ChecklistItem = {
   nome_documento: "CNH (Carteira Nacional de Habilitação)",
   etapa: "base",
   obrigatorio: false,
-  validade_dias: null, // a CNH carrega sua própria validade impressa
+  validade_dias: null, // a CNH carrega validade impressa, validada pela IA
   formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-  regra_validacao: { exige: ["nome_completo", "cpf", "data_nascimento", "validade"] },
+  regra_validacao: {
+    grupo_alternativo: "identificacao",
+    minimo_grupo: 1,
+    exige: ["nome_completo", "cpf", "data_nascimento", "validade"],
+    label_botao: "Enviar CNH",
+  },
   link_emissao: null,
 };
-const ID_CPF: ChecklistItem = {
-  tipo_documento: "cpf",
-  nome_documento: "Comprovante de CPF",
+const ID_CTPS: ChecklistItem = {
+  tipo_documento: "ctps",
+  nome_documento: "Carteira de Trabalho",
   etapa: "base",
-  obrigatorio: true,
+  obrigatorio: false,
   validade_dias: null,
   formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-  regra_validacao: { exige: ["nome_completo", "cpf"] },
-  link_emissao: "https://servicos.receita.fazenda.gov.br/Servicos/CPF/ImpressaoComprovante/ConsultaImpressao.asp",
+  regra_validacao: {
+    grupo_alternativo: "identificacao",
+    minimo_grupo: 1,
+    exige: ["nome_completo", "cpf", "data_nascimento"],
+    label_botao: "Enviar Carteira de Trabalho",
+  },
+  link_emissao: null,
 };
+
+// ============================================================================
+// RESIDÊNCIA
+// ============================================================================
 const COMPROV_RES: ChecklistItem = {
   tipo_documento: "comprovante_residencia",
   nome_documento: "Comprovante de residência (até 30 dias)",
@@ -72,73 +94,195 @@ const COMPROV_RES: ChecklistItem = {
   obrigatorio: true,
   validade_dias: 30,
   formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-  regra_validacao: { exige: ["nome_titular", "endereco_completo", "data_emissao"] },
-  link_emissao: null,
-};
-const COMPROV_RENDA: ChecklistItem = {
-  tipo_documento: "comprovante_renda",
-  nome_documento: "Comprovante de renda / ocupação lícita",
-  etapa: "complementar",
-  obrigatorio: true,
-  validade_dias: 30,
-  formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-  regra_validacao: { exige: ["nome_titular", "ocupacao"] },
+  regra_validacao: {
+    exige: ["nome_titular", "endereco_completo", "data_emissao"],
+    label_botao: "Enviar Comprovante de Residência",
+  },
   link_emissao: null,
 };
 
-// CERTIDÕES — cada uma com prazo próprio
-const CERT_CIVEL: ChecklistItem = {
-  tipo_documento: "certidao_civel",
-  nome_documento: "Certidão Cível Federal (Justiça Federal)",
+// ============================================================================
+// 8 CERTIDÕES GRANULARES — uma linha por certidão
+// ============================================================================
+const C_TSE: ChecklistItem = {
+  tipo_documento: "certidao_crimes_eleitorais_tse",
+  nome_documento: "Certidão Negativa de Crimes Eleitorais (TSE)",
   etapa: "complementar",
   obrigatorio: true,
   validade_dias: 90,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "cpf", "resultado", "data_emissao"], esperado: { resultado: "NADA_CONSTA" } },
-  link_emissao: "https://www2.trf2.jus.br/certidao/jfrj/index.php",
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão de Crimes Eleitorais",
+  },
+  link_emissao: "https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral#/",
 };
-const CERT_CRIM_FED: ChecklistItem = {
-  tipo_documento: "certidao_criminal_federal",
-  nome_documento: "Certidão Criminal Federal",
+const C_STM: ChecklistItem = {
+  tipo_documento: "certidao_crimes_militares_stm",
+  nome_documento: "Certidão Negativa de Crimes Militares (STM)",
   etapa: "complementar",
   obrigatorio: true,
   validade_dias: 90,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "cpf", "resultado", "data_emissao"], esperado: { resultado: "NADA_CONSTA" } },
-  link_emissao: "https://sistemas.trf3.jus.br/certidao/certidaonegativa",
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão de Crimes Militares",
+  },
+  link_emissao: "https://www.stm.jus.br/servicos-ao-cidadao/atendimentoaocidadao/certidao-negativa?view=default",
 };
-const CERT_CRIM_EST: ChecklistItem = {
-  tipo_documento: "certidao_criminal_estadual",
-  nome_documento: "Certidão Criminal Estadual (do estado de residência)",
+const C_TRF3_REGIONAL: ChecklistItem = {
+  tipo_documento: "certidao_federal_trf3_regional",
+  nome_documento: "Certidão Federal TRF3 - Abrangência Regional",
+  etapa: "complementar",
+  obrigatorio: true,
+  validade_dias: 90,
+  formato_aceito: ["pdf"],
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão Federal Regional",
+  },
+  link_emissao: "https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao",
+};
+const C_TRF3_SJSP: ChecklistItem = {
+  tipo_documento: "certidao_federal_trf3_sjsp_jef",
+  nome_documento: "Certidão Federal TRF3 - Seção Judiciária e JEF de São Paulo",
+  etapa: "complementar",
+  obrigatorio: true,
+  validade_dias: 90,
+  formato_aceito: ["pdf"],
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão Federal da Seção Judiciária de São Paulo",
+  },
+  link_emissao: "https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao",
+};
+const C_TJSP_EXEC: ChecklistItem = {
+  tipo_documento: "certidao_tjsp_execucoes_criminais",
+  nome_documento: "Certidão Estadual TJSP - Execuções Criminais",
   etapa: "complementar",
   obrigatorio: true,
   validade_dias: 60,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "cpf", "uf", "resultado", "data_emissao"], esperado: { resultado: "NADA_CONSTA" } },
-  link_emissao: "https://www.tjmg.jus.br/portal-tjmg/servicos/certidoes-judiciais.htm",
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão de Execuções Criminais",
+  },
+  link_emissao: "https://esaj.tjsp.jus.br/sco/abrirCadastro.do",
 };
-const CERT_MILITAR: ChecklistItem = {
-  tipo_documento: "certidao_militar",
-  nome_documento: "Certidão da Justiça Militar",
+const C_TJSP_DIST: ChecklistItem = {
+  tipo_documento: "certidao_tjsp_distribuicao_criminal",
+  nome_documento: "Certidão Estadual TJSP - Distribuição de Ações Criminais",
+  etapa: "complementar",
+  obrigatorio: true,
+  validade_dias: 60,
+  formato_aceito: ["pdf"],
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão de Distribuição Criminal",
+  },
+  link_emissao: "https://esaj.tjsp.jus.br/sco/abrirCadastro.do",
+};
+const C_PC_SP: ChecklistItem = {
+  tipo_documento: "certidao_antecedentes_policia_civil_sp",
+  nome_documento: "Certidão de Antecedentes da Polícia Civil",
   etapa: "complementar",
   obrigatorio: true,
   validade_dias: 90,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "cpf", "resultado", "data_emissao"], esperado: { resultado: "NADA_CONSTA" } },
-  link_emissao: "https://www.stm.jus.br/servicos-stm/certidao-negativa",
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão de Antecedentes da Polícia Civil",
+  },
+  link_emissao: "https://servicos.sp.gov.br/fcarta/259d189e-dc87-4308-9812-7abed7494412",
 };
-const CERT_ELEITORAL: ChecklistItem = {
-  tipo_documento: "certidao_eleitoral",
-  nome_documento: "Certidão de Quitação Eleitoral",
+const C_TJMSP: ChecklistItem = {
+  tipo_documento: "certidao_criminal_tjmsp",
+  nome_documento: "Certidão Criminal do TJM-SP",
   etapa: "complementar",
   obrigatorio: true,
   validade_dias: 90,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "titulo_eleitor", "resultado", "data_emissao"] },
-  link_emissao: "https://www.tse.jus.br/eleitor/certidoes/certidao-de-quitacao-eleitoral",
+  regra_validacao: {
+    exige: ["nome_titular", "cpf", "resultado", "data_emissao"],
+    esperado: { resultado: "NADA_CONSTA" },
+    label_botao: "Emitir Certidão da Justiça Militar Estadual",
+  },
+  link_emissao: "https://certidaocriminal.tjmsp.jus.br",
 };
 
-// EXAMES
+const CERTIDOES_8: ChecklistItem[] = [
+  C_TSE, C_STM, C_TRF3_REGIONAL, C_TRF3_SJSP, C_TJSP_EXEC, C_TJSP_DIST, C_PC_SP, C_TJMSP,
+];
+
+// ============================================================================
+// RENDA / OCUPAÇÃO — CONDICIONAL
+// ============================================================================
+function checklistRenda(condicao: CondicaoProf): ChecklistItem[] {
+  const base = (extra: Partial<ChecklistItem> & { tipo_documento: string; nome_documento: string; label_botao: string; }): ChecklistItem => ({
+    etapa: "complementar",
+    obrigatorio: true,
+    validade_dias: 30,
+    formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+    link_emissao: null,
+    ...extra,
+    regra_validacao: { exige: ["nome_titular"], label_botao: extra.label_botao, ...(extra.regra_validacao ?? {}) },
+  });
+
+  switch (condicao) {
+    case "clt":
+      return [
+        base({ tipo_documento: "renda_holerite_mes_atual", nome_documento: "Holerite mais recente (mês atual)", label_botao: "Enviar Holerite" }),
+        base({ tipo_documento: "renda_ctps_digital", nome_documento: "Carteira de Trabalho Digital (PDF gov.br)", label_botao: "Enviar CTPS Digital",
+               link_emissao: "https://servicos.mte.gov.br/" }),
+        base({ tipo_documento: "renda_extrato_inss", nome_documento: "Extrato completo de contribuições do INSS", label_botao: "Enviar Extrato INSS",
+               link_emissao: "https://meu.inss.gov.br/" }),
+      ];
+    case "autonomo":
+      return [
+        base({ tipo_documento: "renda_cnpj_autonomo", nome_documento: "Cartão CNPJ (autônomo / MEI)", label_botao: "Enviar Cartão CNPJ",
+               link_emissao: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp" }),
+        base({ tipo_documento: "renda_nf_recente", nome_documento: "Nota fiscal recente emitida", label_botao: "Enviar Nota Fiscal" }),
+      ];
+    case "empresario":
+      return [
+        base({ tipo_documento: "renda_cartao_cnpj", nome_documento: "Cartão CNPJ da empresa", label_botao: "Enviar Cartão CNPJ",
+               link_emissao: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp" }),
+        base({ tipo_documento: "renda_qsa", nome_documento: "QSA (Quadro de Sócios e Administradores)", label_botao: "Enviar QSA" }),
+        base({ tipo_documento: "renda_contrato_social", nome_documento: "Contrato Social", label_botao: "Enviar Contrato Social" }),
+        base({ tipo_documento: "renda_nf_empresa", nome_documento: "Nota fiscal recente da empresa (se aplicável)", label_botao: "Enviar Nota Fiscal", obrigatorio: false }),
+      ];
+    case "aposentado":
+      return [
+        base({ tipo_documento: "renda_comprovante_beneficio", nome_documento: "Comprovante de benefício (aposentadoria)", label_botao: "Enviar Comprovante de Benefício",
+               link_emissao: "https://meu.inss.gov.br/" }),
+        base({ tipo_documento: "renda_extrato_inss", nome_documento: "Extrato completo de contribuições do INSS (se aplicável)", label_botao: "Enviar Extrato INSS",
+               obrigatorio: false, link_emissao: "https://meu.inss.gov.br/" }),
+      ];
+    default:
+      // Indefinido: pede ao cliente declarar a condição no portal antes de subir renda.
+      return [
+        base({
+          tipo_documento: "renda_definir_condicao",
+          nome_documento: "Defina sua condição profissional para liberar os comprovantes corretos",
+          label_botao: "Informar Condição Profissional",
+          obrigatorio: true,
+          validade_dias: null,
+          regra_validacao: { acao: "selecionar_condicao_profissional", label_botao: "Informar Condição Profissional" },
+        }),
+      ];
+  }
+}
+
+// ============================================================================
+// EXAMES e específicos
+// ============================================================================
 const LAUDO_PSI: ChecklistItem = {
   tipo_documento: "laudo_psicologico",
   nome_documento: "Laudo Psicológico (psicólogo credenciado PF)",
@@ -146,7 +290,7 @@ const LAUDO_PSI: ChecklistItem = {
   obrigatorio: true,
   validade_dias: 365,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "psicologo_crp", "resultado", "data_emissao"], esperado: { resultado: "APTO" } },
+  regra_validacao: { exige: ["nome_titular", "psicologo_crp", "resultado", "data_emissao"], esperado: { resultado: "APTO" }, label_botao: "Enviar Laudo Psicológico" },
   link_emissao: null,
 };
 const LAUDO_TEC: ChecklistItem = {
@@ -156,11 +300,9 @@ const LAUDO_TEC: ChecklistItem = {
   obrigatorio: true,
   validade_dias: 365,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["nome_titular", "instrutor_credencial", "resultado", "data_emissao"], esperado: { resultado: "APTO" } },
+  regra_validacao: { exige: ["nome_titular", "instrutor_credencial", "resultado", "data_emissao"], esperado: { resultado: "APTO" }, label_botao: "Enviar Atestado Técnico" },
   link_emissao: null,
 };
-
-// ESPECÍFICOS
 const JUSTIFICATIVA_PORTE: ChecklistItem = {
   tipo_documento: "justificativa_porte",
   nome_documento: "Justificativa fundamentada de efetiva necessidade",
@@ -168,7 +310,7 @@ const JUSTIFICATIVA_PORTE: ChecklistItem = {
   obrigatorio: true,
   validade_dias: 30,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["texto"] },
+  regra_validacao: { exige: ["texto"], label_botao: "Enviar Justificativa" },
   link_emissao: null,
 };
 const CR_CAC: ChecklistItem = {
@@ -178,7 +320,7 @@ const CR_CAC: ChecklistItem = {
   obrigatorio: true,
   validade_dias: null,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["numero_cr", "categoria", "validade"] },
+  regra_validacao: { exige: ["numero_cr", "categoria", "validade"], label_botao: "Enviar CR" },
   link_emissao: "https://www.gov.br/defesa/pt-br/assuntos/sfpc",
 };
 const NF_ARMA: ChecklistItem = {
@@ -188,7 +330,7 @@ const NF_ARMA: ChecklistItem = {
   obrigatorio: true,
   validade_dias: null,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["comprador_cpf", "modelo", "numero_serie", "data_emissao"] },
+  regra_validacao: { exige: ["comprador_cpf", "modelo", "numero_serie", "data_emissao"], label_botao: "Enviar Nota Fiscal" },
   link_emissao: null,
 };
 const GUIA_TRAFEGO: ChecklistItem = {
@@ -198,30 +340,37 @@ const GUIA_TRAFEGO: ChecklistItem = {
   obrigatorio: false,
   validade_dias: null,
   formato_aceito: ["pdf"],
-  regra_validacao: { exige: ["numero_guia", "validade"] },
+  regra_validacao: { exige: ["numero_guia", "validade"], label_botao: "Enviar Guia de Tráfego" },
   link_emissao: null,
 };
 
-// CHECKLISTS por servico_id ---------------------------------------------------
-const CHECKLISTS: Record<number, ChecklistItem[]> = {
-  // 2 = Posse PF
-  2: [ID_RG, ID_CNH, ID_CPF, COMPROV_RES, COMPROV_RENDA,
-      CERT_CIVEL, CERT_CRIM_FED, CERT_CRIM_EST, CERT_MILITAR, CERT_ELEITORAL,
-      LAUDO_PSI, LAUDO_TEC],
-  // 3 = Porte PF
-  3: [ID_RG, ID_CNH, ID_CPF, COMPROV_RES, JUSTIFICATIVA_PORTE,
-      CERT_CIVEL, CERT_CRIM_FED, CERT_CRIM_EST, CERT_MILITAR, CERT_ELEITORAL,
-      LAUDO_PSI, LAUDO_TEC],
-  // 26 = CRAF / SIGMA
-  26: [ID_RG, CR_CAC, NF_ARMA, GUIA_TRAFEGO],
-};
+// ============================================================================
+// MONTADOR DE CHECKLIST
+// ============================================================================
+function montarChecklist(servico_id: number, condicao: CondicaoProf): ChecklistItem[] {
+  const ID_BLOCO = [ID_RG_CPF, ID_CNH, ID_CTPS]; // alternativas
+  const RENDA = checklistRenda(condicao);
+  switch (servico_id) {
+    case 2: // Posse PF
+      return [...ID_BLOCO, COMPROV_RES, ...RENDA, ...CERTIDOES_8, LAUDO_PSI, LAUDO_TEC];
+    case 3: // Porte PF
+      return [...ID_BLOCO, COMPROV_RES, JUSTIFICATIVA_PORTE, ...RENDA, ...CERTIDOES_8, LAUDO_PSI, LAUDO_TEC];
+    case 26: // CRAF / SIGMA
+      return [...ID_BLOCO, CR_CAC, NF_ARMA, GUIA_TRAFEGO];
+    default:
+      return [...ID_BLOCO, COMPROV_RES, ...RENDA, ...CERTIDOES_8, LAUDO_PSI, LAUDO_TEC];
+  }
+}
 
-// Default = compra/posse defesa pessoal (granular, sem agregador)
-const CHECKLIST_DEFAULT: ChecklistItem[] = [
-  ID_RG, ID_CNH, ID_CPF, COMPROV_RES, COMPROV_RENDA,
-  CERT_CIVEL, CERT_CRIM_FED, CERT_CRIM_EST, CERT_MILITAR, CERT_ELEITORAL,
-  LAUDO_PSI, LAUDO_TEC,
-];
+function inferirCondicao(profissao: string | null): CondicaoProf {
+  if (!profissao) return "indefinido";
+  const p = profissao.toLowerCase();
+  if (/aposent/.test(p)) return "aposentado";
+  if (/(empres[áa]r|s[óo]cio|cnpj|empreendedor|diretor|administrador)/.test(p)) return "empresario";
+  if (/(aut[ôo]nomo|mei|profissional liberal|freelance|prestador)/.test(p)) return "autonomo";
+  if (/(clt|assalariado|empregado|funcion[áa]rio)/.test(p)) return "clt";
+  return "indefinido";
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -231,7 +380,7 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
 
     const body = await req.json();
-    const { cliente_id, servico_id, item_venda_id, venda_id, observacoes } = body || {};
+    const { cliente_id, servico_id, venda_id, observacoes, condicao_profissional } = body || {};
     if (!cliente_id || !servico_id) {
       return json({ error: "cliente_id e servico_id são obrigatórios" }, 400);
     }
@@ -242,11 +391,16 @@ Deno.serve(async (req) => {
     );
 
     const { data: servico } = await supabase
-      .from("qa_servicos")
-      .select("id, nome_servico")
-      .eq("id", servico_id)
-      .maybeSingle();
+      .from("qa_servicos").select("id, nome_servico").eq("id", servico_id).maybeSingle();
     if (!servico) return json({ error: "Serviço não encontrado" }, 404);
+
+    // Resolver condição profissional: payload > cadastro > indefinido
+    let condicao: CondicaoProf = (condicao_profissional as CondicaoProf) || "indefinido";
+    if (condicao === "indefinido") {
+      const { data: cli } = await supabase
+        .from("qa_clientes").select("profissao").eq("id", cliente_id).maybeSingle();
+      condicao = inferirCondicao(cli?.profissao ?? null);
+    }
 
     const { data: processo, error: pErr } = await supabase
       .from("qa_processos")
@@ -257,12 +411,12 @@ Deno.serve(async (req) => {
         servico_nome: servico.nome_servico,
         status: "aguardando_pagamento",
         observacoes_admin: observacoes ?? null,
+        condicao_profissional: condicao,
       })
-      .select()
-      .single();
+      .select().single();
     if (pErr) return json({ error: pErr.message }, 400);
 
-    const checklist = CHECKLISTS[servico_id] || CHECKLIST_DEFAULT;
+    const checklist = montarChecklist(servico_id, condicao);
     const docsRows = checklist.map((d) => ({
       processo_id: processo.id,
       cliente_id,
@@ -288,14 +442,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Notificação de criação (não bloqueia)
     try {
       await supabase.functions.invoke("qa-processo-notificar", {
         body: { processo_id: processo.id, evento: "processo_criado" },
       });
     } catch (e) { console.warn("[criar] notificação falhou:", e); }
 
-    return json({ success: true, processo, total_documentos: docsRows.length });
+    return json({
+      success: true,
+      processo,
+      condicao_profissional: condicao,
+      total_documentos: docsRows.length,
+      total_certidoes: docsRows.filter((d) => d.tipo_documento.startsWith("certidao_")).length,
+    });
   } catch (err: any) {
     console.error("qa-processo-criar:", err);
     return json({ error: err?.message || "Erro interno" }, 500);
