@@ -36,6 +36,7 @@ interface Props {
   onBuscarGoogle?: () => void;
   onDefinirCapa?: (src: string) => void;
   onRemoverImagem?: (src: string) => void;
+  onRemoverTodasFotos?: () => void;
 }
 
 export function ArmaSpecSheet({
@@ -43,7 +44,7 @@ export function ArmaSpecSheet({
   aiBusy, scrapeBusy, saving, imgBusy,
   onClose, onSave, onAI, onScrape, onGerarImagem,
   imagensFabricante = [], carregandoImagens = false, onSelecionarImagem, onAbrirGaleria, onBuscarGoogle,
-  onDefinirCapa, onRemoverImagem,
+  onDefinirCapa, onRemoverImagem, onRemoverTodasFotos,
 }: Props) {
   const id = editing.id ? String(editing.id).slice(0, 8).toUpperCase() : "NOVO";
   // Galeria do registro: capa + imagens[]
