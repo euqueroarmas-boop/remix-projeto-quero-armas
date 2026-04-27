@@ -1,4 +1,5 @@
-import { Loader2, Sparkles, Globe, RefreshCcw, Image as ImageIcon, X, AlertCircle, Crosshair, Save } from "lucide-react";
+import { Loader2, Sparkles, Globe, RefreshCcw, Image as ImageIcon, X, AlertCircle, Crosshair, Save, ChevronLeft, ChevronRight, Star, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +34,8 @@ interface Props {
   onSelecionarImagem?: (src: string) => void;
   onAbrirGaleria?: () => void;
   onBuscarGoogle?: () => void;
+  onDefinirCapa?: (src: string) => void;
+  onRemoverImagem?: (src: string) => void;
 }
 
 export function ArmaSpecSheet({
@@ -40,8 +43,19 @@ export function ArmaSpecSheet({
   aiBusy, scrapeBusy, saving, imgBusy,
   onClose, onSave, onAI, onScrape, onGerarImagem,
   imagensFabricante = [], carregandoImagens = false, onSelecionarImagem, onAbrirGaleria, onBuscarGoogle,
+  onDefinirCapa, onRemoverImagem,
 }: Props) {
   const id = editing.id ? String(editing.id).slice(0, 8).toUpperCase() : "NOVO";
+  // Galeria do registro: capa + imagens[]
+  const galeriaArma: string[] = (() => {
+    const extras = Array.isArray(editing.imagens) ? editing.imagens.filter((u: string) => !!u && u !== editing.imagem) : [];
+    return [editing.imagem, ...extras].filter((u: string | null): u is string => !!u);
+  })();
+  const [fotoIdx, setFotoIdx] = useState(0);
+  useEffect(() => { setFotoIdx((i) => Math.min(i, Math.max(0, galeriaArma.length - 1))); }, [galeriaArma.length]);
+  const fotoAtual = galeriaArma[fotoIdx] || null;
+  const total = galeriaArma.length;
+  const ehCapa = fotoAtual && fotoAtual === editing.imagem;
   return (
     <div className="flex flex-col h-full bg-[#f6f5f1] text-zinc-900">
       {/* HEADER STICKY — SOC strip */}
