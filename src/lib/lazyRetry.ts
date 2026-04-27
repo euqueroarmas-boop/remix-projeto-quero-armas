@@ -34,7 +34,9 @@ export function lazyRetry<T extends ComponentType<any>>(
         if (attempt > 0) {
           await new Promise((r) => setTimeout(r, 500 * attempt));
         }
-        return await importFn();
+        const mod = await importFn();
+        sessionStorage.removeItem(RELOAD_KEY);
+        return mod;
       } catch (err) {
         if (!isChunkError(err) || attempt === retries) {
           // Not a chunk error or exhausted retries — try auto reload once
@@ -77,7 +79,7 @@ export function lazyRetry<T extends ComponentType<any>>(
 
 /** Call on app mount to clear the reload flag if we successfully loaded */
 export function clearChunkReloadFlag() {
-  sessionStorage.removeItem(RELOAD_KEY);
+  window.setTimeout(() => sessionStorage.removeItem(RELOAD_KEY), 30_000);
 }
 
 export { isChunkError };
