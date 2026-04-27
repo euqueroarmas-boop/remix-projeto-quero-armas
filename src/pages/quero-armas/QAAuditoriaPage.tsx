@@ -4,7 +4,7 @@
  * Novos módulos de auditoria devem ser adicionados na lista AUDIT_MODULES.
  */
 import { Link } from "react-router-dom";
-import { Gavel, ShieldCheck, ArrowRight } from "lucide-react";
+import { Gavel, ShieldCheck, ArrowRight, FileSearch } from "lucide-react";
 
 interface AuditModule {
   slug: string;
@@ -20,6 +20,13 @@ const AUDIT_MODULES: AuditModule[] = [
     title: "Recursos Administrativos",
     description: "Êxito, perdas, prazos expirados e oportunidades não aproveitadas em processos indeferidos.",
     icon: Gavel,
+    available: true,
+  },
+  {
+    slug: "central-documentos",
+    title: "Central de Documentos",
+    description: "Observabilidade dos processos: KPIs de validação IA, divergências, tempo médio e timeline imutável de eventos.",
+    icon: FileSearch,
     available: true,
   },
   // Próximos módulos de auditoria virão aqui.
