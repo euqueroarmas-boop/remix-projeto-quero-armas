@@ -1,4 +1,5 @@
-import { Loader2, Sparkles, Globe, RefreshCcw, Image as ImageIcon, X, AlertCircle, Crosshair, Save } from "lucide-react";
+import { Loader2, Sparkles, Globe, RefreshCcw, Image as ImageIcon, X, AlertCircle, Crosshair, Save, ChevronLeft, ChevronRight, Star, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,6 +34,8 @@ interface Props {
   onSelecionarImagem?: (src: string) => void;
   onAbrirGaleria?: () => void;
   onBuscarGoogle?: () => void;
+  onDefinirCapa?: (src: string) => void;
+  onRemoverImagem?: (src: string) => void;
 }
 
 export function ArmaSpecSheet({
@@ -40,8 +43,19 @@ export function ArmaSpecSheet({
   aiBusy, scrapeBusy, saving, imgBusy,
   onClose, onSave, onAI, onScrape, onGerarImagem,
   imagensFabricante = [], carregandoImagens = false, onSelecionarImagem, onAbrirGaleria, onBuscarGoogle,
+  onDefinirCapa, onRemoverImagem,
 }: Props) {
   const id = editing.id ? String(editing.id).slice(0, 8).toUpperCase() : "NOVO";
+  // Galeria do registro: capa + imagens[]
+  const galeriaArma: string[] = (() => {
+    const extras = Array.isArray(editing.imagens) ? editing.imagens.filter((u: string) => !!u && u !== editing.imagem) : [];
+    return [editing.imagem, ...extras].filter((u: string | null): u is string => !!u);
+  })();
+  const [fotoIdx, setFotoIdx] = useState(0);
+  useEffect(() => { setFotoIdx((i) => Math.min(i, Math.max(0, galeriaArma.length - 1))); }, [galeriaArma.length]);
+  const fotoAtual = galeriaArma[fotoIdx] || null;
+  const total = galeriaArma.length;
+  const ehCapa = fotoAtual && fotoAtual === editing.imagem;
   return (
     <div className="flex flex-col h-full bg-[#f6f5f1] text-zinc-900">
       {/* HEADER STICKY — SOC strip */}
@@ -100,8 +114,36 @@ export function ArmaSpecSheet({
               <div className="absolute top-1/2 left-3 right-3 h-px bg-zinc-200 border-dashed" />
               <div className="absolute left-1/2 top-3 bottom-3 w-px bg-zinc-200 border-dashed" />
 
-              {editing.imagem ? (
-                <img src={editing.imagem} alt={`${editing.marca || ""} ${editing.modelo || ""}`} className="relative z-10 block max-w-[88%] max-h-[88%] object-contain" />
+              {fotoAtual ? (
+                <>
+                  <img src={fotoAtual} alt={`${editing.marca || ""} ${editing.modelo || ""}`} className="relative z-10 block max-w-[88%] max-h-[88%] object-contain" />
+                  {total > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setFotoIdx((i) => (i - 1 + total) % total)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/95 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md"
+                        aria-label="Foto anterior"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFotoIdx((i) => (i + 1) % total)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/95 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md"
+                        aria-label="Próxima foto"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                      <div className="absolute top-2 right-2 z-20 px-2 py-0.5 rounded-full bg-zinc-900/80 text-white text-[10px] font-mono tracking-wider">
+                        {fotoIdx + 1}/{total}
+                      </div>
+                    </>
+                  )}
+                  {ehCapa && (
+                    <div className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded bg-amber-500 text-white text-[9px] font-mono font-bold uppercase tracking-wider">CAPA</div>
+                  )}
+                </>
               ) : (
                 <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-300">
                   <Crosshair className="h-12 w-12" />
@@ -113,6 +155,30 @@ export function ArmaSpecSheet({
                 FIG.01 · PERFIL
               </div>
             </div>
+
+            {/* Ações da foto atual */}
+            {fotoAtual && total > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {!ehCapa && onDefinirCapa && (
+                  <button
+                    type="button"
+                    onClick={() => onDefinirCapa(fotoAtual)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-300 bg-white hover:border-amber-500 hover:text-amber-700 text-[10px] font-mono font-bold uppercase tracking-wider"
+                  >
+                    <Star className="h-3 w-3" /> Definir como capa
+                  </button>
+                )}
+                {onRemoverImagem && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoverImagem(fotoAtual)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-300 bg-white hover:border-red-500 hover:text-red-700 text-[10px] font-mono font-bold uppercase tracking-wider"
+                  >
+                    <Trash2 className="h-3 w-3" /> Remover desta arma
+                  </button>
+                )}
+              </div>
+            )}
 
             <button
               onClick={onGerarImagem}

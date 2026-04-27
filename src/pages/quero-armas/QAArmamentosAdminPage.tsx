@@ -10,7 +10,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
-import { ImageOff, X } from "lucide-react";
+import { ImageOff, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/quero-armas/LoadStates";
 import { ArmaSpecSheet } from "./ArmaSpecSheet";
@@ -35,6 +35,7 @@ interface Arma {
   imagem_status: "pendente" | "gerando" | "pronta" | "erro" | null;
   imagem_aprovada?: boolean | null;
   imagem_validacao_motivo?: string | null;
+  imagens?: string[] | null;
 }
 
 const TIPOS = ["pistola","revolver","espingarda","carabina","fuzil","submetralhadora","outra"];
@@ -518,9 +519,51 @@ export default function QAArmamentosAdminPage() {
     }
   }
 
-  function selecionarImagemFabricante(src: string) {
-    setEditing((prev) => ({ ...(prev || {}), imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" }));
-    toast.success("Imagem definida como principal");
+  /** Adiciona uma foto à galeria da arma; se ainda não houver capa, define como capa. */
+  function adicionarImagemGaleria(src: string) {
+    setEditing((prev) => {
+      const base = prev || {};
+      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
+      const capa = (base.imagem || "").trim();
+      // Já está como capa ou já está na galeria → não duplica
+      if (capa === src || galeria.includes(src)) {
+        toast.info("Esta foto já está na galeria");
+        return base;
+      }
+      if (!capa) {
+        toast.success("Foto definida como capa");
+        return { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" } as any;
+      }
+      galeria.push(src);
+      toast.success(`Foto adicionada à galeria (${galeria.length + 1} no total)`);
+      return { ...base, imagens: galeria } as any;
+    });
+  }
+
+  /** Define uma foto da galeria como capa, mantendo a anterior na galeria. */
+  function definirComoCapa(src: string) {
+    setEditing((prev) => {
+      const base = prev || {};
+      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
+      const capaAtual = (base.imagem || "").trim();
+      const novaGaleria = galeria.filter((u) => u !== src);
+      if (capaAtual && capaAtual !== src) novaGaleria.unshift(capaAtual);
+      return { ...base, imagem: src, imagens: novaGaleria, imagem_status: "pronta" } as any;
+    });
+    toast.success("Foto definida como capa");
+  }
+
+  /** Remove uma foto (capa ou galeria). */
+  function removerImagem(src: string) {
+    setEditing((prev) => {
+      const base = prev || {};
+      const galeria = Array.isArray(base.imagens) ? base.imagens!.filter((u) => u !== src) : [];
+      let capa = base.imagem || null;
+      if (capa === src) {
+        capa = galeria.length > 0 ? galeria.shift()! : null;
+      }
+      return { ...base, imagem: capa, imagens: galeria } as any;
+    });
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
@@ -723,9 +766,11 @@ export default function QAArmamentosAdminPage() {
             onGerarImagem={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
             imagensFabricante={imagensFabricante}
             carregandoImagens={carregandoImagens}
-            onSelecionarImagem={selecionarImagemFabricante}
+            onSelecionarImagem={adicionarImagemGaleria}
             onAbrirGaleria={() => setShowAllImagesModal(true)}
             onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
+            onDefinirCapa={definirComoCapa}
+            onRemoverImagem={removerImagem}
           />}
         </SheetContent>
       </Sheet>
@@ -746,16 +791,21 @@ export default function QAArmamentosAdminPage() {
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {imagensFabricante.map((src, idx) => {
-                const selecionada = editing?.imagem === src;
+                const isCapa = editing?.imagem === src;
+                const naGaleria = Array.isArray(editing?.imagens) && editing!.imagens!.includes(src);
+                const selecionada = isCapa || naGaleria;
                 return (
                   <button
                     key={idx}
-                    onClick={() => { selecionarImagemFabricante(src); setShowAllImagesModal(false); }}
+                    onClick={() => { adicionarImagemGaleria(src); }}
                     className={`group relative overflow-hidden bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-300 hover:border-amber-500"}`}
                   >
                     <img src={src} alt={`Opção ${idx + 1}`} className="block h-40 w-full max-w-full object-contain p-2" loading="lazy" onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")} />
-                    {selecionada && (
-                      <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">SELECIONADA</div>
+                    {isCapa && (
+                      <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">CAPA</div>
+                    )}
+                    {!isCapa && naGaleria && (
+                      <div className="absolute top-1 right-1 bg-emerald-600 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">NA GALERIA</div>
                     )}
                   </button>
                 );
@@ -871,6 +921,18 @@ function WeaponCard({
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
+  // Galeria completa = capa + extras (sem duplicar)
+  const galeria = (() => {
+    const extras = Array.isArray(it.imagens) ? it.imagens.filter((u) => !!u && u !== it.imagem) : [];
+    return [it.imagem, ...extras].filter((u): u is string => !!u);
+  })();
+  const [fotoIdx, setFotoIdx] = useState(0);
+  // Reseta o índice quando a galeria muda de tamanho/conteúdo
+  useEffect(() => { setFotoIdx(0); }, [galeria.length, it.imagem]);
+  const fotoAtual = galeria[fotoIdx] || null;
+  const total = galeria.length;
+  const goPrev = (e: React.MouseEvent) => { e.stopPropagation(); setFotoIdx((i) => (i - 1 + total) % total); };
+  const goNext = (e: React.MouseEvent) => { e.stopPropagation(); setFotoIdx((i) => (i + 1) % total); };
   return (
     <div
       onClick={onOpen}
@@ -892,16 +954,16 @@ function WeaponCard({
         className="relative w-full max-w-full overflow-hidden bg-white"
         style={{ aspectRatio: "16/10" }}
       >
-        {it.imagem ? (
+        {fotoAtual ? (
           <>
             <button
               type="button"
               className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
               aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
             >
               <img
-                src={it.imagem}
+                src={fotoAtual}
                 alt={`${it.marca} ${it.modelo}`}
                 loading="lazy"
                 style={{ objectPosition: "center center" }}
@@ -910,13 +972,38 @@ function WeaponCard({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
               className="absolute top-2 right-2 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
               title="Ampliar imagem"
               aria-label="Ampliar imagem"
             >
               <Search className="h-3.5 w-3.5" />
             </button>
+            {total > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md backdrop-blur-sm transition-colors"
+                  title="Foto anterior"
+                  aria-label="Foto anterior"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md backdrop-blur-sm transition-colors"
+                  title="Próxima foto"
+                  aria-label="Próxima foto"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-zinc-900/70 text-white text-[10px] font-mono tracking-wider">
+                  {fotoIdx + 1}/{total}
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-300">
@@ -931,7 +1018,7 @@ function WeaponCard({
         </div>
 
         {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
-        {it.imagem && it.imagem_aprovada === false && (
+        {fotoAtual && fotoIdx === 0 && it.imagem_aprovada === false && (
           <div className="absolute bottom-2 left-2 right-2 z-20 flex flex-wrap items-center gap-1">
             <div
               className="px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
