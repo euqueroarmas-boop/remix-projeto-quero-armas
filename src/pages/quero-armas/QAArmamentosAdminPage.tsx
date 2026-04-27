@@ -1035,6 +1035,15 @@ function WeaponCard({
             >
               <Search className="h-3.5 w-3.5" />
             </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); if (fotoAtual) onRemoverFoto(fotoAtual); }}
+              className="absolute top-2 right-10 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-red-600 hover:text-white border border-zinc-300 text-zinc-700 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
+              title="Remover esta foto"
+              aria-label="Remover esta foto"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
             {total > 1 && (
               <>
                 <button
