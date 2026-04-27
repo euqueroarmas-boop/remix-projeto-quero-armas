@@ -693,18 +693,19 @@ export default function QAArmamentosAdminPage() {
 
       {/* Modal — galeria completa de imagens do fabricante */}
       {showAllImagesModal && (
-        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAllImagesModal(false)}>
-          <div className="bg-[#f6f5f1] border border-zinc-300 w-full max-w-[calc(100vw-2rem)] sm:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-300">
+        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm p-3 sm:p-4" onClick={() => setShowAllImagesModal(false)}>
+          <div className="mx-auto flex h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden bg-[#f6f5f1] border border-zinc-300 sm:h-[calc(100dvh-2rem)] sm:max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between bg-[#f6f5f1] p-4 sm:p-6 pb-3 border-b border-zinc-300">
               <div>
                 <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// GALERIA · FABRICANTE</div>
                 <h2 className="text-lg font-bold text-zinc-900 mt-1">{imagensFabricante.length} imagens encontradas</h2>
               </div>
-              <button onClick={() => setShowAllImagesModal(false)} className="h-9 w-9 grid place-items-center border border-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white transition-colors">
+              <button type="button" onClick={() => setShowAllImagesModal(false)} className="h-11 w-11 shrink-0 grid place-items-center border border-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white transition-colors" aria-label="Fechar galeria">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {imagensFabricante.map((src, idx) => {
                 const selecionada = editing?.imagem === src;
                 return (
@@ -720,6 +721,7 @@ export default function QAArmamentosAdminPage() {
                   </button>
                 );
               })}
+              </div>
             </div>
           </div>
         </div>
