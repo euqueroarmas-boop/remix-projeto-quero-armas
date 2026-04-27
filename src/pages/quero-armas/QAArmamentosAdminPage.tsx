@@ -469,8 +469,8 @@ export default function QAArmamentosAdminPage() {
                   </Button>
                 </div>
                 {editing.imagem ? (
-                  <div className="grid place-items-center rounded-md p-2" style={{ background: "transparent", backgroundImage: "none" }}>
-                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain" />
+                  <div className="grid place-items-center rounded-md p-2" style={{ background: "#1a1a1a", backgroundImage: "none" }}>
+                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain mix-blend-screen" />
                   </div>
                 ) : (
                   <div className="grid place-items-center h-32 border border-dashed rounded-md text-muted-foreground text-sm">
