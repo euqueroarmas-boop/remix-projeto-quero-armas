@@ -547,17 +547,14 @@ function WeaponCard({
       {/* visual da arma */}
       <div
         className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, #ffffff 0%, #f6f5f1 65%, #ecebe5 100%)",
-        }}
+        style={{ background: "transparent", backgroundImage: "none" }}
       >
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
             loading="lazy"
-            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain mix-blend-multiply drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
+            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
           />
         ) : (
           <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
