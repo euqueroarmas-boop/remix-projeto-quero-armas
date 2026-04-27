@@ -599,13 +599,26 @@ Deno.serve(async (req) => {
       const order = { oficial: 0, wikimedia: 1, ddg: 2 } as Record<string, number>;
       return (order[a.fonte] ?? 9) - (order[b.fonte] ?? 9);
     });
-    const { escolhida, validacao } = await escolherComValidacao(candidatas, {
-      marca: arma.marca,
-      modelo: arma.modelo,
-      tipo: arma.tipo,
-      calibre: arma.calibre,
-      origem: arma.origem,
-    }, 3);
+    const { escolhida, validacao } = await escolherComValidacao(
+      candidatas,
+      {
+        marca: arma.marca,
+        modelo: arma.modelo,
+        tipo: arma.tipo,
+        calibre: arma.calibre,
+        origem: arma.origem,
+      },
+      3,
+      async (c, v, decisao) => {
+        await sb.from("qa_armamentos_validacao_logs").insert({
+          item_id: id,
+          imagem_url: c.url,
+          validacao_resultado: decisao,
+          confianca: v.confianca,
+          motivo: v.motivo,
+        });
+      },
+    );
 
     if (!escolhida) {
       await sb
@@ -681,16 +694,6 @@ Deno.serve(async (req) => {
         imagem_validada_em: new Date().toISOString(),
       })
       .eq("id", id);
-
-    if (validacao) {
-      await sb.from("qa_armamentos_validacao_logs").insert({
-        item_id: id,
-        imagem_url: publicUrl,
-        validacao_resultado: decisaoFinal(validacao),
-        confianca: validacao.confianca,
-        motivo: validacao.motivo,
-      });
-    }
 
     return new Response(
       JSON.stringify({
