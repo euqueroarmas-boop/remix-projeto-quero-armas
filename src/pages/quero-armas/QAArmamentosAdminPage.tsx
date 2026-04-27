@@ -136,7 +136,11 @@ export default function QAArmamentosAdminPage() {
     setSaving(true);
     const payload: any = { ...editing };
     payload.search_tokens = `${payload.marca} ${payload.modelo} ${payload.apelido || ""} ${payload.calibre}`.toUpperCase();
-    if (payload.fonte_url !== undefined) payload.fonte_url = payload.fonte_url || null;
+    // Persiste a URL do repositório: prioriza o input "scrapeUrl" (campo do topo),
+    // caindo para editing.fonte_url quando não houver. Garante que trocar a URL
+    // sem rodar o scraper também salve.
+    const urlRepositorio = (scrapeUrl?.trim() || (payload.fonte_url as string | null | undefined)?.toString().trim()) || null;
+    payload.fonte_url = urlRepositorio;
     // Esta página é exclusiva de admin → imagens entram já aprovadas.
     if (payload.imagem) {
       const { data: u } = await supabase.auth.getUser();
@@ -457,38 +461,20 @@ export default function QAArmamentosAdminPage() {
 
   async function buscarImagensFabricante(url: string): Promise<string[]> {
     try {
-      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-      const data = await response.json();
-      const html: string = data.contents || "";
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const base = new URL(url);
-      const resolve = (src: string) => { try { return new URL(src, base).href; } catch { return ""; } };
-      const blockedRegex = /logo|favicon|sprite|placeholder|avatar|truck|car|vehicle|caminhao|bombeiro|fire-?truck|banner|\/icon|\/bg\/|wallpaper|cartoon|toy/i;
-      const marcaModelo = `${editing?.marca || ""} ${editing?.modelo || ""}`.toLowerCase().trim();
-      const tokens = marcaModelo.split(/\s+/).filter((t) => t.length >= 2);
-      const imgs = Array.from(doc.querySelectorAll("img"))
-        .map((img) => {
-          const src = img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "";
-          const alt = (img.getAttribute("alt") || "").toLowerCase();
-          const w = parseInt(img.getAttribute("width") || "0", 10);
-          return { src: resolve(src), alt, w };
-        })
-        .filter(({ src, alt, w }) =>
-          src.startsWith("http") &&
-          !blockedRegex.test(src) &&
-          !blockedRegex.test(alt) &&
-          /\.(jpe?g|png|webp)(\?|$)/i.test(src) &&
-          (
-            // aceita se URL/alt contém marca ou modelo, ou se imagem é grande (≥300px)
-            tokens.length === 0 ||
-            tokens.some((t) => src.toLowerCase().includes(t) || alt.includes(t)) ||
-            w >= 300 ||
-            !w // não tem width declarado, dá benefício da dúvida
-          )
-        )
-        .map((x) => x.src);
-      return [...new Set(imgs)];
+      const { data, error } = await supabase.functions.invoke("qa-armamento-buscar-imagens", {
+        body: { url, marca: editing?.marca, modelo: editing?.modelo },
+      });
+      if (error) {
+        console.error("[buscarImagensFabricante] edge error", error);
+        toast.error("Falha ao buscar imagens do fabricante");
+        return [];
+      }
+      if ((data as any)?.error && (!Array.isArray((data as any)?.imagens) || (data as any).imagens.length === 0)) {
+        toast.error((data as any).error);
+        return [];
+      }
+      const imgs: string[] = Array.isArray((data as any)?.imagens) ? (data as any).imagens : [];
+      return imgs;
     } catch (e) {
       console.error("[buscarImagensFabricante]", e);
       return [];
@@ -682,7 +668,11 @@ export default function QAArmamentosAdminPage() {
             editing={editing}
             setF={setF}
             scrapeUrl={scrapeUrl}
-            setScrapeUrl={setScrapeUrl}
+            setScrapeUrl={(v: string) => {
+              setScrapeUrl(v);
+              // mantém o campo do banco em sincronia com o input do topo
+              setEditing((p) => ({ ...(p || {}), fonte_url: v }));
+            }}
             aiBusy={aiBusy}
             scrapeBusy={scrapeBusy}
             saving={saving}
