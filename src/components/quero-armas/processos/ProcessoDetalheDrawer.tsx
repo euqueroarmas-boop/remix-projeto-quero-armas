@@ -24,6 +24,10 @@ interface DocRow {
   data_envio: string | null;
   data_validacao: string | null;
   updated_at: string;
+  link_emissao?: string | null;
+  validade_dias?: number | null;
+  data_validade?: string | null;
+  formato_aceito?: string[] | string | null;
 }
 
 interface ProcessoFull {
@@ -271,6 +275,31 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {/* Validade e link de emissão */}
+                      {(doc.validade_dias || doc.data_validade || doc.link_emissao) && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider">
+                          {doc.validade_dias != null && (
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-bold">
+                              VALIDADE: {doc.validade_dias} DIAS
+                            </span>
+                          )}
+                          {doc.data_validade && (
+                            <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                              VENCE EM {formatDate(doc.data_validade)}
+                            </span>
+                          )}
+                          {doc.link_emissao && doc.status !== "aprovado" && (
+                            <a
+                              href={doc.link_emissao}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 font-bold inline-flex items-center gap-1 hover:bg-blue-100"
+                            >
+                              <ExternalLink className="h-3 w-3" /> EMITIR ONLINE
+                            </a>
+                          )}
+                        </div>
+                      )}
                       {doc.motivo_rejeicao && (
                         <div className="text-[11px] bg-red-50 border border-red-200 rounded-md p-2 text-red-800">
                           <strong className="uppercase tracking-wider">MOTIVO:</strong> {doc.motivo_rejeicao}

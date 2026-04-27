@@ -728,6 +728,48 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── QA Processo: promover de aguardando_pagamento → aguardando_documentos ──
+    if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
+      try {
+        const { data: qaProcs } = await supabase
+          .from("qa_processos")
+          .select("id, status, cliente_id")
+          .eq("pagamento_id", String(payment.id));
+
+        for (const proc of qaProcs ?? []) {
+          if (proc.status === "aguardando_pagamento") {
+            await supabase
+              .from("qa_processos")
+              .update({ status: "aguardando_documentos", pagamento_status: "confirmado" })
+              .eq("id", proc.id);
+
+            // Dispara notificação ao cliente solicitando documentos
+            supabase.functions
+              .invoke("qa-processo-notificar", {
+                body: { processo_id: proc.id, evento: "pagamento_confirmado" },
+              })
+              .catch((e) => console.warn("[asaas-webhook] qa-processo-notificar falhou:", e));
+
+            await supabase.from("integration_logs").insert({
+              integration_name: "qa_processo",
+              operation_name: "promovido_aguardando_documentos",
+              request_payload: { processo_id: proc.id, payment_id: payment.id, event },
+              status: "success",
+            });
+          }
+        }
+      } catch (qaErr) {
+        console.error("[asaas-webhook] Erro ao promover qa_processo:", qaErr);
+        await supabase.from("integration_logs").insert({
+          integration_name: "qa_processo",
+          operation_name: "promocao_falhou",
+          request_payload: { payment_id: payment.id, event },
+          status: "error",
+          error_message: String(qaErr),
+        });
+      }
+    }
+
     // ── Payment overdue ──
     if (event === "PAYMENT_OVERDUE" && paymentRecord.quote_id) {
       console.log("[asaas-webhook] Pagamento vencido. Marcando contrato como INADIMPLENTE.");
