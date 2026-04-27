@@ -35,6 +35,7 @@ const App = () => (
           <AuthProvider>
             <CartProvider>
               <Suspense fallback={<PageLoader />}>
+                <div className="overflow-x-hidden max-w-full">
                 <Routes>
                   {/* Legacy: redireciona /quero-armas/* → /* */}
                   <Route path="/quero-armas" element={<Navigate to="/" replace />} />
@@ -43,6 +44,7 @@ const App = () => (
                   {/* Quero Armas (todas as rotas) */}
                   <Route path="/*" element={<QARoutes />} />
                 </Routes>
+                </div>
               </Suspense>
             </CartProvider>
           </AuthProvider>
