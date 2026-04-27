@@ -2246,6 +2246,8 @@ export type Database = {
           imagem_gerada_em: string | null
           imagem_status: string
           imagem_url: string | null
+          imagem_validacao_motivo: string | null
+          imagem_validada_em: string | null
           manual_url: string | null
           marca: string
           modelo: string
@@ -2288,6 +2290,8 @@ export type Database = {
           imagem_gerada_em?: string | null
           imagem_status?: string
           imagem_url?: string | null
+          imagem_validacao_motivo?: string | null
+          imagem_validada_em?: string | null
           manual_url?: string | null
           marca: string
           modelo: string
@@ -2330,6 +2334,8 @@ export type Database = {
           imagem_gerada_em?: string | null
           imagem_status?: string
           imagem_url?: string | null
+          imagem_validacao_motivo?: string | null
+          imagem_validada_em?: string | null
           manual_url?: string | null
           marca?: string
           modelo?: string
