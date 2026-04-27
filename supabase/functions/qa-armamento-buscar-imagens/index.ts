@@ -13,6 +13,28 @@ const BLOCK_RE = /(?:logo|favicon|sprite|placeholder|avatar|truck|caminhao|bombe
 type Candidate = { url: string; context: string; source: string; score: number };
 type ScrapeResult = { html: string; rawHtml: string; markdown: string; links: string[]; metadata: Record<string, unknown>; images: string[] };
 
+function slugTokens(pathname: string): string[] {
+  // Ex.: /en/product/92-fs-inox-P0049 -> ["92","fs","inox","p0049","92fs","92fsinox"]
+  const last = pathname.split("/").filter(Boolean).pop() || "";
+  const cleaned = last.toLowerCase().replace(/\.(html?|php|aspx?)$/i, "");
+  const parts = cleaned.split(/[-_.]+/).filter((p) => p.length >= 2);
+  const tokens = new Set<string>(parts);
+  if (parts.length > 1) {
+    tokens.add(parts.join(""));
+    tokens.add(parts.slice(0, 2).join(""));
+    tokens.add(parts.slice(0, 3).join(""));
+  }
+  // Remove tokens genéricos
+  for (const t of ["product","produto","item","details","detail","page","en","pt","br","www"]) tokens.delete(t);
+  return [...tokens].filter((t) => t.length >= 2);
+}
+
+function matchesSlug(candidate: Candidate, tokens: string[]): boolean {
+  if (tokens.length === 0) return true;
+  const haystack = `${candidate.url} ${candidate.context}`.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  return tokens.some((t) => haystack.includes(t));
+}
+
 function decodeLoose(value: string): string {
   return value
     .replace(/\\u002[Ff]/g, "/")
@@ -212,12 +234,18 @@ Deno.serve(async (req) => {
     }
 
     const candidates = extractImages(documents, url, extras);
-    const imagens = candidates.map((c) => c.url).slice(0, 80);
+    const tokens = slugTokens(parsed.pathname);
+    const filtrados = candidates.filter((c) => matchesSlug(c, tokens));
+    // Se o filtro zerar tudo (slug muito genérico), cai pro conjunto completo
+    const finalSet = filtrados.length > 0 ? filtrados : candidates;
+    const imagens = finalSet.map((c) => c.url).slice(0, 80);
 
     return json({
       imagens,
       total: imagens.length,
       fontes,
+      slug_tokens: tokens,
+      descartadas_fora_da_url: candidates.length - finalSet.length,
       aviso: imagens.length === 0
         ? "Nenhuma imagem rastreável foi encontrada. O site pode bloquear robôs ou exigir uma etapa de país/idade antes do produto."
         : undefined,
