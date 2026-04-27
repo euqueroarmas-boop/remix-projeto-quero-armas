@@ -126,6 +126,13 @@ export default function QAArmamentosAdminPage() {
     const payload: any = { ...editing };
     payload.search_tokens = `${payload.marca} ${payload.modelo} ${payload.apelido || ""} ${payload.calibre}`.toUpperCase();
     if (payload.fonte_url !== undefined) payload.fonte_url = payload.fonte_url || null;
+    // Esta página é exclusiva de admin → imagens entram já aprovadas.
+    if (payload.imagem) {
+      const { data: u } = await supabase.auth.getUser();
+      payload.imagem_aprovada = true;
+      payload.imagem_enviada_por = u.user?.id || null;
+      payload.imagem_enviada_em = new Date().toISOString();
+    }
     const isUpdate = !!editing.id;
     const { error } = isUpdate
       ? await supabase.from("qa_armamentos_catalogo" as any).update(payload).eq("id", editing.id!)
