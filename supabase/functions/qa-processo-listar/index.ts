@@ -101,7 +101,8 @@ Deno.serve(async (req) => {
       const c = counters[d.processo_id];
       if (!c) continue;
       c.total += 1;
-      if (d.status === "aprovado") c.aprovados += 1;
+      // dispensado_grupo é tratado como satisfeito (não pendente, não bloqueante)
+      if (d.status === "aprovado" || d.status === "dispensado_grupo") c.aprovados += 1;
       else if (d.status === "invalido") c.invalidos += 1;
       else if (d.status === "divergente") c.divergentes += 1;
       else if (d.status === "revisao_humana") c.revisao += 1;
