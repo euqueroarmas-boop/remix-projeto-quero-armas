@@ -469,8 +469,8 @@ export default function QAArmamentosAdminPage() {
                   </Button>
                 </div>
                 {editing.imagem ? (
-                  <div className="grid place-items-center bg-black rounded-md p-2">
-                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 object-contain" />
+                  <div className="grid place-items-center rounded-md p-2" style={{ background: "transparent" }}>
+                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain mix-blend-multiply" />
                   </div>
                 ) : (
                   <div className="grid place-items-center h-32 border border-dashed rounded-md text-muted-foreground text-sm">
@@ -557,7 +557,7 @@ function WeaponCard({
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
             loading="lazy"
-            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
+            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain mix-blend-multiply drop-shadow-[0_10px_20px_rgba(0,0,0,0.18)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
           />
         ) : (
           <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
