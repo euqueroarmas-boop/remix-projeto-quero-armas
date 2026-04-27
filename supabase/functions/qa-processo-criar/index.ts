@@ -157,6 +157,15 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Notifica cliente sobre criação do processo (não bloqueia em falha)
+    try {
+      await supabase.functions.invoke("qa-processo-notificar", {
+        body: { processo_id: processo.id, evento: "processo_criado" },
+      });
+    } catch (e) {
+      console.warn("[criar] notificação falhou:", e);
+    }
+
     return json({
       success: true,
       processo,

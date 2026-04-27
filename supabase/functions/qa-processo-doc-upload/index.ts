@@ -134,6 +134,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Notifica cliente que documento entrou em validação (background)
+    try {
+      // @ts-ignore EdgeRuntime
+      (globalThis as any).EdgeRuntime?.waitUntil(
+        supabase.functions.invoke("qa-processo-notificar", {
+          body: { processo_id, documento_id, evento: "documento_em_validacao" },
+        }).catch((e: any) => console.warn("[upload] notif falhou:", e?.message ?? e)),
+      );
+    } catch (e) {
+      console.warn("[upload] notif schedule falhou:", e);
+    }
+
     return json({ success: true, documento: docRow, ia_em_analise: iaTriggered });
   } catch (err: any) {
     console.error("qa-processo-doc-upload:", err);
