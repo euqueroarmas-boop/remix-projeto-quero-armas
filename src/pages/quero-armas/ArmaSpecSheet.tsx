@@ -264,6 +264,29 @@ export function ArmaSpecSheet({
               />
             </Section>
 
+            {/* BASE LEGAL — Lei 10.826/03 e Decreto 11.615/23 */}
+            <Section title="Base Legal & Enquadramento">
+              <div className="border border-zinc-300 bg-amber-50/60 p-4 font-mono text-[11px] leading-relaxed text-zinc-800">
+                <div className="flex items-center gap-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-amber-900">
+                  <span className="inline-block w-2 h-2 bg-amber-600" /> Lei 10.826/03 · Decreto 11.615/23
+                </div>
+                <ul className="space-y-1 mb-3 text-zinc-700">
+                  <li><span className="font-bold text-zinc-900">USO PERMITIDO:</span> armas curtas com energia de boca ≤ 407J (ex.: .380, 9x19mm, .40, .45 ACP, .38, .357 Mag) e armas longas raiadas ≤ 1.620J (ex.: .22 LR) e espingardas cal. .12.</li>
+                  <li><span className="font-bold text-zinc-900">USO RESTRITO:</span> calibres acima dos limites de energia ou classificados pelo Comando do Exército (ex.: 5.56, 7.62, .30 Carbine, e calibres de pistola em armas longas).</li>
+                  <li><span className="font-bold text-zinc-900">POSSE / DEFESA PESSOAL:</span> aceita SOMENTE armas curtas de uso permitido.</li>
+                  <li><span className="font-bold text-zinc-900">CAC NÍVEL III:</span> autoriza aquisição de armas de USO RESTRITO (Atirador Desportivo nível III e Colecionador/CR).</li>
+                </ul>
+                <Textarea
+                  rows={3}
+                  value={editing.observacoes || ""}
+                  onChange={(e) => setF("observacoes", e.target.value)}
+                  placeholder="Anotação de enquadramento legal específica desta arma…"
+                  className="bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 text-[11px] font-mono focus-visible:ring-amber-500"
+                />
+                <p className="mt-2 text-[10px] uppercase tracking-widest text-zinc-500">Esta anotação descreve para quais documentos/perfis (Posse, Porte, CAC, CR) a arma está autorizada.</p>
+              </div>
+            </Section>
+
             {/* META — fonte / status / observações */}
             <Section title="Metadados Editoriais">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-zinc-300 border border-zinc-300">
@@ -293,13 +316,6 @@ export function ArmaSpecSheet({
                   <BareInput value={editing.fonte_url || ""} onChange={(e) => setF("fonte_url", e.target.value)} placeholder="—" />
                 </SpecCell>
               </div>
-              <Textarea
-                rows={2}
-                value={editing.observacoes || ""}
-                onChange={(e) => setF("observacoes", e.target.value)}
-                placeholder="Observações internas (não exibidas ao cliente)…"
-                className="bg-white border border-zinc-300 text-zinc-900 placeholder:text-zinc-400 mt-3 text-xs font-mono focus-visible:ring-amber-500"
-              />
             </Section>
           </div>
         </div>
