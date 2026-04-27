@@ -459,12 +459,51 @@ export default function QADashboardPage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-0.5 shrink-0">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                    c.status === "pendente" ? "bg-amber-50 text-amber-600" :
-                    c.status === "aprovado" ? "bg-emerald-50 text-emerald-600" :
-                    c.status === "recusado" ? "bg-rose-50 text-rose-600" :
-                    "bg-slate-100 text-slate-500"
-                  }`}>{c.status}</span>
+                  {c.status === "aprovado" ? (
+                    <button
+                      type="button"
+                      title="Clique para recusar este cliente aprovado"
+                      onClick={async () => {
+                        const { data: userData } = await supabase.auth.getUser();
+                        const { error: insErr } = await supabase
+                          .from("qa_cadastro_publico_recusados" as any)
+                          .insert({
+                            cadastro_original_id: c.id,
+                            nome_completo: c.nome_completo,
+                            cpf: c.cpf,
+                            telefone_principal: c.telefone_principal,
+                            email: c.email,
+                            end1_cidade: c.end1_cidade,
+                            end1_estado: c.end1_estado,
+                            servico_interesse: c.servico_interesse,
+                            pago: c.pago ?? null,
+                            cadastro_created_at: c.created_at,
+                            recusado_por: userData?.user?.id ?? null,
+                            payload_original: c as any,
+                          });
+                        if (insErr) { toast.error("Erro ao arquivar: " + insErr.message); return; }
+                        const { error: delErr } = await supabase
+                          .from("qa_cadastro_publico" as any)
+                          .delete()
+                          .eq("id", c.id);
+                        if (delErr) { toast.error("Erro ao remover: " + delErr.message); return; }
+                        setNovosCadastros((prev) => prev.filter((x) => x.id !== c.id));
+                        toast.success(`${c.nome_completo} recusado`, {
+                          description: "Movido para o arquivo de recusados.",
+                        });
+                      }}
+                      className="group text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-600 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer"
+                    >
+                      <span className="group-hover:hidden">aprovado</span>
+                      <span className="hidden group-hover:inline">recusar?</span>
+                    </button>
+                  ) : (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      c.status === "pendente" ? "bg-amber-50 text-amber-600" :
+                      c.status === "recusado" ? "bg-rose-50 text-rose-600" :
+                      "bg-slate-100 text-slate-500"
+                    }`}>{c.status}</span>
+                  )}
                   <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
                     c.pago
                       ? "bg-emerald-500 text-white border-emerald-500"
@@ -473,23 +512,21 @@ export default function QADashboardPage() {
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")}
                   </span>
-                  {(c.status === "pendente" || c.status === "aprovado") && (
+                  {c.status === "pendente" && (
                     <div className="flex items-center gap-1 mt-1">
-                      {c.status === "pendente" && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "aprovado" }).eq("id", c.id);
-                            if (error) { toast.error("Erro ao aprovar: " + error.message); return; }
-                            setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "aprovado" } : x));
-                            toast.success(`${c.nome_completo} aprovado`);
-                          }}
-                          className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition"
-                          title="Aprovar"
-                        >
-                          Aprovar
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "aprovado" }).eq("id", c.id);
+                          if (error) { toast.error("Erro ao aprovar: " + error.message); return; }
+                          setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "aprovado" } : x));
+                          toast.success(`${c.nome_completo} aprovado`);
+                        }}
+                        className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition"
+                        title="Aprovar"
+                      >
+                        Aprovar
+                      </button>
                       <button
                         type="button"
                         onClick={async () => {
