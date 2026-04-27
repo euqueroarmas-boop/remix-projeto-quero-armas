@@ -50,6 +50,15 @@ const empty = (): Partial<Arma> => ({
   marca: "", modelo: "", tipo: "pistola", calibre: "", status_revisao: "rascunho", fonte_dados: "curado", ativo: true,
 });
 
+function montarGaleriaArma(item: Pick<Partial<Arma>, "imagem" | "imagens">): string[] {
+  const seen = new Set<string>();
+  return [item.imagem, ...(Array.isArray(item.imagens) ? item.imagens : [])].filter((url): url is string => {
+    if (!url || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
 export default function QAArmamentosAdminPage() {
   const [items, setItems] = useState<Arma[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +84,7 @@ export default function QAArmamentosAdminPage() {
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
   const [showAllImagesModal, setShowAllImagesModal] = useState(false);
-  const [imagemFullscreen, setImagemFullscreen] = useState<string | null>(null);
+  const [imagemFullscreen, setImagemFullscreen] = useState<{ galeria: string[]; idx: number; titulo: string } | null>(null);
   const [imagemConfirm, setImagemConfirm] = useState<{ url: string; arma: { id: string; marca: string; modelo: string } } | null>(null);
 
   async function loadRemoveBgUsage() {
@@ -104,7 +113,7 @@ export default function QAArmamentosAdminPage() {
       if (!norm) return true;
       return [it.marca, it.modelo, it.apelido, it.calibre].filter(Boolean).join(" ").toLowerCase().includes(norm);
     });
-  }, [items, q, tipoFilter, statusFilter]);
+  }, [items, q, tipoFilter, statusFilter, semImagemFilter]);
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -138,6 +147,9 @@ export default function QAArmamentosAdminPage() {
     setSaving(true);
     const payload: any = { ...editing };
     payload.search_tokens = `${payload.marca} ${payload.modelo} ${payload.apelido || ""} ${payload.calibre}`.toUpperCase();
+    const galeriaNormalizada = montarGaleriaArma(payload);
+    payload.imagem = galeriaNormalizada[0] || null;
+    payload.imagens = galeriaNormalizada.slice(1);
     // Persiste a URL do repositório: prioriza o input "scrapeUrl" (campo do topo),
     // caindo para editing.fonte_url quando não houver. Garante que trocar a URL
     // sem rodar o scraper também salve.
