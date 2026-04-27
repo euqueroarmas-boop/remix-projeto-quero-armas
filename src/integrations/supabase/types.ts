@@ -4513,14 +4513,18 @@ export type Database = {
           dados_extraidos_json: Json | null
           data_envio: string | null
           data_validacao: string | null
+          data_validade: string | null
           divergencias_json: Json | null
           etapa: string
+          formato_aceito: string[]
           id: string
+          link_emissao: string | null
           motivo_rejeicao: string | null
           nome_documento: string
           obrigatorio: boolean
           observacoes: string | null
           processo_id: string
+          regra_validacao: Json | null
           revisado_por: string | null
           status: string
           tipo_documento: string
@@ -4529,6 +4533,7 @@ export type Database = {
           validacao_ia_erro: string | null
           validacao_ia_modelo: string | null
           validacao_ia_status: string | null
+          validade_dias: number | null
         }
         Insert: {
           arquivo_storage_key?: string | null
@@ -4538,14 +4543,18 @@ export type Database = {
           dados_extraidos_json?: Json | null
           data_envio?: string | null
           data_validacao?: string | null
+          data_validade?: string | null
           divergencias_json?: Json | null
           etapa?: string
+          formato_aceito?: string[]
           id?: string
+          link_emissao?: string | null
           motivo_rejeicao?: string | null
           nome_documento: string
           obrigatorio?: boolean
           observacoes?: string | null
           processo_id: string
+          regra_validacao?: Json | null
           revisado_por?: string | null
           status?: string
           tipo_documento: string
@@ -4554,6 +4563,7 @@ export type Database = {
           validacao_ia_erro?: string | null
           validacao_ia_modelo?: string | null
           validacao_ia_status?: string | null
+          validade_dias?: number | null
         }
         Update: {
           arquivo_storage_key?: string | null
@@ -4563,14 +4573,18 @@ export type Database = {
           dados_extraidos_json?: Json | null
           data_envio?: string | null
           data_validacao?: string | null
+          data_validade?: string | null
           divergencias_json?: Json | null
           etapa?: string
+          formato_aceito?: string[]
           id?: string
+          link_emissao?: string | null
           motivo_rejeicao?: string | null
           nome_documento?: string
           obrigatorio?: boolean
           observacoes?: string | null
           processo_id?: string
+          regra_validacao?: Json | null
           revisado_por?: string | null
           status?: string
           tipo_documento?: string
@@ -4579,6 +4593,7 @@ export type Database = {
           validacao_ia_erro?: string | null
           validacao_ia_modelo?: string | null
           validacao_ia_status?: string | null
+          validade_dias?: number | null
         }
         Relationships: [
           {
