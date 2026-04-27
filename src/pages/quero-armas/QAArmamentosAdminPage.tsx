@@ -519,9 +519,51 @@ export default function QAArmamentosAdminPage() {
     }
   }
 
-  function selecionarImagemFabricante(src: string) {
-    setEditing((prev) => ({ ...(prev || {}), imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" }));
-    toast.success("Imagem definida como principal");
+  /** Adiciona uma foto à galeria da arma; se ainda não houver capa, define como capa. */
+  function adicionarImagemGaleria(src: string) {
+    setEditing((prev) => {
+      const base = prev || {};
+      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
+      const capa = (base.imagem || "").trim();
+      // Já está como capa ou já está na galeria → não duplica
+      if (capa === src || galeria.includes(src)) {
+        toast.info("Esta foto já está na galeria");
+        return base;
+      }
+      if (!capa) {
+        toast.success("Foto definida como capa");
+        return { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" } as any;
+      }
+      galeria.push(src);
+      toast.success(`Foto adicionada à galeria (${galeria.length + 1} no total)`);
+      return { ...base, imagens: galeria } as any;
+    });
+  }
+
+  /** Define uma foto da galeria como capa, mantendo a anterior na galeria. */
+  function definirComoCapa(src: string) {
+    setEditing((prev) => {
+      const base = prev || {};
+      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
+      const capaAtual = (base.imagem || "").trim();
+      const novaGaleria = galeria.filter((u) => u !== src);
+      if (capaAtual && capaAtual !== src) novaGaleria.unshift(capaAtual);
+      return { ...base, imagem: src, imagens: novaGaleria, imagem_status: "pronta" } as any;
+    });
+    toast.success("Foto definida como capa");
+  }
+
+  /** Remove uma foto (capa ou galeria). */
+  function removerImagem(src: string) {
+    setEditing((prev) => {
+      const base = prev || {};
+      const galeria = Array.isArray(base.imagens) ? base.imagens!.filter((u) => u !== src) : [];
+      let capa = base.imagem || null;
+      if (capa === src) {
+        capa = galeria.length > 0 ? galeria.shift()! : null;
+      }
+      return { ...base, imagem: capa, imagens: galeria } as any;
+    });
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
