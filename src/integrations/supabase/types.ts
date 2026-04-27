@@ -3362,6 +3362,95 @@ export type Database = {
           },
         ]
       }
+      qa_document_examples: {
+        Row: {
+          arquivo_url: string
+          ativo: boolean
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          exemplo_valido: boolean
+          id: string
+          observacoes: string | null
+          servico_id: number | null
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          exemplo_valido?: boolean
+          id?: string
+          observacoes?: string | null
+          servico_id?: number | null
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          exemplo_valido?: boolean
+          id?: string
+          observacoes?: string | null
+          servico_id?: number | null
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_document_examples_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_document_external_links: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome_botao: string
+          ordem: number
+          tipo_documento: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_botao: string
+          ordem?: number
+          tipo_documento: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_botao?: string
+          ordem?: number
+          tipo_documento?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       qa_document_jobs: {
         Row: {
           caso_id: string | null
@@ -4414,6 +4503,187 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      qa_processo_documentos: {
+        Row: {
+          arquivo_storage_key: string | null
+          arquivo_url: string | null
+          cliente_id: number
+          created_at: string
+          dados_extraidos_json: Json | null
+          data_envio: string | null
+          data_validacao: string | null
+          divergencias_json: Json | null
+          etapa: string
+          id: string
+          motivo_rejeicao: string | null
+          nome_documento: string
+          obrigatorio: boolean
+          observacoes: string | null
+          processo_id: string
+          revisado_por: string | null
+          status: string
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_storage_key?: string | null
+          arquivo_url?: string | null
+          cliente_id: number
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          data_envio?: string | null
+          data_validacao?: string | null
+          divergencias_json?: Json | null
+          etapa?: string
+          id?: string
+          motivo_rejeicao?: string | null
+          nome_documento: string
+          obrigatorio?: boolean
+          observacoes?: string | null
+          processo_id: string
+          revisado_por?: string | null
+          status?: string
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_storage_key?: string | null
+          arquivo_url?: string | null
+          cliente_id?: number
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          data_envio?: string | null
+          data_validacao?: string | null
+          divergencias_json?: Json | null
+          etapa?: string
+          id?: string
+          motivo_rejeicao?: string | null
+          nome_documento?: string
+          obrigatorio?: boolean
+          observacoes?: string | null
+          processo_id?: string
+          revisado_por?: string | null
+          status?: string
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_documentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_processo_eventos: {
+        Row: {
+          ator: string | null
+          created_at: string
+          dados_json: Json | null
+          descricao: string | null
+          documento_id: string | null
+          id: string
+          processo_id: string
+          tipo_evento: string
+          user_id: string | null
+        }
+        Insert: {
+          ator?: string | null
+          created_at?: string
+          dados_json?: Json | null
+          descricao?: string | null
+          documento_id?: string | null
+          id?: string
+          processo_id: string
+          tipo_evento: string
+          user_id?: string | null
+        }
+        Update: {
+          ator?: string | null
+          created_at?: string
+          dados_json?: Json | null
+          descricao?: string | null
+          documento_id?: string | null
+          id?: string
+          processo_id?: string
+          tipo_evento?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_eventos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processo_documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processo_eventos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_processos: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          data_criacao: string
+          data_validacao: string | null
+          id: string
+          observacoes_admin: string | null
+          pagamento_id: string | null
+          pagamento_status: string
+          servico_id: number | null
+          servico_nome: string
+          status: string
+          updated_at: string
+          venda_id: number | null
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          data_criacao?: string
+          data_validacao?: string | null
+          id?: string
+          observacoes_admin?: string | null
+          pagamento_id?: string | null
+          pagamento_status?: string
+          servico_id?: number | null
+          servico_nome: string
+          status?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          data_criacao?: string
+          data_validacao?: string | null
+          id?: string
+          observacoes_admin?: string | null
+          pagamento_id?: string | null
+          pagamento_status?: string
+          servico_id?: number | null
+          servico_nome?: string
+          status?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_referencias_preferenciais: {
         Row: {
