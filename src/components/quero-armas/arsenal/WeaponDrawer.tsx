@@ -158,8 +158,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 style={{ background: "transparent" }}
                 className={
                   ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind)
-                    ? "h-auto max-h-full w-full max-w-[98%] object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
-                    : "h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                    ? "h-auto max-h-full w-full max-w-[98%] object-contain mix-blend-screen drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                    : "h-full w-full max-w-full object-contain mix-blend-screen px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
                 }
               />
             </div>
@@ -275,7 +275,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     <img
                       src={v.imagem || renderForKind(v.tipo as any)}
                       alt={v.modelo}
-                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain opacity-95"
+                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain mix-blend-screen opacity-95"
                     />
                   </div>
                 </div>
