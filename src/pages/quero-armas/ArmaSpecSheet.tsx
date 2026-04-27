@@ -28,12 +28,17 @@ interface Props {
   onAI: () => void;
   onScrape: () => void;
   onGerarImagem: () => void;
+  imagensFabricante?: string[];
+  carregandoImagens?: boolean;
+  onSelecionarImagem?: (src: string) => void;
+  onAbrirGaleria?: () => void;
 }
 
 export function ArmaSpecSheet({
   editing, setF, scrapeUrl, setScrapeUrl,
   aiBusy, scrapeBusy, saving, imgBusy,
   onClose, onSave, onAI, onScrape, onGerarImagem,
+  imagensFabricante = [], carregandoImagens = false, onSelecionarImagem, onAbrirGaleria,
 }: Props) {
   const id = editing.id ? String(editing.id).slice(0, 8).toUpperCase() : "NOVO";
   return (
@@ -172,6 +177,60 @@ export function ArmaSpecSheet({
                   {scrapeBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3" />}
                   Buscar especificações
                 </button>
+
+                {/* IMAGENS ENCONTRADAS NO FABRICANTE */}
+                {(carregandoImagens || imagensFabricante.length > 0 || (scrapeUrl && !scrapeBusy && !carregandoImagens && imagensFabricante.length === 0)) && (
+                  <div className="mt-3 pt-3 border-t border-zinc-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-zinc-500">
+                        IMAGENS ENCONTRADAS {imagensFabricante.length > 0 && `· ${imagensFabricante.length}`}
+                      </span>
+                      {imagensFabricante.length > 4 && onAbrirGaleria && (
+                        <button onClick={onAbrirGaleria} className="text-[10px] font-mono font-bold text-amber-700 hover:text-amber-900 uppercase tracking-wider">
+                          Ver todas →
+                        </button>
+                      )}
+                    </div>
+
+                    {carregandoImagens ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {[0,1,2,3].map((i) => (
+                          <div key={i} className="aspect-square bg-zinc-200 animate-pulse border border-zinc-300" />
+                        ))}
+                      </div>
+                    ) : imagensFabricante.length === 0 ? (
+                      <div className="text-[10px] font-mono text-zinc-500 py-3 text-center border border-dashed border-zinc-300 bg-zinc-50">
+                        Nenhuma imagem encontrada nesta página
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        {imagensFabricante.slice(0, 6).map((src, idx) => {
+                          const selecionada = editing?.imagem === src;
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => onSelecionarImagem?.(src)}
+                              type="button"
+                              className={`group relative bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-200 hover:border-amber-500"}`}
+                              title={`Usar como imagem principal`}
+                            >
+                              <img
+                                src={src}
+                                alt={`Opção ${idx + 1}`}
+                                className="w-full h-20 object-contain p-1"
+                                loading="lazy"
+                                onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")}
+                              />
+                              {selecionada && (
+                                <div className="absolute top-0.5 right-0.5 bg-amber-500 text-white text-[8px] font-mono font-bold uppercase px-1 py-0.5">✓</div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
