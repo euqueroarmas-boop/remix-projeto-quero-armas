@@ -3104,7 +3104,12 @@ function Field({ label, value, icon: Icon, copyable }: { label: string; value?: 
         <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">{label}</span>
         {copyable && value && <span className="text-slate-300 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">📋</span>}
       </div>
-      <span className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5">{value || "—"}</span>
+        <span
+          className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5 break-words"
+          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+        >
+          {value || "—"}
+        </span>
     </div>
   );
 }
