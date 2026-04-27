@@ -2359,6 +2359,47 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_armamentos_validacao_logs: {
+        Row: {
+          confianca: number
+          created_at: string
+          id: string
+          imagem_url: string
+          item_id: string
+          motivo: string | null
+          validacao_resultado: string
+          validado_em: string
+        }
+        Insert: {
+          confianca: number
+          created_at?: string
+          id?: string
+          imagem_url: string
+          item_id: string
+          motivo?: string | null
+          validacao_resultado: string
+          validado_em?: string
+        }
+        Update: {
+          confianca?: number
+          created_at?: string
+          id?: string
+          imagem_url?: string
+          item_id?: string
+          motivo?: string | null
+          validacao_resultado?: string
+          validado_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_armamentos_validacao_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "qa_armamentos_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_cadastro_cr: {
         Row: {
           check_exame_tiro: boolean | null
