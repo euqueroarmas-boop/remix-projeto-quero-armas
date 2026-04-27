@@ -32,13 +32,14 @@ interface Props {
   carregandoImagens?: boolean;
   onSelecionarImagem?: (src: string) => void;
   onAbrirGaleria?: () => void;
+  onBuscarGoogle?: () => void;
 }
 
 export function ArmaSpecSheet({
   editing, setF, scrapeUrl, setScrapeUrl,
   aiBusy, scrapeBusy, saving, imgBusy,
   onClose, onSave, onAI, onScrape, onGerarImagem,
-  imagensFabricante = [], carregandoImagens = false, onSelecionarImagem, onAbrirGaleria,
+  imagensFabricante = [], carregandoImagens = false, onSelecionarImagem, onAbrirGaleria, onBuscarGoogle,
 }: Props) {
   const id = editing.id ? String(editing.id).slice(0, 8).toUpperCase() : "NOVO";
   return (
@@ -177,6 +178,17 @@ export function ArmaSpecSheet({
                   {scrapeBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Globe className="h-3 w-3" />}
                   Buscar especificações
                 </button>
+
+                {onBuscarGoogle && (
+                  <button
+                    type="button"
+                    onClick={onBuscarGoogle}
+                    className="text-[11px] font-mono font-bold text-blue-700 hover:text-blue-900 inline-flex items-center gap-2 self-start uppercase tracking-wider"
+                    title="Abrir Google Imagens em nova aba"
+                  >
+                    🔍 Buscar no Google Imagens →
+                  </button>
+                )}
 
                 {/* IMAGENS ENCONTRADAS NO FABRICANTE */}
                 {(carregandoImagens || imagensFabricante.length > 0 || (scrapeUrl && !scrapeBusy && !carregandoImagens && imagensFabricante.length === 0)) && (
