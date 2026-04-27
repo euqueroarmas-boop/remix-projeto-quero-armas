@@ -100,7 +100,7 @@ export default function QAProcessosAuditoriaPage() {
     const ativos = total - concluidos - cancelados;
 
     const docsTotal = documentos.length;
-    const docsAprov = documentos.filter(d => d.status === "aprovado").length;
+    const docsAprov = documentos.filter(d => d.status === "aprovado" || d.status === "dispensado_grupo").length;
     const docsDiverg = documentos.filter(d => d.status === "divergente" || d.status === "invalido").length;
     const docsRevHumana = documentos.filter(d => d.status === "revisao_humana").length;
 
@@ -212,7 +212,7 @@ export default function QAProcessosAuditoriaPage() {
               const st = getStatusProcesso(p.status);
               const cli = clientes[p.cliente_id];
               const docsP = documentos.filter(d => d.processo_id === p.id);
-              const aprov = docsP.filter(d => d.status === "aprovado").length;
+              const aprov = docsP.filter(d => d.status === "aprovado" || d.status === "dispensado_grupo").length;
               return (
                 <button key={p.id} onClick={() => setSelected(p.id)}
                   className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3 ${
