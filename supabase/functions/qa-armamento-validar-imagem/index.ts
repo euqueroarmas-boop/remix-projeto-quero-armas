@@ -1,6 +1,4 @@
-// Edge Function: valida via IA (Gemini Vision) se uma imagem corresponde
-// EXATAMENTE ao modelo de arma cadastrado. Não confia em modelos similares
-// da mesma marca (ex.: Glock 17 não vale como Glock 26).
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,27 +8,51 @@ const corsHeaders = {
 const LOVABLE_AI = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 type ValidacaoResp = { valida: boolean; motivo: string; confianca: number };
+type Decisao = "correta" | "incorreta";
+
+function decisaoFinal(resultado: ValidacaoResp): Decisao {
+  if (resultado.valida) return "correta";
+  if (!resultado.valida && resultado.confianca >= 80) return "incorreta";
+  return "correta";
+}
 
 async function validar(
   imagemUrl: string,
-  arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null },
+  arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null; origem?: string | null },
 ): Promise<ValidacaoResp> {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
     return { valida: true, motivo: "LOVABLE_API_KEY ausente — validação ignorada", confianca: 0 };
   }
 
-  const tipoTxt = arma.tipo ? ` (${arma.tipo})` : "";
-  const calTxt = arma.calibre ? `, calibre ${arma.calibre}` : "";
-  const prompt = `Esta imagem mostra EXATAMENTE uma "${arma.marca}" "${arma.modelo}"${tipoTxt}${calTxt}?
+  const prompt = `Você é um especialista em armas de fogo.
 
-Verifique especialmente:
-1. O texto/gravação no ferrolho, receptor ou cano combina com o modelo "${arma.modelo}"?
-2. A silhueta, formato e proporções correspondem à "${arma.marca} ${arma.modelo}" (e não a outro modelo da mesma marca)?
-3. NÃO se trata de um modelo diferente, mesmo que da mesma fabricante (ex.: Glock 17 ≠ Glock 26 ≠ Glock 19)?
-4. NÃO é caminhão, carro, brinquedo, logo, banner, ícone, desenho ou outro objeto fora de contexto?
+Analise se esta imagem corresponde ao modelo cadastrado.
 
-Se houver QUALQUER dúvida razoável, responda valida=false.
+ARMA CADASTRADA:
+- Marca: ${arma.marca}
+- Modelo: ${arma.modelo}
+- Tipo: ${arma.tipo || "não informado"}
+- Calibre: ${arma.calibre || "não informado"}
+- Origem: ${arma.origem || "não informada"}
+
+REGRAS DE VALIDAÇÃO (aplique com bom senso):
+
+✅ CONSIDERE CORRETA se:
+- A silhueta/formato geral bate com o tipo (pistola, espingarda, fuzil, etc.)
+- A marca visual bate com a marca cadastrada
+- O modelo é compatível considerando variações de nomenclatura (ex: "G26" = "Glock 26" = "26")
+- Pequenas diferenças de geração ou acabamento são aceitáveis (ex: Gen4 vs Gen5 do mesmo modelo)
+
+❌ CONSIDERE INCORRETA apenas se:
+- É claramente um tipo diferente de arma (ex: espingarda no lugar de pistola)
+- É de uma marca completamente diferente
+- É um modelo claramente diferente da mesma marca (ex: Glock 17 no lugar de Glock 26 — tamanhos muito distintos)
+- É um objeto que não é uma arma de fogo
+
+ATENÇÃO: Seja generoso na validação.
+Dúvida razoável = considere CORRETA.
+Só rejeite se tiver CERTEZA que está errada.
 
 Responda SOMENTE através da função 'responder_validacao'.`;
 
