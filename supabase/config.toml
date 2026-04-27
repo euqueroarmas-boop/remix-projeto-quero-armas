@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.qa-armamento-scrape]
 verify_jwt = false
+
+[functions.qa-armamento-validar-imagem]
+verify_jwt = false
