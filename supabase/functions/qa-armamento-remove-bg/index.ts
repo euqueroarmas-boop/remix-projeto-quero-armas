@@ -82,6 +82,13 @@ async function processOne(
     .eq("id", id);
   if (updErr) return { id, ok: false, error: `update:${updErr.message}` };
 
+  // Registra uso bem-sucedido para contagem mensal
+  try {
+    await admin.from("qa_remove_bg_usage").insert({ armamento_id: id });
+  } catch (_) {
+    // não falha o processo por causa do log
+  }
+
   return { id, ok: true, imagem: finalUrl };
 }
 
