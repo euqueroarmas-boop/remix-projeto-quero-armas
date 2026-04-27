@@ -317,8 +317,20 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
             <div className="space-y-3">
+              <CondicaoProfissionalCard
+                condicao={processo?.condicao_profissional ?? null}
+                indefinida={
+                  !processo?.condicao_profissional ||
+                  processo.condicao_profissional === "indefinido" ||
+                  docs.some((d) => d.tipo_documento === "renda_definir_condicao")
+                }
+                saving={savingCond}
+                onSelect={setCondicao}
+              />
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
-              {docs.map((doc) => {
+              {docs
+                .filter((doc) => doc.tipo_documento !== "renda_definir_condicao")
+                .map((doc) => {
                 const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                 const labelBotao: string | null = (doc.regra_validacao && typeof doc.regra_validacao === "object" && typeof doc.regra_validacao.label_botao === "string")
                   ? doc.regra_validacao.label_botao : null;
