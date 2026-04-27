@@ -1016,7 +1016,7 @@ function WeaponCard({
         </div>
 
         {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
-        {it.imagem && it.imagem_aprovada === false && (
+        {fotoAtual && fotoIdx === 0 && it.imagem_aprovada === false && (
           <div className="absolute bottom-2 left-2 right-2 z-20 flex flex-wrap items-center gap-1">
             <div
               className="px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
