@@ -581,7 +581,7 @@ export default function QAArmamentosAdminPage() {
                   </Button>
                 </div>
                 {editing.imagem ? (
-                  <div className="grid place-items-center rounded-md p-2 bg-zinc-100 border border-zinc-200">
+                  <div className="grid place-items-center rounded-md p-4 bg-white border border-zinc-200">
                     <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain" />
                   </div>
                 ) : (
