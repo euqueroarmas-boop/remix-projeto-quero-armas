@@ -602,6 +602,7 @@ Deno.serve(async (req) => {
       modelo: arma.modelo,
       tipo: arma.tipo,
       calibre: arma.calibre,
+      origem: arma.origem,
     }, 3);
 
     if (!escolhida) {
@@ -678,6 +679,16 @@ Deno.serve(async (req) => {
         imagem_validada_em: new Date().toISOString(),
       })
       .eq("id", id);
+
+    if (validacao) {
+      await sb.from("qa_armamentos_validacao_logs").insert({
+        item_id: id,
+        imagem_url: publicUrl,
+        validacao_resultado: decisaoFinal(validacao),
+        confianca: validacao.confianca,
+        motivo: validacao.motivo,
+      });
+    }
 
     return new Response(
       JSON.stringify({
