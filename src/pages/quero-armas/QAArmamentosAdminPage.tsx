@@ -985,6 +985,11 @@ function WeaponCard({
           <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-amber-700 hover:bg-amber-500/10" onClick={onGerarImagem} disabled={busy} title={it.imagem ? "Regerar imagem" : "Gerar imagem"}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />)}
           </Button>
+          {it.imagem && (
+            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-sky-700 hover:bg-sky-500/10" onClick={onLimparFundo} disabled={limpandoFundo} title="Limpar fundo da imagem (remove.bg) — também processa duplicatas com mesma marca/modelo">
+            {limpandoFundo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eraser className="h-3.5 w-3.5" />}
+            </Button>
+          )}
           {!verificado && (
             <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-500/10" onClick={onVerificar} title="Marcar verificado">
               <CheckCircle2 className="h-3.5 w-3.5" />
