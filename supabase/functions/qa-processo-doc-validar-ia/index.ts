@@ -308,6 +308,22 @@ Deno.serve(async (req) => {
       ator: "ia",
     });
 
+    // Notifica o cliente (não bloqueia o fluxo em caso de falha SMTP)
+    const eventoEmail =
+      novoStatus === "aprovado" ? "documento_aprovado" :
+      novoStatus === "divergente" ? "documento_divergente" :
+      novoStatus === "invalido" ? "documento_invalido" :
+      novoStatus === "revisao_humana" ? "revisao_humana" : null;
+    if (eventoEmail) {
+      try {
+        await supabase.functions.invoke("qa-processo-notificar", {
+          body: { processo_id, documento_id, evento: eventoEmail, motivo: motivoRejeicao ?? undefined },
+        });
+      } catch (e) {
+        console.warn("[validar-ia] notificação falhou:", e);
+      }
+    }
+
     return json({
       success: true,
       status: novoStatus,
