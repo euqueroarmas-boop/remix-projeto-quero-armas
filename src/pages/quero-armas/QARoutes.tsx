@@ -23,6 +23,7 @@ const QARelatoriosPage = lazyRetry(() => import("./QARelatoriosPage"), "QARelato
 const QAFinanceiroPage = lazyRetry(() => import("./QAFinanceiroPage"), "QAFinanceiroPage");
 const QARecursosAuditoriaPage = lazyRetry(() => import("./QARecursosAuditoriaPage"), "QARecursosAuditoriaPage");
 const QAAuditoriaPage = lazyRetry(() => import("./QAAuditoriaPage"), "QAAuditoriaPage");
+const QAProcessosAuditoriaPage = lazyRetry(() => import("./QAProcessosAuditoriaPage"), "QAProcessosAuditoriaPage");
 const QAArmamentosAdminPage = lazyRetry(() => import("./QAArmamentosAdminPage"), "QAArmamentosAdminPage");
 const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcessosPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
@@ -86,6 +87,7 @@ export default function QARoutes() {
           <Route path="relatorios" element={<QARelatoriosPage />} />
           <Route path="auditoria" element={<QAAuditoriaPage />} />
           <Route path="auditoria/recursos-administrativos" element={<QARecursosAuditoriaPage />} />
+          <Route path="auditoria/central-documentos" element={<QAProcessosAuditoriaPage />} />
           {/* Legacy redirect: rota antiga */}
           <Route path="recursos-auditoria" element={<Navigate to="/auditoria/recursos-administrativos" replace />} />
         </Route>
