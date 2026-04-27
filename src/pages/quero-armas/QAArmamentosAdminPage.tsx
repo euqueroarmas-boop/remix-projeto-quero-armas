@@ -737,7 +737,7 @@ export default function QAArmamentosAdminPage() {
               onGerarImagem={() => gerarImagem(it)}
               onVerificar={() => marcarVerificado(it)}
               onRemove={() => remove(it)}
-              onFullscreen={(src) => setImagemFullscreen(src)}
+              onFullscreen={(galeria, idx, titulo) => setImagemFullscreen({ galeria, idx, titulo })}
               onRevalidarImagem={() => revalidarImagem(it)}
               revalidando={revalBusyId === it.id}
               onLimparFundo={() => limparFundoArma(it)}
@@ -841,9 +841,16 @@ export default function QAArmamentosAdminPage() {
           >
             ✕
           </button>
+          {imagemFullscreen.galeria.length > 1 && (
+            <>
+              <button type="button" className="absolute left-4 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setImagemFullscreen((p) => p ? { ...p, idx: (p.idx - 1 + p.galeria.length) % p.galeria.length } : p); }} aria-label="Foto anterior"><ChevronLeft className="h-6 w-6" /></button>
+              <button type="button" className="absolute right-4 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setImagemFullscreen((p) => p ? { ...p, idx: (p.idx + 1) % p.galeria.length } : p); }} aria-label="Próxima foto"><ChevronRight className="h-6 w-6" /></button>
+              <div className="absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-xs font-mono tracking-wider text-white/80">{imagemFullscreen.idx + 1}/{imagemFullscreen.galeria.length}</div>
+            </>
+          )}
           <img
-            src={imagemFullscreen}
-            alt="Visualização"
+            src={imagemFullscreen.galeria[imagemFullscreen.idx]}
+            alt={imagemFullscreen.titulo || "Visualização"}
             className="max-w-[92vw] max-h-[85vh] object-contain"
             onClick={(e) => e.stopPropagation()}
           />
@@ -925,7 +932,7 @@ function WeaponCard({
   onGerarImagem: () => void;
   onVerificar: () => void;
   onRemove: () => void;
-  onFullscreen: (src: string) => void;
+  onFullscreen: (galeria: string[], idx: number, titulo: string) => void;
   onRevalidarImagem: () => void;
   revalidando: boolean;
   onLimparFundo: () => void;
@@ -971,7 +978,7 @@ function WeaponCard({
             <button
               type="button"
               className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
               aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
             >
               <img
@@ -984,7 +991,7 @@ function WeaponCard({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
               className="absolute top-2 right-2 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
               title="Ampliar imagem"
               aria-label="Ampliar imagem"
