@@ -27,7 +27,7 @@ function pathFromPublicUrl(url: string): string | null {
 }
 
 async function processOne(
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   id: string,
 ): Promise<{ id: string; ok: boolean; error?: string; imagem?: string }> {
   const { data: row, error } = await admin
@@ -39,7 +39,7 @@ async function processOne(
   if (!row?.imagem) return { id, ok: false, error: "sem_imagem" };
 
   // baixa a imagem original
-  const imgRes = await fetch(row.imagem);
+  const imgRes = await fetch(row.imagem as string);
   if (!imgRes.ok) return { id, ok: false, error: `download_${imgRes.status}` };
   const imgBlob = await imgRes.blob();
 
@@ -62,7 +62,7 @@ async function processOne(
   const cleanBuf = new Uint8Array(await rb.arrayBuffer());
 
   // grava no mesmo path (ou novo) no bucket público
-  const existingPath = pathFromPublicUrl(row.imagem);
+  const existingPath = pathFromPublicUrl(row.imagem as string);
   const targetPath = existingPath || `auto/${id}.png`;
   const { error: upErr } = await admin.storage
     .from(BUCKET)
