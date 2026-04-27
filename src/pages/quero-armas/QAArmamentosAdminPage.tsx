@@ -633,14 +633,24 @@ function WeaponCard({
         style={{ aspectRatio: "16/10" }}
       >
         {it.imagem ? (
-          <img
-            src={it.imagem}
-            alt={`${it.marca} ${it.modelo}`}
-            loading="lazy"
-            onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
-            style={{ objectPosition: "center center" }}
-            className="absolute inset-0 w-full h-full object-contain p-4 cursor-pointer drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
-          />
+          <>
+            <img
+              src={it.imagem}
+              alt={`${it.marca} ${it.modelo}`}
+              loading="lazy"
+              style={{ objectPosition: "center center" }}
+              className="absolute inset-0 w-full h-full object-contain p-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none pointer-events-none"
+            />
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              className="absolute top-2 right-2 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
+              title="Ampliar imagem"
+              aria-label="Ampliar imagem"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
+          </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-300">
             <Target className="h-10 w-10" />
