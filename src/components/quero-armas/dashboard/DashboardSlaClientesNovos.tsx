@@ -95,9 +95,14 @@ export default function DashboardSlaClientesNovos() {
               style={{ borderColor: "#e2e8f0", background: "#fafbfc", overflowWrap: "anywhere", wordBreak: "break-word" }}
             >
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>
+                <Link
+                  to={`/clientes?cadastro_publico=${row.id}`}
+                  className="text-sm font-semibold truncate block hover:underline"
+                  style={{ color: "hsl(220 20% 18%)" }}
+                  title="Abrir cadastro"
+                >
                   {(row.nome_completo || "").toUpperCase()}
-                </p>
+                </Link>
                 <p className="text-xs text-slate-500 truncate">
                   {[row.end1_cidade, row.end1_estado].filter(Boolean).join("/")} · {row.servico_interesse || "—"}
                 </p>
