@@ -136,21 +136,10 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
           </div>
 
           {/* Hero da arma com glow */}
-          <div className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl border border-white/10 bg-slate-950/75">
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url(${backgroundForKind(info.kind)})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(180deg, rgba(2,4,8,0.2), rgba(2,4,8,0.78)), radial-gradient(circle at 50% 60%, ${accent}36, transparent 66%)`,
-              }}
-            />
+          <div
+            className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl"
+            style={{ background: "transparent", backgroundImage: "none" }}
+          >
             <div className="relative flex h-full items-center justify-center px-2 py-2">
               <img
                 src={catalog?.imagem || renderForKind(info.kind)}
@@ -158,16 +147,11 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 style={{ background: "transparent" }}
                 className={
                   ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind)
-                    ? "h-auto max-h-full w-full max-w-[98%] object-contain mix-blend-screen drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
-                    : "h-full w-full max-w-full object-contain mix-blend-screen px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                    ? "h-auto max-h-full w-full max-w-[98%] object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                    : "h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
                 }
               />
             </div>
-            {/* corner ticks */}
-            <div className="pointer-events-none absolute left-2 top-2 h-3 w-6 border-l border-t border-white/30" />
-            <div className="pointer-events-none absolute right-2 top-2 h-3 w-6 border-r border-t border-white/30" />
-            <div className="pointer-events-none absolute bottom-2 left-2 h-3 w-6 border-b border-l border-white/30" />
-            <div className="pointer-events-none absolute bottom-2 right-2 h-3 w-6 border-b border-r border-white/30" />
           </div>
 
           {/* Validade pill */}
@@ -271,11 +255,11 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     {v.modelo}
                   </div>
                   <div className="mt-0.5 text-[9px] font-mono text-cyan-300/80">{v.calibre}</div>
-                  <div className="mt-1 h-20 overflow-hidden rounded-md bg-slate-950 ring-1 ring-white/5">
+                  <div className="mt-1 h-20 overflow-hidden rounded-md" style={{ background: "transparent", backgroundImage: "none" }}>
                     <img
                       src={v.imagem || renderForKind(v.tipo as any)}
                       alt={v.modelo}
-                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain mix-blend-screen opacity-95"
+                      className="h-full w-[112%] max-w-none -translate-x-[6%] object-contain opacity-95"
                     />
                   </div>
                 </div>
