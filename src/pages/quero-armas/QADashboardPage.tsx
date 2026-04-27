@@ -473,21 +473,23 @@ export default function QADashboardPage() {
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")}
                   </span>
-                  {c.status === "pendente" && (
+                  {(c.status === "pendente" || c.status === "aprovado") && (
                     <div className="flex items-center gap-1 mt-1">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "aprovado" }).eq("id", c.id);
-                          if (error) { toast.error("Erro ao aprovar: " + error.message); return; }
-                          setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "aprovado" } : x));
-                          toast.success(`${c.nome_completo} aprovado`);
-                        }}
-                        className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition"
-                        title="Aprovar"
-                      >
-                        Aprovar
-                      </button>
+                      {c.status === "pendente" && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "aprovado" }).eq("id", c.id);
+                            if (error) { toast.error("Erro ao aprovar: " + error.message); return; }
+                            setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "aprovado" } : x));
+                            toast.success(`${c.nome_completo} aprovado`);
+                          }}
+                          className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500 text-white hover:bg-emerald-600 transition"
+                          title="Aprovar"
+                        >
+                          Aprovar
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={async () => {
