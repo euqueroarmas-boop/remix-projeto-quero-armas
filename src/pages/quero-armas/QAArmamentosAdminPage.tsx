@@ -566,10 +566,50 @@ export default function QAArmamentosAdminPage() {
   /** Remove uma foto (capa ou galeria). */
   function removerImagem(src: string) {
     const base = editing || {};
+    const total = montarGaleriaArma(base).length;
+    const msg = total <= 1
+      ? "Remover a única foto desta arma? Ela ficará sem imagem."
+      : "Remover esta foto da arma?";
+    if (!confirm(msg)) return;
     const restante = montarGaleriaArma(base).filter((u) => u !== src);
     const next = { ...base, imagem: restante[0] || null, imagens: restante.slice(1) } as Partial<Arma>;
     setEditing(next);
     void persistirGaleriaEdicao(next);
+  }
+
+  /** Remove uma foto específica de qualquer arma do catálogo (usado pelo card). */
+  async function removerFotoDeArma(arma: Arma, src: string) {
+    const galeria = montarGaleriaArma(arma);
+    const total = galeria.length;
+    const msg = total <= 1
+      ? `Remover a única foto de ${arma.marca} ${arma.modelo}? A arma ficará sem imagem.`
+      : `Remover esta foto de ${arma.marca} ${arma.modelo}?`;
+    if (!confirm(msg)) return;
+    const restante = galeria.filter((u) => u !== src);
+    const novaCapa = restante[0] || null;
+    const novasExtras = restante.slice(1);
+    const { error } = await supabase
+      .from("qa_armamentos_catalogo" as any)
+      .update({ imagem: novaCapa, imagens: novasExtras, imagem_status: novaCapa ? "pronta" : null })
+      .eq("id", arma.id);
+    if (error) { toast.error(`Falha ao remover foto: ${error.message}`); return; }
+    setItems((prev) => prev.map((p) => p.id === arma.id ? { ...p, imagem: novaCapa, imagens: novasExtras, imagem_status: novaCapa ? "pronta" : null } : p));
+    // Mantém o estado da edição em sincronia, caso a sheet esteja aberta na mesma arma
+    setEditing((p) => p && p.id === arma.id ? { ...p, imagem: novaCapa, imagens: novasExtras, imagem_status: novaCapa ? "pronta" : null } : p);
+    toast.success(novaCapa ? "Foto removida" : "Última foto removida — arma sem imagem");
+  }
+
+  /** Remove todas as fotos da arma sendo editada. */
+  function removerTodasFotos() {
+    const base = editing || {};
+    if (!base.id) return;
+    const total = montarGaleriaArma(base).length;
+    if (total === 0) { toast.info("Esta arma já está sem fotos"); return; }
+    if (!confirm(`Remover TODAS as ${total} foto(s) desta arma? Esta ação não pode ser desfeita.`)) return;
+    const next = { ...base, imagem: null, imagens: [] } as Partial<Arma>;
+    setEditing(next);
+    void persistirGaleriaEdicao(next);
+    toast.success("Todas as fotos foram removidas");
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
