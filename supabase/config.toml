@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.qa-armamento-buscar-foto-real]
 verify_jwt = false
 
+[functions.qa-armamento-buscar-imagens]
+verify_jwt = false
+
 [functions.qa-armamento-remove-bg]
 verify_jwt = false
 
