@@ -531,51 +531,45 @@ export default function QAArmamentosAdminPage() {
     }
   }
 
+  async function persistirGaleriaEdicao(next: Partial<Arma>) {
+    if (!next.id) return;
+    const galeria = montarGaleriaArma(next);
+    const { error } = await supabase.from("qa_armamentos_catalogo" as any)
+      .update({ imagem: galeria[0] || null, imagens: galeria.slice(1), imagem_status: galeria[0] ? "pronta" : null })
+      .eq("id", next.id);
+    if (error) { toast.error("Não salvei o álbum: " + error.message); return; }
+    setItems((prev) => prev.map((item) => item.id === next.id ? { ...item, imagem: galeria[0] || null, imagens: galeria.slice(1), imagem_status: galeria[0] ? "pronta" : null } : item));
+  }
+
   /** Adiciona uma foto à galeria da arma; se ainda não houver capa, define como capa. */
   function adicionarImagemGaleria(src: string) {
-    setEditing((prev) => {
-      const base = prev || {};
-      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
-      const capa = (base.imagem || "").trim();
-      // Já está como capa ou já está na galeria → não duplica
-      if (capa === src || galeria.includes(src)) {
-        toast.info("Esta foto já está na galeria");
-        return base;
-      }
-      if (!capa) {
-        toast.success("Foto definida como capa");
-        return { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" } as any;
-      }
-      galeria.push(src);
-      toast.success(`Foto adicionada à galeria (${galeria.length + 1} no total)`);
-      return { ...base, imagens: galeria } as any;
-    });
+    const base = editing || {};
+    const galeria = montarGaleriaArma(base);
+    if (galeria.includes(src)) { toast.info("Esta foto já está na galeria"); return; }
+    const next = (!base.imagem
+      ? { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" }
+      : { ...base, imagens: [...galeria.slice(1), src] }) as Partial<Arma>;
+    setEditing(next);
+    toast.success(!base.imagem ? "Foto definida como capa" : `Foto adicionada ao álbum (${montarGaleriaArma(next).length} no total)`);
+    void persistirGaleriaEdicao(next);
   }
 
   /** Define uma foto da galeria como capa, mantendo a anterior na galeria. */
   function definirComoCapa(src: string) {
-    setEditing((prev) => {
-      const base = prev || {};
-      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
-      const capaAtual = (base.imagem || "").trim();
-      const novaGaleria = galeria.filter((u) => u !== src);
-      if (capaAtual && capaAtual !== src) novaGaleria.unshift(capaAtual);
-      return { ...base, imagem: src, imagens: novaGaleria, imagem_status: "pronta" } as any;
-    });
+    const base = editing || {};
+    const next = { ...base, imagem: src, imagens: montarGaleriaArma(base).filter((u) => u !== src), imagem_status: "pronta" } as Partial<Arma>;
+    setEditing(next);
     toast.success("Foto definida como capa");
+    void persistirGaleriaEdicao(next);
   }
 
   /** Remove uma foto (capa ou galeria). */
   function removerImagem(src: string) {
-    setEditing((prev) => {
-      const base = prev || {};
-      const galeria = Array.isArray(base.imagens) ? base.imagens!.filter((u) => u !== src) : [];
-      let capa = base.imagem || null;
-      if (capa === src) {
-        capa = galeria.length > 0 ? galeria.shift()! : null;
-      }
-      return { ...base, imagem: capa, imagens: galeria } as any;
-    });
+    const base = editing || {};
+    const restante = montarGaleriaArma(base).filter((u) => u !== src);
+    const next = { ...base, imagem: restante[0] || null, imagens: restante.slice(1) } as Partial<Arma>;
+    setEditing(next);
+    void persistirGaleriaEdicao(next);
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
