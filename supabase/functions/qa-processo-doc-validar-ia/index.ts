@@ -30,6 +30,7 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   cpf: "Comprovante de CPF. Extraia: nome_completo, cpf (apenas dígitos).",
   comprovante_residencia: "Conta de luz/água/telefone/internet. Extraia: nome_titular, endereco_completo, cep, cidade, uf, data_emissao (YYYY-MM-DD).",
   comprovante_renda: "Holerite/decore/IR. Extraia: nome_titular, ocupacao, renda_mensal_aproximada, periodo_referencia, data_emissao (YYYY-MM-DD).",
+  renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
   certidao_civel: "Certidão Cível Federal. Extraia: nome_titular, cpf, resultado (NADA_CONSTA ou CONSTA), data_emissao (YYYY-MM-DD).",
   certidao_criminal_federal: "Criminal Federal. Extraia: nome_titular, cpf, resultado, data_emissao.",
   certidao_criminal_estadual: "Criminal Estadual. Extraia: nome_titular, cpf, uf, resultado, data_emissao.",
