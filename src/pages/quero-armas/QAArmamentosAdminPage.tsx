@@ -10,7 +10,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
-import { ImageOff, X } from "lucide-react";
+import { ImageOff, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/quero-armas/LoadStates";
 import { ArmaSpecSheet } from "./ArmaSpecSheet";
