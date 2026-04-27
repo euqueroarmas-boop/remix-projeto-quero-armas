@@ -120,6 +120,10 @@ Responda SOMENTE através da função 'responder_validacao'.`;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const body = await req.json().catch(() => ({}));
     const imagemUrl = body?.imagemUrl as string | undefined;
     const itemId = body?.itemId as string | undefined;
