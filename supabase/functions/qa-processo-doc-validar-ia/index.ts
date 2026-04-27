@@ -345,6 +345,41 @@ Deno.serve(async (req) => {
       ator: "ia",
     });
 
+    // ===== GRUPO ALTERNATIVO: se aprovado, dispensa demais itens do mesmo grupo =====
+    if (novoStatus === "aprovado") {
+      const grupo = (regra?.grupo_alternativo as string | undefined) ?? null;
+      if (grupo) {
+        const { data: irmaos } = await supabase
+          .from("qa_processo_documentos")
+          .select("id, status, regra_validacao, nome_documento")
+          .eq("processo_id", processo_id);
+        const dispensar = (irmaos ?? []).filter((it: any) =>
+          it.id !== documento_id &&
+          it?.regra_validacao?.grupo_alternativo === grupo &&
+          !["aprovado", "dispensado_grupo"].includes(String(it.status))
+        );
+        if (dispensar.length > 0) {
+          const ids = dispensar.map((d: any) => d.id);
+          await supabase.from("qa_processo_documentos")
+            .update({
+              status: "dispensado_grupo",
+              motivo_rejeicao: null,
+              observacoes: `dispensado:grupo=${grupo}`,
+            })
+            .in("id", ids);
+          await supabase.from("qa_processo_eventos").insert(
+            dispensar.map((d: any) => ({
+              processo_id, documento_id: d.id,
+              tipo_evento: "grupo_alternativo_satisfeito",
+              descricao: `${d.nome_documento} dispensado: grupo "${grupo}" satisfeito por ${doc.nome_documento}.`,
+              dados_json: { grupo, satisfeito_por: documento_id },
+              ator: "sistema",
+            }))
+          );
+        }
+      }
+    }
+
     // Notifica granular (cobra SOMENTE este item)
     const eventoEmail =
       novoStatus === "aprovado" ? "documento_aprovado" :
