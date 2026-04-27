@@ -63,6 +63,15 @@ export default function QAArmamentosAdminPage() {
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [bgBusy, setBgBusy] = useState(false);
   const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
+  const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
+
+  async function loadRemoveBgUsage() {
+    const { data, error } = await supabase.rpc("qa_remove_bg_usage_mes" as any);
+    if (!error && Array.isArray(data) && data[0]) {
+      setRemoveBgUsage(Number((data[0] as any).total) || 0);
+    }
+  }
+  useEffect(() => { loadRemoveBgUsage(); }, []);
 
   async function load() {
     setLoading(true);
@@ -243,6 +252,7 @@ export default function QAArmamentosAdminPage() {
       const fail = results.filter((r) => !r.ok).length;
       toast.success(`remove.bg concluído: ${ok} ok${fail ? `, ${fail} falha(s)` : ""}.`);
       load();
+      loadRemoveBgUsage();
     } catch (e: any) {
       toast.error("Erro no remove.bg: " + (e?.message || e));
     } finally {
