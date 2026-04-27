@@ -88,18 +88,18 @@ Deno.serve(async (req) => {
       return json({ error: "Arquivo não encontrado no storage" }, 400);
     }
 
-    // Atualiza item do checklist
+    // Atualiza item do checklist (alinhado ao schema da Fase 1)
     const { data: docRow, error: upErr } = await supabase
       .from("qa_processo_documentos")
       .update({
-        storage_path,
-        mime_type: mime_type || null,
-        tamanho_bytes: tamanho_bytes || null,
-        nome_arquivo_original: nome_arquivo_original || null,
+        arquivo_storage_key: storage_path,
+        arquivo_url: null,
         status: "em_analise",
-        enviado_por: userId,
-        enviado_em: new Date().toISOString(),
+        data_envio: new Date().toISOString(),
         motivo_rejeicao: null,
+        observacoes: nome_arquivo_original
+          ? `arquivo:${nome_arquivo_original}|mime:${mime_type || ""}|bytes:${tamanho_bytes || ""}`
+          : null,
       })
       .eq("id", documento_id)
       .eq("processo_id", processo_id)
