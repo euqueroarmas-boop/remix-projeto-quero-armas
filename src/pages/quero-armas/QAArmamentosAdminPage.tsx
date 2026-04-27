@@ -776,6 +776,7 @@ export default function QAArmamentosAdminPage() {
               revalidando={revalBusyId === it.id}
               onLimparFundo={() => limparFundoArma(it)}
               limpandoFundo={bgBusyId === it.id}
+              onRemoverFoto={(src) => removerFotoDeArma(it, src)}
             />
           ))}
         </div>
@@ -817,6 +818,7 @@ export default function QAArmamentosAdminPage() {
             onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
             onDefinirCapa={definirComoCapa}
             onRemoverImagem={removerImagem}
+            onRemoverTodasFotos={removerTodasFotos}
           />}
         </SheetContent>
       </Sheet>
