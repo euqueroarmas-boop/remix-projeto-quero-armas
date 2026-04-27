@@ -191,7 +191,7 @@ export function ArmaSpecSheet({
                 <SpecCell label="Tipo">
                   <Select value={editing.tipo || "pistola"} onValueChange={(v) => setF("tipo", v)}>
                     <SelectTrigger className="bg-transparent border-0 h-auto p-0 text-sm font-mono font-bold uppercase text-zinc-900 focus:ring-0 shadow-none [&>svg]:hidden"><SelectValue /></SelectTrigger>
-                    <SelectContent>{TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    <SelectContent>{TIPOS.map(t => <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}</SelectContent>
                   </Select>
                 </SpecCell>
                 <SpecCell label="Calibre *">
