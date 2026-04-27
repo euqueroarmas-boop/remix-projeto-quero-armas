@@ -16,6 +16,7 @@ import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDo
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 
