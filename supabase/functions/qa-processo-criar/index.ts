@@ -114,27 +114,31 @@ Deno.serve(async (req) => {
       .insert({
         cliente_id,
         servico_id,
-        item_venda_id: item_venda_id ?? null,
         venda_id: venda_id ?? null,
-        servico_nome_snapshot: servico.nome,
+        servico_nome: servico.nome,
         status: "aguardando_pagamento",
-        observacoes: observacoes ?? null,
-        criado_por: guard.userId,
+        observacoes_admin: observacoes ?? null,
       })
       .select()
       .single();
 
     if (pErr) return json({ error: pErr.message }, 400);
 
-    // Gera checklist
+    // Gera checklist (etapa precisa estar em base|complementar|tecnico|final)
+    const ETAPA_MAP: Record<string, string> = {
+      cadastro: "base",
+      documentos: "complementar",
+      certidoes: "complementar",
+      exames: "tecnico",
+    };
     const checklist = CHECKLISTS[servico_id] || CHECKLIST_DEFAULT;
     const docsRows = checklist.map((d) => ({
       processo_id: processo.id,
+      cliente_id,
       tipo_documento: d.tipo_documento,
       nome_documento: d.nome_documento,
-      etapa: d.etapa,
+      etapa: ETAPA_MAP[d.etapa] || "base",
       obrigatorio: d.obrigatorio,
-      ordem: d.ordem,
       status: "pendente",
     }));
 
