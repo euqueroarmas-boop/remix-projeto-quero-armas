@@ -39,6 +39,7 @@ interface ProcessoFull {
   pagamento_status: string;
   data_criacao: string;
   observacoes_admin: string | null;
+  condicao_profissional?: string | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
@@ -72,7 +73,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
