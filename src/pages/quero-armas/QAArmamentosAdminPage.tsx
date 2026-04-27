@@ -69,6 +69,7 @@ export default function QAArmamentosAdminPage() {
   const [auditBusy, setAuditBusy] = useState(false);
   const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
   const [revalBusyId, setRevalBusyId] = useState<string | null>(null);
+  const [bgBusyId, setBgBusyId] = useState<string | null>(null);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
@@ -268,6 +269,42 @@ export default function QAArmamentosAdminPage() {
     setBulkProgress(null);
     toast.success(`Concluído: ${ok} foto(s) encontrada(s), ${fail} falha(s).`);
     load();
+  }
+
+  /** Limpa o fundo (remove.bg) de UMA arma específica + todas as armas com mesma marca/modelo (duplicadas). */
+  async function limparFundoArma(it: Arma) {
+    if (!it.imagem) { toast.info("Esta arma não possui imagem."); return; }
+    // pega a arma + qualquer duplicata (mesma marca+modelo) que também tenha imagem
+    const grupo = items.filter(
+      (x) => !!x.imagem && (x.id === it.id || (
+        (x.marca || "").trim().toLowerCase() === (it.marca || "").trim().toLowerCase() &&
+        (x.modelo || "").trim().toLowerCase() === (it.modelo || "").trim().toLowerCase()
+      ))
+    );
+    const ids = Array.from(new Set(grupo.map((x) => x.id)));
+    setBgBusyId(it.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-armamento-remove-bg", {
+        body: ids.length > 1 ? { ids } : { id: it.id },
+      });
+      if (error) throw error;
+      const d = data as any;
+      if (Array.isArray(d?.results)) {
+        const ok = d.results.filter((r: any) => r.ok).length;
+        const fail = d.results.filter((r: any) => !r.ok).length;
+        toast.success(`Fundo limpo: ${ok} imagem(ns)${fail ? `, ${fail} falha(s)` : ""}.`);
+      } else if (d?.ok) {
+        toast.success("Fundo limpo com sucesso.");
+      } else {
+        toast.error("Falha: " + (d?.error || "erro desconhecido"));
+      }
+      load();
+      loadRemoveBgUsage();
+    } catch (e: any) {
+      toast.error("Erro ao limpar fundo: " + (e?.message || e));
+    } finally {
+      setBgBusyId(null);
+    }
   }
 
   /** Reprocessa o fundo (alpha real) de todas as armas que tenham imagem. */
@@ -648,6 +685,8 @@ export default function QAArmamentosAdminPage() {
               onFullscreen={(src) => setImagemFullscreen(src)}
               onRevalidarImagem={() => revalidarImagem(it)}
               revalidando={revalBusyId === it.id}
+              onLimparFundo={() => limparFundoArma(it)}
+              limpandoFundo={bgBusyId === it.id}
             />
           ))}
         </div>
@@ -816,7 +855,7 @@ const TIPO_ICON: Record<string, string> = {
 };
 
 function WeaponCard({
-  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando,
+  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando, onLimparFundo, limpandoFundo,
 }: {
   it: Arma;
   busy: boolean;
@@ -827,6 +866,8 @@ function WeaponCard({
   onFullscreen: (src: string) => void;
   onRevalidarImagem: () => void;
   revalidando: boolean;
+  onLimparFundo: () => void;
+  limpandoFundo: boolean;
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
@@ -944,6 +985,11 @@ function WeaponCard({
           <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-amber-700 hover:bg-amber-500/10" onClick={onGerarImagem} disabled={busy} title={it.imagem ? "Regerar imagem" : "Gerar imagem"}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />)}
           </Button>
+          {it.imagem && (
+            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-sky-700 hover:bg-sky-500/10" onClick={onLimparFundo} disabled={limpandoFundo} title="Limpar fundo da imagem (remove.bg) — também processa duplicatas com mesma marca/modelo">
+            {limpandoFundo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eraser className="h-3.5 w-3.5" />}
+            </Button>
+          )}
           {!verificado && (
             <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-500/10" onClick={onVerificar} title="Marcar verificado">
               <CheckCircle2 className="h-3.5 w-3.5" />
