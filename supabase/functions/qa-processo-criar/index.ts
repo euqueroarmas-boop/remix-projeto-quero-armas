@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     // Busca dados do serviço para snapshot
     const { data: servico } = await supabase
       .from("qa_servicos")
-      .select("id, nome")
+      .select("id, nome_servico")
       .eq("id", servico_id)
       .maybeSingle();
 
@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
         cliente_id,
         servico_id,
         venda_id: venda_id ?? null,
-        servico_nome: servico.nome,
+        servico_nome: servico.nome_servico,
         status: "aguardando_pagamento",
         observacoes_admin: observacoes ?? null,
       })

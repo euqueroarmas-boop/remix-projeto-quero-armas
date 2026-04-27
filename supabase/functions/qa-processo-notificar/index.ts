@@ -159,6 +159,12 @@ Deno.serve(async (req) => {
     }
 
     const titulo = TITULOS[body.evento];
+    if (!titulo) {
+      return new Response(JSON.stringify({ error: `Evento inválido: ${body.evento}`, traceId }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const corpo = corpoEvento(body.evento, { servico: proc.servico_nome, documento: nomeDoc, motivo: body.motivo });
     const portalUrl = `${PORTAL_BASE}?processo=${proc.id}`;
     const html = buildHtml({ titulo, nomeCliente: cli.nome_completo ?? "cliente", servico: proc.servico_nome, corpo, portalUrl });
