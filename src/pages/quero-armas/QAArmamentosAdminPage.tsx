@@ -320,6 +320,60 @@ export default function QAArmamentosAdminPage() {
     toast.success("Dados gerados pela IA — revise antes de salvar");
   }
 
+  /** Audita TODAS as imagens já cadastradas: pergunta a uma IA Vision se cada
+   *  foto corresponde realmente ao modelo. Marca imagem_aprovada=false nas que
+   *  não correspondem e exibe relatório. */
+  async function auditarImagens() {
+    const comImagem = items.filter((i) => !!i.imagem);
+    if (comImagem.length === 0) { toast.info("Nenhuma arma com imagem para auditar."); return; }
+    if (!confirm(`Auditar ${comImagem.length} imagem(ns) com IA? Cada item leva ~3s.`)) return;
+    setAuditBusy(true);
+    setAuditProgress({ done: 0, total: comImagem.length });
+    let okCount = 0;
+    let badCount = 0;
+    const incorretos: Array<{ id: string; marca: string; modelo: string; motivo: string }> = [];
+    for (let i = 0; i < comImagem.length; i++) {
+      const it = comImagem[i];
+      try {
+        const { data, error } = await supabase.functions.invoke("qa-armamento-validar-imagem", {
+          body: {
+            imagemUrl: it.imagem,
+            marca: it.marca,
+            modelo: it.modelo,
+            tipo: it.tipo,
+            calibre: it.calibre,
+          },
+        });
+        if (error) throw error;
+        const v = data as { valida: boolean; motivo: string; confianca: number };
+        const aprovada = !!v?.valida && (v?.confianca ?? 0) >= 60;
+        await supabase.from("qa_armamentos_catalogo" as any)
+          .update({
+            imagem_aprovada: aprovada,
+            imagem_validacao_motivo: v?.motivo || null,
+            imagem_validada_em: new Date().toISOString(),
+          })
+          .eq("id", it.id);
+        if (aprovada) okCount++;
+        else { badCount++; incorretos.push({ id: it.id, marca: it.marca, modelo: it.modelo, motivo: v?.motivo || "—" }); }
+      } catch (e: any) {
+        console.warn(`Audit falhou em ${it.marca} ${it.modelo}:`, e?.message || e);
+      }
+      setAuditProgress({ done: i + 1, total: comImagem.length });
+    }
+    setAuditBusy(false);
+    setAuditProgress(null);
+    if (incorretos.length) {
+      console.table(incorretos);
+      toast.error(`Auditoria: ${okCount} ✅ corretas · ${badCount} ❌ incorretas (veja console).`, {
+        duration: 8000,
+      });
+    } else {
+      toast.success(`Auditoria concluída: todas as ${okCount} imagens estão corretas.`);
+    }
+    load();
+  }
+
   async function scrapeFabricante() {
     if (!scrapeUrl) { toast.error("Informe a URL do fabricante"); return; }
     setScrapeBusy(true);
