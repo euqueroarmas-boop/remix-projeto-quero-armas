@@ -13,6 +13,38 @@ const BLOCK_RE = /(?:logo|favicon|sprite|placeholder|avatar|truck|caminhao|bombe
 type Candidate = { url: string; context: string; source: string; score: number };
 type ScrapeResult = { html: string; rawHtml: string; markdown: string; links: string[]; metadata: Record<string, unknown>; images: string[] };
 
+function slugInfo(pathname: string): { parts: string[]; combos: string[] } {
+  // Ex.: /en/product/92-fs-inox-P0049 -> parts ["92","fs","inox"], combos ["92fs","fsinox","92fsinox","92-fs-inox"]
+  const last = pathname.split("/").filter(Boolean).pop() || "";
+  const cleaned = last.toLowerCase().replace(/\.(html?|php|aspx?)$/i, "");
+  // Remove sufixo de SKU tipo P0049, P0044 (letra + dígitos no final)
+  const semSku = cleaned.replace(/[-_]?[a-z]\d{3,}$/i, "");
+  const raw = semSku.split(/[-_.]+/).filter(Boolean);
+  const generic = new Set(["product","produto","item","details","detail","page","en","pt","br","www","new","novo"]);
+  const parts = raw.filter((p) => p.length >= 2 && !generic.has(p));
+  const combos = new Set<string>();
+  if (parts.length >= 2) {
+    combos.add(parts.join(""));            // 92fsinox
+    combos.add(parts.join("-"));           // 92-fs-inox
+    combos.add(parts.join("_"));
+    for (let i = 0; i < parts.length - 1; i++) combos.add(parts[i] + parts[i + 1]); // 92fs, fsinox
+  } else if (parts.length === 1) {
+    combos.add(parts[0]);
+  }
+  return { parts, combos: [...combos] };
+}
+
+function matchesSlug(candidate: Candidate, info: { parts: string[]; combos: string[] }): boolean {
+  if (info.parts.length === 0) return true;
+  const haystackRaw = `${candidate.url} ${candidate.context}`.toLowerCase();
+  const haystack = haystackRaw.replace(/[^a-z0-9]+/g, "");
+  // 1) Match forte: alguma combinação consecutiva (ex.: 92fs, 92fsinox)
+  if (info.combos.some((c) => c.length >= 4 && haystack.includes(c.replace(/[^a-z0-9]+/g, "")))) return true;
+  // 2) Match suficiente: TODAS as partes significativas aparecem (ordem livre)
+  if (info.parts.every((p) => haystack.includes(p))) return true;
+  return false;
+}
+
 function decodeLoose(value: string): string {
   return value
     .replace(/\\u002[Ff]/g, "/")
@@ -212,12 +244,18 @@ Deno.serve(async (req) => {
     }
 
     const candidates = extractImages(documents, url, extras);
-    const imagens = candidates.map((c) => c.url).slice(0, 80);
+    const slug = slugInfo(parsed.pathname);
+    const filtrados = candidates.filter((c) => matchesSlug(c, slug));
+    // Se o filtro zerar tudo (slug muito genérico ou produto sem identificador), cai para o conjunto completo
+    const finalSet = filtrados.length > 0 ? filtrados : candidates;
+    const imagens = finalSet.map((c) => c.url).slice(0, 80);
 
     return json({
       imagens,
       total: imagens.length,
       fontes,
+      slug_tokens: slug.parts,
+      descartadas_fora_da_url: candidates.length - finalSet.length,
       aviso: imagens.length === 0
         ? "Nenhuma imagem rastreável foi encontrada. O site pode bloquear robôs ou exigir uma etapa de país/idade antes do produto."
         : undefined,
