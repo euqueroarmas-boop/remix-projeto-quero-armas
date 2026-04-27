@@ -311,6 +311,11 @@ export default function QAArmamentosAdminPage() {
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
                 : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo</>}
             </Button>
+            <Button variant="outline" className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50" onClick={removeBgTodas} disabled={bgBusy} title="Envia todas as imagens ao remove.bg para gerar PNG com transparência perfeita (1 crédito por imagem)">
+              {bgBusy
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando…</>
+                : <><Sparkles className="h-4 w-4 mr-2" />Remove.bg (lote)</>}
+            </Button>
             <Button onClick={openNew} className="bg-amber-500 text-white hover:bg-amber-600 font-semibold">
               <Plus className="h-4 w-4 mr-2" />Nova arma
             </Button>
