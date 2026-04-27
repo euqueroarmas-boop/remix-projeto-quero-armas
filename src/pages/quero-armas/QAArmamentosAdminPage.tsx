@@ -434,33 +434,70 @@ export default function QAArmamentosAdminPage() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-          <DialogHeader>
-            <DialogTitle>{editing?.id ? "Editar arma" : "Nova arma"}</DialogTitle>
+        <DialogContent
+          className="
+            bg-[#f6f5f1] text-zinc-900 border border-zinc-200 shadow-2xl
+            p-0 gap-0 overflow-hidden
+            w-screen h-[100dvh] max-w-none rounded-none
+            sm:w-[96vw] sm:h-auto sm:max-h-[92dvh] sm:max-w-5xl sm:rounded-xl
+            flex flex-col
+          "
+        >
+          <DialogHeader className="px-5 sm:px-6 py-4 border-b border-zinc-200 bg-white/70 backdrop-blur sticky top-0 z-10">
+            <DialogTitle className="text-zinc-900 text-lg font-bold tracking-tight uppercase">
+              {editing?.id ? "Editar arma" : "Nova arma"}
+            </DialogTitle>
+            <p className="text-[11px] font-mono uppercase tracking-[0.25em] text-amber-700 mt-0.5">
+              // ARSENAL · FICHA TÉCNICA
+            </p>
           </DialogHeader>
 
+          <div
+            className="
+              flex-1 overflow-y-auto overscroll-contain
+              px-5 sm:px-6 py-5
+              pb-[max(6rem,env(safe-area-inset-bottom))]
+            "
+          >
           {editing && (
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="secondary" disabled={aiBusy} onClick={gerarComIA}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="bg-zinc-900 text-white hover:bg-zinc-800"
+                  disabled={aiBusy}
+                  onClick={gerarComIA}
+                >
                   {aiBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
                   Gerar/Regerar com IA
                 </Button>
                 <div className="flex gap-2 flex-1 min-w-[260px]">
-                  <Input placeholder="URL fabricante (ex: taurusarmas.com.br/...)" value={scrapeUrl} onChange={(e) => setScrapeUrl(e.target.value)} />
-                  <Button type="button" variant="secondary" disabled={scrapeBusy} onClick={scrapeFabricante}>
+                  <Input
+                    className="bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400"
+                    placeholder="URL fabricante (ex: taurusarmas.com.br/...)"
+                    value={scrapeUrl}
+                    onChange={(e) => setScrapeUrl(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="bg-zinc-900 text-white hover:bg-zinc-800"
+                    disabled={scrapeBusy}
+                    onClick={scrapeFabricante}
+                  >
                     {scrapeBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Globe className="h-4 w-4 mr-2" />}
                     Buscar no fabricante
                   </Button>
                 </div>
               </div>
               {editing.status_revisao === "pendente_revisao" && (
-                <div className="flex items-center gap-2 text-amber-600 text-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-md p-3">
+                <div className="flex items-center gap-2 text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-md p-3">
                   <AlertCircle className="h-4 w-4" /> Dados pendentes de revisão. Confirme a precisão antes de marcar como verificado.
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-zinc-200 bg-white p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Field label="Marca *"><Input value={editing.marca || ""} onChange={(e) => setF("marca", e.target.value)} /></Field>
                 <Field label="Modelo *"><Input value={editing.modelo || ""} onChange={(e) => setF("modelo", e.target.value)} /></Field>
                 <Field label="Apelido"><Input value={editing.apelido || ""} onChange={(e) => setF("apelido", e.target.value)} /></Field>
@@ -488,10 +525,12 @@ export default function QAArmamentosAdminPage() {
                 <Field label="Velocidade (m/s)"><Input type="number" value={editing.velocidade_projetil_ms ?? ""} onChange={(e) => setF("velocidade_projetil_ms", e.target.value === "" ? null : Number(e.target.value))} /></Field>
               </div>
 
-              <Field label="Descrição"><Textarea rows={2} value={editing.descricao || ""} onChange={(e) => setF("descricao", e.target.value)} /></Field>
+              <div className="rounded-lg border border-zinc-200 bg-white p-4">
+                <Field label="Descrição"><Textarea rows={3} value={editing.descricao || ""} onChange={(e) => setF("descricao", e.target.value)} /></Field>
+              </div>
 
-              <div>
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Stats (0-100)</Label>
+              <div className="rounded-lg border border-zinc-200 bg-white p-4">
+                <Label className="text-xs uppercase tracking-wide text-zinc-500">Stats (0-100)</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
                   {(["stat_dano","stat_precisao","stat_alcance","stat_cadencia","stat_mobilidade","stat_controle"] as const).map(k => (
                     <Field key={k} label={k.replace("stat_","")}>
@@ -501,7 +540,7 @@ export default function QAArmamentosAdminPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg border border-zinc-200 bg-white p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Field label="Status revisão">
                   <Select value={editing.status_revisao || "rascunho"} onValueChange={(v) => setF("status_revisao", v as Status)}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -517,17 +556,20 @@ export default function QAArmamentosAdminPage() {
                 <Field label="URL fonte"><Input value={editing.fonte_url || ""} onChange={(e) => setF("fonte_url", e.target.value)} /></Field>
               </div>
 
-              <Field label="Observações internas"><Textarea rows={2} value={editing.observacoes || ""} onChange={(e) => setF("observacoes", e.target.value)} /></Field>
+              <div className="rounded-lg border border-zinc-200 bg-white p-4">
+                <Field label="Observações internas"><Textarea rows={2} value={editing.observacoes || ""} onChange={(e) => setF("observacoes", e.target.value)} /></Field>
+              </div>
 
-              <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+              <div className="rounded-lg border border-zinc-200 p-4 space-y-3 bg-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Imagem fotorrealista da arma</Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">Render fiel gerado por IA (Nano Banana Pro) com base em marca, modelo e calibre.</p>
+                    <Label className="text-xs uppercase tracking-wide text-zinc-500">Imagem fotorrealista da arma</Label>
+                    <p className="text-xs text-zinc-500 mt-0.5">Render fiel gerado por IA (Nano Banana Pro) com base em marca, modelo e calibre.</p>
                   </div>
                   <Button
                     type="button"
                     variant="secondary"
+                    className="bg-zinc-900 text-white hover:bg-zinc-800"
                     disabled={!editing.id || imgBusyId === editing.id}
                     onClick={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
                   >
@@ -536,21 +578,31 @@ export default function QAArmamentosAdminPage() {
                   </Button>
                 </div>
                 {editing.imagem ? (
-                  <div className="grid place-items-center rounded-md p-2" style={{ background: "#1a1a1a", backgroundImage: "none" }}>
-                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain mix-blend-screen" />
+                  <div className="grid place-items-center rounded-md p-2 bg-zinc-100 border border-zinc-200">
+                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain" />
                   </div>
                 ) : (
-                  <div className="grid place-items-center h-32 border border-dashed rounded-md text-muted-foreground text-sm">
+                  <div className="grid place-items-center h-32 border border-dashed border-zinc-300 rounded-md text-zinc-500 text-sm bg-zinc-50">
                     {editing.id ? "Nenhuma imagem ainda. Clique em 'Gerar imagem'." : "Salve a arma primeiro para gerar a imagem."}
                   </div>
                 )}
               </div>
             </div>
           )}
+          </div>
 
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={save} disabled={saving}>
+          <DialogFooter
+            className="
+              border-t border-zinc-200 bg-white/90 backdrop-blur
+              px-5 sm:px-6 py-3
+              pb-[max(0.75rem,env(safe-area-inset-bottom))]
+              flex-row justify-end gap-2 sticky bottom-0
+            "
+          >
+            <Button variant="ghost" className="text-zinc-700 hover:bg-zinc-100" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={save} disabled={saving} className="bg-amber-500 text-white hover:bg-amber-600 font-semibold">
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar
             </Button>
           </DialogFooter>
