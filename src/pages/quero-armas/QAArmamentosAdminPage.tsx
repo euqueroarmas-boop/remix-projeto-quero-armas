@@ -6,13 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
 import { ImageOff, X } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/quero-armas/LoadStates";
+import { ArmaSpecSheet } from "./ArmaSpecSheet";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
 type Fonte = "curado" | "ia_gerado" | "scrape_fabricante" | "importado";
@@ -433,184 +434,34 @@ export default function QAArmamentosAdminPage() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="right"
           className="
-            bg-[#f6f5f1] text-zinc-900 border border-zinc-200 shadow-2xl
-            p-0 gap-0 overflow-hidden
-            w-screen h-[100dvh] max-w-none rounded-none
-            sm:w-[96vw] sm:h-auto sm:max-h-[92dvh] sm:max-w-5xl sm:rounded-xl
-            flex flex-col
+            p-0 gap-0 border-l border-zinc-300
+            bg-[#f6f5f1] text-zinc-900
+            w-full h-[100dvh] max-w-none
+            sm:max-w-[760px] md:max-w-[860px] lg:max-w-[1100px]
+            flex flex-col font-sans
           "
         >
-          <DialogHeader className="px-5 sm:px-6 py-4 border-b border-zinc-200 bg-white/70 backdrop-blur sticky top-0 z-10">
-            <DialogTitle className="text-zinc-900 text-lg font-bold tracking-tight uppercase">
-              {editing?.id ? "Editar arma" : "Nova arma"}
-            </DialogTitle>
-            <p className="text-[11px] font-mono uppercase tracking-[0.25em] text-amber-700 mt-0.5">
-              // ARSENAL · FICHA TÉCNICA
-            </p>
-          </DialogHeader>
-
-          <div
-            className="
-              flex-1 overflow-y-auto overscroll-contain
-              px-5 sm:px-6 py-5
-              pb-[max(6rem,env(safe-area-inset-bottom))]
-              [&_input]:bg-white [&_input]:text-zinc-900 [&_input]:border-zinc-300 [&_input]:placeholder:text-zinc-400
-              [&_textarea]:bg-white [&_textarea]:text-zinc-900 [&_textarea]:border-zinc-300 [&_textarea]:placeholder:text-zinc-400
-              [&_button[role=combobox]]:bg-white [&_button[role=combobox]]:text-zinc-900 [&_button[role=combobox]]:border-zinc-300
-            "
-          >
-          {editing && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="bg-zinc-900 text-white hover:bg-zinc-800"
-                  disabled={aiBusy}
-                  onClick={gerarComIA}
-                >
-                  {aiBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
-                  Gerar/Regerar com IA
-                </Button>
-                <div className="flex gap-2 flex-1 min-w-[260px]">
-                  <Input
-                    className="bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400"
-                    placeholder="URL fabricante (ex: taurusarmas.com.br/...)"
-                    value={scrapeUrl}
-                    onChange={(e) => setScrapeUrl(e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="bg-zinc-900 text-white hover:bg-zinc-800"
-                    disabled={scrapeBusy}
-                    onClick={scrapeFabricante}
-                  >
-                    {scrapeBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Globe className="h-4 w-4 mr-2" />}
-                    Buscar no fabricante
-                  </Button>
-                </div>
-              </div>
-              {editing.status_revisao === "pendente_revisao" && (
-                <div className="flex items-center gap-2 text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-md p-3">
-                  <AlertCircle className="h-4 w-4" /> Dados pendentes de revisão. Confirme a precisão antes de marcar como verificado.
-                </div>
-              )}
-
-              <div className="rounded-lg border border-zinc-200 bg-white p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Field label="Marca *"><Input value={editing.marca || ""} onChange={(e) => setF("marca", e.target.value)} /></Field>
-                <Field label="Modelo *"><Input value={editing.modelo || ""} onChange={(e) => setF("modelo", e.target.value)} /></Field>
-                <Field label="Apelido"><Input value={editing.apelido || ""} onChange={(e) => setF("apelido", e.target.value)} /></Field>
-                <Field label="Tipo *">
-                  <Select value={editing.tipo || "pistola"} onValueChange={(v) => setF("tipo", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Calibre *"><Input value={editing.calibre || ""} onChange={(e) => setF("calibre", e.target.value)} /></Field>
-                <Field label="Origem"><Input value={editing.origem || ""} onChange={(e) => setF("origem", e.target.value)} /></Field>
-                <Field label="Classificação legal">
-                  <Select value={editing.classificacao_legal || ""} onValueChange={(v) => setF("classificacao_legal", v)}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Uso Permitido">Uso Permitido</SelectItem>
-                      <SelectItem value="Uso Restrito">Uso Restrito</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Capacidade carregador"><Input type="number" value={editing.capacidade_carregador ?? ""} onChange={(e) => setF("capacidade_carregador", e.target.value === "" ? null : Number(e.target.value))} /></Field>
-                <Field label="Peso (g)"><Input type="number" value={editing.peso_gramas ?? ""} onChange={(e) => setF("peso_gramas", e.target.value === "" ? null : Number(e.target.value))} /></Field>
-                <Field label="Comprimento cano (mm)"><Input type="number" value={editing.comprimento_cano_mm ?? ""} onChange={(e) => setF("comprimento_cano_mm", e.target.value === "" ? null : Number(e.target.value))} /></Field>
-                <Field label="Alcance efetivo (m)"><Input type="number" value={editing.alcance_efetivo_m ?? ""} onChange={(e) => setF("alcance_efetivo_m", e.target.value === "" ? null : Number(e.target.value))} /></Field>
-                <Field label="Velocidade (m/s)"><Input type="number" value={editing.velocidade_projetil_ms ?? ""} onChange={(e) => setF("velocidade_projetil_ms", e.target.value === "" ? null : Number(e.target.value))} /></Field>
-              </div>
-
-              <div className="rounded-lg border border-zinc-200 bg-white p-4">
-                <Field label="Descrição"><Textarea rows={3} value={editing.descricao || ""} onChange={(e) => setF("descricao", e.target.value)} /></Field>
-              </div>
-
-              <div className="rounded-lg border border-zinc-200 bg-white p-4">
-                <Label className="text-xs uppercase tracking-wide text-zinc-500">Stats (0-100)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-                  {(["stat_dano","stat_precisao","stat_alcance","stat_cadencia","stat_mobilidade","stat_controle"] as const).map(k => (
-                    <Field key={k} label={k.replace("stat_","")}>
-                      <Input type="number" min={0} max={100} value={(editing as any)[k] ?? ""} onChange={(e) => setF(k as any, e.target.value === "" ? null : Number(e.target.value))} />
-                    </Field>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-zinc-200 bg-white p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                <Field label="Status revisão">
-                  <Select value={editing.status_revisao || "rascunho"} onValueChange={(v) => setF("status_revisao", v as Status)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="Fonte dos dados">
-                  <Select value={editing.fonte_dados || "curado"} onValueChange={(v) => setF("fonte_dados", v as Fonte)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.entries(FONTE_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
-                  </Select>
-                </Field>
-                <Field label="URL fonte"><Input value={editing.fonte_url || ""} onChange={(e) => setF("fonte_url", e.target.value)} /></Field>
-              </div>
-
-              <div className="rounded-lg border border-zinc-200 bg-white p-4">
-                <Field label="Observações internas"><Textarea rows={2} value={editing.observacoes || ""} onChange={(e) => setF("observacoes", e.target.value)} /></Field>
-              </div>
-
-              <div className="rounded-lg border border-zinc-200 p-4 space-y-3 bg-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-xs uppercase tracking-wide text-zinc-500">Imagem fotorrealista da arma</Label>
-                    <p className="text-xs text-zinc-500 mt-0.5">Render fiel gerado por IA (Nano Banana Pro) com base em marca, modelo e calibre.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="bg-zinc-900 text-white hover:bg-zinc-800"
-                    disabled={!editing.id || imgBusyId === editing.id}
-                    onClick={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
-                  >
-                    {imgBusyId === editing.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editing.imagem ? <RefreshCcw className="h-4 w-4 mr-2" /> : <ImageIcon className="h-4 w-4 mr-2" />)}
-                    {editing.imagem ? "Regerar imagem" : "Gerar imagem"}
-                  </Button>
-                </div>
-                {editing.imagem ? (
-                  <div className="grid place-items-center rounded-md p-4 bg-white border border-zinc-200">
-                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain" />
-                  </div>
-                ) : (
-                  <div className="grid place-items-center h-32 border border-dashed border-zinc-300 rounded-md text-zinc-500 text-sm bg-zinc-50">
-                    {editing.id ? "Nenhuma imagem ainda. Clique em 'Gerar imagem'." : "Salve a arma primeiro para gerar a imagem."}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          </div>
-
-          <DialogFooter
-            className="
-              border-t border-zinc-200 bg-white/90 backdrop-blur
-              px-5 sm:px-6 py-3
-              pb-[max(0.75rem,env(safe-area-inset-bottom))]
-              flex-row justify-end gap-2 sticky bottom-0
-            "
-          >
-            <Button variant="ghost" className="text-zinc-700 hover:bg-zinc-100" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={save} disabled={saving} className="bg-amber-500 text-white hover:bg-amber-600 font-semibold">
-              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {editing && <ArmaSpecSheet
+            editing={editing}
+            setF={setF}
+            scrapeUrl={scrapeUrl}
+            setScrapeUrl={setScrapeUrl}
+            aiBusy={aiBusy}
+            scrapeBusy={scrapeBusy}
+            saving={saving}
+            imgBusy={imgBusyId === editing.id}
+            onClose={() => setOpen(false)}
+            onSave={save}
+            onAI={gerarComIA}
+            onScrape={scrapeFabricante}
+            onGerarImagem={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
+          />}
+        </SheetContent>
+      </Sheet>
       </div>
     </div>
   );
