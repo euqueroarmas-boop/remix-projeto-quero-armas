@@ -391,8 +391,8 @@ export default function QAArmamentosAdminPage() {
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
 
   return (
-    <div className="min-h-screen bg-[#f6f5f1] text-zinc-900">
-      <div className="container max-w-7xl mx-auto p-6 space-y-6">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f6f5f1] text-zinc-900">
+      <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-6 sm:px-6 space-y-6">
       {/* HEADER TÁTICO */}
       <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] p-6 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]">
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.5) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
@@ -515,7 +515,7 @@ export default function QAArmamentosAdminPage() {
       ) : filtered.length === 0 ? (
         <Card className="p-16 text-center bg-white border-zinc-200 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid w-full min-w-0 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((it) => (
             <WeaponCard
               key={it.id}
@@ -568,7 +568,7 @@ export default function QAArmamentosAdminPage() {
       {/* Modal — galeria completa de imagens do fabricante */}
       {showAllImagesModal && (
         <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAllImagesModal(false)}>
-          <div className="bg-[#f6f5f1] border border-zinc-300 max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#f6f5f1] border border-zinc-300 w-full max-w-[calc(100vw-2rem)] sm:max-w-5xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-300">
               <div>
                 <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// GALERIA · FABRICANTE</div>
@@ -585,9 +585,9 @@ export default function QAArmamentosAdminPage() {
                   <button
                     key={idx}
                     onClick={() => { selecionarImagemFabricante(src); setShowAllImagesModal(false); }}
-                    className={`group relative bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-300 hover:border-amber-500"}`}
+                    className={`group relative overflow-hidden bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-300 hover:border-amber-500"}`}
                   >
-                    <img src={src} alt={`Opção ${idx + 1}`} className="w-full h-40 object-contain p-2" loading="lazy" onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")} />
+                    <img src={src} alt={`Opção ${idx + 1}`} className="block h-40 w-full max-w-full object-contain p-2" loading="lazy" onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")} />
                     {selecionada && (
                       <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">SELECIONADA</div>
                     )}
@@ -627,13 +627,13 @@ export default function QAArmamentosAdminPage() {
       {/* MODAL — confirmação de imagem gerada/buscada */}
       {imagemConfirm && (
         <div className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center p-4" onClick={() => setImagemConfirm(null)}>
-          <div className="bg-white border border-zinc-300 max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white border border-zinc-300 w-full max-w-[calc(100vw-2rem)] sm:max-w-lg overflow-hidden p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
             <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// CONFIRMAÇÃO · IMAGEM</div>
             <h2 className="text-base font-bold text-zinc-900 mt-1">
               Esta é a imagem correta para {imagemConfirm.arma.marca} {imagemConfirm.arma.modelo}?
             </h2>
-            <div className="mt-4 bg-zinc-50 border border-zinc-200 p-4 grid place-items-center min-h-[280px]">
-              <img src={imagemConfirm.url} alt={`${imagemConfirm.arma.marca} ${imagemConfirm.arma.modelo}`} className="max-h-[320px] max-w-full object-contain" />
+            <div className="mt-4 bg-zinc-50 border border-zinc-200 p-4 grid place-items-center min-h-[280px] overflow-hidden">
+              <img src={imagemConfirm.url} alt={`${imagemConfirm.arma.marca} ${imagemConfirm.arma.modelo}`} className="block max-h-[320px] max-w-full object-contain" />
             </div>
             <div className="flex flex-col sm:flex-row gap-2 mt-5">
               <button
@@ -703,7 +703,7 @@ function WeaponCard({
   return (
     <div
       onClick={onOpen}
-      className="group relative cursor-pointer rounded-xl border border-zinc-200 bg-white overflow-hidden hover:border-amber-500/60 shadow-[0_2px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_50px_-20px_rgba(245,158,11,0.35)] transition-all duration-300"
+      className="group relative min-w-0 w-full max-w-full cursor-pointer rounded-xl border border-zinc-200 bg-white overflow-hidden hover:border-amber-500/60 shadow-[0_2px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_50px_-20px_rgba(245,158,11,0.35)] transition-all duration-300"
     >
       {/* faixa superior tática */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#fafaf7] border-b border-zinc-200">
@@ -718,18 +718,25 @@ function WeaponCard({
 
       {/* visual da arma */}
       <div
-        className="relative w-full overflow-hidden bg-white"
+        className="relative w-full max-w-full overflow-hidden bg-white"
         style={{ aspectRatio: "16/10" }}
       >
         {it.imagem ? (
           <>
-            <img
-              src={it.imagem}
-              alt={`${it.marca} ${it.modelo}`}
-              loading="lazy"
-              style={{ objectPosition: "center center" }}
-              className="absolute inset-0 w-full h-full object-contain p-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none pointer-events-none"
-            />
+            <button
+              type="button"
+              className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
+              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
+            >
+              <img
+                src={it.imagem}
+                alt={`${it.marca} ${it.modelo}`}
+                loading="lazy"
+                style={{ objectPosition: "center center" }}
+                className="block h-full w-full max-w-full object-contain p-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
+              />
+            </button>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}

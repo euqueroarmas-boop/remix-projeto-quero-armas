@@ -92,7 +92,7 @@ export function ArmaSpecSheet({
           <div className="lg:col-span-5 flex flex-col gap-6">
 
             {/* IMAGEM com crosshairs */}
-            <div className="relative bg-white border border-zinc-300 p-3 aspect-[4/3] flex items-center justify-center">
+            <div className="relative bg-white border border-zinc-300 p-3 aspect-[4/3] flex items-center justify-center overflow-hidden max-w-full">
               <div className="absolute top-2 left-2 size-3 border-t border-l border-zinc-900" />
               <div className="absolute top-2 right-2 size-3 border-t border-r border-zinc-900" />
               <div className="absolute bottom-2 left-2 size-3 border-b border-l border-zinc-900" />
@@ -101,7 +101,7 @@ export function ArmaSpecSheet({
               <div className="absolute left-1/2 top-3 bottom-3 w-px bg-zinc-200 border-dashed" />
 
               {editing.imagem ? (
-                <img src={editing.imagem} alt={`${editing.marca || ""} ${editing.modelo || ""}`} className="relative z-10 max-w-[88%] max-h-[88%] object-contain" />
+                <img src={editing.imagem} alt={`${editing.marca || ""} ${editing.modelo || ""}`} className="relative z-10 block max-w-[88%] max-h-[88%] object-contain" />
               ) : (
                 <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-300">
                   <Crosshair className="h-12 w-12" />
@@ -223,13 +223,13 @@ export function ArmaSpecSheet({
                               key={idx}
                               onClick={() => onSelecionarImagem?.(src)}
                               type="button"
-                              className={`group relative bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-200 hover:border-amber-500"}`}
+                              className={`group relative overflow-hidden bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-200 hover:border-amber-500"}`}
                               title={`Usar como imagem principal`}
                             >
                               <img
                                 src={src}
                                 alt={`Opção ${idx + 1}`}
-                                className="w-full h-20 object-contain p-1"
+                                className="block h-20 w-full max-w-full object-contain p-1"
                                 loading="lazy"
                                 onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")}
                               />
