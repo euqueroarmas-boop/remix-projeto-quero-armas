@@ -542,6 +542,7 @@ export default function QAArmamentosAdminPage() {
             carregandoImagens={carregandoImagens}
             onSelecionarImagem={selecionarImagemFabricante}
             onAbrirGaleria={() => setShowAllImagesModal(true)}
+            onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
           />}
         </SheetContent>
       </Sheet>
