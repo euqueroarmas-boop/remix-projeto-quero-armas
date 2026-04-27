@@ -2,3 +2,12 @@ project_id = "ogkltfqvzweeqkfmrzts"
 
 [functions.customer-lookup-email]
 verify_jwt = false
+
+[functions.qa-armamento-buscar-foto-real]
+verify_jwt = false
+
+[functions.qa-armamento-remove-bg]
+verify_jwt = false
+
+[functions.qa-armamento-scrape]
+verify_jwt = false
