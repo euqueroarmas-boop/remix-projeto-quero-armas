@@ -122,6 +122,7 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const imagemUrl = body?.imagemUrl as string | undefined;
+    const itemId = body?.itemId as string | undefined;
     const marca = body?.marca as string | undefined;
     const modelo = body?.modelo as string | undefined;
     if (!imagemUrl || !marca || !modelo) {
@@ -135,8 +136,27 @@ Deno.serve(async (req) => {
       modelo,
       tipo: body?.tipo ?? null,
       calibre: body?.calibre ?? null,
+      origem: body?.origem ?? null,
     });
-    return new Response(JSON.stringify(r), {
+    const validacaoResultado = decisaoFinal(r);
+    if (itemId) {
+      const url = Deno.env.get("SUPABASE_URL")!;
+      const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(url, service);
+      await sb.from("qa_armamentos_validacao_logs").insert({
+        item_id: itemId,
+        imagem_url: imagemUrl,
+        validacao_resultado: validacaoResultado,
+        confianca: r.confianca,
+        motivo: r.motivo,
+      });
+      await sb.from("qa_armamentos_catalogo").update({
+        imagem_aprovada: validacaoResultado === "correta",
+        imagem_validacao_motivo: r.motivo,
+        imagem_validada_em: new Date().toISOString(),
+      }).eq("id", itemId);
+    }
+    return new Response(JSON.stringify({ ...r, validacao_resultado: validacaoResultado }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
