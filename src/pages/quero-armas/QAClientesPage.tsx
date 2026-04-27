@@ -1397,8 +1397,13 @@ export default function QAClientesPage() {
     setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: novoPago } : item));
     setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: novoPago } : prev);
     try {
+      const updateBody: Record<string, any> = { pago: novoPago };
+      // Inicia o relógio de SLA na primeira marcação como pago
+      if (novoPago && !(selectedCadastroPublico as any).pago_em) {
+        updateBody.pago_em = new Date().toISOString();
+      }
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
-        .update({ pago: novoPago })
+        .update(updateBody)
         .eq("id", cadastroId)
         .select("*")
         .limit(1)
@@ -1417,6 +1422,64 @@ export default function QAClientesPage() {
     } finally {
       setSavingCadastroPublicoStatus(null);
     }
+  };
+
+  // ==== SLA: aguardar/retomar/concluir ====
+  const updateCadastroSla = async (patch: Record<string, any>, successMsg: string) => {
+    if (!selectedCadastroPublico) return;
+    const cadastroId = selectedCadastroPublico.id;
+    setSavingCadastroPublicoStatus("sla");
+    try {
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+        .update(patch).eq("id", cadastroId).select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      if (data) {
+        const updated = data as unknown as CadastroPublico;
+        setCadastrosPublicos(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
+        setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
+      }
+      toast.success(successMsg);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao atualizar SLA");
+    } finally {
+      setSavingCadastroPublicoStatus(null);
+    }
+  };
+
+  const handleAguardandoCliente = () => {
+    const desc = window.prompt("O que foi solicitado ao cliente? (Ex: comprovante de residência atualizado)");
+    if (desc === null) return;
+    const today = new Date().toISOString().split("T")[0];
+    void updateCadastroSla(
+      { aguardando_cliente_desde: today, ultima_solicitacao_cliente: desc?.toUpperCase() || null },
+      "Aguardando documentos do cliente. Relógio pausa após 1 dia."
+    );
+  };
+
+  const handleRetomarSla = () => {
+    if (!selectedCadastroPublico) return;
+    const c: any = selectedCadastroPublico;
+    if (!c.aguardando_cliente_desde) {
+      void updateCadastroSla({ ultima_solicitacao_cliente: null }, "Sem pendência registrada.");
+      return;
+    }
+    const desde = new Date(c.aguardando_cliente_desde);
+    const hoje = new Date();
+    const diasAguardando = Math.max(0, Math.floor((hoje.getTime() - desde.getTime()) / 86400000));
+    const pausaConsumida = Math.max(0, diasAguardando - 1); // 1 dia de tolerância
+    const novosPausados = (c.dias_pausados ?? 0) + pausaConsumida;
+    void updateCadastroSla(
+      { aguardando_cliente_desde: null, dias_pausados: novosPausados },
+      pausaConsumida > 0 ? `Relógio retomado. ${pausaConsumida}d de pausa contabilizados.` : "Relógio retomado."
+    );
+  };
+
+  const handleConcluirSla = () => {
+    if (!window.confirm("Concluir o serviço deste cliente? O contador de prazo será encerrado.")) return;
+    void updateCadastroSla(
+      { sla_concluido_em: new Date().toISOString() },
+      "Serviço concluído. Cliente removido do contador de prazo."
+    );
   };
 
   const updateCadastroPublicoStatus = async (status: string) => {
