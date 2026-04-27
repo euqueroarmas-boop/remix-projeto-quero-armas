@@ -28,6 +28,7 @@ interface DocRow {
   validade_dias?: number | null;
   data_validade?: string | null;
   formato_aceito?: string[] | string | null;
+  regra_validacao?: any;
 }
 
 interface ProcessoFull {
@@ -255,7 +256,9 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
             <div className="space-y-3">
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
               {docs.map((doc) => {
-                const ds = getStatusDocumento(doc.status);
+                const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
+                const labelBotao: string | null = (doc.regra_validacao && typeof doc.regra_validacao === "object" && typeof doc.regra_validacao.label_botao === "string")
+                  ? doc.regra_validacao.label_botao : null;
                 const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
                 const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
                 return (
@@ -295,7 +298,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                               rel="noopener noreferrer"
                               className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 font-bold inline-flex items-center gap-1 hover:bg-blue-100"
                             >
-                              <ExternalLink className="h-3 w-3" /> EMITIR ONLINE
+                              <ExternalLink className="h-3 w-3" /> {labelBotao ? labelBotao.toUpperCase() : "EMITIR ONLINE"}
                             </a>
                           )}
                         </div>
