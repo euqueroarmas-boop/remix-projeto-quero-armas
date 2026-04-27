@@ -100,6 +100,20 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
   const handleFileSelect = (docId: string) => {
     setPendingDocId(docId);
+    // ajusta accept conforme formato_aceito do item
+    const doc = docs.find((d) => d.id === docId);
+    const fmts: string[] = Array.isArray(doc?.formato_aceito)
+      ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      : [];
+    let accept = "image/*,application/pdf";
+    if (fmts.length > 0) {
+      const parts: string[] = [];
+      if (fmts.includes("pdf")) parts.push("application/pdf");
+      if (fmts.some((f) => ["jpg", "jpeg"].includes(f))) parts.push("image/jpeg");
+      if (fmts.includes("png")) parts.push("image/png");
+      if (parts.length > 0) accept = parts.join(",");
+    }
+    if (fileInputRef.current) fileInputRef.current.accept = accept;
     fileInputRef.current?.click();
   };
 
@@ -109,6 +123,21 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     if (!file || !docId || !processo) return;
     e.target.value = "";
     setUploadingId(docId);
+    // valida extensão no front antes de subir (UX rápida)
+    const docMeta = docs.find((d) => d.id === docId);
+    const fmts: string[] = Array.isArray(docMeta?.formato_aceito)
+      ? (docMeta!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      : [];
+    const extLocal = (file.name.split(".").pop() || "").toLowerCase();
+    if (fmts.length > 0 && !fmts.includes(extLocal)) {
+      const msg = fmts.length === 1 && fmts[0] === "pdf"
+        ? "Este documento deve ser enviado exclusivamente em PDF."
+        : `Formato não aceito. Envie: ${fmts.join(", ").toUpperCase()}.`;
+      toast.error(msg);
+      setUploadingId(null);
+      setPendingDocId(null);
+      return;
+    }
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
@@ -124,7 +153,14 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-doc-upload`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ documento_id: docId, storage_key: key, mime_type: file.type, file_name: file.name }),
+        body: JSON.stringify({
+          processo_id: processo.id,
+          documento_id: docId,
+          storage_path: key,
+          mime_type: file.type,
+          tamanho_bytes: file.size,
+          nome_arquivo_original: file.name,
+        }),
       });
       if (!resp.ok) {
         const txt = await resp.text();
