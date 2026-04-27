@@ -148,24 +148,25 @@ async function escolherComValidacao(
   candidatas: Candidata[],
   arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null },
   maxValidacoes = 3,
-): Promise<{ escolhida: Candidata | null; validacao: { valida: boolean; motivo: string; confianca: number } | null }> {
+): Promise<{ escolhida: Candidata | null; validacao: ValidacaoResp | null; decisao: DecisaoValidacao | null }> {
   let testadas = 0;
-  let melhor: { c: Candidata; v: { valida: boolean; motivo: string; confianca: number } } | null = null;
+  let melhor: { c: Candidata; v: ValidacaoResp; decisao: DecisaoValidacao } | null = null;
   for (const c of candidatas) {
     if (testadas >= maxValidacoes) break;
     testadas++;
     const v = await validarImagemComIA(c.url, arma);
-    console.log(`[validar] ${c.fonte} ${c.url.slice(0, 80)} -> valida=${v.valida} conf=${v.confianca} motivo="${v.motivo}"`);
-    if (v.valida && v.confianca >= 60) {
-      return { escolhida: c, validacao: v };
+    const decisao = decisaoFinal(v);
+    console.log(`[validar] ${c.fonte} ${c.url.slice(0, 80)} -> valida=${v.valida} conf=${v.confianca} decisao=${decisao} motivo="${v.motivo}"`);
+    if (decisao === "correta") {
+      return { escolhida: c, validacao: v, decisao };
     }
-    if (!melhor || v.confianca > melhor.v.confianca) melhor = { c, v };
+    if (!melhor || v.confianca > melhor.v.confianca) melhor = { c, v, decisao };
   }
   // se a IA não está disponível (sempre válida com confianca=0), aceita a 1ª
   if (melhor && melhor.v.confianca === 0 && melhor.v.valida) {
-    return { escolhida: melhor.c, validacao: melhor.v };
+    return { escolhida: melhor.c, validacao: melhor.v, decisao: melhor.decisao };
   }
-  return { escolhida: null, validacao: melhor?.v ?? null };
+  return { escolhida: null, validacao: melhor?.v ?? null, decisao: melhor?.decisao ?? null };
 }
 
 /** Mapeia marca normalizada → domínio oficial para tentativa direta. */
