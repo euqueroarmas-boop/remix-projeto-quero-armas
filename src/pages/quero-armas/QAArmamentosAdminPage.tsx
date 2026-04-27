@@ -69,6 +69,7 @@ export default function QAArmamentosAdminPage() {
   const [carregandoImagens, setCarregandoImagens] = useState(false);
   const [showAllImagesModal, setShowAllImagesModal] = useState(false);
   const [imagemFullscreen, setImagemFullscreen] = useState<string | null>(null);
+  const [imagemConfirm, setImagemConfirm] = useState<{ url: string; arma: { id: string; marca: string; modelo: string } } | null>(null);
 
   async function loadRemoveBgUsage() {
     const { data, error } = await supabase.rpc("qa_remove_bg_usage_mes" as any);
@@ -156,34 +157,50 @@ export default function QAArmamentosAdminPage() {
       const { data, error } = await supabase.functions.invoke("qa-armamento-buscar-foto-real", { body: { id: it.id } });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Foto real encontrada para ${it.marca} ${it.modelo}`);
       const url = (data as any)?.imagem as string | undefined;
       if (url) {
-        setEditing((p) => (p && p.id === it.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
+        // pede confirmação antes de salvar definitivamente
+        setImagemConfirm({ url, arma: { id: it.id, marca: it.marca, modelo: it.modelo } });
       }
-      // remove fundo automaticamente via remove.bg
-      try {
-        const { data: rb, error: rbErr } = await supabase.functions.invoke(
-          "qa-armamento-remove-bg",
-          { body: { id: it.id } },
-        );
-        if (rbErr) throw rbErr;
-        if ((rb as any)?.ok && (rb as any)?.imagem) {
-          const cleaned = (rb as any).imagem as string;
-          setEditing((p) => (p && p.id === it.id ? { ...p, imagem: cleaned } : p));
-          loadRemoveBgUsage();
-        } else if ((rb as any)?.error) {
-          console.warn("remove.bg falhou:", (rb as any).error);
-        }
-      } catch (e: any) {
-        console.warn("remove.bg indisponível:", e?.message || e);
-      }
-      load();
     } catch (e: any) {
       toast.error(`Não encontrei foto real para ${it.marca} ${it.modelo}: ${e?.message || e}`);
     } finally {
       setImgBusyId(null);
     }
+  }
+
+  async function confirmarImagem() {
+    if (!imagemConfirm) return;
+    const { url, arma } = imagemConfirm;
+    setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
+    setImagemConfirm(null);
+    toast.success(`Imagem confirmada para ${arma.marca} ${arma.modelo}`);
+    // remove fundo automaticamente via remove.bg
+    try {
+      const { data: rb, error: rbErr } = await supabase.functions.invoke(
+        "qa-armamento-remove-bg",
+        { body: { id: arma.id } },
+      );
+      if (rbErr) throw rbErr;
+      if ((rb as any)?.ok && (rb as any)?.imagem) {
+        const cleaned = (rb as any).imagem as string;
+        setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: cleaned } : p));
+        loadRemoveBgUsage();
+      }
+    } catch (e: any) {
+      console.warn("remove.bg indisponível:", e?.message || e);
+    }
+    load();
+  }
+
+  function abrirGoogleImagens(it: { marca?: string | null; modelo?: string | null; tipo?: string | null }) {
+    const tipoMap: Record<string, string> = {
+      pistola: "pistol", revolver: "revolver", espingarda: "shotgun",
+      carabina: "carbine rifle", fuzil: "rifle", submetralhadora: "submachine gun",
+    };
+    const tipoEn = tipoMap[(it.tipo || "").toLowerCase()] || "";
+    const q = [it.marca, it.modelo, tipoEn, "firearm"].filter(Boolean).join(" ");
+    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`, "_blank", "noopener");
   }
 
   /** Busca foto real para todas as armas que ainda não têm foto pronta. */
@@ -317,14 +334,30 @@ export default function QAArmamentosAdminPage() {
       const doc = parser.parseFromString(html, "text/html");
       const base = new URL(url);
       const resolve = (src: string) => { try { return new URL(src, base).href; } catch { return ""; } };
+      const blockedRegex = /logo|favicon|sprite|placeholder|avatar|truck|car|vehicle|caminhao|bombeiro|fire-?truck|banner|\/icon|\/bg\/|wallpaper|cartoon|toy/i;
+      const marcaModelo = `${editing?.marca || ""} ${editing?.modelo || ""}`.toLowerCase().trim();
+      const tokens = marcaModelo.split(/\s+/).filter((t) => t.length >= 2);
       const imgs = Array.from(doc.querySelectorAll("img"))
-        .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "")
-        .map((s) => resolve(s))
-        .filter((src) =>
+        .map((img) => {
+          const src = img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "";
+          const alt = (img.getAttribute("alt") || "").toLowerCase();
+          const w = parseInt(img.getAttribute("width") || "0", 10);
+          return { src: resolve(src), alt, w };
+        })
+        .filter(({ src, alt, w }) =>
           src.startsWith("http") &&
-          !/logo|icon|favicon|sprite|placeholder|avatar/i.test(src) &&
-          /\.(jpe?g|png|webp)(\?|$)/i.test(src)
-        );
+          !blockedRegex.test(src) &&
+          !blockedRegex.test(alt) &&
+          /\.(jpe?g|png|webp)(\?|$)/i.test(src) &&
+          (
+            // aceita se URL/alt contém marca ou modelo, ou se imagem é grande (≥300px)
+            tokens.length === 0 ||
+            tokens.some((t) => src.toLowerCase().includes(t) || alt.includes(t)) ||
+            w >= 300 ||
+            !w // não tem width declarado, dá benefício da dúvida
+          )
+        )
+        .map((x) => x.src);
       return [...new Set(imgs)];
     } catch (e) {
       console.error("[buscarImagensFabricante]", e);
@@ -509,6 +542,7 @@ export default function QAArmamentosAdminPage() {
             carregandoImagens={carregandoImagens}
             onSelecionarImagem={selecionarImagemFabricante}
             onAbrirGaleria={() => setShowAllImagesModal(true)}
+            onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
           />}
         </SheetContent>
       </Sheet>
@@ -569,6 +603,43 @@ export default function QAArmamentosAdminPage() {
           <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 text-xs tracking-widest uppercase font-mono">
             Toque fora para fechar
           </p>
+        </div>
+      )}
+
+      {/* MODAL — confirmação de imagem gerada/buscada */}
+      {imagemConfirm && (
+        <div className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center p-4" onClick={() => setImagemConfirm(null)}>
+          <div className="bg-white border border-zinc-300 max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// CONFIRMAÇÃO · IMAGEM</div>
+            <h2 className="text-base font-bold text-zinc-900 mt-1">
+              Esta é a imagem correta para {imagemConfirm.arma.marca} {imagemConfirm.arma.modelo}?
+            </h2>
+            <div className="mt-4 bg-zinc-50 border border-zinc-200 p-4 grid place-items-center min-h-[280px]">
+              <img src={imagemConfirm.url} alt={`${imagemConfirm.arma.marca} ${imagemConfirm.arma.modelo}`} className="max-h-[320px] max-w-full object-contain" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 mt-5">
+              <button
+                onClick={confirmarImagem}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+              >
+                ✓ Confirmar
+              </button>
+              <button
+                onClick={() => { const arma = imagemConfirm.arma; setImagemConfirm(null); gerarImagem(arma); }}
+                className="flex-1 bg-zinc-900 hover:bg-zinc-700 text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+              >
+                ↻ Gerar novamente
+              </button>
+              <button
+                onClick={() => { abrirGoogleImagens(imagemConfirm.arma); }}
+                className="flex-1 border border-zinc-300 hover:border-zinc-900 text-zinc-900 font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+                title="Buscar manualmente no Google"
+              >
+                🔍 Google
+              </button>
+            </div>
+            <button onClick={() => setImagemConfirm(null)} className="mt-3 w-full text-[10px] font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-900">Cancelar</button>
+          </div>
         </div>
       )}
       </div>

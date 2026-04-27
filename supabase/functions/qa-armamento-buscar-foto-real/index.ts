@@ -13,14 +13,25 @@ const UA =
 
 /** Tipo → palavras chave em inglês para refinar a busca */
 const TIPO_KEYWORDS: Record<string, string> = {
-  pistola: "semi-automatic pistol product photo white background",
-  revolver: "revolver firearm product photo white background",
-  espingarda: "shotgun firearm product photo white background",
-  carabina: "carbine rifle product photo white background",
-  fuzil: "rifle firearm product photo white background",
-  submetralhadora: "submachine gun product photo white background",
-  outra: "firearm product photo white background",
+  pistola: "semi-automatic pistol firearm gun weapon product photo white background side view",
+  revolver: "revolver firearm gun weapon product photo white background side view",
+  espingarda: "shotgun firearm gun weapon product photo white background side view",
+  carabina: "carbine rifle firearm gun weapon product photo white background side view",
+  fuzil: "rifle firearm gun weapon product photo white background side view",
+  submetralhadora: "submachine gun firearm weapon product photo white background side view",
+  outra: "firearm gun weapon product photo white background side view",
 };
+
+/** Termos que indicam que a URL/imagem NÃO é uma arma. */
+const BLOCKED_TERMS = [
+  "truck","car","vehicle","caminhao","bombeiro","fire-truck","firetruck",
+  "logo","banner","icon","favicon","avatar","thumb","sprite","placeholder",
+  "/bg/","background","wallpaper","cartoon","toy","plastic-toy",
+];
+function isBlockedUrl(url: string): boolean {
+  const u = url.toLowerCase();
+  return BLOCKED_TERMS.some((t) => u.includes(t));
+}
 
 /** Mapeia marca normalizada → domínio oficial para tentativa direta. */
 const OFFICIAL_SITES: Record<string, string> = {
@@ -416,7 +427,7 @@ Deno.serve(async (req) => {
 
       // Ordena por (score do host) DESC, depois por área plausível (não muito pequena, não muito grande)
       const ranked = [...results]
-        .filter((r) => r?.image && typeof r.image === "string")
+        .filter((r) => r?.image && typeof r.image === "string" && !isBlockedUrl(r.image) && !isBlockedUrl(String(r.title || "")))
         .map((r) => ({
           r,
           score: hostScore(r.image) * 1000 + (r.height >= 400 && r.height <= 1600 ? 10 : 0),
