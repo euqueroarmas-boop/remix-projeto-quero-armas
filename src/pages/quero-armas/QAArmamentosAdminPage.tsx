@@ -65,6 +65,9 @@ export default function QAArmamentosAdminPage() {
   const [bgBusy, setBgBusy] = useState(false);
   const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
+  const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
+  const [carregandoImagens, setCarregandoImagens] = useState(false);
+  const [showAllImagesModal, setShowAllImagesModal] = useState(false);
 
   async function loadRemoveBgUsage() {
     const { data, error } = await supabase.rpc("qa_remove_bg_usage_mes" as any);
@@ -280,16 +283,57 @@ export default function QAArmamentosAdminPage() {
   async function scrapeFabricante() {
     if (!scrapeUrl) { toast.error("Informe a URL do fabricante"); return; }
     setScrapeBusy(true);
-    const { data, error } = await supabase.functions.invoke("qa-armamento-scrape", {
-      body: { url: scrapeUrl, marca: editing?.marca, modelo: editing?.modelo },
-    });
+    setCarregandoImagens(true);
+    setImagensFabricante([]);
+    const [scrapeRes, imgs] = await Promise.all([
+      supabase.functions.invoke("qa-armamento-scrape", {
+        body: { url: scrapeUrl, marca: editing?.marca, modelo: editing?.modelo },
+      }),
+      buscarImagensFabricante(scrapeUrl),
+    ]);
     setScrapeBusy(false);
-    if (error) { toast.error(error.message); return; }
-    if ((data as any)?.error) { toast.error((data as any).error); return; }
-    const d = (data as any)?.data;
-    if (!d) { toast.error("Scrape não retornou dados"); return; }
-    setEditing((prev) => ({ ...(prev || {}), ...d, fonte_dados: "scrape_fabricante", fonte_url: scrapeUrl, status_revisao: "pendente_revisao" }));
-    toast.success("Dados extraídos do fabricante — revise antes de salvar");
+    setCarregandoImagens(false);
+    setImagensFabricante(imgs);
+    const { data, error } = scrapeRes;
+    if (error) { toast.error(error.message); }
+    else if ((data as any)?.error) { toast.error((data as any).error); }
+    else {
+      const d = (data as any)?.data;
+      if (d) {
+        setEditing((prev) => ({ ...(prev || {}), ...d, fonte_dados: "scrape_fabricante", fonte_url: scrapeUrl, status_revisao: "pendente_revisao" }));
+        toast.success("Dados extraídos do fabricante — revise antes de salvar");
+      }
+    }
+    if (imgs.length > 0) toast.success(`${imgs.length} imagens encontradas no fabricante`);
+  }
+
+  async function buscarImagensFabricante(url: string): Promise<string[]> {
+    try {
+      const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+      const data = await response.json();
+      const html: string = data.contents || "";
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const base = new URL(url);
+      const resolve = (src: string) => { try { return new URL(src, base).href; } catch { return ""; } };
+      const imgs = Array.from(doc.querySelectorAll("img"))
+        .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "")
+        .map((s) => resolve(s))
+        .filter((src) =>
+          src.startsWith("http") &&
+          !/logo|icon|favicon|sprite|placeholder|avatar/i.test(src) &&
+          /\.(jpe?g|png|webp)(\?|$)/i.test(src)
+        );
+      return [...new Set(imgs)];
+    } catch (e) {
+      console.error("[buscarImagensFabricante]", e);
+      return [];
+    }
+  }
+
+  function selecionarImagemFabricante(src: string) {
+    setEditing((prev) => ({ ...(prev || {}), imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" }));
+    toast.success("Imagem definida como principal");
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
@@ -459,9 +503,47 @@ export default function QAArmamentosAdminPage() {
             onAI={gerarComIA}
             onScrape={scrapeFabricante}
             onGerarImagem={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
+            imagensFabricante={imagensFabricante}
+            carregandoImagens={carregandoImagens}
+            onSelecionarImagem={selecionarImagemFabricante}
+            onAbrirGaleria={() => setShowAllImagesModal(true)}
           />}
         </SheetContent>
       </Sheet>
+
+      {/* Modal — galeria completa de imagens do fabricante */}
+      {showAllImagesModal && (
+        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAllImagesModal(false)}>
+          <div className="bg-[#f6f5f1] border border-zinc-300 max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-300">
+              <div>
+                <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// GALERIA · FABRICANTE</div>
+                <h2 className="text-lg font-bold text-zinc-900 mt-1">{imagensFabricante.length} imagens encontradas</h2>
+              </div>
+              <button onClick={() => setShowAllImagesModal(false)} className="h-9 w-9 grid place-items-center border border-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {imagensFabricante.map((src, idx) => {
+                const selecionada = editing?.imagem === src;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => { selecionarImagemFabricante(src); setShowAllImagesModal(false); }}
+                    className={`group relative bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-300 hover:border-amber-500"}`}
+                  >
+                    <img src={src} alt={`Opção ${idx + 1}`} className="w-full h-40 object-contain p-2" loading="lazy" onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")} />
+                    {selecionada && (
+                      <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">SELECIONADA</div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
