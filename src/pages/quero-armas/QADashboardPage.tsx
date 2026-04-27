@@ -127,7 +127,7 @@ export default function QADashboardPage() {
       const results = await Promise.allSettled([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true).eq("papel_documento", "aprendizado"),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, pago, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(8),
+        supabase.from("qa_cadastro_publico" as any).select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, status, pago, created_at", { count: "exact" }).neq("status", "recusado").order("created_at", { ascending: false }).limit(8),
         supabase.from("qa_geracoes_pecas" as any).select("id, titulo_geracao, tipo_peca, created_at, status_revisao").order("created_at", { ascending: false }).limit(6),
       ]);
       if (cancelled) return;
