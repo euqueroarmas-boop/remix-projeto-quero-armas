@@ -10,8 +10,9 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse, GripVertical, Camera, Upload, ShieldCheck,
+  HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
 } from "lucide-react";
+import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, type DragEndEvent,
@@ -1397,8 +1398,13 @@ export default function QAClientesPage() {
     setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: novoPago } : item));
     setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: novoPago } : prev);
     try {
+      const updateBody: Record<string, any> = { pago: novoPago };
+      // Inicia o relógio de SLA na primeira marcação como pago
+      if (novoPago && !(selectedCadastroPublico as any).pago_em) {
+        updateBody.pago_em = new Date().toISOString();
+      }
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
-        .update({ pago: novoPago })
+        .update(updateBody)
         .eq("id", cadastroId)
         .select("*")
         .limit(1)
@@ -1417,6 +1423,64 @@ export default function QAClientesPage() {
     } finally {
       setSavingCadastroPublicoStatus(null);
     }
+  };
+
+  // ==== SLA: aguardar/retomar/concluir ====
+  const updateCadastroSla = async (patch: Record<string, any>, successMsg: string) => {
+    if (!selectedCadastroPublico) return;
+    const cadastroId = selectedCadastroPublico.id;
+    setSavingCadastroPublicoStatus("sla");
+    try {
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+        .update(patch).eq("id", cadastroId).select("*").limit(1).maybeSingle();
+      if (error) throw error;
+      if (data) {
+        const updated = data as unknown as CadastroPublico;
+        setCadastrosPublicos(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
+        setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
+      }
+      toast.success(successMsg);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao atualizar SLA");
+    } finally {
+      setSavingCadastroPublicoStatus(null);
+    }
+  };
+
+  const handleAguardandoCliente = () => {
+    const desc = window.prompt("O que foi solicitado ao cliente? (Ex: comprovante de residência atualizado)");
+    if (desc === null) return;
+    const today = new Date().toISOString().split("T")[0];
+    void updateCadastroSla(
+      { aguardando_cliente_desde: today, ultima_solicitacao_cliente: desc?.toUpperCase() || null },
+      "Aguardando documentos do cliente. Relógio pausa após 1 dia."
+    );
+  };
+
+  const handleRetomarSla = () => {
+    if (!selectedCadastroPublico) return;
+    const c: any = selectedCadastroPublico;
+    if (!c.aguardando_cliente_desde) {
+      void updateCadastroSla({ ultima_solicitacao_cliente: null }, "Sem pendência registrada.");
+      return;
+    }
+    const desde = new Date(c.aguardando_cliente_desde);
+    const hoje = new Date();
+    const diasAguardando = Math.max(0, Math.floor((hoje.getTime() - desde.getTime()) / 86400000));
+    const pausaConsumida = Math.max(0, diasAguardando - 1); // 1 dia de tolerância
+    const novosPausados = (c.dias_pausados ?? 0) + pausaConsumida;
+    void updateCadastroSla(
+      { aguardando_cliente_desde: null, dias_pausados: novosPausados },
+      pausaConsumida > 0 ? `Relógio retomado. ${pausaConsumida}d de pausa contabilizados.` : "Relógio retomado."
+    );
+  };
+
+  const handleConcluirSla = () => {
+    if (!window.confirm("Concluir o serviço deste cliente? O contador de prazo será encerrado.")) return;
+    void updateCadastroSla(
+      { sla_concluido_em: new Date().toISOString() },
+      "Serviço concluído. Cliente removido do contador de prazo."
+    );
   };
 
   const updateCadastroPublicoStatus = async (status: string) => {
@@ -2462,6 +2526,68 @@ export default function QAClientesPage() {
             )}
           </div>
         </div>
+
+        {/* Painel SLA — só aparece quando pago */}
+        {c.pago && (() => {
+          const sla = calcularSla({
+            pago_em: (c as any).pago_em,
+            aguardando_cliente_desde: (c as any).aguardando_cliente_desde,
+            dias_pausados: (c as any).dias_pausados,
+            sla_concluido_em: (c as any).sla_concluido_em,
+          });
+          if (!sla) return null;
+          const aguardando = (c as any).aguardando_cliente_desde;
+          const concluido = !!(c as any).sla_concluido_em;
+          return (
+            <div className="rounded-xl border p-3 md:p-4" style={{ background: sla.bg, borderColor: `${sla.cor}55` }}>
+              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Clock className="h-4 w-4 flex-shrink-0" style={{ color: sla.cor }} />
+                  <span className="text-xs font-bold" style={{ color: sla.cor }}>SLA: {sla.label}</span>
+                </div>
+                <span className="text-[10px] text-slate-600">
+                  {sla.diasCorridos}d corridos · {sla.diasPausados}d em pausa
+                </span>
+              </div>
+              {(c as any).ultima_solicitacao_cliente && aguardando && (
+                <p className="text-[11px] mb-2 text-slate-700" style={{ overflowWrap: "anywhere" }}>
+                  ⏸ Pendência: <strong>{(c as any).ultima_solicitacao_cliente}</strong>
+                </p>
+              )}
+              {!concluido && (
+                <div className="flex flex-wrap gap-2">
+                  {!aguardando ? (
+                    <button
+                      disabled={savingCadastroPublicoStatus === "sla"}
+                      onClick={handleAguardandoCliente}
+                      className="h-8 px-3 rounded-lg text-[11px] font-semibold border bg-white hover:bg-slate-50 disabled:opacity-40 flex items-center gap-1"
+                      style={{ borderColor: "#cbd5e1", color: "#475569" }}
+                    >
+                      <Pause className="h-3.5 w-3.5" /> Aguardando cliente
+                    </button>
+                  ) : (
+                    <button
+                      disabled={savingCadastroPublicoStatus === "sla"}
+                      onClick={handleRetomarSla}
+                      className="h-8 px-3 rounded-lg text-[11px] font-semibold border bg-white hover:bg-slate-50 disabled:opacity-40 flex items-center gap-1"
+                      style={{ borderColor: "#6366f1", color: "#6366f1" }}
+                    >
+                      <Play className="h-3.5 w-3.5" /> Documentos recebidos
+                    </button>
+                  )}
+                  <button
+                    disabled={savingCadastroPublicoStatus === "sla"}
+                    onClick={handleConcluirSla}
+                    className="h-8 px-3 rounded-lg text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-40 flex items-center gap-1"
+                    style={{ background: "#16a34a" }}
+                  >
+                    <CheckCircle className="h-3.5 w-3.5" /> Concluir serviço
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Content cards */}
         <div className="space-y-4">

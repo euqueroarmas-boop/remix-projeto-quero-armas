@@ -2462,6 +2462,7 @@ export type Database = {
       }
       qa_cadastro_publico: {
         Row: {
+          aguardando_cliente_desde: string | null
           aut_atividade: string | null
           aut_cnpj: string | null
           aut_endereco: string | null
@@ -2480,6 +2481,7 @@ export type Database = {
           created_at: string
           data_nascimento: string | null
           descricao_servico_livre: string | null
+          dias_pausados: number
           documento_identidade_path: string | null
           email: string
           emissor_rg: string | null
@@ -2526,6 +2528,7 @@ export type Database = {
           observacoes: string | null
           origem_cadastro: string | null
           pago: boolean
+          pago_em: string | null
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
@@ -2534,6 +2537,7 @@ export type Database = {
           servico_fechado_final: string | null
           servico_interesse: string | null
           servico_principal: string | null
+          sla_concluido_em: string | null
           status: string
           subtipo_servico: string | null
           telefone_principal: string
@@ -2547,10 +2551,12 @@ export type Database = {
           trab_nome_empresa: string | null
           trab_telefone_empresa: string | null
           uf_emissor_rg: string | null
+          ultima_solicitacao_cliente: string | null
           updated_at: string
           vinculo_tipo: string | null
         }
         Insert: {
+          aguardando_cliente_desde?: string | null
           aut_atividade?: string | null
           aut_cnpj?: string | null
           aut_endereco?: string | null
@@ -2569,6 +2575,7 @@ export type Database = {
           created_at?: string
           data_nascimento?: string | null
           descricao_servico_livre?: string | null
+          dias_pausados?: number
           documento_identidade_path?: string | null
           email: string
           emissor_rg?: string | null
@@ -2615,6 +2622,7 @@ export type Database = {
           observacoes?: string | null
           origem_cadastro?: string | null
           pago?: boolean
+          pago_em?: string | null
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
@@ -2623,6 +2631,7 @@ export type Database = {
           servico_fechado_final?: string | null
           servico_interesse?: string | null
           servico_principal?: string | null
+          sla_concluido_em?: string | null
           status?: string
           subtipo_servico?: string | null
           telefone_principal: string
@@ -2636,10 +2645,12 @@ export type Database = {
           trab_nome_empresa?: string | null
           trab_telefone_empresa?: string | null
           uf_emissor_rg?: string | null
+          ultima_solicitacao_cliente?: string | null
           updated_at?: string
           vinculo_tipo?: string | null
         }
         Update: {
+          aguardando_cliente_desde?: string | null
           aut_atividade?: string | null
           aut_cnpj?: string | null
           aut_endereco?: string | null
@@ -2658,6 +2669,7 @@ export type Database = {
           created_at?: string
           data_nascimento?: string | null
           descricao_servico_livre?: string | null
+          dias_pausados?: number
           documento_identidade_path?: string | null
           email?: string
           emissor_rg?: string | null
@@ -2704,6 +2716,7 @@ export type Database = {
           observacoes?: string | null
           origem_cadastro?: string | null
           pago?: boolean
+          pago_em?: string | null
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
@@ -2712,6 +2725,7 @@ export type Database = {
           servico_fechado_final?: string | null
           servico_interesse?: string | null
           servico_principal?: string | null
+          sla_concluido_em?: string | null
           status?: string
           subtipo_servico?: string | null
           telefone_principal?: string
@@ -2725,6 +2739,7 @@ export type Database = {
           trab_nome_empresa?: string | null
           trab_telefone_empresa?: string | null
           uf_emissor_rg?: string | null
+          ultima_solicitacao_cliente?: string | null
           updated_at?: string
           vinculo_tipo?: string | null
         }

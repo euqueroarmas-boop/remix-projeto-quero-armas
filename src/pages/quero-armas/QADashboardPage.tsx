@@ -22,6 +22,7 @@ const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/da
 const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
 const DashboardAtividadesRecentes = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
 const DashboardFunilOperacional = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
+const DashboardSlaClientesNovos = lazy(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"));
 
 interface Stats {
   documentos: number;
@@ -429,6 +430,13 @@ export default function QADashboardPage() {
       {mountHeavy && (
         <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
           <DashboardFunilOperacional />
+        </Suspense>
+      )}
+
+      {/* SLA Clientes Novos */}
+      {mountHeavy && (
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+          <DashboardSlaClientesNovos />
         </Suspense>
       )}
 
