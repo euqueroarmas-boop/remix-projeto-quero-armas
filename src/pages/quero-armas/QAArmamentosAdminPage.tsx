@@ -271,6 +271,42 @@ export default function QAArmamentosAdminPage() {
     load();
   }
 
+  /** Limpa o fundo (remove.bg) de UMA arma específica + todas as armas com mesma marca/modelo (duplicadas). */
+  async function limparFundoArma(it: Arma) {
+    if (!it.imagem) { toast.info("Esta arma não possui imagem."); return; }
+    // pega a arma + qualquer duplicata (mesma marca+modelo) que também tenha imagem
+    const grupo = items.filter(
+      (x) => !!x.imagem && (x.id === it.id || (
+        (x.marca || "").trim().toLowerCase() === (it.marca || "").trim().toLowerCase() &&
+        (x.modelo || "").trim().toLowerCase() === (it.modelo || "").trim().toLowerCase()
+      ))
+    );
+    const ids = Array.from(new Set(grupo.map((x) => x.id)));
+    setBgBusyId(it.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-armamento-remove-bg", {
+        body: ids.length > 1 ? { ids } : { id: it.id },
+      });
+      if (error) throw error;
+      const d = data as any;
+      if (Array.isArray(d?.results)) {
+        const ok = d.results.filter((r: any) => r.ok).length;
+        const fail = d.results.filter((r: any) => !r.ok).length;
+        toast.success(`Fundo limpo: ${ok} imagem(ns)${fail ? `, ${fail} falha(s)` : ""}.`);
+      } else if (d?.ok) {
+        toast.success("Fundo limpo com sucesso.");
+      } else {
+        toast.error("Falha: " + (d?.error || "erro desconhecido"));
+      }
+      load();
+      loadRemoveBgUsage();
+    } catch (e: any) {
+      toast.error("Erro ao limpar fundo: " + (e?.message || e));
+    } finally {
+      setBgBusyId(null);
+    }
+  }
+
   /** Reprocessa o fundo (alpha real) de todas as armas que tenham imagem. */
   async function limparFundoTodas() {
     if (!confirm("Reprocessar o fundo de todas as armas com imagem? Pode levar alguns minutos.")) return;
