@@ -69,6 +69,7 @@ export default function QAArmamentosAdminPage() {
   const [auditBusy, setAuditBusy] = useState(false);
   const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
   const [revalBusyId, setRevalBusyId] = useState<string | null>(null);
+  const [bgBusyId, setBgBusyId] = useState<string | null>(null);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
