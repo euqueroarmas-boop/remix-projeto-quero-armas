@@ -1014,26 +1014,21 @@ function WeaponCard({
           <>
             <button
               type="button"
-              className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer overflow-hidden p-2"
+              className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer overflow-hidden px-2 pt-7 pb-7"
               onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
               aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
             >
-              {/* Target box: área-alvo padronizada (~250×167 px em mobile 440px),
-                  proporção 3:2, centralizada. Toda imagem cabe aqui via object-contain,
-                  garantindo tamanho visual uniforme entre pistolas, espingardas etc.
-                  e nunca invadindo a área dos botões/badges (top/bottom). */}
-              <div
-                className="relative flex items-center justify-center"
-                style={{ width: "60%", aspectRatio: "3 / 2", maxHeight: "78%" }}
-              >
-                <img
-                  src={fotoAtual}
-                  alt={`${it.marca} ${it.modelo}`}
-                  loading="lazy"
-                  style={{ objectPosition: "center center" }}
-                  className="block w-full h-full object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
-                />
-              </div>
+              {/* Padrão: container 4/3 com limite de 85% em altura/largura.
+                  pt-7/pb-7 reservam espaço para a tag de tipo (topo) e badges (rodapé),
+                  evitando que a imagem fique sobre outros elementos.
+                  object-contain preserva a proporção original. */}
+              <img
+                src={fotoAtual}
+                alt={`${it.marca} ${it.modelo}`}
+                loading="lazy"
+                style={{ objectPosition: "center center" }}
+                className="block max-h-[85%] max-w-[85%] w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
+              />
             </button>
             <button
               type="button"
