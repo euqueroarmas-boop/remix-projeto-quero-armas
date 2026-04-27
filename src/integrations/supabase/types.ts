@@ -2671,6 +2671,63 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cadastro_publico_recusados: {
+        Row: {
+          cadastro_created_at: string | null
+          cadastro_original_id: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          end1_cidade: string | null
+          end1_estado: string | null
+          id: string
+          motivo_recusa: string | null
+          nome_completo: string | null
+          pago: boolean | null
+          payload_original: Json | null
+          recusado_em: string
+          recusado_por: string | null
+          servico_interesse: string | null
+          telefone_principal: string | null
+        }
+        Insert: {
+          cadastro_created_at?: string | null
+          cadastro_original_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          end1_cidade?: string | null
+          end1_estado?: string | null
+          id?: string
+          motivo_recusa?: string | null
+          nome_completo?: string | null
+          pago?: boolean | null
+          payload_original?: Json | null
+          recusado_em?: string
+          recusado_por?: string | null
+          servico_interesse?: string | null
+          telefone_principal?: string | null
+        }
+        Update: {
+          cadastro_created_at?: string | null
+          cadastro_original_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          end1_cidade?: string | null
+          end1_estado?: string | null
+          id?: string
+          motivo_recusa?: string | null
+          nome_completo?: string | null
+          pago?: boolean | null
+          payload_original?: Json | null
+          recusado_em?: string
+          recusado_por?: string | null
+          servico_interesse?: string | null
+          telefone_principal?: string | null
+        }
+        Relationships: []
+      }
       qa_casos: {
         Row: {
           bairro: string | null
