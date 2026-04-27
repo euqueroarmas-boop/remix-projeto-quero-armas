@@ -3069,8 +3069,12 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
         <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>
           {label}:
         </span>
-        <span className={`text-sm font-medium uppercase ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
-          style={!isInvalid && !highlight ? { color: "hsl(220 20% 18%)" } : undefined}>
+        <span className={`text-sm font-medium uppercase min-w-0 flex-1 break-words ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
+          style={{
+            ...(isInvalid || highlight ? {} : { color: "hsl(220 20% 18%)" }),
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+          }}>
           {displayValue}
         </span>
       </div>
@@ -3100,7 +3104,12 @@ function Field({ label, value, icon: Icon, copyable }: { label: string; value?: 
         <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">{label}</span>
         {copyable && value && <span className="text-slate-300 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">📋</span>}
       </div>
-      <span className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5">{value || "—"}</span>
+        <span
+          className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5 break-words"
+          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
+        >
+          {value || "—"}
+        </span>
     </div>
   );
 }
