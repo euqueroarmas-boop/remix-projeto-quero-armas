@@ -178,6 +178,16 @@ export function ArmaSpecSheet({
                     <Trash2 className="h-3 w-3" /> Remover desta arma
                   </button>
                 )}
+                {onRemoverTodasFotos && total > 1 && (
+                  <button
+                    type="button"
+                    onClick={onRemoverTodasFotos}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-300 bg-white text-red-700 hover:bg-red-600 hover:text-white hover:border-red-700 text-[10px] font-mono font-bold uppercase tracking-wider"
+                    title="Remove todas as fotos desta arma"
+                  >
+                    <Trash2 className="h-3 w-3" /> Remover todas ({total})
+                  </button>
+                )}
               </div>
             )}
 
