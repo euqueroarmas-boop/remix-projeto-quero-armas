@@ -62,6 +62,7 @@ export const CATEGORIAS_SERVICO: CategoriaOpcao[] = [
       { value: "porte_arma", label: "Porte de arma de fogo" },
       { value: "renovacao_porte", label: "Renovação de porte" },
       { value: "renovacao_registro", label: "Renovação de registro" },
+      { value: "renovacao_arma_fogo", label: "Renovação de Arma de Fogo" },
       { value: "seguranca_publica", label: "Segurança pública" },
       { value: "segunda_via_craf", label: "Segunda via de CRAF" },
       { value: "transferencia_propriedade", label: "Transferência de propriedade" },
