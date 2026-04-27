@@ -50,6 +50,15 @@ const empty = (): Partial<Arma> => ({
   marca: "", modelo: "", tipo: "pistola", calibre: "", status_revisao: "rascunho", fonte_dados: "curado", ativo: true,
 });
 
+function montarGaleriaArma(item: Pick<Partial<Arma>, "imagem" | "imagens">): string[] {
+  const seen = new Set<string>();
+  return [item.imagem, ...(Array.isArray(item.imagens) ? item.imagens : [])].filter((url): url is string => {
+    if (!url || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
 export default function QAArmamentosAdminPage() {
   const [items, setItems] = useState<Arma[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +84,7 @@ export default function QAArmamentosAdminPage() {
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
   const [showAllImagesModal, setShowAllImagesModal] = useState(false);
-  const [imagemFullscreen, setImagemFullscreen] = useState<string | null>(null);
+  const [imagemFullscreen, setImagemFullscreen] = useState<{ galeria: string[]; idx: number; titulo: string } | null>(null);
   const [imagemConfirm, setImagemConfirm] = useState<{ url: string; arma: { id: string; marca: string; modelo: string } } | null>(null);
 
   async function loadRemoveBgUsage() {
@@ -104,7 +113,7 @@ export default function QAArmamentosAdminPage() {
       if (!norm) return true;
       return [it.marca, it.modelo, it.apelido, it.calibre].filter(Boolean).join(" ").toLowerCase().includes(norm);
     });
-  }, [items, q, tipoFilter, statusFilter]);
+  }, [items, q, tipoFilter, statusFilter, semImagemFilter]);
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -138,6 +147,9 @@ export default function QAArmamentosAdminPage() {
     setSaving(true);
     const payload: any = { ...editing };
     payload.search_tokens = `${payload.marca} ${payload.modelo} ${payload.apelido || ""} ${payload.calibre}`.toUpperCase();
+    const galeriaNormalizada = montarGaleriaArma(payload);
+    payload.imagem = galeriaNormalizada[0] || null;
+    payload.imagens = galeriaNormalizada.slice(1);
     // Persiste a URL do repositório: prioriza o input "scrapeUrl" (campo do topo),
     // caindo para editing.fonte_url quando não houver. Garante que trocar a URL
     // sem rodar o scraper também salve.
@@ -519,51 +531,45 @@ export default function QAArmamentosAdminPage() {
     }
   }
 
+  async function persistirGaleriaEdicao(next: Partial<Arma>) {
+    if (!next.id) return;
+    const galeria = montarGaleriaArma(next);
+    const { error } = await supabase.from("qa_armamentos_catalogo" as any)
+      .update({ imagem: galeria[0] || null, imagens: galeria.slice(1), imagem_status: galeria[0] ? "pronta" : null })
+      .eq("id", next.id);
+    if (error) { toast.error("Não salvei o álbum: " + error.message); return; }
+    setItems((prev) => prev.map((item) => item.id === next.id ? { ...item, imagem: galeria[0] || null, imagens: galeria.slice(1), imagem_status: galeria[0] ? "pronta" : null } : item));
+  }
+
   /** Adiciona uma foto à galeria da arma; se ainda não houver capa, define como capa. */
   function adicionarImagemGaleria(src: string) {
-    setEditing((prev) => {
-      const base = prev || {};
-      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
-      const capa = (base.imagem || "").trim();
-      // Já está como capa ou já está na galeria → não duplica
-      if (capa === src || galeria.includes(src)) {
-        toast.info("Esta foto já está na galeria");
-        return base;
-      }
-      if (!capa) {
-        toast.success("Foto definida como capa");
-        return { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" } as any;
-      }
-      galeria.push(src);
-      toast.success(`Foto adicionada à galeria (${galeria.length + 1} no total)`);
-      return { ...base, imagens: galeria } as any;
-    });
+    const base = editing || {};
+    const galeria = montarGaleriaArma(base);
+    if (galeria.includes(src)) { toast.info("Esta foto já está na galeria"); return; }
+    const next = (!base.imagem
+      ? { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" }
+      : { ...base, imagens: [...galeria.slice(1), src] }) as Partial<Arma>;
+    setEditing(next);
+    toast.success(!base.imagem ? "Foto definida como capa" : `Foto adicionada ao álbum (${montarGaleriaArma(next).length} no total)`);
+    void persistirGaleriaEdicao(next);
   }
 
   /** Define uma foto da galeria como capa, mantendo a anterior na galeria. */
   function definirComoCapa(src: string) {
-    setEditing((prev) => {
-      const base = prev || {};
-      const galeria = Array.isArray(base.imagens) ? [...base.imagens!] : [];
-      const capaAtual = (base.imagem || "").trim();
-      const novaGaleria = galeria.filter((u) => u !== src);
-      if (capaAtual && capaAtual !== src) novaGaleria.unshift(capaAtual);
-      return { ...base, imagem: src, imagens: novaGaleria, imagem_status: "pronta" } as any;
-    });
+    const base = editing || {};
+    const next = { ...base, imagem: src, imagens: montarGaleriaArma(base).filter((u) => u !== src), imagem_status: "pronta" } as Partial<Arma>;
+    setEditing(next);
     toast.success("Foto definida como capa");
+    void persistirGaleriaEdicao(next);
   }
 
   /** Remove uma foto (capa ou galeria). */
   function removerImagem(src: string) {
-    setEditing((prev) => {
-      const base = prev || {};
-      const galeria = Array.isArray(base.imagens) ? base.imagens!.filter((u) => u !== src) : [];
-      let capa = base.imagem || null;
-      if (capa === src) {
-        capa = galeria.length > 0 ? galeria.shift()! : null;
-      }
-      return { ...base, imagem: capa, imagens: galeria } as any;
-    });
+    const base = editing || {};
+    const restante = montarGaleriaArma(base).filter((u) => u !== src);
+    const next = { ...base, imagem: restante[0] || null, imagens: restante.slice(1) } as Partial<Arma>;
+    setEditing(next);
+    void persistirGaleriaEdicao(next);
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
@@ -725,7 +731,7 @@ export default function QAArmamentosAdminPage() {
               onGerarImagem={() => gerarImagem(it)}
               onVerificar={() => marcarVerificado(it)}
               onRemove={() => remove(it)}
-              onFullscreen={(src) => setImagemFullscreen(src)}
+              onFullscreen={(galeria, idx, titulo) => setImagemFullscreen({ galeria, idx, titulo })}
               onRevalidarImagem={() => revalidarImagem(it)}
               revalidando={revalBusyId === it.id}
               onLimparFundo={() => limparFundoArma(it)}
@@ -829,9 +835,16 @@ export default function QAArmamentosAdminPage() {
           >
             ✕
           </button>
+          {imagemFullscreen.galeria.length > 1 && (
+            <>
+              <button type="button" className="absolute left-4 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setImagemFullscreen((p) => p ? { ...p, idx: (p.idx - 1 + p.galeria.length) % p.galeria.length } : p); }} aria-label="Foto anterior"><ChevronLeft className="h-6 w-6" /></button>
+              <button type="button" className="absolute right-4 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setImagemFullscreen((p) => p ? { ...p, idx: (p.idx + 1) % p.galeria.length } : p); }} aria-label="Próxima foto"><ChevronRight className="h-6 w-6" /></button>
+              <div className="absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-xs font-mono tracking-wider text-white/80">{imagemFullscreen.idx + 1}/{imagemFullscreen.galeria.length}</div>
+            </>
+          )}
           <img
-            src={imagemFullscreen}
-            alt="Visualização"
+            src={imagemFullscreen.galeria[imagemFullscreen.idx]}
+            alt={imagemFullscreen.titulo || "Visualização"}
             className="max-w-[92vw] max-h-[85vh] object-contain"
             onClick={(e) => e.stopPropagation()}
           />
@@ -913,7 +926,7 @@ function WeaponCard({
   onGerarImagem: () => void;
   onVerificar: () => void;
   onRemove: () => void;
-  onFullscreen: (src: string) => void;
+  onFullscreen: (galeria: string[], idx: number, titulo: string) => void;
   onRevalidarImagem: () => void;
   revalidando: boolean;
   onLimparFundo: () => void;
@@ -959,7 +972,7 @@ function WeaponCard({
             <button
               type="button"
               className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
               aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
             >
               <img
@@ -972,7 +985,7 @@ function WeaponCard({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
               className="absolute top-2 right-2 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
               title="Ampliar imagem"
               aria-label="Ampliar imagem"
