@@ -89,8 +89,9 @@ function canonicalKey(url: string): string {
 function pushCandidate(map: Map<string, Candidate>, raw: string, base: URL, context: string, source: string) {
   const url = resolveUrl(raw, base);
   if (!url || !/^https?:\/\//i.test(url)) return;
+  if (BLOCK_RE.test(url)) return;
   const path = new URL(url).pathname;
-  if (!PHOTO_EXT_RE.test(path) && !/\/renditions\//i.test(path)) return;
+  if (!PHOTO_EXT_RE.test(path)) return;
   const score = imageScore(url, context);
   if (score < -40) return;
   const key = canonicalKey(url);
@@ -101,7 +102,7 @@ function pushCandidate(map: Map<string, Candidate>, raw: string, base: URL, cont
 
 function collectUrlsFromText(text: string, base: URL, map: Map<string, Candidate>, source: string) {
   const normalized = decodeLoose(text);
-  const urlRe = /(?:https?:)?\/\/[^\s"'<>\\]+?(?:\.(?:jpe?g|png|webp|avif)|\/renditions\/[^\s"'<>\\]+?)(?:\?[^\s"'<>\\]*)?/gi;
+  const urlRe = /(?:https?:)?\/\/[^\s"'<>\\\])}]+?(?:\.(?:jpe?g|png|webp|avif)|\/renditions\/[^\s"'<>\\\])}]+?\.(?:jpe?g|png|webp|avif))(?:\?[^\s"'<>\\\])}]*)?/gi;
   let match: RegExpExecArray | null;
   while ((match = urlRe.exec(normalized))) {
     pushCandidate(map, match[0], base, normalized.slice(Math.max(0, match.index - 160), match.index + 260), source);
