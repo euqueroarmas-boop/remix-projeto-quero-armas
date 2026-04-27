@@ -142,6 +142,16 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
         .update({ status: novoStatus, motivo_rejeicao: motivo ?? null, data_validacao: new Date().toISOString() })
         .eq("id", docId);
       if (error) throw error;
+      const eventoEmail =
+        novoStatus === "aprovado" ? "documento_aprovado" :
+        novoStatus === "invalido" ? "documento_invalido" :
+        novoStatus === "divergente" ? "documento_divergente" :
+        novoStatus === "revisao_humana" ? "revisao_humana" : null;
+      if (eventoEmail) {
+        supabase.functions.invoke("qa-processo-notificar", {
+          body: { processo_id: processoId, documento_id: docId, evento: eventoEmail, motivo },
+        }).catch((e) => console.warn("notificação:", e));
+      }
       toast.success("Status do documento atualizado.");
       await carregar();
       onUpdated?.();
@@ -154,6 +164,16 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     try {
       const { error } = await supabase.from("qa_processos").update({ status: novoStatus }).eq("id", processoId);
       if (error) throw error;
+      const eventoEmail =
+        novoStatus === "aprovado" ? "documentacao_aprovada" :
+        novoStatus === "concluido" ? "processo_concluido" :
+        novoStatus === "bloqueado" ? "processo_bloqueado" :
+        novoStatus === "em_revisao_humana" ? "revisao_humana" : null;
+      if (eventoEmail) {
+        supabase.functions.invoke("qa-processo-notificar", {
+          body: { processo_id: processoId, evento: eventoEmail },
+        }).catch((e) => console.warn("notificação:", e));
+      }
       toast.success("Processo atualizado.");
       await carregar();
       onUpdated?.();
