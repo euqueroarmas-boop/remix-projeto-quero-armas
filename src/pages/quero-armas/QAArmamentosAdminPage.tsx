@@ -68,6 +68,7 @@ export default function QAArmamentosAdminPage() {
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
   const [showAllImagesModal, setShowAllImagesModal] = useState(false);
+  const [imagemFullscreen, setImagemFullscreen] = useState<string | null>(null);
 
   async function loadRemoveBgUsage() {
     const { data, error } = await supabase.rpc("qa_remove_bg_usage_mes" as any);
@@ -473,6 +474,7 @@ export default function QAArmamentosAdminPage() {
               onGerarImagem={() => gerarImagem(it)}
               onVerificar={() => marcarVerificado(it)}
               onRemove={() => remove(it)}
+              onFullscreen={(src) => setImagemFullscreen(src)}
             />
           ))}
         </div>
@@ -544,6 +546,31 @@ export default function QAArmamentosAdminPage() {
           </div>
         </div>
       )}
+
+      {/* LIGHTBOX — imagem em tela cheia */}
+      {imagemFullscreen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-in fade-in duration-200"
+          onClick={() => setImagemFullscreen(null)}
+        >
+          <button
+            className="absolute top-6 right-6 text-white bg-white/10 rounded-full w-10 h-10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors z-10"
+            onClick={(e) => { e.stopPropagation(); setImagemFullscreen(null); }}
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+          <img
+            src={imagemFullscreen}
+            alt="Visualização"
+            className="max-w-[92vw] max-h-[85vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 text-xs tracking-widest uppercase font-mono">
+            Toque fora para fechar
+          </p>
+        </div>
+      )}
       </div>
     </div>
   );
@@ -572,7 +599,7 @@ const TIPO_ICON: Record<string, string> = {
 };
 
 function WeaponCard({
-  it, busy, onOpen, onGerarImagem, onVerificar, onRemove,
+  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen,
 }: {
   it: Arma;
   busy: boolean;
@@ -580,6 +607,7 @@ function WeaponCard({
   onGerarImagem: () => void;
   onVerificar: () => void;
   onRemove: () => void;
+  onFullscreen: (src: string) => void;
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
@@ -601,17 +629,20 @@ function WeaponCard({
 
       {/* visual da arma */}
       <div
-        className="relative aspect-[4/3] grid place-items-center overflow-hidden isolate bg-white px-4 pt-8 pb-3"
+        className="relative w-full overflow-hidden bg-white"
+        style={{ aspectRatio: "16/10" }}
       >
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
             loading="lazy"
-            className="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
+            onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+            style={{ objectPosition: "center center" }}
+            className="absolute inset-0 w-full h-full object-contain p-4 cursor-pointer drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
           />
         ) : (
-          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-300">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-300">
             <Target className="h-10 w-10" />
             <span className="text-[10px] font-mono uppercase tracking-[0.2em]">SEM IMAGEM</span>
           </div>
