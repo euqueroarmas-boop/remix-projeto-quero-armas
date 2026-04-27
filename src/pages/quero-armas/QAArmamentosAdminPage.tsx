@@ -703,7 +703,7 @@ function WeaponCard({
   return (
     <div
       onClick={onOpen}
-      className="group relative cursor-pointer rounded-xl border border-zinc-200 bg-white overflow-hidden hover:border-amber-500/60 shadow-[0_2px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_50px_-20px_rgba(245,158,11,0.35)] transition-all duration-300"
+      className="group relative min-w-0 w-full max-w-full cursor-pointer rounded-xl border border-zinc-200 bg-white overflow-hidden hover:border-amber-500/60 shadow-[0_2px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_50px_-20px_rgba(245,158,11,0.35)] transition-all duration-300"
     >
       {/* faixa superior tática */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#fafaf7] border-b border-zinc-200">
@@ -718,18 +718,25 @@ function WeaponCard({
 
       {/* visual da arma */}
       <div
-        className="relative w-full overflow-hidden bg-white"
+        className="relative w-full max-w-full overflow-hidden bg-white"
         style={{ aspectRatio: "16/10" }}
       >
         {it.imagem ? (
           <>
-            <img
-              src={it.imagem}
-              alt={`${it.marca} ${it.modelo}`}
-              loading="lazy"
-              style={{ objectPosition: "center center" }}
-              className="absolute inset-0 w-full h-full object-contain p-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none pointer-events-none"
-            />
+            <button
+              type="button"
+              className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
+              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
+            >
+              <img
+                src={it.imagem}
+                alt={`${it.marca} ${it.modelo}`}
+                loading="lazy"
+                style={{ objectPosition: "center center" }}
+                className="block h-full w-full max-w-full object-contain p-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
+              />
+            </button>
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
