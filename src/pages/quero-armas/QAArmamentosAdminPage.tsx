@@ -69,6 +69,7 @@ export default function QAArmamentosAdminPage() {
   const [carregandoImagens, setCarregandoImagens] = useState(false);
   const [showAllImagesModal, setShowAllImagesModal] = useState(false);
   const [imagemFullscreen, setImagemFullscreen] = useState<string | null>(null);
+  const [imagemConfirm, setImagemConfirm] = useState<{ url: string; arma: { id: string; marca: string; modelo: string } } | null>(null);
 
   async function loadRemoveBgUsage() {
     const { data, error } = await supabase.rpc("qa_remove_bg_usage_mes" as any);
@@ -156,34 +157,50 @@ export default function QAArmamentosAdminPage() {
       const { data, error } = await supabase.functions.invoke("qa-armamento-buscar-foto-real", { body: { id: it.id } });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Foto real encontrada para ${it.marca} ${it.modelo}`);
       const url = (data as any)?.imagem as string | undefined;
       if (url) {
-        setEditing((p) => (p && p.id === it.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
+        // pede confirmação antes de salvar definitivamente
+        setImagemConfirm({ url, arma: { id: it.id, marca: it.marca, modelo: it.modelo } });
       }
-      // remove fundo automaticamente via remove.bg
-      try {
-        const { data: rb, error: rbErr } = await supabase.functions.invoke(
-          "qa-armamento-remove-bg",
-          { body: { id: it.id } },
-        );
-        if (rbErr) throw rbErr;
-        if ((rb as any)?.ok && (rb as any)?.imagem) {
-          const cleaned = (rb as any).imagem as string;
-          setEditing((p) => (p && p.id === it.id ? { ...p, imagem: cleaned } : p));
-          loadRemoveBgUsage();
-        } else if ((rb as any)?.error) {
-          console.warn("remove.bg falhou:", (rb as any).error);
-        }
-      } catch (e: any) {
-        console.warn("remove.bg indisponível:", e?.message || e);
-      }
-      load();
     } catch (e: any) {
       toast.error(`Não encontrei foto real para ${it.marca} ${it.modelo}: ${e?.message || e}`);
     } finally {
       setImgBusyId(null);
     }
+  }
+
+  async function confirmarImagem() {
+    if (!imagemConfirm) return;
+    const { url, arma } = imagemConfirm;
+    setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
+    setImagemConfirm(null);
+    toast.success(`Imagem confirmada para ${arma.marca} ${arma.modelo}`);
+    // remove fundo automaticamente via remove.bg
+    try {
+      const { data: rb, error: rbErr } = await supabase.functions.invoke(
+        "qa-armamento-remove-bg",
+        { body: { id: arma.id } },
+      );
+      if (rbErr) throw rbErr;
+      if ((rb as any)?.ok && (rb as any)?.imagem) {
+        const cleaned = (rb as any).imagem as string;
+        setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: cleaned } : p));
+        loadRemoveBgUsage();
+      }
+    } catch (e: any) {
+      console.warn("remove.bg indisponível:", e?.message || e);
+    }
+    load();
+  }
+
+  function abrirGoogleImagens(it: { marca?: string | null; modelo?: string | null; tipo?: string | null }) {
+    const tipoMap: Record<string, string> = {
+      pistola: "pistol", revolver: "revolver", espingarda: "shotgun",
+      carabina: "carbine rifle", fuzil: "rifle", submetralhadora: "submachine gun",
+    };
+    const tipoEn = tipoMap[(it.tipo || "").toLowerCase()] || "";
+    const q = [it.marca, it.modelo, tipoEn, "firearm"].filter(Boolean).join(" ");
+    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`, "_blank", "noopener");
   }
 
   /** Busca foto real para todas as armas que ainda não têm foto pronta. */
@@ -317,14 +334,30 @@ export default function QAArmamentosAdminPage() {
       const doc = parser.parseFromString(html, "text/html");
       const base = new URL(url);
       const resolve = (src: string) => { try { return new URL(src, base).href; } catch { return ""; } };
+      const blockedRegex = /logo|favicon|sprite|placeholder|avatar|truck|car|vehicle|caminhao|bombeiro|fire-?truck|banner|\/icon|\/bg\/|wallpaper|cartoon|toy/i;
+      const marcaModelo = `${editing?.marca || ""} ${editing?.modelo || ""}`.toLowerCase().trim();
+      const tokens = marcaModelo.split(/\s+/).filter((t) => t.length >= 2);
       const imgs = Array.from(doc.querySelectorAll("img"))
-        .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "")
-        .map((s) => resolve(s))
-        .filter((src) =>
+        .map((img) => {
+          const src = img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "";
+          const alt = (img.getAttribute("alt") || "").toLowerCase();
+          const w = parseInt(img.getAttribute("width") || "0", 10);
+          return { src: resolve(src), alt, w };
+        })
+        .filter(({ src, alt, w }) =>
           src.startsWith("http") &&
-          !/logo|icon|favicon|sprite|placeholder|avatar/i.test(src) &&
-          /\.(jpe?g|png|webp)(\?|$)/i.test(src)
-        );
+          !blockedRegex.test(src) &&
+          !blockedRegex.test(alt) &&
+          /\.(jpe?g|png|webp)(\?|$)/i.test(src) &&
+          (
+            // aceita se URL/alt contém marca ou modelo, ou se imagem é grande (≥300px)
+            tokens.length === 0 ||
+            tokens.some((t) => src.toLowerCase().includes(t) || alt.includes(t)) ||
+            w >= 300 ||
+            !w // não tem width declarado, dá benefício da dúvida
+          )
+        )
+        .map((x) => x.src);
       return [...new Set(imgs)];
     } catch (e) {
       console.error("[buscarImagensFabricante]", e);
