@@ -495,3 +495,64 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
     </button>
   );
 }
+
+const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado"; label: string; hint: string }[] = [
+  { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
+  { id: "autonomo", label: "AUTÔNOMO", hint: "Cartão CNPJ/MEI + NF recente" },
+  { id: "empresario", label: "EMPRESÁRIO/SÓCIO", hint: "Cartão CNPJ + QSA + Contrato Social" },
+  { id: "aposentado", label: "APOSENTADO", hint: "Comprovante de benefício INSS" },
+];
+
+function CondicaoProfissionalCard({
+  condicao,
+  indefinida,
+  saving,
+  onSelect,
+}: {
+  condicao: string | null;
+  indefinida: boolean;
+  saving: string | null;
+  onSelect: (c: "clt" | "autonomo" | "empresario" | "aposentado") => void;
+}) {
+  const atual = (condicao || "").toLowerCase();
+  return (
+    <div className={`rounded-xl border p-4 ${indefinida ? "bg-amber-50 border-amber-200" : "bg-white border-slate-200"}`}>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">CONDIÇÃO PROFISSIONAL</div>
+          <div className="text-sm font-bold text-slate-800 uppercase mt-0.5">
+            {indefinida
+              ? "DEFINA SUA CONDIÇÃO PARA LIBERAR OS COMPROVANTES DE RENDA CORRETOS"
+              : `ATUAL: ${atual.toUpperCase()}`}
+          </div>
+          <div className="text-[11px] text-slate-600 mt-1">
+            Os documentos de renda são gerados automaticamente conforme sua escolha. Itens já aprovados são preservados.
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+        {CONDICAO_OPCOES.map((op) => {
+          const ativo = atual === op.id;
+          const carregando = saving === op.id;
+          return (
+            <button
+              key={op.id}
+              disabled={!!saving}
+              onClick={() => onSelect(op.id)}
+              className={`text-left rounded-lg border px-3 py-2 transition ${
+                ativo
+                  ? "bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200"
+                  : "bg-white border-slate-200 hover:bg-slate-50"
+              } disabled:opacity-50`}
+            >
+              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800">{op.label}</div>
+              <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{op.hint}</div>
+              {ativo && <div className="text-[10px] uppercase font-bold text-emerald-700 mt-1">SELECIONADO</div>}
+              {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1">SALVANDO...</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
