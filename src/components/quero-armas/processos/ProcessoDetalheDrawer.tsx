@@ -39,6 +39,7 @@ interface ProcessoFull {
   pagamento_status: string;
   data_criacao: string;
   observacoes_admin: string | null;
+  condicao_profissional?: string | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
@@ -72,7 +73,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
@@ -99,6 +100,20 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
   const handleFileSelect = (docId: string) => {
     setPendingDocId(docId);
+    // ajusta accept conforme formato_aceito do item
+    const doc = docs.find((d) => d.id === docId);
+    const fmts: string[] = Array.isArray(doc?.formato_aceito)
+      ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      : [];
+    let accept = "image/*,application/pdf";
+    if (fmts.length > 0) {
+      const parts: string[] = [];
+      if (fmts.includes("pdf")) parts.push("application/pdf");
+      if (fmts.some((f) => ["jpg", "jpeg"].includes(f))) parts.push("image/jpeg");
+      if (fmts.includes("png")) parts.push("image/png");
+      if (parts.length > 0) accept = parts.join(",");
+    }
+    if (fileInputRef.current) fileInputRef.current.accept = accept;
     fileInputRef.current?.click();
   };
 
@@ -108,6 +123,21 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     if (!file || !docId || !processo) return;
     e.target.value = "";
     setUploadingId(docId);
+    // valida extensão no front antes de subir (UX rápida)
+    const docMeta = docs.find((d) => d.id === docId);
+    const fmts: string[] = Array.isArray(docMeta?.formato_aceito)
+      ? (docMeta!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      : [];
+    const extLocal = (file.name.split(".").pop() || "").toLowerCase();
+    if (fmts.length > 0 && !fmts.includes(extLocal)) {
+      const msg = fmts.length === 1 && fmts[0] === "pdf"
+        ? "Este documento deve ser enviado exclusivamente em PDF."
+        : `Formato não aceito. Envie: ${fmts.join(", ").toUpperCase()}.`;
+      toast.error(msg);
+      setUploadingId(null);
+      setPendingDocId(null);
+      return;
+    }
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
@@ -123,7 +153,14 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-doc-upload`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ documento_id: docId, storage_key: key, mime_type: file.type, file_name: file.name }),
+        body: JSON.stringify({
+          processo_id: processo.id,
+          documento_id: docId,
+          storage_path: key,
+          mime_type: file.type,
+          tamanho_bytes: file.size,
+          nome_arquivo_original: file.name,
+        }),
       });
       if (!resp.ok) {
         const txt = await resp.text();
@@ -198,6 +235,32 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
+  const [savingCond, setSavingCond] = useState<string | null>(null);
+  const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado") => {
+    if (!processo) return;
+    setSavingCond(cond);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-set-condicao`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ processo_id: processo.id, condicao_profissional: cond }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao salvar condição");
+      }
+      toast.success("Condição profissional registrada. Checklist de renda atualizado.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setSavingCond(null);
+    }
+  };
+
   const st = processo ? getStatusProcesso(processo.status) : null;
   const totalObrig = docs.filter((d) => d.obrigatorio).length;
   const aprovObrig = docs.filter((d) => d.obrigatorio && d.status === "aprovado").length;
@@ -254,8 +317,20 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
             <div className="space-y-3">
+              <CondicaoProfissionalCard
+                condicao={processo?.condicao_profissional ?? null}
+                indefinida={
+                  !processo?.condicao_profissional ||
+                  processo.condicao_profissional === "indefinido" ||
+                  docs.some((d) => d.tipo_documento === "renda_definir_condicao")
+                }
+                saving={savingCond}
+                onSelect={setCondicao}
+              />
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
-              {docs.map((doc) => {
+              {docs
+                .filter((doc) => doc.tipo_documento !== "renda_definir_condicao")
+                .map((doc) => {
                 const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                 const labelBotao: string | null = (doc.regra_validacao && typeof doc.regra_validacao === "object" && typeof doc.regra_validacao.label_botao === "string")
                   ? doc.regra_validacao.label_botao : null;
@@ -339,7 +414,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                         </button>
                       )}
                       {/* Cliente: pode reenviar se não aprovado */}
-                      {doc.status !== "aprovado" && (
+                      {doc.status !== "aprovado" && doc.status !== "dispensado_grupo" && (
                         <button
                           disabled={uploadingId === doc.id}
                           onClick={() => handleFileSelect(doc.id)}
@@ -418,5 +493,66 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
     >
       {icon} {label}
     </button>
+  );
+}
+
+const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado"; label: string; hint: string }[] = [
+  { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
+  { id: "autonomo", label: "AUTÔNOMO", hint: "Cartão CNPJ/MEI + NF recente" },
+  { id: "empresario", label: "EMPRESÁRIO/SÓCIO", hint: "Cartão CNPJ + QSA + Contrato Social" },
+  { id: "aposentado", label: "APOSENTADO", hint: "Comprovante de benefício INSS" },
+];
+
+function CondicaoProfissionalCard({
+  condicao,
+  indefinida,
+  saving,
+  onSelect,
+}: {
+  condicao: string | null;
+  indefinida: boolean;
+  saving: string | null;
+  onSelect: (c: "clt" | "autonomo" | "empresario" | "aposentado") => void;
+}) {
+  const atual = (condicao || "").toLowerCase();
+  return (
+    <div className={`rounded-xl border p-4 ${indefinida ? "bg-amber-50 border-amber-200" : "bg-white border-slate-200"}`}>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">CONDIÇÃO PROFISSIONAL</div>
+          <div className="text-sm font-bold text-slate-800 uppercase mt-0.5">
+            {indefinida
+              ? "DEFINA SUA CONDIÇÃO PARA LIBERAR OS COMPROVANTES DE RENDA CORRETOS"
+              : `ATUAL: ${atual.toUpperCase()}`}
+          </div>
+          <div className="text-[11px] text-slate-600 mt-1">
+            Os documentos de renda são gerados automaticamente conforme sua escolha. Itens já aprovados são preservados.
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+        {CONDICAO_OPCOES.map((op) => {
+          const ativo = atual === op.id;
+          const carregando = saving === op.id;
+          return (
+            <button
+              key={op.id}
+              disabled={!!saving}
+              onClick={() => onSelect(op.id)}
+              className={`text-left rounded-lg border px-3 py-2 transition ${
+                ativo
+                  ? "bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200"
+                  : "bg-white border-slate-200 hover:bg-slate-50"
+              } disabled:opacity-50`}
+            >
+              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800">{op.label}</div>
+              <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{op.hint}</div>
+              {ativo && <div className="text-[10px] uppercase font-bold text-emerald-700 mt-1">SELECIONADO</div>}
+              {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1">SALVANDO...</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

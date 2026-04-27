@@ -30,6 +30,7 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   cpf: "Comprovante de CPF. Extraia: nome_completo, cpf (apenas dígitos).",
   comprovante_residencia: "Conta de luz/água/telefone/internet. Extraia: nome_titular, endereco_completo, cep, cidade, uf, data_emissao (YYYY-MM-DD).",
   comprovante_renda: "Holerite/decore/IR. Extraia: nome_titular, ocupacao, renda_mensal_aproximada, periodo_referencia, data_emissao (YYYY-MM-DD).",
+  renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
   certidao_civel: "Certidão Cível Federal. Extraia: nome_titular, cpf, resultado (NADA_CONSTA ou CONSTA), data_emissao (YYYY-MM-DD).",
   certidao_criminal_federal: "Criminal Federal. Extraia: nome_titular, cpf, resultado, data_emissao.",
   certidao_criminal_estadual: "Criminal Estadual. Extraia: nome_titular, cpf, uf, resultado, data_emissao.",
@@ -141,6 +142,38 @@ function isVencido(dataEmissao: string | undefined, validadeDias: number | null 
   if (isNaN(d.getTime())) return false;
   const limite = new Date(d.getTime() + validadeDias * 86400000);
   return limite < new Date();
+}
+
+// Holerite: precisa corresponder ao mês atual ou mês imediatamente anterior.
+// Aceita "periodo_referencia" ou "mes_referencia" no formato YYYY-MM, "MM/YYYY" ou nomes.
+const MESES_PT: Record<string, number> = {
+  "janeiro":1,"fevereiro":2,"marco":3,"março":3,"abril":4,"maio":5,"junho":6,
+  "julho":7,"agosto":8,"setembro":9,"outubro":10,"novembro":11,"dezembro":12,
+};
+function parseMesAno(raw: any): { y: number; m: number } | null {
+  if (raw == null) return null;
+  const s = String(raw).trim().toLowerCase();
+  let m: RegExpMatchArray | null;
+  if ((m = s.match(/(\d{4})[-\/](\d{1,2})/))) return { y: +m[1], m: +m[2] };
+  if ((m = s.match(/(\d{1,2})[-\/](\d{4})/))) return { y: +m[2], m: +m[1] };
+  for (const [nome, idx] of Object.entries(MESES_PT)) {
+    if (s.includes(nome)) {
+      const ya = s.match(/(\d{4})/);
+      if (ya) return { y: +ya[1], m: idx };
+    }
+  }
+  return null;
+}
+function holeriteForaDoPeriodo(extraidos: Record<string, any>): boolean {
+  const ref = parseMesAno(extraidos?.mes_referencia)
+           ?? parseMesAno(extraidos?.periodo_referencia)
+           ?? parseMesAno(extraidos?.data_emissao);
+  if (!ref) return true; // não conseguimos identificar o mês -> trata como inválido
+  const now = new Date();
+  const cy = now.getFullYear(), cm = now.getMonth() + 1;
+  // aceita: mês atual ou mês anterior
+  const monthsDiff = (cy - ref.y) * 12 + (cm - ref.m);
+  return monthsDiff < 0 || monthsDiff > 1;
 }
 
 Deno.serve(async (req) => {
@@ -256,6 +289,12 @@ Deno.serve(async (req) => {
     } else if (esperadoViolado.length > 0) {
       novoStatus = "invalido";
       motivoRejeicao = "Conteúdo esperado não confirmado: " + esperadoViolado.join("; ");
+    } else if (
+      doc.tipo_documento === "renda_holerite_mes_atual" &&
+      holeriteForaDoPeriodo(parsed.campos_extraidos || {})
+    ) {
+      novoStatus = "invalido";
+      motivoRejeicao = "O holerite enviado não corresponde ao período atual ou mais recente aceitável.";
     } else if (vencido) {
       novoStatus = "invalido";
       motivoRejeicao = `Documento fora do prazo de validade (${doc.validade_dias} dias).`;
@@ -305,6 +344,41 @@ Deno.serve(async (req) => {
       dados_json: { confianca: conf, divergencias: divergencias.length, vencido, campos_faltando: camposFaltando, esperado_violado: esperadoViolado },
       ator: "ia",
     });
+
+    // ===== GRUPO ALTERNATIVO: se aprovado, dispensa demais itens do mesmo grupo =====
+    if (novoStatus === "aprovado") {
+      const grupo = (regra?.grupo_alternativo as string | undefined) ?? null;
+      if (grupo) {
+        const { data: irmaos } = await supabase
+          .from("qa_processo_documentos")
+          .select("id, status, regra_validacao, nome_documento")
+          .eq("processo_id", processo_id);
+        const dispensar = (irmaos ?? []).filter((it: any) =>
+          it.id !== documento_id &&
+          it?.regra_validacao?.grupo_alternativo === grupo &&
+          !["aprovado", "dispensado_grupo"].includes(String(it.status))
+        );
+        if (dispensar.length > 0) {
+          const ids = dispensar.map((d: any) => d.id);
+          await supabase.from("qa_processo_documentos")
+            .update({
+              status: "dispensado_grupo",
+              motivo_rejeicao: null,
+              observacoes: `dispensado:grupo=${grupo}`,
+            })
+            .in("id", ids);
+          await supabase.from("qa_processo_eventos").insert(
+            dispensar.map((d: any) => ({
+              processo_id, documento_id: d.id,
+              tipo_evento: "grupo_alternativo_satisfeito",
+              descricao: `${d.nome_documento} dispensado: grupo "${grupo}" satisfeito por ${doc.nome_documento}.`,
+              dados_json: { grupo, satisfeito_por: documento_id },
+              ator: "sistema",
+            }))
+          );
+        }
+      }
+    }
 
     // Notifica granular (cobra SOMENTE este item)
     const eventoEmail =
