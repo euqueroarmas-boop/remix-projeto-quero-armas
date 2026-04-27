@@ -601,14 +601,14 @@ function WeaponCard({
 
       {/* visual da arma */}
       <div
-        className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate bg-white"
+        className="relative aspect-[4/3] grid place-items-center overflow-hidden isolate bg-white px-4 pt-8 pb-3"
       >
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
             loading="lazy"
-            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
+            className="relative z-10 max-h-full max-w-full w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
           />
         ) : (
           <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-300">
