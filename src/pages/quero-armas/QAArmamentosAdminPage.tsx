@@ -179,6 +179,17 @@ export default function QAArmamentosAdminPage() {
   async function confirmarImagem() {
     if (!imagemConfirm) return;
     const { url, arma } = imagemConfirm;
+    const { data: u } = await supabase.auth.getUser();
+    // Admin: persiste imagem aprovada imediatamente.
+    await supabase.from("qa_armamentos_catalogo" as any)
+      .update({
+        imagem: url,
+        imagem_status: "pronta",
+        imagem_aprovada: true,
+        imagem_enviada_por: u.user?.id || null,
+        imagem_enviada_em: new Date().toISOString(),
+      })
+      .eq("id", arma.id);
     setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
     setImagemConfirm(null);
     toast.success(`Imagem confirmada para ${arma.marca} ${arma.modelo}`);
