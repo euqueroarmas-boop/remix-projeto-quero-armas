@@ -971,7 +971,7 @@ function WeaponCard({
           <>
             <button
               type="button"
-              className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
+              className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer overflow-hidden p-2"
               onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
               aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
             >
@@ -980,7 +980,7 @@ function WeaponCard({
                 alt={`${it.marca} ${it.modelo}`}
                 loading="lazy"
                 style={{ objectPosition: "center center" }}
-                className="block h-full w-full max-w-full object-contain p-2 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
+                className="block max-h-[85%] max-w-[85%] w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
               />
             </button>
             <button
