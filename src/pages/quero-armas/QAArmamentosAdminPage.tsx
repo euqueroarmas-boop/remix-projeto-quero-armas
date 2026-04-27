@@ -827,6 +827,16 @@ function WeaponCard({
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-amber-500/90 border border-amber-600 text-[9px] font-mono uppercase tracking-[0.25em] text-white shadow-sm">
           {it.tipo}
         </div>
+
+        {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
+        {it.imagem && it.imagem_aprovada === false && (
+          <div
+            className="absolute bottom-2 left-2 z-20 px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
+            title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
+          >
+            <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+          </div>
+        )}
       </div>
 
       {/* corpo */}
