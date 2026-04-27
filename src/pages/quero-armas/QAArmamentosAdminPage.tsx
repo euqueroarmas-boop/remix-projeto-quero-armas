@@ -952,16 +952,16 @@ function WeaponCard({
         className="relative w-full max-w-full overflow-hidden bg-white"
         style={{ aspectRatio: "16/10" }}
       >
-        {it.imagem ? (
+        {fotoAtual ? (
           <>
             <button
               type="button"
               className="absolute inset-0 z-10 block h-full w-full max-w-full cursor-pointer overflow-hidden"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
               aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
             >
               <img
-                src={it.imagem}
+                src={fotoAtual}
                 alt={`${it.marca} ${it.modelo}`}
                 loading="lazy"
                 style={{ objectPosition: "center center" }}
@@ -970,13 +970,38 @@ function WeaponCard({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(it.imagem!); }}
+              onClick={(e) => { e.stopPropagation(); onFullscreen(fotoAtual!); }}
               className="absolute top-2 right-2 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
               title="Ampliar imagem"
               aria-label="Ampliar imagem"
             >
               <Search className="h-3.5 w-3.5" />
             </button>
+            {total > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md backdrop-blur-sm transition-colors"
+                  title="Foto anterior"
+                  aria-label="Foto anterior"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md backdrop-blur-sm transition-colors"
+                  title="Próxima foto"
+                  aria-label="Próxima foto"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-zinc-900/70 text-white text-[10px] font-mono tracking-wider">
+                  {fotoIdx + 1}/{total}
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-300">
