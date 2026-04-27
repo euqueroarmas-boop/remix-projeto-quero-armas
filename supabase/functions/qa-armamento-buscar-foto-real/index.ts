@@ -427,7 +427,7 @@ Deno.serve(async (req) => {
 
       // Ordena por (score do host) DESC, depois por área plausível (não muito pequena, não muito grande)
       const ranked = [...results]
-        .filter((r) => r?.image && typeof r.image === "string")
+        .filter((r) => r?.image && typeof r.image === "string" && !isBlockedUrl(r.image) && !isBlockedUrl(String(r.title || "")))
         .map((r) => ({
           r,
           score: hostScore(r.image) * 1000 + (r.height >= 400 && r.height <= 1600 ? 10 : 0),
