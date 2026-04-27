@@ -13,6 +13,7 @@ import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Sear
 import { ImageOff, X } from "lucide-react";
 import { toast } from "sonner";
 import { LoadingState } from "@/components/quero-armas/LoadStates";
+import { ArmaSpecSheet } from "./ArmaSpecSheet";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
 type Fonte = "curado" | "ia_gerado" | "scrape_fabricante" | "importado";
