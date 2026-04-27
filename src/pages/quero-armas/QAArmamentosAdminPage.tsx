@@ -147,6 +147,22 @@ export default function QAArmamentosAdminPage() {
       if (url) {
         setEditing((p) => (p && p.id === it.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
       }
+      // remove fundo automaticamente via remove.bg
+      try {
+        const { data: rb, error: rbErr } = await supabase.functions.invoke(
+          "qa-armamento-remove-bg",
+          { body: { id: it.id } },
+        );
+        if (rbErr) throw rbErr;
+        if ((rb as any)?.ok && (rb as any)?.imagem) {
+          const cleaned = (rb as any).imagem as string;
+          setEditing((p) => (p && p.id === it.id ? { ...p, imagem: cleaned } : p));
+        } else if ((rb as any)?.error) {
+          console.warn("remove.bg falhou:", (rb as any).error);
+        }
+      } catch (e: any) {
+        console.warn("remove.bg indisponível:", e?.message || e);
+      }
       load();
     } catch (e: any) {
       toast.error(`Não encontrei foto real para ${it.marca} ${it.modelo}: ${e?.message || e}`);
@@ -205,6 +221,30 @@ export default function QAArmamentosAdminPage() {
       load();
     } catch (e: any) {
       toast.error("Erro ao limpar fundo: " + (e?.message || e));
+    } finally {
+      setBgBusy(false);
+    }
+  }
+
+  /** Remove o fundo via remove.bg (API premium) em todas as armas com imagem. */
+  async function removeBgTodas() {
+    const comImagem = items.filter((i) => !!i.imagem);
+    if (comImagem.length === 0) { toast.info("Nenhuma arma com imagem."); return; }
+    if (!confirm(`Enviar ${comImagem.length} imagem(ns) ao remove.bg? (1 crédito por imagem)`)) return;
+    setBgBusy(true);
+    try {
+      const ids = comImagem.map((i) => i.id);
+      const { data, error } = await supabase.functions.invoke("qa-armamento-remove-bg", {
+        body: { ids },
+      });
+      if (error) throw error;
+      const results = ((data as any)?.results || []) as Array<{ ok: boolean; error?: string }>;
+      const ok = results.filter((r) => r.ok).length;
+      const fail = results.filter((r) => !r.ok).length;
+      toast.success(`remove.bg concluído: ${ok} ok${fail ? `, ${fail} falha(s)` : ""}.`);
+      load();
+    } catch (e: any) {
+      toast.error("Erro no remove.bg: " + (e?.message || e));
     } finally {
       setBgBusy(false);
     }
