@@ -263,7 +263,10 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
   const st = processo ? getStatusProcesso(processo.status) : null;
   const totalObrig = docs.filter((d) => d.obrigatorio).length;
-  const aprovObrig = docs.filter((d) => d.obrigatorio && d.status === "aprovado").length;
+  // Obrigatório satisfeito = aprovado OU dispensado_grupo (grupo alternativo já satisfeito por outro doc)
+  const aprovObrig = docs.filter(
+    (d) => d.obrigatorio && (d.status === "aprovado" || d.status === "dispensado_grupo")
+  ).length;
   const progresso = totalObrig > 0 ? Math.round((aprovObrig / totalObrig) * 100) : 0;
 
   return (

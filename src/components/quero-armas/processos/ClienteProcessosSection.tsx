@@ -44,8 +44,9 @@ export function ClienteProcessosSection({ clienteId }: Props) {
       const enriched: Processo[] = (procs ?? []).map((p: any) => {
         const myDocs = (docs ?? []).filter((d: any) => d.processo_id === p.id);
         const total = myDocs.length;
+        // pendentes: apenas obrigatórios não satisfeitos. dispensado_grupo NÃO é pendência.
         const pendentes = myDocs.filter((d: any) => d.obrigatorio && (d.status === "pendente" || d.status === "invalido" || d.status === "divergente")).length;
-        const aprovados = myDocs.filter((d: any) => d.status === "aprovado").length;
+        const aprovados = myDocs.filter((d: any) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
 
         let acao = "ACOMPANHAR";
         if (p.status === "aguardando_pagamento") acao = "AGUARDANDO PAGAMENTO";

@@ -54,7 +54,8 @@ export default function QAProcessosPage() {
       (docs ?? []).forEach((d: any) => {
         const c = ctMap.get(d.processo_id) ?? { total: 0, aprovados: 0, pendentes: 0, invalidos: 0, divergentes: 0, revisao: 0 };
         c.total++;
-        if (d.status === "aprovado") c.aprovados++;
+        // dispensado_grupo conta como satisfeito (não pendente, não bloqueante)
+        if (d.status === "aprovado" || d.status === "dispensado_grupo") c.aprovados++;
         else if (d.status === "invalido") c.invalidos++;
         else if (d.status === "divergente") c.divergentes++;
         else if (d.status === "revisao_humana") c.revisao++;
