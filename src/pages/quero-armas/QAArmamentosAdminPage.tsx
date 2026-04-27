@@ -935,11 +935,14 @@ function WeaponCard({
         </div>
 
         {/* status + classificação */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <StatusBadge s={it.status_revisao} />
           {it.classificacao_legal && (
-            <span className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/50 text-red-700 bg-red-500/10" : "border-emerald-500/50 text-emerald-700 bg-emerald-500/10"}`}>
-              {it.classificacao_legal === "Uso Restrito" ? "UR" : "UP"}
+            <span
+              className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/50 text-red-700 bg-red-500/10" : "border-emerald-500/50 text-emerald-700 bg-emerald-500/10"}`}
+              title={it.classificacao_legal === "Uso Restrito" ? "Calibre de USO RESTRITO — exige autorização do Exército (CR)" : "Calibre de USO PERMITIDO — autorizado pela Polícia Federal"}
+            >
+              {it.classificacao_legal === "Uso Restrito" ? "USO RESTRITO" : "USO PERMITIDO"}
             </span>
           )}
         </div>
