@@ -84,9 +84,16 @@ async function processOne(
 
   // Registra uso bem-sucedido para contagem mensal
   try {
-    await admin.from("qa_remove_bg_usage").insert({ armamento_id: id });
-  } catch (_) {
-    // não falha o processo por causa do log
+    const { error: usageErr } = await admin
+      .from("qa_remove_bg_usage")
+      .insert({ armamento_id: id });
+    if (usageErr) {
+      console.error("[remove-bg] falha ao registrar uso:", usageErr.message);
+    } else {
+      console.log("[remove-bg] uso registrado para id:", id);
+    }
+  } catch (e) {
+    console.error("[remove-bg] exceção ao registrar uso:", (e as Error)?.message);
   }
 
   return { id, ok: true, imagem: finalUrl };
