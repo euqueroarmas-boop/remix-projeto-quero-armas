@@ -769,6 +769,8 @@ export default function QAArmamentosAdminPage() {
             onSelecionarImagem={adicionarImagemGaleria}
             onAbrirGaleria={() => setShowAllImagesModal(true)}
             onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
+            onDefinirCapa={definirComoCapa}
+            onRemoverImagem={removerImagem}
           />}
         </SheetContent>
       </Sheet>
