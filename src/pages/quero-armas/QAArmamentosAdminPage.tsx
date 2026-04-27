@@ -855,7 +855,7 @@ const TIPO_ICON: Record<string, string> = {
 };
 
 function WeaponCard({
-  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando,
+  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando, onLimparFundo, limpandoFundo,
 }: {
   it: Arma;
   busy: boolean;
@@ -866,6 +866,8 @@ function WeaponCard({
   onFullscreen: (src: string) => void;
   onRevalidarImagem: () => void;
   revalidando: boolean;
+  onLimparFundo: () => void;
+  limpandoFundo: boolean;
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
