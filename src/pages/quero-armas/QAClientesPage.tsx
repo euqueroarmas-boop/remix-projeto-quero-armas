@@ -1406,10 +1406,9 @@ export default function QAClientesPage() {
       }
       const updated = data as unknown as CadastroPublico;
       setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+      // Atualiza o cadastro selecionado para refletir o novo estado imediatamente no painel aberto
+      setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
       toast.success(novoPago ? "Marcado como pago" : "Marcado como não pago");
-      // Fecha o modal e volta para a lista de formulários
-      setSelectedCadastroPublico(null);
-      setEditingCadastroPublico(false);
     } catch (e: any) {
       toast.error(e.message || "Erro ao atualizar pagamento");
     } finally {
