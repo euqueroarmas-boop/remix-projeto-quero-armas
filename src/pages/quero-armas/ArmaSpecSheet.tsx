@@ -342,8 +342,9 @@ export function ArmaSpecSheet({
                   <span className="inline-block w-2 h-2 bg-amber-600" /> Lei 10.826/03 · Decreto 11.615/23
                 </div>
                 <ul className="space-y-1 mb-3 text-zinc-700">
-                  <li><span className="font-bold text-zinc-900">USO PERMITIDO:</span> armas curtas com energia de boca ≤ 407J (ex.: .380, 9x19mm, .40, .45 ACP, .38, .357 Mag) e armas longas raiadas ≤ 1.620J (ex.: .22 LR) e espingardas cal. .12.</li>
-                  <li><span className="font-bold text-zinc-900">USO RESTRITO:</span> calibres acima dos limites de energia ou classificados pelo Comando do Exército (ex.: 5.56, 7.62, .30 Carbine, e calibres de pistola em armas longas).</li>
+                  <li><span className="font-bold text-zinc-900">PISTOLA — USO PERMITIDO:</span> .22 LR, .380 ACP (e derivados) e .38 TPC. Demais calibres de pistola são de USO RESTRITO.</li>
+                  <li><span className="font-bold text-zinc-900">REVÓLVER — USO PERMITIDO:</span> .32 e .38 SPL. Demais calibres de revólver são de USO RESTRITO.</li>
+                  <li><span className="font-bold text-zinc-900">USO RESTRITO:</span> todos os demais calibres não listados acima (ex.: 9x19mm, .40, .45 ACP, .357 Mag, 5.56, 7.62, .30 Carbine), conforme classificação do Comando do Exército.</li>
                   <li><span className="font-bold text-zinc-900">POSSE / DEFESA PESSOAL:</span> aceita SOMENTE armas curtas de uso permitido.</li>
                   <li><span className="font-bold text-zinc-900">CAC NÍVEL III:</span> autoriza aquisição de armas de USO RESTRITO (Atirador Desportivo nível III e Colecionador/CR).</li>
                 </ul>
