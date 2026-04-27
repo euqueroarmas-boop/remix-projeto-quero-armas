@@ -41,16 +41,23 @@ export async function requireQAStaff(
   const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-  // 1) Validate the JWT
+  // 1) Validate the JWT via getUser (more reliable across SDK versions
+  //    than getClaims, which requires JWKS support).
   const userClient = createClient(url, anon, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const { data: claimsData, error: claimsErr } = await userClient.auth.getClaims(token);
-  if (claimsErr || !claimsData?.claims?.sub) {
-    return { ok: false, response: jsonResp({ error: "Invalid token" }, 401) };
+  const { data: userData, error: userErr } = await userClient.auth.getUser(token);
+  if (userErr || !userData?.user?.id) {
+    return {
+      ok: false,
+      response: jsonResp(
+        { error: "Invalid token", detail: userErr?.message || "no user" },
+        401,
+      ),
+    };
   }
-  const userId = String(claimsData.claims.sub);
-  const email = (claimsData.claims.email as string | undefined) || null;
+  const userId = userData.user.id;
+  const email = userData.user.email ?? null;
 
   // 2) Check active profile via service role (bypass RLS, single source of truth)
   const adminClient = createClient(url, service);
