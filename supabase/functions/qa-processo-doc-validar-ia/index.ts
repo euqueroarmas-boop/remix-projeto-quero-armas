@@ -289,6 +289,12 @@ Deno.serve(async (req) => {
     } else if (esperadoViolado.length > 0) {
       novoStatus = "invalido";
       motivoRejeicao = "Conteúdo esperado não confirmado: " + esperadoViolado.join("; ");
+    } else if (
+      doc.tipo_documento === "renda_holerite_mes_atual" &&
+      holeriteForaDoPeriodo(parsed.campos_extraidos || {})
+    ) {
+      novoStatus = "invalido";
+      motivoRejeicao = "O holerite enviado não corresponde ao período atual ou mais recente aceitável.";
     } else if (vencido) {
       novoStatus = "invalido";
       motivoRejeicao = `Documento fora do prazo de validade (${doc.validade_dias} dias).`;
