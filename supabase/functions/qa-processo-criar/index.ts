@@ -162,6 +162,7 @@ Deno.serve(async (req) => {
       processo,
       total_documentos: docsRows.length,
     });
+    // (notificação enviada antes do return abaixo)
   } catch (err: any) {
     console.error("qa-processo-criar:", err);
     return json({ error: err?.message || "Erro interno" }, 500);
