@@ -4374,6 +4374,24 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_remove_bg_usage: {
+        Row: {
+          armamento_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          armamento_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          armamento_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       qa_revisoes_pecas: {
         Row: {
           aprovada: boolean | null
@@ -5411,6 +5429,13 @@ export type Database = {
         Args: { p_uf: string }
         Returns: {
           municipio: string
+        }[]
+      }
+      qa_remove_bg_usage_mes: {
+        Args: never
+        Returns: {
+          mes_referencia: string
+          total: number
         }[]
       }
       qa_resolver_circunscricao_pf: {
