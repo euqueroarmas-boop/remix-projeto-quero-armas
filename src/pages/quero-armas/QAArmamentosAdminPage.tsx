@@ -668,7 +668,11 @@ export default function QAArmamentosAdminPage() {
             editing={editing}
             setF={setF}
             scrapeUrl={scrapeUrl}
-            setScrapeUrl={setScrapeUrl}
+            setScrapeUrl={(v: string) => {
+              setScrapeUrl(v);
+              // mantém o campo do banco em sincronia com o input do topo
+              setEditing((p) => ({ ...(p || {}), fonte_url: v }));
+            }}
             aiBusy={aiBusy}
             scrapeBusy={scrapeBusy}
             saving={saving}
