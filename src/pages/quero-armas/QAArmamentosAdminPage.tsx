@@ -766,7 +766,7 @@ export default function QAArmamentosAdminPage() {
             onGerarImagem={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
             imagensFabricante={imagensFabricante}
             carregandoImagens={carregandoImagens}
-            onSelecionarImagem={selecionarImagemFabricante}
+            onSelecionarImagem={adicionarImagemGaleria}
             onAbrirGaleria={() => setShowAllImagesModal(true)}
             onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
           />}
@@ -789,16 +789,21 @@ export default function QAArmamentosAdminPage() {
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {imagensFabricante.map((src, idx) => {
-                const selecionada = editing?.imagem === src;
+                const isCapa = editing?.imagem === src;
+                const naGaleria = Array.isArray(editing?.imagens) && editing!.imagens!.includes(src);
+                const selecionada = isCapa || naGaleria;
                 return (
                   <button
                     key={idx}
-                    onClick={() => { selecionarImagemFabricante(src); setShowAllImagesModal(false); }}
+                    onClick={() => { adicionarImagemGaleria(src); }}
                     className={`group relative overflow-hidden bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-300 hover:border-amber-500"}`}
                   >
                     <img src={src} alt={`Opção ${idx + 1}`} className="block h-40 w-full max-w-full object-contain p-2" loading="lazy" onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")} />
-                    {selecionada && (
-                      <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">SELECIONADA</div>
+                    {isCapa && (
+                      <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">CAPA</div>
+                    )}
+                    {!isCapa && naGaleria && (
+                      <div className="absolute top-1 right-1 bg-emerald-600 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">NA GALERIA</div>
                     )}
                   </button>
                 );
