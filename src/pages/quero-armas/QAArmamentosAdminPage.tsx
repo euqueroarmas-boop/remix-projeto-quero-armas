@@ -166,6 +166,7 @@ export default function QAArmamentosAdminPage() {
         if ((rb as any)?.ok && (rb as any)?.imagem) {
           const cleaned = (rb as any).imagem as string;
           setEditing((p) => (p && p.id === it.id ? { ...p, imagem: cleaned } : p));
+          loadRemoveBgUsage();
         } else if ((rb as any)?.error) {
           console.warn("remove.bg falhou:", (rb as any).error);
         }
