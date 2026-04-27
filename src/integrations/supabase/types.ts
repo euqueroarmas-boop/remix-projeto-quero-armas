@@ -4525,6 +4525,10 @@ export type Database = {
           status: string
           tipo_documento: string
           updated_at: string
+          validacao_ia_confianca: number | null
+          validacao_ia_erro: string | null
+          validacao_ia_modelo: string | null
+          validacao_ia_status: string | null
         }
         Insert: {
           arquivo_storage_key?: string | null
@@ -4546,6 +4550,10 @@ export type Database = {
           status?: string
           tipo_documento: string
           updated_at?: string
+          validacao_ia_confianca?: number | null
+          validacao_ia_erro?: string | null
+          validacao_ia_modelo?: string | null
+          validacao_ia_status?: string | null
         }
         Update: {
           arquivo_storage_key?: string | null
@@ -4567,6 +4575,10 @@ export type Database = {
           status?: string
           tipo_documento?: string
           updated_at?: string
+          validacao_ia_confianca?: number | null
+          validacao_ia_erro?: string | null
+          validacao_ia_modelo?: string | null
+          validacao_ia_status?: string | null
         }
         Relationships: [
           {
