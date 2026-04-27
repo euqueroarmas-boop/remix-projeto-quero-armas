@@ -33,6 +33,8 @@ interface Arma {
   search_tokens: string | null;
   imagem: string | null;
   imagem_status: "pendente" | "gerando" | "pronta" | "erro" | null;
+  imagem_aprovada?: boolean | null;
+  imagem_validacao_motivo?: string | null;
 }
 
 const TIPOS = ["pistola","revolver","espingarda","carabina","fuzil","submetralhadora","outra"];
@@ -64,6 +66,8 @@ export default function QAArmamentosAdminPage() {
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [bgBusy, setBgBusy] = useState(false);
   const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
+  const [auditBusy, setAuditBusy] = useState(false);
+  const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
