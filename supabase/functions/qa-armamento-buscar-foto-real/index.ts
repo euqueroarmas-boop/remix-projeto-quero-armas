@@ -146,7 +146,7 @@ Use a função 'responder_validacao'.`;
 type Candidata = { url: string; bytes: Uint8Array; mime: string; sourceUrl: string | null; fonte: string };
 async function escolherComValidacao(
   candidatas: Candidata[],
-  arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null },
+  arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null; origem?: string | null },
   maxValidacoes = 3,
 ): Promise<{ escolhida: Candidata | null; validacao: ValidacaoResp | null; decisao: DecisaoValidacao | null }> {
   let testadas = 0;
