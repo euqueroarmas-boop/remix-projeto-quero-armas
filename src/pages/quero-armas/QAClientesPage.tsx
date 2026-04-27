@@ -10,8 +10,9 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse, GripVertical, Camera, Upload, ShieldCheck,
+  HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
 } from "lucide-react";
+import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, type DragEndEvent,
