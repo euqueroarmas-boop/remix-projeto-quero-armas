@@ -1390,26 +1390,29 @@ export default function QAClientesPage() {
 
   const togglePagoCadastroPublico = async () => {
     if (!selectedCadastroPublico) return;
-    const novoPago = !selectedCadastroPublico.pago;
+    const cadastroId = selectedCadastroPublico.id;
+    const pagoAnterior = Boolean(selectedCadastroPublico.pago);
+    const novoPago = !pagoAnterior;
     setSavingCadastroPublicoStatus("pago");
+    setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: novoPago } : item));
+    setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: novoPago } : prev);
     try {
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
         .update({ pago: novoPago })
-        .eq("id", selectedCadastroPublico.id)
+        .eq("id", cadastroId)
         .select("*")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      if (!data) {
-        toast.error("Cadastro público não encontrado");
-        return;
+      if (data) {
+        const updated = data as unknown as CadastroPublico;
+        setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+        setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
       }
-      const updated = data as unknown as CadastroPublico;
-      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
-      // Atualiza o cadastro selecionado para refletir o novo estado imediatamente no painel aberto
-      setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
-      toast.success(novoPago ? "Marcado como pago" : "Marcado como não pago");
+      toast.success(novoPago ? "Marcado como pago" : "Marcado como não pagou");
     } catch (e: any) {
+      setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: pagoAnterior } : item));
+      setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: pagoAnterior } : prev);
       toast.error(e.message || "Erro ao atualizar pagamento");
     } finally {
       setSavingCadastroPublicoStatus(null);
@@ -2438,9 +2441,9 @@ export default function QAClientesPage() {
                   {savingCadastroPublicoStatus === "pago" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <CheckCircle className="h-3.5 w-3.5" />
+                    c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
                   )}
-                  Pago
+                  {c.pago ? "Não pagou" : "Pago"}
                 </button>
                 <button
                   disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
