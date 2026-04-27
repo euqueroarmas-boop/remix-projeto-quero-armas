@@ -414,7 +414,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                         </button>
                       )}
                       {/* Cliente: pode reenviar se não aprovado */}
-                      {doc.status !== "aprovado" && (
+                      {doc.status !== "aprovado" && doc.status !== "dispensado_grupo" && (
                         <button
                           disabled={uploadingId === doc.id}
                           onClick={() => handleFileSelect(doc.id)}
