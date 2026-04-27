@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (docErr || !doc) return json({ error: "Documento não encontrado" }, 404);
 
-    const path = storage_path || doc.storage_path;
+    const path = storage_path || doc.arquivo_storage_key;
     if (!path) return json({ error: "storage_path ausente" }, 400);
 
     const { data: processo } = await supabase
@@ -234,7 +234,7 @@ Deno.serve(async (req) => {
           ? "Créditos da IA esgotados"
           : `Erro IA: ${errBody}`;
       await supabase.from("qa_processo_documentos")
-        .update({ validacao_ia_status: "erro", validacao_ia_erro: msg, status: "pendente" })
+        .update({ validacao_ia_status: "erro", validacao_ia_erro: msg, status: "enviado" })
         .eq("id", documento_id);
       return json({ error: msg }, status);
     }
@@ -244,7 +244,7 @@ Deno.serve(async (req) => {
     const args = toolCall?.function?.arguments;
     if (!args) {
       await supabase.from("qa_processo_documentos")
-        .update({ validacao_ia_status: "erro", validacao_ia_erro: "IA não retornou tool_call", status: "pendente" })
+        .update({ validacao_ia_status: "erro", validacao_ia_erro: "IA não retornou tool_call", status: "enviado" })
         .eq("id", documento_id);
       return json({ error: "IA não retornou validação estruturada" }, 500);
     }
@@ -254,25 +254,26 @@ Deno.serve(async (req) => {
       return json({ error: "Falha ao parsear resposta IA" }, 500);
     }
 
-    // Decide status final
+    // Decide status final (alinhado ao check constraint:
+    // 'pendente','enviado','em_analise','aprovado','invalido','divergente','revisao_humana')
     let novoStatus: string;
     let motivoRejeicao: string | null = null;
 
     if (!parsed.tipo_correto) {
-      novoStatus = "rejeitado";
+      novoStatus = "invalido";
       motivoRejeicao = parsed.motivo_rejeicao || "Documento não corresponde ao tipo esperado.";
     } else if (!parsed.legivel) {
-      novoStatus = "rejeitado";
+      novoStatus = "invalido";
       motivoRejeicao = "Documento ilegível. Por favor, envie uma foto/scan mais nítido.";
     } else {
       const divergenciasAltas = (parsed.divergencias || []).filter(
         (d: any) => d.severidade === "alta",
       );
       if (divergenciasAltas.length > 0) {
-        novoStatus = "divergencia";
+        novoStatus = "divergente";
         motivoRejeicao = "Divergências críticas detectadas: " +
           divergenciasAltas.map((d: any) => d.campo).join(", ");
-      } else if ((parsed.divergencias || []).length > 0 || parsed.confianca < 0.6) {
+      } else if ((parsed.divergencias || []).length > 0 || (parsed.confianca ?? 0) < 0.6) {
         novoStatus = "revisao_humana";
       } else {
         novoStatus = "aprovado";
@@ -283,12 +284,12 @@ Deno.serve(async (req) => {
       .update({
         status: novoStatus,
         motivo_rejeicao: motivoRejeicao,
-        extracao_json: parsed.campos_extraidos || {},
+        dados_extraidos_json: parsed.campos_extraidos || {},
         divergencias_json: parsed.divergencias || [],
         validacao_ia_status: "concluido",
         validacao_ia_erro: null,
         validacao_ia_confianca: parsed.confianca ?? null,
-        validado_em: new Date().toISOString(),
+        data_validacao: new Date().toISOString(),
       })
       .eq("id", documento_id);
 
