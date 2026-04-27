@@ -58,9 +58,11 @@ function btn(href: string, label: string, color = "#0ea5e9") {
   return `<a href="${href}" style="display:inline-block;background:${color};color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;margin:6px 4px;">${escapeHtml(label)}</a>`;
 }
 
-function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; motivo?: string; portalUrl: string; uploadUrl: string; linkEmissao?: string | null; }) {
+function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; motivo?: string; portalUrl: string; uploadUrl: string; linkEmissao?: string | null; labelBotao?: string | null; }) {
   const docName = ctx.documento ? `<strong>${escapeHtml(ctx.documento)}</strong>` : "documento";
   const motivo = ctx.motivo ? `<p style="margin:8px 0;color:#b91c1c;"><em>Motivo: ${escapeHtml(ctx.motivo)}</em></p>` : "";
+  const labelEmitir = ctx.labelBotao || "Emitir documento";
+  const labelEmitirCert = ctx.labelBotao || "Emitir certidão";
 
   switch (ev) {
     case "processo_criado":
@@ -74,16 +76,16 @@ function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; mot
         <p style="text-align:center;">${btn(ctx.portalUrl, "Acompanhar processo")}</p>`;
     case "documento_faltante":
       return `<p>Falta enviar ${docName}. Pedimos apenas este item — os já aprovados não precisam ser reenviados.</p>
-        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, "Emitir documento", "#0f172a")}${btn(ctx.uploadUrl, "Enviar PDF")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Enviar PDF")}</p>`}`;
+        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, labelEmitir, "#0f172a")}${btn(ctx.uploadUrl, "Enviar PDF")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Enviar PDF")}</p>`}`;
     case "certidao_faltante":
       return `<p>Falta enviar ${docName}. Cada certidão é cobrada separadamente — só este item está pendente.</p>
-        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, "Emitir certidão", "#0f172a")}${btn(ctx.uploadUrl, "Enviar PDF")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Enviar PDF")}</p>`}`;
+        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, labelEmitirCert, "#0f172a")}${btn(ctx.uploadUrl, "Enviar PDF")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Enviar PDF")}</p>`}`;
     case "documento_invalido":
       return `<p>${docName} foi considerado inválido.</p>${motivo}<p>Reenvie um novo arquivo. Os outros documentos já aprovados permanecem válidos.</p>
-        <p style="text-align:center;">${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}${btn(ctx.portalUrl, "Ver instruções")}</p>`;
+        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, labelEmitir, "#0f172a")}${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}${btn(ctx.portalUrl, "Ver instruções")}</p>`}`;
     case "certidao_invalida":
       return `<p>${docName} foi considerada inválida.</p>${motivo}<p>Emita novamente e reenvie. As outras certidões aprovadas seguem válidas.</p>
-        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, "Emitir certidão", "#0f172a")}${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}</p>`}`;
+        ${ctx.linkEmissao ? `<p style="text-align:center;">${btn(ctx.linkEmissao, labelEmitirCert, "#0f172a")}${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}</p>` : `<p style="text-align:center;">${btn(ctx.uploadUrl, "Reenviar PDF", "#dc2626")}</p>`}`;
     case "divergencia_dados":
       return `<p>Detectamos divergência entre ${docName} e seu cadastro.</p>${motivo}
         <p>Diga qual dado está correto:</p>
@@ -161,19 +163,22 @@ Deno.serve(async (req) => {
 
     let nomeDoc: string | undefined;
     let linkEmissao: string | null | undefined;
+    let labelBotao: string | null | undefined;
     if (body.documento_id) {
       const { data: doc } = await supabase.from("qa_processo_documentos")
-        .select("nome_documento, motivo_rejeicao, link_emissao")
+        .select("nome_documento, motivo_rejeicao, link_emissao, regra_validacao")
         .eq("id", body.documento_id).maybeSingle();
       nomeDoc = doc?.nome_documento ?? undefined;
       linkEmissao = doc?.link_emissao ?? null;
+      const reg = (doc?.regra_validacao ?? null) as Record<string, unknown> | null;
+      labelBotao = (reg && typeof reg["label_botao"] === "string") ? reg["label_botao"] as string : null;
       if (!body.motivo && doc?.motivo_rejeicao) body.motivo = doc.motivo_rejeicao;
     }
 
     const portalUrl = `${PORTAL_BASE}?processo=${proc.id}`;
     const uploadUrl = body.documento_id ? `${portalUrl}&doc=${body.documento_id}#enviar` : portalUrl;
     const titulo = TITULOS[body.evento];
-    const corpo = corpoEvento(body.evento, { servico: proc.servico_nome, documento: nomeDoc, motivo: body.motivo, portalUrl, uploadUrl, linkEmissao });
+    const corpo = corpoEvento(body.evento, { servico: proc.servico_nome, documento: nomeDoc, motivo: body.motivo, portalUrl, uploadUrl, linkEmissao, labelBotao });
     const html = buildHtml({ titulo, nomeCliente: cli.nome_completo ?? "cliente", servico: proc.servico_nome, corpo });
     const text = `${titulo}\n\nOlá, ${cli.nome_completo ?? "cliente"}.\nAcompanhe em: ${portalUrl}\n\n— ${BRAND}`;
 
