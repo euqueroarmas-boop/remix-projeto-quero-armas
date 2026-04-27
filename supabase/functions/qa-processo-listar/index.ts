@@ -56,9 +56,8 @@ Deno.serve(async (req) => {
     let query = supabase
       .from("qa_processos")
       .select(`
-        id, cliente_id, servico_id, servico_nome_snapshot, status,
-        observacoes, created_at, updated_at,
-        item_venda_id, venda_id
+        id, cliente_id, servico_id, servico_nome, status,
+        pagamento_status, observacoes_admin, created_at, updated_at, venda_id
       `)
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -96,14 +95,16 @@ Deno.serve(async (req) => {
       .select("processo_id, status")
       .in("processo_id", ids);
 
-    const counters: Record<string, { total: number; aprovados: number; pendentes: number; rejeitados: number }> = {};
-    for (const id of ids) counters[id] = { total: 0, aprovados: 0, pendentes: 0, rejeitados: 0 };
+    const counters: Record<string, { total: number; aprovados: number; pendentes: number; invalidos: number; divergentes: number; revisao: number }> = {};
+    for (const id of ids) counters[id] = { total: 0, aprovados: 0, pendentes: 0, invalidos: 0, divergentes: 0, revisao: 0 };
     for (const d of docs || []) {
       const c = counters[d.processo_id];
       if (!c) continue;
       c.total += 1;
       if (d.status === "aprovado") c.aprovados += 1;
-      else if (d.status === "rejeitado") c.rejeitados += 1;
+      else if (d.status === "invalido") c.invalidos += 1;
+      else if (d.status === "divergente") c.divergentes += 1;
+      else if (d.status === "revisao_humana") c.revisao += 1;
       else c.pendentes += 1;
     }
 
