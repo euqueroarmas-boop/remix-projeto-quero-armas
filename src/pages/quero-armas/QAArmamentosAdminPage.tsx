@@ -965,7 +965,7 @@ function WeaponCard({
       {/* visual da arma */}
       <div
         className="relative w-full max-w-full overflow-hidden bg-white"
-        style={{ aspectRatio: "16/10" }}
+        style={{ aspectRatio: "4/3" }}
       >
         {fotoAtual ? (
           <>
@@ -980,7 +980,7 @@ function WeaponCard({
                 alt={`${it.marca} ${it.modelo}`}
                 loading="lazy"
                 style={{ objectPosition: "center center" }}
-                className="block h-full w-full max-w-full object-contain p-4 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
+                className="block h-full w-full max-w-full object-contain p-2 drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
               />
             </button>
             <button
