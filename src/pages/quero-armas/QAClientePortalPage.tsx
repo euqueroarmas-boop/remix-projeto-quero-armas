@@ -812,6 +812,12 @@ export default function QAClientePortalPage() {
         })()}
 
         {/* ═══ SERVICES ═══ */}
+        {cliente?.id && (
+          <SectionCard icon={FolderArchive} title="Central de Documentos" color="hsl(262 70% 55%)">
+            <ClienteProcessosSection clienteId={cliente.id} />
+          </SectionCard>
+        )}
+
         <SectionCard icon={Target} title="Meus Serviços" color="hsl(230 80% 56%)">
           {itens.length === 0 ? (
             <p className="text-center text-sm text-slate-400 py-6">Nenhum serviço contratado.</p>
