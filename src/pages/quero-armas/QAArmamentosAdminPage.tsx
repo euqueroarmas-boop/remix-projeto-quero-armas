@@ -935,11 +935,14 @@ function WeaponCard({
         </div>
 
         {/* status + classificação */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <StatusBadge s={it.status_revisao} />
           {it.classificacao_legal && (
-            <span className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/50 text-red-700 bg-red-500/10" : "border-emerald-500/50 text-emerald-700 bg-emerald-500/10"}`}>
-              {it.classificacao_legal === "Uso Restrito" ? "UR" : "UP"}
+            <span
+              className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/50 text-red-700 bg-red-500/10" : "border-emerald-500/50 text-emerald-700 bg-emerald-500/10"}`}
+              title={it.classificacao_legal === "Uso Restrito" ? "Calibre de USO RESTRITO — exige autorização do Exército (CR)" : "Calibre de USO PERMITIDO — autorizado pela Polícia Federal"}
+            >
+              {it.classificacao_legal === "Uso Restrito" ? "USO RESTRITO" : "USO PERMITIDO"}
             </span>
           )}
         </div>
@@ -984,12 +987,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function StatusBadge({ s }: { s: Status }) {
-  const map: Record<Status, { cls: string; label: string }> = {
-    rascunho:         { cls: "border-zinc-300 text-zinc-600 bg-zinc-100",                  label: "RASCUNHO" },
-    pendente_revisao: { cls: "border-amber-500/50 text-amber-700 bg-amber-500/10",         label: "PENDENTE" },
-    verificado:       { cls: "border-emerald-500/50 text-emerald-700 bg-emerald-500/10",   label: "VERIFICADO" },
-    rejeitado:        { cls: "border-red-500/50 text-red-700 bg-red-500/10",               label: "REJEITADO" },
+  const map: Record<Status, { cls: string; label: string; hint: string }> = {
+    rascunho:         { cls: "border-zinc-300 text-zinc-600 bg-zinc-100",                  label: "RASCUNHO",   hint: "Cadastro em rascunho — ainda não submetido para revisão." },
+    pendente_revisao: { cls: "border-amber-500/50 text-amber-700 bg-amber-500/10",         label: "PENDENTE",   hint: "Pendente de revisão — dados gerados/importados aguardando validação manual de um administrador." },
+    verificado:       { cls: "border-emerald-500/50 text-emerald-700 bg-emerald-500/10",   label: "VERIFICADO", hint: "Verificado — dados conferidos e aprovados por um administrador." },
+    rejeitado:        { cls: "border-red-500/50 text-red-700 bg-red-500/10",               label: "REJEITADO",  hint: "Rejeitado — dados inconsistentes ou imagem incorreta." },
   };
   const c = map[s];
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-mono uppercase tracking-[0.2em] ${c.cls}`}>{c.label}</span>;
+  return <span title={c.hint} className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-mono uppercase tracking-[0.2em] cursor-help ${c.cls}`}>{c.label}</span>;
 }
