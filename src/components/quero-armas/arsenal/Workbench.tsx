@@ -169,19 +169,16 @@ function WeaponCard({
         </div>
 
         {/* Weapon render with glow — transparent, large, detailed */}
-        <div className={`relative mx-auto my-4 overflow-hidden rounded-xl border border-white/10 ${size === "lg" ? "h-72 md:h-80" : "h-60 md:h-64"} w-full bg-slate-950/70`}>
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(180deg, rgba(2,4,8,0.18), rgba(2,4,8,0.72)), radial-gradient(ellipse at 50% 65%, ${accent}33, transparent 68%)`,
-            }}
-          />
+        <div
+          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-72 md:h-80" : "h-60 md:h-64"} w-full`}
+          style={{ background: "transparent", backgroundImage: "none" }}
+        >
           <img
             src={render}
             alt={`${marca} ${modelo}`}
             loading="lazy"
             style={{ background: "transparent" }}
-            className={`relative h-full w-full max-w-full object-contain mix-blend-screen px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] ${info.kind === "espingarda" ? "scale-110" : ""}`}
+            className={`relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] ${info.kind === "espingarda" ? "scale-110" : ""}`}
           />
         </div>
 
