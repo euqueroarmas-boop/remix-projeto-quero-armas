@@ -547,6 +547,17 @@ export default function QAArmamentosAdminPage() {
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Auditando {auditProgress?.done}/{auditProgress?.total}</>
                 : <><Shield className="h-4 w-4 mr-2" />Auditar imagens</>}
             </Button>
+            <Button
+              variant="outline"
+              className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+              onClick={revalidarSuspeitas}
+              disabled={auditBusy || !items.some((i) => !!i.imagem && i.imagem_aprovada === false)}
+              title="Revalida em lote apenas as imagens marcadas como suspeitas"
+            >
+              {auditBusy
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Revalidando {auditProgress?.done}/{auditProgress?.total}</>
+                : <><RefreshCcw className="h-4 w-4 mr-2" />Revalidar suspeitas</>}
+            </Button>
             <div
               className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-mono text-amber-800"
               title="Imagens processadas pelo remove.bg neste mês (zera no dia 1º). Plano gratuito = 50/mês."
@@ -649,6 +660,8 @@ export default function QAArmamentosAdminPage() {
               onVerificar={() => marcarVerificado(it)}
               onRemove={() => remove(it)}
               onFullscreen={(src) => setImagemFullscreen(src)}
+              onRevalidarImagem={() => revalidarImagem(it)}
+              revalidando={revalBusyId === it.id}
             />
           ))}
         </div>
