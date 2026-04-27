@@ -2239,6 +2239,9 @@ export type Database = {
           fonte_url: string | null
           id: string
           imagem: string | null
+          imagem_aprovada: boolean
+          imagem_enviada_em: string | null
+          imagem_enviada_por: string | null
           imagem_fonte: string | null
           imagem_gerada_em: string | null
           imagem_status: string
@@ -2278,6 +2281,9 @@ export type Database = {
           fonte_url?: string | null
           id?: string
           imagem?: string | null
+          imagem_aprovada?: boolean
+          imagem_enviada_em?: string | null
+          imagem_enviada_por?: string | null
           imagem_fonte?: string | null
           imagem_gerada_em?: string | null
           imagem_status?: string
@@ -2317,6 +2323,9 @@ export type Database = {
           fonte_url?: string | null
           id?: string
           imagem?: string | null
+          imagem_aprovada?: boolean
+          imagem_enviada_em?: string | null
+          imagem_enviada_por?: string | null
           imagem_fonte?: string | null
           imagem_gerada_em?: string | null
           imagem_status?: string
