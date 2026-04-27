@@ -546,6 +546,31 @@ export default function QAArmamentosAdminPage() {
           </div>
         </div>
       )}
+
+      {/* LIGHTBOX — imagem em tela cheia */}
+      {imagemFullscreen && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-in fade-in duration-200"
+          onClick={() => setImagemFullscreen(null)}
+        >
+          <button
+            className="absolute top-6 right-6 text-white bg-white/10 rounded-full w-10 h-10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors z-10"
+            onClick={(e) => { e.stopPropagation(); setImagemFullscreen(null); }}
+            aria-label="Fechar"
+          >
+            ✕
+          </button>
+          <img
+            src={imagemFullscreen}
+            alt="Visualização"
+            className="max-w-[92vw] max-h-[85vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 text-xs tracking-widest uppercase font-mono">
+            Toque fora para fechar
+          </p>
+        </div>
+      )}
       </div>
     </div>
   );
