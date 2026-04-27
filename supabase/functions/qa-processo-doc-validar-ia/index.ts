@@ -144,6 +144,38 @@ function isVencido(dataEmissao: string | undefined, validadeDias: number | null 
   return limite < new Date();
 }
 
+// Holerite: precisa corresponder ao mês atual ou mês imediatamente anterior.
+// Aceita "periodo_referencia" ou "mes_referencia" no formato YYYY-MM, "MM/YYYY" ou nomes.
+const MESES_PT: Record<string, number> = {
+  "janeiro":1,"fevereiro":2,"marco":3,"março":3,"abril":4,"maio":5,"junho":6,
+  "julho":7,"agosto":8,"setembro":9,"outubro":10,"novembro":11,"dezembro":12,
+};
+function parseMesAno(raw: any): { y: number; m: number } | null {
+  if (raw == null) return null;
+  const s = String(raw).trim().toLowerCase();
+  let m: RegExpMatchArray | null;
+  if ((m = s.match(/(\d{4})[-\/](\d{1,2})/))) return { y: +m[1], m: +m[2] };
+  if ((m = s.match(/(\d{1,2})[-\/](\d{4})/))) return { y: +m[2], m: +m[1] };
+  for (const [nome, idx] of Object.entries(MESES_PT)) {
+    if (s.includes(nome)) {
+      const ya = s.match(/(\d{4})/);
+      if (ya) return { y: +ya[1], m: idx };
+    }
+  }
+  return null;
+}
+function holeriteForaDoPeriodo(extraidos: Record<string, any>): boolean {
+  const ref = parseMesAno(extraidos?.mes_referencia)
+           ?? parseMesAno(extraidos?.periodo_referencia)
+           ?? parseMesAno(extraidos?.data_emissao);
+  if (!ref) return true; // não conseguimos identificar o mês -> trata como inválido
+  const now = new Date();
+  const cy = now.getFullYear(), cm = now.getMonth() + 1;
+  // aceita: mês atual ou mês anterior
+  const monthsDiff = (cy - ref.y) * 12 + (cm - ref.m);
+  return monthsDiff < 0 || monthsDiff > 1;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
