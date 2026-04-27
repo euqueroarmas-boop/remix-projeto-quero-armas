@@ -919,6 +919,18 @@ function WeaponCard({
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
+  // Galeria completa = capa + extras (sem duplicar)
+  const galeria = (() => {
+    const extras = Array.isArray(it.imagens) ? it.imagens.filter((u) => !!u && u !== it.imagem) : [];
+    return [it.imagem, ...extras].filter((u): u is string => !!u);
+  })();
+  const [fotoIdx, setFotoIdx] = useState(0);
+  // Reseta o índice quando a galeria muda de tamanho/conteúdo
+  useEffect(() => { setFotoIdx(0); }, [galeria.length, it.imagem]);
+  const fotoAtual = galeria[fotoIdx] || null;
+  const total = galeria.length;
+  const goPrev = (e: React.MouseEvent) => { e.stopPropagation(); setFotoIdx((i) => (i - 1 + total) % total); };
+  const goNext = (e: React.MouseEvent) => { e.stopPropagation(); setFotoIdx((i) => (i + 1) % total); };
   return (
     <div
       onClick={onOpen}
