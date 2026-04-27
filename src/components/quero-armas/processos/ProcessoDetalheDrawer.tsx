@@ -1,0 +1,370 @@
+import { useEffect, useState, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send } from "lucide-react";
+import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
+
+interface DocRow {
+  id: string;
+  nome_documento: string;
+  tipo_documento: string;
+  etapa: string;
+  status: string;
+  obrigatorio: boolean;
+  motivo_rejeicao: string | null;
+  observacoes: string | null;
+  arquivo_url: string | null;
+  arquivo_storage_key: string | null;
+  dados_extraidos_json: any;
+  divergencias_json: any;
+  validacao_ia_status: string | null;
+  validacao_ia_confianca: number | null;
+  validacao_ia_modelo: string | null;
+  validacao_ia_erro: string | null;
+  data_envio: string | null;
+  data_validacao: string | null;
+  updated_at: string;
+}
+
+interface ProcessoFull {
+  id: string;
+  cliente_id: number;
+  servico_nome: string;
+  status: string;
+  pagamento_status: string;
+  data_criacao: string;
+  observacoes_admin: string | null;
+  cliente?: { nome_completo: string; cpf: string | null; email: string | null };
+}
+
+interface Evento {
+  id: string;
+  tipo_evento: string;
+  descricao: string | null;
+  ator: string | null;
+  created_at: string;
+}
+
+interface Props {
+  processoId: string;
+  adminMode?: boolean;
+  onClose: () => void;
+  onUpdated?: () => void;
+}
+
+export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, onUpdated }: Props) {
+  const [loading, setLoading] = useState(true);
+  const [processo, setProcesso] = useState<ProcessoFull | null>(null);
+  const [docs, setDocs] = useState<DocRow[]>([]);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [tab, setTab] = useState<"checklist" | "historico" | "admin">("checklist");
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDocId, setPendingDocId] = useState<string | null>(null);
+
+  const carregar = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: p, error: pErr } = await supabase
+        .from("qa_processos")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin")
+        .eq("id", processoId)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!p) throw new Error("Processo não encontrado");
+
+      const [{ data: cli }, { data: dList, error: dErr }, { data: evs }] = await Promise.all([
+        supabase.from("qa_clientes").select("nome_completo, cpf, email").eq("id", p.cliente_id).maybeSingle(),
+        supabase.from("qa_processo_documentos").select("*").eq("processo_id", processoId).order("created_at"),
+        supabase.from("qa_processo_eventos").select("id, tipo_evento, descricao, ator, created_at").eq("processo_id", processoId).order("created_at", { ascending: false }).limit(100),
+      ]);
+      if (dErr) throw dErr;
+
+      setProcesso({ ...p, cliente: cli ?? undefined });
+      setDocs((dList ?? []) as DocRow[]);
+      setEventos((evs ?? []) as Evento[]);
+    } catch (e: any) {
+      toast.error("Erro ao carregar processo: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setLoading(false);
+    }
+  }, [processoId]);
+
+  useEffect(() => { carregar(); }, [carregar]);
+
+  const handleFileSelect = (docId: string) => {
+    setPendingDocId(docId);
+    fileInputRef.current?.click();
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const docId = pendingDocId;
+    if (!file || !docId || !processo) return;
+    e.target.value = "";
+    setUploadingId(docId);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
+      const key = `${processo.cliente_id}/${processo.id}/${docId}-${Date.now()}-${safe}`;
+      const { error: upErr } = await supabase.storage.from("qa-processo-docs").upload(key, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: true,
+      });
+      if (upErr) throw upErr;
+
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-doc-upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ documento_id: docId, storage_key: key, mime_type: file.type, file_name: file.name }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao registrar upload");
+      }
+      toast.success("Documento enviado. Validação automática iniciada.");
+      await carregar();
+      onUpdated?.();
+    } catch (err: any) {
+      toast.error("Erro no upload: " + (err?.message ?? "desconhecido"));
+    } finally {
+      setUploadingId(null);
+      setPendingDocId(null);
+    }
+  };
+
+  const adminSetStatus = async (docId: string, novoStatus: string, motivo?: string) => {
+    try {
+      const { error } = await supabase
+        .from("qa_processo_documentos")
+        .update({ status: novoStatus, motivo_rejeicao: motivo ?? null, data_validacao: new Date().toISOString() })
+        .eq("id", docId);
+      if (error) throw error;
+      toast.success("Status do documento atualizado.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
+  const adminSetProcessoStatus = async (novoStatus: string) => {
+    try {
+      const { error } = await supabase.from("qa_processos").update({ status: novoStatus }).eq("id", processoId);
+      if (error) throw error;
+      toast.success("Processo atualizado.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
+  const baixarArquivo = async (key: string | null) => {
+    if (!key) return;
+    try {
+      const { data, error } = await supabase.storage.from("qa-processo-docs").createSignedUrl(key, 300);
+      if (error) throw error;
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error("Erro ao gerar link: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
+  const st = processo ? getStatusProcesso(processo.status) : null;
+  const totalObrig = docs.filter((d) => d.obrigatorio).length;
+  const aprovObrig = docs.filter((d) => d.obrigatorio && d.status === "aprovado").length;
+  const progresso = totalObrig > 0 ? Math.round((aprovObrig / totalObrig) * 100) : 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative ml-auto w-full max-w-3xl h-full bg-slate-50 shadow-2xl flex flex-col overflow-hidden">
+        <input ref={fileInputRef} type="file" className="hidden" onChange={handleUpload} accept="image/*,application/pdf" />
+
+        {/* Header */}
+        <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">PROCESSO</div>
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 uppercase truncate">{processo?.servico_nome ?? "—"}</h2>
+            <div className="text-xs text-slate-500 mt-0.5 uppercase">
+              {processo?.cliente?.nome_completo} · {processo?.cliente?.cpf}
+            </div>
+          </div>
+          <button onClick={onClose} className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center">
+            <X className="h-4 w-4 text-slate-600" />
+          </button>
+        </div>
+
+        {/* Status bar */}
+        {st && (
+          <div className={`px-5 py-3 border-b border-slate-200 ${st.bg}`}>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
+                <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
+                <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: st.color }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200 bg-white">
+          <TabBtn active={tab === "checklist"} onClick={() => setTab("checklist")} icon={<FileText className="h-3.5 w-3.5" />} label="CHECKLIST" />
+          <TabBtn active={tab === "historico"} onClick={() => setTab("historico")} icon={<History className="h-3.5 w-3.5" />} label="HISTÓRICO" />
+          {adminMode && <TabBtn active={tab === "admin"} onClick={() => setTab("admin")} icon={<ShieldAlert className="h-3.5 w-3.5" />} label="ADMIN" />}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {loading ? (
+            <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
+          ) : tab === "checklist" ? (
+            <div className="space-y-3">
+              {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
+              {docs.map((doc) => {
+                const ds = getStatusDocumento(doc.status);
+                const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
+                const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
+                return (
+                  <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{doc.etapa}</span>
+                          {doc.obrigatorio && <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">OBRIGATÓRIO</span>}
+                        </div>
+                        <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{doc.nome_documento}</div>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}>
+                        {ds.label}
+                      </span>
+                    </div>
+
+                    {/* Detalhes */}
+                    <div className="px-4 py-3 space-y-2">
+                      {doc.motivo_rejeicao && (
+                        <div className="text-[11px] bg-red-50 border border-red-200 rounded-md p-2 text-red-800">
+                          <strong className="uppercase tracking-wider">MOTIVO:</strong> {doc.motivo_rejeicao}
+                        </div>
+                      )}
+                      {div.length > 0 && (
+                        <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2">
+                          <div className="font-bold uppercase tracking-wider text-amber-800 mb-1">DIVERGÊNCIAS DETECTADAS</div>
+                          <ul className="space-y-0.5 text-amber-900">
+                            {div.slice(0, 5).map((d: any, i: number) => (
+                              <li key={i}>• <strong>{d.campo}:</strong> esperado "{d.esperado}", encontrado "{d.encontrado}"</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {ext && Object.keys(ext).length > 0 && (
+                        <details className="text-[11px] text-slate-600">
+                          <summary className="cursor-pointer uppercase tracking-wider font-bold text-slate-500">DADOS EXTRAÍDOS PELA IA</summary>
+                          <pre className="mt-1 bg-slate-50 border border-slate-200 rounded p-2 overflow-x-auto">{JSON.stringify(ext, null, 2)}</pre>
+                        </details>
+                      )}
+                      {doc.validacao_ia_confianca !== null && (
+                        <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                          IA: {doc.validacao_ia_modelo ?? "—"} · CONFIANÇA {Math.round((doc.validacao_ia_confianca ?? 0) * 100)}%
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Ações */}
+                    <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                      {doc.arquivo_storage_key && (
+                        <button onClick={() => baixarArquivo(doc.arquivo_storage_key)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100">
+                          <Download className="h-3 w-3" /> VER ARQUIVO
+                        </button>
+                      )}
+                      {/* Cliente: pode reenviar se não aprovado */}
+                      {doc.status !== "aprovado" && (
+                        <button
+                          disabled={uploadingId === doc.id}
+                          onClick={() => handleFileSelect(doc.id)}
+                          className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white disabled:opacity-50"
+                          style={{ background: doc.arquivo_storage_key ? "#0EA5E9" : "#10B981" }}
+                        >
+                          <Upload className="h-3 w-3" /> {uploadingId === doc.id ? "ENVIANDO..." : doc.arquivo_storage_key ? "REENVIAR" : "ENVIAR DOCUMENTO"}
+                        </button>
+                      )}
+                      {/* Admin: aprovar/rejeitar */}
+                      {adminMode && doc.status !== "aprovado" && (
+                        <button onClick={() => adminSetStatus(doc.id, "aprovado")} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
+                          <CheckCircle className="h-3 w-3" /> APROVAR
+                        </button>
+                      )}
+                      {adminMode && doc.status !== "invalido" && (
+                        <button onClick={() => {
+                          const m = window.prompt("MOTIVO DA REJEIÇÃO:");
+                          if (m && m.trim()) adminSetStatus(doc.id, "invalido", m.trim().toUpperCase());
+                        }} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
+                          <XCircle className="h-3 w-3" /> REJEITAR
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : tab === "historico" ? (
+            <div className="space-y-2">
+              {eventos.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">SEM EVENTOS REGISTRADOS</div>}
+              {eventos.map((ev) => (
+                <div key={ev.id} className="bg-white border border-slate-200 rounded-lg px-4 py-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">{ev.tipo_evento.replace(/_/g, " ")}</span>
+                    <span className="text-[10px] text-slate-400">{formatDateTime(ev.created_at)}</span>
+                  </div>
+                  {ev.descricao && <div className="text-xs text-slate-700 mt-1 uppercase">{ev.descricao}</div>}
+                  {ev.ator && <div className="text-[10px] text-slate-400 mt-0.5 uppercase">POR: {ev.ator}</div>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-white border border-slate-200 rounded-xl p-4">
+                <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">ALTERAR STATUS DO PROCESSO</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {Object.entries(STATUS_PROCESSO).map(([k, v]) => (
+                    <button
+                      key={k}
+                      onClick={() => adminSetProcessoStatus(k)}
+                      disabled={processo?.status === k}
+                      className={`h-9 px-3 rounded-md text-[10px] uppercase tracking-wider font-bold border ${processo?.status === k ? `${v.bg} ${v.text} ${v.border}` : "border-slate-200 text-slate-700 hover:bg-slate-50 bg-white"} disabled:cursor-not-allowed`}
+                    >
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                ID: {processo?.id} · CRIADO: {formatDateTime(processo?.data_criacao)}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-1 h-11 inline-flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-bold border-b-2 transition-colors ${active ? "border-blue-500 text-blue-600 bg-blue-50/40" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+    >
+      {icon} {label}
+    </button>
+  );
+}
