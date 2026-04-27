@@ -685,6 +685,8 @@ export default function QAArmamentosAdminPage() {
               onFullscreen={(src) => setImagemFullscreen(src)}
               onRevalidarImagem={() => revalidarImagem(it)}
               revalidando={revalBusyId === it.id}
+              onLimparFundo={() => limparFundoArma(it)}
+              limpandoFundo={bgBusyId === it.id}
             />
           ))}
         </div>
