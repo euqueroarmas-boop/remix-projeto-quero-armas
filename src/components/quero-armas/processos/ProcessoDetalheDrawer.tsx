@@ -24,6 +24,10 @@ interface DocRow {
   data_envio: string | null;
   data_validacao: string | null;
   updated_at: string;
+  link_emissao?: string | null;
+  validade_dias?: number | null;
+  data_validade?: string | null;
+  formato_aceito?: string | null;
 }
 
 interface ProcessoFull {
