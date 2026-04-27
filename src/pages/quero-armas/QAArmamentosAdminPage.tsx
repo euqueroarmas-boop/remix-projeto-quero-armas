@@ -457,6 +457,9 @@ export default function QAArmamentosAdminPage() {
               flex-1 overflow-y-auto overscroll-contain
               px-5 sm:px-6 py-5
               pb-[max(6rem,env(safe-area-inset-bottom))]
+              [&_input]:bg-white [&_input]:text-zinc-900 [&_input]:border-zinc-300 [&_input]:placeholder:text-zinc-400
+              [&_textarea]:bg-white [&_textarea]:text-zinc-900 [&_textarea]:border-zinc-300 [&_textarea]:placeholder:text-zinc-400
+              [&_button[role=combobox]]:bg-white [&_button[role=combobox]]:text-zinc-900 [&_button[role=combobox]]:border-zinc-300
             "
           >
           {editing && (
@@ -578,7 +581,7 @@ export default function QAArmamentosAdminPage() {
                   </Button>
                 </div>
                 {editing.imagem ? (
-                  <div className="grid place-items-center rounded-md p-2 bg-zinc-100 border border-zinc-200">
+                  <div className="grid place-items-center rounded-md p-4 bg-white border border-zinc-200">
                     <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 w-full object-contain" />
                   </div>
                 ) : (
@@ -665,18 +668,17 @@ function WeaponCard({
 
       {/* visual da arma */}
       <div
-        className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate"
-        style={{ background: "#1a1a1a", backgroundImage: "none" }}
+        className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate bg-white"
       >
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
             loading="lazy"
-            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain mix-blend-screen drop-shadow-[0_10px_20px_rgba(0,0,0,0.85)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
+            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
           />
         ) : (
-          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
+          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-300">
             <Target className="h-10 w-10" />
             <span className="text-[10px] font-mono uppercase tracking-[0.2em]">SEM IMAGEM</span>
           </div>
