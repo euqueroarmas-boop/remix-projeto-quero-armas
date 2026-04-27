@@ -33,6 +33,8 @@ interface Arma {
   search_tokens: string | null;
   imagem: string | null;
   imagem_status: "pendente" | "gerando" | "pronta" | "erro" | null;
+  imagem_aprovada?: boolean | null;
+  imagem_validacao_motivo?: string | null;
 }
 
 const TIPOS = ["pistola","revolver","espingarda","carabina","fuzil","submetralhadora","outra"];
@@ -64,6 +66,8 @@ export default function QAArmamentosAdminPage() {
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
   const [bgBusy, setBgBusy] = useState(false);
   const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
+  const [auditBusy, setAuditBusy] = useState(false);
+  const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
@@ -316,6 +320,60 @@ export default function QAArmamentosAdminPage() {
     toast.success("Dados gerados pela IA — revise antes de salvar");
   }
 
+  /** Audita TODAS as imagens já cadastradas: pergunta a uma IA Vision se cada
+   *  foto corresponde realmente ao modelo. Marca imagem_aprovada=false nas que
+   *  não correspondem e exibe relatório. */
+  async function auditarImagens() {
+    const comImagem = items.filter((i) => !!i.imagem);
+    if (comImagem.length === 0) { toast.info("Nenhuma arma com imagem para auditar."); return; }
+    if (!confirm(`Auditar ${comImagem.length} imagem(ns) com IA? Cada item leva ~3s.`)) return;
+    setAuditBusy(true);
+    setAuditProgress({ done: 0, total: comImagem.length });
+    let okCount = 0;
+    let badCount = 0;
+    const incorretos: Array<{ id: string; marca: string; modelo: string; motivo: string }> = [];
+    for (let i = 0; i < comImagem.length; i++) {
+      const it = comImagem[i];
+      try {
+        const { data, error } = await supabase.functions.invoke("qa-armamento-validar-imagem", {
+          body: {
+            imagemUrl: it.imagem,
+            marca: it.marca,
+            modelo: it.modelo,
+            tipo: it.tipo,
+            calibre: it.calibre,
+          },
+        });
+        if (error) throw error;
+        const v = data as { valida: boolean; motivo: string; confianca: number };
+        const aprovada = !!v?.valida && (v?.confianca ?? 0) >= 60;
+        await supabase.from("qa_armamentos_catalogo" as any)
+          .update({
+            imagem_aprovada: aprovada,
+            imagem_validacao_motivo: v?.motivo || null,
+            imagem_validada_em: new Date().toISOString(),
+          })
+          .eq("id", it.id);
+        if (aprovada) okCount++;
+        else { badCount++; incorretos.push({ id: it.id, marca: it.marca, modelo: it.modelo, motivo: v?.motivo || "—" }); }
+      } catch (e: any) {
+        console.warn(`Audit falhou em ${it.marca} ${it.modelo}:`, e?.message || e);
+      }
+      setAuditProgress({ done: i + 1, total: comImagem.length });
+    }
+    setAuditBusy(false);
+    setAuditProgress(null);
+    if (incorretos.length) {
+      console.table(incorretos);
+      toast.error(`Auditoria: ${okCount} ✅ corretas · ${badCount} ❌ incorretas (veja console).`, {
+        duration: 8000,
+      });
+    } else {
+      toast.success(`Auditoria concluída: todas as ${okCount} imagens estão corretas.`);
+    }
+    load();
+  }
+
   async function scrapeFabricante() {
     if (!scrapeUrl) { toast.error("Informe a URL do fabricante"); return; }
     setScrapeBusy(true);
@@ -423,6 +481,17 @@ export default function QAArmamentosAdminPage() {
               {bgBusy
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando…</>
                 : <><Sparkles className="h-4 w-4 mr-2" />Remove.bg (lote)</>}
+            </Button>
+            <Button
+              variant="outline"
+              className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+              onClick={auditarImagens}
+              disabled={auditBusy}
+              title="Audita por IA Vision se cada imagem corresponde ao modelo cadastrado. Marca incorretas com badge."
+            >
+              {auditBusy
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Auditando {auditProgress?.done}/{auditProgress?.total}</>
+                : <><Shield className="h-4 w-4 mr-2" />Auditar imagens</>}
             </Button>
             <div
               className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-mono text-amber-800"
@@ -758,6 +827,16 @@ function WeaponCard({
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-amber-500/90 border border-amber-600 text-[9px] font-mono uppercase tracking-[0.25em] text-white shadow-sm">
           {it.tipo}
         </div>
+
+        {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
+        {it.imagem && it.imagem_aprovada === false && (
+          <div
+            className="absolute bottom-2 left-2 z-20 px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
+            title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
+          >
+            <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+          </div>
+        )}
       </div>
 
       {/* corpo */}
