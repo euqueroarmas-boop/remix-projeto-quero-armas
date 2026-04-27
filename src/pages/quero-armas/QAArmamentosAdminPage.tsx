@@ -605,6 +605,43 @@ export default function QAArmamentosAdminPage() {
           </p>
         </div>
       )}
+
+      {/* MODAL — confirmação de imagem gerada/buscada */}
+      {imagemConfirm && (
+        <div className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center p-4" onClick={() => setImagemConfirm(null)}>
+          <div className="bg-white border border-zinc-300 max-w-lg w-full p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// CONFIRMAÇÃO · IMAGEM</div>
+            <h2 className="text-base font-bold text-zinc-900 mt-1">
+              Esta é a imagem correta para {imagemConfirm.arma.marca} {imagemConfirm.arma.modelo}?
+            </h2>
+            <div className="mt-4 bg-zinc-50 border border-zinc-200 p-4 grid place-items-center min-h-[280px]">
+              <img src={imagemConfirm.url} alt={`${imagemConfirm.arma.marca} ${imagemConfirm.arma.modelo}`} className="max-h-[320px] max-w-full object-contain" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 mt-5">
+              <button
+                onClick={confirmarImagem}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+              >
+                ✓ Confirmar
+              </button>
+              <button
+                onClick={() => { const arma = imagemConfirm.arma; setImagemConfirm(null); gerarImagem(arma); }}
+                className="flex-1 bg-zinc-900 hover:bg-zinc-700 text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+              >
+                ↻ Gerar novamente
+              </button>
+              <button
+                onClick={() => { abrirGoogleImagens(imagemConfirm.arma); }}
+                className="flex-1 border border-zinc-300 hover:border-zinc-900 text-zinc-900 font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+                title="Buscar manualmente no Google"
+              >
+                🔍 Google
+              </button>
+            </div>
+            <button onClick={() => setImagemConfirm(null)} className="mt-3 w-full text-[10px] font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-900">Cancelar</button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
