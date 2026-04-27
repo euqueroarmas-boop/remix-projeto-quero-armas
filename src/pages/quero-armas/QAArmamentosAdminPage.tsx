@@ -68,6 +68,7 @@ export default function QAArmamentosAdminPage() {
   const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
   const [auditBusy, setAuditBusy] = useState(false);
   const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
+  const [revalBusyId, setRevalBusyId] = useState<string | null>(null);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
@@ -112,6 +113,12 @@ export default function QAArmamentosAdminPage() {
   }), [items]);
 
   const filtrosAtivos = q.trim() !== "" || tipoFilter !== "todos" || statusFilter !== "todos" || semImagemFilter;
+  const decisaoImagem = (v: { valida?: boolean; confianca?: number; validacao_resultado?: string } | null | undefined) => {
+    if (v?.validacao_resultado === "correta" || v?.validacao_resultado === "incorreta") return v.validacao_resultado;
+    if (v?.valida) return "correta";
+    if (!v?.valida && (v?.confianca ?? 0) >= 80) return "incorreta";
+    return "correta";
+  };
   const limparFiltros = () => {
     setQ("");
     setTipoFilter("todos");
