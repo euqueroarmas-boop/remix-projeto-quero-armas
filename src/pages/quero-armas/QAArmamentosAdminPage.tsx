@@ -668,18 +668,17 @@ function WeaponCard({
 
       {/* visual da arma */}
       <div
-        className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate"
-        style={{ background: "#1a1a1a", backgroundImage: "none" }}
+        className="relative aspect-[16/10] grid place-items-center overflow-hidden isolate bg-white"
       >
         {it.imagem ? (
           <img
             src={it.imagem}
             alt={`${it.marca} ${it.modelo}`}
             loading="lazy"
-            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain mix-blend-screen drop-shadow-[0_10px_20px_rgba(0,0,0,0.85)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
+            className="relative z-10 max-h-[80%] max-w-[88%] w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 pointer-events-none select-none"
           />
         ) : (
-          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-400">
+          <div className="relative z-10 flex flex-col items-center gap-2 text-zinc-300">
             <Target className="h-10 w-10" />
             <span className="text-[10px] font-mono uppercase tracking-[0.2em]">SEM IMAGEM</span>
           </div>
