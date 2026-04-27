@@ -1309,6 +1309,15 @@ export default function QAClientesPage() {
   const autoOpenedRef = useRef(false);
   useEffect(() => {
     const targetId = searchParams.get("cliente");
+    const cadastroPubId = searchParams.get("cadastro_publico");
+    if (cadastroPubId && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+      openCadastroPublico(cadastroPubId);
+      const next = new URLSearchParams(searchParams);
+      next.delete("cadastro_publico");
+      setSearchParams(next, { replace: true });
+      return;
+    }
     if (!targetId || autoOpenedRef.current || clientes.length === 0) return;
     // O Monitor envia o FK canônico (id_legado). Buscamos por id_legado primeiro,
     // com fallback para id quando o cliente não tiver id_legado.
