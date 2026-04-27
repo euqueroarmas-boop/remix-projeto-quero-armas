@@ -17,7 +17,7 @@ export type StatusProcesso = keyof typeof STATUS_PROCESSO;
 export const STATUS_DOCUMENTO = {
   pendente: { label: "PENDENTE", color: "#94A3B8", icon: "Clock" },
   enviado: { label: "ENVIADO", color: "#6366F1", icon: "Upload" },
-  validando_ia: { label: "VALIDANDO IA", color: "#8B5CF6", icon: "Sparkles" },
+  em_analise: { label: "EM ANÁLISE", color: "#8B5CF6", icon: "Sparkles" },
   revisao_humana: { label: "REVISÃO HUMANA", color: "#0EA5E9", icon: "Eye" },
   divergente: { label: "DIVERGENTE", color: "#F59E0B", icon: "AlertTriangle" },
   invalido: { label: "INVÁLIDO", color: "#EF4444", icon: "XCircle" },
@@ -30,8 +30,17 @@ export function getStatusProcesso(s: string) {
   return STATUS_PROCESSO[s as StatusProcesso] ?? STATUS_PROCESSO.aguardando_documentos;
 }
 
-export function getStatusDocumento(s: string) {
-  return STATUS_DOCUMENTO[s as StatusDocumento] ?? STATUS_DOCUMENTO.pendente;
+/**
+ * Retorna metadata de exibição do status do documento.
+ * Se `iaStatus = "processando"` e o status real for `em_analise`, exibe label "VALIDANDO IA"
+ * (apenas visual, o status real persistido continua `em_analise`).
+ */
+export function getStatusDocumento(s: string, iaStatus?: string | null) {
+  const base = STATUS_DOCUMENTO[s as StatusDocumento] ?? STATUS_DOCUMENTO.pendente;
+  if (s === "em_analise" && iaStatus === "processando") {
+    return { ...base, label: "VALIDANDO IA" };
+  }
+  return base;
 }
 
 export function formatDate(d: string | null | undefined) {
