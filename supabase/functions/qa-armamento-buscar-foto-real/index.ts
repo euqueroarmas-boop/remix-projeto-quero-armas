@@ -43,25 +43,51 @@ function normModelo(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-/** Valida se uma imagem corresponde EXATAMENTE ao modelo cadastrado.
- *  Usa Gemini Vision (Lovable AI). Em caso de erro de gateway, é tolerante
- *  (retorna válido) para não bloquear o fluxo se a IA estiver fora. */
+type ValidacaoResp = { valida: boolean; motivo: string; confianca: number };
+type DecisaoValidacao = "correta" | "incorreta";
+
+function decisaoFinal(resultado: ValidacaoResp): DecisaoValidacao {
+  if (resultado.valida) return "correta";
+  if (!resultado.valida && resultado.confianca >= 80) return "incorreta";
+  return "correta";
+}
+
+/** Valida se uma imagem corresponde ao modelo cadastrado com tolerância para
+ *  variações legítimas de nomenclatura e geração. Dúvida razoável aprova. */
 async function validarImagemComIA(
   imagemUrl: string,
-  arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null },
-): Promise<{ valida: boolean; motivo: string; confianca: number }> {
+  arma: { marca: string; modelo: string; tipo?: string | null; calibre?: string | null; origem?: string | null },
+): Promise<ValidacaoResp> {
   if (!LOVABLE_API_KEY_VAL) return { valida: true, motivo: "sem_api_key", confianca: 0 };
-  const tipoTxt = arma.tipo ? ` (${arma.tipo})` : "";
-  const calTxt = arma.calibre ? `, calibre ${arma.calibre}` : "";
-  const prompt = `Esta imagem mostra EXATAMENTE uma "${arma.marca}" "${arma.modelo}"${tipoTxt}${calTxt}?
+  const prompt = `Você é um especialista em armas de fogo.
 
-Verifique:
-1. Texto/gravação no ferrolho ou receptor combina com "${arma.modelo}"?
-2. Silhueta e proporções correspondem à "${arma.marca} ${arma.modelo}" (e não a outro modelo da mesma marca)?
-3. NÃO é um modelo diferente da mesma fabricante (ex.: Glock 17 ≠ Glock 26)?
-4. NÃO é caminhão, brinquedo, logo, banner ou objeto fora de contexto?
+Analise se esta imagem corresponde ao modelo cadastrado.
 
-Se houver QUALQUER dúvida razoável, responda valida=false. Use a função 'responder_validacao'.`;
+ARMA CADASTRADA:
+- Marca: ${arma.marca}
+- Modelo: ${arma.modelo}
+- Tipo: ${arma.tipo || "não informado"}
+- Calibre: ${arma.calibre || "não informado"}
+- Origem: ${arma.origem || "não informada"}
+
+REGRAS DE VALIDAÇÃO (aplique com bom senso):
+✅ CONSIDERE CORRETA se:
+- A silhueta/formato geral bate com o tipo (pistola, espingarda, fuzil, etc.)
+- A marca visual bate com a marca cadastrada
+- O modelo é compatível considerando variações de nomenclatura (ex: "G26" = "Glock 26" = "26")
+- Pequenas diferenças de geração ou acabamento são aceitáveis (ex: Gen4 vs Gen5 do mesmo modelo)
+
+❌ CONSIDERE INCORRETA apenas se:
+- É claramente um tipo diferente de arma (ex: espingarda no lugar de pistola)
+- É de uma marca completamente diferente
+- É um modelo claramente diferente da mesma marca (ex: Glock 17 no lugar de Glock 26 — tamanhos muito distintos)
+- É um objeto que não é uma arma de fogo
+
+ATENÇÃO: Seja generoso na validação.
+Dúvida razoável = considere CORRETA.
+Só rejeite se tiver CERTEZA que está errada.
+
+Use a função 'responder_validacao'.`;
   const tool = {
     type: "function",
     function: {
