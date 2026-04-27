@@ -474,6 +474,7 @@ export default function QAArmamentosAdminPage() {
               onGerarImagem={() => gerarImagem(it)}
               onVerificar={() => marcarVerificado(it)}
               onRemove={() => remove(it)}
+              onFullscreen={(src) => setImagemFullscreen(src)}
             />
           ))}
         </div>
