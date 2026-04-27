@@ -457,6 +457,9 @@ export default function QAArmamentosAdminPage() {
               flex-1 overflow-y-auto overscroll-contain
               px-5 sm:px-6 py-5
               pb-[max(6rem,env(safe-area-inset-bottom))]
+              [&_input]:bg-white [&_input]:text-zinc-900 [&_input]:border-zinc-300 [&_input]:placeholder:text-zinc-400
+              [&_textarea]:bg-white [&_textarea]:text-zinc-900 [&_textarea]:border-zinc-300 [&_textarea]:placeholder:text-zinc-400
+              [&_button[role=combobox]]:bg-white [&_button[role=combobox]]:text-zinc-900 [&_button[role=combobox]]:border-zinc-300
             "
           >
           {editing && (
