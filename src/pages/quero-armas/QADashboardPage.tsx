@@ -491,11 +491,35 @@ export default function QADashboardPage() {
                       <button
                         type="button"
                         onClick={async () => {
-                          const { error } = await supabase.from("qa_cadastro_publico" as any).update({ status: "recusado" }).eq("id", c.id);
-                          if (error) { toast.error("Erro ao recusar: " + error.message); return; }
-                          setNovosCadastros((prev) => prev.map((x) => x.id === c.id ? { ...x, status: "recusado" } : x));
+                          // 1) Arquiva no banco de recusados
+                          const { data: userData } = await supabase.auth.getUser();
+                          const { error: insErr } = await supabase
+                            .from("qa_cadastro_publico_recusados" as any)
+                            .insert({
+                              cadastro_original_id: c.id,
+                              nome_completo: c.nome_completo,
+                              cpf: c.cpf,
+                              telefone_principal: c.telefone_principal,
+                              email: c.email,
+                              end1_cidade: c.end1_cidade,
+                              end1_estado: c.end1_estado,
+                              servico_interesse: c.servico_interesse,
+                              pago: c.pago ?? null,
+                              cadastro_created_at: c.created_at,
+                              recusado_por: userData?.user?.id ?? null,
+                              payload_original: c as any,
+                            });
+                          if (insErr) { toast.error("Erro ao arquivar: " + insErr.message); return; }
+                          // 2) Remove do cadastro público
+                          const { error: delErr } = await supabase
+                            .from("qa_cadastro_publico" as any)
+                            .delete()
+                            .eq("id", c.id);
+                          if (delErr) { toast.error("Erro ao remover: " + delErr.message); return; }
+                          // 3) Some da tela
+                          setNovosCadastros((prev) => prev.filter((x) => x.id !== c.id));
                           toast.success(`${c.nome_completo} recusado`, {
-                            description: "Status atualizado para 'recusado'.",
+                            description: "Movido para o arquivo de recusados.",
                           });
                         }}
                         className="text-[9px] px-2 py-0.5 rounded-full font-semibold bg-rose-500 text-white hover:bg-rose-600 transition"
