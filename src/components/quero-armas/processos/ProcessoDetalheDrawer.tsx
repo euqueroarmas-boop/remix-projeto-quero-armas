@@ -235,6 +235,32 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
+  const [savingCond, setSavingCond] = useState<string | null>(null);
+  const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado") => {
+    if (!processo) return;
+    setSavingCond(cond);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-set-condicao`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ processo_id: processo.id, condicao_profissional: cond }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao salvar condição");
+      }
+      toast.success("Condição profissional registrada. Checklist de renda atualizado.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setSavingCond(null);
+    }
+  };
+
   const st = processo ? getStatusProcesso(processo.status) : null;
   const totalObrig = docs.filter((d) => d.obrigatorio).length;
   const aprovObrig = docs.filter((d) => d.obrigatorio && d.status === "aprovado").length;
