@@ -68,6 +68,7 @@ export default function QAArmamentosAdminPage() {
   const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
   const [auditBusy, setAuditBusy] = useState(false);
   const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
+  const [revalBusyId, setRevalBusyId] = useState<string | null>(null);
   const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
   const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
   const [carregandoImagens, setCarregandoImagens] = useState(false);
@@ -112,6 +113,12 @@ export default function QAArmamentosAdminPage() {
   }), [items]);
 
   const filtrosAtivos = q.trim() !== "" || tipoFilter !== "todos" || statusFilter !== "todos" || semImagemFilter;
+  const decisaoImagem = (v: { valida?: boolean; confianca?: number; validacao_resultado?: string } | null | undefined) => {
+    if (v?.validacao_resultado === "correta" || v?.validacao_resultado === "incorreta") return v.validacao_resultado;
+    if (v?.valida) return "correta";
+    if (!v?.valida && (v?.confianca ?? 0) >= 80) return "incorreta";
+    return "correta";
+  };
   const limparFiltros = () => {
     setQ("");
     setTipoFilter("todos");
@@ -320,9 +327,49 @@ export default function QAArmamentosAdminPage() {
     toast.success("Dados gerados pela IA — revise antes de salvar");
   }
 
-  /** Audita TODAS as imagens já cadastradas: pergunta a uma IA Vision se cada
-   *  foto corresponde realmente ao modelo. Marca imagem_aprovada=false nas que
-   *  não correspondem e exibe relatório. */
+  async function validarImagemItem(it: Arma) {
+    if (!it.imagem) throw new Error("Item sem imagem para validar");
+    const { data, error } = await supabase.functions.invoke("qa-armamento-validar-imagem", {
+      body: {
+        itemId: it.id,
+        imagemUrl: it.imagem,
+        marca: it.marca,
+        modelo: it.modelo,
+        tipo: it.tipo,
+        calibre: it.calibre,
+        origem: it.origem,
+      },
+    });
+    if (error) throw error;
+    const v = data as { valida: boolean; motivo: string; confianca: number; validacao_resultado?: "correta" | "incorreta" };
+    const resultado = decisaoImagem(v);
+    if (!v?.validacao_resultado) {
+      await supabase.from("qa_armamentos_catalogo" as any)
+        .update({
+          imagem_aprovada: resultado === "correta",
+          imagem_validacao_motivo: v?.motivo || null,
+          imagem_validada_em: new Date().toISOString(),
+        })
+        .eq("id", it.id);
+    }
+    return { ...v, validacao_resultado: resultado };
+  }
+
+  async function revalidarImagem(it: Arma) {
+    setRevalBusyId(it.id);
+    try {
+      const v = await validarImagemItem(it);
+      toast.success(v.validacao_resultado === "correta" ? "Imagem revalidada como correta" : "Imagem confirmada como incorreta");
+      load();
+    } catch (e: any) {
+      toast.error("Erro ao revalidar imagem: " + (e?.message || e));
+    } finally {
+      setRevalBusyId(null);
+    }
+  }
+
+  /** Audita TODAS as imagens já cadastradas com regra tolerante: só rejeita
+   * quando a IA diz incorreta com confiança >= 80. Dúvida razoável aprova. */
   async function auditarImagens() {
     const comImagem = items.filter((i) => !!i.imagem);
     if (comImagem.length === 0) { toast.info("Nenhuma arma com imagem para auditar."); return; }
@@ -335,25 +382,8 @@ export default function QAArmamentosAdminPage() {
     for (let i = 0; i < comImagem.length; i++) {
       const it = comImagem[i];
       try {
-        const { data, error } = await supabase.functions.invoke("qa-armamento-validar-imagem", {
-          body: {
-            imagemUrl: it.imagem,
-            marca: it.marca,
-            modelo: it.modelo,
-            tipo: it.tipo,
-            calibre: it.calibre,
-          },
-        });
-        if (error) throw error;
-        const v = data as { valida: boolean; motivo: string; confianca: number };
-        const aprovada = !!v?.valida && (v?.confianca ?? 0) >= 60;
-        await supabase.from("qa_armamentos_catalogo" as any)
-          .update({
-            imagem_aprovada: aprovada,
-            imagem_validacao_motivo: v?.motivo || null,
-            imagem_validada_em: new Date().toISOString(),
-          })
-          .eq("id", it.id);
+        const v = await validarImagemItem(it);
+        const aprovada = v.validacao_resultado === "correta";
         if (aprovada) okCount++;
         else { badCount++; incorretos.push({ id: it.id, marca: it.marca, modelo: it.modelo, motivo: v?.motivo || "—" }); }
       } catch (e: any) {
@@ -371,6 +401,30 @@ export default function QAArmamentosAdminPage() {
     } else {
       toast.success(`Auditoria concluída: todas as ${okCount} imagens estão corretas.`);
     }
+    load();
+  }
+
+  async function revalidarSuspeitas() {
+    const suspeitas = items.filter((i) => !!i.imagem && i.imagem_aprovada === false);
+    if (suspeitas.length === 0) { toast.info("Nenhuma imagem suspeita para revalidar."); return; }
+    if (!confirm(`Revalidar ${suspeitas.length} imagem(ns) suspeita(s) com a nova regra?`)) return;
+    setAuditBusy(true);
+    setAuditProgress({ done: 0, total: suspeitas.length });
+    let okCount = 0;
+    let badCount = 0;
+    for (let i = 0; i < suspeitas.length; i++) {
+      try {
+        const v = await validarImagemItem(suspeitas[i]);
+        if (v.validacao_resultado === "correta") okCount++;
+        else badCount++;
+      } catch (e: any) {
+        console.warn(`Revalidação falhou em ${suspeitas[i].marca} ${suspeitas[i].modelo}:`, e?.message || e);
+      }
+      setAuditProgress({ done: i + 1, total: suspeitas.length });
+    }
+    setAuditBusy(false);
+    setAuditProgress(null);
+    toast.success(`Revalidação concluída: ${okCount} liberada(s), ${badCount} ainda suspeita(s).`);
     load();
   }
 
@@ -493,6 +547,17 @@ export default function QAArmamentosAdminPage() {
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Auditando {auditProgress?.done}/{auditProgress?.total}</>
                 : <><Shield className="h-4 w-4 mr-2" />Auditar imagens</>}
             </Button>
+            <Button
+              variant="outline"
+              className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+              onClick={revalidarSuspeitas}
+              disabled={auditBusy || !items.some((i) => !!i.imagem && i.imagem_aprovada === false)}
+              title="Revalida em lote apenas as imagens marcadas como suspeitas"
+            >
+              {auditBusy
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Revalidando {auditProgress?.done}/{auditProgress?.total}</>
+                : <><RefreshCcw className="h-4 w-4 mr-2" />Revalidar suspeitas</>}
+            </Button>
             <div
               className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-mono text-amber-800"
               title="Imagens processadas pelo remove.bg neste mês (zera no dia 1º). Plano gratuito = 50/mês."
@@ -595,6 +660,8 @@ export default function QAArmamentosAdminPage() {
               onVerificar={() => marcarVerificado(it)}
               onRemove={() => remove(it)}
               onFullscreen={(src) => setImagemFullscreen(src)}
+              onRevalidarImagem={() => revalidarImagem(it)}
+              revalidando={revalBusyId === it.id}
             />
           ))}
         </div>
@@ -757,7 +824,7 @@ const TIPO_ICON: Record<string, string> = {
 };
 
 function WeaponCard({
-  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen,
+  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando,
 }: {
   it: Arma;
   busy: boolean;
@@ -766,6 +833,8 @@ function WeaponCard({
   onVerificar: () => void;
   onRemove: () => void;
   onFullscreen: (src: string) => void;
+  onRevalidarImagem: () => void;
+  revalidando: boolean;
 }) {
   const verificado = it.status_revisao === "verificado";
   const pendente = it.status_revisao === "pendente_revisao";
@@ -830,11 +899,22 @@ function WeaponCard({
 
         {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
         {it.imagem && it.imagem_aprovada === false && (
-          <div
-            className="absolute bottom-2 left-2 z-20 px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
-            title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
-          >
-            <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+          <div className="absolute bottom-2 left-2 right-2 z-20 flex flex-wrap items-center gap-1">
+            <div
+              className="px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
+              title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
+            >
+              <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+            </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onRevalidarImagem(); }}
+              className="rounded-md border border-zinc-300 bg-white/95 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-[0.14em] text-zinc-800 shadow-md hover:border-amber-500 hover:text-amber-700 disabled:opacity-60"
+              disabled={revalidando}
+              title="Revalidar imagem com a nova regra tolerante"
+            >
+              {revalidando ? "Revalidando…" : "Revalidar imagem"}
+            </button>
           </div>
         )}
       </div>
