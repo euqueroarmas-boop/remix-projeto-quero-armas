@@ -746,7 +746,7 @@ Deno.serve(async (req) => {
             // Dispara notificação ao cliente solicitando documentos
             supabase.functions
               .invoke("qa-processo-notificar", {
-                body: { processo_id: proc.id, evento: "pagamento_confirmado_documentos_solicitados" },
+                body: { processo_id: proc.id, evento: "pagamento_confirmado" },
               })
               .catch((e) => console.warn("[asaas-webhook] qa-processo-notificar falhou:", e));
 
