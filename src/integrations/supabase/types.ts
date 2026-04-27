@@ -4659,6 +4659,7 @@ export type Database = {
       qa_processos: {
         Row: {
           cliente_id: number
+          condicao_profissional: string | null
           created_at: string
           data_criacao: string
           data_validacao: string | null
@@ -4674,6 +4675,7 @@ export type Database = {
         }
         Insert: {
           cliente_id: number
+          condicao_profissional?: string | null
           created_at?: string
           data_criacao?: string
           data_validacao?: string | null
@@ -4689,6 +4691,7 @@ export type Database = {
         }
         Update: {
           cliente_id?: number
+          condicao_profissional?: string | null
           created_at?: string
           data_criacao?: string
           data_validacao?: string | null
