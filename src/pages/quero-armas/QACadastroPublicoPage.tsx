@@ -273,11 +273,24 @@ export default function QACadastroPublicoPage() {
   const submit = async () => {
     setBusy(true); setError(null);
     try {
-      const cpfDigits = extracted.cpf.replace(/\D/g, "");
-      if (cpfDigits.length !== 11) throw new Error("CPF inválido");
-      if (!extracted.nome_completo.trim()) throw new Error("Informe o nome completo");
-      if (!extracted.email.trim()) throw new Error("Informe o e-mail");
-      if (!extracted.telefone_principal.replace(/\D/g, "")) throw new Error("Informe o telefone");
+      const cpfDigits = onlyDigits(extracted.cpf);
+      // Bloqueio centralizado pelo schema compartilhado
+      const blocking = getBlockingErrors(extracted, {
+        categoria: extracted.categoria_titular || "pessoa_fisica",
+        needsCpfRgConfirmation: !!cpfRgAmbiguity,
+        cpfRgConfirmed,
+      });
+      const divergencias = getDivergencias(extracted, extractedFromDoc);
+      if (blocking.length > 0) {
+        throw new Error(
+          "Existem campos pendentes: " + blocking.map((e) => e.label).join(", "),
+        );
+      }
+      if (divergencias.length > 0 && !divergenciasConfirmadas) {
+        throw new Error(
+          "Há divergências entre o formulário e o documento extraído. Confirme manualmente para prosseguir.",
+        );
+      }
 
       // upload dos arquivos
       const uploaded: { key: string; path: string }[] = [];
