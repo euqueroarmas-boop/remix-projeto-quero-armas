@@ -1,4 +1,6 @@
 import React, { useState, useRef, useCallback, Fragment } from "react";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
