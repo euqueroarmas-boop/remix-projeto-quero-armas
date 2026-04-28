@@ -1132,6 +1132,7 @@ const CATEGORIA_OPTS: { value: CategoriaTitular | ""; label: string }[] = [
 function Step3Review({
   data, onChange, onContinue, onBack, busy, error,
   fromDoc, cpfRgAmbiguity, cpfRgConfirmed, onConfirmCpfRg,
+  tipoDocumentoIdentidade,
   divergenciasConfirmadas, onConfirmDivergencias,
   unidadePF, unidadeLoading, onResolveUnidade,
 }: {
@@ -1145,6 +1146,7 @@ function Step3Review({
   cpfRgAmbiguity: { reason: string; cpfCandidates: string[]; rgCandidates: string[] } | null;
   cpfRgConfirmed: boolean;
   onConfirmCpfRg: () => void;
+  tipoDocumentoIdentidade: string;
   divergenciasConfirmadas: boolean;
   onConfirmDivergencias: () => void;
   unidadePF: { unidade_pf: string; sigla_unidade: string; tipo_unidade: string; municipio_sede: string; uf: string; base_legal: string } | null;
@@ -1153,6 +1155,8 @@ function Step3Review({
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
+  const isCinDoc = String(tipoDocumentoIdentidade || "").toUpperCase().includes("CIN");
+
   // Categoria implícita p/ bloqueio: usa a do form ou "pessoa_fisica" como padrão (cidadão comum)
   const categoriaEfetiva: CategoriaTitular | "" = data.categoria_titular || "pessoa_fisica";
   const required = new Set<string>(getCamposObrigatoriosPorCategoria(categoriaEfetiva));
@@ -1160,6 +1164,7 @@ function Step3Review({
     categoria: categoriaEfetiva,
     needsCpfRgConfirmation: !!cpfRgAmbiguity,
     cpfRgConfirmed,
+    documentoIdentidadeTipo: tipoDocumentoIdentidade,
   });
   const divergencias = getDivergencias(data, fromDoc);
 
@@ -1174,7 +1179,7 @@ function Step3Review({
     const v = (data as any)[field];
     const empty = v === undefined || v === null || String(v).trim() === "";
     if (required.has(field as string) && empty) return "obrigatorio_vazio";
-    if ((field === "cpf" || field === "rg") && cpfRgAmbiguity && !cpfRgConfirmed) return "precisa_confirmacao";
+    if ((field === "cpf" || field === "rg") && cpfRgAmbiguity && !cpfRgConfirmed && !isCinDoc) return "precisa_confirmacao";
     if (divergencias.some((d) => d.field === field) && !divergenciasConfirmadas) return "divergente";
     if (!empty) return "validado";
     return "normal";
@@ -1200,7 +1205,7 @@ function Step3Review({
       </div>
 
       {/* ─── Aviso de ambiguidade CPF×RG ─── */}
-      {cpfRgAmbiguity && (
+      {cpfRgAmbiguity && !isCinDoc && (
         <div className="rounded-xl p-3 space-y-2" style={{ background: "hsl(40 95% 96%)", border: "1px solid hsl(40 80% 80%)" }}>
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(30 80% 45%)" }} />
@@ -1225,6 +1230,17 @@ function Step3Review({
           >
             {cpfRgConfirmed ? "✓ CPF e RG/CIN confirmados" : "Confirmar CPF e RG/CIN manualmente"}
           </button>
+        </div>
+      )}
+
+      {/* ─── Aviso informativo (não-bloqueante) para CIN gov.br ─── */}
+      {isCinDoc && (
+        <div className="rounded-xl p-3 flex items-start gap-2"
+          style={{ background: "hsl(210 90% 97%)", border: "1px solid hsl(210 80% 88%)" }}>
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(210 80% 45%)" }} />
+          <div className="text-[11px] leading-relaxed font-medium" style={{ color: "hsl(210 50% 30%)" }}>
+            CIN gov.br identificada. O número nacional foi usado automaticamente como CPF e RG/CIN.
+          </div>
         </div>
       )}
 
