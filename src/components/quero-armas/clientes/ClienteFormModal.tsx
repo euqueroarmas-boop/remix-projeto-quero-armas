@@ -333,7 +333,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       }
       // Persiste Senha Gov se mudou
       try {
-        if (savedId && senhaGov !== senhaGovOriginal) {
+        // MODO SEGURO P0: salvamento de Senha Gov suspenso até reconciliação dos vínculos cadastro_cr ↔ cliente.
+        const SENHA_GOV_MODO_SEGURO = true;
+        if (!SENHA_GOV_MODO_SEGURO && savedId && senhaGov !== senhaGovOriginal) {
           let crId = cadastroCrId;
           if (!crId) {
             const { data: stub, error: stubErr } = await supabase
