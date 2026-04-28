@@ -303,12 +303,11 @@ export function ArsenalView({
         onNavigate={scrollToSection}
       />
 
-      {/* Bancada + Sidebar — sidebar flutua à direita só no topo, Bancada ocupa largura total abaixo */}
-      <div id="arsenal-bancada" className="scroll-mt-28">
-        <aside
-          id="arsenal-situacao"
-          className="scroll-mt-28 space-y-3 mb-4 xl:float-right xl:ml-4 xl:mb-4 xl:w-[320px]"
-        >
+      {/* Situação Geral + Próximos vencimentos — strip horizontal acima da bancada */}
+      <aside
+        id="arsenal-situacao"
+        className="scroll-mt-28 grid gap-3 md:grid-cols-2"
+      >
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-1.5">
               <Activity className="h-3.5 w-3.5" style={{ color: TACTICAL.cyan }} />
@@ -316,7 +315,7 @@ export function ArsenalView({
                 Situação Geral
               </div>
             </div>
-            <div className="space-y-2 text-[11px]">
+            <div className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-3">
               <Row
                 label="Documentos em dia"
                 value={`${expDocs.length - alerts.length}/${expDocs.length || 0}`}
@@ -353,15 +352,16 @@ export function ArsenalView({
               </div>
             )}
           </div>
-        </aside>
+      </aside>
 
+      {/* Bancada Tática — largura total */}
+      <div id="arsenal-bancada" className="scroll-mt-28">
         <Workbench
           weapons={weapons}
           documents={benchDocs}
           ammoByCalibre={ammo.byCalibre}
           onSelectWeapon={(w) => setSelected(w)}
         />
-        <div className="clear-both" />
       </div>
 
       {/* Munições */}
