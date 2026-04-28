@@ -173,13 +173,21 @@ function WeaponCard({
           className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
-          <img
-            src={render}
-            alt={`${marca} ${modelo}`}
-            loading="lazy"
-            style={{ background: "transparent" }}
-            className={`relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] ${info.kind === "espingarda" ? "scale-110" : ""}`}
-          />
+          {(() => {
+            const isLonga = ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind);
+            const longaScale = info.kind === "espingarda"
+              ? "scale-125 md:scale-[1.45]"
+              : "scale-110 md:scale-[1.35]";
+            return (
+              <img
+                src={render}
+                alt={`${marca} ${modelo}`}
+                loading="lazy"
+                style={{ background: "transparent" }}
+                className={`relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] ${isLonga ? longaScale : ""}`}
+              />
+            );
+          })()}
         </div>
 
         {/* Mini stats armory */}
