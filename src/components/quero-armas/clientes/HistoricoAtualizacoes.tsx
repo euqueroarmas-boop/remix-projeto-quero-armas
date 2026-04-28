@@ -150,7 +150,7 @@ export function HistoricoAtualizacoes({ clienteId, showSnapshot = false }: Props
                     <summary className="text-[10px] uppercase tracking-wider text-slate-400 cursor-pointer hover:text-slate-600">
                       Ver snapshot completo do estado anterior
                     </summary>
-                    <pre className="mt-2 text-[10px] bg-slate-900 text-slate-100 rounded-lg p-3 overflow-auto max-h-64">
+                    <pre className="mt-2 text-[10px] bg-slate-50 text-slate-800 border border-slate-200 rounded-lg p-3 overflow-auto max-h-64">
                       {JSON.stringify(r.snapshot_anterior, null, 2)}
                     </pre>
                   </details>
