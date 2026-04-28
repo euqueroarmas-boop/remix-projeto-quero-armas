@@ -8,6 +8,23 @@ class SenhaGovAuthError extends Error {
 }
 
 /**
+ * Event bus simples para sincronizar instâncias de `SenhaGovField` quando
+ * a senha é gravada em outro lugar (ex.: ClienteFormModal salva e o campo
+ * `exposed` na aba "Dados" precisa recarregar o valor mais recente).
+ */
+type SenhaGovListener = (cadastroCrId: number) => void;
+const listeners = new Set<SenhaGovListener>();
+export function subscribeSenhaGovUpdates(fn: SenhaGovListener): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+function emitSenhaGovUpdated(cadastroCrId: number) {
+  for (const fn of listeners) {
+    try { fn(cadastroCrId); } catch { /* ignore */ }
+  }
+}
+
+/**
  * Centraliza o acesso à Senha Gov.
  * Toda leitura/escrita passa pela edge function `qa-senha-gov`
  * (AES-256-GCM + auditoria em qa_senha_gov_acessos).
@@ -65,4 +82,5 @@ export async function setSenhaGov(
   contexto?: string,
 ): Promise<void> {
   await callSenhaGov({ action: "set", cadastro_cr_id: cadastroCrId, senha, contexto });
+  emitSenhaGovUpdated(cadastroCrId);
 }
