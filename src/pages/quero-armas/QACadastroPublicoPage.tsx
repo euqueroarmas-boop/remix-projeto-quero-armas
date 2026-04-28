@@ -604,6 +604,7 @@ export default function QACadastroPublicoPage() {
                 cpfRgAmbiguity={cpfRgAmbiguity}
                 cpfRgConfirmed={cpfRgConfirmed}
                 onConfirmCpfRg={() => setCpfRgConfirmed(true)}
+                tipoDocumentoIdentidade={tipoDocumentoIdentidade}
                 divergenciasConfirmadas={divergenciasConfirmadas}
                 onConfirmDivergencias={() => {
                   setDivergenciasConfirmadas(true);
