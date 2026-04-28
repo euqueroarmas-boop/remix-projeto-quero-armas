@@ -2470,6 +2470,7 @@ export type Database = {
           aut_telefone: string | null
           categoria_servico: string | null
           cliente_id_vinculado: number | null
+          cnh: string | null
           comprovante_endereco_path: string | null
           consentimento_dados_verdadeiros: boolean
           consentimento_ip: string | null
@@ -2479,6 +2480,8 @@ export type Database = {
           consentimento_user_agent: string | null
           cpf: string
           created_at: string
+          ctps: string | null
+          data_expedicao_rg: string | null
           data_nascimento: string | null
           descricao_servico_livre: string | null
           dias_pausados: number
@@ -2506,6 +2509,7 @@ export type Database = {
           end1_logradouro: string | null
           end1_longitude: string | null
           end1_numero: string | null
+          end1_pais: string | null
           end2_bairro: string | null
           end2_cep: string | null
           end2_cidade: string | null
@@ -2520,6 +2524,9 @@ export type Database = {
           id: string
           motivo_recusa: string | null
           nacionalidade: string | null
+          naturalidade_municipio: string | null
+          naturalidade_pais: string | null
+          naturalidade_uf: string | null
           nome_completo: string
           nome_mae: string | null
           nome_pai: string | null
@@ -2529,6 +2536,7 @@ export type Database = {
           origem_cadastro: string | null
           pago: boolean
           pago_em: string | null
+          pis_pasep: string | null
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
@@ -2537,12 +2545,14 @@ export type Database = {
           servico_fechado_final: string | null
           servico_interesse: string | null
           servico_principal: string | null
+          sexo: string | null
           sla_concluido_em: string | null
           status: string
           subtipo_servico: string | null
           telefone_principal: string
           telefone_secundario: string | null
           tem_segundo_endereco: boolean | null
+          titulo_eleitor: string | null
           trab_cargo_funcao: string | null
           trab_cnpj_empresa: string | null
           trab_data_admissao: string | null
@@ -2564,6 +2574,7 @@ export type Database = {
           aut_telefone?: string | null
           categoria_servico?: string | null
           cliente_id_vinculado?: number | null
+          cnh?: string | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
@@ -2573,6 +2584,8 @@ export type Database = {
           consentimento_user_agent?: string | null
           cpf: string
           created_at?: string
+          ctps?: string | null
+          data_expedicao_rg?: string | null
           data_nascimento?: string | null
           descricao_servico_livre?: string | null
           dias_pausados?: number
@@ -2600,6 +2613,7 @@ export type Database = {
           end1_logradouro?: string | null
           end1_longitude?: string | null
           end1_numero?: string | null
+          end1_pais?: string | null
           end2_bairro?: string | null
           end2_cep?: string | null
           end2_cidade?: string | null
@@ -2614,6 +2628,9 @@ export type Database = {
           id?: string
           motivo_recusa?: string | null
           nacionalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo: string
           nome_mae?: string | null
           nome_pai?: string | null
@@ -2623,6 +2640,7 @@ export type Database = {
           origem_cadastro?: string | null
           pago?: boolean
           pago_em?: string | null
+          pis_pasep?: string | null
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
@@ -2631,12 +2649,14 @@ export type Database = {
           servico_fechado_final?: string | null
           servico_interesse?: string | null
           servico_principal?: string | null
+          sexo?: string | null
           sla_concluido_em?: string | null
           status?: string
           subtipo_servico?: string | null
           telefone_principal: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
+          titulo_eleitor?: string | null
           trab_cargo_funcao?: string | null
           trab_cnpj_empresa?: string | null
           trab_data_admissao?: string | null
@@ -2658,6 +2678,7 @@ export type Database = {
           aut_telefone?: string | null
           categoria_servico?: string | null
           cliente_id_vinculado?: number | null
+          cnh?: string | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
@@ -2667,6 +2688,8 @@ export type Database = {
           consentimento_user_agent?: string | null
           cpf?: string
           created_at?: string
+          ctps?: string | null
+          data_expedicao_rg?: string | null
           data_nascimento?: string | null
           descricao_servico_livre?: string | null
           dias_pausados?: number
@@ -2694,6 +2717,7 @@ export type Database = {
           end1_logradouro?: string | null
           end1_longitude?: string | null
           end1_numero?: string | null
+          end1_pais?: string | null
           end2_bairro?: string | null
           end2_cep?: string | null
           end2_cidade?: string | null
@@ -2708,6 +2732,9 @@ export type Database = {
           id?: string
           motivo_recusa?: string | null
           nacionalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo?: string
           nome_mae?: string | null
           nome_pai?: string | null
@@ -2717,6 +2744,7 @@ export type Database = {
           origem_cadastro?: string | null
           pago?: boolean
           pago_em?: string | null
+          pis_pasep?: string | null
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
@@ -2725,12 +2753,14 @@ export type Database = {
           servico_fechado_final?: string | null
           servico_interesse?: string | null
           servico_principal?: string | null
+          sexo?: string | null
           sla_concluido_em?: string | null
           status?: string
           subtipo_servico?: string | null
           telefone_principal?: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
+          titulo_eleitor?: string | null
           trab_cargo_funcao?: string | null
           trab_cnpj_empresa?: string | null
           trab_data_admissao?: string | null
@@ -3040,10 +3070,12 @@ export type Database = {
           cidade: string | null
           cidade2: string | null
           cliente_lions: boolean | null
+          cnh: string | null
           complemento: string | null
           complemento2: string | null
           cpf: string | null
           created_at: string
+          ctps: string | null
           customer_id: string | null
           data_nascimento: string | null
           email: string | null
@@ -3064,6 +3096,9 @@ export type Database = {
           matricula_funcional: string | null
           nacionalidade: string | null
           naturalidade: string | null
+          naturalidade_municipio: string | null
+          naturalidade_pais: string | null
+          naturalidade_uf: string | null
           nome_completo: string
           nome_mae: string | null
           nome_pai: string | null
@@ -3073,8 +3108,10 @@ export type Database = {
           orgao_vinculado: string | null
           pais: string | null
           pais2: string | null
+          pis_pasep: string | null
           profissao: string | null
           rg: string | null
+          sexo: string | null
           status: string | null
           subcategoria: string | null
           titulo_eleitor: string | null
@@ -3094,10 +3131,12 @@ export type Database = {
           cidade?: string | null
           cidade2?: string | null
           cliente_lions?: boolean | null
+          cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
           cpf?: string | null
           created_at?: string
+          ctps?: string | null
           customer_id?: string | null
           data_nascimento?: string | null
           email?: string | null
@@ -3118,6 +3157,9 @@ export type Database = {
           matricula_funcional?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo: string
           nome_mae?: string | null
           nome_pai?: string | null
@@ -3127,8 +3169,10 @@ export type Database = {
           orgao_vinculado?: string | null
           pais?: string | null
           pais2?: string | null
+          pis_pasep?: string | null
           profissao?: string | null
           rg?: string | null
+          sexo?: string | null
           status?: string | null
           subcategoria?: string | null
           titulo_eleitor?: string | null
@@ -3148,10 +3192,12 @@ export type Database = {
           cidade?: string | null
           cidade2?: string | null
           cliente_lions?: boolean | null
+          cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
           cpf?: string | null
           created_at?: string
+          ctps?: string | null
           customer_id?: string | null
           data_nascimento?: string | null
           email?: string | null
@@ -3172,6 +3218,9 @@ export type Database = {
           matricula_funcional?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo?: string
           nome_mae?: string | null
           nome_pai?: string | null
@@ -3181,8 +3230,10 @@ export type Database = {
           orgao_vinculado?: string | null
           pais?: string | null
           pais2?: string | null
+          pis_pasep?: string | null
           profissao?: string | null
           rg?: string | null
+          sexo?: string | null
           status?: string | null
           subcategoria?: string | null
           titulo_eleitor?: string | null
