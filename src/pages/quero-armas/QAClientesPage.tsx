@@ -36,6 +36,7 @@ import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
@@ -728,6 +729,12 @@ const formatCpf = (v: string | null | undefined): string => {
   const d = v.replace(/\D/g, "");
   if (d.length !== 11) return v;
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+};
+
+const daysUntilDate = (d: string | null | undefined): number | null => {
+  if (!d) return null;
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : Math.ceil((parsed.getTime() - Date.now()) / 86400000);
 };
 
 const normalizeRgInput = (v: string | null | undefined): string => {
@@ -1664,7 +1671,7 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    setTab("resumo");
+    setTab("arsenal");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
@@ -1884,6 +1891,7 @@ export default function QAClientesPage() {
           <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
             <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
               {[
+                { value: "arsenal", icon: Crosshair, label: "Arsenal" },
                 { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
@@ -1910,6 +1918,32 @@ export default function QAClientesPage() {
             </div>
           ) : (
             <>
+              {/* ARSENAL INTELIGENTE */}
+              <TabsContent value="arsenal" className="mt-3">
+                <ArsenalView
+                  clienteId={c.id}
+                  clienteNome={c.nome_completo}
+                  crafs={crafs}
+                  gtes={gtes}
+                  cadastroCr={cadastro}
+                  meusDocs={docsCliente}
+                  expDocs={[
+                    ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
+                    ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
+                    ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
+                  ]}
+                  alerts={[
+                    ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
+                    ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
+                    ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
+                  ].filter((d) => d.days !== null && d.days <= 90)}
+                  onOpenAddDoc={() => setTab("docs")}
+                  onArsenalChanged={async () => {
+                    await loadSubData(c);
+                  }}
+                />
+              </TabsContent>
+
               {/* RESUMO */}
               <TabsContent value="resumo" className="mt-3">
                 <ClienteOverview
