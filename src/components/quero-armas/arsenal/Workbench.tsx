@@ -40,10 +40,10 @@ interface Props {
 }
 
 const toneClasses = {
-  ok: { glow: "shadow-[0_0_24px_-6px_rgba(0,0,0,0.6)]", chip: "bg-emerald-400/15 text-emerald-300 border-emerald-400/40", dot: "bg-emerald-400" },
-  warn: { glow: "shadow-[0_0_24px_-6px_rgba(0,0,0,0.6)]", chip: "bg-amber-400/15 text-amber-300 border-amber-400/40", dot: "bg-amber-400" },
-  danger: { glow: "shadow-[0_0_24px_-6px_rgba(239,68,68,0.55)]", chip: "bg-red-500/15 text-red-300 border-red-500/40", dot: "bg-red-500" },
-  muted: { glow: "shadow-[0_0_24px_-6px_rgba(148,163,184,0.35)]", chip: "bg-white/5 text-white/60 border-white/10", dot: "bg-white/40" },
+  ok: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.18)]", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  warn: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.18)]", chip: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" },
+  danger: { glow: "shadow-[0_8px_24px_-12px_rgba(239,68,68,0.35)]", chip: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500" },
+  muted: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]", chip: "bg-slate-100 text-slate-500 border-slate-200", dot: "bg-slate-400" },
 };
 
 function urgencyText(days: number | null): string {
@@ -74,7 +74,7 @@ function WeaponCard({
   const accent =
     tone === "danger" ? "#ef4444"
     : tone === "ok" ? "#10b981"
-    : "#64748b";
+    : "#94a3b8";
   const marca = catalog?.marca || info.marca || info.label;
   const modeloRaw = (catalog?.modelo || info.modelo || "").toString();
   // Espingardas com espaços; demais armas compactadas (TS9, RT838, T4).
@@ -94,12 +94,11 @@ function WeaponCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-2xl border border-white/10 text-left transition-all hover:-translate-y-[2px] hover:border-white/30 ${c.glow}`}
-      style={{ background: "linear-gradient(180deg, rgba(10,12,18,0.9), rgba(6,8,12,0.95))" }}
+      className={`group relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition-all hover:-translate-y-[2px] hover:border-slate-300 ${c.glow}`}
     >
       {/* Cinematic background */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-60 transition-opacity group-hover:opacity-80"
+        className="pointer-events-none absolute inset-0 opacity-[0.07] transition-opacity group-hover:opacity-[0.12]"
         style={{
           backgroundImage: `url(${bg})`,
           backgroundSize: "cover",
@@ -109,22 +108,22 @@ function WeaponCard({
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background: `linear-gradient(180deg, rgba(2,4,8,0.45) 0%, rgba(2,4,8,0.85) 100%), radial-gradient(circle at 50% 60%, ${accent}1f, transparent 70%)`,
+          background: `linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(248,250,252,0.85) 100%), radial-gradient(circle at 50% 60%, ${accent}14, transparent 70%)`,
         }}
       />
       {/* Scanline subtle */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: "repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(255,255,255,0.6) 2px, rgba(255,255,255,0.6) 3px)",
+          backgroundImage: "repeating-linear-gradient(0deg, transparent 0, transparent 2px, rgba(15,23,42,0.35) 2px, rgba(15,23,42,0.35) 3px)",
         }}
       />
       {/* Corner ticks */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-2 top-2 h-3 w-6 border-l border-t border-white/40" />
-        <div className="absolute right-2 top-2 h-3 w-6 border-r border-t border-white/40" />
-        <div className="absolute bottom-2 left-2 h-3 w-6 border-b border-l border-white/40" />
-        <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-white/40" />
+        <div className="absolute left-2 top-2 h-3 w-6 border-l border-t border-slate-300" />
+        <div className="absolute right-2 top-2 h-3 w-6 border-r border-t border-slate-300" />
+        <div className="absolute bottom-2 left-2 h-3 w-6 border-b border-l border-slate-300" />
+        <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-slate-300" />
       </div>
 
       <div className="relative p-4">
@@ -132,22 +131,22 @@ function WeaponCard({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${c.dot} animate-pulse`} />
-              <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/70">
+              <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-slate-500">
                 {WEAPON_KIND_LABEL[info.kind]}
               </span>
               {catalog && (
-                <span className="inline-flex items-center gap-0.5 rounded-sm border border-emerald-400/40 bg-emerald-400/10 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-300">
-                  <Star className="h-2 w-2 fill-emerald-400 text-emerald-400" /> ID
+                <span className="inline-flex items-center gap-0.5 rounded-sm border border-emerald-200 bg-emerald-50 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-700">
+                  <Star className="h-2 w-2 fill-emerald-500 text-emerald-500" /> ID
                 </span>
               )}
             </div>
-            <div className="mt-1 truncate text-[15px] font-black uppercase tracking-tight text-white leading-tight">
+            <div className="mt-1 truncate text-[15px] font-black uppercase tracking-tight text-slate-900 leading-tight">
               {marca}
             </div>
-            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
+            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-600">
               {modelo}
             </div>
-            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
               CAL · {calibre}
             </div>
           </div>
@@ -157,10 +156,10 @@ function WeaponCard({
             >
               {urgencyText(w.daysToExpire)}
             </span>
-            <span className="inline-flex items-center gap-1 rounded bg-white/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/80">
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
               {w.source}
               {w.hasGte && (
-                <span className="rounded bg-cyan-400/15 px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-cyan-300">
+                <span className="rounded bg-sky-100 px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-sky-700">
                   + GTE
                 </span>
               )}
@@ -184,7 +183,7 @@ function WeaponCard({
                 alt={`${marca} ${modelo}`}
                 loading="lazy"
                 style={{ background: "transparent" }}
-                className={`relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] ${isLonga ? longaScale : ""}`}
+                className={`relative h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_10px_18px_rgba(15,23,42,0.25)] ${isLonga ? longaScale : ""}`}
               />
             );
           })()}
@@ -192,30 +191,30 @@ function WeaponCard({
 
         {/* Mini stats armory */}
         {catalog && (
-          <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-2">
+          <div className="grid grid-cols-3 gap-2 border-t border-slate-200 pt-2">
             <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
-            <MiniStat label="PRC" value={catalog.stat_precisao} color="#22d3ee" />
+            <MiniStat label="PRC" value={catalog.stat_precisao} color="#0ea5e9" />
             <MiniStat label="MOB" value={catalog.stat_mobilidade} color="#10b981" />
           </div>
         )}
 
-        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-white/10 pt-2 text-[10px]">
+        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-slate-200 pt-2 text-[10px]">
           <div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">CAL</div>
-            <div className="font-bold text-white/90">{calibre}</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
+            <div className="font-bold text-slate-800">{calibre}</div>
           </div>
           <div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">SIGMA</div>
-            <div className="truncate font-mono text-white/80">{w.numero_sigma || "—"}</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
+            <div className="truncate font-mono text-slate-700">{w.numero_sigma || "—"}</div>
           </div>
           <div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-white/40">N° SÉRIE</div>
-            <div className="truncate font-mono text-white/80">{w.numero_arma || "—"}</div>
+            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">N° SÉRIE</div>
+            <div className="truncate font-mono text-slate-700">{w.numero_arma || "—"}</div>
           </div>
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-[10px] text-white/50">
-          <span className="inline-flex items-center gap-1 text-white/40 group-hover:text-cyan-300 ml-auto">
+        <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+          <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-sky-600 ml-auto">
             INSPECIONAR <ChevronRight className="h-3 w-3" />
           </span>
         </div>
@@ -229,11 +228,11 @@ function MiniStat({ label, value, color }: { label: string; value: number | null
   return (
     <div>
       <div className="flex items-center justify-between text-[8px]">
-        <span className="font-bold uppercase tracking-wider text-white/50">{label}</span>
-        <span className="font-mono text-white/70">{value ?? "—"}</span>
+        <span className="font-bold uppercase tracking-wider text-slate-500">{label}</span>
+        <span className="font-mono text-slate-700">{value ?? "—"}</span>
       </div>
-      <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-white/10">
-        <div className="h-full rounded-full" style={{ width: `${v}%`, background: color, boxShadow: `0 0 6px ${color}cc` }} />
+      <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-slate-100">
+        <div className="h-full rounded-full" style={{ width: `${v}%`, background: color, boxShadow: `0 0 6px ${color}66` }} />
       </div>
     </div>
   );
@@ -246,27 +245,27 @@ function DocumentTag({ d }: { d: DocCard }) {
     tone === "ok" ? "#10b981"
     : tone === "warn" ? "#f59e0b"
     : tone === "danger" ? "#ef4444"
-    : "#22d3ee";
+    : "#0ea5e9";
   return (
     <button
       type="button"
       onClick={d.onOpen}
-      className="group relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left transition-all hover:-translate-y-[1px] hover:border-white/25 hover:bg-white/[0.06]"
+      className="group relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition-all hover:-translate-y-[1px] hover:border-slate-300 hover:bg-slate-50"
     >
-      <span className="absolute left-0 top-0 h-full w-1" style={{ background: accent, boxShadow: `0 0 8px ${accent}` }} />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/40 text-cyan-300">
+      <span className="absolute left-0 top-0 h-full w-1" style={{ background: accent, boxShadow: `0 0 8px ${accent}55` }} />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
         <FileText className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/80">
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
             {d.category}
           </span>
           <span className={`rounded-sm border px-1.5 py-0.5 text-[8px] font-bold uppercase ${c.chip}`}>
             {urgencyText(d.daysToExpire)}
           </span>
         </div>
-        <div className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-wide text-white/90">{d.title}</div>
+        <div className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-wide text-slate-800">{d.title}</div>
       </div>
     </button>
   );
@@ -312,28 +311,26 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
   const overflow = longas.length + grupoCurtas.length - (visibleLongas.length + visibleCurtas.length);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/10 shadow-2xl"
-      style={{ background: "linear-gradient(180deg, #07090f 0%, #04060a 100%)" }}
-    >
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
       {/* Top HUD strip */}
-      <div className="flex items-center justify-between border-b border-white/10 bg-black/50 px-5 py-3 backdrop-blur">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-400/15 text-cyan-300 ring-1 ring-cyan-400/30">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-600 ring-1 ring-sky-200">
             <Crosshair className="h-3.5 w-3.5" />
           </div>
           <div>
-            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-white">
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-900">
               ARMORY · BANCADA TÁTICA
             </div>
-            <div className="text-[10px] uppercase tracking-wider text-white/40">Arsenal interpretado a partir do seu cadastro</div>
+            <div className="text-[10px] uppercase tracking-wider text-slate-400">Arsenal interpretado a partir do seu cadastro</div>
           </div>
         </div>
         <div className="hidden items-center gap-3 md:flex">
-          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-300">
+          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-600">
             <Radio className="h-3 w-3 animate-pulse" />
             ONLINE
           </div>
-          <div className="text-[10px] font-mono text-white/50">
+          <div className="text-[10px] font-mono text-slate-400">
             {enriched.length.toString().padStart(2, "0")} ITEM(S)
           </div>
         </div>
@@ -344,17 +341,17 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
         {/* ambient glow */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-40"
-          style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(34,211,238,0.12), transparent 70%)" }}
+          style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.06), transparent 70%)" }}
         />
 
         {enriched.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <ShieldAlert className="h-10 w-10 text-white/30" />
+            <ShieldAlert className="h-10 w-10 text-slate-300" />
             <div>
-              <div className="text-[12px] font-bold uppercase tracking-wider text-white/80">
+              <div className="text-[12px] font-bold uppercase tracking-wider text-slate-700">
                 NENHUMA ARMA NO ACERVO
               </div>
-              <p className="mt-1 max-w-sm text-[11px] text-white/40">
+              <p className="mt-1 max-w-sm text-[11px] text-slate-400">
                 Cadastre seus CRAFs para que o sistema monte automaticamente sua bancada.
               </p>
             </div>
@@ -395,7 +392,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
                 <button
                   type="button"
                   onClick={() => setShowAll(true)}
-                  className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-cyan-300 hover:bg-cyan-400/20"
+                  className="rounded-full border border-sky-200 bg-sky-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-sky-700 hover:bg-sky-100"
                 >
                   Ver todos (+{overflow})
                 </button>
@@ -408,13 +405,13 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
         <div className="relative mt-6 grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <div className="mb-2 flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-cyan-300" />
-              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
+              <Layers className="h-3.5 w-3.5 text-sky-600" />
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-700">
                 Munições · Por Calibre
               </div>
             </div>
             {ammoByCalibre.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-4 text-center text-[11px] text-white/40">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-[11px] text-slate-400">
                 Nenhuma munição cadastrada
               </div>
             ) : (
@@ -422,18 +419,18 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
                 {ammoByCalibre.slice(0, 6).map((a) => (
                   <div
                     key={a.calibre}
-                    className="rounded-xl border border-white/10 bg-black/30 p-2 backdrop-blur"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-2"
                   >
-                    <div className="text-[9px] font-bold uppercase tracking-wider text-white/50">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
                       {a.calibre}
                     </div>
-                    <div className="mt-0.5 font-mono text-[15px] font-bold text-white">
+                    <div className="mt-0.5 font-mono text-[15px] font-bold text-slate-900">
                       {a.quantidade.toLocaleString("pt-BR")}
                     </div>
-                    <div className="mt-1 h-1 w-full rounded-full bg-white/10">
+                    <div className="mt-1 h-1 w-full rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500"
-                        style={{ width: `${Math.min(100, (a.quantidade / 200) * 100)}%`, boxShadow: "0 0 6px #22d3ee" }}
+                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                        style={{ width: `${Math.min(100, (a.quantidade / 200) * 100)}%` }}
                       />
                     </div>
                   </div>
@@ -444,13 +441,13 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
 
           <div className="lg:col-span-2">
             <div className="mb-2 flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-cyan-300" />
-              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/80">
+              <FileText className="h-3.5 w-3.5 text-sky-600" />
+              <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-700">
                 Documentos na Bancada
               </div>
             </div>
             {documents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-3 py-4 text-center text-[11px] text-white/40">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-center text-[11px] text-slate-400">
                 Nenhum documento vinculado
               </div>
             ) : (
