@@ -58,27 +58,12 @@ const SLOTS: DocSlot[] = [
   { key: "selfie",   label: "Selfie de identificação",  description: "Foto sua segurando o documento", icon: UserCircle2, capture: "user" },
 ];
 
-interface Extracted {
-  nome_completo: string;
-  cpf: string;
-  data_nascimento: string;
-  rg: string;
-  emissor_rg: string;
-  cep: string;
-  logradouro: string;
-  numero: string;
-  bairro: string;
-  cidade: string;
-  estado: string;
-  email: string;
-  telefone_principal: string;
-}
-
-const emptyExtracted: Extracted = {
-  nome_completo: "", cpf: "", data_nascimento: "", rg: "", emissor_rg: "",
-  cep: "", logradouro: "", numero: "", bairro: "", cidade: "", estado: "",
-  email: "", telefone_principal: "",
-};
+/**
+ * Backwards-compat alias: a partir da Entrega B usamos o tipo unificado
+ * `ClienteData` (schema compartilhado) como modelo de revisão.
+ */
+type Extracted = ClienteData;
+const emptyExtracted: Extracted = { ...emptyClienteData };
 
 /* ─── helpers ─── */
 function fileToDataUrl(file: File): Promise<string> {
