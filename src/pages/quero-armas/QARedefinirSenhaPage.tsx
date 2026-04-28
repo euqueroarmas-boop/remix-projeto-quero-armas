@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /**
  * Página de redefinição de senha — destino do link de recovery enviado por e-mail.
@@ -23,6 +24,10 @@ export default function QARedefinirSenhaPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const closeToLogin = () => {
+    if (!saving) navigate("/login", { replace: true });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +68,7 @@ export default function QARedefinirSenhaPage() {
           if (!data.session) throw new Error("Link inválido ou expirado. Solicite um novo e-mail de redefinição.");
         }
 
-        // limpa parâmetros sensíveis da URL
+        // Limpa parâmetros sensíveis somente depois de validar/criar sessão de recovery.
         window.history.replaceState({}, document.title, "/redefinir-senha");
 
         if (!cancelled) {
@@ -116,8 +121,17 @@ export default function QARedefinirSenhaPage() {
           </div>
           <p className="text-[11px] text-slate-400 mt-1 tracking-wider uppercase">Redefinição de Senha</p>
         </div>
+      </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-6">
+      <Dialog open onOpenChange={(open) => { if (!open) closeToLogin(); }}>
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-sm max-h-[90dvh] overflow-y-auto overscroll-contain bg-white border-slate-200 rounded-xl p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-slate-800">
+          <DialogHeader>
+            <DialogTitle className="text-base text-slate-800">Redefinir senha</DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Informe uma nova senha para concluir a recuperação do acesso.
+            </DialogDescription>
+          </DialogHeader>
+
           {verifying && (
             <div className="flex flex-col items-center gap-3 py-6 text-slate-500 text-sm">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -163,8 +177,8 @@ export default function QARedefinirSenhaPage() {
               </Button>
             </form>
           )}
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
