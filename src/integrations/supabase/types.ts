@@ -4972,6 +4972,92 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_servicos_catalogo: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          categoria_servico_slug: string | null
+          checklist_type: string | null
+          contrato_type: string | null
+          created_at: string
+          descricao_curta: string | null
+          descricao_full: string | null
+          display_order: number
+          exige_cadastro: boolean
+          exige_pagamento: boolean
+          gera_processo: boolean
+          id: string
+          nome: string
+          objetivo_slug: string | null
+          preco: number | null
+          recorrente: boolean
+          servico_id: number | null
+          servico_principal_slug: string | null
+          slug: string
+          tipo: string
+          tipo_processo: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          categoria_servico_slug?: string | null
+          checklist_type?: string | null
+          contrato_type?: string | null
+          created_at?: string
+          descricao_curta?: string | null
+          descricao_full?: string | null
+          display_order?: number
+          exige_cadastro?: boolean
+          exige_pagamento?: boolean
+          gera_processo?: boolean
+          id?: string
+          nome: string
+          objetivo_slug?: string | null
+          preco?: number | null
+          recorrente?: boolean
+          servico_id?: number | null
+          servico_principal_slug?: string | null
+          slug: string
+          tipo?: string
+          tipo_processo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          categoria_servico_slug?: string | null
+          checklist_type?: string | null
+          contrato_type?: string | null
+          created_at?: string
+          descricao_curta?: string | null
+          descricao_full?: string | null
+          display_order?: number
+          exige_cadastro?: boolean
+          exige_pagamento?: boolean
+          gera_processo?: boolean
+          id?: string
+          nome?: string
+          objetivo_slug?: string | null
+          preco?: number | null
+          recorrente?: boolean
+          servico_id?: number | null
+          servico_principal_slug?: string | null
+          slug?: string
+          tipo?: string
+          tipo_processo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_catalogo_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_servicos_com_exame: {
         Row: {
           ativo: boolean

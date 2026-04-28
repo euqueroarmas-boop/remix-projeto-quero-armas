@@ -1,4 +1,6 @@
 import React, { useState, useRef, useCallback, Fragment } from "react";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
@@ -167,6 +169,38 @@ export default function QACadastroPublicoPage() {
     subtipo_servico: "",
     descricao_servico_livre: "",
   });
+
+  /* ─── Pré-seleção de serviço via querystring (?servico=slug) ───
+   * Permite que cards do portal "/area-do-cliente/contratar" e links
+   * externos abram o cadastro já com o serviço escolhido — eliminando
+   * o "cadastro genérico que tenta adivinhar o serviço". */
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const slug = searchParams.get("servico");
+    if (!slug) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .select("slug, nome, objetivo_slug, categoria_servico_slug, servico_principal_slug")
+        .eq("slug", slug)
+        .eq("ativo", true)
+        .maybeSingle();
+      if (cancel || !data) return;
+      const cat = (data as any).categoria_servico_slug as string | null;
+      const obj = (data as any).objetivo_slug as string | null;
+      const svc = (data as any).servico_principal_slug as string | null;
+      if (obj && cat && svc) {
+        setQualif((q) => ({
+          ...q,
+          objetivo_principal: obj,
+          categoria_servico: cat,
+          servico_principal: svc,
+        }));
+      }
+    })();
+    return () => { cancel = true; };
+  }, [searchParams]);
 
   // arquivos / data URLs
   const [files, setFiles] = useState<Record<string, string>>({});

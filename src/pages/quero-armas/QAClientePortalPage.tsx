@@ -7,6 +7,7 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
+  ShoppingBag,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
@@ -842,6 +843,24 @@ export default function QAClientePortalPage() {
         )}
 
         <SectionCard icon={Target} title="Meus Serviços" color="hsl(230 80% 56%)">
+          {/* CTA — Contratar novo serviço */}
+          <button
+            onClick={() => navigate("/area-do-cliente/contratar")}
+            className="w-full mb-3 flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/60 hover:from-amber-100 hover:to-amber-200/60 border border-amber-200 hover:border-amber-300 transition group"
+          >
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-500 text-white shrink-0 group-hover:scale-105 transition">
+              <ShoppingBag className="h-4 w-4" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="text-[12px] font-bold text-slate-900 uppercase tracking-tight">
+                Contratar novo serviço
+              </div>
+              <div className="text-[10px] text-slate-600 mt-0.5">
+                Posse, porte, CRAF, CR, GTE e mais — escolha e agilizamos para você.
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-amber-700 shrink-0" />
+          </button>
           {itens.length === 0 ? (
             <p className="text-center text-sm text-slate-400 py-6">Nenhum serviço contratado.</p>
           ) : (
