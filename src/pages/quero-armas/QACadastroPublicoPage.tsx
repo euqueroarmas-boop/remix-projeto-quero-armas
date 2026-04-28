@@ -27,6 +27,7 @@ import {
   getCamposObrigatoriosPorCategoria,
   type CategoriaTitular,
 } from "@/shared/quero-armas/clienteSchema";
+import { trackTelemetria } from "@/shared/quero-armas/telemetria";
 
 /* =========================================================================
  * Cadastro do Cliente — Fluxo guiado em 5 etapas
@@ -212,6 +213,21 @@ export default function QACadastroPublicoPage() {
           reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
           cpfCandidates: ambig.cpfCandidates,
           rgCandidates: ambig.rgCandidates,
+        });
+        trackTelemetria({
+          event_type: "cpf_rg_ambiguity_detected",
+          categoria_titular: extracted.categoria_titular || null,
+          payload: {
+            tipo_documento: id?.tipo_documento || null,
+            cpf_candidato_count: ambig.cpfCandidates.length,
+            rg_candidato_count: ambig.rgCandidates.length,
+            cpf_eq_rg:
+              ambig.cpfCandidates.length > 0 &&
+              ambig.rgCandidates.length > 0 &&
+              ambig.cpfCandidates[0] === ambig.rgCandidates[0],
+            cpf_confidence: typeof id?.cpf_confidence === "number" ? id.cpf_confidence : null,
+            rg_confidence: typeof id?.rg_confidence === "number" ? id.rg_confidence : null,
+          },
         });
       } else {
         setCpfRgAmbiguity(null);
@@ -521,7 +537,18 @@ export default function QACadastroPublicoPage() {
                 cpfRgConfirmed={cpfRgConfirmed}
                 onConfirmCpfRg={() => setCpfRgConfirmed(true)}
                 divergenciasConfirmadas={divergenciasConfirmadas}
-                onConfirmDivergencias={() => setDivergenciasConfirmadas(true)}
+                onConfirmDivergencias={() => {
+                  setDivergenciasConfirmadas(true);
+                  const divs = getDivergencias(extracted, extractedFromDoc);
+                  trackTelemetria({
+                    event_type: "divergencia_confirmada",
+                    categoria_titular: extracted.categoria_titular || null,
+                    payload: {
+                      total_divergencias: divs.length,
+                      campos_divergentes: divs.map((d) => d.field).slice(0, 10),
+                    },
+                  });
+                }}
                 unidadePF={unidadePF}
                 unidadeLoading={unidadeLoading}
                 onResolveUnidade={async () => {
@@ -537,9 +564,29 @@ export default function QACadastroPublicoPage() {
                     );
                     const row = Array.isArray(rows) ? rows[0] : rows;
                     setUnidadePF(row || null);
+                    if (!row) {
+                      trackTelemetria({
+                        event_type: "circunscricao_nao_encontrada",
+                        categoria_titular: extracted.categoria_titular || null,
+                        payload: {
+                          uf: String(extracted.end1_estado || "").toUpperCase().slice(0, 2),
+                          municipio_len: String(extracted.end1_cidade || "").length,
+                          motivo: "rpc_sem_resultado",
+                        },
+                      });
+                    }
                   } catch (e) {
                     console.error("Erro ao resolver circunscrição:", e);
                     setUnidadePF(null);
+                    trackTelemetria({
+                      event_type: "circunscricao_nao_encontrada",
+                      categoria_titular: extracted.categoria_titular || null,
+                      payload: {
+                        uf: String(extracted.end1_estado || "").toUpperCase().slice(0, 2),
+                        municipio_len: String(extracted.end1_cidade || "").length,
+                        motivo: "rpc_erro",
+                      },
+                    });
                   } finally {
                     setUnidadeLoading(false);
                   }

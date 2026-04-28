@@ -2835,6 +2835,39 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cadastro_telemetria: {
+        Row: {
+          categoria_titular: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_hash: string | null
+          payload: Json
+          sessao_id: string | null
+          user_agent_hash: string | null
+        }
+        Insert: {
+          categoria_titular?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          sessao_id?: string | null
+          user_agent_hash?: string | null
+        }
+        Update: {
+          categoria_titular?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          sessao_id?: string | null
+          user_agent_hash?: string | null
+        }
+        Relationships: []
+      }
       qa_casos: {
         Row: {
           bairro: string | null
