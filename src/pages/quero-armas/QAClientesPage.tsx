@@ -2333,6 +2333,22 @@ export default function QAClientesPage() {
                     <Button variant="ghost" size="sm" onClick={() => setCrModal({ open: true, item: cadastro || undefined })} className="h-6 px-2 text-[9px] text-emerald-400">
                       {cadastro ? <><Edit className="h-3 w-3 mr-1" /> Editar</> : <><Plus className="h-3 w-3 mr-1" /> Cadastrar CR</>}
                     </Button>
+                    {cadastro && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteModal({
+                          open: true,
+                          table: "qa_cadastro_cr",
+                          id: cadastro.id,
+                          title: "Excluir CR",
+                          desc: `Excluir o cadastro de CR "${cadastro.numero_cr || ""}" deste cliente?`,
+                        })}
+                        className="h-6 px-2 text-[9px] text-red-500 hover:text-red-600"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" /> Excluir
+                      </Button>
+                    )}
                   </div>
                 </div>
                 {!cadastro ? <Empty text="Nenhum cadastro CR encontrado." /> : (() => {
