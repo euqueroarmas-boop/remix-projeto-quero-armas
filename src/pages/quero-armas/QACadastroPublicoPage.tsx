@@ -192,6 +192,10 @@ export default function QACadastroPublicoPage() {
   } | null>(null);
   const [cpfRgConfirmed, setCpfRgConfirmed] = useState(false);
   const [divergenciasConfirmadas, setDivergenciasConfirmadas] = useState(false);
+  // Tipo do documento de identidade detectado pela IA (ex.: "CIN", "RG", "CNH").
+  // Persistido para que o validador (`getBlockingErrors`) saiba dispensar a
+  // regra "CPF ≠ RG" no caso legítimo da CIN gov.br.
+  const [tipoDocumentoIdentidade, setTipoDocumentoIdentidade] = useState<string>("");
   // Circunscrição PF resolvida a partir do endereço residencial
   const [unidadePF, setUnidadePF] = useState<{
     unidade_pf: string; sigla_unidade: string; tipo_unidade: string;
@@ -244,14 +248,18 @@ export default function QACadastroPublicoPage() {
 
       // Detecta ambiguidade CPF×RG retornada pela IA
       const ambig = detectCpfRgAmbiguity(id);
-      const isCin = String(id?.tipo_documento || "").toUpperCase() === "CIN";
+      const tipoDoc = String(id?.tipo_documento || "").toUpperCase();
+      const isCin = tipoDoc.includes("CIN");
+      setTipoDocumentoIdentidade(tipoDoc);
       const cpfDigitsExtracted = id?.cpf ? onlyDigits(String(id.cpf)) : "";
       const cpfIsValid = cpfDigitsExtracted.length === 11 && isValidCpf(cpfDigitsExtracted);
-      if (ambig.hasAmbiguity) {
+      // Para CIN gov.br, o número nacional pode legitimamente ser igual ao CPF.
+      // Tratamos a ambiguidade como puramente informativa: NÃO bloqueia avanço
+      // e NÃO exige clique em "Confirmar". Para qualquer outro tipo, mantém o
+      // bloqueio anterior.
+      if (ambig.hasAmbiguity && !isCin) {
         setCpfRgAmbiguity({
-          reason: isCin
-            ? "Documento CIN gov.br detectado. O número nacional pode aparecer como CPF/RG/CIN. Confirme manualmente antes de concluir."
-            : (ambig.reason || "A IA não conseguiu separar CPF e RG com certeza"),
+          reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
           cpfCandidates: ambig.cpfCandidates,
           rgCandidates: ambig.rgCandidates,
         });
@@ -271,7 +279,9 @@ export default function QACadastroPublicoPage() {
           },
         });
       } else {
+        // CIN com CPF==RG é caso legítimo → não bloqueia.
         setCpfRgAmbiguity(null);
+        if (isCin) setCpfRgConfirmed(true);
       }
 
       // Snapshot do que veio do documento (usado para detecção de divergência)
@@ -294,14 +304,15 @@ export default function QACadastroPublicoPage() {
         // — não deve apagar o CPF do usuário.
         cpf: cpfIsValid ? maskCpf(cpfDigitsExtracted) : prev.cpf,
         // RG/CIN:
-        //  - Sem ambiguidade → usa o RG retornado (comportamento original).
-        //  - Com ambiguidade em CIN → preenche o candidato apenas se for
-        //    DIFERENTE do CPF (para não duplicar visualmente o mesmo número).
-        //  - Demais ambiguidades → não preenche silenciosamente.
-        rg: !ambig.hasAmbiguity
-          ? (id.rg || prev.rg)
-          : (isCin && ambig.rgCandidates[0] && ambig.rgCandidates[0] !== cpfDigitsExtracted
-              ? ambig.rgCandidates[0]
+        //  - CIN gov.br → preenche automaticamente com id.rg, primeiro
+        //    rg_candidato OU o próprio número da CIN/CPF (são o mesmo número
+        //    no documento). Sem bloqueio por igualdade.
+        //  - Demais documentos sem ambiguidade → comportamento original.
+        //  - Demais documentos COM ambiguidade → não preenche silenciosamente.
+        rg: isCin
+          ? (id.rg || ambig.rgCandidates[0] || cpfDigitsExtracted || prev.rg)
+          : (!ambig.hasAmbiguity
+              ? (id.rg || prev.rg)
               : prev.rg),
         emissor_rg: id.emissor_rg && id.uf_emissor_rg
           ? `${id.emissor_rg}/${id.uf_emissor_rg}` : (id.emissor_rg || prev.emissor_rg),
@@ -351,6 +362,7 @@ export default function QACadastroPublicoPage() {
         categoria: extracted.categoria_titular || "pessoa_fisica",
         needsCpfRgConfirmation: !!cpfRgAmbiguity,
         cpfRgConfirmed,
+        documentoIdentidadeTipo: tipoDocumentoIdentidade,
       });
       const divergencias = getDivergencias(extracted, extractedFromDoc);
       if (blocking.length > 0) {
@@ -592,6 +604,7 @@ export default function QACadastroPublicoPage() {
                 cpfRgAmbiguity={cpfRgAmbiguity}
                 cpfRgConfirmed={cpfRgConfirmed}
                 onConfirmCpfRg={() => setCpfRgConfirmed(true)}
+                tipoDocumentoIdentidade={tipoDocumentoIdentidade}
                 divergenciasConfirmadas={divergenciasConfirmadas}
                 onConfirmDivergencias={() => {
                   setDivergenciasConfirmadas(true);
@@ -1119,6 +1132,7 @@ const CATEGORIA_OPTS: { value: CategoriaTitular | ""; label: string }[] = [
 function Step3Review({
   data, onChange, onContinue, onBack, busy, error,
   fromDoc, cpfRgAmbiguity, cpfRgConfirmed, onConfirmCpfRg,
+  tipoDocumentoIdentidade,
   divergenciasConfirmadas, onConfirmDivergencias,
   unidadePF, unidadeLoading, onResolveUnidade,
 }: {
@@ -1132,6 +1146,7 @@ function Step3Review({
   cpfRgAmbiguity: { reason: string; cpfCandidates: string[]; rgCandidates: string[] } | null;
   cpfRgConfirmed: boolean;
   onConfirmCpfRg: () => void;
+  tipoDocumentoIdentidade: string;
   divergenciasConfirmadas: boolean;
   onConfirmDivergencias: () => void;
   unidadePF: { unidade_pf: string; sigla_unidade: string; tipo_unidade: string; municipio_sede: string; uf: string; base_legal: string } | null;
@@ -1140,6 +1155,8 @@ function Step3Review({
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
+  const isCinDoc = String(tipoDocumentoIdentidade || "").toUpperCase().includes("CIN");
+
   // Categoria implícita p/ bloqueio: usa a do form ou "pessoa_fisica" como padrão (cidadão comum)
   const categoriaEfetiva: CategoriaTitular | "" = data.categoria_titular || "pessoa_fisica";
   const required = new Set<string>(getCamposObrigatoriosPorCategoria(categoriaEfetiva));
@@ -1147,6 +1164,7 @@ function Step3Review({
     categoria: categoriaEfetiva,
     needsCpfRgConfirmation: !!cpfRgAmbiguity,
     cpfRgConfirmed,
+    documentoIdentidadeTipo: tipoDocumentoIdentidade,
   });
   const divergencias = getDivergencias(data, fromDoc);
 
@@ -1161,7 +1179,7 @@ function Step3Review({
     const v = (data as any)[field];
     const empty = v === undefined || v === null || String(v).trim() === "";
     if (required.has(field as string) && empty) return "obrigatorio_vazio";
-    if ((field === "cpf" || field === "rg") && cpfRgAmbiguity && !cpfRgConfirmed) return "precisa_confirmacao";
+    if ((field === "cpf" || field === "rg") && cpfRgAmbiguity && !cpfRgConfirmed && !isCinDoc) return "precisa_confirmacao";
     if (divergencias.some((d) => d.field === field) && !divergenciasConfirmadas) return "divergente";
     if (!empty) return "validado";
     return "normal";
@@ -1187,7 +1205,7 @@ function Step3Review({
       </div>
 
       {/* ─── Aviso de ambiguidade CPF×RG ─── */}
-      {cpfRgAmbiguity && (
+      {cpfRgAmbiguity && !isCinDoc && (
         <div className="rounded-xl p-3 space-y-2" style={{ background: "hsl(40 95% 96%)", border: "1px solid hsl(40 80% 80%)" }}>
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(30 80% 45%)" }} />
@@ -1212,6 +1230,17 @@ function Step3Review({
           >
             {cpfRgConfirmed ? "✓ CPF e RG/CIN confirmados" : "Confirmar CPF e RG/CIN manualmente"}
           </button>
+        </div>
+      )}
+
+      {/* ─── Aviso informativo (não-bloqueante) para CIN gov.br ─── */}
+      {isCinDoc && (
+        <div className="rounded-xl p-3 flex items-start gap-2"
+          style={{ background: "hsl(210 90% 97%)", border: "1px solid hsl(210 80% 88%)" }}>
+          <Sparkles className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(210 80% 45%)" }} />
+          <div className="text-[11px] leading-relaxed font-medium" style={{ color: "hsl(210 50% 30%)" }}>
+            CIN gov.br identificada. O número nacional foi usado automaticamente como CPF e RG/CIN.
+          </div>
         </div>
       )}
 

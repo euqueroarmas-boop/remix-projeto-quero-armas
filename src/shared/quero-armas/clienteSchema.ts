@@ -272,6 +272,13 @@ export function getBlockingErrors(
     categoria?: CategoriaTitular | "";
     needsCpfRgConfirmation?: boolean;
     cpfRgConfirmed?: boolean;
+    /**
+     * Tipo do documento de identidade detectado pela IA. Quando "CIN"
+     * (Carteira de Identidade Nacional / gov.br), o número nacional pode
+     * legitimamente ser igual ao CPF — então a regra "CPF ≠ RG" é dispensada
+     * e a confirmação manual CPF×RG/CIN passa a ser meramente informativa.
+     */
+    documentoIdentidadeTipo?: "CIN" | "RG" | "CNH" | string;
   } = {},
 ): BlockingError[] {
   const errs: BlockingError[] = [];
@@ -306,7 +313,8 @@ export function getBlockingErrors(
   }
 
   // CPF×RG idênticos
-  if (!rgNotEqualCpf(data.rg, data.cpf)) {
+  const isCinDoc = String(opts.documentoIdentidadeTipo || "").toUpperCase().includes("CIN");
+  if (!isCinDoc && !rgNotEqualCpf(data.rg, data.cpf)) {
     errs.push({
       field: "ambiguidade_cpf_rg",
       label: "CPF × RG",
@@ -314,8 +322,8 @@ export function getBlockingErrors(
     });
   }
 
-  // Confirmação CPF×RG pendente
-  if (opts.needsCpfRgConfirmation && !opts.cpfRgConfirmed) {
+  // Confirmação CPF×RG pendente — dispensada para CIN (informativa).
+  if (!isCinDoc && opts.needsCpfRgConfirmation && !opts.cpfRgConfirmed) {
     errs.push({
       field: "ambiguidade_cpf_rg",
       label: "CPF × RG",
