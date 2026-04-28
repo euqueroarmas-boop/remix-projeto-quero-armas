@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, FileText, Crosshair, Layers, ShieldAlert, Star, Radio } from "lucide-react";
+import { ChevronRight, FileText, Crosshair, Layers, ShieldAlert, Star, Radio, X } from "lucide-react";
 import {
   buildWeaponInfo,
   maskSerial,
@@ -30,6 +30,7 @@ interface DocCard {
   date: string | null;
   daysToExpire: number | null;
   onOpen?: () => void;
+  onDelete?: () => void;
 }
 
 interface Props {
@@ -247,27 +248,40 @@ function DocumentTag({ d }: { d: DocCard }) {
     : tone === "danger" ? "#ef4444"
     : "#0ea5e9";
   return (
-    <button
-      type="button"
-      onClick={d.onOpen}
-      className="group relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-2 text-left transition-all hover:-translate-y-[1px] hover:border-slate-300 hover:bg-slate-50"
-    >
+    <div className="group relative flex w-full items-center gap-2.5 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-2 transition-all hover:-translate-y-[1px] hover:border-slate-300 hover:bg-slate-50">
       <span className="absolute left-0 top-0 h-full w-1" style={{ background: accent, boxShadow: `0 0 8px ${accent}55` }} />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
-        <FileText className="h-3.5 w-3.5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
-            {d.category}
-          </span>
-          <span className={`rounded-sm border px-1.5 py-0.5 text-[8px] font-bold uppercase ${c.chip}`}>
-            {urgencyText(d.daysToExpire)}
-          </span>
+      <button
+        type="button"
+        onClick={d.onOpen}
+        className="flex flex-1 items-center gap-2.5 text-left min-w-0"
+      >
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+          <FileText className="h-3.5 w-3.5" />
         </div>
-        <div className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-wide text-slate-800">{d.title}</div>
-      </div>
-    </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
+              {d.category}
+            </span>
+            <span className={`rounded-sm border px-1.5 py-0.5 text-[8px] font-bold uppercase ${c.chip}`}>
+              {urgencyText(d.daysToExpire)}
+            </span>
+          </div>
+          <div className="mt-0.5 truncate text-[11px] font-bold uppercase tracking-wide text-slate-800">{d.title}</div>
+        </div>
+      </button>
+      {d.onDelete && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); d.onDelete?.(); }}
+          aria-label="Excluir documento"
+          title="Excluir"
+          className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 opacity-0 transition-all group-hover:opacity-100 hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
   );
 }
 
