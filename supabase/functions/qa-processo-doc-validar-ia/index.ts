@@ -264,6 +264,8 @@ Deno.serve(async (req) => {
     try { parsed = JSON.parse(args); }
     catch { return json({ error: "Falha ao parsear resposta IA" }, 500); }
 
+    console.log("[validar-ia][debug] parsed:", JSON.stringify(parsed).slice(0, 2000));
+
     // ===== Reconciliação de "divergências falsas" =====
     // Se a IA marcou algo como divergência mas o cadastro do cliente está vazio
     // (campo não pôde ser comparado), NÃO é divergência: é um dado novo extraído.
