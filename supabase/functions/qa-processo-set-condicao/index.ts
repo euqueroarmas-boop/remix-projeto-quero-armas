@@ -108,11 +108,12 @@ Deno.serve(async (req) => {
       .eq("tipo_documento", "renda_definir_condicao");
 
     // 3) Carrega itens de renda existentes
-    const { data: existentes } = await supabase
+    const { data: existentes, error: errExist } = await supabase
       .from("qa_processo_documentos")
       .select("id, tipo_documento, status")
       .eq("processo_id", processo_id)
       .like("tipo_documento", "renda_%");
+    console.log("[set-condicao] existentes renda_*:", JSON.stringify(existentes), "err:", errExist);
 
     const aprovados = new Set((existentes ?? []).filter((d: any) => d.status === "aprovado").map((d: any) => d.tipo_documento));
     const aRemover = (existentes ?? []).filter((d: any) =>
@@ -120,12 +121,26 @@ Deno.serve(async (req) => {
       d.status !== "aprovado"
     ).map((d: any) => d.id);
 
+    let removidosReais = 0;
     if (aRemover.length > 0) {
-      await supabase.from("qa_processo_documentos").delete().in("id", aRemover);
+      const { data: delData, error: delErr, count } = await supabase
+        .from("qa_processo_documentos")
+        .delete({ count: "exact" })
+        .in("id", aRemover)
+        .select("id");
+      removidosReais = (delData?.length ?? count ?? 0);
+      console.log("[set-condicao] DELETE ids=", aRemover, "removidosReais=", removidosReais, "err=", delErr);
     }
 
-    // 4) Insere os itens corretos para a condição (preservando aprovados)
-    const novos = rendaPara(condicao).filter((it) => !aprovados.has(it.tipo_documento));
+    // 4) Recarrega a lista REAL após o delete para evitar duplicatas (anti-corrida)
+    const { data: aindaPresentes } = await supabase
+      .from("qa_processo_documentos")
+      .select("tipo_documento")
+      .eq("processo_id", processo_id)
+      .like("tipo_documento", "renda_%");
+    const presentesSet = new Set((aindaPresentes ?? []).map((d: any) => d.tipo_documento));
+    const novos = rendaPara(condicao).filter((it) => !presentesSet.has(it.tipo_documento));
+    console.log("[set-condicao] presentes pós-delete:", Array.from(presentesSet), "novos a inserir:", novos.map(n => n.tipo_documento));
     if (novos.length > 0) {
       const rows = novos.map((d) => ({
         processo_id,
@@ -148,12 +163,12 @@ Deno.serve(async (req) => {
       processo_id,
       tipo_evento: "condicao_profissional_definida",
       descricao: `Condição profissional definida: ${condicao.toUpperCase()}.`,
-      dados_json: { condicao, removidos: aRemover.length, criados: novos.length, preservados_aprovados: Array.from(aprovados) },
+      dados_json: { condicao, removidos_solicitados: aRemover.length, removidos_reais: removidosReais, criados: novos.length, preservados_aprovados: Array.from(aprovados) },
       ator: staffRow ? "staff" : "cliente",
       user_id: userId,
     });
 
-    return json({ success: true, condicao_profissional: condicao, removidos: aRemover.length, criados: novos.length });
+    return json({ success: true, condicao_profissional: condicao, removidos: removidosReais, criados: novos.length });
   } catch (e: any) {
     console.error("qa-processo-set-condicao:", e);
     return json({ error: e?.message || "Erro interno" }, 500);
