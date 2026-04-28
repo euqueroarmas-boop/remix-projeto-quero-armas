@@ -262,7 +262,7 @@ export function ArsenalView({
       if (s) crafSerials.add(s);
       if (g) crafSigmas.add(g);
     });
-    const list: { id: string; category: string; title: string; date: string | null; daysToExpire: number | null }[] = [];
+    const list: { id: string; category: string; title: string; date: string | null; daysToExpire: number | null; onOpen?: () => void; onDelete?: () => void }[] = [];
     if (cadastroCr?.validade_cr) {
       list.push({
         id: `cr-${cadastroCr.id}`,
