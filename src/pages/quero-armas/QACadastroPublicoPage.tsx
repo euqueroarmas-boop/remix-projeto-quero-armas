@@ -192,6 +192,10 @@ export default function QACadastroPublicoPage() {
   } | null>(null);
   const [cpfRgConfirmed, setCpfRgConfirmed] = useState(false);
   const [divergenciasConfirmadas, setDivergenciasConfirmadas] = useState(false);
+  // Tipo do documento de identidade detectado pela IA (ex.: "CIN", "RG", "CNH").
+  // Persistido para que o validador (`getBlockingErrors`) saiba dispensar a
+  // regra "CPF ≠ RG" no caso legítimo da CIN gov.br.
+  const [tipoDocumentoIdentidade, setTipoDocumentoIdentidade] = useState<string>("");
   // Circunscrição PF resolvida a partir do endereço residencial
   const [unidadePF, setUnidadePF] = useState<{
     unidade_pf: string; sigla_unidade: string; tipo_unidade: string;
