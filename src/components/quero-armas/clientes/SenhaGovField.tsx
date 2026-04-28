@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X, ShieldAlert } from "lucide-react";
+import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSenhaGov, setSenhaGov, subscribeSenhaGovUpdates } from "./senhaGovApi";
 
 /**
- * MODO SEGURO P0 — Incidente de cruzamento de Senha Gov (28/04/2026).
- * Enquanto o vínculo cadastro_cr ↔ cliente não estiver 100% restaurado,
- * NÃO revelar senhas no frontend e bloquear edição. Auditoria preservada.
+ * Pós-incidente P0 (28/04/2026):
+ *   - reconciliação concluída e duplicatas órfãs consolidadas;
+ *   - Senha GOV agora opera em modo "revelação manual segura":
+ *       • nunca carrega valor automaticamente;
+ *       • revelação exige clique explícito;
+ *       • toda chamada à edge function inclui `cliente_id` para
+ *         bloquear leitura/gravação cruzada (resposta 409 + log
+ *         `denied_mismatch` no servidor);
+ *       • troca de cliente/CR limpa estado local imediatamente.
  */
-const SENHA_GOV_MODO_SEGURO = true;
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
@@ -72,12 +77,18 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [resolvedCrId, setResolvedCrId] = useState<number | null | undefined>(cadastroCrId ?? null);
-  const [autoLoadedFor, setAutoLoadedFor] = useState<number | null>(null);
 
   // Mantém em sincronia quando o pai atualiza o id após salvar.
+  // Também limpa qualquer senha em memória ao trocar de CR/cliente
+  // (anti cache cruzado entre cadastros).
   useEffect(() => {
+    setSenha(null);
+    setVisible(false);
+    setEditing(false);
+    setDraft("");
     if (cadastroCrId) setResolvedCrId(cadastroCrId);
-  }, [cadastroCrId]);
+    else setResolvedCrId(null);
+  }, [cadastroCrId, clienteId]);
 
   // Fallback: resolve o cadastro_cr_id pelo cliente quando não foi recebido.
   useEffect(() => {
@@ -88,6 +99,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
           .from("qa_cadastro_cr" as any)
           .select("id")
           .eq("cliente_id", clienteId)
+          .is("consolidado_em", null)
           .order("id", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -105,34 +117,14 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
     const unsub = subscribeSenhaGovUpdates((updatedId) => {
       if (effectiveCrId && updatedId === effectiveCrId) {
         setSenha(null);
-        setAutoLoadedFor(null);
         setVisible(false);
       }
     });
     return () => { unsub(); };
   }, [effectiveCrId]);
 
-  // Auto-load do variant "exposed": dispara UMA VEZ por id.
-  // (Antes era chamado em todo render, gerando loop infinito de 401.)
-  useEffect(() => {
-    if (SENHA_GOV_MODO_SEGURO) return;
-    if (variant !== "exposed") return;
-    if (!effectiveCrId) return;
-    if (autoLoadedFor === effectiveCrId) return;
-    setAutoLoadedFor(effectiveCrId);
-    (async () => {
-      setLoading(true);
-      try {
-        const s = await getSenhaGov(effectiveCrId, contexto);
-        setSenha(s || "");
-      } catch {
-        // Silencioso: evita spam de toast no auto-load.
-        setSenha("");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [variant, effectiveCrId, autoLoadedFor, contexto]);
+  // ⚠️  Política pós-P0: NUNCA carregar a senha automaticamente.
+  // Mesmo no variant "exposed" o admin precisa clicar em "Revelar".
 
   // Sem cadastroCrId, sem clienteId e sem callback: nada a fazer (modo legado),
   // exceto no variant "exposed" que sempre exibe o slot (mostra "—").
@@ -141,9 +133,14 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   const ensure = async () => {
     if (!effectiveCrId) return null;
     if (senha != null) return senha;
+    // Sem clienteId não chamamos a edge function (a função recusaria com 400/409).
+    if (!clienteId) {
+      toast.error("clienteId obrigatório para acessar Senha GOV");
+      return null;
+    }
     setLoading(true);
     try {
-      const s = await getSenhaGov(effectiveCrId, contexto);
+      const s = await getSenhaGov(effectiveCrId, contexto, clienteId);
       setSenha(s || "");
       return s || "";
     } catch (e: any) {
@@ -180,29 +177,20 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   // Variante "exposed": carrega automaticamente e exibe em texto claro.
   // O admin já está autenticado — não há necessidade de "revelar".
   if (variant === "exposed") {
-    if (SENHA_GOV_MODO_SEGURO) {
-      return (
-        <div className="flex flex-col gap-0.5 py-1">
-          <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
-          <div className="flex items-center gap-2 pl-0.5">
-            <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
-            <span className="font-mono text-[12px] text-amber-700 font-semibold">
-              BLOQUEADA · MODO SEGURO
-            </span>
-          </div>
-          <span className="text-[10px] text-slate-400 pl-0.5">
-            Visualização suspensa após incidente de vínculo cliente↔CR.
-          </span>
-        </div>
-      );
-    }
     return (
       <div className="flex flex-col gap-0.5 py-1">
         <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
         <div className="flex items-center gap-2 pl-0.5">
           <span className="font-mono text-[13px] text-slate-800 font-semibold select-all">
-            {loading ? "…" : (senha || "—")}
+            {loading ? "…" : (visible ? (senha || "—") : "••••••••")}
           </span>
+          <button
+            onClick={toggle}
+            className="p-1 rounded hover:bg-slate-100 text-slate-500"
+            title={visible ? "Ocultar" : "Revelar (validação cliente↔CR)"}
+          >
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          </button>
           {senha ? (
             <button
               onClick={copy}
@@ -218,8 +206,8 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   }
 
   const startEdit = async () => {
-    if (SENHA_GOV_MODO_SEGURO) {
-      toast.error("Edição de Senha Gov bloqueada · MODO SEGURO ativo");
+    if (!clienteId) {
+      toast.error("clienteId obrigatório para editar Senha GOV");
       return;
     }
     if (cadastroCrId) {
@@ -237,8 +225,8 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   };
 
   const save = async () => {
-    if (SENHA_GOV_MODO_SEGURO) {
-      toast.error("Salvamento de Senha Gov bloqueado · MODO SEGURO ativo");
+    if (!clienteId) {
+      toast.error("clienteId obrigatório para salvar Senha GOV");
       return;
     }
     setSaving(true);
@@ -252,7 +240,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
         setSaving(false);
         return;
       }
-      await setSenhaGov(id, draft, contexto);
+      await setSenhaGov(id, draft, contexto, clienteId);
       setSenha(draft);
       setEditing(false);
       setDraft("");
