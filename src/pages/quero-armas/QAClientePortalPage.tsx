@@ -277,6 +277,7 @@ export default function QAClientePortalPage() {
             .from("qa_documentos_cliente" as any)
             .select("*")
             .or(docFilters)
+            .neq("status", "excluido")
             .order("created_at", { ascending: false });
           setMeusDocs((docsData as any[]) ?? []);
         }
@@ -320,6 +321,38 @@ export default function QAClientePortalPage() {
     await supabase.auth.signOut();
     navigate("/area-do-cliente/login", { replace: true });
   };
+
+  // Realtime: ouve mudanças nos próprios documentos (admin aprovou/reprovou/excluiu)
+  // e nas tabelas de arsenal — recarrega imediatamente.
+  useEffect(() => {
+    const clienteIdReal = cliente?.id ?? null;
+    if (!clienteIdReal && !customerId) return;
+    const channel = supabase
+      .channel(`portal-cliente-${clienteIdReal ?? customerId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_documentos_cliente" },
+        (payload: any) => {
+          const row = payload.new || payload.old;
+          if (!row) return;
+          if (row.qa_cliente_id === clienteIdReal || row.customer_id === customerId) {
+            setDocsReloadKey((k) => k + 1);
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_crafs", filter: `cliente_id=eq.${clienteIdReal}` },
+        () => setDocsReloadKey((k) => k + 1),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` },
+        () => setDocsReloadKey((k) => k + 1),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [cliente?.id, customerId]);
 
   const analysis = useMemo(() => {
     if (!cliente) return null;
@@ -664,7 +697,7 @@ export default function QAClientePortalPage() {
               const [cfRes, gtRes, dRes] = await Promise.all([
                 supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
                 supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
-                supabase.from("qa_documentos_cliente" as any).select("*").eq("cliente_id", clienteIdReal).order("created_at", { ascending: false }),
+                supabase.from("qa_documentos_cliente" as any).select("*").eq("qa_cliente_id", clienteIdReal).neq("status", "excluido").order("created_at", { ascending: false }),
               ]);
               setCrafs((cfRes.data as any[]) ?? []);
               setGtes((gtRes.data as any[]) ?? []);
@@ -1041,12 +1074,22 @@ export default function QAClientePortalPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-slate-600">{cat}</span>
-                            {d.validado_admin && (
+                            {d.status === "aprovado" && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
-                                <BadgeCheck className="h-2.5 w-2.5" /> VALIDADO
+                                <BadgeCheck className="h-2.5 w-2.5" /> APROVADO
                               </span>
                             )}
-                            {d.ia_status === "sugerido" && !d.validado_admin && (
+                            {d.status === "pendente_aprovacao" && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 inline-flex items-center gap-0.5">
+                                AGUARDANDO ANÁLISE
+                              </span>
+                            )}
+                            {d.status === "reprovado" && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 inline-flex items-center gap-0.5">
+                                REPROVADO
+                              </span>
+                            )}
+                            {d.ia_status === "sugerido" && d.status !== "aprovado" && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 inline-flex items-center gap-0.5">
                                 <Sparkles className="h-2.5 w-2.5" /> IA
                               </span>
@@ -1065,6 +1108,12 @@ export default function QAClientePortalPage() {
                           </div>
                           {d.orgao_emissor && (
                             <div className="text-[10px] text-slate-500 mt-0.5">{d.orgao_emissor}</div>
+                          )}
+                          {d.status === "reprovado" && d.motivo_reprovacao && (
+                            <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-700">
+                              <span className="font-bold uppercase">Motivo da reprovação:</span> {d.motivo_reprovacao}
+                              <div className="mt-1 text-[9px] text-red-600">Reenvie o documento corrigido pelo botão Adicionar.</div>
+                            </div>
                           )}
                         </div>
                         <div className="text-right shrink-0">

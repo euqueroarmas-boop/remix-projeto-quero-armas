@@ -3797,6 +3797,8 @@ export type Database = {
       }
       qa_documentos_cliente: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           arma_calibre: string | null
           arma_especie: string | null
           arma_marca: string | null
@@ -3813,10 +3815,15 @@ export type Database = {
           ia_processado_em: string | null
           ia_status: string
           id: string
+          motivo_reprovacao: string | null
           numero_documento: string | null
           observacoes: string | null
           orgao_emissor: string | null
+          origem: string
           qa_cliente_id: number | null
+          reprovado_em: string | null
+          reprovado_por: string | null
+          status: string
           tipo_documento: string
           updated_at: string
           validado_admin: boolean
@@ -3824,6 +3831,8 @@ export type Database = {
           validado_por: string | null
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           arma_calibre?: string | null
           arma_especie?: string | null
           arma_marca?: string | null
@@ -3840,10 +3849,15 @@ export type Database = {
           ia_processado_em?: string | null
           ia_status?: string
           id?: string
+          motivo_reprovacao?: string | null
           numero_documento?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
+          origem?: string
           qa_cliente_id?: number | null
+          reprovado_em?: string | null
+          reprovado_por?: string | null
+          status?: string
           tipo_documento: string
           updated_at?: string
           validado_admin?: boolean
@@ -3851,6 +3865,8 @@ export type Database = {
           validado_por?: string | null
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           arma_calibre?: string | null
           arma_especie?: string | null
           arma_marca?: string | null
@@ -3867,10 +3883,15 @@ export type Database = {
           ia_processado_em?: string | null
           ia_status?: string
           id?: string
+          motivo_reprovacao?: string | null
           numero_documento?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
+          origem?: string
           qa_cliente_id?: number | null
+          reprovado_em?: string | null
+          reprovado_por?: string | null
+          status?: string
           tipo_documento?: string
           updated_at?: string
           validado_admin?: boolean

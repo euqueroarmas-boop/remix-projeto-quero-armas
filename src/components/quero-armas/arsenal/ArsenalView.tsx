@@ -146,7 +146,11 @@ export function ArsenalView({
   };
 
   const deleteDocCliente = async (id: string) => {
-    const { error } = await supabase.from("qa_documentos_cliente" as any).delete().eq("id", id);
+    // Soft-delete: marca como excluído para preservar auditoria; some do portal e dos KPIs.
+    const { error } = await supabase
+      .from("qa_documentos_cliente" as any)
+      .update({ status: "excluido" })
+      .eq("id", id);
     if (error) throw error;
     toast.success("Documento removido.");
     await refreshArsenal();
