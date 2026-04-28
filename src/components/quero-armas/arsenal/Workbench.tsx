@@ -176,8 +176,8 @@ function WeaponCard({
           {(() => {
             const isLonga = ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind);
             const longaScale = info.kind === "espingarda"
-              ? "scale-125 md:scale-[1.45]"
-              : "scale-110 md:scale-[1.35]";
+              ? "scale-125 md:scale-[1.75]"
+              : "scale-110 md:scale-[1.65]";
             return (
               <img
                 src={render}
