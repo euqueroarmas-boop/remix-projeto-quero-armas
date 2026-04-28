@@ -731,6 +731,12 @@ const formatCpf = (v: string | null | undefined): string => {
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
+const daysUntilDate = (d: string | null | undefined): number | null => {
+  if (!d) return null;
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? null : Math.ceil((parsed.getTime() - Date.now()) / 86400000);
+};
+
 const normalizeRgInput = (v: string | null | undefined): string => {
   const raw = (v ?? "").toUpperCase().replace(/[^0-9X]/g, "");
   const hasVerifierX = raw.endsWith("X");
