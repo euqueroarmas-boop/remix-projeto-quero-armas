@@ -41,13 +41,19 @@ interface Props {
   /** "row" = inline tipo Field (admin); "compact" = mini chip */
   variant?: "row" | "compact";
   contexto?: string;
+  /**
+   * Quando não houver `cadastroCrId`, o campo continua visível.
+   * Ao clicar em "Editar", chama este callback para criar o stub
+   * `qa_cadastro_cr` e devolve o id recém-criado para salvar a senha.
+   */
+  onCreateCadastro?: () => Promise<number | null>;
 }
 
 /**
  * Exibe a Senha Gov sob demanda, decifrando via edge function `qa-senha-gov`.
  * Cada revelação registra auditoria em qa_senha_gov_acessos.
  */
-export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props) {
+export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreateCadastro }: Props) {
   const [senha, setSenha] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,9 +61,11 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
 
-  if (!cadastroCrId) return null;
+  // Sem cadastroCrId E sem callback de criação: nada a fazer (modo legado).
+  if (!cadastroCrId && !onCreateCadastro) return null;
 
   const ensure = async () => {
+    if (!cadastroCrId) return null;
     if (senha != null) return senha;
     setLoading(true);
     try {
@@ -95,9 +103,12 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
   };
 
   const startEdit = async () => {
-    // pré-carrega a senha atual (se houver) para facilitar edição
-    const current = await ensure();
-    setDraft(current || "");
+    if (cadastroCrId) {
+      const current = await ensure();
+      setDraft(current || "");
+    } else {
+      setDraft("");
+    }
     setEditing(true);
   };
 
@@ -109,7 +120,16 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
   const save = async () => {
     setSaving(true);
     try {
-      await setSenhaGov(cadastroCrId, draft, contexto);
+      let id = cadastroCrId;
+      if (!id && onCreateCadastro) {
+        id = (await onCreateCadastro()) || undefined as any;
+      }
+      if (!id) {
+        toast.error("Não foi possível preparar o cadastro CR");
+        setSaving(false);
+        return;
+      }
+      await setSenhaGov(id, draft, contexto);
       setSenha(draft);
       setEditing(false);
       setDraft("");
