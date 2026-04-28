@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /**
  * Página de redefinição de senha — destino do link de recovery enviado por e-mail.
@@ -24,10 +23,6 @@ export default function QARedefinirSenhaPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const closeToLogin = () => {
-    if (!saving) navigate("/login", { replace: true });
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -113,24 +108,26 @@ export default function QARedefinirSenhaPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-10">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <QALogo className="h-24 w-auto rounded-2xl" alt="Quero Armas" />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center mb-3">
+            <QALogo className="h-20 w-auto rounded-2xl" alt="Quero Armas" />
           </div>
-          <p className="text-[11px] text-slate-400 mt-1 tracking-wider uppercase">Redefinição de Senha</p>
+          <p className="text-[11px] text-slate-400 tracking-wider uppercase">
+            Redefinição de Senha
+          </p>
         </div>
-      </div>
 
-      <Dialog open onOpenChange={(open) => { if (!open) closeToLogin(); }}>
-        <DialogContent className="w-[calc(100vw-1rem)] max-w-sm max-h-[90dvh] overflow-y-auto overscroll-contain bg-white border-slate-200 rounded-xl p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-slate-800">
-          <DialogHeader>
-            <DialogTitle className="text-base text-slate-800">Redefinir senha</DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div className="mb-4">
+            <h1 className="text-base font-semibold text-slate-800">
+              Redefinir senha
+            </h1>
+            <p className="text-xs text-slate-500 mt-1">
               Informe uma nova senha para concluir a recuperação do acesso.
-            </DialogDescription>
-          </DialogHeader>
+            </p>
+          </div>
 
           {verifying && (
             <div className="flex flex-col items-center gap-3 py-6 text-slate-500 text-sm">
@@ -155,30 +152,58 @@ export default function QARedefinirSenhaPage() {
           {!verifying && ready && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-slate-500 text-[11px] uppercase tracking-wider">Nova senha</Label>
+                <Label
+                  htmlFor="password"
+                  className="text-slate-500 text-[11px] uppercase tracking-wider"
+                >
+                  Nova senha
+                </Label>
                 <Input
-                  id="password" type="password" required minLength={8}
-                  value={password} onChange={e => setPassword(e.target.value)}
+                  id="password"
+                  type="password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
                   placeholder="Mínimo 8 caracteres"
+                  autoComplete="new-password"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="confirm" className="text-slate-500 text-[11px] uppercase tracking-wider">Confirmar senha</Label>
+                <Label
+                  htmlFor="confirm"
+                  className="text-slate-500 text-[11px] uppercase tracking-wider"
+                >
+                  Confirmar senha
+                </Label>
                 <Input
-                  id="confirm" type="password" required minLength={8}
-                  value={confirm} onChange={e => setConfirm(e.target.value)}
+                  id="confirm"
+                  type="password"
+                  required
+                  minLength={8}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
                   className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
                   placeholder="Repita a nova senha"
+                  autoComplete="new-password"
                 />
               </div>
-              <Button type="submit" disabled={saving} className="w-full bg-slate-800 hover:bg-slate-900 text-white h-10 text-sm font-medium">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar nova senha"}
+              <Button
+                type="submit"
+                disabled={saving}
+                className="w-full bg-slate-800 hover:bg-slate-900 text-white h-10 text-sm font-medium"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Salvar nova senha"
+                )}
               </Button>
             </form>
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      </div>
     </div>
   );
 }
