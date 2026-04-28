@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
+import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
@@ -27,14 +28,11 @@ export default function QAClienteLoginPage() {
 
   const handleForgotPassword = async () => {
     if (!email) { toast.error("Informe seu e-mail primeiro."); return; }
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
-      });
-      if (error) throw error;
-      toast.success("E-mail de redefinição enviado.");
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao enviar e-mail.");
+    const result = await requestQAPasswordReset(email);
+    if (result.success) {
+      toast.success("Se existir uma conta com este e-mail, enviaremos as instruções de redefinição.");
+    } else {
+      toast.error(result.errorMessage || "Não foi possível enviar o e-mail de redefinição. Tente novamente em instantes.");
     }
   };
 
