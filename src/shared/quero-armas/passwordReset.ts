@@ -1,23 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * URL canônica para o link de redefinição de senha.
- * Em produção, força o domínio oficial para evitar variações com www/preview/lovable.app
- * que poderiam não estar nas Redirect URLs do Supabase.
+ * URL canônica FIXA para o link de redefinição de senha do Quero Armas.
+ * NUNCA derivar de window.location.origin — em produção o e-mail real
+ * precisa sair sempre com este host, mesmo se a solicitação vier de
+ * preview/lovable.app/localhost. A edge function também força isso para
+ * brand=quero-armas em APP_ENV=production.
  */
-export const QA_PASSWORD_RESET_REDIRECT_URL: string = (() => {
-  if (typeof window === "undefined") {
-    return "https://euqueroarmas.com.br/redefinir-senha";
-  }
-  const host = window.location.hostname;
-  const isProdDomain =
-    host === "euqueroarmas.com.br" || host === "www.euqueroarmas.com.br";
-  if (isProdDomain) {
-    return "https://euqueroarmas.com.br/redefinir-senha";
-  }
-  // Preview/lovable/localhost: usa origin atual (a edge function valida o host na allowlist)
-  return `${window.location.origin}/redefinir-senha`;
-})();
+export const QA_PASSWORD_RESET_REDIRECT_URL =
+  "https://euqueroarmas.com.br/redefinir-senha";
 
 export interface PasswordResetResult {
   success: boolean;
@@ -37,17 +28,22 @@ export async function requestQAPasswordReset(
   rawEmail: string
 ): Promise<PasswordResetResult> {
   const email = rawEmail.trim().toLowerCase();
-  const redirectTo = QA_PASSWORD_RESET_REDIRECT_URL;
 
-  // Log de diagnóstico (visível em dev)
   // eslint-disable-next-line no-console
-  console.info("[QA Password Reset] start", { email, redirectTo });
+  console.info("[QA Password Reset] start", {
+    email,
+    redirectTo: QA_PASSWORD_RESET_REDIRECT_URL,
+  });
 
   try {
     const { data, error } = await supabase.functions.invoke(
       "request-password-reset",
       {
-        body: { email, redirectTo, brand: "quero-armas" },
+        body: {
+          email,
+          redirectTo: QA_PASSWORD_RESET_REDIRECT_URL,
+          brand: "quero-armas",
+        },
       }
     );
 

@@ -122,6 +122,15 @@ function isAllowedRedirectForBrand(url: string, cfg: BrandConfig): boolean {
 }
 
 function resolveRedirectTo(req: Request, cfg: BrandConfig, explicitRedirect?: string) {
+  // Para Quero Armas, o link enviado por e-mail SEMPRE precisa apontar para o
+  // domínio canônico oficial. Ignoramos qualquer redirectTo vindo do frontend
+  // (preview/lovable/localhost) para impedir que o link do e-mail saia com
+  // host errado. Em ambientes não-produção (APP_ENV=preview|development),
+  // permite-se override explícito apenas se passar na allowlist.
+  if (cfg.brand === "quero-armas" && getAppEnv() === "production") {
+    return cfg.defaultRedirectTo;
+  }
+
   if (explicitRedirect && isAllowedRedirectForBrand(explicitRedirect, cfg)) {
     return explicitRedirect;
   }
