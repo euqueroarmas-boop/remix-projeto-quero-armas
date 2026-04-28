@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff } from "lucide-react";
@@ -13,6 +12,7 @@ export default function QAClienteLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const location = useLocation();
 
   useEffect(() => {
@@ -71,7 +71,8 @@ export default function QAClienteLoginPage() {
       }
 
       toast.success("Bem-vindo!");
-      navigate("/area-do-cliente", { replace: true });
+      const next = searchParams.get("next");
+      navigate(next && next.startsWith("/") ? next : "/area-do-cliente", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Erro ao autenticar");
     } finally {
