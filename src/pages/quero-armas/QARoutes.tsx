@@ -36,6 +36,7 @@ const QAContratarServicoPage = lazyRetry(() => import("./QAContratarServicoPage"
 const QAContratarConfirmarPage = lazyRetry(() => import("./QAContratarConfirmarPage"), "QAContratarConfirmarPage");
 const QAContratarIdentificarPage = lazyRetry(() => import("./QAContratarIdentificarPage"), "QAContratarIdentificarPage");
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
+const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
 const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
@@ -67,6 +68,7 @@ export default function QARoutes() {
         <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
         <Route path="area-do-cliente" element={<QAClientePortalPage />} />
         <Route path="area-do-cliente/contratar" element={<QAContratarServicoPage />} />
+        <Route path="area-do-cliente/contratacoes" element={<QAClienteContratacoesPage />} />
         <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAContratarIdentificarPage />} />
         <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAContratarConfirmarPage />} />
         <Route path="ativar-acesso" element={<QAAtivarAcessoPage />} />
