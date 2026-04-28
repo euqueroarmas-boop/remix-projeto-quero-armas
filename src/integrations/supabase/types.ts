@@ -2469,6 +2469,7 @@ export type Database = {
           aut_nome_profissional: string | null
           aut_telefone: string | null
           categoria_servico: string | null
+          categoria_titular: string | null
           cliente_id_vinculado: number | null
           cnh: string | null
           comprovante_endereco_path: string | null
@@ -2573,6 +2574,7 @@ export type Database = {
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
           categoria_servico?: string | null
+          categoria_titular?: string | null
           cliente_id_vinculado?: number | null
           cnh?: string | null
           comprovante_endereco_path?: string | null
@@ -2677,6 +2679,7 @@ export type Database = {
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
           categoria_servico?: string | null
+          categoria_titular?: string | null
           cliente_id_vinculado?: number | null
           cnh?: string | null
           comprovante_endereco_path?: string | null

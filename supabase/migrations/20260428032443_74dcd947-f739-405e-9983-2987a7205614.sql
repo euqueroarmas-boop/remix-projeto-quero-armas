@@ -1,0 +1,1 @@
+DELETE FROM public.qa_cadastro_publico WHERE id='89d60c67-52fd-4f76-97c9-7444a08cdfad';
