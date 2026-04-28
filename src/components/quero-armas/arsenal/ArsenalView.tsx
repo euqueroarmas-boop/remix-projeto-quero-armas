@@ -180,6 +180,17 @@ export function ArsenalView({
 
   // Documentos a exibir como "tags" sobre a bancada
   const benchDocs = useMemo(() => {
+    const norm = (s: string | null | undefined) =>
+      String(s || "").replace(/\s+/g, "").toUpperCase().trim();
+    // Conjuntos das chaves físicas (série/SIGMA) já cobertas pelos CRAFs oficiais.
+    const crafSerials = new Set<string>();
+    const crafSigmas = new Set<string>();
+    crafs.forEach((c: any) => {
+      const s = norm(c.numero_arma);
+      const g = norm(c.numero_sigma);
+      if (s) crafSerials.add(s);
+      if (g) crafSigmas.add(g);
+    });
     const list: { id: string; category: string; title: string; date: string | null; daysToExpire: number | null }[] = [];
     if (cadastroCr?.validade_cr) {
       list.push({
@@ -217,6 +228,18 @@ export function ArsenalView({
       const modeloSeguro = isInvalidWeaponModel(d.arma_modelo) ? "" : String(d.arma_modelo || "").trim();
       const armaNome = [d.arma_marca, modeloSeguro].filter(Boolean).join(" ").trim();
       const tipo = String(d.tipo_documento || "").toLowerCase();
+      // Não duplicar o CR já presente em qa_cadastro_cr.
+      if (tipo === "cr" && cadastroCr?.validade_cr) return;
+      // Não duplicar CRAFs/SINARMs já presentes em qa_crafs (mesma arma física).
+      const docSerial = norm(d.arma_numero_serie);
+      const docNumDoc = norm(d.numero_documento);
+      if (
+        ["craf", "sinarm", "gt", "gte", "autorizacao_compra"].includes(tipo) &&
+        ((docSerial && (crafSerials.has(docSerial) || crafSigmas.has(docSerial))) ||
+         (docNumDoc && (crafSigmas.has(docNumDoc) || crafSerials.has(docNumDoc))))
+      ) {
+        return;
+      }
       // Documentos de arma (CRAF, SINARM, GT, GTE, autorização) e qualquer "outro"
       // que tenha marca/modelo extraídos devem mostrar o NOME DA ARMA.
       // Nunca usar número de documento como título.
