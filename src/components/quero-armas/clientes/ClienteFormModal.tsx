@@ -516,6 +516,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FInput label="E-mail" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" />
                 </div>
               </div>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Acesso Gov.br</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Senha Gov.br">
+                    <input
+                      type="text"
+                      value={senhaGov}
+                      onChange={e => setSenhaGovState(e.target.value)}
+                      placeholder="Digite a senha do gov.br"
+                      autoComplete="off"
+                      className={inputClass.replace("uppercase", "font-mono")}
+                    />
+                  </Field>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Armazenada de forma cifrada (AES-256-GCM). Cada acesso é auditado.
+                </p>
+              </div>
             </div>
           )}
 
