@@ -126,6 +126,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
       setSenha(s || "");
       return s || "";
     } catch (e: any) {
+      if (e?.name === "SenhaGovAuthError") return null;
       toast.error("Senha Gov: " + (e.message || "erro"));
       return null;
     } finally {

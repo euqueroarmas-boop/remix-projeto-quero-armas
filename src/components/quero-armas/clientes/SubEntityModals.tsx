@@ -268,7 +268,9 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
         import("./senhaGovApi").then(({ getSenhaGov }) =>
           getSenhaGov(cadastro.id, "edição CrModal")
             .then((s) => setF((p) => ({ ...p, senha_gov: s || "" })))
-            .catch((e) => toast.error("Senha Gov: " + e.message))
+            .catch((e) => {
+              if (e?.name !== "SenhaGovAuthError") toast.error("Senha Gov: " + e.message);
+            })
             .finally(() => setLoadingSenha(false))
         );
       }

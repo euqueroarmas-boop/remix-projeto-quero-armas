@@ -267,7 +267,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           const id = (row as any)?.id ?? null;
           setCadastroCrId(id);
           if (id) {
-            const s = await getSenhaGov(id, "Editar Cliente").catch(() => "");
+            const s = await getSenhaGov(id, "Editar Cliente").catch((e) => {
+              if (e?.name !== "SenhaGovAuthError") console.warn("[SenhaGov] preload falhou", e);
+              return "";
+            });
             setSenhaGovState(s || "");
             setSenhaGovOriginal(s || "");
           } else {

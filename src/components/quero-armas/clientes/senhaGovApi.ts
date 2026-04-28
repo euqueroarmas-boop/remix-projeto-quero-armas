@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 
+class SenhaGovAuthError extends Error {
+  constructor(message = "Sessão expirada. Faça login novamente.") {
+    super(message);
+    this.name = "SenhaGovAuthError";
+  }
+}
+
 /**
  * Centraliza o acesso à Senha Gov.
  * Toda leitura/escrita passa pela edge function `qa-senha-gov`
@@ -12,8 +19,17 @@ async function callSenhaGov(body: Record<string, unknown>) {
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData?.session?.access_token;
   if (!accessToken) {
-    throw new Error("Sessão expirada. Faça login novamente.");
+    throw new SenhaGovAuthError();
   }
+
+  // getSession() pode retornar um token persistido que já foi revogado no servidor.
+  // Valida antes de chamar a Edge Function para evitar 401 global/blank screen.
+  const { data: userData, error: userError } = await supabase.auth.getUser(accessToken);
+  if (userError || !userData?.user?.id) {
+    await supabase.auth.signOut().catch(() => undefined);
+    throw new SenhaGovAuthError();
+  }
+
   const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-senha-gov`;
   const res = await fetch(url, {
     method: "POST",
@@ -26,7 +42,11 @@ async function callSenhaGov(body: Record<string, unknown>) {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || (json as any)?.error) {
-    throw new Error((json as any)?.error || `HTTP ${res.status}`);
+    if (res.status === 401) {
+      await supabase.auth.signOut().catch(() => undefined);
+      throw new SenhaGovAuthError();
+    }
+    throw new Error((json as any)?.detail || (json as any)?.error || `HTTP ${res.status}`);
   }
   return json as any;
 }
