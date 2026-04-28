@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { isCurrentUserStaff } from "./docsAprovacao";
 
 const TIPOS = [
   { value: "cr", label: "CR — Certificado de Registro", short: "CR · CAC" },
@@ -277,10 +278,27 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         ia_status: storagePath ? "sugerido" : "nao_processado",
       };
 
+      // Fluxo de aprovação: admin lança como aprovado; cliente envia como pendente.
+      const isStaff = await isCurrentUserStaff();
+      if (isStaff) {
+        payload.status = "aprovado";
+        payload.origem = "admin";
+        payload.validado_admin = true;
+        payload.aprovado_em = new Date().toISOString();
+      } else {
+        payload.status = "pendente_aprovacao";
+        payload.origem = "cliente";
+        payload.validado_admin = false;
+      }
+
       const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
       if (insertError) throw insertError;
 
-      toast.success("Documento adicionado com sucesso.");
+      toast.success(
+        (await isCurrentUserStaff())
+          ? "Documento adicionado com sucesso."
+          : "Documento enviado! Aguardando aprovação da equipe."
+      );
       setForm(EMPTY);
       setFile(null);
       onSaved();
