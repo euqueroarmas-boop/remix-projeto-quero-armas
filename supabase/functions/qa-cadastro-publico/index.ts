@@ -34,6 +34,19 @@ const CadastroSchema = z.object({
   profissao: z.string().max(100).optional().nullable(),
   observacoes: z.string().max(2000).optional().nullable(),
 
+  // ── Identificação estendida (Entrega B) ──
+  sexo: z.string().max(20).optional().nullable(),
+  data_expedicao_rg: z.string().max(20).optional().nullable(),
+  naturalidade_municipio: z.string().max(120).optional().nullable(),
+  naturalidade_uf: z.string().max(2).optional().nullable(),
+  naturalidade_pais: z.string().max(60).optional().nullable(),
+  titulo_eleitor: z.string().max(40).optional().nullable(),
+  cnh: z.string().max(40).optional().nullable(),
+  ctps: z.string().max(40).optional().nullable(),
+  pis_pasep: z.string().max(40).optional().nullable(),
+  end1_pais: z.string().max(60).optional().nullable(),
+  categoria_titular: z.string().max(40).optional().nullable(),
+
   // Endereço 1
   end1_cep: z.string().max(10).optional().nullable(),
   end1_logradouro: z.string().max(300).optional().nullable(),
