@@ -1,4 +1,4 @@
-import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck } from "lucide-react";
+import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2 } from "lucide-react";
 import { WeaponSilhouette } from "./WeaponSilhouette";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
 import {
@@ -10,7 +10,7 @@ import {
 } from "./utils";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface RelatedDoc {
   category: string;
@@ -24,6 +24,7 @@ interface Props {
   relatedDocs: RelatedDoc[];
   ammoSameCalibre: number;
   onClose: () => void;
+  onDelete?: (weapon: WorkbenchWeapon) => Promise<void> | void;
 }
 
 const formatDate = (d: string | null) => {
@@ -36,8 +37,11 @@ const formatDate = (d: string | null) => {
   }
 };
 
-export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClose }: Props) {
+export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClose, onDelete }: Props) {
   const { items, match } = useArmamentoCatalogo();
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  useEffect(() => { setConfirmDel(false); setDeleting(false); }, [weapon?.id, open]);
   const info = weapon ? buildWeaponInfo(weapon.nome_arma, weapon.numero_arma) : null;
   const catalog: ArmamentoCatalogo | null = useMemo(
     () => (weapon ? match(weapon.nome_arma) : null),
@@ -325,6 +329,65 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
             </div>
           )}
         </div>
+
+        {/* Zona de risco — Excluir armamento */}
+        {onDelete && (
+          <div className="mt-2 border-t border-white/10 px-6 py-5">
+            <div className="mb-2 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-rose-300/90">
+                Zona de Risco
+              </div>
+            </div>
+            {!confirmDel ? (
+              <button
+                type="button"
+                onClick={() => setConfirmDel(true)}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-500/20 disabled:opacity-60"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Excluir este armamento
+              </button>
+            ) : (
+              <div className="rounded-md border border-rose-400/40 bg-rose-500/10 p-3">
+                <p className="text-[11px] text-rose-100/90">
+                  Tem certeza? Esta ação remove o registro <b>{displayMarca} {displayModelo}</b>{" "}
+                  {weapon.numero_arma ? <>(série <span className="font-mono">{weapon.numero_arma}</span>)</> : null}
+                  {" "}e seus documentos vinculados. Não pode ser desfeita.
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!weapon || !onDelete) return;
+                      try {
+                        setDeleting(true);
+                        await onDelete(weapon);
+                        onClose();
+                      } finally {
+                        setDeleting(false);
+                      }
+                    }}
+                    disabled={deleting}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-rose-500 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-rose-400 disabled:opacity-60"
+                  >
+                    {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                    Sim, excluir
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDel(false)}
+                    disabled={deleting}
+                    className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white/80 hover:bg-white/10 disabled:opacity-60"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </aside>
     </div>
   );
