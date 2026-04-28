@@ -14,7 +14,6 @@ import {
   isValidTelefone,
   rgNotEqualCpf,
 } from "@/shared/quero-armas/clienteSchema";
-import { setSenhaGov } from "./senhaGovApi";
 import { SenhaGovField } from "./SenhaGovField";
 
 interface ClienteFormModalProps {
@@ -140,8 +139,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
-  const [senhaGov, setSenhaGovState] = useState("");
-  const [senhaGovOriginal, setSenhaGovOriginal] = useState("");
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,14 +270,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         } catch {
           setCadastroCrId(null);
         }
-        setSenhaGovState("");
-        setSenhaGovOriginal("");
+        // estado de senha não é mais mantido aqui; SenhaGovField gerencia tudo.
       })();
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
       setPhotoPreview(null);
-      setSenhaGovState("");
-      setSenhaGovOriginal("");
       setCadastroCrId(null);
     }
   }, [cliente, existingPhotoUrl, open]);
