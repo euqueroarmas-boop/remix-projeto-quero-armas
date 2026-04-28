@@ -147,6 +147,20 @@ export default function QACadastroPublicoPage() {
     identity: "pending", address: "pending", selfie: "pending",
   });
   const [extracted, setExtracted] = useState<Extracted>(emptyExtracted);
+  // Snapshot do que veio do documento (para detecção de divergência form × doc)
+  const [extractedFromDoc, setExtractedFromDoc] = useState<Partial<ClienteData>>({});
+  // Estado de ambiguidade CPF×RG retornado pela IA
+  const [cpfRgAmbiguity, setCpfRgAmbiguity] = useState<{
+    reason: string; cpfCandidates: string[]; rgCandidates: string[];
+  } | null>(null);
+  const [cpfRgConfirmed, setCpfRgConfirmed] = useState(false);
+  const [divergenciasConfirmadas, setDivergenciasConfirmadas] = useState(false);
+  // Circunscrição PF resolvida a partir do endereço residencial
+  const [unidadePF, setUnidadePF] = useState<{
+    unidade_pf: string; sigla_unidade: string; tipo_unidade: string;
+    municipio_sede: string; uf: string; base_legal: string;
+  } | null>(null);
+  const [unidadeLoading, setUnidadeLoading] = useState(false);
 
   // submit
   const [savedId, setSavedId] = useState<string | null>(null);
