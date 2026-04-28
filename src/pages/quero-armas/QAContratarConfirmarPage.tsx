@@ -205,6 +205,24 @@ export default function QAContratarConfirmarPage() {
       if (errCreate) throw errCreate;
 
       toast.success("Contratação registrada! Vamos validar o pagamento e ativar seu processo.");
+
+      // 3) Notificações automáticas (não bloqueia o fluxo se falhar)
+      if (novoId) {
+        // Cliente: e-mail "processo aberto"
+        supabase.functions
+          .invoke("qa-processo-notificar", {
+            body: { processo_id: novoId, evento: "processo_criado" },
+          })
+          .catch((e) => console.warn("[notif cliente]", e));
+
+        // Admin: WhatsApp + e-mail
+        supabase.functions
+          .invoke("qa-notificar-admin-contratacao", {
+            body: { processo_id: novoId },
+          })
+          .catch((e) => console.warn("[notif admin]", e));
+      }
+
       // Redireciona para o processo ou portal
       if (novoId) {
         navigate(`/area-do-cliente?processo=${novoId}`);
