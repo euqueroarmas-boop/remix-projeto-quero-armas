@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { getSenhaGov, setSenhaGov } from "./senhaGovApi";
+import { getSenhaGov, setSenhaGov, subscribeSenhaGovUpdates } from "./senhaGovApi";
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
@@ -91,6 +91,19 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   }, [cadastroCrId, clienteId]);
 
   const effectiveCrId = cadastroCrId ?? resolvedCrId ?? null;
+
+  // Quando outra parte do app (ex.: ClienteFormModal) grava a senha,
+ // invalidamos o cache local para forçar recarga do valor atualizado.
+  useEffect(() => {
+    const unsub = subscribeSenhaGovUpdates((updatedId) => {
+      if (effectiveCrId && updatedId === effectiveCrId) {
+        setSenha(null);
+        setAutoLoadedFor(null);
+        setVisible(false);
+      }
+    });
+    return () => { unsub(); };
+  }, [effectiveCrId]);
 
   // Auto-load do variant "exposed": dispara UMA VEZ por id.
   // (Antes era chamado em todo render, gerando loop infinito de 401.)
