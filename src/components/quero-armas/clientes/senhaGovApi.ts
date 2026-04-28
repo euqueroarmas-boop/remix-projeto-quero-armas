@@ -8,6 +8,18 @@ class SenhaGovAuthError extends Error {
 }
 
 /**
+ * Lançado quando o usuário autenticado NÃO é staff QA (ex.: cliente logado
+ * no portal `/area-do-cliente`). Não é um erro real — o caller deve apenas
+ * ignorar silenciosamente (a Senha Gov só é visível para staff interno).
+ */
+class SenhaGovForbiddenError extends Error {
+  constructor(message = "Senha Gov disponível apenas para equipe interna.") {
+    super(message);
+    this.name = "SenhaGovForbiddenError";
+  }
+}
+
+/**
  * Event bus simples para sincronizar instâncias de `SenhaGovField` quando
  * a senha é gravada em outro lugar (ex.: ClienteFormModal salva e o campo
  * `exposed` na aba "Dados" precisa recarregar o valor mais recente).
@@ -63,6 +75,10 @@ async function callSenhaGov(body: Record<string, unknown>) {
       await supabase.auth.signOut().catch(() => undefined);
       throw new SenhaGovAuthError();
     }
+    if (res.status === 403) {
+      // Cliente logado no portal não é staff — silencia.
+      throw new SenhaGovForbiddenError();
+    }
     throw new Error((json as any)?.detail || (json as any)?.error || `HTTP ${res.status}`);
   }
   return json as any;
@@ -73,13 +89,19 @@ export async function getSenhaGov(
   contexto?: string,
   clienteId?: number | null,
 ): Promise<string | null> {
-  const data = await callSenhaGov({
-    action: "get",
-    cadastro_cr_id: cadastroCrId,
-    cliente_id: clienteId ?? null,
-    contexto,
-  });
-  return (data?.senha as string | null) ?? null;
+  try {
+    const data = await callSenhaGov({
+      action: "get",
+      cadastro_cr_id: cadastroCrId,
+      cliente_id: clienteId ?? null,
+      contexto,
+    });
+    return (data?.senha as string | null) ?? null;
+  } catch (e: any) {
+    // Cliente do portal: não tem permissão para ler Senha Gov — retorna null.
+    if (e?.name === "SenhaGovForbiddenError") return null;
+    throw e;
+  }
 }
 
 export async function setSenhaGov(
