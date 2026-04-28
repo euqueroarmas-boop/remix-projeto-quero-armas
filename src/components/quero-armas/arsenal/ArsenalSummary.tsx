@@ -92,7 +92,7 @@ function KpiCard({
   onClick?: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: def.id, disabled: !editing });
+    useSortable({ id: def.id });
   const color = toneColor(def.tone);
 
   const style: React.CSSProperties = {
@@ -103,21 +103,38 @@ function KpiCard({
     zIndex: isDragging ? 20 : "auto",
   };
 
-  const Tag = editing ? "div" : "button";
-
   return (
-    <Tag
-      ref={setNodeRef as any}
-      type={editing ? undefined : "button"}
-      onClick={editing ? undefined : onClick}
-      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-amber-300/50 ${
+    <div
+      ref={setNodeRef}
+      className={`group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white p-4 text-left shadow-sm transition-all ${
         editing
-          ? "border-dashed border-amber-300 cursor-grab active:cursor-grabbing select-none"
+          ? "border-dashed border-amber-300 select-none"
           : "border-slate-200/80 hover:-translate-y-0.5 hover:shadow-md"
       } ${isDragging ? "ring-2 ring-amber-400 shadow-lg" : ""}`}
       style={style}
-      {...(editing ? { ...attributes, ...listeners } : {})}
     >
+      {/* Drag handle: arrasta direto sem precisar entrar em modo edição */}
+      <button
+        type="button"
+        aria-label="Arrastar para reordenar"
+        title="Arraste para reordenar"
+        className={`absolute left-1.5 top-1.5 z-10 inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-400 shadow-sm cursor-grab active:cursor-grabbing touch-none ${
+          editing ? "opacity-100 border-amber-300 text-amber-700" : "opacity-0 group-hover:opacity-100"
+        } transition-opacity`}
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      {/* Conteúdo clicável (navegação) */}
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={editing}
+        className="flex h-full w-full flex-col text-left focus:outline-none focus:ring-2 focus:ring-amber-300/50 rounded-xl"
+      >
       <div
         className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
         style={{ background: color }}
@@ -129,21 +146,6 @@ function KpiCard({
         >
           {def.icon}
         </div>
-        {editing ? (
-          <div
-            className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em] text-amber-700"
-            title="Arraste para reordenar"
-          >
-            <GripVertical className="h-3 w-3" /> MOVER
-          </div>
-        ) : (
-          <div
-            className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em] opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ background: `${color}10`, color }}
-          >
-            <GripVertical className="h-2.5 w-2.5" />
-          </div>
-        )}
         <div
           className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
           style={{ background: `${color}10`, color }}
@@ -158,7 +160,8 @@ function KpiCard({
         {def.label}
       </div>
       <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
-    </Tag>
+      </button>
+    </div>
   );
 }
 
