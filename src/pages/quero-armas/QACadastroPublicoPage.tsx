@@ -873,6 +873,14 @@ function Step1Documents({
               capture={slot.capture}
               hidden
               onChange={(e) => onPick(e, slot.key)}
+              data-testid={
+                slot.key === "identity"
+                  ? "documento-identificacao-input"
+                  : slot.key === "address"
+                    ? "comprovante-endereco-input"
+                    : "selfie-input"
+              }
+              aria-label={slot.label}
             />
           </button>
         );
