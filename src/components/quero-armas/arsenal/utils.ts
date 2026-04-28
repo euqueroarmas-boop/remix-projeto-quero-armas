@@ -92,6 +92,21 @@ export function maskSerial(serial: string | null | undefined): string {
   return `${"•".repeat(Math.max(3, s.length - 3))} ${s.slice(-3)}`;
 }
 
+/**
+ * Valida o campo `modelo` de uma arma. Modelo nunca pode ser:
+ *  - vazio / nulo
+ *  - apenas números, pontos, traços ou barras (= número de doc/registro/CRAF/SINARM)
+ *  - palavra-rótulo isolada (CRAF, SINARM, SIGMA, REGISTRO, DOCUMENTO, PROTOCOLO)
+ */
+export function isInvalidWeaponModel(value: string | null | undefined): boolean {
+  if (!value) return true;
+  const v = value.toString().trim();
+  if (v.length < 2) return true;
+  if (/^[0-9.\-\/\s]+$/.test(v)) return true;
+  if (/^(CRAF|SINARM|SIGMA|REGISTRO|DOCUMENTO|PROTOCOLO|ARMA)$/i.test(v)) return true;
+  return false;
+}
+
 /** Cores táticas reutilizadas em todo o Arsenal. */
 export const TACTICAL = {
   ok: "hsl(152 60% 42%)",
