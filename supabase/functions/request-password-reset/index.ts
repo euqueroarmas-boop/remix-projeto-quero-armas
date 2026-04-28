@@ -219,6 +219,13 @@ function buildRecoveryEmailText(recoveryLink: string, cfg: BrandConfig) {
   ].join("\n");
 }
 
+function buildDirectRecoveryLink(redirectTo: string, tokenHash: string) {
+  const url = new URL(redirectTo);
+  url.searchParams.set("token_hash", tokenHash);
+  url.searchParams.set("type", "recovery");
+  return url.toString();
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -271,12 +278,17 @@ Deno.serve(async (req) => {
       },
     });
 
-    const recoveryLink = linkData?.properties?.action_link;
+    const tokenHash = linkData?.properties?.hashed_token;
+    const recoveryLink = cfg.brand === "quero-armas" && tokenHash
+      ? buildDirectRecoveryLink(finalRedirectTo, tokenHash)
+      : linkData?.properties?.action_link;
 
     console.info(`[request-password-reset][${traceId}] generate_link_result`, JSON.stringify({
       ok: !linkError && Boolean(recoveryLink),
       error: linkError?.message ?? null,
       hasRecoveryLink: Boolean(recoveryLink),
+      linkMode: cfg.brand === "quero-armas" && tokenHash ? "direct_token_hash" : "auth_verify_redirect",
+      linkTarget: recoveryLink ? new URL(recoveryLink).origin + new URL(recoveryLink).pathname : null,
     }));
 
     if (linkError || !recoveryLink) {
