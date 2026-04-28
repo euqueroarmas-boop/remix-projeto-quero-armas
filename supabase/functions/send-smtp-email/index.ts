@@ -200,6 +200,7 @@ async function sendViaSmtp(payload: {
   text?: string;
   reply_to?: string;
   trace_id?: string;
+  from_name?: string;
 }): Promise<SmtpSendResult> {
   const SMTP_HOST = Deno.env.get("SMTP_HOST");
   const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465", 10);
@@ -214,7 +215,8 @@ async function sendViaSmtp(payload: {
   const traceId = createTraceId(payload.trace_id);
   const to = sanitizeEmail(payload.to);
   const subject = sanitizeHeader(payload.subject);
-  const fromName = Deno.env.get("SMTP_FROM_NAME") || "Quero Armas";
+  const overrideName = typeof payload.from_name === "string" ? payload.from_name.trim() : "";
+  const fromName = overrideName || Deno.env.get("SMTP_FROM_NAME") || "Quero Armas";
   const fromEmail = sanitizeEmail(Deno.env.get("SMTP_FROM_EMAIL") || SMTP_USER);
   const fromDomain = fromEmail.split("@")[1] || "localhost";
   const messageId = `<${Date.now()}.${crypto.randomUUID()}@${fromDomain}>`;
