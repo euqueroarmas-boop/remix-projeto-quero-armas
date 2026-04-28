@@ -16,7 +16,7 @@ const BodySchema = z.object({
 });
 
 const DEFAULT_REDIRECT_TO_WMTI = "https://wmti.com.br/redefinir-senha";
-const DEFAULT_REDIRECT_TO_QA = "https://euqueroarmas.com.br/redefinir-senha";
+const DEFAULT_REDIRECT_TO_QA = "https://www.euqueroarmas.com.br/redefinir-senha";
 
 type Brand = "wmti" | "quero-armas";
 
