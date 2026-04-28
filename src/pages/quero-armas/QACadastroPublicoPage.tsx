@@ -1192,7 +1192,7 @@ function Step3Review({
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(30 80% 45%)" }} />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-bold" style={{ color: "hsl(30 60% 30%)" }}>Confirme manualmente CPF e RG</div>
+              <div className="text-[12px] font-bold" style={{ color: "hsl(30 60% 30%)" }}>Confirme manualmente CPF e RG/CIN</div>
               <div className="text-[11px] leading-relaxed" style={{ color: "hsl(30 40% 35%)" }}>
                 {cpfRgAmbiguity.reason}
               </div>
@@ -1210,7 +1210,7 @@ function Step3Review({
             className="w-full h-9 rounded-lg text-[11px] font-semibold disabled:opacity-60"
             style={{ background: cpfRgConfirmed ? "hsl(152 50% 90%)" : "hsl(30 80% 45%)", color: cpfRgConfirmed ? "hsl(152 50% 30%)" : "white" }}
           >
-            {cpfRgConfirmed ? "✓ CPF e RG confirmados" : "Confirmar CPF e RG manualmente"}
+            {cpfRgConfirmed ? "✓ CPF e RG/CIN confirmados" : "Confirmar CPF e RG/CIN manualmente"}
           </button>
         </div>
       )}
