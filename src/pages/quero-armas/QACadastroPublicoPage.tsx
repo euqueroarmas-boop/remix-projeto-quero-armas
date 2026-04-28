@@ -191,20 +191,53 @@ export default function QACadastroPublicoPage() {
       const id = data?.identity || {};
       const ad = data?.address || {};
 
+      // Detecta ambiguidade CPF×RG retornada pela IA
+      const ambig = detectCpfRgAmbiguity(id);
+      if (ambig.hasAmbiguity) {
+        setCpfRgAmbiguity({
+          reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
+          cpfCandidates: ambig.cpfCandidates,
+          rgCandidates: ambig.rgCandidates,
+        });
+      } else {
+        setCpfRgAmbiguity(null);
+      }
+
+      // Snapshot do que veio do documento (usado para detecção de divergência)
+      setExtractedFromDoc({
+        nome_completo: id.nome_completo || "",
+        cpf: id.cpf ? onlyDigits(id.cpf) : "",
+        rg: id.rg || "",
+        emissor_rg: id.emissor_rg && id.uf_emissor_rg
+          ? `${id.emissor_rg}/${id.uf_emissor_rg}` : (id.emissor_rg || ""),
+        data_nascimento: id.data_nascimento || "",
+        nome_mae: id.nome_mae || "",
+        nome_pai: id.nome_pai || "",
+      });
+
       setExtracted(prev => ({
         ...prev,
         nome_completo: id.nome_completo || prev.nome_completo,
-        cpf: id.cpf ? maskCpf(id.cpf) : prev.cpf,
+        cpf: (id.cpf && !ambig.hasAmbiguity) ? maskCpf(id.cpf) : prev.cpf,
         rg: id.rg || prev.rg,
         emissor_rg: id.emissor_rg && id.uf_emissor_rg
           ? `${id.emissor_rg}/${id.uf_emissor_rg}` : (id.emissor_rg || prev.emissor_rg),
         data_nascimento: id.data_nascimento || prev.data_nascimento,
-        cep: ad.cep ? maskCep(ad.cep) : prev.cep,
-        logradouro: ad.logradouro || prev.logradouro,
-        numero: ad.numero || prev.numero,
-        bairro: ad.bairro || prev.bairro,
-        cidade: ad.cidade || prev.cidade,
-        estado: ad.estado || prev.estado,
+        sexo: id.sexo || prev.sexo,
+        nome_mae: id.nome_mae || prev.nome_mae,
+        nome_pai: id.nome_pai || prev.nome_pai,
+        naturalidade_municipio: id.naturalidade_municipio || prev.naturalidade_municipio,
+        naturalidade_uf: id.naturalidade_uf || prev.naturalidade_uf,
+        titulo_eleitor: id.titulo_eleitor || prev.titulo_eleitor,
+        cnh: id.cnh || prev.cnh,
+        ctps: id.ctps || prev.ctps,
+        pis_pasep: id.pis_pasep || prev.pis_pasep,
+        end1_cep: ad.cep ? maskCep(ad.cep) : prev.end1_cep,
+        end1_logradouro: ad.logradouro || prev.end1_logradouro,
+        end1_numero: ad.numero || prev.end1_numero,
+        end1_bairro: ad.bairro || prev.end1_bairro,
+        end1_cidade: ad.cidade || prev.end1_cidade,
+        end1_estado: ad.estado || prev.end1_estado,
       }));
 
       setExtractStage({
