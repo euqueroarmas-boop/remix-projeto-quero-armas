@@ -24,6 +24,8 @@ function isAllowedRedirect(url: string) {
       || hostname === "127.0.0.1"
       || hostname === "wmti.com.br"
       || hostname.endsWith(".wmti.com.br")
+      || hostname === "euqueroarmas.com.br"
+      || hostname.endsWith(".euqueroarmas.com.br")
       || hostname.endsWith(".lovable.app")
       || hostname.endsWith(".lovable.dev");
 
