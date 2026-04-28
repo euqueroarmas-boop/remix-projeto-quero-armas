@@ -89,6 +89,18 @@ function isPreviewOrDevHost(hostname: string): boolean {
     || hostname.endsWith(".lovable.dev");
 }
 
+/**
+ * Define o ambiente da edge function:
+ *   APP_ENV = "production" | "preview" | "development"
+ * Padrão: "production" (fail-safe). Em produção, hosts Lovable/localhost
+ * NUNCA são aceitos como redirectTo.
+ */
+function getAppEnv(): "production" | "preview" | "development" {
+  const raw = (Deno.env.get("APP_ENV") || "production").toLowerCase();
+  if (raw === "preview" || raw === "development") return raw;
+  return "production";
+}
+
 function isAllowedRedirectForBrand(url: string, cfg: BrandConfig): boolean {
   try {
     const parsed = new URL(url);
@@ -98,8 +110,10 @@ function isAllowedRedirectForBrand(url: string, cfg: BrandConfig): boolean {
     // Produção da brand
     if (cfg.productionHosts.includes(hostname)) return true;
 
-    // Preview/dev: permitido apenas em hosts efêmeros (nunca como fallback de produção)
-    if (isPreviewOrDevHost(hostname)) return true;
+    // Preview/dev: permitido apenas quando APP_ENV != production
+    if (getAppEnv() !== "production" && isPreviewOrDevHost(hostname)) {
+      return true;
+    }
 
     return false;
   } catch {
