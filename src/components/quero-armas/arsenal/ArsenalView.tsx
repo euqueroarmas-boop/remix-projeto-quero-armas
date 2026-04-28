@@ -6,6 +6,7 @@ import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
 import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
+import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,6 +22,8 @@ interface Props {
   onOpenAddDoc: () => void;
   onUpdateAvatarClick?: () => void;
   onArsenalChanged?: () => Promise<void> | void;
+  /** Quando true, exibe controles de exclusão de docs genéricos (admin tem permissão total). */
+  isAdmin?: boolean;
 }
 
 const normalizeDocWeaponName = (doc: any) => {
