@@ -978,17 +978,90 @@ function Step2Extracting({ stages, error }: { stages: Record<string, string>; er
   );
 }
 
-/* ─────────────────────── Step 3 — Revisão ─────────────────────── */
+/* ─────────────────────── Step 3 — Revisão (Entrega B / 8 blocos) ─────────────────────── */
+
+type FieldStatus = "normal" | "obrigatorio_vazio" | "divergente" | "precisa_confirmacao" | "validado";
+
+const SEXO_OPTS = [
+  { value: "", label: "—" },
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Feminino" },
+  { value: "Outro", label: "Outro" },
+];
+const ESTADO_CIVIL_OPTS = [
+  { value: "", label: "—" },
+  { value: "Solteiro(a)", label: "Solteiro(a)" },
+  { value: "Casado(a)", label: "Casado(a)" },
+  { value: "Divorciado(a)", label: "Divorciado(a)" },
+  { value: "Viúvo(a)", label: "Viúvo(a)" },
+  { value: "União Estável", label: "União Estável" },
+];
+const CATEGORIA_OPTS: { value: CategoriaTitular | ""; label: string }[] = [
+  { value: "", label: "Selecione a categoria…" },
+  { value: "pessoa_fisica", label: "Pessoa Física (cidadão comum)" },
+  { value: "pessoa_juridica", label: "Pessoa Jurídica" },
+  { value: "seguranca_publica", label: "Segurança Pública" },
+  { value: "magistrado_mp", label: "Magistrado / MP" },
+  { value: "militar", label: "Militar das Forças Armadas" },
+];
+
 function Step3Review({
   data, onChange, onContinue, onBack, busy, error,
+  fromDoc, cpfRgAmbiguity, cpfRgConfirmed, onConfirmCpfRg,
+  divergenciasConfirmadas, onConfirmDivergencias,
+  unidadePF, unidadeLoading, onResolveUnidade,
 }: {
-  data: Extracted; onChange: (v: Extracted) => void;
-  onContinue: () => void; onBack: () => void; busy: boolean; error: string | null;
+  data: ClienteData;
+  onChange: (v: ClienteData) => void;
+  onContinue: () => void;
+  onBack: () => void;
+  busy: boolean;
+  error: string | null;
+  fromDoc: Partial<ClienteData>;
+  cpfRgAmbiguity: { reason: string; cpfCandidates: string[]; rgCandidates: string[] } | null;
+  cpfRgConfirmed: boolean;
+  onConfirmCpfRg: () => void;
+  divergenciasConfirmadas: boolean;
+  onConfirmDivergencias: () => void;
+  unidadePF: { unidade_pf: string; sigla_unidade: string; tipo_unidade: string; municipio_sede: string; uf: string; base_legal: string } | null;
+  unidadeLoading: boolean;
+  onResolveUnidade: () => void | Promise<void>;
 }) {
-  const set = (k: keyof Extracted, v: string) => onChange({ ...data, [k]: v });
+  const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
+
+  // Categoria implícita p/ bloqueio: usa a do form ou "pessoa_fisica" como padrão (cidadão comum)
+  const categoriaEfetiva: CategoriaTitular | "" = data.categoria_titular || "pessoa_fisica";
+  const required = new Set<string>(getCamposObrigatoriosPorCategoria(categoriaEfetiva));
+  const blocking = getBlockingErrors(data, {
+    categoria: categoriaEfetiva,
+    needsCpfRgConfirmation: !!cpfRgAmbiguity,
+    cpfRgConfirmed,
+  });
+  const divergencias = getDivergencias(data, fromDoc);
+
+  // Re-resolve circunscrição quando cidade/UF mudam
+  const cidadeUf = `${data.end1_cidade}|${data.end1_estado}`;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(() => {
+    if (data.end1_cidade && data.end1_estado.length === 2) onResolveUnidade();
+  }, [cidadeUf]);
+
+  function statusOf(field: keyof ClienteData): FieldStatus {
+    const v = (data as any)[field];
+    const empty = v === undefined || v === null || String(v).trim() === "";
+    if (required.has(field as string) && empty) return "obrigatorio_vazio";
+    if ((field === "cpf" || field === "rg") && cpfRgAmbiguity && !cpfRgConfirmed) return "precisa_confirmacao";
+    if (divergencias.some((d) => d.field === field) && !divergenciasConfirmadas) return "divergente";
+    if (!empty) return "validado";
+    return "normal";
+  }
+
+  const podeAvancar =
+    blocking.length === 0 &&
+    (divergencias.length === 0 || divergenciasConfirmadas);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}>
       <button onClick={onBack} className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide"
         style={{ color: "hsl(220 10% 50%)" }}>
         <ArrowLeft className="w-3 h-3" /> Voltar
@@ -998,37 +1071,236 @@ function Step3Review({
         style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(230 80% 92%)" }}>
         <Sparkles className="w-4 h-4 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
         <span className="text-[11px] font-medium" style={{ color: "hsl(230 50% 35%)" }}>
-          Dados extraídos automaticamente — revise e ajuste
+          Revise os dados em todos os blocos antes de enviar
         </span>
       </div>
 
-      <ReviewField label="Nome completo" value={data.nome_completo} onChange={(v) => set("nome_completo", v)} required />
-      <ReviewField label="CPF" value={data.cpf} onChange={(v) => set("cpf", maskCpf(v))} placeholder="000.000.000-00" required />
-      <ReviewField label="Data de nascimento" value={data.data_nascimento} onChange={(v) => set("data_nascimento", v)} placeholder="DD/MM/AAAA" />
-
-      <div className="grid grid-cols-2 gap-2">
-        <ReviewField label="RG" value={data.rg} onChange={(v) => set("rg", v)} />
-        <ReviewField label="Emissor" value={data.emissor_rg} onChange={(v) => set("emissor_rg", v)} placeholder="SSP/SP" />
-      </div>
-
-      <ReviewField label="E-mail" value={data.email} onChange={(v) => set("email", v)} placeholder="seu@email.com" required />
-      <ReviewField label="Telefone" value={data.telefone_principal} onChange={(v) => set("telefone_principal", maskTel(v))} placeholder="(11) 99999-9999" required />
-
-      <div className="pt-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "hsl(220 15% 40%)" }}>
-          Endereço
+      {/* ─── Aviso de ambiguidade CPF×RG ─── */}
+      {cpfRgAmbiguity && (
+        <div className="rounded-xl p-3 space-y-2" style={{ background: "hsl(40 95% 96%)", border: "1px solid hsl(40 80% 80%)" }}>
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(30 80% 45%)" }} />
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-bold" style={{ color: "hsl(30 60% 30%)" }}>Confirme manualmente CPF e RG</div>
+              <div className="text-[11px] leading-relaxed" style={{ color: "hsl(30 40% 35%)" }}>
+                {cpfRgAmbiguity.reason}
+              </div>
+              {(cpfRgAmbiguity.cpfCandidates.length > 0 || cpfRgAmbiguity.rgCandidates.length > 0) && (
+                <div className="text-[10px] mt-1" style={{ color: "hsl(30 35% 35%)" }}>
+                  Candidatos: {cpfRgAmbiguity.cpfCandidates.concat(cpfRgAmbiguity.rgCandidates).join(", ")}
+                </div>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onConfirmCpfRg}
+            disabled={cpfRgConfirmed}
+            className="w-full h-9 rounded-lg text-[11px] font-semibold disabled:opacity-60"
+            style={{ background: cpfRgConfirmed ? "hsl(152 50% 90%)" : "hsl(30 80% 45%)", color: cpfRgConfirmed ? "hsl(152 50% 30%)" : "white" }}
+          >
+            {cpfRgConfirmed ? "✓ CPF e RG confirmados" : "Confirmar CPF e RG manualmente"}
+          </button>
         </div>
-        <ReviewField label="CEP" value={data.cep} onChange={(v) => set("cep", maskCep(v))} placeholder="00000-000" />
-        <div className="grid grid-cols-[1fr_80px] gap-2 mt-2">
-          <ReviewField label="Logradouro" value={data.logradouro} onChange={(v) => set("logradouro", v)} />
-          <ReviewField label="Número" value={data.numero} onChange={(v) => set("numero", v)} />
+      )}
+
+      {/* ─── Bloco 1 — Identificação ─── */}
+      <ReviewBlock title="Identificação" icon={IdCard}>
+        <ReviewField label="Nome completo" value={data.nome_completo} onChange={(v) => set("nome_completo", v)}
+          required={required.has("nome_completo")} status={statusOf("nome_completo")} />
+        <div className="grid grid-cols-2 gap-2">
+          <ReviewField label="CPF" value={data.cpf} onChange={(v) => set("cpf", maskCpf(v))} placeholder="000.000.000-00"
+            required status={statusOf("cpf")}
+            errorHint={data.cpf && !isValidCpf(data.cpf) ? "CPF inválido" : undefined} />
+          <ReviewSelect label="Sexo" value={data.sexo} onChange={(v) => set("sexo", v)} options={SEXO_OPTS} status={statusOf("sexo")} />
         </div>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <ReviewField label="Bairro" value={data.bairro} onChange={(v) => set("bairro", v)} />
-          <ReviewField label="Cidade" value={data.cidade} onChange={(v) => set("cidade", v)} />
+      </ReviewBlock>
+
+      {/* ─── Bloco 2 — Filiação e nascimento ─── */}
+      <ReviewBlock title="Filiação e nascimento" icon={Users}>
+        <ReviewField label="Data de nascimento" value={data.data_nascimento}
+          onChange={(v) => set("data_nascimento", v)} placeholder="DD/MM/AAAA"
+          required={required.has("data_nascimento")} status={statusOf("data_nascimento")} />
+        <ReviewField label="Nome da mãe" value={data.nome_mae} onChange={(v) => set("nome_mae", v)}
+          required={required.has("nome_mae")} status={statusOf("nome_mae")} />
+        <ReviewField label="Nome do pai" value={data.nome_pai} onChange={(v) => set("nome_pai", v)}
+          required={required.has("nome_pai")} status={statusOf("nome_pai")} />
+        <div className="grid grid-cols-[1fr_80px] gap-2">
+          <ReviewField label="Município de nascimento" value={data.naturalidade_municipio}
+            onChange={(v) => set("naturalidade_municipio", v)}
+            required={required.has("naturalidade_municipio")} status={statusOf("naturalidade_municipio")} />
+          <ReviewField label="UF" value={data.naturalidade_uf}
+            onChange={(v) => set("naturalidade_uf", v.toUpperCase().slice(0, 2))} placeholder="SP"
+            required={required.has("naturalidade_uf")} status={statusOf("naturalidade_uf")} />
         </div>
-        <ReviewField label="UF" value={data.estado} onChange={(v) => set("estado", v.toUpperCase().slice(0, 2))} placeholder="SP" />
-      </div>
+        <div className="grid grid-cols-2 gap-2">
+          <ReviewField label="Nacionalidade" value={data.nacionalidade}
+            onChange={(v) => set("nacionalidade", v)} status={statusOf("nacionalidade")} />
+          <ReviewSelect label="Estado civil" value={data.estado_civil}
+            onChange={(v) => set("estado_civil", v)} options={ESTADO_CIVIL_OPTS}
+            required={required.has("estado_civil")} status={statusOf("estado_civil")} />
+        </div>
+      </ReviewBlock>
+
+      {/* ─── Bloco 3 — Documento de identificação ─── */}
+      <ReviewBlock title="Documento de identificação" icon={Shield}>
+        <div className="grid grid-cols-2 gap-2">
+          <ReviewField label="RG / CIN" value={data.rg} onChange={(v) => set("rg", v)}
+            required={required.has("rg")} status={statusOf("rg")} />
+          <ReviewField label="Órgão emissor" value={data.emissor_rg} placeholder="SSP/SP"
+            onChange={(v) => set("emissor_rg", v)}
+            required={required.has("emissor_rg")} status={statusOf("emissor_rg")} />
+        </div>
+        <ReviewField label="Data de expedição do RG" value={data.data_expedicao_rg}
+          onChange={(v) => set("data_expedicao_rg", v)} placeholder="DD/MM/AAAA"
+          status={statusOf("data_expedicao_rg")} />
+      </ReviewBlock>
+
+      {/* ─── Bloco 4 — Contato ─── */}
+      <ReviewBlock title="Contato" icon={Phone}>
+        <ReviewField label="E-mail" value={data.email} onChange={(v) => set("email", v)} placeholder="seu@email.com"
+          required status={statusOf("email")}
+          errorHint={data.email && !isValidEmail(data.email) ? "E-mail inválido" : undefined} />
+        <ReviewField label="Telefone principal" value={data.telefone_principal}
+          onChange={(v) => set("telefone_principal", maskTel(v))} placeholder="(11) 99999-9999"
+          required status={statusOf("telefone_principal")}
+          errorHint={data.telefone_principal && !isValidTelefone(data.telefone_principal) ? "Telefone inválido" : undefined} />
+        <ReviewField label="Telefone secundário (opcional)" value={data.telefone_secundario}
+          onChange={(v) => set("telefone_secundario", maskTel(v))} status={statusOf("telefone_secundario")} />
+      </ReviewBlock>
+
+      {/* ─── Bloco 5 — Endereço residencial ─── */}
+      <ReviewBlock title="Endereço residencial" icon={MapPin}>
+        <ReviewField label="CEP" value={data.end1_cep} onChange={(v) => set("end1_cep", maskCep(v))} placeholder="00000-000"
+          required status={statusOf("end1_cep")} />
+        <div className="grid grid-cols-[1fr_80px] gap-2">
+          <ReviewField label="Logradouro" value={data.end1_logradouro}
+            onChange={(v) => set("end1_logradouro", v)} required status={statusOf("end1_logradouro")} />
+          <ReviewField label="Número" value={data.end1_numero}
+            onChange={(v) => set("end1_numero", v)} required status={statusOf("end1_numero")} />
+        </div>
+        <ReviewField label="Complemento" value={data.end1_complemento} onChange={(v) => set("end1_complemento", v)}
+          status={statusOf("end1_complemento")} />
+        <div className="grid grid-cols-2 gap-2">
+          <ReviewField label="Bairro" value={data.end1_bairro}
+            onChange={(v) => set("end1_bairro", v)} required status={statusOf("end1_bairro")} />
+          <ReviewField label="Cidade" value={data.end1_cidade}
+            onChange={(v) => set("end1_cidade", v)} required status={statusOf("end1_cidade")} />
+        </div>
+        <div className="grid grid-cols-[80px_1fr] gap-2">
+          <ReviewField label="UF" value={data.end1_estado}
+            onChange={(v) => set("end1_estado", v.toUpperCase().slice(0, 2))} placeholder="SP"
+            required status={statusOf("end1_estado")} />
+          <ReviewField label="País" value={data.end1_pais} onChange={(v) => set("end1_pais", v)} status={statusOf("end1_pais")} />
+        </div>
+      </ReviewBlock>
+
+      {/* ─── Bloco 6 — Dados profissionais ─── */}
+      <ReviewBlock title="Dados profissionais" icon={Briefcase}>
+        <ReviewSelect
+          label="Categoria do titular"
+          value={data.categoria_titular || ""}
+          onChange={(v) => set("categoria_titular", v as any)}
+          options={CATEGORIA_OPTS as any}
+          status={data.categoria_titular ? "validado" : "normal"}
+        />
+        <ReviewField label="Profissão" value={data.profissao} onChange={(v) => set("profissao", v)}
+          required={required.has("profissao")} status={statusOf("profissao")} />
+        <div className="grid grid-cols-2 gap-2">
+          <ReviewField label="Título de eleitor" value={data.titulo_eleitor}
+            onChange={(v) => set("titulo_eleitor", v)} status={statusOf("titulo_eleitor")} />
+          <ReviewField label="CNH" value={data.cnh} onChange={(v) => set("cnh", v)} status={statusOf("cnh")} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <ReviewField label="CTPS" value={data.ctps} onChange={(v) => set("ctps", v)} status={statusOf("ctps")} />
+          <ReviewField label="PIS/PASEP" value={data.pis_pasep}
+            onChange={(v) => set("pis_pasep", v)} status={statusOf("pis_pasep")} />
+        </div>
+      </ReviewBlock>
+
+      {/* ─── Bloco 7 — Circunscrição PF ─── */}
+      <ReviewBlock title="Unidade responsável da Polícia Federal" icon={Building2}>
+        {!data.end1_cidade || !data.end1_estado ? (
+          <div className="text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
+            Preencha o endereço residencial para identificarmos a unidade responsável.
+          </div>
+        ) : unidadeLoading ? (
+          <div className="text-[11px] flex items-center gap-1.5" style={{ color: "hsl(220 10% 50%)" }}>
+            <Loader2 className="w-3 h-3 animate-spin" /> Resolvendo unidade…
+          </div>
+        ) : unidadePF ? (
+          <div className="rounded-lg p-3 space-y-1" style={{ background: "hsl(215 50% 96%)", border: "1px solid hsl(215 50% 88%)" }}>
+            <div className="text-[11px]" style={{ color: "hsl(215 35% 30%)" }}>
+              Com base no endereço informado, seus documentos serão preparados/entregues para:
+            </div>
+            <div className="text-[13px] font-bold" style={{ color: "hsl(215 50% 18%)" }}>
+              {unidadePF.unidade_pf}
+              {unidadePF.sigla_unidade ? ` (${unidadePF.sigla_unidade})` : ""}
+            </div>
+            <div className="text-[10px]" style={{ color: "hsl(215 25% 35%)" }}>
+              {unidadePF.tipo_unidade} · Sede: {unidadePF.municipio_sede}/{unidadePF.uf}
+            </div>
+            {unidadePF.base_legal && (
+              <div className="text-[9px] italic" style={{ color: "hsl(220 10% 45%)" }}>
+                {unidadePF.base_legal}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-[11px]" style={{ color: "hsl(30 60% 35%)" }}>
+            Não foi possível identificar automaticamente a unidade responsável para {data.end1_cidade}/{data.end1_estado}. Nossa equipe confirmará na análise.
+          </div>
+        )}
+      </ReviewBlock>
+
+      {/* ─── Bloco 8 — LGPD e revisão final ─── */}
+      <ReviewBlock title="LGPD e revisão final" icon={Shield}>
+        {divergencias.length > 0 && !divergenciasConfirmadas && (
+          <div className="rounded-lg p-2.5 space-y-1.5" style={{ background: "hsl(30 95% 96%)", border: "1px solid hsl(30 80% 80%)" }}>
+            <div className="text-[11px] font-bold" style={{ color: "hsl(30 60% 30%)" }}>
+              Divergências entre documento e formulário:
+            </div>
+            <ul className="text-[10px] space-y-0.5" style={{ color: "hsl(30 40% 35%)" }}>
+              {divergencias.map((d) => (
+                <li key={d.field}>
+                  <strong>{d.label}:</strong> documento "{d.documento}" × formulário "{d.formulario}"
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={onConfirmDivergencias}
+              className="w-full h-8 rounded-md text-[11px] font-semibold text-white"
+              style={{ background: "hsl(30 80% 45%)" }}>
+              Confirmar divergências e prosseguir
+            </button>
+          </div>
+        )}
+
+        <label className="flex items-start gap-2 text-[11px] cursor-pointer" style={{ color: "hsl(220 25% 25%)" }}>
+          <input type="checkbox" className="mt-0.5"
+            checked={data.consentimento_dados_verdadeiros}
+            onChange={(e) => set("consentimento_dados_verdadeiros", e.target.checked)} />
+          <span>Declaro que as informações são verdadeiras, completas e de minha responsabilidade.</span>
+        </label>
+        <label className="flex items-start gap-2 text-[11px] cursor-pointer" style={{ color: "hsl(220 25% 25%)" }}>
+          <input type="checkbox" className="mt-0.5"
+            checked={data.consentimento_tratamento_dados}
+            onChange={(e) => set("consentimento_tratamento_dados", e.target.checked)} />
+          <span>Autorizo o tratamento dos meus dados nos termos da LGPD para fins de cadastro, validação e atendimento.</span>
+        </label>
+
+        {blocking.length > 0 && (
+          <div className="rounded-lg p-2.5 mt-1" style={{ background: "hsl(0 90% 96%)", border: "1px solid hsl(0 80% 88%)" }}>
+            <div className="text-[11px] font-bold mb-1" style={{ color: "hsl(0 65% 35%)" }}>
+              Pendências para concluir:
+            </div>
+            <ul className="text-[10px] space-y-0.5 list-disc pl-4" style={{ color: "hsl(0 50% 35%)" }}>
+              {blocking.map((b, i) => (
+                <li key={`${b.field}-${i}`}>{b.label}: {b.message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </ReviewBlock>
 
       {error && (
         <div className="p-3 rounded-lg flex gap-2 text-xs" style={{ background: "hsl(0 80% 96%)", color: "hsl(0 70% 40%)" }}>
@@ -1038,34 +1310,96 @@ function Step3Review({
 
       <button
         onClick={onContinue}
-        disabled={busy}
+        disabled={busy || !podeAvancar}
         className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
         style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
       >
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
-        Continuar
+        Concluir cadastro
       </button>
     </div>
   );
 }
 
+function ReviewBlock({ title, icon: Icon, children }: { title: string; icon: typeof Shield; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-3 space-y-2" style={{ boxShadow: "0 1px 4px hsl(220 14% 90% / 0.4)" }}>
+      <div className="flex items-center gap-1.5 pb-1 mb-1 border-b border-slate-100">
+        <Icon className="w-3.5 h-3.5" style={{ color: "hsl(215 35% 30%)" }} />
+        <span className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "hsl(215 35% 25%)" }}>{title}</span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function statusBorder(status: FieldStatus): string {
+  switch (status) {
+    case "obrigatorio_vazio": return "hsl(0 70% 65%)";
+    case "divergente": return "hsl(30 80% 55%)";
+    case "precisa_confirmacao": return "hsl(40 90% 55%)";
+    case "validado": return "hsl(152 50% 70%)";
+    default: return "hsl(220 13% 88%)";
+  }
+}
+function statusBg(status: FieldStatus): string {
+  switch (status) {
+    case "obrigatorio_vazio": return "hsl(0 90% 99%)";
+    case "divergente": return "hsl(30 95% 99%)";
+    case "precisa_confirmacao": return "hsl(40 95% 99%)";
+    default: return "white";
+  }
+}
+
 function ReviewField({
-  label, value, onChange, placeholder, required,
-}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean }) {
+  label, value, onChange, placeholder, required, status = "normal", errorHint,
+}: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string;
+  required?: boolean; status?: FieldStatus; errorHint?: string;
+}) {
   return (
     <label className="block">
       <span className="text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1"
         style={{ color: "hsl(220 15% 45%)" }}>
         {label}{required && <span style={{ color: "hsl(0 70% 55%)" }}>*</span>}
-        {value && <Sparkles className="w-2.5 h-2.5 ml-auto" style={{ color: "hsl(230 80% 60%)" }} />}
+        {status === "validado" && <CheckCircle2 className="w-2.5 h-2.5 ml-auto" style={{ color: "hsl(152 50% 45%)" }} />}
+        {status === "obrigatorio_vazio" && <AlertCircle className="w-2.5 h-2.5 ml-auto" style={{ color: "hsl(0 70% 55%)" }} />}
+        {status === "divergente" && <AlertTriangle className="w-2.5 h-2.5 ml-auto" style={{ color: "hsl(30 80% 50%)" }} />}
       </span>
       <input
-        value={value}
+        value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="mt-0.5 w-full h-10 px-3 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(230_80%_70%)] transition"
-        style={{ border: "1px solid hsl(220 13% 88%)", background: "white", color: "hsl(220 25% 18%)" }}
+        style={{ border: `1px solid ${statusBorder(status)}`, background: statusBg(status), color: "hsl(220 25% 18%)" }}
       />
+      {errorHint && (
+        <span className="text-[10px] mt-0.5 block" style={{ color: "hsl(0 65% 45%)" }}>{errorHint}</span>
+      )}
+    </label>
+  );
+}
+
+function ReviewSelect({
+  label, value, onChange, options, required, status = "normal",
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  required?: boolean; status?: FieldStatus;
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1"
+        style={{ color: "hsl(220 15% 45%)" }}>
+        {label}{required && <span style={{ color: "hsl(0 70% 55%)" }}>*</span>}
+        {status === "validado" && <CheckCircle2 className="w-2.5 h-2.5 ml-auto" style={{ color: "hsl(152 50% 45%)" }} />}
+        {status === "obrigatorio_vazio" && <AlertCircle className="w-2.5 h-2.5 ml-auto" style={{ color: "hsl(0 70% 55%)" }} />}
+      </span>
+      <select value={value || ""} onChange={(e) => onChange(e.target.value)}
+        className="mt-0.5 w-full h-10 px-3 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(230_80%_70%)] transition appearance-none"
+        style={{ border: `1px solid ${statusBorder(status)}`, background: statusBg(status), color: "hsl(220 25% 18%)" }}>
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
     </label>
   );
 }
