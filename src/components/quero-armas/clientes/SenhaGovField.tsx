@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { getSenhaGov, setSenhaGov } from "./senhaGovApi";
 
 /**
@@ -38,6 +39,9 @@ async function copyTextSafe(text: string): Promise<boolean> {
 
 interface Props {
   cadastroCrId: number | null | undefined;
+  /** Opcional. Quando informado e `cadastroCrId` estiver vazio, o componente
+   *  resolve automaticamente o `qa_cadastro_cr.id` a partir do cliente. */
+  clienteId?: number | null;
   /** "row" = inline tipo Field (admin); "compact" = mini chip; "exposed" = valor visível direto, só copiar */
   variant?: "row" | "compact" | "exposed";
   contexto?: string;
@@ -53,23 +57,50 @@ interface Props {
  * Exibe a Senha Gov sob demanda, decifrando via edge function `qa-senha-gov`.
  * Cada revelação registra auditoria em qa_senha_gov_acessos.
  */
-export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreateCadastro }: Props) {
+export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contexto, onCreateCadastro }: Props) {
   const [senha, setSenha] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [resolvedCrId, setResolvedCrId] = useState<number | null | undefined>(cadastroCrId ?? null);
 
-  // Sem cadastroCrId E sem callback de criação: nada a fazer (modo legado).
-  if (!cadastroCrId && !onCreateCadastro) return null;
+  // Mantém em sincronia quando o pai atualiza o id após salvar.
+  useEffect(() => {
+    if (cadastroCrId) setResolvedCrId(cadastroCrId);
+  }, [cadastroCrId]);
+
+  // Fallback: resolve o cadastro_cr_id pelo cliente quando não foi recebido.
+  useEffect(() => {
+    let cancel = false;
+    if (!cadastroCrId && clienteId) {
+      (async () => {
+        const { data } = await supabase
+          .from("qa_cadastro_cr" as any)
+          .select("id")
+          .eq("cliente_id", clienteId)
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!cancel) setResolvedCrId((data as any)?.id ?? null);
+      })();
+    }
+    return () => { cancel = true; };
+  }, [cadastroCrId, clienteId]);
+
+  const effectiveCrId = cadastroCrId ?? resolvedCrId ?? null;
+
+  // Sem cadastroCrId, sem clienteId e sem callback: nada a fazer (modo legado),
+  // exceto no variant "exposed" que sempre exibe o slot (mostra "—").
+  if (!effectiveCrId && !onCreateCadastro && !clienteId && variant !== "exposed") return null;
 
   const ensure = async () => {
-    if (!cadastroCrId) return null;
+    if (!effectiveCrId) return null;
     if (senha != null) return senha;
     setLoading(true);
     try {
-      const s = await getSenhaGov(cadastroCrId, contexto);
+      const s = await getSenhaGov(effectiveCrId, contexto);
       setSenha(s || "");
       return s || "";
     } catch (e: any) {
@@ -106,7 +137,7 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreat
   // O admin já está autenticado — não há necessidade de "revelar".
   if (variant === "exposed") {
     // auto-load uma vez
-    if (cadastroCrId && senha == null && !loading) {
+    if (effectiveCrId && senha == null && !loading) {
       // disparo lazy (sem useEffect para evitar overhead; idempotente via guarda)
       void ensure();
     }
