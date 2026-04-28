@@ -153,7 +153,12 @@ function KpiCard({
           KPI <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-      <div className="mt-3 flex h-7 items-end text-2xl font-bold text-slate-800 leading-none font-mono">
+      <div
+        className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
+          typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
+        }`}
+        title={String(def.value)}
+      >
         {def.value}
       </div>
       <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
