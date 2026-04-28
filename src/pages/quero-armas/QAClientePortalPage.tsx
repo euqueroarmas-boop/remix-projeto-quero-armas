@@ -658,6 +658,17 @@ export default function QAClientePortalPage() {
             expDocs={analysis.expDocs}
             alerts={analysis.alerts as any}
             onOpenAddDoc={() => setShowAddDoc(true)}
+            onArsenalChanged={async () => {
+              const clienteIdReal = cliente.id;
+              const [cfRes, gtRes, dRes] = await Promise.all([
+                supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
+                supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
+                supabase.from("qa_documentos_cliente" as any).select("*").eq("cliente_id", clienteIdReal).order("created_at", { ascending: false }),
+              ]);
+              setCrafs((cfRes.data as any[]) ?? []);
+              setGtes((gtRes.data as any[]) ?? []);
+              setMeusDocs((dRes.data as any[]) ?? []);
+            }}
           />
         )}
 
