@@ -244,9 +244,14 @@ export default function QACadastroPublicoPage() {
 
       // Detecta ambiguidade CPF×RG retornada pela IA
       const ambig = detectCpfRgAmbiguity(id);
+      const isCin = String(id?.tipo_documento || "").toUpperCase() === "CIN";
+      const cpfDigitsExtracted = id?.cpf ? onlyDigits(String(id.cpf)) : "";
+      const cpfIsValid = cpfDigitsExtracted.length === 11 && isValidCpf(cpfDigitsExtracted);
       if (ambig.hasAmbiguity) {
         setCpfRgAmbiguity({
-          reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
+          reason: isCin
+            ? "Documento CIN gov.br detectado. O número nacional pode aparecer como CPF/RG/CIN. Confirme manualmente antes de concluir."
+            : (ambig.reason || "A IA não conseguiu separar CPF e RG com certeza"),
           cpfCandidates: ambig.cpfCandidates,
           rgCandidates: ambig.rgCandidates,
         });
@@ -284,8 +289,20 @@ export default function QACadastroPublicoPage() {
       setExtracted(prev => ({
         ...prev,
         nome_completo: id.nome_completo || prev.nome_completo,
-        cpf: (id.cpf && !ambig.hasAmbiguity) ? maskCpf(id.cpf) : prev.cpf,
-        rg: id.rg || prev.rg,
+        // CPF: preenche sempre que vier um CPF válido de 11 dígitos, mesmo com
+        // ambiguidade. A confirmação manual bloqueia apenas a conclusão final
+        // — não deve apagar o CPF do usuário.
+        cpf: cpfIsValid ? maskCpf(cpfDigitsExtracted) : prev.cpf,
+        // RG/CIN:
+        //  - Sem ambiguidade → usa o RG retornado (comportamento original).
+        //  - Com ambiguidade em CIN → preenche o candidato apenas se for
+        //    DIFERENTE do CPF (para não duplicar visualmente o mesmo número).
+        //  - Demais ambiguidades → não preenche silenciosamente.
+        rg: !ambig.hasAmbiguity
+          ? (id.rg || prev.rg)
+          : (isCin && ambig.rgCandidates[0] && ambig.rgCandidates[0] !== cpfDigitsExtracted
+              ? ambig.rgCandidates[0]
+              : prev.rg),
         emissor_rg: id.emissor_rg && id.uf_emissor_rg
           ? `${id.emissor_rg}/${id.uf_emissor_rg}` : (id.emissor_rg || prev.emissor_rg),
         data_nascimento: id.data_nascimento || prev.data_nascimento,
@@ -298,6 +315,9 @@ export default function QACadastroPublicoPage() {
         cnh: id.cnh || prev.cnh,
         ctps: id.ctps || prev.ctps,
         pis_pasep: id.pis_pasep || prev.pis_pasep,
+        // Data de expedição: aceita ISO ou BR e cobre múltiplos aliases da IA
+        // (CIN gov.br usa "Data de Emissão / Issue Date").
+        data_expedicao_rg: pickIssueDate(id) || prev.data_expedicao_rg,
         end1_cep: ad.cep ? maskCep(ad.cep) : prev.end1_cep,
         end1_logradouro: ad.logradouro || prev.end1_logradouro,
         end1_numero: ad.numero || prev.end1_numero,
