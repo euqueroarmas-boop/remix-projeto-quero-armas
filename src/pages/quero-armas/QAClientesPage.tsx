@@ -36,6 +36,7 @@ import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
@@ -1664,7 +1665,7 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    setTab("resumo");
+    setTab("arsenal");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
