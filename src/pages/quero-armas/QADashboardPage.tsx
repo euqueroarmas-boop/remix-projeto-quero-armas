@@ -23,6 +23,7 @@ const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/das
 const DashboardAtividadesRecentes = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
 const DashboardFunilOperacional = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
 const DashboardSlaClientesNovos = lazy(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"));
+const TelemetriaCadastroCards = lazy(() => import("@/components/quero-armas/dashboard/TelemetriaCadastroCards"));
 
 interface Stats {
   documentos: number;
@@ -437,6 +438,13 @@ export default function QADashboardPage() {
       {mountHeavy && (
         <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
           <DashboardSlaClientesNovos />
+        </Suspense>
+      )}
+
+      {/* Telemetria de Qualidade do Cadastro Público */}
+      {mountHeavy && (
+        <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-amber-500 rounded-full animate-spin" /></div>}>
+          <TelemetriaCadastroCards />
         </Suspense>
       )}
 
