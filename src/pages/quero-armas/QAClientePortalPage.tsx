@@ -218,18 +218,21 @@ export default function QAClientePortalPage() {
         setUserName((profile as any)?.nome || clienteData?.nome_completo || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
         setCustomerId(customerLink?.id ?? null);
 
-        const clienteId = getClienteFK(clienteData);
-
-        // Load sub-data in parallel. Exames usam o ID REAL do cliente (não o id_legado),
-        // pois qa_exames_cliente.cliente_id referencia qa_clientes.id.
+        // FK para vendas/itens (regra legada: qa_vendas.cliente_id → qa_clientes.id_legado).
+        const clienteIdVendas = getClienteFK(clienteData);
+        // ID REAL do cliente. As tabelas qa_cadastro_cr / qa_crafs / qa_gtes / qa_filiacoes
+        // possuem RLS owner que filtra por `cliente_id = qa_current_cliente_id(auth.uid())`,
+        // e `cliente_auth_links.qa_cliente_id` armazena o ID REAL (qa_clientes.id).
+        // Portanto, no portal do cliente, devemos consultar essas tabelas pelo ID REAL,
+        // não pelo id_legado — caso contrário a RLS bloqueia silenciosamente os registros.
         const clienteIdReal = clienteData.id;
         // Carrega vendas primeiro, depois itens via venda_id (qa_itens_venda NÃO possui cliente_id).
         const [vRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
-          supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteId).order("data_cadastro", { ascending: false }),
-          supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteId).maybeSingle(),
-          supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteId),
-          supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteId),
-          supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteId),
+          supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteIdVendas).order("data_cadastro", { ascending: false }),
+          supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteIdReal).maybeSingle(),
+          supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
+          supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
+          supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteIdReal),
           supabase.from("qa_exames_cliente" as any)
             .select("id, tipo, data_realizacao, data_vencimento, observacoes")
             .eq("cliente_id", clienteIdReal)
