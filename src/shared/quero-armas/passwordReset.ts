@@ -26,11 +26,12 @@ export interface PasswordResetResult {
 }
 
 /**
- * Dispara o e-mail de redefinição de senha usando o SMTP próprio WMTi
- * (edge function `request-password-reset`), com fallback para o fluxo
- * nativo do Supabase em caso de indisponibilidade da função.
+ * Dispara o e-mail de redefinição de senha do Quero Armas usando o SMTP
+ * próprio (edge function `request-password-reset`, brand "quero-armas").
  *
- * Sempre logamos o resultado em desenvolvimento para diagnóstico.
+ * NÃO usa o SMTP padrão do Supabase (resetPasswordForEmail) — em produção
+ * isso enviaria com template/remetente errado. Em caso de falha da edge
+ * function, retornamos erro explícito.
  */
 export async function requestQAPasswordReset(
   rawEmail: string
@@ -54,16 +55,19 @@ export async function requestQAPasswordReset(
     console.info("[QA Password Reset] edge response", { data, error });
 
     if (error) {
-      // Fallback para o fluxo nativo se a edge function falhar
-      return await fallbackNativeReset(email, redirectTo, error.message);
+      return {
+        success: false,
+        errorMessage:
+          "Não foi possível enviar o e-mail de recuperação agora. Tente novamente em instantes.",
+      };
     }
 
     if (data && (data as any).error) {
-      return await fallbackNativeReset(
-        email,
-        redirectTo,
-        String((data as any).error)
-      );
+      return {
+        success: false,
+        errorMessage:
+          "Não foi possível enviar o e-mail de recuperação agora. Tente novamente em instantes.",
+      };
     }
 
     return {
@@ -73,26 +77,10 @@ export async function requestQAPasswordReset(
   } catch (err: any) {
     // eslint-disable-next-line no-console
     console.error("[QA Password Reset] edge exception", err);
-    return await fallbackNativeReset(email, redirectTo, err?.message);
+    return {
+      success: false,
+      errorMessage:
+        "Não foi possível enviar o e-mail de recuperação agora. Tente novamente em instantes.",
+    };
   }
-}
-
-async function fallbackNativeReset(
-  email: string,
-  redirectTo: string,
-  upstreamMessage?: string
-): Promise<PasswordResetResult> {
-  // eslint-disable-next-line no-console
-  console.warn("[QA Password Reset] fallback to supabase.auth.resetPasswordForEmail", {
-    upstreamMessage,
-  });
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo,
-  });
-  // eslint-disable-next-line no-console
-  console.info("[QA Password Reset] native response", { data, error });
-  if (error) {
-    return { success: false, errorMessage: error.message };
-  }
-  return { success: true };
 }
