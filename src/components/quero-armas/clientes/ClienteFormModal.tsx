@@ -14,7 +14,8 @@ import {
   isValidTelefone,
   rgNotEqualCpf,
 } from "@/shared/quero-armas/clienteSchema";
-import { getSenhaGov, setSenhaGov } from "./senhaGovApi";
+import { setSenhaGov } from "./senhaGovApi";
+import { SenhaGovField } from "./SenhaGovField";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -256,31 +257,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       } else {
         setPhotoPreview(null);
       }
-      // Carrega Senha Gov existente (se houver cadastro_cr) para exibir/editar exposta.
+      // Pós-P0: NÃO pré-carrega senha GOV. Apenas resolve o cadastro_cr_id
+      // (filtrando duplicatas consolidadas) para o componente SenhaGovField.
       (async () => {
         try {
           const { data: row } = await supabase
             .from("qa_cadastro_cr" as any)
             .select("id")
             .eq("cliente_id", cliente.id)
+            .is("consolidado_em", null)
+            .order("id", { ascending: false })
+            .limit(1)
             .maybeSingle();
-          const id = (row as any)?.id ?? null;
-          setCadastroCrId(id);
-          if (id) {
-            const s = await getSenhaGov(id, "Editar Cliente").catch((e) => {
-              if (e?.name !== "SenhaGovAuthError") console.warn("[SenhaGov] preload falhou", e);
-              return "";
-            });
-            setSenhaGovState(s || "");
-            setSenhaGovOriginal(s || "");
-          } else {
-            setSenhaGovState("");
-            setSenhaGovOriginal("");
-          }
+          setCadastroCrId((row as any)?.id ?? null);
         } catch {
-          setSenhaGovState("");
-          setSenhaGovOriginal("");
+          setCadastroCrId(null);
         }
+        setSenhaGovState("");
+        setSenhaGovOriginal("");
       })();
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
@@ -331,30 +325,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         }
         toast.success("Cliente cadastrado");
       }
-      // Persiste Senha Gov se mudou
-      try {
-        // MODO SEGURO P0: salvamento de Senha Gov suspenso até reconciliação dos vínculos cadastro_cr ↔ cliente.
-        const SENHA_GOV_MODO_SEGURO = true;
-        if (!SENHA_GOV_MODO_SEGURO && savedId && senhaGov !== senhaGovOriginal) {
-          let crId = cadastroCrId;
-          if (!crId) {
-            const { data: stub, error: stubErr } = await supabase
-              .from("qa_cadastro_cr" as any)
-              .insert({ cliente_id: savedId })
-              .select("id")
-              .single();
-            if (stubErr) throw stubErr;
-            crId = (stub as any)?.id ?? null;
-            setCadastroCrId(crId);
-          }
-          if (crId) {
-            await setSenhaGov(crId, senhaGov, "Editar Cliente");
-            setSenhaGovOriginal(senhaGov);
-          }
-        }
-      } catch (e: any) {
-        toast.error("Erro ao salvar Senha Gov: " + (e.message || ""));
-      }
+      // Senha GOV não é mais salva em fluxo "save cliente" — o SenhaGovField
+      // grava de forma isolada, sempre com `cliente_id` validado server-side.
       onSaved();
       onClose();
     } catch (e: any) {
