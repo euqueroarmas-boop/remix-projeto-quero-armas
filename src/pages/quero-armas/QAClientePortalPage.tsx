@@ -658,7 +658,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeTab === "resumo" && (
-        <>
+        <div className="qa-resumo-light space-y-4">
         {/* ═══ WELCOME HEADER ═══ */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
           <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%))" }} />
@@ -1059,7 +1059,7 @@ export default function QAClientePortalPage() {
         <div className="text-center py-4">
           <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
         </div>
-        </>
+        </div>
         )}
       </main>
 
