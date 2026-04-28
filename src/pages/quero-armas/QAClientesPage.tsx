@@ -1697,9 +1697,12 @@ export default function QAClientesPage() {
 
       const [vRes, cRes, gRes, fRes, cadRes, exRes, dRes] = await Promise.all([
         supabase.from("qa_vendas" as any).select("*").in("cliente_id", cidsCliente).order("data_cadastro", { ascending: false }),
-        supabase.from("qa_crafs" as any).select("*").in("cliente_id", cidsCliente),
-        supabase.from("qa_gtes" as any).select("*").in("cliente_id", cidsCliente),
-        supabase.from("qa_filiacoes" as any).select("*").in("cliente_id", cidsCliente),
+        // P0 FIX: Tabelas de ARSENAL (crafs/gtes/filiacoes) usam SEMPRE id real
+        // (qa_clientes.id) — ver getClienteCadastroFK. Usar cidsCliente aqui causa
+        // cruzamento entre clientes quando id_legado de um == id real de outro.
+        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
+        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
+        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteIdReal),
         // P0 FIX: CR usa SOMENTE id real e ignora consolidados (CRs antigos de
         // reconciliação). Sem isso, id_legado de um cliente colide com id de outro.
         supabase
