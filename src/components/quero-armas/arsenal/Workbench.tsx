@@ -128,9 +128,9 @@ function WeaponCard({
       </div>
 
       <div className="relative p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-1.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${c.dot} animate-pulse`} />
               <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-white/70">
                 {WEAPON_KIND_LABEL[info.kind]}
@@ -141,19 +141,19 @@ function WeaponCard({
                 </span>
               )}
             </div>
-            <div className="mt-1 text-[16px] font-black uppercase tracking-tight text-white leading-tight">
+            <div className="mt-1 truncate text-[15px] font-black uppercase tracking-tight text-white leading-tight">
               {marca}
             </div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
+            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
               {modelo}
             </div>
             <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
               CAL · {calibre}
             </div>
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-1 max-w-[45%]">
+          <div className="flex shrink-0 flex-col items-end gap-1 max-w-[40%]">
             <span
-              className={`rounded-sm border px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.08em] leading-tight whitespace-nowrap ${c.chip}`}
+              className={`rounded-sm border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] leading-tight text-right ${c.chip}`}
             >
               {urgencyText(w.daysToExpire)}
             </span>
