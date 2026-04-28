@@ -135,6 +135,20 @@ function ddmmaaaaToISO(s?: string | null): string | null {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
+/**
+ * Defesa server-side: o campo arma_modelo NUNCA pode receber número de
+ * documento/registro/CRAF/SINARM/SIGMA/protocolo. Se a IA insistir em devolver
+ * algo numérico, descartamos para que o cadastro fique pendente de revisão.
+ */
+function sanitizeArmaModelo(value?: string | null): string | null {
+  if (!value) return null;
+  const v = String(value).trim();
+  if (v.length < 2) return null;
+  if (/^[0-9.\-\/\s]+$/.test(v)) return null;
+  if (/^(CRAF|SINARM|SIGMA|REGISTRO|DOCUMENTO|PROTOCOLO|ARMA)$/i.test(v)) return null;
+  return v;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -159,7 +173,7 @@ Deno.serve(async (req) => {
       data_validade: ddmmaaaaToISO(raw.data_validade),
       observacoes: raw.observacoes || null,
       arma_marca: raw.arma_marca || null,
-      arma_modelo: raw.arma_modelo || null,
+      arma_modelo: sanitizeArmaModelo(raw.arma_modelo),
       arma_calibre: raw.arma_calibre || null,
       arma_numero_serie: raw.arma_numero_serie || null,
       arma_especie: raw.arma_especie || null,
