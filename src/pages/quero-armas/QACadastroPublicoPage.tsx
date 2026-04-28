@@ -362,6 +362,7 @@ export default function QACadastroPublicoPage() {
         categoria: extracted.categoria_titular || "pessoa_fisica",
         needsCpfRgConfirmation: !!cpfRgAmbiguity,
         cpfRgConfirmed,
+        documentoIdentidadeTipo: tipoDocumentoIdentidade,
       });
       const divergencias = getDivergencias(extracted, extractedFromDoc);
       if (blocking.length > 0) {
