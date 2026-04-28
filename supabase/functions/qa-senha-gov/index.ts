@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
 
     if (action === "get") {
       const id = Number(body?.cadastro_cr_id);
+      const expectedClienteId = body?.cliente_id == null ? null : Number(body.cliente_id);
       if (!Number.isFinite(id)) return json({ error: "cadastro_cr_id inválido" }, 400);
 
       const { data, error } = await admin
@@ -152,6 +153,31 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (error) return json({ error: error.message }, 500);
       if (!data) return json({ error: "Cadastro não encontrado" }, 404);
+
+      // P0 — anti cross-tenant: o caller PRECISA dizer de qual cliente espera ler,
+      // e o CR PRECISA pertencer a esse cliente. Caso contrário, registramos a tentativa
+      // suspeita e bloqueamos o vazamento.
+      if (expectedClienteId != null && data.cliente_id !== expectedClienteId) {
+        await admin.from("qa_senha_gov_acessos").insert({
+          cadastro_cr_id: id,
+          cliente_id: expectedClienteId,
+          user_id: guard.userId,
+          acao: "denied_mismatch",
+          ip,
+          user_agent: ua,
+          contexto: `tentativa de leitura cruzada (cr.cliente_id=${data.cliente_id})`.slice(0, 200),
+        });
+        return json({
+          error: "Vínculo cadastro_cr ↔ cliente divergente. Leitura bloqueada por segurança.",
+        }, 409);
+      }
+
+      // Modo seguro global: até reconciliação completa, recusar leitura sem expectedClienteId
+      if (expectedClienteId == null) {
+        return json({
+          error: "cliente_id é obrigatório para leitura de Senha Gov (modo seguro).",
+        }, 400);
+      }
 
       let senha: string | null = null;
       const ct = bytea(data.senha_gov_encrypted);
@@ -183,6 +209,7 @@ Deno.serve(async (req) => {
 
     if (action === "set") {
       const id = Number(body?.cadastro_cr_id);
+      const expectedClienteId = body?.cliente_id == null ? null : Number(body.cliente_id);
       const senha = body?.senha == null ? "" : String(body.senha);
       if (!Number.isFinite(id)) return json({ error: "cadastro_cr_id inválido" }, 400);
 
@@ -193,6 +220,21 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (fetchErr) return json({ error: fetchErr.message }, 500);
       if (!row) return json({ error: "Cadastro não encontrado" }, 404);
+
+      if (expectedClienteId == null || row.cliente_id !== expectedClienteId) {
+        await admin.from("qa_senha_gov_acessos").insert({
+          cadastro_cr_id: id,
+          cliente_id: expectedClienteId,
+          user_id: guard.userId,
+          acao: "denied_mismatch",
+          ip,
+          user_agent: ua,
+          contexto: `tentativa de gravação cruzada (cr.cliente_id=${row.cliente_id})`.slice(0, 200),
+        });
+        return json({
+          error: "cliente_id obrigatório e precisa coincidir com o do CR. Gravação bloqueada.",
+        }, 409);
+      }
 
       const update: Record<string, unknown> = {
         senha_gov_updated_at: new Date().toISOString(),

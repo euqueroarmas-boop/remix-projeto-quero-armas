@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X } from "lucide-react";
+import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getSenhaGov, setSenhaGov, subscribeSenhaGovUpdates } from "./senhaGovApi";
+
+/**
+ * MODO SEGURO P0 — Incidente de cruzamento de Senha Gov (28/04/2026).
+ * Enquanto o vínculo cadastro_cr ↔ cliente não estiver 100% restaurado,
+ * NÃO revelar senhas no frontend e bloquear edição. Auditoria preservada.
+ */
+const SENHA_GOV_MODO_SEGURO = true;
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
@@ -108,6 +115,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   // Auto-load do variant "exposed": dispara UMA VEZ por id.
   // (Antes era chamado em todo render, gerando loop infinito de 401.)
   useEffect(() => {
+    if (SENHA_GOV_MODO_SEGURO) return;
     if (variant !== "exposed") return;
     if (!effectiveCrId) return;
     if (autoLoadedFor === effectiveCrId) return;
@@ -172,6 +180,22 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   // Variante "exposed": carrega automaticamente e exibe em texto claro.
   // O admin já está autenticado — não há necessidade de "revelar".
   if (variant === "exposed") {
+    if (SENHA_GOV_MODO_SEGURO) {
+      return (
+        <div className="flex flex-col gap-0.5 py-1">
+          <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
+          <div className="flex items-center gap-2 pl-0.5">
+            <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
+            <span className="font-mono text-[12px] text-amber-700 font-semibold">
+              BLOQUEADA · MODO SEGURO
+            </span>
+          </div>
+          <span className="text-[10px] text-slate-400 pl-0.5">
+            Visualização suspensa após incidente de vínculo cliente↔CR.
+          </span>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col gap-0.5 py-1">
         <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
@@ -194,6 +218,10 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   }
 
   const startEdit = async () => {
+    if (SENHA_GOV_MODO_SEGURO) {
+      toast.error("Edição de Senha Gov bloqueada · MODO SEGURO ativo");
+      return;
+    }
     if (cadastroCrId) {
       const current = await ensure();
       setDraft(current || "");
@@ -209,6 +237,10 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   };
 
   const save = async () => {
+    if (SENHA_GOV_MODO_SEGURO) {
+      toast.error("Salvamento de Senha Gov bloqueado · MODO SEGURO ativo");
+      return;
+    }
     setSaving(true);
     try {
       let id = cadastroCrId;
