@@ -144,7 +144,7 @@ export default function QAClientePortalPage() {
           setMustChangePassword(true);
         }
 
-        const [{ data: profile }, { data: customerLink }] = await Promise.all([
+        const [{ data: profile }, { data: authLink }] = await Promise.all([
           supabase
             .from("qa_usuarios_perfis" as any)
             .select("*")
@@ -152,47 +152,70 @@ export default function QAClientePortalPage() {
             .eq("ativo", true)
             .maybeSingle(),
           supabase
-            .from("customers")
-            .select("id, email, cnpj_ou_cpf, razao_social, responsavel")
+            .from("cliente_auth_links" as any)
+            .select("id, status, email, qa_cliente_id, customer_id")
             .eq("user_id", user.id)
+            .eq("status", "active")
+            .order("activated_at", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
         ]);
 
-        if (!profile && !customerLink) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
+        if (!profile && !authLink) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
 
-        setUserName((profile as any)?.nome || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
-        setCustomerId(customerLink?.id ?? null);
+        let customerLink: any = null;
+        if ((authLink as any)?.customer_id) {
+          const { data } = await supabase
+            .from("customers" as any)
+            .select("id, email, cnpj_ou_cpf, razao_social, responsavel")
+            .eq("id", (authLink as any).customer_id)
+            .maybeSingle();
+          customerLink = data;
+        }
 
-        const cpfDigits = String(customerLink?.cnpj_ou_cpf || "").replace(/\D/g, "");
-        const lookupEmail = (customerLink?.email || user.email || "").trim();
         let clienteData: any = null;
+        if ((authLink as any)?.qa_cliente_id) {
+          const { data } = await supabase
+            .from("qa_clientes" as any)
+            .select("*")
+            .eq("id", (authLink as any).qa_cliente_id)
+            .maybeSingle();
+          clienteData = data;
+        }
 
-        const { data: clienteByCpf } = cpfDigits
-          ? await supabase
-              .from("qa_clientes" as any)
-              .select("*")
-              .eq("cpf", cpfDigits)
-              .limit(1)
-              .maybeSingle()
-          : { data: null };
+        const cpfDigits = String(customerLink?.cnpj_ou_cpf || clienteData?.cpf || "").replace(/\D/g, "");
+        const lookupEmail = ((authLink as any)?.email || customerLink?.email || clienteData?.email || user.email || "").trim();
 
-        if (clienteByCpf) {
-          clienteData = clienteByCpf;
-        } else {
-          const { data: clienteByEmail } = lookupEmail
+        if (!clienteData) {
+          const { data: clienteByCpf } = cpfDigits
             ? await supabase
                 .from("qa_clientes" as any)
                 .select("*")
-                .ilike("email", lookupEmail)
+                .eq("cpf", cpfDigits)
                 .limit(1)
                 .maybeSingle()
             : { data: null };
-          clienteData = clienteByEmail;
+
+          if (clienteByCpf) {
+            clienteData = clienteByCpf;
+          } else {
+            const { data: clienteByEmail } = lookupEmail
+              ? await supabase
+                  .from("qa_clientes" as any)
+                  .select("*")
+                  .ilike("email", lookupEmail)
+                  .limit(1)
+                  .maybeSingle()
+              : { data: null };
+            clienteData = clienteByEmail;
+          }
         }
 
         if (!clienteData) { setLoading(false); return; }
         setCliente(clienteData);
+        setUserName((profile as any)?.nome || clienteData?.nome_completo || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
+        setCustomerId(customerLink?.id ?? null);
 
         const clienteId = getClienteFK(clienteData);
 

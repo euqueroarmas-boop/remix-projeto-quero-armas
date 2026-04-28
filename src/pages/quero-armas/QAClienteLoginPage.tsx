@@ -47,8 +47,8 @@ export default function QAClienteLoginPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
 
-      // Aceita: (a) admin QA com perfil ativo OU (b) cliente vinculado em customers
-      const [{ data: qaProfile }, { data: customer }] = await Promise.all([
+      // Aceita: (a) admin QA com perfil ativo OU (b) cliente vinculado no portal Quero Armas
+      const [{ data: qaProfile }, { data: clienteLink }] = await Promise.all([
         supabase
           .from("qa_usuarios_perfis" as any)
           .select("id")
@@ -56,16 +56,17 @@ export default function QAClienteLoginPage() {
           .eq("ativo", true)
           .maybeSingle(),
         supabase
-          .from("customers")
-          .select("id")
+          .from("cliente_auth_links" as any)
+          .select("id, status, qa_cliente_id, customer_id")
           .eq("user_id", user.id)
+          .eq("status", "active")
           .limit(1)
           .maybeSingle(),
       ]);
 
-      if (!qaProfile && !customer) {
+      if (!qaProfile && !clienteLink) {
         await supabase.auth.signOut();
-        toast.error("Acesso negado. Conta sem vínculo de cliente.");
+        toast.error("Acesso negado. Conta sem vínculo de cliente ativo.");
         return;
       }
 
