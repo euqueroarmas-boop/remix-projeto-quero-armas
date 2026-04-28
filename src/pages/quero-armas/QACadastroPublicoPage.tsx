@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
-  Target, Layers, ChevronDown,
+  Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users,
 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import { BackButton } from "@/shared/components/BackButton";
@@ -14,6 +14,19 @@ import {
   findServico,
   getCategoriasPorObjetivo,
 } from "./qaServiceCatalog";
+import {
+  type ClienteData,
+  emptyClienteData,
+  getBlockingErrors,
+  getDivergencias,
+  detectCpfRgAmbiguity,
+  isValidCpf,
+  isValidEmail,
+  isValidTelefone,
+  onlyDigits,
+  getCamposObrigatoriosPorCategoria,
+  type CategoriaTitular,
+} from "@/shared/quero-armas/clienteSchema";
 
 /* =========================================================================
  * Cadastro do Cliente — Fluxo guiado em 5 etapas
