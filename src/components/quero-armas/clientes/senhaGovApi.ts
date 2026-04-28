@@ -8,16 +8,35 @@ import { supabase } from "@/integrations/supabase/client";
  * IMPORTANTE: nunca leia `qa_cadastro_cr.senha_gov` direto do client —
  * o campo está deprecated e pode estar nulo. Use `getSenhaGov`.
  */
+async function callSenhaGov(body: Record<string, unknown>) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) {
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-senha-gov`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || (json as any)?.error) {
+    throw new Error((json as any)?.error || `HTTP ${res.status}`);
+  }
+  return json as any;
+}
+
 export async function getSenhaGov(
   cadastroCrId: number,
   contexto?: string,
 ): Promise<string | null> {
-  const { data, error } = await supabase.functions.invoke("qa-senha-gov", {
-    body: { action: "get", cadastro_cr_id: cadastroCrId, contexto },
-  });
-  if (error) throw new Error(error.message || "Falha ao consultar Senha Gov");
-  if ((data as any)?.error) throw new Error((data as any).error);
-  return ((data as any)?.senha as string | null) ?? null;
+  const data = await callSenhaGov({ action: "get", cadastro_cr_id: cadastroCrId, contexto });
+  return (data?.senha as string | null) ?? null;
 }
 
 export async function setSenhaGov(
@@ -25,9 +44,5 @@ export async function setSenhaGov(
   senha: string,
   contexto?: string,
 ): Promise<void> {
-  const { data, error } = await supabase.functions.invoke("qa-senha-gov", {
-    body: { action: "set", cadastro_cr_id: cadastroCrId, senha, contexto },
-  });
-  if (error) throw new Error(error.message || "Falha ao salvar Senha Gov");
-  if ((data as any)?.error) throw new Error((data as any).error);
+  await callSenhaGov({ action: "set", cadastro_cr_id: cadastroCrId, senha, contexto });
 }
