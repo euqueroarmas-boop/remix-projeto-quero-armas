@@ -1853,6 +1853,8 @@ export default function QAClientesPage() {
   };
 
   const clienteIdForSub = selected ? getClienteFK(selected) : 0;
+  // FK para CR/CRAF/GTE/Filiações/exames — sempre id REAL (ver clientFK.ts).
+  const clienteCadastroIdForSub = selected ? getClienteCadastroFK(selected) : 0;
 
   // ── Detail View ──
   if (selected) {
