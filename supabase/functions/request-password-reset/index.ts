@@ -12,44 +12,115 @@ const BodySchema = z.object({
   email: z.string().trim().email("E-mail inválido").transform((value) => value.toLowerCase()),
   redirectTo: z.string().url("URL de redirecionamento inválida").optional(),
   trace_id: z.string().trim().min(8).max(200).optional(),
+  brand: z.enum(["wmti", "quero-armas"]).optional(),
 });
 
-const DEFAULT_REDIRECT_TO = "https://euqueroarmas.com.br/redefinir-senha";
+const DEFAULT_REDIRECT_TO_WMTI = "https://wmti.com.br/redefinir-senha";
+const DEFAULT_REDIRECT_TO_QA = "https://euqueroarmas.com.br/redefinir-senha";
 
-function isAllowedRedirect(url: string) {
+type Brand = "wmti" | "quero-armas";
+
+interface BrandConfig {
+  brand: Brand;
+  fromName: string;
+  subject: string;
+  headerTitle: string;
+  headerColor: string;
+  greetingLine: string;
+  ctaLabel: string;
+  warningTitle: string;
+  warningItems: string[];
+  footerLines: string[];
+  defaultRedirectTo: string;
+  productionHosts: string[]; // hosts permitidos em produção
+  textIntro: string;
+}
+
+const BRANDS: Record<Brand, BrandConfig> = {
+  wmti: {
+    brand: "wmti",
+    fromName: "WMTi Tecnologia da Informação",
+    subject: "🔐 Redefinição de senha — Portal do Cliente WMTi",
+    headerTitle: "WMTi Tecnologia da Informação",
+    headerColor: "#FF5A1F",
+    greetingLine: "Recebemos uma solicitação para redefinir a senha do seu acesso ao portal do cliente WMTi.",
+    ctaLabel: "Redefinir minha senha",
+    warningTitle: "Importante:",
+    warningItems: [
+      "Se você não solicitou esta redefinição, ignore este e-mail.",
+      "Por segurança, o link possui validade limitada.",
+      "Após alterar a senha, use a nova credencial para acessar o portal.",
+    ],
+    footerLines: [
+      "WMTi Tecnologia da Informação LTDA — CNPJ 13.366.668/0001-07",
+      "Rua José Benedito Duarte, 140 — Parque Itamarati — Jacareí/SP",
+    ],
+    defaultRedirectTo: DEFAULT_REDIRECT_TO_WMTI,
+    productionHosts: ["wmti.com.br", "www.wmti.com.br"],
+    textIntro: "WMTi Tecnologia da Informação",
+  },
+  "quero-armas": {
+    brand: "quero-armas",
+    fromName: "Quero Armas",
+    subject: "🔐 Redefinição de senha — Portal Quero Armas",
+    headerTitle: "Quero Armas",
+    headerColor: "#0A0A0A",
+    greetingLine: "Recebemos uma solicitação para redefinir a senha do seu acesso ao Portal Quero Armas.",
+    ctaLabel: "Redefinir minha senha",
+    warningTitle: "Importante:",
+    warningItems: [
+      "Se você não solicitou esta redefinição, ignore este e-mail.",
+      "Por segurança, o link possui validade limitada.",
+    ],
+    footerLines: [
+      "Quero Armas — Acesso seguro e auditado",
+    ],
+    defaultRedirectTo: DEFAULT_REDIRECT_TO_QA,
+    productionHosts: ["euqueroarmas.com.br", "www.euqueroarmas.com.br"],
+    textIntro: "Quero Armas",
+  },
+};
+
+function isPreviewOrDevHost(hostname: string): boolean {
+  return hostname === "localhost"
+    || hostname === "127.0.0.1"
+    || hostname.endsWith(".lovableproject.com")
+    || hostname.endsWith(".lovable.app")
+    || hostname.endsWith(".lovable.dev");
+}
+
+function isAllowedRedirectForBrand(url: string, cfg: BrandConfig): boolean {
   try {
     const parsed = new URL(url);
     const hostname = parsed.hostname.toLowerCase();
-    const allowedHost = hostname === "localhost"
-      || hostname === "127.0.0.1"
-      || hostname === "wmti.com.br"
-      || hostname.endsWith(".wmti.com.br")
-      || hostname === "euqueroarmas.com.br"
-      || hostname.endsWith(".euqueroarmas.com.br")
-      || hostname.endsWith(".lovableproject.com")
-      || hostname.endsWith(".lovable.app")
-      || hostname.endsWith(".lovable.dev");
+    if (!parsed.pathname.startsWith("/redefinir-senha")) return false;
 
-    return allowedHost && parsed.pathname.startsWith("/redefinir-senha");
+    // Produção da brand
+    if (cfg.productionHosts.includes(hostname)) return true;
+
+    // Preview/dev: permitido apenas em hosts efêmeros (nunca como fallback de produção)
+    if (isPreviewOrDevHost(hostname)) return true;
+
+    return false;
   } catch {
     return false;
   }
 }
 
-function resolveRedirectTo(req: Request, explicitRedirect?: string) {
-  if (explicitRedirect && isAllowedRedirect(explicitRedirect)) {
+function resolveRedirectTo(req: Request, cfg: BrandConfig, explicitRedirect?: string) {
+  if (explicitRedirect && isAllowedRedirectForBrand(explicitRedirect, cfg)) {
     return explicitRedirect;
   }
 
   const requestOrigin = req.headers.get("origin");
   if (requestOrigin) {
     const candidate = `${requestOrigin.replace(/\/$/, "")}/redefinir-senha`;
-    if (isAllowedRedirect(candidate)) {
+    if (isAllowedRedirectForBrand(candidate, cfg)) {
       return candidate;
     }
   }
 
-  return DEFAULT_REDIRECT_TO;
+  return cfg.defaultRedirectTo;
 }
 
 function createTraceId(explicitTraceId?: string) {
