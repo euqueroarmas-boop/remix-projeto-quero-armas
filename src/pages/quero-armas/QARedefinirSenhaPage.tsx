@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 
 /**
@@ -23,6 +23,8 @@ export default function QARedefinirSenhaPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -158,17 +160,28 @@ export default function QARedefinirSenhaPage() {
                 >
                   Nova senha
                 </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  minLength={8}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
-                  placeholder="Mínimo 8 caracteres"
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm pr-10"
+                    placeholder="Mínimo 8 caracteres"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label
@@ -177,17 +190,28 @@ export default function QARedefinirSenhaPage() {
                 >
                   Confirmar senha
                 </Label>
-                <Input
-                  id="confirm"
-                  type="password"
-                  required
-                  minLength={8}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
-                  placeholder="Repita a nova senha"
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="confirm"
+                    type={showConfirm ? "text" : "password"}
+                    required
+                    minLength={8}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm pr-10"
+                    placeholder="Repita a nova senha"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                    aria-label={showConfirm ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <Button
                 type="submit"
