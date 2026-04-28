@@ -277,7 +277,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { to, subject, html, text, reply_to, trace_id } = body;
+    const { to, subject, html, text, reply_to, trace_id, from_name } = body;
     const traceId = createTraceId(trace_id || requestTraceId);
 
     if (!to || !subject || (!html && !text)) {
@@ -296,7 +296,7 @@ Deno.serve(async (req) => {
       replyTo: reply_to ? sanitizeHeader(reply_to) : null,
     }));
 
-    const result = await sendViaSmtp({ to, subject, html, text, reply_to, trace_id: traceId });
+    const result = await sendViaSmtp({ to, subject, html, text, reply_to, trace_id: traceId, from_name });
 
     console.info(`[send-smtp-email][${result.traceId}] email_accepted`, JSON.stringify({
       to: sanitizeHeader(to),
