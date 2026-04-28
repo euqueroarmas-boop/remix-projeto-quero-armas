@@ -3245,11 +3245,12 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
   );
 }
 
-function Field({ label, value, icon: Icon, copyable }: { label: string; value?: string | null; icon?: any; copyable?: boolean }) {
+function Field({ label, value, icon: Icon, copyable, copyValue }: { label: string; value?: string | null; icon?: any; copyable?: boolean; copyValue?: string | null }) {
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (value) {
-      navigator.clipboard.writeText(value);
+    const toCopy = copyValue ?? value;
+    if (toCopy) {
+      navigator.clipboard.writeText(toCopy);
       toast.success(`${label} copiado!`);
     }
   };
