@@ -83,6 +83,7 @@ export function ArsenalView({
   alerts,
   onOpenAddDoc,
   onArsenalChanged,
+  isAdmin = false,
 }: Props) {
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
@@ -90,6 +91,64 @@ export function ArsenalView({
     byCalibre: [],
   });
   const { match: matchCatalogo, byId: catalogoById, resolveCraf, loading: catalogoLoading } = useArmamentoCatalogo();
+
+  // ─── Estados dos modais de CRUD do Arsenal ───
+  const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    title: string;
+    desc: string;
+    onConfirm: () => Promise<void>;
+  }>({ open: false, title: "", desc: "", onConfirm: async () => {} });
+  const [deleting, setDeleting] = useState(false);
+
+  const refreshArsenal = async () => { await onArsenalChanged?.(); };
+
+  const askDelete = (title: string, desc: string, onConfirm: () => Promise<void>) =>
+    setDeleteModal({ open: true, title, desc, onConfirm });
+
+  const confirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteModal.onConfirm();
+      setDeleteModal((s) => ({ ...s, open: false }));
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteCr = async () => {
+    if (!cadastroCr?.id) return;
+    const { error } = await supabase.from("qa_cadastro_cr" as any).delete().eq("id", cadastroCr.id);
+    if (error) throw error;
+    toast.success("CR removido.");
+    await refreshArsenal();
+  };
+
+  const deleteCraf = async (id: number) => {
+    const { error } = await supabase.from("qa_crafs" as any).delete().eq("id", id);
+    if (error) throw error;
+    toast.success("CRAF removido.");
+    await refreshArsenal();
+  };
+
+  const deleteGte = async (id: number) => {
+    const { error } = await supabase.from("qa_gtes" as any).delete().eq("id", id);
+    if (error) throw error;
+    toast.success("GTE removido.");
+    await refreshArsenal();
+  };
+
+  const deleteDocCliente = async (id: string) => {
+    const { error } = await supabase.from("qa_documentos_cliente" as any).delete().eq("id", id);
+    if (error) throw error;
+    toast.success("Documento removido.");
+    await refreshArsenal();
+  };
 
   // Resolve via IA CRAFs/GTEs sem catalogo_id (uma vez por arma)
   useEffect(() => {
