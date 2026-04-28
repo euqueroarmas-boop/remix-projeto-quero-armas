@@ -31,6 +31,7 @@ const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviar
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
+const QARedefinirSenhaPage = lazyRetry(() => import("./QARedefinirSenhaPage"), "QARedefinirSenhaPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
 const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
@@ -52,6 +53,8 @@ export default function QARoutes() {
         <Route path="lp/cac-cr" element={<LpCacCr />} />
         <Route path="lp/atividades-avulsas" element={<LpAtividadesAvulsas />} />
         <Route path="login" element={<QALoginPage />} />
+        <Route path="redefinir-senha" element={<QARedefinirSenhaPage />} />
+        <Route path="auth/callback" element={<QARedefinirSenhaPage />} />
         <Route path="cadastro" element={<QACadastroPublicoPage />} />
         <Route path="cadastro/foto" element={<QAEnviarFotoPage />} />
         <Route path="enviar-foto" element={<QAEnviarFotoPage />} />
