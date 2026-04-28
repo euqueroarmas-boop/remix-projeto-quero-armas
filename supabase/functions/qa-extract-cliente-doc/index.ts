@@ -32,7 +32,14 @@ function buildTool(tipo: TipoDoc) {
 
   const armaProps: Record<string, unknown> = {
     arma_marca: { type: "string", description: "Marca/fabricante (ex: Taurus, Glock, CBC, IMBEL)." },
-    arma_modelo: { type: "string", description: "Modelo (ex: G2C, PT838, 1911)." },
+    arma_modelo: {
+      type: "string",
+      description:
+        "Modelo COMERCIAL/TÉCNICO da arma (ex: G2C, PT838, 1911, G25, TS9, TX22, PUMP MILITARY 3.0). " +
+        "PROIBIDO preencher com número de série, número de registro, número de CRAF, número de SINARM, " +
+        "número de SIGMA, protocolo, ou qualquer valor apenas numérico. Se houver dúvida entre número e modelo, " +
+        "DEIXE VAZIO — não invente e nunca use número como modelo.",
+    },
     arma_calibre: { type: "string", description: "Calibre (ex: .380 ACP, 9mm, .40 S&W, .38 SPL)." },
     arma_numero_serie: { type: "string", description: "Número de série da arma." },
     arma_especie: { type: "string", description: "Espécie/tipo (Pistola, Revólver, Carabina, Espingarda, Fuzil)." },
@@ -66,7 +73,15 @@ function systemPromptFor(tipo: TipoDoc): string {
     autorizacao_compra: "Você é especialista em documentos do Exército/PF. Extraia os dados da AUTORIZAÇÃO DE COMPRA (AC) de arma de fogo.",
     outro: "Você é especialista em documentos SIGMA/SINARM. Extraia todos os dados estruturados que conseguir identificar.",
   };
-  return `${map[tipo]} Responda exclusivamente chamando a função extrair_documento_cac. Use null/vazio para campos não encontrados. Datas no formato DD/MM/AAAA.`;
+  return (
+    `${map[tipo]} Responda exclusivamente chamando a função extrair_documento_cac. ` +
+    `Use null/vazio para campos não encontrados. Datas no formato DD/MM/AAAA. ` +
+    `REGRA CRÍTICA SOBRE arma_modelo: o campo arma_modelo deve conter SOMENTE o modelo comercial da arma ` +
+    `(ex: G25, TS9, TX22, PT838, PUMP MILITARY 3.0). É TERMINANTEMENTE PROIBIDO colocar em arma_modelo: ` +
+    `número de série, número de registro, número de CRAF, número de SINARM, número de SIGMA, protocolo, ` +
+    `ou qualquer valor puramente numérico. Esses números têm campos próprios: numero_documento, arma_numero_serie. ` +
+    `Se você não tiver certeza absoluta do modelo, deixe arma_modelo vazio.`
+  );
 }
 
 async function callVision(imageDataUrl: string, tipo: TipoDoc) {
