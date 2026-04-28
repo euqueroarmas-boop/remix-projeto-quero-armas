@@ -350,6 +350,11 @@ export function ArsenalView({
         title: titulo,
         date: d.data_validade,
         daysToExpire: daysUntil(d.data_validade),
+        onDelete: () => askDelete(
+          "Excluir documento",
+          `Excluir o documento "${titulo}"? Esta ação não pode ser desfeita.`,
+          () => deleteDocCliente(d.id),
+        ),
       });
     });
     // Ordem da bancada:
