@@ -44,7 +44,7 @@ function Kpi({
     <button
       type="button"
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300/50"
+      className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-300/50"
       style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
     >
       <div
@@ -65,9 +65,11 @@ function Kpi({
           KPI <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-      <div className="mt-3 text-2xl font-bold text-slate-800 leading-none font-mono">{value}</div>
+      <div className="mt-3 flex h-7 items-end text-2xl font-bold text-slate-800 leading-none font-mono">
+        {value}
+      </div>
       <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{label}</div>
-      {hint && <div className="mt-2 text-[10px] text-slate-400">{hint}</div>}
+      <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{hint || ""}</div>
     </button>
   );
 }
