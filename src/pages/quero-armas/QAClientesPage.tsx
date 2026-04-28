@@ -1949,7 +1949,12 @@ export default function QAClientesPage() {
                   <Field label="Estado Civil" value={c.estado_civil} />
                   <Field label="Profissão" value={c.profissao} />
                   <Field label="Escolaridade" value={c.escolaridade} />
-                  <Field label="Título Eleitor" value={c.titulo_eleitor} />
+                  <Field
+                    label="Título Eleitor"
+                    value={c.titulo_eleitor}
+                    copyable
+                    copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
+                  />
                 </Section>
                 <Section title="Filiação">
                   <Field label="Mãe" value={c.nome_mae} />
@@ -3245,11 +3250,12 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
   );
 }
 
-function Field({ label, value, icon: Icon, copyable }: { label: string; value?: string | null; icon?: any; copyable?: boolean }) {
+function Field({ label, value, icon: Icon, copyable, copyValue }: { label: string; value?: string | null; icon?: any; copyable?: boolean; copyValue?: string | null }) {
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (value) {
-      navigator.clipboard.writeText(value);
+    const toCopy = copyValue ?? value;
+    if (toCopy) {
+      navigator.clipboard.writeText(toCopy);
       toast.success(`${label} copiado!`);
     }
   };
