@@ -5937,6 +5937,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      qa_atualizar_dados_basicos_cliente: {
+        Args: {
+          p_bairro?: string
+          p_cep?: string
+          p_cidade?: string
+          p_cliente_id: number
+          p_complemento?: string
+          p_endereco?: string
+          p_estado?: string
+          p_estado_civil?: string
+          p_numero?: string
+          p_profissao?: string
+        }
+        Returns: boolean
+      }
       qa_busca_auxiliar_caso: {
         Args: {
           match_count?: number
@@ -5965,6 +5980,14 @@ export type Database = {
           similarity: number
           texto_chunk: string
         }[]
+      }
+      qa_criar_processo_logado: {
+        Args: {
+          p_catalogo_slug: string
+          p_cliente_id: number
+          p_observacoes?: string
+        }
+        Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
       qa_has_qa_perfil: {
