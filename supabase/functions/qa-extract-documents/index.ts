@@ -227,6 +227,10 @@ Deno.serve(async (req) => {
             "4) Se você encontrar um único número de identificação e não puder determinar com segurança se é CPF ou RG, NÃO preencha cpf nem rg. Em vez disso preencha cpf_candidato e/ou rg_candidato com os números encontrados e marque needs_confirmation=true com confirmation_reason explicando.",
             "5) Para cada campo cpf e rg preenchido, retorne também cpf_confidence/rg_confidence (0..1). Se a confiança for menor que 0.7, prefira retornar como candidato e marcar needs_confirmation=true.",
             "6) Datas sempre em DD/MM/AAAA. Sexo apenas M ou F quando claro.",
+            "7) REGRA ESPECIAL CIN (Carteira de Identidade Nacional gov.br): na CIN o número impresso ao lado de 'Registro Geral' / 'CPF' / 'Personal Number' é o PRÓPRIO CPF do cidadão (11 dígitos), e NÃO um RG estadual tradicional. Quando tipo_documento = 'CIN':",
+            "   a) Se houver APENAS um número de identificação principal (11 dígitos), trate-o como CPF E como possível RG ao mesmo tempo: NÃO preencha o campo `rg` silenciosamente. Em vez disso, preencha cpf com esse número (com cpf_confidence ~ 0.9) E adicione o MESMO número em rg_candidato. Marque needs_confirmation=true e em confirmation_reason explique: 'Documento é CIN gov.br: o número exibido como Registro Geral é o próprio CPF (identificador nacional unificado). Confirme manualmente se deseja usar este número também como RG.'",
+            "   b) Só preencha o campo `rg` da CIN se houver, ALÉM do CPF, um segundo número claramente rotulado como RG estadual antigo (com órgão expedidor estadual diferente do RIC/CIN).",
+            "   c) Em CIN, emissor_rg/uf_emissor_rg só devem ser preenchidos se você visualizar EXPLICITAMENTE no documento (ex.: 'IIRGD/SP'); caso contrário deixe vazio.",
           ].join("\n"),
           ).catch((e) => ({ __error: String(e?.message || e) }))
         : Promise.resolve(null),
