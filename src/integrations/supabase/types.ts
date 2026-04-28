@@ -3616,6 +3616,36 @@ export type Database = {
           },
         ]
       }
+      qa_dashboard_kpi_layout: {
+        Row: {
+          cliente_id: number | null
+          created_at: string
+          dashboard_type: string
+          id: string
+          kpi_order: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: number | null
+          created_at?: string
+          dashboard_type?: string
+          id?: string
+          kpi_order: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: number | null
+          created_at?: string
+          dashboard_type?: string
+          id?: string
+          kpi_order?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       qa_document_examples: {
         Row: {
           arquivo_url: string
