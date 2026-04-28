@@ -273,9 +273,11 @@ Deno.serve(async (req) => {
       const divsIn: any[] = Array.isArray(parsed.divergencias) ? parsed.divergencias : [];
       const divsKeep: any[] = [];
       for (const d of divsIn) {
+        const _cv = d?.valor_cadastro;
         const cadVazio =
-          d?.valor_cadastro == null ||
-          (typeof d.valor_cadastro === "string" && d.valor_cadastro.trim() === "");
+          _cv == null ||
+          (typeof _cv === "string" &&
+            ["", "none", "null", "undefined", "n/a", "na", "-"].includes(_cv.trim().toLowerCase()));
         const docVal = d?.valor_documento;
         const temDocVal =
           docVal != null && !(typeof docVal === "string" && docVal.trim() === "");
