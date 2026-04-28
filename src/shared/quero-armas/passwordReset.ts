@@ -29,6 +29,17 @@ export async function requestQAPasswordReset(
 ): Promise<PasswordResetResult> {
   const email = rawEmail.trim().toLowerCase();
 
+  // Validação local para evitar 400 da edge function quando o usuário
+  // digita um valor que não é e-mail (ex.: CPF ou string vazia).
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!EMAIL_RE.test(email)) {
+    return {
+      success: false,
+      errorMessage:
+        "Informe um e-mail válido para receber o link de redefinição.",
+    };
+  }
+
   // eslint-disable-next-line no-console
   console.info("[QA Password Reset] start", {
     email,
