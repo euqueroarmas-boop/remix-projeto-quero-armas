@@ -1696,7 +1696,8 @@ export default function QAClientesPage() {
         supabase.from("qa_crafs" as any).select("*").in("cliente_id", cidsCliente),
         supabase.from("qa_gtes" as any).select("*").in("cliente_id", cidsCliente),
         supabase.from("qa_filiacoes" as any).select("*").in("cliente_id", cidsCliente),
-        supabase.from("qa_cadastro_cr" as any).select("*").in("cliente_id", cidsCliente).limit(1),
+        // CR sempre vinculado ao id REAL após backfill. Mantemos `.in()` por compat — pega o mais recente.
+        supabase.from("qa_cadastro_cr" as any).select("*").in("cliente_id", cidsCliente).order("id", { ascending: false }).limit(1),
         examesQuery,
         // Documentos enviados pelo cliente no portal/app (qa_cliente_id = id real do cliente).
         supabase.from("qa_documentos_cliente" as any).select("*").eq("qa_cliente_id", c.id).order("created_at", { ascending: false }),
