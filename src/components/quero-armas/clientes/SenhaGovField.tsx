@@ -65,6 +65,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [resolvedCrId, setResolvedCrId] = useState<number | null | undefined>(cadastroCrId ?? null);
+  const [autoLoadedFor, setAutoLoadedFor] = useState<number | null>(null);
 
   // Mantém em sincronia quando o pai atualiza o id após salvar.
   useEffect(() => {
@@ -90,6 +91,27 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   }, [cadastroCrId, clienteId]);
 
   const effectiveCrId = cadastroCrId ?? resolvedCrId ?? null;
+
+  // Auto-load do variant "exposed": dispara UMA VEZ por id.
+  // (Antes era chamado em todo render, gerando loop infinito de 401.)
+  useEffect(() => {
+    if (variant !== "exposed") return;
+    if (!effectiveCrId) return;
+    if (autoLoadedFor === effectiveCrId) return;
+    setAutoLoadedFor(effectiveCrId);
+    (async () => {
+      setLoading(true);
+      try {
+        const s = await getSenhaGov(effectiveCrId, contexto);
+        setSenha(s || "");
+      } catch {
+        // Silencioso: evita spam de toast no auto-load.
+        setSenha("");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [variant, effectiveCrId, autoLoadedFor, contexto]);
 
   // Sem cadastroCrId, sem clienteId e sem callback: nada a fazer (modo legado),
   // exceto no variant "exposed" que sempre exibe o slot (mostra "—").
@@ -136,11 +158,6 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   // Variante "exposed": carrega automaticamente e exibe em texto claro.
   // O admin já está autenticado — não há necessidade de "revelar".
   if (variant === "exposed") {
-    // auto-load uma vez
-    if (effectiveCrId && senha == null && !loading) {
-      // disparo lazy (sem useEffect para evitar overhead; idempotente via guarda)
-      void ensure();
-    }
     return (
       <div className="flex flex-col gap-0.5 py-1">
         <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
