@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
         .from("qa_documentos_cliente")
         .delete({ count: "exact" })
         .eq("id", docId)
-        .eq("cliente_id", cliente_id);
+        .eq("qa_cliente_id", cliente_id);
       if (error) throw error;
       removed.docs += count || 0;
     } else {
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       const { data: docs } = await admin
         .from("qa_documentos_cliente")
         .select("id, arma_numero_serie, numero_documento")
-        .eq("cliente_id", cliente_id);
+        .eq("qa_cliente_id", cliente_id);
       const docIdsToDel = (docs || [])
         .filter((d: any) => {
           const a = norm(d.arma_numero_serie);
