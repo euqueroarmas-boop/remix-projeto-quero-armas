@@ -2458,6 +2458,104 @@ export type Database = {
           validade_exame_tiro?: string | null
           validade_laudo_psicologico?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_cadastro_cr_audit: {
+        Row: {
+          cadastro_cr_id: number
+          changed_by: string | null
+          cliente_id_anterior: number | null
+          cliente_id_novo: number | null
+          contexto: string | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          cadastro_cr_id: number
+          changed_by?: string | null
+          cliente_id_anterior?: number | null
+          cliente_id_novo?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          cadastro_cr_id?: number
+          changed_by?: string | null
+          cliente_id_anterior?: number | null
+          cliente_id_novo?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      qa_cadastro_cr_backup_p0: {
+        Row: {
+          backup_at: string | null
+          check_exame_tiro: boolean | null
+          check_laudo_psi: boolean | null
+          cliente_id: number | null
+          id: number | null
+          id_legado: number | null
+          num_item_servico_cr: number | null
+          numero_cr: string | null
+          senha_gov: string | null
+          senha_gov_encrypted: string | null
+          senha_gov_iv: string | null
+          senha_gov_tag: string | null
+          senha_gov_updated_at: string | null
+          senha_gov_updated_by: string | null
+          validade_cr: string | null
+          validade_exame_tiro: string | null
+          validade_laudo_psicologico: string | null
+        }
+        Insert: {
+          backup_at?: string | null
+          check_exame_tiro?: boolean | null
+          check_laudo_psi?: boolean | null
+          cliente_id?: number | null
+          id?: number | null
+          id_legado?: number | null
+          num_item_servico_cr?: number | null
+          numero_cr?: string | null
+          senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
+          validade_cr?: string | null
+          validade_exame_tiro?: string | null
+          validade_laudo_psicologico?: string | null
+        }
+        Update: {
+          backup_at?: string | null
+          check_exame_tiro?: boolean | null
+          check_laudo_psi?: boolean | null
+          cliente_id?: number | null
+          id?: number | null
+          id_legado?: number | null
+          num_item_servico_cr?: number | null
+          numero_cr?: string | null
+          senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
+          validade_cr?: string | null
+          validade_exame_tiro?: string | null
+          validade_laudo_psicologico?: string | null
+        }
         Relationships: []
       }
       qa_cadastro_publico: {
@@ -4213,6 +4311,51 @@ export type Database = {
           },
         ]
       }
+      qa_incident_reconciliation_snapshot: {
+        Row: {
+          cadastro_cr_id: number | null
+          cifrado_em: string | null
+          cliente_atual_cpf: string | null
+          cliente_atual_id: number | null
+          cliente_atual_nome: string | null
+          cliente_correto_cpf: string | null
+          cliente_correto_id: number | null
+          cliente_correto_nome: string | null
+          numero_cr: string | null
+          senha_alterada_em: string | null
+          snapshot_at: string | null
+          status_reconciliacao: string | null
+        }
+        Insert: {
+          cadastro_cr_id?: number | null
+          cifrado_em?: string | null
+          cliente_atual_cpf?: string | null
+          cliente_atual_id?: number | null
+          cliente_atual_nome?: string | null
+          cliente_correto_cpf?: string | null
+          cliente_correto_id?: number | null
+          cliente_correto_nome?: string | null
+          numero_cr?: string | null
+          senha_alterada_em?: string | null
+          snapshot_at?: string | null
+          status_reconciliacao?: string | null
+        }
+        Update: {
+          cadastro_cr_id?: number | null
+          cifrado_em?: string | null
+          cliente_atual_cpf?: string | null
+          cliente_atual_id?: number | null
+          cliente_atual_nome?: string | null
+          cliente_correto_cpf?: string | null
+          cliente_correto_id?: number | null
+          cliente_correto_nome?: string | null
+          numero_cr?: string | null
+          senha_alterada_em?: string | null
+          snapshot_at?: string | null
+          status_reconciliacao?: string | null
+        }
+        Relationships: []
+      }
       qa_itens_venda: {
         Row: {
           calibre: string | null
@@ -5964,6 +6107,13 @@ export type Database = {
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_atual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       qa_senha_gov_incident_audit: {
@@ -5980,6 +6130,13 @@ export type Database = {
           {
             foreignKeyName: "fk_qa_senha_gov__cliente"
             columns: ["cliente_id_migracao"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
