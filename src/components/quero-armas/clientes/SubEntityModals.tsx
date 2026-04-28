@@ -269,7 +269,9 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
           getSenhaGov(cadastro.id, "edição CrModal")
             .then((s) => setF((p) => ({ ...p, senha_gov: s || "" })))
             .catch((e) => {
-              if (e?.name !== "SenhaGovAuthError") toast.error("Senha Gov: " + e.message);
+              if (e?.name !== "SenhaGovAuthError" && e?.name !== "SenhaGovForbiddenError") {
+                toast.error("Senha Gov: " + e.message);
+              }
             })
             .finally(() => setLoadingSenha(false))
         );
@@ -304,8 +306,15 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
         cadastroId = (inserted as any)?.id ?? null;
       }
       // Senha Gov passa pela edge function (cifragem + auditoria)
-      if (cadastroId != null) {
-        await setSenhaGov(cadastroId, f.senha_gov || "", isEdit ? "edit CrModal" : "create CrModal");
+      if (cadastroId != null && f.senha_gov) {
+        try {
+          await setSenhaGov(cadastroId, f.senha_gov, isEdit ? "edit CrModal" : "create CrModal");
+        } catch (e: any) {
+          // Portal de cliente não pode gravar Senha Gov — ignora silenciosamente.
+          if (e?.name !== "SenhaGovForbiddenError" && e?.name !== "SenhaGovAuthError") {
+            throw e;
+          }
+        }
       }
       toast.success(isEdit ? "CR atualizado" : "CR cadastrado");
       onSaved(); onClose();
