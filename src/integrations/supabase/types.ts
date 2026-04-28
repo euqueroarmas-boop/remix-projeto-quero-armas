@@ -4903,7 +4903,7 @@ export type Database = {
       qa_senha_gov_acessos: {
         Row: {
           acao: string
-          cadastro_cr_id: number
+          cadastro_cr_id: number | null
           cliente_id: number | null
           contexto: string | null
           created_at: string
@@ -4914,7 +4914,7 @@ export type Database = {
         }
         Insert: {
           acao: string
-          cadastro_cr_id: number
+          cadastro_cr_id?: number | null
           cliente_id?: number | null
           contexto?: string | null
           created_at?: string
@@ -4925,7 +4925,7 @@ export type Database = {
         }
         Update: {
           acao?: string
-          cadastro_cr_id?: number
+          cadastro_cr_id?: number | null
           cliente_id?: number | null
           contexto?: string | null
           created_at?: string
