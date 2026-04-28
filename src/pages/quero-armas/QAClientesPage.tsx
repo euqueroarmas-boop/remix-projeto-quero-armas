@@ -970,6 +970,8 @@ export default function QAClientesPage() {
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [examesAtuais, setExamesAtuais] = useState<any[]>([]);
+  // Documentos enviados pelo cliente via portal/app/arsenal (qa_documentos_cliente).
+  const [docsCliente, setDocsCliente] = useState<any[]>([]);
   const [loadingSub, setLoadingSub] = useState(false);
 
   // Modal states
@@ -1670,22 +1672,27 @@ export default function QAClientesPage() {
   const loadSubData = useCallback(async (c: Cliente) => {
     setLoadingSub(true);
     try {
-      // CHAVE CANÔNICA APROVADA: vendas/itens/crafs/gtes/cr/filiações usam id_legado.
-      // Exames usam c.id (qa_exames_cliente.cliente_id ainda referencia o id real).
+      // CHAVE CANÔNICA: vendas/crafs/gtes/cr/filiações historicamente usam id_legado,
+      // mas o portal/app/arsenal grava com o id real (qa_clientes.id). Para garantir
+      // visibilidade total no admin (zero perda de dados criados pelo cliente),
+      // buscamos por AMBAS as chaves usando .in('cliente_id', [id, id_legado]).
       const cid = getClienteFK(c);
+      const cidsCliente = Array.from(new Set([c.id, c.id_legado, cid].filter((n) => typeof n === "number" && Number.isFinite(n)))) as number[];
       const examesQuery = supabase
         .from("qa_exames_cliente_status" as any)
         .select("*")
         .eq("cliente_id", c.id)
         .order("data_realizacao", { ascending: false });
 
-      const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
-        supabase.from("qa_vendas" as any).select("*").eq("cliente_id", cid).order("data_cadastro", { ascending: false }),
-        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", cid),
-        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", cid),
-        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", cid),
-        supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", cid).limit(1),
+      const [vRes, cRes, gRes, fRes, cadRes, exRes, dRes] = await Promise.all([
+        supabase.from("qa_vendas" as any).select("*").in("cliente_id", cidsCliente).order("data_cadastro", { ascending: false }),
+        supabase.from("qa_crafs" as any).select("*").in("cliente_id", cidsCliente),
+        supabase.from("qa_gtes" as any).select("*").in("cliente_id", cidsCliente),
+        supabase.from("qa_filiacoes" as any).select("*").in("cliente_id", cidsCliente),
+        supabase.from("qa_cadastro_cr" as any).select("*").in("cliente_id", cidsCliente).limit(1),
         examesQuery,
+        // Documentos enviados pelo cliente no portal/app (qa_cliente_id = id real do cliente).
+        supabase.from("qa_documentos_cliente" as any).select("*").eq("qa_cliente_id", c.id).order("created_at", { ascending: false }),
       ]);
       const vendasData = (vRes.data as any[]) ?? [];
       setVendas(vendasData);
@@ -1694,6 +1701,7 @@ export default function QAClientesPage() {
       setFiliacoes((fRes.data as any[]) ?? []);
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
+      setDocsCliente((dRes.data as any[]) ?? []);
       if (vendasData.length > 0) {
         // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
