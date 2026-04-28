@@ -35,7 +35,7 @@ import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcesso
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
-import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
@@ -1696,7 +1696,8 @@ export default function QAClientesPage() {
         supabase.from("qa_crafs" as any).select("*").in("cliente_id", cidsCliente),
         supabase.from("qa_gtes" as any).select("*").in("cliente_id", cidsCliente),
         supabase.from("qa_filiacoes" as any).select("*").in("cliente_id", cidsCliente),
-        supabase.from("qa_cadastro_cr" as any).select("*").in("cliente_id", cidsCliente).limit(1),
+        // CR sempre vinculado ao id REAL após backfill. Mantemos `.in()` por compat — pega o mais recente.
+        supabase.from("qa_cadastro_cr" as any).select("*").in("cliente_id", cidsCliente).order("id", { ascending: false }).limit(1),
         examesQuery,
         // Documentos enviados pelo cliente no portal/app (qa_cliente_id = id real do cliente).
         supabase.from("qa_documentos_cliente" as any).select("*").eq("qa_cliente_id", c.id).order("created_at", { ascending: false }),
@@ -1853,6 +1854,8 @@ export default function QAClientesPage() {
   };
 
   const clienteIdForSub = selected ? getClienteFK(selected) : 0;
+  // FK para CR/CRAF/GTE/Filiações/exames — sempre id REAL (ver clientFK.ts).
+  const clienteCadastroIdForSub = selected ? getClienteCadastroFK(selected) : 0;
 
   // ── Detail View ──
   if (selected) {
@@ -2436,11 +2439,11 @@ export default function QAClientesPage() {
             if (data) setSelected(data as any);
           }
         }} cliente={editingCliente} />
-        <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} craf={crafModal.item} />
-        <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} gte={gteModal.item} />
-        <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} cadastro={crModal.item} />
+        <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} craf={crafModal.item} />
+        <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} gte={gteModal.item} />
+        <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} cadastro={crModal.item} />
         <VendaModal open={vendaModal.open} onClose={() => setVendaModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} venda={vendaModal.item} />
-        <FiliacaoModal open={filiacaoModal.open} onClose={() => setFiliacaoModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} filiacao={filiacaoModal.item} />
+        <FiliacaoModal open={filiacaoModal.open} onClose={() => setFiliacaoModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} filiacao={filiacaoModal.item} />
         <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} />
       </div>
     );

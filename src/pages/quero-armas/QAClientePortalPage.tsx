@@ -229,7 +229,8 @@ export default function QAClientePortalPage() {
         // Carrega vendas primeiro, depois itens via venda_id (qa_itens_venda NÃO possui cliente_id).
         const [vRes, crRes, cfRes, gtRes, flRes, exRes] = await Promise.all([
           supabase.from("qa_vendas" as any).select("*").eq("cliente_id", clienteIdVendas).order("data_cadastro", { ascending: false }),
-          supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteIdReal).maybeSingle(),
+          // Cliente pode ter mais de um CR (ex.: CR antigo vencido + CR novo). Mostramos o mais recente.
+          supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteIdReal).order("id", { ascending: false }).limit(1),
           supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
           supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
           supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteIdReal),
@@ -253,7 +254,7 @@ export default function QAClientePortalPage() {
           itensData = (iData as any[]) ?? [];
         }
         setItens(itensData);
-        setCadastro(crRes.data);
+        setCadastro(Array.isArray(crRes.data) ? (crRes.data[0] ?? null) : crRes.data);
         setCrafs((cfRes.data as any[]) ?? []);
         setGtes((gtRes.data as any[]) ?? []);
         setFiliacoes((flRes.data as any[]) ?? []);
