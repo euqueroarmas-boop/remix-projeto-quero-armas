@@ -420,16 +420,27 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
                 <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FInput label="Naturalidade" value={f.naturalidade} onChange={v => set("naturalidade", v)} />
+                <FSelect label="Sexo" value={f.sexo} onChange={v => set("sexo", v)} options={SEXO_OPTIONS} placeholder="Selecionar..." />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <FInput label="Naturalidade (Município)" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} />
+                <FSelect label="Naturalidade (UF)" value={f.naturalidade_uf} onChange={v => set("naturalidade_uf", v)} options={ufOptions} placeholder="UF" />
+                <FInput label="Naturalidade (País)" value={f.naturalidade_pais} onChange={v => set("naturalidade_pais", v)} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
                 <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
                 <FInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <FInput label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} />
                 <FInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} />
+                <FInput label="CNH" value={f.cnh} onChange={v => set("cnh", v)} />
+                <FInput label="CTPS" value={f.ctps} onChange={v => set("ctps", v)} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
+                <FInput label="PIS/PASEP" value={f.pis_pasep} onChange={v => set("pis_pasep", v)} />
+                <FInput label="Naturalidade (legado)" value={f.naturalidade} onChange={v => set("naturalidade", v)} placeholder="Compatibilidade" />
               </div>
             </div>
           )}
