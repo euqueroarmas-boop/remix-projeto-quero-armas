@@ -170,7 +170,7 @@ function WeaponCard({
 
         {/* Weapon render with glow — transparent, large, detailed */}
         <div
-          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-72 md:h-80" : "h-60 md:h-64"} w-full`}
+          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
           <img
