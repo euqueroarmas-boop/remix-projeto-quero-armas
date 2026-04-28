@@ -162,8 +162,13 @@ export function ArsenalView({
   }, [crafs, gtes, catalogoLoading, resolveCraf]);
 
   const scrollToSection = (target: ArsenalSummaryTarget) => {
+    // Clique no KPI "Status CR" abre o modal de CR (criar ou editar) — controle total.
+    if (target === "cr") {
+      setCrModal({ open: true, item: cadastroCr || undefined });
+      return;
+    }
     const sectionId =
-      target === "alertas" || target === "cr" || target === "crafs"
+      target === "alertas" || target === "crafs"
         ? "arsenal-situacao"
         : target === "municoes" || target === "calibres"
         ? "arsenal-municoes"
