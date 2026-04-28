@@ -472,13 +472,26 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FInput label="PIS/PASEP" value={f.pis_pasep} onChange={v => set("pis_pasep", v)} />
                 <Field label="Senha Gov.br">
-                  <input
-                    type="text"
-                    value={senhaGov}
-                    onChange={e => setSenhaGovState(e.target.value)}
-                    placeholder="Digite a senha do gov.br"
-                    autoComplete="off"
-                    className={inputClass.replace("uppercase", "font-mono")}
+                  <SenhaGovField
+                    cadastroCrId={cadastroCrId}
+                    clienteId={cliente?.id ?? null}
+                    contexto="ClienteFormModal"
+                    variant="row"
+                    onCreateCadastro={async () => {
+                      if (!cliente?.id) return null;
+                      const { data: stub, error } = await supabase
+                        .from("qa_cadastro_cr" as any)
+                        .insert({ cliente_id: cliente.id })
+                        .select("id")
+                        .single();
+                      if (error) {
+                        toast.error("Falha ao preparar CR: " + error.message);
+                        return null;
+                      }
+                      const newId = (stub as any)?.id ?? null;
+                      setCadastroCrId(newId);
+                      return newId;
+                    }}
                   />
                 </Field>
                 <FInput label="Naturalidade (legado)" value={f.naturalidade} onChange={v => set("naturalidade", v)} placeholder="Compatibilidade" />
