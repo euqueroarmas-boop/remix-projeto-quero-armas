@@ -1924,6 +1924,7 @@ export default function QAClientesPage() {
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
                   <SenhaGovField
                     cadastroCrId={cadastro?.id}
+                    clienteId={c.id}
                     variant="exposed"
                     contexto="aba Dados"
                   />
