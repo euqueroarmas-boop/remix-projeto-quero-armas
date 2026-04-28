@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText } from "lucide-react";
+import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard } from "lucide-react";
 import { getStatusProcesso, formatDate } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
 
@@ -89,11 +89,12 @@ export function ClienteProcessosSection({ clienteId }: Props) {
       {processos.map((p) => {
         const st = getStatusProcesso(p.status);
         const precisaAcao = (p.pendentes ?? 0) > 0 || p.status === "aguardando_documentos";
+        const aguardandoPagto = p.pagamento_status === "aguardando";
         return (
           <button
             key={p.id}
             onClick={() => setOpenId(p.id)}
-            className={`w-full text-left bg-white border rounded-xl p-4 hover:shadow-md transition ${precisaAcao ? "border-amber-300 ring-1 ring-amber-200" : "border-slate-200"}`}
+            className={`w-full text-left bg-white border rounded-xl p-4 hover:shadow-md transition ${aguardandoPagto ? "border-blue-300 ring-1 ring-blue-200" : precisaAcao ? "border-amber-300 ring-1 ring-amber-200" : "border-slate-200"}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -110,7 +111,25 @@ export function ClienteProcessosSection({ clienteId }: Props) {
                     </span>
                   )}
                 </div>
-                {precisaAcao && (
+                {aguardandoPagto ? (
+                  <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-blue-800">
+                      <CreditCard className="h-3 w-3" /> AGUARDANDO PAGAMENTO
+                    </div>
+                    <p className="text-[11px] text-blue-900/80 mt-1 leading-relaxed normal-case">
+                      Recebemos sua contratação. Entre em contato pelo WhatsApp para combinar a forma de pagamento (PIX, cartão ou boleto). Assim que confirmarmos, a Central de Documentos é liberada automaticamente.
+                    </p>
+                    <a
+                      href="https://wa.me/5511978481919?text=Ol%C3%A1!%20Acabei%20de%20contratar%20um%20servi%C3%A7o%20pelo%20portal%20e%20gostaria%20de%20combinar%20o%20pagamento."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] uppercase tracking-wider font-bold"
+                    >
+                      Falar no WhatsApp
+                    </a>
+                  </div>
+                ) : precisaAcao && (
                   <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-amber-700">
                     <AlertTriangle className="h-3 w-3" /> {p.acao}
                   </div>
