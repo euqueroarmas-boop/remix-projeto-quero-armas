@@ -100,6 +100,42 @@ function brDateToIso(v: string): string {
   if (!m) return "";
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
+/**
+ * Converte qualquer data plausível vinda da IA para o formato BR (DD/MM/AAAA).
+ * Aceita: ISO YYYY-MM-DD, DD/MM/AAAA, DD-MM-AAAA, e tolera espaços.
+ * Retorna "" se não conseguir interpretar.
+ */
+export function normalizeDateToBr(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v).trim();
+  if (!s) return "";
+  // ISO YYYY-MM-DD (pode vir com T... — pegamos só a data)
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  // BR DD/MM/AAAA ou DD-MM-AAAA
+  const br = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if (br) return `${br[1]}/${br[2]}/${br[3]}`;
+  return "";
+}
+/**
+ * Escolhe a primeira data de expedição/emissão disponível no objeto retornado
+ * pela IA, na ordem oficial definida pela regra de negócio. Para CIN gov.br,
+ * "Data de Emissão / Issue Date" deve cair em data_expedicao_rg.
+ */
+export function pickIssueDate(id: Record<string, any> | null | undefined): string {
+  if (!id) return "";
+  const candidates = [
+    id.data_expedicao_rg,
+    id.data_emissao,
+    id.issue_date,
+    id.data_emissao_rg,
+  ];
+  for (const c of candidates) {
+    const br = normalizeDateToBr(c);
+    if (br) return br;
+  }
+  return "";
+}
 function dataUrlToBlob(dataUrl: string): { blob: Blob; ext: string } {
   const [meta, b64] = dataUrl.split(",");
   const mime = /data:([^;]+)/.exec(meta || "")?.[1] || "image/jpeg";
@@ -208,9 +244,14 @@ export default function QACadastroPublicoPage() {
 
       // Detecta ambiguidade CPF×RG retornada pela IA
       const ambig = detectCpfRgAmbiguity(id);
+      const isCin = String(id?.tipo_documento || "").toUpperCase() === "CIN";
+      const cpfDigitsExtracted = id?.cpf ? onlyDigits(String(id.cpf)) : "";
+      const cpfIsValid = cpfDigitsExtracted.length === 11 && isValidCpf(cpfDigitsExtracted);
       if (ambig.hasAmbiguity) {
         setCpfRgAmbiguity({
-          reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
+          reason: isCin
+            ? "Documento CIN gov.br detectado. O número nacional pode aparecer como CPF/RG/CIN. Confirme manualmente antes de concluir."
+            : (ambig.reason || "A IA não conseguiu separar CPF e RG com certeza"),
           cpfCandidates: ambig.cpfCandidates,
           rgCandidates: ambig.rgCandidates,
         });
@@ -248,8 +289,20 @@ export default function QACadastroPublicoPage() {
       setExtracted(prev => ({
         ...prev,
         nome_completo: id.nome_completo || prev.nome_completo,
-        cpf: (id.cpf && !ambig.hasAmbiguity) ? maskCpf(id.cpf) : prev.cpf,
-        rg: id.rg || prev.rg,
+        // CPF: preenche sempre que vier um CPF válido de 11 dígitos, mesmo com
+        // ambiguidade. A confirmação manual bloqueia apenas a conclusão final
+        // — não deve apagar o CPF do usuário.
+        cpf: cpfIsValid ? maskCpf(cpfDigitsExtracted) : prev.cpf,
+        // RG/CIN:
+        //  - Sem ambiguidade → usa o RG retornado (comportamento original).
+        //  - Com ambiguidade em CIN → preenche o candidato apenas se for
+        //    DIFERENTE do CPF (para não duplicar visualmente o mesmo número).
+        //  - Demais ambiguidades → não preenche silenciosamente.
+        rg: !ambig.hasAmbiguity
+          ? (id.rg || prev.rg)
+          : (isCin && ambig.rgCandidates[0] && ambig.rgCandidates[0] !== cpfDigitsExtracted
+              ? ambig.rgCandidates[0]
+              : prev.rg),
         emissor_rg: id.emissor_rg && id.uf_emissor_rg
           ? `${id.emissor_rg}/${id.uf_emissor_rg}` : (id.emissor_rg || prev.emissor_rg),
         data_nascimento: id.data_nascimento || prev.data_nascimento,
@@ -262,6 +315,9 @@ export default function QACadastroPublicoPage() {
         cnh: id.cnh || prev.cnh,
         ctps: id.ctps || prev.ctps,
         pis_pasep: id.pis_pasep || prev.pis_pasep,
+        // Data de expedição: aceita ISO ou BR e cobre múltiplos aliases da IA
+        // (CIN gov.br usa "Data de Emissão / Issue Date").
+        data_expedicao_rg: pickIssueDate(id) || prev.data_expedicao_rg,
         end1_cep: ad.cep ? maskCep(ad.cep) : prev.end1_cep,
         end1_logradouro: ad.logradouro || prev.end1_logradouro,
         end1_numero: ad.numero || prev.end1_numero,
@@ -1136,7 +1192,7 @@ function Step3Review({
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(30 80% 45%)" }} />
             <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-bold" style={{ color: "hsl(30 60% 30%)" }}>Confirme manualmente CPF e RG</div>
+              <div className="text-[12px] font-bold" style={{ color: "hsl(30 60% 30%)" }}>Confirme manualmente CPF e RG/CIN</div>
               <div className="text-[11px] leading-relaxed" style={{ color: "hsl(30 40% 35%)" }}>
                 {cpfRgAmbiguity.reason}
               </div>
@@ -1154,7 +1210,7 @@ function Step3Review({
             className="w-full h-9 rounded-lg text-[11px] font-semibold disabled:opacity-60"
             style={{ background: cpfRgConfirmed ? "hsl(152 50% 90%)" : "hsl(30 80% 45%)", color: cpfRgConfirmed ? "hsl(152 50% 30%)" : "white" }}
           >
-            {cpfRgConfirmed ? "✓ CPF e RG confirmados" : "Confirmar CPF e RG manualmente"}
+            {cpfRgConfirmed ? "✓ CPF e RG/CIN confirmados" : "Confirmar CPF e RG/CIN manualmente"}
           </button>
         </div>
       )}
