@@ -447,7 +447,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
               </div>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2">
-                {documents.slice(0, 6).map((d) => (
+                {documents.map((d) => (
                   <DocumentTag key={d.id} d={d} />
                 ))}
               </div>

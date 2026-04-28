@@ -191,7 +191,7 @@ export function ArsenalView({
         daysToExpire: daysUntil(g.data_validade),
       });
     });
-    meusDocs.slice(0, 4).forEach((d: any) => {
+    meusDocs.forEach((d: any) => {
       // Defesa: nunca aceitar número como modelo.
       const modeloSeguro = isInvalidWeaponModel(d.arma_modelo) ? "" : String(d.arma_modelo || "").trim();
       const armaNome = [d.arma_marca, modeloSeguro].filter(Boolean).join(" ").trim();
