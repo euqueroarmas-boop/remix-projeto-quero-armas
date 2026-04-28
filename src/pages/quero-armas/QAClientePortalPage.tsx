@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
-  ShoppingBag,
+  ShoppingBag, FileStack,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
@@ -838,6 +838,15 @@ export default function QAClientePortalPage() {
         {/* ═══ SERVICES ═══ */}
         {cliente?.id && (
           <SectionCard icon={FolderArchive} title="Central de Documentos" color="hsl(262 70% 55%)">
+            <button
+              onClick={() => navigate("/area-do-cliente/contratacoes")}
+              className="w-full mb-3 inline-flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] uppercase tracking-wider font-bold transition"
+            >
+              <span className="inline-flex items-center gap-2">
+                <FileStack className="h-3.5 w-3.5" /> Ver todas as minhas contratações
+              </span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
             <ClienteProcessosSection clienteId={cliente.id} />
           </SectionCard>
         )}
