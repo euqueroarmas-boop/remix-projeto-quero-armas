@@ -18,6 +18,35 @@ function json(body: Record<string, unknown>, status = 200) {
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const MODEL = "google/gemini-2.5-flash";
 
+// ─── Modo de teste interno (preview/dev) ─────────────────────────────────
+// Permite chamar a função sem precisar fazer upload via <input type="file">,
+// usando um arquivo já presente no bucket privado `qa-cadastro-selfies`
+// (identity_storage_path / address_storage_path) OU enviando bytes em base64
+// puro (identity_b64 / address_b64). Em AMBOS os casos é obrigatório o
+// header `x-internal-token` igual ao secret INTERNAL_FUNCTION_TOKEN, para
+// não expor essa rota em produção.
+async function fetchStorageAsDataUrl(path: string): Promise<string> {
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("STORAGE_ENV_MISSING");
+  const url = `${SUPABASE_URL}/storage/v1/object/qa-cadastro-selfies/${path.replace(/^\/+/, "")}`;
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY } });
+  if (!r.ok) throw new Error(`STORAGE_${r.status}`);
+  const ct = r.headers.get("content-type") || "image/jpeg";
+  const buf = new Uint8Array(await r.arrayBuffer());
+  // base64 sem dependências externas
+  let bin = "";
+  for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+  const b64 = btoa(bin);
+  return `data:${ct};base64,${b64}`;
+}
+
+function bytesToDataUrl(b64: string, mime = "image/jpeg"): string {
+  // aceita data URL completo OU base64 puro
+  if (b64.startsWith("data:")) return b64;
+  return `data:${mime};base64,${b64}`;
+}
+
 const ID_TOOL = {
   type: "function",
   function: {
@@ -142,7 +171,42 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { identity_image, address_image } = body || {};
+    let { identity_image, address_image } = body || {};
+    const {
+      identity_storage_path,
+      address_storage_path,
+      identity_b64,
+      address_b64,
+      identity_mime,
+      address_mime,
+    } = body || {};
+
+    // Modo interno: storage_path / b64 só com token válido
+    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN");
+    const providedToken = req.headers.get("x-internal-token");
+    const wantsInternal =
+      !!(identity_storage_path || address_storage_path || identity_b64 || address_b64);
+    if (wantsInternal) {
+      if (!internalToken || providedToken !== internalToken) {
+        return json({ error: "internal_mode_forbidden" }, 403);
+      }
+      try {
+        if (!identity_image && identity_storage_path) {
+          identity_image = await fetchStorageAsDataUrl(String(identity_storage_path));
+        }
+        if (!address_image && address_storage_path) {
+          address_image = await fetchStorageAsDataUrl(String(address_storage_path));
+        }
+      } catch (e: any) {
+        return json({ error: `storage_fetch_failed: ${e?.message || e}` }, 502);
+      }
+      if (!identity_image && identity_b64) {
+        identity_image = bytesToDataUrl(String(identity_b64), identity_mime || "image/jpeg");
+      }
+      if (!address_image && address_b64) {
+        address_image = bytesToDataUrl(String(address_b64), address_mime || "image/jpeg");
+      }
+    }
 
     if (!identity_image && !address_image) {
       return json({ error: "Envie pelo menos uma imagem (identity_image ou address_image)" }, 400);
