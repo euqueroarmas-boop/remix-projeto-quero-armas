@@ -14,7 +14,7 @@ const BodySchema = z.object({
   trace_id: z.string().trim().min(8).max(200).optional(),
 });
 
-const DEFAULT_REDIRECT_TO = "https://dell-shine-solutions.lovable.app/redefinir-senha";
+const DEFAULT_REDIRECT_TO = "https://euqueroarmas.com.br/redefinir-senha";
 
 function isAllowedRedirect(url: string) {
   try {
@@ -26,6 +26,7 @@ function isAllowedRedirect(url: string) {
       || hostname.endsWith(".wmti.com.br")
       || hostname === "euqueroarmas.com.br"
       || hostname.endsWith(".euqueroarmas.com.br")
+      || hostname.endsWith(".lovableproject.com")
       || hostname.endsWith(".lovable.app")
       || hostname.endsWith(".lovable.dev");
 
