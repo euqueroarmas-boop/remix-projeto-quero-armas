@@ -38,8 +38,8 @@ async function copyTextSafe(text: string): Promise<boolean> {
 
 interface Props {
   cadastroCrId: number | null | undefined;
-  /** "row" = inline tipo Field (admin); "compact" = mini chip */
-  variant?: "row" | "compact";
+  /** "row" = inline tipo Field (admin); "compact" = mini chip; "exposed" = valor visível direto, só copiar */
+  variant?: "row" | "compact" | "exposed";
   contexto?: string;
   /**
    * Quando não houver `cadastroCrId`, o campo continua visível.
@@ -101,6 +101,35 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreat
     if (ok) toast.success("Senha Gov copiada");
     else toast.error("Não foi possível copiar — toque e segure para copiar manualmente");
   };
+
+  // Variante "exposed": carrega automaticamente e exibe em texto claro.
+  // O admin já está autenticado — não há necessidade de "revelar".
+  if (variant === "exposed") {
+    // auto-load uma vez
+    if (cadastroCrId && senha == null && !loading) {
+      // disparo lazy (sem useEffect para evitar overhead; idempotente via guarda)
+      void ensure();
+    }
+    return (
+      <div className="flex flex-col gap-0.5 py-1">
+        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
+        <div className="flex items-center gap-2 pl-0.5">
+          <span className="font-mono text-[13px] text-slate-800 font-semibold select-all">
+            {loading ? "…" : (senha || "—")}
+          </span>
+          {senha ? (
+            <button
+              onClick={copy}
+              className="p-1 rounded hover:bg-slate-100 text-slate-500"
+              title="Copiar"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   const startEdit = async () => {
     if (cadastroCrId) {

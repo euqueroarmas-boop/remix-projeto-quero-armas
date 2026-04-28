@@ -1924,23 +1924,8 @@ export default function QAClientesPage() {
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
                   <SenhaGovField
                     cadastroCrId={cadastro?.id}
+                    variant="exposed"
                     contexto="aba Dados"
-                    onCreateCadastro={async () => {
-                      try {
-                        const cid = getClienteFK(c);
-                        const { data, error } = await supabase
-                          .from("qa_cadastro_cr" as any)
-                          .insert({ cliente_id: cid })
-                          .select()
-                          .single();
-                        if (error) throw error;
-                        setCadastro(data);
-                        return (data as any)?.id ?? null;
-                      } catch (e: any) {
-                        toast.error("Erro ao preparar Senha Gov: " + (e.message || ""));
-                        return null;
-                      }
-                    }}
                   />
                   <Field label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />

@@ -14,6 +14,7 @@ import {
   isValidTelefone,
   rgNotEqualCpf,
 } from "@/shared/quero-armas/clienteSchema";
+import { getSenhaGov, setSenhaGov } from "./senhaGovApi";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -137,6 +138,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
+  // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
+  const [senhaGov, setSenhaGovState] = useState("");
+  const [senhaGovOriginal, setSenhaGovOriginal] = useState("");
+  const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -250,9 +256,35 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       } else {
         setPhotoPreview(null);
       }
+      // Carrega Senha Gov existente (se houver cadastro_cr) para exibir/editar exposta.
+      (async () => {
+        try {
+          const { data: row } = await supabase
+            .from("qa_cadastro_cr" as any)
+            .select("id")
+            .eq("cliente_id", cliente.id)
+            .maybeSingle();
+          const id = (row as any)?.id ?? null;
+          setCadastroCrId(id);
+          if (id) {
+            const s = await getSenhaGov(id, "Editar Cliente").catch(() => "");
+            setSenhaGovState(s || "");
+            setSenhaGovOriginal(s || "");
+          } else {
+            setSenhaGovState("");
+            setSenhaGovOriginal("");
+          }
+        } catch {
+          setSenhaGovState("");
+          setSenhaGovOriginal("");
+        }
+      })();
     } else {
       setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
       setPhotoPreview(null);
+      setSenhaGovState("");
+      setSenhaGovOriginal("");
+      setCadastroCrId(null);
     }
   }, [cliente, existingPhotoUrl, open]);
 
@@ -295,6 +327,28 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           }
         }
         toast.success("Cliente cadastrado");
+      }
+      // Persiste Senha Gov se mudou
+      try {
+        if (savedId && senhaGov !== senhaGovOriginal) {
+          let crId = cadastroCrId;
+          if (!crId) {
+            const { data: stub, error: stubErr } = await supabase
+              .from("qa_cadastro_cr" as any)
+              .insert({ cliente_id: savedId })
+              .select("id")
+              .single();
+            if (stubErr) throw stubErr;
+            crId = (stub as any)?.id ?? null;
+            setCadastroCrId(crId);
+          }
+          if (crId) {
+            await setSenhaGov(crId, senhaGov, "Editar Cliente");
+            setSenhaGovOriginal(senhaGov);
+          }
+        }
+      } catch (e: any) {
+        toast.error("Erro ao salvar Senha Gov: " + (e.message || ""));
       }
       onSaved();
       onClose();
@@ -461,6 +515,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FInput label="Celular" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" />
                   <FInput label="E-mail" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" />
                 </div>
+              </div>
+              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-4">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Acesso Gov.br</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Senha Gov.br">
+                    <input
+                      type="text"
+                      value={senhaGov}
+                      onChange={e => setSenhaGovState(e.target.value)}
+                      placeholder="Digite a senha do gov.br"
+                      autoComplete="off"
+                      className={inputClass.replace("uppercase", "font-mono")}
+                    />
+                  </Field>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Armazenada de forma cifrada (AES-256-GCM). Cada acesso é auditado.
+                </p>
               </div>
             </div>
           )}
