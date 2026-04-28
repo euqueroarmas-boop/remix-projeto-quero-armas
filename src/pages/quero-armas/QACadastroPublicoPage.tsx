@@ -537,7 +537,18 @@ export default function QACadastroPublicoPage() {
                 cpfRgConfirmed={cpfRgConfirmed}
                 onConfirmCpfRg={() => setCpfRgConfirmed(true)}
                 divergenciasConfirmadas={divergenciasConfirmadas}
-                onConfirmDivergencias={() => setDivergenciasConfirmadas(true)}
+                onConfirmDivergencias={() => {
+                  setDivergenciasConfirmadas(true);
+                  const divs = getDivergencias(extracted, extractedFromDoc);
+                  trackTelemetria({
+                    event_type: "divergencia_confirmada",
+                    categoria_titular: extracted.categoria_titular || null,
+                    payload: {
+                      total_divergencias: divs.length,
+                      campos_divergentes: divs.map((d) => d.field).slice(0, 10),
+                    },
+                  });
+                }}
                 unidadePF={unidadePF}
                 unidadeLoading={unidadeLoading}
                 onResolveUnidade={async () => {
@@ -553,9 +564,29 @@ export default function QACadastroPublicoPage() {
                     );
                     const row = Array.isArray(rows) ? rows[0] : rows;
                     setUnidadePF(row || null);
+                    if (!row) {
+                      trackTelemetria({
+                        event_type: "circunscricao_nao_encontrada",
+                        categoria_titular: extracted.categoria_titular || null,
+                        payload: {
+                          uf: String(extracted.end1_estado || "").toUpperCase().slice(0, 2),
+                          municipio_len: String(extracted.end1_cidade || "").length,
+                          motivo: "rpc_sem_resultado",
+                        },
+                      });
+                    }
                   } catch (e) {
                     console.error("Erro ao resolver circunscrição:", e);
                     setUnidadePF(null);
+                    trackTelemetria({
+                      event_type: "circunscricao_nao_encontrada",
+                      categoria_titular: extracted.categoria_titular || null,
+                      payload: {
+                        uf: String(extracted.end1_estado || "").toUpperCase().slice(0, 2),
+                        municipio_len: String(extracted.end1_cidade || "").length,
+                        motivo: "rpc_erro",
+                      },
+                    });
                   } finally {
                     setUnidadeLoading(false);
                   }
