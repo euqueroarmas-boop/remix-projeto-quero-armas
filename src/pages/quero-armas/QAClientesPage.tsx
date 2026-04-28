@@ -1922,7 +1922,33 @@ export default function QAClientesPage() {
                 <Section title="Identificação">
                   <Field label="Nome" value={c.nome_completo} />
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
-                  {cadastro?.id && <SenhaGovField cadastroCrId={cadastro.id} contexto="aba Dados" />}
+                  {cadastro?.id ? (
+                    <SenhaGovField cadastroCrId={cadastro.id} contexto="aba Dados" />
+                  ) : (
+                    <div className="flex items-center justify-between py-1.5 border-b border-slate-100">
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Senha Gov</span>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const cid = getClienteFK(c);
+                            const { data, error } = await supabase
+                              .from("qa_cadastro_cr" as any)
+                              .insert({ cliente_id: cid })
+                              .select()
+                              .single();
+                            if (error) throw error;
+                            setCadastro(data);
+                            toast.success("Pronto — agora cadastre a senha");
+                          } catch (e: any) {
+                            toast.error("Erro ao preparar Senha Gov: " + (e.message || ""));
+                          }
+                        }}
+                        className="text-[10px] uppercase tracking-wider px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      >
+                        + Cadastrar Senha Gov
+                      </button>
+                    </div>
+                  )}
                   <Field label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
                   <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
                   <Field label="Naturalidade" value={c.naturalidade} />
