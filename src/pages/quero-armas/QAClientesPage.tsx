@@ -1949,7 +1949,12 @@ export default function QAClientesPage() {
                   <Field label="Estado Civil" value={c.estado_civil} />
                   <Field label="Profissão" value={c.profissao} />
                   <Field label="Escolaridade" value={c.escolaridade} />
-                  <Field label="Título Eleitor" value={c.titulo_eleitor} />
+                  <Field
+                    label="Título Eleitor"
+                    value={c.titulo_eleitor}
+                    copyable
+                    copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
+                  />
                 </Section>
                 <Section title="Filiação">
                   <Field label="Mãe" value={c.nome_mae} />
