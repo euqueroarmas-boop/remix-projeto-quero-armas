@@ -516,6 +516,34 @@ export default function QACadastroPublicoPage() {
                 onBack={() => setStep(1)}
                 busy={busy}
                 error={error}
+                fromDoc={extractedFromDoc}
+                cpfRgAmbiguity={cpfRgAmbiguity}
+                cpfRgConfirmed={cpfRgConfirmed}
+                onConfirmCpfRg={() => setCpfRgConfirmed(true)}
+                divergenciasConfirmadas={divergenciasConfirmadas}
+                onConfirmDivergencias={() => setDivergenciasConfirmadas(true)}
+                unidadePF={unidadePF}
+                unidadeLoading={unidadeLoading}
+                onResolveUnidade={async () => {
+                  if (!extracted.end1_cidade || !extracted.end1_estado) return;
+                  setUnidadeLoading(true);
+                  try {
+                    const { data: rows } = await (supabase as any).rpc(
+                      "qa_resolver_circunscricao_pf",
+                      {
+                        p_municipio: extracted.end1_cidade,
+                        p_uf: extracted.end1_estado,
+                      },
+                    );
+                    const row = Array.isArray(rows) ? rows[0] : rows;
+                    setUnidadePF(row || null);
+                  } catch (e) {
+                    console.error("Erro ao resolver circunscrição:", e);
+                    setUnidadePF(null);
+                  } finally {
+                    setUnidadeLoading(false);
+                  }
+                }}
               />
             )}
 
