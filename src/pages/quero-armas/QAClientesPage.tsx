@@ -1679,12 +1679,16 @@ export default function QAClientesPage() {
   const loadSubData = useCallback(async (c: Cliente) => {
     setLoadingSub(true);
     try {
-      // CHAVE CANÔNICA: vendas/crafs/gtes/cr/filiações historicamente usam id_legado,
+      // CHAVE CANÔNICA: vendas/crafs/gtes/filiações historicamente usam id_legado,
       // mas o portal/app/arsenal grava com o id real (qa_clientes.id). Para garantir
       // visibilidade total no admin (zero perda de dados criados pelo cliente),
       // buscamos por AMBAS as chaves usando .in('cliente_id', [id, id_legado]).
+      // ⚠️ INCIDENTE P0: usar cidsCliente para qa_cadastro_cr causa CRUZAMENTO entre
+      // clientes quando id_legado de um == id real de outro (ex.: Weverton id_legado=46
+      // == Willian id=46). qa_cadastro_cr deve usar EXCLUSIVAMENTE o id real.
       const cid = getClienteFK(c);
       const cidsCliente = Array.from(new Set([c.id, c.id_legado, cid].filter((n) => typeof n === "number" && Number.isFinite(n)))) as number[];
+      const clienteIdReal = c.id; // id real, único — usado para qa_cadastro_cr
       const examesQuery = supabase
         .from("qa_exames_cliente_status" as any)
         .select("*")
@@ -1693,11 +1697,21 @@ export default function QAClientesPage() {
 
       const [vRes, cRes, gRes, fRes, cadRes, exRes, dRes] = await Promise.all([
         supabase.from("qa_vendas" as any).select("*").in("cliente_id", cidsCliente).order("data_cadastro", { ascending: false }),
-        supabase.from("qa_crafs" as any).select("*").in("cliente_id", cidsCliente),
-        supabase.from("qa_gtes" as any).select("*").in("cliente_id", cidsCliente),
-        supabase.from("qa_filiacoes" as any).select("*").in("cliente_id", cidsCliente),
-        // CR sempre vinculado ao id REAL após backfill. Mantemos `.in()` por compat — pega o mais recente.
-        supabase.from("qa_cadastro_cr" as any).select("*").in("cliente_id", cidsCliente).order("id", { ascending: false }).limit(1),
+        // P0 FIX: Tabelas de ARSENAL (crafs/gtes/filiacoes) usam SEMPRE id real
+        // (qa_clientes.id) — ver getClienteCadastroFK. Usar cidsCliente aqui causa
+        // cruzamento entre clientes quando id_legado de um == id real de outro.
+        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
+        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
+        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteIdReal),
+        // P0 FIX: CR usa SOMENTE id real e ignora consolidados (CRs antigos de
+        // reconciliação). Sem isso, id_legado de um cliente colide com id de outro.
+        supabase
+          .from("qa_cadastro_cr" as any)
+          .select("*")
+          .eq("cliente_id", clienteIdReal)
+          .is("consolidado_em", null)
+          .order("id", { ascending: false })
+          .limit(1),
         examesQuery,
         // Documentos enviados pelo cliente no portal/app (qa_cliente_id = id real do cliente).
         supabase.from("qa_documentos_cliente" as any).select("*").eq("qa_cliente_id", c.id).order("created_at", { ascending: false }),
