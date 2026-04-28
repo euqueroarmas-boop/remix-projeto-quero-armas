@@ -159,10 +159,10 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreat
   }
 
   return (
-    <div className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Senha Gov</span>
+    <div className="flex flex-col gap-0.5 py-1">
+      <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
       {editing ? (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 pl-0.5">
           <input
             type="text"
             value={draft}
@@ -170,7 +170,7 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreat
             placeholder="Digite a senha gov.br"
             autoFocus
             disabled={saving}
-            className="h-7 px-2 text-xs font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-48 uppercase"
+            className="h-7 px-2 text-[13px] font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-56"
             onKeyDown={(e) => {
               if (e.key === "Enter") save();
               if (e.key === "Escape") cancelEdit();
@@ -194,8 +194,8 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto, onCreat
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-slate-800">
+        <div className="flex items-center gap-2 pl-0.5">
+          <span className="font-mono text-[13px] text-slate-800 font-semibold">
             {visible ? (senha || "—") : "••••••••"}
           </span>
           <button
