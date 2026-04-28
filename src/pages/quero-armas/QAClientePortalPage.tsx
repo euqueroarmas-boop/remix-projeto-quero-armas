@@ -322,6 +322,38 @@ export default function QAClientePortalPage() {
     navigate("/area-do-cliente/login", { replace: true });
   };
 
+  // Realtime: ouve mudanças nos próprios documentos (admin aprovou/reprovou/excluiu)
+  // e nas tabelas de arsenal — recarrega imediatamente.
+  useEffect(() => {
+    const clienteIdReal = cliente?.id ?? null;
+    if (!clienteIdReal && !customerId) return;
+    const channel = supabase
+      .channel(`portal-cliente-${clienteIdReal ?? customerId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_documentos_cliente" },
+        (payload: any) => {
+          const row = payload.new || payload.old;
+          if (!row) return;
+          if (row.qa_cliente_id === clienteIdReal || row.customer_id === customerId) {
+            setDocsReloadKey((k) => k + 1);
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_crafs", filter: `cliente_id=eq.${clienteIdReal}` },
+        () => setDocsReloadKey((k) => k + 1),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` },
+        () => setDocsReloadKey((k) => k + 1),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [cliente?.id, customerId]);
+
   const analysis = useMemo(() => {
     if (!cliente) return null;
     const totalServicos = itens.length;
