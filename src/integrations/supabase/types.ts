@@ -4949,6 +4949,13 @@ export type Database = {
             referencedRelation: "qa_cadastro_cr"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_senha_gov_incident_audit"
+            referencedColumns: ["cadastro_cr_id"]
+          },
         ]
       }
       qa_servicos: {
@@ -5922,6 +5929,26 @@ export type Database = {
           {
             foreignKeyName: "fk_qa_exames__cliente"
             columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_senha_gov_incident_audit: {
+        Row: {
+          cadastro_cr_id: number | null
+          cliente_atual: string | null
+          cliente_id_atual: number | null
+          cliente_id_migracao: number | null
+          cliente_migracao: string | null
+          migrado_em: string | null
+          numero_cr: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id_migracao"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
