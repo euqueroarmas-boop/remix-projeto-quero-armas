@@ -6,6 +6,8 @@ import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
 import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   clienteId: number;
@@ -18,6 +20,7 @@ interface Props {
   alerts: { label: string; date: string | null; days: number | null; category: string }[];
   onOpenAddDoc: () => void;
   onUpdateAvatarClick?: () => void;
+  onArsenalChanged?: () => Promise<void> | void;
 }
 
 const normalizeDocWeaponName = (doc: any) => {
@@ -76,6 +79,7 @@ export function ArsenalView({
   expDocs,
   alerts,
   onOpenAddDoc,
+  onArsenalChanged,
 }: Props) {
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
@@ -419,6 +423,27 @@ export function ArsenalView({
         relatedDocs={relatedDocs}
         ammoSameCalibre={ammoSameCalibre}
         onClose={() => setSelected(null)}
+        onDelete={async (w) => {
+          // ref_id: para fontes "doc-..." manda o id real do documento
+          const isDoc = typeof w.id === "string" && w.id.startsWith("doc-");
+          const source = isDoc ? "DOC" : w.source;
+          const ref_id = isDoc ? String(w.id).replace(/^doc-/, "") : w.id;
+          const { data, error } = await supabase.functions.invoke("qa-cliente-excluir-armamento", {
+            body: {
+              cliente_id: clienteId,
+              source,
+              ref_id,
+              numero_arma: w.numero_arma,
+              numero_sigma: w.numero_sigma,
+            },
+          });
+          if (error || (data as any)?.error) {
+            toast.error((data as any)?.error || error?.message || "Erro ao excluir");
+            throw new Error("delete_failed");
+          }
+          toast.success("Armamento removido do arsenal.");
+          await onArsenalChanged?.();
+        }}
       />
     </div>
   );
