@@ -46,7 +46,7 @@ export async function requestQAPasswordReset(
     const { data, error } = await supabase.functions.invoke(
       "request-password-reset",
       {
-        body: { email, redirectTo },
+        body: { email, redirectTo, brand: "quero-armas" },
       }
     );
 
