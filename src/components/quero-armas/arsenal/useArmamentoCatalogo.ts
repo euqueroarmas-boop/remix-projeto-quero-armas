@@ -42,6 +42,7 @@ const NORM = (s: string) =>
 export function useArmamentoCatalogo() {
   const [items, setItems] = useState<ArmamentoCatalogo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isStaff, setIsStaff] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -54,6 +55,24 @@ export function useArmamentoCatalogo() {
       if (!error && data) setItems(data as unknown as ArmamentoCatalogo[]);
       setLoading(false);
     })();
+    // Detecta se o usuário logado é staff QA. Clientes não devem disparar
+    // qa-resolver-arma-craf (ação administrativa que retorna 403 pra cliente).
+    (async () => {
+      try {
+        const { data: u } = await supabase.auth.getUser();
+        const uid = u?.user?.id;
+        if (!uid) { if (!cancel) setIsStaff(false); return; }
+        const { data: perfil } = await supabase
+          .from("qa_usuarios_perfis" as any)
+          .select("ativo")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+          .maybeSingle();
+        if (!cancel) setIsStaff(!!perfil);
+      } catch {
+        if (!cancel) setIsStaff(false);
+      }
+    })();
     return () => {
       cancel = true;
     };
@@ -62,6 +81,8 @@ export function useArmamentoCatalogo() {
   /** Pede para a IA identificar a arma do CRAF/GTE e vincular ao catálogo (dedup global). */
   const requestedRef = (typeof window !== "undefined") ? ((window as any).__qaArmaReqs ||= new Set<string>()) : new Set<string>();
   async function resolveCraf(opts: { craf_id?: number | string; gte_id?: number | string; nome_arma?: string | null }) {
+    // Apenas staff QA pode chamar a edge function (cliente recebe 403).
+    if (isStaff !== true) return null;
     const key = `${opts.craf_id || ""}|${opts.gte_id || ""}|${opts.nome_arma || ""}`.toUpperCase();
     if (!key.trim() || requestedRef.has(key)) return null;
     requestedRef.add(key);
