@@ -970,6 +970,8 @@ export default function QAClientesPage() {
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [examesAtuais, setExamesAtuais] = useState<any[]>([]);
+  // Documentos enviados pelo cliente via portal/app/arsenal (qa_documentos_cliente).
+  const [docsCliente, setDocsCliente] = useState<any[]>([]);
   const [loadingSub, setLoadingSub] = useState(false);
 
   // Modal states
