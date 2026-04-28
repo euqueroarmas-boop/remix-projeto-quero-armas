@@ -621,9 +621,9 @@ function CadastroDocumentosCard({
         <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
         <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
       </div>
-      <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950 p-3 sm:p-4">
-        <p className="text-[11px] leading-relaxed text-slate-400 mb-3">
-          <span className="text-slate-200 font-semibold">Scanner de documentos.</span> Capture pela câmera <em>ou</em> importe
+      <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
+        <p className="text-[11px] leading-relaxed text-slate-500 mb-3">
+          <span className="text-slate-800 font-semibold">Scanner de documentos.</span> Capture pela câmera <em>ou</em> importe
           um arquivo (JPG, PNG, PDF) já existente. O sistema detecta bordas, corrige perspectiva e gera um
           PDF com aparência de documento escaneado. Depois, o OCR preenche os campos vazios.
         </p>
@@ -633,25 +633,25 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openScanner("identidade")}
-            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold tracking-wider text-slate-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
-            <Camera className="w-3.5 h-3.5 text-emerald-400" />
+            <Camera className="w-3.5 h-3.5 text-emerald-600" />
             IDENTIDADE
           </button>
           <button
             type="button"
             onClick={() => openScanner("endereco")}
-            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold tracking-wider text-slate-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
-            <Camera className="w-3.5 h-3.5 text-emerald-400" />
+            <Camera className="w-3.5 h-3.5 text-emerald-600" />
             COMPROVANTE
           </button>
           <button
             type="button"
             onClick={() => openScanner("avulso")}
-            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold tracking-wider text-slate-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           >
-            <FileDown className="w-3.5 h-3.5 text-emerald-400" />
+            <FileDown className="w-3.5 h-3.5 text-emerald-600" />
             ESCANEAR & PDF
           </button>
 
@@ -659,7 +659,7 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openImportPicker("identidade")}
-            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-semibold tracking-wider text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
             <Upload className="w-3.5 h-3.5" />
             IMPORTAR IDENT.
@@ -667,7 +667,7 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openImportPicker("endereco")}
-            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-semibold tracking-wider text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
             <Upload className="w-3.5 h-3.5" />
             IMPORTAR COMP.
@@ -675,7 +675,7 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openImportPicker("avulso")}
-            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-semibold tracking-wider text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
           >
             <Upload className="w-3.5 h-3.5" />
             IMPORTAR ARQUIVO
@@ -683,12 +683,12 @@ function CadastroDocumentosCard({
         </div>
 
         {hasAnyDoc && (
-          <div className="mt-3 pt-3 border-t border-slate-800 flex justify-end">
+          <div className="mt-3 pt-3 border-t border-slate-200 flex justify-end">
             <button
               type="button"
               onClick={handleExtract}
               disabled={extracting}
-              className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-500 px-4 text-[11px] font-bold tracking-wider text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-4 text-[11px] font-bold tracking-wider text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-sm"
             >
               {extracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
               EXTRAIR DADOS VIA OCR
