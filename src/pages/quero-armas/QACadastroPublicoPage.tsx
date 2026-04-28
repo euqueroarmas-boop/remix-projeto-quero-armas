@@ -248,14 +248,18 @@ export default function QACadastroPublicoPage() {
 
       // Detecta ambiguidade CPF×RG retornada pela IA
       const ambig = detectCpfRgAmbiguity(id);
-      const isCin = String(id?.tipo_documento || "").toUpperCase() === "CIN";
+      const tipoDoc = String(id?.tipo_documento || "").toUpperCase();
+      const isCin = tipoDoc.includes("CIN");
+      setTipoDocumentoIdentidade(tipoDoc);
       const cpfDigitsExtracted = id?.cpf ? onlyDigits(String(id.cpf)) : "";
       const cpfIsValid = cpfDigitsExtracted.length === 11 && isValidCpf(cpfDigitsExtracted);
-      if (ambig.hasAmbiguity) {
+      // Para CIN gov.br, o número nacional pode legitimamente ser igual ao CPF.
+      // Tratamos a ambiguidade como puramente informativa: NÃO bloqueia avanço
+      // e NÃO exige clique em "Confirmar". Para qualquer outro tipo, mantém o
+      // bloqueio anterior.
+      if (ambig.hasAmbiguity && !isCin) {
         setCpfRgAmbiguity({
-          reason: isCin
-            ? "Documento CIN gov.br detectado. O número nacional pode aparecer como CPF/RG/CIN. Confirme manualmente antes de concluir."
-            : (ambig.reason || "A IA não conseguiu separar CPF e RG com certeza"),
+          reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
           cpfCandidates: ambig.cpfCandidates,
           rgCandidates: ambig.rgCandidates,
         });
@@ -275,7 +279,9 @@ export default function QACadastroPublicoPage() {
           },
         });
       } else {
+        // CIN com CPF==RG é caso legítimo → não bloqueia.
         setCpfRgAmbiguity(null);
+        if (isCin) setCpfRgConfirmed(true);
       }
 
       // Snapshot do que veio do documento (usado para detecção de divergência)
@@ -298,14 +304,15 @@ export default function QACadastroPublicoPage() {
         // — não deve apagar o CPF do usuário.
         cpf: cpfIsValid ? maskCpf(cpfDigitsExtracted) : prev.cpf,
         // RG/CIN:
-        //  - Sem ambiguidade → usa o RG retornado (comportamento original).
-        //  - Com ambiguidade em CIN → preenche o candidato apenas se for
-        //    DIFERENTE do CPF (para não duplicar visualmente o mesmo número).
-        //  - Demais ambiguidades → não preenche silenciosamente.
-        rg: !ambig.hasAmbiguity
-          ? (id.rg || prev.rg)
-          : (isCin && ambig.rgCandidates[0] && ambig.rgCandidates[0] !== cpfDigitsExtracted
-              ? ambig.rgCandidates[0]
+        //  - CIN gov.br → preenche automaticamente com id.rg, primeiro
+        //    rg_candidato OU o próprio número da CIN/CPF (são o mesmo número
+        //    no documento). Sem bloqueio por igualdade.
+        //  - Demais documentos sem ambiguidade → comportamento original.
+        //  - Demais documentos COM ambiguidade → não preenche silenciosamente.
+        rg: isCin
+          ? (id.rg || ambig.rgCandidates[0] || cpfDigitsExtracted || prev.rg)
+          : (!ambig.hasAmbiguity
+              ? (id.rg || prev.rg)
               : prev.rg),
         emissor_rg: id.emissor_rg && id.uf_emissor_rg
           ? `${id.emissor_rg}/${id.uf_emissor_rg}` : (id.emissor_rg || prev.emissor_rg),
