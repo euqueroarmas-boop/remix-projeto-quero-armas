@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { AuthProvider } from "@/shared/auth/AuthProvider";
+import { AuthDeepLinkHandler } from "@/shared/auth/AuthDeepLinkHandler";
 import { CartProvider } from "@/shared/cart/CartProvider";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 
@@ -36,6 +37,7 @@ const App = () => (
             <CartProvider>
               <Suspense fallback={<PageLoader />}>
                 <div className="overflow-x-hidden max-w-full">
+                <AuthDeepLinkHandler />
                 <Routes>
                   {/* Legacy: redireciona /quero-armas/* → /* */}
                   <Route path="/quero-armas" element={<Navigate to="/" replace />} />
