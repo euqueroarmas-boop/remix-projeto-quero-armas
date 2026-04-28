@@ -4,7 +4,7 @@ import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
-import { TACTICAL, urgencyTone, buildWeaponInfo } from "./utils";
+import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 
 interface Props {
@@ -22,7 +22,9 @@ interface Props {
 
 const normalizeDocWeaponName = (doc: any) => {
   const marca = String(doc?.arma_marca || "").trim();
-  const modelo = String(doc?.arma_modelo || "").trim();
+  const modeloRaw = String(doc?.arma_modelo || "").trim();
+  // Defesa: nunca aceitar número de documento/registro como modelo.
+  const modelo = isInvalidWeaponModel(modeloRaw) ? "" : modeloRaw;
   return [marca, modelo].filter(Boolean).join(" ").trim() || null;
 };
 
@@ -130,12 +132,19 @@ export function ArsenalView({
       fromCrafs.map((w) => `${w.numero_arma || ""}|${w.numero_sigma || ""}|${(w.nome_arma || "").toUpperCase()}`),
     );
     const fromDocs = meusDocs
-      .filter((d: any) => String(d.tipo_documento || "").toLowerCase() === "craf" && normalizeDocWeaponName(d))
+      .filter((d: any) => {
+        const tipo = String(d.tipo_documento || "").toLowerCase();
+        // Documentos vinculados a arma (CRAF, SINARM, GT, GTE, autorização) entram no arsenal
+        // desde que tenham marca/modelo válidos extraídos.
+        const ehDocDeArma = ["craf", "sinarm", "gt", "gte", "autorizacao_compra", "outro"].includes(tipo);
+        return ehDocDeArma && normalizeDocWeaponName(d);
+      })
       .map((d: any) => {
         const nome = normalizeDocWeaponName(d);
+        const tipoUpper = String(d.tipo_documento || "DOC").toUpperCase();
         return {
           id: `doc-${d.id}`,
-          source: "CRAF" as const,
+          source: (tipoUpper === "GTE" ? "GTE" : "CRAF") as "CRAF" | "GTE",
           nome_arma: nome,
           numero_arma: d.arma_numero_serie || d.numero_documento || null,
           numero_sigma: d.numero_documento || null,
@@ -183,15 +192,25 @@ export function ArsenalView({
       });
     });
     meusDocs.slice(0, 4).forEach((d: any) => {
-      const armaNome = [d.arma_marca, d.arma_modelo].filter(Boolean).join(" ").trim();
+      // Defesa: nunca aceitar número como modelo.
+      const modeloSeguro = isInvalidWeaponModel(d.arma_modelo) ? "" : String(d.arma_modelo || "").trim();
+      const armaNome = [d.arma_marca, modeloSeguro].filter(Boolean).join(" ").trim();
       const tipo = String(d.tipo_documento || "").toLowerCase();
-      // Para CRAF/GTE o título deve ser o nome da arma (marca + modelo).
-      // Apenas documentos sem vínculo de arma caem no número do documento.
-      const ehDocDeArma = tipo === "craf" || tipo === "gte";
-      const cat = matchCatalogo(armaNome || d.numero_documento);
-      const titulo = ehDocDeArma
-        ? formatArmaTitulo(armaNome || d.numero_documento, d.arma_calibre, cat)
-        : (d.numero_documento || armaNome || "Documento").toUpperCase();
+      // Documentos de arma (CRAF, SINARM, GT, GTE, autorização) e qualquer "outro"
+      // que tenha marca/modelo extraídos devem mostrar o NOME DA ARMA.
+      // Nunca usar número de documento como título.
+      const ehDocDeArma = ["craf", "sinarm", "gt", "gte", "autorizacao_compra"].includes(tipo);
+      const cat = matchCatalogo(armaNome);
+      let titulo: string;
+      if (armaNome) {
+        titulo = formatArmaTitulo(armaNome, d.arma_calibre, cat);
+      } else if (ehDocDeArma) {
+        // Documento de arma sem modelo extraído → pendência de conferência
+        titulo = "MODELO PENDENTE DE CONFERÊNCIA";
+      } else {
+        // Documento administrativo genuíno (sem vínculo de arma)
+        titulo = (d.numero_documento || "DOCUMENTO").toUpperCase();
+      }
       list.push({
         id: `doc-${d.id}`,
         category: (d.tipo_documento || "DOC").toUpperCase(),
