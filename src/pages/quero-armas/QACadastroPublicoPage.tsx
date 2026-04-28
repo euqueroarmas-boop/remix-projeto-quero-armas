@@ -100,6 +100,42 @@ function brDateToIso(v: string): string {
   if (!m) return "";
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
+/**
+ * Converte qualquer data plausível vinda da IA para o formato BR (DD/MM/AAAA).
+ * Aceita: ISO YYYY-MM-DD, DD/MM/AAAA, DD-MM-AAAA, e tolera espaços.
+ * Retorna "" se não conseguir interpretar.
+ */
+export function normalizeDateToBr(v: unknown): string {
+  if (v == null) return "";
+  const s = String(v).trim();
+  if (!s) return "";
+  // ISO YYYY-MM-DD (pode vir com T... — pegamos só a data)
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  // BR DD/MM/AAAA ou DD-MM-AAAA
+  const br = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+  if (br) return `${br[1]}/${br[2]}/${br[3]}`;
+  return "";
+}
+/**
+ * Escolhe a primeira data de expedição/emissão disponível no objeto retornado
+ * pela IA, na ordem oficial definida pela regra de negócio. Para CIN gov.br,
+ * "Data de Emissão / Issue Date" deve cair em data_expedicao_rg.
+ */
+export function pickIssueDate(id: Record<string, any> | null | undefined): string {
+  if (!id) return "";
+  const candidates = [
+    id.data_expedicao_rg,
+    id.data_emissao,
+    id.issue_date,
+    id.data_emissao_rg,
+  ];
+  for (const c of candidates) {
+    const br = normalizeDateToBr(c);
+    if (br) return br;
+  }
+  return "";
+}
 function dataUrlToBlob(dataUrl: string): { blob: Blob; ext: string } {
   const [meta, b64] = dataUrl.split(",");
   const mime = /data:([^;]+)/.exec(meta || "")?.[1] || "image/jpeg";
