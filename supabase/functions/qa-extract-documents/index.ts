@@ -22,19 +22,39 @@ const ID_TOOL = {
   type: "function",
   function: {
     name: "extract_identity",
-    description: "Extrai dados estruturados de um documento oficial de identificação brasileiro (RG, CNH, CIN, etc.).",
+    description:
+      "Extrai dados estruturados de um documento oficial de identificação brasileiro (RG, CNH, CIN, Passaporte). " +
+      "Regras CRÍTICAS: (1) o número do CPF SEMPRE tem 11 dígitos e é distinto do RG. " +
+      "(2) o RG tem formato variável (números, dígito verificador X) e nunca deve ser copiado para o campo CPF. " +
+      "(3) se houver dúvida sobre qual número é CPF e qual é RG, NÃO PREENCHA cpf nem rg — preencha cpf_candidato/rg_candidato com os números encontrados e marque needs_confirmation=true.",
     parameters: {
       type: "object",
       properties: {
         nome_completo: { type: "string", description: "Nome completo conforme aparece no documento" },
-        cpf: { type: "string", description: "Apenas números, 11 dígitos" },
-        rg: { type: "string", description: "Número do RG ou registro geral, se houver" },
+        cpf: { type: "string", description: "Apenas números, EXATAMENTE 11 dígitos. Só preencha se tiver certeza absoluta de que é o CPF (não o RG)." },
+        rg: { type: "string", description: "Número do Registro Geral. NUNCA copie o CPF aqui. Pode conter dígito verificador X." },
+        cpf_confidence: { type: "number", description: "Confiança 0..1 de que o valor em cpf é realmente o CPF" },
+        rg_confidence: { type: "number", description: "Confiança 0..1 de que o valor em rg é realmente o RG" },
+        cpf_candidato: { type: "array", items: { type: "string" }, description: "Candidatos a CPF (11 dígitos) quando há ambiguidade" },
+        rg_candidato: { type: "array", items: { type: "string" }, description: "Candidatos a RG quando há ambiguidade" },
+        needs_confirmation: { type: "boolean", description: "true quando não foi possível separar CPF e RG com segurança" },
+        confirmation_reason: { type: "string", description: "Motivo curto, em PT-BR, do porquê precisa confirmação" },
         emissor_rg: { type: "string", description: "Órgão expedidor (ex: SSP, DETRAN)" },
         uf_emissor_rg: { type: "string", description: "UF do órgão emissor (2 letras)" },
+        data_expedicao_rg: { type: "string", description: "Data de expedição do RG no formato DD/MM/AAAA" },
         data_nascimento: { type: "string", description: "Formato DD/MM/AAAA" },
+        sexo: { type: "string", description: "M, F ou texto exato como aparece" },
         nome_mae: { type: "string" },
         nome_pai: { type: "string" },
-        naturalidade: { type: "string", description: "Cidade/UF de nascimento" },
+        naturalidade: { type: "string", description: "Texto bruto da naturalidade (ex: 'São Paulo/SP')" },
+        naturalidade_municipio: { type: "string", description: "Apenas o município de nascimento" },
+        naturalidade_uf: { type: "string", description: "UF de nascimento (2 letras)" },
+        naturalidade_pais: { type: "string", description: "País de nascimento, se houver" },
+        titulo_eleitor: { type: "string" },
+        cnh: { type: "string", description: "Número do registro CNH se aplicável" },
+        ctps: { type: "string" },
+        pis_pasep: { type: "string" },
+        estado_civil: { type: "string" },
         tipo_documento: { type: "string", enum: ["RG", "CNH", "CIN", "PASSAPORTE", "OUTRO"] },
       },
       required: ["tipo_documento"],
@@ -134,7 +154,16 @@ Deno.serve(async (req) => {
         ? callVision(
             identity_image,
             ID_TOOL,
-            "Você é um extrator de dados de documentos brasileiros (RG, CNH, CIN). Extraia APENAS o que está visível e legível.",
+          [
+            "Você é um extrator forense de dados de documentos brasileiros (RG, CNH, CIN, Passaporte).",
+            "REGRAS OBRIGATÓRIAS:",
+            "1) Extraia APENAS o que está visível e legível na imagem. Nunca invente dados.",
+            "2) CPF e RG são campos DISTINTOS. CPF tem exatamente 11 dígitos numéricos. NUNCA copie o RG para o campo CPF.",
+            "3) Se um documento estrangeiro disser 'Personal Number' separado do CPF, mantenha-os separados.",
+            "4) Se você encontrar um único número de identificação e não puder determinar com segurança se é CPF ou RG, NÃO preencha cpf nem rg. Em vez disso preencha cpf_candidato e/ou rg_candidato com os números encontrados e marque needs_confirmation=true com confirmation_reason explicando.",
+            "5) Para cada campo cpf e rg preenchido, retorne também cpf_confidence/rg_confidence (0..1). Se a confiança for menor que 0.7, prefira retornar como candidato e marcar needs_confirmation=true.",
+            "6) Datas sempre em DD/MM/AAAA. Sexo apenas M ou F quando claro.",
+          ].join("\n"),
           ).catch((e) => ({ __error: String(e?.message || e) }))
         : Promise.resolve(null),
     );
