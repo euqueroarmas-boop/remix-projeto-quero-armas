@@ -458,11 +458,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "fk_cliente_auth_links__qa_cliente"
             columns: ["qa_cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cliente_auth_links__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
           },
         ]
       }
@@ -2475,6 +2489,13 @@ export type Database = {
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
         ]
       }
       qa_cadastro_cr_audit: {
@@ -3126,11 +3147,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_qa_casos__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "qa_casos_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_casos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
           },
         ]
       }
@@ -3608,6 +3643,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_qa_crafs__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "qa_crafs_catalogo_id_fkey"
             columns: ["catalogo_id"]
             isOneToOne: false
@@ -3907,6 +3949,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "qa_documentos_cliente_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3919,6 +3968,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
           },
         ]
       }
@@ -4138,6 +4194,13 @@ export type Database = {
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
         ]
       }
       qa_feedback_geracoes: {
@@ -4234,6 +4297,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_filiacoes__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
           },
         ]
       }
@@ -4385,7 +4455,74 @@ export type Database = {
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
         ]
+      }
+      qa_gov_reconciliation_audit: {
+        Row: {
+          acao: string
+          cadastro_cr_id_anterior: string | null
+          cadastro_cr_id_correto: string | null
+          cliente_id_anterior: number | null
+          cliente_id_correto: number | null
+          cpf_normalizado: string | null
+          email_normalizado: string | null
+          evidencia: Json | null
+          executado_em: string
+          executado_por: string | null
+          id: string
+          motivo: string | null
+          nivel_confianca: string
+          numero_cr_normalizado: string | null
+          origem: string
+          rollback_payload: Json | null
+          status: string
+        }
+        Insert: {
+          acao: string
+          cadastro_cr_id_anterior?: string | null
+          cadastro_cr_id_correto?: string | null
+          cliente_id_anterior?: number | null
+          cliente_id_correto?: number | null
+          cpf_normalizado?: string | null
+          email_normalizado?: string | null
+          evidencia?: Json | null
+          executado_em?: string
+          executado_por?: string | null
+          id?: string
+          motivo?: string | null
+          nivel_confianca: string
+          numero_cr_normalizado?: string | null
+          origem?: string
+          rollback_payload?: Json | null
+          status: string
+        }
+        Update: {
+          acao?: string
+          cadastro_cr_id_anterior?: string | null
+          cadastro_cr_id_correto?: string | null
+          cliente_id_anterior?: number | null
+          cliente_id_correto?: number | null
+          cpf_normalizado?: string | null
+          email_normalizado?: string | null
+          evidencia?: Json | null
+          executado_em?: string
+          executado_por?: string | null
+          id?: string
+          motivo?: string | null
+          nivel_confianca?: string
+          numero_cr_normalizado?: string | null
+          origem?: string
+          rollback_payload?: Json | null
+          status?: string
+        }
+        Relationships: []
       }
       qa_gtes: {
         Row: {
@@ -5206,11 +5343,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
             columns: ["cadastro_cr_id"]
             isOneToOne: false
             referencedRelation: "qa_cadastro_cr"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cadastro_cr_id_sugerido"]
           },
           {
             foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
@@ -5917,6 +6068,183 @@ export type Database = {
           },
         ]
       }
+      staging_access_armas: {
+        Row: {
+          calibre: string | null
+          cliente_id_access: string | null
+          id_access: string | null
+          import_batch: string | null
+          imported_at: string
+          modelo: string | null
+          numero_serie: string | null
+          raw: Json | null
+        }
+        Insert: {
+          calibre?: string | null
+          cliente_id_access?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          modelo?: string | null
+          numero_serie?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          calibre?: string | null
+          cliente_id_access?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          modelo?: string | null
+          numero_serie?: string | null
+          raw?: Json | null
+        }
+        Relationships: []
+      }
+      staging_access_clientes: {
+        Row: {
+          cnpj: string | null
+          cpf: string | null
+          email: string | null
+          id_access: string | null
+          import_batch: string | null
+          imported_at: string
+          nome: string | null
+          observacoes: string | null
+          raw: Json | null
+          telefone: string | null
+        }
+        Insert: {
+          cnpj?: string | null
+          cpf?: string | null
+          email?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          nome?: string | null
+          observacoes?: string | null
+          raw?: Json | null
+          telefone?: string | null
+        }
+        Update: {
+          cnpj?: string | null
+          cpf?: string | null
+          email?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          nome?: string | null
+          observacoes?: string | null
+          raw?: Json | null
+          telefone?: string | null
+        }
+        Relationships: []
+      }
+      staging_access_crafs: {
+        Row: {
+          arma: string | null
+          cliente_id_access: string | null
+          id_access: string | null
+          import_batch: string | null
+          imported_at: string
+          numero_craf: string | null
+          raw: Json | null
+        }
+        Insert: {
+          arma?: string | null
+          cliente_id_access?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          numero_craf?: string | null
+          raw?: Json | null
+        }
+        Update: {
+          arma?: string | null
+          cliente_id_access?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          numero_craf?: string | null
+          raw?: Json | null
+        }
+        Relationships: []
+      }
+      staging_access_crs: {
+        Row: {
+          categoria: string | null
+          cliente_id_access: string | null
+          id_access: string | null
+          import_batch: string | null
+          imported_at: string
+          numero_cr: string | null
+          raw: Json | null
+          validade: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          cliente_id_access?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          numero_cr?: string | null
+          raw?: Json | null
+          validade?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          cliente_id_access?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          numero_cr?: string | null
+          raw?: Json | null
+          validade?: string | null
+        }
+        Relationships: []
+      }
+      staging_access_senhas_gov: {
+        Row: {
+          cliente_id_access: string | null
+          cpf: string | null
+          cr_id_access: string | null
+          email: string | null
+          id_access: string | null
+          import_batch: string | null
+          imported_at: string
+          numero_cr: string | null
+          observacoes: string | null
+          raw: Json | null
+          senha_plaintext: string | null
+        }
+        Insert: {
+          cliente_id_access?: string | null
+          cpf?: string | null
+          cr_id_access?: string | null
+          email?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          numero_cr?: string | null
+          observacoes?: string | null
+          raw?: Json | null
+          senha_plaintext?: string | null
+        }
+        Update: {
+          cliente_id_access?: string | null
+          cpf?: string | null
+          cr_id_access?: string | null
+          email?: string | null
+          id_access?: string | null
+          import_batch?: string | null
+          imported_at?: string
+          numero_cr?: string | null
+          observacoes?: string | null
+          raw?: Json | null
+          senha_plaintext?: string | null
+        }
+        Relationships: []
+      }
       support_tools: {
         Row: {
           created_at: string
@@ -6203,6 +6531,52 @@ export type Database = {
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+        ]
+      }
+      qa_gov_password_reconciliation_view: {
+        Row: {
+          acao_recomendada: string | null
+          cadastro_cr_id_sugerido: number | null
+          cliente_id_atual_do_cr: number | null
+          cliente_id_sugerido: number | null
+          cpf_access: string | null
+          email_access: string | null
+          email_sistema_sugerido: string | null
+          hash_senha_access: string | null
+          hash_senha_sistema: string | null
+          id_access: string | null
+          nivel_confianca: string | null
+          nome_access: string | null
+          nome_atual_do_cr: string | null
+          nome_sistema_sugerido: string | null
+          numero_cr_access: string | null
+          numero_cr_sistema_sugerido: string | null
+          status_reconciliacao: string | null
+          tem_senha_access: boolean | null
+          tem_senha_sistema: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual_do_cr"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual_do_cr"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
         ]
       }
       qa_incident_reconciliation_plan: {
@@ -6228,11 +6602,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_correto_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
             columns: ["cliente_atual_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_atual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
           },
         ]
       }
@@ -6255,11 +6643,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id_migracao"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+          {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
             columns: ["cliente_id_atual"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
           },
         ]
       }
@@ -6336,6 +6738,10 @@ export type Database = {
           municipio: string
         }[]
       }
+      qa_norm_cr: { Args: { p_cr: string }; Returns: string }
+      qa_norm_doc: { Args: { p_doc: string }; Returns: string }
+      qa_norm_email: { Args: { p_email: string }; Returns: string }
+      qa_norm_nome: { Args: { p_nome: string }; Returns: string }
       qa_remove_bg_usage_mes: {
         Args: never
         Returns: {
