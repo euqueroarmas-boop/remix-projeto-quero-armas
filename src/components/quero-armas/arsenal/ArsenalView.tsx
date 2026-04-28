@@ -270,6 +270,12 @@ export function ArsenalView({
         title: cadastroCr.numero_cr ? `CR ${cadastroCr.numero_cr}` : "Certificado de Registro",
         date: cadastroCr.validade_cr,
         daysToExpire: daysUntil(cadastroCr.validade_cr),
+        onOpen: () => setCrModal({ open: true, item: cadastroCr }),
+        onDelete: () => askDelete(
+          "Excluir CR",
+          `Excluir o CR "${cadastroCr.numero_cr || ""}" deste cliente? Esta ação não pode ser desfeita.`,
+          deleteCr,
+        ),
       });
     }
     crafs.forEach((c: any) => {
@@ -281,6 +287,12 @@ export function ArsenalView({
         title: formatArmaTitulo(c.nome_arma, c.calibre, cat),
         date: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
+        onOpen: () => setCrafModal({ open: true, item: c }),
+        onDelete: () => askDelete(
+          "Excluir CRAF",
+          `Excluir o CRAF de "${formatArmaTitulo(c.nome_arma, c.calibre, cat)}"?`,
+          () => deleteCraf(c.id),
+        ),
       });
     });
     gtes.forEach((g: any) => {
@@ -292,6 +304,12 @@ export function ArsenalView({
         title: formatArmaTitulo(g.nome_arma, g.calibre, cat),
         date: g.data_validade,
         daysToExpire: daysUntil(g.data_validade),
+        onOpen: () => setGteModal({ open: true, item: g }),
+        onDelete: () => askDelete(
+          "Excluir GTE",
+          `Excluir a GTE de "${formatArmaTitulo(g.nome_arma, g.calibre, cat)}"?`,
+          () => deleteGte(g.id),
+        ),
       });
     });
     meusDocs.forEach((d: any) => {
