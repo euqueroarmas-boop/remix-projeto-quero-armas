@@ -535,6 +535,37 @@ export function ArsenalView({
           await onArsenalChanged?.();
         }}
       />
+
+      {/* Modais de CRUD do Arsenal — controle total a partir da Bancada e dos KPIs */}
+      <CrModal
+        open={crModal.open}
+        onClose={() => setCrModal({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+        cadastro={crModal.item}
+      />
+      <CrafModal
+        open={crafModal.open}
+        onClose={() => setCrafModal({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+        craf={crafModal.item}
+      />
+      <GteModal
+        open={gteModal.open}
+        onClose={() => setGteModal({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+        gte={gteModal.item}
+      />
+      <DeleteConfirm
+        open={deleteModal.open}
+        onClose={() => setDeleteModal((s) => ({ ...s, open: false }))}
+        onConfirm={confirmDelete}
+        title={deleteModal.title}
+        description={deleteModal.desc}
+        loading={deleting}
+      />
     </div>
   );
 }
