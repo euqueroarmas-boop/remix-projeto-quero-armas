@@ -2408,6 +2408,9 @@ export type Database = {
           check_exame_tiro: boolean | null
           check_laudo_psi: boolean | null
           cliente_id: number | null
+          consolidado_em: string | null
+          consolidado_motivo: string | null
+          consolidado_por: string | null
           id: number
           id_legado: number | null
           num_item_servico_cr: number | null
@@ -2426,6 +2429,9 @@ export type Database = {
           check_exame_tiro?: boolean | null
           check_laudo_psi?: boolean | null
           cliente_id?: number | null
+          consolidado_em?: string | null
+          consolidado_motivo?: string | null
+          consolidado_por?: string | null
           id?: number
           id_legado?: number | null
           num_item_servico_cr?: number | null
@@ -2444,6 +2450,9 @@ export type Database = {
           check_exame_tiro?: boolean | null
           check_laudo_psi?: boolean | null
           cliente_id?: number | null
+          consolidado_em?: string | null
+          consolidado_motivo?: string | null
+          consolidado_por?: string | null
           id?: number
           id_legado?: number | null
           num_item_servico_cr?: number | null
@@ -2552,6 +2561,66 @@ export type Database = {
           senha_gov_tag?: string | null
           senha_gov_updated_at?: string | null
           senha_gov_updated_by?: string | null
+          validade_cr?: string | null
+          validade_exame_tiro?: string | null
+          validade_laudo_psicologico?: string | null
+        }
+        Relationships: []
+      }
+      qa_cadastro_cr_consolidacao_snapshot: {
+        Row: {
+          check_exame_tiro: boolean | null
+          check_laudo_psi: boolean | null
+          cliente_id: number | null
+          id: number | null
+          id_legado: number | null
+          num_item_servico_cr: number | null
+          numero_cr: string | null
+          senha_gov: string | null
+          senha_gov_encrypted: string | null
+          senha_gov_iv: string | null
+          senha_gov_tag: string | null
+          senha_gov_updated_at: string | null
+          senha_gov_updated_by: string | null
+          snapshot_em: string | null
+          validade_cr: string | null
+          validade_exame_tiro: string | null
+          validade_laudo_psicologico: string | null
+        }
+        Insert: {
+          check_exame_tiro?: boolean | null
+          check_laudo_psi?: boolean | null
+          cliente_id?: number | null
+          id?: number | null
+          id_legado?: number | null
+          num_item_servico_cr?: number | null
+          numero_cr?: string | null
+          senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
+          snapshot_em?: string | null
+          validade_cr?: string | null
+          validade_exame_tiro?: string | null
+          validade_laudo_psicologico?: string | null
+        }
+        Update: {
+          check_exame_tiro?: boolean | null
+          check_laudo_psi?: boolean | null
+          cliente_id?: number | null
+          id?: number | null
+          id_legado?: number | null
+          num_item_servico_cr?: number | null
+          numero_cr?: string | null
+          senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
+          snapshot_em?: string | null
           validade_cr?: string | null
           validade_exame_tiro?: string | null
           validade_laudo_psicologico?: string | null
