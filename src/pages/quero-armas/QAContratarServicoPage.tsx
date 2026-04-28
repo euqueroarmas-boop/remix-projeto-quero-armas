@@ -63,9 +63,13 @@ export default function QAContratarServicoPage() {
   }, [items]);
 
   const handleContratar = (slug: string) => {
-    const qs = new URLSearchParams({ servico: slug });
-    if (logado) qs.set("clienteLogado", "true");
-    navigate(`/cadastro?${qs.toString()}`);
+    if (logado) {
+      // Cliente logado vai direto para a tela de revisão rápida (Fase 2)
+      navigate(`/area-do-cliente/contratar/${slug}/confirmar`);
+    } else {
+      // Visitante: pergunta se já é cliente (login) ou abre wizard
+      navigate(`/area-do-cliente/contratar/${slug}/identificar`);
+    }
   };
 
   return (
