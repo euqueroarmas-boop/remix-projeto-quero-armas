@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Eye, EyeOff, Copy, Loader2, Lock } from "lucide-react";
+import { Eye, EyeOff, Copy, Loader2, Lock, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
-import { getSenhaGov } from "./senhaGovApi";
+import { getSenhaGov, setSenhaGov } from "./senhaGovApi";
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
@@ -51,6 +51,9 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
   const [senha, setSenha] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
 
   if (!cadastroCrId) return null;
 
@@ -91,6 +94,33 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
     else toast.error("Não foi possível copiar — toque e segure para copiar manualmente");
   };
 
+  const startEdit = async () => {
+    // pré-carrega a senha atual (se houver) para facilitar edição
+    const current = await ensure();
+    setDraft(current || "");
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setDraft("");
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await setSenhaGov(cadastroCrId, draft, contexto);
+      setSenha(draft);
+      setEditing(false);
+      setDraft("");
+      toast.success(draft ? "Senha Gov salva" : "Senha Gov removida");
+    } catch (e: any) {
+      toast.error("Senha Gov: " + (e.message || "erro ao salvar"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (variant === "compact") {
     return (
       <div className="inline-flex items-center gap-1.5">
@@ -111,25 +141,66 @@ export function SenhaGovField({ cadastroCrId, variant = "row", contexto }: Props
   return (
     <div className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
       <span className="text-[10px] text-slate-500 uppercase tracking-wider">Senha Gov</span>
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-xs text-slate-800">
-          {visible ? (senha || "—") : "••••••••"}
-        </span>
-        <button
-          onClick={toggle}
-          className="p-1 rounded hover:bg-slate-100 text-slate-500"
-          title={visible ? "Ocultar" : "Revelar"}
-        >
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-        </button>
-        <button
-          onClick={copy}
-          className="p-1 rounded hover:bg-slate-100 text-slate-500"
-          title="Copiar"
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </button>
-      </div>
+      {editing ? (
+        <div className="flex items-center gap-1.5">
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Digite a senha gov.br"
+            autoFocus
+            disabled={saving}
+            className="h-7 px-2 text-xs font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-48 uppercase"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") cancelEdit();
+            }}
+          />
+          <button
+            onClick={save}
+            disabled={saving}
+            className="p-1 rounded hover:bg-emerald-50 text-emerald-600 disabled:opacity-50"
+            title="Salvar"
+          >
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            onClick={cancelEdit}
+            disabled={saving}
+            className="p-1 rounded hover:bg-slate-100 text-slate-500 disabled:opacity-50"
+            title="Cancelar"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-slate-800">
+            {visible ? (senha || "—") : "••••••••"}
+          </span>
+          <button
+            onClick={toggle}
+            className="p-1 rounded hover:bg-slate-100 text-slate-500"
+            title={visible ? "Ocultar" : "Revelar"}
+          >
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            onClick={copy}
+            className="p-1 rounded hover:bg-slate-100 text-slate-500"
+            title="Copiar"
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={startEdit}
+            className="p-1 rounded hover:bg-slate-100 text-slate-500"
+            title="Editar"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
