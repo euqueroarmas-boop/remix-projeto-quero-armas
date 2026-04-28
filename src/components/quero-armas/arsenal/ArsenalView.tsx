@@ -6,6 +6,7 @@ import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
 import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
+import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,6 +22,8 @@ interface Props {
   onOpenAddDoc: () => void;
   onUpdateAvatarClick?: () => void;
   onArsenalChanged?: () => Promise<void> | void;
+  /** Quando true, exibe controles de exclusão de docs genéricos (admin tem permissão total). */
+  isAdmin?: boolean;
 }
 
 const normalizeDocWeaponName = (doc: any) => {
@@ -80,13 +83,74 @@ export function ArsenalView({
   alerts,
   onOpenAddDoc,
   onArsenalChanged,
+  isAdmin = false,
 }: Props) {
+  // RLS no banco já garante quem pode CRUD; flag mantida por compat para futuras UIs admin-only.
+  void isAdmin;
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
     total: 0,
     byCalibre: [],
   });
   const { match: matchCatalogo, byId: catalogoById, resolveCraf, loading: catalogoLoading } = useArmamentoCatalogo();
+
+  // ─── Estados dos modais de CRUD do Arsenal ───
+  const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    title: string;
+    desc: string;
+    onConfirm: () => Promise<void>;
+  }>({ open: false, title: "", desc: "", onConfirm: async () => {} });
+  const [deleting, setDeleting] = useState(false);
+
+  const refreshArsenal = async () => { await onArsenalChanged?.(); };
+
+  const askDelete = (title: string, desc: string, onConfirm: () => Promise<void>) =>
+    setDeleteModal({ open: true, title, desc, onConfirm });
+
+  const confirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteModal.onConfirm();
+      setDeleteModal((s) => ({ ...s, open: false }));
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteCr = async () => {
+    if (!cadastroCr?.id) return;
+    const { error } = await supabase.from("qa_cadastro_cr" as any).delete().eq("id", cadastroCr.id);
+    if (error) throw error;
+    toast.success("CR removido.");
+    await refreshArsenal();
+  };
+
+  const deleteCraf = async (id: number) => {
+    const { error } = await supabase.from("qa_crafs" as any).delete().eq("id", id);
+    if (error) throw error;
+    toast.success("CRAF removido.");
+    await refreshArsenal();
+  };
+
+  const deleteGte = async (id: number) => {
+    const { error } = await supabase.from("qa_gtes" as any).delete().eq("id", id);
+    if (error) throw error;
+    toast.success("GTE removido.");
+    await refreshArsenal();
+  };
+
+  const deleteDocCliente = async (id: string) => {
+    const { error } = await supabase.from("qa_documentos_cliente" as any).delete().eq("id", id);
+    if (error) throw error;
+    toast.success("Documento removido.");
+    await refreshArsenal();
+  };
 
   // Resolve via IA CRAFs/GTEs sem catalogo_id (uma vez por arma)
   useEffect(() => {
@@ -100,8 +164,13 @@ export function ArsenalView({
   }, [crafs, gtes, catalogoLoading, resolveCraf]);
 
   const scrollToSection = (target: ArsenalSummaryTarget) => {
+    // Clique no KPI "Status CR" abre o modal de CR (criar ou editar) — controle total.
+    if (target === "cr") {
+      setCrModal({ open: true, item: cadastroCr || undefined });
+      return;
+    }
     const sectionId =
-      target === "alertas" || target === "cr" || target === "crafs"
+      target === "alertas" || target === "crafs"
         ? "arsenal-situacao"
         : target === "municoes" || target === "calibres"
         ? "arsenal-municoes"
@@ -195,7 +264,7 @@ export function ArsenalView({
       if (s) crafSerials.add(s);
       if (g) crafSigmas.add(g);
     });
-    const list: { id: string; category: string; title: string; date: string | null; daysToExpire: number | null }[] = [];
+    const list: { id: string; category: string; title: string; date: string | null; daysToExpire: number | null; onOpen?: () => void; onDelete?: () => void }[] = [];
     if (cadastroCr?.validade_cr) {
       list.push({
         id: `cr-${cadastroCr.id}`,
@@ -203,6 +272,12 @@ export function ArsenalView({
         title: cadastroCr.numero_cr ? `CR ${cadastroCr.numero_cr}` : "Certificado de Registro",
         date: cadastroCr.validade_cr,
         daysToExpire: daysUntil(cadastroCr.validade_cr),
+        onOpen: () => setCrModal({ open: true, item: cadastroCr }),
+        onDelete: () => askDelete(
+          "Excluir CR",
+          `Excluir o CR "${cadastroCr.numero_cr || ""}" deste cliente? Esta ação não pode ser desfeita.`,
+          deleteCr,
+        ),
       });
     }
     crafs.forEach((c: any) => {
@@ -214,6 +289,12 @@ export function ArsenalView({
         title: formatArmaTitulo(c.nome_arma, c.calibre, cat),
         date: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
+        onOpen: () => setCrafModal({ open: true, item: c }),
+        onDelete: () => askDelete(
+          "Excluir CRAF",
+          `Excluir o CRAF de "${formatArmaTitulo(c.nome_arma, c.calibre, cat)}"?`,
+          () => deleteCraf(c.id),
+        ),
       });
     });
     gtes.forEach((g: any) => {
@@ -225,6 +306,12 @@ export function ArsenalView({
         title: formatArmaTitulo(g.nome_arma, g.calibre, cat),
         date: g.data_validade,
         daysToExpire: daysUntil(g.data_validade),
+        onOpen: () => setGteModal({ open: true, item: g }),
+        onDelete: () => askDelete(
+          "Excluir GTE",
+          `Excluir a GTE de "${formatArmaTitulo(g.nome_arma, g.calibre, cat)}"?`,
+          () => deleteGte(g.id),
+        ),
       });
     });
     meusDocs.forEach((d: any) => {
@@ -265,6 +352,11 @@ export function ArsenalView({
         title: titulo,
         date: d.data_validade,
         daysToExpire: daysUntil(d.data_validade),
+        onDelete: () => askDelete(
+          "Excluir documento",
+          `Excluir o documento "${titulo}"? Esta ação não pode ser desfeita.`,
+          () => deleteDocCliente(d.id),
+        ),
       });
     });
     // Ordem da bancada:
@@ -444,6 +536,37 @@ export function ArsenalView({
           toast.success("Armamento removido do arsenal.");
           await onArsenalChanged?.();
         }}
+      />
+
+      {/* Modais de CRUD do Arsenal — controle total a partir da Bancada e dos KPIs */}
+      <CrModal
+        open={crModal.open}
+        onClose={() => setCrModal({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+        cadastro={crModal.item}
+      />
+      <CrafModal
+        open={crafModal.open}
+        onClose={() => setCrafModal({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+        craf={crafModal.item}
+      />
+      <GteModal
+        open={gteModal.open}
+        onClose={() => setGteModal({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+        gte={gteModal.item}
+      />
+      <DeleteConfirm
+        open={deleteModal.open}
+        onClose={() => setDeleteModal((s) => ({ ...s, open: false }))}
+        onConfirm={confirmDelete}
+        title={deleteModal.title}
+        description={deleteModal.desc}
+        loading={deleting}
       />
     </div>
   );

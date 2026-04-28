@@ -1930,6 +1930,7 @@ export default function QAClientesPage() {
                   gtes={gtes}
                   cadastroCr={cadastro}
                   meusDocs={docsCliente}
+                  isAdmin
                   expDocs={[
                     ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
                     ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
