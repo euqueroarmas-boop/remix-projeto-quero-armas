@@ -1927,8 +1927,16 @@ export default function QAClientesPage() {
                   gtes={gtes}
                   cadastroCr={cadastro}
                   meusDocs={docsCliente}
-                  expDocs={[]}
-                  alerts={[]}
+                  expDocs={[
+                    ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
+                    ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
+                    ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
+                  ]}
+                  alerts={[
+                    ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
+                    ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
+                    ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
+                  ].filter((d) => d.days !== null && d.days <= 90)}
                   onOpenAddDoc={() => setTab("docs")}
                   onArsenalChanged={async () => {
                     await loadSubData(c);
