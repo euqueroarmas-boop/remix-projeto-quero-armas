@@ -4953,6 +4953,13 @@ export type Database = {
             foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
             columns: ["cadastro_cr_id"]
             isOneToOne: false
+            referencedRelation: "qa_incident_reconciliation_plan"
+            referencedColumns: ["cadastro_cr_id"]
+          },
+          {
+            foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
             referencedRelation: "qa_senha_gov_incident_audit"
             referencedColumns: ["cadastro_cr_id"]
           },
@@ -5929,6 +5936,30 @@ export type Database = {
           {
             foreignKeyName: "fk_qa_exames__cliente"
             columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_incident_reconciliation_plan: {
+        Row: {
+          cadastro_cr_id: number | null
+          cifrado_em: string | null
+          cliente_atual_cpf: string | null
+          cliente_atual_id: number | null
+          cliente_atual_nome: string | null
+          cliente_correto_cpf: string | null
+          cliente_correto_id: number | null
+          cliente_correto_nome: string | null
+          numero_cr: string | null
+          senha_alterada_em: string | null
+          status_reconciliacao: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_correto_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
