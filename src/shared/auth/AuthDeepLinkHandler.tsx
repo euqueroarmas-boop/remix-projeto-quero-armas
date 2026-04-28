@@ -49,7 +49,7 @@ export function AuthDeepLinkHandler() {
     const target = new URL("/redefinir-senha", window.location.origin);
     if (code) target.searchParams.set("code", code);
     if (tokenHash) target.searchParams.set("token_hash", tokenHash);
-    if (type) target.searchParams.set("type", type || "recovery");
+    if (type && !accessToken) target.searchParams.set("type", type || "recovery");
     if (mode) target.searchParams.set("mode", mode);
     if (reset) target.searchParams.set("reset", reset);
     if (error) target.searchParams.set("error", error);
