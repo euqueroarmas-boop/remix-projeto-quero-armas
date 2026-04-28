@@ -27,6 +27,7 @@ import {
   getCamposObrigatoriosPorCategoria,
   type CategoriaTitular,
 } from "@/shared/quero-armas/clienteSchema";
+import { trackTelemetria } from "@/shared/quero-armas/telemetria";
 
 /* =========================================================================
  * Cadastro do Cliente — Fluxo guiado em 5 etapas
@@ -212,6 +213,21 @@ export default function QACadastroPublicoPage() {
           reason: ambig.reason || "A IA não conseguiu separar CPF e RG com certeza",
           cpfCandidates: ambig.cpfCandidates,
           rgCandidates: ambig.rgCandidates,
+        });
+        trackTelemetria({
+          event_type: "cpf_rg_ambiguity_detected",
+          categoria_titular: extracted.categoria_titular || null,
+          payload: {
+            tipo_documento: id?.tipo_documento || null,
+            cpf_candidato_count: ambig.cpfCandidates.length,
+            rg_candidato_count: ambig.rgCandidates.length,
+            cpf_eq_rg:
+              ambig.cpfCandidates.length > 0 &&
+              ambig.rgCandidates.length > 0 &&
+              ambig.cpfCandidates[0] === ambig.rgCandidates[0],
+            cpf_confidence: typeof id?.cpf_confidence === "number" ? id.cpf_confidence : null,
+            rg_confidence: typeof id?.rg_confidence === "number" ? id.rg_confidence : null,
+          },
         });
       } else {
         setCpfRgAmbiguity(null);
