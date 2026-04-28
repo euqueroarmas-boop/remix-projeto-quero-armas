@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ChevronLeft, Sparkles } from "lucide-react";
+import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff } from "lucide-react";
 import logoWhite from "@/assets/logo-white.png";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 
@@ -10,6 +10,7 @@ export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -243,7 +244,7 @@ export default function QAClienteLoginPage() {
                 &gt;
               </span>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -255,6 +256,15 @@ export default function QAClienteLoginPage() {
                 name="password"
                 className="w-full bg-transparent p-3 text-sm text-white outline-none placeholder:text-zinc-700"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((s) => !s)}
+                className="px-3 text-zinc-500 hover:text-[#c9a961] transition-colors"
+                tabIndex={-1}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
           </div>
 
@@ -460,7 +470,7 @@ export default function QAClienteLoginPage() {
                     &gt;
                   </span>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -472,6 +482,15 @@ export default function QAClienteLoginPage() {
                     name="password"
                     className="w-full bg-transparent p-3.5 text-sm text-white outline-none placeholder:text-zinc-700"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="px-3 text-zinc-500 hover:text-[#c9a961] transition-colors"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
