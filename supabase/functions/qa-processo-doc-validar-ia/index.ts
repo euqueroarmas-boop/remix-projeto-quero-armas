@@ -264,6 +264,34 @@ Deno.serve(async (req) => {
     try { parsed = JSON.parse(args); }
     catch { return json({ error: "Falha ao parsear resposta IA" }, 500); }
 
+    // ===== Reconciliação de "divergências falsas" =====
+    // Se a IA marcou algo como divergência mas o cadastro do cliente está vazio
+    // (campo não pôde ser comparado), NÃO é divergência: é um dado novo extraído.
+    // Move para campos_extraidos e remove da lista de divergências.
+    {
+      const camposIA: Record<string, any> = parsed.campos_extraidos || {};
+      const divsIn: any[] = Array.isArray(parsed.divergencias) ? parsed.divergencias : [];
+      const divsKeep: any[] = [];
+      for (const d of divsIn) {
+        const cadVazio =
+          d?.valor_cadastro == null ||
+          (typeof d.valor_cadastro === "string" && d.valor_cadastro.trim() === "");
+        const docVal = d?.valor_documento;
+        const temDocVal =
+          docVal != null && !(typeof docVal === "string" && docVal.trim() === "");
+        if (cadVazio && temDocVal) {
+          // promove para campo extraído (sem sobrescrever campo já presente)
+          if (camposIA[d.campo] == null || (typeof camposIA[d.campo] === "string" && camposIA[d.campo].trim() === "")) {
+            camposIA[d.campo] = docVal;
+          }
+          continue; // descarta a divergência falsa
+        }
+        divsKeep.push(d);
+      }
+      parsed.campos_extraidos = camposIA;
+      parsed.divergencias = divsKeep;
+    }
+
     // ========== LÓGICA DE DECISÃO ENDURECIDA ==========
     const regra = (doc.regra_validacao ?? {}) as any;
     const exige: string[] = Array.isArray(regra.exige) ? regra.exige : [];
