@@ -3533,6 +3533,7 @@ export type Database = {
           numero2: string | null
           observacao: string | null
           orgao_vinculado: string | null
+          origem: string | null
           pais: string | null
           pais2: string | null
           pis_pasep: string | null
@@ -3541,6 +3542,7 @@ export type Database = {
           sexo: string | null
           status: string | null
           subcategoria: string | null
+          tipo_cliente: string | null
           titulo_eleitor: string | null
           uf_emissor_rg: string | null
           updated_at: string
@@ -3594,6 +3596,7 @@ export type Database = {
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
+          origem?: string | null
           pais?: string | null
           pais2?: string | null
           pis_pasep?: string | null
@@ -3602,6 +3605,7 @@ export type Database = {
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tipo_cliente?: string | null
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
@@ -3655,6 +3659,7 @@ export type Database = {
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
+          origem?: string | null
           pais?: string | null
           pais2?: string | null
           pis_pasep?: string | null
@@ -3663,6 +3668,7 @@ export type Database = {
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tipo_cliente?: string | null
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
@@ -7054,6 +7060,15 @@ export type Database = {
         Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_ensure_cliente_from_auth: {
+        Args: {
+          p_cpf?: string
+          p_email?: string
+          p_nome?: string
+          p_telefone?: string
+        }
+        Returns: Json
+      }
       qa_get_senha_gov_source: {
         Args: { p_cadastro_cr_id?: number; p_cliente_id: number }
         Returns: {
