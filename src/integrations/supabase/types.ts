@@ -4467,8 +4467,8 @@ export type Database = {
       qa_gov_reconciliation_audit: {
         Row: {
           acao: string
-          cadastro_cr_id_anterior: string | null
-          cadastro_cr_id_correto: string | null
+          cadastro_cr_id_anterior: number | null
+          cadastro_cr_id_correto: number | null
           cliente_id_anterior: number | null
           cliente_id_correto: number | null
           cpf_normalizado: string | null
@@ -4486,8 +4486,8 @@ export type Database = {
         }
         Insert: {
           acao: string
-          cadastro_cr_id_anterior?: string | null
-          cadastro_cr_id_correto?: string | null
+          cadastro_cr_id_anterior?: number | null
+          cadastro_cr_id_correto?: number | null
           cliente_id_anterior?: number | null
           cliente_id_correto?: number | null
           cpf_normalizado?: string | null
@@ -4505,8 +4505,8 @@ export type Database = {
         }
         Update: {
           acao?: string
-          cadastro_cr_id_anterior?: string | null
-          cadastro_cr_id_correto?: string | null
+          cadastro_cr_id_anterior?: number | null
+          cadastro_cr_id_correto?: number | null
           cliente_id_anterior?: number | null
           cliente_id_correto?: number | null
           cpf_normalizado?: string | null
@@ -6727,6 +6727,39 @@ export type Database = {
         Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_gov_reconcile_build_plan: {
+        Args: never
+        Returns: {
+          cliente_id_atualmente_vinculado: number
+          cliente_id_correto: number
+          cpf_access: string
+          cr_id_no_sistema: number
+          id_access: string
+          nome_access: string
+          nome_cliente_atualmente_vinculado: string
+          nome_cliente_correto: string
+          numero_cr_access: string
+          senha_plaintext: string
+          tem_senha_sistema: boolean
+        }[]
+      }
+      qa_gov_reconcile_build_plan_safe: {
+        Args: never
+        Returns: {
+          cliente_id_atualmente_vinculado: number
+          cliente_id_correto: number
+          cpf_access: string
+          cr_id_no_sistema: number
+          id_access: string
+          nome_access: string
+          nome_cliente_atualmente_vinculado: string
+          nome_cliente_correto: string
+          numero_cr_access: string
+          senha_plaintext: string
+          tem_senha_sistema: boolean
+        }[]
+      }
+      qa_gov_reconcile_realign_atomic: { Args: never; Returns: Json }
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
