@@ -24,6 +24,7 @@ const DashboardAtividadesRecentes = lazy(() => import("@/components/quero-armas/
 const DashboardFunilOperacional = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
 const DashboardSlaClientesNovos = lazy(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"));
 const TelemetriaCadastroCards = lazy(() => import("@/components/quero-armas/dashboard/TelemetriaCadastroCards"));
+const DashboardNovosCadastrosRecebidos = lazy(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"));
 
 interface Stats {
   documentos: number;
@@ -400,6 +401,10 @@ export default function QADashboardPage() {
       {/* Widgets pesados — só montam DEPOIS que a parte estática foi pintada (mountHeavy) */}
       {mountHeavy && (
         <>
+          <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
+            <DashboardNovosCadastrosRecebidos />
+          </Suspense>
+
           <Suspense fallback={<div className="qa-card p-6 flex justify-center"><div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" /></div>}>
             <DashboardPrazosRecursais />
           </Suspense>
