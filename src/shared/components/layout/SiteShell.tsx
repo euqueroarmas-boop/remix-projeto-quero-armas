@@ -26,9 +26,12 @@ import {
   LayoutDashboard,
   LogIn,
   ChevronRight,
+  GraduationCap,
+  Clock,
 } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
 import { BackButton } from '@/shared/components/BackButton';
+import { coursesCatalog, courseCategories } from '@/shared/data/coursesCatalog';
 
 interface SiteShellProps {
   children: ReactNode;
