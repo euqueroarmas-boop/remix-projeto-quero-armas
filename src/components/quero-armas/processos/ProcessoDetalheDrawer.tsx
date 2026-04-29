@@ -224,12 +224,24 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
-  const baixarArquivo = async (key: string | null) => {
+  const baixarArquivo = async (key: string | null, modo: "visualizar" | "baixar" = "visualizar") => {
     if (!key) return;
     try {
-      const { data, error } = await supabase.storage.from("qa-processo-docs").createSignedUrl(key, 300);
+      const opts = modo === "baixar"
+        ? { download: (key.split("/").pop() || "documento") }
+        : undefined;
+      const { data, error } = await supabase.storage
+        .from("qa-processo-docs")
+        .createSignedUrl(key, 300, opts as any);
       if (error) throw error;
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      if (modo === "baixar") {
+        const a = document.createElement("a");
+        a.href = data.signedUrl;
+        a.rel = "noopener noreferrer";
+        a.click();
+      } else {
+        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      }
     } catch (e: any) {
       toast.error("Erro ao gerar link: " + (e?.message ?? "desconhecido"));
     }
