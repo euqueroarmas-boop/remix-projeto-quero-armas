@@ -460,6 +460,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                 );
               })}
             </div>
+            )
           ) : tab === "historico" ? (
             <div className="space-y-2">
               {eventos.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">SEM EVENTOS REGISTRADOS</div>}
