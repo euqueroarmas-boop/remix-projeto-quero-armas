@@ -461,6 +461,13 @@ export type Database = {
             foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
             columns: ["qa_cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -470,6 +477,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cliente_auth_links__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_cliente_auth_links__qa_cliente"
@@ -2493,6 +2507,13 @@ export type Database = {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -3150,6 +3171,13 @@ export type Database = {
             foreignKeyName: "fk_qa_casos__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_casos__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -3159,6 +3187,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_casos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_casos_cliente_id_fkey"
@@ -3646,6 +3681,13 @@ export type Database = {
             foreignKeyName: "fk_qa_crafs__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_crafs__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -3952,6 +3994,13 @@ export type Database = {
             foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
             columns: ["qa_cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -3968,6 +4017,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_documentos_cliente_qa_cliente_id_fkey"
@@ -4198,6 +4254,13 @@ export type Database = {
             foreignKeyName: "fk_qa_exames__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -4297,6 +4360,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_filiacoes__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_qa_filiacoes__cliente"
@@ -4454,6 +4524,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
@@ -5341,6 +5418,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_qa_senha_gov__cliente"
@@ -6535,10 +6619,37 @@ export type Database = {
             foreignKeyName: "fk_qa_exames__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
         ]
+      }
+      qa_gov_password_reconciliation_by_cpf: {
+        Row: {
+          acao_sugerida: string | null
+          cliente_id: number | null
+          cpf_norm: string | null
+          cr_access_norm: string | null
+          cr_access_raw: string | null
+          cr_id_alvo: number | null
+          email_access: string | null
+          email_match: boolean | null
+          email_supabase: string | null
+          nome_access: string | null
+          nome_supabase: string | null
+          status: string | null
+          tem_senha_access: boolean | null
+          tem_senha_sistema: boolean | null
+          total_crs_ativos: number | null
+        }
+        Relationships: []
       }
       qa_gov_password_reconciliation_view: {
         Row: {
@@ -6569,6 +6680,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual_do_cr"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
@@ -6605,6 +6723,13 @@ export type Database = {
             foreignKeyName: "fk_qa_senha_gov__cliente"
             columns: ["cliente_correto_id"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_correto_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -6614,6 +6739,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_atual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
@@ -6646,6 +6778,13 @@ export type Database = {
             foreignKeyName: "fk_qa_senha_gov__cliente"
             columns: ["cliente_id_migracao"]
             isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id_migracao"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_view"
             referencedColumns: ["cliente_id_sugerido"]
           },
@@ -6655,6 +6794,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
@@ -6727,6 +6873,14 @@ export type Database = {
         Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_gov_recon_cpf_summary: {
+        Args: never
+        Returns: {
+          acao_sugerida: string
+          status: string
+          total: number
+        }[]
+      }
       qa_gov_reconcile_build_plan: {
         Args: never
         Returns: {
