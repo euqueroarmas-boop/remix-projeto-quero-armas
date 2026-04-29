@@ -322,6 +322,17 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
           {loading ? (
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
+            aguardandoPagto ? (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-blue-800">
+                  AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO
+                </div>
+                <p className="mt-2 text-sm text-blue-900/90 leading-relaxed">
+                  Após a confirmação do pagamento, liberaremos automaticamente o checklist documental
+                  obrigatório deste processo. Enquanto isso, você não precisa enviar nenhum documento.
+                </p>
+              </div>
+            ) : (
             <div className="space-y-3">
               <CondicaoProfissionalCard
                 condicao={processo?.condicao_profissional ?? null}
