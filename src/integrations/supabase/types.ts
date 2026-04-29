@@ -7271,6 +7271,7 @@ export type Database = {
           itens_atualizados: number
         }[]
       }
+      qa_test_fase42_run: { Args: never; Returns: Json }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
