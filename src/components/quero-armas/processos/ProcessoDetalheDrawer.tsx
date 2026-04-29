@@ -236,6 +236,39 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   };
 
   const [savingCond, setSavingCond] = useState<string | null>(null);
+  const [confirmandoPagto, setConfirmandoPagto] = useState(false);
+
+  const confirmarPagamentoManual = async () => {
+    if (!processo) return;
+    const ok = window.confirm(
+      "Confirmar manualmente o pagamento deste processo? Após confirmar, o checklist documental será liberado ao cliente."
+    );
+    if (!ok) return;
+    setConfirmandoPagto(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-confirmar-pagamento`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ processo_id: processo.id }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data?.error || "Falha ao confirmar pagamento");
+      if (data?.ja_estava_confirmado) {
+        toast.message("Pagamento já estava confirmado.");
+      } else {
+        toast.success("Pagamento confirmado manualmente. Checklist documental liberado.");
+      }
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao confirmar pagamento: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setConfirmandoPagto(false);
+    }
+  };
+
   const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado") => {
     if (!processo) return;
     setSavingCond(cond);
