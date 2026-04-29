@@ -123,6 +123,8 @@ Deno.serve(async (req) => {
     // ---------- APPLY ----------
     if (action === "apply") {
       const dryRun = Boolean(body?.dry_run);
+      const limit = Number.isFinite(Number(body?.limit)) ? Math.max(1, Math.min(200, Number(body?.limit))) : 200;
+      const offset = Number.isFinite(Number(body?.offset)) ? Math.max(0, Number(body?.offset)) : 0;
       const key = await loadKey();
 
       // Carrega plano seguro
@@ -130,7 +132,9 @@ Deno.serve(async (req) => {
         .from("qa_gov_password_reconciliation_by_cpf")
         .select("cpf_norm, nome_supabase, cliente_id, cr_id_alvo, email_match, status, acao_sugerida")
         .eq("acao_sugerida", "aplicar_automaticamente")
-        .eq("status", "cpf_match_unico_seguro");
+        .eq("status", "cpf_match_unico_seguro")
+        .order("cliente_id", { ascending: true })
+        .range(offset, offset + limit - 1);
       if (planoErr) return json({ error: planoErr.message }, 500);
 
       // Mapa CPF -> senha plaintext (carregado server-side, NUNCA exposto na resposta)
@@ -299,6 +303,9 @@ Deno.serve(async (req) => {
       return json({
         ok: true,
         dry_run: dryRun,
+        offset,
+        limit,
+        batch_size: results.length,
         applied,
         skipped,
         errors_count: errors.length,
