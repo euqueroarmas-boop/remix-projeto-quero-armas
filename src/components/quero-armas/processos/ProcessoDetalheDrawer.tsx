@@ -361,9 +361,24 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                   AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO
                 </div>
                 <p className="mt-2 text-sm text-blue-900/90 leading-relaxed">
-                  Após a confirmação do pagamento, liberaremos automaticamente o checklist documental
-                  obrigatório deste processo. Enquanto isso, você não precisa enviar nenhum documento.
+                  Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente.
+                  Após a confirmação, o checklist documental será liberado.
                 </p>
+                {adminMode && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={confirmarPagamentoManual}
+                      disabled={confirmandoPagto}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white text-xs font-bold uppercase tracking-wider px-4 py-2"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      {confirmandoPagto ? "Confirmando..." : "Confirmar pagamento manualmente"}
+                    </button>
+                    <span className="text-[10px] uppercase tracking-wider text-blue-700/70 self-center">
+                      Ação restrita à Equipe Operacional
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
             <div className="space-y-3">
