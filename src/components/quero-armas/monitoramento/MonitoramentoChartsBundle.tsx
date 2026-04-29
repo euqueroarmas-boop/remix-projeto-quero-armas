@@ -163,7 +163,8 @@ export default function MonitoramentoChartsBundle({ enabled }: Props) {
         promises.push(
           supabase.from("qa_geracoes_pecas" as any)
             .select("id, titulo_geracao, tipo_peca, created_at, status_revisao")
-            .order("created_at", { ascending: false }).limit(6),
+            .order("created_at", { ascending: false }).limit(6)
+            .then((r) => r),
         );
       } else promises.push(Promise.resolve({ data: [] }));
       if (needRecentDocs) {
@@ -171,7 +172,8 @@ export default function MonitoramentoChartsBundle({ enabled }: Props) {
           supabase.from("qa_documentos_conhecimento" as any)
             .select("id, titulo, tipo_documento, created_at, status_processamento")
             .eq("ativo", true).eq("papel_documento", "aprendizado")
-            .order("created_at", { ascending: false }).limit(6),
+            .order("created_at", { ascending: false }).limit(6)
+            .then((r) => r),
         );
       } else promises.push(Promise.resolve({ data: [] }));
 
