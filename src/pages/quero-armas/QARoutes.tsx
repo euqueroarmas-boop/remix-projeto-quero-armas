@@ -44,6 +44,7 @@ const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
 const LpDefesaPessoalPosse = lazyRetry(() => import("@/pages/LpDefesaPessoalPosse"), "LpDefesaPessoalPosse");
 const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
 const LpAtividadesAvulsas = lazyRetry(() => import("@/pages/LpAtividadesAvulsas"), "LpAtividadesAvulsas");
+const CursoPage = lazyRetry(() => import("@/pages/cursos/CursoPage"), "CursoPage");
 
 export default function QARoutes() {
   return (
@@ -58,6 +59,7 @@ export default function QARoutes() {
         <Route path="lp/defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
         <Route path="lp/cac-cr" element={<LpCacCr />} />
         <Route path="lp/atividades-avulsas" element={<LpAtividadesAvulsas />} />
+        <Route path="cursos/:slug" element={<CursoPage />} />
         <Route path="login" element={<QALoginPage />} />
         <Route path="redefinir-senha" element={<QARedefinirSenhaPage />} />
         <Route path="auth/callback" element={<QARedefinirSenhaPage />} />
