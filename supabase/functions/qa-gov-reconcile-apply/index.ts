@@ -138,10 +138,17 @@ Deno.serve(async (req) => {
     if (planErr) return json({ error: "Falha ao montar plano: " + planErr.message }, 500);
     const plan = (planRaw || []) as PlanRow[];
 
+    // Plano SAFE (sub-conjunto sem CRs bloqueadores) — usado por apply_atomic
+    const { data: safeRaw, error: safeErr } = await admin.rpc("qa_gov_reconcile_build_plan_safe");
+    if (safeErr) return json({ error: "Falha ao montar plano safe: " + safeErr.message }, 500);
+    const planSafe = (safeRaw || []) as PlanRow[];
+
     if (mode === "dry_run") {
       return json({
         mode: "dry_run",
         total_planejado: plan.length,
+        total_safe: planSafe.length,
+        total_bloqueados: plan.length - planSafe.length,
         amostra: plan.slice(0, 5).map((p) => ({
           cr: p.numero_cr_access,
           cr_id: p.cr_id_no_sistema,
@@ -150,7 +157,7 @@ Deno.serve(async (req) => {
           tem_senha_sistema: p.tem_senha_sistema,
           tem_senha_access: !!p.senha_plaintext,
         })),
-        proximo_passo: 'Para aplicar, chame com { mode: "apply", confirm: "RECONCILIAR_46" }',
+        proximo_passo: 'Para aplicar com swap atômico (apenas casos seguros), chame com { mode: "apply_atomic", confirm: "RECONCILIAR_46" }',
       });
     }
 
@@ -163,7 +170,7 @@ Deno.serve(async (req) => {
       }
       // capturar os CRs ANTES de mover (para sabermos snapshot original)
       const before_map = new Map<number, { cliente_id: number; ct: Uint8Array | null; iv: Uint8Array | null; tag: Uint8Array | null }>();
-      for (const r of plan) {
+      for (const r of planSafe) {
         const { data: b } = await admin
           .from("qa_cadastro_cr")
           .select("id, cliente_id, senha_gov_encrypted, senha_gov_iv, senha_gov_tag")
@@ -191,7 +198,7 @@ Deno.serve(async (req) => {
       let aplicados2 = 0;
       let erros2 = 0;
 
-      for (const row of plan) {
+      for (const row of planSafe) {
         try {
           const before = before_map.get(row.cr_id_no_sistema);
           if (!before) throw new Error("snapshot anterior não encontrado");
@@ -257,7 +264,9 @@ Deno.serve(async (req) => {
       return json({
         mode: "apply_atomic",
         realign_rpc: realignRes,
-        total_planejado: plan.length,
+        total_planejado_geral: plan.length,
+        total_aplicavel_safe: planSafe.length,
+        total_bloqueados_revisao_manual: plan.length - planSafe.length,
         senhas_aplicadas: aplicados2,
         senhas_erros: erros2,
         results: results2,
