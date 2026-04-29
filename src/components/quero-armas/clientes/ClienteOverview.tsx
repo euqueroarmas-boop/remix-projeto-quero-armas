@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
+import ClienteArsenalReview from "@/components/quero-armas/clientes/ClienteArsenalReview";
 
 interface Props {
   cliente: any;
@@ -469,6 +470,13 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       {/* ═══ DOCUMENTS & EXPIRATIONS ═══ */}
       <div className="qa-card p-4 md:p-5">
         <SectionHeader icon={Calendar} title="Documentos e Validades" color="hsl(262 60% 55%)" action="Gerenciar" onAction={() => onNavigate("cr")} />
+      </div>
+
+      {/* ═══ FASE 5 — ARSENAL REVIEW (admin) ═══ */}
+      {cliente?.id && <ClienteArsenalReview qaClienteId={cliente.id} />}
+
+      <div className="qa-card p-4 md:p-5">
+        <SectionHeader icon={Calendar} title="Documentos e Validades (detalhe)" color="hsl(262 60% 55%)" action="Gerenciar" onAction={() => onNavigate("cr")} />
         {analysis.expDocs.length === 0 ? (
           <div className="text-center py-8 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum documento com validade cadastrado.</div>
         ) : (
