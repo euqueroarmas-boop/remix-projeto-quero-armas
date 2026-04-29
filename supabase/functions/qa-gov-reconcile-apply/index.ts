@@ -154,7 +154,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (mode !== "apply") return json({ error: "mode inválido" }, 400);
+    if (mode !== "apply" && mode !== "apply_atomic") {
+      return json({ error: "mode inválido (use dry_run|apply|apply_atomic)" }, 400);
+    }
     if (mode === "apply_atomic") {
       if (confirm !== "RECONCILIAR_46") {
         return json({ error: 'confirm deve ser exatamente "RECONCILIAR_46"' }, 400);
