@@ -9,7 +9,7 @@ import { CourseTimeline } from './CourseTimeline';
 import { CourseLocationCard } from './CourseLocationCard';
 import { CourseFaq } from './CourseFaq';
 import { CourseFinalCta } from './CourseFinalCta';
-import { AlertTriangle, Users } from 'lucide-react';
+import { AlertTriangle, Users, Target, ShieldCheck, Clock, Award } from 'lucide-react';
 
 interface CourseLandingPageProps {
   course: Course;
@@ -51,6 +51,33 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
       />
 
       <CourseHero course={course} />
+
+      {/* Stats strip — credibilidade & ritmo visual */}
+      <section className="border-b border-border/60 bg-surface-overlay/40">
+        <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-10">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: Clock, label: 'Carga horária', value: '8h' },
+              { icon: Target, label: 'Foco', value: 'Fundamentos' },
+              { icon: ShieldCheck, label: 'Ambiente', value: 'Controlado' },
+              { icon: Award, label: 'Nível', value: `Inicial · ${course.level}` },
+            ].map(({ icon: Icon, label, value }) => (
+              <div
+                key={label}
+                className="flex items-center gap-4 border-l-2 border-accent/40 pl-4"
+              >
+                <Icon className="size-6 shrink-0 text-accent" />
+                <div>
+                  <p className="font-heading text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+                    {label}
+                  </p>
+                  <p className="font-heading text-lg uppercase text-foreground">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <CourseSection
         id="conscientizacao"
