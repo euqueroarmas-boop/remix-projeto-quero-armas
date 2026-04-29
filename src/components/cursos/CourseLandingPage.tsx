@@ -11,7 +11,7 @@ import { CourseFaq } from './CourseFaq';
 import { CourseFinalCta } from './CourseFinalCta';
 import { CoursePricing } from './CoursePricing';
 import { CourseFieldStrip } from './CourseFieldStrip';
-import { AlertTriangle, Users, Target, ShieldCheck, Clock, Award } from 'lucide-react';
+import { AlertTriangle, Target, ShieldCheck, Clock, Award } from 'lucide-react';
 
 interface CourseLandingPageProps {
   course: Course;
