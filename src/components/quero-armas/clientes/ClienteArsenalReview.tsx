@@ -1,5 +1,5 @@
 /**
- * FASE 5 — Painel administrativo de revisão de arsenal.
+ * FASE 5 + FASE 7 — Painel administrativo de revisão de arsenal.
  *
  * Lê a view `qa_cliente_armas` (CRAFs + manuais/IA consolidados) e permite:
  *  - Visualizar tudo separado por fonte (CRAF · MANUAL · IA/OCR).
@@ -7,8 +7,14 @@
  *  - Marcar como revisado quando `needs_review = true`.
  *
  * Armas com `fonte = craf` são SOMENTE LEITURA nesta fase (não toca em qa_crafs).
+ *
+ * FASE 7:
+ *  - Resumo no topo (total / CRAF / Manual-IA / revisão).
+ *  - Filtros: TODAS · PRECISA REVISÃO · MANUAL/IA · CRAF · SINARM · SIGMA.
+ *  - Armas com needs_review aparecem no topo, com card alaranjado e botão destacado.
+ *  - Badges padronizados (FONTE / STATUS / SISTEMA).
  */
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Crosshair, Edit, Lock, AlertTriangle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -43,11 +49,45 @@ function FonteBadge({ fonte }: { fonte: string }) {
   );
 }
 
+function StatusBadge({ readonly, needsReview }: { readonly: boolean; needsReview: boolean }) {
+  if (needsReview) {
+    return (
+      <span
+        className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1"
+        style={{ background: "hsl(38 92% 50% / 0.18)", color: "hsl(28 92% 32%)" }}
+      >
+        <AlertTriangle className="h-2.5 w-2.5" /> PRECISA REVISÃO
+      </span>
+    );
+  }
+  if (readonly) {
+    return (
+      <span
+        className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+        style={{ background: "hsl(220 13% 92%)", color: "hsl(220 10% 35%)" }}
+      >
+        SOMENTE LEITURA
+      </span>
+    );
+  }
+  return (
+    <span
+      className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}
+    >
+      EDITÁVEL
+    </span>
+  );
+}
+
+type FiltroKey = "todas" | "revisao" | "manual_ia" | "craf" | "sinarm" | "sigma";
+
 export default function ClienteArsenalReview({ qaClienteId }: Props) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [filtro, setFiltro] = useState<FiltroKey>("todas");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,6 +132,35 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
   const totalCraf = rows.filter((r) => r.fonte === "craf").length;
   const totalManual = rows.filter((r) => r.fonte === "manual" || r.fonte === "ocr" || r.fonte === "ia").length;
   const totalReview = rows.filter((r) => r.needs_review).length;
+  const total = rows.length;
+
+  const filtered = useMemo(() => {
+    let arr = rows;
+    switch (filtro) {
+      case "revisao":   arr = rows.filter((r) => r.needs_review); break;
+      case "manual_ia": arr = rows.filter((r) => r.fonte === "manual" || r.fonte === "ocr" || r.fonte === "ia"); break;
+      case "craf":      arr = rows.filter((r) => r.fonte === "craf"); break;
+      case "sinarm":    arr = rows.filter((r) => (r.sistema || "").toUpperCase() === "SINARM"); break;
+      case "sigma":     arr = rows.filter((r) => (r.sistema || "").toUpperCase() === "SIGMA"); break;
+      default: break;
+    }
+    // Ordenação: needs_review primeiro, depois mais recentes
+    return [...arr].sort((a, b) => {
+      if (!!b.needs_review !== !!a.needs_review) return b.needs_review ? 1 : -1;
+      const da = a.created_at ? +new Date(a.created_at) : 0;
+      const db = b.created_at ? +new Date(b.created_at) : 0;
+      return db - da;
+    });
+  }, [rows, filtro]);
+
+  const FILTROS: { key: FiltroKey; label: string; count: number }[] = [
+    { key: "todas",     label: "TODAS",            count: total },
+    { key: "revisao",   label: "PRECISA REVISÃO",  count: totalReview },
+    { key: "manual_ia", label: "MANUAL/IA",        count: totalManual },
+    { key: "craf",      label: "CRAF",             count: totalCraf },
+    { key: "sinarm",    label: "SINARM",           count: rows.filter((r) => (r.sistema || "").toUpperCase() === "SINARM").length },
+    { key: "sigma",     label: "SIGMA",            count: rows.filter((r) => (r.sistema || "").toUpperCase() === "SIGMA").length },
+  ];
 
   return (
     <div className="qa-card p-4 md:p-5">
@@ -109,33 +178,72 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-3 text-[10px]">
-        <span className="px-2 py-0.5 rounded-full font-bold" style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(220 80% 40%)" }}>
-          {totalCraf} CRAF (somente leitura)
-        </span>
-        <span className="px-2 py-0.5 rounded-full font-bold" style={{ background: "hsl(262 60% 55% / 0.10)", color: "hsl(262 60% 40%)" }}>
-          {totalManual} Manual/IA (editável)
-        </span>
-        {totalReview > 0 && (
-          <span className="px-2 py-0.5 rounded-full font-bold" style={{ background: "hsl(38 92% 50% / 0.15)", color: "hsl(28 92% 35%)" }}>
-            {totalReview} PRECISA REVISÃO
-          </span>
-        )}
+      {/* FASE 7 — Resumo */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-3 text-[10px]">
+        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total</div>
+          <div className="text-[14px] font-bold text-slate-800">{total}</div>
+        </div>
+        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">CRAF (R/O)</div>
+          <div className="text-[14px] font-bold" style={{ color: "hsl(220 80% 40%)" }}>{totalCraf}</div>
+        </div>
+        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">Manual/IA</div>
+          <div className="text-[14px] font-bold" style={{ color: "hsl(262 60% 40%)" }}>{totalManual}</div>
+        </div>
+        <div
+          className="rounded-md border px-2 py-1.5"
+          style={{
+            background: totalReview > 0 ? "hsl(38 92% 50% / 0.10)" : "white",
+            borderColor: totalReview > 0 ? "hsl(38 92% 50% / 0.40)" : "hsl(220 13% 90%)",
+          }}
+        >
+          <div className="text-[9px] uppercase tracking-wider text-slate-500">Revisão</div>
+          <div className="text-[14px] font-bold" style={{ color: totalReview > 0 ? "hsl(28 92% 32%)" : "hsl(220 10% 50%)" }}>
+            {totalReview}
+          </div>
+        </div>
+      </div>
+
+      {/* FASE 7 — Filtros */}
+      <div className="flex flex-wrap gap-1 mb-3">
+        {FILTROS.map((f) => {
+          const active = filtro === f.key;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFiltro(f.key)}
+              className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition ${
+                active
+                  ? "bg-slate-900 text-white border-slate-900"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+              }`}
+            >
+              {f.label} <span className={active ? "opacity-80" : "text-slate-400"}>({f.count})</span>
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
         <div className="text-center py-6 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>Carregando arsenal…</div>
-      ) : rows.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="text-center py-6 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>Nenhuma arma cadastrada.</div>
       ) : (
         <div className="space-y-1.5">
-          {rows.map((r) => {
+          {filtered.map((r) => {
             const readonly = r.fonte === "craf";
             const labelArma = [r.marca, r.modelo, r.calibre].filter(Boolean).join(" ").toUpperCase() || "ARMA SEM IDENTIFICAÇÃO";
             return (
               <div
                 key={r.arma_uid}
-                className={`flex items-start gap-2.5 px-3 py-2 rounded-lg border ${r.needs_review ? "bg-amber-50/60 border-amber-200/70" : "bg-white border-slate-200"}`}
+                className={`flex items-start gap-2.5 px-3 py-2 rounded-lg border ${
+                  r.needs_review
+                    ? "bg-amber-50/60 border-amber-300 ring-1 ring-amber-200"
+                    : "bg-white border-slate-200"
+                }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -145,11 +253,7 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
                         {r.sistema}
                       </span>
                     )}
-                    {r.needs_review && (
-                      <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider flex items-center gap-1" style={{ background: "hsl(38 92% 50% / 0.15)", color: "hsl(28 92% 35%)" }}>
-                        <AlertTriangle className="h-2.5 w-2.5" /> PRECISA REVISÃO
-                      </span>
-                    )}
+                    <StatusBadge readonly={readonly} needsReview={!!r.needs_review} />
                   </div>
                   <div className="text-[12px] font-semibold mt-1" style={{ color: "hsl(220 20% 18%)" }}>
                     {labelArma}
@@ -171,8 +275,16 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
                       <Lock className="h-3 w-3" /> R/O
                     </span>
                   ) : (
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={() => handleEdit(r)}>
-                      <Edit className="h-3 w-3 mr-1" /> EDITAR
+                    <Button
+                      size="sm"
+                      variant={r.needs_review ? "default" : "outline"}
+                      className={`h-7 px-2 text-[10px] ${
+                        r.needs_review ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" : ""
+                      }`}
+                      onClick={() => handleEdit(r)}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      {r.needs_review ? "REVISAR" : "EDITAR"}
                     </Button>
                   )}
                 </div>
