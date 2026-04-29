@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ArmaHistoricoBlock from "@/components/quero-armas/arsenal/ArmaHistoricoBlock";
 
 interface Props {
   open: boolean;
@@ -37,6 +38,7 @@ const STATUS_DOC_OPTIONS = [
 
 export default function ArmaManualEditModal({ open, onOpenChange, arma, onSaved }: Props) {
   const [saving, setSaving] = useState(false);
+  const [historyKey, setHistoryKey] = useState(0);
   const [sistema, setSistema] = useState<"SINARM" | "SIGMA">("SINARM");
   const [tipo, setTipo] = useState("");
   const [marca, setMarca] = useState("");
@@ -101,8 +103,9 @@ export default function ArmaManualEditModal({ open, onOpenChange, arma, onSaved 
         .update(payload)
         .eq("id", arma.id);
       if (error) throw error;
-      // TODO[FASE 6]: registrar histórico/auditoria de edição de arma.
-      console.log("[ArmaManualEditModal] arma editada", { id: arma.id, payload });
+      // FASE 6 — auditoria é gravada automaticamente via trigger no banco
+      // (qa_cliente_armas_manual_audit_trg). Apenas atualiza o histórico exibido.
+      setHistoryKey((k) => k + 1);
       return true;
     } catch (e: any) {
       console.error("[ArmaManualEditModal] erro:", e);
@@ -230,6 +233,9 @@ export default function ArmaManualEditModal({ open, onOpenChange, arma, onSaved 
             <div className="rounded-lg border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-800">
               Esta arma está marcada como <b>PRECISA REVISÃO</b>. Confirme modelo e calibre, depois clique em <b>Marcar como revisado</b>.
             </div>
+          )}
+          {arma?.id && (
+            <ArmaHistoricoBlock armaManualId={arma.id} refreshKey={historyKey} />
           )}
         </div>
         <DialogFooter className="gap-2 flex-wrap">
