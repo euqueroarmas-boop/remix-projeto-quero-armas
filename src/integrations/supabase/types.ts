@@ -6743,6 +6743,22 @@ export type Database = {
           tem_senha_sistema: boolean
         }[]
       }
+      qa_gov_reconcile_build_plan_safe: {
+        Args: never
+        Returns: {
+          cliente_id_atualmente_vinculado: number
+          cliente_id_correto: number
+          cpf_access: string
+          cr_id_no_sistema: number
+          id_access: string
+          nome_access: string
+          nome_cliente_atualmente_vinculado: string
+          nome_cliente_correto: string
+          numero_cr_access: string
+          senha_plaintext: string
+          tem_senha_sistema: boolean
+        }[]
+      }
       qa_gov_reconcile_realign_atomic: { Args: never; Returns: Json }
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
