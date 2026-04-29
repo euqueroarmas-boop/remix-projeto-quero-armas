@@ -20,16 +20,22 @@ export const CourseSection = ({
   return (
     <section
       id={id}
-      className={`border-b border-border/60 ${tone === 'muted' ? 'bg-surface-overlay/40' : 'bg-background'}`}
+      className={`relative border-b border-border/60 ${tone === 'muted' ? 'bg-surface-overlay/40' : 'bg-background'}`}
     >
-      <div className="container mx-auto max-w-5xl px-4 py-14 sm:py-20">
+      <div className="container mx-auto max-w-6xl px-4 py-16 sm:py-24">
         {eyebrow && (
-          <p className="mb-3 font-heading text-xs uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="h-px w-8 bg-accent/60" />
+            <p className="font-heading text-xs uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
+          </div>
         )}
-        <h2 className="mb-4 font-heading text-2xl uppercase leading-tight tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+        <h2 className="mb-4 max-w-4xl font-heading text-2xl uppercase leading-[1.1] tracking-tight text-foreground sm:text-3xl lg:text-4xl">
           {title}
         </h2>
-        {description && <p className="mb-8 max-w-3xl text-base text-muted-foreground sm:text-lg">{description}</p>}
+        {description && (
+          <p className="mb-10 max-w-3xl text-base text-muted-foreground sm:text-lg">{description}</p>
+        )}
+        {!description && <div className="mb-10" />}
         {children}
       </div>
     </section>

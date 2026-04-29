@@ -9,10 +9,14 @@ interface CourseFaqProps {
 
 export const CourseFaq = ({ items }: CourseFaqProps) => {
   return (
-    <Accordion type="single" collapsible className="w-full">
+    <Accordion type="single" collapsible className="mx-auto w-full max-w-3xl space-y-3">
       {items.map((item, idx) => (
-        <AccordionItem key={idx} value={`item-${idx}`} className="border-border/60">
-          <AccordionTrigger className="text-left font-heading text-base uppercase tracking-wide text-foreground hover:text-accent sm:text-lg">
+        <AccordionItem
+          key={idx}
+          value={`item-${idx}`}
+          className="overflow-hidden rounded-md border border-border/60 bg-surface-elevated/40 px-5 transition-colors data-[state=open]:border-accent/50 data-[state=open]:bg-surface-elevated/70"
+        >
+          <AccordionTrigger className="text-left font-heading text-sm uppercase tracking-wide text-foreground hover:text-accent hover:no-underline sm:text-base">
             {item.question}
           </AccordionTrigger>
           <AccordionContent className="text-sm text-muted-foreground sm:text-base">
