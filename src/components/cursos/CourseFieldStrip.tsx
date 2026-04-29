@@ -57,21 +57,21 @@ export const CourseFieldStrip = ({ course }: CourseFieldStripProps) => {
         </div>
 
         <div>
-          <ol className="space-y-3">
+          <ol className="space-y-5 border-l border-border/40 pl-6">
             {fieldStrip.bullets.map((b, i) => (
-              <li
-                key={b}
-                className="group flex items-start gap-4 rounded-md border border-border/50 bg-surface-elevated/40 p-4 transition-colors hover:border-accent/50"
-              >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10 font-heading text-xs text-accent">
+              <li key={b} className="relative flex items-start gap-4">
+                <span className="absolute -left-[29px] flex size-3 items-center justify-center">
+                  <span className="size-2 rounded-full bg-accent shadow-[0_0_0_3px_hsl(var(--background))]" />
+                </span>
+                <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent/80 pt-0.5">
                   {String(i + 1).padStart(2, '0')}
                 </span>
-                <span className="pt-1 text-sm text-foreground/90 sm:text-base">{b}</span>
+                <span className="text-base leading-relaxed text-foreground/90">{b}</span>
               </li>
             ))}
           </ol>
 
-          <div className="mt-6 flex items-start gap-3 rounded-md border border-border/50 bg-surface-overlay/60 p-4">
+          <div className="mt-8 flex items-start gap-3 border-t border-border/40 pt-5">
             <ShieldAlert className="mt-0.5 size-4 shrink-0 text-accent" />
             <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
               {fieldStrip.legalNote}

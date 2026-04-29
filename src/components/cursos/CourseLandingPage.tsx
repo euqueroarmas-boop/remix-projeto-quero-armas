@@ -11,7 +11,7 @@ import { CourseFaq } from './CourseFaq';
 import { CourseFinalCta } from './CourseFinalCta';
 import { CoursePricing } from './CoursePricing';
 import { CourseFieldStrip } from './CourseFieldStrip';
-import { AlertTriangle, Users, Target, ShieldCheck, Clock, Award } from 'lucide-react';
+import { AlertTriangle, Target, ShieldCheck, Clock, Award } from 'lucide-react';
 
 interface CourseLandingPageProps {
   course: Course;
@@ -106,17 +106,17 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
         eyebrow="Público"
         title={`Para quem é o ${course.title}?`}
       >
-        <div className="grid gap-3 sm:grid-cols-2">
+        <ul className="divide-y divide-border/40 border-y border-border/40">
           {course.targetAudience.map((item) => (
-            <div
+            <li
               key={item}
-              className="flex items-start gap-3 rounded-md border border-border/50 bg-surface-elevated/40 p-4 transition-colors hover:border-accent/50"
+              className="flex items-center gap-4 py-4 text-base text-foreground/90 sm:text-lg"
             >
-              <Users className="mt-0.5 size-5 shrink-0 text-accent" />
-              <span className="text-sm text-foreground/90 sm:text-base">{item}</span>
-            </div>
+              <span className="size-1.5 shrink-0 rounded-full bg-accent" />
+              <span>{item}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </CourseSection>
 
       <CourseSection
