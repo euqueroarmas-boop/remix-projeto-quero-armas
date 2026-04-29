@@ -4556,21 +4556,6 @@ export type Database = {
           },
         ]
       }
-      qa_fase10_1_e2e_report: {
-        Row: {
-          chave: string
-          valor: string | null
-        }
-        Insert: {
-          chave: string
-          valor?: string | null
-        }
-        Update: {
-          chave?: string
-          valor?: string | null
-        }
-        Relationships: []
-      }
       qa_feedback_geracoes: {
         Row: {
           aprovada_como_modelo: boolean
