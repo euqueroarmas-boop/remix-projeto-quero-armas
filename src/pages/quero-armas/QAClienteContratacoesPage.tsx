@@ -256,7 +256,7 @@ export default function QAClienteContratacoesPage() {
                           <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${st.bg} ${st.text} border ${st.border}`}>
                             {st.label}
                           </span>
-                          {(p.total_docs ?? 0) > 0 && (
+                          {(p.total_docs ?? 0) > 0 && !aguardandoPagto && (
                             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
                               {p.aprovados}/{p.total_docs} DOCS APROVADOS
                             </span>

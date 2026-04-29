@@ -105,7 +105,7 @@ export function ClienteProcessosSection({ clienteId }: Props) {
                 <h4 className="font-bold text-sm text-slate-800 uppercase mt-1 line-clamp-2">{p.servico_nome}</h4>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${st.bg} ${st.text} border ${st.border}`}>{st.label}</span>
-                  {(p.total_docs ?? 0) > 0 && (
+                  {(p.total_docs ?? 0) > 0 && !aguardandoPagto && (
                     <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
                       {p.aprovados}/{p.total_docs} DOCS APROVADOS
                     </span>

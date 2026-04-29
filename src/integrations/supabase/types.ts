@@ -5923,6 +5923,68 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_servicos_documentos: {
+        Row: {
+          ativo: boolean
+          condicao_profissional: string | null
+          created_at: string
+          etapa: string
+          formato_aceito: string[]
+          id: string
+          link_emissao: string | null
+          nome_documento: string
+          obrigatorio: boolean
+          ordem: number
+          regra_validacao: Json | null
+          servico_id: number
+          tipo_documento: string
+          updated_at: string
+          validade_dias: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          condicao_profissional?: string | null
+          created_at?: string
+          etapa?: string
+          formato_aceito?: string[]
+          id?: string
+          link_emissao?: string | null
+          nome_documento: string
+          obrigatorio?: boolean
+          ordem?: number
+          regra_validacao?: Json | null
+          servico_id: number
+          tipo_documento: string
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          condicao_profissional?: string | null
+          created_at?: string
+          etapa?: string
+          formato_aceito?: string[]
+          id?: string
+          link_emissao?: string | null
+          nome_documento?: string
+          obrigatorio?: boolean
+          ordem?: number
+          regra_validacao?: Json | null
+          servico_id?: number
+          tipo_documento?: string
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_documentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_status_servico: {
         Row: {
           ativo: boolean
@@ -7221,6 +7283,13 @@ export type Database = {
           p_telefone?: string
         }
         Returns: Json
+      }
+      qa_explodir_checklist_processo: {
+        Args: { p_processo_id: string }
+        Returns: {
+          inseridos: number
+          ja_existentes: number
+        }[]
       }
       qa_get_senha_gov_source: {
         Args: { p_cadastro_cr_id?: number; p_cliente_id: number }

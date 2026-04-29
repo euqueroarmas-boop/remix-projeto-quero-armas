@@ -262,6 +262,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   };
 
   const st = processo ? getStatusProcesso(processo.status) : null;
+  const aguardandoPagto = processo?.pagamento_status === "aguardando";
   const totalObrig = docs.filter((d) => d.obrigatorio).length;
   // Obrigatório satisfeito = aprovado OU dispensado_grupo (grupo alternativo já satisfeito por outro doc)
   const aprovObrig = docs.filter(
@@ -297,12 +298,14 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
-                <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: st.color }} />
+              {!aguardandoPagto && (
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
+                  <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: st.color }} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -319,6 +322,17 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
           {loading ? (
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
+            aguardandoPagto ? (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-blue-800">
+                  AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO
+                </div>
+                <p className="mt-2 text-sm text-blue-900/90 leading-relaxed">
+                  Após a confirmação do pagamento, liberaremos automaticamente o checklist documental
+                  obrigatório deste processo. Enquanto isso, você não precisa enviar nenhum documento.
+                </p>
+              </div>
+            ) : (
             <div className="space-y-3">
               <CondicaoProfissionalCard
                 condicao={processo?.condicao_profissional ?? null}
@@ -446,6 +460,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                 );
               })}
             </div>
+            )
           ) : tab === "historico" ? (
             <div className="space-y-2">
               {eventos.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">SEM EVENTOS REGISTRADOS</div>}
