@@ -124,6 +124,7 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
+  const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
