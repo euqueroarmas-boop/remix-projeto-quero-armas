@@ -91,6 +91,34 @@ export const SiteShell = ({ children }: SiteShellProps) => {
             ))}
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
+                Cursos <ChevronDown className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                {courseCategories.map((cat) => (
+                  <div key={cat.id}>
+                    <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
+                      {cat.label}
+                    </DropdownMenuLabel>
+                    {coursesCatalog
+                      .filter((c) => c.category === cat.id)
+                      .map((c) => (
+                        <DropdownMenuItem key={c.id} asChild disabled={c.status === 'em_breve'}>
+                          <Link to={`/cursos/${c.slug}`} className="flex items-center justify-between gap-2">
+                            <span>{c.title}</span>
+                            {c.status === 'em_breve' && (
+                              <span className="font-heading text-[10px] uppercase tracking-widest text-muted-foreground">
+                                em breve
+                              </span>
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                  </div>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
                 Quero Armas <ChevronDown className="size-3.5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="max-h-[80vh] w-64 overflow-y-auto">
