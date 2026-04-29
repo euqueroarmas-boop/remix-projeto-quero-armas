@@ -6738,6 +6738,7 @@ export type Database = {
           municipio: string
         }[]
       }
+      qa_load_staging_admin: { Args: { p_payload: Json }; Returns: Json }
       qa_load_staging_chunk: { Args: { p_payload: Json }; Returns: Json }
       qa_norm_cr: { Args: { p_cr: string }; Returns: string }
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
