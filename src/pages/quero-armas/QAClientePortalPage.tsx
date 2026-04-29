@@ -20,6 +20,7 @@ import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
+import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -213,6 +214,39 @@ export default function QAClientePortalPage() {
           }
         }
 
+        // FASE 2 — Fundação de identidade.
+        // Se ainda não temos cliente nesta sessão, garante vínculo via RPC segura
+        // (auth.uid() é resolvido server-side; nunca enviamos user_id daqui).
+        if (!clienteData) {
+          try {
+            const ensured = await ensureClienteFromAuthUser({
+              email: lookupEmail || user.email || null,
+              cpf: cpfDigits || null,
+              nome:
+                (profile as any)?.nome ||
+                customerLink?.responsavel ||
+                customerLink?.razao_social ||
+                null,
+            });
+            if (ensured.needs_manual_review) {
+              toast.error(
+                "Encontramos mais de um cadastro com seus dados. Nossa equipe foi avisada para vincular manualmente.",
+              );
+              setLoading(false);
+              return;
+            }
+            if (ensured.qa_cliente_id) {
+              const { data: ensuredCliente } = await supabase
+                .from("qa_clientes" as any)
+                .select("*")
+                .eq("id", ensured.qa_cliente_id)
+                .maybeSingle();
+              clienteData = ensuredCliente;
+            }
+          } catch (e: any) {
+            console.error("[QAClientePortalPage] ensureClienteFromAuthUser falhou", e);
+          }
+        }
         if (!clienteData) { setLoading(false); return; }
         setCliente(clienteData);
         setUserName((profile as any)?.nome || clienteData?.nome_completo || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
