@@ -117,7 +117,7 @@ export function ClienteProcessosSection({ clienteId }: Props) {
                       <CreditCard className="h-3 w-3" /> AGUARDANDO PAGAMENTO
                     </div>
                     <p className="text-[11px] text-blue-900/80 mt-1 leading-relaxed normal-case">
-                      Recebemos sua contratação. Entre em contato pelo WhatsApp para combinar a forma de pagamento (PIX, cartão ou boleto). Assim que confirmarmos, a Central de Documentos é liberada automaticamente.
+                      Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente. Após a confirmação, o checklist documental será liberado.
                     </p>
                     <a
                       href="https://wa.me/5511978481919?text=Ol%C3%A1!%20Acabei%20de%20contratar%20um%20servi%C3%A7o%20pelo%20portal%20e%20gostaria%20de%20combinar%20o%20pagamento."

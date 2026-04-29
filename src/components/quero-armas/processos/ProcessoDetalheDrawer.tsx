@@ -236,6 +236,39 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   };
 
   const [savingCond, setSavingCond] = useState<string | null>(null);
+  const [confirmandoPagto, setConfirmandoPagto] = useState(false);
+
+  const confirmarPagamentoManual = async () => {
+    if (!processo) return;
+    const ok = window.confirm(
+      "Confirmar manualmente o pagamento deste processo? Após confirmar, o checklist documental será liberado ao cliente."
+    );
+    if (!ok) return;
+    setConfirmandoPagto(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-processo-confirmar-pagamento`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ processo_id: processo.id }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data?.error || "Falha ao confirmar pagamento");
+      if (data?.ja_estava_confirmado) {
+        toast.message("Pagamento já estava confirmado.");
+      } else {
+        toast.success("Pagamento confirmado manualmente. Checklist documental liberado.");
+      }
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao confirmar pagamento: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setConfirmandoPagto(false);
+    }
+  };
+
   const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado") => {
     if (!processo) return;
     setSavingCond(cond);
@@ -328,9 +361,24 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                   AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO
                 </div>
                 <p className="mt-2 text-sm text-blue-900/90 leading-relaxed">
-                  Após a confirmação do pagamento, liberaremos automaticamente o checklist documental
-                  obrigatório deste processo. Enquanto isso, você não precisa enviar nenhum documento.
+                  Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente.
+                  Após a confirmação, o checklist documental será liberado.
                 </p>
+                {adminMode && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={confirmarPagamentoManual}
+                      disabled={confirmandoPagto}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white text-xs font-bold uppercase tracking-wider px-4 py-2"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      {confirmandoPagto ? "Confirmando..." : "Confirmar pagamento manualmente"}
+                    </button>
+                    <span className="text-[10px] uppercase tracking-wider text-blue-700/70 self-center">
+                      Ação restrita à Equipe Operacional
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
             <div className="space-y-3">
