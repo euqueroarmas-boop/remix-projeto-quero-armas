@@ -3294,6 +3294,94 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_armas_manual: {
+        Row: {
+          calibre: string | null
+          created_at: string
+          dados_extraidos_json: Json | null
+          id: number
+          marca: string | null
+          modelo: string | null
+          needs_review: boolean
+          numero_autorizacao_compra: string | null
+          numero_craf: string | null
+          numero_serie: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          origem: string
+          qa_cliente_id: number
+          sistema: string | null
+          status_documental: string | null
+          tipo_arma: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          calibre?: string | null
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          id?: number
+          marca?: string | null
+          modelo?: string | null
+          needs_review?: boolean
+          numero_autorizacao_compra?: string | null
+          numero_craf?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id: number
+          sistema?: string | null
+          status_documental?: string | null
+          tipo_arma?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          calibre?: string | null
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          id?: number
+          marca?: string | null
+          modelo?: string | null
+          needs_review?: boolean
+          numero_autorizacao_compra?: string | null
+          numero_craf?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id?: number
+          sistema?: string | null
+          status_documental?: string | null
+          tipo_arma?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_armas_manual_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_armas_manual_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_armas_manual_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+        ]
+      }
       qa_cliente_credenciais: {
         Row: {
           cadastro_cr_id: number | null
@@ -6748,6 +6836,29 @@ export type Database = {
       }
     }
     Views: {
+      qa_cliente_armas: {
+        Row: {
+          arma_uid: string | null
+          calibre: string | null
+          created_at: string | null
+          fonte: string | null
+          marca: string | null
+          modelo: string | null
+          needs_review: boolean | null
+          numero_autorizacao_compra: string | null
+          numero_craf: string | null
+          numero_serie: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          qa_cliente_id: number | null
+          sistema: string | null
+          status_documental: string | null
+          tipo_arma: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       qa_exames_cliente_status: {
         Row: {
           cadastrado_por: string | null
