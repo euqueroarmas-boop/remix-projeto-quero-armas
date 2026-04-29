@@ -6,6 +6,7 @@ import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
 const QADashboardPage = lazyRetry(() => import("./QADashboardPage"), "QADashboardPage");
+const QAMonitoramentoPage = lazyRetry(() => import("./QAMonitoramentoPage"), "QAMonitoramentoPage");
 const QABaseConhecimentoPage = lazyRetry(() => import("./QABaseConhecimentoPage"), "QABaseConhecimentoPage");
 const QADocumentoDetalhePage = lazyRetry(() => import("./QADocumentoDetalhePage"), "QADocumentoDetalhePage");
 const QALegislacaoPage = lazyRetry(() => import("./QALegislacaoPage"), "QALegislacaoPage");
@@ -80,6 +81,7 @@ export default function QARoutes() {
         {/* Protected admin routes */}
         <Route element={<QALayout />}>
           <Route path="dashboard" element={<QADashboardPage />} />
+          <Route path="operacao/monitoramento" element={<QAMonitoramentoPage />} />
           <Route path="ia" element={<QAIAPage />} />
           <Route path="base-conhecimento" element={<QABaseConhecimentoPage />} />
           <Route path="base-conhecimento/:id" element={<QADocumentoDetalhePage />} />

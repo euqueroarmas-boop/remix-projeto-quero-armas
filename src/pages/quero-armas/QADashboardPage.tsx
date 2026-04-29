@@ -1,30 +1,23 @@
-import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import {
   AlertTriangle, CheckCircle, Clock, XCircle, PenTool, BookOpen,
   ArrowRight, FileText, Shield, TrendingUp, TrendingDown, Users,
-  Scale, Gavel, BarChart3, Activity, ArrowUpRight,
+  BarChart3, Activity,
 } from "lucide-react";
-import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 
 import { LoadingState } from "@/components/quero-armas/LoadStates";
 
 // LazyOnVisible removido dos widgets críticos por estabilidade (mount único, sem IO).
 
-const DashboardExames = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
+// Dashboard agora foca em alertas/KPIs essenciais e prazos críticos.
+// Gráficos analíticos foram movidos para /operacao/monitoramento.
+const DashboardExames           = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
 const DashboardProcessosMonitor = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
-const DashboardPrazosRecursais = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
-const DashboardAtividadesRecentes = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
-const DashboardFunilOperacional = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
+const DashboardPrazosRecursais  = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
 const DashboardSlaClientesNovos = lazy(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"));
-const TelemetriaCadastroCards = lazy(() => import("@/components/quero-armas/dashboard/TelemetriaCadastroCards"));
-const DashboardNovosCadastrosRecebidos = lazy(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"));
 
 interface Stats {
   documentos: number;
