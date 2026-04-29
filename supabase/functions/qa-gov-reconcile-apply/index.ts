@@ -6,6 +6,9 @@
 // Endpoints (POST JSON):
 //   { mode: "dry_run" }   -> retorna o plano de correção SEM tocar em produção
 //   { mode: "apply", confirm: "RECONCILIAR_46" } -> aplica em transação única
+//   { mode: "apply_atomic", confirm: "RECONCILIAR_46" } -> faz primeiro o realinhamento
+//        atômico de TODOS os vínculos (RPC qa_gov_reconcile_realign_atomic) e depois
+//        re-criptografa as senhas dos CRs realinhados, com auditoria por linha.
 //
 // Auth: aceita x-internal-token (INTERNAL_FUNCTION_TOKEN) OU staff QA logado.
 // Auditoria: cada UPDATE gera 1 row em qa_gov_reconciliation_audit com
@@ -152,6 +155,113 @@ Deno.serve(async (req) => {
     }
 
     if (mode !== "apply") return json({ error: "mode inválido" }, 400);
+    if (mode === "apply_atomic") {
+      if (confirm !== "RECONCILIAR_46") {
+        return json({ error: 'confirm deve ser exatamente "RECONCILIAR_46"' }, 400);
+      }
+      // capturar os CRs ANTES de mover (para sabermos snapshot original)
+      const before_map = new Map<number, { cliente_id: number; ct: Uint8Array | null; iv: Uint8Array | null; tag: Uint8Array | null }>();
+      for (const r of plan) {
+        const { data: b } = await admin
+          .from("qa_cadastro_cr")
+          .select("id, cliente_id, senha_gov_encrypted, senha_gov_iv, senha_gov_tag")
+          .eq("id", r.cr_id_no_sistema)
+          .maybeSingle();
+        if (b) {
+          before_map.set(r.cr_id_no_sistema, {
+            cliente_id: b.cliente_id as number,
+            ct: bytea(b.senha_gov_encrypted),
+            iv: bytea(b.senha_gov_iv),
+            tag: bytea(b.senha_gov_tag),
+          });
+        }
+      }
+
+      // Fase 1: realinhamento atômico via RPC
+      const { data: realignRes, error: realignErr } = await admin.rpc("qa_gov_reconcile_realign_atomic");
+      if (realignErr) return json({ error: "Realinhamento atômico falhou: " + realignErr.message }, 500);
+
+      // Fase 2: re-criptografar senhas + auditoria
+      const key2 = await loadKey();
+      const ip2 = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+      const ua2 = req.headers.get("user-agent") || null;
+      const results2: Array<{ cr_id: number; status: string; error?: string }> = [];
+      let aplicados2 = 0;
+      let erros2 = 0;
+
+      for (const row of plan) {
+        try {
+          const before = before_map.get(row.cr_id_no_sistema);
+          if (!before) throw new Error("snapshot anterior não encontrado");
+          const rollbackPayload = {
+            cliente_id: before.cliente_id,
+            senha_gov_encrypted: before.ct ? bytesToB64(before.ct) : null,
+            senha_gov_iv: before.iv ? bytesToB64(before.iv) : null,
+            senha_gov_tag: before.tag ? bytesToB64(before.tag) : null,
+          };
+
+          const updateFields: Record<string, unknown> = {
+            senha_gov_updated_at: new Date().toISOString(),
+            senha_gov_updated_by: actorUserId,
+            senha_gov: null,
+          };
+          if (row.senha_plaintext && row.senha_plaintext.length > 0) {
+            const { ct, iv, tag } = await encryptSenha(row.senha_plaintext, key2);
+            updateFields.senha_gov_encrypted = toHexLiteral(ct);
+            updateFields.senha_gov_iv = toHexLiteral(iv);
+            updateFields.senha_gov_tag = toHexLiteral(tag);
+          }
+
+          const { error: updErr } = await admin
+            .from("qa_cadastro_cr")
+            .update(updateFields)
+            .eq("id", row.cr_id_no_sistema);
+          if (updErr) throw new Error("UPDATE senha falhou: " + updErr.message);
+
+          const { error: audErr } = await admin
+            .from("qa_gov_reconciliation_audit")
+            .insert({
+              acao: "realinhar_atomico_e_sobrescrever_senha",
+              status: "aplicado",
+              nivel_confianca: "alto",
+              cliente_id_anterior: before.cliente_id,
+              cliente_id_correto: row.cliente_id_correto,
+              cadastro_cr_id_anterior: row.cr_id_no_sistema,
+              cadastro_cr_id_correto: row.cr_id_no_sistema,
+              cpf_normalizado: row.cpf_access,
+              numero_cr_normalizado: row.numero_cr_access,
+              origem: "access_2026_04_29",
+              motivo: `Realinhamento atômico: CR ${row.numero_cr_access} estava em ${before.cliente_id} (${row.nome_cliente_atualmente_vinculado}); movido para ${row.cliente_id_correto} (${row.nome_cliente_correto}). Senha re-criptografada do plaintext do Access.`,
+              evidencia: {
+                nome_access: row.nome_access,
+                ip: ip2, user_agent: ua2, actor,
+                tinha_senha_no_sistema: row.tem_senha_sistema,
+                senha_substituida: !!row.senha_plaintext,
+                realign_phase: realignRes,
+              },
+              executado_por: actorUserId,
+              rollback_payload: rollbackPayload,
+            });
+          if (audErr) throw new Error("Auditoria falhou: " + audErr.message);
+
+          aplicados2++;
+          results2.push({ cr_id: row.cr_id_no_sistema, status: "ok" });
+        } catch (e) {
+          erros2++;
+          results2.push({ cr_id: row.cr_id_no_sistema, status: "erro", error: (e as Error).message });
+        }
+      }
+
+      return json({
+        mode: "apply_atomic",
+        realign_rpc: realignRes,
+        total_planejado: plan.length,
+        senhas_aplicadas: aplicados2,
+        senhas_erros: erros2,
+        results: results2,
+      });
+    }
+
     if (confirm !== "RECONCILIAR_46") {
       return json({ error: 'confirm deve ser exatamente "RECONCILIAR_46"' }, 400);
     }
