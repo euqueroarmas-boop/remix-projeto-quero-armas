@@ -3294,6 +3294,160 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_credenciais: {
+        Row: {
+          cadastro_cr_id: number | null
+          cliente_id: number
+          created_at: string
+          id: number
+          notas: string | null
+          origem: string
+          senha_encrypted: string
+          senha_iv: string
+          senha_tag: string
+          status: string
+          tipo_credencial: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cadastro_cr_id?: number | null
+          cliente_id: number
+          created_at?: string
+          id?: number
+          notas?: string | null
+          origem: string
+          senha_encrypted: string
+          senha_iv: string
+          senha_tag: string
+          status?: string
+          tipo_credencial?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cadastro_cr_id?: number | null
+          cliente_id?: number
+          created_at?: string
+          id?: number
+          notas?: string | null
+          origem?: string
+          senha_encrypted?: string
+          senha_iv?: string
+          senha_tag?: string
+          status?: string
+          tipo_credencial?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_credenciais_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cadastro_cr"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cadastro_cr_id_sugerido"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_incident_reconciliation_plan"
+            referencedColumns: ["cadastro_cr_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_senha_gov_incident_audit"
+            referencedColumns: ["cadastro_cr_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+        ]
+      }
+      qa_cliente_credenciais_audit: {
+        Row: {
+          acao: string
+          cliente_id: number
+          contexto: string | null
+          created_at: string
+          credencial_id: number | null
+          id: number
+          ip: string | null
+          origem: string | null
+          rollback_payload: Json | null
+          status_resultado: string | null
+          tipo_credencial: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          cliente_id: number
+          contexto?: string | null
+          created_at?: string
+          credencial_id?: number | null
+          id?: number
+          ip?: string | null
+          origem?: string | null
+          rollback_payload?: Json | null
+          status_resultado?: string | null
+          tipo_credencial: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          cliente_id?: number
+          contexto?: string | null
+          created_at?: string
+          credencial_id?: number | null
+          id?: number
+          ip?: string | null
+          origem?: string | null
+          rollback_payload?: Json | null
+          status_resultado?: string | null
+          tipo_credencial?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_credenciais_audit_credencial_id_fkey"
+            columns: ["credencial_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cliente_credenciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_cliente_historico_atualizacoes: {
         Row: {
           autor: string | null
@@ -6873,6 +7027,15 @@ export type Database = {
         Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_get_senha_gov_source: {
+        Args: { p_cadastro_cr_id?: number; p_cliente_id: number }
+        Returns: {
+          cadastro_cr_id: number
+          credencial_id: number
+          source: string
+          tem_senha: boolean
+        }[]
+      }
       qa_gov_recon_cpf_summary: {
         Args: never
         Returns: {
