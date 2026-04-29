@@ -1,10 +1,9 @@
 // qa-processo-criar
-// Cria processo + checklist 100% GRANULAR (1 documento = 1 item).
-// - 8 certidões individuais (TSE, STM, TRF3 Regional, TRF3 SJSP, TJSP Execuções,
-//   TJSP Distribuição, Polícia Civil SP, TJM-SP) com link de emissão e botão próprios.
-// - Identificação por alternativas (RG+CPF / CNH / CTPS) — pelo menos 1.
-// - Renda/ocupação CONDICIONAL: CLT, autônomo, empresário, aposentado.
-// - Sem item agrupado "certidoes_negativas".
+// FASE 10:
+// - Cria processo SEM checklist por padrão (checklist só após pagamento).
+// - Aceita parâmetro opcional criarChecklistAgora=true para fluxo administrativo.
+// - Lê checklist da tabela qa_servicos_documentos (fonte única de verdade).
+// - SEM fallback silencioso para Posse: serviço desconhecido → erro.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireQAStaff } from "../_shared/qaAuth.ts";
