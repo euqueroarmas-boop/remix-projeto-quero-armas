@@ -5397,13 +5397,19 @@ export type Database = {
           data_validade: string | null
           divergencias_json: Json | null
           etapa: string
+          exemplo_url: string | null
           formato_aceito: string[]
           id: string
+          instrucoes: string | null
           link_emissao: string | null
+          modelo_url: string | null
           motivo_rejeicao: string | null
           nome_documento: string
           obrigatorio: boolean
           observacoes: string | null
+          observacoes_cliente: string | null
+          orgao_emissor: string | null
+          prazo_recomendado_dias: number | null
           processo_id: string
           regra_validacao: Json | null
           revisado_por: string | null
@@ -5427,13 +5433,19 @@ export type Database = {
           data_validade?: string | null
           divergencias_json?: Json | null
           etapa?: string
+          exemplo_url?: string | null
           formato_aceito?: string[]
           id?: string
+          instrucoes?: string | null
           link_emissao?: string | null
+          modelo_url?: string | null
           motivo_rejeicao?: string | null
           nome_documento: string
           obrigatorio?: boolean
           observacoes?: string | null
+          observacoes_cliente?: string | null
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
           processo_id: string
           regra_validacao?: Json | null
           revisado_por?: string | null
@@ -5457,13 +5469,19 @@ export type Database = {
           data_validade?: string | null
           divergencias_json?: Json | null
           etapa?: string
+          exemplo_url?: string | null
           formato_aceito?: string[]
           id?: string
+          instrucoes?: string | null
           link_emissao?: string | null
+          modelo_url?: string | null
           motivo_rejeicao?: string | null
           nome_documento?: string
           obrigatorio?: boolean
           observacoes?: string | null
+          observacoes_cliente?: string | null
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
           processo_id?: string
           regra_validacao?: Json | null
           revisado_por?: string | null
@@ -5929,12 +5947,18 @@ export type Database = {
           condicao_profissional: string | null
           created_at: string
           etapa: string
+          exemplo_url: string | null
           formato_aceito: string[]
           id: string
+          instrucoes: string | null
           link_emissao: string | null
+          modelo_url: string | null
           nome_documento: string
           obrigatorio: boolean
+          observacoes_cliente: string | null
           ordem: number
+          orgao_emissor: string | null
+          prazo_recomendado_dias: number | null
           regra_validacao: Json | null
           servico_id: number
           tipo_documento: string
@@ -5946,12 +5970,18 @@ export type Database = {
           condicao_profissional?: string | null
           created_at?: string
           etapa?: string
+          exemplo_url?: string | null
           formato_aceito?: string[]
           id?: string
+          instrucoes?: string | null
           link_emissao?: string | null
+          modelo_url?: string | null
           nome_documento: string
           obrigatorio?: boolean
+          observacoes_cliente?: string | null
           ordem?: number
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
           regra_validacao?: Json | null
           servico_id: number
           tipo_documento: string
@@ -5963,12 +5993,18 @@ export type Database = {
           condicao_profissional?: string | null
           created_at?: string
           etapa?: string
+          exemplo_url?: string | null
           formato_aceito?: string[]
           id?: string
+          instrucoes?: string | null
           link_emissao?: string | null
+          modelo_url?: string | null
           nome_documento?: string
           obrigatorio?: boolean
+          observacoes_cliente?: string | null
           ordem?: number
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
           regra_validacao?: Json | null
           servico_id?: number
           tipo_documento?: string

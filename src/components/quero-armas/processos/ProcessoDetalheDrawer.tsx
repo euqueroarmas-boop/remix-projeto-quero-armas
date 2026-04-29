@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send } from "lucide-react";
+import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 
 interface DocRow {
@@ -29,6 +29,13 @@ interface DocRow {
   data_validade?: string | null;
   formato_aceito?: string[] | string | null;
   regra_validacao?: any;
+  // Fase 12 — orientação ao cliente (todos opcionais)
+  instrucoes?: string | null;
+  observacoes_cliente?: string | null;
+  modelo_url?: string | null;
+  exemplo_url?: string | null;
+  orgao_emissor?: string | null;
+  prazo_recomendado_dias?: number | null;
 }
 
 interface ProcessoFull {
@@ -430,6 +437,72 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {/* Fase 12 — Orientação ao cliente (apenas campos preenchidos) */}
+                      {(doc.instrucoes || doc.observacoes_cliente) && (
+                        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-blue-800">
+                            <Info className="h-3 w-3" /> COMO OBTER ESTE DOCUMENTO
+                          </div>
+                          {doc.instrucoes && (
+                            <p className="mt-1 text-[12px] leading-relaxed text-blue-900/90 whitespace-pre-line">
+                              {doc.instrucoes}
+                            </p>
+                          )}
+                          {doc.observacoes_cliente && (
+                            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-900/80 italic">
+                              {doc.observacoes_cliente}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Grupo alternativo — orientação clara quando aplicável */}
+                      {doc.regra_validacao && typeof doc.regra_validacao === "object" && doc.regra_validacao.grupo_documental && doc.status !== "aprovado" && doc.status !== "dispensado_grupo" && (
+                        <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 inline-flex items-start gap-1.5">
+                          <Layers className="h-3 w-3 mt-0.5 text-slate-500 shrink-0" />
+                          <span>
+                            <strong className="uppercase tracking-wider text-[10px] text-slate-600">ALTERNATIVA:</strong>{" "}
+                            envie 1 dos documentos aceitos deste grupo. Após aprovação de qualquer um, os demais ficam dispensados.
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Metadados leves — órgão, prazo recomendado, modelo, exemplo */}
+                      {(doc.orgao_emissor || doc.prazo_recomendado_dias || doc.modelo_url || doc.exemplo_url) && (
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider">
+                          {doc.orgao_emissor && (
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold inline-flex items-center gap-1">
+                              <Building2 className="h-3 w-3" /> ÓRGÃO: {doc.orgao_emissor}
+                            </span>
+                          )}
+                          {doc.prazo_recomendado_dias != null && (
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold inline-flex items-center gap-1">
+                              <CalendarClock className="h-3 w-3" /> PRAZO RECOMENDADO: {doc.prazo_recomendado_dias} DIAS
+                            </span>
+                          )}
+                          {doc.modelo_url && (
+                            <a
+                              href={doc.modelo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold inline-flex items-center gap-1 hover:bg-emerald-100"
+                            >
+                              <FileDown className="h-3 w-3" /> BAIXAR MODELO
+                            </a>
+                          )}
+                          {doc.exemplo_url && (
+                            <a
+                              href={doc.exemplo_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="px-2 py-0.5 rounded bg-violet-50 border border-violet-200 text-violet-800 font-bold inline-flex items-center gap-1 hover:bg-violet-100"
+                            >
+                              <BookOpen className="h-3 w-3" /> VER EXEMPLO
+                            </a>
+                          )}
+                        </div>
+                      )}
+
                       {/* Validade e link de emissão */}
                       {(doc.validade_dias || doc.data_validade || doc.link_emissao) && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider">
