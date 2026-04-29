@@ -6743,6 +6743,7 @@ export type Database = {
           tem_senha_sistema: boolean
         }[]
       }
+      qa_gov_reconcile_realign_atomic: { Args: never; Returns: Json }
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
