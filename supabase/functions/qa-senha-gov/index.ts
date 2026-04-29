@@ -1,10 +1,15 @@
 // Edge function: qa-senha-gov
 // Endpoints (POST JSON):
-//   { action: "get",     cadastro_cr_id: number, contexto?: string }
-//   { action: "set",     cadastro_cr_id: number, senha: string, contexto?: string }
+//   { action: "get",     cliente_id: number, cadastro_cr_id?: number|null, contexto?: string }
+//   { action: "set",     cliente_id: number, cadastro_cr_id?: number|null, senha: string, contexto?: string }
 //   { action: "migrate" }   -> cifra todas as senha_gov em texto puro pendentes (admin)
 //
-// Sempre exige staff ativo (requireQAStaff) e registra auditoria em qa_senha_gov_acessos.
+// Cenários:
+//   1) Cliente COM CR: { cliente_id, cadastro_cr_id }
+//   2) Cliente SEM CR: { cliente_id, cadastro_cr_id: null }
+//
+// Fonte da verdade: qa_cliente_credenciais (tipo='gov_br', status='ativa').
+// Fallback de leitura: qa_cadastro_cr (legado), apenas se cadastro_cr_id pertence ao cliente.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireQAStaff, qaAuthCors } from "../_shared/qaAuth.ts";
@@ -24,49 +29,29 @@ function b64ToBytes(b64: string): Uint8Array {
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
-function bytesToB64(bytes: Uint8Array): string {
-  let bin = "";
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
 function hexToBytes(hex: string): Uint8Array {
   const clean = hex.replace(/[^0-9a-fA-F]/g, "");
   const out = new Uint8Array(clean.length / 2);
   for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i * 2, 2), 16);
   return out;
 }
+function toHexLit(bytes: Uint8Array): string {
+  return "\\x" + Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 async function loadKey(): Promise<CryptoKey> {
   const rawEnv = Deno.env.get("QA_ENCRYPTION_KEY") || "";
   if (!rawEnv) throw new Error("QA_ENCRYPTION_KEY not configured");
-  // Remove qualquer whitespace/quebra de linha que possa ter vindo da UI
   const raw = rawEnv.replace(/\s+/g, "").trim();
   let bytes: Uint8Array | null = null;
-
-  // 1) Hex de 64 chars
   if (/^[0-9a-fA-F]{64}$/.test(raw)) {
     bytes = hexToBytes(raw);
   } else {
-    // 2) base64 ou base64url (converte url-safe -> std e adiciona padding)
     let b64 = raw.replace(/-/g, "+").replace(/_/g, "/");
     while (b64.length % 4 !== 0) b64 += "=";
-    try {
-      bytes = b64ToBytes(b64);
-    } catch {
-      bytes = null;
-    }
+    try { bytes = b64ToBytes(b64); } catch { bytes = null; }
   }
-
-  if (!bytes) {
-    throw new Error(
-      `QA_ENCRYPTION_KEY inválida (formato não reconhecido, length=${raw.length})`,
-    );
-  }
-  if (bytes.length !== 32) {
-    throw new Error(
-      `QA_ENCRYPTION_KEY deve ter 32 bytes (recebido ${bytes.length}, length string=${raw.length})`,
-    );
-  }
+  if (!bytes || bytes.length !== 32) throw new Error("QA_ENCRYPTION_KEY inválida (precisa 32 bytes)");
   return await crypto.subtle.importKey(
     "raw",
     bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
@@ -85,19 +70,13 @@ async function encryptSenha(plaintext: string, key: CryptoKey) {
     enc.buffer.slice(0) as ArrayBuffer,
   );
   const cipher = new Uint8Array(cipherBuf);
-  // WebCrypto AES-GCM já anexa o tag (16 bytes) ao final do ciphertext
   const tagLen = 16;
   const ct = cipher.slice(0, cipher.length - tagLen);
   const tag = cipher.slice(cipher.length - tagLen);
   return { ct, iv, tag };
 }
 
-async function decryptSenha(
-  ct: Uint8Array,
-  iv: Uint8Array,
-  tag: Uint8Array,
-  key: CryptoKey,
-): Promise<string> {
+async function decryptSenha(ct: Uint8Array, iv: Uint8Array, tag: Uint8Array, key: CryptoKey): Promise<string> {
   const full = new Uint8Array(ct.length + tag.length);
   full.set(ct, 0);
   full.set(tag, ct.length);
@@ -111,13 +90,8 @@ function bytea(value: unknown): Uint8Array | null {
   if (!value) return null;
   if (value instanceof Uint8Array) return value;
   if (typeof value === "string") {
-    // Postgres retorna `\x...` em hex
     if (value.startsWith("\\x")) return hexToBytes(value.slice(2));
-    try {
-      return b64ToBytes(value);
-    } catch {
-      return null;
-    }
+    try { return b64ToBytes(value); } catch { return null; }
   }
   return null;
 }
@@ -141,10 +115,51 @@ Deno.serve(async (req) => {
 
     const key = await loadKey();
 
+    // ============= GET =============
     if (action === "get") {
-      const id = Number(body?.cadastro_cr_id);
       const expectedClienteId = body?.cliente_id == null ? null : Number(body.cliente_id);
-      if (!Number.isFinite(id)) return json({ error: "cadastro_cr_id inválido" }, 400);
+      const rawCrId = body?.cadastro_cr_id;
+      const id = rawCrId == null ? null : Number(rawCrId);
+      if (expectedClienteId == null || !Number.isFinite(expectedClienteId)) {
+        return json({ error: "cliente_id é obrigatório para leitura de Senha Gov." }, 400);
+      }
+      if (id != null && !Number.isFinite(id)) {
+        return json({ error: "cadastro_cr_id inválido" }, 400);
+      }
+
+      // 1) PRIORIDADE: tabela central
+      const { data: cred } = await admin
+        .from("qa_cliente_credenciais")
+        .select("id, cliente_id, cadastro_cr_id, senha_encrypted, senha_iv, senha_tag, origem")
+        .eq("cliente_id", expectedClienteId)
+        .eq("tipo_credencial", "gov_br")
+        .eq("status", "ativa")
+        .maybeSingle();
+
+      if (cred) {
+        let senha: string | null = null;
+        const ct = bytea((cred as any).senha_encrypted);
+        const iv = bytea((cred as any).senha_iv);
+        const tag = bytea((cred as any).senha_tag);
+        if (ct && iv && tag) {
+          try { senha = await decryptSenha(ct, iv, tag, key); }
+          catch (e) { return json({ error: "Falha ao descriptografar (central): " + (e as Error).message }, 500); }
+        }
+        await admin.from("qa_senha_gov_acessos").insert({
+          cadastro_cr_id: id ?? (cred as any).cadastro_cr_id ?? null,
+          cliente_id: expectedClienteId,
+          user_id: guard.userId,
+          acao: "read",
+          ip, user_agent: ua,
+          contexto: (contexto ? contexto + " | " : "") + "fonte=central",
+        });
+        return json({ senha, source: "central", cadastro_cr_id: (cred as any).cadastro_cr_id ?? null });
+      }
+
+      // 2) Fallback CR (legado) — exige cr_id
+      if (id == null) {
+        return json({ senha: null, source: "none" });
+      }
 
       const { data, error } = await admin
         .from("qa_cadastro_cr")
@@ -154,126 +169,171 @@ Deno.serve(async (req) => {
       if (error) return json({ error: error.message }, 500);
       if (!data) return json({ error: "Cadastro não encontrado" }, 404);
 
-      // P0 — anti cross-tenant: o caller PRECISA dizer de qual cliente espera ler,
-      // e o CR PRECISA pertencer a esse cliente. Caso contrário, registramos a tentativa
-      // suspeita e bloqueamos o vazamento.
-      if (expectedClienteId != null && data.cliente_id !== expectedClienteId) {
+      if ((data as any).cliente_id !== expectedClienteId) {
         await admin.from("qa_senha_gov_acessos").insert({
-          cadastro_cr_id: id,
-          cliente_id: expectedClienteId,
-          user_id: guard.userId,
-          acao: "denied_mismatch",
-          ip,
-          user_agent: ua,
-          contexto: `tentativa de leitura cruzada (cr.cliente_id=${data.cliente_id})`.slice(0, 200),
+          cadastro_cr_id: id, cliente_id: expectedClienteId, user_id: guard.userId,
+          acao: "denied_mismatch", ip, user_agent: ua,
+          contexto: `tentativa de leitura cruzada (cr.cliente_id=${(data as any).cliente_id})`.slice(0, 200),
         });
-        return json({
-          error: "Vínculo cadastro_cr ↔ cliente divergente. Leitura bloqueada por segurança.",
-        }, 409);
-      }
-
-      // Modo seguro global: até reconciliação completa, recusar leitura sem expectedClienteId
-      if (expectedClienteId == null) {
-        return json({
-          error: "cliente_id é obrigatório para leitura de Senha Gov (modo seguro).",
-        }, 400);
+        return json({ error: "Vínculo cadastro_cr ↔ cliente divergente. Leitura bloqueada por segurança." }, 409);
       }
 
       let senha: string | null = null;
-      const ct = bytea(data.senha_gov_encrypted);
-      const iv = bytea(data.senha_gov_iv);
-      const tag = bytea(data.senha_gov_tag);
+      const ct = bytea((data as any).senha_gov_encrypted);
+      const iv = bytea((data as any).senha_gov_iv);
+      const tag = bytea((data as any).senha_gov_tag);
       if (ct && iv && tag) {
-        try {
-          senha = await decryptSenha(ct, iv, tag, key);
-        } catch (e) {
-          return json({ error: "Falha ao descriptografar: " + (e as Error).message }, 500);
-        }
-      } else if (data.senha_gov) {
-        // Fallback enquanto migração não rodou
-        senha = data.senha_gov as string;
+        try { senha = await decryptSenha(ct, iv, tag, key); }
+        catch (e) { return json({ error: "Falha ao descriptografar: " + (e as Error).message }, 500); }
+      } else if ((data as any).senha_gov) {
+        senha = (data as any).senha_gov as string;
       }
 
       await admin.from("qa_senha_gov_acessos").insert({
         cadastro_cr_id: id,
-        cliente_id: data.cliente_id ?? null,
+        cliente_id: (data as any).cliente_id ?? null,
         user_id: guard.userId,
         acao: "read",
-        ip,
-        user_agent: ua,
-        contexto,
+        ip, user_agent: ua,
+        contexto: (contexto ? contexto + " | " : "") + "fonte=cr",
       });
 
-      return json({ senha });
+      return json({ senha, source: "cr", cadastro_cr_id: id });
     }
 
+    // ============= SET =============
     if (action === "set") {
-      const id = Number(body?.cadastro_cr_id);
       const expectedClienteId = body?.cliente_id == null ? null : Number(body.cliente_id);
+      const rawCrId = body?.cadastro_cr_id;
+      const id = rawCrId == null ? null : Number(rawCrId);
       const senha = body?.senha == null ? "" : String(body.senha);
-      if (!Number.isFinite(id)) return json({ error: "cadastro_cr_id inválido" }, 400);
+      if (expectedClienteId == null || !Number.isFinite(expectedClienteId)) {
+        return json({ error: "cliente_id é obrigatório para gravação de Senha Gov." }, 400);
+      }
+      if (id != null && !Number.isFinite(id)) {
+        return json({ error: "cadastro_cr_id inválido" }, 400);
+      }
 
-      const { data: row, error: fetchErr } = await admin
-        .from("qa_cadastro_cr")
-        .select("id, cliente_id")
-        .eq("id", id)
-        .maybeSingle();
-      if (fetchErr) return json({ error: fetchErr.message }, 500);
-      if (!row) return json({ error: "Cadastro não encontrado" }, 404);
+      const { data: cliente } = await admin
+        .from("qa_clientes").select("id").eq("id", expectedClienteId).maybeSingle();
+      if (!cliente) return json({ error: "Cliente não encontrado" }, 404);
 
-      if (expectedClienteId == null || row.cliente_id !== expectedClienteId) {
+      if (id != null) {
+        const { data: row } = await admin
+          .from("qa_cadastro_cr").select("id, cliente_id").eq("id", id).maybeSingle();
+        if (!row) return json({ error: "CR não encontrado" }, 404);
+        if ((row as any).cliente_id !== expectedClienteId) {
+          await admin.from("qa_senha_gov_acessos").insert({
+            cadastro_cr_id: id, cliente_id: expectedClienteId, user_id: guard.userId,
+            acao: "denied_mismatch", ip, user_agent: ua,
+            contexto: `tentativa de gravação cruzada (cr.cliente_id=${(row as any).cliente_id})`.slice(0, 200),
+          });
+          return json({ error: "cliente_id precisa coincidir com o do CR. Gravação bloqueada." }, 409);
+        }
+      }
+
+      // Tabela central = fonte da verdade
+      let credencialId: number | null = null;
+      if (senha) {
+        const { ct, iv, tag } = await encryptSenha(senha, key);
+        const { data: existing } = await admin
+          .from("qa_cliente_credenciais")
+          .select("id")
+          .eq("cliente_id", expectedClienteId)
+          .eq("tipo_credencial", "gov_br")
+          .eq("status", "ativa")
+          .maybeSingle();
+
+        if (existing) {
+          await admin
+            .from("qa_cliente_credenciais")
+            .update({
+              senha_encrypted: toHexLit(ct), senha_iv: toHexLit(iv), senha_tag: toHexLit(tag),
+              cadastro_cr_id: id ?? null,
+              origem: "admin_ui_set",
+              updated_by: guard.userId,
+            })
+            .eq("id", (existing as any).id);
+          credencialId = (existing as any).id;
+        } else {
+          const { data: ins } = await admin
+            .from("qa_cliente_credenciais")
+            .insert({
+              cliente_id: expectedClienteId,
+              tipo_credencial: "gov_br",
+              cadastro_cr_id: id ?? null,
+              senha_encrypted: toHexLit(ct), senha_iv: toHexLit(iv), senha_tag: toHexLit(tag),
+              origem: "admin_ui_set",
+              status: "ativa",
+              updated_by: guard.userId,
+            })
+            .select("id").maybeSingle();
+          credencialId = (ins as any)?.id ?? null;
+        }
+
+        await admin.from("qa_cliente_credenciais_audit").insert({
+          credencial_id: credencialId,
+          cliente_id: expectedClienteId,
+          tipo_credencial: "gov_br",
+          acao: existing ? "admin_update" : "admin_insert",
+          origem: "admin_ui_set",
+          status_resultado: "applied",
+          ip, user_agent: ua, user_id: guard.userId,
+          contexto: contexto || null,
+        });
+      } else {
+        await admin
+          .from("qa_cliente_credenciais")
+          .update({ status: "revogada", updated_by: guard.userId })
+          .eq("cliente_id", expectedClienteId)
+          .eq("tipo_credencial", "gov_br")
+          .eq("status", "ativa");
+
+        await admin.from("qa_cliente_credenciais_audit").insert({
+          cliente_id: expectedClienteId,
+          tipo_credencial: "gov_br",
+          acao: "admin_revoke",
+          status_resultado: "revoked",
+          ip, user_agent: ua, user_id: guard.userId,
+          contexto: contexto || null,
+        });
+      }
+
+      // Compat: espelha em CR se houver vínculo
+      if (id != null) {
+        const update: Record<string, unknown> = {
+          senha_gov_updated_at: new Date().toISOString(),
+          senha_gov_updated_by: guard.userId,
+        };
+        if (senha) {
+          const { ct, iv, tag } = await encryptSenha(senha, key);
+          update.senha_gov_encrypted = toHexLit(ct);
+          update.senha_gov_iv = toHexLit(iv);
+          update.senha_gov_tag = toHexLit(tag);
+          update.senha_gov = null;
+        } else {
+          update.senha_gov_encrypted = null;
+          update.senha_gov_iv = null;
+          update.senha_gov_tag = null;
+          update.senha_gov = null;
+        }
+        await admin.from("qa_cadastro_cr").update(update).eq("id", id);
+
         await admin.from("qa_senha_gov_acessos").insert({
           cadastro_cr_id: id,
           cliente_id: expectedClienteId,
           user_id: guard.userId,
-          acao: "denied_mismatch",
-          ip,
-          user_agent: ua,
-          contexto: `tentativa de gravação cruzada (cr.cliente_id=${row.cliente_id})`.slice(0, 200),
+          acao: "write",
+          ip, user_agent: ua,
+          contexto: (contexto ? contexto + " | " : "") + "espelhado em CR",
         });
-        return json({
-          error: "cliente_id obrigatório e precisa coincidir com o do CR. Gravação bloqueada.",
-        }, 409);
       }
 
-      const update: Record<string, unknown> = {
-        senha_gov_updated_at: new Date().toISOString(),
-        senha_gov_updated_by: guard.userId,
-      };
-      if (senha) {
-        const { ct, iv, tag } = await encryptSenha(senha, key);
-        update.senha_gov_encrypted = "\\x" + Array.from(ct).map((b) => b.toString(16).padStart(2, "0")).join("");
-        update.senha_gov_iv = "\\x" + Array.from(iv).map((b) => b.toString(16).padStart(2, "0")).join("");
-        update.senha_gov_tag = "\\x" + Array.from(tag).map((b) => b.toString(16).padStart(2, "0")).join("");
-        update.senha_gov = null; // limpa o texto puro
-      } else {
-        update.senha_gov_encrypted = null;
-        update.senha_gov_iv = null;
-        update.senha_gov_tag = null;
-        update.senha_gov = null;
-      }
-
-      const { error: updErr } = await admin
-        .from("qa_cadastro_cr")
-        .update(update)
-        .eq("id", id);
-      if (updErr) return json({ error: updErr.message }, 500);
-
-      await admin.from("qa_senha_gov_acessos").insert({
-        cadastro_cr_id: id,
-        cliente_id: row.cliente_id ?? null,
-        user_id: guard.userId,
-        acao: "write",
-        ip,
-        user_agent: ua,
-        contexto,
-      });
-
-      return json({ ok: true });
+      return json({ ok: true, credencial_id: credencialId });
     }
 
+    // ============= MIGRATE (legado: texto puro -> AES) =============
     if (action === "migrate") {
-      // Cifra todos os registros que ainda têm senha_gov em texto puro.
       const { data: rows, error } = await admin
         .from("qa_cadastro_cr")
         .select("id, cliente_id, senha_gov")
@@ -291,25 +351,21 @@ Deno.serve(async (req) => {
           const upd = await admin
             .from("qa_cadastro_cr")
             .update({
-              senha_gov_encrypted: "\\x" + Array.from(ct).map((b) => b.toString(16).padStart(2, "0")).join(""),
-              senha_gov_iv: "\\x" + Array.from(iv).map((b) => b.toString(16).padStart(2, "0")).join(""),
-              senha_gov_tag: "\\x" + Array.from(tag).map((b) => b.toString(16).padStart(2, "0")).join(""),
+              senha_gov_encrypted: toHexLit(ct),
+              senha_gov_iv: toHexLit(iv),
+              senha_gov_tag: toHexLit(tag),
               senha_gov: null,
               senha_gov_updated_at: new Date().toISOString(),
               senha_gov_updated_by: guard.userId,
             })
             .eq("id", (r as any).id);
-          if (upd.error) {
-            errors.push({ id: (r as any).id, error: upd.error.message });
-            continue;
-          }
+          if (upd.error) { errors.push({ id: (r as any).id, error: upd.error.message }); continue; }
           await admin.from("qa_senha_gov_acessos").insert({
             cadastro_cr_id: (r as any).id,
             cliente_id: (r as any).cliente_id ?? null,
             user_id: guard.userId,
             acao: "migrate",
-            ip,
-            user_agent: ua,
+            ip, user_agent: ua,
             contexto: "bulk migrate texto puro -> AES-256-GCM",
           });
           migrated++;
