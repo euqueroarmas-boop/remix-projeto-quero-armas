@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
+import ClienteArsenalReview from "@/components/quero-armas/clientes/ClienteArsenalReview";
 
 interface Props {
   cliente: any;
@@ -465,6 +466,9 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
           </div>
         )}
       </div>
+
+      {/* ═══ FASE 5 — ARSENAL REVIEW (admin) ═══ */}
+      {cliente?.id && <ClienteArsenalReview qaClienteId={cliente.id} />}
 
       {/* ═══ DOCUMENTS & EXPIRATIONS ═══ */}
       <div className="qa-card p-4 md:p-5">
