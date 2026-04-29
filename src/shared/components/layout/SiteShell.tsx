@@ -26,9 +26,12 @@ import {
   LayoutDashboard,
   LogIn,
   ChevronRight,
+  GraduationCap,
+  Clock,
 } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
 import { BackButton } from '@/shared/components/BackButton';
+import { coursesCatalog, courseCategories } from '@/shared/data/coursesCatalog';
 
 interface SiteShellProps {
   children: ReactNode;
@@ -86,6 +89,34 @@ export const SiteShell = ({ children }: SiteShellProps) => {
                 {item.label}
               </NavLink>
             ))}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
+                Cursos <ChevronDown className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                {courseCategories.map((cat) => (
+                  <div key={cat.id}>
+                    <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
+                      {cat.label}
+                    </DropdownMenuLabel>
+                    {coursesCatalog
+                      .filter((c) => c.category === cat.id)
+                      .map((c) => (
+                        <DropdownMenuItem key={c.id} asChild disabled={c.status === 'em_breve'}>
+                          <Link to={`/cursos/${c.slug}`} className="flex items-center justify-between gap-2">
+                            <span>{c.title}</span>
+                            {c.status === 'em_breve' && (
+                              <span className="font-heading text-[10px] uppercase tracking-widest text-muted-foreground">
+                                em breve
+                              </span>
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                  </div>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
                 Quero Armas <ChevronDown className="size-3.5" />
@@ -205,6 +236,65 @@ export const SiteShell = ({ children }: SiteShellProps) => {
 
                   {/* Grupos Quero Armas */}
                   <div className="mt-6">
+                    {/* Cursos */}
+                    <div className="mb-5">
+                      <div className="mb-2 flex items-center gap-2 px-2">
+                        <span className="h-px flex-1 bg-border/60" />
+                        <p className="font-heading text-[10px] uppercase tracking-[0.2em] text-accent">
+                          Cursos
+                        </p>
+                        <span className="h-px flex-1 bg-border/60" />
+                      </div>
+                      {courseCategories.map((cat) => (
+                        <div key={cat.id} className="mb-2">
+                          <p className="px-2 py-1 font-heading text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
+                            {cat.label}
+                          </p>
+                          <div className="flex flex-col gap-0.5">
+                            {coursesCatalog
+                              .filter((c) => c.category === cat.id)
+                              .map((c) => {
+                                const disabled = c.status === 'em_breve';
+                                const Inner = (
+                                  <span className="flex flex-1 items-center justify-between gap-2">
+                                    <span className="flex items-center gap-3">
+                                      {disabled ? (
+                                        <Clock className="size-4 shrink-0 text-muted-foreground/60" />
+                                      ) : (
+                                        <GraduationCap className="size-4 shrink-0 text-accent" />
+                                      )}
+                                      <span>{c.title}</span>
+                                    </span>
+                                    {disabled && (
+                                      <span className="font-heading text-[9px] uppercase tracking-widest text-muted-foreground">
+                                        em breve
+                                      </span>
+                                    )}
+                                  </span>
+                                );
+                                return disabled ? (
+                                  <span
+                                    key={c.id}
+                                    className="flex cursor-not-allowed items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-muted-foreground/70"
+                                    aria-disabled="true"
+                                  >
+                                    {Inner}
+                                  </span>
+                                ) : (
+                                  <Link
+                                    key={c.id}
+                                    to={`/cursos/${c.slug}`}
+                                    onClick={() => setMenuOpen(false)}
+                                    className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-surface-elevated hover:text-accent"
+                                  >
+                                    {Inner}
+                                  </Link>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     {queroArmasGroups.map((group) => (
                       <div key={group.label} className="mb-5">
                         <div className="mb-2 flex items-center gap-2 px-2">
