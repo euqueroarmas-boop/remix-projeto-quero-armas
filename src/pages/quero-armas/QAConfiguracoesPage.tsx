@@ -5,6 +5,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { BLOCOS_MONITORAMENTO } from "@/components/quero-armas/monitoramento/blocosCatalogo";
+import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/useMonitoramentoConfig";
+import { Switch } from "@/components/ui/switch";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
 interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
@@ -407,6 +410,60 @@ export default function QAConfiguracoesPage() {
           <div><span style={{ color: "hsl(220 10% 55%)" }}>Status:</span> <span className={`ml-1 font-medium ${profile?.ativo ? "text-emerald-600" : "text-red-500"}`}>{profile?.ativo ? "ATIVO" : "INATIVO"}</span></div>
         </div>
       </div>
+
+      {/* Configurações de Monitoramento */}
+      {isAdmin && <MonitoramentoToggles />}
+    </div>
+  );
+}
+
+function MonitoramentoToggles() {
+  const { enabled, loading, setEnabled } = useMonitoramentoConfig();
+
+  const handleToggle = async (key: any, value: boolean) => {
+    try {
+      await setEnabled(key, value);
+      toast.success(value ? "Bloco ativado" : "Bloco desativado");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao salvar");
+    }
+  };
+
+  return (
+    <div className="qa-card p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <Settings className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
+          Configurações de Monitoramento
+        </span>
+      </div>
+      <p className="text-[11px] mb-4" style={{ color: "hsl(220 10% 62%)" }}>
+        Controle quais blocos aparecem na página <span className="font-semibold">Operação → Monitoramento</span>.
+        Blocos desativados não executam queries.
+      </p>
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {BLOCOS_MONITORAMENTO.map((b) => (
+            <label key={b.key}
+              className="flex items-start gap-3 p-3 rounded-lg border hover:bg-slate-50 cursor-pointer transition-colors"
+              style={{ borderColor: "hsl(220 13% 91%)" }}>
+              <Switch
+                checked={!!enabled[b.key]}
+                onCheckedChange={(v) => handleToggle(b.key, v)}
+                className="mt-0.5"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-medium" style={{ color: "hsl(220 20% 25%)" }}>{b.label}</div>
+                <div className="text-[11px]" style={{ color: "hsl(220 10% 62%)" }}>{b.descricao}</div>
+              </div>
+            </label>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
