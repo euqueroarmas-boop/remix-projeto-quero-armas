@@ -61,7 +61,7 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   },
 ];
 
-export const SiteShell = ({ children }: SiteShellProps) => {
+export const SiteShell = ({ children, hideBackButton = false }: SiteShellProps) => {
   const { user, isAdmin } = useAuth();
   const { itemCount } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
