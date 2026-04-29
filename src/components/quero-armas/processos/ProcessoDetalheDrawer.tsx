@@ -74,6 +74,11 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDocId, setPendingDocId] = useState<string | null>(null);
+  // Fase 13 — fluxo operacional de análise documental
+  const [rejeicao, setRejeicao] = useState<{ docId: string; nome: string } | null>(null);
+  const [motivoRejeicao, setMotivoRejeicao] = useState("");
+  const [aprovacao, setAprovacao] = useState<{ docId: string; nome: string; divergente: boolean } | null>(null);
+  const [salvandoAcao, setSalvandoAcao] = useState(false);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -186,11 +191,44 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
   const adminSetStatus = async (docId: string, novoStatus: string, motivo?: string) => {
     try {
+      const docAtual = docs.find((d) => d.id === docId);
+      // Aprovar limpa motivo de rejeição anterior. Recusar exige motivo.
+      const updatePayload: Record<string, any> = {
+        status: novoStatus,
+        data_validacao: new Date().toISOString(),
+      };
+      if (novoStatus === "aprovado") {
+        updatePayload.motivo_rejeicao = null;
+      } else if (novoStatus === "invalido") {
+        updatePayload.motivo_rejeicao = motivo ?? null;
+      } else {
+        updatePayload.motivo_rejeicao = motivo ?? null;
+      }
       const { error } = await supabase
         .from("qa_processo_documentos")
-        .update({ status: novoStatus, motivo_rejeicao: motivo ?? null, data_validacao: new Date().toISOString() })
+        .update(updatePayload)
         .eq("id", docId);
       if (error) throw error;
+
+      // Evento operacional contextual (somado ao evento técnico do trigger)
+      const tipoOperacional =
+        novoStatus === "aprovado" ? "documento_aprovado" :
+        novoStatus === "invalido" ? "documento_recusado" :
+        novoStatus === "divergente" ? "documento_divergente_marcado" :
+        null;
+      if (tipoOperacional && docAtual) {
+        const descBase = `${docAtual.nome_documento} (${docAtual.tipo_documento})`;
+        const desc = motivo ? `${descBase} — MOTIVO: ${motivo}` : descBase;
+        await supabase.from("qa_processo_eventos").insert({
+          processo_id: processoId,
+          documento_id: docId,
+          tipo_evento: tipoOperacional,
+          descricao: desc,
+          ator: "equipe_operacional",
+          dados_json: { status: novoStatus, motivo: motivo ?? null },
+        });
+      }
+
       const eventoEmail =
         novoStatus === "aprovado" ? "documento_aprovado" :
         novoStatus === "invalido" ? "documento_invalido" :
@@ -206,6 +244,45 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
       onUpdated?.();
     } catch (e: any) {
       toast.error("Erro: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
+  const abrirAprovacao = (doc: DocRow) => {
+    setAprovacao({
+      docId: doc.id,
+      nome: doc.nome_documento,
+      divergente: doc.status === "divergente" || (Array.isArray(doc.divergencias_json) && doc.divergencias_json.length > 0),
+    });
+  };
+  const confirmarAprovacao = async () => {
+    if (!aprovacao) return;
+    setSalvandoAcao(true);
+    try {
+      await adminSetStatus(aprovacao.docId, "aprovado");
+    } finally {
+      setSalvandoAcao(false);
+      setAprovacao(null);
+    }
+  };
+
+  const abrirRejeicao = (doc: DocRow) => {
+    setMotivoRejeicao("");
+    setRejeicao({ docId: doc.id, nome: doc.nome_documento });
+  };
+  const confirmarRejeicao = async () => {
+    if (!rejeicao) return;
+    const motivo = motivoRejeicao.trim();
+    if (!motivo) {
+      toast.error("Informe o motivo da recusa.");
+      return;
+    }
+    setSalvandoAcao(true);
+    try {
+      await adminSetStatus(rejeicao.docId, "invalido", motivo.toUpperCase());
+    } finally {
+      setSalvandoAcao(false);
+      setRejeicao(null);
+      setMotivoRejeicao("");
     }
   };
 
