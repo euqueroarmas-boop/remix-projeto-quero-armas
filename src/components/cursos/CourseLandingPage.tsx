@@ -9,6 +9,8 @@ import { CourseTimeline } from './CourseTimeline';
 import { CourseLocationCard } from './CourseLocationCard';
 import { CourseFaq } from './CourseFaq';
 import { CourseFinalCta } from './CourseFinalCta';
+import { CoursePricing } from './CoursePricing';
+import { CourseFieldStrip } from './CourseFieldStrip';
 import { AlertTriangle, Users, Target, ShieldCheck, Clock, Award } from 'lucide-react';
 
 interface CourseLandingPageProps {
@@ -131,9 +133,32 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
         <CourseIncludedItems items={course.includedItems} />
       </CourseSection>
 
+      {course.fieldStrip?.enabled && (
+        <CourseSection
+          id="field-strip"
+          eyebrow="Manutenção"
+          title="No meio do curso, você aprende a montar, desmontar e limpar a sua arma."
+          description="Conhecer o equipamento por dentro é parte do que torna um operador realmente responsável."
+          tone="muted"
+        >
+          <CourseFieldStrip course={course} />
+        </CourseSection>
+      )}
+
       <CourseSection eyebrow="Processo" title="Como funciona o treinamento" tone="muted">
         <CourseTimeline steps={course.timeline} />
       </CourseSection>
+
+      {course.pricing?.enabled && (
+        <CourseSection
+          id="investimento"
+          eyebrow="Investimento"
+          title="Reserve sua posição na próxima turma."
+          description="Vagas limitadas. A reserva garante atenção real do instrutor durante toda a prática."
+        >
+          <CoursePricing course={course} />
+        </CourseSection>
+      )}
 
       <CourseSection
         eyebrow="Quero Armas"

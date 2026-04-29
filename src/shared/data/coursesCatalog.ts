@@ -32,6 +32,36 @@ export interface CourseLocation {
   zip: string;
 }
 
+export interface CoursePricingTier {
+  id: 'padrao' | 'vip';
+  name: string;
+  tagline: string;
+  price: number;
+  installments: string;
+  highlights: string[];
+  badge?: string;
+  emphasis?: boolean;
+}
+
+export interface CoursePricing {
+  enabled: boolean;
+  classSize: string;
+  rationale: string;
+  tiers: CoursePricingTier[];
+  footnote: string;
+}
+
+export interface CourseFieldStripBlock {
+  enabled: boolean;
+  eyebrow: string;
+  title: string;
+  highlight: string;
+  paragraphs: string[];
+  bullets: string[];
+  imageCaption: string;
+  legalNote: string;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -57,6 +87,8 @@ export interface Course {
   whatsappNumber: string;
   whatsappMessage: string;
   price?: string | null;
+  pricing?: CoursePricing;
+  fieldStrip?: CourseFieldStripBlock;
   faq: CourseFaqItem[];
   timeline: CourseTimelineStep[];
   seoTitle: string;
@@ -130,6 +162,68 @@ export const coursesCatalog: Course[] = [
     whatsappMessage:
       'Olá! Tenho interesse no curso Operador de Pistola — Nível I. Gostaria de saber sobre a próxima turma.',
     price: null,
+    pricing: {
+      enabled: true,
+      classSize: 'Turma limitada a 05 alunos',
+      rationale:
+        'Turma pequena não é marketing — é o que permite ao instrutor acompanhar empunhadura, postura e segurança de cada aluno, um a um. É assim que treinamento deixa de ser teoria e vira reflexo. E reflexo é o que protege a sua família no dia em que tudo der errado.',
+      tiers: [
+        {
+          id: 'padrao',
+          name: 'Operador · Padrão',
+          tagline: 'Formação inicial completa, supervisionada e responsável.',
+          price: 1890,
+          installments: 'em até 18x no cartão*',
+          highlights: [
+            '8 horas de treinamento supervisionado',
+            'Munições, alvos e EPIs inclusos',
+            'Almoço incluso',
+            'Instrutor acompanhando a prática',
+            'Bloco de manutenção de 1º escalão (field strip)',
+          ],
+        },
+        {
+          id: 'vip',
+          name: 'Operador · VIP',
+          tagline: 'Mesma formação, com acompanhamento individualizado e prioridade.',
+          price: 2490,
+          installments: 'em até 18x no cartão*',
+          badge: 'Elite',
+          emphasis: true,
+          highlights: [
+            'Tudo do plano Padrão',
+            'Atenção prioritária do instrutor durante a prática',
+            'Sessão de revisão individual de fundamentos',
+            'Material de apoio digital pós-curso',
+            'Prioridade na reserva das próximas turmas',
+          ],
+        },
+      ],
+      footnote:
+        '* Parcelamento sujeito à análise do meio de pagamento. Vagas confirmadas somente após reserva. Valores referentes à turma de Operador de Pistola — Nível I em Jacareí/SP.',
+    },
+    fieldStrip: {
+      enabled: true,
+      eyebrow: '1º Escalão · Manutenção de Campo',
+      title: 'Arma suja falha. Arma mal lubrificada trava.',
+      highlight: 'Quem treina, previne.',
+      paragraphs: [
+        'No meio do curso, o aluno aprende a montar e desmontar a pistola no nível de 1º escalão e a executar a limpeza correta da arma. Isso é manutenção de campo — não é técnica de combate.',
+        'É o procedimento que todo operador responsável precisa dominar para garantir que a arma esteja segura, limpa e em condições de uso, sem depender de terceiros e sem improviso.',
+        'A desmontagem é feita em ambiente controlado, com a arma descarregada, em mesa apropriada, sob supervisão direta do instrutor. O foco é segurança, conhecimento do equipamento e responsabilidade — nunca performance ou velocidade.',
+      ],
+      bullets: [
+        'Desmontagem de 1º escalão — passo a passo, em mesa, com arma descarregada',
+        'Identificação visual das partes principais: ferrolho, cano, mola recuperadora, armação',
+        'Limpeza correta: pontos críticos, produtos adequados, sequência segura',
+        'Lubrificação consciente — onde aplicar, onde não aplicar, e por quê',
+        'Remontagem supervisionada e verificação funcional em segurança',
+        'Conferência final: arma limpa, lubrificada, montada e em condição segura',
+      ],
+      imageCaption: 'Field strip · pistola descarregada, mesa de manutenção, supervisão do instrutor.',
+      legalNote:
+        'Conteúdo de manutenção e segurança do equipamento. Não envolve técnica operacional de tiro, saque, mira, recarga tática ou combate.',
+    },
     timeline: [
       {
         step: '01',
