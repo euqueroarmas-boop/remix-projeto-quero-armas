@@ -262,6 +262,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   };
 
   const st = processo ? getStatusProcesso(processo.status) : null;
+  const aguardandoPagto = processo?.pagamento_status === "aguardando";
   const totalObrig = docs.filter((d) => d.obrigatorio).length;
   // Obrigatório satisfeito = aprovado OU dispensado_grupo (grupo alternativo já satisfeito por outro doc)
   const aprovObrig = docs.filter(
@@ -297,12 +298,14 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
-                <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: st.color }} />
+              {!aguardandoPagto && (
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
+                  <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: st.color }} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
