@@ -611,8 +611,10 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                         </div>
                       )}
                       {div.length > 0 && (
-                        <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2">
-                          <div className="font-bold uppercase tracking-wider text-amber-800 mb-1">DIVERGÊNCIAS DETECTADAS</div>
+                        <div className={`text-[11px] rounded-md p-2 ${doc.status === "divergente" ? "bg-amber-100 border-2 border-amber-400" : "bg-amber-50 border border-amber-200"}`}>
+                          <div className="font-bold uppercase tracking-wider text-amber-800 mb-1 inline-flex items-center gap-1">
+                            <AlertTriangle className="h-3 w-3" /> DIVERGÊNCIAS DETECTADAS
+                          </div>
                           <ul className="space-y-0.5 text-amber-900">
                             {div.slice(0, 5).map((d: any, i: number) => (
                               <li key={i}>• <strong>{d.campo}:</strong> esperado "{d.esperado}", encontrado "{d.encontrado}"</li>
@@ -689,15 +691,12 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
 
                         {/* Admin: aprovar/rejeitar (mantido) */}
                         {adminMode && doc.status !== "aprovado" && (
-                          <button onClick={() => adminSetStatus(doc.id, "aprovado")} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
+                          <button onClick={() => abrirAprovacao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
                             <CheckCircle className="h-3 w-3" /> APROVAR
                           </button>
                         )}
                         {adminMode && doc.status !== "invalido" && (
-                          <button onClick={() => {
-                            const m = window.prompt("MOTIVO DA REJEIÇÃO:");
-                            if (m && m.trim()) adminSetStatus(doc.id, "invalido", m.trim().toUpperCase());
-                          }} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
+                          <button onClick={() => abrirRejeicao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
                             <XCircle className="h-3 w-3" /> REJEITAR
                           </button>
                         )}
