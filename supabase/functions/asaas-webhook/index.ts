@@ -738,30 +738,25 @@ Deno.serve(async (req) => {
 
         for (const proc of qaProcs ?? []) {
           if (proc.status === "aguardando_pagamento") {
-            await supabase
-              .from("qa_processos")
-              .update({ status: "aguardando_documentos", pagamento_status: "confirmado" })
-              .eq("id", proc.id);
-
-            // FASE 10: explode checklist apenas após pagamento confirmado (idempotente)
-            const { data: explodeRes, error: explodeErr } = await supabase.rpc(
-              "qa_explodir_checklist_processo",
-              { p_processo_id: proc.id },
+            // FASE 10.1: usa RPC central (mesma regra da confirmação manual)
+            const { data: confirmRes, error: confirmErr } = await supabase.rpc(
+              "qa_confirmar_pagamento_processo",
+              { p_processo_id: proc.id, p_origem: "asaas_webhook" },
             );
-            if (explodeErr) {
-              console.error("[asaas-webhook] qa_explodir_checklist_processo falhou:", explodeErr.message);
+            if (confirmErr) {
+              console.error("[asaas-webhook] qa_confirmar_pagamento_processo falhou:", confirmErr.message);
               await supabase.from("integration_logs").insert({
                 integration_name: "qa_processo",
-                operation_name: "checklist_explosao_falhou",
+                operation_name: "confirmacao_pagamento_falhou",
                 request_payload: { processo_id: proc.id, payment_id: payment.id, event },
                 status: "error",
-                error_message: explodeErr.message,
+                error_message: confirmErr.message,
               });
             } else {
               await supabase.from("integration_logs").insert({
                 integration_name: "qa_processo",
-                operation_name: "checklist_explodido",
-                request_payload: { processo_id: proc.id, payment_id: payment.id, event, result: explodeRes },
+                operation_name: "pagamento_confirmado_webhook",
+                request_payload: { processo_id: proc.id, payment_id: payment.id, event, result: confirmRes },
                 status: "success",
               });
             }
@@ -772,13 +767,6 @@ Deno.serve(async (req) => {
                 body: { processo_id: proc.id, evento: "pagamento_confirmado" },
               })
               .catch((e) => console.warn("[asaas-webhook] qa-processo-notificar falhou:", e));
-
-            await supabase.from("integration_logs").insert({
-              integration_name: "qa_processo",
-              operation_name: "promovido_aguardando_documentos",
-              request_payload: { processo_id: proc.id, payment_id: payment.id, event },
-              status: "success",
-            });
           }
         }
       } catch (qaErr) {
