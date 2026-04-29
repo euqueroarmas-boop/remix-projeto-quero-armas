@@ -100,23 +100,31 @@ Deno.serve(async (req) => {
     if (pErr) return json({ error: pErr.message }, 400);
 
     // Por padrão NÃO explode checklist (Fase 10).
-    // Apenas se admin passar criarChecklistAgora=true (fluxo manual/gratuito).
+    // FASE 10.1: criarChecklistAgora só é aceito de perfil 'administrador' da Equipe Operacional,
+    // e quando aceito, passa pela RPC central (mesma regra do webhook/confirmação manual).
     let checklistResult: { inseridos: number; ja_existentes: number } | null = null;
     if (criarChecklistAgora === true) {
-      const { data: rpcRes, error: rpcErr } = await supabase.rpc(
-        "qa_explodir_checklist_processo",
-        { p_processo_id: processo.id },
-      );
-      if (rpcErr) {
-        console.error("[criar] erro ao explodir checklist:", rpcErr.message);
-        await supabase.from("qa_processo_eventos").insert({
-          processo_id: processo.id,
-          tipo_evento: "erro_checklist",
-          descricao: "Falha ao gerar checklist (admin): " + rpcErr.message,
-          ator: "sistema",
-        });
-      } else if (Array.isArray(rpcRes) && rpcRes[0]) {
-        checklistResult = rpcRes[0];
+      if (guard.perfil !== "administrador") {
+        console.warn("[criar] criarChecklistAgora ignorado: perfil não-administrador (", guard.perfil, ")");
+      } else {
+        const { data: rpcRes, error: rpcErr } = await supabase.rpc(
+          "qa_confirmar_pagamento_processo",
+          { p_processo_id: processo.id, p_origem: "manual_admin" },
+        );
+        if (rpcErr) {
+          console.error("[criar] erro ao confirmar pagamento (admin):", rpcErr.message);
+          await supabase.from("qa_processo_eventos").insert({
+            processo_id: processo.id,
+            tipo_evento: "erro_checklist",
+            descricao: "Falha ao gerar checklist (admin): " + rpcErr.message,
+            ator: "equipe_operacional",
+          });
+        } else if (rpcRes && typeof rpcRes === "object") {
+          checklistResult = {
+            inseridos: Number((rpcRes as any).checklist_inseridos ?? 0),
+            ja_existentes: Number((rpcRes as any).checklist_ja_existentes ?? 0),
+          };
+        }
       }
     }
 
