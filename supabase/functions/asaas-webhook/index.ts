@@ -743,6 +743,29 @@ Deno.serve(async (req) => {
               .update({ status: "aguardando_documentos", pagamento_status: "confirmado" })
               .eq("id", proc.id);
 
+            // FASE 10: explode checklist apenas após pagamento confirmado (idempotente)
+            const { data: explodeRes, error: explodeErr } = await supabase.rpc(
+              "qa_explodir_checklist_processo",
+              { p_processo_id: proc.id },
+            );
+            if (explodeErr) {
+              console.error("[asaas-webhook] qa_explodir_checklist_processo falhou:", explodeErr.message);
+              await supabase.from("integration_logs").insert({
+                integration_name: "qa_processo",
+                operation_name: "checklist_explosao_falhou",
+                request_payload: { processo_id: proc.id, payment_id: payment.id, event },
+                status: "error",
+                error_message: explodeErr.message,
+              });
+            } else {
+              await supabase.from("integration_logs").insert({
+                integration_name: "qa_processo",
+                operation_name: "checklist_explodido",
+                request_payload: { processo_id: proc.id, payment_id: payment.id, event, result: explodeRes },
+                status: "success",
+              });
+            }
+
             // Dispara notificação ao cliente solicitando documentos
             supabase.functions
               .invoke("qa-processo-notificar", {
