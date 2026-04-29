@@ -160,21 +160,19 @@ export default function MonitoramentoChartsBundle({ enabled }: Props) {
     const loadRecents = async () => {
       const promises: Promise<any>[] = [];
       if (needRecentPecas) {
-        promises.push(
+        promises.push(Promise.resolve(
           supabase.from("qa_geracoes_pecas" as any)
             .select("id, titulo_geracao, tipo_peca, created_at, status_revisao")
-            .order("created_at", { ascending: false }).limit(6)
-            .then((r) => r),
-        );
+            .order("created_at", { ascending: false }).limit(6),
+        ));
       } else promises.push(Promise.resolve({ data: [] }));
       if (needRecentDocs) {
-        promises.push(
+        promises.push(Promise.resolve(
           supabase.from("qa_documentos_conhecimento" as any)
             .select("id, titulo, tipo_documento, created_at, status_processamento")
             .eq("ativo", true).eq("papel_documento", "aprendizado")
-            .order("created_at", { ascending: false }).limit(6)
-            .then((r) => r),
-        );
+            .order("created_at", { ascending: false }).limit(6),
+        ));
       } else promises.push(Promise.resolve({ data: [] }));
 
       const [pRes, dRes] = await Promise.allSettled(promises);
