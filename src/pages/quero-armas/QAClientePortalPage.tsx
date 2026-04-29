@@ -21,6 +21,7 @@ import { ClienteProcessosSection } from "@/components/quero-armas/processos/Clie
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
+import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -123,6 +124,7 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
+  const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
@@ -716,6 +718,7 @@ export default function QAClientePortalPage() {
         </div>
 
         {activeTab === "arsenal" && cliente && analysis && (
+          <>
           <ArsenalView
             clienteId={cliente.id}
             clienteNome={cliente.nome_completo}
@@ -738,6 +741,25 @@ export default function QAClientePortalPage() {
               setMeusDocs((dRes.data as any[]) ?? []);
             }}
           />
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setShowArmaManual(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-700 shadow-sm hover:bg-indigo-100"
+            >
+              <Plus className="h-3.5 w-3.5" /> Cadastrar arma manualmente
+            </button>
+          </div>
+          <ArmaManualForm
+            open={showArmaManual}
+            onOpenChange={setShowArmaManual}
+            qaClienteId={cliente.id}
+            defaultEmail={cliente.email}
+            defaultCpf={cliente.cpf}
+            defaultNome={cliente.nome_completo}
+            onSaved={() => { /* dados aparecerão na ficha do admin via view qa_cliente_armas */ }}
+          />
+          </>
         )}
 
         {activeTab === "resumo" && (

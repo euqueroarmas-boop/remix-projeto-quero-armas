@@ -17,6 +17,8 @@ interface Props {
   filiacoes: any[];
   cadastro: any;
   examesAtuais?: any[]; // qa_exames_cliente_status — fonte de verdade
+  /** FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR). */
+  armasManual?: any[];
   onNavigate: (tab: string) => void;
 }
 
@@ -111,7 +113,7 @@ function StatPill({ label, value, color }: { label: string; value: string | numb
   );
 }
 
-export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais = [], onNavigate }: Props) {
+export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais = [], armasManual = [], onNavigate }: Props) {
   const { map: SERVICO_MAP, getNome: getServicoNome } = useQAServicosMap();
   const analysis = useMemo(() => {
     const totalServicos = itens.length;
@@ -120,7 +122,8 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const cancelados = itens.filter((i: any) => ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)).length;
     const totalVendas = vendas.reduce((acc: number, v: any) => acc + Number(v.valor_a_pagar || 0), 0);
     const totalDescontos = vendas.reduce((acc: number, v: any) => acc + Number(v.desconto || 0), 0);
-    const totalArmas = crafs.length + gtes.length;
+    const totalArmas = crafs.length + gtes.length + (armasManual?.length || 0);
+    const armasReview = (armasManual || []).filter((a: any) => a?.needs_review).length;
 
     const expDocs: ExpiringDoc[] = [];
     if (cadastro?.validade_cr) {
@@ -167,8 +170,8 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const vencidos = expDocs.filter(d => d.days !== null && d.days < 0);
     const validos = expDocs.filter(d => d.days !== null && d.days > 90);
 
-    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, expDocs, alerts, vencidos, validos };
-  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais]);
+    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, armasReview, expDocs, alerts, vencidos, validos };
+  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual]);
 
   // Timeline events — ORDEM CRONOLÓGICA ASCENDENTE com TODOS os marcos por serviço
   const timeline = useMemo(() => {
@@ -386,7 +389,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         {[
           { icon: ShoppingBag, label: "SERVIÇOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
           { icon: Activity, label: "ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancel.` : "nenhum cancel.", color: "hsl(38 92% 50%)", tab: "servicos" },
-          { icon: Crosshair, label: "ARMAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "hsl(262 60% 55%)", tab: "armas" },
+          { icon: Crosshair, label: "ARMAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs${armasManual.length ? ` · ${armasManual.length} MAN/IA` : ""}`, color: "hsl(262 60% 55%)", tab: "armas" },
           { icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
         ].map((c) => {
           const Icon = c.icon;
@@ -604,8 +607,32 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
             <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(190 80% 42%)" }}>ARMAS</span>
           </div>
           <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
-            {crafs.length} CRAFs · {gtes.length} GTEs
+            {crafs.length} CRAFs · {gtes.length} GTEs{armasManual.length ? ` · ${armasManual.length} Manual/IA` : ""}
           </div>
+          {armasManual.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {armasManual.slice(0, 4).map((a: any) => (
+                <div key={a.id} className="flex items-center justify-between gap-1.5 text-[10px]">
+                  <span className="truncate" style={{ color: "hsl(220 20% 30%)" }}>
+                    {[a.marca, a.modelo, a.calibre].filter(Boolean).join(" ").toUpperCase() || "ARMA"}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}>
+                      {a.origem === "ocr" || a.origem === "ia" ? "IA" : "MANUAL"}
+                    </span>
+                    {a.needs_review && (
+                      <span className="px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: "hsl(38 92% 50% / 0.15)", color: "hsl(28 92% 35%)" }}>
+                        REVISAR
+                      </span>
+                    )}
+                  </span>
+                </div>
+              ))}
+              {armasManual.length > 4 && (
+                <div className="text-[9px]" style={{ color: "hsl(220 10% 55%)" }}>+ {armasManual.length - 4} mais</div>
+              )}
+            </div>
+          )}
         </button>
 
         <button onClick={() => onNavigate("dados")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
