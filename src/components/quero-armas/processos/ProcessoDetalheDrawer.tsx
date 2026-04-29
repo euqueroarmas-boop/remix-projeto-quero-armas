@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send } from "lucide-react";
+import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 
 interface DocRow {
@@ -29,6 +29,13 @@ interface DocRow {
   data_validade?: string | null;
   formato_aceito?: string[] | string | null;
   regra_validacao?: any;
+  // Fase 12 — orientação ao cliente (todos opcionais)
+  instrucoes?: string | null;
+  observacoes_cliente?: string | null;
+  modelo_url?: string | null;
+  exemplo_url?: string | null;
+  orgao_emissor?: string | null;
+  prazo_recomendado_dias?: number | null;
 }
 
 interface ProcessoFull {
