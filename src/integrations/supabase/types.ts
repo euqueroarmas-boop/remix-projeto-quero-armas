@@ -3294,6 +3294,48 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_armas_auditoria: {
+        Row: {
+          acao: string
+          arma_manual_id: number
+          ator_tipo: string
+          campos_alterados: Json | null
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: number
+          origem: string | null
+          qa_cliente_id: number | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          arma_manual_id: number
+          ator_tipo: string
+          campos_alterados?: Json | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: number
+          origem?: string | null
+          qa_cliente_id?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          arma_manual_id?: number
+          ator_tipo?: string
+          campos_alterados?: Json | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: number
+          origem?: string | null
+          qa_cliente_id?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       qa_cliente_armas_manual: {
         Row: {
           calibre: string | null
