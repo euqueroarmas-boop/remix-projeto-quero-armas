@@ -15,7 +15,7 @@
  *  - Badges padronizados (FONTE / STATUS / SISTEMA).
  */
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Crosshair, Edit, Lock, AlertTriangle, RefreshCw } from "lucide-react";
+import { Crosshair, Edit, Lock, AlertTriangle, RefreshCw, Search, History, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import ArmaManualEditModal from "@/components/quero-armas/arsenal/ArmaManualEditModal";
@@ -88,6 +88,9 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
   const [editing, setEditing] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [filtro, setFiltro] = useState<FiltroKey>("todas");
+  const [busca, setBusca] = useState("");
+  const [visiveis, setVisiveis] = useState(10);
+  const PAGE = 10;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,6 +111,9 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
   }, [qaClienteId]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // Resetar paginação ao mudar filtro/busca
+  useEffect(() => { setVisiveis(PAGE); }, [filtro, busca]);
 
   const handleEdit = async (row: any) => {
     if (row.fonte === "craf") return;
@@ -144,6 +150,21 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
       case "sigma":     arr = rows.filter((r) => (r.sistema || "").toUpperCase() === "SIGMA"); break;
       default: break;
     }
+    // FASE 8 — busca textual
+    const q = busca.trim().toLowerCase();
+    if (q) {
+      arr = arr.filter((r) => {
+        const hay = [
+          r.marca, r.modelo, r.calibre, r.tipo_arma,
+          r.numero_serie, r.numero_craf, r.numero_sinarm, r.numero_sigma,
+          r.numero_autorizacao_compra, r.sistema, r.fonte, r.status_documental,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return hay.includes(q);
+      });
+    }
     // Ordenação: needs_review primeiro, depois mais recentes
     return [...arr].sort((a, b) => {
       if (!!b.needs_review !== !!a.needs_review) return b.needs_review ? 1 : -1;
@@ -151,7 +172,11 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
       const db = b.created_at ? +new Date(b.created_at) : 0;
       return db - da;
     });
-  }, [rows, filtro]);
+  }, [rows, filtro, busca]);
+
+  const visibleRows = filtered.slice(0, visiveis);
+  const hasFilterOrSearch = filtro !== "todas" || busca.trim().length > 0;
+  const limparFiltros = () => { setFiltro("todas"); setBusca(""); };
 
   const FILTROS: { key: FiltroKey; label: string; count: number }[] = [
     { key: "todas",     label: "TODAS",            count: total },
@@ -227,13 +252,55 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
         })}
       </div>
 
+      {/* FASE 8 — Busca textual */}
+      <div className="relative mb-2">
+        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+        <input
+          type="text"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar marca, modelo, calibre, série, CRAF, SINARM, SIGMA…"
+          className="w-full h-8 pl-7 pr-7 rounded-md border border-slate-200 bg-white text-[11px] placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
+        />
+        {busca && (
+          <button
+            type="button"
+            onClick={() => setBusca("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+            aria-label="Limpar busca"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* FASE 8 — Contador do filtro ativo */}
+      {!loading && (
+        <div className="text-[10px] text-slate-500 mb-2">
+          Exibindo <b className="text-slate-700">{Math.min(visibleRows.length, filtered.length)}</b> de{" "}
+          <b className="text-slate-700">{total}</b> armas
+          {filtered.length !== total && <> (filtradas: <b className="text-slate-700">{filtered.length}</b>)</>}
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-6 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>Carregando arsenal…</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-6 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>Nenhuma arma cadastrada.</div>
+        <div className="text-center py-6 text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>
+          {hasFilterOrSearch ? (
+            <>
+              <div className="mb-2">Nenhuma arma encontrada com esses critérios.</div>
+              <Button size="sm" variant="outline" className="h-7 px-2 text-[10px]" onClick={limparFiltros}>
+                LIMPAR FILTROS
+              </Button>
+            </>
+          ) : (
+            <>Nenhuma arma cadastrada.</>
+          )}
+        </div>
       ) : (
         <div className="space-y-1.5">
-          {filtered.map((r) => {
+          {visibleRows.map((r) => {
             const readonly = r.fonte === "craf";
             const labelArma = [r.marca, r.modelo, r.calibre].filter(Boolean).join(" ").toUpperCase() || "ARMA SEM IDENTIFICAÇÃO";
             return (
@@ -269,28 +336,52 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
                     {r.created_at && <span>Criada: <b className="text-slate-700">{fmtDate(r.created_at)}</b></span>}
                   </div>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex flex-col gap-1 items-end">
                   {readonly ? (
                     <span title="CRAFs são somente leitura nesta fase" className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400">
                       <Lock className="h-3 w-3" /> R/O
                     </span>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant={r.needs_review ? "default" : "outline"}
-                      className={`h-7 px-2 text-[10px] ${
-                        r.needs_review ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" : ""
-                      }`}
-                      onClick={() => handleEdit(r)}
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      {r.needs_review ? "REVISAR" : "EDITAR"}
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant={r.needs_review ? "default" : "outline"}
+                        className={`h-7 px-2 text-[10px] ${
+                          r.needs_review ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500" : ""
+                        }`}
+                        onClick={() => handleEdit(r)}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        {r.needs_review ? "REVISAR" : "EDITAR"}
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(r)}
+                        className="inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-800"
+                        title="Abrir histórico no modal de edição"
+                      >
+                        <History className="h-3 w-3" /> HISTÓRICO
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
             );
           })}
+
+          {/* FASE 8 — Mostrar mais */}
+          {filtered.length > visibleRows.length && (
+            <div className="pt-2 flex justify-center">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-3 text-[10px]"
+                onClick={() => setVisiveis((v) => v + PAGE)}
+              >
+                MOSTRAR MAIS ({filtered.length - visibleRows.length} restantes)
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
