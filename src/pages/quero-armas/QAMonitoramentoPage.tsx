@@ -8,7 +8,6 @@ import MonitoramentoChartsBundle from "@/components/quero-armas/monitoramento/Mo
 
 const DashboardFunilOperacional        = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
 const TelemetriaCadastroCards          = lazy(() => import("@/components/quero-armas/dashboard/TelemetriaCadastroCards"));
-const DashboardNovosCadastrosRecebidos = lazy(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"));
 const DashboardAtividadesRecentes      = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
 
 function Spinner() {
@@ -52,11 +51,6 @@ export default function QAMonitoramentoPage() {
       )}
       {enabled.qualidade_cadastro && (
         <Suspense fallback={<Spinner />}><TelemetriaCadastroCards /></Suspense>
-      )}
-
-      {/* Linha 2 — Crescimento de clientes (cadastro recente) */}
-      {enabled.cadastro_recente && (
-        <Suspense fallback={<Spinner />}><DashboardNovosCadastrosRecebidos /></Suspense>
       )}
 
       {/* Bundle dos demais gráficos analíticos (queries condicionais por toggle) */}

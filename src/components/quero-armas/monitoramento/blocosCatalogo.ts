@@ -11,7 +11,6 @@ export type MonitoramentoBlocoKey =
   | "atividades_recentes"
   | "funil_operacional"
   | "qualidade_cadastro"
-  | "cadastro_recente"
   | "clientes_novos_dia"
   | "clientes_novos_mes"
   | "comparativo_servicos"
@@ -40,7 +39,6 @@ export const BLOCOS_MONITORAMENTO: MonitoramentoBlocoMeta[] = [
   // Linha 2 — Crescimento de clientes
   { key: "clientes_novos_dia",   label: "Clientes novos por dia",           descricao: "Cadastros últimos 14 dias",                linha: 2, largura: "half"  },
   { key: "clientes_novos_mes",   label: "Clientes novos por mês",           descricao: "Evolução mensal dos cadastros",            linha: 2, largura: "half"  },
-  { key: "cadastro_recente",     label: "Cadastro recente",                 descricao: "Últimos cadastros públicos recebidos",     linha: 2, largura: "full"  },
 
   // Linha 3 — Produção jurídica
   { key: "status_pecas",         label: "Status das peças",                 descricao: "Distribuição por status de revisão",       linha: 3, largura: "third" },
