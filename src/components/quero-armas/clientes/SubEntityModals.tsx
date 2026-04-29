@@ -266,7 +266,7 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
       if (open && cadastro.id) {
         setLoadingSenha(true);
         import("./senhaGovApi").then(({ getSenhaGov }) =>
-          getSenhaGov(cadastro.id, "edição CrModal")
+          getSenhaGov(cadastro.id, "edição CrModal", clienteId)
             .then((s) => setF((p) => ({ ...p, senha_gov: s || "" })))
             .catch((e) => {
               if (e?.name !== "SenhaGovAuthError" && e?.name !== "SenhaGovForbiddenError") {
