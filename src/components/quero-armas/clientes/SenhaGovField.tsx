@@ -272,7 +272,13 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
 
   return (
     <div className="flex flex-col gap-0.5 py-1">
-      <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
+      <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">
+        SENHA GOV {effectiveCrId
+          ? <span className="text-emerald-600 normal-case font-normal">— vinculada ao cliente (com CR)</span>
+          : (allowNoCr
+              ? <span className="text-amber-600 normal-case font-normal">— cliente sem CR ativo</span>
+              : null)}
+      </span>
       {editing ? (
         <div className="flex items-center gap-1.5 pl-0.5">
           <input
