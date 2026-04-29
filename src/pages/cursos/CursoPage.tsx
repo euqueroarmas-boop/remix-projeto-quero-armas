@@ -12,7 +12,7 @@ export default function CursoPage() {
 
   if (!course) {
     return (
-      <SiteShell>
+      <SiteShell hideBackButton>
         <SEO
           title="Curso não encontrado | Quero Armas"
           description="Este curso não está disponível."
@@ -36,7 +36,7 @@ export default function CursoPage() {
   if (course.status === 'em_breve') {
     const wa = buildWhatsAppLink(course.whatsappNumber, course.whatsappMessage);
     return (
-      <SiteShell>
+      <SiteShell hideBackButton>
         <SEO
           title={course.seoTitle}
           description={course.seoDescription}

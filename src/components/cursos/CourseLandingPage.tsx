@@ -43,7 +43,7 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
   };
 
   return (
-    <SiteShell>
+    <SiteShell hideBackButton>
       <SEO
         title={course.seoTitle}
         description={course.seoDescription}

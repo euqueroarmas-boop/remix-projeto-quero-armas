@@ -35,6 +35,7 @@ import { coursesCatalog, courseCategories } from '@/shared/data/coursesCatalog';
 
 interface SiteShellProps {
   children: ReactNode;
+  hideBackButton?: boolean;
 }
 
 const navItems = [
@@ -60,7 +61,7 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   },
 ];
 
-export const SiteShell = ({ children }: SiteShellProps) => {
+export const SiteShell = ({ children, hideBackButton = false }: SiteShellProps) => {
   const { user, isAdmin } = useAuth();
   const { itemCount } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -374,9 +375,11 @@ export const SiteShell = ({ children }: SiteShellProps) => {
       </header>
 
       <main className="relative z-10 w-full max-w-full flex-1 overflow-x-clip pt-16 sm:pt-20">
-        <div className="container pt-3">
-          <BackButton />
-        </div>
+        {!hideBackButton && (
+          <div className="container pt-3">
+            <BackButton />
+          </div>
+        )}
         {children}
       </main>
 
