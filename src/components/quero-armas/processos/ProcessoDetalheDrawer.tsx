@@ -483,39 +483,76 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                       )}
                     </div>
 
-                    {/* Ações */}
-                    <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                      {doc.arquivo_storage_key && (
-                        <button onClick={() => baixarArquivo(doc.arquivo_storage_key)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100">
-                          <Download className="h-3 w-3" /> VER ARQUIVO
-                        </button>
-                      )}
-                      {/* Cliente: pode reenviar se não aprovado */}
-                      {doc.status !== "aprovado" && doc.status !== "dispensado_grupo" && (
-                        <button
-                          disabled={uploadingId === doc.id}
-                          onClick={() => handleFileSelect(doc.id)}
-                          className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white disabled:opacity-50"
-                          style={{ background: doc.arquivo_storage_key ? "#0EA5E9" : "#10B981" }}
-                        >
-                          <Upload className="h-3 w-3" /> {uploadingId === doc.id ? "ENVIANDO..." : doc.arquivo_storage_key ? "REENVIAR" : "ENVIAR DOCUMENTO"}
-                        </button>
-                      )}
-                      {/* Admin: aprovar/rejeitar */}
-                      {adminMode && doc.status !== "aprovado" && (
-                        <button onClick={() => adminSetStatus(doc.id, "aprovado")} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
-                          <CheckCircle className="h-3 w-3" /> APROVAR
-                        </button>
-                      )}
-                      {adminMode && doc.status !== "invalido" && (
-                        <button onClick={() => {
-                          const m = window.prompt("MOTIVO DA REJEIÇÃO:");
-                          if (m && m.trim()) adminSetStatus(doc.id, "invalido", m.trim().toUpperCase());
-                        }} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
-                          <XCircle className="h-3 w-3" /> REJEITAR
-                        </button>
-                      )}
-                    </div>
+                    {/* Ações por status do documento */}
+                    {doc.status === "dispensado_grupo" ? (
+                      <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
+                        <div className="text-[11px] text-slate-600 leading-relaxed">
+                          <span className="font-bold uppercase tracking-wider text-slate-700">DISPENSADO PELO ADMINISTRATIVO.</span>{" "}
+                          Outro documento do mesmo grupo já satisfaz esta exigência. Nenhuma ação necessária.
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                        {/* Visualizar/Baixar — só se houver arquivo enviado */}
+                        {doc.arquivo_storage_key && (
+                          <>
+                            <button
+                              onClick={() => baixarArquivo(doc.arquivo_storage_key, "visualizar")}
+                              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                            >
+                              <Eye className="h-3 w-3" /> VISUALIZAR
+                            </button>
+                            <button
+                              onClick={() => baixarArquivo(doc.arquivo_storage_key, "baixar")}
+                              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                            >
+                              <Download className="h-3 w-3" /> BAIXAR
+                            </button>
+                          </>
+                        )}
+
+                        {/* Cliente/equipe: enviar / substituir conforme estado */}
+                        {doc.status !== "aprovado" && (
+                          <button
+                            disabled={uploadingId === doc.id}
+                            onClick={() => handleFileSelect(doc.id)}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white disabled:opacity-50"
+                            style={{
+                              background:
+                                doc.status === "invalido" || doc.status === "divergente"
+                                  ? "#EF4444"
+                                  : doc.arquivo_storage_key
+                                  ? "#0EA5E9"
+                                  : "#10B981",
+                            }}
+                          >
+                            <Upload className="h-3 w-3" />
+                            {uploadingId === doc.id
+                              ? "ENVIANDO..."
+                              : doc.status === "invalido" || doc.status === "divergente"
+                              ? "SUBSTITUIR DOCUMENTO"
+                              : doc.arquivo_storage_key
+                              ? "SUBSTITUIR DOCUMENTO"
+                              : "ENVIAR DOCUMENTO"}
+                          </button>
+                        )}
+
+                        {/* Admin: aprovar/rejeitar (mantido) */}
+                        {adminMode && doc.status !== "aprovado" && (
+                          <button onClick={() => adminSetStatus(doc.id, "aprovado")} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
+                            <CheckCircle className="h-3 w-3" /> APROVAR
+                          </button>
+                        )}
+                        {adminMode && doc.status !== "invalido" && (
+                          <button onClick={() => {
+                            const m = window.prompt("MOTIVO DA REJEIÇÃO:");
+                            if (m && m.trim()) adminSetStatus(doc.id, "invalido", m.trim().toUpperCase());
+                          }} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
+                            <XCircle className="h-3 w-3" /> REJEITAR
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
