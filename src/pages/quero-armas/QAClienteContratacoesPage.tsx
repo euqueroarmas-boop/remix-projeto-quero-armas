@@ -257,6 +257,7 @@ export default function QAClienteContratacoesPage() {
                             {st.label}
                           </span>
                           {(p.total_docs ?? 0) > 0 && (
+                          {(p.total_docs ?? 0) > 0 && !aguardandoPagto && (
                             <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
                               {p.aprovados}/{p.total_docs} DOCS APROVADOS
                             </span>
