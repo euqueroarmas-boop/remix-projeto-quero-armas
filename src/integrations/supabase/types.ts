@@ -4467,8 +4467,8 @@ export type Database = {
       qa_gov_reconciliation_audit: {
         Row: {
           acao: string
-          cadastro_cr_id_anterior: string | null
-          cadastro_cr_id_correto: string | null
+          cadastro_cr_id_anterior: number | null
+          cadastro_cr_id_correto: number | null
           cliente_id_anterior: number | null
           cliente_id_correto: number | null
           cpf_normalizado: string | null
@@ -4486,8 +4486,8 @@ export type Database = {
         }
         Insert: {
           acao: string
-          cadastro_cr_id_anterior?: string | null
-          cadastro_cr_id_correto?: string | null
+          cadastro_cr_id_anterior?: number | null
+          cadastro_cr_id_correto?: number | null
           cliente_id_anterior?: number | null
           cliente_id_correto?: number | null
           cpf_normalizado?: string | null
@@ -4505,8 +4505,8 @@ export type Database = {
         }
         Update: {
           acao?: string
-          cadastro_cr_id_anterior?: string | null
-          cadastro_cr_id_correto?: string | null
+          cadastro_cr_id_anterior?: number | null
+          cadastro_cr_id_correto?: number | null
           cliente_id_anterior?: number | null
           cliente_id_correto?: number | null
           cpf_normalizado?: string | null
