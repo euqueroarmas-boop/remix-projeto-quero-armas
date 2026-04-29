@@ -745,6 +745,98 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
           )}
         </div>
       </div>
+
+      {/* Modal — Confirmar APROVAÇÃO */}
+      {aprovacao && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">CONFIRMAR APROVAÇÃO</h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-700 uppercase tracking-wide">
+                Documento: <strong>{aprovacao.nome}</strong>
+              </p>
+              {aprovacao.divergente ? (
+                <div className="text-[11px] bg-amber-50 border border-amber-300 rounded-md p-2.5 text-amber-900">
+                  <strong className="uppercase tracking-wider">ATENÇÃO:</strong> este documento possui divergências detectadas. Deseja aprovar mesmo assim?
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  O documento passará a status APROVADO e o motivo de rejeição anterior, se houver, será limpo.
+                </p>
+              )}
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setAprovacao(null)}
+                disabled={salvandoAcao}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarAprovacao}
+                disabled={salvandoAcao}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <CheckCircle className="h-3 w-3" /> {salvandoAcao ? "APROVANDO..." : "CONFIRMAR APROVAÇÃO"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal — Recusar com MOTIVO obrigatório */}
+      {rejeicao && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">RECUSAR DOCUMENTO</h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-700 uppercase tracking-wide">
+                Documento: <strong>{rejeicao.nome}</strong>
+              </p>
+              <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600">
+                MOTIVO DA RECUSA (OBRIGATÓRIO)
+              </label>
+              <textarea
+                value={motivoRejeicao}
+                onChange={(e) => setMotivoRejeicao(e.target.value.toUpperCase())}
+                placeholder="EX.: ARQUIVO ILEGÍVEL, FOTO CORTADA, DOCUMENTO VENCIDO..."
+                rows={4}
+                maxLength={500}
+                className="w-full text-xs uppercase tracking-wide rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-300"
+              />
+              <div className="text-[10px] text-slate-400 text-right">
+                {motivoRejeicao.length}/500
+              </div>
+              <p className="text-[11px] text-slate-500">
+                O cliente verá este motivo e o botão para SUBSTITUIR DOCUMENTO no portal.
+              </p>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => { setRejeicao(null); setMotivoRejeicao(""); }}
+                disabled={salvandoAcao}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarRejeicao}
+                disabled={salvandoAcao || !motivoRejeicao.trim()}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <XCircle className="h-3 w-3" /> {salvandoAcao ? "REGISTRANDO..." : "CONFIRMAR RECUSA"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
