@@ -110,6 +110,9 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   }, [cadastroCrId, clienteId]);
 
   const effectiveCrId = cadastroCrId ?? resolvedCrId ?? null;
+  // Modo "cliente sem CR": a Senha GOV pertence ao cliente e é lida/gravada
+  // diretamente em qa_cliente_credenciais via edge function (Cenário 2).
+  const allowNoCr = !!clienteId;
 
   // Quando outra parte do app (ex.: ClienteFormModal) grava a senha,
  // invalidamos o cache local para forçar recarga do valor atualizado.
@@ -131,7 +134,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   if (!effectiveCrId && !onCreateCadastro && !clienteId && variant !== "exposed") return null;
 
   const ensure = async () => {
-    if (!effectiveCrId) return null;
+    if (!effectiveCrId && !allowNoCr) return null;
     if (senha != null) return senha;
     // Sem clienteId não chamamos a edge function (a função recusaria com 400/409).
     if (!clienteId) {
@@ -140,7 +143,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
     }
     setLoading(true);
     try {
-      const s = await getSenhaGov(effectiveCrId, contexto, clienteId);
+      const s = await getSenhaGov(effectiveCrId ?? null, contexto, clienteId);
       setSenha(s || "");
       return s || "";
     } catch (e: any) {
@@ -179,7 +182,13 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
   if (variant === "exposed") {
     return (
       <div className="flex flex-col gap-0.5 py-1">
-        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
+        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">
+          SENHA GOV {effectiveCrId
+            ? <span className="text-emerald-600 normal-case font-normal">— vinculada ao cliente (com CR)</span>
+            : (allowNoCr
+                ? <span className="text-amber-600 normal-case font-normal">— cliente sem CR ativo</span>
+                : null)}
+        </span>
         <div className="flex items-center gap-2 pl-0.5">
           <span className="font-mono text-[13px] text-slate-800 font-semibold select-all">
             {loading ? "…" : (visible ? (senha || "—") : "••••••••")}
@@ -210,7 +219,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
       toast.error("clienteId obrigatório para editar Senha GOV");
       return;
     }
-    if (cadastroCrId) {
+    if (effectiveCrId || allowNoCr) {
       const current = await ensure();
       setDraft(current || "");
     } else {
@@ -231,16 +240,14 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
     }
     setSaving(true);
     try {
-      let id = cadastroCrId;
-      if (!id && onCreateCadastro) {
+      let id: number | null | undefined = effectiveCrId ?? cadastroCrId;
+      // Se não há CR e o consumidor expôs callback de criação (modo legado),
+      // usa-o. Caso contrário, segue Cenário 2: grava direto na central.
+      if (!id && onCreateCadastro && !allowNoCr) {
         id = (await onCreateCadastro()) || undefined as any;
       }
-      if (!id) {
-        toast.error("Não foi possível preparar o cadastro CR");
-        setSaving(false);
-        return;
-      }
-      await setSenhaGov(id, draft, contexto, clienteId);
+      // id pode ser null aqui (cliente sem CR) — a edge function aceita.
+      await setSenhaGov(id ?? null, draft, contexto, clienteId);
       setSenha(draft);
       setEditing(false);
       setDraft("");
@@ -271,7 +278,13 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
 
   return (
     <div className="flex flex-col gap-0.5 py-1">
-      <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">Senha Gov</span>
+      <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">
+        SENHA GOV {effectiveCrId
+          ? <span className="text-emerald-600 normal-case font-normal">— vinculada ao cliente (com CR)</span>
+          : (allowNoCr
+              ? <span className="text-amber-600 normal-case font-normal">— cliente sem CR ativo</span>
+              : null)}
+      </span>
       {editing ? (
         <div className="flex items-center gap-1.5 pl-0.5">
           <input

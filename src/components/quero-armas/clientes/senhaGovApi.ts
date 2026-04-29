@@ -85,14 +85,14 @@ async function callSenhaGov(body: Record<string, unknown>) {
 }
 
 export async function getSenhaGov(
-  cadastroCrId: number,
+  cadastroCrId: number | null,
   contexto?: string,
   clienteId?: number | null,
 ): Promise<string | null> {
   try {
     const data = await callSenhaGov({
       action: "get",
-      cadastro_cr_id: cadastroCrId,
+      cadastro_cr_id: cadastroCrId ?? null,
       cliente_id: clienteId ?? null,
       contexto,
     });
@@ -105,17 +105,17 @@ export async function getSenhaGov(
 }
 
 export async function setSenhaGov(
-  cadastroCrId: number,
+  cadastroCrId: number | null,
   senha: string,
   contexto?: string,
   clienteId?: number | null,
 ): Promise<void> {
   await callSenhaGov({
     action: "set",
-    cadastro_cr_id: cadastroCrId,
+    cadastro_cr_id: cadastroCrId ?? null,
     cliente_id: clienteId ?? null,
     senha,
     contexto,
   });
-  emitSenhaGovUpdated(cadastroCrId);
+  if (cadastroCrId) emitSenhaGovUpdated(cadastroCrId);
 }
