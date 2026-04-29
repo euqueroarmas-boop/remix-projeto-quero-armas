@@ -7266,6 +7266,10 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_confirmar_pagamento_processo: {
+        Args: { p_origem?: string; p_processo_id: string }
+        Returns: Json
+      }
       qa_criar_processo_logado: {
         Args: {
           p_catalogo_slug: string
