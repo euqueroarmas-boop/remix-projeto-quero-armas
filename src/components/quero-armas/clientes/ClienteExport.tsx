@@ -51,7 +51,7 @@ export async function exportCr(clienteId: number, nomeCliente: string) {
   const cr = (data as any[])[0];
   let senhaGov = "";
   try {
-    senhaGov = (await getSenhaGov(cr.id, `export CSV CR — ${nomeCliente}`)) || "";
+    senhaGov = (await getSenhaGov(cr.id, `export CSV CR — ${nomeCliente}`, clienteId)) || "";
   } catch (e: any) {
     toast.error("Senha Gov não exportada: " + (e?.message || "erro"));
   }

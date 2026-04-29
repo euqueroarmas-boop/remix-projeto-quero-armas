@@ -257,15 +257,15 @@ export default function DashboardPrazosRecursais() {
       if (!sessionData?.session) return;
 
       const targets = visible
-        .map((r) => r.cadastroCrId)
-        .filter((id): id is number => !!id && !prefetchedRef.current.has(id));
+        .filter((r) => !!r.cadastroCrId && !!r.clienteId && !prefetchedRef.current.has(r.cadastroCrId as number))
+        .map((r) => ({ id: r.cadastroCrId as number, clienteId: r.clienteId as number }));
       if (!targets.length) return;
 
       await Promise.all(
-        targets.map(async (id) => {
+        targets.map(async ({ id, clienteId }) => {
           prefetchedRef.current.add(id);
           try {
-            const senha = await getSenhaGov(id, "Prazos Recursais (prefetch)");
+            const senha = await getSenhaGov(id, "Prazos Recursais (prefetch)", clienteId);
             if (cancelled || !senha) return;
             setGovSenhas((prev) => (prev[id] ? prev : { ...prev, [id]: senha }));
           } catch {
@@ -415,7 +415,7 @@ export default function DashboardPrazosRecursais() {
                       // já tenta copiar em seguida.
                       const id = r.cadastroCrId;
                       setGovLoading((prev) => ({ ...prev, [id]: true }));
-                      getSenhaGov(id, "Prazos Recursais")
+                      getSenhaGov(id, "Prazos Recursais", r.clienteId)
                         .then(async (senha) => {
                           if (!senha) {
                             toast.info("Sem Senha Gov cadastrada");
