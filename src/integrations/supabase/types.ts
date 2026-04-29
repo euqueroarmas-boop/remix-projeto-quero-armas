@@ -5189,6 +5189,33 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_monitoramento_configuracoes: {
+        Row: {
+          config_key: string
+          created_at: string
+          enabled: boolean
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config_key: string
+          created_at?: string
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config_key?: string
+          created_at?: string
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       qa_municoes: {
         Row: {
           calibre: string
