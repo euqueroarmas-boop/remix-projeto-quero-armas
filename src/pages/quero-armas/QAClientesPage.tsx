@@ -974,6 +974,8 @@ export default function QAClientesPage() {
   const [itens, setItens] = useState<any[]>([]);
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
+  // FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR).
+  const [armasManual, setArmasManual] = useState<any[]>([]);
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [examesAtuais, setExamesAtuais] = useState<any[]>([]);
@@ -1724,6 +1726,18 @@ export default function QAClientesPage() {
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
       setDocsCliente((dRes.data as any[]) ?? []);
+      // FASE 4 — carrega armas manuais/IA em paralelo (não-bloqueante; falha silenciosa).
+      try {
+        const { data: amRes } = await supabase
+          .from("qa_cliente_armas_manual" as any)
+          .select("*")
+          .eq("qa_cliente_id", clienteIdReal)
+          .order("created_at", { ascending: false });
+        setArmasManual((amRes as any[]) ?? []);
+      } catch (e) {
+        console.warn("[loadSubData] armasManual falhou", e);
+        setArmasManual([]);
+      }
       if (vendasData.length > 0) {
         // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
@@ -1973,6 +1987,7 @@ export default function QAClientesPage() {
                   filiacoes={filiacoes}
                   cadastro={cadastro}
                   examesAtuais={examesAtuais}
+                  armasManual={armasManual}
                   onNavigate={setTab}
                 />
               </TabsContent>
