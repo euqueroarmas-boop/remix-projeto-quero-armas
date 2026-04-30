@@ -6336,6 +6336,7 @@ export type Database = {
           cadastro_publico_id: string | null
           cliente_id: number
           created_at: string
+          documentos_total: number | null
           id: string
           item_venda_id: number | null
           observacoes: string | null
@@ -6356,6 +6357,7 @@ export type Database = {
           cadastro_publico_id?: string | null
           cliente_id: number
           created_at?: string
+          documentos_total?: number | null
           id?: string
           item_venda_id?: number | null
           observacoes?: string | null
@@ -6376,6 +6378,7 @@ export type Database = {
           cadastro_publico_id?: string | null
           cliente_id?: number
           created_at?: string
+          documentos_total?: number | null
           id?: string
           item_venda_id?: number | null
           observacoes?: string | null
