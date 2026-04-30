@@ -199,11 +199,14 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
       } else {
         setCustomer(null);
       }
+
+      // Carrega status persistido + timeline em paralelo
+      await Promise.all([fetchPortalStatus(), fetchTimeline()]);
     } catch (err) {
       console.error("Erro ao buscar customer:", err);
     }
     setLoading(false);
-  }, [cliente.cpf, cliente.email, cliente.id, fetchStoredCredentials]);
+  }, [cliente.cpf, cliente.email, cliente.id, fetchStoredCredentials, fetchPortalStatus, fetchTimeline]);
 
   useEffect(() => {
     fetchCustomer();
