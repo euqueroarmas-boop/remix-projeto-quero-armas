@@ -2280,15 +2280,6 @@ export default function QAClientesPage() {
                                   processoExistente={processosVenda.find((p: any) => p.venda_id === v.id) || null}
                                   onCreated={() => loadSubData(selected!)}
                                 />
-                                {v.solicitacao_id && (
-                                  <SolicitacaoStatusPopover
-                                    solicitacaoId={v.solicitacao_id}
-                                    onUpdated={() => {
-                                      void loadSubData(selected!);
-                                      void reloadSolicitacoes();
-                                    }}
-                                  />
-                                )}
                                 <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700">
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
