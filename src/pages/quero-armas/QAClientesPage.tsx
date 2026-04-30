@@ -39,6 +39,7 @@ import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
+import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
@@ -2637,6 +2638,7 @@ export default function QAClientesPage() {
               </TabsContent>
               {/* HUB DO CLIENTE — documentos enviados pelo próprio cliente */}
               <TabsContent value="hub" className="mt-3">
+                <ClienteDocsCadastroPublico cliente={c} />
                 <ClienteDocsEnviados cliente={c} />
               </TabsContent>
               {/* ACESSO AO PORTAL */}
