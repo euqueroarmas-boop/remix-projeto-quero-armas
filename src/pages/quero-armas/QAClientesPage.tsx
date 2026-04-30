@@ -29,6 +29,7 @@ import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import { SolicitacaoStatusPopover } from "@/components/quero-armas/clientes/SolicitacaoStatusPopover";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
@@ -2257,6 +2258,15 @@ export default function QAClientesPage() {
                                   processoExistente={processosVenda.find((p: any) => p.venda_id === v.id) || null}
                                   onCreated={() => loadSubData(selected!)}
                                 />
+                                {v.solicitacao_id && (
+                                  <SolicitacaoStatusPopover
+                                    solicitacaoId={v.solicitacao_id}
+                                    onUpdated={() => {
+                                      void loadSubData(selected!);
+                                      void reloadSolicitacoes();
+                                    }}
+                                  />
+                                )}
                                 <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700">
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
