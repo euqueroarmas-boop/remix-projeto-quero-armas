@@ -5808,6 +5808,7 @@ export type Database = {
           pagamento_status: string
           servico_id: number | null
           servico_nome: string
+          solicitacao_id: string | null
           status: string
           updated_at: string
           venda_id: number | null
@@ -5824,6 +5825,7 @@ export type Database = {
           pagamento_status?: string
           servico_id?: number | null
           servico_nome: string
+          solicitacao_id?: string | null
           status?: string
           updated_at?: string
           venda_id?: number | null
@@ -5840,6 +5842,7 @@ export type Database = {
           pagamento_status?: string
           servico_id?: number | null
           servico_nome?: string
+          solicitacao_id?: string | null
           status?: string
           updated_at?: string
           venda_id?: number | null
@@ -5850,6 +5853,13 @@ export type Database = {
             columns: ["servico_id"]
             isOneToOne: false
             referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_solicitacoes_servico"
             referencedColumns: ["id"]
           },
         ]
