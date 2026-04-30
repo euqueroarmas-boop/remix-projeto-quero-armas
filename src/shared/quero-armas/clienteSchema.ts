@@ -64,6 +64,18 @@ export function rgNotEqualCpf(rg: string | null | undefined, cpf: string | null 
   return r !== c;
 }
 
+/**
+ * Quando o documento for CIN, o número DEVE ser exatamente igual ao CPF
+ * (mesmos dígitos, formato livre). Retorna true se ainda não há dados
+ * suficientes para checar, ou se já são iguais.
+ */
+export function cinEqualsCpf(rg: string | null | undefined, cpf: string | null | undefined): boolean {
+  const r = onlyDigits(rg);
+  const c = onlyDigits(cpf);
+  if (!r || !c) return true;
+  return r === c;
+}
+
 /* ─── Tipo unificado dos dados do cliente ─── */
 export interface ClienteData {
   // Identificação
@@ -188,6 +200,14 @@ export const clienteSchema = z.object(baseShape).superRefine((d, ctx) => {
       code: z.ZodIssueCode.custom,
       path: ["rg"],
       message: "RG não pode ser igual ao CPF — se for CIN, selecione CIN",
+    });
+  }
+  // Se for CIN, o número precisa ser igual ao CPF (mesmos dígitos)
+  if (d.tipo_documento_identidade === "CIN" && !cinEqualsCpf(d.rg, d.cpf)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["rg"],
+      message: "CIN deve usar o mesmo número do CPF",
     });
   }
   // LGPD obrigatório
@@ -321,6 +341,14 @@ export function getBlockingErrors(
       field: "ambiguidade_cpf_rg",
       label: "CPF × RG",
       message: "RG e CPF não podem ser iguais — confirme manualmente",
+    });
+  }
+  // CIN deve ser igual ao CPF
+  if (isCinDoc && data.rg && data.cpf && !cinEqualsCpf(data.rg, data.cpf)) {
+    errs.push({
+      field: "rg",
+      label: "CIN",
+      message: "CIN deve usar o mesmo número do CPF",
     });
   }
 
