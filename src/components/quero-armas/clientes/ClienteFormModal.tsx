@@ -298,6 +298,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      // Hardening: Postgres rejeita string vazia em colunas date/timestamp/numeric.
+      // Convertemos QUALQUER "" → null para evitar regressão se novos campos forem
+      // adicionados ao formulário no futuro. Booleans e zeros são preservados.
+      for (const k of Object.keys(payload)) {
+        if (payload[k] === "") payload[k] = null;
+      }
       let savedId: number | null = null;
       if (isEdit) {
         // Upload photo if new file selected
