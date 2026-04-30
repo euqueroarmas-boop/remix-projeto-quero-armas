@@ -372,8 +372,10 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
 interface VendaModalProps {
   open: boolean; onClose: () => void; onSaved: () => void;
   clienteId: number; venda?: any;
-  /** Quando preenchido, vincula a venda criada à solicitação (qa_solicitacoes_servico)
-   *  e atualiza o status_servico daquela solicitação para 'contratado'. */
+  /**
+   * Quando preenchido, vincula a venda criada à solicitação (qa_solicitacoes_servico)
+   * e atualiza o status_servico daquela solicitação para 'contratado'.
+   */
   solicitacaoId?: string | null;
 }
 export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitacaoId }: VendaModalProps) {

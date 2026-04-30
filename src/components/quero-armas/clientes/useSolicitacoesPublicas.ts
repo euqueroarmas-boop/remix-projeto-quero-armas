@@ -16,7 +16,10 @@ export type SolicitacaoPublica = {
   status_financeiro: "Sem cobrança vinculada";
   status_processo: "Processo ainda não aberto";
   created_at: string;
-  /** true quando já existe um qa_itens_venda do mesmo serviço para o mesmo cliente — não exibir como solicitação solta. */
+  /**
+   * true SOMENTE quando qa_solicitacoes_servico.status_servico === 'contratado'.
+   * NÃO inferir mais por qa_itens_venda, servico_id ou venda existente.
+   */
   ja_convertido: boolean;
 };
 
@@ -29,7 +32,8 @@ export type SolicitacaoPublica = {
  */
 export function useSolicitacoesPublicasDoCliente(
   clienteIdReal: number | null | undefined,
-  itensVenda: Array<{ servico_id?: number | null }>,
+  /** @deprecated Mantido por compatibilidade. Não é mais usado para inferir conversão. */
+  _itensVenda?: Array<{ servico_id?: number | null }>,
 ) {
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoPublica[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,12 +45,6 @@ export function useSolicitacoesPublicasDoCliente(
     }
     setLoading(true);
     try {
-      const servicoIdsContratados = new Set(
-        (itensVenda || [])
-          .map((i) => Number(i?.servico_id))
-          .filter((n) => Number.isFinite(n)),
-      );
-
       // 1) Fonte canônica: qa_solicitacoes_servico
       const { data: sols } = await supabase
         .from("qa_solicitacoes_servico" as any)
@@ -61,9 +59,8 @@ export function useSolicitacoesPublicasDoCliente(
       const cadIdsCanon = new Set(canonRows.map((r) => r.cadastro_publico_id).filter(Boolean));
 
       const fromCanon: SolicitacaoPublica[] = canonRows.map((r) => {
-        const ja =
-          r.status_servico === "contratado" ||
-          (r.servico_id != null && servicoIdsContratados.has(Number(r.servico_id)));
+        // ÚNICA FONTE DE VERDADE — sem fallback por venda/servico_id.
+        const ja = r.status_servico === "contratado";
         const servico: ServicoCanonico = {
           slug: r.service_slug,
           nome: r.service_name,
@@ -100,8 +97,8 @@ export function useSolicitacoesPublicasDoCliente(
       );
       const fromLegacy: SolicitacaoPublica[] = legacyRows.map((r) => {
         const servico = resolveServicoFromInteresse(r.servico_interesse);
-        const ja = servico.servico_id != null && servicoIdsContratados.has(servico.servico_id);
-          return {
+        // Fallback legado nunca tem status canônico — sempre tratado como aguardando.
+        return {
             cadastro_publico_id: String(r.id),
             solicitacao_id: null,
             status_servico: "aguardando_contratacao" as const,
@@ -113,7 +110,7 @@ export function useSolicitacoesPublicasDoCliente(
             status_financeiro: "Sem cobrança vinculada" as const,
             status_processo: "Processo ainda não aberto" as const,
             created_at: r.created_at,
-            ja_convertido: ja,
+            ja_convertido: false,
           };
       });
 
@@ -121,7 +118,7 @@ export function useSolicitacoesPublicasDoCliente(
     } finally {
       setLoading(false);
     }
-  }, [clienteIdReal, JSON.stringify((itensVenda || []).map((i) => i?.servico_id))]);
+  }, [clienteIdReal]);
 
   useEffect(() => {
     void load();
