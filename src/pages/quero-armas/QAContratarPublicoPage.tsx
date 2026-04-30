@@ -111,6 +111,14 @@ export default function QAContratarPublicoPage() {
         navigate(`/area-do-cliente/login?next=${next}`);
         return;
       }
+      if (res?.requires_recadastramento) {
+        toast.error(
+          "Seu cadastro precisa ser atualizado antes de contratar novo serviço.",
+        );
+        const next = encodeURIComponent(`/area-do-cliente/contratar/${slug}/confirmar`);
+        navigate(`/area-do-cliente/login?next=${next}&recad=1`);
+        return;
+      }
       if (res?.needs_manual_review) {
         toast.error(
           "Encontramos mais de um cadastro com seu CPF. Nossa equipe vai resolver e entrar em contato.",
