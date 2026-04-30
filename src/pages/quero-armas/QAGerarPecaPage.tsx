@@ -1618,7 +1618,7 @@ export default function QAGerarPecaPage() {
           </div>
         )}
 
-        <Button onClick={gerar} disabled={!canGenerate} className="bg-slate-800 hover:bg-slate-900 text-slate-700 border border-slate-200 w-full md:w-auto h-9 text-sm disabled:opacity-40">
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>

@@ -180,22 +180,22 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
 
   return (
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
-      isFailed ? "bg-red-500/5 border-red-500/20" :
-      isDone ? "bg-emerald-500/5 border-emerald-500/20" :
-      "bg-blue-500/5 border-blue-500/20"
+      isFailed ? "bg-red-50 border-red-200" :
+      isDone ? "bg-emerald-50 border-emerald-200" :
+      "bg-blue-50 border-blue-200"
     }`}>
       <div className="shrink-0">
-        {isActive && <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />}
-        {isDone && <CheckCircle className="h-4 w-4 text-emerald-400" />}
-        {isFailed && <AlertCircle className="h-4 w-4 text-red-400" />}
+        {isActive && <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />}
+        {isDone && <CheckCircle className="h-4 w-4 text-emerald-700" />}
+        {isFailed && <AlertCircle className="h-4 w-4 text-red-600" />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-medium text-slate-700 truncate">{item.titulo || item.url}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
-            isFailed ? "bg-red-500/10 text-red-400" :
-            isDone ? "bg-emerald-500/10 text-emerald-400" :
-            "bg-blue-500/10 text-blue-400"
+            isFailed ? "bg-red-100 text-red-700" :
+            isDone ? "bg-emerald-100 text-emerald-700" :
+            "bg-blue-100 text-blue-700"
           }`}>{stage.label}</span>
           {duration > 0 && (
             <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
@@ -213,18 +213,18 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
           </div>
         )}
         {isFailed && item.resumo && (
-          <p className="text-[10px] text-red-400/70 mt-0.5 truncate">{item.resumo}</p>
+          <p className="text-[10px] text-red-600 mt-0.5 truncate">{item.resumo}</p>
         )}
       </div>
       {isDone && (
         <Link to={`/base-conhecimento/${item.doc_id}`} className="shrink-0">
-          <Button size="sm" variant="ghost" className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 h-7 px-2 text-[10px] gap-1">
+          <Button size="sm" variant="ghost" className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 h-7 px-2 text-[10px] gap-1">
             Abrir <ArrowRight className="h-3 w-3" />
           </Button>
         </Link>
       )}
       {isFailed && (
-        <Button size="sm" variant="ghost" onClick={onReprocess} className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 h-7 px-2 text-[10px] gap-1 shrink-0">
+        <Button size="sm" variant="ghost" onClick={onReprocess} className="text-amber-700 hover:text-amber-800 hover:bg-amber-50 h-7 px-2 text-[10px] gap-1 shrink-0">
           <RefreshCw className="h-3 w-3" /> Reprocessar
         </Button>
       )}
