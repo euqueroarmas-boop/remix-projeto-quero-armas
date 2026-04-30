@@ -28,6 +28,7 @@ import {
   ChevronRight,
   GraduationCap,
   Clock,
+  Smartphone,
 } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
 import { BackButton } from '@/shared/components/BackButton';
@@ -49,6 +50,7 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   {
     label: 'Público',
     links: [
+      { to: '/app-arsenal-gratuito', label: 'App Arsenal Gratuito', icon: Smartphone },
       { to: '/cadastro', label: 'Cadastro de cliente', icon: UserPlus },
       { to: '/enviar-foto', label: 'Enviar foto', icon: Camera },
     ],
