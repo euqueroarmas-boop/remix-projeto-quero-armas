@@ -207,6 +207,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     matricula_funcional: "",
     // ── Entrega B (sincronizado com clienteSchema) ──
     sexo: "",
+    // Tipo do documento de identidade — RG ou CIN.
+    // CIN substitui o RG e usa o MESMO número do CPF (legalmente permitido).
+    tipo_documento_identidade: "RG" as "RG" | "CIN",
     naturalidade_municipio: "",
     naturalidade_uf: "",
     naturalidade_pais: "Brasil",
@@ -244,6 +247,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         orgao_vinculado: cliente.orgao_vinculado || "",
         matricula_funcional: cliente.matricula_funcional || "",
         sexo: cliente.sexo || "",
+        tipo_documento_identidade: ((cliente.tipo_documento_identidade as "RG" | "CIN") || "RG"),
         naturalidade_municipio: cliente.naturalidade_municipio || "",
         naturalidade_uf: cliente.naturalidade_uf || "",
         naturalidade_pais: cliente.naturalidade_pais || "Brasil",
