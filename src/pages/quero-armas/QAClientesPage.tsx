@@ -1623,6 +1623,25 @@ export default function QAClientesPage() {
           : "Aprovado sem vínculo automático.";
       }
 
+      // Vínculo reverso obrigatório: qa_clientes.cadastro_publico_id deve apontar
+      // para o cadastro público de origem. Sem isso, a varredura de pendências
+      // dispara "Cliente vindo do formulário sem vínculo reverso" para sempre.
+      if (status === "aprovado" && clienteVinculadoId) {
+        const { error: revErr } = await supabase
+          .from("qa_clientes" as any)
+          .update({
+            cadastro_publico_id: selectedCadastroPublico.id,
+            cadastro_publico_aplicado_em: new Date().toISOString(),
+          })
+          .eq("id", clienteVinculadoId);
+        if (revErr) {
+          console.error("[vinculo-reverso] erro ao gravar cadastro_publico_id:", revErr.message);
+          throw new Error(
+            "Falha ao gravar vínculo reverso no cliente: " + revErr.message,
+          );
+        }
+      }
+
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
         .update(updatePayload)
         .eq("id", selectedCadastroPublico.id)
