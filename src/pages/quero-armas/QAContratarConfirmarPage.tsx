@@ -195,6 +195,31 @@ export default function QAContratarConfirmarPage() {
     if (!cliente || !catalogo) return;
     setSubmitting(true);
     try {
+      // FASE 20-D: verificar se cliente pode contratar (bloqueia legado pendente)
+      const { data: verifData, error: verifErr } = await supabase.rpc(
+        "qa_verificar_cliente_pode_contratar" as any,
+        {
+          p_cliente_id: cliente.id,
+          p_catalogo_slug: catalogo.slug,
+        } as any,
+      );
+      if (verifErr) throw verifErr;
+      const verif = (verifData ?? {}) as {
+        pode_contratar?: boolean;
+        motivo?: string;
+        homologacao_status?: string | null;
+        recadastramento_status?: string | null;
+      };
+      if (verif.pode_contratar === false) {
+        setLegadoBlock({
+          homologacao_status: verif.homologacao_status ?? null,
+          recadastramento_status: verif.recadastramento_status ?? null,
+        });
+        toast.error("Recadastramento obrigatório antes de contratar.");
+        setSubmitting(false);
+        return;
+      }
+
       // 1) Atualiza dados básicos se o cliente disse que mudou algo
       if (enderecoOk === "nao" || dadosOk === "nao") {
         const { error: errUpd } = await supabase.rpc(
