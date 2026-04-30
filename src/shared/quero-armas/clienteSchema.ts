@@ -183,11 +183,11 @@ const baseShape = {
 
 export const clienteSchema = z.object(baseShape).superRefine((d, ctx) => {
   // CPF×RG não podem ser idênticos
-  if (!rgNotEqualCpf(d.rg, d.cpf)) {
+  if (d.tipo_documento_identidade !== "CIN" && !rgNotEqualCpf(d.rg, d.cpf)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["rg"],
-      message: "RG não pode ser igual ao CPF — confirme manualmente",
+      message: "RG não pode ser igual ao CPF — se for CIN, selecione CIN",
     });
   }
   // LGPD obrigatório
