@@ -515,7 +515,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
           const { data: updRows, error: updErr } = await supabase
             .from("qa_solicitacoes_servico" as any)
             .update({
-              status_servico: "contratado",
+              // Novo padrão (15 status) — substitui o antigo "contratado".
+              // Após a venda gerada, o serviço entra em montagem da pasta.
+              status_servico: "montando_pasta",
               servico_id: primaryServicoId,
               service_slug: serviceSlug,
               service_name: serviceName,
