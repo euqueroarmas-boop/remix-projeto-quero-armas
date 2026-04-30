@@ -3,10 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import {
   AlertTriangle, CheckCircle, Clock, XCircle, PenTool,
-  ArrowRight, FileText, Shield, Users,
+  ArrowRight, FileText, Shield, Users, ListChecks,
 } from "lucide-react";
 
 import { LoadingState } from "@/components/quero-armas/LoadStates";
+import { useCadastroPendenciasCriticas } from "@/components/quero-armas/clientes/useCadastroPendenciasCriticas";
+
+const PendenciasEssenciaisModal = lazy(() => import("@/components/quero-armas/PendenciasEssenciaisModal"));
 
 /**
  * Dashboard Principal — enxuta.
@@ -46,6 +49,30 @@ export default function QADashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [mountHeavy, setMountHeavy] = useState(false);
+  const [pendenciasOpen, setPendenciasOpen] = useState(false);
+  // Força re-montagem (= re-fetch) do modal a cada clique manual.
+  const [pendenciasRunKey, setPendenciasRunKey] = useState(0);
+  const { reload: reloadPendencias, pendencias: pendenciasAtuais } = useCadastroPendenciasCriticas();
+
+  const handleBuscarPendencias = async () => {
+    // Força nova consulta (não cache antigo) e abre o painel.
+    await reloadPendencias();
+    if (import.meta.env.DEV) {
+      const total_pendencias = pendenciasAtuais.length;
+      const cadastros_sem_cliente = pendenciasAtuais.filter(p => p.pendencias.includes("sem_cliente_vinculado")).length;
+      const clientes_sem_servico  = pendenciasAtuais.filter(p => p.pendencias.includes("servico_solicitado_nao_gerado")).length;
+      const servicos_sem_classificacao = pendenciasAtuais.filter(p => p.pendencias.includes("servico_pendente_classificacao")).length;
+      // eslint-disable-next-line no-console
+      console.log("[BuscarPendenciasDashboard]", {
+        total_pendencias,
+        cadastros_sem_cliente,
+        clientes_sem_servico,
+        servicos_sem_classificacao,
+      });
+    }
+    setPendenciasRunKey(k => k + 1);
+    setPendenciasOpen(true);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +139,15 @@ export default function QADashboardPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleBuscarPendencias}
+            className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm border"
+            style={{ background: "hsl(38 92% 96%)", color: "hsl(35 80% 30%)", borderColor: "hsl(38 92% 80%)" }}
+            title="Executa a mesma varredura do login e lista cadastros que precisam de correção"
+          >
+            <ListChecks className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Verificar pendências</span>
+          </button>
           <Link to="/gerar-peca"
             className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm no-glow"
             style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}>
@@ -184,6 +220,19 @@ export default function QADashboardPage() {
           Operação → Monitoramento
         </Link>
       </p>
+
+      {/* Painel manual de pendências — mesma fonte do alerta automático.
+          A `key` força nova consulta a cada clique, garantindo dados atuais. */}
+      {pendenciasOpen && (
+        <Suspense fallback={null}>
+          <PendenciasEssenciaisModal
+            key={pendenciasRunKey}
+            open={pendenciasOpen}
+            onOpenChange={setPendenciasOpen}
+            triggeredManually
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
