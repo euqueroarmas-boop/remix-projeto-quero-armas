@@ -575,10 +575,6 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-amber-800 shadow-sm">
-          DEBUG: COMPONENTE REAL DO PORTAL DO CLIENTE
-        </div>
-
         {/* ═══ TABS NAVIGATION ═══ */}
         <div className="sticky top-[60px] z-30 -mx-4 mb-1 border-b border-slate-200/70 bg-gradient-to-b from-white/95 to-white/85 px-4 py-2 backdrop-blur-md">
           <div className="flex items-center justify-between gap-2">
