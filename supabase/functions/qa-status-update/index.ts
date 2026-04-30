@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     // Estado atual
     const { data: atual, error: atualErr } = await supa
       .from("qa_solicitacoes_servico")
-      .select("id, cliente_id, status_servico, sem_checklist_configurado")
+      .select("id, cliente_id, status_servico, status_financeiro, sem_checklist_configurado")
       .eq("id", solicitacao_id)
       .maybeSingle();
     if (atualErr || !atual) {
@@ -132,6 +132,100 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 🚀 Gatilho automático: provisionar acesso ao Portal quando status_financeiro virar "pago"
+    const PAID_STATUSES = new Set(["pago", "quitado", "recebido", "confirmado"]);
+    const becamePaid =
+      typeof status_financeiro === "string" &&
+      PAID_STATUSES.has(String(status_financeiro).toLowerCase()) &&
+      !PAID_STATUSES.has(String(atual.status_financeiro || "").toLowerCase());
+
+    if (becamePaid && atual.cliente_id) {
+      try {
+        // Idempotência: só provisiona se ainda não foi provisionado
+        const { data: cli } = await supa
+          .from("qa_clientes")
+          .select("id, nome_completo, email, cpf, user_id, customer_id, portal_provisionado_em")
+          .eq("id", atual.cliente_id)
+          .maybeSingle();
+
+        if (cli && cli.email && !cli.portal_provisionado_em) {
+          // Gera senha temporária e cria acesso via create-client-user (idempotente lá também)
+          const tempPwd = generateTempPassword();
+
+          const { data: provisionRes, error: provisionErr } = await supa.functions.invoke("create-client-user", {
+            body: {
+              qa_client_id: cli.id,
+              customer_id: cli.customer_id || undefined,
+              email: cli.email,
+              document: cli.cpf,
+              user_password: tempPwd,
+              name: cli.nome_completo,
+              customer_data: {
+                email: cli.email,
+                razao_social: cli.nome_completo,
+                responsavel: cli.nome_completo,
+                cnpj_ou_cpf: String(cli.cpf || "").replace(/\D/g, ""),
+                status_cliente: "ativo",
+              },
+            },
+            headers: {
+              // sinaliza que é chamada interna do servidor (sem JWT de usuário)
+              "x-internal-token": Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "",
+              "x-admin-token": "",
+            },
+          });
+
+          if (provisionErr || provisionRes?.error) {
+            await supa.from("qa_solicitacao_eventos").insert({
+              solicitacao_id,
+              cliente_id: atual.cliente_id,
+              evento: "falha_envio_email",
+              descricao: `Falha ao provisionar Portal automaticamente após pagamento: ${provisionErr?.message || provisionRes?.error}`,
+              ator: "sistema",
+              metadata: { motivo: "auto_provisionamento_pagamento" },
+            });
+          } else {
+            await supa.from("qa_solicitacao_eventos").insert({
+              solicitacao_id,
+              cliente_id: atual.cliente_id,
+              evento: "portal_provisionado",
+              descricao: `Acesso ao Portal provisionado automaticamente após pagamento confirmado (${cli.email})`,
+              ator: "sistema",
+              metadata: {
+                motivo: "auto_provisionamento_pagamento",
+                trigger: "status_financeiro=pago",
+                user_id: provisionRes?.user_id ?? null,
+              },
+            });
+          }
+        } else if (cli && cli.portal_provisionado_em) {
+          // Já provisionado — não recria/reenvia (regra: manual só reenvia se operador clicar)
+          console.info("[qa-status-update] portal já provisionado, ignorando auto-envio", { qa_client_id: cli.id });
+        } else if (cli && !cli.email) {
+          await supa.from("qa_solicitacao_eventos").insert({
+            solicitacao_id,
+            cliente_id: atual.cliente_id,
+            evento: "falha_envio_email",
+            descricao: "Cliente sem e-mail cadastrado — provisionamento automático ignorado",
+            ator: "sistema",
+            metadata: { motivo: "sem_email" },
+          });
+        }
+      } catch (autoErr) {
+        console.error("[qa-status-update] erro no auto-provisionamento:", autoErr);
+        try {
+          await supa.from("qa_solicitacao_eventos").insert({
+            solicitacao_id,
+            cliente_id: atual.cliente_id,
+            evento: "falha_envio_email",
+            descricao: `Erro inesperado no auto-provisionamento: ${(autoErr as Error).message}`,
+            ator: "sistema",
+            metadata: { motivo: "exception_auto_provisionamento" },
+          });
+        } catch { /* ignore */ }
+      }
+    }
+
     return new Response(JSON.stringify({ ok: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -142,3 +236,12 @@ Deno.serve(async (req) => {
     });
   }
 });
+
+function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let pwd = "";
+  const arr = new Uint8Array(10);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < 10; i++) pwd += chars[arr[i] % chars.length];
+  return pwd + "!1";
+}
