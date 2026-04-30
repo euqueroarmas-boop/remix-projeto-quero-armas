@@ -95,6 +95,13 @@ function fmtBRL(v: number | string | null | undefined): string {
   return `R$ ${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function parseBRLInput(v: string): number {
+  const raw = String(v || "").trim().replace(/\s/g, "").replace(/^R\$?/i, "");
+  if (!raw) return NaN;
+  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
+  return Number(normalized);
+}
+
 function fmtDate(s: string | null): string {
   if (!s) return "—";
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -178,11 +185,12 @@ function CorrigirModal({ open, onClose, venda, onDone }: CorrigirModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [valor, setValor] = useState("");
   const [motivo, setMotivo] = useState("");
+  const motivoPadrao = "CORREÇÃO OPERACIONAL DE VALOR";
 
   useEffect(() => {
     if (open && venda) {
       setValor(String(venda.valor_aprovado ?? venda.valor_informado_cliente ?? venda.valor_a_pagar ?? ""));
-      setMotivo("");
+      setMotivo(motivoPadrao);
     }
   }, [open, venda]);
 
@@ -190,15 +198,15 @@ function CorrigirModal({ open, onClose, venda, onDone }: CorrigirModalProps) {
 
   const handle = async () => {
     if (submitting) return;
-    const num = Number(valor);
+    const num = parseBRLInput(valor);
     if (!Number.isFinite(num) || num <= 0) { toast.error("Valor inválido"); return; }
-    if (!motivo.trim()) { toast.error("Motivo da correção é obrigatório"); return; }
+    const motivoFinal = motivo.trim() || motivoPadrao;
     setSubmitting(true);
     try {
       const { error } = await supabase.rpc("qa_venda_corrigir_valor" as any, {
         p_venda_id: venda.id,
         p_valor_corrigido: num,
-        p_motivo: motivo.trim(),
+        p_motivo: motivoFinal,
       });
       if (error) throw error;
       toast.success(`Valor corrigido para venda #${venda.id_legado ?? venda.id}`);
@@ -220,7 +228,7 @@ function CorrigirModal({ open, onClose, venda, onDone }: CorrigirModalProps) {
         <div className="space-y-3 mt-2">
           <div>
             <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-1 block">Novo valor (R$) *</label>
-            <Input type="number" inputMode="decimal" min={0} step="0.01" value={valor} onChange={(e) => setValor(e.target.value)}
+            <Input type="text" inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)}
               className="h-9 text-sm bg-slate-50 border-slate-200 text-slate-800 rounded-md font-mono" disabled={submitting} />
           </div>
           <div>
@@ -233,7 +241,7 @@ function CorrigirModal({ open, onClose, venda, onDone }: CorrigirModalProps) {
           <div className="grid grid-cols-2 gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}
               className="h-10 text-xs rounded-md text-slate-600 hover:text-slate-800">Cancelar</Button>
-            <Button type="button" onClick={handle} disabled={submitting || !motivo.trim() || !valor}
+            <Button type="button" onClick={handle} disabled={submitting || !valor.trim()}
               className="h-10 text-xs rounded-md bg-amber-600 hover:bg-amber-700 text-white shadow-sm disabled:opacity-60">
               {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Edit3 className="h-3.5 w-3.5 mr-1.5" />}
               Salvar correção
