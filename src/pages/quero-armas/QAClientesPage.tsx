@@ -1008,9 +1008,6 @@ export default function QAClientesPage() {
   const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
-  const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
-  const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
-  const [savingItem, setSavingItem] = useState(false);
 
   // Sensores DnD para reordenar serviços dentro de uma venda
   const dndSensors = useSensors(
@@ -1040,100 +1037,8 @@ export default function QAClientesPage() {
     }
   };
 
-
-  // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
-  const SERVICOS_CR = [13, 20, 27, 29];
-  // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
-  // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
-  // OBS: Concessão de CR (13, 20, 27) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
-  // OBS: Autorização de compra de arma de fogo no EB (5, 15) foi REMOVIDA daqui — possui apenas campos específicos da autorização
-  // OBS: COMBO - Registro de arma de fogo CRAF no EB (id=6) foi REMOVIDA daqui — possui formulário próprio com dados da arma
-  const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18];
-  // Serviços de Autorização de compra de arma de fogo no Exército Brasileiro
-  const SERVICOS_AUTORIZACAO_EB = [5, 15];
-  // Serviço de Posse na Polícia Federal
-  const SERVICOS_POSSE = [2];
-  // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
-  const SERVICOS_CRAF_EB = [6];
-
-  const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean; required?: boolean }[] = [
-    /* ================================================================
-     * POSSE NA POLÍCIA FEDERAL (servico_id = 2) — formulário dedicado
-     * Ordem fixa solicitada: Nº Requerimento → Protocolo → Notificação →
-     * Indeferimento → Recurso Adm. → Indeferimento do Recurso → Deferimento →
-     * Nº Autorização → Validade Autorização.
-     * Regra: Nº Processo NÃO aparece em Posse PF.
-     * ================================================================ */
-    { key: "numero_posse",                  label: "Nº do Requerimento de Posse",       type: "text", servicos: SERVICOS_POSSE },
-    { key: "data_protocolo",                label: "Data Protocolo",                    type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_notificacao",              label: "Data da Notificação",               type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_indeferimento",            label: "Data de Indeferimento",             type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_recurso_administrativo",   label: "Data do Recurso Administrativo",    type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_indeferimento_recurso",    label: "Data de Indeferimento do Recurso",  type: "date", servicos: SERVICOS_POSSE },
-    { key: "data_deferimento",              label: "Data Deferimento",                  type: "date", servicos: SERVICOS_POSSE, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    { key: "numero_autorizacao",            label: "Código da Autorização",             type: "text", servicos: SERVICOS_POSSE },
-    { key: "validade_autorizacao",          label: "Validade da Autorização",           type: "date", servicos: SERVICOS_POSSE },
-
-    /* ================================================================
-     * DEMAIS SERVIÇOS (mantém estrutura anterior)
-     * Posse PF (id=2) FOI REMOVIDA das listas abaixo — possui form próprio.
-     * ================================================================ */
-    { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
-    // Nº do Requerimento — exclusivo de Porte na Polícia Federal
-    { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
-    // Data Notificação — Porte PF (3) e CRAF PF (26) também precisam exibir para
-    // controle do prazo recursal de 10 dias (Lei 9.784/99 art. 59).
-    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: [3, 26] },
-    { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO (exceto Posse, que tem regra própria acima)
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27] },
-    { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
-    // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
-    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
-    // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo" (REMOVIDO de Posse PF)
-    { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
-    { key: "numero_processo", label: "Nº do Requerimento", type: "text", servicos: [26] },
-    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18] },
-    // Campos exclusivos de CAC — NÃO aparecem em Posse na PF, Concessão de CR, nem CRAF EB (id=6)
-    { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
-    { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
-    // Nº CR — aparece em CAC e em Concessão de CR (com rótulo "Nº de Certificado de Registro (CR)")
-    { key: "numero_cr", label: "Nº de Certificado de Registro (CR)", type: "text", servicos: SERVICOS_CR },
-    { key: "numero_cr", label: "Nº CR", type: "text", servicos: SERVICOS_CAC },
-    { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [3, ...SERVICOS_CAC] },
-    { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
-    { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
-    { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
-    // Nº CAD SINARM — obrigatório em CRAF na Polícia Federal
-    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: [26], required: true },
-    // Autorização de compra EB (Posse PF tem campos próprios na seção dedicada acima)
-    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [5, 15] },
-    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [5, 15] },
-    // CRAF na Polícia Federal — dados da arma
-    { key: "numero_registro", label: "Nº Registro", type: "text", servicos: [26] },
-    { key: "numero_serie", label: "Nº Série", type: "text", servicos: [26] },
-    { key: "fabricante", label: "Fabricante", type: "text", servicos: [26] },
-    { key: "modelo", label: "Modelo", type: "text", servicos: [26] },
-    { key: "calibre", label: "Calibre", type: "text", servicos: [26] },
-    // COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro — dados da arma
-    { key: "numero_serie", label: "Nº de Série da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
-    { key: "fabricante", label: "Fabricante da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
-    { key: "modelo", label: "Modelo da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
-    { key: "calibre", label: "Calibre da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
-    { key: "quantidade_tiros", label: "Quantidade de Tiros da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
-  ];
-
   /** REGRA GLOBAL: o formulário de detalhes só é liberado após o status do item ser definido. */
   const isStatusDefinido = (s: any) => String(s || "").trim().length > 0;
-
-  /** Retorna apenas os campos aplicáveis ao serviço (filtra por servico_id quando definido). */
-  const getFieldsForServico = (servicoId: number | null | undefined, form?: Record<string, string>, item?: any) =>
-    ITEM_EDIT_FIELDS.filter(f =>
-      (!f.servicos || (servicoId != null && f.servicos.includes(servicoId))) &&
-      (!f.condition || f.condition(form || {}, item))
-    );
 
   const parseCalendarDate = (value: string): Date | null => {
     if (!value) return null;
