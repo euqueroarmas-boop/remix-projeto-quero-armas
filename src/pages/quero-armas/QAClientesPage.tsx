@@ -30,6 +30,7 @@ import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { SolicitacaoStatusPopover } from "@/components/quero-armas/clientes/SolicitacaoStatusPopover";
+import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
