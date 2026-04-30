@@ -138,7 +138,7 @@ export default function QAProcessosAuditoriaPage() {
           <Link to="/auditoria" className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition">
             <ArrowLeft className="h-4 w-4 text-slate-700" />
           </Link>
-          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-slate-900 text-white">
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#2563EB] text-white">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -161,7 +161,7 @@ export default function QAProcessosAuditoriaPage() {
           <button key={r.id}
             onClick={() => setRange(r.id)}
             className={`px-3 h-7 text-[11px] font-bold uppercase rounded-md border transition ${
-              range === r.id ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
+              range === r.id ? "bg-[#2563EB] text-white border-[#2563EB]" : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
             }`}>{r.label}</button>
         ))}
         <span className="mx-3 h-5 w-px bg-slate-200" />
@@ -216,7 +216,7 @@ export default function QAProcessosAuditoriaPage() {
               return (
                 <button key={p.id} onClick={() => setSelected(p.id)}
                   className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3 ${
-                    selected === p.id ? "bg-slate-50 border-l-2 border-slate-900" : ""
+                    selected === p.id ? "bg-slate-50 border-l-2 border-[#2563EB]" : ""
                   }`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

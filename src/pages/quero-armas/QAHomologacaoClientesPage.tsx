@@ -562,7 +562,7 @@ export default function QAHomologacaoClientesPage() {
                           </span>
                           {statusBadge(r.homologacao_status_atual)}
                           {typeof r.prioridade_homologacao === "number" && (
-                            <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-900 text-white">
+                            <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#2563EB] text-white">
                               P{r.prioridade_homologacao}
                             </span>
                           )}

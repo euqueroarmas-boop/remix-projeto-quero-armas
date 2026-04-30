@@ -145,7 +145,7 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white uppercase tracking-wider text-xs font-bold"
+            className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white uppercase tracking-wider text-xs font-bold"
           >
             {loading ? "Salvando..." : "Salvar nova senha"}
           </Button>

@@ -1032,7 +1032,7 @@ function FilterChip({
       onClick={onClick}
       className={`px-2.5 h-7 rounded-full text-[11px] font-medium border transition-colors ${
         active
-          ? "bg-slate-900 text-white border-slate-900"
+          ? "bg-[#2563EB] text-white border-[#2563EB]"
           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
       }`}
     >
