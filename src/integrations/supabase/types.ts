@@ -461,6 +461,13 @@ export type Database = {
             foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
             columns: ["qa_cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -477,6 +484,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cliente_auth_links__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_cliente_auth_links__qa_cliente"
@@ -2507,6 +2521,13 @@ export type Database = {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -3171,6 +3192,13 @@ export type Database = {
             foreignKeyName: "fk_qa_casos__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_casos__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -3187,6 +3215,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_casos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_casos_cliente_id_fkey"
@@ -3412,6 +3447,13 @@ export type Database = {
             foreignKeyName: "qa_cliente_armas_manual_qa_cliente_id_fkey"
             columns: ["qa_cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_armas_manual_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -3505,6 +3547,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_cliente_credenciais_cliente_id_fkey"
@@ -3614,6 +3663,68 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_homologacao_eventos: {
+        Row: {
+          ator: string
+          created_at: string
+          dados_json: Json
+          descricao: string | null
+          id: string
+          qa_cliente_id: number
+          tipo_evento: string
+          user_id: string | null
+        }
+        Insert: {
+          ator?: string
+          created_at?: string
+          dados_json?: Json
+          descricao?: string | null
+          id?: string
+          qa_cliente_id: number
+          tipo_evento: string
+          user_id?: string | null
+        }
+        Update: {
+          ator?: string
+          created_at?: string
+          dados_json?: Json
+          descricao?: string | null
+          id?: string
+          qa_cliente_id?: number
+          tipo_evento?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_homologacao_eventos_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_homologacao_eventos_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_homologacao_eventos_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_homologacao_eventos_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+        ]
+      }
       qa_clientes: {
         Row: {
           avatar_tatico_gerado_em: string | null
@@ -3626,6 +3737,7 @@ export type Database = {
           cep2: string | null
           cidade: string | null
           cidade2: string | null
+          cliente_legado: boolean
           cliente_lions: boolean | null
           cnh: string | null
           complemento: string | null
@@ -3647,6 +3759,10 @@ export type Database = {
           expedicao_rg: string | null
           geolocalizacao: string | null
           geolocalizacao2: string | null
+          homologacao_observacoes: string | null
+          homologacao_status: string
+          homologado_em: string | null
+          homologado_por: string | null
           id: number
           id_legado: number
           imagem: string | null
@@ -3668,10 +3784,16 @@ export type Database = {
           pais2: string | null
           pis_pasep: string | null
           profissao: string | null
+          recadastramento_concluido_em: string | null
+          recadastramento_iniciado_em: string | null
+          recadastramento_obrigatorio: boolean
+          recadastramento_status: string | null
           rg: string | null
           sexo: string | null
           status: string | null
           subcategoria: string | null
+          tentativa_compra_legado_count: number
+          tentativa_compra_legado_em: string | null
           tipo_cliente: string | null
           titulo_eleitor: string | null
           uf_emissor_rg: string | null
@@ -3689,6 +3811,7 @@ export type Database = {
           cep2?: string | null
           cidade?: string | null
           cidade2?: string | null
+          cliente_legado?: boolean
           cliente_lions?: boolean | null
           cnh?: string | null
           complemento?: string | null
@@ -3710,6 +3833,10 @@ export type Database = {
           expedicao_rg?: string | null
           geolocalizacao?: string | null
           geolocalizacao2?: string | null
+          homologacao_observacoes?: string | null
+          homologacao_status?: string
+          homologado_em?: string | null
+          homologado_por?: string | null
           id?: number
           id_legado: number
           imagem?: string | null
@@ -3731,10 +3858,16 @@ export type Database = {
           pais2?: string | null
           pis_pasep?: string | null
           profissao?: string | null
+          recadastramento_concluido_em?: string | null
+          recadastramento_iniciado_em?: string | null
+          recadastramento_obrigatorio?: boolean
+          recadastramento_status?: string | null
           rg?: string | null
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tentativa_compra_legado_count?: number
+          tentativa_compra_legado_em?: string | null
           tipo_cliente?: string | null
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
@@ -3752,6 +3885,7 @@ export type Database = {
           cep2?: string | null
           cidade?: string | null
           cidade2?: string | null
+          cliente_legado?: boolean
           cliente_lions?: boolean | null
           cnh?: string | null
           complemento?: string | null
@@ -3773,6 +3907,10 @@ export type Database = {
           expedicao_rg?: string | null
           geolocalizacao?: string | null
           geolocalizacao2?: string | null
+          homologacao_observacoes?: string | null
+          homologacao_status?: string
+          homologado_em?: string | null
+          homologado_por?: string | null
           id?: number
           id_legado?: number
           imagem?: string | null
@@ -3794,10 +3932,16 @@ export type Database = {
           pais2?: string | null
           pis_pasep?: string | null
           profissao?: string | null
+          recadastramento_concluido_em?: string | null
+          recadastramento_iniciado_em?: string | null
+          recadastramento_obrigatorio?: boolean
+          recadastramento_status?: string | null
           rg?: string | null
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tentativa_compra_legado_count?: number
+          tentativa_compra_legado_em?: string | null
           tipo_cliente?: string | null
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
@@ -3966,6 +4110,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_crafs__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_qa_crafs__cliente"
@@ -4284,6 +4435,13 @@ export type Database = {
             foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
             columns: ["qa_cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -4307,6 +4465,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_documentos_cliente_qa_cliente_id_fkey"
@@ -4544,6 +4709,13 @@ export type Database = {
             foreignKeyName: "fk_qa_exames__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -4650,6 +4822,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_filiacoes__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_qa_filiacoes__cliente"
@@ -4814,6 +4993,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
@@ -5758,6 +5944,13 @@ export type Database = {
             foreignKeyName: "fk_qa_senha_gov__cliente"
             columns: ["cliente_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -6327,7 +6520,28 @@ export type Database = {
             referencedColumns: ["id_legado"]
           },
           {
+            foreignKeyName: "fk_qa_vendas__cliente_legado"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["id_legado"]
+          },
+          {
             foreignKeyName: "qa_vendas_cliente_id_fk"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "qa_vendas_cliente_id_fk"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "qa_vendas_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
@@ -6337,7 +6551,7 @@ export type Database = {
             foreignKeyName: "qa_vendas_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
-            referencedRelation: "qa_clientes"
+            referencedRelation: "qa_clientes_homologacao_dry_run"
             referencedColumns: ["id_legado"]
           },
         ]
@@ -7070,6 +7284,51 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_clientes_homologacao_dry_run: {
+        Row: {
+          celular: string | null
+          classificacao_sugerida: string | null
+          cliente_id: number | null
+          cliente_legado_atual: boolean | null
+          cpf: string | null
+          cpf_duplicado: boolean | null
+          email: string | null
+          email_duplicado: boolean | null
+          homologacao_status_atual: string | null
+          id_legado: number | null
+          motivo_classificacao: string | null
+          nome_completo: string | null
+          origem: string | null
+          prioridade_homologacao: number | null
+          sem_cpf: boolean | null
+          tem_arma_manual: boolean | null
+          tem_craf: boolean | null
+          tem_documento_cliente: boolean | null
+          tem_venda_antiga: boolean | null
+          tentou_comprar: boolean | null
+          tipo_cliente: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      qa_clientes_homologacao_kpis: {
+        Row: {
+          faltam_homologar: number | null
+          meta_1_por_dia_dias_restantes: number | null
+          total_aguardando_documentos: number | null
+          total_cliente_app: number | null
+          total_clientes: number | null
+          total_documentos_enviados: number | null
+          total_em_revisao: number | null
+          total_homologado: number | null
+          total_legado_pendente: number | null
+          total_marcados_legado: number | null
+          total_novos_com_portal: number | null
+          total_revisar_manual: number | null
+          total_tentaram_comprar: number | null
+        }
+        Relationships: []
+      }
       qa_exames_cliente_status: {
         Row: {
           cadastrado_por: string | null
@@ -7123,6 +7382,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "fk_qa_exames__cliente"
@@ -7194,6 +7460,13 @@ export type Database = {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
             columns: ["cliente_id_atual_do_cr"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual_do_cr"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -7232,6 +7505,13 @@ export type Database = {
             foreignKeyName: "fk_qa_senha_gov__cliente"
             columns: ["cliente_correto_id"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_correto_id"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -7248,6 +7528,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_atual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
@@ -7287,6 +7574,13 @@ export type Database = {
             foreignKeyName: "fk_qa_senha_gov__cliente"
             columns: ["cliente_id_migracao"]
             isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id_migracao"]
+            isOneToOne: false
             referencedRelation: "qa_gov_password_reconciliation_by_cpf"
             referencedColumns: ["cliente_id"]
           },
@@ -7303,6 +7597,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
           },
           {
             foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
