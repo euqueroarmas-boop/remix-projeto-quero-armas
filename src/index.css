@@ -145,3 +145,54 @@
   background: #f8fafc !important;
   color: #0f172a !important;
 }
+
+/* =====================================================================
+   QUERO ARMAS — Premium Light scope (.qa-scope)
+   Sobrescreve os tokens semânticos do shadcn (background, card, popover,
+   input, border, primary, etc.) APENAS dentro do container `.qa-scope`.
+   Isso evita que componentes shadcn (Button outline, Card, Dialog, Input,
+   Popover, Select) renderizem com fundos pretos herdados do tema Absolute
+   Dark do WMTi Core. O WMTi Core (regra Core de memória) permanece intacto.
+   ===================================================================== */
+.qa-scope {
+  --background: 220 20% 97%;
+  --foreground: 222 47% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 224 76% 48%;
+
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 217 91% 60%;
+
+  --surface-elevated: 0 0% 100%;
+  --surface-overlay: 0 0% 100%;
+
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 222 47% 11%;
+  --sidebar-primary: 217 91% 60%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 222 47% 11%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217 91% 60%;
+}

@@ -54,6 +54,17 @@ const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
 const LpAtividadesAvulsas = lazyRetry(() => import("@/pages/LpAtividadesAvulsas"), "LpAtividadesAvulsas");
 const CursoPage = lazyRetry(() => import("@/pages/cursos/CursoPage"), "CursoPage");
 
+/**
+ * Envolve rotas QA standalone (fora do QALayout) com a classe `qa-scope`,
+ * que sobrescreve os tokens semânticos do shadcn para Premium Light.
+ * Sem isso, componentes shadcn (Button outline, Card, Dialog, Input)
+ * herdam o tema Absolute Dark global do WMTi Core e renderizam pretos
+ * dentro do módulo Quero Armas.
+ */
+function QAScope({ children }: { children: React.ReactNode }) {
+  return <div className="qa-scope">{children}</div>;
+}
+
 export default function QARoutes() {
   return (
     <Suspense fallback={<QATacticalLoader />}>
@@ -70,24 +81,24 @@ export default function QARoutes() {
         <Route path="app-arsenal-gratuito" element={<QAArsenalDigitalGratuitoPage />} />
         <Route path="lp/atividades-avulsas" element={<LpAtividadesAvulsas />} />
         <Route path="cursos/:slug" element={<CursoPage />} />
-        <Route path="login" element={<QALoginPage />} />
-        <Route path="redefinir-senha" element={<QARedefinirSenhaPage />} />
-        <Route path="auth/callback" element={<QARedefinirSenhaPage />} />
-        <Route path="cadastro" element={<QACadastroPublicoPage />} />
-        <Route path="cadastro/foto" element={<QAEnviarFotoPage />} />
-        <Route path="enviar-foto" element={<QAEnviarFotoPage />} />
+        <Route path="login" element={<QAScope><QALoginPage /></QAScope>} />
+        <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
+        <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
+        <Route path="cadastro" element={<QAScope><QACadastroPublicoPage /></QAScope>} />
+        <Route path="cadastro/foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
+        <Route path="enviar-foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         
         {/* Client portal (separate auth flow) */}
-        <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
-        <Route path="area-do-cliente/criar-conta" element={<QACriarContaPage />} />
-        <Route path="area-do-cliente" element={<QAClientePortalPage />} />
-        <Route path="area-do-cliente/contratar" element={<QAContratarServicoPage />} />
-        <Route path="area-do-cliente/contratacoes" element={<QAClienteContratacoesPage />} />
-        <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAContratarIdentificarPage />} />
-        <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAContratarPublicoPage />} />
-        <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAContratarConfirmarPage />} />
-        <Route path="ativar-acesso" element={<QAAtivarAcessoPage />} />
-        <Route path="portal/acessar" element={<QAAtivarAcessoPage />} />
+        <Route path="area-do-cliente/login" element={<QAScope><QAClienteLoginPage /></QAScope>} />
+        <Route path="area-do-cliente/criar-conta" element={<QAScope><QACriarContaPage /></QAScope>} />
+        <Route path="area-do-cliente" element={<QAScope><QAClientePortalPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar" element={<QAScope><QAContratarServicoPage /></QAScope>} />
+        <Route path="area-do-cliente/contratacoes" element={<QAScope><QAClienteContratacoesPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAScope><QAContratarIdentificarPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />
+        <Route path="ativar-acesso" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
+        <Route path="portal/acessar" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         {/* Legacy redirects */}
         <Route path="portal/login" element={<Navigate to="/area-do-cliente/login" replace />} />
         <Route path="portal" element={<Navigate to="/area-do-cliente" replace />} />
