@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Loader2, Settings2, Save } from "lucide-react";
+import { Loader2, Settings2, Save, AlertTriangle, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
 // Notificações e timeline são geradas por triggers no banco.
@@ -61,13 +61,16 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
   const [statusFinanceiro, setStatusFinanceiro] = useState<string>("");
   const [statusProcesso, setStatusProcesso] = useState<string>("");
   const [observacoes, setObservacoes] = useState<string>("");
+  const [semChecklist, setSemChecklist] = useState<boolean>(false);
+  const [servicoId, setServicoId] = useState<number | null>(null);
+  const [serviceName, setServiceName] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     supabase
       .from("qa_solicitacoes_servico" as any)
-      .select("status_servico, status_financeiro, status_processo, observacoes")
+      .select("status_servico, status_financeiro, status_processo, observacoes, sem_checklist_configurado, servico_id, service_name")
       .eq("id", solicitacaoId)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -80,6 +83,9 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
         setStatusFinanceiro(r?.status_financeiro ?? "");
         setStatusProcesso(r?.status_processo ?? "");
         setObservacoes(r?.observacoes ?? "");
+        setSemChecklist(!!r?.sem_checklist_configurado);
+        setServicoId(r?.servico_id ?? null);
+        setServiceName(r?.service_name ?? "");
       })
       .then(() => setLoading(false));
   }, [open, solicitacaoId]);
@@ -138,6 +144,38 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
             <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
               Atualizar Status
             </div>
+            {semChecklist && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-2.5 space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div className="text-[11px] leading-snug text-amber-900">
+                    <div className="font-bold uppercase tracking-wider mb-0.5">
+                      CHECKLIST NÃO CONFIGURADO
+                    </div>
+                    <div>
+                      Este serviço{serviceName ? ` (${serviceName})` : ""} ainda
+                      não possui documentos obrigatórios cadastrados. Configure
+                      para ativar o fluxo automático.
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full h-8 text-[10px] border-amber-400 text-amber-900 hover:bg-amber-100"
+                  onClick={() => {
+                    const target = servicoId
+                      ? `/quero-armas/configuracoes#checklist-servico-${servicoId}`
+                      : `/quero-armas/configuracoes#checklist`;
+                    window.open(target, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  <ListChecks className="h-3.5 w-3.5 mr-1" />
+                  Configurar checklist
+                </Button>
+              </div>
+            )}
             <SelectField
               label="Status do serviço"
               value={statusServico}
