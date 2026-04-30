@@ -144,6 +144,38 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
             <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
               Atualizar Status
             </div>
+            {semChecklist && (
+              <div className="rounded-md border border-amber-300 bg-amber-50 p-2.5 space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                  <div className="text-[11px] leading-snug text-amber-900">
+                    <div className="font-bold uppercase tracking-wider mb-0.5">
+                      CHECKLIST NÃO CONFIGURADO
+                    </div>
+                    <div>
+                      Este serviço{serviceName ? ` (${serviceName})` : ""} ainda
+                      não possui documentos obrigatórios cadastrados. Configure
+                      para ativar o fluxo automático.
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="w-full h-8 text-[10px] border-amber-400 text-amber-900 hover:bg-amber-100"
+                  onClick={() => {
+                    const target = servicoId
+                      ? `/quero-armas/configuracoes#checklist-servico-${servicoId}`
+                      : `/quero-armas/configuracoes#checklist`;
+                    window.open(target, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  <ListChecks className="h-3.5 w-3.5 mr-1" />
+                  Configurar checklist
+                </Button>
+              </div>
+            )}
             <SelectField
               label="Status do serviço"
               value={statusServico}
