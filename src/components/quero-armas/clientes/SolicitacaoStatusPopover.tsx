@@ -4,24 +4,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Loader2, Settings2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
 
 /**
  * Status canônicos da solicitação — qa_solicitacoes_servico é a ÚNICA fonte
- * de verdade do sistema. Toda evolução operacional do serviço passa por aqui.
+ * de verdade do sistema. Lista vinda de @/lib/quero-armas/statusServico
+ * (espelho do CHECK constraint no banco).
  */
-const STATUS_SERVICO = [
-  "aguardando_contratacao",
-  "contratado",
-  "aguardando_documentos",
-  "documentos_em_analise",
-  "documentos_incompletos",
-  "documentos_aprovados",
-  "em_andamento",
-  "aguardando_orgao",
-  "deferido",
-  "indeferido",
-  "finalizado",
-] as const;
+const STATUS_SERVICO = STATUS_SERVICO_QA;
 
 const STATUS_FINANCEIRO = [
   "sem_cobranca_vinculada",
@@ -49,7 +39,8 @@ const STATUS_PROCESSO = [
   "finalizado",
 ] as const;
 
-const labelize = (s: string) => s.replace(/_/g, " ").toUpperCase();
+const labelize = (s: string) =>
+  (STATUS_LABELS as Record<string, string>)[s] ?? s.replace(/_/g, " ").toUpperCase();
 
 type Props = {
   solicitacaoId: string;
