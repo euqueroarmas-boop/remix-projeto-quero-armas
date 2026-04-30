@@ -29,6 +29,16 @@ const brToIso = (br: string): string | null => {
   return `${m[3]}-${m[2]}-${m[1]}`;
 };
 
+const slugifyServico = (nome: string, id: number) => {
+  const base = nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return base || `servico-${id}`;
+};
+
 /* ─── Shared Premium Input ─── */
 function PremiumField({ label, value, onChange, type = "text", placeholder, icon: Icon, required }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; icon?: any; required?: boolean;
@@ -486,12 +496,25 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         // Propaga status financeiro e operacional conforme a venda recém-criada.
         if (solicitacaoId) {
           const vendaPk = (data as any).id;
+          const primaryServicoId = Array.from(selectedServicos.keys())[0];
+          const primaryServico = servicos.find((svc) => svc.id === primaryServicoId);
+          const { data: catalogoServico } = await supabase
+            .from("qa_servicos_catalogo" as any)
+            .select("slug, nome")
+            .eq("servico_id", primaryServicoId)
+            .maybeSingle();
+          const serviceName = (catalogoServico as any)?.nome || primaryServico?.nome_servico || "Serviço contratado";
+          const serviceSlug = (catalogoServico as any)?.slug || slugifyServico(serviceName, primaryServicoId);
           // Atualiza solicitação canônica → fonte única de verdade do dashboard.
           // Falha NÃO pode ser silenciosa: se o update não confirmar, lança erro.
           const { data: updRows, error: updErr } = await supabase
             .from("qa_solicitacoes_servico" as any)
             .update({
               status_servico: "contratado",
+              servico_id: primaryServicoId,
+              service_slug: serviceSlug,
+              service_name: serviceName,
+              pendente_classificacao: false,
               // Fonte única de verdade. Padrão canônico do produto: 'vinculado'.
               // status_processo NÃO é alterado aqui — só muda quando o processo
               // é efetivamente aberto (RPC qa_venda_to_processo).
