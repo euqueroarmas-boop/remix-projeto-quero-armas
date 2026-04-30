@@ -31,6 +31,7 @@ const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"),
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
+const QAArsenalDigitalGratuitoPage = lazyRetry(() => import("./QAArsenalDigitalGratuitoPage"), "QAArsenalDigitalGratuitoPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
 const QARedefinirSenhaPage = lazyRetry(() => import("./QARedefinirSenhaPage"), "QARedefinirSenhaPage");
@@ -61,6 +62,8 @@ export default function QARoutes() {
         <Route path="descobrir-meu-caminho" element={<QuizPage />} />
         <Route path="lp/defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
         <Route path="lp/cac-cr" element={<LpCacCr />} />
+        <Route path="arsenal-digital-gratuito" element={<QAArsenalDigitalGratuitoPage />} />
+        <Route path="app-arsenal-gratuito" element={<QAArsenalDigitalGratuitoPage />} />
         <Route path="lp/atividades-avulsas" element={<LpAtividadesAvulsas />} />
         <Route path="cursos/:slug" element={<CursoPage />} />
         <Route path="login" element={<QALoginPage />} />
