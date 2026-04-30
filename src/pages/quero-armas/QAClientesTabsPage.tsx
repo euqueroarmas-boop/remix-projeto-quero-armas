@@ -56,7 +56,8 @@ export default function QAClientesTabsPage() {
         </div>
       </header>
 
-      <div>
+      {/* Espaçamento vertical entre a faixa superior e o conteúdo (cabeçalho do cliente / listagem). */}
+      <div className="pt-6 md:pt-8 pb-8">
         {tab === "clientes" && <QAClientesPage />}
         {tab === "acessos" && <QAAcessosPage />}
         {tab === "clubes" && <QAClubesPage />}

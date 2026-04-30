@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
-const BUCKET = "qa-cadastro-selfies";
+// Buckets distintos por origem da imagem:
+// - upload manual antigo (cliente.imagem) → bucket "qa-documentos" (mesma origem da listagem)
+// - selfie do cadastro público (qa_cadastro_publico.selfie_path) → bucket "qa-cadastro-selfies"
+const BUCKET_MANUAL = "qa-documentos";
+const BUCKET_SELFIE = "qa-cadastro-selfies";
 
 /**
  * Avatar do cliente no cabeçalho do detalhe.
@@ -58,33 +62,40 @@ export default function ClienteSelfieAvatar({
     },
   });
 
-  // 2) Gera signed URL p/ qualquer um dos paths (manual OU cadastro público)
+  // 2) Gera signed URL para o path correto, usando o bucket adequado.
+  //    Tenta primeiro o bucket esperado e, em caso de falha, faz fallback p/ o outro.
   const path = imagemManual || selfiePath || null;
+  const primaryBucket = imagemManual ? BUCKET_MANUAL : BUCKET_SELFIE;
+  const fallbackBucket = imagemManual ? BUCKET_SELFIE : BUCKET_MANUAL;
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let abort = false;
     setUrl(null);
     if (!path) return;
-    // Caminho absoluto já assinado / público?
     if (/^https?:\/\//i.test(path)) {
       setUrl(path);
       return;
     }
     (async () => {
-      try {
-        const { data } = await supabase.storage
-          .from(BUCKET)
-          .createSignedUrl(path, 3600);
-        if (!abort && data?.signedUrl) setUrl(data.signedUrl);
-      } catch {
-        /* fallback p/ iniciais abaixo */
-      }
+      const trySign = async (bucket: string) => {
+        try {
+          const { data } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(path, 3600);
+          return data?.signedUrl || null;
+        } catch {
+          return null;
+        }
+      };
+      let signed = await trySign(primaryBucket);
+      if (!signed) signed = await trySign(fallbackBucket);
+      if (!abort && signed) setUrl(signed);
     })();
     return () => {
       abort = true;
     };
-  }, [path]);
+  }, [path, primaryBucket, fallbackBucket]);
 
   const iniciais = (cliente?.nome_completo || "?")
     .split(/\s+/)
