@@ -436,26 +436,28 @@ export default function DashboardNovosCadastrosRecebidos() {
                     )}
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
-                    {/* Comando principal: SEMPRE leva à ficha real do cliente.
-                        Se já vinculado → abre cliente direto (?cliente=ID).
-                        Se ainda não vinculado → abre o painel do cadastro público
-                        em /clientes (?cadastro_publico=UUID), de onde o admin
-                        analisa, vincula/cria cliente e aprova. */}
-                    {c.cliente_id_vinculado ? (
-                      <Link
-                        to={`/clientes?cliente=${c.cliente_id_vinculado}`}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium"
-                      >
-                        <User className="w-3 h-3" /> Abrir cliente <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    ) : (
-                      <Link
-                        to={`/clientes?cadastro_publico=${c.id}`}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium"
-                      >
-                        <User className="w-3 h-3" /> Abrir cliente <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    )}
+                    {/* Comando principal: SEMPRE roteia via ?cadastro_publico=UUID
+                        do card clicado. A página /clientes resolve o vínculo
+                        validando CPF antes de abrir a ficha — evita abrir
+                        cliente errado por colisão entre id e id_legado. */}
+                    <Link
+                      to={`/clientes?cadastro_publico=${c.id}`}
+                      onClick={() => {
+                        if (import.meta.env.DEV) {
+                          // eslint-disable-next-line no-console
+                          console.log("[AbrirClienteCadastroPublico]", {
+                            cadastro_publico_id: c.id,
+                            nome_formulario: c.nome_completo,
+                            cpf_formulario_normalizado: (c.cpf || "").replace(/\D/g, ""),
+                            cliente_id_vinculado: c.cliente_id_vinculado,
+                            destino_navegacao: `/clientes?cadastro_publico=${c.id}`,
+                          });
+                        }
+                      }}
+                      className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium"
+                    >
+                      <User className="w-3 h-3" /> Abrir cliente <ExternalLink className="w-3 h-3" />
+                    </Link>
                     {r.processo && (
                       <Link
                         to={`/processos?focus=${r.processo.id}`}
