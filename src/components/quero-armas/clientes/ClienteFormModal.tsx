@@ -13,6 +13,7 @@ import {
   isValidEmail,
   isValidTelefone,
   rgNotEqualCpf,
+  cinEqualsCpf,
 } from "@/shared/quero-armas/clienteSchema";
 import { SenhaGovField } from "./SenhaGovField";
 
@@ -298,7 +299,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     // Só bloqueia quando o tipo é RG tradicional.
     if (f.tipo_documento_identidade !== "CIN" && !rgNotEqualCpf(f.rg, f.cpf)) {
       toast.error("RG não pode ser igual ao CPF — se for CIN, mude o tipo de documento para 'CIN'");
-      setStep(0);
+      return;
+    }
+    if (f.tipo_documento_identidade === "CIN" && !cinEqualsCpf(f.rg, f.cpf)) {
+      toast.error("CIN deve usar o mesmo número do CPF (mesmos dígitos)");
       return;
     }
     setSaving(true);
