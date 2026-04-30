@@ -1999,7 +1999,7 @@ export default function QAClientesPage() {
                 { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
-                { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
+                { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => s.status_servico === "aguardando_contratacao" && !s.ja_convertido).length})` },
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
