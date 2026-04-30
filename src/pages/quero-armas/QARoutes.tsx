@@ -42,6 +42,8 @@ const QAContratarPublicoPage = lazyRetry(() => import("./QAContratarPublicoPage"
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
 const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
 const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"), "QAContratacoesTabsPage");
+const QAClientesTabsPage = lazyRetry(() => import("./QAClientesTabsPage"), "QAClientesTabsPage");
+const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QAAuditoriaTabsPage");
 const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
 const QAHomologacaoClientesPage = lazyRetry(() => import("./QAHomologacaoClientesPage"), "QAHomologacaoClientesPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
@@ -109,12 +111,14 @@ export default function QARoutes() {
           <Route path="operacao/homologacao-clientes" element={<QAHomologacaoClientesPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />
-          <Route path="clientes" element={<QAClientesPage />} />
+          <Route path="clientes" element={<QAClientesTabsPage />} />
+          <Route path="clientes-lista" element={<QAClientesPage />} />
           <Route path="acessos" element={<QAAcessosPage />} />
           <Route path="clubes" element={<QAClubesPage />} />
           <Route path="financeiro" element={<QAFinanceiroPage />} />
           <Route path="relatorios" element={<QARelatoriosPage />} />
-          <Route path="auditoria" element={<QAAuditoriaPage />} />
+          <Route path="auditoria" element={<QAAuditoriaTabsPage />} />
+          <Route path="auditoria/geral" element={<QAAuditoriaPage />} />
           <Route path="auditoria/recursos-administrativos" element={<QARecursosAuditoriaPage />} />
           <Route path="auditoria/central-documentos" element={<QAProcessosAuditoriaPage />} />
           {/* Legacy redirect: rota antiga */}
