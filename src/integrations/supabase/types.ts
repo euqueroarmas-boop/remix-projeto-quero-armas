@@ -6198,8 +6198,57 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_venda_eventos: {
+        Row: {
+          ator: string | null
+          cliente_id: number | null
+          created_at: string
+          dados_json: Json
+          descricao: string | null
+          id: string
+          qa_cliente_id: number | null
+          tipo_evento: string
+          user_id: string | null
+          venda_id: number
+        }
+        Insert: {
+          ator?: string | null
+          cliente_id?: number | null
+          created_at?: string
+          dados_json?: Json
+          descricao?: string | null
+          id?: string
+          qa_cliente_id?: number | null
+          tipo_evento: string
+          user_id?: string | null
+          venda_id: number
+        }
+        Update: {
+          ator?: string | null
+          cliente_id?: number | null
+          created_at?: string
+          dados_json?: Json
+          descricao?: string | null
+          id?: string
+          qa_cliente_id?: number | null
+          tipo_evento?: string
+          user_id?: string | null
+          venda_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_venda_eventos_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_vendas: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           cliente_id: number
           created_at: string
           data_cadastro: string | null
@@ -6210,12 +6259,20 @@ export type Database = {
           forma_pagamento: string | null
           id: number
           id_legado: number
+          motivo_correcao: string | null
           numero_processo: string | null
+          origem_proposta: string | null
           status: string
+          status_validacao_valor: string | null
+          validacao_valor_atualizado_em: string | null
           valor_a_pagar: number | null
           valor_aberto: number
+          valor_aprovado: number | null
+          valor_informado_cliente: number | null
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           cliente_id: number
           created_at?: string
           data_cadastro?: string | null
@@ -6226,12 +6283,20 @@ export type Database = {
           forma_pagamento?: string | null
           id?: number
           id_legado: number
+          motivo_correcao?: string | null
           numero_processo?: string | null
+          origem_proposta?: string | null
           status?: string
+          status_validacao_valor?: string | null
+          validacao_valor_atualizado_em?: string | null
           valor_a_pagar?: number | null
           valor_aberto?: number
+          valor_aprovado?: number | null
+          valor_informado_cliente?: number | null
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           cliente_id?: number
           created_at?: string
           data_cadastro?: string | null
@@ -6242,10 +6307,16 @@ export type Database = {
           forma_pagamento?: string | null
           id?: number
           id_legado?: number
+          motivo_correcao?: string | null
           numero_processo?: string | null
+          origem_proposta?: string | null
           status?: string
+          status_validacao_valor?: string | null
+          validacao_valor_atualizado_em?: string | null
           valor_a_pagar?: number | null
           valor_aberto?: number
+          valor_aprovado?: number | null
+          valor_informado_cliente?: number | null
         }
         Relationships: [
           {
@@ -7425,6 +7496,10 @@ export type Database = {
           total: number
         }[]
       }
+      qa_resolve_cliente_id_real: {
+        Args: { p_cliente_id_legado: number }
+        Returns: number
+      }
       qa_resolver_circunscricao_pf: {
         Args: { p_municipio: string; p_uf: string }
         Returns: {
@@ -7441,6 +7516,23 @@ export type Database = {
         Returns: {
           itens_atualizados: number
         }[]
+      }
+      qa_venda_aprovar_valor: { Args: { p_venda_id: number }; Returns: Json }
+      qa_venda_corrigir_valor: {
+        Args: {
+          p_motivo: string
+          p_valor_corrigido: number
+          p_venda_id: number
+        }
+        Returns: Json
+      }
+      qa_venda_propor_valor: {
+        Args: { p_origem?: string; p_valor: number; p_venda_id: number }
+        Returns: Json
+      }
+      qa_venda_reprovar_valor: {
+        Args: { p_motivo: string; p_venda_id: number }
+        Returns: Json
       }
       unaccent: { Args: { "": string }; Returns: string }
     }
