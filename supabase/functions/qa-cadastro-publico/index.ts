@@ -21,6 +21,8 @@ const CadastroSchema = z.object({
   // Dados pessoais
   nome_completo: z.string().min(3).max(200),
   cpf: z.string().min(11).max(18),
+  tipo_documento_identidade: z.enum(["RG", "CIN"]).optional().default("RG"),
+  numero_documento_identidade: z.string().max(30).optional().nullable(),
   rg: z.string().max(30).optional().nullable(),
   emissor_rg: z.string().max(30).optional().nullable(),
   data_nascimento: z.string().optional().nullable(),
@@ -204,6 +206,8 @@ Deno.serve(async (req) => {
     const updateExistingId = data.update_existing_id || null;
     // Remove campo de controle do payload de persistência
     const { update_existing_id: _u, ...persistData } = data;
+    const documentoNumero = data.numero_documento_identidade || data.rg || null;
+    const isCin = data.tipo_documento_identidade === "CIN";
 
     // Capture audit metadata
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
@@ -212,6 +216,10 @@ Deno.serve(async (req) => {
 
     // Clean CPF
     const cpfDigits = data.cpf.replace(/\D/g, "");
+    const docDigits = (documentoNumero || "").replace(/\D/g, "");
+    if (!isCin && cpfDigits && docDigits && cpfDigits === docDigits) {
+      return json({ error: "RG não pode ser igual ao CPF — se for CIN, selecione CIN" }, 400);
+    }
 
     // ── Caminho UPDATE ──
     if (updateExistingId) {
@@ -244,6 +252,8 @@ Deno.serve(async (req) => {
         .from("qa_cadastro_publico")
         .update({
           ...persistData,
+          numero_documento_identidade: documentoNumero,
+          rg: data.rg || documentoNumero,
           cpf: cpfDigits,
           consentimento_timestamp: now,
           consentimento_ip: ip.substring(0, 45),
@@ -278,7 +288,7 @@ Deno.serve(async (req) => {
     // ── Caminho INSERT — proteção contra duplicidade ──
     const { data: dup } = await supabase
       .from("qa_cadastro_publico")
-      .select("id, status, created_at, nome_completo, cpf, rg, emissor_rg, data_nascimento, telefone_principal, email, end1_cep, end1_logradouro, end1_numero, end1_bairro, end1_cidade, end1_estado")
+      .select("id, status, created_at, nome_completo, cpf, tipo_documento_identidade, numero_documento_identidade, rg, emissor_rg, data_nascimento, telefone_principal, email, end1_cep, end1_logradouro, end1_numero, end1_bairro, end1_cidade, end1_estado")
       .eq("cpf", cpfDigits)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -300,6 +310,8 @@ Deno.serve(async (req) => {
       .from("qa_cadastro_publico")
       .insert({
         ...persistData,
+        numero_documento_identidade: documentoNumero,
+        rg: data.rg || documentoNumero,
         cpf: cpfDigits,
         consentimento_timestamp: now,
         consentimento_ip: ip.substring(0, 45),

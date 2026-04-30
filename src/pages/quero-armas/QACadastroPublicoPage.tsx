@@ -332,6 +332,7 @@ export default function QACadastroPublicoPage() {
 
       setExtracted(prev => ({
         ...prev,
+        tipo_documento_identidade: isCin ? "CIN" : (prev.tipo_documento_identidade || "RG"),
         nome_completo: id.nome_completo || prev.nome_completo,
         // CPF: preenche sempre que vier um CPF válido de 11 dígitos, mesmo com
         // ambiguidade. A confirmação manual bloqueia apenas a conclusão final
@@ -396,7 +397,7 @@ export default function QACadastroPublicoPage() {
         categoria: extracted.categoria_titular || "pessoa_fisica",
         needsCpfRgConfirmation: !!cpfRgAmbiguity,
         cpfRgConfirmed,
-        documentoIdentidadeTipo: tipoDocumentoIdentidade,
+        documentoIdentidadeTipo: extracted.tipo_documento_identidade || tipoDocumentoIdentidade,
       });
       const divergencias = getDivergencias(extracted, extractedFromDoc);
       if (blocking.length > 0) {
@@ -458,6 +459,8 @@ export default function QACadastroPublicoPage() {
       const payload = {
         nome_completo: extracted.nome_completo.trim(),
         cpf: cpfDigits,
+        tipo_documento_identidade: extracted.tipo_documento_identidade || (String(tipoDocumentoIdentidade).toUpperCase().includes("CIN") ? "CIN" : "RG"),
+        numero_documento_identidade: extracted.rg || null,
         rg: extracted.rg || null,
         emissor_rg: extracted.emissor_rg || null,
         data_nascimento: brDateToIso(extracted.data_nascimento) || null,
@@ -743,6 +746,8 @@ function DuplicateModal({
   const FIELDS: { label: string; key: string; format?: (v: any) => string }[] = [
     { label: "Nome completo", key: "nome_completo" },
     { label: "CPF", key: "cpf", format: (v) => v ? maskCpf(String(v)) : "" },
+    { label: "Tipo documento", key: "tipo_documento_identidade" },
+    { label: "Documento", key: "numero_documento_identidade" },
     { label: "RG", key: "rg" },
     { label: "Emissor", key: "emissor_rg" },
     { label: "Data de nascimento", key: "data_nascimento", format: (v) => {
@@ -1189,7 +1194,8 @@ function Step3Review({
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
-  const isCinDoc = String(tipoDocumentoIdentidade || "").toUpperCase().includes("CIN");
+  const tipoDocumentoAtual = data.tipo_documento_identidade || (String(tipoDocumentoIdentidade || "").toUpperCase().includes("CIN") ? "CIN" : "RG");
+  const isCinDoc = tipoDocumentoAtual === "CIN";
 
   // Categoria implícita p/ bloqueio: usa a do form ou "pessoa_fisica" como padrão (cidadão comum)
   const categoriaEfetiva: CategoriaTitular | "" = data.categoria_titular || "pessoa_fisica";
@@ -1198,7 +1204,7 @@ function Step3Review({
     categoria: categoriaEfetiva,
     needsCpfRgConfirmation: !!cpfRgAmbiguity,
     cpfRgConfirmed,
-    documentoIdentidadeTipo: tipoDocumentoIdentidade,
+    documentoIdentidadeTipo: tipoDocumentoAtual,
   });
   const divergencias = getDivergencias(data, fromDoc);
 
@@ -1319,15 +1325,32 @@ function Step3Review({
       {/* ─── Bloco 3 — Documento de identificação ─── */}
       <ReviewBlock title="Documento de identificação" icon={Shield}>
         <div className="grid grid-cols-2 gap-2">
-          <ReviewField label="RG / CIN" value={data.rg} onChange={(v) => set("rg", v)}
+          <ReviewSelect
+            label="Tipo"
+            value={tipoDocumentoAtual}
+            onChange={(v) => set("tipo_documento_identidade", (v === "CIN" ? "CIN" : "RG") as any)}
+            options={[
+              { value: "RG", label: "RG" },
+              { value: "CIN", label: "CIN" },
+            ]}
+            status={tipoDocumentoAtual ? "validado" : "normal"}
+          />
+          <ReviewField label={isCinDoc ? "CIN" : "RG"} value={data.rg} onChange={(v) => set("rg", v)}
             required={required.has("rg")} status={statusOf("rg")} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
           <ReviewField label="Órgão emissor" value={data.emissor_rg} placeholder="SSP/SP"
             onChange={(v) => set("emissor_rg", v)}
             required={required.has("emissor_rg")} status={statusOf("emissor_rg")} />
+          <ReviewField label={isCinDoc ? "Data de emissão da CIN" : "Data de expedição do RG"} value={data.data_expedicao_rg}
+            onChange={(v) => set("data_expedicao_rg", v)} placeholder="DD/MM/AAAA"
+            status={statusOf("data_expedicao_rg")} />
         </div>
-        <ReviewField label="Data de expedição do RG" value={data.data_expedicao_rg}
-          onChange={(v) => set("data_expedicao_rg", v)} placeholder="DD/MM/AAAA"
-          status={statusOf("data_expedicao_rg")} />
+        {isCinDoc && (
+          <div className="rounded-lg p-2 text-[10px] leading-relaxed" style={{ background: "hsl(210 90% 97%)", color: "hsl(210 50% 30%)", border: "1px solid hsl(210 80% 88%)" }}>
+            CIN substitui o RG e pode usar o mesmo número do CPF.
+          </div>
+        )}
       </ReviewBlock>
 
       {/* ─── Bloco 4 — Contato ─── */}
