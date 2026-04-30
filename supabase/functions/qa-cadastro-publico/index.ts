@@ -207,6 +207,7 @@ Deno.serve(async (req) => {
     // Remove campo de controle do payload de persistência
     const { update_existing_id: _u, ...persistData } = data;
     const documentoNumero = data.numero_documento_identidade || data.rg || null;
+    const isCin = data.tipo_documento_identidade === "CIN";
 
     // Capture audit metadata
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
@@ -215,6 +216,10 @@ Deno.serve(async (req) => {
 
     // Clean CPF
     const cpfDigits = data.cpf.replace(/\D/g, "");
+    const docDigits = (documentoNumero || "").replace(/\D/g, "");
+    if (!isCin && cpfDigits && docDigits && cpfDigits === docDigits) {
+      return json({ error: "RG não pode ser igual ao CPF — se for CIN, selecione CIN" }, 400);
+    }
 
     // ── Caminho UPDATE ──
     if (updateExistingId) {
