@@ -1192,7 +1192,8 @@ function Step3Review({
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
-  const isCinDoc = String(tipoDocumentoIdentidade || "").toUpperCase().includes("CIN");
+  const tipoDocumentoAtual = data.tipo_documento_identidade || (String(tipoDocumentoIdentidade || "").toUpperCase().includes("CIN") ? "CIN" : "RG");
+  const isCinDoc = tipoDocumentoAtual === "CIN";
 
   // Categoria implícita p/ bloqueio: usa a do form ou "pessoa_fisica" como padrão (cidadão comum)
   const categoriaEfetiva: CategoriaTitular | "" = data.categoria_titular || "pessoa_fisica";
@@ -1201,7 +1202,7 @@ function Step3Review({
     categoria: categoriaEfetiva,
     needsCpfRgConfirmation: !!cpfRgAmbiguity,
     cpfRgConfirmed,
-    documentoIdentidadeTipo: tipoDocumentoIdentidade,
+    documentoIdentidadeTipo: tipoDocumentoAtual,
   });
   const divergencias = getDivergencias(data, fromDoc);
 
