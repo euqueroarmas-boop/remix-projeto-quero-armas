@@ -973,6 +973,9 @@ export default function QAClientesPage() {
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
+  // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
+  // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
+  const [processosVenda, setProcessosVenda] = useState<any[]>([]);
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   // FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR).
