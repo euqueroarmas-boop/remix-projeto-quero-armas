@@ -2130,6 +2130,14 @@ export default function QAClientesPage() {
                                 })()}
                               </span>
                               <div className="flex items-center gap-0.5">
+                                {/* FASE 16-C — Gerar processo a partir de venda aprovada */}
+                                <GerarProcessoButton
+                                  venda={v}
+                                  itens={itens}
+                                  clienteNome={c.nome_completo}
+                                  processoExistente={processosVenda.find((p: any) => p.venda_id === v.id) || null}
+                                  onCreated={() => loadSubData(selected!)}
+                                />
                                 <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700">
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
