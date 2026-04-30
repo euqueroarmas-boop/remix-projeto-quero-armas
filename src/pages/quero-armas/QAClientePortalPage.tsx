@@ -1045,7 +1045,11 @@ export default function QAClientePortalPage() {
             <ChevronRight className="h-4 w-4 text-amber-700 shrink-0" />
           </button>
           {itens.length === 0 ? (
-            <p className="text-center text-sm text-slate-400 py-6">Nenhum serviço contratado.</p>
+            <p className="text-center text-sm text-slate-400 py-6">
+              {cliente?.tipo_cliente === "cliente_app"
+                ? "Você ainda não contratou serviços da Quero Armas. Quando precisar de posse, porte, CRAF, GTE, CR ou apostilamento, solicite diretamente pelo portal."
+                : "Nenhum serviço contratado."}
+            </p>
           ) : (
             <div className="space-y-2">
               {itens.map((it: any) => {
