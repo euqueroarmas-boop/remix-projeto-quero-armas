@@ -78,41 +78,18 @@ export const STATUS_TERMINAIS: StatusServicoQA[] = [
 ];
 
 /**
- * Mapeia status legado (em UIs antigas e nomes em variáveis) para o novo padrão.
- * Apenas para LEITURA defensiva — nunca escrever status antigos no banco.
+ * Resolve label estritamente a partir da lista canônica. Qualquer valor
+ * fora da lista é considerado erro de dados — não há mais fallback de
+ * normalização legada.
  */
-export function normalizeLegacyStatus(s: string | null | undefined): StatusServicoQA | null {
-  if (!s) return null;
-  const v = String(s).toLowerCase().trim();
-  if ((STATUS_SERVICO_QA as readonly string[]).includes(v)) return v as StatusServicoQA;
-  switch (v) {
-    case "aguardando_contratacao":
-    case "contratado":
-      return "montando_pasta";
-    case "aguardando_documentos":
-      return "aguardando_documentacao";
-    case "em_andamento":
-      return "em_verificacao";
-    case "pronto":
-      return "pronto_para_protocolo";
-    case "enviado":
-      return "enviado_ao_orgao";
-    case "aguardando_orgao":
-      return "em_analise_orgao";
-    case "concluido":
-    case "cancelado":
-      return "finalizado";
-    default:
-      return null;
-  }
+function isCanon(s: string | null | undefined): s is StatusServicoQA {
+  return !!s && (STATUS_SERVICO_QA as readonly string[]).includes(s);
 }
 
 export function statusLabel(s: string | null | undefined): string {
-  const n = normalizeLegacyStatus(s);
-  return n ? STATUS_LABELS[n] : (s ?? "—").toUpperCase();
+  return isCanon(s) ? STATUS_LABELS[s] : (s ?? "—").toString().toUpperCase();
 }
 
 export function statusBadgeClass(s: string | null | undefined): string {
-  const n = normalizeLegacyStatus(s);
-  return n ? STATUS_COLORS[n] : "bg-slate-100 text-slate-700 border-slate-300";
+  return isCanon(s) ? STATUS_COLORS[s] : "bg-rose-100 text-rose-800 border-rose-300";
 }
