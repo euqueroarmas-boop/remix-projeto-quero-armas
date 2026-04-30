@@ -25,7 +25,18 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { customer_email, customer_name, temp_password, portal_url, trace_id } = body;
+    const {
+      customer_email,
+      customer_name,
+      temp_password,
+      portal_url,
+      trace_id,
+      qa_client_id,
+      solicitacao_id,
+      evento_label,
+      evento_descricao,
+      ator,
+    } = body;
     const traceId = trace_id || `user-invite-${crypto.randomUUID()}`;
 
     if (!customer_email || !customer_name || !temp_password) {
@@ -42,7 +53,11 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const subject = `🔑 Seu acesso ao Portal WMTi foi criado`;
+    // Quando há qa_client_id, é fluxo Quero Armas: usa marca/portal próprios
+    const isQA = !!qa_client_id;
+    const subject = isQA
+      ? `🔑 Seu acesso ao Portal Quero Armas foi criado`
+      : `🔑 Seu acesso ao Portal WMTi foi criado`;
 
     const smtpRes = await supabase.functions.invoke("send-smtp-email", {
       body: {
@@ -61,6 +76,41 @@ Deno.serve(async (req) => {
       await logSistemaBackend({ tipo: "email", status: "error", mensagem: `Falha envio convite usuário: ${customer_email}`, payload: { trace_id: traceId } });
     } else {
       await logSistemaBackend({ tipo: "email", status: "success", mensagem: `Convite de acesso enviado: ${customer_email}`, payload: { trace_id: traceId, subject } });
+    }
+
+    // Marca em qa_clientes e registra evento na timeline da solicitação (se aplicável)
+    if (qa_client_id) {
+      try {
+        const updates: Record<string, unknown> = {
+          portal_credenciais_enviadas_em: new Date().toISOString(),
+          portal_ultimo_envio_status: ok ? "success" : "failed",
+          portal_ultimo_envio_erro: ok ? null : (smtpRes.error?.message || "Falha desconhecida"),
+        };
+        await supabase.from("qa_clientes").update(updates).eq("id", qa_client_id);
+      } catch (markErr) {
+        console.error("[notify-user-invite] erro ao marcar qa_clientes:", markErr);
+      }
+
+      if (solicitacao_id) {
+        try {
+          await supabase.from("qa_solicitacao_eventos").insert({
+            solicitacao_id,
+            cliente_id: qa_client_id,
+            evento: ok ? (evento_label || "credenciais_enviadas") : "falha_envio_email",
+            descricao: evento_descricao
+              || (ok ? `Credenciais enviadas para ${customer_email}` : `Falha ao enviar credenciais para ${customer_email}`),
+            ator: ator || "sistema",
+            metadata: {
+              email: customer_email,
+              trace_id: traceId,
+              error: ok ? null : (smtpRes.error?.message || "Falha desconhecida"),
+            },
+            email_enviado_em: ok ? new Date().toISOString() : null,
+          });
+        } catch (evErr) {
+          console.error("[notify-user-invite] erro ao gravar evento timeline:", evErr);
+        }
+      }
     }
 
     return new Response(JSON.stringify({ success: ok, traceId }), {

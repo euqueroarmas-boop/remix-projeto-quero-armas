@@ -3830,6 +3830,10 @@ export type Database = {
           pais: string | null
           pais2: string | null
           pis_pasep: string | null
+          portal_credenciais_enviadas_em: string | null
+          portal_provisionado_em: string | null
+          portal_ultimo_envio_erro: string | null
+          portal_ultimo_envio_status: string | null
           profissao: string | null
           recadastramento_concluido_em: string | null
           recadastramento_iniciado_em: string | null
@@ -3906,6 +3910,10 @@ export type Database = {
           pais?: string | null
           pais2?: string | null
           pis_pasep?: string | null
+          portal_credenciais_enviadas_em?: string | null
+          portal_provisionado_em?: string | null
+          portal_ultimo_envio_erro?: string | null
+          portal_ultimo_envio_status?: string | null
           profissao?: string | null
           recadastramento_concluido_em?: string | null
           recadastramento_iniciado_em?: string | null
@@ -3982,6 +3990,10 @@ export type Database = {
           pais?: string | null
           pais2?: string | null
           pis_pasep?: string | null
+          portal_credenciais_enviadas_em?: string | null
+          portal_provisionado_em?: string | null
+          portal_ultimo_envio_erro?: string | null
+          portal_ultimo_envio_status?: string | null
           profissao?: string | null
           recadastramento_concluido_em?: string | null
           recadastramento_iniciado_em?: string | null

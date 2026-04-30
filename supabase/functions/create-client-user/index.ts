@@ -360,15 +360,21 @@ async function sendInviteEmail(
   email: string,
   name: string,
   password: string,
+  opts?: { qaClientId?: number | null; eventoLabel?: string; ator?: string | null },
 ) {
   try {
     const portalOrigin = req.headers.get("origin") || "https://wmti.com.br";
+    const isQA = !!opts?.qaClientId;
+    const portalPath = isQA ? "/quero-armas/area-do-cliente/login" : "/area-do-cliente";
     await supabase.functions.invoke("notify-user-invite", {
       body: {
         customer_email: email,
         customer_name: name,
         temp_password: password,
-        portal_url: `${portalOrigin.replace(/\/$/, "")}/area-do-cliente`,
+        portal_url: `${portalOrigin.replace(/\/$/, "")}${portalPath}`,
+        qa_client_id: opts?.qaClientId || undefined,
+        evento_label: opts?.eventoLabel,
+        ator: opts?.ator || undefined,
       },
     });
   } catch (emailErr) {
@@ -581,6 +587,19 @@ Deno.serve(async (req) => {
         payload: { email: data.user.email, customer_id: canonicalCustomer?.id || customer_id, qa_client_id: qaClient?.id || qa_client_id },
       });
 
+      // Reenvia e-mail com a nova senha (e registra evento senha_resetada na timeline QA, se aplicável)
+      await sendInviteEmail(
+        supabase,
+        req,
+        data.user.email!,
+        name || qaClient?.nome_completo || canonicalCustomer?.razao_social || data.user.email || "",
+        newPassword,
+        {
+          qaClientId: qaClient?.id || qa_client_id || null,
+          eventoLabel: "senha_resetada",
+        },
+      );
+
       return new Response(JSON.stringify({
         success: true,
         email: normalizeEmail(data.user.email),
@@ -588,6 +607,81 @@ Deno.serve(async (req) => {
         user_id: data.user.id,
         customer_id: canonicalCustomer?.id || customer_id || null,
         qa_client_id: qaClient?.id || qa_client_id || null,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "resend_credentials") {
+      const authUser = await resolveAuthUser(supabase, {
+        userId: customer?.user_id,
+        fallbackUserId: qaClient?.user_id,
+        email: normalizedEmail || customer?.email || qaClient?.email,
+      });
+
+      if (!authUser) {
+        return new Response(JSON.stringify({ error: "Usuário não possui conta no portal. Crie o acesso primeiro." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const meta = (authUser.user_metadata && typeof authUser.user_metadata === "object")
+        ? authUser.user_metadata as Record<string, unknown>
+        : {};
+      const existingTemp = typeof meta.temp_password === "string" ? meta.temp_password : "";
+
+      // Idempotência: se não temos a senha temporária armazenada, geramos uma nova
+      // e atualizamos no Auth (necessário, senão cliente não consegue logar).
+      let passwordToSend = existingTemp;
+      if (!passwordToSend) {
+        passwordToSend = generateTempPassword();
+        const { error: updErr } = await supabase.auth.admin.updateUserById(authUser.id, {
+          password: passwordToSend,
+          user_metadata: {
+            ...meta,
+            temp_password: passwordToSend,
+            password_change_required: true,
+          },
+        });
+        if (updErr) {
+          return new Response(JSON.stringify({ error: updErr.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const recipientEmail = authUser.email || normalizedEmail || customer?.email || qaClient?.email || "";
+      const recipientName = (typeof meta.name === "string" ? meta.name : "")
+        || name || qaClient?.nome_completo || customer?.razao_social || recipientEmail;
+
+      await sendInviteEmail(
+        supabase,
+        req,
+        recipientEmail,
+        recipientName,
+        passwordToSend,
+        {
+          qaClientId: qaClient?.id || qa_client_id || null,
+          eventoLabel: "credenciais_enviadas",
+        },
+      );
+
+      await logSistemaBackend({
+        tipo: "admin",
+        status: "success",
+        mensagem: "Credenciais reenviadas para o cliente",
+        payload: { email: recipientEmail, qa_client_id: qaClient?.id || qa_client_id },
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        email: normalizeEmail(recipientEmail),
+        user_id: authUser.id,
+        qa_client_id: qaClient?.id || qa_client_id || null,
+        regenerated_password: !existingTemp,
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -690,6 +784,20 @@ Deno.serve(async (req) => {
       document: normalizedDocument || canonicalCustomer.cnpj_ou_cpf || qaClient?.cpf,
     });
 
+    // Marca portal_provisionado_em na 1ª criação (idempotente: só seta se for null)
+    const effectiveQaClientId = qaClient?.id || qa_client_id || null;
+    if (effectiveQaClientId && !reused) {
+      try {
+        await supabase
+          .from("qa_clientes")
+          .update({ portal_provisionado_em: new Date().toISOString() })
+          .eq("id", effectiveQaClientId)
+          .is("portal_provisionado_em", null);
+      } catch (markErr) {
+        console.error("[create-client-user] erro ao marcar portal_provisionado_em:", markErr);
+      }
+    }
+
     await supabase.from("client_events").insert({
       customer_id: canonicalCustomer.id,
       event_type: "cadastro",
@@ -716,6 +824,10 @@ Deno.serve(async (req) => {
       normalizedEmail,
       name || qaClient?.nome_completo || canonicalCustomer.razao_social || normalizedEmail,
       password,
+      {
+        qaClientId: effectiveQaClientId,
+        eventoLabel: reused ? "credenciais_enviadas" : "portal_provisionado",
+      },
     );
 
     return new Response(JSON.stringify({
