@@ -483,128 +483,44 @@ export default function QAClientePortalPage() {
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
       />
-      {/* ═══ TOP BAR ═══ */}
-      <header
-        className="sticky top-0 z-50 backdrop-blur-2xl"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(6,6,8,0.96) 0%, rgba(3,3,4,0.94) 100%)",
-          boxShadow:
-            "0 1px 0 0 rgba(201,169,97,0.18), 0 18px 40px -24px rgba(0,0,0,0.95)",
-        }}
-      >
-        {/* Filete dourado superior */}
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[2px]"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(201,169,97,0.0) 8%, rgba(201,169,97,0.85) 50%, rgba(201,169,97,0.0) 92%, transparent 100%)",
-          }}
-        />
-        {/* Brilho radial sutil atrás do nome */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-60"
-          style={{
-            background:
-              "radial-gradient(ellipse 60% 80% at 30% 100%, rgba(201,169,97,0.10), transparent 60%)",
-          }}
-        />
-
+      {/* ═══ TOP BAR — Premium Light ═══ */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-          {/* ── IDENTIDADE ── */}
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            {/* Monograma circular premium */}
+            {/* Monograma premium light */}
             <div className="relative shrink-0">
-              {/* Anel dourado externo */}
-              <div
-                className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full"
-                style={{
-                  background:
-                    "conic-gradient(from 140deg, #c9a961, #f3d98a, #8a6f33, #c9a961)",
-                  padding: "1.5px",
-                  boxShadow:
-                    "0 0 0 1px rgba(0,0,0,0.6), 0 0 24px -6px rgba(201,169,97,0.55)",
-                }}
-              >
-                <div
-                  className="flex h-full w-full items-center justify-center rounded-full"
-                  style={{
-                    background:
-                      "radial-gradient(circle at 30% 25%, #1a1814 0%, #0a0908 70%)",
-                  }}
-                >
-                  <span
-                    className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider"
-                    style={{
-                      color: "#e6c986",
-                      textShadow: "0 1px 0 rgba(0,0,0,0.8)",
-                    }}
-                  >
-                    {(userName || "C")
-                      .split(" ")
-                      .filter(Boolean)
-                      .slice(0, 2)
-                      .map((p) => p[0])
-                      .join("")
-                      .toUpperCase()}
-                  </span>
-                </div>
+              <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-slate-900 ring-1 ring-slate-200 shadow-sm">
+                <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
+                  {(userName || "C")
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((p) => p[0])
+                    .join("")
+                    .toUpperCase()}
+                </span>
               </div>
-              {/* Selo verificado */}
               <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full border border-black"
-                style={{ background: "#c9a961" }}
+                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white"
                 title="Cliente verificado"
               >
-                <svg viewBox="0 0 12 12" className="h-2.5 w-2.5">
-                  <path d="M2.5 6.2 L4.8 8.5 L9.5 3.5" stroke="#0a0908" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <BadgeCheck className="h-2.5 w-2.5 text-white" />
               </span>
             </div>
 
-            {/* Divisor filete vertical */}
-            <div
-              className="hidden sm:block h-11 w-px"
-              style={{
-                background:
-                  "linear-gradient(180deg, transparent 0%, rgba(201,169,97,0.45) 50%, transparent 100%)",
-              }}
-            />
+            <div className="hidden sm:block h-11 w-px bg-slate-200" />
 
             <div className="flex flex-col min-w-0 leading-none">
-              {/* Eyebrow premium */}
               <div className="flex items-center gap-1.5">
-                <span
-                  className="text-[8px] font-bold uppercase"
-                  style={{
-                    color: "#c9a961",
-                    letterSpacing: "0.12em",
-                  }}
-                >
+                <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
                   Área do Cliente
                 </span>
-                <span
-                  className="hidden sm:inline-flex items-center gap-1 rounded-sm border px-1 py-[1px] text-[7.5px] font-black uppercase tracking-[0.18em]"
-                  style={{
-                    color: "#c9a961",
-                    borderColor: "rgba(201,169,97,0.45)",
-                    background: "rgba(201,169,97,0.08)",
-                  }}
-                >
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-[0.16em] text-slate-700">
                   {cliente?.tipo_cliente === "cliente_app" ? "Arsenal Gratuito" : "Premium"}
                 </span>
               </div>
 
-              {/* Nome — tipografia serif premium */}
-              <h1
-                className="mt-1 truncate text-[15px] sm:text-[17px] font-semibold uppercase text-white"
-                style={{
-                  fontFamily:
-                    'Georgia, "Cormorant Garamond", "Playfair Display", serif',
-                  letterSpacing: "0.04em",
-                  textShadow: "0 1px 0 rgba(0,0,0,0.7)",
-                }}
-              >
+              <h1 className="mt-1 truncate text-[15px] sm:text-[17px] font-bold uppercase text-slate-900 tracking-wide">
                 {(() => {
                   const parts = (userName || "Cliente").trim().split(/\s+/).filter(Boolean);
                   if (parts.length <= 1) return parts[0] || "Cliente";
@@ -612,71 +528,25 @@ export default function QAClientePortalPage() {
                 })()}
               </h1>
 
-              {/* Sub-rótulo com ornamentos */}
               <div className="mt-1 flex items-center gap-1.5">
-                <span
-                  className="h-px w-3"
-                  style={{ background: "rgba(201,169,97,0.6)" }}
-                />
-                <span
-                  className="text-[8.5px] font-semibold uppercase text-white/45"
-                  style={{ letterSpacing: "0.32em" }}
-                >
+                <span className="h-px w-3 bg-slate-300" />
+                <span className="text-[8.5px] font-semibold uppercase tracking-[0.28em] text-slate-400">
                   Arsenal Inteligente
                 </span>
-                <span
-                  className="h-px w-3"
-                  style={{ background: "rgba(201,169,97,0.6)" }}
-                />
+                <span className="h-px w-3 bg-slate-300" />
               </div>
             </div>
           </div>
 
-          {/* ── AÇÕES ── */}
           <button
             type="button"
             onClick={handleLogout}
-            className="group relative inline-flex h-10 sm:h-11 shrink-0 items-center gap-2 overflow-hidden rounded-md px-3 sm:px-4 text-[10px] font-bold uppercase text-white/85 transition-all hover:text-white"
-            style={{
-              letterSpacing: "0.32em",
-              background:
-                "linear-gradient(180deg, rgba(20,20,22,0.9), rgba(8,8,10,0.95))",
-              border: "1px solid rgba(201,169,97,0.35)",
-              boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,0.04), 0 6px 16px -10px rgba(0,0,0,0.9)",
-            }}
+            className="inline-flex h-10 sm:h-11 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 sm:px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm transition"
           >
-            {/* Brilho de borda animado no hover */}
-            <span
-              className="pointer-events-none absolute inset-x-0 top-0 h-px opacity-70 transition-opacity group-hover:opacity-100"
-              style={{
-                background:
-                  "linear-gradient(90deg, transparent, rgba(201,169,97,0.85), transparent)",
-              }}
-            />
-            <LogOut
-              className="h-3.5 w-3.5 transition group-hover:translate-x-0.5"
-              style={{ color: "#c9a961" }}
-            />
+            <LogOut className="h-3.5 w-3.5 text-slate-500" />
             <span>Sair</span>
           </button>
         </div>
-
-        {/* Filete inferior duplo */}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(201,169,97,0.55) 50%, transparent 100%)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 -bottom-1 h-px opacity-40"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 30%, rgba(201,169,97,0.35) 50%, transparent 70%)",
-          }}
-        />
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
