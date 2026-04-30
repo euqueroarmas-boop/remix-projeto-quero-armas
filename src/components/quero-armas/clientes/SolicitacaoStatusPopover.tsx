@@ -93,14 +93,19 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
   const save = async () => {
     setSaving(true);
     try {
+      // Quando sem_checklist_configurado, ignora alteração de status_servico
+      // (backend também bloqueia, mas evitamos ida ao servidor).
+      const updatePayload: Record<string, any> = {
+        status_financeiro: statusFinanceiro,
+        status_processo: statusProcesso,
+        observacoes: observacoes || null,
+      };
+      if (!semChecklist) {
+        updatePayload.status_servico = statusServico;
+      }
       const { error } = await supabase
         .from("qa_solicitacoes_servico" as any)
-        .update({
-          status_servico: statusServico,
-          status_financeiro: statusFinanceiro,
-          status_processo: statusProcesso,
-          observacoes: observacoes || null,
-        })
+        .update(updatePayload)
         .eq("id", solicitacaoId);
       if (error) throw error;
 
@@ -181,6 +186,12 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
               value={statusServico}
               onChange={setStatusServico}
               options={STATUS_SERVICO as readonly string[]}
+              disabled={semChecklist}
+              hint={
+                semChecklist
+                  ? "Status bloqueado até configuração do checklist"
+                  : undefined
+              }
             />
             <SelectField
               label="Status financeiro"
