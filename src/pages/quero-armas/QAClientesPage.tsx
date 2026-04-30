@@ -1747,8 +1747,25 @@ export default function QAClientesPage() {
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds).order("sort_order", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
         setItens((itensData as any[]) ?? []);
+        // FASE 16-C — processos por venda (qa_processos.venda_id = qa_vendas.id real).
+        try {
+          const realVendaIds = vendasData.map((v: any) => Number(v.id)).filter((n: number) => Number.isFinite(n));
+          if (realVendaIds.length > 0) {
+            const { data: procData } = await supabase
+              .from("qa_processos" as any)
+              .select("id, venda_id, servico_id, servico_nome")
+              .in("venda_id", realVendaIds);
+            setProcessosVenda((procData as any[]) ?? []);
+          } else {
+            setProcessosVenda([]);
+          }
+        } catch (e) {
+          console.warn("[loadSubData] processosVenda falhou", e);
+          setProcessosVenda([]);
+        }
       } else {
         setItens([]);
+        setProcessosVenda([]);
       }
     } catch (e: any) {
       console.error("[loadSubData] erro:", e.message);
