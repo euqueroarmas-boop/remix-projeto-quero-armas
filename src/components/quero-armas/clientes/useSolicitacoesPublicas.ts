@@ -16,7 +16,10 @@ export type SolicitacaoPublica = {
   status_financeiro: "Sem cobrança vinculada";
   status_processo: "Processo ainda não aberto";
   created_at: string;
-  /** true quando já existe um qa_itens_venda do mesmo serviço para o mesmo cliente — não exibir como solicitação solta. */
+  /**
+   * true SOMENTE quando qa_solicitacoes_servico.status_servico === 'contratado'.
+   * NÃO inferir mais por qa_itens_venda, servico_id ou venda existente.
+   */
   ja_convertido: boolean;
 };
 
