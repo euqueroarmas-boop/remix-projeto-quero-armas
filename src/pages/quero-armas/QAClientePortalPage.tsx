@@ -719,6 +719,76 @@ export default function QAClientePortalPage() {
 
         {activeTab === "arsenal" && cliente && analysis && (
           <>
+          {(() => {
+            const isFree = cliente?.tipo_cliente === "cliente_app";
+            const isEmpty =
+              (crafs?.length ?? 0) === 0 &&
+              (gtes?.length ?? 0) === 0 &&
+              (meusDocs?.length ?? 0) === 0 &&
+              !cadastro;
+            if (!isFree || !isEmpty) return null;
+            return (
+              <div className="mb-4 rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 to-slate-950 text-slate-100 shadow-lg overflow-hidden">
+                <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #c9a961, hsl(230 80% 56%))" }} />
+                <div className="p-4 sm:p-5 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-500/15 text-amber-300 flex items-center justify-center">
+                      <CrosshairIcon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <h2 className="text-[15px] sm:text-[17px] font-bold uppercase tracking-wide text-white">
+                        Comece montando seu Arsenal Digital
+                      </h2>
+                      <p className="mt-1 text-[12px] sm:text-[13px] leading-relaxed text-slate-300">
+                        Cadastre suas armas, documentos e vencimentos para manter tudo organizado em um só lugar. Esta conta é gratuita e não gera cobrança.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowArmaManual(true)}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-emerald-950 px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider shadow-sm transition"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Cadastrar minha primeira arma
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddDoc(true)}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-amber-950 px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider shadow-sm transition"
+                    >
+                      <Upload className="h-3.5 w-3.5" /> Enviar documento do acervo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/area-do-cliente/contratar")}
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/60 hover:bg-slate-800 text-slate-100 px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition"
+                    >
+                      <ShoppingBag className="h-3.5 w-3.5" /> Contratar serviço da Quero Armas
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {[
+                      { n: "1", t: "Cadastre suas armas", d: "Registre acervo, modelo, calibre e número de série." },
+                      { n: "2", t: "Envie seus documentos", d: "CR, CRAF, GTE, autorizações e comprovantes." },
+                      { n: "3", t: "Acompanhe vencimentos", d: "Receba alertas antes que algo expire." },
+                      { n: "4", t: "Contrate se precisar", d: "Solicite assessoria diretamente pelo portal." },
+                    ].map((step) => (
+                      <div key={step.n} className="flex items-start gap-2.5 rounded-xl border border-slate-700/70 bg-slate-900/60 p-3">
+                        <span className="h-6 w-6 shrink-0 rounded-md bg-slate-800 text-amber-300 text-[11px] font-bold flex items-center justify-center">{step.n}</span>
+                        <div className="min-w-0">
+                          <div className="text-[12px] font-semibold text-white">{step.t}</div>
+                          <div className="text-[11px] text-slate-400 leading-snug">{step.d}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           <ArsenalView
             clienteId={cliente.id}
             clienteNome={cliente.nome_completo}
