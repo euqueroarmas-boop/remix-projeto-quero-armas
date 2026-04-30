@@ -38,6 +38,7 @@ import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
