@@ -434,6 +434,11 @@ export default function QAClientePortalPage() {
     });
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
+    itens.forEach((it: any) => {
+      if (!it.data_vencimento) return;
+      const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || `#${it.servico_id}`;
+      expDocs.push({ label: `Serviço — ${servicoLabel}`, date: it.data_vencimento, days: daysUntil(it.data_vencimento), category: "SERVIÇO" });
+    });
     // Documentos enviados pelo próprio cliente (hub pessoal)
     meusDocs.forEach((d: any) => {
       if (!d.data_validade) return;
@@ -461,7 +466,7 @@ export default function QAClientePortalPage() {
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
-  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs]);
+  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs, catalogoByServicoId, SERVICO_MAP]);
 
   // Timeline
   const timeline = useMemo(() => {
@@ -959,7 +964,7 @@ export default function QAClientePortalPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[12px] font-semibold text-slate-800 truncate">
-                        {SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`}
+                        {getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || `Serviço #${it.servico_id}`}
                       </div>
                       {it.numero_processo && <div className="text-[10px] text-slate-500 font-mono">{it.numero_processo}</div>}
                       <div className="w-full h-1 rounded-full bg-slate-100 mt-1.5">
