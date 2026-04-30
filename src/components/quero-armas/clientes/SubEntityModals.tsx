@@ -486,16 +486,25 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         // Propaga status financeiro e operacional conforme a venda recém-criada.
         if (solicitacaoId) {
           const vendaPk = (data as any).id;
-          const isPago = f.status === "PAGO";
-          await supabase
+          // Atualiza solicitação canônica → fonte única de verdade do dashboard.
+          // Falha NÃO pode ser silenciosa: se o update não confirmar, lança erro.
+          const { data: updRows, error: updErr } = await supabase
             .from("qa_solicitacoes_servico" as any)
             .update({
               status_servico: "contratado",
-              status_financeiro: isPago ? "pago" : "aguardando_pagamento",
+              status_financeiro: "vinculado",
               status_processo: "aguardando_documentos",
               venda_id: vendaPk,
+              updated_at: new Date().toISOString(),
             })
-            .eq("id", solicitacaoId);
+            .eq("id", solicitacaoId)
+            .select("id");
+          if (updErr) throw updErr;
+          if (!updRows || (updRows as any[]).length === 0) {
+            throw new Error(
+              "Falha ao finalizar solicitação: nenhum registro atualizado em qa_solicitacoes_servico."
+            );
+          }
         }
       }
       const defaultItemStatus = getDefaultItemStatus();
