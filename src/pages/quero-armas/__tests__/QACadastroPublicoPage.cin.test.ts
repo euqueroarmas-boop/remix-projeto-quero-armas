@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { normalizeDateToBr, pickIssueDate } from "../QACadastroPublicoPage";
 import {
+  clienteSchema,
   detectCpfRgAmbiguity,
   getBlockingErrors,
   isValidCpf,
@@ -101,5 +102,21 @@ describe("getBlockingErrors — exceção CPF==RG para CIN", () => {
     const errs = getBlockingErrors(baseValidForm, {});
     const cpfRgErr = errs.find((e) => e.field === "ambiguidade_cpf_rg");
     expect(cpfRgErr).toBeDefined();
+  });
+
+  it("clienteSchema: CPF==CIN aceita quando tipo_documento_identidade é CIN", () => {
+    const parsed = clienteSchema.safeParse({
+      ...baseValidForm,
+      tipo_documento_identidade: "CIN",
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("clienteSchema: CPF==RG continua bloqueando quando tipo_documento_identidade é RG", () => {
+    const parsed = clienteSchema.safeParse({
+      ...baseValidForm,
+      tipo_documento_identidade: "RG",
+    });
+    expect(parsed.success).toBe(false);
   });
 });
