@@ -475,6 +475,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
 
   const save = async () => {
     if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
+    if (!f.status) { toast.error("Selecione o status da venda"); return; }
+    if (!f.forma_pagamento) { toast.error("Selecione a forma de pagamento"); return; }
     setSaving(true);
     try {
       const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
