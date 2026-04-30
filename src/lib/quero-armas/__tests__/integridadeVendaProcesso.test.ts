@@ -15,11 +15,15 @@ import { describe, it, expect } from "vitest";
 
 type ItemVenda = { id: number; servico_id: number | null };
 
+type ValidationResult =
+  | { ok: true; code?: undefined; reason?: undefined }
+  | { ok: false; code: string; reason: string };
+
 function validarIntegridadeVendaProcesso(params: {
   venda_id: number | null | undefined;
   servico_id_solicitado: number;
   itens_da_venda: ItemVenda[];
-}): { ok: true } | { ok: false; code: string; reason: string } {
+}): ValidationResult {
   const { venda_id, servico_id_solicitado, itens_da_venda } = params;
 
   // Sem venda → nada para validar
