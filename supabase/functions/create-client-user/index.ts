@@ -696,6 +696,20 @@ Deno.serve(async (req) => {
       document: normalizedDocument || canonicalCustomer.cnpj_ou_cpf || qaClient?.cpf,
     });
 
+    // Marca portal_provisionado_em na 1ª criação (idempotente: só seta se for null)
+    const effectiveQaClientId = qaClient?.id || qa_client_id || null;
+    if (effectiveQaClientId && !reused) {
+      try {
+        await supabase
+          .from("qa_clientes")
+          .update({ portal_provisionado_em: new Date().toISOString() })
+          .eq("id", effectiveQaClientId)
+          .is("portal_provisionado_em", null);
+      } catch (markErr) {
+        console.error("[create-client-user] erro ao marcar portal_provisionado_em:", markErr);
+      }
+    }
+
     await supabase.from("client_events").insert({
       customer_id: canonicalCustomer.id,
       event_type: "cadastro",
@@ -722,6 +736,10 @@ Deno.serve(async (req) => {
       normalizedEmail,
       name || qaClient?.nome_completo || canonicalCustomer.razao_social || normalizedEmail,
       password,
+      {
+        qaClientId: effectiveQaClientId,
+        eventoLabel: reused ? "credenciais_enviadas" : "portal_provisionado",
+      },
     );
 
     return new Response(JSON.stringify({
