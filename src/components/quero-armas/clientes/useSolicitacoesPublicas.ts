@@ -32,7 +32,8 @@ export type SolicitacaoPublica = {
  */
 export function useSolicitacoesPublicasDoCliente(
   clienteIdReal: number | null | undefined,
-  itensVenda: Array<{ servico_id?: number | null }>,
+  /** @deprecated Mantido por compatibilidade. Não é mais usado para inferir conversão. */
+  _itensVenda?: Array<{ servico_id?: number | null }>,
 ) {
   const [solicitacoes, setSolicitacoes] = useState<SolicitacaoPublica[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,12 +45,6 @@ export function useSolicitacoesPublicasDoCliente(
     }
     setLoading(true);
     try {
-      const servicoIdsContratados = new Set(
-        (itensVenda || [])
-          .map((i) => Number(i?.servico_id))
-          .filter((n) => Number.isFinite(n)),
-      );
-
       // 1) Fonte canônica: qa_solicitacoes_servico
       const { data: sols } = await supabase
         .from("qa_solicitacoes_servico" as any)
