@@ -127,6 +127,20 @@ export default function DashboardNovosCadastrosRecebidos() {
     const list = ((cads as any[]) ?? []) as CadastroRow[];
     setRows(list);
 
+    // Hidrata estados centrais (banco é fonte canônica; localStorage é só fallback/cache).
+    setAnalisados(prev => {
+      const next = new Set(prev);
+      list.forEach(r => {
+        if (r.status === "analisado" || r.status === "aprovado") next.add(r.id);
+      });
+      return next;
+    });
+    setArquivados(prev => {
+      const next = new Set(prev);
+      list.forEach(r => { if (r.status === "arquivado") next.add(r.id); });
+      return next;
+    });
+
     const clienteIds = list.map(r => r.cliente_id_vinculado).filter((x): x is number => !!x);
     if (clienteIds.length > 0) {
       const { data: pData } = await supabase
