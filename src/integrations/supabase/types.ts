@@ -7665,6 +7665,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      qa_atualizar_status_homologacao_cliente: {
+        Args: { p_cliente_id: number; p_observacao?: string; p_status: string }
+        Returns: Json
+      }
       qa_busca_auxiliar_caso: {
         Args: {
           match_count?: number
