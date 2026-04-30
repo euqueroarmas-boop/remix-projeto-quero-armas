@@ -200,12 +200,23 @@ export default function DashboardNovosCadastrosRecebidos() {
   const totalPendentes = consolidated.filter(r => !analisados.has(r.cadastro.id) && !arquivados.has(r.cadastro.id)).length;
 
   function toggleAnalisado(id: string) {
+    const wasAnalisado = analisados.has(id);
+    // Optimistic UI
     setAnalisados(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (wasAnalisado) next.delete(id); else next.add(id);
       localStorage.setItem("qa_novos_cad_analisados", JSON.stringify([...next]));
       return next;
     });
+    // Persistir status central no banco (fonte canônica)
+    void (async () => {
+      const novoStatus = wasAnalisado ? "pendente" : "analisado";
+      const { error } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({ status: novoStatus })
+        .eq("id", id);
+      if (error) console.warn("[DashboardNovosCadastros] persist analisado falhou:", error.message);
+    })();
   }
   function arquivar(id: string) {
     setArquivados(prev => {
@@ -213,6 +224,13 @@ export default function DashboardNovosCadastrosRecebidos() {
       localStorage.setItem("qa_novos_cad_arquivados", JSON.stringify([...next]));
       return next;
     });
+    void (async () => {
+      const { error } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({ status: "arquivado" })
+        .eq("id", id);
+      if (error) console.warn("[DashboardNovosCadastros] persist arquivado falhou:", error.message);
+    })();
   }
 
   const filters: { key: FilterKey; label: string }[] = [
@@ -304,19 +322,24 @@ export default function DashboardNovosCadastrosRecebidos() {
                     )}
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
+                    {/* Comando principal: SEMPRE leva à ficha real do cliente.
+                        Se já vinculado → abre cliente direto (?cliente=ID).
+                        Se ainda não vinculado → abre o painel do cadastro público
+                        em /clientes (?cadastro_publico=UUID), de onde o admin
+                        analisa, vincula/cria cliente e aprova. */}
                     {c.cliente_id_vinculado ? (
                       <Link
-                        to={`/clientes?focus=${c.cliente_id_vinculado}`}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100"
+                        to={`/clientes?cliente=${c.cliente_id_vinculado}`}
+                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium"
                       >
                         <User className="w-3 h-3" /> Abrir cliente <ExternalLink className="w-3 h-3" />
                       </Link>
                     ) : (
                       <Link
-                        to="/clientes"
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                        to={`/clientes?cadastro_publico=${c.id}`}
+                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium"
                       >
-                        <User className="w-3 h-3" /> Buscar em /clientes
+                        <User className="w-3 h-3" /> Abrir cliente <ExternalLink className="w-3 h-3" />
                       </Link>
                     )}
                     {r.processo && (
