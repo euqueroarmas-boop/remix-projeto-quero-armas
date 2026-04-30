@@ -58,11 +58,14 @@ const normalizeDateInput = (value: string) => {
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 };
 
-const formatDateForDatabase = (value: string) => {
-  if (!value) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return value;
+const formatDateForDatabase = (value: string): string | null => {
+  // Postgres `date` columns rejeitam string vazia. Sempre devolvemos null
+  // quando o campo está vazio ou parcialmente preenchido.
+  if (!value || !value.trim()) return null;
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const match = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
   const [, day, month, year] = match;
   return `${year}-${month}-${day}`;
 };
