@@ -29,7 +29,7 @@ import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
-import { SolicitacaoStatusPopover } from "@/components/quero-armas/clientes/SolicitacaoStatusPopover";
+// SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
 import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
@@ -2346,15 +2346,17 @@ export default function QAClientesPage() {
                                           });
                                       }}
                                     >
-                                      <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`} onClick={(e) => e.stopPropagation()}>
+                                      <SelectTrigger
+                                        className={`h-6 w-auto min-w-0 px-2 text-[9px] font-mono rounded border bg-white text-gray-700 border-gray-200 hover:border-gray-300 gap-1 shadow-none ${statusBadgeClass(it.status)}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
                                         <SelectValue placeholder="SELECIONAR STATUS" />
                                       </SelectTrigger>
-                                      <SelectContent>
-                                        {(statusList.length > 0
-                                          ? statusList.map(s => s.nome)
-                                          : ["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "NOTIFICADO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"]
-                                        ).map(s => (
-                                          <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
+                                      <SelectContent className="bg-white border border-gray-200 shadow-md">
+                                        {STATUS_SERVICO_QA.map(s => (
+                                          <SelectItem key={s} value={s} className="text-[10px] text-gray-700">
+                                            {STATUS_LABELS[s]}
+                                          </SelectItem>
                                         ))}
                                       </SelectContent>
                                     </Select>
