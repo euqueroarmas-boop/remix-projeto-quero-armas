@@ -6285,6 +6285,7 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           descricao: string | null
+          email_enviado_em: string | null
           evento: string
           id: string
           metadata: Json | null
@@ -6298,6 +6299,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           descricao?: string | null
+          email_enviado_em?: string | null
           evento: string
           id?: string
           metadata?: Json | null
@@ -6311,6 +6313,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           descricao?: string | null
+          email_enviado_em?: string | null
           evento?: string
           id?: string
           metadata?: Json | null
@@ -7936,6 +7939,10 @@ export type Database = {
           p_telefone?: string
         }
         Returns: Json
+      }
+      qa_evento_ja_notificado: {
+        Args: { _evento: string; _solicitacao_id: string; _status_novo: string }
+        Returns: boolean
       }
       qa_explodir_checklist_processo: {
         Args: { p_processo_id: string }
