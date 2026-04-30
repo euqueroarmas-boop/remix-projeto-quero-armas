@@ -7881,6 +7881,10 @@ export type Database = {
         }
         Returns: Json
       }
+      qa_verificar_cliente_pode_contratar: {
+        Args: { p_catalogo_slug: string; p_cliente_id: number }
+        Returns: Json
+      }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
