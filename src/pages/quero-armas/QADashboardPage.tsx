@@ -146,7 +146,7 @@ export default function QADashboardPage() {
             style={{ background: "hsl(38 92% 96%)", color: "hsl(35 80% 30%)", borderColor: "hsl(38 92% 80%)" }}
             title="Executa a mesma varredura do login e lista cadastros que precisam de correção"
           >
-            <ListChecks className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Verificar pendências</span>
+            <ListChecks className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Buscar pendências</span>
           </button>
           <Link to="/gerar-peca"
             className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm no-glow"
