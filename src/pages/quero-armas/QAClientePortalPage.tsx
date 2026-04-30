@@ -458,19 +458,19 @@ export default function QAClientePortalPage() {
 
   if (loading) {
     return (
-      <div data-tactical-portal className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-amber-500/40 border-t-amber-400 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!cliente) {
     return (
-      <div data-tactical-portal className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
         <div className="text-center max-w-sm">
-          <Shield className="h-12 w-12 text-amber-400 mx-auto mb-4" />
-          <h2 className="text-lg font-bold">Perfil não vinculado</h2>
-          <p className="text-sm mt-2">Seu cadastro ainda não foi vinculado a um perfil de cliente. Entre em contato conosco para ativar seu acesso.</p>
+          <Shield className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-slate-900">Perfil não vinculado</h2>
+          <p className="text-sm mt-2 text-slate-600">Seu cadastro ainda não foi vinculado a um perfil de cliente. Entre em contato conosco para ativar seu acesso.</p>
           <Button onClick={handleLogout} variant="outline" className="mt-6">Sair</Button>
         </div>
       </div>
@@ -478,7 +478,7 @@ export default function QAClientePortalPage() {
   }
 
   return (
-    <div data-tactical-portal className="min-h-screen">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
