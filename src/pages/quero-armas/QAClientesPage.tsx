@@ -2459,6 +2459,17 @@ export default function QAClientesPage() {
                               </div>
                             </div>
                           </div>
+                          {/* Timeline operacional — só quando há solicitação canônica vinculada */}
+                          {v.solicitacao_id && (
+                            <details className="border-t border-slate-100 px-3 py-2 bg-slate-50/40">
+                              <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-indigo-600 select-none">
+                                Linha do tempo do serviço
+                              </summary>
+                              <div className="mt-3 pl-1">
+                                <SolicitacaoTimeline solicitacaoId={v.solicitacao_id} />
+                              </div>
+                            </details>
+                          )}
                         </div>
                       );
                     })}
