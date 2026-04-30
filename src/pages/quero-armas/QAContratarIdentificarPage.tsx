@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, LogIn, UserPlus, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, LogIn, UserPlus, Loader2, Sparkles, Zap } from "lucide-react";
 
 /**
  * QAContratarIdentificarPage — Visitante não logado escolheu um serviço.
@@ -37,6 +37,7 @@ export default function QAContratarIdentificarPage() {
     navigate(`/area-do-cliente/login?next=${next}`);
   };
   const irParaCadastro = () => navigate(`/cadastro?servico=${slug}`);
+  const irParaSolicitar = () => navigate(`/area-do-cliente/contratar/${slug}/solicitar`);
 
   return (
     <div data-tactical-portal className="min-h-screen">
@@ -95,6 +96,21 @@ export default function QAContratarIdentificarPage() {
                   <div className="text-sm font-bold text-slate-900 uppercase">Sou novo aqui</div>
                   <div className="text-[11px] text-slate-500 mt-0.5">
                     Faço o cadastro guiado em 5 etapas com o serviço já selecionado.
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={irParaSolicitar}
+                className="w-full text-left rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition p-4 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-900 uppercase">Solicitar agora</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Envio nome, CPF, e-mail, telefone e o valor combinado — equipe valida e me retorna.
                   </div>
                 </div>
               </button>

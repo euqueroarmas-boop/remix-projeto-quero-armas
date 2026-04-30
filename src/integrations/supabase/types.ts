@@ -7393,6 +7393,26 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_cliente_criar_contratacao: {
+        Args: {
+          p_catalogo_slug: string
+          p_observacoes?: string
+          p_valor_informado: number
+        }
+        Returns: Json
+      }
+      qa_cliente_criar_contratacao_publico: {
+        Args: {
+          p_catalogo_slug: string
+          p_cpf: string
+          p_email: string
+          p_nome: string
+          p_observacoes?: string
+          p_telefone: string
+          p_valor_informado: number
+        }
+        Returns: Json
+      }
       qa_confirmar_pagamento_processo: {
         Args: { p_origem?: string; p_processo_id: string }
         Returns: Json

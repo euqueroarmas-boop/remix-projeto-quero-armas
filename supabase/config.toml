@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.qa-senha-gov]
 verify_jwt = false
+
+[functions.qa-contratar-publico]
+verify_jwt = false

@@ -11,6 +11,7 @@ import {
   FileCheck2,
   AlertCircle,
   ChevronRight,
+  DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -83,6 +84,10 @@ export default function QAContratarConfirmarPage() {
   const [dadosOk, setDadosOk] = useState<"sim" | "nao" | null>(null);
   const [novoEstadoCivil, setNovoEstadoCivil] = useState("");
   const [novaProfissao, setNovaProfissao] = useState("");
+
+  // Step 3 (Fase 16-E): valor combinado informado pelo cliente
+  const [valorInformado, setValorInformado] = useState<string>("");
+  const [obsContratacao, setObsContratacao] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -166,8 +171,19 @@ export default function QAContratarConfirmarPage() {
       .join(", ");
   }, [cliente]);
 
+  const valorNumerico = useMemo(() => {
+    const n = Number(valorInformado.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [valorInformado]);
+
   const podeConfirmar =
-    enderecoOk !== null && dadosOk !== null && !submitting && !loading && cliente && catalogo;
+    enderecoOk !== null &&
+    dadosOk !== null &&
+    valorNumerico > 0 &&
+    !submitting &&
+    !loading &&
+    cliente &&
+    catalogo;
 
   async function handleConfirmar() {
     if (!cliente || !catalogo) return;
@@ -193,42 +209,40 @@ export default function QAContratarConfirmarPage() {
         if (errUpd) throw errUpd;
       }
 
-      // 2) Cria processo via RPC
-      const { data: novoId, error: errCreate } = await supabase.rpc(
-        "qa_criar_processo_logado" as any,
+      // 2) Cria VENDA pendente via RPC (Fase 16-E)
+      //    NÃO cria processo. NÃO confirma pagamento. NÃO explode checklist.
+      const { data: rpcRes, error: errCreate } = await supabase.rpc(
+        "qa_cliente_criar_contratacao" as any,
         {
-          p_cliente_id: cliente.id,
           p_catalogo_slug: catalogo.slug,
-          p_observacoes: `Contratação via portal logado | Docs reaproveitados: ${docsReaproveitados.length}`,
-        } as any
+          p_valor_informado: valorNumerico,
+          p_observacoes:
+            obsContratacao?.trim() ||
+            `Contratação via portal logado | Docs reaproveitados: ${docsReaproveitados.length}`,
+        } as any,
       );
       if (errCreate) throw errCreate;
 
-      toast.success("Contratação registrada! Vamos validar o pagamento e ativar seu processo.");
+      const result = rpcRes as { venda_id?: number; ja_existia?: boolean } | null;
+      const vendaId = result?.venda_id;
+      const jaExistia = !!result?.ja_existia;
 
-      // 3) Notificações automáticas (não bloqueia o fluxo se falhar)
-      if (novoId) {
-        // Cliente: e-mail "processo aberto"
-        supabase.functions
-          .invoke("qa-processo-notificar", {
-            body: { processo_id: novoId, evento: "processo_criado" },
-          })
-          .catch((e) => console.warn("[notif cliente]", e));
+      toast.success(
+        jaExistia
+          ? "Contratação já estava em fila — vamos validar o valor com você."
+          : "Contratação registrada! O valor informado será validado pela Equipe Operacional.",
+      );
 
-        // Admin: WhatsApp + e-mail
+      // 3) Notificação ao admin (não bloqueia o fluxo se falhar)
+      if (vendaId) {
         supabase.functions
           .invoke("qa-notificar-admin-contratacao", {
-            body: { processo_id: novoId },
+            body: { venda_id: vendaId },
           })
           .catch((e) => console.warn("[notif admin]", e));
       }
 
-      // Redireciona para o processo ou portal
-      if (novoId) {
-        navigate(`/area-do-cliente?processo=${novoId}`);
-      } else {
-        navigate("/area-do-cliente");
-      }
+      navigate("/area-do-cliente");
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
       toast.error(e?.message || "Não foi possível concluir a contratação.");
@@ -447,13 +461,43 @@ export default function QAContratarConfirmarPage() {
             )}
           </div>
 
-          {/* Aviso pagamento manual */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
-            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <p>
-              <strong>Sem pagamento online por enquanto.</strong> Após confirmar, nossa equipe entra em
-              contato para combinar o pagamento e liberar seu processo.
+          {/* Step 4: Valor combinado (Fase 16-E) */}
+          <div className="rounded-xl bg-white border border-slate-200 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="h-4 w-4 text-amber-600" />
+              <h2 className="text-sm font-bold text-slate-900 uppercase">
+                4. Valor combinado
+              </h2>
+            </div>
+            <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+              Informe o valor combinado com a Quero Armas para este serviço. Esse valor
+              será <strong>validado pela Equipe Operacional</strong>. Após a aprovação, sua
+              contratação seguirá para a geração do processo.
             </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-slate-700">R$</span>
+              <input
+                inputMode="decimal"
+                placeholder="0,00"
+                value={valorInformado}
+                onChange={(e) => setValorInformado(e.target.value.replace(/[^0-9,.]/g, ""))}
+                className="flex-1 h-10 px-3 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+              />
+            </div>
+            <textarea
+              rows={2}
+              placeholder="Observações para a equipe (opcional)"
+              value={obsContratacao}
+              onChange={(e) => setObsContratacao(e.target.value.toUpperCase())}
+              className="mt-2 w-full px-3 py-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+            />
+            <div className="mt-3 flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+              <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <p>
+                Sua contratação ficará <strong>aguardando validação</strong>. Não há cobrança
+                automática — a Equipe Operacional confirma o valor antes da geração do processo.
+              </p>
+            </div>
           </div>
 
           {/* CTA */}

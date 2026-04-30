@@ -16,9 +16,11 @@ const EVOLUTION_API_TOKEN = Deno.env.get("EVOLUTION_API_TOKEN") || "";
 const ADMIN_PHONE = "5511978481919";
 const ADMIN_EMAIL = "eu@queroarmas.com.br";
 const ADMIN_PORTAL = "https://www.euqueroarmas.com.br/contratacoes-pendentes";
+const ADMIN_PORTAL_VENDAS = "https://www.euqueroarmas.com.br/operacao/contratacoes";
 
 interface Body {
-  processo_id: string;
+  processo_id?: string;
+  venda_id?: number;
 }
 
 function escapeHtml(s: string) {
@@ -52,10 +54,10 @@ Deno.serve(async (req) => {
 
   const traceId = `qa-notif-admin-${crypto.randomUUID()}`;
   try {
-    const { processo_id } = (await req.json()) as Body;
-    if (!processo_id) {
+    const { processo_id, venda_id } = (await req.json()) as Body;
+    if (!processo_id && !venda_id) {
       return new Response(
-        JSON.stringify({ error: "processo_id obrigatório", traceId }),
+        JSON.stringify({ error: "processo_id ou venda_id obrigatório", traceId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -65,29 +67,77 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: proc } = await supabase
-      .from("qa_processos")
-      .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin")
-      .eq("id", processo_id)
-      .maybeSingle();
-    if (!proc) throw new Error("Processo não encontrado");
+    let nome = "Cliente";
+    let cpf = "—";
+    let tel = "—";
+    let email = "—";
+    let servico = "—";
+    let data = new Date().toLocaleString("pt-BR");
+    let valorInformado: string | null = null;
+    let origemRotulo = "Portal logado";
+    let portalLink = ADMIN_PORTAL;
+    let statusRotulo = "Aguardando pagamento";
 
-    const { data: cli } = await supabase
-      .from("qa_clientes")
-      .select("nome_completo, cpf, email, celular")
-      .eq("id", proc.cliente_id)
-      .maybeSingle();
+    if (venda_id) {
+      // Fluxo de venda (Fase 16-E)
+      const { data: venda } = await supabase
+        .from("qa_vendas")
+        .select("id, id_legado, cliente_id, valor_informado_cliente, origem_proposta, created_at")
+        .eq("id", venda_id)
+        .maybeSingle();
+      if (!venda) throw new Error("Venda não encontrada");
 
-    const nome = cli?.nome_completo || "Cliente";
-    const cpf = cli?.cpf || "—";
-    const tel = cli?.celular || "—";
-    const email = cli?.email || "—";
-    const servico = proc.servico_nome || "—";
-    const data = new Date(proc.data_criacao || Date.now()).toLocaleString("pt-BR");
+      const cliLegado = venda.cliente_id as number;
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("nome_completo, cpf, email, celular")
+        .or(`id_legado.eq.${cliLegado},id.eq.${cliLegado}`)
+        .limit(1)
+        .maybeSingle();
+      const { data: item } = await supabase
+        .from("qa_itens_venda")
+        .select("servico_id")
+        .eq("venda_id", venda.id_legado)
+        .limit(1)
+        .maybeSingle();
+      const { data: svc } = item?.servico_id
+        ? await supabase.from("qa_servicos").select("nome").eq("id", item.servico_id).maybeSingle()
+        : { data: null } as any;
+      nome = cli?.nome_completo || "Cliente";
+      cpf = cli?.cpf || "—";
+      tel = cli?.celular || "—";
+      email = cli?.email || "—";
+      servico = svc?.nome || "—";
+      data = new Date(venda.created_at || Date.now()).toLocaleString("pt-BR");
+      valorInformado = venda.valor_informado_cliente
+        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(venda.valor_informado_cliente))
+        : null;
+      origemRotulo = venda.origem_proposta === "wizard_publico" ? "Wizard público" : "Portal cliente";
+      portalLink = ADMIN_PORTAL_VENDAS;
+      statusRotulo = "Aguardando validação de valor";
+    } else if (processo_id) {
+      const { data: proc } = await supabase
+        .from("qa_processos")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin")
+        .eq("id", processo_id)
+        .maybeSingle();
+      if (!proc) throw new Error("Processo não encontrado");
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("nome_completo, cpf, email, celular")
+        .eq("id", proc.cliente_id)
+        .maybeSingle();
+      nome = cli?.nome_completo || "Cliente";
+      cpf = cli?.cpf || "—";
+      tel = cli?.celular || "—";
+      email = cli?.email || "—";
+      servico = proc.servico_nome || "—";
+      data = new Date(proc.data_criacao || Date.now()).toLocaleString("pt-BR");
+    }
 
     // WhatsApp para admin
     const wppMsg = [
-      `🆕 *NOVA CONTRATAÇÃO — QUERO ARMAS*`,
+      venda_id ? `🆕 *NOVA CONTRATAÇÃO (VENDA) — QUERO ARMAS*` : `🆕 *NOVA CONTRATAÇÃO — QUERO ARMAS*`,
       ``,
       `👤 *${nome}*`,
       `CPF: ${cpf}`,
@@ -96,9 +146,11 @@ Deno.serve(async (req) => {
       ``,
       `🛡️ *Serviço:* ${servico}`,
       `🕒 ${data}`,
-      `💰 *Pagamento:* aguardando validação manual`,
+      ...(valorInformado ? [`💰 *Valor informado:* ${valorInformado}`] : []),
+      `📌 *Origem:* ${origemRotulo}`,
+      `🔎 *Status:* ${statusRotulo}`,
       ``,
-      `▶️ ${ADMIN_PORTAL}`,
+      `▶️ ${portalLink}`,
     ].join("\n");
 
     const wpp = await sendWhatsApp(ADMIN_PHONE, wppMsg);
@@ -120,16 +172,18 @@ Deno.serve(async (req) => {
 <tr><td style="color:#64748b;">E-mail</td><td>${escapeHtml(email)}</td></tr>
 <tr><td style="color:#64748b;">Serviço</td><td><strong>${escapeHtml(servico)}</strong></td></tr>
 <tr><td style="color:#64748b;">Data</td><td>${escapeHtml(data)}</td></tr>
-<tr><td style="color:#64748b;">Status</td><td><span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;">Aguardando pagamento</span></td></tr>
+<tr><td style="color:#64748b;">Status</td><td><span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;">${escapeHtml(statusRotulo)}</span></td></tr>
+${valorInformado ? `<tr><td style="color:#64748b;">Valor informado</td><td><strong>${escapeHtml(valorInformado)}</strong></td></tr>` : ""}
+<tr><td style="color:#64748b;">Origem</td><td>${escapeHtml(origemRotulo)}</td></tr>
 </table>
 <p style="text-align:center;margin:24px 0 0;">
-<a href="${ADMIN_PORTAL}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Abrir contratações pendentes</a>
+<a href="${portalLink}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Abrir contratações pendentes</a>
 </p>
 </td></tr>
 <tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Quero Armas — notificação automática.</td></tr>
 </table></td></tr></table></body></html>`;
 
-    const text = `Nova contratação — Quero Armas\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: aguardando pagamento\n\nAcesse: ${ADMIN_PORTAL}`;
+    const text = `Nova contratação — Quero Armas\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: ${statusRotulo}${valorInformado ? `\nValor informado: ${valorInformado}` : ""}\nOrigem: ${origemRotulo}\n\nAcesse: ${portalLink}`;
 
     const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
     const emailRes = await supabase.functions.invoke("send-smtp-email", {
