@@ -207,6 +207,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     matricula_funcional: "",
     // ── Entrega B (sincronizado com clienteSchema) ──
     sexo: "",
+    // Tipo do documento de identidade — RG ou CIN.
+    // CIN substitui o RG e usa o MESMO número do CPF (legalmente permitido).
+    tipo_documento_identidade: "RG" as "RG" | "CIN",
     naturalidade_municipio: "",
     naturalidade_uf: "",
     naturalidade_pais: "Brasil",
@@ -244,6 +247,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         orgao_vinculado: cliente.orgao_vinculado || "",
         matricula_funcional: cliente.matricula_funcional || "",
         sexo: cliente.sexo || "",
+        tipo_documento_identidade: ((cliente.tipo_documento_identidade as "RG" | "CIN") || "RG"),
         naturalidade_municipio: cliente.naturalidade_municipio || "",
         naturalidade_uf: cliente.naturalidade_uf || "",
         naturalidade_pais: cliente.naturalidade_pais || "Brasil",
@@ -290,7 +294,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); setStep(0); return; }
     if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); setStep(1); return; }
     if (f.celular && !isValidTelefone(f.celular)) { toast.error("Telefone inválido"); setStep(1); return; }
-    if (!rgNotEqualCpf(f.rg, f.cpf)) { toast.error("RG não pode ser igual ao CPF — confirme manualmente"); setStep(0); return; }
+    // CIN substitui o RG e PODE ter o mesmo número do CPF (legal).
+    // Só bloqueia quando o tipo é RG tradicional.
+    if (f.tipo_documento_identidade !== "CIN" && !rgNotEqualCpf(f.rg, f.cpf)) {
+      toast.error("RG não pode ser igual ao CPF — se for CIN, mude o tipo de documento para 'CIN'");
+      setStep(0);
+      return;
+    }
     setSaving(true);
     try {
       const payload: any = {
@@ -446,11 +456,33 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
-                <FInput label="RG / CIN" value={f.rg} onChange={v => set("rg", v)} />
-                <FInput label="Emissor RG / CIN" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
+                <FSelect
+                  label="Tipo de Documento"
+                  value={f.tipo_documento_identidade}
+                  onChange={v => set("tipo_documento_identidade", (v === "CIN" ? "CIN" : "RG"))}
+                  options={[
+                    { value: "RG", label: "RG" },
+                    { value: "CIN", label: "CIN (usa CPF)" },
+                  ]}
+                />
+                <FInput
+                  label={f.tipo_documento_identidade === "CIN" ? "CIN (nº)" : "RG (nº)"}
+                  value={f.rg}
+                  onChange={v => set("rg", v)}
+                />
+                <FInput
+                  label={f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG"}
+                  value={f.emissor_rg}
+                  onChange={v => set("emissor_rg", v)}
+                />
               </div>
+              {f.tipo_documento_identidade === "CIN" && (
+                <p className="text-[10px] text-blue-600 -mt-2">
+                  ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
+                </p>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
                 <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
