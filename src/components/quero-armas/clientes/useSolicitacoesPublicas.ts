@@ -114,7 +114,11 @@ export function useSolicitacoesPublicasDoCliente(
           };
       });
 
-      setSolicitacoes([...fromCanon, ...fromLegacy]);
+      // A aba Serviços só renderiza solicitações da fonte canônica.
+      // qa_cadastro_publico legado (sem solicitação materializada) NÃO vira card operacional;
+        // continua disponível apenas para o modal de pendências (serviço_solicitado_nao_gerado).
+      void fromLegacy; // mantido para diagnóstico futuro; não exposto na UI operacional.
+      setSolicitacoes(fromCanon);
     } finally {
       setLoading(false);
     }
