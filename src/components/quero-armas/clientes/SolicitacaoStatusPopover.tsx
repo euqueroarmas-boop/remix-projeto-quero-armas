@@ -252,11 +252,15 @@ function SelectField({
   value,
   onChange,
   options,
+  disabled,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
+  disabled?: boolean;
+  hint?: string;
 }) {
   return (
     <div>
@@ -266,7 +270,12 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-8 text-xs bg-slate-50 border border-slate-200 rounded-md px-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+        disabled={disabled}
+        className={`w-full h-8 text-xs border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 ${
+          disabled
+            ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+            : "bg-slate-50 border-slate-200 text-slate-700"
+        }`}
       >
         {options.map((o) => (
           <option key={o} value={o}>
@@ -274,6 +283,11 @@ function SelectField({
           </option>
         ))}
       </select>
+      {hint && (
+        <div className="mt-1 text-[9px] uppercase tracking-wider text-amber-700">
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
