@@ -294,7 +294,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); setStep(0); return; }
     if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); setStep(1); return; }
     if (f.celular && !isValidTelefone(f.celular)) { toast.error("Telefone inválido"); setStep(1); return; }
-    if (!rgNotEqualCpf(f.rg, f.cpf)) { toast.error("RG não pode ser igual ao CPF — confirme manualmente"); setStep(0); return; }
+    // CIN substitui o RG e PODE ter o mesmo número do CPF (legal).
+    // Só bloqueia quando o tipo é RG tradicional.
+    if (f.tipo_documento_identidade !== "CIN" && !rgNotEqualCpf(f.rg, f.cpf)) {
+      toast.error("RG não pode ser igual ao CPF — se for CIN, mude o tipo de documento para 'CIN'");
+      setStep(0);
+      return;
+    }
     setSaving(true);
     try {
       const payload: any = {
