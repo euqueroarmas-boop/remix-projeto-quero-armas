@@ -172,16 +172,18 @@ Deno.serve(async (req) => {
 <tr><td style="color:#64748b;">E-mail</td><td>${escapeHtml(email)}</td></tr>
 <tr><td style="color:#64748b;">Serviço</td><td><strong>${escapeHtml(servico)}</strong></td></tr>
 <tr><td style="color:#64748b;">Data</td><td>${escapeHtml(data)}</td></tr>
-<tr><td style="color:#64748b;">Status</td><td><span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;">Aguardando pagamento</span></td></tr>
+<tr><td style="color:#64748b;">Status</td><td><span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;">${escapeHtml(statusRotulo)}</span></td></tr>
+${valorInformado ? `<tr><td style="color:#64748b;">Valor informado</td><td><strong>${escapeHtml(valorInformado)}</strong></td></tr>` : ""}
+<tr><td style="color:#64748b;">Origem</td><td>${escapeHtml(origemRotulo)}</td></tr>
 </table>
 <p style="text-align:center;margin:24px 0 0;">
-<a href="${ADMIN_PORTAL}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Abrir contratações pendentes</a>
+<a href="${portalLink}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Abrir contratações pendentes</a>
 </p>
 </td></tr>
 <tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Quero Armas — notificação automática.</td></tr>
 </table></td></tr></table></body></html>`;
 
-    const text = `Nova contratação — Quero Armas\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: aguardando pagamento\n\nAcesse: ${ADMIN_PORTAL}`;
+    const text = `Nova contratação — Quero Armas\n\nCliente: ${nome}\nCPF: ${cpf}\nTelefone: ${tel}\nE-mail: ${email}\nServiço: ${servico}\nData: ${data}\nStatus: ${statusRotulo}${valorInformado ? `\nValor informado: ${valorInformado}` : ""}\nOrigem: ${origemRotulo}\n\nAcesse: ${portalLink}`;
 
     const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
     const emailRes = await supabase.functions.invoke("send-smtp-email", {
