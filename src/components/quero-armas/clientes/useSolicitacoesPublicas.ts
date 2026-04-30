@@ -60,7 +60,10 @@ export function useSolicitacoesPublicasDoCliente(
 
       const fromCanon: SolicitacaoPublica[] = canonRows.map((r) => {
         // ÚNICA FONTE DE VERDADE — sem fallback por venda/servico_id.
-        const ja = r.status_servico === "contratado";
+        // No novo padrão, "aguardando contratação" = solicitação ainda em
+        // 'montando_pasta' SEM venda vinculada (servico_id null).
+        const semVenda = r.servico_id == null;
+        const ja = !semVenda;
         const servico: ServicoCanonico = {
           slug: r.service_slug,
           nome: r.service_name,
@@ -70,15 +73,14 @@ export function useSolicitacoesPublicasDoCliente(
         return {
           cadastro_publico_id: String(r.cadastro_publico_id ?? r.id),
           solicitacao_id: String(r.id),
-          status_servico: r.status_servico ?? "aguardando_contratacao",
+          status_servico: r.status_servico ?? "montando_pasta",
           cliente_id_vinculado: r.cliente_id ?? null,
           servico_interesse: r.servico_interesse_raw ?? r.service_name,
           servico,
           origem: "Formulário público" as const,
-          status_solicitacao:
-            r.status_servico === "aguardando_confirmacao"
-              ? ("Aguardando confirmação" as const)
-              : ("Aguardando contratação" as const),
+          status_solicitacao: semVenda
+            ? ("Aguardando contratação" as const)
+            : ("Aguardando confirmação" as const),
           status_financeiro: "Sem cobrança vinculada" as const,
           status_processo: "Processo ainda não aberto" as const,
           created_at: r.created_at,
@@ -101,7 +103,7 @@ export function useSolicitacoesPublicasDoCliente(
         return {
             cadastro_publico_id: String(r.id),
             solicitacao_id: null,
-            status_servico: "aguardando_contratacao" as const,
+            status_servico: "montando_pasta" as const,
             cliente_id_vinculado: r.cliente_id_vinculado ?? null,
             servico_interesse: r.servico_interesse ?? null,
             servico,
