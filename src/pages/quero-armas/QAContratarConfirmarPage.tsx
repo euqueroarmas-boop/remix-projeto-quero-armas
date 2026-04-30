@@ -11,6 +11,7 @@ import {
   FileCheck2,
   AlertCircle,
   ChevronRight,
+  DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -83,6 +84,10 @@ export default function QAContratarConfirmarPage() {
   const [dadosOk, setDadosOk] = useState<"sim" | "nao" | null>(null);
   const [novoEstadoCivil, setNovoEstadoCivil] = useState("");
   const [novaProfissao, setNovaProfissao] = useState("");
+
+  // Step 3 (Fase 16-E): valor combinado informado pelo cliente
+  const [valorInformado, setValorInformado] = useState<string>("");
+  const [obsContratacao, setObsContratacao] = useState<string>("");
 
   useEffect(() => {
     (async () => {
@@ -166,8 +171,19 @@ export default function QAContratarConfirmarPage() {
       .join(", ");
   }, [cliente]);
 
+  const valorNumerico = useMemo(() => {
+    const n = Number(valorInformado.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }, [valorInformado]);
+
   const podeConfirmar =
-    enderecoOk !== null && dadosOk !== null && !submitting && !loading && cliente && catalogo;
+    enderecoOk !== null &&
+    dadosOk !== null &&
+    valorNumerico > 0 &&
+    !submitting &&
+    !loading &&
+    cliente &&
+    catalogo;
 
   async function handleConfirmar() {
     if (!cliente || !catalogo) return;
@@ -193,42 +209,40 @@ export default function QAContratarConfirmarPage() {
         if (errUpd) throw errUpd;
       }
 
-      // 2) Cria processo via RPC
-      const { data: novoId, error: errCreate } = await supabase.rpc(
-        "qa_criar_processo_logado" as any,
+      // 2) Cria VENDA pendente via RPC (Fase 16-E)
+      //    NÃO cria processo. NÃO confirma pagamento. NÃO explode checklist.
+      const { data: rpcRes, error: errCreate } = await supabase.rpc(
+        "qa_cliente_criar_contratacao" as any,
         {
-          p_cliente_id: cliente.id,
           p_catalogo_slug: catalogo.slug,
-          p_observacoes: `Contratação via portal logado | Docs reaproveitados: ${docsReaproveitados.length}`,
-        } as any
+          p_valor_informado: valorNumerico,
+          p_observacoes:
+            obsContratacao?.trim() ||
+            `Contratação via portal logado | Docs reaproveitados: ${docsReaproveitados.length}`,
+        } as any,
       );
       if (errCreate) throw errCreate;
 
-      toast.success("Contratação registrada! Vamos validar o pagamento e ativar seu processo.");
+      const result = rpcRes as { venda_id?: number; ja_existia?: boolean } | null;
+      const vendaId = result?.venda_id;
+      const jaExistia = !!result?.ja_existia;
 
-      // 3) Notificações automáticas (não bloqueia o fluxo se falhar)
-      if (novoId) {
-        // Cliente: e-mail "processo aberto"
-        supabase.functions
-          .invoke("qa-processo-notificar", {
-            body: { processo_id: novoId, evento: "processo_criado" },
-          })
-          .catch((e) => console.warn("[notif cliente]", e));
+      toast.success(
+        jaExistia
+          ? "Contratação já estava em fila — vamos validar o valor com você."
+          : "Contratação registrada! O valor informado será validado pela Equipe Operacional.",
+      );
 
-        // Admin: WhatsApp + e-mail
+      // 3) Notificação ao admin (não bloqueia o fluxo se falhar)
+      if (vendaId) {
         supabase.functions
           .invoke("qa-notificar-admin-contratacao", {
-            body: { processo_id: novoId },
+            body: { venda_id: vendaId },
           })
           .catch((e) => console.warn("[notif admin]", e));
       }
 
-      // Redireciona para o processo ou portal
-      if (novoId) {
-        navigate(`/area-do-cliente?processo=${novoId}`);
-      } else {
-        navigate("/area-do-cliente");
-      }
+      navigate("/area-do-cliente");
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
       toast.error(e?.message || "Não foi possível concluir a contratação.");
