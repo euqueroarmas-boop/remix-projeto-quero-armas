@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff } from "lucide-react";
@@ -292,6 +292,12 @@ export default function QAClienteLoginPage() {
             </button>
           </div>
         </form>
+        <div className="md:hidden text-center text-[11px] tracking-[0.15em] text-zinc-500 mt-4">
+          Não tem conta?{" "}
+          <Link to="/area-do-cliente/criar-conta" className="text-[#c9a961] hover:underline">
+            CRIAR CONTA GRATUITA
+          </Link>
+        </div>
       </div>
 
       {/* ===================== DESKTOP / NOTEBOOK (md+) — split full-screen ===================== */}
@@ -518,6 +524,12 @@ export default function QAClienteLoginPage() {
                 </button>
               </div>
             </form>
+            <div className="hidden md:block text-center text-[11px] tracking-[0.2em] text-zinc-500 mt-5">
+              NÃO TEM CONTA?{" "}
+              <Link to="/area-do-cliente/criar-conta" className="text-[#c9a961] hover:underline">
+                CRIAR CONTA GRATUITA
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.qa-contratar-publico]
 verify_jwt = false
+
+[functions.qa-cliente-criar-conta-publica]
+verify_jwt = false
