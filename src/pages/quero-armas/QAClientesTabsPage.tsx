@@ -25,7 +25,7 @@ export default function QAClientesTabsPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-[1400px] pl-2 pr-4 py-5 flex items-start gap-5">
+        <div className="mx-auto max-w-[1400px] pl-0 pr-4 py-5 flex items-start gap-5">
           {/* Logo Quero Armas — preenche o espaço quadrado à esquerda do título */}
           <QALogo
             linkTo={null}
