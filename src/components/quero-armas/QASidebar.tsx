@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
-  BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
+  BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  Inbox, ClipboardList, UserCheck,
+  ClipboardList, UserCheck,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
