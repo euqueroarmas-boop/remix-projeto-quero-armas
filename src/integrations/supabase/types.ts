@@ -7534,6 +7534,14 @@ export type Database = {
         Args: { p_motivo: string; p_venda_id: number }
         Returns: Json
       }
+      qa_venda_to_processo: {
+        Args: {
+          p_observacoes?: string
+          p_servico_id: number
+          p_venda_id: number
+        }
+        Returns: Json
+      }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
