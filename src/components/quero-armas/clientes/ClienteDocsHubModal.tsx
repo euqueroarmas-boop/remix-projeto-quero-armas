@@ -132,7 +132,7 @@ const inputClassName =
 interface Props {
   open: boolean;
   onClose: () => void;
-  customerId: string;
+  customerId: string | null;
   qaClienteId?: number | null;
   onSaved: () => void;
 }
@@ -203,6 +203,10 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       toast.error("Escolha o tipo de documento.");
       return;
     }
+    if (!customerId && !qaClienteId) {
+      toast.error("Não foi possível identificar seu cadastro. Recarregue a página.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -212,12 +216,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
       // CR: único por cliente (não importa número)
       if (form.tipo_documento === "cr") {
-        const { data: existsCr, error: errCr } = await supabase
+        let q = supabase
           .from("qa_documentos_cliente" as any)
           .select("id")
-          .eq("customer_id", customerId)
           .eq("tipo_documento", "cr")
+          .neq("status", "excluido")
           .limit(1);
+        q = customerId
+          ? q.eq("customer_id", customerId)
+          : q.eq("qa_cliente_id", qaClienteId as number);
+        const { data: existsCr, error: errCr } = await q;
         if (errCr) throw errCr;
         if ((existsCr as any[])?.length) {
           toast.error("Este cliente já possui um CR cadastrado. Edite o existente em vez de duplicar.");
@@ -226,11 +234,15 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         }
       } else if (numeroNorm) {
         // Demais tipos: bloqueia se mesmo tipo + mesmo número já existir
-        const { data: existsNum, error: errNum } = await supabase
+        let q = supabase
           .from("qa_documentos_cliente" as any)
           .select("id, numero_documento")
-          .eq("customer_id", customerId)
-          .eq("tipo_documento", form.tipo_documento);
+          .eq("tipo_documento", form.tipo_documento)
+          .neq("status", "excluido");
+        q = customerId
+          ? q.eq("customer_id", customerId)
+          : q.eq("qa_cliente_id", qaClienteId as number);
+        const { data: existsNum, error: errNum } = await q;
         if (errNum) throw errNum;
         const dup = (existsNum as any[] | null)?.find(
           (d) => (d.numero_documento || "").replace(/\s+/g, "").toUpperCase() === numeroNorm,
@@ -248,7 +260,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
       if (file) {
         const safe = sanitize(file.name);
-        const path = `cliente-docs/${customerId}/${form.tipo_documento}/${Date.now()}_${safe}`;
+        const ownerKey = customerId ?? `qa-${qaClienteId}`;
+        const path = `cliente-docs/${ownerKey}/${form.tipo_documento}/${Date.now()}_${safe}`;
         const { error: upErr } = await supabase.storage
           .from("qa-documentos")
           .upload(path, file, { upsert: false, contentType: file.type });
@@ -259,7 +272,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       }
 
       const payload: any = {
-        customer_id: customerId,
+        customer_id: customerId ?? null,
         qa_cliente_id: qaClienteId ?? null,
         tipo_documento: form.tipo_documento,
         numero_documento: form.numero_documento || null,

@@ -591,7 +591,7 @@ export default function QAClientePortalPage() {
                     background: "rgba(201,169,97,0.08)",
                   }}
                 >
-                  Premium
+                  {cliente?.tipo_cliente === "cliente_app" ? "Arsenal Gratuito" : "Premium"}
                 </span>
               </div>
 
@@ -1097,11 +1097,13 @@ export default function QAClientePortalPage() {
         )}
 
         {/* ═══ MEU HUB DE DOCUMENTOS (CR, CRAF, GT, AC...) ═══ */}
-        {customerId && (
+        {(customerId || cliente?.id) && (
           <SectionCard icon={FolderArchive} title="Meu Hub de Documentos" color="hsl(280 60% 50%)">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
-                Cadastre seus CR, CRAF/SINARM, GT, GTE e Autorizações de Compra. A IA pode preencher os campos a partir da foto.
+                {cliente?.tipo_cliente === "cliente_app" && !customerId
+                  ? "Envie aqui seus documentos de acervo, CR, CRAF, GTE, autorização de compra ou comprovantes para manter tudo organizado."
+                  : "Cadastre seus CR, CRAF/SINARM, GT, GTE e Autorizações de Compra. A IA pode preencher os campos a partir da foto."}
               </p>
               <Button
                 size="sm"
@@ -1211,7 +1213,7 @@ export default function QAClientePortalPage() {
         )}
       </main>
 
-      {customerId && (
+      {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
           open={showAddDoc}
           onClose={() => setShowAddDoc(false)}

@@ -4182,7 +4182,7 @@ export type Database = {
           arquivo_nome: string | null
           arquivo_storage_path: string | null
           created_at: string
-          customer_id: string
+          customer_id: string | null
           data_emissao: string | null
           data_validade: string | null
           ia_dados_extraidos: Json | null
@@ -4216,7 +4216,7 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
           ia_dados_extraidos?: Json | null
@@ -4250,7 +4250,7 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
           ia_dados_extraidos?: Json | null
