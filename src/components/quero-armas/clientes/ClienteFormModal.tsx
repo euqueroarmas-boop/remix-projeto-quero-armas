@@ -305,9 +305,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       toast.error("CIN deve usar o mesmo número do CPF (mesmos dígitos)");
       return;
     }
-      setStep(0);
-      return;
-    }
     setSaving(true);
     try {
       const payload: any = {
