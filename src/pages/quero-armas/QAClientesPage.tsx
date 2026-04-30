@@ -2115,25 +2115,12 @@ export default function QAClientesPage() {
                                     >
                                       <GripVertical className="h-3 w-3 shrink-0" />
                                     </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleExpandItem(it)}
-                                      disabled={!isStatusDefinido(it.status)}
-                                      title={isStatusDefinido(it.status) ? "Abrir formulário" : "Selecione o status para liberar o formulário"}
-                                      className={`inline-flex h-5 w-5 items-center justify-center rounded transition-colors ${isStatusDefinido(it.status) ? "text-slate-500 hover:bg-slate-100 hover:text-slate-700" : "cursor-not-allowed text-slate-300"}`}
-                                    >
-                                      {expandedItemId === it.id ? <ChevronUp className="h-3 w-3 shrink-0" /> : <ChevronDown className="h-3 w-3 shrink-0" />}
-                                    </button>
                                     <Select
                                       value={it.status || ""}
                                       onValueChange={(newStatus) => {
                                         // Optimistic update — UI responde instantaneamente
                                         const prevStatus = it.status;
                                         setItens(prev => prev.map((i: any) => i.id === it.id ? { ...i, status: newStatus } : i));
-                                        if (expandedItemId === it.id) {
-                                          setExpandedItemId(null);
-                                          setItemEditForm({});
-                                        }
                                         toast.success(`Status → ${newStatus}`);
                                         invalidateQADashboardSnapshot();
                                         // Persistência em background; reverte se falhar
@@ -2197,49 +2184,6 @@ export default function QAClientesPage() {
                                     <span className="h-7 w-7 shrink-0" aria-hidden="true" />
                                   </div>
                                 </div>
-                                {expandedItemId === it.id && (
-                                  <div className="bg-slate-50 border border-slate-200 rounded-lg mt-1 mb-2 p-3 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-[10px] font-medium text-slate-700">Detalhes — {getServicoNome(it.servico_id)}</span>
-                                      <div className="flex gap-2">
-                                        <Button variant="ghost" size="sm" onClick={() => { setExpandedItemId(null); setItemEditForm({}); }} className="h-6 px-2 text-[9px] text-slate-500 hover:text-slate-700">
-                                          <X className="h-3 w-3 mr-1" /> Cancelar
-                                        </Button>
-                                        <Button variant="ghost" size="sm" onClick={handleSaveItem} disabled={savingItem} className="h-6 px-2 text-[9px] text-emerald-400 bg-emerald-900/20 border border-emerald-800/30 hover:bg-emerald-900/40">
-                                          <Save className="h-3 w-3 mr-1" /> {savingItem ? "Salvando..." : "Salvar"}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                    {!isStatusDefinido(it.status) ? (
-                                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-700">
-                                        ⚠️ Selecione o <strong>status</strong> deste serviço para liberar o preenchimento do formulário.
-                                      </div>
-                                    ) : (
-                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                        {getFieldsForServico(it.servico_id, itemEditForm, it).map(field => (
-                                          <div key={field.key}>
-                                            <label className="block text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">
-                                              {field.label}
-                                              {field.required && <span className="text-red-500 ml-0.5">*</span>}
-                                            </label>
-                                            <input
-                                              type="text"
-                                              value={itemEditForm[field.key] || ""}
-                                              onChange={e => {
-                                                const raw = e.target.value;
-                                                const val = field.type === "date" ? applyDateMask(raw) : raw.toUpperCase();
-                                                setItemEditForm(prev => ({ ...prev, [field.key]: val }));
-                                              }}
-                                              placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-blue-500"}`}
-                                            />
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                    {/* Declarações movidas para a aba "Docs" — não exibir aqui */}
-                                  </div>
-                                )}
                                 </div>
                                 )}
                               </SortableServicoRow>
