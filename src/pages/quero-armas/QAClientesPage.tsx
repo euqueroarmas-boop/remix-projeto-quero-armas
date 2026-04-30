@@ -40,6 +40,7 @@ import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarPro
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
+import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
@@ -1990,8 +1991,8 @@ export default function QAClientesPage() {
           <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 w-8 p-0 shrink-0 mt-0.5 rounded-xl border" style={{ borderColor: "hsl(220 13% 90%)" }}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          {/* Client photo or fallback */}
-          {(c as any).imagem ? <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-11 h-11 rounded-xl shrink-0 mt-0.5 object-cover border border-slate-200" /> : null}
+          {/* Selfie do titular (cadastro público) ou upload manual; cantos arredondados ("arestas aparadas") */}
+          <ClienteSelfieAvatar cliente={c} size="md" />
           <div className="flex-1 min-w-0">
             <h1 className="text-[15px] md:text-base font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</h1>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
