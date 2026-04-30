@@ -6278,6 +6278,56 @@ export type Database = {
           },
         ]
       }
+      qa_solicitacao_eventos: {
+        Row: {
+          ator: string | null
+          ator_id: string | null
+          cliente_id: string | null
+          created_at: string
+          descricao: string | null
+          evento: string
+          id: string
+          metadata: Json | null
+          solicitacao_id: string
+          status_anterior: string | null
+          status_novo: string | null
+        }
+        Insert: {
+          ator?: string | null
+          ator_id?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          evento: string
+          id?: string
+          metadata?: Json | null
+          solicitacao_id: string
+          status_anterior?: string | null
+          status_novo?: string | null
+        }
+        Update: {
+          ator?: string | null
+          ator_id?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          evento?: string
+          id?: string
+          metadata?: Json | null
+          solicitacao_id?: string
+          status_anterior?: string | null
+          status_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_solicitacao_eventos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_solicitacoes_servico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_solicitacoes_servico: {
         Row: {
           cadastro_publico_id: string | null
