@@ -483,12 +483,16 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         if (error) throw error;
         vendaId = (data as any).id_legado ?? (data as any).id;
         // Marca solicitação canônica como contratada (única fonte de verdade).
+        // Propaga status financeiro e operacional conforme a venda recém-criada.
         if (solicitacaoId) {
           const vendaPk = (data as any).id;
+          const isPago = f.status === "PAGO";
           await supabase
             .from("qa_solicitacoes_servico" as any)
             .update({
               status_servico: "contratado",
+              status_financeiro: isPago ? "pago" : "aguardando_pagamento",
+              status_processo: "aguardando_documentos",
               venda_id: vendaPk,
             })
             .eq("id", solicitacaoId);
