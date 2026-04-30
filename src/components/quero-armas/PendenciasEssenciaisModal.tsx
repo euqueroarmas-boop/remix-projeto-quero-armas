@@ -12,8 +12,17 @@ import {
 
 const TIPO_LABEL: Record<string, string> = {
   sem_cliente_vinculado: "Cadastro público sem cliente vinculado",
+  cpf_divergente: "CPF do cadastro público diverge do cliente vinculado",
+  dados_formulario_nao_aplicados: "Dados do formulário não aplicados na ficha do cliente",
   servico_solicitado_nao_gerado: "Serviço informado no formulário, mas não gerado na ficha do cliente",
+  servico_sem_slug: "Serviço sem identificador canônico (slug)",
   servico_pendente_classificacao: "Serviço solicitado precisa de classificação manual",
+  servico_sem_status: "Solicitação de serviço sem status",
+  servico_sem_status_financeiro: "Solicitação de serviço sem status financeiro",
+  servico_sem_status_processo: "Solicitação de serviço sem status do processo",
+  documentos_orfaos: "Documentos enviados pelo formulário sem vínculo ao cadastro público",
+  cliente_sem_cadastro_publico_id: "Cliente vindo do formulário sem vínculo reverso (cadastro_publico_id)",
+  conferido_com_pendencias: "Formulário marcado como conferido, mas ainda há pendências",
 };
 
 /**

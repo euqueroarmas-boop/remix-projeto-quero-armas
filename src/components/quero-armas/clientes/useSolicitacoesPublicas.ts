@@ -18,8 +18,10 @@ export type SolicitacaoPublica = {
 
 /**
  * Carrega solicitações vindas do formulário público vinculadas ao cliente.
- * Não cria registros: apenas projeta o que já existe em qa_cadastro_publico
- * para a aba Serviços, com status real (sem inventar pagamento confirmado).
+ * Fonte canônica: tabela qa_solicitacoes_servico (origem='formulario_publico').
+ * Fallback: projeta qa_cadastro_publico em runtime para registros antigos
+ * que ainda não foram materializados em qa_solicitacoes_servico.
+ * Nunca inventa pagamento confirmado.
  */
 export function useSolicitacoesPublicasDoCliente(
   clienteIdReal: number | null | undefined,
@@ -35,22 +37,63 @@ export function useSolicitacoesPublicasDoCliente(
     }
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from("qa_cadastro_publico" as any)
-        .select("id, cliente_id_vinculado, servico_interesse, created_at")
-        .eq("cliente_id_vinculado", clienteIdReal)
-        .order("created_at", { ascending: false });
-      const rows = (data as any[]) ?? [];
       const servicoIdsContratados = new Set(
         (itensVenda || [])
           .map((i) => Number(i?.servico_id))
           .filter((n) => Number.isFinite(n)),
       );
-      const result: SolicitacaoPublica[] = rows
-        .filter((r) => (r.servico_interesse ?? "").toString().trim().length > 0)
-        .map((r) => {
-          const servico = resolveServicoFromInteresse(r.servico_interesse);
-          const ja = servico.servico_id != null && servicoIdsContratados.has(servico.servico_id);
+
+      // 1) Fonte canônica: qa_solicitacoes_servico
+      const { data: sols } = await supabase
+        .from("qa_solicitacoes_servico" as any)
+        .select(
+          "id, cliente_id, cadastro_publico_id, servico_id, service_slug, service_name, origem, status_servico, status_financeiro, status_processo, pendente_classificacao, servico_interesse_raw, created_at",
+        )
+        .eq("cliente_id", clienteIdReal)
+        .eq("origem", "formulario_publico")
+        .order("created_at", { ascending: false });
+
+      const canonRows = (sols as any[]) ?? [];
+      const cadIdsCanon = new Set(canonRows.map((r) => r.cadastro_publico_id).filter(Boolean));
+
+      const fromCanon: SolicitacaoPublica[] = canonRows.map((r) => {
+        const ja =
+          r.servico_id != null && servicoIdsContratados.has(Number(r.servico_id));
+        const servico: ServicoCanonico = {
+          slug: r.service_slug,
+          nome: r.service_name,
+          servico_id: r.servico_id ?? null,
+          pendente_classificacao: !!r.pendente_classificacao,
+        };
+        return {
+          cadastro_publico_id: String(r.cadastro_publico_id ?? r.id),
+          cliente_id_vinculado: r.cliente_id ?? null,
+          servico_interesse: r.servico_interesse_raw ?? r.service_name,
+          servico,
+          origem: "Formulário público" as const,
+          status_solicitacao:
+            r.status_servico === "aguardando_confirmacao"
+              ? ("Aguardando confirmação" as const)
+              : ("Aguardando contratação" as const),
+          status_financeiro: "Sem cobrança vinculada" as const,
+          status_processo: "Processo ainda não aberto" as const,
+          created_at: r.created_at,
+          ja_convertido: ja,
+        };
+      });
+
+      // 2) Fallback legado: qa_cadastro_publico não materializado
+      const { data: legacy } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .select("id, cliente_id_vinculado, servico_interesse, created_at")
+        .eq("cliente_id_vinculado", clienteIdReal)
+        .order("created_at", { ascending: false });
+      const legacyRows = ((legacy as any[]) ?? []).filter(
+        (r) => !cadIdsCanon.has(r.id) && (r.servico_interesse ?? "").toString().trim().length > 0,
+      );
+      const fromLegacy: SolicitacaoPublica[] = legacyRows.map((r) => {
+        const servico = resolveServicoFromInteresse(r.servico_interesse);
+        const ja = servico.servico_id != null && servicoIdsContratados.has(servico.servico_id);
           return {
             cadastro_publico_id: String(r.id),
             cliente_id_vinculado: r.cliente_id_vinculado ?? null,
@@ -63,8 +106,9 @@ export function useSolicitacoesPublicasDoCliente(
             created_at: r.created_at,
             ja_convertido: ja,
           };
-        });
-      setSolicitacoes(result);
+      });
+
+      setSolicitacoes([...fromCanon, ...fromLegacy]);
     } finally {
       setLoading(false);
     }
