@@ -2762,6 +2762,7 @@ export type Database = {
           nome_mae: string | null
           nome_pai: string | null
           notas_processamento: string | null
+          numero_documento_identidade: string | null
           objetivo_principal: string | null
           observacoes: string | null
           origem_cadastro: string | null
@@ -2868,6 +2869,7 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           notas_processamento?: string | null
+          numero_documento_identidade?: string | null
           objetivo_principal?: string | null
           observacoes?: string | null
           origem_cadastro?: string | null
@@ -2974,6 +2976,7 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           notas_processamento?: string | null
+          numero_documento_identidade?: string | null
           objetivo_principal?: string | null
           observacoes?: string | null
           origem_cadastro?: string | null
@@ -3826,6 +3829,7 @@ export type Database = {
           nome_mae: string | null
           nome_pai: string | null
           numero: string | null
+          numero_documento_identidade: string | null
           numero2: string | null
           observacao: string | null
           orgao_vinculado: string | null
@@ -3907,6 +3911,7 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           numero?: string | null
+          numero_documento_identidade?: string | null
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
@@ -3988,6 +3993,7 @@ export type Database = {
           nome_mae?: string | null
           nome_pai?: string | null
           numero?: string | null
+          numero_documento_identidade?: string | null
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
