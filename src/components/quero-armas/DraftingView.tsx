@@ -120,7 +120,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
                   ? "text-blue-600 font-semibold text-[13px] mt-4 mb-1 tracking-wide"
                   : isLast ? "text-slate-700" : "text-slate-600"
                 }
-                ${isLast ? "border-l-2 border-slate-300/50 pl-3 -ml-3 bg-slate-800/[0.04] rounded-r" : ""}
+                ${isLast ? "border-l-2 border-slate-300/50 pl-3 -ml-3 bg-blue-50/40 rounded-r" : ""}
               `}
             >
               {line}
@@ -364,7 +364,7 @@ export default function DraftingView({
             <Button
               onClick={handleCopyClick}
               disabled={!streamedText}
-              className="h-14 text-base font-medium bg-slate-800 hover:bg-slate-900 text-white active:scale-[0.98] transition-transform border-0"
+              className="h-14 text-base font-medium bg-[#2563EB] hover:bg-[#1D4ED8] text-white active:scale-[0.98] transition-transform border-0"
             >
               {copied ? (
                 <><Check className="h-5 w-5 mr-2" /> Texto copiado com sucesso</>

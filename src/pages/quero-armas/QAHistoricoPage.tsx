@@ -157,11 +157,11 @@ export default function QAHistoricoPage() {
         <div className="flex gap-1 bg-white border rounded-xl p-1" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <button onClick={() => setTab("geracoes")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              tab === "geracoes" ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+              tab === "geracoes" ? "bg-[#2563EB] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}>Peças</button>
           <button onClick={() => setTab("consultas")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              tab === "consultas" ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+              tab === "consultas" ? "bg-[#2563EB] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}>Consultas</button>
         </div>
       </div>

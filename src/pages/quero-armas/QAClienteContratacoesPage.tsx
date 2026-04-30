@@ -201,7 +201,7 @@ export default function QAClienteContratacoesPage() {
                 onClick={() => setFiltro(f.id)}
                 className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-[10px] uppercase tracking-wider font-bold transition ${
                   active
-                    ? "bg-slate-900 text-white"
+                    ? "bg-[#2563EB] text-white"
                     : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200"
                 }`}
               >
@@ -273,7 +273,7 @@ export default function QAClienteContratacoesPage() {
                     <div className="mt-3 flex items-center gap-2 flex-wrap">
                       <button
                         onClick={() => setOpenId(p.id)}
-                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] uppercase tracking-wider font-bold"
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-[11px] uppercase tracking-wider font-bold"
                       >
                         ABRIR DETALHES <ChevronRight className="h-3 w-3" />
                       </button>

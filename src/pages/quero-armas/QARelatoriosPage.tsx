@@ -483,7 +483,7 @@ export default function QARelatoriosPage() {
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
               tab === t.key
-                ? "bg-slate-800 text-white shadow-sm"
+                ? "bg-[#2563EB] text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >

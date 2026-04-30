@@ -238,7 +238,7 @@ export default function QACriarContaPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-11 mt-2 rounded-md bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 disabled:opacity-60 inline-flex items-center justify-center gap-2 shadow-sm"
+                className="w-full h-11 mt-2 rounded-md bg-[#2563EB] text-white font-semibold text-sm hover:bg-[#1D4ED8] disabled:opacity-60 inline-flex items-center justify-center gap-2 shadow-sm"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {loading ? "Criando conta..." : "Criar minha conta gratuita"}

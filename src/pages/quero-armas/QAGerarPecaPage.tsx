@@ -1402,7 +1402,7 @@ export default function QAGerarPecaPage() {
                       <CommandGroup>
                         {municipiosList.map(m => (
                           <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
-                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-slate-800/10 data-[selected=true]:text-blue-600">
+                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-blue-50/60 data-[selected=true]:text-blue-600">
                             <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
                             {toTitleCase(m)}
                           </CommandItem>
@@ -1511,7 +1511,7 @@ export default function QAGerarPecaPage() {
               <Paperclip className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-[10px] text-slate-400 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
               {docTotal > 0 && (
-                <span className="text-[9px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded">
+                <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
                   {docDone}/{docTotal}
                   {docFailed > 0 && <span className="text-red-400 ml-1">• {docFailed} falha(s)</span>}
                 </span>
@@ -1589,7 +1589,7 @@ export default function QAGerarPecaPage() {
         {docTotal > 0 && (
           <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
-            docActive > 0 ? "border-slate-300/30 bg-slate-800/5 text-blue-600" :
+            docActive > 0 ? "border-slate-300/30 bg-blue-50/40 text-blue-600" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-neutral-700 bg-slate-100/50 text-slate-600"
@@ -1618,7 +1618,7 @@ export default function QAGerarPecaPage() {
           </div>
         )}
 
-        <Button onClick={gerar} disabled={!canGenerate} className="bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 w-full md:w-auto h-9 text-sm disabled:opacity-40">
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white border border-[#2563EB] w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>

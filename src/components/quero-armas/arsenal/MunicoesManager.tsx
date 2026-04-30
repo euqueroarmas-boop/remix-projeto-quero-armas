@@ -178,7 +178,7 @@ export function MunicoesManager({ clienteId, onChange }: Props) {
         <Button
           onClick={handleAdd}
           disabled={saving}
-          className="h-9 bg-slate-900 px-3 text-[10px] uppercase tracking-wider text-white hover:bg-slate-800"
+          className="h-9 bg-[#2563EB] px-3 text-[10px] uppercase tracking-wider text-white hover:bg-[#1D4ED8]"
         >
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
           Registrar

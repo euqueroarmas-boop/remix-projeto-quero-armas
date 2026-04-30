@@ -524,7 +524,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
               </Button>
               <Button
                 size="sm"
-                className="h-9 shrink-0 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 rounded-xl"
+                className="h-9 shrink-0 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold px-4 rounded-xl"
                 onClick={handleResetPassword}
                 disabled={resetLoading}
               >
@@ -559,7 +559,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
               <p className="text-xs text-slate-400 mt-1">Crie as credenciais para permitir o acesso à Área do Cliente</p>
             </div>
             <Button
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-6 h-10 rounded-xl uppercase tracking-wider"
+              className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold px-6 h-10 rounded-xl uppercase tracking-wider"
               onClick={handleCreateAccess}
               disabled={createLoading || !cliente.email}
             >

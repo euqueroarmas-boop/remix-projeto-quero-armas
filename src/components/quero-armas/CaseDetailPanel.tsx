@@ -135,13 +135,13 @@ export default function CaseDetailPanel({
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-white border border-slate-200 h-8 w-full">
-          <TabsTrigger value="resumo" className="text-[10px] flex-1 data-[state=active]:bg-slate-800/30 data-[state=active]:text-slate-800">
+          <TabsTrigger value="resumo" className="text-[10px] flex-1 data-[state=active]:bg-blue-50 data-[state=active]:text-[#2563EB]">
             <User className="h-3 w-3 mr-1" /> Resumo
           </TabsTrigger>
-          <TabsTrigger value="documentos" className="text-[10px] flex-1 data-[state=active]:bg-slate-800/30 data-[state=active]:text-slate-800">
+          <TabsTrigger value="documentos" className="text-[10px] flex-1 data-[state=active]:bg-blue-50 data-[state=active]:text-[#2563EB]">
             <FileText className="h-3 w-3 mr-1" /> Docs ({docs.length})
           </TabsTrigger>
-          <TabsTrigger value="peticao" className="text-[10px] flex-1 data-[state=active]:bg-slate-800/30 data-[state=active]:text-slate-800">
+          <TabsTrigger value="peticao" className="text-[10px] flex-1 data-[state=active]:bg-blue-50 data-[state=active]:text-[#2563EB]">
             <BookOpen className="h-3 w-3 mr-1" /> Petição
           </TabsTrigger>
         </TabsList>
@@ -355,7 +355,7 @@ export default function CaseDetailPanel({
       <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-200">
         {onEdit && (
           <Button size="sm" onClick={() => onEdit(caso.id)}
-            className="bg-slate-800 hover:bg-slate-900 text-white border-0 h-7 text-[10px]">
+            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white border-0 h-7 text-[10px]">
             Editar / Gerar
           </Button>
         )}
