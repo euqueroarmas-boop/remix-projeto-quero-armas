@@ -3008,6 +3008,51 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cadastro_publico_audit: {
+        Row: {
+          acao: string
+          cadastro_publico_id: string
+          campo: string | null
+          cliente_id: number | null
+          cpf_normalizado: string | null
+          created_at: string
+          divergencia: boolean
+          id: string
+          service_slug: string | null
+          user_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          acao: string
+          cadastro_publico_id: string
+          campo?: string | null
+          cliente_id?: number | null
+          cpf_normalizado?: string | null
+          created_at?: string
+          divergencia?: boolean
+          id?: string
+          service_slug?: string | null
+          user_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          acao?: string
+          cadastro_publico_id?: string
+          campo?: string | null
+          cliente_id?: number | null
+          cpf_normalizado?: string | null
+          created_at?: string
+          divergencia?: boolean
+          id?: string
+          service_slug?: string | null
+          user_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: []
+      }
       qa_cadastro_publico_recusados: {
         Row: {
           cadastro_created_at: string | null
@@ -3731,6 +3776,8 @@ export type Database = {
           avatar_tatico_path: string | null
           bairro: string | null
           bairro2: string | null
+          cadastro_publico_aplicado_em: string | null
+          cadastro_publico_id: string | null
           categoria_titular: string | null
           celular: string | null
           cep: string | null
@@ -3805,6 +3852,8 @@ export type Database = {
           avatar_tatico_path?: string | null
           bairro?: string | null
           bairro2?: string | null
+          cadastro_publico_aplicado_em?: string | null
+          cadastro_publico_id?: string | null
           categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
@@ -3879,6 +3928,8 @@ export type Database = {
           avatar_tatico_path?: string | null
           bairro?: string | null
           bairro2?: string | null
+          cadastro_publico_aplicado_em?: string | null
+          cadastro_publico_id?: string | null
           categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
@@ -4332,6 +4383,7 @@ export type Database = {
           arquivo_mime: string | null
           arquivo_nome: string | null
           arquivo_storage_path: string | null
+          cadastro_publico_id: string | null
           created_at: string
           customer_id: string | null
           data_emissao: string | null
@@ -4366,6 +4418,7 @@ export type Database = {
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
+          cadastro_publico_id?: string | null
           created_at?: string
           customer_id?: string | null
           data_emissao?: string | null
@@ -4400,6 +4453,7 @@ export type Database = {
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
+          cadastro_publico_id?: string | null
           created_at?: string
           customer_id?: string | null
           data_emissao?: string | null
@@ -6213,6 +6267,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      qa_solicitacoes_servico: {
+        Row: {
+          cadastro_publico_id: string | null
+          cliente_id: number
+          created_at: string
+          id: string
+          item_venda_id: number | null
+          observacoes: string | null
+          origem: string
+          pendente_classificacao: boolean
+          processo_id: number | null
+          service_name: string
+          service_slug: string
+          servico_id: number | null
+          servico_interesse_raw: string | null
+          status_financeiro: string
+          status_processo: string
+          status_servico: string
+          updated_at: string
+          venda_id: number | null
+        }
+        Insert: {
+          cadastro_publico_id?: string | null
+          cliente_id: number
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          observacoes?: string | null
+          origem?: string
+          pendente_classificacao?: boolean
+          processo_id?: number | null
+          service_name: string
+          service_slug: string
+          servico_id?: number | null
+          servico_interesse_raw?: string | null
+          status_financeiro?: string
+          status_processo?: string
+          status_servico?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Update: {
+          cadastro_publico_id?: string | null
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          observacoes?: string | null
+          origem?: string
+          pendente_classificacao?: boolean
+          processo_id?: number | null
+          service_name?: string
+          service_slug?: string
+          servico_id?: number | null
+          servico_interesse_raw?: string | null
+          status_financeiro?: string
+          status_processo?: string
+          status_servico?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Relationships: []
       }
       qa_status_servico: {
         Row: {
