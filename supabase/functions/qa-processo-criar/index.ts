@@ -7,6 +7,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { requireQAStaff } from "../_shared/qaAuth.ts";
+import { logSistemaBackend } from "../_shared/logSistema.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -70,6 +71,80 @@ Deno.serve(async (req) => {
         404,
       );
     }
+
+    // ── BLINDAGEM DE INTEGRIDADE Posse↔Porte (Fase de Hardening) ──
+    // Se uma venda foi informada, o servico_id do processo DEVE bater com o
+    // servico_id de pelo menos um item da venda. Sem fallback, sem similaridade.
+    if (venda_id != null) {
+      const { data: itensVenda, error: itensErr } = await supabase
+        .from("qa_itens_venda")
+        .select("id, servico_id")
+        .eq("venda_id", venda_id);
+
+      if (itensErr) {
+        await logSistemaBackend({
+          tipo: "erro",
+          status: "error",
+          mensagem: "Falha ao validar itens da venda em qa-processo-criar",
+          payload: { venda_id, cliente_id, servico_id_solicitado: servico_id, erro: itensErr.message },
+        });
+        return json({ error: `Falha ao validar venda ${venda_id}: ${itensErr.message}` }, 500);
+      }
+
+      const idsServicosDaVenda = (itensVenda ?? [])
+        .map((it) => it.servico_id)
+        .filter((v): v is number => typeof v === "number");
+
+      if (idsServicosDaVenda.length === 0) {
+        await logSistemaBackend({
+          tipo: "erro",
+          status: "warning",
+          mensagem: "Venda informada sem itens com servico_id ao criar processo",
+          payload: { venda_id, cliente_id, servico_id_solicitado: servico_id },
+        });
+        return json(
+          { error: `Venda ${venda_id} não possui itens com serviço definido. Não é possível criar processo.` },
+          409,
+        );
+      }
+
+      if (!idsServicosDaVenda.includes(Number(servico_id))) {
+        await logSistemaBackend({
+          tipo: "erro",
+          status: "error",
+          mensagem: "DIVERGÊNCIA DE INTEGRIDADE: serviço do processo não bate com itens da venda",
+          payload: {
+            venda_id,
+            cliente_id,
+            servico_id_solicitado: Number(servico_id),
+            servico_nome_solicitado: servico.nome_servico,
+            servico_ids_da_venda: idsServicosDaVenda,
+          },
+        });
+        return json(
+          {
+            error:
+              `Divergência de integridade: o serviço solicitado (id=${servico_id}, "${servico.nome_servico}") não consta nos itens da venda ${venda_id} (serviços da venda: ${idsServicosDaVenda.join(", ")}). Criação bloqueada.`,
+            code: "INTEGRITY_VENDA_PROCESSO_MISMATCH",
+          },
+          409,
+        );
+      }
+    }
+
+    // Log de auditoria de slug (sem PII além de IDs já manuseados)
+    await logSistemaBackend({
+      tipo: "admin",
+      status: "info",
+      mensagem: "qa-processo-criar: validação de integridade aprovada",
+      payload: {
+        cliente_id,
+        venda_id: venda_id ?? null,
+        servico_id: Number(servico_id),
+        servico_nome: servico.nome_servico,
+        criar_checklist_agora: criarChecklistAgora === true,
+      },
+    });
 
     // Resolver condição profissional: payload > cadastro > indefinido
     let condicao: CondicaoProf = (condicao_profissional as CondicaoProf) || "indefinido";
