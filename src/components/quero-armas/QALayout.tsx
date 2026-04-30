@@ -35,12 +35,10 @@ function QALayoutInner() {
         </div>
         <QAFooter />
       </main>
-      {/* Painel automático de pendências essenciais (somente perfis internos). */}
-      {profile.perfil !== "cliente" && (
-        <Suspense fallback={null}>
-          <PendenciasEssenciaisModal />
-        </Suspense>
-      )}
+      {/* Painel automático de pendências essenciais (perfis internos). */}
+      <Suspense fallback={null}>
+        <PendenciasEssenciaisModal />
+      </Suspense>
     </div>
   );
 }
