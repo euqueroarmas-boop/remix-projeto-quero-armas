@@ -1085,110 +1085,6 @@ export default function QAClientesPage() {
     return `${day}/${month}/${year}`;
   };
 
-  const handleExpandItem = (item: any) => {
-    if (expandedItemId === item.id) {
-      setExpandedItemId(null);
-      setItemEditForm({});
-      return;
-    }
-    if (!isStatusDefinido(item?.status)) {
-      toast.error("Selecione o status do serviço antes de preencher o formulário.");
-      return;
-    }
-    setExpandedItemId(item.id);
-    const form: Record<string, string> = {};
-    ITEM_EDIT_FIELDS.forEach(f => {
-      const val = item[f.key];
-      form[f.key] = f.type === "date" ? dateToBr(val) : (val || "");
-    });
-    setItemEditForm(form);
-  };
-
-  /** Máscara automática DD/MM/AAAA */
-  const applyDateMask = (raw: string): string => {
-    const digits = raw.replace(/\D/g, "").slice(0, 8);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-  };
-
-  /** Converte DD/MM/AAAA → YYYY-MM-DD para gravar no banco (tipo date) */
-  const dateBrToIso = (v: string): string | null => {
-    if (!v) return null;
-    const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!m) return null;
-    const [, dd, mm, yyyy] = m;
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const handleSaveItem = async () => {
-    if (!expandedItemId) return;
-    const currentItem = (itens as any[]).find(i => i.id === expandedItemId);
-    if (!isStatusDefinido(currentItem?.status)) {
-      toast.error("Selecione o status do serviço antes de salvar.");
-      return;
-    }
-    const servicoId = currentItem?.servico_id;
-    const applicableFields = getFieldsForServico(servicoId, itemEditForm, currentItem);
-    setSavingItem(true);
-    try {
-      const payload: Record<string, any> = {};
-      // Status que dispensam campos de "outorga" (deferimento) — ex.: INDEFERIDO, EM ANÁLISE, etc.
-      const statusAtual = String(currentItem?.status || "").toLowerCase();
-      const dispensaDeferimento = ["indeferido", "cancelado", "em_analise", "pronto_para_analise", "a_iniciar", "montando_pasta", "aguardando_documentos"].includes(statusAtual);
-      for (const f of applicableFields) {
-        const v = itemEditForm[f.key]?.trim() || null;
-        // Campos só obrigatórios quando o processo foi efetivamente DEFERIDO/CONCLUÍDO
-        const isFieldRequired = f.required && !dispensaDeferimento;
-        if (isFieldRequired && !v) {
-          toast.error(`Campo obrigatório: "${f.label}".`);
-          setSavingItem(false);
-          return;
-        }
-        if (f.type === "date") {
-          if (v) {
-            const iso = dateBrToIso(v);
-            if (!iso) {
-              toast.error(`Data inválida em "${f.label}". Use DD/MM/AAAA.`);
-              setSavingItem(false);
-              return;
-            }
-            payload[f.key] = iso;
-          } else {
-            payload[f.key] = null;
-          }
-        } else {
-          payload[f.key] = v;
-        }
-      }
-      const today = new Date();
-      payload.data_ultima_atualizacao = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      // Regra automática: ao preencher data_indeferimento em serviços PF (Posse/Porte/CRAF),
-      // o status passa automaticamente para "RECURSO ADMINISTRATIVO" — assim o card de
-      // prazos do dashboard reflete a fase processual correta (Lei 9.784/99 art. 59).
-      const SERVICOS_PF_RECURSO_IDS = [2, 3, 26];
-      if (
-        servicoId && SERVICOS_PF_RECURSO_IDS.includes(servicoId) &&
-        Object.prototype.hasOwnProperty.call(payload, "data_indeferimento") &&
-        payload.data_indeferimento &&
-        payload.data_indeferimento !== currentItem?.data_indeferimento &&
-        String(currentItem?.status || "").toUpperCase() !== "RECURSO ADMINISTRATIVO"
-      ) {
-        payload.status = "RECURSO ADMINISTRATIVO";
-      }
-      const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
-      if (error) throw error;
-      setItens(prev => prev.map((i: any) => i.id === expandedItemId ? { ...i, ...payload } : i));
-      toast.success("Dados do serviço atualizados");
-      setExpandedItemId(null);
-      setItemEditForm({});
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao salvar");
-    } finally {
-      setSavingItem(false);
-    }
-  };
-
   const handleDeleteItem = async (item: any) => {
     if (!item?.id) return;
     const nome = (() => {
@@ -1210,7 +1106,6 @@ export default function QAClientesPage() {
         setVendas(prev => (prev as any[]).map(v => v.id === venda.id ? { ...v, valor_a_pagar: novoTotal, valor_total: subtotal } : v));
       }
       setItens(prev => (prev as any[]).filter(i => i.id !== item.id));
-      if (expandedItemId === item.id) { setExpandedItemId(null); setItemEditForm({}); }
       toast.success("Item excluído e total recalculado");
     } catch (e: any) {
       toast.error(e.message || "Erro ao excluir item");
