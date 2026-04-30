@@ -6336,13 +6336,13 @@ export type Database = {
           cadastro_publico_id: string | null
           cliente_id: number
           created_at: string
-          documentos_total: number | null
           id: string
           item_venda_id: number | null
           observacoes: string | null
           origem: string
           pendente_classificacao: boolean
           processo_id: number | null
+          sem_checklist_configurado: boolean
           service_name: string
           service_slug: string
           servico_id: number | null
@@ -6357,13 +6357,13 @@ export type Database = {
           cadastro_publico_id?: string | null
           cliente_id: number
           created_at?: string
-          documentos_total?: number | null
           id?: string
           item_venda_id?: number | null
           observacoes?: string | null
           origem?: string
           pendente_classificacao?: boolean
           processo_id?: number | null
+          sem_checklist_configurado?: boolean
           service_name: string
           service_slug: string
           servico_id?: number | null
@@ -6378,13 +6378,13 @@ export type Database = {
           cadastro_publico_id?: string | null
           cliente_id?: number
           created_at?: string
-          documentos_total?: number | null
           id?: string
           item_venda_id?: number | null
           observacoes?: string | null
           origem?: string
           pendente_classificacao?: boolean
           processo_id?: number | null
+          sem_checklist_configurado?: boolean
           service_name?: string
           service_slug?: string
           servico_id?: number | null
@@ -7814,6 +7814,50 @@ export type Database = {
           },
         ]
       }
+      qa_servico_documentos_obrigatorios: {
+        Row: {
+          ativo: boolean | null
+          condicao_profissional: string | null
+          etapa: string | null
+          id: string | null
+          nome_documento: string | null
+          obrigatorio: boolean | null
+          ordem: number | null
+          servico_id: number | null
+          tipo_documento: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          condicao_profissional?: string | null
+          etapa?: string | null
+          id?: string | null
+          nome_documento?: string | null
+          obrigatorio?: boolean | null
+          ordem?: number | null
+          servico_id?: number | null
+          tipo_documento?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          condicao_profissional?: string | null
+          etapa?: string | null
+          id?: string | null
+          nome_documento?: string | null
+          obrigatorio?: boolean | null
+          ordem?: number | null
+          servico_id?: number | null
+          tipo_documento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_documentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       has_role: {
@@ -7889,6 +7933,15 @@ export type Database = {
           resumo_chunk: string
           similarity: number
           texto_chunk: string
+        }[]
+      }
+      qa_calcular_progresso: {
+        Args: { _solicitacao_id: string }
+        Returns: {
+          sem_checklist: boolean
+          x_progresso: number
+          x_valido: number
+          y: number
         }[]
       }
       qa_cliente_criar_conta_publica: {
@@ -8028,6 +8081,10 @@ export type Database = {
       qa_reabrir_homologacao_cliente: {
         Args: { p_cliente_id: number; p_motivo: string }
         Returns: Json
+      }
+      qa_recalcular_status_servico: {
+        Args: { _solicitacao_id: string }
+        Returns: string
       }
       qa_remove_bg_usage_mes: {
         Args: never

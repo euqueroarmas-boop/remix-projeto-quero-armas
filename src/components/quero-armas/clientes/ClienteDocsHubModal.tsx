@@ -22,7 +22,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
-import { notifyQAEvent } from "@/lib/quero-armas/notifyEvent";
+// Notificações e auto-avanço são 100% backend-driven via triggers
+// (qa_doc_cliente_recalcular -> qa_recalcular_status_servico ->
+//  qa_dispatch_notify_event). Nada de notify aqui.
 
 const TIPOS = [
   { value: "cr", label: "CR — Certificado de Registro", short: "CR · CAC" },
@@ -308,67 +310,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
       if (insertError) throw insertError;
 
-      // Notifica fluxo operacional: documento recebido (X/Y).
-      // X = total de documentos do cliente após este insert.
-      // Y = total esperado, lido de qa_solicitacoes_servico.documentos_total
-      // (operador pode preencher). Se Y for desconhecido, omite contagem.
-      if (qaClienteId) {
-        try {
-          const { count: xCount } = await supabase
-            .from("qa_documentos_cliente" as any)
-            .select("id", { count: "exact", head: true })
-            .eq("qa_cliente_id", qaClienteId)
-            .neq("status", "excluido");
-
-          // Resolve solicitação ativa + Y esperado (se configurado)
-          const { data: solAtiva } = await supabase
-            .from("qa_solicitacoes_servico" as any)
-            .select("id, documentos_total, status_servico, service_name")
-            .eq("cliente_id", qaClienteId)
-            .not("status_servico", "in", "(deferido,indeferido,finalizado)")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          const x = xCount ?? undefined;
-          const y = (solAtiva as any)?.documentos_total ?? undefined;
-          const solId = (solAtiva as any)?.id ?? null;
-
-          void notifyQAEvent({
-            evento: "documento_recebido",
-            solicitacao_id: solId,
-            cliente_id: qaClienteId,
-            documentos_recebidos: x,
-            documentos_total: y,
-            documento_nome: TIPOS.find(t => t.value === payload.tipo_documento)?.short || payload.tipo_documento,
-          });
-
-          // Se atingiu o total esperado (Y > 0 e X >= Y), avança status para em_verificacao
-          // e dispara todos_documentos_recebidos + em_verificacao (com anti-dup server-side).
-          if (solId && typeof x === "number" && typeof y === "number" && y > 0 && x >= y) {
-            const statusAtual = (solAtiva as any).status_servico;
-            if (statusAtual !== "em_verificacao") {
-              await supabase
-                .from("qa_solicitacoes_servico" as any)
-                .update({ status_servico: "em_verificacao" })
-                .eq("id", solId);
-            }
-            void notifyQAEvent({
-              evento: "todos_documentos_recebidos",
-              solicitacao_id: solId,
-              status_novo: "em_verificacao",
-            });
-            void notifyQAEvent({
-              evento: "em_verificacao",
-              solicitacao_id: solId,
-              status_novo: "em_verificacao",
-            });
-          }
-        } catch (notifyErr) {
-          // Notificação NUNCA quebra o upload.
-          console.warn("[notifyQAEvent doc] falhou:", notifyErr);
-        }
-      }
+      // Recálculo, eventos (documento_recebido / todos_documentos_recebidos)
+      // e e-mail são disparados pela trigger qa_doc_cliente_recalcular no banco.
 
       toast.success(
         (await isCurrentUserStaff())

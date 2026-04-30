@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, Trash2, Shield, Crosshair, FileCheck, ShoppingCart, Users, CalendarDays, Hash, Key, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { notifyQAEvent } from "@/lib/quero-armas/notifyEvent";
+// Eventos operacionais são gerados pela trigger qa_dispatch_notify_event.
 
 /* ─── Date helpers ─── */
 const applyDateMask = (raw: string): string => {
@@ -538,13 +538,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
               "Falha ao finalizar solicitação: nenhum registro atualizado em qa_solicitacoes_servico."
             );
           }
-          // Notifica cliente: serviço iniciado / pasta sendo montada.
-          void notifyQAEvent({
-            evento: "montando_pasta",
-            solicitacao_id: solicitacaoId,
-            status_novo: "montando_pasta",
-            servico_nome: serviceName,
-          } as any);
+          // Notificação 'montando_pasta' é disparada automaticamente pela
+          // trigger ao detectar a transição de status no banco.
         }
       }
       const defaultItemStatus = getDefaultItemStatus();
