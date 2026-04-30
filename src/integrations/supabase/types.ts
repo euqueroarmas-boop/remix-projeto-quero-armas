@@ -2783,6 +2783,7 @@ export type Database = {
           telefone_principal: string
           telefone_secundario: string | null
           tem_segundo_endereco: boolean | null
+          tipo_documento_identidade: string
           titulo_eleitor: string | null
           trab_cargo_funcao: string | null
           trab_cnpj_empresa: string | null
@@ -2888,6 +2889,7 @@ export type Database = {
           telefone_principal: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
+          tipo_documento_identidade?: string
           titulo_eleitor?: string | null
           trab_cargo_funcao?: string | null
           trab_cnpj_empresa?: string | null
@@ -2993,6 +2995,7 @@ export type Database = {
           telefone_principal?: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
+          tipo_documento_identidade?: string
           titulo_eleitor?: string | null
           trab_cargo_funcao?: string | null
           trab_cnpj_empresa?: string | null
@@ -3846,6 +3849,7 @@ export type Database = {
           tentativa_compra_legado_count: number
           tentativa_compra_legado_em: string | null
           tipo_cliente: string | null
+          tipo_documento_identidade: string
           titulo_eleitor: string | null
           uf_emissor_rg: string | null
           updated_at: string
@@ -3926,6 +3930,7 @@ export type Database = {
           tentativa_compra_legado_count?: number
           tentativa_compra_legado_em?: string | null
           tipo_cliente?: string | null
+          tipo_documento_identidade?: string
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
@@ -4006,6 +4011,7 @@ export type Database = {
           tentativa_compra_legado_count?: number
           tentativa_compra_legado_em?: string | null
           tipo_cliente?: string | null
+          tipo_documento_identidade?: string
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
