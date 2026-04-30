@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Inbox, ArrowRight, ExternalLink, AlertCircle, CheckCircle2,
-  FileText, CreditCard, Clock, User, Loader2,
+  FileText, CreditCard, Clock, User, Loader2, ClipboardCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,6 +11,19 @@ import { supabase } from "@/integrations/supabase/client";
  * Fonte: tabela qa_cadastro_publico (formulário público de cadastro).
  * Ordem: do mais antigo para o mais novo (created_at ASC).
  * Para cada cadastro: tenta cruzar com qa_processos / qa_vendas via cliente_id_vinculado.
+ *
+ * SEMÂNTICA DE STATUS (não confundir):
+ *   - "Formulário conferido" = o admin já leu/conferiu o cadastro recebido pela
+ *     internet. NÃO significa cliente aprovado, pagamento confirmado ou processo
+ *     aberto. No banco, é gravado como qa_cadastro_publico.status = "conferido"
+ *     (legado: "analisado" — mapeado no front para "Formulário conferido").
+ *   - "Cadastro aprovado" = aprovação cadastral (qa_cadastro_publico.status =
+ *     "aprovado"), feita dentro da ficha do cliente, com vínculo formal.
+ *   - "Rejeitado" = recusa cadastral.
+ *   - "Arquivado" = ocultado da operação ativa, dados preservados.
+ *
+ * Cada faceta (Formulário, Cadastro, Financeiro, Processo) tem badge própria
+ * para evitar ambiguidade na Dashboard.
  */
 
 type CadastroRow = {
@@ -47,7 +60,7 @@ type VendaMin = {
 
 type FilterKey =
   | "todos"
-  | "nao_analisados"
+  | "nao_conferidos"
   | "sem_servico"
   | "sem_processo"
   | "com_prazo"
@@ -59,10 +72,33 @@ interface ConsolidatedRow {
   cadastro: CadastroRow;
   processo: ProcessoMin | null;
   venda: VendaMin | null;
-  statusInicial: string;
-  statusColor: string;
   prazoLabel: string;
   pendencias: string[];
+  facetas: FacetaBadges;
+}
+
+/**
+ * Cada faceta tem contexto explícito ("Formulário", "Cadastro", "Financeiro",
+ * "Processo") + valor + cor. Nunca exibir só o valor sem contexto.
+ */
+type FacetaBadge = { contexto: string; valor: string; color: string };
+interface FacetaBadges {
+  formulario: FacetaBadge;            // recebido | conferido | arquivado
+  cadastro: FacetaBadge;              // aguardando análise | aprovado | rejeitado
+  financeiro: FacetaBadge;            // sem cobrança | pagto pendente | confirmado
+  processo: FacetaBadge;              // não aberto | aberto | aguardando docs etc.
+}
+
+/** "analisado" (legado) vira "conferido" no front. */
+function normalizarStatusFormulario(raw: string | null | undefined): "recebido" | "conferido" | "arquivado" | "rejeitado" | "aprovado" | "pendente" {
+  const v = (raw || "").toLowerCase();
+  if (v === "analisado") return "conferido";
+  if (v === "conferido") return "conferido";
+  if (v === "arquivado") return "arquivado";
+  if (v === "rejeitado") return "rejeitado";
+  if (v === "aprovado") return "aprovado";
+  if (v === "pendente" || !v) return "pendente";
+  return "pendente";
 }
 
 function formatDateTime(iso: string | null) {
@@ -71,17 +107,60 @@ function formatDateTime(iso: string | null) {
   return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function classifyStatus(c: CadastroRow, p: ProcessoMin | null, v: VendaMin | null): { label: string; color: string } {
-  if (c.status === "rejeitado") return { label: "Rejeitado", color: "#dc2626" };
-  if (!c.servico_interesse) return { label: "Sem serviço identificado", color: "#dc2626" };
-  if (!c.cliente_id_vinculado && !c.processado_em) return { label: "Aguardando análise", color: "#ca8a04" };
-  if (c.pago === false) return { label: "Pagamento pendente", color: "#ea580c" };
-  if (c.cliente_id_vinculado && !p && !v) return { label: "Serviço recebido — processo ainda não aberto", color: "#0891b2" };
-  if (p?.status === "aguardando_pagamento") return { label: "Pagamento pendente", color: "#ea580c" };
-  if (p?.status?.includes("documento")) return { label: "Aguardando documentos", color: "#ca8a04" };
-  if (p) return { label: "Processo aberto", color: "#16a34a" };
-  if (c.cliente_id_vinculado) return { label: "Cadastro aprovado", color: "#16a34a" };
-  return { label: "Novo cadastro", color: "#6366f1" };
+/**
+ * Constrói badges contextuais separadas por faceta.
+ * Nunca devolve label genérico tipo "ANALISADO" — todo valor vem com seu contexto.
+ */
+function buildFacetas(c: CadastroRow, p: ProcessoMin | null, v: VendaMin | null): FacetaBadges {
+  const formStatus = normalizarStatusFormulario(c.status);
+
+  // A) Formulário público (recebido / conferido / arquivado / rejeitado)
+  let formulario: FacetaBadge;
+  if (formStatus === "conferido") {
+    formulario = { contexto: "Formulário", valor: "Conferido", color: "#0891b2" };
+  } else if (formStatus === "arquivado") {
+    formulario = { contexto: "Formulário", valor: "Arquivado", color: "#64748b" };
+  } else if (formStatus === "rejeitado") {
+    formulario = { contexto: "Formulário", valor: "Recusado", color: "#dc2626" };
+  } else {
+    formulario = { contexto: "Formulário", valor: "Recebido", color: "#6366f1" };
+  }
+
+  // B) Análise cadastral (independente da conferência do formulário)
+  let cadastro: FacetaBadge;
+  if (formStatus === "rejeitado") {
+    cadastro = { contexto: "Cadastro", valor: "Rejeitado", color: "#dc2626" };
+  } else if (formStatus === "aprovado" || c.cliente_id_vinculado) {
+    cadastro = { contexto: "Cadastro", valor: "Aprovado", color: "#16a34a" };
+  } else {
+    cadastro = { contexto: "Cadastro", valor: "Aguardando análise", color: "#ca8a04" };
+  }
+
+  // C) Financeiro — só usa fonte real (venda/cobrança); nunca inventa pelo formulário.
+  let financeiro: FacetaBadge;
+  if (!v && c.pago !== true) {
+    financeiro = { contexto: "Financeiro", valor: "Sem cobrança vinculada", color: "#64748b" };
+  } else if (c.pago === true || p?.pagamento_status === "pago" || v?.status === "pago") {
+    financeiro = { contexto: "Financeiro", valor: "Pagamento confirmado", color: "#16a34a" };
+  } else if (p?.status === "aguardando_pagamento" || v?.status === "aguardando_pagamento") {
+    financeiro = { contexto: "Financeiro", valor: "Pagamento pendente", color: "#ea580c" };
+  } else {
+    financeiro = { contexto: "Financeiro", valor: "Sem cobrança vinculada", color: "#64748b" };
+  }
+
+  // D) Processo — fonte real (qa_processos vinculado).
+  let processo: FacetaBadge;
+  if (!p) {
+    processo = { contexto: "Processo", valor: "Ainda não aberto", color: "#64748b" };
+  } else if (p.status?.includes("documento")) {
+    processo = { contexto: "Processo", valor: "Aguardando documentos", color: "#ca8a04" };
+  } else if (p.status?.includes("notificacao") || p.status?.includes("protocolo")) {
+    processo = { contexto: "Processo", valor: "Aguardando órgão", color: "#0891b2" };
+  } else {
+    processo = { contexto: "Processo", valor: "Aberto", color: "#16a34a" };
+  }
+
+  return { formulario, cadastro, financeiro, processo };
 }
 
 function buildPrazoLabel(c: CadastroRow, p: ProcessoMin | null): string {
@@ -98,7 +177,7 @@ function buildPrazoLabel(c: CadastroRow, p: ProcessoMin | null): string {
 function buildPendencias(c: CadastroRow, p: ProcessoMin | null, v: VendaMin | null): string[] {
   const out: string[] = [];
   if (!c.servico_interesse) out.push("Serviço não informado");
-  if (!c.cliente_id_vinculado) out.push("Não vinculado em /clientes");
+  if (!c.cliente_id_vinculado) out.push("Cadastro ainda não vinculado");
   if (c.pago === false && !p) out.push("Sem pagamento confirmado");
   if (c.cliente_id_vinculado && !p && !v) out.push("Sem processo/venda aberto");
   return out;
@@ -110,8 +189,10 @@ export default function DashboardNovosCadastrosRecebidos() {
   const [vendas, setVendas] = useState<VendaMin[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("todos");
-  const [analisados, setAnalisados] = useState<Set<string>>(() => {
-    try { return new Set(JSON.parse(localStorage.getItem("qa_novos_cad_analisados") || "[]")); } catch { return new Set(); }
+  // "conferidos" = formulário público já foi conferido administrativamente.
+  // NÃO é o mesmo que "aprovado" (análise cadastral) — propositalmente separado.
+  const [conferidos, setConferidos] = useState<Set<string>>(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("qa_novos_cad_conferidos") || localStorage.getItem("qa_novos_cad_analisados") || "[]")); } catch { return new Set(); }
   });
   const [arquivados, setArquivados] = useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem("qa_novos_cad_arquivados") || "[]")); } catch { return new Set(); }
@@ -128,11 +209,14 @@ export default function DashboardNovosCadastrosRecebidos() {
     const list = ((cads as any[]) ?? []) as CadastroRow[];
     setRows(list);
 
-    // Hidrata estados centrais (banco é fonte canônica; localStorage é só fallback/cache).
-    setAnalisados(prev => {
+    // Hidrata estados centrais. Banco é fonte canônica.
+    // ATENÇÃO: "aprovado" NÃO conta como "conferido" — são facetas distintas.
+    // Apenas "conferido" (novo) e "analisado" (legado) são tratados como
+    // conferência do formulário.
+    setConferidos(prev => {
       const next = new Set(prev);
       list.forEach(r => {
-        if (r.status === "analisado" || r.status === "aprovado") next.add(r.id);
+        if (r.status === "conferido" || r.status === "analisado") next.add(r.id);
       });
       return next;
     });
@@ -183,15 +267,13 @@ export default function DashboardNovosCadastrosRecebidos() {
       const v = c.cliente_id_vinculado
         ? vendas.find(x => x.cliente_id === c.cliente_id_vinculado) ?? null
         : null;
-      const st = classifyStatus(c, p, v);
       return {
         cadastro: c,
         processo: p,
         venda: v,
-        statusInicial: st.label,
-        statusColor: st.color,
         prazoLabel: buildPrazoLabel(c, p),
         pendencias: buildPendencias(c, p, v),
+        facetas: buildFacetas(c, p, v),
       };
     });
   }, [rows, processos, vendas]);
@@ -200,37 +282,40 @@ export default function DashboardNovosCadastrosRecebidos() {
     return consolidated.filter(r => {
       if (arquivados.has(r.cadastro.id)) return false;
       switch (filter) {
-        case "nao_analisados": return !analisados.has(r.cadastro.id);
+        case "nao_conferidos": return !conferidos.has(r.cadastro.id);
         case "sem_servico": return !r.cadastro.servico_interesse;
         case "sem_processo": return !r.processo;
         case "com_prazo": return !!r.processo && !["aguardando_pagamento"].includes(r.processo.status || "");
-        case "aguard_docs": return r.statusInicial.includes("documento");
-        case "pgto_pendente": return r.statusInicial.includes("Pagamento");
+        case "aguard_docs": return r.facetas.processo.valor.toLowerCase().includes("documento");
+        case "pgto_pendente": return r.facetas.financeiro.valor.toLowerCase().includes("pendente");
         case "incompletos": return !r.cadastro.cliente_id_vinculado || !r.cadastro.servico_interesse;
         default: return true;
       }
     });
-  }, [consolidated, filter, analisados, arquivados]);
+  }, [consolidated, filter, conferidos, arquivados]);
 
-  const totalPendentes = consolidated.filter(r => !analisados.has(r.cadastro.id) && !arquivados.has(r.cadastro.id)).length;
+  const totalPendentes = consolidated.filter(r => !conferidos.has(r.cadastro.id) && !arquivados.has(r.cadastro.id)).length;
 
-  function toggleAnalisado(id: string) {
-    const wasAnalisado = analisados.has(id);
-    // Optimistic UI
-    setAnalisados(prev => {
+  /**
+   * Marca/desmarca o FORMULÁRIO PÚBLICO como conferido administrativamente.
+   * Não confundir com aprovação cadastral.
+   * Banco: status = "conferido" (novo) | "pendente" (reabertura).
+   */
+  function toggleConferido(id: string) {
+    const wasConferido = conferidos.has(id);
+    setConferidos(prev => {
       const next = new Set(prev);
-      if (wasAnalisado) next.delete(id); else next.add(id);
-      localStorage.setItem("qa_novos_cad_analisados", JSON.stringify([...next]));
+      if (wasConferido) next.delete(id); else next.add(id);
+      localStorage.setItem("qa_novos_cad_conferidos", JSON.stringify([...next]));
       return next;
     });
-    // Persistir status central no banco (fonte canônica)
     void (async () => {
-      const novoStatus = wasAnalisado ? "pendente" : "analisado";
+      const novoStatus = wasConferido ? "pendente" : "conferido";
       const { error } = await supabase
         .from("qa_cadastro_publico" as any)
         .update({ status: novoStatus })
         .eq("id", id);
-      if (error) console.warn("[DashboardNovosCadastros] persist analisado falhou:", error.message);
+      if (error) console.warn("[DashboardNovosCadastros] persist conferido falhou:", error.message);
     })();
   }
   function arquivar(id: string) {
@@ -250,7 +335,7 @@ export default function DashboardNovosCadastrosRecebidos() {
 
   const filters: { key: FilterKey; label: string }[] = [
     { key: "todos", label: "Todos" },
-    { key: "nao_analisados", label: "Não analisados" },
+    { key: "nao_conferidos", label: "Não conferidos" },
     { key: "sem_servico", label: "Sem serviço" },
     { key: "sem_processo", label: "Sem processo" },
     { key: "com_prazo", label: "Com prazo iniciado" },
@@ -300,28 +385,42 @@ export default function DashboardNovosCadastrosRecebidos() {
         <div className="space-y-2">
           {visible.map(r => {
             const c = r.cadastro;
-            const isAnalisado = analisados.has(c.id);
+            const isConferido = conferidos.has(c.id);
             return (
               <div
                 key={c.id}
                 className="border rounded-lg p-3 hover:shadow-sm transition"
-                style={{ borderColor: "#e2e8f0", background: isAnalisado ? "#f8fafc" : "#ffffff", opacity: isAnalisado ? 0.75 : 1 }}
+                style={{ borderColor: "#e2e8f0", background: isConferido ? "#f8fafc" : "#ffffff", opacity: isConferido ? 0.85 : 1 }}
               >
                 <div className="flex flex-wrap items-start gap-3 justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-sm" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full text-white font-medium" style={{ background: r.statusColor }}>
-                        {r.statusInicial}
+                      <span
+                        className="text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide"
+                        style={{ background: "#eef2ff", color: "#4338ca" }}
+                        title="Cadastro recebido pelo formulário público da internet"
+                      >
+                        Origem: Formulário público
                       </span>
-                      {isAnalisado && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium uppercase">Analisado</span>
-                      )}
                     </div>
+
+                    {/* Badges contextuais — uma por faceta, sempre com rótulo do contexto */}
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      {([r.facetas.formulario, r.facetas.cadastro, r.facetas.financeiro, r.facetas.processo] as FacetaBadge[]).map((f, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] px-2 py-0.5 rounded-full font-medium border"
+                          style={{ borderColor: f.color, color: f.color, background: "#ffffff" }}
+                        >
+                          <strong>{f.contexto}:</strong> {f.valor}
+                        </span>
+                      ))}
+                    </div>
+
                     <div className="text-xs text-slate-600 mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                       <span><strong>CPF:</strong> {c.cpf || "—"}</span>
                       <span><strong>Recebido:</strong> {formatDateTime(c.created_at)}</span>
-                      <span><strong>Origem:</strong> Formulário público</span>
                       {c.end1_cidade && <span>{c.end1_cidade}/{c.end1_estado}</span>}
                     </div>
                     <div className="text-xs text-slate-700 mt-1.5">
@@ -374,10 +473,15 @@ export default function DashboardNovosCadastrosRecebidos() {
                       </Link>
                     )}
                     <button
-                      onClick={() => toggleAnalisado(c.id)}
+                      onClick={() => toggleConferido(c.id)}
                       className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                      title={isConferido
+                        ? "Reabrir conferência do formulário público (volta ao status Recebido)"
+                        : "Marca apenas que o formulário público foi lido/conferido. Não aprova cadastro, pagamento ou processo."}
                     >
-                      <CheckCircle2 className="w-3 h-3" /> {isAnalisado ? "Desfazer" : "Marcar analisado"}
+                      {isConferido
+                        ? (<><ClipboardCheck className="w-3 h-3" /> Reabrir conferência</>)
+                        : (<><CheckCircle2 className="w-3 h-3" /> Marcar formulário como conferido</>)}
                     </button>
                     <button
                       onClick={() => arquivar(c.id)}
