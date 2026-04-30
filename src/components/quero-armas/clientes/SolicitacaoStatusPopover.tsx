@@ -93,14 +93,19 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
   const save = async () => {
     setSaving(true);
     try {
+      // Quando sem_checklist_configurado, ignora alteração de status_servico
+      // (backend também bloqueia, mas evitamos ida ao servidor).
+      const updatePayload: Record<string, any> = {
+        status_financeiro: statusFinanceiro,
+        status_processo: statusProcesso,
+        observacoes: observacoes || null,
+      };
+      if (!semChecklist) {
+        updatePayload.status_servico = statusServico;
+      }
       const { error } = await supabase
         .from("qa_solicitacoes_servico" as any)
-        .update({
-          status_servico: statusServico,
-          status_financeiro: statusFinanceiro,
-          status_processo: statusProcesso,
-          observacoes: observacoes || null,
-        })
+        .update(updatePayload)
         .eq("id", solicitacaoId);
       if (error) throw error;
 
@@ -181,6 +186,12 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
               value={statusServico}
               onChange={setStatusServico}
               options={STATUS_SERVICO as readonly string[]}
+              disabled={semChecklist}
+              hint={
+                semChecklist
+                  ? "Status bloqueado até configuração do checklist"
+                  : undefined
+              }
             />
             <SelectField
               label="Status financeiro"
@@ -241,11 +252,15 @@ function SelectField({
   value,
   onChange,
   options,
+  disabled,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
+  disabled?: boolean;
+  hint?: string;
 }) {
   return (
     <div>
@@ -255,7 +270,12 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-8 text-xs bg-slate-50 border border-slate-200 rounded-md px-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+        disabled={disabled}
+        className={`w-full h-8 text-xs border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 ${
+          disabled
+            ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+            : "bg-slate-50 border-slate-200 text-slate-700"
+        }`}
       >
         {options.map((o) => (
           <option key={o} value={o}>
@@ -263,6 +283,11 @@ function SelectField({
           </option>
         ))}
       </select>
+      {hint && (
+        <div className="mt-1 text-[9px] uppercase tracking-wider text-amber-700">
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
