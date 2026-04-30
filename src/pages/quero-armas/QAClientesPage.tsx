@@ -2620,7 +2620,14 @@ export default function QAClientesPage() {
         <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} craf={crafModal.item} />
         <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} gte={gteModal.item} />
         <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} cadastro={crModal.item} />
-        <VendaModal open={vendaModal.open} onClose={() => setVendaModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} venda={vendaModal.item} />
+        <VendaModal
+          open={vendaModal.open}
+          onClose={() => setVendaModal({ open: false })}
+          onSaved={() => loadSubData(selected!)}
+          clienteId={clienteIdForSub}
+          venda={vendaModal.item}
+          solicitacaoId={vendaModal.solicitacaoId ?? null}
+        />
         <FiliacaoModal open={filiacaoModal.open} onClose={() => setFiliacaoModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} filiacao={filiacaoModal.item} />
         <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} />
       </div>
