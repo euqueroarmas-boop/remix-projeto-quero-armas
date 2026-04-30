@@ -287,7 +287,7 @@ export default function DraftingView({
 
       {/* Stall warning */}
       {stalled && isStreaming && (
-        <div className="mx-4 mb-2 bg-amber-500/5 border border-amber-500/10 rounded-lg p-2 text-[11px] text-amber-400 flex items-center gap-2">
+        <div className="mx-4 mb-2 bg-amber-50 border border-amber-200 rounded-lg p-2 text-[11px] text-amber-800 flex items-center gap-2">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>A geração parece mais lenta que o normal. Aguardando resposta da IA...</span>
         </div>
@@ -313,11 +313,11 @@ export default function DraftingView({
       {/* Error state */}
       {isError && error && (
         <div className="px-4 pb-4">
-          <div className="bg-red-500/5 border border-red-500/10 rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-2 text-red-400 text-[12px] font-medium">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-2 text-red-700 text-[12px] font-medium">
               <AlertTriangle className="h-4 w-4" /> Erro na geração
             </div>
-            <p className="text-[11px] text-red-400/80">{error}</p>
+            <p className="text-[11px] text-red-600">{error}</p>
             {streamedText.length > 0 && (
               <p className="text-[10px] text-slate-500">
                 O rascunho parcial acima foi preservado. Você pode copiá-lo ou tentar novamente.
@@ -325,7 +325,7 @@ export default function DraftingView({
             )}
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={onRetry}
-                className="h-7 text-[10px] border-red-500/20 text-red-400">
+                className="h-7 text-[10px] border-red-300 text-red-700 hover:bg-red-50">
                 <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
               </Button>
               {streamedText.length > 0 && (
@@ -342,13 +342,13 @@ export default function DraftingView({
       {/* Validation errors */}
       {isDone && hasValidationErrors && (
         <div className="px-4 pb-3">
-          <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3 space-y-1.5">
-            <div className="flex items-center gap-2 text-amber-400 text-[12px] font-medium">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1.5">
+            <div className="flex items-center gap-2 text-amber-800 text-[12px] font-medium">
               <AlertTriangle className="h-4 w-4" /> Avisos na validação final
             </div>
             <ul className="space-y-0.5">
               {validationErrors!.map((err, i) => (
-                <li key={i} className="text-[11px] text-amber-400/80 flex items-start gap-1.5">
+                <li key={i} className="text-[11px] text-amber-700 flex items-start gap-1.5">
                   <span className="shrink-0 mt-0.5">•</span> {err}
                 </li>
               ))}
@@ -375,7 +375,7 @@ export default function DraftingView({
             <Button
               onClick={onExportDocx}
               disabled={isExporting || !streamedText}
-              className="h-14 text-base font-medium bg-slate-50 hover:bg-slate-100 text-slate-700 border border-[#2a2a2a] active:scale-[0.98] transition-transform"
+              className="h-14 text-base font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 active:scale-[0.98] transition-transform"
             >
               {isExporting ? (
                 <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Gerando Word...</>
@@ -386,16 +386,16 @@ export default function DraftingView({
           </div>
 
           {savedCasoId && (
-            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-3 flex items-center justify-between">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-400" />
+                <CheckCircle className="h-4 w-4 text-emerald-700" />
                 <div>
-                  <div className="text-[12px] text-emerald-400 font-medium">Caso salvo com sucesso</div>
-                  <div className="text-[9px] text-slate-400 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
+                  <div className="text-[12px] text-emerald-700 font-medium">Caso salvo com sucesso</div>
+                  <div className="text-[9px] text-slate-500 font-mono">ID: {savedCasoId.slice(0, 8)}...</div>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={onOpenCase}
-                className="h-7 text-[10px] border-emerald-500/20 text-emerald-400">
+                className="h-7 text-[10px] border-emerald-300 text-emerald-700 hover:bg-emerald-50">
                 <FolderOpen className="h-3 w-3 mr-1" /> Abrir Caso
               </Button>
             </div>
@@ -406,22 +406,22 @@ export default function DraftingView({
               <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg p-3">
                 <div className="text-center">
                   <div className={`text-lg font-semibold font-mono ${
-                    (result.score_confianca || 0) >= 0.7 ? "text-emerald-400" :
-                    (result.score_confianca || 0) >= 0.4 ? "text-amber-400" : "text-red-400"
+                    (result.score_confianca || 0) >= 0.7 ? "text-emerald-700" :
+                    (result.score_confianca || 0) >= 0.4 ? "text-amber-700" : "text-red-600"
                   }`}>
                     {((result.score_confianca || 0) * 100).toFixed(0)}%
                   </div>
-                  <div className="text-[9px] text-slate-400 uppercase tracking-wider">Confiança</div>
+                  <div className="text-[9px] text-slate-500 uppercase tracking-wider">Confiança</div>
                 </div>
                 <div className="flex-1 text-[11px] text-slate-500">
                   {result.fontes_utilizadas?.length || 0} fontes • {result.fontes_utilizadas?.filter((f: any) => f.validada).length || 0} validadas
                   {result.circunscricao_utilizada && (
-                    <div className="text-emerald-400/60 mt-0.5 text-[10px]">✓ {result.circunscricao_utilizada.unidade_pf}</div>
+                    <div className="text-emerald-700 mt-0.5 text-[10px]">✓ {result.circunscricao_utilizada.unidade_pf}</div>
                   )}
                 </div>
               </div>
               {(result.quality_issues?.length || 0) > 0 && (
-                <div className="text-[10px] text-amber-400/70 bg-amber-500/5 border border-amber-500/10 rounded-lg p-2">
+                <div className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
                   <span className="font-medium">Avisos de qualidade:</span> {result.quality_issues?.join(", ")}
                 </div>
               )}
