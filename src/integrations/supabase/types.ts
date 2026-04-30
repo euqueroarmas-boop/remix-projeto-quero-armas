@@ -6572,6 +6572,7 @@ export type Database = {
           motivo_correcao: string | null
           numero_processo: string | null
           origem_proposta: string | null
+          solicitacao_id: string | null
           status: string
           status_validacao_valor: string | null
           validacao_valor_atualizado_em: string | null
@@ -6596,6 +6597,7 @@ export type Database = {
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
+          solicitacao_id?: string | null
           status?: string
           status_validacao_valor?: string | null
           validacao_valor_atualizado_em?: string | null
@@ -6620,6 +6622,7 @@ export type Database = {
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
+          solicitacao_id?: string | null
           status?: string
           status_validacao_valor?: string | null
           validacao_valor_atualizado_em?: string | null
@@ -6670,6 +6673,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes_homologacao_dry_run"
             referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "qa_vendas_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_solicitacoes_servico"
+            referencedColumns: ["id"]
           },
         ]
       }
