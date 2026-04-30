@@ -4,6 +4,10 @@ import { resolveServicoFromInteresse, type ServicoCanonico } from "@/lib/quero-a
 
 export type SolicitacaoPublica = {
   cadastro_publico_id: string;
+  /** ID canônico em qa_solicitacoes_servico (uuid). Null se for fallback legado não materializado. */
+  solicitacao_id: string | null;
+  /** Status bruto do serviço em qa_solicitacoes_servico (única fonte de verdade). */
+  status_servico: string;
   cliente_id_vinculado: number | null;
   servico_interesse: string | null;
   servico: ServicoCanonico;
@@ -58,7 +62,8 @@ export function useSolicitacoesPublicasDoCliente(
 
       const fromCanon: SolicitacaoPublica[] = canonRows.map((r) => {
         const ja =
-          r.servico_id != null && servicoIdsContratados.has(Number(r.servico_id));
+          r.status_servico === "contratado" ||
+          (r.servico_id != null && servicoIdsContratados.has(Number(r.servico_id)));
         const servico: ServicoCanonico = {
           slug: r.service_slug,
           nome: r.service_name,
@@ -67,6 +72,8 @@ export function useSolicitacoesPublicasDoCliente(
         };
         return {
           cadastro_publico_id: String(r.cadastro_publico_id ?? r.id),
+          solicitacao_id: String(r.id),
+          status_servico: r.status_servico ?? "aguardando_contratacao",
           cliente_id_vinculado: r.cliente_id ?? null,
           servico_interesse: r.servico_interesse_raw ?? r.service_name,
           servico,
@@ -96,6 +103,8 @@ export function useSolicitacoesPublicasDoCliente(
         const ja = servico.servico_id != null && servicoIdsContratados.has(servico.servico_id);
           return {
             cadastro_publico_id: String(r.id),
+            solicitacao_id: null,
+            status_servico: "aguardando_contratacao" as const,
             cliente_id_vinculado: r.cliente_id_vinculado ?? null,
             servico_interesse: r.servico_interesse ?? null,
             servico,

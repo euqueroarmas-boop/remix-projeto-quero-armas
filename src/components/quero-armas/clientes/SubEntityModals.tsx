@@ -372,8 +372,11 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
 interface VendaModalProps {
   open: boolean; onClose: () => void; onSaved: () => void;
   clienteId: number; venda?: any;
+  /** Quando preenchido, vincula a venda criada à solicitação (qa_solicitacoes_servico)
+   *  e atualiza o status_servico daquela solicitação para 'contratado'. */
+  solicitacaoId?: string | null;
 }
-export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaModalProps) {
+export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitacaoId }: VendaModalProps) {
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
@@ -472,9 +475,22 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         vendaId = venda.id_legado ?? venda.id;
         await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaId);
       } else {
-        const { data, error } = await supabase.from("qa_vendas" as any).insert({ ...payload, cliente_id: clienteId }).select("id, id_legado").single();
+        const insertPayload: any = { ...payload, cliente_id: clienteId };
+        if (solicitacaoId) insertPayload.solicitacao_id = solicitacaoId;
+        const { data, error } = await supabase.from("qa_vendas" as any).insert(insertPayload).select("id, id_legado").single();
         if (error) throw error;
         vendaId = (data as any).id_legado ?? (data as any).id;
+        // Marca solicitação canônica como contratada (única fonte de verdade).
+        if (solicitacaoId) {
+          const vendaPk = (data as any).id;
+          await supabase
+            .from("qa_solicitacoes_servico" as any)
+            .update({
+              status_servico: "contratado",
+              venda_id: vendaPk,
+            })
+            .eq("id", solicitacaoId);
+        }
       }
       const defaultItemStatus = getDefaultItemStatus();
       const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo, status }]) => ({
