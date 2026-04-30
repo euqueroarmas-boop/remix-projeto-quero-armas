@@ -461,13 +461,43 @@ export default function QAContratarConfirmarPage() {
             )}
           </div>
 
-          {/* Aviso pagamento manual */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
-            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-            <p>
-              <strong>Sem pagamento online por enquanto.</strong> Após confirmar, nossa equipe entra em
-              contato para combinar o pagamento e liberar seu processo.
+          {/* Step 4: Valor combinado (Fase 16-E) */}
+          <div className="rounded-xl bg-white border border-slate-200 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="h-4 w-4 text-amber-600" />
+              <h2 className="text-sm font-bold text-slate-900 uppercase">
+                4. Valor combinado
+              </h2>
+            </div>
+            <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+              Informe o valor combinado com a Quero Armas para este serviço. Esse valor
+              será <strong>validado pela Equipe Operacional</strong>. Após a aprovação, sua
+              contratação seguirá para a geração do processo.
             </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-slate-700">R$</span>
+              <input
+                inputMode="decimal"
+                placeholder="0,00"
+                value={valorInformado}
+                onChange={(e) => setValorInformado(e.target.value.replace(/[^0-9,.]/g, ""))}
+                className="flex-1 h-10 px-3 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+              />
+            </div>
+            <textarea
+              rows={2}
+              placeholder="Observações para a equipe (opcional)"
+              value={obsContratacao}
+              onChange={(e) => setObsContratacao(e.target.value.toUpperCase())}
+              className="mt-2 w-full px-3 py-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+            />
+            <div className="mt-3 flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+              <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <p>
+                Sua contratação ficará <strong>aguardando validação</strong>. Não há cobrança
+                automática — a Equipe Operacional confirma o valor antes da geração do processo.
+              </p>
+            </div>
           </div>
 
           {/* CTA */}
