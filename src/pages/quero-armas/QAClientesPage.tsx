@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
-  ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
+  Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
 } from "lucide-react";
 import { calcularSla } from "@/lib/qaSlaCadastro";
@@ -29,7 +29,6 @@ import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
-// SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
 import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
