@@ -3,70 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, ChevronLeft, ShieldCheck, KeyRound, CheckCircle2, AlertCircle, Copy, Mail } from "lucide-react";
 import { toast } from "sonner";
-import logoWhite from "@/assets/logo-white.png";
+import logoColor from "@/assets/logo-color.png";
 
 type Step = "identify" | "needs_email" | "otp" | "success" | "awaiting_admin" | "not_found";
-
-const MONO = { fontFamily: "'JetBrains Mono', monospace" } as const;
-
-const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <label className="text-[10px] tracking-[0.2em] text-zinc-500" style={MONO}>
-    {children}
-  </label>
-);
-
-const TacticalInput = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
-  <div className="flex items-center border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
-    <span className="text-[#ff2a2a]/60 text-sm pl-3" style={MONO}>&gt;</span>
-    <input
-      {...props}
-      className={`w-full bg-transparent p-3 text-sm text-white outline-none normal-case placeholder:text-zinc-700 placeholder:tracking-wider ${props.className || ""}`}
-      style={{ ...MONO, ...(props.style || {}) }}
-    />
-  </div>
-);
-
-const PrimaryButton = ({ children, onClick, disabled, type = "button" }: any) => (
-  <button
-    type={type}
-    onClick={onClick}
-    disabled={disabled}
-    className="w-full relative bg-[#ff2a2a]/5 hover:bg-[#ff2a2a]/10 border border-[#ff2a2a]/40 hover:border-[#ff2a2a] px-6 py-3.5 flex items-center justify-center gap-2 transition-all shadow-[0_0_25px_rgba(255,42,42,0.12)] hover:shadow-[0_0_45px_rgba(255,42,42,0.3)] disabled:opacity-50 disabled:cursor-not-allowed text-[13px] tracking-[0.2em] text-white font-bold"
-  >
-    <div className="absolute top-0 left-0 size-2.5 border-t-2 border-l-2 border-[#ff2a2a]" />
-    <div className="absolute top-0 right-0 size-2.5 border-t-2 border-r-2 border-[#ff2a2a]" />
-    <div className="absolute bottom-0 left-0 size-2.5 border-b-2 border-l-2 border-[#ff2a2a]" />
-    <div className="absolute bottom-0 right-0 size-2.5 border-b-2 border-r-2 border-[#ff2a2a]" />
-    {children}
-  </button>
-);
-
-const Notice = ({
-  tone,
-  icon: Icon,
-  children,
-}: {
-  tone: "warn" | "success" | "info";
-  icon: any;
-  children: React.ReactNode;
-}) => {
-  const colors =
-    tone === "success"
-      ? { border: "border-[#22c55e]/40", text: "text-[#86efac]", icon: "text-[#22c55e]", bg: "bg-[#22c55e]/5" }
-      : tone === "warn"
-      ? { border: "border-[#f59e0b]/40", text: "text-[#fcd34d]", icon: "text-[#f59e0b]", bg: "bg-[#f59e0b]/5" }
-      : { border: "border-[#1f1f1f]", text: "text-zinc-400", icon: "text-zinc-500", bg: "bg-black/40" };
-  return (
-    <div className={`relative ${colors.bg} border ${colors.border} p-4 flex items-start gap-3`}>
-      <div className={`absolute top-0 left-0 size-2 border-t border-l ${colors.border}`} />
-      <div className={`absolute bottom-0 right-0 size-2 border-b border-r ${colors.border}`} />
-      <Icon className={`h-4 w-4 ${colors.icon} mt-0.5 shrink-0`} />
-      <div className={`text-[12px] leading-relaxed ${colors.text} normal-case`} style={MONO}>
-        {children}
-      </div>
-    </div>
-  );
-};
 
 export default function QAAtivarAcessoPage() {
   const navigate = useNavigate();
@@ -153,89 +92,56 @@ export default function QAAtivarAcessoPage() {
   };
 
   const stepLabel: Record<Step, string> = {
-    identify: "ETAPA_01 // IDENTIFICAR_OPERADOR",
-    needs_email: "ETAPA_02 // E-MAIL_AUXILIAR",
-    otp: "ETAPA_02 // VALIDAR_CÓDIGO",
-    success: "ETAPA_03 // CREDENCIAIS_LIBERADAS",
-    awaiting_admin: "PENDENTE // AGUARDANDO_AUTORIZAÇÃO",
-    not_found: "FALHA // CADASTRO_NÃO_LOCALIZADO",
+    identify: "Identificar cadastro",
+    needs_email: "E-mail auxiliar",
+    otp: "Validar código",
+    success: "Credenciais liberadas",
+    awaiting_admin: "Aguardando autorização",
+    not_found: "Cadastro não localizado",
   };
 
   return (
-    <div
-      className="qa-ativar-shell relative w-full flex items-center justify-center p-4 bg-[#030303] text-[#e0e0e0] uppercase"
-      style={{ fontFamily: "'Rajdhani', sans-serif" }}
-    >
-      {/* Tactical grid */}
-      <div className="absolute inset-0 opacity-60 pointer-events-none"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,42,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,42,42,0.04) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-      {/* Vignette */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(circle at center, transparent 0%, #030303 80%)" }}
-      />
-      {/* Scanlines */}
-      <div className="absolute inset-0 pointer-events-none opacity-20"
-        style={{
-          backgroundImage: "linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 50%)",
-          backgroundSize: "100% 4px",
-        }}
-      />
-
-      {/* Terminal */}
-      <div className="relative z-10 w-full max-w-[420px] bg-[#0a0a0a]/90 md:border md:border-[#1f1f1f] backdrop-blur-md p-6 flex flex-col gap-6 md:shadow-[0_0_60px_rgba(255,42,42,0.05)]">
-        {/* HUD bar */}
-        <div className="flex items-center justify-between text-[11px] tracking-[0.2em] text-zinc-500" style={MONO}>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-slate-50">
+      <div className="relative z-10 w-full max-w-[440px] bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col gap-6">
+        <div className="flex items-center justify-between text-xs text-slate-500">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 hover:text-[#ff2a2a] transition-colors group"
+            className="flex items-center gap-1 hover:text-slate-900 transition-colors"
           >
-            <ChevronLeft className="h-3 w-3 text-[#ff2a2a] group-hover:-translate-x-0.5 transition-transform" />
-            VOLTAR
+            <ChevronLeft className="h-4 w-4" />
+            Voltar
           </button>
           <div className="flex items-center gap-2">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full bg-[#ff2a2a] opacity-75 animate-ping" />
-              <span className="relative inline-flex h-1.5 w-1.5 bg-[#ff2a2a]" />
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            <span>ATIVACAO_SEGURA</span>
+            <span>Ativação segura</span>
           </div>
         </div>
 
-        {/* Branding */}
         <div className="flex flex-col items-center gap-3">
-          <img
-            src={logoWhite}
-            alt="Eu Quero Armas"
-            className="h-10 w-auto object-contain drop-shadow-[0_4px_20px_rgba(255,42,42,0.25)]"
-            draggable={false}
-          />
-          <div className="text-[9px] tracking-[0.3em] text-zinc-500 px-3 py-1 border border-zinc-800" style={MONO}>
-            ATIVAR_PRIMEIRO_ACESSO
+          <img src={logoColor} alt="Eu Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
+          <div className="text-[11px] tracking-wider text-slate-500 px-3 py-1 border border-slate-200 rounded-full bg-slate-50">
+            Ativar primeiro acesso
           </div>
         </div>
 
-        {/* Step header */}
         <div className="flex flex-col gap-1">
-          <div className="text-[10px] tracking-[0.2em] text-[#ff2a2a]/80 pl-2 border-l-2 border-[#ff2a2a]/60" style={MONO}>
-            &gt; {stepLabel[step]}
+          <div className="text-xs font-semibold text-slate-900 pl-3 border-l-2 border-slate-900">
+            {stepLabel[step]}
           </div>
         </div>
 
-        {/* ─── STEPS ─── */}
         {step === "identify" && (
           <div className="flex flex-col gap-5">
-            <p className="text-[12px] text-zinc-400 normal-case leading-relaxed" style={MONO}>
-              Informe seu e-mail, CPF ou CNPJ para localizarmos seu cadastro no sistema.
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Informe seu e-mail, CPF ou CNPJ para localizarmos seu cadastro.
             </p>
             <div className="flex flex-col gap-2">
-              <FieldLabel>E-MAIL / CPF / CNPJ</FieldLabel>
-              <TacticalInput
+              <label className="text-xs font-medium text-slate-700">E-mail / CPF / CNPJ</label>
+              <input
                 type="text"
                 name="username"
                 value={identificador}
@@ -247,31 +153,39 @@ export default function QAAtivarAcessoPage() {
                 autoCorrect="off"
                 spellCheck={false}
                 autoFocus
+                className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-colors"
               />
             </div>
-            <PrimaryButton onClick={() => requestOtp()} disabled={loading}>
+            <button
+              type="button"
+              onClick={() => requestOtp()}
+              disabled={loading}
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              LOCALIZAR / ENVIAR CÓDIGO
-            </PrimaryButton>
+              Localizar / enviar código
+            </button>
             <button
               onClick={() => navigate("/area-do-cliente/login")}
-              className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors text-center"
-              style={MONO}
+              className="text-xs text-slate-500 hover:text-slate-900 transition-colors text-center"
             >
-              [ JÁ TENHO ACESSO → ENTRAR NO PORTAL ]
+              Já tenho acesso → entrar no portal
             </button>
           </div>
         )}
 
         {step === "needs_email" && (
           <div className="flex flex-col gap-5">
-            <Notice tone="warn" icon={AlertCircle}>
-              Olá{clienteNome ? `, ${clienteNome}` : ""}! Cadastro localizado, mas sem e-mail registrado.
-              Informe um e-mail válido. <strong>A liberação passa por aprovação do administrador.</strong>
-            </Notice>
+            <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                Olá{clienteNome ? `, ${clienteNome}` : ""}! Cadastro localizado, mas sem e-mail registrado.
+                Informe um e-mail válido. <strong>A liberação passa por aprovação do administrador.</strong>
+              </div>
+            </div>
             <div className="flex flex-col gap-2">
-              <FieldLabel>E-MAIL PARA ACESSO</FieldLabel>
-              <TacticalInput
+              <label className="text-xs font-medium text-slate-700">E-mail para acesso</label>
+              <input
                 type="email"
                 name="email"
                 value={emailAlt}
@@ -281,94 +195,105 @@ export default function QAAtivarAcessoPage() {
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
+                className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
               />
             </div>
-            <PrimaryButton onClick={() => requestOtp({ withEmail: true })} disabled={loading}>
+            <button
+              type="button"
+              onClick={() => requestOtp({ withEmail: true })}
+              disabled={loading}
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              ENVIAR CÓDIGO
-            </PrimaryButton>
+              Enviar código
+            </button>
             <button
               onClick={() => setStep("identify")}
-              className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors flex items-center gap-1 self-start"
-              style={MONO}
+              className="text-xs text-slate-500 hover:text-slate-900 flex items-center gap-1 self-start"
             >
-              <ChevronLeft className="h-3 w-3" /> VOLTAR
+              <ChevronLeft className="h-3 w-3" /> Voltar
             </button>
           </div>
         )}
 
         {step === "otp" && (
           <div className="flex flex-col gap-5">
-            <p className="text-[12px] text-zinc-400 normal-case leading-relaxed" style={MONO}>
-              Código enviado para <strong className="text-white">{emailMascarado || "seu e-mail"}</strong>.
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Código enviado para <strong className="text-slate-900">{emailMascarado || "seu e-mail"}</strong>.
               Digite-o abaixo ou utilize o link mágico.
             </p>
             {!otpId && (
               <div className="flex flex-col gap-2">
-                <FieldLabel>TOKEN (DO LINK)</FieldLabel>
-                <TacticalInput
+                <label className="text-xs font-medium text-slate-700">Token (do link)</label>
+                <input
                   value={otpId || ""}
                   onChange={(e) => setOtpId(e.target.value)}
                   placeholder="cole o token do link"
+                  className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
                 />
               </div>
             )}
             <div className="flex flex-col gap-2">
-              <FieldLabel>CÓDIGO 6 DÍGITOS</FieldLabel>
-              <div className="border-b border-[#1f1f1f] focus-within:border-[#ff2a2a]/60 bg-black/40 transition-colors">
-                <input
-                  type="text"
-                  name="one-time-code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  className="w-full bg-transparent p-3 text-center text-2xl tracking-[0.5em] text-white outline-none placeholder:text-zinc-700"
-                  style={MONO}
-                />
-              </div>
+              <label className="text-xs font-medium text-slate-700">Código de 6 dígitos</label>
+              <input
+                type="text"
+                name="one-time-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                className="w-full h-14 px-3 text-center text-2xl font-mono tracking-[0.5em] rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-300 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+              />
             </div>
-            <PrimaryButton onClick={() => verifyCode()} disabled={loading}>
+            <button
+              type="button"
+              onClick={() => verifyCode()}
+              disabled={loading}
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-              VALIDAR / LIBERAR ACESSO
-            </PrimaryButton>
+              Validar / liberar acesso
+            </button>
             <button
               onClick={() => requestOtp()}
-              className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors text-center"
-              style={MONO}
+              className="text-xs text-slate-500 hover:text-slate-900 text-center"
             >
-              [ REENVIAR CÓDIGO ]
+              Reenviar código
             </button>
           </div>
         )}
 
         {step === "success" && credentials && (
           <div className="flex flex-col gap-5">
-            <Notice tone="success" icon={CheckCircle2}>
-              <strong>Acesso liberado.</strong> Use as credenciais abaixo. Recomendamos alterar a senha no primeiro acesso.
-            </Notice>
+            <div className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+              <div>
+                <strong>Acesso liberado.</strong> Use as credenciais abaixo. Recomendamos alterar a senha no primeiro acesso.
+              </div>
+            </div>
             <div className="flex flex-col gap-3">
               {[
-                { label: "E-MAIL", value: credentials.email, copyLabel: "E-mail" },
-                { label: "SENHA TEMPORÁRIA", value: credentials.password, copyLabel: "Senha" },
+                { label: "E-mail", value: credentials.email, copyLabel: "E-mail" },
+                { label: "Senha temporária", value: credentials.password, copyLabel: "Senha" },
               ].map((c) => (
-                <div key={c.label} className="relative flex items-center justify-between bg-black/40 border border-[#1f1f1f] p-3">
+                <div key={c.label} className="relative flex items-center justify-between bg-slate-50 border border-slate-200 rounded-md p-3">
                   <div className="text-xs flex-1 min-w-0">
-                    <div className="text-[9px] tracking-[0.25em] text-zinc-500" style={MONO}>{c.label}</div>
-                    <div className="text-sm text-white truncate normal-case" style={MONO}>{c.value}</div>
+                    <div className="text-[11px] text-slate-500">{c.label}</div>
+                    <div className="text-sm text-slate-900 truncate font-mono">{c.value}</div>
                   </div>
                   <button
                     onClick={() => copy(c.value, c.copyLabel)}
-                    className="text-zinc-500 hover:text-[#ff2a2a] transition-colors p-1"
+                    className="text-slate-500 hover:text-slate-900 transition-colors p-1"
                   >
                     <Copy className="h-4 w-4" />
                   </button>
                 </div>
               ))}
             </div>
-            <PrimaryButton
+            <button
+              type="button"
               onClick={() =>
                 navigate("/area-do-cliente/login", {
                   state: {
@@ -377,58 +302,59 @@ export default function QAAtivarAcessoPage() {
                   },
                 })
               }
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors"
             >
               <ShieldCheck className="h-4 w-4" />
-              IR PARA O PORTAL
-            </PrimaryButton>
+              Ir para o portal
+            </button>
           </div>
         )}
 
         {step === "awaiting_admin" && (
           <div className="flex flex-col gap-5">
-            <Notice tone="warn" icon={AlertCircle}>
-              E-mail validado. Sua solicitação foi enviada para aprovação do administrador.
-              Você receberá uma confirmação assim que o acesso for liberado.
-            </Notice>
-            <PrimaryButton onClick={() => navigate("/")}>
+            <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                E-mail validado. Sua solicitação foi enviada para aprovação do administrador.
+                Você receberá uma confirmação assim que o acesso for liberado.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold"
+            >
               <ChevronLeft className="h-4 w-4" />
-              VOLTAR AO INÍCIO
-            </PrimaryButton>
+              Voltar ao início
+            </button>
           </div>
         )}
 
         {step === "not_found" && (
           <div className="flex flex-col gap-5">
-            <Notice tone="info" icon={AlertCircle}>
-              Não encontramos um cadastro com esses dados. Você pode preencher um pré-cadastro para análise.
-            </Notice>
-            <PrimaryButton onClick={() => navigate("/cadastro")}>
+            <div className="flex items-start gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              <AlertCircle className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
+              <div>
+                Não encontramos um cadastro com esses dados. Você pode preencher um pré-cadastro para análise.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/cadastro")}
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold"
+            >
               <ShieldCheck className="h-4 w-4" />
-              FAZER PRÉ-CADASTRO
-            </PrimaryButton>
+              Fazer pré-cadastro
+            </button>
             <button
               onClick={() => setStep("identify")}
-              className="text-[10px] text-zinc-500 hover:text-[#ff2a2a] tracking-[0.2em] transition-colors text-center"
-              style={MONO}
+              className="text-xs text-slate-500 hover:text-slate-900 text-center"
             >
-              [ TENTAR COM OUTRO IDENTIFICADOR ]
+              Tentar com outro identificador
             </button>
           </div>
         )}
       </div>
-
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap"
-      />
-      <style>{`
-        html, body { scrollbar-width: none; -ms-overflow-style: none; }
-        html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; height: 0; }
-        .qa-ativar-shell { height: 100svh; min-height: 100svh; overflow: hidden; }
-        @media (max-height: 820px) {
-          .qa-ativar-shell { height: auto; min-height: 100svh; overflow-y: auto; align-items: flex-start; padding-top: 2rem; padding-bottom: 2rem; }
-        }
-      `}</style>
     </div>
   );
 }
