@@ -591,7 +591,7 @@ export default function QAClientePortalPage() {
                     background: "rgba(201,169,97,0.08)",
                   }}
                 >
-                  Premium
+                  {cliente?.tipo_cliente === "cliente_app" ? "Arsenal Gratuito" : "Premium"}
                 </span>
               </div>
 
