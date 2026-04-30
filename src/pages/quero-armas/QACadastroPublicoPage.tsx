@@ -332,6 +332,7 @@ export default function QACadastroPublicoPage() {
 
       setExtracted(prev => ({
         ...prev,
+        tipo_documento_identidade: isCin ? "CIN" : (prev.tipo_documento_identidade || "RG"),
         nome_completo: id.nome_completo || prev.nome_completo,
         // CPF: preenche sempre que vier um CPF válido de 11 dígitos, mesmo com
         // ambiguidade. A confirmação manual bloqueia apenas a conclusão final
@@ -396,7 +397,7 @@ export default function QACadastroPublicoPage() {
         categoria: extracted.categoria_titular || "pessoa_fisica",
         needsCpfRgConfirmation: !!cpfRgAmbiguity,
         cpfRgConfirmed,
-        documentoIdentidadeTipo: tipoDocumentoIdentidade,
+        documentoIdentidadeTipo: extracted.tipo_documento_identidade || tipoDocumentoIdentidade,
       });
       const divergencias = getDivergencias(extracted, extractedFromDoc);
       if (blocking.length > 0) {
@@ -458,6 +459,8 @@ export default function QACadastroPublicoPage() {
       const payload = {
         nome_completo: extracted.nome_completo.trim(),
         cpf: cpfDigits,
+        tipo_documento_identidade: extracted.tipo_documento_identidade || (String(tipoDocumentoIdentidade).toUpperCase().includes("CIN") ? "CIN" : "RG"),
+        numero_documento_identidade: extracted.rg || null,
         rg: extracted.rg || null,
         emissor_rg: extracted.emissor_rg || null,
         data_nascimento: brDateToIso(extracted.data_nascimento) || null,
