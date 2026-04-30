@@ -22,6 +22,7 @@ import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-reac
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
+import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -115,6 +116,7 @@ export default function QAClientePortalPage() {
   const [cliente, setCliente] = useState<any>(null);
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
+  const [catalogoByServicoId, setCatalogoByServicoId] = useState<Record<number, { service_slug: string; nome: string }>>({});
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
@@ -288,6 +290,23 @@ export default function QAClientePortalPage() {
             .select("*")
             .in("venda_id", vendaIds);
           itensData = (iData as any[]) ?? [];
+          const servicoIds = Array.from(new Set(itensData.map((i: any) => Number(i.servico_id)).filter(Number.isFinite)));
+          if (servicoIds.length > 0) {
+            const { data: catalogoData } = await supabase
+              .from("qa_servicos_catalogo" as any)
+              .select("servico_id, slug, nome")
+              .in("servico_id", servicoIds)
+              .eq("ativo", true);
+            const catalogMap: Record<number, { service_slug: string; nome: string }> = {};
+            ((catalogoData as any[]) ?? []).forEach((c: any) => {
+              if (Number.isFinite(Number(c.servico_id)) && !catalogMap[Number(c.servico_id)]) {
+                catalogMap[Number(c.servico_id)] = { service_slug: c.slug, nome: c.nome };
+              }
+            });
+            setCatalogoByServicoId(catalogMap);
+          } else {
+            setCatalogoByServicoId({});
+          }
         }
         setItens(itensData);
         setCadastro(Array.isArray(crRes.data) ? (crRes.data[0] ?? null) : crRes.data);
@@ -449,12 +468,13 @@ export default function QAClientePortalPage() {
     const events: { date: string; label: string; icon: any; color: string }[] = [];
     vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(230 80% 56%)" }));
     itens.forEach((it: any) => {
-      if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${SERVICO_MAP[it.servico_id] || "Serviço"} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
-      if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${SERVICO_MAP[it.servico_id] || "Serviço"} — Deferido`, icon: CheckCircle, color: "hsl(152 60% 42%)" });
+      const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || "Serviço";
+      if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${servicoLabel} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
+      if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${servicoLabel} — Deferido`, icon: CheckCircle, color: "hsl(152 60% 42%)" });
     });
     events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return events.slice(0, 12);
-  }, [vendas, itens]);
+  }, [vendas, itens, catalogoByServicoId, SERVICO_MAP]);
 
   if (loading) {
     return (
