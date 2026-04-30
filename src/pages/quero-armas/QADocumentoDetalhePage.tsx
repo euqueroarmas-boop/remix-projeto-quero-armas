@@ -360,7 +360,7 @@ export default function QADocumentoDetalhePage() {
           )}
           {isRef && (
             <Button size="sm" variant="outline" disabled={acting} onClick={() => handleAction("remover_referencia")}
-              className="border-neutral-600 text-slate-600 hover:bg-neutral-700/40 gap-1.5">
+              className="border-slate-300 text-slate-600 hover:bg-slate-100 gap-1.5">
               <StarOff className="h-3.5 w-3.5" /> Remover da referência
             </Button>
           )}

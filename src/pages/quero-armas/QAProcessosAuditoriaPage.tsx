@@ -302,7 +302,7 @@ export default function QAProcessosAuditoriaPage() {
                 <ol className="relative border-l-2 border-slate-200 ml-2 space-y-3">
                   {eventosSel.map(ev => (
                     <li key={ev.id} className="ml-4">
-                      <div className="absolute -left-[7px] w-3 h-3 rounded-full bg-slate-900 border-2 border-white" />
+                      <div className="absolute -left-[7px] w-3 h-3 rounded-full bg-[#2563EB] border-2 border-white" />
                       <div className="text-[10px] font-mono text-slate-400 uppercase">{formatDateTime(ev.created_at)}</div>
                       <div className="text-[12px] font-bold uppercase text-slate-800">{ev.tipo_evento}</div>
                       {ev.descricao && <div className="text-[11px] text-slate-600">{ev.descricao}</div>}

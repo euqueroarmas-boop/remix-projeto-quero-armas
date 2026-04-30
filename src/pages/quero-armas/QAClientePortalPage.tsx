@@ -514,7 +514,7 @@ export default function QAClientePortalPage() {
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             {/* Monograma premium light */}
             <div className="relative shrink-0">
-              <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-slate-900 ring-1 ring-slate-200 shadow-sm">
+              <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#2563EB] ring-1 ring-slate-200 shadow-sm">
                 <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
                   {(userName || "C")
                     .split(" ")
@@ -779,7 +779,7 @@ export default function QAClientePortalPage() {
                       {generatingAvatar ? "Criando avatar..." : "Gerar avatar tático com IA"}
                     </Button>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-slate-900/5 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-blue-50 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
                       <BadgeCheck className="h-3 w-3 text-emerald-600" /> Avatar tático ativo
                     </span>
                   )}

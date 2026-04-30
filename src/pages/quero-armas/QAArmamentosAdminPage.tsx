@@ -832,7 +832,7 @@ export default function QAArmamentosAdminPage() {
                 <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// GALERIA · FABRICANTE</div>
                 <h2 className="text-lg font-bold text-zinc-900 mt-1">{imagensFabricante.length} imagens encontradas</h2>
               </div>
-              <button type="button" onClick={() => setShowAllImagesModal(false)} className="h-11 w-11 shrink-0 grid place-items-center border border-zinc-300 hover:border-zinc-900 hover:bg-zinc-900 hover:text-white transition-colors" aria-label="Fechar galeria">
+              <button type="button" onClick={() => setShowAllImagesModal(false)} className="h-11 w-11 shrink-0 grid place-items-center border border-zinc-300 hover:border-[#2563EB] hover:bg-[#2563EB] hover:text-white transition-colors" aria-label="Fechar galeria">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -916,7 +916,7 @@ export default function QAArmamentosAdminPage() {
               </button>
               <button
                 onClick={() => { const arma = imagemConfirm.arma; setImagemConfirm(null); gerarImagem(arma); }}
-                className="flex-1 bg-zinc-900 hover:bg-zinc-700 text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
+                className="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
               >
                 ↻ Gerar novamente
               </button>

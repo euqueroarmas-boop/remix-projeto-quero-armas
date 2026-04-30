@@ -1511,7 +1511,7 @@ export default function QAGerarPecaPage() {
               <Paperclip className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-[10px] text-slate-400 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
               {docTotal > 0 && (
-                <span className="text-[9px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded">
+                <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
                   {docDone}/{docTotal}
                   {docFailed > 0 && <span className="text-red-400 ml-1">• {docFailed} falha(s)</span>}
                 </span>

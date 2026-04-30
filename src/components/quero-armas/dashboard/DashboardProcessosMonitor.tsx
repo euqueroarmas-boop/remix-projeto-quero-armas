@@ -891,7 +891,7 @@ function EntityPanel({
       {/* Header da entidade */}
       <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className={`size-2.5 rounded-full ${entidade === "PF" ? "bg-slate-900" : "bg-emerald-700"}`} />
+          <span className={`size-2.5 rounded-full ${entidade === "PF" ? "bg-[#2563EB]" : "bg-emerald-700"}`} />
           <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">{meta.label}</h4>
         </div>
         <span className="font-mono text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded">{meta.ref}</span>
