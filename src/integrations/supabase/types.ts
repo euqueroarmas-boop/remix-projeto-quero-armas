@@ -6282,7 +6282,7 @@ export type Database = {
         Row: {
           ator: string | null
           ator_id: string | null
-          cliente_id: string | null
+          cliente_id: number | null
           created_at: string
           descricao: string | null
           email_enviado_em: string | null
@@ -6296,7 +6296,7 @@ export type Database = {
         Insert: {
           ator?: string | null
           ator_id?: string | null
-          cliente_id?: string | null
+          cliente_id?: number | null
           created_at?: string
           descricao?: string | null
           email_enviado_em?: string | null
@@ -6310,7 +6310,7 @@ export type Database = {
         Update: {
           ator?: string | null
           ator_id?: string | null
-          cliente_id?: string | null
+          cliente_id?: number | null
           created_at?: string
           descricao?: string | null
           email_enviado_em?: string | null
