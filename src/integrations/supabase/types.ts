@@ -7393,6 +7393,16 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_cliente_criar_conta_publica: {
+        Args: {
+          p_cpf: string
+          p_email: string
+          p_nome: string
+          p_telefone?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       qa_cliente_criar_contratacao: {
         Args: {
           p_catalogo_slug: string
