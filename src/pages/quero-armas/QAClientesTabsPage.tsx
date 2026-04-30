@@ -56,7 +56,7 @@ export default function QAClientesTabsPage() {
         </div>
       </header>
 
-      <div>
+      <div className="mx-auto max-w-[1400px] px-4 pt-6 md:pt-8 pb-8">
         {tab === "clientes" && <QAClientesPage />}
         {tab === "acessos" && <QAAcessosPage />}
         {tab === "clubes" && <QAClubesPage />}
