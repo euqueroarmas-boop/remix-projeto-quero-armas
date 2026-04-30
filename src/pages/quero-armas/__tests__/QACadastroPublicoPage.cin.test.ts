@@ -73,7 +73,7 @@ describe("getBlockingErrors — exceção CPF==RG para CIN", () => {
     end1_cep: "30000-000",
     end1_logradouro: "RUA X",
     end1_numero: "1",
-    end1_bairro: "B",
+    end1_bairro: "BAIRRO",
     end1_cidade: "BELO HORIZONTE",
     end1_estado: "MG",
     consentimento_dados_verdadeiros: true,
