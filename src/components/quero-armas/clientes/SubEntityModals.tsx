@@ -497,6 +497,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         if (solicitacaoId) {
           const vendaPk = (data as any).id;
           const primaryServicoId = Array.from(selectedServicos.keys())[0];
+          if (!primaryServicoId) {
+            throw new Error("Falha ao classificar solicitação: nenhum serviço principal selecionado.");
+          }
           const primaryServico = servicos.find((svc) => svc.id === primaryServicoId);
           const { data: catalogoServico } = await supabase
             .from("qa_servicos_catalogo" as any)
