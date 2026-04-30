@@ -587,6 +587,19 @@ Deno.serve(async (req) => {
         payload: { email: data.user.email, customer_id: canonicalCustomer?.id || customer_id, qa_client_id: qaClient?.id || qa_client_id },
       });
 
+      // Reenvia e-mail com a nova senha (e registra evento senha_resetada na timeline QA, se aplicável)
+      await sendInviteEmail(
+        supabase,
+        req,
+        data.user.email!,
+        name || qaClient?.nome_completo || canonicalCustomer?.razao_social || data.user.email || "",
+        newPassword,
+        {
+          qaClientId: qaClient?.id || qa_client_id || null,
+          eventoLabel: "senha_resetada",
+        },
+      );
+
       return new Response(JSON.stringify({
         success: true,
         email: normalizeEmail(data.user.email),
@@ -594,6 +607,81 @@ Deno.serve(async (req) => {
         user_id: data.user.id,
         customer_id: canonicalCustomer?.id || customer_id || null,
         qa_client_id: qaClient?.id || qa_client_id || null,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "resend_credentials") {
+      const authUser = await resolveAuthUser(supabase, {
+        userId: customer?.user_id,
+        fallbackUserId: qaClient?.user_id,
+        email: normalizedEmail || customer?.email || qaClient?.email,
+      });
+
+      if (!authUser) {
+        return new Response(JSON.stringify({ error: "Usuário não possui conta no portal. Crie o acesso primeiro." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const meta = (authUser.user_metadata && typeof authUser.user_metadata === "object")
+        ? authUser.user_metadata as Record<string, unknown>
+        : {};
+      const existingTemp = typeof meta.temp_password === "string" ? meta.temp_password : "";
+
+      // Idempotência: se não temos a senha temporária armazenada, geramos uma nova
+      // e atualizamos no Auth (necessário, senão cliente não consegue logar).
+      let passwordToSend = existingTemp;
+      if (!passwordToSend) {
+        passwordToSend = generateTempPassword();
+        const { error: updErr } = await supabase.auth.admin.updateUserById(authUser.id, {
+          password: passwordToSend,
+          user_metadata: {
+            ...meta,
+            temp_password: passwordToSend,
+            password_change_required: true,
+          },
+        });
+        if (updErr) {
+          return new Response(JSON.stringify({ error: updErr.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const recipientEmail = authUser.email || normalizedEmail || customer?.email || qaClient?.email || "";
+      const recipientName = (typeof meta.name === "string" ? meta.name : "")
+        || name || qaClient?.nome_completo || customer?.razao_social || recipientEmail;
+
+      await sendInviteEmail(
+        supabase,
+        req,
+        recipientEmail,
+        recipientName,
+        passwordToSend,
+        {
+          qaClientId: qaClient?.id || qa_client_id || null,
+          eventoLabel: "credenciais_enviadas",
+        },
+      );
+
+      await logSistemaBackend({
+        tipo: "admin",
+        status: "success",
+        mensagem: "Credenciais reenviadas para o cliente",
+        payload: { email: recipientEmail, qa_client_id: qaClient?.id || qa_client_id },
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        email: normalizeEmail(recipientEmail),
+        user_id: authUser.id,
+        qa_client_id: qaClient?.id || qa_client_id || null,
+        regenerated_password: !existingTemp,
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
