@@ -492,10 +492,10 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
             .from("qa_solicitacoes_servico" as any)
             .update({
               status_servico: "contratado",
-              // Coluna text livre. Mantém padrão semântico do schema
-              // (default = 'sem_cobranca_vinculada' → contratado = 'cobranca_vinculada').
-              status_financeiro: "cobranca_vinculada",
-              status_processo: "aguardando_documentos",
+              // Fonte única de verdade. Padrão canônico do produto: 'vinculado'.
+              // status_processo NÃO é alterado aqui — só muda quando o processo
+              // é efetivamente aberto (RPC qa_venda_to_processo).
+              status_financeiro: "vinculado",
               venda_id: vendaPk,
               updated_at: new Date().toISOString(),
             })
