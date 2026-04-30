@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  Inbox,
+  Inbox, ClipboardList,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -17,6 +17,7 @@ const NAV_GROUPS = [
       { title: "Gerar Peça", url: "/gerar-peca", icon: PenTool },
       { title: "Casos", url: "/casos", icon: FolderOpen },
       { title: "Central de Documentos", url: "/processos", icon: FileStack },
+      { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
       { title: "Contratações Pendentes", url: "/contratacoes-pendentes", icon: Inbox },
       { title: "Clientes", url: "/clientes", icon: Users },
       { title: "Clubes de Tiro", url: "/clubes", icon: Building2 },
