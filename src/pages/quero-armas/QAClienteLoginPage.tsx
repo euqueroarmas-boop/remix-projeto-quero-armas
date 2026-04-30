@@ -524,6 +524,12 @@ export default function QAClienteLoginPage() {
                 </button>
               </div>
             </form>
+            <div className="hidden md:block text-center text-[11px] tracking-[0.2em] text-zinc-500 mt-5">
+              NÃO TEM CONTA?{" "}
+              <Link to="/area-do-cliente/criar-conta" className="text-[#c9a961] hover:underline">
+                CRIAR CONTA GRATUITA
+              </Link>
+            </div>
           </div>
         </div>
       </div>
