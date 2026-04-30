@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff } from "lucide-react";
-import logoWhite from "@/assets/logo-white.png";
+import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import logoColor from "@/assets/logo-color.png";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 
 export default function QAClienteLoginPage() {
