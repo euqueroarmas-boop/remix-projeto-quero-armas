@@ -122,6 +122,7 @@ export default function DashboardNovosCadastrosRecebidos() {
     const { data: cads } = await supabase
       .from("qa_cadastro_publico")
       .select("id,nome_completo,cpf,email,servico_interesse,status,pago,pago_em,cliente_id_vinculado,processado_em,created_at,end1_cidade,end1_estado")
+      .neq("status", "arquivado")
       .order("created_at", { ascending: true })
       .limit(100);
     const list = ((cads as any[]) ?? []) as CadastroRow[];
