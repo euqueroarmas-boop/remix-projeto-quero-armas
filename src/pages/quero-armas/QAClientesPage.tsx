@@ -978,7 +978,7 @@ export default function QAClientesPage() {
   // Solicitações vindas do formulário público para o cliente selecionado.
   // Apenas leitura; jamais cria pagamento. Usado para evitar "Serviços (0)"
   // quando o cliente veio da internet com serviço informado.
-  const { solicitacoes: solicitacoesPublicas } =
+  const { solicitacoes: solicitacoesPublicas, reload: reloadSolicitacoes } =
     useSolicitacoesPublicasDoCliente(selected?.id ?? null, itens);
   // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
   // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
@@ -2623,7 +2623,10 @@ export default function QAClientesPage() {
         <VendaModal
           open={vendaModal.open}
           onClose={() => setVendaModal({ open: false })}
-          onSaved={() => loadSubData(selected!)}
+          onSaved={() => {
+            void loadSubData(selected!);
+            void reloadSolicitacoes();
+          }}
           clienteId={clienteIdForSub}
           venda={vendaModal.item}
           solicitacaoId={vendaModal.solicitacaoId ?? null}
