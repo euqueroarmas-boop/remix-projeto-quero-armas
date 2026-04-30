@@ -192,40 +192,76 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   const adminSetStatus = async (docId: string, novoStatus: string, motivo?: string) => {
     try {
       const docAtual = docs.find((d) => d.id === docId);
-      // Aprovar limpa motivo de rejeição anterior. Recusar exige motivo.
+      // ============================================================
+      // FASE 14 — IDEMPOTÊNCIA
+      // Buscar estado atual no banco (evita usar cache local desatualizado)
+      // ============================================================
+      const { data: docDb, error: errFetch } = await supabase
+        .from("qa_processo_documentos")
+        .select("status, motivo_rejeicao, nome_documento, tipo_documento")
+        .eq("id", docId)
+        .maybeSingle();
+      if (errFetch) throw errFetch;
+      if (!docDb) throw new Error("Documento não encontrado.");
+
+      const norm = (s?: string | null) => (s ?? "").trim().toUpperCase();
+      const motivoNovo = novoStatus === "aprovado" ? null : (motivo ?? null);
+      const statusIgual = docDb.status === novoStatus;
+      const motivoIgual = norm(docDb.motivo_rejeicao) === norm(motivoNovo);
+
+      // Caso 1: nada mudou — bloquear update e evento
+      if (statusIgual && motivoIgual) {
+        if (novoStatus === "aprovado") {
+          toast.info("Documento já está aprovado.");
+        } else if (novoStatus === "invalido") {
+          toast.info("Documento já está recusado com este motivo.");
+        } else {
+          toast.info("Nenhuma alteração detectada.");
+        }
+        return;
+      }
+
+      // Monta payload conforme o que mudou
       const updatePayload: Record<string, any> = {
-        status: novoStatus,
         data_validacao: new Date().toISOString(),
       };
-      if (novoStatus === "aprovado") {
-        updatePayload.motivo_rejeicao = null;
-      } else if (novoStatus === "invalido") {
-        updatePayload.motivo_rejeicao = motivo ?? null;
-      } else {
-        updatePayload.motivo_rejeicao = motivo ?? null;
-      }
+      if (!statusIgual) updatePayload.status = novoStatus;
+      if (!motivoIgual) updatePayload.motivo_rejeicao = motivoNovo;
+
       const { error } = await supabase
         .from("qa_processo_documentos")
         .update(updatePayload)
         .eq("id", docId);
       if (error) throw error;
 
-      // Evento operacional contextual (somado ao evento técnico do trigger)
+      // Evento operacional só se houve mudança real (status ou motivo)
       const tipoOperacional =
         novoStatus === "aprovado" ? "documento_aprovado" :
         novoStatus === "invalido" ? "documento_recusado" :
         novoStatus === "divergente" ? "documento_divergente_marcado" :
         null;
-      if (tipoOperacional && docAtual) {
-        const descBase = `${docAtual.nome_documento} (${docAtual.tipo_documento})`;
-        const desc = motivo ? `${descBase} — MOTIVO: ${motivo}` : descBase;
+      if (tipoOperacional && (docAtual || docDb)) {
+        const nome = docAtual?.nome_documento ?? docDb.nome_documento;
+        const tipo = docAtual?.tipo_documento ?? docDb.tipo_documento;
+        const descBase = `${nome} (${tipo})`;
+        const sufixoMotivo = !statusIgual && motivo
+          ? ` — MOTIVO: ${motivo}`
+          : statusIgual && !motivoIgual && motivo
+          ? ` — MOTIVO ATUALIZADO: ${motivo}`
+          : "";
         await supabase.from("qa_processo_eventos").insert({
           processo_id: processoId,
           documento_id: docId,
           tipo_evento: tipoOperacional,
-          descricao: desc,
+          descricao: descBase + sufixoMotivo,
           ator: "equipe_operacional",
-          dados_json: { status: novoStatus, motivo: motivo ?? null },
+          dados_json: {
+            status: novoStatus,
+            motivo: motivo ?? null,
+            motivo_anterior: docDb.motivo_rejeicao,
+            mudou_status: !statusIgual,
+            mudou_motivo: !motivoIgual,
+          },
         });
       }
 
@@ -234,7 +270,8 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
         novoStatus === "invalido" ? "documento_invalido" :
         novoStatus === "divergente" ? "documento_divergente" :
         novoStatus === "revisao_humana" ? "revisao_humana" : null;
-      if (eventoEmail) {
+      // Notifica apenas em mudança real de status (evita reenviar e-mail)
+      if (eventoEmail && !statusIgual) {
         supabase.functions.invoke("qa-processo-notificar", {
           body: { processo_id: processoId, documento_id: docId, evento: eventoEmail, motivo },
         }).catch((e) => console.warn("notificação:", e));
@@ -255,7 +292,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     });
   };
   const confirmarAprovacao = async () => {
-    if (!aprovacao) return;
+    if (!aprovacao || salvandoAcao) return;
     setSalvandoAcao(true);
     try {
       await adminSetStatus(aprovacao.docId, "aprovado");
@@ -270,7 +307,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     setRejeicao({ docId: doc.id, nome: doc.nome_documento });
   };
   const confirmarRejeicao = async () => {
-    if (!rejeicao) return;
+    if (!rejeicao || salvandoAcao) return;
     const motivo = motivoRejeicao.trim();
     if (!motivo) {
       toast.error("Informe o motivo da recusa.");
