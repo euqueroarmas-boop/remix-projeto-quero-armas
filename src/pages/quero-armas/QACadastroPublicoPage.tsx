@@ -746,6 +746,8 @@ function DuplicateModal({
   const FIELDS: { label: string; key: string; format?: (v: any) => string }[] = [
     { label: "Nome completo", key: "nome_completo" },
     { label: "CPF", key: "cpf", format: (v) => v ? maskCpf(String(v)) : "" },
+    { label: "Tipo documento", key: "tipo_documento_identidade" },
+    { label: "Documento", key: "numero_documento_identidade" },
     { label: "RG", key: "rg" },
     { label: "Emissor", key: "emissor_rg" },
     { label: "Data de nascimento", key: "data_nascimento", format: (v) => {
