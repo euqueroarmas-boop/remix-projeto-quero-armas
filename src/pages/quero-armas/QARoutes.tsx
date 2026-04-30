@@ -30,6 +30,7 @@ const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcesso
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
+const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
 const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QAClientePortalPage");
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
 const QARedefinirSenhaPage = lazyRetry(() => import("./QARedefinirSenhaPage"), "QARedefinirSenhaPage");
@@ -71,6 +72,7 @@ export default function QARoutes() {
         
         {/* Client portal (separate auth flow) */}
         <Route path="area-do-cliente/login" element={<QAClienteLoginPage />} />
+        <Route path="area-do-cliente/criar-conta" element={<QACriarContaPage />} />
         <Route path="area-do-cliente" element={<QAClientePortalPage />} />
         <Route path="area-do-cliente/contratar" element={<QAContratarServicoPage />} />
         <Route path="area-do-cliente/contratacoes" element={<QAClienteContratacoesPage />} />
