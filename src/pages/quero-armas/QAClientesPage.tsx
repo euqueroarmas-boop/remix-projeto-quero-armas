@@ -1391,6 +1391,9 @@ export default function QAClientesPage() {
 
   const openCadastroPublico = async (cadastroId: string) => {
     setLoadingCadastroPublico(true);
+    // Limpa estado anterior — o ID da URL manda; nunca reabrir cliente em memória.
+    setSelected(null);
+    setSelectedCadastroPublico(null);
     try {
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
         .select("*")
@@ -1404,8 +1407,50 @@ export default function QAClientesPage() {
         return;
       }
 
+      const cad = data as any;
+      const cpfCadNorm = String(cad.cpf || "").replace(/\D/g, "");
+
+      // Se houver vínculo, RESOLVE pela PK real (qa_clientes.id) e VALIDA CPF
+      // antes de abrir o cliente. Nunca usa id_legado para esta resolução —
+      // id_legado pode colidir com id de outro cliente.
+      if (cad.cliente_id_vinculado) {
+        const { data: cliRow } = await supabase
+          .from("qa_clientes" as any)
+          .select("*")
+          .eq("id", cad.cliente_id_vinculado)
+          .limit(1)
+          .maybeSingle();
+        const cli = cliRow as any | null;
+        const cpfCliNorm = String(cli?.cpf || "").replace(/\D/g, "");
+        const cpfBate = cpfCadNorm && cpfCliNorm && cpfCadNorm === cpfCliNorm;
+
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.log("[AbrirClienteCadastroPublico:resolveVinculo]", {
+            cadastro_publico_id: cad.id,
+            nome_formulario: cad.nome_completo,
+            cpf_formulario_normalizado: cpfCadNorm,
+            cliente_id_vinculado: cad.cliente_id_vinculado,
+            cliente_nome_vinculado: cli?.nome_completo ?? null,
+            cliente_cpf_normalizado: cpfCliNorm,
+            resultado_validacao: cli ? (cpfBate ? "ok" : "cpf_divergente") : "cliente_nao_encontrado",
+          });
+        }
+
+        if (cli && cpfBate) {
+          // Vínculo válido — abre a ficha do cliente real.
+          setSelectedCadastroPublico(null);
+          openClient(cli);
+          return;
+        }
+
+        // Vínculo inconsistente — não abre cliente errado; mostra o cadastro
+        // público para correção manual.
+        toast.error("Vínculo inconsistente entre cadastro público e cliente. Reveja o vínculo.");
+      }
+
       setSelected(null);
-      setSelectedCadastroPublico(data as unknown as CadastroPublico);
+      setSelectedCadastroPublico(cad as unknown as CadastroPublico);
     } catch (e: any) {
       toast.error(e.message || "Erro ao abrir cadastro público");
     } finally {
