@@ -89,6 +89,12 @@ export default function QAContratarConfirmarPage() {
   const [valorInformado, setValorInformado] = useState<string>("");
   const [obsContratacao, setObsContratacao] = useState<string>("");
 
+  // FASE 20-D: bloqueio de cliente legado pendente
+  const [legadoBlock, setLegadoBlock] = useState<{
+    homologacao_status?: string | null;
+    recadastramento_status?: string | null;
+  } | null>(null);
+
   useEffect(() => {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
