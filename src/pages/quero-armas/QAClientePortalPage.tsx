@@ -22,6 +22,7 @@ import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-reac
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
+import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -115,6 +116,7 @@ export default function QAClientePortalPage() {
   const [cliente, setCliente] = useState<any>(null);
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
+  const [catalogoByServicoId, setCatalogoByServicoId] = useState<Record<number, { service_slug: string; nome: string }>>({});
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
@@ -288,6 +290,23 @@ export default function QAClientePortalPage() {
             .select("*")
             .in("venda_id", vendaIds);
           itensData = (iData as any[]) ?? [];
+          const servicoIds = Array.from(new Set(itensData.map((i: any) => Number(i.servico_id)).filter(Number.isFinite)));
+          if (servicoIds.length > 0) {
+            const { data: catalogoData } = await supabase
+              .from("qa_servicos_catalogo" as any)
+              .select("servico_id, slug, nome")
+              .in("servico_id", servicoIds)
+              .eq("ativo", true);
+            const catalogMap: Record<number, { service_slug: string; nome: string }> = {};
+            ((catalogoData as any[]) ?? []).forEach((c: any) => {
+              if (Number.isFinite(Number(c.servico_id)) && !catalogMap[Number(c.servico_id)]) {
+                catalogMap[Number(c.servico_id)] = { service_slug: c.slug, nome: c.nome };
+              }
+            });
+            setCatalogoByServicoId(catalogMap);
+          } else {
+            setCatalogoByServicoId({});
+          }
         }
         setItens(itensData);
         setCadastro(Array.isArray(crRes.data) ? (crRes.data[0] ?? null) : crRes.data);
@@ -415,6 +434,11 @@ export default function QAClientePortalPage() {
     });
     crafs.forEach((cr: any) => { if (cr.data_validade) expDocs.push({ label: `CRAF — ${cr.nome_arma || "Arma"}`, date: cr.data_validade, days: daysUntil(cr.data_validade), category: "CRAF" }); });
     gtes.forEach((g: any) => { if (g.data_validade) expDocs.push({ label: `GTE — ${g.nome_arma || "Arma"}`, date: g.data_validade, days: daysUntil(g.data_validade), category: "GTE" }); });
+    itens.forEach((it: any) => {
+      if (!it.data_vencimento) return;
+      const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || `#${it.servico_id}`;
+      expDocs.push({ label: `Serviço — ${servicoLabel}`, date: it.data_vencimento, days: daysUntil(it.data_vencimento), category: "SERVIÇO" });
+    });
     // Documentos enviados pelo próprio cliente (hub pessoal)
     meusDocs.forEach((d: any) => {
       if (!d.data_validade) return;
@@ -442,19 +466,20 @@ export default function QAClientePortalPage() {
     const alerts = expDocs.filter(d => d.days !== null && d.days <= 90);
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
-  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs]);
+  }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs, catalogoByServicoId, SERVICO_MAP]);
 
   // Timeline
   const timeline = useMemo(() => {
     const events: { date: string; label: string; icon: any; color: string }[] = [];
     vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(230 80% 56%)" }));
     itens.forEach((it: any) => {
-      if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${SERVICO_MAP[it.servico_id] || "Serviço"} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
-      if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${SERVICO_MAP[it.servico_id] || "Serviço"} — Deferido`, icon: CheckCircle, color: "hsl(152 60% 42%)" });
+      const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || "Serviço";
+      if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${servicoLabel} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
+      if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${servicoLabel} — Deferido`, icon: CheckCircle, color: "hsl(152 60% 42%)" });
     });
     events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return events.slice(0, 12);
-  }, [vendas, itens]);
+  }, [vendas, itens, catalogoByServicoId, SERVICO_MAP]);
 
   if (loading) {
     return (
@@ -550,6 +575,10 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-amber-800 shadow-sm">
+          DEBUG: COMPONENTE REAL DO PORTAL DO CLIENTE
+        </div>
+
         {/* ═══ TABS NAVIGATION ═══ */}
         <div className="sticky top-[60px] z-30 -mx-4 mb-1 border-b border-slate-200/70 bg-gradient-to-b from-white/95 to-white/85 px-4 py-2 backdrop-blur-md">
           <div className="flex items-center justify-between gap-2">
@@ -935,7 +964,7 @@ export default function QAClientePortalPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[12px] font-semibold text-slate-800 truncate">
-                        {SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`}
+                        {getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || `Serviço #${it.servico_id}`}
                       </div>
                       {it.numero_processo && <div className="text-[10px] text-slate-500 font-mono">{it.numero_processo}</div>}
                       <div className="w-full h-1 rounded-full bg-slate-100 mt-1.5">
