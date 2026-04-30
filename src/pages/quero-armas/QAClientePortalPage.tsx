@@ -1188,7 +1188,11 @@ export default function QAClientePortalPage() {
             {meusDocs.length === 0 ? (
               <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
                 <FolderArchive className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-[11px] text-slate-400">Nenhum documento cadastrado ainda.</p>
+                <p className="text-[11px] text-slate-400">
+                  {cliente?.tipo_cliente === "cliente_app"
+                    ? "Você ainda não enviou documentos do acervo."
+                    : "Nenhum documento cadastrado ainda."}
+                </p>
                 <p className="text-[10px] text-slate-400 mt-1">Use o botão acima para começar.</p>
               </div>
             ) : (
