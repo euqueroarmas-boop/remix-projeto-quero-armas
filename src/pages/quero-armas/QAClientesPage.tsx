@@ -1000,7 +1000,7 @@ export default function QAClientesPage() {
   const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
-  const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
   const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
