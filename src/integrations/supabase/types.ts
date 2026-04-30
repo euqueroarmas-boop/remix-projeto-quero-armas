@@ -7258,6 +7258,26 @@ export type Database = {
         }
         Returns: boolean
       }
+      qa_arma_manual_upsert: {
+        Args: {
+          p_calibre: string
+          p_cliente_id: number
+          p_dados_extraidos_json?: Json
+          p_marca: string
+          p_modelo: string
+          p_numero_autorizacao_compra: string
+          p_numero_craf: string
+          p_numero_serie: string
+          p_numero_sigma: string
+          p_numero_sinarm: string
+          p_origem: string
+          p_sistema: string
+          p_tipo_arma: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      qa_arma_norm: { Args: { s: string }; Returns: string }
       qa_atualizar_dados_basicos_cliente: {
         Args: {
           p_bairro?: string

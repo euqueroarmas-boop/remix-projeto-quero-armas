@@ -135,7 +135,15 @@ export default function ArmaManualForm({
       const { error: errIns } = await supabase
         .from("qa_cliente_armas_manual" as any)
         .insert(payload);
-      if (errIns) throw errIns;
+      if (errIns) {
+        // 23505 = unique_violation (índices uq_qa_armas_manual_cliente_*)
+        if ((errIns as any).code === "23505") {
+          toast.error("Esta arma já está cadastrada no arsenal deste cliente.");
+          setSaving(false);
+          return;
+        }
+        throw errIns;
+      }
 
       toast.success("Arma cadastrada com sucesso.");
       reset();
