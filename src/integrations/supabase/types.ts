@@ -8084,7 +8084,7 @@ export type Database = {
       }
       qa_recalcular_status_servico: {
         Args: { _solicitacao_id: string }
-        Returns: string
+        Returns: undefined
       }
       qa_remove_bg_usage_mes: {
         Args: never
