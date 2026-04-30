@@ -33,6 +33,7 @@ import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/Histori
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
+import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
@@ -972,6 +973,9 @@ export default function QAClientesPage() {
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
+  // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
+  // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
+  const [processosVenda, setProcessosVenda] = useState<any[]>([]);
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
   // FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR).
@@ -1743,8 +1747,25 @@ export default function QAClientesPage() {
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds).order("sort_order", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
         setItens((itensData as any[]) ?? []);
+        // FASE 16-C — processos por venda (qa_processos.venda_id = qa_vendas.id real).
+        try {
+          const realVendaIds = vendasData.map((v: any) => Number(v.id)).filter((n: number) => Number.isFinite(n));
+          if (realVendaIds.length > 0) {
+            const { data: procData } = await supabase
+              .from("qa_processos" as any)
+              .select("id, venda_id, servico_id, servico_nome")
+              .in("venda_id", realVendaIds);
+            setProcessosVenda((procData as any[]) ?? []);
+          } else {
+            setProcessosVenda([]);
+          }
+        } catch (e) {
+          console.warn("[loadSubData] processosVenda falhou", e);
+          setProcessosVenda([]);
+        }
       } else {
         setItens([]);
+        setProcessosVenda([]);
       }
     } catch (e: any) {
       console.error("[loadSubData] erro:", e.message);
@@ -2109,6 +2130,14 @@ export default function QAClientesPage() {
                                 })()}
                               </span>
                               <div className="flex items-center gap-0.5">
+                                {/* FASE 16-C — Gerar processo a partir de venda aprovada */}
+                                <GerarProcessoButton
+                                  venda={v}
+                                  itens={itens}
+                                  clienteNome={c.nome_completo}
+                                  processoExistente={processosVenda.find((p: any) => p.venda_id === v.id) || null}
+                                  onCreated={() => loadSubData(selected!)}
+                                />
                                 <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700">
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
