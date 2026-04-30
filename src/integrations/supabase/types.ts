@@ -7807,6 +7807,10 @@ export type Database = {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
       }
+      qa_homologar_cliente: {
+        Args: { p_cliente_id: number; p_observacao?: string }
+        Returns: Json
+      }
       qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
       qa_listar_municipios_por_uf: {
         Args: { p_uf: string }
@@ -7820,6 +7824,10 @@ export type Database = {
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }
       qa_norm_nome: { Args: { p_nome: string }; Returns: string }
+      qa_reabrir_homologacao_cliente: {
+        Args: { p_cliente_id: number; p_motivo: string }
+        Returns: Json
+      }
       qa_remove_bg_usage_mes: {
         Args: never
         Returns: {
