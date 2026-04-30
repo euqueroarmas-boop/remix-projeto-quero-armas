@@ -6,6 +6,7 @@
  */
 import { useState } from "react";
 import { Users, KeyRound, Building2 } from "lucide-react";
+import { QALogo } from "@/components/quero-armas/QALogo";
 import QAClientesPage from "./QAClientesPage";
 import QAAcessosPage from "./QAAcessosPage";
 import QAClubesPage from "./QAClubesPage";
@@ -24,15 +25,22 @@ export default function QAClientesTabsPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-[1400px] px-4 py-5">
-          <h1 className="text-[20px] font-bold uppercase tracking-wider text-slate-900">
-            Clientes
-          </h1>
-          <p className="mt-1 text-[12px] text-slate-500">
-            Gestão de clientes, acessos e entidades vinculadas.
-          </p>
+        <div className="mx-auto max-w-[1400px] px-4 py-5 flex items-start gap-5">
+          {/* Logo Quero Armas — preenche o espaço quadrado à esquerda do título */}
+          <QALogo
+            linkTo={null}
+            className="h-20 w-20 md:h-24 md:w-24 shrink-0 mt-0.5"
+            alt="Quero Armas"
+          />
+          <div className="min-w-0 flex-1">
+            <h1 className="text-[20px] font-bold uppercase tracking-wider text-slate-900">
+              Clientes
+            </h1>
+            <p className="mt-1 text-[12px] text-slate-500">
+              Gestão de clientes, acessos e entidades vinculadas.
+            </p>
 
-          <div className="mt-4 inline-flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+            <div className="mt-4 inline-flex flex-wrap items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
             {TABS.map(t => {
               const Icon = t.icon;
               const active = tab === t.key;
@@ -52,6 +60,7 @@ export default function QAClientesTabsPage() {
                 </button>
               );
             })}
+            </div>
           </div>
         </div>
       </header>
