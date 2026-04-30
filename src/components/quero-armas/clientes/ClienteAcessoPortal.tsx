@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Shield, Mail, Hash, Copy, ExternalLink, KeyRound, Loader2,
   CheckCircle, XCircle, Eye, EyeOff, Link2, UserPlus, RefreshCw,
+  Send, AlertTriangle, Clock, History,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,12 +18,52 @@ interface Props {
   };
 }
 
+const EVENTOS_PORTAL = [
+  "portal_provisionado",
+  "credenciais_enviadas",
+  "senha_resetada",
+  "falha_envio_email",
+] as const;
+
+type PortalStatus = {
+  portal_provisionado_em: string | null;
+  portal_credenciais_enviadas_em: string | null;
+  portal_ultimo_envio_status: string | null;
+  portal_ultimo_envio_erro: string | null;
+};
+
+type TimelineEvent = {
+  id: string;
+  evento: string;
+  descricao: string | null;
+  ator: string | null;
+  created_at: string;
+};
+
+const formatDateTime = (iso?: string | null) => {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("pt-BR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  } catch { return iso; }
+};
+
+const eventoLabel: Record<string, { label: string; color: string; icon: any }> = {
+  portal_provisionado: { label: "Portal provisionado", color: "text-emerald-700 bg-emerald-100", icon: CheckCircle },
+  credenciais_enviadas: { label: "Credenciais enviadas", color: "text-blue-700 bg-blue-100", icon: Send },
+  senha_resetada: { label: "Senha redefinida", color: "text-amber-700 bg-amber-100", icon: KeyRound },
+  falha_envio_email: { label: "Falha no envio", color: "text-red-700 bg-red-100", icon: AlertTriangle },
+};
+
 export default function ClienteAcessoPortal({ cliente }: Props) {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<any>(null);
   const [qaCustomer, setQaCustomer] = useState<any>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [generatedPwd, setGeneratedPwd] = useState("");
   const [generatedEmail, setGeneratedEmail] = useState("");
   const [persistedPwd, setPersistedPwd] = useState("");
@@ -31,9 +72,39 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [persistedUserId, setPersistedUserId] = useState<string | null>(null);
   const [newPwd, setNewPwd] = useState("");
   const [showPwd, setShowPwd] = useState(false);
+  const [portalStatus, setPortalStatus] = useState<PortalStatus | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
 
-  const portalUrl = `${window.location.origin}/area-do-cliente`;
+  const portalUrl = `${window.location.origin}/quero-armas/area-do-cliente/login`;
   const resetUrl = `${window.location.origin}/redefinir-senha`;
+
+  const fetchPortalStatus = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from("qa_clientes" as any)
+        .select("portal_provisionado_em, portal_credenciais_enviadas_em, portal_ultimo_envio_status, portal_ultimo_envio_erro")
+        .eq("id", cliente.id)
+        .maybeSingle();
+      setPortalStatus((data as any) || null);
+    } catch (err) {
+      console.error("Erro ao buscar status portal:", err);
+    }
+  }, [cliente.id]);
+
+  const fetchTimeline = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from("qa_solicitacao_eventos" as any)
+        .select("id, evento, descricao, ator, created_at")
+        .eq("cliente_id", cliente.id)
+        .in("evento", EVENTOS_PORTAL as unknown as string[])
+        .order("created_at", { ascending: false })
+        .limit(15);
+      setTimeline(((data as any) || []) as TimelineEvent[]);
+    } catch (err) {
+      console.error("Erro ao buscar timeline portal:", err);
+    }
+  }, [cliente.id]);
 
   const fetchStoredCredentials = useCallback(async (customerRecord?: any, qaCustomerRecord?: any) => {
     try {
