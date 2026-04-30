@@ -5,17 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Settings2, Save } from "lucide-react";
 import { toast } from "sonner";
 
-/** Status canônicos da solicitação — alinhados ao schema qa_solicitacoes_servico. */
+/**
+ * Status canônicos da solicitação — qa_solicitacoes_servico é a ÚNICA fonte
+ * de verdade do sistema. Toda evolução operacional do serviço passa por aqui.
+ */
 const STATUS_SERVICO = [
   "aguardando_contratacao",
   "contratado",
+  "aguardando_documentos",
+  "documentos_em_analise",
+  "documentos_incompletos",
+  "documentos_aprovados",
   "em_andamento",
-  "concluido",
-  "cancelado",
+  "aguardando_orgao",
+  "deferido",
+  "indeferido",
+  "finalizado",
 ] as const;
 
 const STATUS_FINANCEIRO = [
   "sem_cobranca_vinculada",
+  "vinculado",
   "aguardando_pagamento",
   "pago",
   "vencido",
@@ -25,6 +35,7 @@ const STATUS_FINANCEIRO = [
 
 const STATUS_PROCESSO = [
   "processo_nao_aberto",
+  "aberto",
   "aguardando_documentos",
   "documentos_recebidos",
   "documentos_em_analise",
