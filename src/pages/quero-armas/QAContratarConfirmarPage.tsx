@@ -89,6 +89,12 @@ export default function QAContratarConfirmarPage() {
   const [valorInformado, setValorInformado] = useState<string>("");
   const [obsContratacao, setObsContratacao] = useState<string>("");
 
+  // FASE 20-D: bloqueio de cliente legado pendente
+  const [legadoBlock, setLegadoBlock] = useState<{
+    homologacao_status?: string | null;
+    recadastramento_status?: string | null;
+  } | null>(null);
+
   useEffect(() => {
     (async () => {
       const { data: sess } = await supabase.auth.getSession();
@@ -189,6 +195,31 @@ export default function QAContratarConfirmarPage() {
     if (!cliente || !catalogo) return;
     setSubmitting(true);
     try {
+      // FASE 20-D: verificar se cliente pode contratar (bloqueia legado pendente)
+      const { data: verifData, error: verifErr } = await supabase.rpc(
+        "qa_verificar_cliente_pode_contratar" as any,
+        {
+          p_cliente_id: cliente.id,
+          p_catalogo_slug: catalogo.slug,
+        } as any,
+      );
+      if (verifErr) throw verifErr;
+      const verif = (verifData ?? {}) as {
+        pode_contratar?: boolean;
+        motivo?: string;
+        homologacao_status?: string | null;
+        recadastramento_status?: string | null;
+      };
+      if (verif.pode_contratar === false) {
+        setLegadoBlock({
+          homologacao_status: verif.homologacao_status ?? null,
+          recadastramento_status: verif.recadastramento_status ?? null,
+        });
+        toast.error("Recadastramento obrigatório antes de contratar.");
+        setSubmitting(false);
+        return;
+      }
+
       // 1) Atualiza dados básicos se o cliente disse que mudou algo
       if (enderecoOk === "nao" || dadosOk === "nao") {
         const { error: errUpd } = await supabase.rpc(
@@ -261,6 +292,63 @@ export default function QAContratarConfirmarPage() {
 
   if (!catalogo || !cliente) return null;
   const preco = formatBRL(catalogo.preco);
+
+  if (legadoBlock) {
+    const waLink =
+      "https://wa.me/5562994040220?text=" +
+      encodeURIComponent(
+        `Olá! Sou cliente antigo da Quero Armas (CPF ${cliente.cpf || "—"}) e quero atualizar meu cadastro para contratar o serviço ${catalogo.nome}.`,
+      );
+    return (
+      <div data-tactical-portal className="min-h-screen">
+        <div className="qa-resumo-light min-h-screen">
+          <div className="max-w-xl mx-auto px-4 py-10">
+            <div className="rounded-2xl bg-white border border-amber-200 p-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <h1 className="text-lg font-bold text-slate-900 uppercase">
+                    Recadastramento obrigatório
+                  </h1>
+                  <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                    Seu cadastro veio do sistema antigo da Quero Armas. Para comprar um novo
+                    serviço, precisamos atualizar seus documentos no sistema novo. Envie CR,
+                    CRAF, GTE, documentos pessoais e demais arquivos do acervo pelo portal.
+                  </p>
+                  <p className="text-[11px] text-slate-500 mt-3 uppercase tracking-wider">
+                    Status: {legadoBlock.homologacao_status || "pendente"} ·{" "}
+                    Recadastramento: {legadoBlock.recadastramento_status || "—"}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex flex-col gap-2">
+                <button
+                  onClick={() => navigate("/area-do-cliente/arsenal")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-amber-500 text-white text-[12px] font-bold uppercase tracking-wider hover:bg-amber-600"
+                >
+                  Enviar documentos agora
+                </button>
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-[12px] font-bold uppercase tracking-wider hover:bg-emerald-700"
+                >
+                  Falar com a Equipe Quero Armas
+                </a>
+                <button
+                  onClick={() => navigate("/area-do-cliente")}
+                  className="w-full px-4 py-2.5 rounded-lg bg-slate-100 text-slate-700 text-[12px] font-bold uppercase tracking-wider hover:bg-slate-200"
+                >
+                  Voltar ao portal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div data-tactical-portal className="min-h-screen">
