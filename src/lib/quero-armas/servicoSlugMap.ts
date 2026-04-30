@@ -42,9 +42,9 @@ export function resolveServicoFromInteresse(rawInteresse: string | null | undefi
   // Concessão de CR (Exército)
   if (norm.includes("concessao de cr") || norm.includes("concessao cr") || norm === "cr eb") {
     return {
-      slug: "concessao-de-cr",
-      nome: "Concessão de CR no Exército Brasileiro",
-      servico_id: 27, // qa_servicos.id "Concessão de CR no Exército Brasileiro (Sem Clube)"
+      slug: "concessao-cr",
+      nome: "Concessão de CR",
+      servico_id: 20, // canônico em qa_servicos / qa_servicos_catalogo
       pendente_classificacao: false,
     };
   }
@@ -78,9 +78,9 @@ export function resolveServicoFromInteresse(rawInteresse: string | null | undefi
   // Renovação de arma de fogo (mapeia para CRAF na Polícia Federal)
   if (norm.includes("renovacao") && (norm.includes("arma") || norm.includes("registro"))) {
     return {
-      slug: "renovacao-arma-fogo",
-      nome: "Renovação de Arma de Fogo (CRAF)",
-      servico_id: 26, // CRAF na Polícia Federal
+      slug: "registro-arma-fogo",
+      nome: "Registro de arma de fogo (CRAF)",
+      servico_id: 26, // canônico CRAF
       pendente_classificacao: false,
     };
   }

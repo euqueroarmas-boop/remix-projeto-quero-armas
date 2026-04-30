@@ -5266,6 +5266,7 @@ export type Database = {
           servico_id: number | null
           sort_order: number | null
           status: string
+          tipo_venda: string
           validade_autorizacao: string | null
           valor: number
           venda_id: number
@@ -5303,6 +5304,7 @@ export type Database = {
           servico_id?: number | null
           sort_order?: number | null
           status?: string
+          tipo_venda?: string
           validade_autorizacao?: string | null
           valor?: number
           venda_id: number
@@ -5340,6 +5342,7 @@ export type Database = {
           servico_id?: number | null
           sort_order?: number | null
           status?: string
+          tipo_venda?: string
           validade_autorizacao?: string | null
           valor?: number
           venda_id?: number
@@ -6346,6 +6349,7 @@ export type Database = {
       qa_solicitacoes_servico: {
         Row: {
           cadastro_publico_id: string | null
+          categoria_atendimento: string
           cliente_id: number
           created_at: string
           id: string
@@ -6367,6 +6371,7 @@ export type Database = {
         }
         Insert: {
           cadastro_publico_id?: string | null
+          categoria_atendimento?: string
           cliente_id: number
           created_at?: string
           id?: string
@@ -6388,6 +6393,7 @@ export type Database = {
         }
         Update: {
           cadastro_publico_id?: string | null
+          categoria_atendimento?: string
           cliente_id?: number
           created_at?: string
           id?: string
@@ -7988,6 +7994,10 @@ export type Database = {
       }
       qa_confirmar_pagamento_processo: {
         Args: { p_origem?: string; p_processo_id: string }
+        Returns: Json
+      }
+      qa_create_processo_from_venda: {
+        Args: { p_servico_id: number; p_venda_id: number }
         Returns: Json
       }
       qa_criar_processo_logado: {
