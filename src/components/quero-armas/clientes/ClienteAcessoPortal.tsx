@@ -319,6 +319,47 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
     setResetLoading(false);
   };
 
+  const handleResend = async () => {
+    setResendLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente para reenviar.");
+        setResendLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("create-client-user", {
+        body: {
+          action: "resend_credentials",
+          qa_client_id: qaCustomer?.id || cliente.id,
+          customer_id: customer?.id,
+          email: customer?.email || qaCustomer?.email || cliente.email,
+          document: qaCustomer?.cpf || cliente.cpf,
+          name: cliente.nome_completo,
+        },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (error || data?.error) {
+        toast.error(data?.error || "Erro ao reenviar credenciais");
+        setResendLoading(false);
+        return;
+      }
+
+      toast.success(
+        data?.regenerated_password
+          ? "Nova senha temporária gerada e enviada por e-mail"
+          : "Credenciais reenviadas por e-mail",
+      );
+      await fetchCustomer();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao reenviar credenciais");
+    }
+    setResendLoading(false);
+  };
+
   const copyText = (text: string, label = "Copiado!") => {
     navigator.clipboard.writeText(text);
     toast.success(label);
