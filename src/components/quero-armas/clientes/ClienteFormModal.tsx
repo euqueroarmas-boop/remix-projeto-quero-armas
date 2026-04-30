@@ -305,6 +305,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     try {
       const payload: any = {
         ...f,
+        numero_documento_identidade: f.rg || null,
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
