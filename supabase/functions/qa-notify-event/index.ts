@@ -32,7 +32,9 @@ type Evento =
 
 interface Payload {
   evento: Evento;
-  solicitacao_id: string;
+  solicitacao_id?: string;
+  /** Quando solicitacao_id não for informada, resolve a partir do cliente. */
+  cliente_id?: number;
   /** Para documento_recebido. */
   documentos_recebidos?: number;
   documentos_total?: number;
@@ -43,6 +45,8 @@ interface Payload {
   /** Override opcional, se já carregado em memória. */
   cliente?: { nome?: string | null; email?: string | null };
   servico_nome?: string | null;
+  /** Status novo após mudança (para anti-dup em mudanças manuais). */
+  status_novo?: string | null;
 }
 
 function buildBody(p: Payload, cliente: { nome?: string | null }, servico: string): { subject: string; html: string } {
@@ -110,11 +114,31 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // Carrega solicitação + cliente
+    // Resolve solicitacao_id se vier apenas cliente_id (pega a mais recente
+    // não-finalizada/indeferida do cliente).
+    let solicitacaoId = body.solicitacao_id ?? null;
+    if (!solicitacaoId && body.cliente_id) {
+      const { data: ativa } = await supabase
+        .from("qa_solicitacoes_servico")
+        .select("id")
+        .eq("cliente_id", body.cliente_id)
+        .not("status_servico", "in", "(deferido,indeferido,finalizado)")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      solicitacaoId = (ativa as any)?.id ?? null;
+    }
+    if (!solicitacaoId) {
+      return new Response(JSON.stringify({ error: "solicitacao_id ou cliente_id válidos são obrigatórios" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: sol, error: solErr } = await supabase
       .from("qa_solicitacoes_servico")
-      .select("id, cliente_id, service_name")
-      .eq("id", body.solicitacao_id)
+      .select("id, cliente_id, service_name, status_servico")
+      .eq("id", solicitacaoId)
       .maybeSingle();
     if (solErr || !sol) {
       return new Response(JSON.stringify({ error: "Solicitação não encontrada" }), {
@@ -137,11 +161,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Registra o evento na timeline
-    await supabase.from("qa_solicitacao_eventos").insert({
-      solicitacao_id: body.solicitacao_id,
+    // Anti-duplicidade: já existe e-mail enviado para este (solicitacao, evento, status_novo)
+    // sem mudança real de status no meio?
+    const statusRef = body.status_novo ?? (sol as any).status_servico ?? null;
+    const { data: jaNotif } = await supabase.rpc("qa_evento_ja_notificado", {
+      _solicitacao_id: solicitacaoId,
+      _evento: body.evento,
+      _status_novo: statusRef,
+    });
+
+    // Registra o evento na timeline (sempre — útil para auditoria)
+    const { data: eventoRow } = await supabase
+      .from("qa_solicitacao_eventos")
+      .insert({
+        solicitacao_id: solicitacaoId,
       cliente_id: sol.cliente_id ?? null,
       evento: body.evento,
+        status_novo: statusRef,
       descricao: body.observacao ?? null,
       metadata: {
         documentos_recebidos: body.documentos_recebidos,
@@ -150,7 +186,15 @@ Deno.serve(async (req) => {
         status_orgao: body.status_orgao,
       },
       ator: "sistema",
-    });
+      })
+      .select("id")
+      .single();
+
+    if (jaNotif === true) {
+      return new Response(JSON.stringify({ ok: true, email_skipped: "duplicado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // E-mail só se tiver destinatário válido
     if (!email) {
@@ -168,7 +212,7 @@ Deno.serve(async (req) => {
         subject,
         html,
         from_name: "Quero Armas",
-        trace_id: `qa-event-${body.evento}-${body.solicitacao_id}`,
+        trace_id: `qa-event-${body.evento}-${solicitacaoId}`,
       },
     });
 
@@ -177,6 +221,14 @@ Deno.serve(async (req) => {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Marca evento como notificado por e-mail (para a anti-dup futura)
+    if ((eventoRow as any)?.id) {
+      await supabase
+        .from("qa_solicitacao_eventos")
+        .update({ email_enviado_em: new Date().toISOString() })
+        .eq("id", (eventoRow as any).id);
     }
 
     return new Response(JSON.stringify({ ok: true }), {
