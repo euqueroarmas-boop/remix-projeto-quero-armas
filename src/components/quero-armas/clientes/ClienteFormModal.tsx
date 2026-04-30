@@ -456,11 +456,33 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
-                <FInput label="RG / CIN" value={f.rg} onChange={v => set("rg", v)} />
-                <FInput label="Emissor RG / CIN" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
+                <FSelect
+                  label="Tipo de Documento"
+                  value={f.tipo_documento_identidade}
+                  onChange={v => set("tipo_documento_identidade", (v === "CIN" ? "CIN" : "RG"))}
+                  options={[
+                    { value: "RG", label: "RG" },
+                    { value: "CIN", label: "CIN (usa CPF)" },
+                  ]}
+                />
+                <FInput
+                  label={f.tipo_documento_identidade === "CIN" ? "CIN (nº)" : "RG (nº)"}
+                  value={f.rg}
+                  onChange={v => set("rg", v)}
+                />
+                <FInput
+                  label={f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG"}
+                  value={f.emissor_rg}
+                  onChange={v => set("emissor_rg", v)}
+                />
               </div>
+              {f.tipo_documento_identidade === "CIN" && (
+                <p className="text-[10px] text-blue-600 -mt-2">
+                  ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
+                </p>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
                 <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
