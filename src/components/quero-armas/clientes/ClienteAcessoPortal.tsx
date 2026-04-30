@@ -579,9 +579,45 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Links do Portal</h4>
         </div>
         <div className="space-y-2.5">
-          <LinkRow label="URL Login" url={portalUrl} path="/area-do-cliente" onCopy={() => copyText(portalUrl, "URL de login copiada")} onOpen={() => window.open(portalUrl, "_blank")} />
+          <LinkRow label="URL Login" url={portalUrl} path="/quero-armas/area-do-cliente/login" onCopy={() => copyText(portalUrl, "URL de login copiada")} onOpen={() => window.open(portalUrl, "_blank")} />
           <LinkRow label="URL Redefinição de Senha" url={resetUrl} path="/redefinir-senha" onCopy={() => copyText(resetUrl, "URL de reset copiada")} onOpen={() => window.open(resetUrl, "_blank")} />
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <History className="h-4 w-4 text-slate-500" />
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Histórico de Acesso</h4>
+        </div>
+        {timeline.length === 0 ? (
+          <p className="text-[11px] text-slate-400 italic">Nenhum evento registrado ainda.</p>
+        ) : (
+          <ul className="space-y-2">
+            {timeline.map((ev) => {
+              const meta = eventoLabel[ev.evento] || { label: ev.evento, color: "text-slate-700 bg-slate-100", icon: History };
+              const Icon = meta.icon;
+              return (
+                <li key={ev.id} className="flex items-start gap-2 py-1.5 border-b border-slate-50 last:border-0">
+                  <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full shrink-0 ${meta.color}`}>
+                    <Icon className="h-3 w-3" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold text-slate-700 truncate">{meta.label}</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">{formatDateTime(ev.created_at)}</span>
+                    </div>
+                    {ev.descricao && (
+                      <p className="text-[10px] text-slate-500 truncate">{ev.descricao}</p>
+                    )}
+                    {ev.ator && (
+                      <p className="text-[9px] text-slate-400 uppercase tracking-wider">por {ev.ator}</p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );
