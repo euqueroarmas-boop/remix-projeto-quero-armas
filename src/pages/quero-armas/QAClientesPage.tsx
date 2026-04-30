@@ -2019,7 +2019,7 @@ export default function QAClientesPage() {
                 { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
-                { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => s.status_servico === "aguardando_contratacao" && !s.ja_convertido).length})` },
+                { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
@@ -2181,18 +2181,18 @@ export default function QAClientesPage() {
                 </div>
                 {/* Solicitações de serviço vindas do formulário público
                     — exibidas como leads operacionais; não criam pagamento. */}
-                {solicitacoesPublicas.filter(s => s.status_servico === "aguardando_contratacao" && !s.ja_convertido).length > 0 && (
+                {solicitacoesPublicas.filter(s => !s.ja_convertido).length > 0 && (
                   <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
                         Solicitações — Formulário público
                       </span>
                       <span className="text-[10px] text-amber-700">
-                        {solicitacoesPublicas.filter(s => s.status_servico === "aguardando_contratacao" && !s.ja_convertido).length} aguardando contratação
+                        {solicitacoesPublicas.filter(s => !s.ja_convertido).length} aguardando contratação
                       </span>
                     </div>
                     <div className="space-y-2">
-                      {solicitacoesPublicas.filter(s => s.status_servico === "aguardando_contratacao" && !s.ja_convertido).map(s => (
+                      {solicitacoesPublicas.filter(s => !s.ja_convertido).map(s => (
                         <div key={s.cadastro_publico_id} className="rounded-md border border-amber-200 bg-white p-2.5">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
@@ -2222,7 +2222,7 @@ export default function QAClientesPage() {
                                 )}
                               </div>
                             </div>
-                            {s.status_servico === "aguardando_contratacao" && (
+                            {!s.ja_convertido && (
                               <Button
                                 size="sm"
                                 variant="default"
