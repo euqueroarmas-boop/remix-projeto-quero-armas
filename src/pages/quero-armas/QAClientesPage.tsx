@@ -974,6 +974,11 @@ export default function QAClientesPage() {
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
+  // Solicitações vindas do formulário público para o cliente selecionado.
+  // Apenas leitura; jamais cria pagamento. Usado para evitar "Serviços (0)"
+  // quando o cliente veio da internet com serviço informado.
+  const { solicitacoes: solicitacoesPublicas, reload: reloadSolicitacoes } =
+    useSolicitacoesPublicasDoCliente(selected?.id ?? null, itens);
   // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
   // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
   const [processosVenda, setProcessosVenda] = useState<any[]>([]);
