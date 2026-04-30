@@ -456,11 +456,56 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           {hasAccount && displayUserId && (
             <InfoRow icon={Hash} label="Auth User ID" value={displayUserId.slice(0, 12) + "..."} copyable onCopy={() => copyText(displayUserId, "User ID copiado")} />
           )}
+          <InfoRow icon={Clock} label="Provisionado em" value={formatDateTime(portalStatus?.portal_provisionado_em)} />
+          <InfoRow icon={Send} label="Último envio em" value={formatDateTime(portalStatus?.portal_credenciais_enviadas_em)} />
         </div>
       </div>
 
+      {portalStatus?.portal_ultimo_envio_status === "failed" && (
+        <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-bold text-red-800 uppercase tracking-wider">Último envio falhou</h4>
+              <p className="text-[11px] text-red-700 mt-1">
+                {portalStatus.portal_ultimo_envio_erro || "Não foi possível entregar o e-mail de credenciais."}
+              </p>
+              <Button
+                size="sm"
+                className="mt-3 h-8 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl px-3"
+                onClick={handleResend}
+                disabled={resendLoading}
+              >
+                {resendLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+                Tentar reenviar agora
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {hasAccount ? (
         <div className="space-y-4">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Send className="h-4 w-4 text-blue-600" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Reenviar credenciais</h4>
+            </div>
+            <p className="text-[11px] text-blue-700/80 mb-3">
+              Reenvia o e-mail com a senha temporária atual. Se a senha não estiver mais disponível,
+              uma nova será gerada automaticamente.
+            </p>
+            <Button
+              size="sm"
+              className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl"
+              onClick={handleResend}
+              disabled={resendLoading}
+            >
+              {resendLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Send className="h-3.5 w-3.5 mr-2" />}
+              Reenviar e-mail de credenciais
+            </Button>
+          </div>
+
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex items-center gap-2 mb-3">
               <KeyRound className="h-4 w-4 text-slate-500" />
