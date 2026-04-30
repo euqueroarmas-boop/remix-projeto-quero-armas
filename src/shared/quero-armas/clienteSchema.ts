@@ -69,6 +69,7 @@ export interface ClienteData {
   // Identificação
   nome_completo: string;
   cpf: string;
+  tipo_documento_identidade: "RG" | "CIN";
   rg: string;
   emissor_rg: string;
   data_expedicao_rg: string; // DD/MM/AAAA
@@ -118,7 +119,7 @@ export interface ClienteData {
 }
 
 export const emptyClienteData: ClienteData = {
-  nome_completo: "", cpf: "", rg: "", emissor_rg: "", data_expedicao_rg: "", sexo: "",
+  nome_completo: "", cpf: "", tipo_documento_identidade: "RG", rg: "", emissor_rg: "", data_expedicao_rg: "", sexo: "",
   data_nascimento: "", nome_mae: "", nome_pai: "",
   naturalidade_municipio: "", naturalidade_uf: "", naturalidade_pais: "Brasil",
   nacionalidade: "Brasileira", estado_civil: "",
@@ -136,6 +137,7 @@ export const emptyClienteData: ClienteData = {
 const baseShape = {
   nome_completo: z.string().trim().min(3, "Informe o nome completo"),
   cpf: z.string().refine(isValidCpf, "CPF inválido"),
+  tipo_documento_identidade: z.enum(["RG", "CIN"]).optional().default("RG"),
   rg: z.string().trim().optional().default(""),
   emissor_rg: z.string().trim().optional().default(""),
   data_expedicao_rg: z.string().trim().optional().default(""),
@@ -313,7 +315,7 @@ export function getBlockingErrors(
   }
 
   // CPF×RG idênticos
-  const isCinDoc = String(opts.documentoIdentidadeTipo || "").toUpperCase().includes("CIN");
+  const isCinDoc = String(opts.documentoIdentidadeTipo || data.tipo_documento_identidade || "").toUpperCase().includes("CIN");
   if (!isCinDoc && !rgNotEqualCpf(data.rg, data.cpf)) {
     errs.push({
       field: "ambiguidade_cpf_rg",
