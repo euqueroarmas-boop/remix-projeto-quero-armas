@@ -85,27 +85,23 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
   return (
     <div className="fixed inset-0 z-[60] flex items-stretch justify-center">
       <aside
-        className="relative flex h-full w-full flex-col overflow-y-auto overscroll-contain text-slate-100 shadow-2xl"
-        style={{
-          background:
-            "radial-gradient(circle at 20% 0%, hsl(190 60% 22% / 0.35), transparent 50%), radial-gradient(circle at 80% 100%, hsl(220 30% 14% / 0.6), transparent 60%), linear-gradient(180deg, hsl(220 28% 10%), hsl(220 25% 7%))",
-        }}
+        className="relative flex h-full w-full flex-col overflow-y-auto overscroll-contain text-slate-900 bg-slate-50 shadow-2xl"
       >
         {/* Top bar estilo ARMORY */}
-        <div className="relative flex items-center justify-between border-b border-white/10 bg-black/30 px-5 py-3 backdrop-blur">
+        <div className="relative flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3 backdrop-blur shadow-sm">
           <div className="flex items-center gap-2">
-            <Crosshair className="h-3.5 w-3.5 text-cyan-300" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.32em] text-cyan-200/80">
+            <Crosshair className="h-3.5 w-3.5 text-cyan-600" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.32em] text-cyan-700">
               ARMORY
             </span>
-            <span className="ml-2 text-[9px] font-mono text-white/40">
+            <span className="ml-2 text-[9px] font-mono text-slate-400">
               / {WEAPON_KIND_LABEL[info.kind]}
             </span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-white/5 p-1.5 text-white/70 hover:bg-white/10"
+            className="rounded-full bg-slate-100 p-1.5 text-slate-600 hover:bg-slate-200"
           >
             <X className="h-4 w-4" />
           </button>
@@ -116,10 +112,10 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
           {/* Marquee do nome (estilo CoD) */}
           <div className="flex items-end justify-between">
             <div>
-              <div className="text-[28px] font-black uppercase tracking-tight leading-none text-white">
+              <div className="text-[28px] font-black uppercase tracking-tight leading-none text-slate-900">
                 {displayMarca}
               </div>
-              <div className="mt-0.5 text-[14px] font-semibold uppercase tracking-[0.18em] text-cyan-300/90">
+              <div className="mt-0.5 text-[14px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
                 {displayModelo || displayCalibre}
               </div>
             </div>
@@ -132,7 +128,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 {weapon.source === "CRAF" ? "REGISTRADA" : "EM TRÁFEGO"}
               </span>
               {catalog && (
-                <span className="rounded-sm border border-emerald-400/40 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-300">
+                <span className="rounded-sm border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.2em] text-emerald-700">
                   ★ BLUEPRINT
                 </span>
               )}
@@ -141,8 +137,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
 
           {/* Hero da arma com glow */}
           <div
-            className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl"
-            style={{ background: "transparent", backgroundImage: "none" }}
+            className="relative mt-4 h-[26rem] w-full overflow-hidden rounded-xl border border-slate-200 bg-white"
           >
             <div className="relative flex h-full items-center justify-center px-2 py-2">
               <img
@@ -151,8 +146,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 style={{ background: "transparent" }}
                 className={
                   ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind)
-                    ? "h-auto max-h-full w-full max-w-[98%] object-contain drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
-                    : "h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_14px_32px_rgba(0,0,0,0.95)]"
+                    ? "h-auto max-h-full w-full max-w-[98%] object-contain drop-shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
+                    : "h-full w-full max-w-full object-contain px-2 py-3 drop-shadow-[0_10px_24px_rgba(15,23,42,0.18)]"
                 }
               />
             </div>
@@ -172,16 +167,16 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 ? "VENCE HOJE"
                 : `${weapon.daysToExpire}D RESTANTES`}
             </span>
-            <span className="rounded-sm bg-white/5 px-2 py-1 font-mono text-white/70">
+            <span className="rounded-sm bg-slate-100 px-2 py-1 font-mono text-slate-700">
               {formatDate(weapon.data_validade)}
             </span>
             {catalog?.classificacao_legal && (
-              <span className="rounded-sm bg-white/5 px-2 py-1 font-bold uppercase tracking-wider text-white/70">
+              <span className="rounded-sm bg-slate-100 px-2 py-1 font-bold uppercase tracking-wider text-slate-700">
                 {catalog.classificacao_legal}
               </span>
             )}
             {catalog?.origem && (
-              <span className="inline-flex items-center gap-1 rounded-sm bg-white/5 px-2 py-1 font-bold uppercase tracking-wider text-white/70">
+              <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-1 font-bold uppercase tracking-wider text-slate-700">
                 <MapPin className="h-3 w-3" /> {catalog.origem}
               </span>
             )}
@@ -192,12 +187,12 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {catalog && (
           <div className="mt-5 px-6">
             <div className="mb-2 flex items-center gap-1.5">
-              <Gauge className="h-3.5 w-3.5 text-cyan-300" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200/80">
+              <Gauge className="h-3.5 w-3.5 text-cyan-600" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700">
                 Weapon Details
               </div>
             </div>
-            <div className="space-y-1.5 rounded-lg border border-white/10 bg-black/30 p-3">
+            <div className="space-y-1.5 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
               <StatBar label="Damage"     value={catalog.stat_dano} accent="#ef4444" />
               <StatBar label="Precision"  value={catalog.stat_precisao} accent="#22d3ee" />
               <StatBar label="Range"      value={catalog.stat_alcance} accent="#a78bfa" />
@@ -232,7 +227,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         </div>
 
         {catalog?.descricao && (
-          <p className="mt-4 px-6 text-[11px] leading-relaxed text-white/60">
+          <p className="mt-4 px-6 text-[11px] leading-relaxed text-slate-600">
             {catalog.descricao}
           </p>
         )}
@@ -241,8 +236,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {variants.length > 0 && (
           <div className="mt-5 px-6">
             <div className="mb-2 flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-cyan-300" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200/80">
+              <Layers className="h-3.5 w-3.5 text-cyan-600" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700">
                 Outras opções · {WEAPON_KIND_LABEL[info.kind]}
               </div>
             </div>
@@ -250,15 +245,15 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
               {variants.map((v) => (
                 <div
                   key={v.id}
-                  className="group relative overflow-hidden rounded-md border border-white/10 bg-white/[0.03] p-2 transition-colors hover:border-cyan-300/40"
+                  className="group relative overflow-hidden rounded-md border border-slate-200 bg-white p-2 shadow-sm transition-colors hover:border-cyan-400"
                 >
-                  <div className="text-[8px] font-bold uppercase tracking-wider text-white/40">
+                  <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
                     {v.marca}
                   </div>
-                  <div className="text-[11px] font-bold text-white/90 leading-tight">
+                  <div className="text-[11px] font-bold text-slate-900 leading-tight">
                     {v.modelo}
                   </div>
-                  <div className="mt-0.5 text-[9px] font-mono text-cyan-300/80">{v.calibre}</div>
+                  <div className="mt-0.5 text-[9px] font-mono text-cyan-700">{v.calibre}</div>
                   <div className="mt-1 h-20 overflow-hidden rounded-md" style={{ background: "transparent", backgroundImage: "none" }}>
                     <img
                       src={v.imagem || renderForKind(v.tipo as any)}
@@ -275,21 +270,21 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {/* Munições compatíveis */}
         <div className="mt-5 px-6">
           <div className="mb-2 flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5 text-cyan-300" />
-            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200/80">
+            <Layers className="h-3.5 w-3.5 text-cyan-600" />
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700">
               Estoque · Mesmo calibre
             </div>
           </div>
-          <div className="flex items-center justify-between rounded-md border border-white/10 bg-black/30 p-3">
+          <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3 shadow-sm">
             <div>
-              <div className="text-[10px] uppercase tracking-wider text-white/50">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500">
                 {displayCalibre}
               </div>
-              <div className="font-mono text-2xl font-bold text-white">
+              <div className="font-mono text-2xl font-bold text-slate-900">
                 {ammoSameCalibre.toLocaleString("pt-BR")}
               </div>
             </div>
-            <div className="text-right text-[10px] text-white/40">
+            <div className="text-right text-[10px] text-slate-500">
               {ammoSameCalibre === 0
                 ? "Sem munição cadastrada"
                 : "Munições disponíveis"}
@@ -300,14 +295,14 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {/* Documentos vinculados */}
         <div className="mt-5 px-6 pb-8">
           <div className="mb-2 flex items-center gap-1.5">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200/80">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-700">
               Acessórios · Documentos vinculados
             </div>
           </div>
           {relatedDocs.length === 0 ? (
-            <div className="flex items-center gap-2 rounded-md border border-dashed border-white/15 bg-black/20 px-3 py-3 text-[11px] text-white/50">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+            <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-[11px] text-slate-500">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
               Nenhum documento vinculado a esta arma.
             </div>
           ) : (
@@ -315,15 +310,15 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
               {relatedDocs.map((d, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-md border border-white/10 bg-white/[0.04] px-3 py-2"
+                  className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="rounded-sm bg-cyan-500/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-cyan-300">
+                    <span className="rounded-sm bg-cyan-50 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-cyan-700 border border-cyan-200">
                       {d.category}
                     </span>
-                    <span className="text-[11px] font-semibold text-white/90">{d.title}</span>
+                    <span className="text-[11px] font-semibold text-slate-800">{d.title}</span>
                   </div>
-                  <span className="font-mono text-[10px] text-white/50">{formatDate(d.date)}</span>
+                  <span className="font-mono text-[10px] text-slate-500">{formatDate(d.date)}</span>
                 </div>
               ))}
             </div>
@@ -332,10 +327,10 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
 
         {/* Zona de risco — Excluir armamento */}
         {onDelete && (
-          <div className="mt-2 border-t border-white/10 px-6 py-5">
+          <div className="mt-2 border-t border-slate-200 px-6 py-5">
             <div className="mb-2 flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-rose-300/90">
+              <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-rose-700">
                 Zona de Risco
               </div>
             </div>
@@ -344,14 +339,14 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 type="button"
                 onClick={() => setConfirmDel(true)}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 rounded-md border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-rose-200 hover:bg-rose-500/20 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-rose-700 hover:bg-rose-100 disabled:opacity-60"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Excluir este armamento
               </button>
             ) : (
-              <div className="rounded-md border border-rose-400/40 bg-rose-500/10 p-3">
-                <p className="text-[11px] text-rose-100/90">
+              <div className="rounded-md border border-rose-300 bg-rose-50 p-3">
+                <p className="text-[11px] text-rose-800">
                   Tem certeza? Esta ação remove o registro <b>{displayMarca} {displayModelo}</b>{" "}
                   {weapon.numero_arma ? <>(série <span className="font-mono">{weapon.numero_arma}</span>)</> : null}
                   {" "}e seus documentos vinculados. Não pode ser desfeita.
@@ -370,7 +365,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                       }
                     }}
                     disabled={deleting}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-rose-500 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-rose-400 disabled:opacity-60"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-rose-500 disabled:opacity-60"
                   >
                     {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                     Sim, excluir
@@ -379,7 +374,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     type="button"
                     onClick={() => setConfirmDel(false)}
                     disabled={deleting}
-                    className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-white/80 hover:bg-white/10 disabled:opacity-60"
+                    className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                   >
                     Cancelar
                   </button>
@@ -397,32 +392,32 @@ function StatBar({ label, value, accent }: { label: string; value: number | null
   const v = Math.max(0, Math.min(100, value ?? 0));
   return (
     <div className="grid grid-cols-[80px_1fr_28px] items-center gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-wider text-white/60">{label}</span>
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-white/10">
+      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600">{label}</span>
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-slate-200">
         <div
           className="absolute inset-y-0 left-0 rounded-full"
-          style={{ width: `${v}%`, background: `linear-gradient(90deg, ${accent}cc, ${accent})`, boxShadow: `0 0 8px ${accent}88` }}
+          style={{ width: `${v}%`, background: `linear-gradient(90deg, ${accent}cc, ${accent})`, boxShadow: `0 0 6px ${accent}55` }}
         />
         {/* tick marks */}
         <div className="pointer-events-none absolute inset-0 flex">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="flex-1 border-r border-black/40 last:border-r-0" />
+            <div key={i} className="flex-1 border-r border-white/70 last:border-r-0" />
           ))}
         </div>
       </div>
-      <span className="text-right font-mono text-[9px] text-white/70">{value ?? "—"}</span>
+      <span className="text-right font-mono text-[9px] text-slate-700">{value ?? "—"}</span>
     </div>
   );
 }
 
 function SpecCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
-      <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-white/50">
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm">
+      <div className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
         {icon}
         {label}
       </div>
-      <div className="mt-0.5 font-mono text-[12px] font-semibold text-white/90">
+      <div className="mt-0.5 font-mono text-[12px] font-semibold text-slate-900">
         {value}
       </div>
     </div>
