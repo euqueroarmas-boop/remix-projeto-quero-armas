@@ -37,6 +37,7 @@ const QAContratarServicoPage = lazyRetry(() => import("./QAContratarServicoPage"
 const QAContratarConfirmarPage = lazyRetry(() => import("./QAContratarConfirmarPage"), "QAContratarConfirmarPage");
 const QAContratarIdentificarPage = lazyRetry(() => import("./QAContratarIdentificarPage"), "QAContratarIdentificarPage");
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
+const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
 const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
@@ -95,6 +96,7 @@ export default function QARoutes() {
           <Route path="casos" element={<QACasosPage />} />
           <Route path="processos" element={<QAProcessosPage />} />
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
+          <Route path="operacao/contratacoes" element={<QAVendasPendentesPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />
           <Route path="clientes" element={<QAClientesPage />} />
