@@ -15,6 +15,9 @@ import {
   UserPlus,
   ShoppingBag,
   Phone,
+  Users,
+  XCircle,
+  Building2,
 } from "lucide-react";
 
 const FAQ = [
@@ -57,9 +60,27 @@ const ORGANIZA = [
 
 const PASSOS = [
   { n: "1", t: "Crie sua conta gratuita", d: "Apenas CPF, nome, e-mail e telefone. Leva menos de 1 minuto." },
-  { n: "2", t: "Cadastre suas armas", d: "Você mesmo registra cada arma manualmente, com marca, modelo, calibre e número de série." },
-  { n: "3", t: "Anexe seus documentos", d: "CR, CRAF, GTE, autorizações e comprovantes ficam guardados em um só lugar." },
-  { n: "4", t: "Receba alertas de vencimento", d: "Acompanhe prazos antes que algo expire e perca a validade." },
+  { n: "2", t: "Cadastre suas armas", d: "Você mesmo registra cada arma manualmente — marca, modelo, calibre, série. Sem intermediário." },
+  { n: "3", t: "Anexe seus documentos", d: "Você envia CR, CRAF, GTE, autorizações e comprovantes. Tudo guardado em um só lugar." },
+  { n: "4", t: "Acompanhe vencimentos", d: "Você visualiza prazos e organiza renovações antes que algo expire. A equipe só entra se você contratar." },
+];
+
+const PARA_QUEM = [
+  { icon: Crosshair, t: "CAC", d: "Caçador, Atirador ou Colecionador que quer organizar todo o acervo em um só painel." },
+  { icon: ShieldCheck, t: "Atirador desportivo", d: "Mantém GTE, CRAF e autorizações sempre à mão para treinos e competições." },
+  { icon: Crosshair, t: "Caçador", d: "Centraliza guias de tráfego, autorizações e datas-limite de cada temporada." },
+  { icon: FolderArchive, t: "Colecionador", d: "Catálogo digital privado das armas da coleção, com fotos e documentos anexos." },
+  { icon: FileText, t: "Possui arma no SINARM", d: "Quem tem arma registrada na Polícia Federal e quer manter cópias e prazos organizados." },
+  { icon: Sparkles, t: "Quer organizar antes de contratar", d: "Reúne sua documentação primeiro e contrata um serviço da Quero Armas só quando precisar." },
+];
+
+const NAO_FAZ = [
+  "Não substitui SIGMA (Exército) nem SINARM (Polícia Federal).",
+  "Não emite documento oficial, certidão ou autorização.",
+  "Não compra arma, munição ou acessório.",
+  "Não gera cobrança automática nem cadastra cartão.",
+  "Não abre processo administrativo automaticamente.",
+  "Não dispensa acompanhamento jurídico ou administrativo quando o caso exigir.",
 ];
 
 const ArsenalDigitalGratuito = () => (
@@ -93,7 +114,7 @@ const ArsenalDigitalGratuito = () => (
           Seu <span className="text-accent">Arsenal Digital</span><br />em um só lugar.
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-base text-muted-foreground sm:text-lg">
-          Organize <strong className="text-foreground">suas armas</strong>, <strong className="text-foreground">CR, CRAF, GTE, autorizações</strong>, exames e vencimentos do acervo. Você cadastra tudo sozinho — a Quero Armas só entra quando você precisar contratar um serviço.
+          Organize <strong className="text-foreground">suas armas</strong>, <strong className="text-foreground">CR, CRAF, GTE, autorizações</strong>, exames e vencimentos do acervo. <strong className="text-foreground">Você cadastra e envia tudo por conta própria</strong> — a Equipe Operacional da Quero Armas só entra em ação quando você contratar um serviço. O painel é gratuito; serviços são pagos somente quando você solicitar.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -138,7 +159,7 @@ const ArsenalDigitalGratuito = () => (
       <div className="container max-w-5xl">
         <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">Como funciona</h2>
         <p className="mt-3 max-w-2xl text-muted-foreground">
-          Quatro passos para ter seu acervo 100% organizado. Você no controle, sem intermediário, sem cobrança.
+          Quatro passos para ter seu acervo 100% organizado. Você no controle, sem intermediário, sem cobrança. A equipe só atua quando houver contratação.
         </p>
         <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PASSOS.map((p) => (
@@ -148,6 +169,71 @@ const ArsenalDigitalGratuito = () => (
               <div className="mt-1 text-sm text-muted-foreground leading-relaxed">{p.d}</div>
             </div>
           ))}
+        </div>
+
+        {/* CTA INTERMEDIÁRIO */}
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Link to="/area-do-cliente/criar-conta">
+              <UserPlus className="mr-2 size-4" /> Criar conta gratuita agora <ArrowRight className="ml-2 size-4" />
+            </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link to="/quero-armas/servicos">
+              <ShoppingBag className="mr-2 size-4" /> Ver serviços da Quero Armas
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+
+    {/* PARA QUEM É */}
+    <section className="border-b border-border bg-card/30 py-16 sm:py-20">
+      <div className="container max-w-5xl">
+        <div className="flex items-center gap-3">
+          <Users className="size-5 text-accent" />
+          <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">Para quem é</h2>
+        </div>
+        <p className="mt-3 max-w-3xl text-muted-foreground">
+          O Arsenal Digital foi pensado para quem já vive a rotina do CAC e quer ter controle total da própria documentação — sem depender de planilha, pasta física ou e-mail.
+        </p>
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {PARA_QUEM.map(({ icon: Icon, t, d }) => (
+            <div key={t} className="rounded-sm border border-border bg-card p-5">
+              <div className="flex items-center gap-2">
+                <Icon className="size-4 text-accent shrink-0" />
+                <div className="font-heading text-sm font-bold uppercase tracking-wider text-foreground">{t}</div>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{d}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* O QUE A CONTA GRATUITA NÃO FAZ */}
+    <section className="border-b border-border bg-background py-16 sm:py-20">
+      <div className="container max-w-4xl">
+        <div className="rounded-sm border border-destructive/30 bg-destructive/5 p-6 sm:p-8">
+          <div className="flex items-start gap-4">
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-sm border border-destructive/40 bg-destructive/10">
+              <XCircle className="size-5 text-destructive" />
+            </div>
+            <div className="w-full">
+              <h2 className="font-heading text-xl font-bold uppercase tracking-tight sm:text-2xl">O que a conta gratuita NÃO faz</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Transparência total sobre os limites do Arsenal Digital. Ele organiza — não substitui órgãos públicos nem serviços profissionais.
+              </p>
+              <ul className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
+                {NAO_FAZ.map((item) => (
+                  <li key={item} className="flex items-start gap-2 rounded-sm border border-border bg-card p-3 text-muted-foreground">
+                    <XCircle className="mt-0.5 size-4 text-destructive shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -219,6 +305,23 @@ const ArsenalDigitalGratuito = () => (
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{item.a}</p>
             </details>
           ))}
+        </div>
+      </div>
+    </section>
+
+    {/* BLOCO DE CONFIANÇA */}
+    <section className="border-b border-border bg-background py-12">
+      <div className="container max-w-4xl">
+        <div className="rounded-sm border border-border bg-card p-6 text-center">
+          <div className="mx-auto mb-3 inline-flex size-10 items-center justify-center rounded-sm border border-accent/40 bg-accent/10">
+            <Building2 className="size-4 text-accent" />
+          </div>
+          <p className="font-heading text-sm font-bold uppercase tracking-wider text-foreground">
+            Desenvolvido pela WMTi Tecnologia da Informação
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sistema criado para organização documental e acompanhamento operacional — uso interno e externo da Quero Armas.
+          </p>
         </div>
       </div>
     </section>
