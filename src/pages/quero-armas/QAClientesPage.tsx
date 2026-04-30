@@ -38,6 +38,7 @@ import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
@@ -973,6 +974,11 @@ export default function QAClientesPage() {
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
+  // Solicitações vindas do formulário público para o cliente selecionado.
+  // Apenas leitura; jamais cria pagamento. Usado para evitar "Serviços (0)"
+  // quando o cliente veio da internet com serviço informado.
+  const { solicitacoes: solicitacoesPublicas } =
+    useSolicitacoesPublicasDoCliente(selected?.id ?? null, itens);
   // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
   // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
   const [processosVenda, setProcessosVenda] = useState<any[]>([]);
@@ -1992,7 +1998,7 @@ export default function QAClientesPage() {
                 { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
-                { value: "servicos", icon: FileText, label: `Serviços (${itens.length})` },
+                { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
                 { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
@@ -2146,6 +2152,65 @@ export default function QAClientesPage() {
                     </Button>
                   </div>
                 </div>
+                {/* Solicitações de serviço vindas do formulário público
+                    — exibidas como leads operacionais; não criam pagamento. */}
+                {solicitacoesPublicas.filter(s => !s.ja_convertido).length > 0 && (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
+                        Solicitações — Formulário público
+                      </span>
+                      <span className="text-[10px] text-amber-700">
+                        {solicitacoesPublicas.filter(s => !s.ja_convertido).length} aguardando contratação
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {solicitacoesPublicas.filter(s => !s.ja_convertido).map(s => (
+                        <div key={s.cadastro_publico_id} className="rounded-md border border-amber-200 bg-white p-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-[12px] font-semibold text-slate-800 truncate">
+                                {s.servico.nome}
+                              </div>
+                              <div className="text-[10px] text-slate-500 mt-0.5">
+                                Origem: <span className="font-semibold">Formulário público</span>
+                                {s.servico_interesse && (
+                                  <> · Texto do formulário: <span className="font-mono">{s.servico_interesse}</span></>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                                  Aguardando contratação
+                                </span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                  Sem cobrança vinculada
+                                </span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                  Processo ainda não aberto
+                                </span>
+                                {s.servico.pendente_classificacao && (
+                                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
+                                    Classificação pendente
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="h-7 text-[10px] shrink-0"
+                              onClick={() => {
+                                setVendaModal({ open: true });
+                              }}
+                            >
+                              <Plus className="h-3 w-3 mr-1" /> Gerar venda
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {vendas.length === 0 ? <Empty text="Nenhuma venda registrada." /> : (
                   <div className="space-y-3">
                     {vendas.map((v: any) => {

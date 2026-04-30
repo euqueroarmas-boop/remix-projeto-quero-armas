@@ -3,6 +3,9 @@ import { Outlet, Navigate } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
+import { lazy, Suspense } from "react";
+
+const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal"));
 
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
@@ -32,6 +35,10 @@ function QALayoutInner() {
         </div>
         <QAFooter />
       </main>
+      {/* Painel automático de pendências essenciais (perfis internos). */}
+      <Suspense fallback={null}>
+        <PendenciasEssenciaisModal />
+      </Suspense>
     </div>
   );
 }
