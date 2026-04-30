@@ -1323,15 +1323,32 @@ function Step3Review({
       {/* ─── Bloco 3 — Documento de identificação ─── */}
       <ReviewBlock title="Documento de identificação" icon={Shield}>
         <div className="grid grid-cols-2 gap-2">
-          <ReviewField label="RG / CIN" value={data.rg} onChange={(v) => set("rg", v)}
+          <ReviewSelect
+            label="Tipo"
+            value={tipoDocumentoAtual}
+            onChange={(v) => set("tipo_documento_identidade", (v === "CIN" ? "CIN" : "RG") as any)}
+            options={[
+              { value: "RG", label: "RG" },
+              { value: "CIN", label: "CIN" },
+            ]}
+            status={tipoDocumentoAtual ? "validado" : "normal"}
+          />
+          <ReviewField label={isCinDoc ? "CIN" : "RG"} value={data.rg} onChange={(v) => set("rg", v)}
             required={required.has("rg")} status={statusOf("rg")} />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
           <ReviewField label="Órgão emissor" value={data.emissor_rg} placeholder="SSP/SP"
             onChange={(v) => set("emissor_rg", v)}
             required={required.has("emissor_rg")} status={statusOf("emissor_rg")} />
+          <ReviewField label={isCinDoc ? "Data de emissão da CIN" : "Data de expedição do RG"} value={data.data_expedicao_rg}
+            onChange={(v) => set("data_expedicao_rg", v)} placeholder="DD/MM/AAAA"
+            status={statusOf("data_expedicao_rg")} />
         </div>
-        <ReviewField label="Data de expedição do RG" value={data.data_expedicao_rg}
-          onChange={(v) => set("data_expedicao_rg", v)} placeholder="DD/MM/AAAA"
-          status={statusOf("data_expedicao_rg")} />
+        {isCinDoc && (
+          <div className="rounded-lg p-2 text-[10px] leading-relaxed" style={{ background: "hsl(210 90% 97%)", color: "hsl(210 50% 30%)", border: "1px solid hsl(210 80% 88%)" }}>
+            CIN substitui o RG e pode usar o mesmo número do CPF.
+          </div>
+        )}
       </ReviewBlock>
 
       {/* ─── Bloco 4 — Contato ─── */}
