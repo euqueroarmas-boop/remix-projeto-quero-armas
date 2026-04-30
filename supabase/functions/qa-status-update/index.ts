@@ -154,6 +154,7 @@ Deno.serve(async (req) => {
 
           const { data: provisionRes, error: provisionErr } = await supa.functions.invoke("create-client-user", {
             body: {
+              password: Deno.env.get("ADMIN_PASSWORD") ?? "",
               qa_client_id: cli.id,
               customer_id: cli.customer_id || undefined,
               email: cli.email,
@@ -167,11 +168,6 @@ Deno.serve(async (req) => {
                 cnpj_ou_cpf: String(cli.cpf || "").replace(/\D/g, ""),
                 status_cliente: "ativo",
               },
-            },
-            headers: {
-              // sinaliza que é chamada interna do servidor (sem JWT de usuário)
-              "x-internal-token": Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "",
-              "x-admin-token": "",
             },
           });
 
