@@ -8074,6 +8074,17 @@ export type Database = {
       }
       qa_load_staging_admin: { Args: { p_payload: Json }; Returns: Json }
       qa_load_staging_chunk: { Args: { p_payload: Json }; Returns: Json }
+      qa_log_tentativa_bloqueada: {
+        Args: {
+          _ator: string
+          _cliente_id: number
+          _motivo: string
+          _solicitacao_id: string
+          _status_anterior: string
+          _status_tentado: string
+        }
+        Returns: undefined
+      }
       qa_norm_cr: { Args: { p_cr: string }; Returns: string }
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }

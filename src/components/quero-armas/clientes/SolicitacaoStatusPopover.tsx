@@ -93,21 +93,20 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
   const save = async () => {
     setSaving(true);
     try {
-      // Quando sem_checklist_configurado, ignora alteração de status_servico
-      // (backend também bloqueia, mas evitamos ida ao servidor).
-      const updatePayload: Record<string, any> = {
-        status_financeiro: statusFinanceiro,
-        status_processo: statusProcesso,
-        observacoes: observacoes || null,
-      };
-      if (!semChecklist) {
-        updatePayload.status_servico = statusServico;
-      }
-      const { error } = await supabase
-        .from("qa_solicitacoes_servico" as any)
-        .update(updatePayload)
-        .eq("id", solicitacaoId);
+      // Roteia toda alteração via edge function: ela aplica a regra de
+      // bloqueio (sem checklist) e audita tentativas inválidas em
+      // qa_solicitacao_eventos como 'tentativa_status_bloqueada'.
+      const { data, error } = await supabase.functions.invoke("qa-status-update", {
+        body: {
+          solicitacao_id: solicitacaoId,
+          status_servico: semChecklist ? undefined : statusServico,
+          status_financeiro: statusFinanceiro,
+          status_processo: statusProcesso,
+          observacoes,
+        },
+      });
       if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
 
       // Trigger qa_log_status_change registra o evento na timeline e
       // qa_dispatch_notify_event chama qa-notify-event automaticamente.
