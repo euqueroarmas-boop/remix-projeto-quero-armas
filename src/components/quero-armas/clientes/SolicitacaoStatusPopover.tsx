@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Settings2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
+import { notifyQAEvent, STATUS_TO_EVENT } from "@/lib/quero-armas/notifyEvent";
 
 /**
  * Status canônicos da solicitação — qa_solicitacoes_servico é a ÚNICA fonte
@@ -86,6 +87,14 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
   const save = async () => {
     setSaving(true);
     try {
+      // Captura status anterior para detectar mudança REAL e disparar evento.
+      const { data: prev } = await supabase
+        .from("qa_solicitacoes_servico" as any)
+        .select("status_servico")
+        .eq("id", solicitacaoId)
+        .maybeSingle();
+      const statusAnterior = (prev as any)?.status_servico ?? null;
+
       const { error } = await supabase
         .from("qa_solicitacoes_servico" as any)
         .update({
@@ -96,6 +105,22 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
         })
         .eq("id", solicitacaoId);
       if (error) throw error;
+
+      // Dispara evento + e-mail apenas se houve mudança real e o novo
+      // status mapeia para um evento de notificação ao cliente.
+      if (statusServico && statusServico !== statusAnterior) {
+        const evento = STATUS_TO_EVENT[statusServico];
+        if (evento) {
+          void notifyQAEvent({
+            evento,
+            solicitacao_id: solicitacaoId,
+            status_novo: statusServico,
+            status_orgao: evento === "status_orgao" ? statusServico : undefined,
+            observacao: observacoes || undefined,
+          });
+        }
+      }
+
       toast.success("Status da solicitação atualizado");
       setOpen(false);
       onUpdated?.();
