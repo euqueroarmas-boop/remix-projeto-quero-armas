@@ -2,47 +2,66 @@ import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
-  BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
+  BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  Inbox, ClipboardList, UserCheck,
+  ClipboardList, UserCheck,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
+// FASE 22-B: Menu reorganizado em 7 grupos.
+// Itens ocultados (rotas mantidas em QARoutes.tsx, acessíveis por URL direta):
+//   /contratacoes-pendentes, /historico, /acessos, /clubes
 const NAV_GROUPS = [
   {
-    label: "Operação",
+    label: "Visão Geral",
     items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
       { title: "Monitoramento", url: "/operacao/monitoramento", icon: Activity },
-      { title: "Gerar Peça", url: "/gerar-peca", icon: PenTool },
-      { title: "Casos", url: "/casos", icon: FolderOpen },
-      { title: "Central de Documentos", url: "/processos", icon: FileStack },
-      { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
-      { title: "Contratações Pendentes", url: "/contratacoes-pendentes", icon: Inbox },
-      { title: "Homologação de Clientes", url: "/operacao/homologacao-clientes", icon: UserCheck },
-      { title: "Clientes", url: "/clientes", icon: Users },
-      { title: "Clubes de Tiro", url: "/clubes", icon: Building2 },
-      { title: "Financeiro", url: "/financeiro", icon: DollarSign },
-      { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
-      { title: "Assistente IA", url: "/ia", icon: Shield },
     ],
   },
   {
-    label: "Acervo",
+    label: "Operação",
     items: [
+      { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
+      { title: "Processos & Documentos", url: "/processos", icon: FileStack },
+      { title: "Homologação de Clientes", url: "/operacao/homologacao-clientes", icon: UserCheck },
+    ],
+  },
+  {
+    label: "Clientes",
+    items: [
+      { title: "Clientes", url: "/clientes", icon: Users },
+    ],
+  },
+  {
+    label: "Jurídico & IA",
+    items: [
+      { title: "Assistente IA", url: "/ia", icon: Shield },
+      { title: "Gerar Peça", url: "/gerar-peca", icon: PenTool },
+      { title: "Casos", url: "/casos", icon: FolderOpen },
       { title: "Base Jurídica", url: "/base-conhecimento", icon: BookOpen },
       { title: "Legislação", url: "/legislacao", icon: Scale },
       { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel },
       { title: "Modelos DOCX", url: "/modelos-docx", icon: FileBox },
-      { title: "Catálogo de Armas", url: "/armamentos", icon: Crosshair },
+    ],
+  },
+  {
+    label: "Arsenal",
+    items: [
+      { title: "Catálogo de Modelos", url: "/armamentos", icon: Crosshair },
+    ],
+  },
+  {
+    label: "Financeiro",
+    items: [
+      { title: "Financeiro", url: "/financeiro", icon: DollarSign },
+      { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
     ],
   },
   {
     label: "Sistema",
     items: [
       { title: "Auditoria", url: "/auditoria", icon: ShieldCheck },
-      { title: "Acessos de Clientes", url: "/acessos", icon: ShieldCheck },
-      { title: "Histórico", url: "/historico", icon: History },
       { title: "Configurações", url: "/configuracoes", icon: Settings },
     ],
   },
