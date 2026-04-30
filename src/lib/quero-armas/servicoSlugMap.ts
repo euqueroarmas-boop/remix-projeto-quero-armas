@@ -49,14 +49,14 @@ export function resolveServicoFromInteresse(rawInteresse: string | null | undefi
     };
   }
 
-  // Posse na Polícia Federal
-  if (
+  // Posse na Polícia Federal (inclui "Aquisição / Posse de arma de fogo")
+  const ehPosse =
     norm.includes("posse na policia federal") ||
     norm === "posse pf" ||
     norm.includes("posse de arma") ||
-    norm === "aquisicao / posse de arma de fogo" ||
-    norm.includes("aquisicao") && norm.includes("posse")
-  ) {
+    norm.includes("aquisicao / posse") ||
+    (norm.includes("aquisicao") && norm.includes("posse"));
+  if (ehPosse) {
     return {
       slug: "posse-arma-fogo",
       nome: "Posse de arma de fogo",
