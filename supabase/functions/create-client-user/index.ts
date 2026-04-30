@@ -360,15 +360,21 @@ async function sendInviteEmail(
   email: string,
   name: string,
   password: string,
+  opts?: { qaClientId?: number | null; eventoLabel?: string; ator?: string | null },
 ) {
   try {
     const portalOrigin = req.headers.get("origin") || "https://wmti.com.br";
+    const isQA = !!opts?.qaClientId;
+    const portalPath = isQA ? "/quero-armas/area-do-cliente/login" : "/area-do-cliente";
     await supabase.functions.invoke("notify-user-invite", {
       body: {
         customer_email: email,
         customer_name: name,
         temp_password: password,
-        portal_url: `${portalOrigin.replace(/\/$/, "")}/area-do-cliente`,
+        portal_url: `${portalOrigin.replace(/\/$/, "")}${portalPath}`,
+        qa_client_id: opts?.qaClientId || undefined,
+        evento_label: opts?.eventoLabel,
+        ator: opts?.ator || undefined,
       },
     });
   } catch (emailErr) {
