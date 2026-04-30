@@ -33,6 +33,7 @@ import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/Histori
 import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
+import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
