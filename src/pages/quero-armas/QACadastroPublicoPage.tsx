@@ -2473,10 +2473,6 @@ function Step0Qualificacao({
         <span>Continuar</span>
         <ChevronRight className="h-4 w-4" strokeWidth={2.6} />
       </button>
-
-      <p className="text-[10px] text-center text-zinc-500 leading-relaxed font-mono uppercase tracking-[0.18em]">
-        Sem compromisso · Dados protegidos
-      </p>
     </div>
   );
 }
