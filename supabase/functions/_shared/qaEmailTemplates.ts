@@ -318,3 +318,77 @@ export function qaGenericHtml(opts: { name?: string; subject: string; message: s
 }
 export const qaGenericText = (o: { name?: string; subject: string; message: string; ctaUrl?: string; ctaLabel?: string }) =>
   `Quero Armas — ${o.subject}\n\nOlá${o.name ? `, ${o.name}` : ""}!\n\n${o.message.replace(/<[^>]+>/g, "")}\n${o.ctaUrl ? `\n${o.ctaLabel || "Acessar"}: ${o.ctaUrl}\n` : ""}`;
+
+// ════════════════════════════════════════════════════════════════════
+// 11. BEM-VINDO AO ARSENAL (conta gratuita pública — pós-cadastro)
+//    Identidade: Arsenal UI (papel + âmbar + header escuro #1E1E1E)
+// ════════════════════════════════════════════════════════════════════
+const ARSENAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente/arsenal";
+const AMBER = "#d97706";
+const AMBER_DARK = "#92400e";
+const PAPER = "#f6f5f1";
+const ARSENAL_INK = "#1E1E1E";
+
+export function qaArsenalWelcomeHtml(opts: {
+  name: string;
+  email: string;
+  servicoInteresse?: string | null;
+  arsenalUrl?: string;
+}) {
+  const url = opts.arsenalUrl || ARSENAL_URL;
+  const firstName = (opts.name || "").trim().split(/\s+/)[0] || "Cliente";
+  const servico = (opts.servicoInteresse || "").trim();
+
+  const proximosPassos = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+      ${[
+        ["1", "Acesse o Arsenal", "Use seu e-mail e a senha que você acabou de criar para entrar."],
+        ["2", "Cadastre suas armas", "Registre seus armamentos, CRAFs e documentos no seu acervo digital seguro."],
+        ["3", "Acompanhe vencimentos", "O Arsenal monitora prazos de CRAF, porte e psicotécnico — você é avisado antes de vencer."],
+        ["4", servico ? "Avance com seu serviço" : "Solicite serviços quando quiser", servico
+          ? `Quando estiver pronto, contrate <strong>${servico}</strong> direto pelo Arsenal — nossa equipe assume o processo.`
+          : "Concessão, transferência, porte, CR — contrate qualquer serviço pelo próprio Arsenal."],
+      ].map(([n, titulo, desc]) => `
+        <tr>
+          <td width="40" valign="top" style="padding:0 14px 18px 0;">
+            <div style="width:32px;height:32px;border-radius:8px;background:${AMBER};color:#ffffff;font-weight:800;font-size:14px;text-align:center;line-height:32px;font-family:'SF Mono',Menlo,Consolas,monospace;">${n}</div>
+          </td>
+          <td valign="top" style="padding:0 0 18px 0;">
+            <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:${ARSENAL_INK};line-height:1.3;">${titulo}</p>
+            <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">${desc}</p>
+          </td>
+        </tr>
+      `).join("")}
+    </table>`;
+
+  return qaWrap({
+    preheader: `Sua conta gratuita no Arsenal está ativa, ${firstName}.`,
+    title: "Bem-vindo ao Arsenal",
+    body: `
+      <!-- Faixa Arsenal (papel + âmbar + mono) -->
+      <div style="background:${PAPER};border:1px solid ${BORDER};border-left:3px solid ${AMBER};border-radius:12px;padding:18px 22px;margin:0 0 24px;">
+        <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${AMBER_DARK};font-weight:700;">ARSENAL · CONTA GRATUITA</div>
+        <p style="margin:6px 0 0;font-size:15px;color:${ARSENAL_INK};line-height:1.5;">Acesso liberado para <strong>${opts.email}</strong></p>
+      </div>
+
+      ${greeting(firstName)}
+      ${para("Seu cadastro foi concluído. O <strong>Arsenal</strong> é o seu acervo digital — armas, documentos, vencimentos e processos, tudo em um único lugar, gratuito para sempre.")}
+
+      ${btn(url, "Entrar no Arsenal")}
+
+      ${hr}
+
+      <p style="margin:0 0 16px;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${MUTED};">Próximos passos</p>
+      ${proximosPassos}
+
+      ${servico ? notice("info", "Seu serviço de interesse", `Você indicou interesse em <strong>${servico}</strong>. Nossa equipe entrará em contato em até 1 dia útil para orientar o próximo passo. Você também pode iniciar a contratação direto pelo Arsenal a qualquer momento.`) : ""}
+
+      ${notice("warn", "Guarde seu acesso", `Use sempre o e-mail <strong>${opts.email}</strong> e a senha que você definiu. Em caso de esquecimento, use a opção “Esqueci minha senha” na tela de login.`)}
+    `,
+  });
+}
+
+export const qaArsenalWelcomeText = (o: { name: string; email: string; servicoInteresse?: string | null; arsenalUrl?: string }) => {
+  const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
+  return `Quero Armas — Bem-vindo ao Arsenal\n\nOlá, ${firstName}!\n\nSua conta gratuita no Arsenal foi criada com sucesso.\nE-mail de acesso: ${o.email}\n\nAcesse: ${o.arsenalUrl || ARSENAL_URL}\n\nPróximos passos:\n1. Acesse o Arsenal com seu e-mail e senha\n2. Cadastre suas armas, CRAFs e documentos\n3. Acompanhe vencimentos automaticamente\n4. ${o.servicoInteresse ? `Avance com ${o.servicoInteresse} quando estiver pronto` : "Solicite serviços quando precisar"}\n\nEm caso de esquecimento, use \"Esqueci minha senha\" na tela de login.`;
+};

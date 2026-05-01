@@ -3,6 +3,7 @@
 // NÃO cria venda, processo, pagamento, checklist ou Asaas.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
+import { qaArsenalWelcomeHtml, qaArsenalWelcomeText } from "../_shared/qaEmailTemplates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +18,7 @@ const BodySchema = z.object({
   email: z.string().trim().email().max(255),
   telefone: z.string().trim().max(40).optional().nullable(),
   senha: z.string().min(8).max(72),
+  servico_interesse: z.string().trim().max(200).optional().nullable(),
 });
 
 function json(body: unknown, status = 200) {
@@ -42,7 +44,7 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_payload", details: parsed.error.flatten() }, 400);
   }
 
-  const { cpf, nome, email, telefone, senha } = parsed.data;
+  const { cpf, nome, email, telefone, senha, servico_interesse } = parsed.data;
   const cpfNorm = cpf.replace(/\D/g, "");
   if (cpfNorm.length !== 11) {
     return json({ error: "cpf_invalido" }, 400);
@@ -128,6 +130,34 @@ Deno.serve(async (req) => {
   if (result.ok === false) {
     await admin.auth.admin.deleteUser(userId).catch(() => null);
     return json(result, 409);
+  }
+
+  // 4) Dispara e-mail de boas-vindas Arsenal (best-effort, não bloqueia o cadastro)
+  try {
+    const html = qaArsenalWelcomeHtml({
+      name: nome,
+      email: emailNorm,
+      servicoInteresse: servico_interesse ?? null,
+    });
+    const text = qaArsenalWelcomeText({
+      name: nome,
+      email: emailNorm,
+      servicoInteresse: servico_interesse ?? null,
+    });
+
+    await admin.functions.invoke("send-smtp-email", {
+      body: {
+        to: emailNorm,
+        subject: "Bem-vindo ao Arsenal — Quero Armas",
+        html,
+        text,
+        tag: "arsenal_welcome",
+      },
+    }).catch((e) => {
+      console.error("[arsenal_welcome] send failed:", e?.message || e);
+    });
+  } catch (e) {
+    console.error("[arsenal_welcome] template failed:", (e as Error)?.message);
   }
 
   return json({
