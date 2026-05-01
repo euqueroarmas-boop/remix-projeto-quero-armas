@@ -568,9 +568,9 @@ export default function QACadastroPublicoPage() {
         </div>
 
         {/* Logo isolada acima do card — assinatura discreta no topo */}
-        <div className="mb-4 flex flex-col items-center gap-2">
-          <QALogo className="h-11 w-11 rounded-lg shadow-sm ring-1 ring-zinc-200" />
-          <div className="text-[9px] font-mono uppercase tracking-[0.3em] text-zinc-500">
+        <div className="mb-5 flex flex-col items-center gap-2.5">
+          <QALogo className="h-20 w-20 rounded-xl shadow-sm ring-1 ring-zinc-200" />
+          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-500">
             QUERO ARMAS · ATENDIMENTO
           </div>
         </div>
