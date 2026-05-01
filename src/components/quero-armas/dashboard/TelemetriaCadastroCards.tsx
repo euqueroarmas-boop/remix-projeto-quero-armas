@@ -16,7 +16,7 @@ import {
  *  • % com divergência form×documento confirmada pelo usuário
  *  • % com circunscrição PF não encontrada
  *
- * Lê direto da tabela `qa_cadastro_telemetria`. RLS já restringe a staff.
+ * Lê direto da tabela `qa_cadastro_telemetria`. RLS já restringe à Equipe Quero Armas.
  */
 
 type Period = 7 | 30;

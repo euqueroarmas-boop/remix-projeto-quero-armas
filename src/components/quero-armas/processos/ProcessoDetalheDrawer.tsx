@@ -376,7 +376,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   };
 
   // ============================================================
-  // REPROCESSAR IA — staff dispara nova validação para o documento
+  // REPROCESSAR IA — Equipe Quero Armas dispara nova validação para o documento
   // ============================================================
   const reprocessarIA = async (doc: DocRow) => {
     if (!processo) return;
@@ -684,7 +684,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                         </div>
                       )}
 
-                      {/* Checklist do Operador — exclusivo staff */}
+                      {/* Checklist do Operador — exclusivo Equipe Quero Armas */}
                       {adminMode && checklistOperador.length > 0 && (
                         <div className="rounded-md border border-slate-300 bg-slate-50 p-2.5">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-700">

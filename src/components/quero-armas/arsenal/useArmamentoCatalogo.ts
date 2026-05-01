@@ -55,8 +55,8 @@ export function useArmamentoCatalogo() {
       if (!error && data) setItems(data as unknown as ArmamentoCatalogo[]);
       setLoading(false);
     })();
-    // Detecta se o usuário logado é staff QA. Clientes não devem disparar
-    // qa-resolver-arma-craf (ação administrativa que retorna 403 pra cliente).
+    // Detecta se o usuário logado é membro da Equipe Quero Armas. Clientes não devem
+    // disparar qa-resolver-arma-craf (ação interna que retorna 403 para clientes).
     (async () => {
       try {
         const { data: u } = await supabase.auth.getUser();
