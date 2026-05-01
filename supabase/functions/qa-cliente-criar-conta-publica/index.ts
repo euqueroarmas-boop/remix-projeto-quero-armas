@@ -19,6 +19,10 @@ const BodySchema = z.object({
   telefone: z.string().trim().max(40).optional().nullable(),
   senha: z.string().min(8).max(72),
   servico_interesse: z.string().trim().max(200).optional().nullable(),
+  // FASE 17-B: criar venda pendente automaticamente quando o usuário escolheu um serviço.
+  // Aceita o slug do servico_principal (ex.: "concessao_cr") OU o slug do catálogo direto (ex.: "concessao-cr").
+  servico_principal: z.string().trim().max(80).optional().nullable(),
+  catalogo_slug: z.string().trim().max(120).optional().nullable(),
 });
 
 function json(body: unknown, status = 200) {
