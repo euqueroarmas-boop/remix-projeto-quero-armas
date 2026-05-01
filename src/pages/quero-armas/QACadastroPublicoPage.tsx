@@ -1030,7 +1030,7 @@ function Step1Documents({
                   <img
                     src={files[slot.key]}
                     alt=""
-                    className="w-full h-full object-cover block"
+                    className={slot.key === "selfie" ? "w-full h-full object-cover block" : "w-full h-full object-contain block"}
                     style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%" }}
                   />
                 </div>
