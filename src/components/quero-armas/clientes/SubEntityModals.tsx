@@ -815,6 +815,14 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         </div>
       </div>
     </PremiumModalShell>
+    <TrocaServicoConfirmDialog
+      open={trocaOpen}
+      preview={trocaPreview}
+      saving={trocaSaving}
+      onConfirm={confirmarTroca}
+      onCancel={cancelarTroca}
+    />
+    </>
   );
 }
 
