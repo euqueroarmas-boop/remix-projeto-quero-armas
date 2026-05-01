@@ -351,8 +351,8 @@ export function ArsenalSummary({
         icon: <Crosshair className="h-4 w-4" />,
         label: "Armas",
         value: totalArmas,
-        hint: totalArmas === 0 ? "Sem CRAFs cadastrados" : "Cadastradas",
-        tone: "cyan",
+        hint: totalArmas === 0 ? "Sem armas cadastradas" : "Cadastradas",
+        tone: totalArmas === 0 ? "steel" : "cyan",
         target: "armas",
       },
       municoes: {
@@ -369,8 +369,8 @@ export function ArsenalSummary({
         icon: <FileBadge className="h-4 w-4" />,
         label: "CRAFs",
         value: totalCrafs,
-        hint: "Vinculados ao acervo",
-        tone: "cyan",
+        hint: totalCrafs === 0 ? "Sem CRAFs cadastrados" : "Vinculados ao acervo",
+        tone: totalCrafs === 0 ? "steel" : "cyan",
         target: "crafs",
       },
       status_cr: {
@@ -386,8 +386,8 @@ export function ArsenalSummary({
         icon: <Layers className="h-4 w-4" />,
         label: "Calibres",
         value: totalCalibres,
-        hint: "Diferentes em estoque",
-        tone: "ok",
+        hint: totalCalibres === 0 ? "Sem calibres em estoque" : "Diferentes em estoque",
+        tone: totalCalibres === 0 ? "steel" : "ok",
         target: "calibres",
       },
       alertas: {
@@ -396,7 +396,8 @@ export function ArsenalSummary({
         label: "Alertas",
         value: alerts,
         hint: alerts === 0 ? "Tudo em dia" : "Vencimentos próximos",
-        tone: alerts === 0 ? "ok" : alerts > 2 ? "danger" : "warn",
+        // Zerado é cinza/neutro (regra global). Com alertas: amarelo/vermelho.
+        tone: alerts === 0 ? "steel" : alerts > 2 ? "danger" : "warn",
         target: "alertas",
       },
       gte: {
@@ -405,7 +406,8 @@ export function ArsenalSummary({
         label: "GTEs",
         value: totalGtes,
         hint: gteHint,
-        tone: gteStatus === "muted" ? "steel" : gteStatus,
+        // Sem GTE cadastrada → cinza, mesmo se status vier como "ok".
+        tone: totalGtes === 0 || gteStatus === "muted" ? "steel" : gteStatus,
         target: "gte",
       },
     }),
