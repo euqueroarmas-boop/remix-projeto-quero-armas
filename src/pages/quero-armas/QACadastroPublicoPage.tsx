@@ -600,6 +600,8 @@ export default function QACadastroPublicoPage() {
           (findServico(qualif.categoria_servico, qualif.servico_principal)?.label as string | undefined) ||
           qualif.descricao_servico_livre ||
           null,
+        // Snapshot do valor (sem disparar cobrança)
+        valor_servico: servicoPreSelecionado?.preco ?? null,
       };
 
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
