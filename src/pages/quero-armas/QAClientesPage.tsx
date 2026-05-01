@@ -2179,16 +2179,71 @@ export default function QAClientesPage() {
 
               {/* SERVIÇOS / VENDAS */}
               <TabsContent value="servicos" className="mt-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">Vendas</span>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => exportVendas(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
-                      <Download className="h-3 w-3 mr-1" /> CSV
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
-                      <Plus className="h-3 w-3 mr-1" /> Nova Venda
-                    </Button>
+                {/* Header padrão Arsenal Review */}
+                <div className="qa-card p-4 md:p-5 mb-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 56% / 0.12)" }}>
+                        <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
+                      </div>
+                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(230 80% 56%)" }}>
+                        Serviços — Vendas e Processos
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => exportVendas(clienteIdForSub, c.nome_completo)}
+                        className="text-[10px] flex items-center gap-1 hover:underline"
+                        style={{ color: "hsl(220 10% 50%)" }}
+                      >
+                        <Download className="h-3 w-3" /> EXPORTAR CSV
+                      </button>
+                      <button
+                        onClick={() => setVendaModal({ open: true })}
+                        className="text-[10px] flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold uppercase tracking-wider"
+                      >
+                        <Plus className="h-3 w-3" /> NOVA VENDA
+                      </button>
+                    </div>
                   </div>
+                  {/* KPIs no topo — padrão Arsenal */}
+                  {(() => {
+                    const totalVendas = vendas.length;
+                    const totalPagas = vendas.filter((v: any) => v.status === "PAGO" || !!v.forma_pagamento).length;
+                    const totalPendentes = totalVendas - totalPagas;
+                    const totalCortesia = vendas.filter((v: any) => {
+                      const its = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
+                      return its.length > 0 && its.every((i: any) => i.cortesia);
+                    }).length;
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[10px]">
+                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total</div>
+                          <div className="text-[14px] font-bold text-slate-800">{totalVendas}</div>
+                        </div>
+                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Pagas</div>
+                          <div className="text-[14px] font-bold" style={{ color: "hsl(220 80% 40%)" }}>{totalPagas}</div>
+                        </div>
+                        <div
+                          className="rounded-md border px-2 py-1.5"
+                          style={{
+                            background: totalPendentes > 0 ? "hsl(38 92% 50% / 0.10)" : "white",
+                            borderColor: totalPendentes > 0 ? "hsl(38 92% 50% / 0.40)" : "hsl(220 13% 90%)",
+                          }}
+                        >
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Pendentes</div>
+                          <div className="text-[14px] font-bold" style={{ color: totalPendentes > 0 ? "hsl(28 92% 32%)" : "hsl(220 10% 50%)" }}>
+                            {totalPendentes}
+                          </div>
+                        </div>
+                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Cortesia</div>
+                          <div className="text-[14px] font-bold" style={{ color: "hsl(152 60% 28%)" }}>{totalCortesia}</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 {/* Solicitações de serviço vindas do formulário público
                     — exibidas como leads operacionais; não criam pagamento. */}
