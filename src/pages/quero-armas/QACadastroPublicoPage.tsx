@@ -1842,10 +1842,10 @@ function WelcomeBlock() {
           <Crosshair className="h-4 w-4 text-amber-600" strokeWidth={2.2} />
         </div>
         <div className="min-w-0">
-          <div className="text-[9px] font-mono uppercase tracking-[0.3em] text-amber-700">
+          <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700">
             // BRIEFING TÉCNICO
           </div>
-          <p className="mt-1 text-[12px] leading-relaxed text-zinc-700">
+          <p className="mt-1.5 text-[12.5px] leading-relaxed text-zinc-700">
             Selecione abaixo o <span className="font-semibold text-zinc-900">objetivo</span> e o{" "}
             <span className="font-semibold text-zinc-900">serviço</span> desejados. Conduzimos o restante do processo
             com sigilo e precisão técnica.
@@ -2029,7 +2029,7 @@ function ArsenalGroup({
         </div>
       </div>
       {hint && (
-        <p className="px-4 pb-2 text-[13px] leading-snug text-zinc-700 font-medium">{hint}</p>
+        <p className="px-4 pb-2 text-[12.5px] leading-snug text-zinc-700 font-medium">{hint}</p>
       )}
       <div className="px-4 pb-4 pt-1">{children}</div>
     </div>
