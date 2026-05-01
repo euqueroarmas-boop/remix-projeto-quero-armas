@@ -650,8 +650,8 @@ export default function QACadastroPublicoPage() {
 
   /* ─── render ─── */
   return (
-    <div className="min-h-screen flex flex-col bg-[#f6f5f1] overflow-x-hidden">
-      <div className="max-w-md w-full mx-auto px-4 pt-0 pb-6 flex-1 min-w-0">
+    <div className="min-h-[100dvh] flex flex-col bg-[#f6f5f1] overflow-x-hidden">
+      <div className="w-full max-w-[480px] mx-auto px-4 pt-0 pb-6 flex-1 min-w-0 flex flex-col">
         {/* Header premium — integrado ao card, mesma palheta da logo. Logo clicável = voltar. */}
         <div className="relative w-full overflow-hidden border-x border-b-0 border-t-0 border-zinc-200 bg-[#1E1E1E]">
           {/* Textura sutil de grid */}
