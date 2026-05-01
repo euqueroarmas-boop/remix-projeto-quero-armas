@@ -16,7 +16,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 // escaneada (sem texto), o fallback abaixo encaminha para revisão
 // humana — nunca rejeita como "campo faltando".
 // @ts-ignore esm.sh fornece tipos mínimos
-import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1/pdfjs?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
