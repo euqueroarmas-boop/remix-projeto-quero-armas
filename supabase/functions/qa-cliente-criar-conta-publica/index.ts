@@ -132,7 +132,28 @@ Deno.serve(async (req) => {
     return json(result, 409);
   }
 
-  // 4) Dispara e-mail de boas-vindas Arsenal (best-effort, não bloqueia o cadastro)
+  // 4) Marca cadastro público como concluído e vincula cliente_id (best-effort)
+  const qaClienteId = (result.qa_cliente_id as string | null) ?? null;
+  try {
+    const updatePayload: Record<string, unknown> = {
+      status: "concluido",
+      processado_em: new Date().toISOString(),
+      processado_por: "qa-cliente-criar-conta-publica",
+    };
+    if (qaClienteId) updatePayload.cliente_id_vinculado = qaClienteId;
+
+    const { error: updErr } = await admin
+      .from("qa_cadastro_publico")
+      .update(updatePayload)
+      .eq("email", emailNorm);
+    if (updErr) {
+      console.error("[qa_cadastro_publico] update failed:", updErr.message);
+    }
+  } catch (e) {
+    console.error("[qa_cadastro_publico] update threw:", (e as Error)?.message);
+  }
+
+  // 5) Dispara e-mail de boas-vindas via send-smtp-email (gateway central existente)
   try {
     const html = qaArsenalWelcomeHtml({
       name: nome,
@@ -145,19 +166,31 @@ Deno.serve(async (req) => {
       servicoInteresse: servico_interesse ?? null,
     });
 
-    await admin.functions.invoke("send-smtp-email", {
-      body: {
-        to: emailNorm,
-        subject: "Bem-vindo ao Arsenal — Quero Armas",
-        html,
-        text,
-        tag: "arsenal_welcome",
-      },
-    }).catch((e) => {
-      console.error("[arsenal_welcome] send failed:", e?.message || e);
-    });
+    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
+    if (!internalToken) {
+      console.error("[arsenal_welcome] INTERNAL_FUNCTION_TOKEN ausente — e-mail não será enviado");
+    } else {
+      const { data: smtpData, error: smtpErr } = await admin.functions.invoke(
+        "send-smtp-email",
+        {
+          headers: { "x-internal-token": internalToken },
+          body: {
+            to: emailNorm,
+            subject: "Bem-vindo ao Arsenal — Quero Armas",
+            html,
+            text,
+            from_name: "Quero Armas",
+          },
+        },
+      );
+      if (smtpErr) {
+        console.error("[arsenal_welcome] send-smtp-email error:", smtpErr.message);
+      } else {
+        console.info("[arsenal_welcome] enviado:", JSON.stringify(smtpData));
+      }
+    }
   } catch (e) {
-    console.error("[arsenal_welcome] template failed:", (e as Error)?.message);
+    console.error("[arsenal_welcome] envio falhou:", (e as Error)?.message);
   }
 
   return json({
