@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }
 interface Servico { id: number; nome_servico: string; valor_servico: number; is_combo?: boolean; }
 
+type ServicoTab = "catalogo" | "internos";
+
 export default function QAConfiguracoesPage() {
   const { profile } = useQAAuthContext();
   const [stats, setStats] = useState<any>(null);
@@ -21,6 +23,8 @@ export default function QAConfiguracoesPage() {
   const [saving, setSaving] = useState(false);
 
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [catalogoIds, setCatalogoIds] = useState<Set<number>>(new Set());
+  const [activeTab, setActiveTab] = useState<ServicoTab>("catalogo");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ nome_servico: "", valor_servico: "", is_combo: false });
   const [newForm, setNewForm] = useState({ nome_servico: "", valor_servico: "", is_combo: false });
@@ -38,6 +42,19 @@ export default function QAConfiguracoesPage() {
   const loadServicos = async () => {
     const { data } = await supabase.from("qa_servicos" as any).select("*").order("nome_servico");
     setServicos((data as any[]) ?? []);
+  };
+
+  const loadCatalogoIds = async () => {
+    const { data } = await supabase
+      .from("qa_servicos_catalogo" as any)
+      .select("servico_id")
+      .eq("ativo", true);
+    const ids = new Set<number>(
+      ((data as any[]) ?? [])
+        .map((r) => r?.servico_id)
+        .filter((v): v is number => typeof v === "number")
+    );
+    setCatalogoIds(ids);
   };
 
   const loadStatuses = async () => {
@@ -116,6 +133,7 @@ export default function QAConfiguracoesPage() {
         items.forEach((c: any) => { initial[c.id] = String(c.valor); });
         setEditedValues(initial);
         await loadServicos();
+        await loadCatalogoIds();
         await loadStatuses();
       } catch (err) {
         console.error("[QAConfiguracoes] load error:", err);
@@ -238,15 +256,50 @@ export default function QAConfiguracoesPage() {
       {/* Serviços CRUD */}
       {isAdmin && (
         <div className="qa-card p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Serviços ({servicos.length})</span>
-            <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "", is_combo: false }); }}
-              className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
-              <Plus className="h-3 w-3" /> Novo Serviço
-            </button>
-          </div>
+          {(() => {
+            const servicosCatalogo = servicos.filter((s) => catalogoIds.has(s.id));
+            const servicosInternos = servicos.filter((s) => !catalogoIds.has(s.id));
+            const lista = activeTab === "catalogo" ? servicosCatalogo : servicosInternos;
+            return (
+              <>
+                <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                  <div className="flex items-center gap-1 rounded-lg p-0.5 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
+                    <button
+                      onClick={() => setActiveTab("catalogo")}
+                      className="h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-colors"
+                      style={{
+                        background: activeTab === "catalogo" ? "white" : "transparent",
+                        color: activeTab === "catalogo" ? "hsl(230 80% 56%)" : "hsl(220 10% 55%)",
+                        boxShadow: activeTab === "catalogo" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
+                      }}
+                    >
+                      Catálogo público ({servicosCatalogo.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("internos")}
+                      className="h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-colors"
+                      style={{
+                        background: activeTab === "internos" ? "white" : "transparent",
+                        color: activeTab === "internos" ? "hsl(230 80% 56%)" : "hsl(220 10% 55%)",
+                        boxShadow: activeTab === "internos" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
+                      }}
+                    >
+                      Internos / legados ({servicosInternos.length})
+                    </button>
+                  </div>
+                  <button onClick={() => { setShowNew(!showNew); setNewForm({ nome_servico: "", valor_servico: "", is_combo: false }); }}
+                    className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+                    <Plus className="h-3 w-3" /> Novo Serviço
+                  </button>
+                </div>
 
-          {showNew && (
+                {activeTab === "internos" && (
+                  <p className="text-[11px] mb-3 px-2 py-1.5 rounded-md" style={{ color: "hsl(35 60% 30%)", background: "hsl(45 90% 95%)", border: "1px solid hsl(45 80% 85%)" }}>
+                    Serviços operacionais/legados — mantidos para preservar vendas, processos e histórico. Não aparecem na vitrine pública.
+                  </p>
+                )}
+
+                {showNew && (
             <div className="flex gap-2 items-end mb-3 rounded-xl p-3 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
               <div className="flex-1 space-y-1">
                 <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Nome</Label>
@@ -268,7 +321,7 @@ export default function QAConfiguracoesPage() {
           )}
 
           <div className="space-y-1">
-            {servicos.map(svc => (
+            {lista.map(svc => (
               <div key={svc.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] hover:bg-slate-50 transition-colors group">
                 {editingId === svc.id ? (
                   <>
@@ -297,8 +350,15 @@ export default function QAConfiguracoesPage() {
                 )}
               </div>
             ))}
-            {servicos.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço cadastrado</p>}
+            {lista.length === 0 && (
+              <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>
+                {activeTab === "catalogo" ? "Nenhum serviço vinculado ao catálogo público" : "Nenhum serviço interno/legado"}
+              </p>
+            )}
           </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
