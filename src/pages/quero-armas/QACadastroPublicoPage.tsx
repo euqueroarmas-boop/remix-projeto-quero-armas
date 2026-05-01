@@ -273,6 +273,55 @@ export default function QACadastroPublicoPage() {
     cliente_existente: boolean;
   } | null>(null);
 
+  /* ─── checagem proativa de CPF/email já cadastrado (Etapa 3) ─── */
+  const [existingCheck, setExistingCheck] = useState<{
+    cpf_existe: boolean;
+    email_existe: boolean;
+    checked_for: { cpf: string; email: string };
+    loading: boolean;
+  }>({ cpf_existe: false, email_existe: false, checked_for: { cpf: "", email: "" }, loading: false });
+
+  useEffect(() => {
+    if (step !== 3) return;
+    const cpfDigits = (extracted.cpf || "").replace(/\D/g, "");
+    const emailNorm = (extracted.email || "").trim().toLowerCase();
+    if (cpfDigits.length !== 11 && !emailNorm) return;
+    // dedupe — não rechecar a mesma combinação
+    if (
+      existingCheck.checked_for.cpf === cpfDigits &&
+      existingCheck.checked_for.email === emailNorm
+    ) return;
+
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      setExistingCheck((p) => ({ ...p, loading: true }));
+      try {
+        const url = `${(import.meta as any).env?.VITE_SUPABASE_URL}/functions/v1/qa-cliente-checar-existente`;
+        const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+          },
+          body: JSON.stringify({ cpf: cpfDigits, email: emailNorm }),
+          signal: ctrl.signal,
+        });
+        const body = await res.json().catch(() => ({}));
+        setExistingCheck({
+          cpf_existe: !!body?.cpf_existe,
+          email_existe: !!body?.email_existe,
+          checked_for: { cpf: cpfDigits, email: emailNorm },
+          loading: false,
+        });
+      } catch {
+        setExistingCheck((p) => ({ ...p, loading: false }));
+      }
+    }, 600);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [step, extracted.cpf, extracted.email, existingCheck.checked_for.cpf, existingCheck.checked_for.email]);
+
   /* ─── upload handler ─── */
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
     const f = e.target.files?.[0];
