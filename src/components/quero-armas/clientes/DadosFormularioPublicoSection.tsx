@@ -100,7 +100,7 @@ export default function DadosFormularioPublicoSection({
   cliente,
   onApplied,
 }: {
-  cliente: { id: number; cadastro_publico_id?: string | null } & Cli;
+  cliente: { id: number; cadastro_publico_id?: string | null; customer_id?: string | null; user_id?: string | null } & Cli;
   onApplied?: () => void;
 }) {
   const [cad, setCad] = useState<Cad | null>(null);
@@ -186,6 +186,93 @@ export default function DadosFormularioPublicoSection({
       onApplied?.();
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao aplicar dados.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const syncPortalDocs = async () => {
+    const cpfDigits = norm(cad.cpf || cliente.cpf);
+    const email = String(cad.email || cliente.email || "").trim().toLowerCase();
+    let customer: any = null;
+
+    if (cliente.customer_id) {
+      const { data } = await supabase
+        .from("customers" as any)
+        .select("id,user_id,email,cnpj_ou_cpf")
+        .eq("id", cliente.customer_id)
+        .maybeSingle();
+      customer = data || null;
+    }
+    if (!customer && email) {
+      const { data } = await supabase
+        .from("customers" as any)
+        .select("id,user_id,email,cnpj_ou_cpf")
+        .ilike("email", email)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      customer = data || null;
+    }
+    if (!customer && cpfDigits) {
+      const { data } = await supabase
+        .from("customers" as any)
+        .select("id,user_id,email,cnpj_ou_cpf")
+        .limit(100);
+      customer = ((data as any[]) || []).find((r) => norm(r.cnpj_ou_cpf) === cpfDigits) || null;
+    }
+
+    if (customer?.id) {
+      await supabase
+        .from("qa_documentos_cliente" as any)
+        .update({ qa_cliente_id: cliente.id, cadastro_publico_id: cad.id })
+        .eq("customer_id", customer.id)
+        .is("qa_cliente_id", null);
+    }
+
+    await supabase
+      .from("qa_documentos_cliente" as any)
+      .update({ qa_cliente_id: cliente.id })
+      .eq("cadastro_publico_id", cad.id)
+      .is("qa_cliente_id", null);
+
+    return customer as { id?: string; user_id?: string | null } | null;
+  };
+
+  const aprovarCadastro = async () => {
+    setBusy(true);
+    try {
+      const customer = await syncPortalDocs();
+      const clientePatch: Record<string, any> = {
+        cadastro_publico_id: cad.id,
+        cadastro_publico_aplicado_em: new Date().toISOString(),
+      };
+      if (customer?.id) clientePatch.customer_id = customer.id;
+      if (customer?.user_id && !cliente.user_id) clientePatch.user_id = customer.user_id;
+
+      const { error: cliErr } = await supabase
+        .from("qa_clientes" as any)
+        .update(clientePatch)
+        .eq("id", cliente.id);
+      if (cliErr) throw cliErr;
+
+      const { error: cadErr } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({
+          status: "aprovado",
+          cliente_id_vinculado: cliente.id,
+          processado_em: new Date().toISOString(),
+          notas_processamento: `Aprovado e sincronizado na ficha do cliente #${cliente.id}.`,
+        })
+        .eq("id", cad.id);
+      if (cadErr) throw cadErr;
+
+      await audit("aprovar_cadastro", { valor_novo: "aprovado" });
+      toast.success("Cadastro aprovado, vínculo e documentos sincronizados.");
+      void load();
+      onApplied?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao aprovar cadastro.");
     } finally {
       setBusy(false);
     }
