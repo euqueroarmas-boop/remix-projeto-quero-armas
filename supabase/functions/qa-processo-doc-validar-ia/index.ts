@@ -44,6 +44,13 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   nota_fiscal_arma: "Nota fiscal de arma. Extraia: comprador_nome, comprador_cpf, modelo, calibre, numero_serie, data_emissao, valor.",
   guia_trafego: "Guia de Tráfego. Extraia: nome_titular, cpf, numero_guia, validade (YYYY-MM-DD).",
   justificativa_porte: "Justificativa fundamentada. Extraia: texto integral (resumo curto), assinatura, data.",
+  // === DOCUMENTOS DE PESSOA JURÍDICA (sócio/empresa) ===
+  // ATENÇÃO: estes documentos NÃO têm 'nome_titular' único — listam SÓCIOS e dados da EMPRESA.
+  // Não exija nome_titular. Extraia razao_social, cnpj e a lista de sócios.
+  renda_contrato_social:
+    "Contrato Social (ou última alteração consolidada) de PESSOA JURÍDICA. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), data_constituicao (YYYY-MM-DD se houver), capital_social (número), endereco_sede, cidade_sede, uf_sede, objeto_social (resumo curto), socios (array com objetos {nome, cpf, participacao_percentual, qualificacao}). NÃO exija um campo 'nome_titular' único: este documento lista sócios; preencha o array 'socios'. Se o cliente cadastrado aparecer entre os sócios, registre cliente_e_socio=true em campos_complementares.",
+  renda_qsa:
+    "QSA (Quadro de Sócios e Administradores) emitido pela Receita Federal a partir do Cartão CNPJ. Extraia: razao_social, cnpj (apenas dígitos), data_emissao (YYYY-MM-DD se houver), socios (array {nome, cpf, qualificacao, data_entrada}), administradores (array {nome, cpf, qualificacao}). NÃO exija um campo 'nome_titular' único. Se o cliente cadastrado aparecer no QSA, registre cliente_e_socio=true em campos_complementares.",
 };
 
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
@@ -130,11 +137,39 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
   return { b64: btoa(bin), mime: data.type || "application/octet-stream" };
 }
 
-function checaCamposExigidos(extraidos: Record<string, any>, exige: string[] = []): string[] {
+/**
+ * Verifica campos obrigatórios no payload extraído pela IA.
+ *
+ * Para documentos de PESSOA JURÍDICA (Contrato Social, QSA), `nome_titular`
+ * historicamente foi cadastrado como exigido — porém esses documentos não têm
+ * um único titular, e sim uma lista de SÓCIOS. Aceitamos como satisfeito
+ * quando há `socios` (array) ou `razao_social`/`cnpj` no payload, de forma
+ * a não invalidar QSA/Contrato Social legítimos sem tocar na regra do banco.
+ */
+function checaCamposExigidos(
+  extraidos: Record<string, any>,
+  exige: string[] = [],
+  tipoDocumento?: string,
+): string[] {
   const faltando: string[] = [];
+  const isPJ = tipoDocumento === "renda_qsa" || tipoDocumento === "renda_contrato_social";
+  const sociosArr = Array.isArray(extraidos?.socios) ? extraidos.socios : [];
+  const adminsArr = Array.isArray(extraidos?.administradores) ? extraidos.administradores : [];
+  const temIdentPJ =
+    (typeof extraidos?.razao_social === "string" && extraidos.razao_social.trim() !== "") ||
+    (typeof extraidos?.cnpj === "string" && extraidos.cnpj.trim() !== "") ||
+    sociosArr.length > 0 ||
+    adminsArr.length > 0;
+
   for (const k of exige) {
     const v = extraidos?.[k];
-    if (v === undefined || v === null || (typeof v === "string" && v.trim() === "")) faltando.push(k);
+    const vazio = v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+    if (!vazio) continue;
+    // Equivalência semântica para PJ: nome_titular pode ser substituído pelos sócios/empresa.
+    if (isPJ && (k === "nome_titular" || k === "nome_completo" || k === "titular") && temIdentPJ) {
+      continue;
+    }
+    faltando.push(k);
   }
   return faltando;
 }
@@ -355,7 +390,11 @@ Deno.serve(async (req) => {
     const regra = (doc.regra_validacao ?? {}) as any;
     const exige: string[] = Array.isArray(regra.exige) ? regra.exige : [];
     const esperado: Record<string, any> = regra.esperado || {};
-    const camposFaltando = checaCamposExigidos(parsed.campos_extraidos || {}, exige);
+    const camposFaltando = checaCamposExigidos(
+      parsed.campos_extraidos || {},
+      exige,
+      doc.tipo_documento,
+    );
     const esperadoViolado = checaEsperado(parsed.campos_extraidos || {}, esperado);
     const dataEmissao = parsed.campos_extraidos?.data_emissao || parsed.campos_extraidos?.validade;
     const vencido = isVencido(dataEmissao, doc.validade_dias);
