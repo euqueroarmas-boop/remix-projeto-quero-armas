@@ -882,6 +882,10 @@ Deno.serve(async (req) => {
         titular_comprovante_nome: titularNome,
         titular_comprovante_documento: titularDoc,
         endereco_em_nome_de_terceiro: enderecoTerceiro,
+        // APRENDIZADO SUPERVISIONADO
+        texto_ocr_extraido: textoParaModelo ? textoParaModelo.slice(0, 30000) : null,
+        score_modelo_aprovado: matchModelo.modeloId ? Number(scoreModelo.toFixed(4)) : null,
+        modelo_aprovado_id: matchModelo.modeloId,
       })
       .eq("id", documento_id);
 
@@ -889,7 +893,18 @@ Deno.serve(async (req) => {
       processo_id, documento_id,
       tipo_evento: "validacao_ia",
       descricao: `IA: ${doc.nome_documento} → ${novoStatus}`,
-      dados_json: { confianca: conf, divergencias: divergencias.length, vencido, campos_faltando: camposFaltando, esperado_violado: esperadoViolado },
+      dados_json: {
+        confianca: conf,
+        divergencias: divergencias.length,
+        vencido,
+        campos_faltando: camposFaltando,
+        esperado_violado: esperadoViolado,
+        modelo_aprovado_id: matchModelo.modeloId,
+        modelo_aprovado_nome: matchModelo.nomeModelo,
+        score_modelo: matchModelo.modeloId ? Number(scoreModelo.toFixed(4)) : null,
+        similaridade_semantica: matchModelo.modeloId ? Number(matchModelo.similaridade.toFixed(4)) : null,
+        cobertura_palavras_chave: matchModelo.modeloId ? Number(matchModelo.coberturaKw.toFixed(4)) : null,
+      },
       ator: "ia",
     });
 
