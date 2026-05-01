@@ -144,6 +144,55 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
 }
 
 /**
+ * Converte a primeira página de um PDF em PNG via API pública pdf.co-like
+ * usando a Cloudflare/Lovable AI Gateway? Não temos serviço próprio.
+ * Estratégia: usar o conversor pdfium via api.pdfshift OU fallback para
+ * envio do PDF direto. Como não há binário de PDF→imagem disponível em
+ * Deno edge, adotamos a estratégia abaixo:
+ *   1) Tentar enviar o PDF diretamente para o Gemini como image_url
+ *      (Gemini 2.5 aceita PDFs até ~50 páginas).
+ *   2) Se o resultado vier vazio, retornamos null para que o caller
+ *      marque o documento como `revisao_humana` (não como inválido).
+ *
+ * Heurística simples para verificar se a IA "leu" o documento:
+ * - tipo_correto presente, e
+ * - campos_extraidos com pelo menos 1 chave útil OU divergencias com
+ *   pelo menos 1 item OU motivo_rejeicao explícito da IA (não default).
+ */
+function extraiuAlgo(parsed: any): boolean {
+  if (!parsed || typeof parsed !== "object") return false;
+  const cx = parsed.campos_extraidos;
+  const camposUteis = cx && typeof cx === "object"
+    ? Object.entries(cx).filter(([, v]) =>
+        v !== null && v !== undefined && !(typeof v === "string" && v.trim() === "")
+      ).length
+    : 0;
+  const divs = Array.isArray(parsed.divergencias) ? parsed.divergencias.length : 0;
+  const temMotivo = typeof parsed.motivo_rejeicao === "string" && parsed.motivo_rejeicao.trim().length > 0;
+  return camposUteis > 0 || divs > 0 || (parsed.tipo_correto === false && temMotivo);
+}
+
+/**
+ * Sinônimos comuns de "razão social" no Cartão CNPJ da Receita Federal
+ * e em documentos de PJ. Se a regra exigir `razao_social` e a IA tiver
+ * extraído um destes, consideramos satisfeito.
+ */
+const SINONIMOS_RAZAO_SOCIAL = [
+  "razao_social", "razão_social", "razao social",
+  "nome_empresarial", "nome empresarial",
+  "nome_da_empresa", "nome da empresa", "empresa",
+  "nome", "cnpj_nome", "razao_social_emitente", "emitente",
+];
+function temRazaoSocialOuEquivalente(extraidos: Record<string, any>): boolean {
+  if (!extraidos || typeof extraidos !== "object") return false;
+  for (const k of SINONIMOS_RAZAO_SOCIAL) {
+    const v = extraidos[k];
+    if (v != null && !(typeof v === "string" && v.trim() === "")) return true;
+  }
+  return false;
+}
+
+/**
  * Verifica campos obrigatórios no payload extraído pela IA.
  *
  * Para documentos de PESSOA JURÍDICA, `nome_titular` historicamente foi
