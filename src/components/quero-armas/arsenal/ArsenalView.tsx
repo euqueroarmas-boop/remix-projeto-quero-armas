@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, History, Plus, Sparkles, Upload, FileBadge, Crosshair } from "lucide-react";
+import { Activity, AlertTriangle, History, Plus, Sparkles, Upload, FileBadge, Crosshair, Landmark } from "lucide-react";
 import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
@@ -25,6 +25,10 @@ interface Props {
   onArsenalChanged?: () => Promise<void> | void;
   /** Quando true, exibe controles de exclusão de docs genéricos (admin tem permissão total). */
   isAdmin?: boolean;
+  /** Cidade do cliente (usada para resolver Circunscrição PF). */
+  clienteCidade?: string | null;
+  /** UF do cliente (usada para resolver Circunscrição PF). */
+  clienteUf?: string | null;
 }
 
 const normalizeDocWeaponName = (doc: any) => {
@@ -85,6 +89,8 @@ export function ArsenalView({
   onOpenAddDoc,
   onArsenalChanged,
   isAdmin = false,
+  clienteCidade,
+  clienteUf,
 }: Props) {
   // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
@@ -100,6 +106,43 @@ export function ArsenalView({
   // ─── GTEs (qa_gte_documentos) — fonte do KPI de GTE no Arsenal ───
   // Lê apenas os campos mínimos exigidos pelo helper getGteKpiStatus.
   const [gteDocs, setGteDocs] = useState<{ id: string; data_validade: string | null; status_processamento: string | null }[]>([]);
+
+  // ─── Circunscrição PF (resolve via mesma RPC usada na geração de peças) ───
+  const [circ, setCirc] = useState<{ unidade_pf: string; sigla_unidade: string; municipio_sede?: string } | null>(null);
+  const [circStatus, setCircStatus] = useState<"idle" | "loading" | "ok" | "not_found" | "error">("idle");
+  useEffect(() => {
+    let cancelled = false;
+    const cidade = String(clienteCidade || "").trim();
+    const uf = String(clienteUf || "").trim().toUpperCase();
+    if (!cidade || !uf) { setCirc(null); setCircStatus("idle"); return; }
+    setCircStatus("loading");
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const apikey = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/rest/v1/rpc/qa_resolver_circunscricao_pf`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ p_municipio: cidade.toUpperCase(), p_uf: uf }),
+        });
+        if (cancelled) return;
+        if (!res.ok) { setCirc(null); setCircStatus("error"); return; }
+        const data = await res.json();
+        if (!data || (Array.isArray(data) && data.length === 0)) { setCirc(null); setCircStatus("not_found"); return; }
+        const row = Array.isArray(data) ? data[0] : data;
+        setCirc(row); setCircStatus("ok");
+      } catch {
+        if (!cancelled) { setCirc(null); setCircStatus("error"); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clienteCidade, clienteUf]);
 
   useEffect(() => {
     let cancelled = false;
@@ -535,6 +578,50 @@ export function ArsenalView({
             )}
           </div>
       </aside>
+
+      {/* Circunscrição PF do cliente — visível na aba Arsenal */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+        <div className="mb-2 flex items-center gap-1.5">
+          <Landmark className="h-3.5 w-3.5 text-slate-600" />
+          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
+            Circunscrição PF
+          </div>
+        </div>
+        {circStatus === "loading" && (
+          <p className="text-[11px] text-slate-500">Resolvendo circunscrição…</p>
+        )}
+        {circStatus === "ok" && circ && (
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[12px] font-bold uppercase text-slate-800 leading-tight break-words">
+                {circ.unidade_pf}
+              </div>
+              {circ.municipio_sede && (
+                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">
+                  Sede: {circ.municipio_sede}
+                </div>
+              )}
+            </div>
+            <span
+              className="shrink-0 rounded-md px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+              style={{ background: "hsl(220 13% 92%)", color: "hsl(220 10% 30%)" }}
+            >
+              {circ.sigla_unidade}
+            </span>
+          </div>
+        )}
+        {circStatus === "not_found" && (
+          <p className="text-[11px] text-slate-500">
+            Circunscrição não localizada para {String(clienteCidade || "—")}/{String(clienteUf || "—")}.
+          </p>
+        )}
+        {circStatus === "error" && (
+          <p className="text-[11px] text-amber-700">Falha ao consultar circunscrição. Tente novamente.</p>
+        )}
+        {circStatus === "idle" && (
+          <p className="text-[11px] text-slate-500">Cadastre cidade e UF do cliente para resolver a circunscrição.</p>
+        )}
+      </div>
 
       {/* Bancada Tática — largura total */}
       <div id="arsenal-bancada" className="scroll-mt-28">
