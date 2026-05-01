@@ -1461,6 +1461,20 @@ Deno.serve(async (req) => {
       ? ` — usar documentos probatórios como PROVA MATERIAL${bos.length > 0 ? " do risco concreto" : ""}${laudos.length > 0 ? " e do impacto clínico" : ""}`
       : "";
 
+    // ═══ FASE 3 — Buscar correções supervisionadas ANTES do prompt ═══
+    const correcoesAtivas = await buscarCorrecoesRelevantes(supabase, {
+      tipo_peca,
+      foco_argumentativo: foco,
+      cliente_id: cliente_id_final,
+      caso_id: caso_id,
+      peca_id: null, // a peça ainda não foi gerada nesta execução
+    });
+    const blocoCorrecoes = montarBlocoCorrecoesParaPrompt(correcoesAtivas);
+    console.log(`[qa-gerar-peca] Correções injetadas no prompt: ${correcoesAtivas.length} (tipo=${tipo_peca}, cliente=${cliente_id_final ?? "—"}, caso=${caso_id ?? "—"})`);
+    if (correcoesAtivas.length > 0) {
+      console.log(`[qa-gerar-peca] Correções IDs: ${correcoesAtivas.map(c => `${c.id}(${c._escopo})`).join(", ")}`);
+    }
+
     const aiMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -1474,7 +1488,7 @@ MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
 UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}${numero_requerimento ? `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}` : ""}
 ${evidenceSummaryForPrompt}
-${parametros}
+${parametros}${blocoCorrecoes}
 
 DESCRIÇÃO COMPLETA DO CASO:
 ${entrada_caso}
