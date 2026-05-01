@@ -33,6 +33,8 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   comprovante_residencia: "Comprovante de residência ACEITO APENAS se for: conta de energia elétrica, água, gás, internet fixa, telefone fixo ou IPTU. NÃO aceite: fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato bancário, ou qualquer documento sem vínculo claro com o imóvel — nesses casos marque tipo_correto=false e cite em motivo_rejeicao. Quando válido, extraia TODOS: nome_titular, cpf_cnpj_titular (apenas dígitos), endereco_completo, logradouro, numero, complemento, bairro, cidade, uf, cep (apenas dígitos), data_emissao (YYYY-MM-DD), mes_referencia (YYYY-MM), tipo_conta (energia/agua/gas/internet/telefone_fixo/iptu), empresa_emissora, codigo_instalacao (matrícula/UC/instalação se houver). Se o nome_titular for diferente do nome do cliente cadastrado, NÃO trate como divergência: preencha endereco_em_nome_de_terceiro=true e os campos titular_comprovante_*; o endereço deve ser extraído normalmente.",
   comprovante_renda: "Holerite/decore/IR. Extraia: nome_titular, ocupacao, renda_mensal_aproximada, periodo_referencia, data_emissao (YYYY-MM-DD).",
   renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
+  renda_cnpj_autonomo: "Cartão CNPJ de autônomo/MEI. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), situacao_cadastral, data_abertura (YYYY-MM-DD se houver), atividade_principal, endereco_sede, cidade_sede e uf_sede. NÃO exija 'nome_titular': cartão CNPJ identifica empresa por razão social/CNPJ.",
+  renda_nf_recente: "Nota fiscal recente emitida por CNPJ/MEI/autônomo. Extraia: razao_social_emitente, cnpj_emitente (apenas dígitos), numero_nota, serie, data_emissao (YYYY-MM-DD), valor_total, municipio_emissao e natureza_operacao/servico. NÃO exija 'nome_titular': nota fiscal identifica emitente por razão social/CNPJ.",
   certidao_civel: "Certidão Cível Federal. Extraia: nome_titular, cpf, resultado (NADA_CONSTA ou CONSTA), data_emissao (YYYY-MM-DD).",
   certidao_criminal_federal: "Criminal Federal. Extraia: nome_titular, cpf, resultado, data_emissao.",
   certidao_criminal_estadual: "Criminal Estadual. Extraia: nome_titular, cpf, uf, resultado, data_emissao.",
@@ -47,6 +49,8 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   // === DOCUMENTOS DE PESSOA JURÍDICA (sócio/empresa) ===
   // ATENÇÃO: estes documentos NÃO têm 'nome_titular' único — listam SÓCIOS e dados da EMPRESA.
   // Não exija nome_titular. Extraia razao_social, cnpj e a lista de sócios.
+  renda_cartao_cnpj:
+    "Cartão CNPJ da empresa emitido pela Receita Federal. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), situacao_cadastral, data_abertura (YYYY-MM-DD se houver), atividade_principal, atividades_secundarias, natureza_juridica, endereco_sede, cidade_sede e uf_sede. NÃO exija 'nome_titular': cartão CNPJ identifica empresa por razão social/CNPJ.",
   renda_contrato_social:
     "Contrato Social (ou última alteração consolidada) de PESSOA JURÍDICA. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), data_constituicao (YYYY-MM-DD se houver), capital_social (número), endereco_sede, cidade_sede, uf_sede, objeto_social (resumo curto), socios (array com objetos {nome, cpf, participacao_percentual, qualificacao}). NÃO exija um campo 'nome_titular' único: este documento lista sócios; preencha o array 'socios'. Se o cliente cadastrado aparecer entre os sócios, registre cliente_e_socio=true em campos_complementares.",
   renda_qsa:
@@ -153,7 +157,7 @@ function checaCamposExigidos(
   tipoDocumento?: string,
 ): string[] {
   const faltando: string[] = [];
-  const isPJ = ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj"].includes(tipoDocumento || "");
+  const isPJ = ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(tipoDocumento || "");
   const sociosArr = Array.isArray(extraidos?.socios) ? extraidos.socios : [];
   const adminsArr = Array.isArray(extraidos?.administradores) ? extraidos.administradores : [];
   const hasValue = (v: any) => v !== undefined && v !== null && !(typeof v === "string" && v.trim() === "");
