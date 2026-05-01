@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/button";
 // ---------------------------------------------------------------------------
 type DocRow = {
   id: string;
-  cliente_id: string | null;
+  cliente_id: number | null;
   processo_id: string | null;
   tipo_documento: string;
   nome_documento: string | null;
@@ -135,7 +135,7 @@ export default function MonitorCadastrosDocumentos() {
       if (docsErr) throw docsErr;
 
       // Hidratação opcional de cliente/serviço
-      const clienteIds = Array.from(new Set((docsData ?? []).map(d => d.cliente_id).filter(Boolean))) as string[];
+      const clienteIds = Array.from(new Set((docsData ?? []).map(d => d.cliente_id).filter((v): v is number => v != null)));
       const procIds    = Array.from(new Set((docsData ?? []).map(d => d.processo_id).filter(Boolean))) as string[];
       const [{ data: clientes }, { data: processos }] = await Promise.all([
         clienteIds.length
@@ -145,9 +145,9 @@ export default function MonitorCadastrosDocumentos() {
           ? supabase.from("qa_processos").select("id, servico_nome").in("id", procIds)
           : Promise.resolve({ data: [] as any[] }) as any,
       ]);
-      const cliMap = new Map((clientes ?? []).map((c: any) => [c.id, c]));
-      const procMap = new Map((processos ?? []).map((p: any) => [p.id, p]));
-      const docsHidratados: DocRow[] = (docsData ?? []).map(d => {
+      const cliMap = new Map<number, any>((clientes ?? []).map((c: any) => [c.id as number, c]));
+      const procMap = new Map<string, any>((processos ?? []).map((p: any) => [p.id as string, p]));
+      const docsHidratados: DocRow[] = (docsData ?? []).map((d: any) => {
         const c = d.cliente_id ? cliMap.get(d.cliente_id) : null;
         const p = d.processo_id ? procMap.get(d.processo_id) : null;
         return {
@@ -177,8 +177,8 @@ export default function MonitorCadastrosDocumentos() {
       const hoje = new Date();
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
       const [aguardando, aprovHoje] = await Promise.all([
-        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status_cadastro", "aguardando_aprovacao"),
-        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status_cadastro", "aprovado").gte("updated_at", inicio),
+        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status", "aguardando_aprovacao"),
+        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status", "aprovado").gte("updated_at", inicio),
       ]);
       setKpiCadastros({
         aguardando:    aguardando.count ?? 0,
