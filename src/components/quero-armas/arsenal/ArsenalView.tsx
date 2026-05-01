@@ -9,6 +9,7 @@ import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCata
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ArsenalGTEControl from "./ArsenalGTEControl";
 
 interface Props {
   clienteId: number;
@@ -506,6 +507,11 @@ export function ArsenalView({
           ammoByCalibre={ammo.byCalibre}
           onSelectWeapon={(w) => setSelected(w)}
         />
+      </div>
+
+      {/* Controle de GTE — extração IA + KPIs (cliente + equipe) */}
+      <div id="arsenal-gte" className="scroll-mt-28">
+        <ArsenalGTEControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
       </div>
 
       {/* Munições */}
