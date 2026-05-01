@@ -574,6 +574,73 @@ export default function QACadastroPublicoPage() {
     }
   };
 
+  /* ─── criação de conta Arsenal (Etapa 5) ─── */
+  const criarContaArsenal = async () => {
+    setArsenalBusy(true);
+    setArsenalError(null);
+    try {
+      // Validação de senha forte (8+, 1 letra, 1 número)
+      if (arsenalSenha.length < 8) {
+        throw new Error("A senha deve ter no mínimo 8 caracteres.");
+      }
+      if (!/[A-Za-z]/.test(arsenalSenha) || !/[0-9]/.test(arsenalSenha)) {
+        throw new Error("A senha precisa conter pelo menos 1 letra e 1 número.");
+      }
+      if (arsenalSenha !== arsenalSenhaConfirma) {
+        throw new Error("As senhas não conferem.");
+      }
+
+      const cpfDigits = onlyDigits(extracted.cpf);
+      const emailNorm = extracted.email.trim().toLowerCase();
+      const telefone = extracted.telefone_principal?.replace(/\D/g, "") || "";
+
+      const { data, error } = await supabase.functions.invoke(
+        "qa-cliente-criar-conta-publica",
+        {
+          body: {
+            cpf: cpfDigits,
+            nome: extracted.nome_completo.trim(),
+            email: emailNorm,
+            telefone: telefone || null,
+            senha: arsenalSenha,
+          },
+        },
+      );
+
+      let body: any = data;
+      if (error && (error as any).context?.json) {
+        try { body = await (error as any).context.json(); } catch { /* ignore */ }
+      } else if (error && (error as any).context?.text) {
+        try { body = JSON.parse(await (error as any).context.text()); } catch { /* ignore */ }
+      }
+
+      // CPF/Email já tem login → vincula (não cria duplicado, só segue para conclusão)
+      if (body?.reason === "cpf_ja_possui_login" || body?.reason === "email_ja_cadastrado") {
+        setArsenalCriado({ user_id: null, email: emailNorm, cliente_existente: true });
+        setStep(5);
+        return;
+      }
+
+      if (error && !body?.ok) {
+        throw new Error(body?.message || error.message || "Não foi possível criar a conta Arsenal.");
+      }
+      if (body?.ok === false) {
+        throw new Error(body?.message || "Não foi possível criar a conta Arsenal.");
+      }
+
+      setArsenalCriado({
+        user_id: body?.user_id || null,
+        email: emailNorm,
+        cliente_existente: false,
+      });
+      setStep(5);
+    } catch (e: any) {
+      setArsenalError(e?.message || "Erro ao criar acesso Arsenal");
+    } finally {
+      setArsenalBusy(false);
+    }
+  };
+
   /* ─── render ─── */
   return (
     <div className="min-h-screen flex flex-col bg-[#f6f5f1] overflow-x-hidden">
