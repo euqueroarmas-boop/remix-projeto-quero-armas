@@ -405,10 +405,44 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
   const getDefaultItemStatus = () => (f.status === "NÃO PAGOU" ? "NÃO PAGOU" : "PAGO");
 
   useEffect(() => {
-    supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
-      setServicos((data as any[]) ?? []);
-    });
-  }, []);
+    // REGRA GLOBAL: o preço exibido/aplicado em "Editar Venda" SEMPRE reflete
+    // o catálogo (qa_servicos_catalogo). qa_servicos.valor_servico é legado e
+    // pode estar desatualizado; sobrescrevemos pelo preço do catálogo
+    // (link por servico_id quando houver, senão por nome normalizado).
+    (async () => {
+      const [{ data: legacy }, { data: catalogo }] = await Promise.all([
+        supabase.from("qa_servicos" as any).select("*").order("nome_servico"),
+        supabase
+          .from("qa_servicos_catalogo" as any)
+          .select("nome, preco, servico_id, ativo")
+          .eq("ativo", true),
+      ]);
+      const norm = (s: string) =>
+        String(s || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      const byId = new Map<number, number>();
+      const byName = new Map<string, number>();
+      ((catalogo as any[]) ?? []).forEach((c) => {
+        const preco = c.preco != null ? Number(c.preco) : NaN;
+        if (!Number.isFinite(preco)) return;
+        if (c.servico_id != null) byId.set(Number(c.servico_id), preco);
+        if (c.nome) byName.set(norm(c.nome), preco);
+      });
+      const merged = ((legacy as any[]) ?? []).map((s) => {
+        const fromId = byId.get(Number(s.id));
+        const fromName = byName.get(norm(s.nome_servico));
+        const precoCatalogo = fromId ?? fromName;
+        return precoCatalogo != null
+          ? { ...s, valor_servico: precoCatalogo }
+          : s;
+      });
+      setServicos(merged);
+    })();
+  }, [open]);
 
   useEffect(() => {
     if (venda) {
