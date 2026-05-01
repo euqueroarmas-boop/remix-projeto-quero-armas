@@ -1188,11 +1188,27 @@ function Step2Extracting({ stages, error, onBack }: { stages: Record<string, str
         <div
           className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-500/15 blur-3xl"
         />
-        <div className="relative mx-auto w-16 h-16 rounded-lg flex items-center justify-center mb-4 border border-amber-500/40 bg-amber-500/10">
-          <div className="relative">
-            <FileText className="w-8 h-8 text-amber-700" strokeWidth={1.7} />
-            <Search className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 text-amber-600" strokeWidth={2.2} />
-            <Sparkles className="w-3 h-3 absolute -top-0.5 right-0.5 animate-pulse text-amber-500" />
+        <div className="relative mx-auto w-16 h-16 rounded-lg flex items-center justify-center mb-4 border border-amber-500/40 bg-amber-500/10 overflow-visible">
+          <span className="absolute inset-0 rounded-lg bg-amber-500/20 blur-md animate-pulse" aria-hidden />
+          <div className="relative" style={{ transformOrigin: "center" }}>
+            <FileText
+              className="w-8 h-8 text-amber-700 animate-doc-float"
+              strokeWidth={1.7}
+              style={{ transformOrigin: "center" }}
+            />
+            <Search
+              className="w-4 h-4 absolute -bottom-1 -right-1 text-amber-600 animate-lens-scan drop-shadow-[0_1px_2px_rgba(180,83,9,0.4)]"
+              strokeWidth={2.4}
+              style={{ transformOrigin: "center" }}
+            />
+            <Sparkles
+              className="w-3 h-3 absolute -top-1 right-0 text-amber-500 animate-twinkle"
+              style={{ transformOrigin: "center" }}
+            />
+            <Sparkles
+              className="w-2.5 h-2.5 absolute -top-1.5 -left-1 text-amber-400 animate-twinkle-alt"
+              style={{ transformOrigin: "center", animationDelay: "0.4s" }}
+            />
           </div>
         </div>
         <div className="text-center text-[10px] font-mono uppercase tracking-[0.28em] mb-1 text-amber-700">
