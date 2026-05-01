@@ -1994,97 +1994,109 @@ export default function QAClientesPage() {
     const c = selected;
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
-        {/* Header — padrão ARMORY (Arsenal HUD strip) */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 md:px-5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelected(null)}
-                className="h-7 w-7 p-0 shrink-0 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </Button>
-              <div className="hidden sm:flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-600 ring-1 ring-sky-200 shrink-0">
-                <User className="h-3.5 w-3.5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-900">
-                  CLIENTE · DOSSIÊ TÁTICO
-                </div>
-                <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
-                  CPF {formatCpf(c.cpf)}
-                </div>
-              </div>
-            </div>
-            <div className="hidden md:flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-600">
-                <Radio className="h-3 w-3 animate-pulse" />
-                ONLINE
-              </div>
-              <div className="text-[10px] font-mono text-slate-400">
-                ID #{String(c.id).padStart(4, "0")}
-              </div>
-            </div>
-          </div>
-          <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
+        {/* Header — padrão ARSENAL (Premium KPI cluster) */}
+        {(() => {
+          const statusTone =
+            c.status === "ATIVO"
+              ? "hsl(152 60% 42%)"
+              : c.status === "DESISTENTE"
+              ? "hsl(0 72% 55%)"
+              : "hsl(38 92% 50%)";
+          return (
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-24"
-              style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.06), transparent 70%)" }}
-            />
-            <ClienteSelfieAvatar cliente={c} size="md" />
-            <div className="flex-1 min-w-0 relative">
-              <h1 className="text-[16px] md:text-[18px] font-black uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 14%)" }}>
-                {c.nome_completo}
-              </h1>
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ring-1 ${statusColor(c.status)}`}
-                  style={{
-                    background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)",
-                    boxShadow: c.status === "ATIVO" ? "inset 0 0 0 1px hsl(152 60% 80%)" : c.status === "DESISTENTE" ? "inset 0 0 0 1px hsl(0 60% 85%)" : "inset 0 0 0 1px hsl(38 80% 80%)",
-                  }}>
-                  {c.status}
-                </span>
-                {c.celular && (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                    <Phone className="h-2.5 w-2.5" /> {c.celular}
-                  </span>
-                )}
-                {c.cidade && (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                    <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
-                  </span>
-                )}
-                {c.cliente_lions && (
-                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 ring-1 ring-amber-200 font-bold uppercase tracking-wider">
-                    🦁 LIONS
-                  </span>
-                )}
+              className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+              style={{ boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 1px 2px rgba(15,23,42,0.04)" }}
+            >
+              {/* Glow ambiente (mesmo tratamento do KpiCard do Arsenal) */}
+              <div
+                className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
+                style={{ background: statusTone }}
+              />
+              <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelected(null)}
+                  className="h-8 w-8 p-0 shrink-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  title="Voltar"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <ClienteSelfieAvatar cliente={c} size="md" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
+                      style={{ background: `${statusTone}14`, color: statusTone, boxShadow: `inset 0 0 0 1px ${statusTone}33` }}
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusTone }} />
+                      {c.status}
+                    </span>
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
+                      ID #{String(c.id).padStart(4, "0")}
+                    </span>
+                    {c.cliente_lions && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold uppercase tracking-wider"
+                        style={{ boxShadow: "inset 0 0 0 1px hsl(38 92% 75%)" }}>
+                        🦁 LIONS
+                      </span>
+                    )}
+                  </div>
+                  <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
+                    {c.nome_completo}
+                  </h1>
+                  <div className="mt-0.5 text-[11px] font-mono tracking-wider text-slate-400">
+                    CPF {formatCpf(c.cpf)}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setEditingCliente(c); setClienteModal(true); }}
+                    className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+                    title="Editar cliente"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
+                    className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+                    title="Excluir cliente"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              {/* Vitals row — mesma linguagem dos KpiCards do Arsenal */}
+              <div className="relative grid grid-cols-2 md:grid-cols-4 border-t border-slate-200/80 divide-x divide-slate-200/80">
+                {[
+                  { icon: Phone, color: "hsl(190 80% 45%)", label: "Telefone", value: c.celular || "—", mono: true },
+                  { icon: MapPin, color: "hsl(220 20% 28%)", label: "Localização", value: c.cidade ? `${c.cidade}/${c.estado}` : "—" },
+                  { icon: FileText, color: "hsl(152 60% 42%)", label: "Vendas", value: vendas.length, mono: true },
+                  { icon: Crosshair, color: "hsl(38 92% 50%)", label: "Armas", value: crafs.length + gtes.length, mono: true },
+                ].map((v, i) => (
+                  <div key={i} className="flex items-center gap-2.5 px-4 py-3 first:border-l-0">
+                    <div
+                      className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+                      style={{ background: `${v.color}14`, color: v.color, boxShadow: `inset 0 0 0 1px ${v.color}1f` }}
+                    >
+                      <v.icon className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">{v.label}</div>
+                      <div className={`text-[13px] font-bold text-slate-800 truncate ${v.mono ? "font-mono" : "uppercase"}`}>
+                        {v.value}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="flex items-center gap-1 shrink-0 relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => { setEditingCliente(c); setClienteModal(true); }}
-                className="h-8 w-8 p-0 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50"
-                title="Editar cliente"
-              >
-                <Edit className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
-                className="h-8 w-8 p-0 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
-                title="Excluir cliente"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         <Tabs value={tab} onValueChange={setTab}>
           {/* Scrollable tabs for mobile */}
