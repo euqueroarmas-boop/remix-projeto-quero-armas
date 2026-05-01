@@ -836,7 +836,29 @@ export default function QACadastroPublicoPage() {
               </div>
             )}
 
-            {step === 4 && <Step4Done firstName={extracted.nome_completo.split(" ")[0] || ""} />}
+            {step === 4 && (
+              <Step4ArsenalAccess
+                email={extracted.email}
+                nome={extracted.nome_completo}
+                senha={arsenalSenha}
+                setSenha={setArsenalSenha}
+                senhaConfirma={arsenalSenhaConfirma}
+                setSenhaConfirma={setArsenalSenhaConfirma}
+                showSenha={arsenalShowSenha}
+                setShowSenha={setArsenalShowSenha}
+                onContinue={criarContaArsenal}
+                busy={arsenalBusy}
+                error={arsenalError}
+              />
+            )}
+
+            {step === 5 && (
+              <Step5Done
+                firstName={extracted.nome_completo.split(" ")[0] || ""}
+                email={arsenalCriado?.email || extracted.email}
+                clienteExistente={arsenalCriado?.cliente_existente || false}
+              />
+            )}
           </div>
         </div>
 
