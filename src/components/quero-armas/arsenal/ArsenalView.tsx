@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, History, Plus, Sparkles, Upload, FileBadge, Crosshair } from "lucide-react";
+import { Activity, AlertTriangle, History, Plus, Sparkles, Upload, FileBadge, Crosshair, Landmark } from "lucide-react";
 import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
@@ -25,6 +25,10 @@ interface Props {
   onArsenalChanged?: () => Promise<void> | void;
   /** Quando true, exibe controles de exclusão de docs genéricos (admin tem permissão total). */
   isAdmin?: boolean;
+  /** Cidade do cliente (usada para resolver Circunscrição PF). */
+  clienteCidade?: string | null;
+  /** UF do cliente (usada para resolver Circunscrição PF). */
+  clienteUf?: string | null;
 }
 
 const normalizeDocWeaponName = (doc: any) => {
