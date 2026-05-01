@@ -8203,6 +8203,15 @@ export type Database = {
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }
       qa_norm_nome: { Args: { p_nome: string }; Returns: string }
+      qa_processo_trocar_servico: {
+        Args: {
+          p_dry_run?: boolean
+          p_motivo?: string
+          p_novo_servico_id: number
+          p_processo_id: string
+        }
+        Returns: Json
+      }
       qa_reabrir_homologacao_cliente: {
         Args: { p_cliente_id: number; p_motivo: string }
         Returns: Json
