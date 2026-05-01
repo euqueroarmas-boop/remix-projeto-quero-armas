@@ -337,7 +337,7 @@ Deno.serve(async (req) => {
     if (doc.tipo_documento === "comprovante_residencia") {
       const cx: Record<string, any> = parsed.campos_extraidos || {};
       const titularDoc = String(cx.nome_titular ?? cx.titular_comprovante_nome ?? "").trim();
-      const nomeCadastro = String(cliente?.nome ?? "").trim();
+      const nomeCadastro = String(cliente?.nome_completo ?? cliente?.nome ?? "").trim();
       const flagIA = cx.endereco_em_nome_de_terceiro === true || cx.endereco_em_nome_de_terceiro === "true";
       const titularDivergente = !!titularDoc && !!nomeCadastro &&
         titularDoc.toLowerCase().replace(/\s+/g, " ") !==
@@ -537,7 +537,7 @@ Deno.serve(async (req) => {
           sanitize?: (v: any) => string;
           sensivel?: boolean; // se true, JAMAIS promove se não estiver vazio
         }> = [
-          { campoCliente: "nome",            fontesIA: ["nome_completo", "nome"], sensivel: true },
+          { campoCliente: "nome_completo",   fontesIA: ["nome_completo", "nome"], sensivel: true },
           { campoCliente: "cpf",             fontesIA: ["cpf"], sanitize: onlyDigits, sensivel: true },
           { campoCliente: "rg",              fontesIA: ["rg", "numero_documento"] },
           { campoCliente: "data_nascimento", fontesIA: ["data_nascimento"] },
@@ -545,7 +545,7 @@ Deno.serve(async (req) => {
           ...(enderecoTerceiro ? [] : [
             { campoCliente: "endereco", fontesIA: ["endereco", "endereco_completo", "logradouro"] },
             { campoCliente: "cidade",   fontesIA: ["cidade"] },
-            { campoCliente: "uf",       fontesIA: ["uf", "estado"] },
+            { campoCliente: "estado",   fontesIA: ["uf", "estado"] },
             { campoCliente: "cep",      fontesIA: ["cep"], sanitize: onlyDigits },
           ]),
         ];
