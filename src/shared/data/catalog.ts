@@ -2,7 +2,7 @@
  * Camada de leitura do catálogo público.
  *
  * FONTE ÚNICA DA VERDADE: `qa_servicos_catalogo`.
- * Tudo que é cadastrado/editado em /quero-armas/precos-servicos
+ * Tudo que é cadastrado/editado em /precos-servicos
  * reflete IMEDIATAMENTE em /servicos (site público) e demais consumidores.
  *
  * Este módulo mantém o shape legado `ServiceWithCategory` para preservar

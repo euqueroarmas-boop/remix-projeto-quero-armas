@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import logoColor from "@/assets/logo-color.png";
-import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
+import { requestQAPasswordReset } from "@/shared/passwordReset";
 
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");

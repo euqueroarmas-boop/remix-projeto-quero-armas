@@ -9,20 +9,20 @@ import {
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack,
 } from "lucide-react";
-import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
+import { HistoricoAtualizacoes } from "@/components/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
-import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import { getClienteFK, getVendaFK } from "@/components/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
-import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import { ClienteDocsHubModal } from "@/components/clientes/ClienteDocsHubModal";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
-import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
-import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
+import { ArsenalView } from "@/components/arsenal/ArsenalView";
+import { ClienteProcessosSection } from "@/components/processos/ClienteProcessosSection";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
-import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
-import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
-import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
-import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
+import { ForcePasswordChangeModal } from "@/components/clientes/ForcePasswordChangeModal";
+import { ensureClienteFromAuthUser } from "@/lib/ensureClienteFromAuthUser";
+import ArmaManualForm from "@/components/arsenal/ArmaManualForm";
+import { getQAServiceDisplayName } from "@/lib/serviceDisplay";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -747,7 +747,7 @@ export default function QAClientePortalPage() {
                   {!hasAnyPhoto ? (
                     <Button
                       size="sm"
-                      onClick={() => navigate("/quero-armas/cadastro/foto")}
+                      onClick={() => navigate("/cadastro/foto")}
                       className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-sm"
                     >
                       <Camera className="h-3.5 w-3.5 mr-1.5" /> Enviar minha foto
@@ -787,7 +787,7 @@ export default function QAClientePortalPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigate("/quero-armas/cadastro/foto")}
+                      onClick={() => navigate("/cadastro/foto")}
                       className="h-8 px-3 text-[11px] font-semibold rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50"
                     >
                       <Camera className="h-3.5 w-3.5 mr-1.5" /> Trocar foto

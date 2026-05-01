@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { FileText, Upload, Plus, Loader2, CheckCircle, XCircle } from "lucide-react";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 
 const TIPOS_PECA = [
   { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },

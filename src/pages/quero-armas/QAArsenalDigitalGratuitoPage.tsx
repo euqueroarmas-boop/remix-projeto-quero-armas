@@ -179,7 +179,7 @@ const ArsenalDigitalGratuito = () => (
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
-            <Link to="/quero-armas/servicos">
+            <Link to="/servicos">
               <ShoppingBag className="mr-2 size-4" /> Ver serviços da Quero Armas
             </Link>
           </Button>

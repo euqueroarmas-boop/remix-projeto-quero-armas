@@ -9,7 +9,7 @@ import {
 import {
   computeExameStatus, formatExameCountdown,
   type ExameComStatus, type ExameTipo,
-} from "@/components/quero-armas/clientes/ClienteExames";
+} from "@/components/clientes/ClienteExames";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";

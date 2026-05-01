@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, ArrowRight, ShieldCheck, FileText, PenTool, Users, FolderOpen } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ErrorRetryState, SkeletonList, EmptyState } from "@/components/quero-armas/LoadStates";
+import { ErrorRetryState, SkeletonList, EmptyState } from "@/components/LoadStates";
 
 interface AuditRow {
   id: string;

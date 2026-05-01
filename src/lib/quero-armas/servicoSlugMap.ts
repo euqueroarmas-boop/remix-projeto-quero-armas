@@ -3,7 +3,7 @@
  * e o catálogo interno (qa_servicos). Não inventa valores: quando não reconhecer,
  * marca como "pendente_classificacao" para o admin classificar manualmente.
  *
- * Mantém a regra global da plataforma (`mem://lib/quero-armas/serviceDisplay.ts`):
+ * Mantém a regra global da plataforma (`mem://lib/serviceDisplay.ts`):
  * slug é a fonte canônica de exibição.
  */
 
