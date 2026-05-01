@@ -17,7 +17,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-type Cond = "clt" | "autonomo" | "empresario" | "aposentado";
+type Cond = "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico";
 
 type Item = {
   tipo_documento: string;
@@ -48,10 +48,14 @@ function rendaPara(c: Cond): Item[] {
       { tipo_documento: "renda_comprovante_beneficio", nome_documento: "Comprovante de benefício (aposentadoria)", obrigatorio: true, link_emissao: "https://meu.inss.gov.br/", label_botao: "Enviar Comprovante de Benefício" },
       { tipo_documento: "renda_extrato_inss", nome_documento: "Extrato completo de contribuições do INSS (se aplicável)", obrigatorio: false, link_emissao: "https://meu.inss.gov.br/", label_botao: "Enviar Extrato INSS" },
     ];
+    case "funcionario_publico": return [
+      { tipo_documento: "renda_carteira_funcional", nome_documento: "Carteira Funcional (servidor público)", obrigatorio: true, link_emissao: null, label_botao: "Enviar Carteira Funcional" },
+      { tipo_documento: "renda_holerite_30dias", nome_documento: "Holerite dos últimos 30 dias", obrigatorio: true, link_emissao: null, label_botao: "Enviar Holerite (30 dias)" },
+    ];
   }
 }
 
-const VALID_CONDS: Cond[] = ["clt", "autonomo", "empresario", "aposentado"];
+const VALID_CONDS: Cond[] = ["clt", "autonomo", "empresario", "aposentado", "funcionario_publico"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -75,7 +79,7 @@ Deno.serve(async (req) => {
     const processo_id: string | undefined = body?.processo_id;
     const condicao = String(body?.condicao_profissional || "").toLowerCase() as Cond;
     if (!processo_id || !VALID_CONDS.includes(condicao)) {
-      return json({ error: "processo_id e condicao_profissional (clt|autonomo|empresario|aposentado) obrigatórios" }, 400);
+      return json({ error: "processo_id e condicao_profissional (clt|autonomo|empresario|aposentado|funcionario_publico) obrigatórios" }, 400);
     }
 
     const { data: processo } = await supabase

@@ -402,7 +402,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
-  const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado") => {
+  const setCondicao = async (cond: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico") => {
     if (!processo) return;
     setSavingCond(cond);
     try {
@@ -889,11 +889,12 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   );
 }
 
-const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado"; label: string; hint: string }[] = [
+const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico"; label: string; hint: string }[] = [
   { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
   { id: "autonomo", label: "AUTÔNOMO", hint: "Cartão CNPJ/MEI + NF recente" },
   { id: "empresario", label: "EMPRESÁRIO/SÓCIO", hint: "Cartão CNPJ + QSA + Contrato Social" },
   { id: "aposentado", label: "APOSENTADO", hint: "Comprovante de benefício INSS" },
+  { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO", hint: "Carteira Funcional + Holerite (últimos 30 dias)" },
 ];
 
 function CondicaoProfissionalCard({
@@ -905,7 +906,7 @@ function CondicaoProfissionalCard({
   condicao: string | null;
   indefinida: boolean;
   saving: string | null;
-  onSelect: (c: "clt" | "autonomo" | "empresario" | "aposentado") => void;
+  onSelect: (c: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico") => void;
 }) {
   const atual = (condicao || "").toLowerCase();
   return (
@@ -923,7 +924,7 @@ function CondicaoProfissionalCard({
           </div>
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
         {CONDICAO_OPCOES.map((op) => {
           const ativo = atual === op.id;
           const carregando = saving === op.id;
