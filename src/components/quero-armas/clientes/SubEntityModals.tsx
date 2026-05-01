@@ -492,11 +492,15 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
     if (isEdit && originalPrimaryServicoId) {
       const novoPrimary = Array.from(selectedServicos.keys())[0];
       if (novoPrimary && novoPrimary !== originalPrimaryServicoId) {
-        const vendaLegacyId = venda.id_legado ?? venda.id;
+        // qa_processos.venda_id referencia qa_vendas.id (PK real),
+        // NÃO id_legado. Bug histórico fazia o lookup falhar e o modal
+        // de troca nunca abria, deixando o operador trocar o serviço
+        // sem regenerar checklist.
+        const vendaPkId = Number(venda.id);
         const { data: procRaw } = await supabase
           .from("qa_processos" as any)
           .select("id")
-          .eq("venda_id", vendaLegacyId)
+          .eq("venda_id", vendaPkId)
           .maybeSingle();
         const proc = procRaw as unknown as { id: string } | null;
         if (proc?.id) {
