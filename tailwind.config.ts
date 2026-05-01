@@ -122,6 +122,24 @@ export default {
           "0%": { transform: "scale(0.6)", opacity: "0.7" },
           "100%": { transform: "scale(2.2)", opacity: "0" },
         },
+        "hat-wiggle": {
+          "0%, 100%": { transform: "rotate(-14deg) translateY(0)" },
+          "25%": { transform: "rotate(-6deg) translateY(-2px)" },
+          "50%": { transform: "rotate(-18deg) translateY(0)" },
+          "75%": { transform: "rotate(-10deg) translateY(-1px)" },
+        },
+        "glitter": {
+          "0%, 100%": { opacity: "0", transform: "scale(0.4)" },
+          "50%": { opacity: "1", transform: "scale(1.2)" },
+        },
+        "rays-spin": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "pom-bounce": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.35)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -135,6 +153,10 @@ export default {
         "party-pop": "party-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both",
         "party-bounce": "party-bounce 1.8s ease-in-out infinite",
         "ring-pulse": "ring-pulse 1.8s ease-out infinite",
+        "hat-wiggle": "hat-wiggle 1.6s ease-in-out infinite",
+        "glitter": "glitter 1.4s ease-in-out infinite",
+        "rays-spin": "rays-spin 14s linear infinite",
+        "pom-bounce": "pom-bounce 0.8s ease-in-out infinite",
       },
     },
   },
