@@ -1035,6 +1035,86 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                   ))}
                 </div>
               </div>
+
+              {/* Documentos do processo — gestão direta pela Equipe Quero Armas */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4">
+                <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">
+                  DOCUMENTOS DO PROCESSO ({docs.length})
+                </h4>
+                {docs.length === 0 ? (
+                  <div className="text-[11px] uppercase text-slate-400">NENHUM DOCUMENTO REGISTRADO.</div>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {docs.map((doc) => {
+                      const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
+                      return (
+                        <li key={doc.id} className="py-2.5 flex flex-wrap items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[11px] font-bold uppercase text-slate-800 truncate">
+                              {doc.nome_documento}
+                            </div>
+                            <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
+                              {doc.tipo_documento} · {doc.etapa}
+                            </div>
+                            {doc.motivo_rejeicao && (
+                              <div className="text-[10px] text-red-700 mt-0.5 leading-snug">
+                                MOTIVO: {doc.motivo_rejeicao}
+                              </div>
+                            )}
+                          </div>
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider whitespace-nowrap"
+                            style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}
+                          >
+                            {ds.label}
+                          </span>
+                          {doc.arquivo_storage_key && (
+                            <>
+                              <button
+                                onClick={() => baixarArquivo(doc.arquivo_storage_key, "visualizar")}
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                              >
+                                <Eye className="h-3 w-3" /> VER
+                              </button>
+                              <button
+                                onClick={() => baixarArquivo(doc.arquivo_storage_key, "baixar")}
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                              >
+                                <Download className="h-3 w-3" /> BAIXAR
+                              </button>
+                              <button
+                                onClick={() => reprocessarIA(doc)}
+                                disabled={reprocessandoId === doc.id}
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                              >
+                                <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
+                                {reprocessandoId === doc.id ? "..." : "REPROCESSAR"}
+                              </button>
+                            </>
+                          )}
+                          {doc.status !== "aprovado" && (
+                            <button
+                              onClick={() => abrirAprovacao(doc)}
+                              className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600"
+                            >
+                              <CheckCircle className="h-3 w-3" /> APROVAR
+                            </button>
+                          )}
+                          {doc.status !== "invalido" && (
+                            <button
+                              onClick={() => abrirRejeicao(doc)}
+                              className="h-7 px-2 inline-flex items-center gap-1 rounded text-[10px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600"
+                            >
+                              <XCircle className="h-3 w-3" /> REJEITAR
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+
               <div className="text-[10px] uppercase tracking-wider text-slate-400">
                 ID: {processo?.id} · CRIADO: {formatDateTime(processo?.data_criacao)}
               </div>
