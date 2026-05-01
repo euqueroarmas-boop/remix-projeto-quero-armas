@@ -25,10 +25,12 @@ const APROVA_AUTO_MIN = 0.90;
 const REVISAO_HUMANA_MIN = 0.70;
 
 const TIPO_DOC_PROMPTS: Record<string, string> = {
-  rg: "RG. Extraia: nome_completo, rg, data_nascimento (YYYY-MM-DD), nome_mae, orgao_emissor, uf.",
-  cnh: "CNH. Extraia: nome_completo, cpf, rg, data_nascimento (YYYY-MM-DD), validade (YYYY-MM-DD), categoria.",
+  // === IDENTIFICAÇÃO (FASE 2: extração ampliada) ===
+  rg: "RG (Registro Geral). Extraia TODOS os dados visíveis: nome_completo, cpf (se houver), tipo_documento_detectado ('rg'), numero_documento, rg, data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD se houver). Tudo o que enxergar e tiver utilidade documental.",
+  cin: "CIN (Carteira de Identidade Nacional). Extraia TODOS os dados: nome_completo, cpf, tipo_documento_detectado ('cin'), numero_documento (pode ser igual ao CPF — isso é normal na CIN, NÃO marque divergência), rg (se ainda exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD).",
+  cnh: "CNH (Carteira Nacional de Habilitação). Extraia TODOS: nome_completo, cpf, tipo_documento_detectado ('cnh'), numero_documento (n. registro), rg (se exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao/primeira_habilitacao (YYYY-MM-DD), validade (YYYY-MM-DD), categoria_cnh, registro_cnh, numero_espelho (se houver).",
   cpf: "Comprovante de CPF. Extraia: nome_completo, cpf (apenas dígitos).",
-  comprovante_residencia: "Conta de luz/água/telefone/internet. Extraia: nome_titular, endereco_completo, cep, cidade, uf, data_emissao (YYYY-MM-DD).",
+  comprovante_residencia: "Comprovante de residência ACEITO APENAS se for: conta de energia elétrica, água, gás, internet fixa, telefone fixo ou IPTU. NÃO aceite: fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato bancário, ou qualquer documento sem vínculo claro com o imóvel — nesses casos marque tipo_correto=false e cite em motivo_rejeicao. Quando válido, extraia TODOS: nome_titular, cpf_cnpj_titular (apenas dígitos), endereco_completo, logradouro, numero, complemento, bairro, cidade, uf, cep (apenas dígitos), data_emissao (YYYY-MM-DD), mes_referencia (YYYY-MM), tipo_conta (energia/agua/gas/internet/telefone_fixo/iptu), empresa_emissora, codigo_instalacao (matrícula/UC/instalação se houver). Se o nome_titular for diferente do nome do cliente cadastrado, NÃO trate como divergência: preencha endereco_em_nome_de_terceiro=true e os campos titular_comprovante_*; o endereço deve ser extraído normalmente.",
   comprovante_renda: "Holerite/decore/IR. Extraia: nome_titular, ocupacao, renda_mensal_aproximada, periodo_referencia, data_emissao (YYYY-MM-DD).",
   renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
   certidao_civel: "Certidão Cível Federal. Extraia: nome_titular, cpf, resultado (NADA_CONSTA ou CONSTA), data_emissao (YYYY-MM-DD).",
@@ -47,6 +49,8 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
   const docHint = TIPO_DOC_PROMPTS[tipoDoc] ||
     "Documento administrativo. Extraia nome_titular, cpf, datas, números identificadores.";
+  const isIdentificacao = ["rg", "cin", "cnh"].includes(tipoDoc);
+  const isComprovanteEnd = tipoDoc === "comprovante_residencia";
   return `Você é um auditor RIGOROSO de documentos para Polícia Federal / Exército Brasileiro.
 TAREFA: Valide a imagem/PDF e responda SEMPRE chamando "validar_documento".
 REGRAS CRÍTICAS:
@@ -56,6 +60,10 @@ REGRAS CRÍTICAS:
 4. Compare CADA campo com o cadastro abaixo. QUALQUER diferença textual relevante (nome, CPF, RG, data nascimento, endereço, CEP) é divergência.
 5. NUNCA assuma campos não vistos. Se incerto, baixe a confiança.
 6. Datas YYYY-MM-DD.
+7. EXTRAIA TUDO O QUE FOR ÚTIL: campos com correspondência no cadastro vão em "campos_extraidos"; dados úteis sem campo fixo (observações, códigos auxiliares, anotações, números de protocolo, etc.) vão em "campos_complementares"; metadados gerais do documento (resolução, idioma, observações de qualidade) vão em "metadados_documento".
+${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos somente RG, CIN ou CNH. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).` : ""}
+${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
+9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
 Tipo esperado: ${tipoDoc}
 Detalhes: ${docHint}
 Cadastro do cliente:
@@ -82,7 +90,11 @@ const VALIDAR_TOOL = {
         tipo_correto: { type: "boolean" },
         legivel: { type: "boolean" },
         confianca: { type: "number" },
+        tipo_documento_detectado: { type: "string", description: "Tipo real detectado: rg, cin, cnh, energia, agua, gas, internet, telefone_fixo, iptu, cartao_credito, boleto, extrato_bancario, outro." },
         campos_extraidos: { type: "object", additionalProperties: true },
+        campos_complementares: { type: "object", additionalProperties: true, description: "Dados úteis sem campo fixo no cadastro principal." },
+        metadados_documento: { type: "object", additionalProperties: true, description: "Metadados gerais (qualidade, idioma, observações operacionais)." },
+        orientacoes_cliente: { type: "string", description: "Orientações claras ao cliente sobre o que melhorar/enviar, se aplicável." },
         divergencias: {
           type: "array",
           items: {
