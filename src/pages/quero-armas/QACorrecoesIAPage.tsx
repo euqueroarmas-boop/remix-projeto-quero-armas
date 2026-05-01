@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, Search, Pencil, Power, Trash2, Loader2, GraduationCap, Globe2, User,
-  AlertTriangle, BookMarked, Filter,
+  BookMarked, Filter,
 } from "lucide-react";
 
 // =============================================================
