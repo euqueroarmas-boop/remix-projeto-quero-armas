@@ -1043,10 +1043,15 @@ export default function QAClientesPage() {
 
 
   // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
-  const SERVICOS_CR = [13, 20, 27, 29];
+  // REGRA: TODA variante de "Concessão de CR" usa o MESMO formulário de detalhes.
+  //   13 → Mudança de Serviço Contratado - Posse (PF) para Concessão de CR (EB)
+  //   20 → Concessão de CR no Exército Brasileiro sem clube / Militar
+  //   31 → Concessão de CR no Exército Brasileiro
+  // Mantemos 27/29 por compatibilidade defensiva caso voltem ao catálogo.
+  const SERVICOS_CR = [13, 20, 27, 29, 31];
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
-  // OBS: Concessão de CR (13, 20, 27) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
+    // OBS: Concessão de CR (13, 20, 27, 31) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
   // OBS: Autorização de compra de arma de fogo no EB (5, 15) foi REMOVIDA daqui — possui apenas campos específicos da autorização
   // OBS: COMBO - Registro de arma de fogo CRAF no EB (id=6) foi REMOVIDA daqui — possui formulário próprio com dados da arma
   const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18];
@@ -1089,7 +1094,7 @@ export default function QAClientesPage() {
     { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO (exceto Posse, que tem regra própria acima)
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27] },
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27, 31] },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
     { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
