@@ -89,6 +89,8 @@ export function ArsenalView({
   onOpenAddDoc,
   onArsenalChanged,
   isAdmin = false,
+  clienteCidade,
+  clienteUf,
 }: Props) {
   // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
