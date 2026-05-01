@@ -1338,11 +1338,6 @@ function Step3Review({
 
   return (
     <div className="space-y-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}>
-      <button onClick={onBack} className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide"
-        style={{ color: "hsl(220 10% 50%)" }}>
-        <ArrowLeft className="w-3 h-3" /> Voltar
-      </button>
-
       <div className="rounded-xl p-3 flex items-center gap-2"
         style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(230 80% 92%)" }}>
         <Sparkles className="w-4 h-4 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
