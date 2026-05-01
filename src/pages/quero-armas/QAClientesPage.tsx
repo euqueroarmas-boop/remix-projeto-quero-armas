@@ -3030,7 +3030,7 @@ export default function QAClientesPage() {
                 >
                   <Edit className="h-3.5 w-3.5" /> Editar
                 </button>
-                {c.status === "rejeitado" && !c.cliente_id_vinculado && (
+                {c.status === "rejeitado" && !(c as any).cliente_id_vinculado && (
                   <button
                     disabled={!!savingCadastroPublicoStatus}
                     onClick={() => excluirDefinitivamenteCadastroPublico()}
