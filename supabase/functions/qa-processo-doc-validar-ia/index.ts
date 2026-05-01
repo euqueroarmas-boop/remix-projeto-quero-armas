@@ -383,12 +383,44 @@ Deno.serve(async (req) => {
     const { b64, mime } = await downloadAsBase64(supabase, path);
     const systemPrompt = buildSystemPrompt(doc.tipo_documento, cliente);
 
-    // PDFs nativos (sobretudo da Receita Federal) frequentemente vinham
-    // como image_url com mime application/pdf e produziam extração VAZIA.
-    // Estratégia atual: usar o modelo `gemini-2.5-pro` para PDFs, que
-    // possui suporte robusto a PDF nativo. Para imagens, manter o flash.
+    // Estratégia por tipo de arquivo:
+    //  - PDF: tenta primeiro extrair a CAMADA DE TEXTO via pdfjs-dist
+    //    (PDFs emitidos pela Receita Federal, Detran, cartórios etc. são
+    //    nativos e têm texto). Se houver texto, mandamos texto puro para
+    //    o modelo (mais confiável que image_url com mime application/pdf,
+    //    que vinha resultando em extração vazia).
+    //  - Se o PDF não tem texto (escaneado/imagem), enviamos como
+    //    image_url e o guard `extraiuAlgo` cuida do encaminhamento para
+    //    revisão humana caso a IA também não consiga ler.
+    //  - Imagens (JPG/PNG): sempre image_url.
     const isPdf = mime === "application/pdf" || /\.pdf$/i.test(path);
+    let pdfTexto = "";
+    if (isPdf) {
+      pdfTexto = await extractPdfText(supabase, path);
+    }
+    const usandoTextoPdf = isPdf && pdfTexto.length >= 40;
     const modelo = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+
+    const userContent: any[] = usandoTextoPdf
+      ? [{
+          type: "text",
+          text:
+            "Este é o TEXTO EXTRAÍDO de um PDF nativo (provavelmente emitido por órgão público como Receita Federal). " +
+            "Use APENAS este texto para preencher os campos solicitados e em seguida chame validar_documento.\n\n" +
+            "===== INÍCIO DO TEXTO DO PDF =====\n" +
+            pdfTexto.slice(0, 60000) +
+            "\n===== FIM DO TEXTO DO PDF =====",
+        }]
+      : [
+          {
+            type: "text",
+            text: isPdf
+              ? "Este é um PDF (não foi possível extrair camada de texto — provavelmente é escaneado). Tente ler como imagem; se não conseguir, devolva tipo_correto=false e motivo_rejeicao explicando que o arquivo está ilegível. Em seguida chame validar_documento."
+              : "Analise este documento e chame validar_documento.",
+          },
+          { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
+        ];
+
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
@@ -396,12 +428,7 @@ Deno.serve(async (req) => {
         model: modelo,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: [
-            { type: "text", text: isPdf
-                ? "Este é um PDF nativo (provavelmente emitido por órgão público como Receita Federal). LEIA o conteúdo textual do PDF e extraia TODOS os campos solicitados. Em seguida chame validar_documento."
-                : "Analise este documento e chame validar_documento." },
-            { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
-          ]},
+          { role: "user", content: userContent },
         ],
         tools: [VALIDAR_TOOL],
         tool_choice: { type: "function", function: { name: "validar_documento" } },
