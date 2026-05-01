@@ -421,6 +421,11 @@ export default function DadosFormularioPublicoSection({
       )}
 
       <div className="flex items-center justify-end pt-1">
+        {isConferido && (
+          <Button size="sm" className="h-7 text-[10px] mr-2 bg-emerald-600 hover:bg-emerald-700" disabled={busy} onClick={() => void aprovarCadastro()}>
+            <ShieldCheck className="h-3 w-3 mr-1" /> Aprovar e sincronizar tudo
+          </Button>
+        )}
         {!isConferido && (
           <Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={busy} onClick={() => void marcarConferido()}>
             <CheckCircle2 className="h-3 w-3 mr-1" /> Marcar formulário como conferido
