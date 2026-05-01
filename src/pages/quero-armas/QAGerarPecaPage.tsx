@@ -1076,11 +1076,17 @@ export default function QAGerarPecaPage() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/qa-gerar-peca`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`,
+          "Authorization": `Bearer ${accessToken}`,
           "apikey": supabaseKey,
         },
         body: JSON.stringify({
