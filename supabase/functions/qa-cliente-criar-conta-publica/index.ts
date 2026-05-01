@@ -137,7 +137,8 @@ Deno.serve(async (req) => {
   try {
     const updatePayload: Record<string, unknown> = {
       status: "concluido",
-      concluido_em: new Date().toISOString(),
+      processado_em: new Date().toISOString(),
+      processado_por: "qa-cliente-criar-conta-publica",
     };
     if (qaClienteId) updatePayload.cliente_id_vinculado = qaClienteId;
 
