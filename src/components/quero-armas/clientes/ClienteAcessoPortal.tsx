@@ -274,6 +274,10 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
     fetchCustomer();
   }, [fetchCustomer]);
 
+  useEffect(() => {
+    void runDiagnose();
+  }, [runDiagnose]);
+
   const handleCreateAccess = async () => {
     if (!cliente.email) {
       toast.error("Cliente sem e-mail cadastrado");
