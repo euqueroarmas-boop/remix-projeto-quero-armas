@@ -149,7 +149,7 @@ export default function ClientePecas({ cliente }: Props) {
   const [numeroRequerimento, setNumeroRequerimento] = useState("");
 
   const [circunscricao, setCircunscricao] = useState<any>(null);
-  const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "error">("idle");
+  const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "not_found" | "error">("idle");
 
   const [generating, setGenerating] = useState(false);
   const [resultado, setResultado] = useState<DraftingResult | null>(null);
@@ -209,12 +209,16 @@ export default function ClientePecas({ cliente }: Props) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // ── Circumscription ──
+  // ── Circumscription ── recalcula sempre que cidade/UF do cliente mudar
   useEffect(() => {
-    if (clienteCidade && clienteUf && circStatus === "idle") {
+    if (clienteCidade && clienteUf) {
       resolverCircunscricao(clienteCidade, clienteUf);
+    } else {
+      setCircunscricao(null);
+      setCircStatus("not_found");
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteCidade, clienteUf]);
 
   const resolverCircunscricao = async (cidade: string, uf: string) => {
     const c = cidade.replace(/\s+/g, " ").trim();
@@ -236,13 +240,14 @@ export default function ClientePecas({ cliente }: Props) {
         signal: controller.signal,
       });
       clearTimeout(timer);
-      if (!res.ok) { setCircStatus("error"); return null; }
+      if (!res.ok) { setCircunscricao(null); setCircStatus("error"); return null; }
       const data = await res.json();
-      if (!data || data.length === 0) { setCircStatus("error"); return null; }
+      if (!data || data.length === 0) { setCircunscricao(null); setCircStatus("not_found"); return null; }
       setCircunscricao(data[0]);
       setCircStatus("resolved");
       return data[0];
     } catch {
+      setCircunscricao(null);
       setCircStatus("error");
       return null;
     }
