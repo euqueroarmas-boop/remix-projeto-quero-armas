@@ -122,6 +122,7 @@ const CadastroSchema = z.object({
   subtipo_servico: z.string().max(120).optional().nullable(),
   descricao_servico_livre: z.string().max(2000).optional().nullable(),
   origem_cadastro: z.string().max(50).optional().nullable(),
+  valor_servico: z.number().min(0).max(9999999).optional().nullable(),
 });
 
 Deno.serve(async (req) => {
