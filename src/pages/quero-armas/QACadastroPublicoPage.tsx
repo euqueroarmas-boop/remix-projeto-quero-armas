@@ -1473,7 +1473,7 @@ function Step3Review({
           <ReviewField label="Órgão emissor" value={data.emissor_rg} placeholder="SSP/SP"
             onChange={(v) => set("emissor_rg", v)}
             required={required.has("emissor_rg")} status={statusOf("emissor_rg")} />
-          <ReviewField label={isCinDoc ? "Data de emissão da CIN" : "Data de expedição do RG"} value={data.data_expedicao_rg}
+          <ReviewField label={isCinDoc ? "Data de emissão" : "Data de expedição"} value={data.data_expedicao_rg}
             onChange={(v) => set("data_expedicao_rg", v)} placeholder="DD/MM/AAAA"
             status={statusOf("data_expedicao_rg")} />
         </div>
