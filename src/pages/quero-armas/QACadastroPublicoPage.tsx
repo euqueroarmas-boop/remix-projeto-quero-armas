@@ -1418,17 +1418,18 @@ function Step3Review({
           options={CATEGORIA_OPTS as any}
           status={data.categoria_titular ? "validado" : "normal"}
         />
-        <ReviewField label="Profissão" value={data.profissao} onChange={(v) => set("profissao", v)}
-          required={required.has("profissao")} status={statusOf("profissao")} />
+        <ReviewField
+          label="Profissão / Atividade exercida"
+          value={data.profissao}
+          onChange={(v) => set("profissao", v)}
+          required={required.has("profissao")}
+          status={statusOf("profissao")}
+          hint="Informe exatamente como exercida — a Polícia Federal exigirá comprovante dessa atividade (holerite, contrato, declaração, etc.)."
+        />
         <div className="grid grid-cols-2 gap-2">
           <ReviewField label="Título de eleitor" value={data.titulo_eleitor}
             onChange={(v) => set("titulo_eleitor", v)} status={statusOf("titulo_eleitor")} />
           <ReviewField label="CNH" value={data.cnh} onChange={(v) => set("cnh", v)} status={statusOf("cnh")} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <ReviewField label="CTPS" value={data.ctps} onChange={(v) => set("ctps", v)} status={statusOf("ctps")} />
-          <ReviewField label="PIS/PASEP" value={data.pis_pasep}
-            onChange={(v) => set("pis_pasep", v)} status={statusOf("pis_pasep")} />
         </div>
       </ReviewBlock>
 
