@@ -2287,6 +2287,8 @@ export default function QAClientesPage() {
                 <ArsenalView
                   clienteId={c.id}
                   clienteNome={c.nome_completo}
+                  clienteCidade={c.cidade}
+                  clienteUf={c.estado}
                   crafs={crafs}
                   gtes={gtes}
                   cadastroCr={cadastro}
