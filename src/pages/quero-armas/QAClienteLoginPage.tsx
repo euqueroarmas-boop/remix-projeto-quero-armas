@@ -42,7 +42,9 @@ export default function QAClienteLoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      // Normalização defensiva — o input já força lowercase, mas garante trim e lower aqui.
+      const emailNorm = (email || "").trim().toLowerCase();
+      const { error } = await supabase.auth.signInWithPassword({ email: emailNorm, password });
       if (error) throw error;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
@@ -64,10 +66,56 @@ export default function QAClienteLoginPage() {
           .maybeSingle(),
       ]);
 
-      if (!qaProfile && !clienteLink) {
+      let efectiveLink = clienteLink as any;
+
+      // FALLBACK SEGURO: vínculo ausente para esse user_id, mas existe link
+      // ativo localizável pelo e-mail normalizado e cliente correspondente ativo
+      // e único. Repara o vínculo sem expor outros clientes.
+      if (!qaProfile && !efectiveLink && emailNorm) {
+        const { data: linksByEmail } = await supabase
+          .from("cliente_auth_links" as any)
+          .select("id, status, qa_cliente_id, customer_id, user_id, email")
+          .ilike("email", emailNorm);
+
+        const candidates = (linksByEmail || []) as any[];
+        const semConflito =
+          candidates.length > 0 &&
+          candidates.every((l) => !l.user_id || l.user_id === user.id);
+        const apontandoEsteCliente = candidates.filter(
+          (l) => l.status === "active" && l.qa_cliente_id,
+        );
+        // Único candidato ativo + sem conflito => repara silenciosamente.
+        if (semConflito && apontandoEsteCliente.length === 1) {
+          const repair = apontandoEsteCliente[0];
+          await supabase
+            .from("cliente_auth_links" as any)
+            .update({
+              user_id: user.id,
+              email: emailNorm,
+              status: "active",
+              activated_at: new Date().toISOString(),
+              motivo: null,
+              email_pendente: null,
+            })
+            .eq("id", repair.id);
+          efectiveLink = { ...repair, user_id: user.id };
+          console.warn("[QAClienteLogin] Vínculo reparado automaticamente para user", user.id, "cliente", repair.qa_cliente_id);
+        }
+      }
+
+      if (!qaProfile && !efectiveLink) {
         await supabase.auth.signOut();
-        toast.error("Acesso negado. Conta sem vínculo de cliente ativo.");
+        toast.error("Acesso negado. Conta sem vínculo de cliente ativo. Solicite ao admin: Reparar vínculo do portal.");
         return;
+      }
+
+      // Atualiza last_login_at para diagnóstico
+      if (efectiveLink?.id) {
+        supabase
+          .from("cliente_auth_links" as any)
+          .update({ last_login_at: new Date().toISOString() })
+          .eq("id", efectiveLink.id)
+          .then(() => {}, () => {});
       }
 
       toast.success("Bem-vindo!");
