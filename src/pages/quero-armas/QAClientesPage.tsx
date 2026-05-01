@@ -1614,6 +1614,42 @@ export default function QAClientesPage() {
     );
   };
 
+  const excluirDefinitivamenteCadastroPublico = async () => {
+    if (!selectedCadastroPublico) return;
+    const c: any = selectedCadastroPublico;
+    if (c.cliente_id_vinculado) {
+      toast.error("Este cadastro já está vinculado a um cliente. Exclua o cliente primeiro.");
+      return;
+    }
+    const nome = c.nome_completo || "este cadastro";
+    const confirm1 = window.confirm(
+      `EXCLUSÃO DEFINITIVA\n\nDeseja remover permanentemente o cadastro público de "${nome}"?\n\nEsta ação NÃO pode ser desfeita. O CPF poderá ser usado em um novo cadastro.`,
+    );
+    if (!confirm1) return;
+    const confirm2 = window.prompt(
+      `Confirme digitando EXCLUIR para apagar definitivamente o cadastro de ${nome}.`,
+    );
+    if ((confirm2 || "").trim().toUpperCase() !== "EXCLUIR") {
+      toast.info("Exclusão cancelada.");
+      return;
+    }
+    setSavingCadastroPublicoStatus("excluindo");
+    try {
+      const { error } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .delete()
+        .eq("id", c.id);
+      if (error) throw error;
+      setCadastrosPublicos(prev => prev.filter(item => item.id !== c.id));
+      setSelectedCadastroPublico(null);
+      toast.success("Cadastro excluído definitivamente.");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir cadastro definitivamente.");
+    } finally {
+      setSavingCadastroPublicoStatus(null);
+    }
+  };
+
   const updateCadastroPublicoStatus = async (status: string) => {
     if (!selectedCadastroPublico) return;
 
