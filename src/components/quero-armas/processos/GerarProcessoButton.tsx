@@ -247,10 +247,19 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
                 <SelectTrigger className="h-9 text-sm bg-slate-50 border-slate-200 text-slate-800 rounded-md">
                   <SelectValue placeholder="Selecionar serviço" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-slate-200 z-[110] max-h-72">
-                  {servicos.map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)} className="text-sm">
-                      #{s.id} — {s.nome_servico}
+                <SelectContent className="bg-white border border-slate-200 z-[110] max-h-72 shadow-lg">
+                  {servicos.length === 0 ? (
+                    <div className="px-3 py-4 text-[12px] text-slate-500">
+                      Nenhum serviço ativo no catálogo.
+                    </div>
+                  ) : servicos.map((s) => (
+                    <SelectItem
+                      key={s.id}
+                      value={String(s.id)}
+                      className="text-sm text-slate-900 font-medium data-[highlighted]:bg-amber-100 data-[highlighted]:text-slate-900 focus:bg-amber-100 focus:text-slate-900"
+                    >
+                      <span className="text-slate-400 font-mono mr-1.5">#{s.id}</span>
+                      <span className="text-slate-900">{s.nome_servico}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
