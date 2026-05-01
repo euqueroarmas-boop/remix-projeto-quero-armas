@@ -219,23 +219,27 @@ const chip = (txt: string, color: string = AMBER_DARK, bg: string = AMBER_SOFT) 
 export function qaWelcomeHtml(opts: { name: string; email: string; tempPassword: string; portalUrl?: string }) {
   const url = opts.portalUrl || PORTAL_URL;
   return qaWrap({
-    preheader: "Seu acesso ao Portal Quero Armas foi criado.",
-    title: "Bem-vindo ao Quero Armas",
+    preheader: "Acesso provisionado · credenciais ativas no Portal Tático.",
+    opTag: "OPERAÇÃO · PROVISIONAMENTO DE ACESSO",
+    title: "Seu portal está armado.",
+    subtitle: "Conta criada, credenciais geradas, perímetro liberado para o primeiro acesso.",
     body: `
       ${greeting(opts.name)}
-      ${para("Seu acesso ao <strong>Portal Quero Armas</strong> foi criado com sucesso. Utilize as credenciais abaixo para realizar seu primeiro acesso:")}
-      ${infoCard([
-        ["E-mail", opts.email],
-        ["Senha provisória", `<span style="font-family:'SF Mono',Menlo,Consolas,monospace;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid ${BORDER};color:${PRIMARY};">${opts.tempPassword}</span>`],
+      ${para("Sua conta no <strong>Portal Quero Armas</strong> acabou de ser provisionada. Use exatamente as credenciais abaixo no <strong>primeiro login</strong> — depois disso, o sistema vai forçar a troca por uma senha pessoal e descartar a provisória.")}
+      ${diagBlock([
+        { k: "Identificador", v: opts.email, mono: true },
+        { k: "Senha provisória", v: opts.tempPassword, mono: true, tone: "warn" },
+        { k: "Endpoint", v: "Portal do Cliente · /cliente/login", mono: true },
       ])}
-      ${btn(url, "Acessar o Portal")}
+      ${btn(url, "Entrar no Portal Tático")}
       ${hr}
-      ${notice("warn", "Importante", "No primeiro acesso, você será solicitado a definir uma nova senha pessoal. Não compartilhe essas credenciais com terceiros.")}
+      ${notice("warn", "REGRA DE ENGAJAMENTO", "A senha provisória é descartável e single-use. No primeiro login você será obrigado a definir a sua. Nunca compartilhe estas credenciais — elas dão acesso integral ao seu acervo de armas, documentos e processos.")}
+      ${notice("danger", "NÃO ESPERAVA ESTE E-MAIL?", "Significa que alguém criou conta usando seu e-mail. Ignore este aviso — sem o primeiro login, o acesso permanece bloqueado.")}
     `,
   });
 }
 export const qaWelcomeText = (o: { name: string; email: string; tempPassword: string; portalUrl?: string }) =>
-  `Quero Armas\n\nOlá, ${o.name}!\n\nSeu acesso ao Portal Quero Armas foi criado.\n\nE-mail: ${o.email}\nSenha provisória: ${o.tempPassword}\n\nAcesse: ${o.portalUrl || PORTAL_URL}\n\nNo primeiro acesso, você será solicitado a definir uma nova senha.`;
+  `QUERO ARMAS — PROVISIONAMENTO DE ACESSO\n\n${o.name},\n\nSua conta no Portal Tático foi provisionada.\n\nIDENTIFICADOR: ${o.email}\nSENHA PROVISÓRIA: ${o.tempPassword}\nENDPOINT: ${o.portalUrl || PORTAL_URL}\n\nA senha acima é single-use. No primeiro login você será obrigado a trocá-la. Não compartilhe.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 2. CÓDIGO OTP DE PRIMEIRO ACESSO / ATIVAÇÃO
@@ -243,22 +247,27 @@ export const qaWelcomeText = (o: { name: string; email: string; tempPassword: st
 export function qaOtpHtml(opts: { name?: string; code: string; minutes?: number }) {
   const min = opts.minutes ?? 10;
   return qaWrap({
-    preheader: `Seu código de verificação: ${opts.code}`,
-    title: "Código de verificação",
+    preheader: `OTP ${opts.code} · validade ${min} min · single-use`,
+    opTag: "OPERAÇÃO · AUTENTICAÇÃO DE FATOR ÚNICO",
+    title: "Código de verificação emitido.",
+    subtitle: `Token de uso único. Janela operacional: ${min} minutos.`,
     body: `
       ${greeting(opts.name)}
-      ${para("Use o código abaixo para concluir a ativação do seu acesso ao Portal Quero Armas:")}
-      <div style="text-align:center;margin:0 0 24px;">
-        <div style="display:inline-block;background:${SOFT_BG};border:2px solid ${PRIMARY};border-radius:14px;padding:20px 32px;">
-          <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:36px;font-weight:700;letter-spacing:10px;color:${PRIMARY};">${opts.code}</div>
+      ${para("Para concluir a autenticação, digite o código abaixo no Portal. Cada caractere é parte de um <strong>token criptográfico de fator único</strong> — não compartilhe nem encaminhe.")}
+      <div style="text-align:center;margin:0 0 22px;">
+        <div style="display:inline-block;background:${INK};border-radius:14px;padding:24px 36px;">
+          <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${AMBER};font-weight:700;margin:0 0 10px;">TOKEN OTP</div>
+          <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:42px;font-weight:800;letter-spacing:14px;color:#ffffff;">${opts.code}</div>
+          <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:9px;letter-spacing:2px;color:#94a3b8;margin-top:10px;">EXPIRA EM ${min} MIN · SINGLE-USE</div>
         </div>
       </div>
-      ${notice("info", "Validade do código", `Este código expira em <strong>${min} minutos</strong>. Se você não solicitou este acesso, ignore este e-mail com segurança.`)}
+      ${notice("warn", "REGRA DE OURO", `Nossa equipe <strong>NUNCA</strong> vai te pedir este código — nem por telefone, nem por WhatsApp, nem por outro canal. Se alguém pedir, é fraude. Encerre o contato.`)}
+      ${notice("info", "VALIDADE", `Token vence em <strong>${min} minutos</strong> a partir da emissão. Se não foi você, ignore — sem confirmação no portal o acesso não acontece.`)}
     `,
   });
 }
 export const qaOtpText = (o: { name?: string; code: string; minutes?: number }) =>
-  `Quero Armas — Código de verificação\n\nOlá${o.name ? `, ${o.name}` : ""}!\n\nSeu código: ${o.code}\nVálido por ${o.minutes ?? 10} minutos.\n\nSe você não solicitou este acesso, ignore este e-mail.`;
+  `QUERO ARMAS — TOKEN OTP\n\n${o.name ? `${o.name},\n\n` : ""}TOKEN: ${o.code}\nVALIDADE: ${o.minutes ?? 10} MIN · SINGLE-USE\n\nA equipe NUNCA pede este código. Se alguém pediu, é fraude.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 3. RECUPERAÇÃO DE SENHA
@@ -266,107 +275,131 @@ export const qaOtpText = (o: { name?: string; code: string; minutes?: number }) 
 export function qaPasswordResetHtml(opts: { name?: string; resetUrl: string; minutes?: number }) {
   const min = opts.minutes ?? 30;
   return qaWrap({
-    preheader: "Solicitação de redefinição de senha.",
-    title: "Redefinir senha",
+    preheader: `Reset de senha solicitado · janela ${min} min.`,
+    opTag: "OPERAÇÃO · REINICIALIZAÇÃO DE CREDENCIAL",
+    title: "Redefinição de senha solicitada.",
+    subtitle: `Link assinado e cifrado. Válido por ${min} minutos a partir da emissão.`,
     body: `
       ${greeting(opts.name)}
-      ${para("Recebemos uma solicitação para redefinir a senha da sua conta no Portal Quero Armas. Clique no botão abaixo para escolher uma nova senha:")}
-      ${btn(opts.resetUrl, "Redefinir minha senha")}
-      <p style="margin:20px 0 0;font-size:12px;color:${MUTED};text-align:center;">Este link expira em <strong>${min} minutos</strong>.</p>
+      ${para("Alguém — provavelmente você — disparou uma solicitação de <strong>reset de senha</strong> para a sua conta. Use o botão abaixo para escolher uma nova senha. O link é <strong>assinado, único e descartável</strong>: depois de usado ou expirado, deixa de funcionar.")}
+      ${diagBlock([
+        { k: "Tipo", v: "RESET DE SENHA", mono: true },
+        { k: "Validade", v: `${min} MINUTOS`, mono: true, tone: "warn" },
+        { k: "Uso", v: "SINGLE-USE", mono: true },
+      ])}
+      ${btn(opts.resetUrl, "Definir nova senha", "primary")}
       ${hr}
-      ${notice("warn", "Não foi você?", "Se você não solicitou esta redefinição, ignore este e-mail. Sua senha atual permanece inalterada.")}
+      ${notice("danger", "NÃO FOI VOCÊ?", "Ignore este e-mail e não clique no botão. Sua senha atual continua válida e ninguém consegue acessar sua conta sem confirmar este link. Se isso se repetir, fale com a gente — pode ser tentativa de invasão.")}
     `,
   });
 }
 export const qaPasswordResetText = (o: { name?: string; resetUrl: string; minutes?: number }) =>
-  `Quero Armas — Redefinir senha\n\nAcesse o link a seguir para redefinir sua senha (válido por ${o.minutes ?? 30} minutos):\n\n${o.resetUrl}\n\nSe não foi você, ignore este e-mail.`;
+  `QUERO ARMAS — RESET DE SENHA\n\nLink (single-use, ${o.minutes ?? 30} min):\n${o.resetUrl}\n\nSe não foi você, ignore. Sua senha atual permanece válida.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 4. CONFIRMAÇÃO DE SENHA ALTERADA
 // ════════════════════════════════════════════════════════════════════
 export function qaPasswordChangedHtml(opts: { email: string; name?: string }) {
   return qaWrap({
-    preheader: "Sua senha foi alterada com sucesso.",
-    title: "Senha alterada",
+    preheader: "Senha rotacionada · credencial anterior invalidada.",
+    opTag: "EVENTO · ROTAÇÃO DE CREDENCIAL",
+    title: "Senha alterada com sucesso.",
+    subtitle: "A credencial anterior foi invalidada e revogada de todas as sessões ativas.",
     body: `
       ${greeting(opts.name)}
-      ${para(`A senha da sua conta <strong>${opts.email}</strong> foi alterada com sucesso.`)}
-      ${notice("success", "Tudo certo", "Sua nova senha já está ativa. Você pode acessar o portal normalmente.")}
-      ${notice("danger", "Não reconhece esta alteração?", "Entre em contato imediatamente conosco para proteger sua conta.")}
+      ${para(`A senha da conta <strong>${opts.email}</strong> foi rotacionada agora. A credencial antiga foi <strong>imediatamente revogada</strong> — qualquer sessão aberta com a senha anterior precisa relogar.`)}
+      ${diagBlock([
+        { k: "Conta", v: opts.email, mono: true },
+        { k: "Evento", v: "PASSWORD_ROTATED", mono: true, tone: "success" },
+        { k: "Timestamp", v: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) + " (BRT)", mono: true },
+      ], SUCCESS)}
+      ${notice("success", "OPERAÇÃO CONCLUÍDA", "Sua nova senha já está ativa. O portal te trata como uma sessão limpa a partir do próximo login.")}
+      ${notice("danger", "NÃO RECONHECE ESTA TROCA?", "Isso é vermelho-alerta: alguém pode ter comprometido seu e-mail. Acesse imediatamente <strong>/recuperar-senha</strong>, force outro reset e fale com a gente. Quanto antes, melhor.")}
     `,
   });
 }
 export const qaPasswordChangedText = (o: { email: string }) =>
-  `Quero Armas — Senha alterada\n\nA senha da conta ${o.email} foi alterada com sucesso.\n\nSe não foi você, entre em contato imediatamente.`;
+  `QUERO ARMAS — SENHA ROTACIONADA\n\nConta: ${o.email}\nEvento: PASSWORD_ROTATED\n\nSe não foi você, force novo reset AGORA e nos avise.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 5. PAGAMENTO PENDENTE (boleto/PIX gerado)
 // ════════════════════════════════════════════════════════════════════
 export function qaPaymentPendingHtml(opts: { name: string; value: string; dueDate: string; billingType: string; invoiceUrl?: string }) {
   return qaWrap({
-    preheader: `Cobrança gerada — ${opts.value} com vencimento em ${opts.dueDate}`,
-    title: "Nova cobrança disponível",
+    preheader: `Cobrança ${opts.value} · vence ${opts.dueDate} · ${opts.billingType}`,
+    opTag: "OPERAÇÃO · COBRANÇA EMITIDA",
+    title: "Nova cobrança disponível.",
+    subtitle: "Liquidação manda no andamento do seu processo. Pague agora para não travar.",
     body: `
       ${greeting(opts.name)}
-      ${para("Uma nova cobrança foi gerada para o seu serviço Quero Armas:")}
-      ${infoCard([
-        ["Valor", `<span style="color:${PRIMARY};">${opts.value}</span>`],
-        ["Vencimento", opts.dueDate],
-        ["Forma", opts.billingType],
+      ${para("Emitimos a cobrança abaixo para o seu serviço. Enquanto não houver liquidação, <strong>os documentos e movimentações relacionados ficam em standby</strong> — é regra de operação.")}
+      ${diagBlock([
+        { k: "Valor", v: opts.value, mono: true, tone: "warn" },
+        { k: "Vencimento", v: opts.dueDate, mono: true },
+        { k: "Forma", v: opts.billingType.toUpperCase(), mono: true },
+        { k: "Status", v: "AGUARDANDO LIQUIDAÇÃO", mono: true, tone: "warn" },
       ])}
-      ${opts.invoiceUrl ? btn(opts.invoiceUrl, "Visualizar cobrança") : ""}
-      ${opts.invoiceUrl ? "" : para(`<em>Acesse o portal para visualizar e quitar sua cobrança.</em>`)}
+      ${opts.invoiceUrl ? btn(opts.invoiceUrl, "Pagar agora") : btn(PORTAL_URL, "Abrir cobrança no Portal")}
       ${hr}
-      ${para("Se já efetuou o pagamento, desconsidere este aviso.")}
+      ${notice("info", "PRAZO E IMPACTO", "PIX cai em segundos. Boleto compensa em até 2 dias úteis. Se você precisa de prazo, gere PIX para destravar a operação imediatamente. Se já pagou, este aviso pode estar em trânsito — o sistema reconcilia sozinho em minutos.")}
     `,
   });
 }
 export const qaPaymentPendingText = (o: { name: string; value: string; dueDate: string; billingType: string; invoiceUrl?: string }) =>
-  `Quero Armas — Nova cobrança\n\nOlá, ${o.name}!\n\nValor: ${o.value}\nVencimento: ${o.dueDate}\nForma: ${o.billingType}\n${o.invoiceUrl ? `\nLink: ${o.invoiceUrl}\n` : ""}`;
+  `QUERO ARMAS — COBRANÇA EMITIDA\n\n${o.name},\n\nVALOR: ${o.value}\nVENCIMENTO: ${o.dueDate}\nFORMA: ${o.billingType.toUpperCase()}\nSTATUS: AGUARDANDO LIQUIDAÇÃO\n${o.invoiceUrl ? `\nPAGAR: ${o.invoiceUrl}\n` : ""}\nEnquanto não liquidar, sua operação fica em standby.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 6. PAGAMENTO VENCIDO
 // ════════════════════════════════════════════════════════════════════
 export function qaPaymentOverdueHtml(opts: { name: string; value: string; dueDate: string; invoiceUrl?: string }) {
   return qaWrap({
-    preheader: `Cobrança vencida — ${opts.value}`,
-    title: "Cobrança vencida",
+    preheader: `INADIMPLÊNCIA · ${opts.value} venceu em ${opts.dueDate}.`,
+    opTag: "ALERTA · INADIMPLÊNCIA DETECTADA",
+    title: "Cobrança vencida — operação em risco.",
+    subtitle: "Sem regularização, processos em andamento são pausados e o acesso pode ser suspenso.",
     body: `
       ${greeting(opts.name)}
-      ${notice("danger", "Atenção: cobrança vencida", "Identificamos que a cobrança abaixo está em atraso. Para evitar a suspensão dos serviços, regularize o pagamento o quanto antes.")}
-      ${infoCard([
-        ["Valor", `<span style="color:${PRIMARY};">${opts.value}</span>`],
-        ["Venceu em", `<span style="color:${PRIMARY};font-weight:700;">${opts.dueDate}</span>`],
-      ], PRIMARY)}
-      ${opts.invoiceUrl ? btn(opts.invoiceUrl, "Regularizar agora", "danger") : ""}
+      ${notice("danger", "INADIMPLÊNCIA ATIVA", "Sua cobrança passou do vencimento. A partir de agora, qualquer movimentação operacional vinculada a este serviço (envio de documentos, geração de peças, sincronização com Polícia Federal) <strong>fica bloqueada</strong> até a liquidação.")}
+      ${diagBlock([
+        { k: "Valor em aberto", v: opts.value, mono: true, tone: "danger" },
+        { k: "Venceu em", v: opts.dueDate, mono: true, tone: "danger" },
+        { k: "Status", v: "OVERDUE · BLOQUEIO PARCIAL", mono: true, tone: "danger" },
+        { k: "Próximo passo", v: "REGULARIZAR IMEDIATAMENTE", mono: true, tone: "warn" },
+      ], DANGER)}
+      ${opts.invoiceUrl ? btn(opts.invoiceUrl, "Regularizar agora", "danger") : btn(PORTAL_URL, "Abrir no Portal", "danger")}
       ${hr}
-      ${para("Se já efetuou o pagamento, desconsidere este aviso.")}
+      ${notice("warn", "PIX RESOLVE NO ATO", "Quitação por PIX é reconciliada em segundos e libera sua operação automaticamente. Se já pagou nas últimas horas, aguarde a compensação — o sistema atualiza sozinho.")}
     `,
   });
 }
 export const qaPaymentOverdueText = (o: { name: string; value: string; dueDate: string; invoiceUrl?: string }) =>
-  `Quero Armas — Cobrança vencida\n\nOlá, ${o.name}!\n\nValor: ${o.value}\nVenceu em: ${o.dueDate}\n${o.invoiceUrl ? `\nRegularize: ${o.invoiceUrl}\n` : ""}`;
+  `QUERO ARMAS — INADIMPLÊNCIA\n\n${o.name},\n\nVALOR: ${o.value}\nVENCIDO EM: ${o.dueDate}\nSTATUS: OVERDUE · BLOQUEIO PARCIAL\n${o.invoiceUrl ? `\nREGULARIZAR: ${o.invoiceUrl}\n` : ""}\nSem liquidação, sua operação fica pausada.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 7. PAGAMENTO CONFIRMADO
 // ════════════════════════════════════════════════════════════════════
 export function qaPaymentConfirmedHtml(opts: { name: string; value: string; paidAt: string; invoiceUrl?: string }) {
   return qaWrap({
-    preheader: `Pagamento de ${opts.value} confirmado.`,
-    title: "Pagamento confirmado",
+    preheader: `Liquidação confirmada · ${opts.value} · operação destravada.`,
+    opTag: "EVENTO · LIQUIDAÇÃO CONFIRMADA",
+    title: "Pagamento confirmado. Operação liberada.",
+    subtitle: "Reconciliação concluída. Bloqueios operacionais relacionados foram automaticamente removidos.",
     body: `
       ${greeting(opts.name)}
-      ${para("Recebemos a confirmação do seu pagamento. Obrigado pela confiança!")}
-      ${infoCard([
-        ["Valor pago", `<span style="color:#16a34a;">${opts.value}</span>`],
-        ["Confirmado em", opts.paidAt],
-      ], "#16a34a")}
-      ${opts.invoiceUrl ? btn(opts.invoiceUrl, "Ver comprovante", "success") : ""}
+      ${para("A liquidação caiu e o sistema reconciliou na hora. Tudo que estava em standby aguardando este pagamento <strong>volta a andar agora mesmo</strong> — documentos podem ser enviados, peças geradas, processos continuam.")}
+      ${diagBlock([
+        { k: "Valor liquidado", v: opts.value, mono: true, tone: "success" },
+        { k: "Confirmado em", v: opts.paidAt, mono: true },
+        { k: "Status", v: "PAID · OPERAÇÃO LIBERADA", mono: true, tone: "success" },
+      ], SUCCESS)}
+      ${opts.invoiceUrl ? btn(opts.invoiceUrl, "Ver comprovante", "success") : btn(PORTAL_URL, "Acessar Portal", "success")}
+      ${hr}
+      ${notice("success", "PRÓXIMO MOVIMENTO", "Acompanhe o avanço do seu processo direto pelo Portal. Notificaremos cada mudança de status — você não precisa ficar checando manualmente.")}
     `,
   });
 }
 export const qaPaymentConfirmedText = (o: { name: string; value: string; paidAt: string }) =>
-  `Quero Armas — Pagamento confirmado\n\nOlá, ${o.name}!\n\nRecebemos seu pagamento de ${o.value} em ${o.paidAt}. Obrigado!`;
+  `QUERO ARMAS — LIQUIDAÇÃO CONFIRMADA\n\n${o.name},\n\nVALOR: ${o.value}\nCONFIRMADO EM: ${o.paidAt}\nSTATUS: PAID · OPERAÇÃO LIBERADA\n\nProcessos em standby foram destravados automaticamente.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 8. ATUALIZAÇÃO DE CASO/PROCESSO
@@ -374,22 +407,32 @@ export const qaPaymentConfirmedText = (o: { name: string; value: string; paidAt:
 export function qaCaseUpdateHtml(opts: { name: string; caseTitle: string; status: string; message?: string; portalUrl?: string }) {
   const url = opts.portalUrl || PORTAL_URL;
   return qaWrap({
-    preheader: `Atualização do caso: ${opts.caseTitle}`,
-    title: "Atualização no seu caso",
+    preheader: `Status atualizado · ${opts.caseTitle} → ${opts.status.toUpperCase()}`,
+    opTag: "EVENTO · ATUALIZAÇÃO DE PROCESSO",
+    title: "Há movimento no seu processo.",
+    subtitle: `Status mudou. Detalhes técnicos abaixo — log completo no Portal.`,
     body: `
       ${greeting(opts.name)}
-      ${para("Há uma nova atualização no seu caso junto à nossa equipe:")}
-      ${infoCard([
-        ["Caso", opts.caseTitle],
-        ["Novo status", `<span style="color:${PRIMARY};text-transform:uppercase;letter-spacing:0.5px;">${opts.status}</span>`],
+      ${para("Sua operação avançou. O time atualizou o status do processo abaixo. <strong>Cada transição é registrada com timestamp e responsável</strong> — você consegue auditar a linha do tempo inteira no Portal.")}
+      ${diagBlock([
+        { k: "Processo", v: opts.caseTitle.toUpperCase() },
+        { k: "Novo status", v: opts.status.toUpperCase(), mono: true, tone: "warn" },
+        { k: "Atualizado em", v: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) + " (BRT)", mono: true },
       ])}
-      ${opts.message ? `<div style="background:${SOFT_BG};border-left:3px solid ${PRIMARY};border-radius:8px;padding:16px 20px;margin:0 0 24px;font-size:14px;color:${INK};line-height:1.7;">${opts.message}</div>` : ""}
-      ${btn(url, "Acessar o portal")}
+      ${opts.message ? `
+        <div style="background:${SOFT_BG};border-left:3px solid ${INK};border-radius:8px;padding:18px 22px;margin:0 0 24px;">
+          <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-weight:700;margin:0 0 8px;">NOTA DO OPERADOR</div>
+          <div style="font-size:14px;color:${INK};line-height:1.7;">${opts.message}</div>
+        </div>
+      ` : ""}
+      ${btn(url, "Abrir processo no Portal")}
+      ${hr}
+      ${notice("info", "VOCÊ SERÁ NOTIFICADO", "A cada novo status, validação ou pendência, este e-mail dispara automaticamente. Não precisa ficar atualizando o portal — o sistema te chama quando algo muda.")}
     `,
   });
 }
 export const qaCaseUpdateText = (o: { name: string; caseTitle: string; status: string; message?: string }) =>
-  `Quero Armas — Atualização de caso\n\nOlá, ${o.name}!\n\nCaso: ${o.caseTitle}\nNovo status: ${o.status}\n${o.message ? `\n${o.message}\n` : ""}`;
+  `QUERO ARMAS — ATUALIZAÇÃO DE PROCESSO\n\n${o.name},\n\nPROCESSO: ${o.caseTitle.toUpperCase()}\nNOVO STATUS: ${o.status.toUpperCase()}\n${o.message ? `\nNOTA: ${o.message}\n` : ""}\nAuditoria completa no Portal.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 9. DOCUMENTO PRONTO
@@ -398,17 +441,25 @@ export function qaDocumentReadyHtml(opts: { name: string; documentName: string; 
   const url = opts.portalUrl || PORTAL_URL;
   return qaWrap({
     preheader: `Documento pronto: ${opts.documentName}`,
-    title: "Seu documento está pronto",
+    opTag: "ENTREGA · DOCUMENTO ASSINADO E DISPONÍVEL",
+    title: "Seu documento está pronto.",
+    subtitle: "Gerado, validado e — quando aplicável — assinado digitalmente com certificado A1 (PAdES, ICP-Brasil).",
     body: `
       ${greeting(opts.name)}
-      ${para(`O documento <strong>${opts.documentName}</strong> foi finalizado e está disponível no seu portal.`)}
-      ${notice("success", "Pronto para download", "Acesse o portal para visualizar, baixar e assinar (quando aplicável) seu documento.")}
-      ${btn(url, "Acessar documento")}
+      ${para(`O artefato <strong>${opts.documentName}</strong> passou por todas as etapas de geração, conferência e assinatura. Está disponível para download <strong>imediato</strong> no seu Portal.`)}
+      ${diagBlock([
+        { k: "Documento", v: opts.documentName.toUpperCase() },
+        { k: "Formato", v: "PDF · ICP-BRASIL · PAdES", mono: true },
+        { k: "Status", v: "READY · DOWNLOAD LIBERADO", mono: true, tone: "success" },
+      ], SUCCESS)}
+      ${btn(url, "Baixar documento", "success")}
+      ${hr}
+      ${notice("info", "VALIDADE JURÍDICA", "Documentos assinados digitalmente com certificado ICP-Brasil têm o mesmo valor legal de assinatura física, conforme MP 2.200-2/2001. Guarde o PDF — ele é a sua via oficial.")}
     `,
   });
 }
 export const qaDocumentReadyText = (o: { name: string; documentName: string }) =>
-  `Quero Armas — Documento pronto\n\nOlá, ${o.name}!\n\nO documento "${o.documentName}" está disponível no seu portal.`;
+  `QUERO ARMAS — DOCUMENTO PRONTO\n\n${o.name},\n\nDOCUMENTO: ${o.documentName.toUpperCase()}\nFORMATO: PDF · ICP-BRASIL · PAdES\nSTATUS: READY\n\nBaixe direto pelo Portal.`;
 
 // ════════════════════════════════════════════════════════════════════
 // 10. NOTIFICAÇÃO GENÉRICA (mensagem livre, mantendo identidade visual)
@@ -416,26 +467,24 @@ export const qaDocumentReadyText = (o: { name: string; documentName: string }) =
 export function qaGenericHtml(opts: { name?: string; subject: string; message: string; ctaUrl?: string; ctaLabel?: string }) {
   return qaWrap({
     preheader: opts.subject,
+    opTag: "COMUNICADO · QUERO ARMAS",
     title: opts.subject,
+    subtitle: "Mensagem oficial da equipe operacional.",
     body: `
       ${greeting(opts.name)}
-      <div style="font-size:15px;color:#334155;line-height:1.7;margin:0 0 24px;">${opts.message}</div>
+      <div style="font-size:14px;color:${STEEL};line-height:1.75;margin:0 0 24px;">${opts.message}</div>
       ${opts.ctaUrl && opts.ctaLabel ? btn(opts.ctaUrl, opts.ctaLabel) : ""}
     `,
   });
 }
 export const qaGenericText = (o: { name?: string; subject: string; message: string; ctaUrl?: string; ctaLabel?: string }) =>
-  `Quero Armas — ${o.subject}\n\nOlá${o.name ? `, ${o.name}` : ""}!\n\n${o.message.replace(/<[^>]+>/g, "")}\n${o.ctaUrl ? `\n${o.ctaLabel || "Acessar"}: ${o.ctaUrl}\n` : ""}`;
+  `QUERO ARMAS — ${o.subject.toUpperCase()}\n\n${o.name ? `${o.name},\n\n` : ""}${o.message.replace(/<[^>]+>/g, "")}\n${o.ctaUrl ? `\n${o.ctaLabel || "ACESSAR"}: ${o.ctaUrl}\n` : ""}`;
 
 // ════════════════════════════════════════════════════════════════════
 // 11. BEM-VINDO AO ARSENAL (conta gratuita pública — pós-cadastro)
-//    Identidade: Arsenal UI (papel + âmbar + header escuro #1E1E1E)
+//    Identidade: Arsenal UI (papel + âmbar + header escuro)
 // ════════════════════════════════════════════════════════════════════
 const ARSENAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente/arsenal";
-const AMBER = "#d97706";
-const AMBER_DARK = "#92400e";
-const PAPER = "#f6f5f1";
-const ARSENAL_INK = "#1E1E1E";
 
 export function qaArsenalWelcomeHtml(opts: {
   name: string;
@@ -447,56 +496,37 @@ export function qaArsenalWelcomeHtml(opts: {
   const firstName = (opts.name || "").trim().split(/\s+/)[0] || "Cliente";
   const servico = (opts.servicoInteresse || "").trim();
 
-  const proximosPassos = `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
-      ${[
-        ["1", "Acesse o Arsenal", "Use seu e-mail e a senha que você acabou de criar para entrar."],
-        ["2", "Cadastre suas armas", "Registre seus armamentos, CRAFs e documentos no seu acervo digital seguro."],
-        ["3", "Acompanhe vencimentos", "O Arsenal monitora prazos de CRAF, porte e psicotécnico — você é avisado antes de vencer."],
-        ["4", servico ? "Avance com seu serviço" : "Solicite serviços quando quiser", servico
-          ? `Quando estiver pronto, contrate <strong>${servico}</strong> direto pelo Arsenal — nossa equipe assume o processo.`
-          : "Concessão, transferência, porte, CR — contrate qualquer serviço pelo próprio Arsenal."],
-      ].map(([n, titulo, desc]) => `
-        <tr>
-          <td width="40" valign="top" style="padding:0 14px 18px 0;">
-            <div style="width:32px;height:32px;border-radius:8px;background:${AMBER};color:#ffffff;font-weight:800;font-size:14px;text-align:center;line-height:32px;font-family:'SF Mono',Menlo,Consolas,monospace;">${n}</div>
-          </td>
-          <td valign="top" style="padding:0 0 18px 0;">
-            <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:${ARSENAL_INK};line-height:1.3;">${titulo}</p>
-            <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">${desc}</p>
-          </td>
-        </tr>
-      `).join("")}
-    </table>`;
-
   return qaWrap({
-    preheader: `Sua conta gratuita no Arsenal está ativa, ${firstName}.`,
-    title: "Bem-vindo ao Arsenal",
+    preheader: `Arsenal Digital ativo · acervo armado para ${firstName}.`,
+    opTag: "ARSENAL · CONTA GRATUITA ATIVADA",
+    title: "Seu Arsenal Digital está armado.",
+    subtitle: "Acervo gratuito vitalício. Armas, CRAFs, vencimentos e processos em um único cofre digital.",
     body: `
-      <!-- Faixa Arsenal (papel + âmbar + mono) -->
-      <div style="background:${PAPER};border:1px solid ${BORDER};border-left:3px solid ${AMBER};border-radius:12px;padding:18px 22px;margin:0 0 24px;">
-        <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${AMBER_DARK};font-weight:700;">ARSENAL · CONTA GRATUITA</div>
-        <p style="margin:6px 0 0;font-size:15px;color:${ARSENAL_INK};line-height:1.5;">Acesso liberado para <strong>${opts.email}</strong></p>
-      </div>
-
       ${greeting(firstName)}
-      ${para("Seu cadastro foi concluído. O <strong>Arsenal</strong> é o seu acervo digital — armas, documentos, vencimentos e processos, tudo em um único lugar, gratuito para sempre.")}
-
+      ${para("O <strong>Arsenal</strong> é o cofre digital da sua coleção: cadastra armas, sobe CRAFs, monitora vencimentos de porte e psicotécnico, e dispara alerta antes de qualquer documento expirar. Operação 100% sua, criptografada, sem pegadinha.")}
+      ${diagBlock([
+        { k: "Identificador", v: opts.email, mono: true },
+        { k: "Plano", v: "GRATUITO · VITALÍCIO", mono: true, tone: "success" },
+        { k: "Capacidade", v: "ARMAS, CRAFs, GTEs, DOCUMENTOS", mono: true },
+        { k: "Endpoint", v: "/area-do-cliente/arsenal", mono: true },
+      ], AMBER)}
       ${btn(url, "Entrar no Arsenal")}
-
       ${hr}
-
-      <p style="margin:0 0 16px;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${MUTED};">Próximos passos</p>
-      ${proximosPassos}
-
-      ${servico ? notice("info", "Seu serviço de interesse", `Você indicou interesse em <strong>${servico}</strong>. Nossa equipe entrará em contato em até 1 dia útil para orientar o próximo passo. Você também pode iniciar a contratação direto pelo Arsenal a qualquer momento.`) : ""}
-
-      ${notice("warn", "Guarde seu acesso", `Use sempre o e-mail <strong>${opts.email}</strong> e a senha que você definiu. Em caso de esquecimento, use a opção “Esqueci minha senha” na tela de login.`)}
+      <p style="margin:0 0 16px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:${AMBER_DARK};">PROTOCOLO DE INSTALAÇÃO</p>
+      ${steps([
+        { titulo: "Faça o primeiro login", desc: `Use ${opts.email} e a senha que você acabou de definir. O sistema reconhece o dispositivo e libera a sessão.` },
+        { titulo: "Arme seu acervo", desc: "Cadastre cada arma com marca, modelo, número, calibre e CRAF. O Arsenal reconhece automaticamente da nossa base de catálogo." },
+        { titulo: "Suba seus documentos", desc: "CRAF, GTE, porte, psicotécnico, exames. O Arsenal indexa, valida visualmente e alerta antes do vencimento." },
+        { titulo: servico ? `Avance com ${servico}` : "Contrate serviços quando quiser", desc: servico ? `Você indicou interesse em <strong>${servico}</strong>. Nosso time entra em contato em até 1 dia útil. Pode também iniciar pelo Arsenal a qualquer momento.` : "Concessão, transferência, porte, CR — qualquer movimento da sua vida CAC, contratável direto pelo Arsenal." },
+      ])}
+      ${servico ? notice("info", "SERVIÇO DE INTERESSE REGISTRADO", `Marcamos <strong>${servico}</strong> no seu perfil. Em até 1 dia útil você recebe contato para o próximo passo. Sem pressão — anda no seu tempo.`) : ""}
+      ${notice("warn", "GUARDE SUAS CREDENCIAIS", `Acesso fixo: <strong>${opts.email}</strong> + senha pessoal. Esqueceu? Use “Esqueci minha senha” no login. Não criamos contas paralelas — o Arsenal é único por e-mail.`)}
+      ${notice("danger", "REGRA DE SEGURANÇA", "Não compartilhe a senha. O Arsenal contém dados sensíveis (números de série, fotos de armamento, documentos pessoais). Trate como acesso ao seu cofre.")}
     `,
   });
 }
 
 export const qaArsenalWelcomeText = (o: { name: string; email: string; servicoInteresse?: string | null; arsenalUrl?: string }) => {
   const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
-  return `Quero Armas — Bem-vindo ao Arsenal\n\nOlá, ${firstName}!\n\nSua conta gratuita no Arsenal foi criada com sucesso.\nE-mail de acesso: ${o.email}\n\nAcesse: ${o.arsenalUrl || ARSENAL_URL}\n\nPróximos passos:\n1. Acesse o Arsenal com seu e-mail e senha\n2. Cadastre suas armas, CRAFs e documentos\n3. Acompanhe vencimentos automaticamente\n4. ${o.servicoInteresse ? `Avance com ${o.servicoInteresse} quando estiver pronto` : "Solicite serviços quando precisar"}\n\nEm caso de esquecimento, use \"Esqueci minha senha\" na tela de login.`;
+  return `QUERO ARMAS — ARSENAL DIGITAL ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nPLANO: GRATUITO · VITALÍCIO\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
 };
