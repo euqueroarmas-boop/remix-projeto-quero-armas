@@ -8,18 +8,15 @@
 //  - NUNCA aprova por presunção.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-// pdfjs-dist (legacy build) roda em Deno: usado para extrair texto nativo
-// de PDFs antes de mandar para a IA. Não convertemos PDF em imagem aqui
-// (Deno edge não tem binário Poppler/Ghostscript). Quando o PDF é nativo
-// com camada de texto (caso típico de Receita Federal), a IA recebe o
-// texto extraído e processa normalmente. Quando o PDF é só imagem
-// escaneada (sem texto), o fallback é encaminhar para revisão humana —
-// nunca rejeitar como "campo faltando".
-// pdfjs-dist em Deno: usar a build "legacy" e desabilitar deps de canvas
-// via query string `?no-check&deps=false`. Sem isso, esm.sh tenta puxar
-// `canvas.node` (binário Node) e a função quebra no deploy.
-// @ts-ignore esm.sh fornece tipos minimos
-import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs?target=denonext&no-check";
+// `unpdf` é uma porta de pdfjs-dist sem dependências de canvas/Node,
+// pensada para edge runtimes (Deno/Workers/Bun). Usamos só `extractText`
+// para ler a camada de texto nativa de PDFs (Receita Federal, Detran,
+// cartórios). Não convertemos PDF em imagem nesta função: o runtime do
+// Supabase Edge não tem Poppler/Ghostscript. Quando o PDF é só imagem
+// escaneada (sem texto), o fallback abaixo encaminha para revisão
+// humana — nunca rejeita como "campo faltando".
+// @ts-ignore esm.sh fornece tipos mínimos
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -167,30 +164,12 @@ async function extractPdfText(supabase: any, path: string): Promise<string> {
     const { data, error } = await supabase.storage.from("qa-processo-docs").download(path);
     if (error || !data) return "";
     const arr = new Uint8Array(await data.arrayBuffer());
-    // pdfjs-dist em Deno: desligar worker
-    // @ts-ignore
-    const loadingTask = (pdfjsLib as any).getDocument({
-      data: arr,
-      disableWorker: true,
-      isEvalSupported: false,
-      useSystemFonts: false,
-    });
-    const pdf = await loadingTask.promise;
-    const maxPages = Math.min(pdf.numPages || 0, 10);
-    const partes: string[] = [];
-    for (let i = 1; i <= maxPages; i++) {
-      try {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const linha = (content.items || [])
-          .map((it: any) => (typeof it?.str === "string" ? it.str : ""))
-          .join(" ");
-        if (linha.trim()) partes.push(linha);
-      } catch (_) { /* segue */ }
-    }
-    return partes.join("\n").trim();
+    const pdf = await getDocumentProxy(arr);
+    const { text } = await extractText(pdf, { mergePages: true });
+    const out = Array.isArray(text) ? text.join("\n") : String(text ?? "");
+    return out.trim();
   } catch (e) {
-    console.warn("[validar-ia] pdfjs falhou:", e);
+    console.warn("[validar-ia] unpdf falhou:", e);
     return "";
   }
 }
