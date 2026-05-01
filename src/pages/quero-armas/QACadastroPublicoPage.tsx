@@ -615,7 +615,7 @@ export default function QACadastroPublicoPage() {
                 </span>
               )}
               <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-500 shrink-0">
-                ETAPA {step + 1}/5
+                ETAPA {step + 1}/6
               </span>
             </div>
 
@@ -629,14 +629,16 @@ export default function QACadastroPublicoPage() {
                   {step === 1 && "SEUS DOCUMENTOS"}
                   {step === 2 && "LENDO INFORMAÇÕES"}
                   {step === 3 && "CONFIRME OS DADOS"}
-                  {step === 4 && "TUDO PRONTO"}
+                  {step === 4 && "ACESSO AO ARSENAL"}
+                  {step === 5 && "TUDO PRONTO"}
                 </h1>
                 <p className="mt-1 text-[11.5px] leading-snug text-zinc-500 break-words">
                   {step === 0 && "Conte rapidamente o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
                   {step === 3 && "Revise antes de enviar"}
-                  {step === 4 && "Recebemos seu cadastro com sucesso"}
+                  {step === 4 && "Crie sua senha do app Arsenal"}
+                  {step === 5 && "Recebemos seu cadastro com sucesso"}
                 </p>
               </div>
             </div>
