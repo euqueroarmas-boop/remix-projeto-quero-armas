@@ -303,12 +303,15 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
 
       const controller = new AbortController();
       const timer = window.setTimeout(() => controller.abort(), 15000);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ storage_path: storagePath, user_id: userId || null }),
         signal: controller.signal,
@@ -488,12 +491,15 @@ export default function ClientePecaAuxiliaryDocs({ onChange, userId, caseId }: P
 
         const retryController = new AbortController();
         const retryTimer = window.setTimeout(() => retryController.abort(), 15000);
+        const { data: retrySession } = await supabase.auth.getSession();
+        const retryToken = retrySession?.session?.access_token;
+        if (!retryToken) throw new Error("Sessão expirada. Faça login novamente.");
         const retryResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${retryToken}`,
           },
           body: JSON.stringify({ storage_path: item.storagePath, user_id: userId || null }),
           signal: retryController.signal,

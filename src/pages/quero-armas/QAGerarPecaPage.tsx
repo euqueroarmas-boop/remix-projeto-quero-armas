@@ -733,12 +733,15 @@ export default function QAGerarPecaPage() {
       // Direct fetch with timeout for reliable mobile execution
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 15000);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "Authorization": `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ storage_path: storagePath, user_id: user?.id || null }),
         signal: controller.signal,
@@ -865,12 +868,15 @@ export default function QAGerarPecaPage() {
         // Direct fetch for retry (same as dispatchDocumentIngestion)
         const retryController = new AbortController();
         const retryTimer = setTimeout(() => retryController.abort(), 15000);
+        const { data: retrySession } = await supabase.auth.getSession();
+        const retryToken = retrySession?.session?.access_token;
+        if (!retryToken) throw new Error("Sessão expirada. Faça login novamente.");
         const retryRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Authorization": `Bearer ${retryToken}`,
           },
           body: JSON.stringify({ storage_path: arq.storagePath, user_id: user?.id || null }),
           signal: retryController.signal,
