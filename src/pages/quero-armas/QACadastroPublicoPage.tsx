@@ -1786,7 +1786,7 @@ function Step4Done({ firstName }: { firstName: string }) {
       "hsl(220 80% 60%)", // azul
       "hsl(280 70% 60%)", // roxo
     ];
-    return Array.from({ length: 28 }).map((_, i) => ({
+    return Array.from({ length: 42 }).map((_, i) => ({
       id: i,
       left: Math.random() * 100,
       cx: (Math.random() - 0.5) * 80, // deriva horizontal em px
@@ -1795,6 +1795,20 @@ function Step4Done({ firstName }: { firstName: string }) {
       color: palette[i % palette.length],
       size: 4 + Math.round(Math.random() * 4),
       shape: i % 3, // 0 quadrado, 1 círculo, 2 retângulo (fita)
+    }));
+  }, []);
+
+  // Purpurina cintilante (pontinhos brilhantes espalhados)
+  const glitter = React.useMemo(() => {
+    const palette = ["#fde68a", "#fbbf24", "#fef3c7", "#fff", "#fcd34d", "#f9a8d4"];
+    return Array.from({ length: 24 }).map((_, i) => ({
+      id: i,
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      delay: Math.random() * 1.4,
+      duration: 1 + Math.random() * 1.4,
+      size: 2 + Math.round(Math.random() * 3),
+      color: palette[i % palette.length],
     }));
   }, []);
 
@@ -1825,9 +1839,45 @@ function Step4Done({ firstName }: { firstName: string }) {
             }}
           />
         ))}
+        {/* Purpurina cintilante */}
+        {glitter.map((g) => (
+          <span
+            key={`g-${g.id}`}
+            className="absolute rounded-full animate-glitter"
+            style={{
+              top: `${g.top}%`,
+              left: `${g.left}%`,
+              width: g.size,
+              height: g.size,
+              background: g.color,
+              boxShadow: `0 0 ${g.size * 2}px ${g.color}`,
+              animationDelay: `${g.delay}s`,
+              animationDuration: `${g.duration}s`,
+            }}
+          />
+        ))}
       </div>
       <div className="relative mt-2 min-w-0">
       <div className="relative w-20 h-20 mx-auto mb-4">
+        {/* raios de luz girando atrás */}
+        <div className="absolute inset-0 -m-4 animate-rays-spin pointer-events-none" aria-hidden>
+          <svg viewBox="0 0 100 100" className="w-full h-full opacity-50">
+            <defs>
+              <radialGradient id="rayGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="hsl(45 95% 65%)" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="hsl(45 95% 65%)" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <polygon
+                key={i}
+                points="50,50 48,0 52,0"
+                fill="url(#rayGrad)"
+                transform={`rotate(${i * 30} 50 50)`}
+              />
+            ))}
+          </svg>
+        </div>
         {/* anéis de pulso */}
         <span
           className="absolute inset-0 m-auto w-14 h-14 rounded-lg border-2 border-emerald-500/60 animate-ring-pulse"
@@ -1846,6 +1896,37 @@ function Step4Done({ firstName }: { firstName: string }) {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-14 h-14 rounded-lg flex items-center justify-center border border-emerald-500/50 bg-emerald-500/10 animate-party-pop shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)]">
             <CheckCircle2 className="w-7 h-7 text-emerald-700 animate-party-bounce" strokeWidth={2.4} />
+            {/* Chapéu de aniversário */}
+            <div
+              className="absolute -top-6 left-1/2 -translate-x-1/2 animate-hat-wiggle"
+              style={{ transformOrigin: "50% 100%" }}
+              aria-hidden
+            >
+              <svg width="34" height="40" viewBox="0 0 34 40" className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]">
+                <defs>
+                  <linearGradient id="hatGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="hsl(348 85% 62%)" />
+                    <stop offset="50%" stopColor="hsl(280 75% 60%)" />
+                    <stop offset="100%" stopColor="hsl(220 80% 58%)" />
+                  </linearGradient>
+                </defs>
+                {/* cone do chapéu */}
+                <polygon points="17,2 4,32 30,32" fill="url(#hatGrad)" stroke="hsl(220 25% 18%)" strokeWidth="0.8" strokeLinejoin="round" />
+                {/* listras decorativas */}
+                <polygon points="17,2 13,11 21,11" fill="hsl(45 95% 60%)" opacity="0.95" />
+                <polygon points="13,11 9,22 25,22 21,11" fill="hsl(152 65% 50%)" opacity="0.55" />
+                {/* bolinhas (pompons coloridos) */}
+                <circle cx="10" cy="28" r="1.6" fill="hsl(45 95% 60%)" />
+                <circle cx="22" cy="20" r="1.4" fill="hsl(348 85% 65%)" />
+                <circle cx="14" cy="18" r="1.2" fill="#fff" opacity="0.9" />
+                {/* base/aba */}
+                <ellipse cx="17" cy="33" rx="14" ry="2.2" fill="hsl(220 25% 18%)" opacity="0.85" />
+                {/* pompom no topo */}
+                <circle cx="17" cy="2.5" r="3" fill="hsl(45 95% 60%)" stroke="hsl(35 90% 40%)" strokeWidth="0.5" className="animate-pom-bounce" style={{ transformOrigin: "17px 2.5px" }} />
+                {/* brilho no pompom */}
+                <circle cx="15.8" cy="1.4" r="0.8" fill="#fff" opacity="0.9" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
