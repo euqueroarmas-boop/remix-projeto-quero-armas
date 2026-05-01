@@ -405,42 +405,50 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
   const getDefaultItemStatus = () => (f.status === "NÃO PAGOU" ? "NÃO PAGOU" : "PAGO");
 
   useEffect(() => {
-    // REGRA GLOBAL: o preço exibido/aplicado em "Editar Venda" SEMPRE reflete
-    // o catálogo (qa_servicos_catalogo). qa_servicos.valor_servico é legado e
-    // pode estar desatualizado; sobrescrevemos pelo preço do catálogo
-    // (link por servico_id quando houver, senão por nome normalizado).
+    // REGRA GLOBAL: a lista e os preços de serviços vêm SEMPRE do catálogo
+    // (qa_servicos_catalogo). Um trigger no banco garante que cada item ativo
+    // do catálogo está vinculado a uma linha em qa_servicos com nome/preço
+    // sincronizados. Aqui listamos apenas o catálogo ativo.
+    //
+    // Compatibilidade: se a venda em edição contém serviços que NÃO estão no
+    // catálogo ativo (vendas históricas), eles são adicionados ao final para
+    // não sumirem da tela — mas com seu preço original.
     (async () => {
-      const [{ data: legacy }, { data: catalogo }] = await Promise.all([
-        supabase.from("qa_servicos" as any).select("*").order("nome_servico"),
-        supabase
-          .from("qa_servicos_catalogo" as any)
-          .select("nome, preco, servico_id, ativo")
-          .eq("ativo", true),
-      ]);
-      const norm = (s: string) =>
-        String(s || "")
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .toLowerCase()
-          .replace(/\s+/g, " ")
-          .trim();
-      const byId = new Map<number, number>();
-      const byName = new Map<string, number>();
-      ((catalogo as any[]) ?? []).forEach((c) => {
-        const preco = c.preco != null ? Number(c.preco) : NaN;
-        if (!Number.isFinite(preco)) return;
-        if (c.servico_id != null) byId.set(Number(c.servico_id), preco);
-        if (c.nome) byName.set(norm(c.nome), preco);
-      });
-      const merged = ((legacy as any[]) ?? []).map((s) => {
-        const fromId = byId.get(Number(s.id));
-        const fromName = byName.get(norm(s.nome_servico));
-        const precoCatalogo = fromId ?? fromName;
-        return precoCatalogo != null
-          ? { ...s, valor_servico: precoCatalogo }
-          : s;
-      });
-      setServicos(merged);
+      const { data: catalogo } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .select("servico_id, nome, preco, display_order")
+        .eq("ativo", true)
+        .not("servico_id", "is", null)
+        .order("categoria", { ascending: true })
+        .order("display_order", { ascending: true });
+
+      const lista = ((catalogo as any[]) ?? []).map((c) => ({
+        id: Number(c.servico_id),
+        nome_servico: c.nome,
+        valor_servico: c.preco != null ? Number(c.preco) : 0,
+      }));
+
+      // Garante que serviços já vendidos (fora do catálogo ativo) continuem
+      // visíveis no modal de edição.
+      const idsCatalogo = new Set(lista.map((s) => s.id));
+      const idsVenda: number[] = venda
+        ? Array.from(selectedServicos.keys()).filter((id) => !idsCatalogo.has(id))
+        : [];
+      if (idsVenda.length > 0) {
+        const { data: extras } = await supabase
+          .from("qa_servicos" as any)
+          .select("id, nome_servico, valor_servico")
+          .in("id", idsVenda);
+        ((extras as any[]) ?? []).forEach((e) => {
+          lista.push({
+            id: Number(e.id),
+            nome_servico: `${e.nome_servico} (legado)`,
+            valor_servico: Number(e.valor_servico) || 0,
+          });
+        });
+      }
+
+      setServicos(lista);
     })();
   }, [open]);
 
