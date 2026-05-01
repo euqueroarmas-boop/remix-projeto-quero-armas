@@ -31,11 +31,14 @@ export default function ClienteSelfieAvatar({
   const clienteId = Number(cliente?.id) || null;
   const cadastroPublicoId: string | null = cliente?.cadastro_publico_id || null;
   const imagemManual: string | null = cliente?.imagem || null;
+  // Override opcional: quando a tela já carrega o selfie_path em batch (lista de clientes),
+  // evita uma query por linha.
+  const selfiePathInline: string | null = cliente?.selfie_path || null;
 
-  // 1) Busca o selfie_path no cadastro público quando NÃO há foto manual
+  // 1) Busca o selfie_path no cadastro público quando NÃO há foto manual nem inline
   const { data: selfiePath } = useQuery<string | null>({
     queryKey: ["cliente-selfie-path", clienteId, cadastroPublicoId],
-    enabled: !imagemManual && Boolean(clienteId || cadastroPublicoId),
+    enabled: !imagemManual && !selfiePathInline && Boolean(clienteId || cadastroPublicoId),
     staleTime: 60_000,
     queryFn: async () => {
       if (cadastroPublicoId) {
@@ -64,7 +67,7 @@ export default function ClienteSelfieAvatar({
 
   // 2) Gera signed URL para o path correto, usando o bucket adequado.
   //    Tenta primeiro o bucket esperado e, em caso de falha, faz fallback p/ o outro.
-  const path = imagemManual || selfiePath || null;
+  const resolvedPath = imagemManual || selfiePathInline || selfiePath || null;
   const primaryBucket = imagemManual ? BUCKET_MANUAL : BUCKET_SELFIE;
   const fallbackBucket = imagemManual ? BUCKET_SELFIE : BUCKET_MANUAL;
   const [url, setUrl] = useState<string | null>(null);
@@ -72,9 +75,9 @@ export default function ClienteSelfieAvatar({
   useEffect(() => {
     let abort = false;
     setUrl(null);
-    if (!path) return;
-    if (/^https?:\/\//i.test(path)) {
-      setUrl(path);
+    if (!resolvedPath) return;
+    if (/^https?:\/\//i.test(resolvedPath)) {
+      setUrl(resolvedPath);
       return;
     }
     (async () => {
@@ -82,7 +85,7 @@ export default function ClienteSelfieAvatar({
         try {
           const { data } = await supabase.storage
             .from(bucket)
-            .createSignedUrl(path, 3600);
+            .createSignedUrl(resolvedPath, 3600);
           return data?.signedUrl || null;
         } catch {
           return null;
@@ -95,7 +98,7 @@ export default function ClienteSelfieAvatar({
     return () => {
       abort = true;
     };
-  }, [path, primaryBucket, fallbackBucket]);
+  }, [resolvedPath, primaryBucket, fallbackBucket]);
 
   const iniciais = (cliente?.nome_completo || "?")
     .split(/\s+/)
