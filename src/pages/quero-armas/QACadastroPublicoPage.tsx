@@ -560,54 +560,49 @@ export default function QACadastroPublicoPage() {
         <div className="mb-4 flex justify-start">
           <BackButton fallback="/" />
         </div>
-        <div className="bg-white rounded-[20px] shadow-[0_10px_40px_-12px_rgba(15,23,42,0.12),0_2px_8px_-2px_rgba(15,23,42,0.04)] border border-slate-200/70 overflow-hidden">
-          {/* Cabeçalho — composição refinada com logo integrada */}
-          <div className="px-6 pt-6 pb-5 relative">
-            {/* hairline tático sutil no topo */}
-            <div
-              className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, transparent 0%, hsl(215 50% 25%) 30%, hsl(86 23% 30%) 70%, transparent 100%)",
-                opacity: 0.55,
-              }}
-            />
-            <div className="flex items-center gap-3.5">
+        <div
+          className="relative bg-white rounded-2xl border border-slate-200/80 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.10),0_2px_8px_-2px_rgba(15,23,42,0.04)] overflow-hidden"
+          style={{ boxShadow: `inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 10px 40px -12px rgba(15,23,42,0.10), 0 2px 8px -2px rgba(15,23,42,0.04)` }}
+        >
+          {/* Glow ambiente — assinatura KpiCard premium light */}
+          <div
+            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-25 blur-3xl"
+            style={{ background: "hsl(190 80% 45%)" }}
+          />
+          {/* Cabeçalho no estilo KpiCard do Arsenal */}
+          <div className="relative px-6 pt-6 pb-5">
+            <div className="flex items-start justify-between gap-2 mb-3">
               <div
-                className="shrink-0 rounded-xl p-1.5 flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, hsl(215 40% 12%) 0%, hsl(215 38% 18%) 100%)",
-                  boxShadow:
-                    "0 4px 12px hsl(215 50% 15% / 0.18), inset 0 1px 0 hsl(50 60% 88% / 0.08)",
-                }}
+                className="flex h-11 w-11 items-center justify-center rounded-xl"
+                style={{ background: "hsl(190 80% 45% / 0.14)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}
               >
-                <QALogo className="h-11 w-11 rounded-lg" />
+                <QALogo className="h-8 w-8 rounded-lg" />
               </div>
-              <div className="min-w-0 flex-1">
-                <span
-                  className="text-[9px] font-semibold uppercase tracking-[0.18em] block mb-0.5"
-                  style={{ color: "hsl(215 35% 45%)" }}
-                >
-                  Quero Armas · Cadastro
-                </span>
-                <h1
-                  className="text-[20px] font-bold leading-tight tracking-tight"
-                  style={{ color: "hsl(215 35% 14%)" }}
-                >
+              <div
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                style={{ background: "hsl(190 80% 45% / 0.10)", color: "hsl(190 80% 32%)" }}
+              >
+                Cadastro · Quero Armas
+              </div>
+            </div>
+            <div className="min-w-0">
+              <h1
+                className="text-[20px] font-bold leading-tight tracking-tight font-mono"
+                style={{ color: "hsl(215 35% 14%)" }}
+              >
                   {step === 0 && "Vamos começar"}
                   {step === 1 && "Seus documentos"}
                   {step === 2 && "Lendo informações"}
                   {step === 3 && "Confirme os dados"}
                   {step === 4 && "Tudo pronto"}
                 </h1>
-                <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: "hsl(220 10% 52%)" }}>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "hsl(220 12% 48%)" }}>
                   {step === 0 && "Conte rapidamente o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
                   {step === 3 && "Revise antes de enviar"}
                   {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
-              </div>
             </div>
             <Stepper current={step} />
           </div>
@@ -895,47 +890,43 @@ function DuplicateModal({
 
 function Stepper({ current }: { current: StepId }) {
   return (
-    <div className="mt-6 px-1">
+    <div className="mt-5 px-1">
       <div className="flex items-start">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
           const nextReached = current > s.id;
           const isLast = i === STEPS.length - 1;
+          const cyan = "hsl(190 80% 45%)";
+          const ok = "hsl(152 60% 42%)";
           return (
             <Fragment key={s.id}>
               <div className="flex flex-col items-center shrink-0" style={{ width: 52 }}>
                 <div
-                  className="rounded-full flex items-center justify-center text-[11px] font-bold transition-all"
+                  className="rounded-xl flex items-center justify-center text-[11px] font-bold font-mono transition-all"
                   style={{
                     width: active ? 28 : 24,
                     height: active ? 28 : 24,
-                    background: done
-                      ? "hsl(152 50% 38%)"
-                      : active
-                        ? "linear-gradient(135deg, hsl(215 52% 25%) 0%, hsl(215 50% 32%) 100%)"
-                        : "hsl(220 14% 95%)",
-                    color: done || active ? "white" : "hsl(220 10% 60%)",
+                    background: done ? `${ok}14` : active ? `${cyan}14` : "white",
+                    color: done ? ok : active ? cyan : "hsl(220 10% 55%)",
                     boxShadow: active
-                      ? "0 0 0 4px hsl(215 50% 25% / 0.10), 0 2px 6px hsl(215 50% 25% / 0.22)"
+                      ? `inset 0 0 0 1.5px ${cyan}, 0 0 0 4px ${cyan}10`
                       : done
-                        ? "0 1px 3px hsl(152 50% 30% / 0.20)"
+                        ? `inset 0 0 0 1.5px ${ok}`
                         : "inset 0 0 0 1px hsl(220 14% 88%)",
-                    border: !done && !active ? "1px solid hsl(220 14% 90%)" : "none",
                   }}
                 >
                   {done ? <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} /> : i + 1}
                 </div>
                 <span
-                  className="mt-2 text-[10px] text-center leading-tight transition-colors"
+                  className="mt-2 text-[8.5px] text-center leading-tight uppercase tracking-[0.18em] transition-colors"
                   style={{
                     color: active
-                      ? "hsl(215 35% 18%)"
+                      ? "hsl(190 80% 28%)"
                       : done
-                        ? "hsl(220 15% 35%)"
+                        ? "hsl(152 60% 32%)"
                         : "hsl(220 10% 60%)",
                     fontWeight: active ? 700 : 500,
-                    letterSpacing: active ? "0.01em" : "0",
                   }}
                 >
                   {s.label}
@@ -946,10 +937,8 @@ function Stepper({ current }: { current: StepId }) {
                   className="flex-1 h-px rounded-full self-start"
                   style={{
                     marginTop: active ? 14 : 12,
-                    background: nextReached
-                      ? "hsl(152 50% 38%)"
-                      : "hsl(220 14% 88%)",
-                    opacity: nextReached ? 0.6 : 1,
+                    background: nextReached ? ok : "hsl(220 14% 88%)",
+                    opacity: nextReached ? 0.55 : 1,
                   }}
                 />
               )}
@@ -974,24 +963,39 @@ function Step1Documents({
         </button>
       )}
 
-      {/* Bloco de boas-vindas — premium, tático e sutil */}
+      {/* Slots — KpiCard-like premium light */}
       {SLOTS.map(slot => {
         const Icon = slot.icon;
         const sent = !!files[slot.key];
+        const color = sent ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
         return (
           <button
             key={slot.key}
             type="button"
             onClick={() => fileRefs[slot.key].current?.click()}
-            className="w-full text-left rounded-2xl border border-slate-200 bg-white px-3.5 py-3 transition-all hover:border-slate-300 shadow-[0_3px_12px_rgba(15,23,42,0.06)]"
+            className="group relative w-full text-left overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-5 h-5 rounded-md border border-slate-200 flex items-center justify-center" style={{ background: "hsl(220 20% 97%)" }}>
-                <Icon className="w-3.5 h-3.5" style={{ color: "hsl(220 25% 25%)" }} />
+            <div
+              className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
+              style={{ background: color }}
+            />
+            <div className="relative flex items-start justify-between gap-2 mb-3">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl"
+                style={{ background: `${color}14`, color }}
+              >
+                <Icon className="w-4 h-4" />
               </div>
-              <span className="text-[15px] font-semibold leading-none" style={{ color: "hsl(220 25% 15%)" }}>
-                {slot.label}
-              </span>
+              <div
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
+                style={{ background: `${color}10`, color }}
+              >
+                {sent ? "Enviado" : "Pendente"} <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 mb-2">
+              {slot.label}
             </div>
             <div className="flex items-center gap-3">
               {sent ? (
@@ -1059,10 +1063,10 @@ function Step1Documents({
       <button
         onClick={onContinue}
         disabled={!allUploaded}
-        className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "linear-gradient(135deg, hsl(219 90% 56%), hsl(225 88% 54%))", boxShadow: "0 6px 18px hsl(222 89% 55% / 0.28)" }}
+        className="w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 6px 18px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
       >
-        Extrair dados
+        Extrair dados <ChevronRight className="h-3.5 w-3.5" />
       </button>
 
       <button
@@ -1080,52 +1084,67 @@ function Step1Documents({
 function Step2Extracting({ stages, error }: { stages: Record<string, string>; error: string | null }) {
   return (
     <div className="py-3">
-      <div className="rounded-[22px] border border-slate-200 bg-white px-4 py-5 shadow-[0_3px_12px_rgba(15,23,42,0.06)]">
-        <div className="mx-auto w-32 h-32 rounded-full flex items-center justify-center mb-5"
-          style={{ background: "hsl(220 95% 96%)" }}>
+      <div
+        className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-5 shadow-sm"
+        style={{ boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.10)" }}
+      >
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-30 blur-3xl"
+          style={{ background: "hsl(190 80% 45%)" }}
+        />
+        <div className="relative mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
+          style={{ background: "hsl(190 80% 45% / 0.14)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.25)" }}>
           <div className="relative">
-            <FileText className="w-16 h-16" strokeWidth={1.6} style={{ color: "hsl(217 82% 58%)" }} />
-            <Search className="w-7 h-7 absolute -bottom-1 -right-1" strokeWidth={2} style={{ color: "hsl(217 82% 58%)" }} />
-            <Sparkles className="w-4 h-4 absolute -top-1 right-1 animate-pulse" style={{ color: "hsl(217 82% 68%)" }} />
+            <FileText className="w-10 h-10" strokeWidth={1.6} style={{ color: "hsl(190 80% 32%)" }} />
+            <Search className="w-4 h-4 absolute -bottom-0.5 -right-0.5" strokeWidth={2.2} style={{ color: "hsl(190 80% 32%)" }} />
+            <Sparkles className="w-3 h-3 absolute -top-0.5 right-0.5 animate-pulse" style={{ color: "hsl(190 80% 50%)" }} />
           </div>
         </div>
-        <h2 className="text-center text-[17px] leading-tight font-bold mb-3" style={{ color: "hsl(220 25% 15%)" }}>
-          Extraindo dados dos<br />documentos...
+        <div className="text-center text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(190 80% 32%)" }}>
+          Processando · IA
+        </div>
+        <h2 className="text-center text-[17px] leading-tight font-bold font-mono mb-3" style={{ color: "hsl(220 25% 15%)" }}>
+          Extraindo dados dos<br />documentos…
         </h2>
 
         <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-2" style={{ background: "hsl(220 20% 92%)" }}>
           <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
-            style={{ background: "hsl(217 82% 58%)", width: "66%" }} />
+            style={{ background: "hsl(190 80% 45%)", width: "66%" }} />
         </div>
-        <p className="text-center text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento...</p>
+        <p className="text-center text-[10px] uppercase tracking-[0.18em] font-bold mb-4" style={{ color: "hsl(220 10% 55%)" }}>Aguarde um momento</p>
 
         <div className="border-t border-slate-100 pt-3 space-y-2">
         {SLOTS.map(s => {
           const Icon = s.icon;
           const st = stages[s.key];
-          const chipStyle = s.key === "selfie"
-            ? { background: "hsl(217 95% 96%)", color: "hsl(217 82% 58%)" }
-            : { background: "hsl(152 65% 95%)", color: "hsl(152 55% 42%)" };
+          const chipColor = st === "ok" ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
+          const chipStyle = { background: `${chipColor}14`, color: chipColor, boxShadow: `inset 0 0 0 1px ${chipColor}25` };
           return (
             <div key={s.key} className="flex items-center justify-between py-1">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={chipStyle}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={chipStyle}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-sm font-medium truncate" style={{ color: "hsl(220 25% 20%)" }}>{s.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] truncate" style={{ color: "hsl(220 25% 25%)" }}>{s.label}</span>
               </div>
               {st === "ok" && (
-                <span className="w-5 h-5 rounded-full flex items-center justify-center"
-                  style={{ background: "hsl(152 65% 45%)" }}>
-                  <CheckCircle2 className="w-4 h-4 text-white" />
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{ background: "hsl(152 60% 42% / 0.10)", color: "hsl(152 60% 32%)" }}>
+                  <CheckCircle2 className="w-3 h-3" /> OK
                 </span>
               )}
               {st === "processing" && (
-                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "hsl(222 89% 55%)" }}>
-                  <Loader2 className="w-4 h-4 animate-spin" /> processando
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{ background: "hsl(190 80% 45% / 0.10)", color: "hsl(190 80% 32%)" }}>
+                  <Loader2 className="w-3 h-3 animate-spin" /> Lendo
                 </span>
               )}
-              {st === "fail" && <AlertCircle className="w-4 h-4" style={{ color: "hsl(0 70% 55%)" }} />}
+              {st === "fail" && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{ background: "hsl(0 70% 55% / 0.10)", color: "hsl(0 70% 45%)" }}>
+                  <AlertCircle className="w-3 h-3" /> Erro
+                </span>
+              )}
             </div>
           );
         })}
@@ -1612,13 +1631,19 @@ function ReviewSelect({
 /* ─────────────────────── Step 4 — Conclusão ─────────────────────── */
 function Step4Done({ firstName }: { firstName: string }) {
   return (
-    <div className="text-center py-4">
+    <div className="relative overflow-hidden text-center py-4 px-4 -mx-2 rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+      style={{ boxShadow: "inset 0 0 0 1px hsl(152 60% 42% / 0.10)" }}>
+      <div
+        className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full opacity-30 blur-3xl"
+        style={{ background: "hsl(152 60% 42%)" }}
+      />
+      <div className="relative mt-2">
       <div className="relative w-24 h-24 mx-auto mb-5">
         {/* confetti pontos */}
         {Array.from({ length: 14 }).map((_, i) => {
           const angle = (i / 14) * Math.PI * 2;
           const r = 50 + (i % 3) * 8;
-          const colors = ["hsl(152 60% 50%)", "hsl(45 90% 55%)", "hsl(230 80% 60%)", "hsl(280 60% 60%)"];
+          const colors = ["hsl(152 60% 42%)", "hsl(190 80% 45%)", "hsl(45 90% 55%)", "hsl(220 60% 50%)"];
           return (
             <span key={i} className="absolute w-1.5 h-1.5 rounded-full"
               style={{
@@ -1629,21 +1654,24 @@ function Step4Done({ firstName }: { firstName: string }) {
           );
         })}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_24px_hsl(152_60%_50%/0.4)]"
-            style={{ background: "linear-gradient(135deg, hsl(152 60% 45%), hsl(160 65% 42%))" }}>
-            <CheckCircle2 className="w-9 h-9 text-white" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: "hsl(152 60% 42% / 0.14)", boxShadow: "inset 0 0 0 1.5px hsl(152 60% 42% / 0.35), 0 0 24px hsl(152 60% 42% / 0.20)" }}>
+            <CheckCircle2 className="w-8 h-8" style={{ color: "hsl(152 60% 32%)" }} />
           </div>
         </div>
       </div>
 
-      <h2 className="text-lg font-bold mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>Cadastro completo!</h2>
+      <div className="text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(152 60% 32%)" }}>
+        Concluído
+      </div>
+      <h2 className="text-lg font-bold font-mono mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>Cadastro completo!</h2>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>
         Suas informações foram extraídas, revisadas e enviadas com sucesso.
       </p>
 
-      <div className="rounded-xl p-3 text-left flex gap-2 mb-5"
-        style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(230 80% 92%)" }}>
-        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(230 80% 56%)" }} />
+      <div className="rounded-2xl p-3 text-left flex gap-2 mb-5"
+        style={{ background: "hsl(190 80% 45% / 0.06)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}>
+        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(190 80% 32%)" }} />
         <div className="text-[11px] leading-relaxed" style={{ color: "hsl(220 25% 25%)" }}>
           <strong>Tudo certo{firstName ? `, ${firstName}` : ""}.</strong> Seu acesso ao sistema será liberado após validação pela nossa equipe. Você receberá um e-mail quando estiver tudo pronto.
         </div>
@@ -1651,8 +1679,8 @@ function Step4Done({ firstName }: { firstName: string }) {
 
       <a
         href="/area-do-cliente/login"
-        className="block w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2"
-        style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
+        className="block w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2"
+        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 4px 14px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
       >
         Acessar sistema
       </a>
@@ -1662,6 +1690,7 @@ function Step4Done({ firstName }: { firstName: string }) {
         style={{ color: "hsl(220 15% 45%)" }}>
         Quero tirar dúvidas
       </a>
+      </div>
     </div>
   );
 }
