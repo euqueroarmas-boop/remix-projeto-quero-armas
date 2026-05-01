@@ -649,8 +649,8 @@ export default function QACadastroPublicoPage() {
           <BackButton fallback="/" />
         </div>
 
-        {/* Header preto — integrado, 100% da largura do container, sem cantos/sombra */}
-        <div className="w-full bg-[#0A0A0A] flex items-center justify-center py-4 -mb-px">
+        {/* Header preto — mesma palheta da logo (#1E1E1E), 100% da largura do container */}
+        <div className="w-full bg-[#1E1E1E] flex items-center justify-center py-4 -mb-px">
           <QALogo className="h-14 w-14" />
         </div>
 
