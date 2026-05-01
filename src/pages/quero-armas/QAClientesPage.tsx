@@ -2150,9 +2150,14 @@ export default function QAClientesPage() {
                   </Section>
                 )}
                 {c.observacao && (
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
-                    <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>Observações</div>
-                    <div className="text-[12px] text-slate-600 whitespace-pre-wrap leading-relaxed">{c.observacao}</div>
+                  <div className="qa-card p-4 md:p-5">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(38 92% 50% / 0.12)" }}>
+                        <FileText className="h-3.5 w-3.5" style={{ color: "hsl(38 92% 50%)" }} />
+                      </div>
+                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(38 92% 50%)" }}>Observações</h3>
+                    </div>
+                    <div className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">{c.observacao}</div>
                   </div>
                 )}
                 <Section title="Filiações a Clubes">
