@@ -1729,17 +1729,19 @@ function Step4Done({ firstName }: { firstName: string }) {
 /* ─────────────────────── Bloco de boas-vindas ─────────────────────── */
 function WelcomeBlock() {
   return (
-    <div className="px-1">
-      <p
-        className="text-[13px] leading-relaxed"
-        style={{ color: "hsl(220 12% 38%)" }}
-      >
-        Cuidamos de toda a burocracia para você.{" "}
-        <span style={{ color: "hsl(220 18% 22%)", fontWeight: 600 }}>
-          Comece nos contando o que precisa
-        </span>{" "}
-        — seu processo será conduzido com clareza, sigilo e precisão técnica.
-      </p>
+    <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3">
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 ring-1 ring-blue-100">
+          <Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={2.4} />
+        </div>
+        <p className="text-[12px] leading-relaxed text-slate-600">
+          Cuidamos de toda a burocracia para você.{" "}
+          <span className="font-semibold text-slate-800">
+            Comece nos contando o que precisa
+          </span>
+          {" "}— seu processo será conduzido com clareza, sigilo e precisão técnica.
+        </p>
+      </div>
     </div>
   );
 }
@@ -1786,125 +1788,162 @@ function Step0Qualificacao({
     (!needsLivre || value.descricao_servico_livre.trim().length >= 10);
 
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-4">
       <WelcomeBlock />
 
-      {/* Campo 1 — Objetivo principal (destaque visual: variante primary) */}
-      <TacticalSelect
-        icon={Target}
-        label="Qual é o seu objetivo principal?"
-        value={value.objetivo_principal}
-        onChange={(v) => set("objetivo_principal", v)}
-        placeholder="Selecione seu objetivo"
-        options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
-        required
-        primary
-      />
+      {/* Card branco com grid de campos no padrão admin Quero Armas */}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 rounded-t-xl flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-600 text-white">
+            <Briefcase className="h-3.5 w-3.5" strokeWidth={2.4} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[12px] font-bold text-slate-800 leading-tight">Sobre o que você precisa</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Etapa 1 de 5 · Os campos abaixo aparecem em cascata</p>
+          </div>
+        </div>
 
-      {/* Campo 2 — Categoria */}
-      {value.objetivo_principal && (
-        <TacticalSelect
-          icon={Layers}
-          label="Categoria"
-          value={value.categoria_servico}
-          onChange={(v) => {
-            // limpa serviço/subtipo ao trocar categoria
-            onChange({ ...value, categoria_servico: v, servico_principal: "", subtipo_servico: "", descricao_servico_livre: "" });
-          }}
-          placeholder="Selecione a categoria"
-          options={categoriasDisponiveis.map((c) => ({ value: c.value, label: c.label }))}
-          required
-        />
-      )}
+        <div className="px-4 py-4 grid grid-cols-1 gap-4">
+          {/* Campo 1 — Objetivo principal */}
+          <AdminField label="Objetivo Principal *" hint="Qual o motivo central do seu pedido?">
+            <AdminSelect
+              value={value.objetivo_principal}
+              onChange={(v) => set("objetivo_principal", v)}
+              placeholder="Selecione seu objetivo"
+              options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
+            />
+          </AdminField>
 
-      {/* Campo 3 — Serviço */}
-      {cat && (
-        <TacticalSelect
-          icon={FileText}
-          label="Serviço"
-          value={value.servico_principal}
-          onChange={(v) => onChange({ ...value, servico_principal: v, subtipo_servico: "", descricao_servico_livre: "" })}
-          placeholder="Selecione o serviço"
-          options={servicosDisponiveis.map((s) => ({ value: s.value, label: s.label }))}
-          required
-        />
-      )}
+          {/* Campo 2 — Categoria */}
+          {value.objetivo_principal && (
+            <AdminField label="Categoria do Serviço *">
+              <AdminSelect
+                value={value.categoria_servico}
+                onChange={(v) => {
+                  onChange({
+                    ...value,
+                    categoria_servico: v,
+                    servico_principal: "",
+                    subtipo_servico: "",
+                    descricao_servico_livre: "",
+                  });
+                }}
+                placeholder="Selecione a categoria"
+                options={categoriasDisponiveis.map((c) => ({ value: c.value, label: c.label }))}
+              />
+            </AdminField>
+          )}
 
-      {/* Campo 4 — Subtipo (condicional) */}
-      {svc && needsSubtipo && (
-        <TacticalSelect
-          icon={ChevronRight}
-          label="Subtipo"
-          value={value.subtipo_servico}
-          onChange={(v) => set("subtipo_servico", v)}
-          placeholder="Selecione o subtipo"
-          options={(svc.subtipos || []).map((s) => ({ value: s, label: s }))}
-          required
-        />
-      )}
+          {/* Campo 3 — Serviço */}
+          {cat && (
+            <AdminField label="Serviço *">
+              <AdminSelect
+                value={value.servico_principal}
+                onChange={(v) => onChange({ ...value, servico_principal: v, subtipo_servico: "", descricao_servico_livre: "" })}
+                placeholder="Selecione o serviço"
+                options={servicosDisponiveis.map((s) => ({ value: s.value, label: s.label }))}
+              />
+            </AdminField>
+          )}
 
-      {/* Campo 5 — Texto livre (condicional) */}
-      {svc && needsLivre && (
-        <label className="block">
-          <span className="text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5"
-            style={{ color: "hsl(215 35% 30%)" }}>
-            <FileText className="w-3 h-3" />
-            Descreva o serviço que você precisa <span style={{ color: "hsl(0 70% 50%)" }}>*</span>
-          </span>
-          <textarea
-            value={value.descricao_servico_livre}
-            onChange={(e) => set("descricao_servico_livre", e.target.value)}
-            placeholder="Explique brevemente qual atendimento ou processo você deseja solicitar"
-            rows={3}
-            className="mt-1.5 w-full px-3 py-2.5 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(215_50%_45%)] transition resize-none"
-            style={{
-              border: "1px solid hsl(220 13% 86%)",
-              background: "white",
-              color: "hsl(220 25% 18%)",
-            }}
-          />
-          <span className="text-[10px] mt-1 block" style={{ color: "hsl(220 10% 55%)" }}>
-            Mínimo 10 caracteres.
-          </span>
-        </label>
-      )}
+          {/* Campo 4 — Subtipo (condicional) */}
+          {svc && needsSubtipo && (
+            <AdminField label="Subtipo *">
+              <AdminSelect
+                value={value.subtipo_servico}
+                onChange={(v) => set("subtipo_servico", v)}
+                placeholder="Selecione o subtipo"
+                options={(svc.subtipos || []).map((s) => ({ value: s, label: s }))}
+              />
+            </AdminField>
+          )}
 
-      {/* CTA principal — premium, com mais peso e claramente clicável quando ativo */}
+          {/* Campo 5 — Texto livre (condicional) */}
+          {svc && needsLivre && (
+            <AdminField
+              label="Descreva o serviço que você precisa *"
+              hint="Mínimo 10 caracteres."
+            >
+              <textarea
+                value={value.descricao_servico_livre}
+                onChange={(e) => set("descricao_servico_livre", e.target.value)}
+                placeholder="Explique brevemente qual atendimento ou processo você deseja solicitar"
+                rows={3}
+                className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none"
+              />
+            </AdminField>
+          )}
+        </div>
+      </div>
+
+      {/* CTA — padrão admin (azul sólido) */}
       <button
         onClick={onContinue}
         disabled={!valido}
-        className="group w-full h-[52px] rounded-xl text-[13.5px] font-bold tracking-wide uppercase text-white flex items-center justify-center gap-2 transition-all duration-200 mt-1 relative overflow-hidden disabled:cursor-not-allowed"
-        style={{
-          background: valido
-            ? "linear-gradient(135deg, hsl(215 55% 22%) 0%, hsl(215 52% 28%) 50%, hsl(86 28% 26%) 100%)"
-            : "hsl(220 14% 92%)",
-          color: valido ? "white" : "hsl(220 10% 58%)",
-          boxShadow: valido
-            ? "0 10px 24px -8px hsl(215 55% 20% / 0.45), 0 4px 10px -2px hsl(215 55% 20% / 0.20), inset 0 1px 0 hsl(50 60% 88% / 0.18)"
-            : "inset 0 0 0 1px hsl(220 14% 86%)",
-          letterSpacing: "0.04em",
-        }}
+        className={`w-full h-11 rounded-lg text-[12px] font-bold uppercase tracking-wider text-white flex items-center justify-center gap-2 transition-all
+          ${valido
+            ? "bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200"
+            : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
       >
-        {valido && (
-          <span
-            className="absolute inset-x-0 top-0 h-px"
-            style={{ background: "linear-gradient(90deg, transparent, hsl(50 60% 88% / 0.45), transparent)" }}
-          />
-        )}
         <span>Continuar</span>
-        <ChevronRight
-          className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
-          strokeWidth={2.5}
-        />
+        <ChevronRight className="h-4 w-4" strokeWidth={2.4} />
       </button>
 
-      {/* Texto de apoio — discreto, secundário ao CTA */}
-      <p
-        className="text-[10px] text-center px-4 leading-relaxed pt-1"
-        style={{ color: "hsl(220 10% 62%)" }}
-      >
+      <p className="text-[10px] text-center text-slate-400 leading-relaxed">
         Sem compromisso até a confirmação · Dados protegidos
       </p>
+    </div>
+  );
+}
+
+/* ── Field e Select no padrão do ClienteFormModal (admin Quero Armas) ── */
+function AdminField({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">
+        {label}
+      </label>
+      {children}
+      {hint && <p className="text-[10px] text-slate-400 mt-0.5">{hint}</p>}
+    </div>
+  );
+}
+
+function AdminSelect({
+  value,
+  onChange,
+  placeholder,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-10 pl-3 pr-9 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all appearance-none cursor-pointer"
+      >
+        <option value="">{placeholder}</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <ChevronDown
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
+        strokeWidth={2.2}
+      />
     </div>
   );
 }
