@@ -644,15 +644,19 @@ export default function QACadastroPublicoPage() {
   /* ─── render ─── */
   return (
     <div className="min-h-screen flex flex-col bg-[#f6f5f1] overflow-x-hidden">
-      <div className="max-w-md w-full mx-auto px-4 py-6 flex-1 min-w-0">
-        <div className="mb-3 flex justify-start">
-          <BackButton fallback="/" />
+      {/* Faixa superior preta — header tático Arsenal */}
+      <div className="w-full bg-[#0A0A0A] border-b border-amber-500/20">
+        <div className="max-w-md w-full mx-auto px-4 pt-6 pb-5">
+          <div className="mb-3 flex justify-start">
+            <BackButton fallback="/" />
+          </div>
+          <div className="flex justify-center">
+            <QALogo className="h-20 w-20 rounded-xl shadow-lg ring-1 ring-amber-500/20" />
+          </div>
         </div>
+      </div>
 
-        {/* Logo isolada acima do card — assinatura discreta no topo */}
-        <div className="mb-5 flex justify-center">
-          <QALogo className="h-20 w-20 rounded-xl shadow-sm ring-1 ring-zinc-200" />
-        </div>
+      <div className="max-w-md w-full mx-auto px-4 py-6 flex-1 min-w-0">
 
         <div
           className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
