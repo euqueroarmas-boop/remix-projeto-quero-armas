@@ -295,6 +295,29 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (dup) {
+      // Regra: cadastros REJEITADOS são sobrescritos automaticamente.
+      // Apaga o registro antigo e segue para o INSERT normal — o cliente
+      // não vê o modal de duplicidade.
+      if (String(dup.status || "").toLowerCase() === "rejeitado") {
+        const { error: delErr } = await supabase
+          .from("qa_cadastro_publico")
+          .delete()
+          .eq("id", dup.id);
+        if (delErr) {
+          console.error("[qa-cadastro-publico] Falha ao sobrescrever rejeitado:", delErr);
+          return json({ error: "Erro ao reabrir cadastro rejeitado" }, 500);
+        }
+        await supabase.from("integration_logs").insert({
+          integration_name: "qa_cadastro_publico",
+          operation_name: "overwrite_rejected",
+          request_payload: {
+            cpf: cpfDigits.slice(0, 3) + "***",
+            previous_id: dup.id,
+          },
+          status: "success",
+        }).then();
+        // segue fluxo: cai no INSERT abaixo
+      } else {
       // Bloqueia o INSERT — o frontend deve oferecer atualizar
       return json({
         error: "duplicate_cpf",
@@ -304,6 +327,7 @@ Deno.serve(async (req) => {
         existing_created_at: dup.created_at,
         existing_data: dup,
       }, 409);
+      }
     }
 
     const { data: inserted, error } = await supabase
