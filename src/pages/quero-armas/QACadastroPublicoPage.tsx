@@ -273,6 +273,55 @@ export default function QACadastroPublicoPage() {
     cliente_existente: boolean;
   } | null>(null);
 
+  /* ─── checagem proativa de CPF/email já cadastrado (Etapa 3) ─── */
+  const [existingCheck, setExistingCheck] = useState<{
+    cpf_existe: boolean;
+    email_existe: boolean;
+    checked_for: { cpf: string; email: string };
+    loading: boolean;
+  }>({ cpf_existe: false, email_existe: false, checked_for: { cpf: "", email: "" }, loading: false });
+
+  useEffect(() => {
+    if (step !== 3) return;
+    const cpfDigits = (extracted.cpf || "").replace(/\D/g, "");
+    const emailNorm = (extracted.email || "").trim().toLowerCase();
+    if (cpfDigits.length !== 11 && !emailNorm) return;
+    // dedupe — não rechecar a mesma combinação
+    if (
+      existingCheck.checked_for.cpf === cpfDigits &&
+      existingCheck.checked_for.email === emailNorm
+    ) return;
+
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      setExistingCheck((p) => ({ ...p, loading: true }));
+      try {
+        const url = `${(import.meta as any).env?.VITE_SUPABASE_URL}/functions/v1/qa-cliente-checar-existente`;
+        const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: anonKey,
+            Authorization: `Bearer ${anonKey}`,
+          },
+          body: JSON.stringify({ cpf: cpfDigits, email: emailNorm }),
+          signal: ctrl.signal,
+        });
+        const body = await res.json().catch(() => ({}));
+        setExistingCheck({
+          cpf_existe: !!body?.cpf_existe,
+          email_existe: !!body?.email_existe,
+          checked_for: { cpf: cpfDigits, email: emailNorm },
+          loading: false,
+        });
+      } catch {
+        setExistingCheck((p) => ({ ...p, loading: false }));
+      }
+    }, 600);
+    return () => { clearTimeout(t); ctrl.abort(); };
+  }, [step, extracted.cpf, extracted.email, existingCheck.checked_for.cpf, existingCheck.checked_for.email]);
+
   /* ─── upload handler ─── */
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
     const f = e.target.files?.[0];
@@ -866,6 +915,7 @@ export default function QACadastroPublicoPage() {
                     setUnidadeLoading(false);
                   }
                 }}
+                existingCheck={existingCheck}
               />
               </div>
             )}
@@ -1450,6 +1500,7 @@ function Step3Review({
   tipoDocumentoIdentidade,
   divergenciasConfirmadas, onConfirmDivergencias,
   unidadePF, unidadeLoading, onResolveUnidade,
+  existingCheck,
 }: {
   data: ClienteData;
   onChange: (v: ClienteData) => void;
@@ -1467,6 +1518,7 @@ function Step3Review({
   unidadePF: { unidade_pf: string; sigla_unidade: string; tipo_unidade: string; municipio_sede: string; uf: string; base_legal: string } | null;
   unidadeLoading: boolean;
   onResolveUnidade: () => void | Promise<void>;
+  existingCheck?: { cpf_existe: boolean; email_existe: boolean; loading: boolean };
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
@@ -1814,6 +1866,31 @@ function Step3Review({
       {error && (
         <div className="p-3 rounded-lg flex gap-2 text-xs" style={{ background: "hsl(0 80% 96%)", color: "hsl(0 70% 40%)" }}>
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />{error}
+        </div>
+      )}
+
+      {(existingCheck?.cpf_existe || existingCheck?.email_existe) && (
+        <div
+          className="p-3 rounded-lg flex gap-2 text-xs items-start"
+          style={{
+            background: "#FEF3C7",
+            border: "1px solid #F59E0B",
+            color: "#78350F",
+          }}
+        >
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#B45309" }} />
+          <div className="space-y-1 min-w-0">
+            <div className="font-bold uppercase tracking-wide text-[10px]" style={{ color: "#92400E" }}>
+              Já existe um Acesso Arsenal
+            </div>
+            <div className="leading-relaxed">
+              {existingCheck.cpf_existe && existingCheck.email_existe
+                ? "Encontramos uma conta ativa com este CPF e e-mail. Você será vinculado(a) a ela ao concluir — não criaremos uma conta duplicada."
+                : existingCheck.cpf_existe
+                ? "Já existe uma conta ativa com este CPF. Você será vinculado(a) a ela ao concluir."
+                : "Já existe uma conta ativa com este e-mail. Você será vinculado(a) a ela ao concluir."}
+            </div>
+          </div>
         </div>
       )}
 
