@@ -1994,30 +1994,95 @@ export default function QAClientesPage() {
     const c = selected;
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
-        {/* Header — mobile-optimized */}
-        <div className="flex items-start gap-2.5">
-          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 w-8 p-0 shrink-0 mt-0.5 rounded-xl border" style={{ borderColor: "hsl(220 13% 90%)" }}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {/* Selfie do titular (cadastro público) ou upload manual; cantos arredondados ("arestas aparadas") */}
-          <ClienteSelfieAvatar cliente={c} size="md" />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-[15px] md:text-base font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</h1>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${statusColor(c.status)}`} style={{ background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)" }}>
-                {c.status}
-              </span>
-              <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
-              {c.cliente_lions && <span className="text-[10px]">🦁</span>}
+        {/* Header — padrão ARMORY (Arsenal HUD strip) */}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 md:px-5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelected(null)}
+                className="h-7 w-7 p-0 shrink-0 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+              </Button>
+              <div className="hidden sm:flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-600 ring-1 ring-sky-200 shrink-0">
+                <User className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] font-black uppercase tracking-[0.28em] text-slate-900">
+                  CLIENTE · DOSSIÊ TÁTICO
+                </div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 truncate">
+                  CPF {formatCpf(c.cpf)}
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-emerald-600">
+                <Radio className="h-3 w-3 animate-pulse" />
+                ONLINE
+              </div>
+              <div className="text-[10px] font-mono text-slate-400">
+                ID #{String(c.id).padStart(4, "0")}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-0.5 shrink-0">
-            <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 rounded-xl">
-              <Edit className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })} className="h-8 w-8 p-0 text-slate-300 hover:text-red-500 rounded-xl">
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+          <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-24"
+              style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.06), transparent 70%)" }}
+            />
+            <ClienteSelfieAvatar cliente={c} size="md" />
+            <div className="flex-1 min-w-0 relative">
+              <h1 className="text-[16px] md:text-[18px] font-black uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 14%)" }}>
+                {c.nome_completo}
+              </h1>
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ring-1 ${statusColor(c.status)}`}
+                  style={{
+                    background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)",
+                    boxShadow: c.status === "ATIVO" ? "inset 0 0 0 1px hsl(152 60% 80%)" : c.status === "DESISTENTE" ? "inset 0 0 0 1px hsl(0 60% 85%)" : "inset 0 0 0 1px hsl(38 80% 80%)",
+                  }}>
+                  {c.status}
+                </span>
+                {c.celular && (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                    <Phone className="h-2.5 w-2.5" /> {c.celular}
+                  </span>
+                )}
+                {c.cidade && (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                    <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
+                  </span>
+                )}
+                {c.cliente_lions && (
+                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 ring-1 ring-amber-200 font-bold uppercase tracking-wider">
+                    🦁 LIONS
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0 relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setEditingCliente(c); setClienteModal(true); }}
+                className="h-8 w-8 p-0 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+                title="Editar cliente"
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
+                className="h-8 w-8 p-0 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+                title="Excluir cliente"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
 
