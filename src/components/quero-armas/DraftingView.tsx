@@ -39,6 +39,20 @@ export interface DraftingResult {
   quality_issues?: string[];
   circunscricao_utilizada?: any;
   evidence_analysis?: any;
+  correcoes_ia_alertas?: CorrecaoAlerta[];
+  correcoes_ia_injetadas_count?: number;
+}
+
+export interface CorrecaoAlerta {
+  correcao_id: string;
+  categoria: string;
+  escopo: string;
+  trecho_errado: string;
+  trecho_correto: string;
+  explicacao: string | null;
+  regra_aplicavel: string | null;
+  trecho_suspeito: string;
+  metodo: "literal" | "normalizado";
 }
 
 export interface DraftingViewProps {

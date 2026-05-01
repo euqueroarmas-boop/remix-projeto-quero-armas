@@ -13,7 +13,7 @@ type: feature
 
 **Fases**:
 - Fase 1 ✅: tabela + RLS + página admin CRUD
-- Fase 2 (pendente): modal "Marcar trecho como erro" no DraftingView (seleção de texto + botão flutuante + botão fixo "Nova correção")
-- Fase 3 (pendente): injeção das correções ativas no prompt do qa-gerar-peca + checagem pós-geração (textual normalizado primeiro, embeddings se nada bater) + auto-incremento de usado_vezes/ultima_utilizacao
+- Fase 2 ✅: captura via DraftingView (PecaCorrectionTools + MarcarErroIAModal), seleção flutuante + botão fixo, escopo coerente (cliente_id integer, caso_id/peca_id uuid).
+- Fase 3 ✅: edge function `qa-gerar-peca` injeta no máx. 20 correções ativas (prioridade peca>caso>cliente>global, foco e categorias críticas elevam score) sob bloco "CORREÇÕES JURÍDICAS SUPERVISIONADAS — OBRIGATÓRIAS"; pós-geração faz checagem textual literal + normalizada (sem acentos/pontuação) e devolve `correcoes_ia_alertas` no SSE `done`. `usado_vezes` e `ultima_utilizacao` são incrementados após sucesso. `qa_geracoes_pecas` ganhou `correcoes_ia_usadas_json` e `correcoes_ia_alertas_json`. UI: `CorrecoesAlertaPanel` (Arsenal âmbar) com "Aplicar correção" (substitui `trecho_suspeito`/`trecho_errado` por `trecho_correto` no streamedText e resultado.minuta_gerada) e "Ignorar alerta" (apenas fecha, não desativa).
 
 **Constraints**: trecho_errado e trecho_correto >= 5 chars. Não substituir templates fixos. Não inventar jurisprudência. Correções inativas nunca são enviadas para IA.
