@@ -594,6 +594,12 @@ export default function QACadastroPublicoPage() {
       const emailNorm = extracted.email.trim().toLowerCase();
       const telefone = extracted.telefone_principal?.replace(/\D/g, "") || "";
 
+      // Label do serviço de interesse (para o e-mail Arsenal)
+      const servicoInteresseLabel =
+        (findServico(qualif.categoria_servico, qualif.servico_principal)?.label as string | undefined) ||
+        qualif.descricao_servico_livre ||
+        null;
+
       const { data, error } = await supabase.functions.invoke(
         "qa-cliente-criar-conta-publica",
         {
@@ -603,6 +609,7 @@ export default function QACadastroPublicoPage() {
             email: emailNorm,
             telefone: telefone || null,
             senha: arsenalSenha,
+            servico_interesse: servicoInteresseLabel,
           },
         },
       );
