@@ -8,6 +8,15 @@
 //  - NUNCA aprova por presunção.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+// `unpdf` é uma porta de pdfjs-dist sem dependências de canvas/Node,
+// pensada para edge runtimes (Deno/Workers/Bun). Usamos só `extractText`
+// para ler a camada de texto nativa de PDFs (Receita Federal, Detran,
+// cartórios). Não convertemos PDF em imagem nesta função: o runtime do
+// Supabase Edge não tem Poppler/Ghostscript. Quando o PDF é só imagem
+// escaneada (sem texto), o fallback abaixo encaminha para revisão
+// humana — nunca rejeita como "campo faltando".
+// @ts-ignore esm.sh fornece tipos mínimos
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1/pdfjs?target=denonext";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,20 +153,32 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
 }
 
 /**
- * Converte a primeira página de um PDF em PNG via API pública pdf.co-like
- * usando a Cloudflare/Lovable AI Gateway? Não temos serviço próprio.
- * Estratégia: usar o conversor pdfium via api.pdfshift OU fallback para
- * envio do PDF direto. Como não há binário de PDF→imagem disponível em
- * Deno edge, adotamos a estratégia abaixo:
- *   1) Tentar enviar o PDF diretamente para o Gemini como image_url
- *      (Gemini 2.5 aceita PDFs até ~50 páginas).
- *   2) Se o resultado vier vazio, retornamos null para que o caller
- *      marque o documento como `revisao_humana` (não como inválido).
- *
- * Heurística simples para verificar se a IA "leu" o documento:
- * - tipo_correto presente, e
- * - campos_extraidos com pelo menos 1 chave útil OU divergencias com
- *   pelo menos 1 item OU motivo_rejeicao explícito da IA (não default).
+ * Baixa o PDF e tenta extrair a camada de texto nativa via pdfjs-dist.
+ * Retorna string vazia se o PDF não tem texto extraível (PDF de imagem
+ * escaneada). NÃO há conversão PDF→imagem nesta função: Deno edge não
+ * tem Poppler/Ghostscript. Quando não há texto, o caller encaminha para
+ * revisão humana.
+ */
+async function extractPdfText(supabase: any, path: string): Promise<string> {
+  try {
+    const { data, error } = await supabase.storage.from("qa-processo-docs").download(path);
+    if (error || !data) return "";
+    const arr = new Uint8Array(await data.arrayBuffer());
+    const pdf = await getDocumentProxy(arr);
+    const { text } = await extractText(pdf, { mergePages: true });
+    const out = Array.isArray(text) ? text.join("\n") : String(text ?? "");
+    return out.trim();
+  } catch (e) {
+    console.warn("[validar-ia] unpdf falhou:", e);
+    return "";
+  }
+}
+
+/**
+ * Heurística para detectar se a IA produziu algo útil:
+ * - campos_extraidos com pelo menos 1 chave útil OU
+ * - divergências OU
+ * - rejeição explícita (tipo_correto=false + motivo_rejeicao).
  */
 function extraiuAlgo(parsed: any): boolean {
   if (!parsed || typeof parsed !== "object") return false;
@@ -344,12 +365,44 @@ Deno.serve(async (req) => {
     const { b64, mime } = await downloadAsBase64(supabase, path);
     const systemPrompt = buildSystemPrompt(doc.tipo_documento, cliente);
 
-    // PDFs nativos (sobretudo da Receita Federal) frequentemente vinham
-    // como image_url com mime application/pdf e produziam extração VAZIA.
-    // Estratégia atual: usar o modelo `gemini-2.5-pro` para PDFs, que
-    // possui suporte robusto a PDF nativo. Para imagens, manter o flash.
+    // Estratégia por tipo de arquivo:
+    //  - PDF: tenta primeiro extrair a CAMADA DE TEXTO via pdfjs-dist
+    //    (PDFs emitidos pela Receita Federal, Detran, cartórios etc. são
+    //    nativos e têm texto). Se houver texto, mandamos texto puro para
+    //    o modelo (mais confiável que image_url com mime application/pdf,
+    //    que vinha resultando em extração vazia).
+    //  - Se o PDF não tem texto (escaneado/imagem), enviamos como
+    //    image_url e o guard `extraiuAlgo` cuida do encaminhamento para
+    //    revisão humana caso a IA também não consiga ler.
+    //  - Imagens (JPG/PNG): sempre image_url.
     const isPdf = mime === "application/pdf" || /\.pdf$/i.test(path);
+    let pdfTexto = "";
+    if (isPdf) {
+      pdfTexto = await extractPdfText(supabase, path);
+    }
+    const usandoTextoPdf = isPdf && pdfTexto.length >= 40;
     const modelo = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
+
+    const userContent: any[] = usandoTextoPdf
+      ? [{
+          type: "text",
+          text:
+            "Este é o TEXTO EXTRAÍDO de um PDF nativo (provavelmente emitido por órgão público como Receita Federal). " +
+            "Use APENAS este texto para preencher os campos solicitados e em seguida chame validar_documento.\n\n" +
+            "===== INÍCIO DO TEXTO DO PDF =====\n" +
+            pdfTexto.slice(0, 60000) +
+            "\n===== FIM DO TEXTO DO PDF =====",
+        }]
+      : [
+          {
+            type: "text",
+            text: isPdf
+              ? "Este é um PDF (não foi possível extrair camada de texto — provavelmente é escaneado). Tente ler como imagem; se não conseguir, devolva tipo_correto=false e motivo_rejeicao explicando que o arquivo está ilegível. Em seguida chame validar_documento."
+              : "Analise este documento e chame validar_documento.",
+          },
+          { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
+        ];
+
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
@@ -357,12 +410,7 @@ Deno.serve(async (req) => {
         model: modelo,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: [
-            { type: "text", text: isPdf
-                ? "Este é um PDF nativo (provavelmente emitido por órgão público como Receita Federal). LEIA o conteúdo textual do PDF e extraia TODOS os campos solicitados. Em seguida chame validar_documento."
-                : "Analise este documento e chame validar_documento." },
-            { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
-          ]},
+          { role: "user", content: userContent },
         ],
         tools: [VALIDAR_TOOL],
         tool_choice: { type: "function", function: { name: "validar_documento" } },
@@ -537,8 +585,21 @@ Deno.serve(async (req) => {
       novoStatus = "invalido";
       motivoRejeicao = "Documento ilegível. Envie um arquivo mais nítido.";
     } else if (camposFaltando.length > 0) {
-      novoStatus = "invalido";
-      motivoRejeicao = "Campos obrigatórios não identificados: " + camposFaltando.join(", ");
+      // Se a IA conseguiu LER o documento (achou divergências, dados
+      // complementares ou um tipo detectado) mas não preencheu o campo
+      // exato exigido pela regra, NÃO é falha do cliente — é limitação
+      // de leitura. Vai para revisão humana.
+      const temSinalDeLeitura =
+        (Array.isArray(parsed.divergencias) && parsed.divergencias.length > 0) ||
+        (parsed.tipo_documento_detectado && String(parsed.tipo_documento_detectado).length > 0) ||
+        (parsed.campos_complementares && Object.keys(parsed.campos_complementares).length > 0);
+      if (temSinalDeLeitura) {
+        novoStatus = "revisao_humana";
+        motivoRejeicao = null;
+      } else {
+        novoStatus = "invalido";
+        motivoRejeicao = "Campos obrigatórios não identificados: " + camposFaltando.join(", ");
+      }
     } else if (esperadoViolado.length > 0) {
       novoStatus = "invalido";
       motivoRejeicao = "Conteúdo esperado não confirmado: " + esperadoViolado.join("; ");

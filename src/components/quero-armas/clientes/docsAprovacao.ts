@@ -3,7 +3,7 @@
  *
  * Regras:
  *  - Documentos enviados pelo CLIENTE (portal) entram como `pendente_aprovacao` + origem `cliente`.
- *  - Documentos lançados pelo ADMIN/STAFF em /clientes entram como `aprovado` + origem `admin`.
+ *  - Documentos lançados pela EQUIPE QUERO ARMAS em /clientes entram como `aprovado` + origem `admin`.
  *  - Apenas staff pode mudar status para `aprovado` ou `reprovado` (RLS + trigger garantem isso).
  */
 
