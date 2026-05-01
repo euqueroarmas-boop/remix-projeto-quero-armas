@@ -42,6 +42,11 @@ interface DocRow {
   titular_comprovante_nome?: string | null;
   titular_comprovante_documento?: string | null;
   endereco_em_nome_de_terceiro?: boolean | null;
+  // APRENDIZADO SUPERVISIONADO
+  texto_ocr_extraido?: string | null;
+  score_modelo_aprovado?: number | null;
+  modelo_aprovado_id?: string | null;
+  usado_como_modelo?: boolean | null;
 }
 
 interface ProcessoFull {
@@ -996,6 +1001,37 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                             <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
                             {reprocessandoId === doc.id ? "REPROCESSANDO..." : "REPROCESSAR IA"}
                           </button>
+                        )}
+                        {adminMode && doc.status === "aprovado" && doc.arquivo_storage_key && !doc.usado_como_modelo && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const { data, error } = await supabase.functions.invoke("qa-modelo-aprovado-criar", {
+                                  body: { documento_id: doc.id },
+                                });
+                                if (error) throw error;
+                                if ((data as any)?.error) throw new Error((data as any).error);
+                                toast.success("Documento promovido a modelo aprovado.");
+                                await carregar();
+                              } catch (e: any) {
+                                toast.error("Erro ao promover modelo: " + (e?.message ?? "desconhecido"));
+                              }
+                            }}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-amber-600 hover:bg-amber-700"
+                            title="Usar este documento como exemplo aprovado para a IA aprender"
+                          >
+                            <BookOpen className="h-3 w-3" /> APROVAR COMO MODELO
+                          </button>
+                        )}
+                        {adminMode && doc.usado_como_modelo && (
+                          <span className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-amber-700 bg-amber-100 border border-amber-300">
+                            <BookOpen className="h-3 w-3" /> MODELO APROVADO
+                          </span>
+                        )}
+                        {adminMode && doc.score_modelo_aprovado != null && (
+                          <span className="h-8 px-2 inline-flex items-center gap-1 rounded-md text-[10px] uppercase tracking-wider font-mono text-slate-700 bg-slate-100 border border-slate-300">
+                            SIM. MODELO {(Number(doc.score_modelo_aprovado) * 100).toFixed(0)}%
+                          </span>
                         )}
                       </div>
                     )}

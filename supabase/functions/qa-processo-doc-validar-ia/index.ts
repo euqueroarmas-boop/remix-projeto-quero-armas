@@ -33,6 +33,102 @@ function json(body: unknown, status = 200) {
 const APROVA_AUTO_MIN = 0.90;
 const REVISAO_HUMANA_MIN = 0.70;
 
+// ===== APRENDIZADO SUPERVISIONADO — utilitários =====
+function normalizarTexto(s: string): string {
+  return (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase().replace(/[^A-Z0-9\s]/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+async function gerarEmbedding(texto: string, lovableKey: string): Promise<number[] | null> {
+  try {
+    const trimmed = (texto || "").slice(0, 8000);
+    if (trimmed.length < 20) return null;
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
+      body: JSON.stringify({ model: "google/text-embedding-004", input: trimmed }),
+    });
+    if (!resp.ok) {
+      console.warn("[validar-ia] embedding falhou:", resp.status);
+      return null;
+    }
+    const j = await resp.json();
+    const v = j?.data?.[0]?.embedding;
+    return Array.isArray(v) ? v : null;
+  } catch (e) {
+    console.warn("[validar-ia] embedding erro:", e);
+    return null;
+  }
+}
+
+/**
+ * Busca os top-3 modelos aprovados do mesmo tipo e retorna o melhor.
+ * Também checa cobertura de palavras-chave do modelo no texto do doc novo.
+ */
+async function compararContraModelos(
+  supabase: any,
+  embedding: number[] | null,
+  textoNorm: string,
+  tipoDocumento: string,
+): Promise<{ modeloId: string | null; similaridade: number; coberturaKw: number; nomeModelo: string | null }> {
+  if (!embedding) return { modeloId: null, similaridade: 0, coberturaKw: 0, nomeModelo: null };
+  try {
+    const { data, error } = await supabase.rpc("match_qa_modelos_aprovados", {
+      query_embedding: embedding,
+      filtro_tipo: tipoDocumento,
+      match_limit: 3,
+    });
+    if (error || !Array.isArray(data) || data.length === 0) {
+      return { modeloId: null, similaridade: 0, coberturaKw: 0, nomeModelo: null };
+    }
+    const top = data[0];
+    const sim = Number(top.similaridade ?? 0);
+    const palavras: string[] = Array.isArray(top.palavras_chave_json) ? top.palavras_chave_json : [];
+    let cobertos = 0;
+    for (const p of palavras.slice(0, 30)) {
+      if (textoNorm.includes(String(p).toUpperCase())) cobertos++;
+    }
+    const cobertura = palavras.length > 0 ? cobertos / Math.min(palavras.length, 30) : 0;
+    return {
+      modeloId: top.id,
+      similaridade: sim,
+      coberturaKw: cobertura,
+      nomeModelo: top.nome_modelo ?? null,
+    };
+  } catch (e) {
+    console.warn("[validar-ia] compararContraModelos erro:", e);
+    return { modeloId: null, similaridade: 0, coberturaKw: 0, nomeModelo: null };
+  }
+}
+
+/**
+ * Busca config de limites por tipo. Default conservador se não houver linha.
+ */
+async function carregarConfigTipo(
+  supabase: any,
+  tipoDocumento: string,
+): Promise<{ aprovaAuto: number; analiseHumana: number; permiteAuto: boolean }> {
+  try {
+    const { data } = await supabase
+      .from("qa_validacao_config")
+      .select("limite_aprovacao_auto, limite_analise_humana, permite_aprovacao_auto")
+      .eq("tipo_documento", tipoDocumento)
+      .maybeSingle();
+    if (data) {
+      return {
+        aprovaAuto: Number(data.limite_aprovacao_auto ?? 0.85),
+        analiseHumana: Number(data.limite_analise_humana ?? 0.50),
+        permiteAuto: data.permite_aprovacao_auto !== false,
+      };
+    }
+  } catch (e) {
+    console.warn("[validar-ia] config tipo erro:", e);
+  }
+  return { aprovaAuto: 0.85, analiseHumana: 0.50, permiteAuto: true };
+}
+
 const TIPO_DOC_PROMPTS: Record<string, string> = {
   // === IDENTIFICAÇÃO (FASE 2: extração ampliada) ===
   rg: "RG (Registro Geral). Extraia TODOS os dados visíveis: nome_completo, cpf (se houver), tipo_documento_detectado ('rg'), numero_documento, rg, data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD se houver). Tudo o que enxergar e tiver utilidade documental.",
@@ -696,6 +792,56 @@ Deno.serve(async (req) => {
       novoStatus = "aprovado";
     }
 
+    // ===================================================================
+    // APRENDIZADO SUPERVISIONADO — comparação contra modelos aprovados
+    // ===================================================================
+    // Reusa o texto extraído do PDF (quando disponível) ou um resumo dos
+    // campos extraídos pela IA (quando o doc é imagem). Calcula embedding
+    // e compara contra os modelos aprovados do MESMO tipo. O resultado
+    // pode REFORÇAR (subir revisão_humana → aprovado) ou ENDURECER
+    // (rebaixar aprovado para revisão_humana / invalido) a decisão.
+    let textoParaModelo = "";
+    if (typeof pdfTexto === "string" && pdfTexto.length >= 40) {
+      textoParaModelo = pdfTexto;
+    } else {
+      // Imagem: monta um proxy textual a partir dos campos extraídos.
+      try {
+        textoParaModelo = JSON.stringify(parsed.campos_extraidos ?? {});
+      } catch { textoParaModelo = ""; }
+    }
+    const textoNormParaModelo = normalizarTexto(textoParaModelo).slice(0, 12000);
+    const embeddingDoc = await gerarEmbedding(textoNormParaModelo, lovableKey);
+    const cfg = await carregarConfigTipo(supabase, doc.tipo_documento);
+    const matchModelo = await compararContraModelos(
+      supabase, embeddingDoc, textoNormParaModelo, doc.tipo_documento,
+    );
+    // Score combinado: 70% similaridade semântica + 30% cobertura de palavras-chave
+    const scoreModelo = matchModelo.modeloId
+      ? (matchModelo.similaridade * 0.7 + matchModelo.coberturaKw * 0.3)
+      : 0;
+
+    // Aplicação conservadora — NUNCA aprova doc que a IA marcou como
+    // invalido/divergente; só ajusta entre aprovado ↔ revisao_humana.
+    if (matchModelo.modeloId && novoStatus === "aprovado") {
+      // Se o tipo NÃO permite aprovação automática (ex.: CR/CRAF/laudos),
+      // sempre vai para revisão humana, mesmo com bom score.
+      if (!cfg.permiteAuto) {
+        novoStatus = "revisao_humana";
+        motivoRejeicao = null;
+      } else if (scoreModelo > 0 && scoreModelo < cfg.analiseHumana) {
+        // Modelo aprovado existe mas o doc atual é muito diferente:
+        // rebaixa para revisão humana.
+        novoStatus = "revisao_humana";
+        motivoRejeicao = null;
+      }
+    } else if (matchModelo.modeloId && novoStatus === "revisao_humana" && cfg.permiteAuto) {
+      // Sobe revisão humana → aprovado se o doc bate fortemente com modelo aprovado.
+      if (scoreModelo >= cfg.aprovaAuto && camposFaltando.length === 0 && divergencias.length === 0) {
+        novoStatus = "aprovado";
+        motivoRejeicao = null;
+      }
+    }
+
     // calcula data_validade quando aplicável
     let dataValidade: string | null = null;
     if (dataEmissao && doc.validade_dias) {
@@ -736,6 +882,10 @@ Deno.serve(async (req) => {
         titular_comprovante_nome: titularNome,
         titular_comprovante_documento: titularDoc,
         endereco_em_nome_de_terceiro: enderecoTerceiro,
+        // APRENDIZADO SUPERVISIONADO
+        texto_ocr_extraido: textoParaModelo ? textoParaModelo.slice(0, 30000) : null,
+        score_modelo_aprovado: matchModelo.modeloId ? Number(scoreModelo.toFixed(4)) : null,
+        modelo_aprovado_id: matchModelo.modeloId,
       })
       .eq("id", documento_id);
 
@@ -743,7 +893,18 @@ Deno.serve(async (req) => {
       processo_id, documento_id,
       tipo_evento: "validacao_ia",
       descricao: `IA: ${doc.nome_documento} → ${novoStatus}`,
-      dados_json: { confianca: conf, divergencias: divergencias.length, vencido, campos_faltando: camposFaltando, esperado_violado: esperadoViolado },
+      dados_json: {
+        confianca: conf,
+        divergencias: divergencias.length,
+        vencido,
+        campos_faltando: camposFaltando,
+        esperado_violado: esperadoViolado,
+        modelo_aprovado_id: matchModelo.modeloId,
+        modelo_aprovado_nome: matchModelo.nomeModelo,
+        score_modelo: matchModelo.modeloId ? Number(scoreModelo.toFixed(4)) : null,
+        similaridade_semantica: matchModelo.modeloId ? Number(matchModelo.similaridade.toFixed(4)) : null,
+        cobertura_palavras_chave: matchModelo.modeloId ? Number(matchModelo.coberturaKw.toFixed(4)) : null,
+      },
       ator: "ia",
     });
 
