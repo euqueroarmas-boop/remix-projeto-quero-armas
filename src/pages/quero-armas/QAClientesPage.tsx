@@ -2327,12 +2327,12 @@ export default function QAClientesPage() {
                           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50/40">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span
-                                className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
                                 style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}
                               >
                                 VENDA #{v.id_legado ?? v.id}
                               </span>
-                              <span className="text-[10px] text-slate-500">{formatDate(v.data_cadastro)}</span>
+                              <span className="text-[12px] font-semibold text-slate-600">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
                               <span className="w-[88px] flex justify-start">
