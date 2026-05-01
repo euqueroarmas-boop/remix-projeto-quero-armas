@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers } from "lucide-react";
+import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 
 interface DocRow {
@@ -36,6 +36,13 @@ interface DocRow {
   exemplo_url?: string | null;
   orgao_emissor?: string | null;
   prazo_recomendado_dias?: number | null;
+  // Fase 1/2 — extração ampliada
+  metadados_documento_json?: any;
+  campos_complementares_json?: any;
+  titular_comprovante_nome?: string | null;
+  titular_comprovante_documento?: string | null;
+  endereco_em_nome_de_terceiro?: boolean | null;
+  observacoes?: string | null;
 }
 
 interface ProcessoFull {
