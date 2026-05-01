@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         reason: "cpf_ja_possui_login",
         message: "Este CPF já possui acesso. Faça login.",
       },
-      409,
+      200,
     );
   }
 
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
           reason: "email_ja_cadastrado",
           message: "Este e-mail já tem cadastro. Faça login.",
         },
-        409,
+        200,
       );
     }
     return json({ ok: false, reason: "auth_create_failed", message: createErr?.message }, 400);
