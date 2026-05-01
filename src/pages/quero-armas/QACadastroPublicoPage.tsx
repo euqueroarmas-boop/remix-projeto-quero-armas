@@ -2096,7 +2096,7 @@ function Step5Done({ firstName, email, clienteExistente }: { firstName: string; 
       </div>
       <h2 className="text-[18px] font-bold tracking-tight mb-1.5 text-zinc-900 break-words">CADASTRO COMPLETO</h2>
       <p className="text-xs mb-4 text-zinc-500 break-words">
-        Suas informações foram extraídas, revisadas e enviadas com sucesso.
+        Recebemos seus dados e documentos. A partir de agora, nossa equipe assume o processo por você.
       </p>
 
       <div className="rounded-lg p-3 text-left flex gap-2 mb-3 border border-emerald-500/30 bg-emerald-500/5 min-w-0">
