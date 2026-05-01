@@ -9,6 +9,7 @@ import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCata
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ArsenalGTEControl from "./ArsenalGTEControl";
 
 interface Props {
   clienteId: number;
@@ -85,8 +86,7 @@ export function ArsenalView({
   onArsenalChanged,
   isAdmin = false,
 }: Props) {
-  // RLS no banco já garante quem pode CRUD; flag mantida por compat para futuras UIs admin-only.
-  void isAdmin;
+  // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
     total: 0,
@@ -506,6 +506,11 @@ export function ArsenalView({
           ammoByCalibre={ammo.byCalibre}
           onSelectWeapon={(w) => setSelected(w)}
         />
+      </div>
+
+      {/* Controle de GTE — extração IA + KPIs (cliente + equipe) */}
+      <div id="arsenal-gte" className="scroll-mt-28">
+        <ArsenalGTEControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
       </div>
 
       {/* Munições */}
