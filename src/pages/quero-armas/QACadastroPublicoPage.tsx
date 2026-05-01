@@ -1957,10 +1957,10 @@ function Step0Qualificacao({
         <ArsenalGroup index="05" title="DESCREVA O SERVIÇO" hint="Mínimo 10 caracteres.">
           <textarea
             value={value.descricao_servico_livre}
-            onChange={(e) => set("descricao_servico_livre", e.target.value)}
+            onChange={(e) => set("descricao_servico_livre", e.target.value.toUpperCase())}
             placeholder="Explique brevemente qual atendimento você deseja solicitar"
             rows={3}
-            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300 bg-white text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none"
+            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300 bg-white text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none uppercase"
           />
         </ArsenalGroup>
       )}
