@@ -37,6 +37,7 @@ import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from 
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
+import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
@@ -2279,6 +2280,11 @@ export default function QAClientesPage() {
                               </span>
                               <div className="flex items-center gap-0.5">
                                 {/* FASE 16-C — Gerar processo a partir de venda aprovada */}
+                                {/* Aprovar valor em 1 clique (libera o checklist) */}
+                                <AprovarValorButton
+                                  venda={v}
+                                  onApproved={() => loadSubData(selected!)}
+                                />
                                 <GerarProcessoButton
                                   venda={v}
                                   itens={itens}
