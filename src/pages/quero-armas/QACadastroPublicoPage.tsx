@@ -1691,6 +1691,7 @@ function ReviewField({
   label: string; value: string; onChange: (v: string) => void; placeholder?: string;
   required?: boolean; status?: FieldStatus; errorHint?: string;
 }) {
+  const isEmail = /e-?mail/i.test(label);
   return (
     <label className="block">
       <span className="text-[10px] font-semibold uppercase tracking-wide flex items-center gap-1"
@@ -1702,10 +1703,10 @@ function ReviewField({
       </span>
       <input
         value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(isEmail ? e.target.value : e.target.value.toUpperCase())}
         placeholder={placeholder}
         className="mt-0.5 w-full h-10 px-3 rounded-lg text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(230_80%_70%)] transition"
-        style={{ border: `1px solid ${statusBorder(status)}`, background: statusBg(status), color: "hsl(220 25% 18%)" }}
+        style={{ border: `1px solid ${statusBorder(status)}`, background: statusBg(status), color: "hsl(220 25% 18%)", textTransform: isEmail ? "none" : "uppercase" }}
       />
       {errorHint && (
         <span className="text-[10px] mt-0.5 block" style={{ color: "hsl(0 65% 45%)" }}>{errorHint}</span>
