@@ -107,6 +107,43 @@ export function ArsenalView({
   // Lê apenas os campos mínimos exigidos pelo helper getGteKpiStatus.
   const [gteDocs, setGteDocs] = useState<{ id: string; data_validade: string | null; status_processamento: string | null }[]>([]);
 
+  // ─── Circunscrição PF (resolve via mesma RPC usada na geração de peças) ───
+  const [circ, setCirc] = useState<{ unidade_pf: string; sigla_unidade: string; municipio_sede?: string } | null>(null);
+  const [circStatus, setCircStatus] = useState<"idle" | "loading" | "ok" | "not_found" | "error">("idle");
+  useEffect(() => {
+    let cancelled = false;
+    const cidade = String(clienteCidade || "").trim();
+    const uf = String(clienteUf || "").trim().toUpperCase();
+    if (!cidade || !uf) { setCirc(null); setCircStatus("idle"); return; }
+    setCircStatus("loading");
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const apikey = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/rest/v1/rpc/qa_resolver_circunscricao_pf`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey,
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ p_municipio: cidade.toUpperCase(), p_uf: uf }),
+        });
+        if (cancelled) return;
+        if (!res.ok) { setCirc(null); setCircStatus("error"); return; }
+        const data = await res.json();
+        if (!data || (Array.isArray(data) && data.length === 0)) { setCirc(null); setCircStatus("not_found"); return; }
+        const row = Array.isArray(data) ? data[0] : data;
+        setCirc(row); setCircStatus("ok");
+      } catch {
+        if (!cancelled) { setCirc(null); setCircStatus("error"); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clienteCidade, clienteUf]);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
