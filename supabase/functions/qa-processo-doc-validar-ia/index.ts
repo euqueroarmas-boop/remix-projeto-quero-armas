@@ -33,6 +33,102 @@ function json(body: unknown, status = 200) {
 const APROVA_AUTO_MIN = 0.90;
 const REVISAO_HUMANA_MIN = 0.70;
 
+// ===== APRENDIZADO SUPERVISIONADO — utilitários =====
+function normalizarTexto(s: string): string {
+  return (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase().replace(/[^A-Z0-9\s]/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+async function gerarEmbedding(texto: string, lovableKey: string): Promise<number[] | null> {
+  try {
+    const trimmed = (texto || "").slice(0, 8000);
+    if (trimmed.length < 20) return null;
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
+      body: JSON.stringify({ model: "google/text-embedding-004", input: trimmed }),
+    });
+    if (!resp.ok) {
+      console.warn("[validar-ia] embedding falhou:", resp.status);
+      return null;
+    }
+    const j = await resp.json();
+    const v = j?.data?.[0]?.embedding;
+    return Array.isArray(v) ? v : null;
+  } catch (e) {
+    console.warn("[validar-ia] embedding erro:", e);
+    return null;
+  }
+}
+
+/**
+ * Busca os top-3 modelos aprovados do mesmo tipo e retorna o melhor.
+ * Também checa cobertura de palavras-chave do modelo no texto do doc novo.
+ */
+async function compararContraModelos(
+  supabase: any,
+  embedding: number[] | null,
+  textoNorm: string,
+  tipoDocumento: string,
+): Promise<{ modeloId: string | null; similaridade: number; coberturaKw: number; nomeModelo: string | null }> {
+  if (!embedding) return { modeloId: null, similaridade: 0, coberturaKw: 0, nomeModelo: null };
+  try {
+    const { data, error } = await supabase.rpc("match_qa_modelos_aprovados", {
+      query_embedding: embedding,
+      filtro_tipo: tipoDocumento,
+      match_limit: 3,
+    });
+    if (error || !Array.isArray(data) || data.length === 0) {
+      return { modeloId: null, similaridade: 0, coberturaKw: 0, nomeModelo: null };
+    }
+    const top = data[0];
+    const sim = Number(top.similaridade ?? 0);
+    const palavras: string[] = Array.isArray(top.palavras_chave_json) ? top.palavras_chave_json : [];
+    let cobertos = 0;
+    for (const p of palavras.slice(0, 30)) {
+      if (textoNorm.includes(String(p).toUpperCase())) cobertos++;
+    }
+    const cobertura = palavras.length > 0 ? cobertos / Math.min(palavras.length, 30) : 0;
+    return {
+      modeloId: top.id,
+      similaridade: sim,
+      coberturaKw: cobertura,
+      nomeModelo: top.nome_modelo ?? null,
+    };
+  } catch (e) {
+    console.warn("[validar-ia] compararContraModelos erro:", e);
+    return { modeloId: null, similaridade: 0, coberturaKw: 0, nomeModelo: null };
+  }
+}
+
+/**
+ * Busca config de limites por tipo. Default conservador se não houver linha.
+ */
+async function carregarConfigTipo(
+  supabase: any,
+  tipoDocumento: string,
+): Promise<{ aprovaAuto: number; analiseHumana: number; permiteAuto: boolean }> {
+  try {
+    const { data } = await supabase
+      .from("qa_validacao_config")
+      .select("limite_aprovacao_auto, limite_analise_humana, permite_aprovacao_auto")
+      .eq("tipo_documento", tipoDocumento)
+      .maybeSingle();
+    if (data) {
+      return {
+        aprovaAuto: Number(data.limite_aprovacao_auto ?? 0.85),
+        analiseHumana: Number(data.limite_analise_humana ?? 0.50),
+        permiteAuto: data.permite_aprovacao_auto !== false,
+      };
+    }
+  } catch (e) {
+    console.warn("[validar-ia] config tipo erro:", e);
+  }
+  return { aprovaAuto: 0.85, analiseHumana: 0.50, permiteAuto: true };
+}
+
 const TIPO_DOC_PROMPTS: Record<string, string> = {
   // === IDENTIFICAÇÃO (FASE 2: extração ampliada) ===
   rg: "RG (Registro Geral). Extraia TODOS os dados visíveis: nome_completo, cpf (se houver), tipo_documento_detectado ('rg'), numero_documento, rg, data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD se houver). Tudo o que enxergar e tiver utilidade documental.",
