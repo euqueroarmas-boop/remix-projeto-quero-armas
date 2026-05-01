@@ -211,7 +211,16 @@ export function ArsenalSummary({
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Estado: existe layout salvo por cliente?
+  // Quando true → respeita estritamente a ordem do banco (não força CR primeiro).
+  // Quando false → aplica a ordem inteligente padrão (CR primeiro se houver CR).
+  const [hasSavedLayout, setHasSavedLayout] = useState(false);
+
   // Carrega user e preferência salva
+  // FONTE DE VERDADE: qa_cliente_kpi_layouts (por cliente_id, compartilhada
+  // entre portal do cliente e equipe Quero Armas).
+  // FALLBACK: qa_dashboard_kpi_layout (preferência por usuário) — preservada
+  // para Zero Regression quando não há cliente_id em foco.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -219,20 +228,40 @@ export function ArsenalSummary({
       const uid = data.user?.id ?? null;
       if (cancelled) return;
       setUserId(uid);
-      if (!uid) {
-        setLoaded(true);
-        return;
+
+      // 1) Layout COMPARTILHADO por cliente_id (fonte oficial)
+      if (clienteId) {
+        const { data: shared } = await supabase
+          .from("qa_cliente_kpi_layouts")
+          .select("ordem_kpis")
+          .eq("cliente_id", clienteId)
+          .eq("contexto", dashboardType)
+          .maybeSingle();
+        if (cancelled) return;
+        if (shared?.ordem_kpis) {
+          setOrder(sanitizeOrder(shared.ordem_kpis));
+          setHasSavedLayout(true);
+          setLoaded(true);
+          return;
+        }
       }
-      const query = supabase
-        .from("qa_dashboard_kpi_layout")
-        .select("kpi_order")
-        .eq("user_id", uid)
-        .eq("dashboard_type", dashboardType);
-      const { data: rows } = clienteId
-        ? await query.eq("cliente_id", clienteId).maybeSingle()
-        : await query.is("cliente_id", null).maybeSingle();
-      if (cancelled) return;
-      if (rows?.kpi_order) setOrder(sanitizeOrder(rows.kpi_order));
+
+      // 2) Sem layout compartilhado → cai para preferência por usuário (legacy)
+      if (uid) {
+        const query = supabase
+          .from("qa_dashboard_kpi_layout")
+          .select("kpi_order")
+          .eq("user_id", uid)
+          .eq("dashboard_type", dashboardType);
+        const { data: rows } = clienteId
+          ? await query.eq("cliente_id", clienteId).maybeSingle()
+          : await query.is("cliente_id", null).maybeSingle();
+        if (cancelled) return;
+        if (rows?.kpi_order) {
+          setOrder(sanitizeOrder(rows.kpi_order));
+          setHasSavedLayout(true);
+        }
+      }
       setLoaded(true);
     })();
     return () => {
@@ -240,20 +269,68 @@ export function ArsenalSummary({
     };
   }, [clienteId, dashboardType]);
 
+  // Realtime: se a equipe alterar no admin, o cliente vê na hora (e vice-versa)
+  useEffect(() => {
+    if (!clienteId) return;
+    const channel = supabase
+      .channel(`arsenal_kpi_layout_${clienteId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "qa_cliente_kpi_layouts",
+          filter: `cliente_id=eq.${clienteId}`,
+        },
+        (payload: any) => {
+          const next = (payload.new?.ordem_kpis ?? payload.old?.ordem_kpis) as unknown;
+          if (Array.isArray(next)) {
+            setOrder(sanitizeOrder(next));
+            setHasSavedLayout(true);
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [clienteId]);
+
   const persist = useCallback(
     async (next: KpiId[]) => {
+      // Persistência primária: por cliente_id (compartilhada cliente↔equipe)
+      if (clienteId) {
+        setSaving(true);
+        try {
+          await supabase.from("qa_cliente_kpi_layouts").upsert(
+            {
+              cliente_id: clienteId,
+              contexto: dashboardType,
+              ordem_kpis: next as unknown as any,
+              updated_by: userId,
+            },
+            { onConflict: "cliente_id,contexto" },
+          );
+          setHasSavedLayout(true);
+        } finally {
+          setSaving(false);
+        }
+        return;
+      }
+      // Fallback legacy: preferência por usuário quando não há cliente em foco
       if (!userId) return;
       setSaving(true);
       try {
         await supabase.from("qa_dashboard_kpi_layout").upsert(
           {
             user_id: userId,
-            cliente_id: clienteId ?? null,
+            cliente_id: null,
             dashboard_type: dashboardType,
             kpi_order: next as unknown as any,
           },
           { onConflict: "user_id,dashboard_type,cliente_id" },
         );
+        setHasSavedLayout(true);
       } finally {
         setSaving(false);
       }
@@ -335,14 +412,18 @@ export function ArsenalSummary({
     [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint],
   );
 
-  // Ordem efetiva: se cliente possuir CR (status != muted), CR vai para o início.
-  // Mantém a ordem do usuário para os demais.
+  // Ordem efetiva:
+  // - Se já há layout salvo, respeitar EXATAMENTE a ordem persistida
+  //   (cliente/equipe pode ter colocado outra KPI antes).
+  // - Se não há layout salvo e o cliente possui CR, CR vai para o início
+  //   automaticamente (regra inteligente padrão).
   const effectiveOrder = useMemo<KpiId[]>(() => {
+    if (hasSavedLayout) return order;
     const hasCr = crStatus !== "muted" && !!crLabel && crLabel.trim().length > 0;
     if (!hasCr) return order;
     if (order[0] === "status_cr") return order;
     return ["status_cr", ...order.filter((id) => id !== "status_cr")];
-  }, [order, crStatus, crLabel]);
+  }, [order, crStatus, crLabel, hasSavedLayout]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {

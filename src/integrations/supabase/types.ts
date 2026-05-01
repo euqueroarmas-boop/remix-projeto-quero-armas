@@ -3850,6 +3850,68 @@ export type Database = {
           },
         ]
       }
+      qa_cliente_kpi_layouts: {
+        Row: {
+          cliente_id: number
+          contexto: string
+          created_at: string
+          id: string
+          kpis_ocultas: Json
+          ordem_kpis: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          kpis_ocultas?: Json
+          ordem_kpis?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          kpis_ocultas?: Json
+          ordem_kpis?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_kpi_layouts_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_kpi_layouts_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_kpi_layouts_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_kpi_layouts_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+        ]
+      }
       qa_clientes: {
         Row: {
           arsenal_plano: string
@@ -8469,6 +8531,10 @@ export type Database = {
         Returns: Json
       }
       qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
+      qa_is_owner_of_cliente: {
+        Args: { _cliente_id: number }
+        Returns: boolean
+      }
       qa_listar_municipios_por_uf: {
         Args: { p_uf: string }
         Returns: {
