@@ -4,7 +4,7 @@
  * Regras:
  *  - Documentos enviados pelo CLIENTE (portal) entram como `pendente_aprovacao` + origem `cliente`.
  *  - Documentos lançados pela EQUIPE QUERO ARMAS em /clientes entram como `aprovado` + origem `admin`.
- *  - Apenas staff pode mudar status para `aprovado` ou `reprovado` (RLS + trigger garantem isso).
+ *  - Apenas membros da Equipe Quero Armas podem mudar status para `aprovado` ou `reprovado` (RLS + trigger garantem isso).
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +18,7 @@ export type DocStatus =
 
 export type DocOrigem = "admin" | "cliente" | "sistema" | "scanner" | "importacao";
 
-/** Verifica se o usuário logado é staff (admin) — usado para definir status/origem default. */
+/** Verifica se o usuário logado é membro da Equipe Quero Armas — usado para definir status/origem default. */
 export async function isCurrentUserStaff(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
@@ -32,7 +32,7 @@ export async function isCurrentUserStaff(): Promise<boolean> {
   return ((data as any[]) || []).length > 0;
 }
 
-/** Aprova um documento. Apenas staff. */
+/** Aprova um documento. Apenas Equipe Quero Armas. */
 export async function aprovarDocumento(docId: string) {
   const { error } = await supabase
     .from("qa_documentos_cliente" as any)
@@ -47,7 +47,7 @@ export async function aprovarDocumento(docId: string) {
   if (error) throw error;
 }
 
-/** Reprova com motivo obrigatório. Apenas staff. */
+/** Reprova com motivo obrigatório. Apenas Equipe Quero Armas. */
 export async function reprovarDocumento(docId: string, motivo: string) {
   const m = (motivo || "").trim();
   if (m.length < 3) throw new Error("Informe o motivo da reprovação.");

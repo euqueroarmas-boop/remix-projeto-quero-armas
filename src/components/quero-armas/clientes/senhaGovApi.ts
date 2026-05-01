@@ -8,12 +8,13 @@ class SenhaGovAuthError extends Error {
 }
 
 /**
- * Lançado quando o usuário autenticado NÃO é staff QA (ex.: cliente logado
- * no portal `/area-do-cliente`). Não é um erro real — o caller deve apenas
- * ignorar silenciosamente (a Senha Gov só é visível para staff interno).
+ * Lançado quando o usuário autenticado NÃO é membro da Equipe Quero Armas
+ * (ex.: cliente logado no portal `/area-do-cliente`). Não é um erro real —
+ * o caller deve apenas ignorar silenciosamente (a Senha Gov só é visível
+ * para a Equipe Quero Armas).
  */
 class SenhaGovForbiddenError extends Error {
-  constructor(message = "Senha Gov disponível apenas para equipe interna.") {
+  constructor(message = "Senha Gov disponível apenas para a Equipe Quero Armas.") {
     super(message);
     this.name = "SenhaGovForbiddenError";
   }
@@ -76,7 +77,7 @@ async function callSenhaGov(body: Record<string, unknown>) {
       throw new SenhaGovAuthError();
     }
     if (res.status === 403) {
-      // Cliente logado no portal não é staff — silencia.
+      // Cliente logado no portal não é membro da Equipe Quero Armas — silencia.
       throw new SenhaGovForbiddenError();
     }
     throw new Error((json as any)?.detail || (json as any)?.error || `HTTP ${res.status}`);
