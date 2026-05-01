@@ -8119,6 +8119,8 @@ export type Database = {
         Returns: {
           inseridos: number
           ja_existentes: number
+          pre_validados: number
+          reaproveitados_cofre: number
         }[]
       }
       qa_gen_temp_password: { Args: never; Returns: string }
