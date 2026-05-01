@@ -1881,7 +1881,27 @@ function ReviewSelect({
 }
 
 /* ─────────────────────── Step 4 — Conclusão ─────────────────────── */
-function Step4Done({ firstName }: { firstName: string }) {
+function Step5Done({ firstName, email, clienteExistente }: { firstName: string; email: string; clienteExistente: boolean }) {
+  // Captura o evento de install do PWA (Android/Desktop)
+  const [installPrompt, setInstallPrompt] = React.useState<any>(null);
+  const [installed, setInstalled] = React.useState(false);
+  const [isIOS] = React.useState(() => /iPad|iPhone|iPod/.test(navigator.userAgent));
+  React.useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setInstalled(true));
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") setInstalled(true);
+    setInstallPrompt(null);
+  };
   // Confetes caindo do topo (gerados uma vez por montagem)
   const confetti = React.useMemo(() => {
     const palette = [
@@ -2045,18 +2065,52 @@ function Step4Done({ firstName }: { firstName: string }) {
         Suas informações foram extraídas, revisadas e enviadas com sucesso.
       </p>
 
-      <div className="rounded-lg p-3 text-left flex gap-2 mb-4 border border-amber-500/30 bg-amber-500/5 min-w-0">
-        <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+      <div className="rounded-lg p-3 text-left flex gap-2 mb-3 border border-emerald-500/30 bg-emerald-500/5 min-w-0">
+        <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-700" />
         <div className="text-[11px] leading-relaxed text-zinc-700 min-w-0 break-words">
-          <strong>Tudo certo{firstName ? `, ${firstName}` : ""}.</strong> Seu acesso ao sistema será liberado após validação pela nossa equipe. Você receberá um e-mail quando estiver tudo pronto.
+          <strong>Tudo certo{firstName ? `, ${firstName}` : ""}.</strong> {clienteExistente
+            ? <>Vinculamos este cadastro ao seu acesso existente. Use sua senha já cadastrada para entrar.</>
+            : <>Sua conta <span className="font-semibold">Arsenal Free</span> foi criada. Use o e-mail <span className="font-mono">{email}</span> e a senha que você acabou de definir para entrar.</>
+          }
         </div>
       </div>
+
+      <div className="rounded-lg p-3 text-left flex gap-2 mb-4 border border-amber-500/30 bg-amber-500/5 min-w-0">
+        <Crown className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+        <div className="text-[11px] leading-relaxed text-zinc-700 min-w-0 break-words">
+          Quando nossa equipe aprovar seu pagamento, seu Arsenal vira <strong>Premium</strong> automaticamente — você será avisado por e-mail e pelo próprio app.
+        </div>
+      </div>
+
+      {/* Instalar PWA */}
+      {installed ? (
+        <div className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 border border-emerald-500/40 bg-emerald-500/10 text-emerald-800 mb-2">
+          <CheckCircle2 className="w-4 h-4" /> APP INSTALADO
+        </div>
+      ) : installPrompt ? (
+        <button
+          type="button"
+          onClick={handleInstall}
+          className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 shadow-[0_6px_18px_-6px_rgba(0,0,0,0.55)] mb-2"
+        >
+          <Download className="w-4 h-4" /> Instalar Gerenciamento de Arsenal
+        </button>
+      ) : isIOS ? (
+        <div className="rounded-lg p-3 text-left mb-2 border border-zinc-200 bg-white text-[11px] leading-relaxed text-zinc-700">
+          <div className="font-semibold mb-1 flex items-center gap-1.5"><Smartphone className="w-3.5 h-3.5" /> Instalar no iPhone:</div>
+          <ol className="list-decimal pl-4 space-y-0.5">
+            <li>Toque no botão <strong>Compartilhar</strong> (ícone de seta para cima).</li>
+            <li>Escolha <strong>"Adicionar à Tela de Início"</strong>.</li>
+            <li>Confirme com o nome <strong>Arsenal QA</strong>.</li>
+          </ol>
+        </div>
+      ) : null}
 
       <a
         href="/area-do-cliente/login"
         className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 shadow-[0_6px_18px_-6px_rgba(245,158,11,0.55)]"
       >
-        Acessar sistema
+        Acessar Arsenal agora
       </a>
 
       <a href="https://wa.me/5511963166915" target="_blank" rel="noreferrer"
@@ -2064,6 +2118,148 @@ function Step4Done({ firstName }: { firstName: string }) {
         Quero tirar dúvidas
       </a>
       </div>
+    </div>
+  );
+}
+
+/* ─────────────────── Step 4 — Acesso Arsenal (cria conta) ─────────────────── */
+function Step4ArsenalAccess({
+  email, nome, senha, setSenha, senhaConfirma, setSenhaConfirma,
+  showSenha, setShowSenha, onContinue, busy, error,
+}: {
+  email: string; nome: string;
+  senha: string; setSenha: (v: string) => void;
+  senhaConfirma: string; setSenhaConfirma: (v: string) => void;
+  showSenha: boolean; setShowSenha: (v: boolean) => void;
+  onContinue: () => void; busy: boolean; error: string | null;
+}) {
+  // Indicador de força (0-3)
+  const forca = React.useMemo(() => {
+    let s = 0;
+    if (senha.length >= 8) s++;
+    if (/[A-Za-z]/.test(senha) && /[0-9]/.test(senha)) s++;
+    if (senha.length >= 12 && /[^A-Za-z0-9]/.test(senha)) s++;
+    return s;
+  }, [senha]);
+  const forcaLabel = ["FRACA", "FRACA", "MÉDIA", "FORTE"][forca] || "FRACA";
+  const forcaCor = forca <= 1 ? "bg-rose-500" : forca === 2 ? "bg-amber-500" : "bg-emerald-500";
+  const senhasIguais = senha.length > 0 && senha === senhaConfirma;
+  const podeContinuar = senha.length >= 8 && /[A-Za-z]/.test(senha) && /[0-9]/.test(senha) && senhasIguais && !busy;
+  const firstName = nome.split(" ")[0] || "";
+
+  return (
+    <div className="space-y-4">
+      {/* Banner Arsenal */}
+      <div className="relative overflow-hidden rounded-xl border border-amber-500/40 bg-gradient-to-br from-amber-50 via-white to-amber-100/40 p-4 shadow-sm">
+        <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-amber-500/10 blur-2xl" />
+        <div className="relative flex items-start gap-3">
+          <div className="h-10 w-10 shrink-0 rounded-md border border-amber-500/50 bg-amber-500/10 grid place-items-center">
+            <Shield className="h-5 w-5 text-amber-700" strokeWidth={2.2} />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700">// ACESSO ARSENAL</div>
+            <h3 className="mt-1 text-[15px] font-bold tracking-tight text-zinc-900">Bem-vindo{firstName ? `, ${firstName}` : ""}!</h3>
+            <p className="mt-1 text-[12px] leading-relaxed text-zinc-700">
+              Vamos criar sua <strong>conta gratuita</strong> no app <strong>Arsenal Quero Armas</strong>. Aqui você acompanha seu processo, documentos e prazos. Quando o pagamento for aprovado, seu plano vira <strong>Premium</strong> automaticamente.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Email (somente leitura) */}
+      <div>
+        <label className="text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-zinc-500">E-mail de acesso</label>
+        <div className="mt-1 h-11 px-3 rounded-md border border-zinc-200 bg-zinc-50 flex items-center text-[13px] text-zinc-700 font-mono break-all">
+          {email}
+        </div>
+      </div>
+
+      {/* Senha */}
+      <div>
+        <label className="text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-zinc-500">Crie uma senha</label>
+        <div className="mt-1 relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            type={showSenha ? "text" : "password"}
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            placeholder="Mínimo 8 caracteres, com letra e número"
+            className="w-full h-11 pl-10 pr-10 rounded-md border border-zinc-300 bg-white text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+            autoComplete="new-password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowSenha(!showSenha)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+            aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
+          >
+            {showSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        {senha.length > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full bg-zinc-200 overflow-hidden">
+              <div className={`h-full transition-all ${forcaCor}`} style={{ width: `${(Math.min(forca, 3) / 3) * 100}%` }} />
+            </div>
+            <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${forca <= 1 ? "text-rose-600" : forca === 2 ? "text-amber-600" : "text-emerald-600"}`}>
+              {forcaLabel}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Confirma senha */}
+      <div>
+        <label className="text-[10px] font-mono font-bold uppercase tracking-[0.22em] text-zinc-500">Confirme a senha</label>
+        <div className="mt-1 relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <input
+            type={showSenha ? "text" : "password"}
+            value={senhaConfirma}
+            onChange={(e) => setSenhaConfirma(e.target.value)}
+            placeholder="Digite a mesma senha"
+            className={`w-full h-11 pl-10 pr-3 rounded-md border bg-white text-[13px] font-mono focus:outline-none focus:ring-2 ${
+              senhaConfirma.length > 0 && !senhasIguais
+                ? "border-rose-400 focus:ring-rose-500/40"
+                : senhasIguais
+                ? "border-emerald-400 focus:ring-emerald-500/40"
+                : "border-zinc-300 focus:ring-amber-500/40 focus:border-amber-500"
+            }`}
+            autoComplete="new-password"
+          />
+        </div>
+        {senhaConfirma.length > 0 && !senhasIguais && (
+          <p className="mt-1 text-[11px] text-rose-600">As senhas não coincidem.</p>
+        )}
+      </div>
+
+      {/* Aviso */}
+      <div className="rounded-md p-3 flex gap-2 border border-zinc-200 bg-zinc-50">
+        <Info className="w-4 h-4 shrink-0 mt-0.5 text-zinc-500" />
+        <p className="text-[11px] leading-relaxed text-zinc-600">
+          Use uma senha que você lembre fácil. Se já tiver conta com este CPF/e-mail, vamos vincular automaticamente sem criar nada novo.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-md p-3 flex gap-2 border border-rose-300 bg-rose-50">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+          <p className="text-[11.5px] leading-relaxed text-rose-700">{error}</p>
+        </div>
+      )}
+
+      <button
+        type="button"
+        disabled={!podeContinuar}
+        onClick={onContinue}
+        className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-300 disabled:cursor-not-allowed shadow-[0_6px_18px_-6px_rgba(245,158,11,0.55)]"
+      >
+        {busy ? (
+          <><Loader2 className="w-4 h-4 animate-spin" /> Criando acesso…</>
+        ) : (
+          <><Shield className="w-4 h-4" /> Criar meu acesso Arsenal</>
+        )}
+      </button>
     </div>
   );
 }
