@@ -3030,6 +3030,21 @@ export default function QAClientesPage() {
                 >
                   <Edit className="h-3.5 w-3.5" /> Editar
                 </button>
+                {c.status === "rejeitado" && !c.cliente_id_vinculado && (
+                  <button
+                    disabled={!!savingCadastroPublicoStatus}
+                    onClick={() => excluirDefinitivamenteCadastroPublico()}
+                    className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                    title="Excluir cadastro definitivamente (libera o CPF)"
+                  >
+                    {savingCadastroPublicoStatus === "excluindo" ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                    Excluir
+                  </button>
+                )}
                 <button
                   disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
                   onClick={() => updateCadastroPublicoStatus("rejeitado")}
