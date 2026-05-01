@@ -652,11 +652,7 @@ export default function QACadastroPublicoPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f6f5f1] overflow-x-hidden">
       <div className="max-w-md w-full mx-auto px-4 py-6 flex-1 min-w-0">
-        <div className="mb-3 flex justify-start">
-          <BackButton fallback="/" />
-        </div>
-
-        {/* Header premium — integrado ao card, mesma palheta da logo */}
+        {/* Header premium — integrado ao card, mesma palheta da logo. Logo clicável = voltar. */}
         <div className="relative w-full overflow-hidden rounded-t-xl border border-b-0 border-zinc-200 bg-[#1E1E1E]">
           {/* Textura sutil de grid */}
           <div
@@ -671,17 +667,25 @@ export default function QACadastroPublicoPage() {
           <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-amber-500/15 blur-3xl" />
           <div className="pointer-events-none absolute -left-16 -bottom-16 h-32 w-32 rounded-full bg-amber-400/10 blur-3xl" />
 
-          <div className="relative flex items-center justify-center gap-3 px-5 py-5">
-            <QALogo className="h-12 w-12" />
-            <div className="flex flex-col leading-tight">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) window.history.back();
+              else window.location.href = "/";
+            }}
+            aria-label="Voltar"
+            className="relative w-full flex items-center justify-center gap-3 px-5 py-6 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+          >
+            <QALogo className="h-16 w-16" />
+            <div className="flex flex-col leading-tight text-left">
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/90">
                 // Arsenal
               </span>
-              <span className="text-base font-semibold uppercase tracking-[0.18em] text-zinc-100">
+              <span className="text-lg font-semibold uppercase tracking-[0.18em] text-zinc-100">
                 Quero Armas
               </span>
             </div>
-          </div>
+          </button>
 
           {/* Faixa âmbar separadora */}
           <div className="relative h-px w-full bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
