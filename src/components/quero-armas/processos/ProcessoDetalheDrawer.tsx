@@ -42,6 +42,11 @@ interface DocRow {
   titular_comprovante_nome?: string | null;
   titular_comprovante_documento?: string | null;
   endereco_em_nome_de_terceiro?: boolean | null;
+  // APRENDIZADO SUPERVISIONADO
+  texto_ocr_extraido?: string | null;
+  score_modelo_aprovado?: number | null;
+  modelo_aprovado_id?: string | null;
+  usado_como_modelo?: boolean | null;
 }
 
 interface ProcessoFull {
