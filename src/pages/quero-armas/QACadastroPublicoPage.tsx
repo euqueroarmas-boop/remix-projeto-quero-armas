@@ -568,9 +568,9 @@ export default function QACadastroPublicoPage() {
         </div>
 
         {/* Logo isolada acima do card — assinatura discreta no topo */}
-        <div className="mb-4 flex flex-col items-center gap-2">
-          <QALogo className="h-11 w-11 rounded-lg shadow-sm ring-1 ring-zinc-200" />
-          <div className="text-[9px] font-mono uppercase tracking-[0.3em] text-zinc-500">
+        <div className="mb-5 flex flex-col items-center gap-2.5">
+          <QALogo className="h-20 w-20 rounded-xl shadow-sm ring-1 ring-zinc-200" />
+          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-500">
             QUERO ARMAS · ATENDIMENTO
           </div>
         </div>
@@ -644,7 +644,13 @@ export default function QACadastroPublicoPage() {
               />
             )}
 
-            {step === 2 && <Step2Extracting stages={extractStage} error={error} />}
+            {step === 2 && (
+              <Step2Extracting
+                stages={extractStage}
+                error={error}
+                onBack={() => { setError(null); setStep(1); }}
+              />
+            )}
 
             {step === 3 && (
               <Step3Review
@@ -1143,9 +1149,17 @@ function Step1Documents({
 }
 
 /* ─────────────────────── Step 2 — Extração ─────────────────────── */
-function Step2Extracting({ stages, error }: { stages: Record<string, string>; error: string | null }) {
+function Step2Extracting({ stages, error, onBack }: { stages: Record<string, string>; error: string | null; onBack?: () => void }) {
   return (
-    <div className="py-3">
+    <div className="py-3 space-y-3">
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 hover:text-zinc-800"
+        >
+          <ArrowLeft className="w-3 h-3" /> Voltar
+        </button>
+      )}
       <div
         className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] px-4 py-5 shadow-sm"
       >
