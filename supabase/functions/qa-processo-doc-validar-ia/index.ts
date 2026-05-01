@@ -165,8 +165,14 @@ function checaCamposExigidos(
     const v = extraidos?.[k];
     const vazio = v === undefined || v === null || (typeof v === "string" && v.trim() === "");
     if (!vazio) continue;
-    // Equivalência semântica para PJ: nome_titular pode ser substituído pelos sócios/empresa.
-    if (isPJ && (k === "nome_titular" || k === "nome_completo" || k === "titular") && temIdentPJ) {
+    // Equivalência semântica para PJ: nome_titular / razao_social podem ser
+    // satisfeitos por sócios, administradores, cnpj, razão social ou nome
+    // fantasia presentes no payload.
+    if (
+      isPJ &&
+      (k === "nome_titular" || k === "nome_completo" || k === "titular" || k === "razao_social") &&
+      temIdentPJ
+    ) {
       continue;
     }
     faltando.push(k);
