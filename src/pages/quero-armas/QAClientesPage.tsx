@@ -1390,7 +1390,50 @@ export default function QAClientesPage() {
         .select("*")
         .order("nome_completo", { ascending: true });
       if (error) throw error;
-      setClientes((data as any[]) ?? []);
+      const rows = (data as any[]) ?? [];
+
+      // Enriquece cada cliente com `selfie_path` do cadastro público em UMA única
+      // query (evita N consultas no avatar de cada linha da listagem).
+      try {
+        const cadIds = Array.from(new Set(rows.map((r: any) => r.cadastro_publico_id).filter(Boolean)));
+        const cliIds = Array.from(new Set(rows.map((r: any) => r.id).filter(Boolean)));
+        const selfieByCadId = new Map<string, string>();
+        const selfieByCliId = new Map<number, string>();
+        if (cadIds.length > 0) {
+          const { data: cads } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("id, selfie_path")
+            .in("id", cadIds);
+          for (const c of (cads as any[]) || []) {
+            if (c?.selfie_path) selfieByCadId.set(c.id, c.selfie_path);
+          }
+        }
+        if (cliIds.length > 0) {
+          const { data: cads2 } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("cliente_id_vinculado, selfie_path, created_at")
+            .in("cliente_id_vinculado", cliIds)
+            .not("selfie_path", "is", null)
+            .order("created_at", { ascending: false });
+          for (const c of (cads2 as any[]) || []) {
+            const cid = c?.cliente_id_vinculado;
+            if (cid && c?.selfie_path && !selfieByCliId.has(cid)) {
+              selfieByCliId.set(cid, c.selfie_path);
+            }
+          }
+        }
+        for (const r of rows) {
+          if (r.imagem) continue; // upload manual tem prioridade
+          const fromCad = r.cadastro_publico_id ? selfieByCadId.get(r.cadastro_publico_id) : null;
+          const fromCli = selfieByCliId.get(r.id);
+          const sp = fromCad || fromCli || null;
+          if (sp) (r as any).selfie_path = sp;
+        }
+      } catch (enrichErr) {
+        console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
+      }
+
+      setClientes(rows);
       setLoadError(null);
     } catch (err: any) {
       console.error("[QAClientes] loadClientes error:", err);
