@@ -976,7 +976,7 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
                   {done ? <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.6} /> : i + 1}
                 </div>
                 <span
-                  className="mt-1 text-[8.5px] text-center leading-[1.1] uppercase tracking-[0.06em] font-mono w-full break-words px-0.5"
+                  className="mt-1 text-[8.5px] text-center leading-[1.1] uppercase tracking-[0.04em] font-mono w-full px-0.5 whitespace-nowrap overflow-hidden text-ellipsis"
                   style={{
                     color: active
                       ? amberDark
