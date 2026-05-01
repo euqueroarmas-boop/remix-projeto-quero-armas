@@ -614,8 +614,26 @@ export default function QACadastroPublicoPage() {
                   {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
               </div>
+              {step > 0 && step < 4 && (
+                <button
+                  onClick={() => { setError(null); setStep((step - 1) as StepId); }}
+                  className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-amber-500/60 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 hover:border-amber-600 transition-all shadow-[0_2px_10px_-4px_rgba(245,158,11,0.5)] font-mono text-[10.5px] font-bold uppercase tracking-[0.18em]"
+                  aria-label="Voltar à etapa anterior"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2.4} />
+                  Voltar
+                </button>
+              )}
             </div>
-            <Stepper current={step} />
+            <Stepper
+              current={step}
+              onJump={(target) => {
+                if (target < step && step < 4) {
+                  setError(null);
+                  setStep(target);
+                }
+              }}
+            />
           </div>
 
           {/* Conteúdo */}
