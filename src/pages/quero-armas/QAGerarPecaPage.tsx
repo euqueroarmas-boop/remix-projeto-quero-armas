@@ -20,6 +20,7 @@ import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
 import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/quero-armas/tiposPeca";
+import PecaCorrectionTools from "@/components/quero-armas/PecaCorrectionTools";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
@@ -1652,6 +1653,18 @@ export default function QAGerarPecaPage() {
         onOpenCase={() => savedCasoId && navigate(`/gerar-peca?caso=${savedCasoId}`)}
         validationErrors={validationErrors}
         isExporting={isExporting}
+      />
+
+      {/* Fase 2 — captura de correções supervisionadas direto na peça gerada */}
+      <PecaCorrectionTools
+        enabled={showDraftingView && draftingStep === "done" && !isStreaming && streamedText.length > 0}
+        context={{
+          tipo_peca: tipoPeca,
+          foco_argumentativo: foco,
+          cliente_id: clienteIdVinculado ?? null,
+          caso_id: savedCasoId || casoId || null,
+          peca_id: resultado?.geracao_id || null,
+        }}
       />
     </div>
   );
