@@ -7188,27 +7188,36 @@ export type Database = {
       qa_validacao_config: {
         Row: {
           alimenta_aprendizado: boolean
+          ativo: boolean
+          campos_obrigatorios_json: Json
           limite_analise_humana: number
           limite_aprovacao_auto: number
           observacoes: string | null
+          palavras_chave_esperadas_json: Json
           permite_aprovacao_auto: boolean
           tipo_documento: string
           updated_at: string
         }
         Insert: {
           alimenta_aprendizado?: boolean
+          ativo?: boolean
+          campos_obrigatorios_json?: Json
           limite_analise_humana?: number
           limite_aprovacao_auto?: number
           observacoes?: string | null
+          palavras_chave_esperadas_json?: Json
           permite_aprovacao_auto?: boolean
           tipo_documento: string
           updated_at?: string
         }
         Update: {
           alimenta_aprendizado?: boolean
+          ativo?: boolean
+          campos_obrigatorios_json?: Json
           limite_analise_humana?: number
           limite_aprovacao_auto?: number
           observacoes?: string | null
+          palavras_chave_esperadas_json?: Json
           permite_aprovacao_auto?: boolean
           tipo_documento?: string
           updated_at?: string
