@@ -561,58 +561,68 @@ export default function QACadastroPublicoPage() {
 
   /* ─── render ─── */
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(225 30% 94%) 100%)" }}>
-      <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
-        <div className="mb-4 flex justify-start">
+    <div className="min-h-screen flex flex-col bg-[#f6f5f1] overflow-x-hidden">
+      <div className="max-w-md w-full mx-auto px-4 py-6 flex-1 min-w-0">
+        <div className="mb-3 flex justify-start">
           <BackButton fallback="/" />
         </div>
 
         {/* Logo isolada acima do card — assinatura discreta no topo */}
-        <div className="mb-5 flex flex-col items-center gap-2">
-          <QALogo className="h-12 w-12 rounded-xl shadow-sm ring-1 ring-slate-200" />
-          <div className="text-[9px] font-mono uppercase tracking-[0.32em] text-slate-500">
+        <div className="mb-4 flex flex-col items-center gap-2">
+          <QALogo className="h-11 w-11 rounded-lg shadow-sm ring-1 ring-zinc-200" />
+          <div className="text-[9px] font-mono uppercase tracking-[0.3em] text-zinc-500">
             QUERO ARMAS · ATENDIMENTO
           </div>
         </div>
 
         <div
-          className="relative bg-white rounded-2xl border border-slate-200/80 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.10),0_2px_8px_-2px_rgba(15,23,42,0.04)] overflow-hidden"
-          style={{ boxShadow: `inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 10px 40px -12px rgba(15,23,42,0.10), 0 2px 8px -2px rgba(15,23,42,0.04)` }}
+          className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
         >
-          {/* Glow ambiente — assinatura KpiCard premium light */}
+          {/* Grid pontilhado Arsenal */}
           <div
-            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-25 blur-3xl"
-            style={{ background: "hsl(190 80% 45%)" }}
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(0,0,0,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.5) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
           />
+          {/* Glow âmbar Arsenal */}
+          <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-amber-500/10 blur-3xl" />
+          {/* Faixa âmbar superior */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+
           {/* Cabeçalho no estilo KpiCard do Arsenal */}
-          <div className="relative px-6 pt-6 pb-5">
-            <div className="min-w-0">
-              <div className="text-[10px] font-mono uppercase tracking-[0.3em]" style={{ color: "hsl(190 80% 30%)" }}>
-                // ATENDIMENTO · ETAPA {step + 1} DE 5
+          <div className="relative px-5 pt-5 pb-4 min-w-0">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="h-10 w-10 shrink-0 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
+                <Crosshair className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
               </div>
-              <h1
-                className="mt-1 text-[22px] font-bold leading-tight tracking-tight font-mono"
-                style={{ color: "hsl(215 35% 14%)" }}
-              >
-                {step === 0 && "Vamos começar"}
-                {step === 1 && "Seus documentos"}
-                {step === 2 && "Lendo informações"}
-                {step === 3 && "Confirme os dados"}
-                {step === 4 && "Tudo pronto"}
-              </h1>
-              <p className="mt-1 text-[11px] tracking-wide" style={{ color: "hsl(220 12% 48%)" }}>
-                {step === 0 && "Conte rapidamente o que você precisa"}
-                {step === 1 && "Envie seus documentos para iniciar"}
-                {step === 2 && "Estamos lendo suas informações"}
-                {step === 3 && "Revise antes de enviar"}
-                {step === 4 && "Recebemos seu cadastro com sucesso"}
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700 truncate">
+                  // ATENDIMENTO · ETAPA {step + 1} DE 5
+                </div>
+                <h1 className="mt-0.5 text-[18px] sm:text-[20px] font-bold leading-tight tracking-tight text-zinc-900 break-words">
+                  {step === 0 && "VAMOS COMEÇAR"}
+                  {step === 1 && "SEUS DOCUMENTOS"}
+                  {step === 2 && "LENDO INFORMAÇÕES"}
+                  {step === 3 && "CONFIRME OS DADOS"}
+                  {step === 4 && "TUDO PRONTO"}
+                </h1>
+                <p className="mt-1 text-[11.5px] leading-snug text-zinc-500 break-words">
+                  {step === 0 && "Conte rapidamente o que você precisa"}
+                  {step === 1 && "Envie seus documentos para iniciar"}
+                  {step === 2 && "Estamos lendo suas informações"}
+                  {step === 3 && "Revise antes de enviar"}
+                  {step === 4 && "Recebemos seu cadastro com sucesso"}
+                </p>
+              </div>
             </div>
             <Stepper current={step} />
           </div>
 
           {/* Conteúdo */}
-          <div className="px-6 pb-6">
+          <div className="relative px-4 sm:px-5 pb-5 min-w-0">
             {step === 0 && (
               <Step0Qualificacao
                 value={qualif}
