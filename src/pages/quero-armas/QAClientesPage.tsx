@@ -2222,7 +2222,7 @@ export default function QAClientesPage() {
                 </div>
               </div>
               {/* Vitals row — mesma linguagem dos KpiCards do Arsenal */}
-              <div className="relative grid grid-cols-2 md:grid-cols-4 border-t border-slate-200/80 divide-x divide-slate-200/80">
+              <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
                 {[
                   { icon: Phone, color: "hsl(190 80% 45%)", label: "Telefone", value: c.celular || "—", mono: true },
                   { icon: MapPin, color: "hsl(220 20% 28%)", label: "Localização", value: c.cidade ? `${c.cidade}/${c.estado}` : "—" },
@@ -2244,6 +2244,7 @@ export default function QAClientesPage() {
                     </div>
                   </div>
                 ))}
+                <CircunscricaoKpi cidade={c.cidade} uf={c.estado} />
               </div>
             </div>
           );
