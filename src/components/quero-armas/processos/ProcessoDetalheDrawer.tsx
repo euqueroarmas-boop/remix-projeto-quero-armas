@@ -847,7 +847,6 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                           </div>
                         );
                       })()}
-                      )}
                       {doc.validacao_ia_confianca !== null && (
                         <div className="text-[10px] uppercase tracking-wider text-slate-400">
                           IA: {doc.validacao_ia_modelo ?? "—"} · CONFIANÇA {Math.round((doc.validacao_ia_confianca ?? 0) * 100)}%
