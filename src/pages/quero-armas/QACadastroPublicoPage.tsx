@@ -1500,6 +1500,7 @@ function Step3Review({
   tipoDocumentoIdentidade,
   divergenciasConfirmadas, onConfirmDivergencias,
   unidadePF, unidadeLoading, onResolveUnidade,
+  existingCheck,
 }: {
   data: ClienteData;
   onChange: (v: ClienteData) => void;
@@ -1517,6 +1518,7 @@ function Step3Review({
   unidadePF: { unidade_pf: string; sigla_unidade: string; tipo_unidade: string; municipio_sede: string; uf: string; base_legal: string } | null;
   unidadeLoading: boolean;
   onResolveUnidade: () => void | Promise<void>;
+  existingCheck?: { cpf_existe: boolean; email_existe: boolean; loading: boolean };
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
