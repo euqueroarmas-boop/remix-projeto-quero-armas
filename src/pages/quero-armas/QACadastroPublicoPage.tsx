@@ -561,58 +561,68 @@ export default function QACadastroPublicoPage() {
 
   /* ─── render ─── */
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 25% 97%) 0%, hsl(225 30% 94%) 100%)" }}>
-      <div className="max-w-md w-full mx-auto px-4 py-6 flex-1">
-        <div className="mb-4 flex justify-start">
+    <div className="min-h-screen flex flex-col bg-[#f6f5f1] overflow-x-hidden">
+      <div className="max-w-md w-full mx-auto px-4 py-6 flex-1 min-w-0">
+        <div className="mb-3 flex justify-start">
           <BackButton fallback="/" />
         </div>
 
         {/* Logo isolada acima do card — assinatura discreta no topo */}
-        <div className="mb-5 flex flex-col items-center gap-2">
-          <QALogo className="h-12 w-12 rounded-xl shadow-sm ring-1 ring-slate-200" />
-          <div className="text-[9px] font-mono uppercase tracking-[0.32em] text-slate-500">
+        <div className="mb-4 flex flex-col items-center gap-2">
+          <QALogo className="h-11 w-11 rounded-lg shadow-sm ring-1 ring-zinc-200" />
+          <div className="text-[9px] font-mono uppercase tracking-[0.3em] text-zinc-500">
             QUERO ARMAS · ATENDIMENTO
           </div>
         </div>
 
         <div
-          className="relative bg-white rounded-2xl border border-slate-200/80 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.10),0_2px_8px_-2px_rgba(15,23,42,0.04)] overflow-hidden"
-          style={{ boxShadow: `inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 10px 40px -12px rgba(15,23,42,0.10), 0 2px 8px -2px rgba(15,23,42,0.04)` }}
+          className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
         >
-          {/* Glow ambiente — assinatura KpiCard premium light */}
+          {/* Grid pontilhado Arsenal */}
           <div
-            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-25 blur-3xl"
-            style={{ background: "hsl(190 80% 45%)" }}
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(0,0,0,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.5) 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
           />
+          {/* Glow âmbar Arsenal */}
+          <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-amber-500/10 blur-3xl" />
+          {/* Faixa âmbar superior */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+
           {/* Cabeçalho no estilo KpiCard do Arsenal */}
-          <div className="relative px-6 pt-6 pb-5">
-            <div className="min-w-0">
-              <div className="text-[10px] font-mono uppercase tracking-[0.3em]" style={{ color: "hsl(190 80% 30%)" }}>
-                // ATENDIMENTO · ETAPA {step + 1} DE 5
+          <div className="relative px-5 pt-5 pb-4 min-w-0">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="h-10 w-10 shrink-0 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
+                <Crosshair className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
               </div>
-              <h1
-                className="mt-1 text-[22px] font-bold leading-tight tracking-tight font-mono"
-                style={{ color: "hsl(215 35% 14%)" }}
-              >
-                {step === 0 && "Vamos começar"}
-                {step === 1 && "Seus documentos"}
-                {step === 2 && "Lendo informações"}
-                {step === 3 && "Confirme os dados"}
-                {step === 4 && "Tudo pronto"}
-              </h1>
-              <p className="mt-1 text-[11px] tracking-wide" style={{ color: "hsl(220 12% 48%)" }}>
-                {step === 0 && "Conte rapidamente o que você precisa"}
-                {step === 1 && "Envie seus documentos para iniciar"}
-                {step === 2 && "Estamos lendo suas informações"}
-                {step === 3 && "Revise antes de enviar"}
-                {step === 4 && "Recebemos seu cadastro com sucesso"}
-              </p>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700 truncate">
+                  // ATENDIMENTO · ETAPA {step + 1} DE 5
+                </div>
+                <h1 className="mt-0.5 text-[18px] sm:text-[20px] font-bold leading-tight tracking-tight text-zinc-900 break-words">
+                  {step === 0 && "VAMOS COMEÇAR"}
+                  {step === 1 && "SEUS DOCUMENTOS"}
+                  {step === 2 && "LENDO INFORMAÇÕES"}
+                  {step === 3 && "CONFIRME OS DADOS"}
+                  {step === 4 && "TUDO PRONTO"}
+                </h1>
+                <p className="mt-1 text-[11.5px] leading-snug text-zinc-500 break-words">
+                  {step === 0 && "Conte rapidamente o que você precisa"}
+                  {step === 1 && "Envie seus documentos para iniciar"}
+                  {step === 2 && "Estamos lendo suas informações"}
+                  {step === 3 && "Revise antes de enviar"}
+                  {step === 4 && "Recebemos seu cadastro com sucesso"}
+                </p>
+              </div>
             </div>
             <Stepper current={step} />
           </div>
 
           {/* Conteúdo */}
-          <div className="px-6 pb-6">
+          <div className="relative px-4 sm:px-5 pb-5 min-w-0">
             {step === 0 && (
               <Step0Qualificacao
                 value={qualif}
@@ -894,39 +904,40 @@ function DuplicateModal({
 
 function Stepper({ current }: { current: StepId }) {
   return (
-    <div className="mt-5 px-1">
-      <div className="flex items-start">
+    <div className="mt-4 -mx-1 overflow-x-hidden">
+      <div className="flex items-start min-w-0">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
           const nextReached = current > s.id;
           const isLast = i === STEPS.length - 1;
-          const cyan = "hsl(190 80% 45%)";
+          const amber = "hsl(38 92% 50%)";   // amber-500
+          const amberDark = "hsl(35 91% 33%)"; // amber-700
           const ok = "hsl(152 60% 42%)";
           return (
             <Fragment key={s.id}>
-              <div className="flex flex-col items-center shrink-0" style={{ width: 52 }}>
+              <div className="flex flex-col items-center shrink-0 min-w-0" style={{ width: 48 }}>
                 <div
-                  className="rounded-xl flex items-center justify-center text-[11px] font-bold font-mono transition-all"
+                  className="rounded-md flex items-center justify-center text-[10.5px] font-bold font-mono transition-all"
                   style={{
-                    width: active ? 28 : 24,
-                    height: active ? 28 : 24,
-                    background: done ? `${ok}14` : active ? `${cyan}14` : "white",
-                    color: done ? ok : active ? cyan : "hsl(220 10% 55%)",
+                    width: active ? 26 : 22,
+                    height: active ? 26 : 22,
+                    background: done ? `${ok}14` : active ? `${amber}1F` : "white",
+                    color: done ? ok : active ? amberDark : "hsl(220 10% 55%)",
                     boxShadow: active
-                      ? `inset 0 0 0 1.5px ${cyan}, 0 0 0 4px ${cyan}10`
+                      ? `inset 0 0 0 1.5px ${amber}, 0 0 0 3px ${amber}10`
                       : done
                         ? `inset 0 0 0 1.5px ${ok}`
                         : "inset 0 0 0 1px hsl(220 14% 88%)",
                   }}
                 >
-                  {done ? <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.5} /> : i + 1}
+                  {done ? <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} /> : i + 1}
                 </div>
                 <span
-                  className="mt-2 text-[8.5px] text-center leading-tight uppercase tracking-[0.18em] transition-colors"
+                  className="mt-1.5 text-[8px] text-center leading-tight uppercase tracking-[0.14em] font-mono truncate w-full"
                   style={{
                     color: active
-                      ? "hsl(190 80% 28%)"
+                      ? amberDark
                       : done
                         ? "hsl(152 60% 32%)"
                         : "hsl(220 10% 60%)",
@@ -940,7 +951,7 @@ function Stepper({ current }: { current: StepId }) {
                 <div
                   className="flex-1 h-px rounded-full self-start"
                   style={{
-                    marginTop: active ? 14 : 12,
+                    marginTop: active ? 13 : 11,
                     background: nextReached ? ok : "hsl(220 14% 88%)",
                     opacity: nextReached ? 0.55 : 1,
                   }}
@@ -972,15 +983,16 @@ function Step1Documents({
       {SLOTS.map(slot => {
         const Icon = slot.icon;
         const sent = !!files[slot.key];
-        const color = sent ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
+        const color = sent ? "hsl(152 60% 42%)" : "hsl(38 92% 50%)"; // ok verde / pendente âmbar
         return (
           <button
             key={slot.key}
             type="button"
             onClick={() => fileRefs[slot.key].current?.click()}
-            className="group relative w-full text-left overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-            style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
+            className="group relative w-full text-left overflow-hidden rounded-xl border border-zinc-200 bg-white px-3.5 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ boxShadow: `inset 0 0 0 1px ${color}14` }}
           >
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
             <div
               className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
               style={{ background: color }}
@@ -1068,64 +1080,62 @@ function Step1Documents({
       <button
         onClick={onContinue}
         disabled={!allUploaded}
-        className="w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 6px 18px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
+        className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all bg-amber-500 hover:bg-amber-600 shadow-[0_6px_18px_-6px_rgba(245,158,11,0.55)]"
       >
         Extrair dados <ChevronRight className="h-3.5 w-3.5" />
       </button>
 
       <button
         onClick={() => setManualWarnOpen(true)}
-        className="w-full h-9 text-xs font-medium underline-offset-2 hover:underline"
-        style={{ color: "hsl(220 15% 45%)" }}
+        className="w-full h-9 text-xs font-medium underline-offset-2 hover:underline text-zinc-500"
       >
         Preencher manualmente
       </button>
 
       <AlertDialog open={manualWarnOpen} onOpenChange={setManualWarnOpen}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-md bg-white border-zinc-200 max-h-[85vh] overflow-y-auto">
           <AlertDialogHeader>
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-              <AlertTriangle className="h-6 w-6 text-amber-600" strokeWidth={2.4} />
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg border border-amber-500/40 bg-amber-500/10">
+              <AlertTriangle className="h-6 w-6 text-amber-600" strokeWidth={2.2} />
             </div>
-            <AlertDialogTitle className="text-center text-base font-bold text-slate-800">
+            <div className="text-center text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700">
+              // ATENÇÃO · ENTRADA MANUAL
+            </div>
+            <AlertDialogTitle className="text-center text-base font-bold text-zinc-900 break-words">
               Tem certeza que prefere digitar manualmente?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[13px] leading-relaxed text-slate-600 text-left space-y-2 pt-2">
+            <AlertDialogDescription className="text-[13px] leading-relaxed text-zinc-600 text-left space-y-2 pt-2 break-words">
               <span className="block">
-                Preencher os dados <strong className="text-slate-800">à mão</strong> aumenta muito
+                Preencher os dados <strong className="text-zinc-900">à mão</strong> aumenta muito
                 o risco de <strong className="text-amber-700">erros de digitação</strong> em CPF,
                 RG, CEP, datas e endereço — e qualquer divergência pode causar a{" "}
                 <strong className="text-red-700">rejeição do seu cadastro pela Polícia Federal</strong>.
               </span>
               <span className="block">
-                Nossa <strong className="text-blue-700">IA é treinada para extrair os dados com
+                Nossa <strong className="text-amber-700">IA é treinada para extrair os dados com
                 altíssima precisão</strong> direto dos seus documentos. É <strong>mais rápido,
                 mais seguro</strong> e elimina o retrabalho.
               </span>
-              <span className="block text-[12px] text-slate-500">
+              <span className="block text-[12px] text-zinc-500">
                 Recomendamos fortemente enviar as fotos dos documentos.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <AlertDialogCancel className="mt-0 w-full sm:w-auto text-[12px] font-semibold">
-              Continuar digitando manualmente
-            </AlertDialogCancel>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
             <AlertDialogAction
               onClick={() => { setManualWarnOpen(false); }}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-[12px] font-bold uppercase tracking-wide"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold uppercase tracking-[0.16em]"
             >
               Voltar e enviar documentos
             </AlertDialogAction>
+            <button
+              type="button"
+              onClick={() => { setManualWarnOpen(false); onManual(); }}
+              className="w-full text-[11px] text-zinc-500 underline underline-offset-2 hover:text-zinc-700 font-medium"
+            >
+              Entendi os riscos, quero digitar mesmo assim
+            </button>
           </AlertDialogFooter>
-          <button
-            type="button"
-            onClick={() => { setManualWarnOpen(false); onManual(); }}
-            className="mt-1 text-[11px] text-slate-400 underline underline-offset-2 hover:text-slate-600 self-center"
-          >
-            Entendi os riscos, quero digitar mesmo assim
-          </button>
         </AlertDialogContent>
       </AlertDialog>
     </div>
@@ -1137,62 +1147,58 @@ function Step2Extracting({ stages, error }: { stages: Record<string, string>; er
   return (
     <div className="py-3">
       <div
-        className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-5 shadow-sm"
-        style={{ boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.10)" }}
+        className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] px-4 py-5 shadow-sm"
       >
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
         <div
-          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-30 blur-3xl"
-          style={{ background: "hsl(190 80% 45%)" }}
+          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-500/15 blur-3xl"
         />
-        <div className="relative mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
-          style={{ background: "hsl(190 80% 45% / 0.14)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.25)" }}>
+        <div className="relative mx-auto w-16 h-16 rounded-lg flex items-center justify-center mb-4 border border-amber-500/40 bg-amber-500/10">
           <div className="relative">
-            <FileText className="w-10 h-10" strokeWidth={1.6} style={{ color: "hsl(190 80% 32%)" }} />
-            <Search className="w-4 h-4 absolute -bottom-0.5 -right-0.5" strokeWidth={2.2} style={{ color: "hsl(190 80% 32%)" }} />
-            <Sparkles className="w-3 h-3 absolute -top-0.5 right-0.5 animate-pulse" style={{ color: "hsl(190 80% 50%)" }} />
+            <FileText className="w-8 h-8 text-amber-700" strokeWidth={1.7} />
+            <Search className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5 text-amber-600" strokeWidth={2.2} />
+            <Sparkles className="w-3 h-3 absolute -top-0.5 right-0.5 animate-pulse text-amber-500" />
           </div>
         </div>
-        <div className="text-center text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(190 80% 32%)" }}>
-          Processando · IA
+        <div className="text-center text-[10px] font-mono uppercase tracking-[0.28em] mb-1 text-amber-700">
+          // PROCESSANDO · IA
         </div>
-        <h2 className="text-center text-[17px] leading-tight font-bold font-mono mb-3" style={{ color: "hsl(220 25% 15%)" }}>
-          Extraindo dados dos<br />documentos…
+        <h2 className="text-center text-[16px] leading-tight font-bold tracking-tight mb-3 text-zinc-900 break-words">
+          EXTRAINDO DADOS DOS DOCUMENTOS
         </h2>
 
-        <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-2" style={{ background: "hsl(220 20% 92%)" }}>
-          <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
-            style={{ background: "hsl(190 80% 45%)", width: "66%" }} />
+        <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-2 bg-zinc-200/60">
+          <div className="h-full bg-amber-500 animate-[progress_2.5s_ease-in-out_infinite]" style={{ width: "66%" }} />
         </div>
-        <p className="text-center text-[10px] uppercase tracking-[0.18em] font-bold mb-4" style={{ color: "hsl(220 10% 55%)" }}>Aguarde um momento</p>
+        <p className="text-center text-[10px] font-mono uppercase tracking-[0.22em] mb-4 text-zinc-500">Aguarde um momento</p>
 
-        <div className="border-t border-slate-100 pt-3 space-y-2">
+        <div className="border-t border-zinc-200 pt-3 space-y-2">
         {SLOTS.map(s => {
           const Icon = s.icon;
           const st = stages[s.key];
-          const chipColor = st === "ok" ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
+          const chipColor = st === "ok" ? "hsl(152 60% 42%)" : "hsl(38 92% 50%)";
           const chipStyle = { background: `${chipColor}14`, color: chipColor, boxShadow: `inset 0 0 0 1px ${chipColor}25` };
           return (
-            <div key={s.key} className="flex items-center justify-between py-1">
-              <div className="flex items-center gap-2.5 min-w-0">
+            <div key={s.key} className="flex items-center justify-between gap-2 py-1 min-w-0">
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={chipStyle}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] truncate" style={{ color: "hsl(220 25% 25%)" }}>{s.label}</span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-[0.16em] truncate text-zinc-700">{s.label}</span>
               </div>
               {st === "ok" && (
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                <span className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-[0.18em]"
                   style={{ background: "hsl(152 60% 42% / 0.10)", color: "hsl(152 60% 32%)" }}>
                   <CheckCircle2 className="w-3 h-3" /> OK
                 </span>
               )}
               {st === "processing" && (
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
-                  style={{ background: "hsl(190 80% 45% / 0.10)", color: "hsl(190 80% 32%)" }}>
+                <span className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-[0.18em] bg-amber-500/10 text-amber-700">
                   <Loader2 className="w-3 h-3 animate-spin" /> Lendo
                 </span>
               )}
               {st === "fail" && (
-                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                <span className="shrink-0 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-[0.18em]"
                   style={{ background: "hsl(0 70% 55% / 0.10)", color: "hsl(0 70% 45%)" }}>
                   <AlertCircle className="w-3 h-3" /> Erro
                 </span>
@@ -1724,19 +1730,19 @@ function ReviewSelect({
 /* ─────────────────────── Step 4 — Conclusão ─────────────────────── */
 function Step4Done({ firstName }: { firstName: string }) {
   return (
-    <div className="relative overflow-hidden text-center py-4 px-4 -mx-2 rounded-2xl border border-slate-200/80 bg-white shadow-sm"
-      style={{ boxShadow: "inset 0 0 0 1px hsl(152 60% 42% / 0.10)" }}>
+    <div className="relative overflow-hidden text-center py-4 px-4 rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-sm">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
       <div
         className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full opacity-30 blur-3xl"
         style={{ background: "hsl(152 60% 42%)" }}
       />
-      <div className="relative mt-2">
-      <div className="relative w-24 h-24 mx-auto mb-5">
+      <div className="relative mt-2 min-w-0">
+      <div className="relative w-20 h-20 mx-auto mb-4">
         {/* confetti pontos */}
         {Array.from({ length: 14 }).map((_, i) => {
           const angle = (i / 14) * Math.PI * 2;
-          const r = 50 + (i % 3) * 8;
-          const colors = ["hsl(152 60% 42%)", "hsl(190 80% 45%)", "hsl(45 90% 55%)", "hsl(220 60% 50%)"];
+          const r = 44 + (i % 3) * 6;
+          const colors = ["hsl(152 60% 42%)", "hsl(38 92% 50%)", "hsl(45 90% 55%)", "hsl(35 91% 33%)"];
           return (
             <span key={i} className="absolute w-1.5 h-1.5 rounded-full"
               style={{
@@ -1747,40 +1753,36 @@ function Step4Done({ firstName }: { firstName: string }) {
           );
         })}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: "hsl(152 60% 42% / 0.14)", boxShadow: "inset 0 0 0 1.5px hsl(152 60% 42% / 0.35), 0 0 24px hsl(152 60% 42% / 0.20)" }}>
-            <CheckCircle2 className="w-8 h-8" style={{ color: "hsl(152 60% 32%)" }} />
+          <div className="w-14 h-14 rounded-lg flex items-center justify-center border border-emerald-500/40 bg-emerald-500/10">
+            <CheckCircle2 className="w-7 h-7 text-emerald-700" strokeWidth={2.2} />
           </div>
         </div>
       </div>
 
-      <div className="text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(152 60% 32%)" }}>
-        Concluído
+      <div className="text-[10px] font-mono uppercase tracking-[0.28em] mb-1 text-emerald-700">
+        // CONCLUÍDO
       </div>
-      <h2 className="text-lg font-bold font-mono mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>Cadastro completo!</h2>
-      <p className="text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>
+      <h2 className="text-[18px] font-bold tracking-tight mb-1.5 text-zinc-900 break-words">CADASTRO COMPLETO</h2>
+      <p className="text-xs mb-4 text-zinc-500 break-words">
         Suas informações foram extraídas, revisadas e enviadas com sucesso.
       </p>
 
-      <div className="rounded-2xl p-3 text-left flex gap-2 mb-5"
-        style={{ background: "hsl(190 80% 45% / 0.06)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}>
-        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(190 80% 32%)" }} />
-        <div className="text-[11px] leading-relaxed" style={{ color: "hsl(220 25% 25%)" }}>
+      <div className="rounded-lg p-3 text-left flex gap-2 mb-4 border border-amber-500/30 bg-amber-500/5 min-w-0">
+        <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+        <div className="text-[11px] leading-relaxed text-zinc-700 min-w-0 break-words">
           <strong>Tudo certo{firstName ? `, ${firstName}` : ""}.</strong> Seu acesso ao sistema será liberado após validação pela nossa equipe. Você receberá um e-mail quando estiver tudo pronto.
         </div>
       </div>
 
       <a
         href="/area-do-cliente/login"
-        className="block w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2"
-        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 4px 14px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
+        className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 shadow-[0_6px_18px_-6px_rgba(245,158,11,0.55)]"
       >
         Acessar sistema
       </a>
 
       <a href="https://wa.me/5511963166915" target="_blank" rel="noreferrer"
-        className="block mt-2 text-xs font-medium underline-offset-2 hover:underline"
-        style={{ color: "hsl(220 15% 45%)" }}>
+        className="block mt-2 text-xs font-medium underline-offset-2 hover:underline text-zinc-500">
         Quero tirar dúvidas
       </a>
       </div>
