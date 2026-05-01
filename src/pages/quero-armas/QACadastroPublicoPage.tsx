@@ -188,6 +188,12 @@ export default function QACadastroPublicoPage() {
    * externos abram o cadastro já com o serviço escolhido — eliminando
    * o "cadastro genérico que tenta adivinhar o serviço". */
   const [searchParams] = useSearchParams();
+  const [servicoPreSelecionado, setServicoPreSelecionado] = useState<{
+    slug: string;
+    nome: string;
+    preco: number | null;
+    recorrente: boolean;
+  } | null>(null);
   useEffect(() => {
     const slug = searchParams.get("servico");
     if (!slug) return;
@@ -195,7 +201,7 @@ export default function QACadastroPublicoPage() {
     (async () => {
       const { data } = await supabase
         .from("qa_servicos_catalogo" as any)
-        .select("slug, nome, objetivo_slug, categoria_servico_slug, servico_principal_slug")
+        .select("slug, nome, preco, recorrente, objetivo_slug, categoria_servico_slug, servico_principal_slug")
         .eq("slug", slug)
         .eq("ativo", true)
         .maybeSingle();
@@ -203,6 +209,12 @@ export default function QACadastroPublicoPage() {
       const cat = (data as any).categoria_servico_slug as string | null;
       const obj = (data as any).objetivo_slug as string | null;
       const svc = (data as any).servico_principal_slug as string | null;
+      setServicoPreSelecionado({
+        slug: (data as any).slug,
+        nome: (data as any).nome,
+        preco: (data as any).preco != null ? Number((data as any).preco) : null,
+        recorrente: !!(data as any).recorrente,
+      });
       if (obj && cat && svc) {
         setQualif((q) => ({
           ...q,
@@ -588,6 +600,8 @@ export default function QACadastroPublicoPage() {
           (findServico(qualif.categoria_servico, qualif.servico_principal)?.label as string | undefined) ||
           qualif.descricao_servico_livre ||
           null,
+        // Snapshot do valor (sem disparar cobrança)
+        valor_servico: servicoPreSelecionado?.preco ?? null,
       };
 
       const { data, error } = await supabase.functions.invoke("qa-cadastro-publico", {
@@ -818,11 +832,39 @@ export default function QACadastroPublicoPage() {
           {/* Conteúdo */}
           <div className="relative px-4 sm:px-5 pb-5 min-w-0">
             {step === 0 && (
+              <>
+                {servicoPreSelecionado && (
+                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                        SERVIÇO SELECIONADO
+                      </div>
+                      <div className="text-sm font-bold uppercase text-slate-900 leading-tight mt-0.5 truncate">
+                        {servicoPreSelecionado.nome}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      {servicoPreSelecionado.preco != null ? (
+                        <>
+                          <div className="text-base font-bold text-slate-900 tabular-nums">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(servicoPreSelecionado.preco)}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                            {servicoPreSelecionado.recorrente ? "MENSAL" : "VALOR ÚNICO"}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-[11px] italic text-slate-500">Sob consulta</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               <Step0Qualificacao
                 value={qualif}
                 onChange={setQualif}
                 onContinue={() => { setError(null); setStep(1); }}
               />
+              </>
             )}
 
             {step === 1 && (

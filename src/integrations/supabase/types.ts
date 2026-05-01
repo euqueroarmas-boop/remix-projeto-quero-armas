@@ -2867,6 +2867,7 @@ export type Database = {
           uf_emissor_rg: string | null
           ultima_solicitacao_cliente: string | null
           updated_at: string
+          valor_servico: number | null
           vinculo_tipo: string | null
         }
         Insert: {
@@ -2974,6 +2975,7 @@ export type Database = {
           uf_emissor_rg?: string | null
           ultima_solicitacao_cliente?: string | null
           updated_at?: string
+          valor_servico?: number | null
           vinculo_tipo?: string | null
         }
         Update: {
@@ -3081,6 +3083,7 @@ export type Database = {
           uf_emissor_rg?: string | null
           ultima_solicitacao_cliente?: string | null
           updated_at?: string
+          valor_servico?: number | null
           vinculo_tipo?: string | null
         }
         Relationships: []
