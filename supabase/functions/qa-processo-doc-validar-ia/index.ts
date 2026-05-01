@@ -450,6 +450,154 @@ Deno.serve(async (req) => {
       ator: "ia",
     });
 
+    // ===================================================================
+    // FASE 3: RECONCILIAÇÃO SEGURA — preenche SOMENTE campos vazios do cliente
+    // ===================================================================
+    // Regras inegociáveis:
+    //  - Cliente é a fonte da verdade. NUNCA sobrescreve dado existente.
+    //  - Só roda se o documento foi APROVADO pela IA (confiança >= 0.90).
+    //  - Só promove campos da whitelist (nome/cpf/rg/data_nascimento/endereço).
+    //  - Campos sensíveis já preenchidos (nome, cpf) são intocáveis.
+    //  - Conflitos são registrados em campos_complementares_json + evento auditável.
+    //  - Toda promoção é rastreável (origem='ia', com documento_id e timestamp).
+    if (novoStatus === "aprovado" && cliente?.id) {
+      try {
+        const cx: Record<string, any> = camposExtraidosFinal || {};
+        const cleanStr = (v: any) => (v == null ? "" : String(v).trim());
+        const isCampoVazio = (v: any) => {
+          const s = cleanStr(v).toLowerCase();
+          return s === "" || ["none", "null", "undefined", "n/a", "na", "-"].includes(s);
+        };
+        const onlyDigits = (v: any) => cleanStr(v).replace(/\D+/g, "");
+
+        // Whitelist de promoção automática (ordem importa para auditoria)
+        // Mapeia: campo do cliente -> possíveis chaves no extraído da IA + sanitizer
+        const promocoes: Array<{
+          campoCliente: string;
+          fontesIA: string[];
+          sanitize?: (v: any) => string;
+          sensivel?: boolean; // se true, JAMAIS promove se não estiver vazio
+        }> = [
+          { campoCliente: "nome",            fontesIA: ["nome_completo", "nome"], sensivel: true },
+          { campoCliente: "cpf",             fontesIA: ["cpf"], sanitize: onlyDigits, sensivel: true },
+          { campoCliente: "rg",              fontesIA: ["rg", "numero_documento"] },
+          { campoCliente: "data_nascimento", fontesIA: ["data_nascimento"] },
+          // Endereço — não promove se for em nome de terceiro
+          ...(enderecoTerceiro ? [] : [
+            { campoCliente: "endereco", fontesIA: ["endereco", "endereco_completo", "logradouro"] },
+            { campoCliente: "cidade",   fontesIA: ["cidade"] },
+            { campoCliente: "uf",       fontesIA: ["uf", "estado"] },
+            { campoCliente: "cep",      fontesIA: ["cep"], sanitize: onlyDigits },
+          ]),
+        ];
+
+        const patchCliente: Record<string, any> = {};
+        const promovidos: Array<{ campo: string; valor: string; fonte: string }> = [];
+        const conflitos: Array<{ campo: string; valor_cliente: string; valor_ia: string; fonte: string }> = [];
+
+        for (const p of promocoes) {
+          const valorAtual = (cliente as any)[p.campoCliente];
+          let valorIA = "";
+          let fonteUsada = "";
+          for (const k of p.fontesIA) {
+            const raw = cx[k];
+            const v = p.sanitize ? p.sanitize(raw) : cleanStr(raw);
+            if (!isCampoVazio(v)) { valorIA = v; fonteUsada = k; break; }
+          }
+          if (!valorIA) continue;
+
+          if (isCampoVazio(valorAtual)) {
+            // Cliente está vazio → promove
+            patchCliente[p.campoCliente] = valorIA;
+            promovidos.push({ campo: p.campoCliente, valor: valorIA, fonte: fonteUsada });
+          } else {
+            // Cliente já tem valor → NUNCA sobrescreve
+            const atualNorm = (p.sanitize ? p.sanitize(valorAtual) : cleanStr(valorAtual)).toLowerCase();
+            const iaNorm = valorIA.toLowerCase();
+            if (atualNorm !== iaNorm) {
+              conflitos.push({
+                campo: p.campoCliente,
+                valor_cliente: cleanStr(valorAtual),
+                valor_ia: valorIA,
+                fonte: fonteUsada,
+              });
+            }
+          }
+        }
+
+        // 1) Aplica patch no cliente (somente se houve campos vazios para preencher)
+        if (Object.keys(patchCliente).length > 0) {
+          const { error: cliErr } = await supabase
+            .from("qa_clientes")
+            .update(patchCliente)
+            .eq("id", cliente.id);
+          if (cliErr) {
+            console.warn("[FASE3] Falha ao promover dados ao cliente:", cliErr.message);
+          } else {
+            await supabase.from("qa_processo_eventos").insert({
+              processo_id, documento_id,
+              tipo_evento: "reconciliacao_cliente",
+              descricao: `Promoção automática de dados ao cadastro do cliente a partir de ${doc.nome_documento}.`,
+              dados_json: {
+                origem: "ia",
+                documento_id,
+                tipo_documento: doc.tipo_documento,
+                confianca: conf,
+                campos_promovidos: promovidos,
+                politica: "preenche_apenas_campos_vazios",
+              },
+              ator: "ia",
+            });
+          }
+        }
+
+        // 2) Conflitos (cliente já preenchido com valor diferente) → registra,
+        //    nunca sobrescreve. Vai para campos_complementares_json do documento + evento.
+        if (conflitos.length > 0) {
+          const novosComplementares = {
+            ...camposComplementares,
+            conflitos_reconciliacao: [
+              ...(Array.isArray((camposComplementares as any).conflitos_reconciliacao)
+                ? (camposComplementares as any).conflitos_reconciliacao
+                : []),
+              ...conflitos.map((c) => ({
+                ...c,
+                origem: "ia",
+                documento_id,
+                detectado_em: new Date().toISOString(),
+                acao: "nao_sobrescrito_cliente_e_fonte_da_verdade",
+              })),
+            ],
+          };
+          await supabase.from("qa_processo_documentos")
+            .update({
+              campos_complementares_json: novosComplementares,
+              observacoes: (doc.observacoes ? doc.observacoes + " | " : "") +
+                `Conflito de reconciliação não aplicado (cliente=fonte da verdade): ${conflitos.map((c) => c.campo).join(", ")}`,
+            })
+            .eq("id", documento_id);
+
+          await supabase.from("qa_processo_eventos").insert({
+            processo_id, documento_id,
+            tipo_evento: "reconciliacao_conflito",
+            descricao: `Conflito de dados detectado entre ${doc.nome_documento} e cadastro do cliente. Cadastro preservado.`,
+            dados_json: {
+              origem: "ia",
+              documento_id,
+              tipo_documento: doc.tipo_documento,
+              confianca: conf,
+              conflitos,
+              politica: "cliente_e_fonte_da_verdade_nao_sobrescreve",
+            },
+            ator: "ia",
+          });
+        }
+      } catch (e) {
+        // Falha na reconciliação NUNCA derruba a validação do documento
+        console.warn("[FASE3] Reconciliação falhou (não crítico):", e);
+      }
+    }
+
     // ===== GRUPO ALTERNATIVO: se aprovado, dispensa demais itens do mesmo grupo =====
     if (novoStatus === "aprovado") {
       const grupo = (regra?.grupo_alternativo as string | undefined) ?? null;
