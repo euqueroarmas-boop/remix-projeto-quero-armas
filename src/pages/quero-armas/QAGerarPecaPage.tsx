@@ -21,6 +21,8 @@ import { logSistema } from "@/lib/logSistema";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
 import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/quero-armas/tiposPeca";
 import PecaCorrectionTools from "@/components/quero-armas/PecaCorrectionTools";
+import CorrecoesAlertaPanel from "@/components/quero-armas/CorrecoesAlertaPanel";
+import type { CorrecaoAlerta } from "@/components/quero-armas/DraftingView";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
