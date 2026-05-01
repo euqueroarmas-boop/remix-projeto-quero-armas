@@ -137,11 +137,39 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
   return { b64: btoa(bin), mime: data.type || "application/octet-stream" };
 }
 
-function checaCamposExigidos(extraidos: Record<string, any>, exige: string[] = []): string[] {
+/**
+ * Verifica campos obrigatórios no payload extraído pela IA.
+ *
+ * Para documentos de PESSOA JURÍDICA (Contrato Social, QSA), `nome_titular`
+ * historicamente foi cadastrado como exigido — porém esses documentos não têm
+ * um único titular, e sim uma lista de SÓCIOS. Aceitamos como satisfeito
+ * quando há `socios` (array) ou `razao_social`/`cnpj` no payload, de forma
+ * a não invalidar QSA/Contrato Social legítimos sem tocar na regra do banco.
+ */
+function checaCamposExigidos(
+  extraidos: Record<string, any>,
+  exige: string[] = [],
+  tipoDocumento?: string,
+): string[] {
   const faltando: string[] = [];
+  const isPJ = tipoDocumento === "renda_qsa" || tipoDocumento === "renda_contrato_social";
+  const sociosArr = Array.isArray(extraidos?.socios) ? extraidos.socios : [];
+  const adminsArr = Array.isArray(extraidos?.administradores) ? extraidos.administradores : [];
+  const temIdentPJ =
+    (typeof extraidos?.razao_social === "string" && extraidos.razao_social.trim() !== "") ||
+    (typeof extraidos?.cnpj === "string" && extraidos.cnpj.trim() !== "") ||
+    sociosArr.length > 0 ||
+    adminsArr.length > 0;
+
   for (const k of exige) {
     const v = extraidos?.[k];
-    if (v === undefined || v === null || (typeof v === "string" && v.trim() === "")) faltando.push(k);
+    const vazio = v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+    if (!vazio) continue;
+    // Equivalência semântica para PJ: nome_titular pode ser substituído pelos sócios/empresa.
+    if (isPJ && (k === "nome_titular" || k === "nome_completo" || k === "titular") && temIdentPJ) {
+      continue;
+    }
+    faltando.push(k);
   }
   return faltando;
 }
@@ -362,7 +390,11 @@ Deno.serve(async (req) => {
     const regra = (doc.regra_validacao ?? {}) as any;
     const exige: string[] = Array.isArray(regra.exige) ? regra.exige : [];
     const esperado: Record<string, any> = regra.esperado || {};
-    const camposFaltando = checaCamposExigidos(parsed.campos_extraidos || {}, exige);
+    const camposFaltando = checaCamposExigidos(
+      parsed.campos_extraidos || {},
+      exige,
+      doc.tipo_documento,
+    );
     const esperadoViolado = checaEsperado(parsed.campos_extraidos || {}, esperado);
     const dataEmissao = parsed.campos_extraidos?.data_emissao || parsed.campos_extraidos?.validade;
     const vencido = isVencido(dataEmissao, doc.validade_dias);
