@@ -7,6 +7,16 @@ import {
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import { BackButton } from "@/shared/components/BackButton";
 import {
@@ -944,6 +954,7 @@ function Stepper({ current }: { current: StepId }) {
 function Step1Documents({
   files, fileRefs, onPick, onContinue, onManual, allUploaded, error, onBack,
 }: any) {
+  const [manualWarnOpen, setManualWarnOpen] = useState(false);
   return (
     <div className="space-y-3">
       {onBack && (
@@ -1060,12 +1071,59 @@ function Step1Documents({
       </button>
 
       <button
-        onClick={onManual}
+        onClick={() => setManualWarnOpen(true)}
         className="w-full h-9 text-xs font-medium underline-offset-2 hover:underline"
         style={{ color: "hsl(220 15% 45%)" }}
       >
         Preencher manualmente
       </button>
+
+      <AlertDialog open={manualWarnOpen} onOpenChange={setManualWarnOpen}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+              <AlertTriangle className="h-6 w-6 text-amber-600" strokeWidth={2.4} />
+            </div>
+            <AlertDialogTitle className="text-center text-base font-bold text-slate-800">
+              Tem certeza que prefere digitar manualmente?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[13px] leading-relaxed text-slate-600 text-left space-y-2 pt-2">
+              <span className="block">
+                Preencher os dados <strong className="text-slate-800">à mão</strong> aumenta muito
+                o risco de <strong className="text-amber-700">erros de digitação</strong> em CPF,
+                RG, CEP, datas e endereço — e qualquer divergência pode causar a{" "}
+                <strong className="text-red-700">rejeição do seu cadastro pela Polícia Federal</strong>.
+              </span>
+              <span className="block">
+                Nossa <strong className="text-blue-700">IA é treinada para extrair os dados com
+                altíssima precisão</strong> direto dos seus documentos. É <strong>mais rápido,
+                mais seguro</strong> e elimina o retrabalho.
+              </span>
+              <span className="block text-[12px] text-slate-500">
+                Recomendamos fortemente enviar as fotos dos documentos.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <AlertDialogCancel className="mt-0 w-full sm:w-auto text-[12px] font-semibold">
+              Continuar digitando manualmente
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setManualWarnOpen(false); }}
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-[12px] font-bold uppercase tracking-wide"
+            >
+              Voltar e enviar documentos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+          <button
+            type="button"
+            onClick={() => { setManualWarnOpen(false); onManual(); }}
+            className="mt-1 text-[11px] text-slate-400 underline underline-offset-2 hover:text-slate-600 self-center"
+          >
+            Entendi os riscos, quero digitar mesmo assim
+          </button>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
