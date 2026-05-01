@@ -1032,7 +1032,7 @@ function Step1Documents({
             <input
               ref={fileRefs[slot.key]}
               type="file"
-              accept="image/*"
+              accept={slot.key === "selfie" ? "image/*" : "image/*,application/pdf,.pdf"}
               capture={slot.capture}
               hidden
               onChange={(e) => onPick(e, slot.key)}
