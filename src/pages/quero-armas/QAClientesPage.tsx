@@ -3549,9 +3549,22 @@ export default function QAClientesPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
-      <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>{title}</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">{children}</div>
+    <div className="qa-card p-4 md:p-5">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          style={{ background: "hsl(220 65% 48% / 0.12)" }}
+        >
+          <FileText className="h-3.5 w-3.5" style={{ color: "hsl(220 65% 48%)" }} />
+        </div>
+        <h3
+          className="text-[11px] uppercase tracking-[0.14em] font-bold"
+          style={{ color: "hsl(220 65% 48%)" }}
+        >
+          {title}
+        </h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">{children}</div>
     </div>
   );
 }
