@@ -67,7 +67,6 @@ export default function ClienteSelfieAvatar({
 
   // 2) Gera signed URL para o path correto, usando o bucket adequado.
   //    Tenta primeiro o bucket esperado e, em caso de falha, faz fallback p/ o outro.
-  const path = imagemManual || selfiePath || null;
   const resolvedPath = imagemManual || selfiePathInline || selfiePath || null;
   const primaryBucket = imagemManual ? BUCKET_MANUAL : BUCKET_SELFIE;
   const fallbackBucket = imagemManual ? BUCKET_SELFIE : BUCKET_MANUAL;
