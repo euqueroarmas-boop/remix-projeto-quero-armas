@@ -25,32 +25,216 @@ type Item = {
   obrigatorio: boolean;
   link_emissao: string | null;
   label_botao: string;
+  instrucoes?: string;
+  observacoes_cliente?: string;
+  orgao_emissor?: string;
+  prazo_recomendado_dias?: number;
+  checklist_operador?: string[];
 };
 
 function rendaPara(c: Cond): Item[] {
   switch (c) {
     case "clt": return [
-      { tipo_documento: "renda_holerite_mes_atual", nome_documento: "Holerite mais recente (mês atual)", obrigatorio: true, link_emissao: null, label_botao: "Enviar Holerite" },
-      { tipo_documento: "renda_ctps_digital", nome_documento: "Carteira de Trabalho Digital (PDF gov.br)", obrigatorio: true, link_emissao: "https://servicos.mte.gov.br/", label_botao: "Enviar CTPS Digital" },
-      { tipo_documento: "renda_extrato_inss", nome_documento: "Extrato completo de contribuições do INSS", obrigatorio: true, link_emissao: "https://meu.inss.gov.br/", label_botao: "Enviar Extrato INSS" },
+      {
+        tipo_documento: "renda_holerite_mes_atual",
+        nome_documento: "Holerite mais recente (mês atual)",
+        obrigatorio: true,
+        link_emissao: null,
+        label_botao: "Enviar Holerite",
+        instrucoes: "1) Solicite ao RH o holerite do mês atual (ou último mês fechado).\n2) Confirme que o documento mostra: nome completo, CPF, cargo, data de emissão e empresa.\n3) Envie em PDF preferencialmente — fotos só se totalmente legíveis.",
+        observacoes_cliente: "ATENÇÃO: o holerite deve ser dos últimos 30 dias. Documentos antigos podem ser recusados.",
+        prazo_recomendado_dias: 30,
+        checklist_operador: [
+          "Conferir nome completo e CPF do titular",
+          "Conferir CNPJ do empregador",
+          "Conferir data de emissão (até 30 dias)",
+          "Verificar se o salário/competência está visível",
+        ],
+      },
+      {
+        tipo_documento: "renda_ctps_digital",
+        nome_documento: "Carteira de Trabalho Digital (PDF gov.br)",
+        obrigatorio: true,
+        link_emissao: "https://servicos.mte.gov.br/",
+        label_botao: "Emitir CTPS Digital",
+        instrucoes: "1) Acesse o app/portal CTPS Digital com login gov.br.\n2) Vá em \"Contratos\" e gere o PDF completo do histórico.\n3) Envie o PDF original gerado pelo gov.br (não tire foto da tela).",
+        orgao_emissor: "Ministério do Trabalho",
+        checklist_operador: [
+          "Verificar se é o PDF oficial gov.br (não print)",
+          "Conferir nome e CPF",
+          "Conferir vínculo ativo mais recente",
+        ],
+      },
+      {
+        tipo_documento: "renda_extrato_inss",
+        nome_documento: "Extrato completo de contribuições do INSS (CNIS)",
+        obrigatorio: true,
+        link_emissao: "https://meu.inss.gov.br/",
+        label_botao: "Emitir Extrato INSS",
+        instrucoes: "1) Acesse Meu INSS com login gov.br.\n2) Menu \"Extrato de Contribuição (CNIS)\" > Baixar PDF.\n3) Envie o PDF completo, sem cortar páginas.",
+        orgao_emissor: "INSS",
+        checklist_operador: [
+          "Verificar se é o CNIS oficial",
+          "Conferir CPF e nome completo",
+          "Confirmar vínculo ativo recente",
+        ],
+      },
     ];
     case "autonomo": return [
-      { tipo_documento: "renda_cnpj_autonomo", nome_documento: "Cartão CNPJ (autônomo / MEI)", obrigatorio: true, link_emissao: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp", label_botao: "Enviar Cartão CNPJ" },
-      { tipo_documento: "renda_nf_recente", nome_documento: "Nota fiscal recente emitida", obrigatorio: true, link_emissao: null, label_botao: "Enviar Nota Fiscal" },
+      {
+        tipo_documento: "renda_cnpj_autonomo",
+        nome_documento: "Cartão CNPJ (Autônomo / MEI)",
+        obrigatorio: true,
+        link_emissao: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp",
+        label_botao: "Emitir Cartão CNPJ",
+        instrucoes: "1) Acesse o link \"Consulta CNPJ\" da Receita Federal.\n2) Digite seu CNPJ e resolva o captcha.\n3) Clique em \"Consultar\" e depois em \"Imprimir\" — salve como PDF.",
+        orgao_emissor: "Receita Federal",
+        checklist_operador: [
+          "Verificar situação ATIVA",
+          "Conferir CPF do titular = sócio único / MEI",
+          "Verificar CNAE compatível com a atividade declarada",
+        ],
+      },
+      {
+        tipo_documento: "renda_nf_recente",
+        nome_documento: "Nota fiscal recente emitida",
+        obrigatorio: true,
+        link_emissao: null,
+        label_botao: "Enviar Nota Fiscal",
+        instrucoes: "1) Localize uma NFS-e ou NF-e emitida pelo seu CNPJ nos últimos 30 dias.\n2) Baixe o DANFE/PDF oficial.\n3) Envie a NF (não enviar apenas comprovante de pagamento).",
+        observacoes_cliente: "Se você não emite notas, informe ao operador para definir documento alternativo.",
+        prazo_recomendado_dias: 30,
+        checklist_operador: [
+          "Conferir CNPJ emissor = CNPJ do titular",
+          "Conferir data (até 30 dias)",
+          "Verificar valor compatível com renda declarada",
+        ],
+      },
     ];
     case "empresario": return [
-      { tipo_documento: "renda_cartao_cnpj", nome_documento: "Cartão CNPJ da empresa", obrigatorio: true, link_emissao: "https://solucoes.receita.fazenda.gov.br/Servicos/cnpjreva/Cnpjreva_Solicitacao.asp", label_botao: "Enviar Cartão CNPJ" },
-      { tipo_documento: "renda_qsa", nome_documento: "QSA (Quadro de Sócios e Administradores)", obrigatorio: true, link_emissao: null, label_botao: "Enviar QSA" },
-      { tipo_documento: "renda_contrato_social", nome_documento: "Contrato Social", obrigatorio: true, link_emissao: null, label_botao: "Enviar Contrato Social" },
-      { tipo_documento: "renda_nf_empresa", nome_documento: "Nota fiscal recente da empresa (se aplicável)", obrigatorio: false, link_emissao: null, label_botao: "Enviar Nota Fiscal" },
+      {
+        tipo_documento: "renda_cartao_cnpj",
+        nome_documento: "Cartão CNPJ da empresa",
+        obrigatorio: true,
+        link_emissao: "https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp",
+        label_botao: "Emitir Cartão CNPJ",
+        instrucoes: "1) Acesse o link da Receita Federal (Consulta CNPJ).\n2) Digite o CNPJ da empresa e resolva o captcha.\n3) Clique em \"Consultar\" e baixe/imprima o Cartão CNPJ em PDF.\n4) Na MESMA tela, role até \"QSA – Quadro de Sócios e Administradores\" e baixe também (envie no item ao lado).",
+        observacoes_cliente: "ATENÇÃO: o QSA é gerado dentro da MESMA consulta. Não envie apenas o cartão CNPJ.",
+        orgao_emissor: "Receita Federal",
+        checklist_operador: [
+          "Verificar situação cadastral ATIVA",
+          "Conferir razão social, CNPJ e endereço",
+          "Conferir CNAE principal",
+        ],
+      },
+      {
+        tipo_documento: "renda_qsa",
+        nome_documento: "QSA (Quadro de Sócios e Administradores)",
+        obrigatorio: true,
+        link_emissao: "https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp",
+        label_botao: "Emitir QSA",
+        instrucoes: "1) Use a MESMA consulta do Cartão CNPJ.\n2) Clique em \"QSA – Quadro de Sócios e Administradores\".\n3) Clique em \"Imprimir\" e salve como PDF.\n4) Envie aqui o PDF do QSA.",
+        observacoes_cliente: "O QSA mostra os sócios da empresa. Sem ele, não é possível validar sua condição de sócio.",
+        orgao_emissor: "Receita Federal",
+        checklist_operador: [
+          "Conferir se o titular consta como sócio/administrador",
+          "Verificar percentual de participação",
+          "Cruzar com o Contrato Social",
+        ],
+      },
+      {
+        tipo_documento: "renda_contrato_social",
+        nome_documento: "Contrato Social (ou última alteração)",
+        obrigatorio: true,
+        link_emissao: "https://www.jucesponline.sp.gov.br/",
+        label_botao: "Emitir Contrato Social",
+        instrucoes: "1) Acesse o portal da Junta Comercial do seu estado (ex.: JUCESP em SP).\n2) Vá em \"Pesquisa de Empresas\".\n3) Busque por nome ou CNPJ e baixe o Contrato Social ou a última alteração consolidada.",
+        observacoes_cliente: "Se a empresa for de outro estado, use a Junta Comercial correspondente.",
+        orgao_emissor: "Junta Comercial",
+        checklist_operador: [
+          "Documento completo (todas as páginas)",
+          "Conferir dados com o QSA",
+          "Verificar última alteração registrada",
+        ],
+      },
+      {
+        tipo_documento: "renda_nf_empresa",
+        nome_documento: "Nota fiscal recente da empresa (se aplicável)",
+        obrigatorio: false,
+        link_emissao: null,
+        label_botao: "Enviar Nota Fiscal",
+        instrucoes: "1) Localize uma NF emitida pela empresa nos últimos 30 dias.\n2) Baixe o DANFE/PDF.\n3) Envie aqui.",
+        observacoes_cliente: "Se a empresa não emite notas, ignore este item.",
+        prazo_recomendado_dias: 30,
+        checklist_operador: [
+          "Conferir data (até 30 dias)",
+          "Conferir CNPJ emissor",
+          "Validar atividade compatível",
+        ],
+      },
     ];
     case "aposentado": return [
-      { tipo_documento: "renda_comprovante_beneficio", nome_documento: "Comprovante de benefício (aposentadoria)", obrigatorio: true, link_emissao: "https://meu.inss.gov.br/", label_botao: "Enviar Comprovante de Benefício" },
-      { tipo_documento: "renda_extrato_inss", nome_documento: "Extrato completo de contribuições do INSS (se aplicável)", obrigatorio: false, link_emissao: "https://meu.inss.gov.br/", label_botao: "Enviar Extrato INSS" },
+      {
+        tipo_documento: "renda_comprovante_beneficio",
+        nome_documento: "Comprovante de benefício (aposentadoria)",
+        obrigatorio: true,
+        link_emissao: "https://meu.inss.gov.br/",
+        label_botao: "Emitir Comprovante",
+        instrucoes: "1) Acesse Meu INSS com login gov.br.\n2) Menu \"Extrato de Pagamento de Benefício\" > baixar PDF do mês atual.\n3) Envie o PDF completo.",
+        orgao_emissor: "INSS",
+        prazo_recomendado_dias: 30,
+        checklist_operador: [
+          "Conferir nome e CPF",
+          "Conferir número do benefício",
+          "Verificar data do extrato",
+        ],
+      },
+      {
+        tipo_documento: "renda_extrato_inss",
+        nome_documento: "Extrato completo de contribuições do INSS (CNIS — se aplicável)",
+        obrigatorio: false,
+        link_emissao: "https://meu.inss.gov.br/",
+        label_botao: "Emitir CNIS",
+        instrucoes: "1) Acesse Meu INSS.\n2) Menu \"Extrato de Contribuição (CNIS)\" > baixar PDF.\n3) Envie o PDF completo.",
+        orgao_emissor: "INSS",
+        checklist_operador: [
+          "Conferir histórico contributivo",
+          "Validar identidade (CPF/nome)",
+        ],
+      },
     ];
     case "funcionario_publico": return [
-      { tipo_documento: "renda_carteira_funcional", nome_documento: "Carteira Funcional (servidor público)", obrigatorio: true, link_emissao: null, label_botao: "Enviar Carteira Funcional" },
-      { tipo_documento: "renda_holerite_30dias", nome_documento: "Holerite dos últimos 30 dias", obrigatorio: true, link_emissao: null, label_botao: "Enviar Holerite (30 dias)" },
+      {
+        tipo_documento: "renda_carteira_funcional",
+        nome_documento: "Carteira Funcional / Documento Funcional",
+        obrigatorio: true,
+        link_emissao: null,
+        label_botao: "Enviar Funcional",
+        instrucoes: "1) Localize sua carteira funcional ou documento oficial emitido pelo órgão público em que trabalha.\n2) Fotografe frente e verso ou escaneie em PDF.\n3) Envie o arquivo aqui.",
+        observacoes_cliente: "A funcional comprova que você é servidor público ATIVO. Sem ela, não é possível validar seu vínculo.",
+        checklist_operador: [
+          "Conferir órgão emissor",
+          "Conferir nome e CPF",
+          "Verificar se está dentro da validade (se aplicável)",
+          "Confirmar status ATIVO (não aposentado)",
+        ],
+      },
+      {
+        tipo_documento: "renda_holerite_funcionario_publico",
+        nome_documento: "Holerite recente (servidor público)",
+        obrigatorio: true,
+        link_emissao: null,
+        label_botao: "Enviar Holerite",
+        instrucoes: "1) Acesse o portal do servidor do seu órgão (ex.: SIGRH, SIAPE, SEI etc.).\n2) Baixe o contracheque/holerite mais recente (últimos 30 dias).\n3) Envie em PDF preferencialmente.",
+        observacoes_cliente: "ATENÇÃO: o holerite deve ter sido emitido nos últimos 30 dias. Documentos antigos serão recusados.",
+        prazo_recomendado_dias: 30,
+        checklist_operador: [
+          "Conferir nome completo e CPF",
+          "Conferir órgão pagador",
+          "Conferir data do holerite (até 30 dias)",
+          "Confirmar vínculo ATIVO",
+        ],
+      },
     ];
   }
 }
@@ -154,10 +338,18 @@ Deno.serve(async (req) => {
         etapa: "complementar",
         obrigatorio: d.obrigatorio,
         status: "pendente",
-        validade_dias: 30,
+        validade_dias: d.prazo_recomendado_dias ?? 30,
         formato_aceito: ["pdf", "jpg", "jpeg", "png"],
-        regra_validacao: { exige: ["nome_titular"], label_botao: d.label_botao },
+        regra_validacao: {
+          exige: ["nome_titular"],
+          label_botao: d.label_botao,
+          checklist_operador: d.checklist_operador ?? [],
+        },
         link_emissao: d.link_emissao,
+        instrucoes: d.instrucoes ?? null,
+        observacoes_cliente: d.observacoes_cliente ?? null,
+        orgao_emissor: d.orgao_emissor ?? null,
+        prazo_recomendado_dias: d.prazo_recomendado_dias ?? null,
       }));
       await supabase.from("qa_processo_documentos").insert(rows);
     }
