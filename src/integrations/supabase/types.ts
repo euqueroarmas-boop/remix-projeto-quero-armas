@@ -4829,6 +4829,74 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documentos_modelos_aprovados: {
+        Row: {
+          aprovado_em: string
+          aprovado_por: string | null
+          ativo: boolean
+          campos_esperados_json: Json
+          created_at: string
+          documento_origem_id: string | null
+          embedding_texto: string | null
+          id: string
+          layout_fingerprint_json: Json | null
+          nome_modelo: string | null
+          observacoes: string | null
+          origem_emissora: string | null
+          palavras_chave_json: Json
+          texto_ocr_normalizado: string | null
+          tipo_documento: string
+          updated_at: string
+          versao_modelo: number
+        }
+        Insert: {
+          aprovado_em?: string
+          aprovado_por?: string | null
+          ativo?: boolean
+          campos_esperados_json?: Json
+          created_at?: string
+          documento_origem_id?: string | null
+          embedding_texto?: string | null
+          id?: string
+          layout_fingerprint_json?: Json | null
+          nome_modelo?: string | null
+          observacoes?: string | null
+          origem_emissora?: string | null
+          palavras_chave_json?: Json
+          texto_ocr_normalizado?: string | null
+          tipo_documento: string
+          updated_at?: string
+          versao_modelo?: number
+        }
+        Update: {
+          aprovado_em?: string
+          aprovado_por?: string | null
+          ativo?: boolean
+          campos_esperados_json?: Json
+          created_at?: string
+          documento_origem_id?: string | null
+          embedding_texto?: string | null
+          id?: string
+          layout_fingerprint_json?: Json | null
+          nome_modelo?: string | null
+          observacoes?: string | null
+          origem_emissora?: string | null
+          palavras_chave_json?: Json
+          texto_ocr_normalizado?: string | null
+          tipo_documento?: string
+          updated_at?: string
+          versao_modelo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_documentos_modelos_aprovados_documento_origem_id_fkey"
+            columns: ["documento_origem_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processo_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_embeddings: {
         Row: {
           chunk_id: string
@@ -6113,6 +6181,7 @@ export type Database = {
           instrucoes: string | null
           link_emissao: string | null
           metadados_documento_json: Json | null
+          modelo_aprovado_id: string | null
           modelo_url: string | null
           motivo_rejeicao: string | null
           nome_documento: string
@@ -6124,11 +6193,14 @@ export type Database = {
           processo_id: string
           regra_validacao: Json | null
           revisado_por: string | null
+          score_modelo_aprovado: number | null
           status: string
+          texto_ocr_extraido: string | null
           tipo_documento: string
           titular_comprovante_documento: string | null
           titular_comprovante_nome: string | null
           updated_at: string
+          usado_como_modelo: boolean
           validacao_ia_confianca: number | null
           validacao_ia_erro: string | null
           validacao_ia_modelo: string | null
@@ -6154,6 +6226,7 @@ export type Database = {
           instrucoes?: string | null
           link_emissao?: string | null
           metadados_documento_json?: Json | null
+          modelo_aprovado_id?: string | null
           modelo_url?: string | null
           motivo_rejeicao?: string | null
           nome_documento: string
@@ -6165,11 +6238,14 @@ export type Database = {
           processo_id: string
           regra_validacao?: Json | null
           revisado_por?: string | null
+          score_modelo_aprovado?: number | null
           status?: string
+          texto_ocr_extraido?: string | null
           tipo_documento: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
           updated_at?: string
+          usado_como_modelo?: boolean
           validacao_ia_confianca?: number | null
           validacao_ia_erro?: string | null
           validacao_ia_modelo?: string | null
@@ -6195,6 +6271,7 @@ export type Database = {
           instrucoes?: string | null
           link_emissao?: string | null
           metadados_documento_json?: Json | null
+          modelo_aprovado_id?: string | null
           modelo_url?: string | null
           motivo_rejeicao?: string | null
           nome_documento?: string
@@ -6206,11 +6283,14 @@ export type Database = {
           processo_id?: string
           regra_validacao?: Json | null
           revisado_por?: string | null
+          score_modelo_aprovado?: number | null
           status?: string
+          texto_ocr_extraido?: string | null
           tipo_documento?: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
           updated_at?: string
+          usado_como_modelo?: boolean
           validacao_ia_confianca?: number | null
           validacao_ia_erro?: string | null
           validacao_ia_modelo?: string | null
@@ -6218,6 +6298,13 @@ export type Database = {
           validade_dias?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_processo_documentos_modelo_aprovado_id_fkey"
+            columns: ["modelo_aprovado_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_modelos_aprovados"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_processo_documentos_processo_id_fkey"
             columns: ["processo_id"]
@@ -7095,6 +7182,36 @@ export type Database = {
           perfil?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      qa_validacao_config: {
+        Row: {
+          alimenta_aprendizado: boolean
+          limite_analise_humana: number
+          limite_aprovacao_auto: number
+          observacoes: string | null
+          permite_aprovacao_auto: boolean
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          alimenta_aprendizado?: boolean
+          limite_analise_humana?: number
+          limite_aprovacao_auto?: number
+          observacoes?: string | null
+          permite_aprovacao_auto?: boolean
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          alimenta_aprendizado?: boolean
+          limite_analise_humana?: number
+          limite_aprovacao_auto?: number
+          observacoes?: string | null
+          permite_aprovacao_auto?: boolean
+          tipo_documento?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -8410,6 +8527,22 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_qa_modelos_aprovados: {
+        Args: {
+          filtro_tipo: string
+          match_limit?: number
+          query_embedding: string
+        }
+        Returns: {
+          campos_esperados_json: Json
+          id: string
+          nome_modelo: string
+          origem_emissora: string
+          palavras_chave_json: Json
+          similaridade: number
+          tipo_documento: string
+        }[]
       }
       qa_arma_manual_upsert: {
         Args: {
