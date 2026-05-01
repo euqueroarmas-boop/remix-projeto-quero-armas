@@ -524,7 +524,7 @@ export default function QAVendasPendentesPage() {
       <div className="flex items-center justify-between gap-3 mb-5">
         <div>
           <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-slate-500">
-            ADMIN · QUERO ARMAS
+            EQUIPE · QUERO ARMAS
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-900 uppercase tracking-tight mt-0.5">
             Contratações
