@@ -261,6 +261,18 @@ export default function QACadastroPublicoPage() {
   } | null>(null);
   const [updateExistingId, setUpdateExistingId] = useState<string | null>(null);
 
+  // Etapa 5 — Acesso Arsenal (cria conta gratuita)
+  const [arsenalSenha, setArsenalSenha] = useState("");
+  const [arsenalSenhaConfirma, setArsenalSenhaConfirma] = useState("");
+  const [arsenalShowSenha, setArsenalShowSenha] = useState(false);
+  const [arsenalBusy, setArsenalBusy] = useState(false);
+  const [arsenalError, setArsenalError] = useState<string | null>(null);
+  const [arsenalCriado, setArsenalCriado] = useState<{
+    user_id: string | null;
+    email: string;
+    cliente_existente: boolean;
+  } | null>(null);
+
   /* ─── upload handler ─── */
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
     const f = e.target.files?.[0];
