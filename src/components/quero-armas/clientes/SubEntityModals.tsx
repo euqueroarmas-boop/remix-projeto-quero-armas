@@ -523,10 +523,11 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
               service_slug: serviceSlug,
               service_name: serviceName,
               pendente_classificacao: false,
-              // Fonte única de verdade. Padrão canônico do produto: 'vinculado'.
-              // status_processo NÃO é alterado aqui — só muda quando o processo
-              // é efetivamente aberto (RPC qa_venda_to_processo).
-              status_financeiro: "vinculado",
+              // status_financeiro NÃO é setado aqui: é DERIVADO de qa_vendas.
+              // A trigger trg_qa_vendas_propagate_status já propagou o valor
+              // correto para esta solicitação no INSERT da venda acima.
+              // status_processo só muda quando o processo é aberto
+              // (RPC qa_venda_to_processo).
               venda_id: vendaPk,
               updated_at: new Date().toISOString(),
             })

@@ -6,6 +6,7 @@ import { Loader2, Settings2, Save, AlertTriangle, ListChecks } from "lucide-reac
 import { toast } from "sonner";
 import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
 // Notificações e timeline são geradas por triggers no banco.
+// Status financeiro é DERIVADO de qa_vendas — exibido apenas em modo leitura.
 
 /**
  * Status canônicos da solicitação — qa_solicitacoes_servico é a ÚNICA fonte
@@ -13,16 +14,6 @@ import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServic
  * (espelho do CHECK constraint no banco).
  */
 const STATUS_SERVICO = STATUS_SERVICO_QA;
-
-const STATUS_FINANCEIRO = [
-  "sem_cobranca_vinculada",
-  "vinculado",
-  "aguardando_pagamento",
-  "pago",
-  "vencido",
-  "cancelado",
-  "estornado",
-] as const;
 
 const STATUS_PROCESSO = [
   "processo_nao_aberto",
@@ -96,11 +87,13 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
       // Roteia toda alteração via edge function: ela aplica a regra de
       // bloqueio (sem checklist) e audita tentativas inválidas em
       // qa_solicitacao_eventos como 'tentativa_status_bloqueada'.
+      //
+      // status_financeiro NÃO é enviado: é derivado de qa_vendas (fonte única).
+      // Para alterar pagamento, use o módulo Financeiro (qa_vendas.status).
       const { data, error } = await supabase.functions.invoke("qa-status-update", {
         body: {
           solicitacao_id: solicitacaoId,
           status_servico: semChecklist ? undefined : statusServico,
-          status_financeiro: statusFinanceiro,
           status_processo: statusProcesso,
           observacoes,
         },
@@ -192,12 +185,17 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
                   : undefined
               }
             />
-            <SelectField
-              label="Status financeiro"
-              value={statusFinanceiro}
-              onChange={setStatusFinanceiro}
-              options={STATUS_FINANCEIRO as readonly string[]}
-            />
+            <div>
+              <label className="text-[9px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-1 block">
+                Status financeiro
+              </label>
+              <div className="w-full h-8 text-xs border rounded-md px-2 flex items-center bg-slate-100 border-slate-200 text-slate-500 uppercase tracking-wider">
+                {statusFinanceiro ? labelize(statusFinanceiro) : "—"}
+              </div>
+              <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-500">
+                Status financeiro é controlado pela venda/financeiro.
+              </div>
+            </div>
             <SelectField
               label="Status do processo"
               value={statusProcesso}

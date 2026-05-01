@@ -21,10 +21,24 @@ Deno.serve(async (req) => {
     const {
       solicitacao_id,
       status_servico,
-      status_financeiro,
+      status_financeiro: _ignored_status_financeiro,
       status_processo,
       observacoes,
     } = body || {};
+
+    // 🚫 FONTE ÚNICA: status_financeiro é DERIVADO de qa_vendas.
+    // Atualizações chegam exclusivamente via trigger trg_qa_vendas_propagate_status.
+    // Se o cliente enviar este campo, ignoramos silenciosamente e devolvemos um
+    // aviso controlado para que o frontend possa exibir/registrar.
+    const statusFinanceiroRecebido = typeof _ignored_status_financeiro === "string"
+      ? _ignored_status_financeiro
+      : null;
+    const avisos: string[] = [];
+    if (statusFinanceiroRecebido !== null) {
+      avisos.push(
+        "status_financeiro ignorado: campo é derivado de qa_vendas. Use o módulo financeiro."
+      );
+    }
 
     if (!solicitacao_id) {
       return new Response(JSON.stringify({ error: "solicitacao_id obrigatório" }), {
@@ -97,12 +111,12 @@ Deno.serve(async (req) => {
     if (typeof status_servico === "string" && !atual.sem_checklist_configurado) {
       payload.status_servico = status_servico;
     }
-    if (typeof status_financeiro === "string") payload.status_financeiro = status_financeiro;
+    // status_financeiro NUNCA é gravado aqui (fonte única = qa_vendas).
     if (typeof status_processo === "string") payload.status_processo = status_processo;
     if (typeof observacoes !== "undefined") payload.observacoes = observacoes || null;
 
     if (Object.keys(payload).length === 0) {
-      return new Response(JSON.stringify({ ok: true, noop: true }), {
+      return new Response(JSON.stringify({ ok: true, noop: true, avisos }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -133,11 +147,10 @@ Deno.serve(async (req) => {
     }
 
     // 🚀 Gatilho automático: provisionar acesso ao Portal quando status_financeiro virar "pago"
-    const PAID_STATUSES = new Set(["pago", "quitado", "recebido", "confirmado"]);
-    const becamePaid =
-      typeof status_financeiro === "string" &&
-      PAID_STATUSES.has(String(status_financeiro).toLowerCase()) &&
-      !PAID_STATUSES.has(String(atual.status_financeiro || "").toLowerCase());
+    // Como status_financeiro é DERIVADO, esta função não detecta mais "virou pago"
+    // diretamente. O auto-provisionamento de Portal ao pagar deve ser disparado
+    // por uma trigger/edge na tabela qa_vendas (fonte única).
+    const becamePaid = false;
 
     if (becamePaid && atual.cliente_id) {
       try {
@@ -222,7 +235,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({ ok: true, avisos }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
