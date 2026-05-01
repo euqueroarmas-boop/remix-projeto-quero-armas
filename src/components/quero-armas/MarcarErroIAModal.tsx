@@ -37,6 +37,16 @@ function asUuid(v: any): string | null {
   return UUID_RE.test(v) ? v : null;
 }
 
+/**
+ * qa_clientes.id é INTEGER (bigint sequencial), enquanto qa_casos/qa_geracoes_pecas usam UUID.
+ * Normalizamos cliente_id para number quando válido.
+ */
+function asClienteId(v: any): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "number" ? v : Number(String(v).trim());
+  return Number.isFinite(n) && n > 0 ? Math.trunc(n) : null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -53,11 +63,11 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
   const [trechoCorreto, setTrechoCorreto] = useState<string>("");
   const [explicacao, setExplicacao] = useState<string>("");
   const [regra, setRegra] = useState<string>("");
-  const clienteUuid = asUuid(context?.cliente_id);
+  const clienteId = asClienteId(context?.cliente_id);
   const casoUuid = asUuid(context?.caso_id);
   const pecaUuid = asUuid(context?.peca_id);
   const [escopo, setEscopo] = useState<EscopoTarget>(
-    pecaUuid ? "peca" : casoUuid ? "caso" : clienteUuid ? "cliente" : "global",
+    pecaUuid ? "peca" : casoUuid ? "caso" : clienteId ? "cliente" : "global",
   );
   const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -71,14 +81,14 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
     setTrechoCorreto("");
     setExplicacao("");
     setRegra("");
-    setEscopo(pecaUuid ? "peca" : casoUuid ? "caso" : clienteUuid ? "cliente" : "global");
+    setEscopo(pecaUuid ? "peca" : casoUuid ? "caso" : clienteId ? "cliente" : "global");
     setAtivo(true);
   }, [open, trechoInicial, context]);
 
   // Escopos disponíveis dependem do contexto vindo da peça
   const escoposDisponiveis: { value: EscopoTarget; label: string; icon: any; available: boolean; hint?: string }[] = [
     { value: "global", label: "GLOBAL — TODAS AS PEÇAS", icon: Globe2, available: true },
-    { value: "cliente", label: "APENAS ESTE CLIENTE", icon: User, available: !!clienteUuid, hint: !clienteUuid ? "Cliente sem ID compatível" : undefined },
+    { value: "cliente", label: "APENAS ESTE CLIENTE", icon: User, available: !!clienteId, hint: !clienteId ? "Cliente não vinculado" : undefined },
     { value: "caso", label: "APENAS ESTE CASO", icon: FolderOpen, available: !!casoUuid, hint: !casoUuid ? "Salve o caso primeiro" : undefined },
     { value: "peca", label: "APENAS ESTA PEÇA", icon: FileText, available: !!pecaUuid, hint: !pecaUuid ? "Sem peça gerada vinculada" : undefined },
   ];
@@ -88,7 +98,7 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
     if (trechoCorreto.trim().length < 5) { toast.error("Trecho correto deve ter ao menos 5 caracteres"); return; }
     // Garantir coerência com a constraint do banco
     if (escopo !== "global") {
-      const ok = (escopo === "cliente" && clienteUuid)
+      const ok = (escopo === "cliente" && clienteId)
         || (escopo === "caso" && casoUuid)
         || (escopo === "peca" && pecaUuid);
       if (!ok) { toast.error("Escopo selecionado não tem ID disponível"); return; }
@@ -105,7 +115,7 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
         explicacao: explicacao.trim() || null,
         regra_aplicavel: regra.trim() || null,
         aplicar_globalmente: escopo === "global",
-        cliente_id: escopo === "cliente" ? clienteUuid : null,
+        cliente_id: escopo === "cliente" ? clienteId : null,
         caso_id: escopo === "caso" ? casoUuid : null,
         peca_id: escopo === "peca" ? pecaUuid : null,
         ativo,
