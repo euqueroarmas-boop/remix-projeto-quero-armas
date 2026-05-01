@@ -5160,6 +5160,8 @@ export type Database = {
         Row: {
           caso_id: string | null
           cliente_id: number | null
+          correcoes_ia_alertas_json: Json
+          correcoes_ia_usadas_json: Json
           created_at: string
           documentos_referencia_json: Json | null
           docx_path: string | null
@@ -5184,6 +5186,8 @@ export type Database = {
         Insert: {
           caso_id?: string | null
           cliente_id?: number | null
+          correcoes_ia_alertas_json?: Json
+          correcoes_ia_usadas_json?: Json
           created_at?: string
           documentos_referencia_json?: Json | null
           docx_path?: string | null
@@ -5208,6 +5212,8 @@ export type Database = {
         Update: {
           caso_id?: string | null
           cliente_id?: number | null
+          correcoes_ia_alertas_json?: Json
+          correcoes_ia_usadas_json?: Json
           created_at?: string
           documentos_referencia_json?: Json | null
           docx_path?: string | null
