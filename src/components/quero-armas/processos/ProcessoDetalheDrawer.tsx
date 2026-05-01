@@ -532,6 +532,8 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                 const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                 const labelBotao: string | null = (doc.regra_validacao && typeof doc.regra_validacao === "object" && typeof doc.regra_validacao.label_botao === "string")
                   ? doc.regra_validacao.label_botao : null;
+                const checklistOperador: string[] = (doc.regra_validacao && typeof doc.regra_validacao === "object" && Array.isArray((doc.regra_validacao as any).checklist_operador))
+                  ? (doc.regra_validacao as any).checklist_operador as string[] : [];
                 const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
                 const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
                 return (
@@ -567,6 +569,23 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                               {doc.observacoes_cliente}
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* Checklist do Operador — exclusivo staff */}
+                      {adminMode && checklistOperador.length > 0 && (
+                        <div className="rounded-md border border-slate-300 bg-slate-50 p-2.5">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-700">
+                            <ShieldAlert className="h-3 w-3" /> CHECKLIST DO OPERADOR
+                          </div>
+                          <ul className="mt-1.5 space-y-1">
+                            {checklistOperador.map((item, i) => (
+                              <li key={i} className="text-[11px] text-slate-800 leading-snug flex items-start gap-1.5">
+                                <span className="text-slate-400 mt-0.5">▢</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       )}
 
