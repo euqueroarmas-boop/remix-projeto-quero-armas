@@ -1631,13 +1631,19 @@ function ReviewSelect({
 /* ─────────────────────── Step 4 — Conclusão ─────────────────────── */
 function Step4Done({ firstName }: { firstName: string }) {
   return (
-    <div className="text-center py-4">
+    <div className="relative overflow-hidden text-center py-4 px-4 -mx-2 rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+      style={{ boxShadow: "inset 0 0 0 1px hsl(152 60% 42% / 0.10)" }}>
+      <div
+        className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full opacity-30 blur-3xl"
+        style={{ background: "hsl(152 60% 42%)" }}
+      />
+      <div className="relative mt-2">
       <div className="relative w-24 h-24 mx-auto mb-5">
         {/* confetti pontos */}
         {Array.from({ length: 14 }).map((_, i) => {
           const angle = (i / 14) * Math.PI * 2;
           const r = 50 + (i % 3) * 8;
-          const colors = ["hsl(152 60% 50%)", "hsl(45 90% 55%)", "hsl(230 80% 60%)", "hsl(280 60% 60%)"];
+          const colors = ["hsl(152 60% 42%)", "hsl(190 80% 45%)", "hsl(45 90% 55%)", "hsl(220 60% 50%)"];
           return (
             <span key={i} className="absolute w-1.5 h-1.5 rounded-full"
               style={{
@@ -1648,21 +1654,24 @@ function Step4Done({ firstName }: { firstName: string }) {
           );
         })}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_24px_hsl(152_60%_50%/0.4)]"
-            style={{ background: "linear-gradient(135deg, hsl(152 60% 45%), hsl(160 65% 42%))" }}>
-            <CheckCircle2 className="w-9 h-9 text-white" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: "hsl(152 60% 42% / 0.14)", boxShadow: "inset 0 0 0 1.5px hsl(152 60% 42% / 0.35), 0 0 24px hsl(152 60% 42% / 0.20)" }}>
+            <CheckCircle2 className="w-8 h-8" style={{ color: "hsl(152 60% 32%)" }} />
           </div>
         </div>
       </div>
 
-      <h2 className="text-lg font-bold mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>Cadastro completo!</h2>
+      <div className="text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(152 60% 32%)" }}>
+        Concluído
+      </div>
+      <h2 className="text-lg font-bold font-mono mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>Cadastro completo!</h2>
       <p className="text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>
         Suas informações foram extraídas, revisadas e enviadas com sucesso.
       </p>
 
-      <div className="rounded-xl p-3 text-left flex gap-2 mb-5"
-        style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(230 80% 92%)" }}>
-        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(230 80% 56%)" }} />
+      <div className="rounded-2xl p-3 text-left flex gap-2 mb-5"
+        style={{ background: "hsl(190 80% 45% / 0.06)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}>
+        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(190 80% 32%)" }} />
         <div className="text-[11px] leading-relaxed" style={{ color: "hsl(220 25% 25%)" }}>
           <strong>Tudo certo{firstName ? `, ${firstName}` : ""}.</strong> Seu acesso ao sistema será liberado após validação pela nossa equipe. Você receberá um e-mail quando estiver tudo pronto.
         </div>
@@ -1670,8 +1679,8 @@ function Step4Done({ firstName }: { firstName: string }) {
 
       <a
         href="/area-do-cliente/login"
-        className="block w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2"
-        style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
+        className="block w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2"
+        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 4px 14px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
       >
         Acessar sistema
       </a>
@@ -1681,6 +1690,7 @@ function Step4Done({ firstName }: { firstName: string }) {
         style={{ color: "hsl(220 15% 45%)" }}>
         Quero tirar dúvidas
       </a>
+      </div>
     </div>
   );
 }
