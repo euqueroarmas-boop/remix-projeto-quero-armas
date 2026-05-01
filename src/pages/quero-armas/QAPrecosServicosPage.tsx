@@ -108,10 +108,20 @@ export default function QAPrecosServicosPage() {
     void load();
   }, []);
 
-  const categoriasExistentes = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.categoria))).sort(),
-    [rows],
-  );
+  const categoriasExistentes = useMemo(() => {
+    const CANONICAS = [
+      "POLÍCIA FEDERAL / SINARM",
+      "POLÍCIA FEDERAL CAC / CR",
+      "EXÉRCITO / SIGMA",
+      "EMPRESARIAL / INSTITUCIONAL",
+      "ATENDIMENTO ESPECIAL",
+      "MUDANÇA DE SERVIÇO",
+      "CURSOS",
+      "COMBOS",
+    ];
+    const doBanco = rows.map((r) => r.categoria.toUpperCase());
+    return Array.from(new Set([...CANONICAS, ...doBanco])).sort();
+  }, [rows]);
 
   const grupos = useMemo(() => {
     const f = filter.trim().toLowerCase();
