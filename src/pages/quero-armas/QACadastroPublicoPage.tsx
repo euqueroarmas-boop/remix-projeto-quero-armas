@@ -938,7 +938,7 @@ function DuplicateModal({
 function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepId) => void }) {
   return (
     <div className="mt-4 -mx-1 overflow-x-hidden">
-      <div className="flex items-start min-w-0">
+      <div className="flex items-start min-w-0 gap-1">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
@@ -955,34 +955,34 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
                 disabled={!canJump}
                 onClick={canJump ? () => onJump!(s.id) : undefined}
                 className={`flex flex-col items-center shrink-0 min-w-0 bg-transparent border-0 p-0 ${canJump ? "cursor-pointer group/step" : "cursor-default"}`}
-                style={{ width: 48 }}
+                style={{ width: 64 }}
                 aria-label={canJump ? `Voltar para ${s.label}` : s.label}
               >
                 <div
-                  className={`rounded-md flex items-center justify-center text-[10.5px] font-bold font-mono transition-all ${canJump ? "group-hover/step:scale-110 group-hover/step:shadow-[0_0_0_3px_hsla(38,92%,50%,0.25)]" : ""}`}
+                  className={`rounded-lg flex items-center justify-center text-[15px] font-bold font-mono transition-all ${canJump ? "group-hover/step:scale-110 group-hover/step:shadow-[0_0_0_4px_hsla(38,92%,50%,0.3)]" : ""}`}
                   style={{
-                    width: active ? 26 : 22,
-                    height: active ? 26 : 22,
-                    background: done ? `${ok}14` : active ? `${amber}1F` : "white",
-                    color: done ? ok : active ? amberDark : "hsl(220 10% 55%)",
+                    width: active ? 38 : 34,
+                    height: active ? 38 : 34,
+                    background: done ? `${ok}1F` : active ? amber : "white",
+                    color: done ? ok : active ? "white" : "hsl(220 12% 40%)",
                     boxShadow: active
-                      ? `inset 0 0 0 1.5px ${amber}, 0 0 0 3px ${amber}10`
+                      ? `0 4px 14px -4px ${amber}, inset 0 0 0 2px ${amber}`
                       : done
-                        ? `inset 0 0 0 1.5px ${ok}`
-                        : "inset 0 0 0 1px hsl(220 14% 88%)",
+                        ? `inset 0 0 0 2px ${ok}`
+                        : "inset 0 0 0 1.5px hsl(220 14% 80%)",
                   }}
                 >
-                  {done ? <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} /> : i + 1}
+                  {done ? <CheckCircle2 className="w-4 h-4" strokeWidth={2.6} /> : i + 1}
                 </div>
                 <span
-                  className="mt-1.5 text-[8px] text-center leading-tight uppercase tracking-[0.14em] font-mono truncate w-full"
+                  className="mt-1.5 text-[9.5px] text-center leading-[1.15] uppercase tracking-[0.1em] font-mono w-full break-words"
                   style={{
                     color: active
                       ? amberDark
                       : done
-                        ? "hsl(152 60% 32%)"
-                        : "hsl(220 10% 60%)",
-                    fontWeight: active ? 700 : 500,
+                        ? "hsl(152 60% 28%)"
+                        : "hsl(220 12% 45%)",
+                    fontWeight: active ? 800 : 600,
                   }}
                 >
                   {s.label}
@@ -990,11 +990,11 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
               </button>
               {!isLast && (
                 <div
-                  className="flex-1 h-px rounded-full self-start"
+                  className="flex-1 h-[2px] rounded-full self-start"
                   style={{
-                    marginTop: active ? 13 : 11,
-                    background: nextReached ? ok : "hsl(220 14% 88%)",
-                    opacity: nextReached ? 0.55 : 1,
+                    marginTop: active ? 19 : 17,
+                    background: nextReached ? ok : "hsl(220 14% 85%)",
+                    opacity: nextReached ? 0.7 : 1,
                   }}
                 />
               )}
