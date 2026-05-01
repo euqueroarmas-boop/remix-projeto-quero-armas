@@ -674,14 +674,14 @@ export default function QACadastroPublicoPage() {
               else window.location.href = "/";
             }}
             aria-label="Voltar"
-            className="relative w-full flex items-center justify-center gap-3 px-5 py-6 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+            className="relative w-full flex items-center justify-center gap-4 px-5 py-7 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
           >
-            <QALogo className="h-16 w-16" />
+            <QALogo className="h-20 w-20" />
             <div className="flex flex-col leading-tight text-left">
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/90">
                 // Arsenal
               </span>
-              <span className="text-lg font-semibold uppercase tracking-[0.18em] text-zinc-100">
+              <span className="text-xl font-semibold uppercase tracking-[0.18em] text-zinc-100">
                 Quero Armas
               </span>
             </div>
@@ -735,11 +735,8 @@ export default function QACadastroPublicoPage() {
               </span>
             </div>
 
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="h-10 w-10 shrink-0 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
-                <Crosshair className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
-              </div>
-              <div className="min-w-0 flex-1">
+            <div className="min-w-0">
+              <div className="min-w-0">
                 <h1 className="text-[18px] sm:text-[20px] font-bold leading-tight tracking-tight text-zinc-900 break-words">
                   {step === 0 && "VAMOS COMEÇAR"}
                   {step === 1 && "SEUS DOCUMENTOS"}
