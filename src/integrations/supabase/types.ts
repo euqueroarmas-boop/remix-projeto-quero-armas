@@ -5265,10 +5265,61 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_gte_alertas_enviados: {
+        Row: {
+          canal: string
+          cliente_id: number
+          data_referencia: string | null
+          destinatario: string | null
+          detalhes: Json | null
+          enviado_em: string
+          erro_mensagem: string | null
+          gte_documento_id: string
+          id: string
+          marco_dias: number
+          status: string
+        }
+        Insert: {
+          canal: string
+          cliente_id: number
+          data_referencia?: string | null
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          gte_documento_id: string
+          id?: string
+          marco_dias: number
+          status?: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number
+          data_referencia?: string | null
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          gte_documento_id?: string
+          id?: string
+          marco_dias?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_gte_alertas_enviados_gte_documento_id_fkey"
+            columns: ["gte_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gte_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_gte_documentos: {
         Row: {
           armas_json: Json
           armas_total: number
+          armas_vinculadas_json: Json
           cliente_id: number
           clubes_json: Json
           created_at: string
@@ -5282,6 +5333,9 @@ export type Database = {
           enviado_por: string | null
           erro_mensagem: string | null
           id: string
+          matching_em: string | null
+          matching_resumo_json: Json
+          matching_status: string
           mime_type: string | null
           nome_original: string | null
           numero_gte: string | null
@@ -5299,6 +5353,7 @@ export type Database = {
         Insert: {
           armas_json?: Json
           armas_total?: number
+          armas_vinculadas_json?: Json
           cliente_id: number
           clubes_json?: Json
           created_at?: string
@@ -5312,6 +5367,9 @@ export type Database = {
           enviado_por?: string | null
           erro_mensagem?: string | null
           id?: string
+          matching_em?: string | null
+          matching_resumo_json?: Json
+          matching_status?: string
           mime_type?: string | null
           nome_original?: string | null
           numero_gte?: string | null
@@ -5329,6 +5387,7 @@ export type Database = {
         Update: {
           armas_json?: Json
           armas_total?: number
+          armas_vinculadas_json?: Json
           cliente_id?: number
           clubes_json?: Json
           created_at?: string
@@ -5342,6 +5401,9 @@ export type Database = {
           enviado_por?: string | null
           erro_mensagem?: string | null
           id?: string
+          matching_em?: string | null
+          matching_resumo_json?: Json
+          matching_status?: string
           mime_type?: string | null
           nome_original?: string | null
           numero_gte?: string | null
@@ -8397,6 +8459,7 @@ export type Database = {
         }[]
       }
       qa_gov_reconcile_realign_atomic: { Args: never; Returns: Json }
+      qa_gte_match_armas: { Args: { _gte_id: string }; Returns: Json }
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
