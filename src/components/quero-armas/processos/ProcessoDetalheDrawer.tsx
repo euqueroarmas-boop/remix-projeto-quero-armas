@@ -42,7 +42,6 @@ interface DocRow {
   titular_comprovante_nome?: string | null;
   titular_comprovante_documento?: string | null;
   endereco_em_nome_de_terceiro?: boolean | null;
-  observacoes?: string | null;
 }
 
 interface ProcessoFull {
