@@ -1,7 +1,13 @@
 /**
- * Templates de e-mail premium do Quero Armas.
- * Identidade visual: fundo branco, acento vermelho tático (#dc2626),
- * tipografia limpa, layout responsivo, marca em destaque.
+ * Templates de e-mail premium do Quero Armas — Arsenal Tactical Light.
+ * Identidade visual baseada na UI do Arsenal (detalhes do cliente):
+ *   - Fundo gelo / papel (#f6f5f1)
+ *   - Card branco com bordas slate finas
+ *   - Header tático preto absoluto (#0A0A0A) com logo PRETA da marca
+ *   - Acento âmbar tático (#d97706 / #92400e)
+ *   - Tipografia mono uppercase com tracking 3px em labels
+ *   - Blocos técnicos KEY → VALUE estilo "diagnóstico de campo"
+ *   - Copy agressiva, técnica, direta — zero gordura.
  *
  * Remetente padrão: Quero Armas <naoresponda@euqueroarmas.com.br>
  */
@@ -10,20 +16,40 @@ const LOGO_URL = "https://ogkltfqvzweeqkfmrzts.supabase.co/storage/v1/object/pub
 const PORTAL_URL = "https://www.euqueroarmas.com.br/quero-armas/cliente/login";
 const SITE_URL = "https://www.euqueroarmas.com.br";
 const SUPPORT_EMAIL = "naoresponda@euqueroarmas.com.br";
-const PRIMARY = "#dc2626";
-const PRIMARY_DARK = "#991b1b";
-const INK = "#0f172a";
-const MUTED = "#64748b";
-const BORDER = "#e5e7eb";
-const SOFT_BG = "#f8fafc";
+
+// ─── Arsenal Tactical Light tokens ────────────────────────────────────
+const PAPER       = "#f6f5f1"; // fundo gelo (body)
+const SURFACE     = "#ffffff"; // card
+const INK         = "#0A0A0A"; // texto principal / header
+const INK_SOFT    = "#1E1E1E"; // ink secundário (Arsenal)
+const STEEL       = "#334155"; // texto de leitura
+const MUTED       = "#64748b"; // labels secundárias
+const HAIRLINE    = "#e5e3dc"; // bordas em fundo papel
+const BORDER      = "#e5e7eb"; // bordas padrão
+const SOFT_BG     = "#fafaf7"; // bg de blocos info dentro do card
+const AMBER       = "#d97706"; // acento primário (Arsenal)
+const AMBER_DARK  = "#92400e";
+const AMBER_SOFT  = "#fef3c7";
+const DANGER      = "#dc2626";
+const DANGER_DARK = "#991b1b";
+const SUCCESS     = "#16a34a";
+const SUCCESS_DK  = "#166534";
+
+// Compat (algum chamador externo pode importar)
+const PRIMARY      = AMBER;
+const PRIMARY_DARK = AMBER_DARK;
 
 export interface QAEmailFrame {
   preheader?: string;
   title: string;
   body: string;
+  /** Etiqueta mono no topo do card (ex.: "OPERAÇÃO · COBRANÇA"). */
+  opTag?: string;
+  /** Subtítulo curto sob o título (ex.: serviço afetado, cliente). */
+  subtitle?: string;
 }
 
-export function qaWrap({ preheader = "", title, body }: QAEmailFrame): string {
+export function qaWrap({ preheader = "", title, body, opTag, subtitle }: QAEmailFrame): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -32,30 +58,69 @@ export function qaWrap({ preheader = "", title, body }: QAEmailFrame): string {
 <meta name="x-apple-disable-message-reformatting">
 <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${INK};-webkit-font-smoothing:antialiased;">
+<body style="margin:0;padding:0;background:${PAPER};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${INK};-webkit-font-smoothing:antialiased;">
 <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#ffffff;opacity:0;">${preheader}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;">
-  <tr><td align="center" style="padding:40px 16px;">
-    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid ${BORDER};border-radius:16px;overflow:hidden;">
-      <!-- HEADER -->
-      <tr><td style="padding:32px 40px 24px;border-bottom:1px solid ${BORDER};text-align:center;background:#ffffff;">
-        <img src="${LOGO_URL}" alt="Quero Armas" width="64" height="64" style="display:inline-block;width:64px;height:64px;object-fit:contain;border:0;outline:0;text-decoration:none;">
-        <div style="margin-top:12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${MUTED};font-weight:600;">Plataforma Quero Armas</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PAPER};">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px;width:100%;">
+
+      <!-- BARRA DE MARCA TÁTICA (preto absoluto) -->
+      <tr><td style="background:${INK};border-radius:14px 14px 0 0;padding:18px 28px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td valign="middle" style="vertical-align:middle;">
+              <div style="font-family:'SF Mono',Menlo,Consolas,'Courier New',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${AMBER};font-weight:700;">QUERO · ARMAS</div>
+              <div style="margin-top:4px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#94a3b8;">PLATAFORMA TÁTICA · ARSENAL DIGITAL</div>
+            </td>
+            <td align="right" valign="middle" style="vertical-align:middle;">
+              <div style="display:inline-block;background:#ffffff;border-radius:8px;padding:6px 10px;">
+                <img src="${LOGO_URL}" alt="Quero Armas" width="36" height="36" style="display:block;width:36px;height:36px;object-fit:contain;border:0;outline:0;">
+              </div>
+            </td>
+          </tr>
+        </table>
       </td></tr>
-      <!-- CONTENT -->
-      <tr><td style="padding:40px;background:#ffffff;">
-        ${body}
+
+      <!-- CARD PRINCIPAL (branco premium) -->
+      <tr><td style="background:${SURFACE};border-left:1px solid ${HAIRLINE};border-right:1px solid ${HAIRLINE};">
+
+        <!-- TÍTULO + OPTAG -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="padding:32px 40px 0;">
+            ${opTag ? `<div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:${AMBER_DARK};font-weight:700;margin:0 0 10px;">${opTag}</div>` : ""}
+            <h1 style="margin:0;font-size:26px;line-height:1.2;font-weight:800;color:${INK};letter-spacing:-0.5px;">${title}</h1>
+            ${subtitle ? `<p style="margin:8px 0 0;font-size:13px;color:${MUTED};line-height:1.5;">${subtitle}</p>` : ""}
+            <div style="height:3px;width:48px;background:${AMBER};margin:18px 0 0;border-radius:2px;"></div>
+          </td></tr>
+        </table>
+
+        <!-- CONTEÚDO -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td style="padding:28px 40px 36px;">
+            ${body}
+          </td></tr>
+        </table>
       </td></tr>
+
       <!-- FOOTER -->
-      <tr><td style="padding:24px 40px 32px;background:${SOFT_BG};border-top:1px solid ${BORDER};text-align:center;">
-        <p style="margin:0 0 8px;font-size:12px;color:${MUTED};line-height:1.6;">
-          Este é um e-mail automático. Por favor, não responda.<br>
-          Para falar com nossa equipe, acesse <a href="${SITE_URL}" style="color:${PRIMARY};text-decoration:none;font-weight:600;">euqueroarmas.com.br</a>
+      <tr><td style="background:${SURFACE};border:1px solid ${HAIRLINE};border-top:1px solid ${HAIRLINE};border-radius:0 0 14px 14px;padding:22px 40px 26px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${MUTED};font-weight:700;">PROTOCOLO AUTOMATIZADO</td>
+            <td align="right" style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${MUTED};">NOREPLY · NÃO RESPONDA</td>
+          </tr>
+        </table>
+        <div style="height:1px;background:${HAIRLINE};margin:14px 0 14px;"></div>
+        <p style="margin:0;font-size:12px;color:${STEEL};line-height:1.6;">
+          Este e-mail é gerado automaticamente pela infraestrutura da plataforma. Para suporte humano, acesse
+          <a href="${SITE_URL}" style="color:${AMBER_DARK};text-decoration:none;font-weight:700;">euqueroarmas.com.br</a>
+          ou fale com o time pelo seu portal.
         </p>
-        <p style="margin:12px 0 0;font-size:11px;color:#94a3b8;">
-          © ${new Date().getFullYear()} Quero Armas — Todos os direitos reservados.
+        <p style="margin:10px 0 0;font-size:10px;color:#94a3b8;letter-spacing:0.3px;">
+          © ${new Date().getFullYear()} QUERO ARMAS · Operação regida por LGPD e pela Lei 10.826/03.
         </p>
       </td></tr>
+
     </table>
   </td></tr>
 </table>
@@ -63,47 +128,90 @@ export function qaWrap({ preheader = "", title, body }: QAEmailFrame): string {
 </html>`;
 }
 
-function btn(href: string, label: string, color: "primary" | "danger" | "success" = "primary"): string {
-  const bg = color === "danger" ? "#dc2626" : color === "success" ? "#16a34a" : PRIMARY;
-  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-    <tr><td align="center" style="border-radius:10px;background:${bg};">
-      <a href="${href}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.3px;">${label}</a>
+// ─── Primitivos visuais ───────────────────────────────────────────────
+
+function btn(href: string, label: string, color: "primary" | "danger" | "success" | "ghost" = "primary"): string {
+  const bg = color === "danger" ? DANGER : color === "success" ? SUCCESS : color === "ghost" ? "#ffffff" : INK;
+  const fg = color === "ghost" ? INK : "#ffffff";
+  const bd = color === "ghost" ? `2px solid ${INK}` : `2px solid ${bg}`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px auto 4px;">
+    <tr><td align="center" style="border-radius:10px;background:${bg};border:${bd};">
+      <a href="${href}" style="display:inline-block;padding:14px 30px;font-size:13px;font-weight:800;color:${fg};text-decoration:none;border-radius:8px;letter-spacing:1.5px;text-transform:uppercase;font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;">${label} →</a>
     </td></tr>
   </table>`;
 }
 
-function infoCard(rows: Array<[string, string]>, accent = PRIMARY): string {
-  const trs = rows.map(([k, v], i) => `
-    <tr>
-      <td style="padding:12px 16px;font-size:13px;color:${MUTED};${i < rows.length - 1 ? `border-bottom:1px solid ${BORDER};` : ""}">${k}</td>
-      <td style="padding:12px 16px;font-size:14px;color:${INK};font-weight:600;text-align:right;${i < rows.length - 1 ? `border-bottom:1px solid ${BORDER};` : ""}">${v}</td>
-    </tr>`).join("");
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${SOFT_BG};border:1px solid ${BORDER};border-radius:12px;border-left:3px solid ${accent};margin:0 0 28px;">
+/** Linha técnica KEY → VALUE estilo "diagnóstico" do Arsenal. */
+function diagRow(label: string, value: string, opts: { mono?: boolean; tone?: "default" | "danger" | "success" | "warn"; last?: boolean } = {}): string {
+  const toneColor = opts.tone === "danger" ? DANGER : opts.tone === "success" ? SUCCESS : opts.tone === "warn" ? AMBER_DARK : INK;
+  const fontFamily = opts.mono ? "'SF Mono',Menlo,Consolas,monospace" : "-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
+  return `<tr>
+    <td style="padding:14px 18px;${opts.last ? "" : `border-bottom:1px solid ${HAIRLINE};`}vertical-align:middle;width:42%;">
+      <div style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:${MUTED};font-weight:700;">${label}</div>
+    </td>
+    <td style="padding:14px 18px;${opts.last ? "" : `border-bottom:1px solid ${HAIRLINE};`}vertical-align:middle;text-align:right;">
+      <div style="font-family:${fontFamily};font-size:14px;color:${toneColor};font-weight:700;">${value}</div>
+    </td>
+  </tr>`;
+}
+
+/** Bloco diagnóstico KEY/VALUE em fundo gelo, borda âmbar à esquerda. */
+function diagBlock(rows: Array<{ k: string; v: string; mono?: boolean; tone?: "default" | "danger" | "success" | "warn" }>, accent: string = AMBER): string {
+  const trs = rows.map((r, i) => diagRow(r.k, r.v, { mono: r.mono, tone: r.tone, last: i === rows.length - 1 })).join("");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${SOFT_BG};border:1px solid ${HAIRLINE};border-left:3px solid ${accent};border-radius:10px;margin:0 0 24px;">
     ${trs}
   </table>`;
 }
 
 function notice(kind: "info" | "warn" | "success" | "danger", title: string, body: string): string {
   const themes = {
-    info: { bg: "#eff6ff", bd: "#bfdbfe", fg: "#1e40af" },
-    warn: { bg: "#fffbeb", bd: "#fcd34d", fg: "#92400e" },
-    success: { bg: "#f0fdf4", bd: "#86efac", fg: "#166534" },
-    danger: { bg: "#fef2f2", bd: "#fecaca", fg: PRIMARY_DARK },
+    info:    { bg: "#f1f5f9", bd: "#cbd5e1", fg: "#1e293b", icon: "ℹ" },
+    warn:    { bg: AMBER_SOFT, bd: "#fcd34d", fg: AMBER_DARK, icon: "⚠" },
+    success: { bg: "#dcfce7", bd: "#86efac", fg: SUCCESS_DK, icon: "✓" },
+    danger:  { bg: "#fee2e2", bd: "#fca5a5", fg: DANGER_DARK, icon: "✕" },
   };
   const t = themes[kind];
-  return `<div style="background:${t.bg};border:1px solid ${t.bd};border-radius:10px;padding:16px 20px;margin:0 0 24px;">
-    <p style="margin:0 0 6px;font-size:13px;font-weight:700;color:${t.fg};">${title}</p>
-    <p style="margin:0;font-size:13px;color:${t.fg};line-height:1.6;">${body}</p>
-  </div>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${t.bg};border:1px solid ${t.bd};border-radius:10px;margin:0 0 22px;">
+    <tr>
+      <td width="36" valign="top" style="padding:14px 0 14px 16px;">
+        <div style="width:24px;height:24px;border-radius:6px;background:${t.fg};color:#ffffff;font-weight:800;font-size:13px;text-align:center;line-height:24px;font-family:'SF Mono',monospace;">${t.icon}</div>
+      </td>
+      <td valign="top" style="padding:14px 18px 14px 12px;">
+        <p style="margin:0 0 4px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;font-weight:700;color:${t.fg};letter-spacing:2px;text-transform:uppercase;">${title}</p>
+        <p style="margin:0;font-size:13px;color:${t.fg};line-height:1.6;">${body}</p>
+      </td>
+    </tr>
+  </table>`;
+}
+
+/** Sequência numerada estilo "ROE" — passos técnicos de operação. */
+function steps(items: Array<{ titulo: string; desc: string }>): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;">
+    ${items.map((it, idx) => `
+      <tr>
+        <td width="44" valign="top" style="padding:0 14px 16px 0;">
+          <div style="width:32px;height:32px;border-radius:8px;background:${INK};color:${AMBER};font-weight:800;font-size:13px;text-align:center;line-height:32px;font-family:'SF Mono',Menlo,Consolas,monospace;">${String(idx + 1).padStart(2, "0")}</div>
+        </td>
+        <td valign="top" style="padding:0 0 16px 0;">
+          <p style="margin:0 0 4px;font-size:14px;font-weight:800;color:${INK};line-height:1.3;letter-spacing:-0.2px;">${it.titulo}</p>
+          <p style="margin:0;font-size:13px;color:${STEEL};line-height:1.6;">${it.desc}</p>
+        </td>
+      </tr>
+    `).join("")}
+  </table>`;
 }
 
 const greeting = (name?: string) =>
-  `<p style="margin:0 0 8px;font-size:18px;font-weight:600;color:${INK};">Olá${name ? `, ${name}` : ""}!</p>`;
+  `<p style="margin:0 0 14px;font-size:15px;font-weight:700;color:${INK};letter-spacing:-0.2px;">${name ? `${name},` : "Operador,"}</p>`;
 
 const para = (txt: string) =>
-  `<p style="margin:0 0 20px;font-size:15px;color:#334155;line-height:1.7;">${txt}</p>`;
+  `<p style="margin:0 0 18px;font-size:14px;color:${STEEL};line-height:1.7;">${txt}</p>`;
 
-const hr = `<div style="height:1px;background:${BORDER};margin:32px 0;"></div>`;
+const hr = `<div style="height:1px;background:${HAIRLINE};margin:28px 0;"></div>`;
+
+/** Selo mono inline tipo chip do Arsenal. */
+const chip = (txt: string, color: string = AMBER_DARK, bg: string = AMBER_SOFT) =>
+  `<span style="display:inline-block;background:${bg};color:${color};font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:5px;">${txt}</span>`;
 
 // ════════════════════════════════════════════════════════════════════
 // 1. BOAS-VINDAS / PRIMEIRO ACESSO (com credenciais provisórias)
