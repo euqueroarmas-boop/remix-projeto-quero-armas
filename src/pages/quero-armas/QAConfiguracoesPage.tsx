@@ -31,11 +31,31 @@ export default function QAConfiguracoesPage() {
   const [showNew, setShowNew] = useState(false);
   const [savingSvc, setSavingSvc] = useState(false);
 
-  // Status de Serviço (CRUD)
-  const [statuses, setStatuses] = useState<{ id: string; nome: string; ordem: number; ativo: boolean }[]>([]);
+  // Status de Serviço (CRUD) — fonte única editável pela Equipe Quero Armas
+  type StatusRow = {
+    id: string;
+    codigo: string;
+    nome: string;
+    descricao: string | null;
+    ordem: number;
+    cor: string | null;
+    ativo: boolean;
+    finalizador: boolean;
+    exige_data_protocolo: boolean;
+    exige_numero_protocolo: boolean;
+    visivel_cliente: boolean;
+    visivel_equipe: boolean;
+  };
+  const emptyStatusForm = {
+    codigo: "", nome: "", descricao: "", ordem: "",
+    cor: "#94a3b8", finalizador: false,
+    exige_data_protocolo: false, exige_numero_protocolo: false,
+    visivel_cliente: true, visivel_equipe: true,
+  };
+  const [statuses, setStatuses] = useState<StatusRow[]>([]);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  const [editStatusForm, setEditStatusForm] = useState({ nome: "", ordem: "" });
-  const [newStatusForm, setNewStatusForm] = useState({ nome: "", ordem: "" });
+  const [editStatusForm, setEditStatusForm] = useState<typeof emptyStatusForm>(emptyStatusForm);
+  const [newStatusForm, setNewStatusForm] = useState<typeof emptyStatusForm>(emptyStatusForm);
   const [showNewStatus, setShowNewStatus] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
 
@@ -62,17 +82,32 @@ export default function QAConfiguracoesPage() {
     setStatuses((data as any[]) ?? []);
   };
 
+  const slugify = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
   const handleAddStatus = async () => {
     if (!newStatusForm.nome.trim()) { toast.error("Nome obrigatório"); return; }
+    const codigo = (newStatusForm.codigo.trim() || slugify(newStatusForm.nome));
+    if (!codigo) { toast.error("Código inválido"); return; }
     setSavingStatus(true);
     try {
       const { error } = await supabase.from("qa_status_servico" as any).insert({
-        nome: newStatusForm.nome.trim(),
+        codigo,
+        nome: newStatusForm.nome.trim().toUpperCase(),
+        descricao: newStatusForm.descricao.trim() || null,
         ordem: Number(newStatusForm.ordem) || 0,
+        cor: newStatusForm.cor || null,
+        ativo: true,
+        finalizador: newStatusForm.finalizador,
+        exige_data_protocolo: newStatusForm.exige_data_protocolo,
+        exige_numero_protocolo: newStatusForm.exige_numero_protocolo,
+        visivel_cliente: newStatusForm.visivel_cliente,
+        visivel_equipe: newStatusForm.visivel_equipe,
       });
       if (error) throw error;
       toast.success("Status criado");
-      setNewStatusForm({ nome: "", ordem: "" });
+      setNewStatusForm(emptyStatusForm);
       setShowNewStatus(false);
       await loadStatuses();
     } catch (e: any) { toast.error(e.message); } finally { setSavingStatus(false); }
@@ -83,8 +118,16 @@ export default function QAConfiguracoesPage() {
     setSavingStatus(true);
     try {
       const { error } = await supabase.from("qa_status_servico" as any).update({
-        nome: editStatusForm.nome.trim(),
+        codigo: editStatusForm.codigo.trim() || slugify(editStatusForm.nome),
+        nome: editStatusForm.nome.trim().toUpperCase(),
+        descricao: editStatusForm.descricao.trim() || null,
         ordem: Number(editStatusForm.ordem) || 0,
+        cor: editStatusForm.cor || null,
+        finalizador: editStatusForm.finalizador,
+        exige_data_protocolo: editStatusForm.exige_data_protocolo,
+        exige_numero_protocolo: editStatusForm.exige_numero_protocolo,
+        visivel_cliente: editStatusForm.visivel_cliente,
+        visivel_equipe: editStatusForm.visivel_equipe,
       }).eq("id", id);
       if (error) throw error;
       toast.success("Status atualizado");
@@ -93,19 +136,47 @@ export default function QAConfiguracoesPage() {
     } catch (e: any) { toast.error(e.message); } finally { setSavingStatus(false); }
   };
 
+  const handleToggleStatusAtivo = async (s: StatusRow) => {
+    const { error } = await supabase
+      .from("qa_status_servico" as any)
+      .update({ ativo: !s.ativo })
+      .eq("id", s.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(!s.ativo ? "Status ativado" : "Status desativado");
+    await loadStatuses();
+  };
+
   const handleDeleteStatus = async (id: string) => {
-    if (!confirm("Excluir este status?")) return;
+    if (!confirm("Excluir este status? (Bloqueado se já estiver em uso — neste caso, desative.)")) return;
     try {
       const { error } = await supabase.from("qa_status_servico" as any).delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        toast.error(
+          error.message.includes("em uso")
+            ? error.message
+            : "Não foi possível excluir. Se está em uso, desative em vez de excluir."
+        );
+        return;
+      }
       toast.success("Status excluído");
       await loadStatuses();
     } catch (e: any) { toast.error(e.message); }
   };
 
-  const startEditStatus = (s: { id: string; nome: string; ordem: number }) => {
+  const startEditStatus = (s: StatusRow) => {
     setEditingStatusId(s.id);
-    setEditStatusForm({ nome: s.nome, ordem: String(s.ordem) });
+    setEditStatusForm({
+      codigo: s.codigo || "",
+      nome: s.nome || "",
+      descricao: s.descricao || "",
+      ordem: String(s.ordem ?? 0),
+      cor: s.cor || "#94a3b8",
+      finalizador: !!s.finalizador,
+      exige_data_protocolo: !!s.exige_data_protocolo,
+      exige_numero_protocolo: !!s.exige_numero_protocolo,
+      visivel_cliente: s.visivel_cliente !== false,
+      visivel_equipe: s.visivel_equipe !== false,
+    });
   };
 
   useEffect(() => {
