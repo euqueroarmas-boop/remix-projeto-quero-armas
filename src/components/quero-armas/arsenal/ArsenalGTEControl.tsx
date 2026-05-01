@@ -284,7 +284,19 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
                     <span>Validade: <b className="text-slate-700">{fmtDate(d.data_validade)}</b></span>
                     <span>Armas: <b className="text-slate-700">{d.armas_total}</b></span>
                     <span>Endereços: <b className="text-slate-700">{d.enderecos_total}</b></span>
-                    {d.requerente_nome && <span>Titular: <b className="text-slate-700">{d.requerente_nome}</b></span>}
+                    {d.matching_status && d.matching_status !== "sem_armas" && d.matching_status !== "pendente" && (
+                      <span>
+                        Vínculo Arsenal:{" "}
+                        <b className="text-slate-700">
+                          {d.matching_resumo_json?.vinculadas ?? 0}/{d.matching_resumo_json?.total ?? d.armas_total}
+                        </b>
+                        {(d.matching_resumo_json?.revisao ?? 0) > 0 && (
+                          <span className="ml-1 rounded bg-amber-100 px-1 py-[1px] text-[8px] font-bold uppercase text-amber-800">
+                            {d.matching_resumo_json?.revisao} p/ revisar
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   {d.status_processamento === "erro" && d.erro_mensagem && (
                     <p className="mt-1 text-[10px] text-red-600">⚠ {d.erro_mensagem}</p>
