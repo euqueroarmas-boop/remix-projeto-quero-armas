@@ -1868,107 +1868,185 @@ function Step0Qualificacao({
     <div className="space-y-4">
       <WelcomeBlock />
 
-      {/* Card branco com grid de campos no padrão admin Quero Armas */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/60 rounded-t-xl flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-blue-600 text-white">
-            <Briefcase className="h-3.5 w-3.5" strokeWidth={2.4} />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[12px] font-bold text-slate-800 leading-tight">Sobre o que você precisa</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Etapa 1 de 5 · Os campos abaixo aparecem em cascata</p>
-          </div>
-        </div>
+      {/* Bloco 1 — OBJETIVO (tiles) */}
+      <ArsenalGroup
+        index="01"
+        title="OBJETIVO PRINCIPAL"
+        hint="Qual o motivo central do seu pedido?"
+      >
+        <ArsenalTileGrid
+          options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
+          selected={value.objetivo_principal}
+          onSelect={(v) => {
+            onChange({
+              ...value,
+              objetivo_principal: v,
+              categoria_servico: "",
+              servico_principal: "",
+              subtipo_servico: "",
+              descricao_servico_livre: "",
+            });
+          }}
+        />
+      </ArsenalGroup>
 
-        <div className="px-4 py-4 grid grid-cols-1 gap-4">
-          {/* Campo 1 — Objetivo principal */}
-          <AdminField label="Objetivo Principal *" hint="Qual o motivo central do seu pedido?">
-            <AdminSelect
-              value={value.objetivo_principal}
-              onChange={(v) => set("objetivo_principal", v)}
-              placeholder="Selecione seu objetivo"
-              options={OBJETIVOS_PRINCIPAIS.map((o) => ({ value: o.value, label: o.label }))}
-            />
-          </AdminField>
+      {/* Bloco 2 — CATEGORIA */}
+      {value.objetivo_principal && (
+        <ArsenalGroup index="02" title="CATEGORIA DO SERVIÇO">
+          <ArsenalTileGrid
+            options={categoriasDisponiveis.map((c) => ({ value: c.value, label: c.label }))}
+            selected={value.categoria_servico}
+            onSelect={(v) => {
+              onChange({
+                ...value,
+                categoria_servico: v,
+                servico_principal: "",
+                subtipo_servico: "",
+                descricao_servico_livre: "",
+              });
+            }}
+          />
+        </ArsenalGroup>
+      )}
 
-          {/* Campo 2 — Categoria */}
-          {value.objetivo_principal && (
-            <AdminField label="Categoria do Serviço *">
-              <AdminSelect
-                value={value.categoria_servico}
-                onChange={(v) => {
-                  onChange({
-                    ...value,
-                    categoria_servico: v,
-                    servico_principal: "",
-                    subtipo_servico: "",
-                    descricao_servico_livre: "",
-                  });
-                }}
-                placeholder="Selecione a categoria"
-                options={categoriasDisponiveis.map((c) => ({ value: c.value, label: c.label }))}
-              />
-            </AdminField>
-          )}
+      {/* Bloco 3 — SERVIÇO */}
+      {cat && (
+        <ArsenalGroup index="03" title="SERVIÇO">
+          <ArsenalTileGrid
+            options={servicosDisponiveis.map((s) => ({ value: s.value, label: s.label }))}
+            selected={value.servico_principal}
+            onSelect={(v) =>
+              onChange({
+                ...value,
+                servico_principal: v,
+                subtipo_servico: "",
+                descricao_servico_livre: "",
+              })
+            }
+          />
+        </ArsenalGroup>
+      )}
 
-          {/* Campo 3 — Serviço */}
-          {cat && (
-            <AdminField label="Serviço *">
-              <AdminSelect
-                value={value.servico_principal}
-                onChange={(v) => onChange({ ...value, servico_principal: v, subtipo_servico: "", descricao_servico_livre: "" })}
-                placeholder="Selecione o serviço"
-                options={servicosDisponiveis.map((s) => ({ value: s.value, label: s.label }))}
-              />
-            </AdminField>
-          )}
+      {/* Bloco 4 — SUBTIPO (condicional) */}
+      {svc && needsSubtipo && (
+        <ArsenalGroup index="04" title="SUBTIPO">
+          <ArsenalTileGrid
+            options={(svc.subtipos || []).map((s) => ({ value: s, label: s }))}
+            selected={value.subtipo_servico}
+            onSelect={(v) => set("subtipo_servico", v)}
+          />
+        </ArsenalGroup>
+      )}
 
-          {/* Campo 4 — Subtipo (condicional) */}
-          {svc && needsSubtipo && (
-            <AdminField label="Subtipo *">
-              <AdminSelect
-                value={value.subtipo_servico}
-                onChange={(v) => set("subtipo_servico", v)}
-                placeholder="Selecione o subtipo"
-                options={(svc.subtipos || []).map((s) => ({ value: s, label: s }))}
-              />
-            </AdminField>
-          )}
+      {/* Bloco 5 — Texto livre (condicional) */}
+      {svc && needsLivre && (
+        <ArsenalGroup index="05" title="DESCREVA O SERVIÇO" hint="Mínimo 10 caracteres.">
+          <textarea
+            value={value.descricao_servico_livre}
+            onChange={(e) => set("descricao_servico_livre", e.target.value)}
+            placeholder="Explique brevemente qual atendimento você deseja solicitar"
+            rows={3}
+            className="w-full px-3 py-2.5 rounded-lg border border-zinc-300 bg-white text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none"
+          />
+        </ArsenalGroup>
+      )}
 
-          {/* Campo 5 — Texto livre (condicional) */}
-          {svc && needsLivre && (
-            <AdminField
-              label="Descreva o serviço que você precisa *"
-              hint="Mínimo 10 caracteres."
-            >
-              <textarea
-                value={value.descricao_servico_livre}
-                onChange={(e) => set("descricao_servico_livre", e.target.value)}
-                placeholder="Explique brevemente qual atendimento ou processo você deseja solicitar"
-                rows={3}
-                className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none"
-              />
-            </AdminField>
-          )}
-        </div>
-      </div>
-
-      {/* CTA — padrão admin (azul sólido) */}
+      {/* CTA — assinatura âmbar Arsenal */}
       <button
         onClick={onContinue}
         disabled={!valido}
-        className={`w-full h-11 rounded-lg text-[12px] font-bold uppercase tracking-wider text-white flex items-center justify-center gap-2 transition-all
+        className={`w-full h-12 rounded-lg text-[12px] font-bold uppercase tracking-[0.18em] flex items-center justify-center gap-2 transition-all
           ${valido
-            ? "bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-200"
-            : "bg-slate-100 text-slate-400 cursor-not-allowed"}`}
+            ? "bg-amber-500 text-white hover:bg-amber-600 shadow-[0_6px_20px_-6px_rgba(245,158,11,0.55)]"
+            : "bg-zinc-100 text-zinc-400 cursor-not-allowed border border-zinc-200"}`}
       >
         <span>Continuar</span>
-        <ChevronRight className="h-4 w-4" strokeWidth={2.4} />
+        <ChevronRight className="h-4 w-4" strokeWidth={2.6} />
       </button>
 
-      <p className="text-[10px] text-center text-slate-400 leading-relaxed">
-        Sem compromisso até a confirmação · Dados protegidos
+      <p className="text-[10px] text-center text-zinc-500 leading-relaxed font-mono uppercase tracking-[0.18em]">
+        Sem compromisso · Dados protegidos
       </p>
+    </div>
+  );
+}
+
+/* ── Componentes visuais Arsenal (tiles + group) ── */
+function ArsenalGroup({
+  index,
+  title,
+  hint,
+  children,
+}: {
+  index: string;
+  title: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-[#f6f5f1] shadow-sm">
+      {/* faixa superior âmbar (assinatura KpiCard Arsenal) */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+      <div className="px-4 pt-3 pb-2 flex items-center gap-2.5">
+        <span className="font-mono text-[10px] font-bold text-amber-700 tracking-[0.2em] bg-amber-500/10 border border-amber-500/30 rounded px-1.5 py-0.5">
+          {index}
+        </span>
+        <div className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-700">
+          {title}
+        </div>
+      </div>
+      {hint && (
+        <p className="px-4 pb-2 text-[10px] text-zinc-500">{hint}</p>
+      )}
+      <div className="px-4 pb-4 pt-1">{children}</div>
+    </div>
+  );
+}
+
+function ArsenalTileGrid({
+  options,
+  selected,
+  onSelect,
+}: {
+  options: { value: string; label: string }[];
+  selected: string;
+  onSelect: (v: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-2">
+      {options.map((o) => {
+        const active = selected === o.value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onSelect(o.value)}
+            className={`group relative w-full text-left rounded-lg border px-3.5 py-3 transition-all flex items-center gap-3
+              ${active
+                ? "border-amber-500 bg-white shadow-[0_4px_14px_-6px_rgba(245,158,11,0.45)]"
+                : "border-zinc-200 bg-white hover:border-amber-400/60 hover:bg-[#fafaf7]"}`}
+          >
+            <div
+              className={`h-5 w-5 shrink-0 rounded-full border-2 grid place-items-center transition-colors
+                ${active ? "border-amber-500 bg-amber-500" : "border-zinc-300 bg-white"}`}
+            >
+              {active && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+            </div>
+            <span
+              className={`text-[13px] leading-snug ${
+                active ? "font-semibold text-zinc-900" : "font-medium text-zinc-700"
+              }`}
+            >
+              {o.label}
+            </span>
+            {active && (
+              <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.2em] text-amber-700">
+                SELECIONADO
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
