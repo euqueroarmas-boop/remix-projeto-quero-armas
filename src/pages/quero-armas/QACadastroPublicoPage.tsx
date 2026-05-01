@@ -923,7 +923,7 @@ function DuplicateModal({
   );
 }
 
-function Stepper({ current }: { current: StepId }) {
+function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepId) => void }) {
   return (
     <div className="mt-4 -mx-1 overflow-x-hidden">
       <div className="flex items-start min-w-0">
@@ -935,11 +935,19 @@ function Stepper({ current }: { current: StepId }) {
           const amber = "hsl(38 92% 50%)";   // amber-500
           const amberDark = "hsl(35 91% 33%)"; // amber-700
           const ok = "hsl(152 60% 42%)";
+          const canJump = !!onJump && s.id < current && current < 4;
           return (
             <Fragment key={s.id}>
-              <div className="flex flex-col items-center shrink-0 min-w-0" style={{ width: 48 }}>
+              <button
+                type="button"
+                disabled={!canJump}
+                onClick={canJump ? () => onJump!(s.id) : undefined}
+                className={`flex flex-col items-center shrink-0 min-w-0 bg-transparent border-0 p-0 ${canJump ? "cursor-pointer group/step" : "cursor-default"}`}
+                style={{ width: 48 }}
+                aria-label={canJump ? `Voltar para ${s.label}` : s.label}
+              >
                 <div
-                  className="rounded-md flex items-center justify-center text-[10.5px] font-bold font-mono transition-all"
+                  className={`rounded-md flex items-center justify-center text-[10.5px] font-bold font-mono transition-all ${canJump ? "group-hover/step:scale-110 group-hover/step:shadow-[0_0_0_3px_hsla(38,92%,50%,0.25)]" : ""}`}
                   style={{
                     width: active ? 26 : 22,
                     height: active ? 26 : 22,
@@ -967,7 +975,7 @@ function Stepper({ current }: { current: StepId }) {
                 >
                   {s.label}
                 </span>
-              </div>
+              </button>
               {!isLast && (
                 <div
                   className="flex-1 h-px rounded-full self-start"
