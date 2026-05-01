@@ -13,6 +13,100 @@ export type WeaponKind =
   | "submetralhadora"
   | "outra";
 
+/**
+ * Status visual agregado das GTEs do cliente para o KPI do Arsenal.
+ *
+ * Precedência: vencida > próxima > válida > neutro.
+ * Janela: vencida (<0d), próxima (0..30d), em dia (>30d).
+ * GTEs sem `data_validade` ou ainda em processamento entram em "neutro".
+ */
+export interface GteKpiInput {
+  data_validade?: string | null;
+  status_processamento?: string | null;
+}
+
+export interface GteKpiStatus {
+  total: number;
+  validas: number;
+  proximas: number;
+  vencidas: number;
+  semData: number;
+  statusVisual: "ok" | "warn" | "danger" | "muted";
+  labelSecundaria: string;
+}
+
+export function getGteKpiStatus(gtes: GteKpiInput[] | null | undefined): GteKpiStatus {
+  const list = Array.isArray(gtes) ? gtes : [];
+  const total = list.length;
+
+  if (total === 0) {
+    return {
+      total: 0,
+      validas: 0,
+      proximas: 0,
+      vencidas: 0,
+      semData: 0,
+      statusVisual: "muted",
+      labelSecundaria: "Sem GTE cadastrada",
+    };
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  let validas = 0;
+  let proximas = 0;
+  let vencidas = 0;
+  let semData = 0;
+
+  for (const g of list) {
+    const status = (g?.status_processamento || "").toLowerCase();
+    if (!g?.data_validade || (status && status !== "concluido")) {
+      semData++;
+      continue;
+    }
+    const v = new Date(`${g.data_validade}T00:00:00`);
+    if (Number.isNaN(v.getTime())) {
+      semData++;
+      continue;
+    }
+    const dias = Math.floor((v.getTime() - hoje.getTime()) / 86400000);
+    if (dias < 0) vencidas++;
+    else if (dias <= 30) proximas++;
+    else validas++;
+  }
+
+  // Precedência: vencida > próxima > válida > neutro
+  if (vencidas > 0) {
+    return {
+      total, validas, proximas, vencidas, semData,
+      statusVisual: "danger",
+      labelSecundaria: vencidas === 1 ? "Vencida" : `${vencidas} vencidas`,
+    };
+  }
+  if (proximas > 0) {
+    return {
+      total, validas, proximas, vencidas, semData,
+      statusVisual: "warn",
+      labelSecundaria: proximas === 1 ? "Próxima do vencimento" : `${proximas} p/ vencer`,
+    };
+  }
+  if (validas > 0) {
+    return {
+      total, validas, proximas, vencidas, semData,
+      statusVisual: "ok",
+      labelSecundaria: "Tudo em dia",
+    };
+  }
+  // Só tem semData
+  return {
+    total, validas, proximas, vencidas, semData,
+    statusVisual: "muted",
+    labelSecundaria: "Aguardando leitura",
+  };
+}
+
+
 export interface WeaponInfo {
   kind: WeaponKind;
   label: string;

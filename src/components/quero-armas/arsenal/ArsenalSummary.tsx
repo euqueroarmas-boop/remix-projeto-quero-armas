@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   FileBadge,
   Boxes,
+  ClipboardList,
   ChevronRight,
   GripVertical,
   Settings2,
@@ -33,12 +34,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { TACTICAL } from "./utils";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas";
+export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
 
 // Identificadores fixos exigidos
-type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas";
+type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas" | "gte";
 
-const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas"];
+const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas", "gte"];
 
 const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   armas: "armas",
@@ -47,6 +48,7 @@ const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   status_cr: "cr",
   calibres: "calibres",
   alertas: "alertas",
+  gte: "gte",
 };
 
 interface Props {
@@ -57,6 +59,12 @@ interface Props {
   crLabel: string;
   totalCrafs: number;
   alerts: number;
+  /** Total de GTEs do cliente (concluídas, com leitura ok). */
+  totalGtes?: number;
+  /** Status visual agregado da GTE: ok/warn/danger/muted. */
+  gteStatus?: "ok" | "warn" | "danger" | "muted";
+  /** Subtexto dinâmico: "Tudo em dia" / "Próxima do vencimento" / "Vencida" / "Sem GTE cadastrada". */
+  gteHint?: string;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
@@ -190,6 +198,9 @@ export function ArsenalSummary({
   crLabel,
   totalCrafs,
   alerts,
+  totalGtes = 0,
+  gteStatus = "muted",
+  gteHint = "Sem GTE cadastrada",
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
@@ -311,8 +322,17 @@ export function ArsenalSummary({
         tone: alerts === 0 ? "ok" : alerts > 2 ? "danger" : "warn",
         target: "alertas",
       },
+      gte: {
+        id: "gte",
+        icon: <ClipboardList className="h-4 w-4" />,
+        label: "GTEs",
+        value: totalGtes,
+        hint: gteHint,
+        tone: gteStatus === "muted" ? "steel" : gteStatus,
+        target: "gte",
+      },
     }),
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint],
   );
 
   const handleDragEnd = useCallback(

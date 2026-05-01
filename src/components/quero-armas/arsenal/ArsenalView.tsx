@@ -4,7 +4,7 @@ import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesManager } from "./MunicoesManager";
-import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel } from "./utils";
+import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +96,37 @@ export function ArsenalView({
 
   // ─── Estados dos modais de CRUD do Arsenal ───
   const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
+
+  // ─── GTEs (qa_gte_documentos) — fonte do KPI de GTE no Arsenal ───
+  // Lê apenas os campos mínimos exigidos pelo helper getGteKpiStatus.
+  const [gteDocs, setGteDocs] = useState<{ id: string; data_validade: string | null; status_processamento: string | null }[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("qa_gte_documentos" as any)
+        .select("id, data_validade, status_processamento")
+        .eq("cliente_id", clienteId);
+      if (!cancelled) setGteDocs(((data as any[]) || []) as any);
+    };
+    load();
+    const ch = supabase
+      .channel(`arsenal_gte_kpi_${clienteId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_gte_documentos", filter: `cliente_id=eq.${clienteId}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [clienteId]);
+
+  const gteKpi = useMemo(() => getGteKpiStatus(gteDocs), [gteDocs]);
+
   const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{
@@ -171,6 +202,10 @@ export function ArsenalView({
     // Clique no KPI "Status CR" abre o modal de CR (criar ou editar) — controle total.
     if (target === "cr") {
       setCrModal({ open: true, item: cadastroCr || undefined });
+      return;
+    }
+    if (target === "gte") {
+      document.getElementById("arsenal-gte")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
     const sectionId =
@@ -444,6 +479,9 @@ export function ArsenalView({
         crLabel={crStatus.label}
         totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
         alerts={alerts.length}
+        totalGtes={gteKpi.total}
+        gteStatus={gteKpi.statusVisual}
+        gteHint={gteKpi.labelSecundaria}
         onNavigate={scrollToSection}
       />
 
