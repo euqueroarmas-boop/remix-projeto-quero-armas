@@ -110,14 +110,8 @@ export default function QAPrecosServicosPage() {
 
   const categoriasExistentes = useMemo(() => {
     const CANONICAS = [
-      "POLÍCIA FEDERAL / SINARM",
-      "POLÍCIA FEDERAL CAC / CR",
-      "EXÉRCITO / SIGMA",
-      "EMPRESARIAL / INSTITUCIONAL",
-      "ATENDIMENTO ESPECIAL",
-      "MUDANÇA DE SERVIÇO",
-      "CURSOS",
-      "COMBOS",
+      "POLÍCIA FEDERAL / DEFESA PESSOAL",
+      "EXÉRCITO / CAC",
     ];
     const doBanco = rows.map((r) => r.categoria.toUpperCase());
     return Array.from(new Set([...CANONICAS, ...doBanco])).sort();
@@ -467,17 +461,16 @@ export default function QAPrecosServicosPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <Field label="CATEGORIA">
-                  <input
-                    list="qa-cat-list"
+                  <select
                     value={form.categoria}
                     onChange={(e) => setForm((f) => f && { ...f, categoria: e.target.value.toUpperCase() })}
                     className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-100"
-                  />
-                  <datalist id="qa-cat-list">
+                  >
+                    <option value="">SELECIONE...</option>
                     {categoriasExistentes.map((c) => (
-                      <option key={c} value={c} />
+                      <option key={c} value={c}>{c}</option>
                     ))}
-                  </datalist>
+                  </select>
                 </Field>
                 <Field label="TIPO">
                   <select
