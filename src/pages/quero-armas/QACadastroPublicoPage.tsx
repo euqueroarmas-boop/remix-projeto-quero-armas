@@ -963,24 +963,39 @@ function Step1Documents({
         </button>
       )}
 
-      {/* Bloco de boas-vindas — premium, tático e sutil */}
+      {/* Slots — KpiCard-like premium light */}
       {SLOTS.map(slot => {
         const Icon = slot.icon;
         const sent = !!files[slot.key];
+        const color = sent ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
         return (
           <button
             key={slot.key}
             type="button"
             onClick={() => fileRefs[slot.key].current?.click()}
-            className="w-full text-left rounded-2xl border border-slate-200 bg-white px-3.5 py-3 transition-all hover:border-slate-300 shadow-[0_3px_12px_rgba(15,23,42,0.06)]"
+            className="group relative w-full text-left overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
           >
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-5 h-5 rounded-md border border-slate-200 flex items-center justify-center" style={{ background: "hsl(220 20% 97%)" }}>
-                <Icon className="w-3.5 h-3.5" style={{ color: "hsl(220 25% 25%)" }} />
+            <div
+              className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
+              style={{ background: color }}
+            />
+            <div className="relative flex items-start justify-between gap-2 mb-3">
+              <div
+                className="flex h-9 w-9 items-center justify-center rounded-xl"
+                style={{ background: `${color}14`, color }}
+              >
+                <Icon className="w-4 h-4" />
               </div>
-              <span className="text-[15px] font-semibold leading-none" style={{ color: "hsl(220 25% 15%)" }}>
-                {slot.label}
-              </span>
+              <div
+                className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
+                style={{ background: `${color}10`, color }}
+              >
+                {sent ? "Enviado" : "Pendente"} <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
+              </div>
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 mb-2">
+              {slot.label}
             </div>
             <div className="flex items-center gap-3">
               {sent ? (
