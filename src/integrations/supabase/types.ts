@@ -5265,6 +5265,99 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_gte_documentos: {
+        Row: {
+          armas_json: Json
+          armas_total: number
+          cliente_id: number
+          clubes_json: Json
+          created_at: string
+          dados_extraidos_json: Json
+          data_emissao: string | null
+          data_validade: string | null
+          endereco_destino: string | null
+          endereco_origem: string | null
+          enderecos_json: Json
+          enderecos_total: number
+          enviado_por: string | null
+          erro_mensagem: string | null
+          id: string
+          mime_type: string | null
+          nome_original: string | null
+          numero_gte: string | null
+          observacoes_ia: string | null
+          orgao_emissor: string | null
+          origem_envio: string
+          processado_em: string | null
+          requerente_cpf: string | null
+          requerente_nome: string | null
+          status_processamento: string
+          storage_path: string
+          tamanho_bytes: number | null
+          updated_at: string
+        }
+        Insert: {
+          armas_json?: Json
+          armas_total?: number
+          cliente_id: number
+          clubes_json?: Json
+          created_at?: string
+          dados_extraidos_json?: Json
+          data_emissao?: string | null
+          data_validade?: string | null
+          endereco_destino?: string | null
+          endereco_origem?: string | null
+          enderecos_json?: Json
+          enderecos_total?: number
+          enviado_por?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_original?: string | null
+          numero_gte?: string | null
+          observacoes_ia?: string | null
+          orgao_emissor?: string | null
+          origem_envio?: string
+          processado_em?: string | null
+          requerente_cpf?: string | null
+          requerente_nome?: string | null
+          status_processamento?: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          armas_json?: Json
+          armas_total?: number
+          cliente_id?: number
+          clubes_json?: Json
+          created_at?: string
+          dados_extraidos_json?: Json
+          data_emissao?: string | null
+          data_validade?: string | null
+          endereco_destino?: string | null
+          endereco_origem?: string | null
+          enderecos_json?: Json
+          enderecos_total?: number
+          enviado_por?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          mime_type?: string | null
+          nome_original?: string | null
+          numero_gte?: string | null
+          observacoes_ia?: string | null
+          orgao_emissor?: string | null
+          origem_envio?: string
+          processado_em?: string | null
+          requerente_cpf?: string | null
+          requerente_nome?: string | null
+          status_processamento?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_gtes: {
         Row: {
           catalogo_id: string | null
