@@ -649,11 +649,9 @@ export default function QACadastroPublicoPage() {
           <BackButton fallback="/" />
         </div>
 
-        {/* Bloco preto da logo — encostado no topo do formulário, mesmo preto da logo */}
-        <div className="flex justify-center">
-          <div className="bg-[#0A0A0A] rounded-t-xl px-8 pt-5 pb-6 -mb-3 shadow-[0_4px_16px_-8px_rgba(0,0,0,0.3)]">
-            <QALogo className="h-20 w-20" />
-          </div>
+        {/* Header preto — integrado, 100% da largura do container, sem cantos/sombra */}
+        <div className="w-full bg-[#0A0A0A] flex items-center justify-center py-4 -mb-px">
+          <QALogo className="h-14 w-14" />
         </div>
 
         <div
