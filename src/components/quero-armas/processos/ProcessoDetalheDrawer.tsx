@@ -738,10 +738,115 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                         </div>
                       )}
                       {ext && Object.keys(ext).length > 0 && (
-                        <details className="text-[11px] text-slate-600">
-                          <summary className="cursor-pointer uppercase tracking-wider font-bold text-slate-500">DADOS EXTRAÍDOS PELA IA</summary>
-                          <pre className="mt-1 bg-slate-50 border border-slate-200 rounded p-2 overflow-x-auto">{JSON.stringify(ext, null, 2)}</pre>
+                        <details className="text-[11px] text-slate-700 rounded-md border border-slate-200 bg-white">
+                          <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-slate-600 inline-flex items-center gap-1.5">
+                            <Sparkles className="h-3 w-3 text-amber-500" /> DADOS EXTRAÍDOS AUTOMATICAMENTE
+                          </summary>
+                          <div className="border-t border-slate-100 p-2.5 space-y-1">
+                            {Object.entries(ext).filter(([k, v]) => v !== null && v !== "" && k !== "_meta").map(([k, v]) => (
+                              <div key={k} className="grid grid-cols-[140px_1fr] gap-2 items-start">
+                                <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 truncate">{k}</div>
+                                <div className="text-[11px] text-slate-800 break-words">{typeof v === "object" ? JSON.stringify(v) : String(v)}</div>
+                              </div>
+                            ))}
+                          </div>
                         </details>
+                      )}
+
+                      {/* FASE 4 — Endereço em nome de terceiro */}
+                      {doc.endereco_em_nome_de_terceiro && (
+                        <div className="rounded-md border border-violet-200 bg-violet-50/70 p-2.5">
+                          <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-violet-800">
+                            <Home className="h-3 w-3" /> ENDEREÇO EM NOME DE TERCEIRO
+                          </div>
+                          <div className="mt-1.5 text-[11px] text-violet-900/90 leading-relaxed">
+                            {doc.titular_comprovante_nome && (
+                              <div><strong className="uppercase">TITULAR:</strong> {doc.titular_comprovante_nome}</div>
+                            )}
+                            {doc.titular_comprovante_documento && (
+                              <div><strong className="uppercase">DOCUMENTO:</strong> {doc.titular_comprovante_documento}</div>
+                            )}
+                            <div className="mt-1 italic text-violet-800/80">
+                              Será necessária declaração do responsável pelo imóvel em etapa futura.
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* FASE 4 — Metadados do documento */}
+                      {doc.metadados_documento_json && typeof doc.metadados_documento_json === "object" && Object.keys(doc.metadados_documento_json).length > 0 && (
+                        <details className="text-[11px] text-slate-600 rounded-md border border-slate-200 bg-white">
+                          <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-slate-500 inline-flex items-center gap-1.5">
+                            <Database className="h-3 w-3 text-slate-500" /> METADADOS DO DOCUMENTO
+                          </summary>
+                          <pre className="mt-0 border-t border-slate-100 p-2 text-[10px] bg-slate-50 overflow-x-auto">{JSON.stringify(doc.metadados_documento_json, null, 2)}</pre>
+                        </details>
+                      )}
+
+                      {/* FASE 4 — Campos complementares (sem coluna fixa) */}
+                      {doc.campos_complementares_json && typeof doc.campos_complementares_json === "object" && (() => {
+                        const compl = doc.campos_complementares_json as any;
+                        const extras = Object.entries(compl).filter(([k]) => k !== "conflitos_reconciliacao" && k !== "conflitos_resolvidos");
+                        if (extras.length === 0) return null;
+                        return (
+                          <details className="text-[11px] text-slate-600 rounded-md border border-slate-200 bg-white">
+                            <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-slate-500 inline-flex items-center gap-1.5">
+                              <Layers className="h-3 w-3 text-slate-500" /> CAMPOS COMPLEMENTARES
+                            </summary>
+                            <div className="border-t border-slate-100 p-2.5 space-y-1">
+                              {extras.map(([k, v]) => (
+                                <div key={k} className="grid grid-cols-[160px_1fr] gap-2 items-start">
+                                  <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 truncate">{k}</div>
+                                  <div className="text-[11px] text-slate-800 break-words">{typeof v === "object" ? JSON.stringify(v) : String(v ?? "—")}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        );
+                      })()}
+
+                      {/* FASE 4 — Conflitos de reconciliação (cliente vs IA) */}
+                      {(() => {
+                        const compl = (doc.campos_complementares_json && typeof doc.campos_complementares_json === "object")
+                          ? doc.campos_complementares_json as any : null;
+                        const conflitos: any[] = compl && Array.isArray(compl.conflitos_reconciliacao) ? compl.conflitos_reconciliacao : [];
+                        if (conflitos.length === 0) return null;
+                        return (
+                          <div className="rounded-md border border-orange-300 bg-orange-50/70 p-2.5">
+                            <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-orange-800">
+                              <GitCompareArrows className="h-3 w-3" /> CONFLITOS DETECTADOS — CADASTRO PRESERVADO
+                            </div>
+                            <ul className="mt-1.5 space-y-2">
+                              {conflitos.map((c: any, i: number) => (
+                                <li key={i} className="text-[11px] bg-white border border-orange-200 rounded p-2">
+                                  <div className="font-bold uppercase tracking-wider text-slate-700">{c.campo ?? "—"}</div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 mt-1">
+                                    <div className="rounded bg-emerald-50 border border-emerald-200 p-1.5">
+                                      <div className="text-[9px] uppercase tracking-wider font-bold text-emerald-700">VALOR DO CLIENTE (MANTIDO)</div>
+                                      <div className="text-emerald-900 break-words">{String(c.valor_cliente ?? "—")}</div>
+                                    </div>
+                                    <div className="rounded bg-amber-50 border border-amber-200 p-1.5">
+                                      <div className="text-[9px] uppercase tracking-wider font-bold text-amber-700">VALOR EXTRAÍDO PELA IA</div>
+                                      <div className="text-amber-900 break-words">{String(c.valor_ia ?? c.valor_extraido ?? "—")}</div>
+                                    </div>
+                                  </div>
+                                  {adminMode && (
+                                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">PADRÃO: MANTER VALOR ATUAL</span>
+                                      <button
+                                        onClick={() => aplicarConflitoIA(doc, c)}
+                                        className="h-7 px-2.5 inline-flex items-center gap-1 rounded border border-amber-400 bg-white text-[10px] uppercase tracking-wider font-bold text-amber-800 hover:bg-amber-50"
+                                      >
+                                        ATUALIZAR MANUALMENTE COM VALOR DA IA
+                                      </button>
+                                    </div>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })()}
                       )}
                       {doc.validacao_ia_confianca !== null && (
                         <div className="text-[10px] uppercase tracking-wider text-slate-400">
