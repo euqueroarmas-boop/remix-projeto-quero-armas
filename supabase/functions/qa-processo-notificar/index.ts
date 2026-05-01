@@ -43,7 +43,7 @@ const TITULOS: Record<Evento, string> = {
   documento_invalido: "Documento precisa ser reenviado",
   certidao_invalida: "Certidão precisa ser reenviada",
   divergencia_dados: "Divergência entre documento e cadastro",
-  revisao_humana: "Documento em revisão humana",
+  revisao_humana: "Documento em revisão pela Equipe Quero Armas",
   documento_aprovado: "Documento aprovado",
   documentacao_aprovada: "Documentação aprovada",
   processo_bloqueado: "Processo bloqueado",
@@ -92,7 +92,8 @@ function corpoEvento(ev: Evento, ctx: { servico: string; documento?: string; mot
         <p style="text-align:center;">${btn(ctx.portalUrl + "&acao=confirmar_cadastro", "Meu cadastro está correto", "#0f172a")}${btn(ctx.portalUrl + "&acao=confirmar_documento", "O documento está correto", "#0ea5e9")}</p>
         <p style="text-align:center;">${btn(ctx.uploadUrl, "Reenviar PDF correto")}</p>`;
     case "revisao_humana":
-      return `<p>${docName} está em revisão humana. Avisaremos assim que terminar — nenhuma ação sua é necessária agora.</p>
+      return `<p>Recebemos ${docName}, mas a leitura automática não conseguiu interpretar o arquivo com segurança. Nossa equipe fará a conferência manual.</p>
+        <p>Você não precisa fazer nada agora — avisaremos assim que a Equipe Quero Armas terminar a análise.</p>
         <p style="text-align:center;">${btn(ctx.portalUrl, "Acompanhar processo")}</p>`;
     case "documento_aprovado":
       return `<p>${docName} foi aprovado. Continue acompanhando os itens restantes.</p>
