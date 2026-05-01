@@ -183,21 +183,21 @@ Deno.serve(async (req) => {
         .eq("ativo", true)
         .maybeSingle();
 
+      const qaClienteIdNum = qaClienteId ? Number(qaClienteId) : null;
       if (!catRow) {
         console.warn("[venda_pendente] catálogo não encontrado:", slugCatalogo);
       } else if (catRow.servico_id == null) {
         console.warn("[venda_pendente] catálogo sem servico_id (não pronto online):", slugCatalogo);
+      } else if (!qaClienteIdNum) {
+        console.warn("[venda_pendente] qa_cliente_id ausente, não é possível criar venda");
       } else {
-        const valor = Number(catRow.preco ?? 0) || 1; // RPC exige > 0
+        const valor = Number(catRow.preco ?? 0) || 1;
         const { data: rpcRes, error: rpcErr } = await admin.rpc(
-          "qa_cliente_criar_contratacao_publico" as any,
+          "qa_arsenal_criar_venda_pendente" as any,
           {
-            p_cpf: cpfNorm,
-            p_nome: nome,
-            p_email: emailNorm,
-            p_telefone: telefone ?? "",
+            p_qa_cliente_id: qaClienteIdNum,
             p_catalogo_slug: catRow.slug,
-            p_valor_informado: valor,
+            p_valor: valor,
             p_observacoes:
               "Contratação iniciada no cadastro Arsenal — aguardando validação da equipe.",
           } as any,
@@ -208,9 +208,7 @@ Deno.serve(async (req) => {
           const r = (rpcRes ?? {}) as Record<string, unknown>;
           vendaCriadaId = (r.venda_id as number | null) ?? null;
           console.info("[venda_pendente] criada:", JSON.stringify(r));
-
-          // Notifica admin (best-effort)
-          if (vendaCriadaId) {
+          if (vendaCriadaId && r.ja_existia !== true) {
             admin.functions
               .invoke("qa-notificar-admin-contratacao", { body: { venda_id: vendaCriadaId } })
               .catch((e) => console.warn("[venda_pendente] notif admin falhou:", e));
