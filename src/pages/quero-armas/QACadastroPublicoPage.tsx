@@ -938,7 +938,7 @@ function DuplicateModal({
 function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepId) => void }) {
   return (
     <div className="mt-4 -mx-1 overflow-x-hidden">
-      <div className="flex items-start min-w-0 gap-1">
+      <div className="flex items-start min-w-0 gap-0.5 px-1">
         {STEPS.map((s, i) => {
           const done = current > s.id;
           const active = current === s.id;
@@ -954,15 +954,14 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
                 type="button"
                 disabled={!canJump}
                 onClick={canJump ? () => onJump!(s.id) : undefined}
-                className={`flex flex-col items-center shrink-0 min-w-0 bg-transparent border-0 p-0 ${canJump ? "cursor-pointer group/step" : "cursor-default"}`}
-                style={{ width: 64 }}
+                className={`flex flex-col items-center min-w-0 flex-1 basis-0 bg-transparent border-0 p-0 ${canJump ? "cursor-pointer group/step" : "cursor-default"}`}
                 aria-label={canJump ? `Voltar para ${s.label}` : s.label}
               >
                 <div
-                  className={`rounded-lg flex items-center justify-center text-[15px] font-bold font-mono transition-all ${canJump ? "group-hover/step:scale-110 group-hover/step:shadow-[0_0_0_4px_hsla(38,92%,50%,0.3)]" : ""}`}
+                  className={`shrink-0 rounded-lg flex items-center justify-center text-[13px] font-bold font-mono transition-all ${canJump ? "group-hover/step:scale-110 group-hover/step:shadow-[0_0_0_4px_hsla(38,92%,50%,0.3)]" : ""}`}
                   style={{
-                    width: active ? 38 : 34,
-                    height: active ? 38 : 34,
+                    width: active ? 30 : 26,
+                    height: active ? 30 : 26,
                     background: done ? `${ok}1F` : active ? amber : "white",
                     color: done ? ok : active ? "white" : "hsl(220 12% 40%)",
                     boxShadow: active
@@ -972,10 +971,10 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
                         : "inset 0 0 0 1.5px hsl(220 14% 80%)",
                   }}
                 >
-                  {done ? <CheckCircle2 className="w-4 h-4" strokeWidth={2.6} /> : i + 1}
+                  {done ? <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2.6} /> : i + 1}
                 </div>
                 <span
-                  className="mt-1.5 text-[9.5px] text-center leading-[1.15] uppercase tracking-[0.1em] font-mono w-full break-words"
+                  className="mt-1 text-[8.5px] text-center leading-[1.1] uppercase tracking-[0.06em] font-mono w-full break-words px-0.5"
                   style={{
                     color: active
                       ? amberDark
@@ -990,9 +989,9 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
               </button>
               {!isLast && (
                 <div
-                  className="flex-1 h-[2px] rounded-full self-start"
+                  className="shrink-0 w-2 sm:w-3 h-[2px] rounded-full self-start"
                   style={{
-                    marginTop: active ? 19 : 17,
+                    marginTop: active ? 15 : 13,
                     background: nextReached ? ok : "hsl(220 14% 85%)",
                     opacity: nextReached ? 0.7 : 1,
                   }}
