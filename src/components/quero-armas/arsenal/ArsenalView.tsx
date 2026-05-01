@@ -204,6 +204,10 @@ export function ArsenalView({
       setCrModal({ open: true, item: cadastroCr || undefined });
       return;
     }
+    if (target === "gte") {
+      document.getElementById("arsenal-gte")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     const sectionId =
       target === "alertas" || target === "crafs"
         ? "arsenal-situacao"
@@ -475,6 +479,9 @@ export function ArsenalView({
         crLabel={crStatus.label}
         totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
         alerts={alerts.length}
+        totalGtes={gteKpi.total}
+        gteStatus={gteKpi.statusVisual}
+        gteHint={gteKpi.labelSecundaria}
         onNavigate={scrollToSection}
       />
 
