@@ -1796,7 +1796,13 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       versao: 1,
       caso_id: caso_id || null,
       cliente_id: cliente_id_final ?? null,
+      correcoes_ia_usadas_json: resumoCorrecoesParaMetadata(correcoesAtivas),
+      correcoes_ia_alertas_json: checarErrosConhecidosNaPeca(minutaGerada, correcoesAtivas),
     }).select("id").single();
+
+    const alertasCorrecoesNS = checarErrosConhecidosNaPeca(minutaGerada, correcoesAtivas);
+    await registrarUsoCorrecoes(supabase, correcoesAtivas);
+    console.log(`[qa-gerar-peca] Pós-geração (json): correcoes_injetadas=${correcoesAtivas.length}, alertas=${alertasCorrecoesNS.length}`);
 
     await supabase.from("qa_logs_auditoria").insert({
       usuario_id,
@@ -1817,6 +1823,10 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
         evidence_structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, indicadores_risco: d.structured.indicadores_risco })),
         score_confianca: scoreConfianca,
         quality_issues: qualityCheck.issues,
+        correcoes_ia_injetadas: correcoesAtivas.length,
+        correcoes_ia_ids: correcoesAtivas.map(c => c.id),
+        correcoes_ia_alertas: alertasCorrecoesNS.length,
+        correcoes_ia_alertas_categorias: alertasCorrecoesNS.map(a => a.categoria),
       },
     });
 
@@ -1843,6 +1853,8 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
         by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
         structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, structured: d.structured })),
       } : null,
+      correcoes_ia_alertas: alertasCorrecoesNS,
+      correcoes_ia_injetadas_count: correcoesAtivas.length,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
   } catch (err: any) {
