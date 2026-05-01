@@ -783,6 +783,16 @@ export default function QAClientePortalPage() {
                       <BadgeCheck className="h-3 w-3 text-emerald-600" /> Avatar tático ativo
                     </span>
                   )}
+                  {hasAnyPhoto && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate("/quero-armas/cadastro/foto")}
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50"
+                    >
+                      <Camera className="h-3.5 w-3.5 mr-1.5" /> Trocar foto
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
