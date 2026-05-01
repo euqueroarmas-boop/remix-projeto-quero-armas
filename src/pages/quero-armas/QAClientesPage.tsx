@@ -11,7 +11,7 @@ import {
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
-  ShoppingCart, RefreshCw,
+  ShoppingCart, RefreshCw, Landmark,
 } from "lucide-react";
 import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
@@ -967,6 +967,78 @@ function SortableServicoRow({ id, children }: { id: string; children: (handlePro
   return (
     <div ref={setNodeRef} style={style}>
       {children({ listeners, attributes, isDragging })}
+    </div>
+  );
+}
+
+/**
+ * KPI inline da Circunscrição PF do cliente.
+ * Resolve a unidade da Polícia Federal a partir de cidade/UF do cliente
+ * usando a mesma RPC `qa_resolver_circunscricao_pf` já utilizada na geração
+ * de peças (ver ClientePecas.tsx). Não cria arquitetura paralela.
+ */
+function CircunscricaoKpi({ cidade, uf }: { cidade: string | null | undefined; uf: string | null | undefined }) {
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "empty" | "error">("idle");
+  const [data, setData] = useState<{ unidade_pf?: string; sigla_unidade?: string } | null>(null);
+
+  useEffect(() => {
+    const c = (cidade || "").replace(/\s+/g, " ").trim();
+    const u = (uf || "").trim().toUpperCase();
+    if (!c || !u) { setStatus("idle"); setData(null); return; }
+    let aborted = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    setStatus("loading");
+    (async () => {
+      try {
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/qa_resolver_circunscricao_pf`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ p_municipio: c, p_uf: u }),
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (aborted) return;
+        if (!res.ok) { setStatus("error"); setData(null); return; }
+        const arr = await res.json();
+        if (!arr || arr.length === 0) { setStatus("empty"); setData(null); return; }
+        setData(arr[0]);
+        setStatus("ok");
+      } catch {
+        if (!aborted) { setStatus("error"); setData(null); }
+      }
+    })();
+    return () => { aborted = true; clearTimeout(timer); controller.abort(); };
+  }, [cidade, uf]);
+
+  const color = "hsl(220 70% 50%)";
+  const value =
+    status === "loading" ? "RESOLVENDO..." :
+    status === "ok" && data ? `${data.sigla_unidade || ""}${data.sigla_unidade && data.unidade_pf ? " — " : ""}${data.unidade_pf || ""}`.trim() :
+    status === "empty" ? "NÃO LOCALIZADA" :
+    status === "error" ? "FALHA AO RESOLVER" :
+    "—";
+  const tooltip = status === "ok" && data ? `${data.sigla_unidade || ""} — ${data.unidade_pf || ""}` : value;
+
+  return (
+    <div className="flex items-center gap-2.5 px-4 py-3 first:border-l-0">
+      <div
+        className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+        style={{ background: `${color}14`, color, boxShadow: `inset 0 0 0 1px ${color}1f` }}
+      >
+        <Landmark className="h-3.5 w-3.5" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">CIRCUNSCRIÇÃO PF</div>
+        <div className="text-[13px] font-bold text-slate-800 truncate uppercase" title={tooltip}>
+          {value}
+        </div>
+      </div>
     </div>
   );
 }
@@ -2150,7 +2222,7 @@ export default function QAClientesPage() {
                 </div>
               </div>
               {/* Vitals row — mesma linguagem dos KpiCards do Arsenal */}
-              <div className="relative grid grid-cols-2 md:grid-cols-4 border-t border-slate-200/80 divide-x divide-slate-200/80">
+              <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
                 {[
                   { icon: Phone, color: "hsl(190 80% 45%)", label: "Telefone", value: c.celular || "—", mono: true },
                   { icon: MapPin, color: "hsl(220 20% 28%)", label: "Localização", value: c.cidade ? `${c.cidade}/${c.estado}` : "—" },
@@ -2172,6 +2244,7 @@ export default function QAClientesPage() {
                     </div>
                   </div>
                 ))}
+                <CircunscricaoKpi cidade={c.cidade} uf={c.estado} />
               </div>
             </div>
           );
