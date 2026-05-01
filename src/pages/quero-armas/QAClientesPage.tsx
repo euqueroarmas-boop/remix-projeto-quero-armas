@@ -2214,7 +2214,9 @@ export default function QAClientesPage() {
                   {/* KPIs no topo — padrão Arsenal */}
                   {(() => {
                     const totalVendas = vendas.length;
-                    const totalPagas = vendas.filter((v: any) => v.status === "PAGO" || !!v.forma_pagamento).length;
+                    // Status é a fonte da verdade. forma_pagamento só indica o método escolhido,
+                    // mas a venda pode estar como NÃO PAGOU mesmo com método selecionado.
+                    const totalPagas = vendas.filter((v: any) => String(v.status || "").trim().toUpperCase() === "PAGO").length;
                     const totalPendentes = totalVendas - totalPagas;
                     const totalCortesia = vendas.filter((v: any) => {
                       const its = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
@@ -2338,7 +2340,7 @@ export default function QAClientesPage() {
                               <span className="w-[88px] flex justify-start">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
-                                  const isPago = v.status === "PAGO" || !!v.forma_pagamento;
+                                  const isPago = String(v.status || "").trim().toUpperCase() === "PAGO";
                                   if (allCortesia) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
                                       style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
