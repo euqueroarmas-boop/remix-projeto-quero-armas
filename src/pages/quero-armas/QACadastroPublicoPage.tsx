@@ -188,6 +188,12 @@ export default function QACadastroPublicoPage() {
    * externos abram o cadastro já com o serviço escolhido — eliminando
    * o "cadastro genérico que tenta adivinhar o serviço". */
   const [searchParams] = useSearchParams();
+  const [servicoPreSelecionado, setServicoPreSelecionado] = useState<{
+    slug: string;
+    nome: string;
+    preco: number | null;
+    recorrente: boolean;
+  } | null>(null);
   useEffect(() => {
     const slug = searchParams.get("servico");
     if (!slug) return;
@@ -195,7 +201,7 @@ export default function QACadastroPublicoPage() {
     (async () => {
       const { data } = await supabase
         .from("qa_servicos_catalogo" as any)
-        .select("slug, nome, objetivo_slug, categoria_servico_slug, servico_principal_slug")
+        .select("slug, nome, preco, recorrente, objetivo_slug, categoria_servico_slug, servico_principal_slug")
         .eq("slug", slug)
         .eq("ativo", true)
         .maybeSingle();
@@ -203,6 +209,12 @@ export default function QACadastroPublicoPage() {
       const cat = (data as any).categoria_servico_slug as string | null;
       const obj = (data as any).objetivo_slug as string | null;
       const svc = (data as any).servico_principal_slug as string | null;
+      setServicoPreSelecionado({
+        slug: (data as any).slug,
+        nome: (data as any).nome,
+        preco: (data as any).preco != null ? Number((data as any).preco) : null,
+        recorrente: !!(data as any).recorrente,
+      });
       if (obj && cat && svc) {
         setQualif((q) => ({
           ...q,
