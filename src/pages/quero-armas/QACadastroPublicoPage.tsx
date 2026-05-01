@@ -1869,6 +1869,31 @@ function Step3Review({
         </div>
       )}
 
+      {(existingCheck?.cpf_existe || existingCheck?.email_existe) && (
+        <div
+          className="p-3 rounded-lg flex gap-2 text-xs items-start"
+          style={{
+            background: "#FEF3C7",
+            border: "1px solid #F59E0B",
+            color: "#78350F",
+          }}
+        >
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "#B45309" }} />
+          <div className="space-y-1 min-w-0">
+            <div className="font-bold uppercase tracking-wide text-[10px]" style={{ color: "#92400E" }}>
+              Já existe um Acesso Arsenal
+            </div>
+            <div className="leading-relaxed">
+              {existingCheck.cpf_existe && existingCheck.email_existe
+                ? "Encontramos uma conta ativa com este CPF e e-mail. Você será vinculado(a) a ela ao concluir — não criaremos uma conta duplicada."
+                : existingCheck.cpf_existe
+                ? "Já existe uma conta ativa com este CPF. Você será vinculado(a) a ela ao concluir."
+                : "Já existe uma conta ativa com este e-mail. Você será vinculado(a) a ela ao concluir."}
+            </div>
+          </div>
+        </div>
+      )}
+
       <button
         onClick={onContinue}
         disabled={busy || !podeAvancar}
