@@ -157,6 +157,71 @@ Deno.serve(async (req) => {
     console.error("[qa_cadastro_publico] update threw:", (e as Error)?.message);
   }
 
+  // 4.5) FASE 17-B: cria venda PENDENTE automaticamente quando usuário escolheu serviço.
+  // A equipe valida o valor/serviço e aprova manualmente. NÃO gera processo nem checklist.
+  let vendaCriadaId: number | null = null;
+  try {
+    let slugCatalogo: string | null = (catalogo_slug || "").trim() || null;
+    if (!slugCatalogo && servico_principal) {
+      const sp = servico_principal.trim();
+      const { data: cat } = await admin
+        .from("qa_servicos_catalogo")
+        .select("slug, preco")
+        .eq("ativo", true)
+        .or(`slug.eq.${sp},servico_principal_slug.eq.${sp}`)
+        .order("display_order", { ascending: true, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      if (cat?.slug) slugCatalogo = cat.slug;
+    }
+
+    if (slugCatalogo) {
+      const { data: catRow } = await admin
+        .from("qa_servicos_catalogo")
+        .select("slug, preco, servico_id")
+        .eq("slug", slugCatalogo)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      if (!catRow) {
+        console.warn("[venda_pendente] catálogo não encontrado:", slugCatalogo);
+      } else if (catRow.servico_id == null) {
+        console.warn("[venda_pendente] catálogo sem servico_id (não pronto online):", slugCatalogo);
+      } else {
+        const valor = Number(catRow.preco ?? 0) || 1; // RPC exige > 0
+        const { data: rpcRes, error: rpcErr } = await admin.rpc(
+          "qa_cliente_criar_contratacao_publico" as any,
+          {
+            p_cpf: cpfNorm,
+            p_nome: nome,
+            p_email: emailNorm,
+            p_telefone: telefone ?? "",
+            p_catalogo_slug: catRow.slug,
+            p_valor_informado: valor,
+            p_observacoes:
+              "Contratação iniciada no cadastro Arsenal — aguardando validação da equipe.",
+          } as any,
+        );
+        if (rpcErr) {
+          console.error("[venda_pendente] RPC erro:", rpcErr.message);
+        } else {
+          const r = (rpcRes ?? {}) as Record<string, unknown>;
+          vendaCriadaId = (r.venda_id as number | null) ?? null;
+          console.info("[venda_pendente] criada:", JSON.stringify(r));
+
+          // Notifica admin (best-effort)
+          if (vendaCriadaId) {
+            admin.functions
+              .invoke("qa-notificar-admin-contratacao", { body: { venda_id: vendaCriadaId } })
+              .catch((e) => console.warn("[venda_pendente] notif admin falhou:", e));
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[venda_pendente] threw:", (e as Error)?.message);
+  }
+
   // 5) Dispara e-mail de boas-vindas via send-smtp-email (gateway central existente)
   try {
     const html = qaArsenalWelcomeHtml({
@@ -204,5 +269,6 @@ Deno.serve(async (req) => {
     email: emailNorm,
     tipo_cliente: result.tipo_cliente ?? null,
     cliente_created: result.cliente_created ?? false,
+    venda_pendente_id: vendaCriadaId,
   });
 });
