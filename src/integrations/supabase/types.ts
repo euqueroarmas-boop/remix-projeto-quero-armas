@@ -6900,27 +6900,51 @@ export type Database = {
       qa_status_servico: {
         Row: {
           ativo: boolean
+          codigo: string
+          cor: string | null
           created_at: string
+          descricao: string | null
+          exige_data_protocolo: boolean
+          exige_numero_protocolo: boolean
+          finalizador: boolean
           id: string
           nome: string
           ordem: number
           updated_at: string
+          visivel_cliente: boolean
+          visivel_equipe: boolean
         }
         Insert: {
           ativo?: boolean
+          codigo: string
+          cor?: string | null
           created_at?: string
+          descricao?: string | null
+          exige_data_protocolo?: boolean
+          exige_numero_protocolo?: boolean
+          finalizador?: boolean
           id?: string
           nome: string
           ordem?: number
           updated_at?: string
+          visivel_cliente?: boolean
+          visivel_equipe?: boolean
         }
         Update: {
           ativo?: boolean
+          codigo?: string
+          cor?: string | null
           created_at?: string
+          descricao?: string | null
+          exige_data_protocolo?: boolean
+          exige_numero_protocolo?: boolean
+          finalizador?: boolean
           id?: string
           nome?: string
           ordem?: number
           updated_at?: string
+          visivel_cliente?: boolean
+          visivel_equipe?: boolean
         }
         Relationships: []
       }

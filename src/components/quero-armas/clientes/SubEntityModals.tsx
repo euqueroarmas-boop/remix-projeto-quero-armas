@@ -615,26 +615,12 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         }
       }
       const defaultItemStatus = getDefaultItemStatus();
-      // Whitelist do CHECK constraint chk_qa_itens_venda_status (uppercase, com espaços).
-      // Itens legados podem ter status em snake_case (ex: "montando_pasta") que viola
-      // o constraint. Validamos antes de inserir; se inválido, caímos no default.
-      const ALLOWED_ITEM_STATUS = new Set([
-        "PAGO", "NÃO PAGOU", "NAO PAGOU", "FALT. PARTE PAG.", "DESISTIU",
-        "INDEFERIDO", "DEFERIDO", "MONTANDO PASTA", "AGUARDANDO DOCUMENTOS DO CLIENTE",
-        "EM ANÁLISE", "EM ANALISE", "PRONTO PARA ANÁLISE", "PRONTO PARA ANALISE",
-        "CANCELADO", "RESTITUÍDO", "RESTITUIDO", "CONCLUÍDO", "CONCLUIDO",
-        "À INICIAR", "A INICIAR", "À FAZER", "A FAZER", "AGUARD. ETAPA ANTERIOR",
-        "RECURSO ADMINISTRATIVO", "AGUARDANDO DOCUMENTAÇÃO", "AGUARDANDO DOCUMENTACAO",
-        "NOTIFICADO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO",
-        "PASTA FISICA - AGUARDANDO LIBERACAO",
-      ]);
-      const normalizeItemStatus = (raw: string | null | undefined): string => {
-        const candidate = (raw ?? "").trim().toUpperCase();
-        return ALLOWED_ITEM_STATUS.has(candidate) ? candidate : defaultItemStatus;
-      };
+      // Validação agora é feita pelo trigger trg_qa_itens_venda_validate_status
+      // contra qa_status_servico (fonte única, editável em Configurações).
+      // Aqui apenas garantimos um fallback para itens sem status definido.
       const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo, status }]) => ({
         venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor,
-        status: normalizeItemStatus(status),
+        status: (status && String(status).trim()) ? status : defaultItemStatus,
         cortesia, cortesia_motivo: cortesia ? (cortesia_motivo || null) : null,
       }));
       if (items.length > 0) {

@@ -31,11 +31,31 @@ export default function QAConfiguracoesPage() {
   const [showNew, setShowNew] = useState(false);
   const [savingSvc, setSavingSvc] = useState(false);
 
-  // Status de Serviço (CRUD)
-  const [statuses, setStatuses] = useState<{ id: string; nome: string; ordem: number; ativo: boolean }[]>([]);
+  // Status de Serviço (CRUD) — fonte única editável pela Equipe Quero Armas
+  type StatusRow = {
+    id: string;
+    codigo: string;
+    nome: string;
+    descricao: string | null;
+    ordem: number;
+    cor: string | null;
+    ativo: boolean;
+    finalizador: boolean;
+    exige_data_protocolo: boolean;
+    exige_numero_protocolo: boolean;
+    visivel_cliente: boolean;
+    visivel_equipe: boolean;
+  };
+  const emptyStatusForm = {
+    codigo: "", nome: "", descricao: "", ordem: "",
+    cor: "#94a3b8", finalizador: false,
+    exige_data_protocolo: false, exige_numero_protocolo: false,
+    visivel_cliente: true, visivel_equipe: true,
+  };
+  const [statuses, setStatuses] = useState<StatusRow[]>([]);
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  const [editStatusForm, setEditStatusForm] = useState({ nome: "", ordem: "" });
-  const [newStatusForm, setNewStatusForm] = useState({ nome: "", ordem: "" });
+  const [editStatusForm, setEditStatusForm] = useState<typeof emptyStatusForm>(emptyStatusForm);
+  const [newStatusForm, setNewStatusForm] = useState<typeof emptyStatusForm>(emptyStatusForm);
   const [showNewStatus, setShowNewStatus] = useState(false);
   const [savingStatus, setSavingStatus] = useState(false);
 
@@ -62,17 +82,32 @@ export default function QAConfiguracoesPage() {
     setStatuses((data as any[]) ?? []);
   };
 
+  const slugify = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+
   const handleAddStatus = async () => {
     if (!newStatusForm.nome.trim()) { toast.error("Nome obrigatório"); return; }
+    const codigo = (newStatusForm.codigo.trim() || slugify(newStatusForm.nome));
+    if (!codigo) { toast.error("Código inválido"); return; }
     setSavingStatus(true);
     try {
       const { error } = await supabase.from("qa_status_servico" as any).insert({
-        nome: newStatusForm.nome.trim(),
+        codigo,
+        nome: newStatusForm.nome.trim().toUpperCase(),
+        descricao: newStatusForm.descricao.trim() || null,
         ordem: Number(newStatusForm.ordem) || 0,
+        cor: newStatusForm.cor || null,
+        ativo: true,
+        finalizador: newStatusForm.finalizador,
+        exige_data_protocolo: newStatusForm.exige_data_protocolo,
+        exige_numero_protocolo: newStatusForm.exige_numero_protocolo,
+        visivel_cliente: newStatusForm.visivel_cliente,
+        visivel_equipe: newStatusForm.visivel_equipe,
       });
       if (error) throw error;
       toast.success("Status criado");
-      setNewStatusForm({ nome: "", ordem: "" });
+      setNewStatusForm(emptyStatusForm);
       setShowNewStatus(false);
       await loadStatuses();
     } catch (e: any) { toast.error(e.message); } finally { setSavingStatus(false); }
@@ -83,8 +118,16 @@ export default function QAConfiguracoesPage() {
     setSavingStatus(true);
     try {
       const { error } = await supabase.from("qa_status_servico" as any).update({
-        nome: editStatusForm.nome.trim(),
+        codigo: editStatusForm.codigo.trim() || slugify(editStatusForm.nome),
+        nome: editStatusForm.nome.trim().toUpperCase(),
+        descricao: editStatusForm.descricao.trim() || null,
         ordem: Number(editStatusForm.ordem) || 0,
+        cor: editStatusForm.cor || null,
+        finalizador: editStatusForm.finalizador,
+        exige_data_protocolo: editStatusForm.exige_data_protocolo,
+        exige_numero_protocolo: editStatusForm.exige_numero_protocolo,
+        visivel_cliente: editStatusForm.visivel_cliente,
+        visivel_equipe: editStatusForm.visivel_equipe,
       }).eq("id", id);
       if (error) throw error;
       toast.success("Status atualizado");
@@ -93,19 +136,47 @@ export default function QAConfiguracoesPage() {
     } catch (e: any) { toast.error(e.message); } finally { setSavingStatus(false); }
   };
 
+  const handleToggleStatusAtivo = async (s: StatusRow) => {
+    const { error } = await supabase
+      .from("qa_status_servico" as any)
+      .update({ ativo: !s.ativo })
+      .eq("id", s.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(!s.ativo ? "Status ativado" : "Status desativado");
+    await loadStatuses();
+  };
+
   const handleDeleteStatus = async (id: string) => {
-    if (!confirm("Excluir este status?")) return;
+    if (!confirm("Excluir este status? (Bloqueado se já estiver em uso — neste caso, desative.)")) return;
     try {
       const { error } = await supabase.from("qa_status_servico" as any).delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        toast.error(
+          error.message.includes("em uso")
+            ? error.message
+            : "Não foi possível excluir. Se está em uso, desative em vez de excluir."
+        );
+        return;
+      }
       toast.success("Status excluído");
       await loadStatuses();
     } catch (e: any) { toast.error(e.message); }
   };
 
-  const startEditStatus = (s: { id: string; nome: string; ordem: number }) => {
+  const startEditStatus = (s: StatusRow) => {
     setEditingStatusId(s.id);
-    setEditStatusForm({ nome: s.nome, ordem: String(s.ordem) });
+    setEditStatusForm({
+      codigo: s.codigo || "",
+      nome: s.nome || "",
+      descricao: s.descricao || "",
+      ordem: String(s.ordem ?? 0),
+      cor: s.cor || "#94a3b8",
+      finalizador: !!s.finalizador,
+      exige_data_protocolo: !!s.exige_data_protocolo,
+      exige_numero_protocolo: !!s.exige_numero_protocolo,
+      visivel_cliente: s.visivel_cliente !== false,
+      visivel_equipe: s.visivel_equipe !== false,
+    });
   };
 
   useEffect(() => {
@@ -362,68 +433,164 @@ export default function QAConfiguracoesPage() {
         </div>
       )}
 
-      {/* Status de Serviço CRUD */}
+      {/* Status dos Serviços (CRUD — Equipe Quero Armas) */}
       {isAdmin && (
         <div className="qa-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status dos Serviços ({statuses.length})</span>
-            <button onClick={() => { setShowNewStatus(!showNewStatus); setNewStatusForm({ nome: "", ordem: "" }); }}
-              className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
+                Status dos Serviços ({statuses.length})
+              </span>
+              <p className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
+                Fonte única usada nos menus de status. Status em uso só podem ser desativados.
+              </p>
+            </div>
+            <button
+              onClick={() => { setShowNewStatus(!showNewStatus); setNewStatusForm(emptyStatusForm); }}
+              className="qa-btn-primary h-8 px-3 text-[11px] flex items-center gap-1 no-glow"
+            >
               <Plus className="h-3 w-3" /> Novo Status
             </button>
           </div>
 
           {showNewStatus && (
-            <div className="flex gap-2 items-end mb-3 rounded-xl p-3 border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
-              <div className="flex-1 space-y-1">
-                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Nome</Label>
-                <Input value={newStatusForm.nome} onChange={e => setNewStatusForm(p => ({ ...p, nome: e.target.value }))}
-                  className="h-9 bg-white border-slate-200 text-slate-700" placeholder="Nome do status" />
+            <div className="mb-3 rounded-xl p-3 border space-y-3" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 97%)" }}>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                <div className="md:col-span-5 space-y-1">
+                  <Label className="text-[10px] uppercase">Nome exibido</Label>
+                  <Input
+                    value={newStatusForm.nome}
+                    onChange={e => setNewStatusForm(p => ({ ...p, nome: e.target.value, codigo: p.codigo || slugify(e.target.value) }))}
+                    className="h-9 bg-white border-slate-200 text-slate-700 uppercase"
+                    placeholder="ENVIADO AO ÓRGÃO"
+                  />
+                </div>
+                <div className="md:col-span-4 space-y-1">
+                  <Label className="text-[10px] uppercase">Código (estável)</Label>
+                  <Input
+                    value={newStatusForm.codigo}
+                    onChange={e => setNewStatusForm(p => ({ ...p, codigo: slugify(e.target.value) }))}
+                    className="h-9 bg-white border-slate-200 text-slate-700 font-mono"
+                    placeholder="enviado_ao_orgao"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-1">
+                  <Label className="text-[10px] uppercase">Ordem</Label>
+                  <Input type="number" value={newStatusForm.ordem}
+                    onChange={e => setNewStatusForm(p => ({ ...p, ordem: e.target.value }))}
+                    className="h-9 bg-white border-slate-200 text-slate-700 font-mono text-right" placeholder="0" />
+                </div>
+                <div className="md:col-span-1 space-y-1">
+                  <Label className="text-[10px] uppercase">Cor</Label>
+                  <Input type="color" value={newStatusForm.cor}
+                    onChange={e => setNewStatusForm(p => ({ ...p, cor: e.target.value }))}
+                    className="h-9 w-full p-1 bg-white border-slate-200" />
+                </div>
               </div>
-              <div className="w-24 space-y-1">
-                <Label className="text-[10px] uppercase" style={{ color: "hsl(220 10% 45%)" }}>Ordem</Label>
-                <Input type="number" value={newStatusForm.ordem} onChange={e => setNewStatusForm(p => ({ ...p, ordem: e.target.value }))}
-                  className="h-9 bg-white border-slate-200 text-slate-700 font-mono text-right" placeholder="0" />
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase">Descrição (opcional)</Label>
+                <Input value={newStatusForm.descricao}
+                  onChange={e => setNewStatusForm(p => ({ ...p, descricao: e.target.value }))}
+                  className="h-9 bg-white border-slate-200 text-slate-700" />
               </div>
-              <button onClick={handleAddStatus} disabled={savingStatus} className="h-9 w-9 rounded-lg flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 shrink-0">
-                {savingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-              </button>
-              <button onClick={() => setShowNewStatus(false)} className="h-9 w-9 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 shrink-0">
-                <X className="h-3.5 w-3.5" />
-              </button>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                {([
+                  ["finalizador", "FINALIZADOR"],
+                  ["exige_data_protocolo", "EXIGE DATA PROTOCOLO"],
+                  ["exige_numero_protocolo", "EXIGE Nº PROTOCOLO"],
+                  ["visivel_cliente", "VISÍVEL P/ CLIENTE"],
+                  ["visivel_equipe", "VISÍVEL P/ EQUIPE"],
+                ] as const).map(([k, label]) => (
+                  <label key={k} className="flex items-center gap-2 text-[10px] uppercase text-slate-600 cursor-pointer">
+                    <Switch checked={(newStatusForm as any)[k]} onCheckedChange={(v) => setNewStatusForm(p => ({ ...p, [k]: v }))} />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowNewStatus(false)} className="h-9 px-3 rounded-lg hover:bg-slate-100 text-slate-500 text-[11px]">Cancelar</button>
+                <button onClick={handleAddStatus} disabled={savingStatus}
+                  className="h-9 px-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[11px] flex items-center gap-1">
+                  {savingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                  Criar
+                </button>
+              </div>
             </div>
           )}
 
           <div className="space-y-1">
-            {statuses.map(s => (
-              <div key={s.id} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] hover:bg-slate-50 transition-colors group">
-                {editingStatusId === s.id ? (
-                  <>
-                    <Input value={editStatusForm.nome} onChange={e => setEditStatusForm(p => ({ ...p, nome: e.target.value }))}
-                      className="flex-1 bg-white border-slate-200 text-slate-700 h-8 text-xs" />
-                    <Input type="number" value={editStatusForm.ordem} onChange={e => setEditStatusForm(p => ({ ...p, ordem: e.target.value }))}
-                      className="w-20 bg-white border-slate-200 text-slate-700 h-8 text-xs font-mono text-right" />
-                    <button onClick={() => handleUpdateStatus(s.id)} disabled={savingStatus} className="h-7 w-7 rounded-lg flex items-center justify-center text-emerald-600 hover:bg-emerald-50">
-                      <Check className="h-3.5 w-3.5" />
-                    </button>
-                    <button onClick={() => setEditingStatusId(null)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-100">
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-1 truncate" style={{ color: "hsl(220 20% 25%)" }}>{s.nome}</span>
-                    <span className="font-mono text-[10px] shrink-0" style={{ color: "hsl(220 10% 55%)" }}>#{s.ordem}</span>
-                    <button onClick={() => startEditStatus(s)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Pencil className="h-3 w-3" />
-                    </button>
-                    <button onClick={() => handleDeleteStatus(s.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </>
-                )}
-              </div>
-            ))}
+            {statuses.map(s => {
+              const isEditing = editingStatusId === s.id;
+              return (
+                <div key={s.id} className={`rounded-lg px-3 py-2 text-[12px] transition-colors ${isEditing ? "bg-slate-50 border border-slate-200" : "hover:bg-slate-50"} group`}>
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                        <div className="md:col-span-5 space-y-1">
+                          <Label className="text-[10px] uppercase">Nome exibido</Label>
+                          <Input value={editStatusForm.nome} onChange={e => setEditStatusForm(p => ({ ...p, nome: e.target.value }))}
+                            className="h-8 bg-white border-slate-200 text-slate-700 uppercase text-xs" />
+                        </div>
+                        <div className="md:col-span-4 space-y-1">
+                          <Label className="text-[10px] uppercase">Código</Label>
+                          <Input value={editStatusForm.codigo} onChange={e => setEditStatusForm(p => ({ ...p, codigo: slugify(e.target.value) }))}
+                            className="h-8 bg-white border-slate-200 text-slate-700 font-mono text-xs" />
+                        </div>
+                        <div className="md:col-span-2 space-y-1">
+                          <Label className="text-[10px] uppercase">Ordem</Label>
+                          <Input type="number" value={editStatusForm.ordem} onChange={e => setEditStatusForm(p => ({ ...p, ordem: e.target.value }))}
+                            className="h-8 bg-white border-slate-200 text-slate-700 font-mono text-right text-xs" />
+                        </div>
+                        <div className="md:col-span-1 space-y-1">
+                          <Label className="text-[10px] uppercase">Cor</Label>
+                          <Input type="color" value={editStatusForm.cor} onChange={e => setEditStatusForm(p => ({ ...p, cor: e.target.value }))}
+                            className="h-8 w-full p-1 bg-white border-slate-200" />
+                        </div>
+                      </div>
+                      <Input value={editStatusForm.descricao} placeholder="Descrição (opcional)"
+                        onChange={e => setEditStatusForm(p => ({ ...p, descricao: e.target.value }))}
+                        className="h-8 bg-white border-slate-200 text-slate-700 text-xs" />
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {([
+                          ["finalizador", "FINALIZADOR"],
+                          ["exige_data_protocolo", "EXIGE DATA PROTOCOLO"],
+                          ["exige_numero_protocolo", "EXIGE Nº PROTOCOLO"],
+                          ["visivel_cliente", "VISÍVEL P/ CLIENTE"],
+                          ["visivel_equipe", "VISÍVEL P/ EQUIPE"],
+                        ] as const).map(([k, label]) => (
+                          <label key={k} className="flex items-center gap-2 text-[10px] uppercase text-slate-600 cursor-pointer">
+                            <Switch checked={(editStatusForm as any)[k]} onCheckedChange={(v) => setEditStatusForm(p => ({ ...p, [k]: v }))} />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => setEditingStatusId(null)} className="h-8 px-3 rounded-lg hover:bg-slate-100 text-slate-500 text-[11px]">Cancelar</button>
+                        <button onClick={() => handleUpdateStatus(s.id)} disabled={savingStatus}
+                          className="h-8 px-3 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[11px] flex items-center gap-1">
+                          {savingStatus ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block h-3 w-3 rounded-full shrink-0 border" style={{ background: s.cor || "#cbd5e1", borderColor: "hsl(220 13% 85%)" }} />
+                      <span className={`flex-1 truncate font-medium ${s.ativo ? "" : "line-through opacity-50"}`} style={{ color: "hsl(220 20% 25%)" }}>{s.nome}</span>
+                      <span className="font-mono text-[10px] shrink-0 text-slate-400 truncate max-w-[160px]" title={s.codigo}>{s.codigo}</span>
+                      <span className="font-mono text-[10px] shrink-0 text-slate-500">#{s.ordem}</span>
+                      <Switch checked={s.ativo} onCheckedChange={() => handleToggleStatusAtivo(s)} />
+                      <button onClick={() => startEditStatus(s)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700">
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <button onClick={() => handleDeleteStatus(s.id)} className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500" title="Excluir (bloqueado se em uso)">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {statuses.length === 0 && <p className="text-xs text-center py-4" style={{ color: "hsl(220 10% 62%)" }}>Nenhum status cadastrado</p>}
           </div>
         </div>
