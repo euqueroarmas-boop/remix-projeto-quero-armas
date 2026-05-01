@@ -23,7 +23,7 @@ import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getSenhaGov } from "@/components/clientes/senhaGovApi";
+import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard

@@ -6,8 +6,8 @@ import {
   ArrowLeft, FileStack, Search, RefreshCw, ShoppingBag, AlertTriangle,
   CheckCircle, Clock, FileText, ChevronRight, CreditCard, XCircle,
 } from "lucide-react";
-import { getStatusProcesso, formatDate, formatDateTime } from "@/components/processos/processoConstants";
-import { ProcessoDetalheDrawer } from "@/components/processos/ProcessoDetalheDrawer";
+import { getStatusProcesso, formatDate, formatDateTime } from "@/components/quero-armas/processos/processoConstants";
+import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/ProcessoDetalheDrawer";
 
 interface Processo {
   id: string;

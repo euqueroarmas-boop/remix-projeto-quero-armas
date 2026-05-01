@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import {
   getStatusProcesso, getStatusDocumento, formatDateTime, formatDate,
-} from "@/components/processos/processoConstants";
+} from "@/components/quero-armas/processos/processoConstants";
 
 type Processo = {
   id: string; cliente_id: number; servico_id: number; servico_nome: string | null;

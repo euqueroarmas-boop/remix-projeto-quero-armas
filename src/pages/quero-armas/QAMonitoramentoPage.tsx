@@ -1,14 +1,14 @@
 import { lazy, Suspense } from "react";
 import { Activity } from "lucide-react";
-import { LoadingState } from "@/components/LoadStates";
-import { useQAAuthContext } from "@/components/QAAuthContext";
+import { LoadingState } from "@/components/quero-armas/LoadStates";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { Navigate } from "react-router-dom";
-import { useMonitoramentoConfig } from "@/components/monitoramento/useMonitoramentoConfig";
-import MonitoramentoChartsBundle from "@/components/monitoramento/MonitoramentoChartsBundle";
+import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/useMonitoramentoConfig";
+import MonitoramentoChartsBundle from "@/components/quero-armas/monitoramento/MonitoramentoChartsBundle";
 
-const DashboardFunilOperacional        = lazy(() => import("@/components/dashboard/DashboardFunilOperacional"));
-const TelemetriaCadastroCards          = lazy(() => import("@/components/dashboard/TelemetriaCadastroCards"));
-const DashboardAtividadesRecentes      = lazy(() => import("@/components/dashboard/DashboardAtividadesRecentes"));
+const DashboardFunilOperacional        = lazy(() => import("@/components/quero-armas/dashboard/DashboardFunilOperacional"));
+const TelemetriaCadastroCards          = lazy(() => import("@/components/quero-armas/dashboard/TelemetriaCadastroCards"));
+const DashboardAtividadesRecentes      = lazy(() => import("@/components/quero-armas/dashboard/DashboardAtividadesRecentes"));
 
 function Spinner() {
   return (

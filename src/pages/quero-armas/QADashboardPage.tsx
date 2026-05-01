@@ -6,10 +6,10 @@ import {
   ArrowRight, FileText, Shield, Users, ListChecks,
 } from "lucide-react";
 
-import { LoadingState } from "@/components/LoadStates";
-import { useCadastroPendenciasCriticas } from "@/components/clientes/useCadastroPendenciasCriticas";
+import { LoadingState } from "@/components/quero-armas/LoadStates";
+import { useCadastroPendenciasCriticas } from "@/components/quero-armas/clientes/useCadastroPendenciasCriticas";
 
-const PendenciasEssenciaisModal = lazy(() => import("@/components/PendenciasEssenciaisModal"));
+const PendenciasEssenciaisModal = lazy(() => import("@/components/quero-armas/PendenciasEssenciaisModal"));
 
 /**
  * Dashboard Principal — enxuta.
@@ -17,11 +17,11 @@ const PendenciasEssenciaisModal = lazy(() => import("@/components/PendenciasEsse
  * Gráficos analíticos e listas longas vivem em /operacao/monitoramento.
  */
 
-const DashboardExames                = lazy(() => import("@/components/dashboard/DashboardExames"));
-const DashboardProcessosMonitor      = lazy(() => import("@/components/dashboard/DashboardProcessosMonitor"));
-const DashboardPrazosRecursais       = lazy(() => import("@/components/dashboard/DashboardPrazosRecursais"));
-const DashboardSlaClientesNovos      = lazy(() => import("@/components/dashboard/DashboardSlaClientesNovos"));
-const DashboardNovosCadastrosRecebidos = lazy(() => import("@/components/dashboard/DashboardNovosCadastrosRecebidos"));
+const DashboardExames                = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
+const DashboardProcessosMonitor      = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
+const DashboardPrazosRecursais       = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
+const DashboardSlaClientesNovos      = lazy(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"));
+const DashboardNovosCadastrosRecebidos = lazy(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"));
 
 interface Stats {
   documentos: number;
