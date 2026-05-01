@@ -440,13 +440,15 @@ export default function QACorrecoesIAPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <ToggleRow
-                checked={form.aplicar_globalmente}
-                onChange={v => setForm(f => ({ ...f, aplicar_globalmente: v }))}
-                title="APLICAR GLOBALMENTE"
-                desc="Vale para todas as peças do mesmo tipo."
-                icon={<Globe2 className="h-4 w-4" />}
-              />
+              <div className="flex items-start gap-2 p-3 rounded-lg border bg-white" style={{ borderColor: "hsl(36 20% 88%)" }}>
+                <Globe2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "hsl(35 90% 50%)" }} />
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "hsl(220 25% 18%)" }}>APLICAR GLOBALMENTE</div>
+                  <div className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>
+                    Correções criadas aqui valem para TODAS as peças do mesmo tipo. Para correções específicas de cliente/caso/peça, use "MARCAR COMO ERRO" diretamente na peça gerada.
+                  </div>
+                </div>
+              </div>
               <ToggleRow
                 checked={form.ativo}
                 onChange={v => setForm(f => ({ ...f, ativo: v }))}
@@ -456,14 +458,6 @@ export default function QACorrecoesIAPage() {
               />
             </div>
 
-            {!form.aplicar_globalmente && (
-              <div className="flex items-start gap-2 p-3 rounded-lg border text-[11px]" style={{ background: "hsl(40 95% 96%)", borderColor: "hsl(40 80% 80%)", color: "hsl(35 60% 30%)" }}>
-                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                <span>
-                  Esta correção <strong>NÃO será global</strong>. Para limitar a um cliente/caso específico, use o botão "MARCAR COMO ERRO" diretamente na peça gerada (Fase 2). Salvando aqui sem escopo, ela ficará registrada mas inativa para a IA até ser vinculada.
-                </span>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="gap-2">
