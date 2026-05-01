@@ -2417,8 +2417,8 @@ export default function QAClientesPage() {
               <TabsContent value="servicos" className="mt-3">
                 {/* Header padrão Arsenal Review */}
                 <div className="qa-card p-4 md:p-5 mb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 56% / 0.12)" }}>
                         <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
                       </div>
@@ -2426,7 +2426,7 @@ export default function QAClientesPage() {
                         Serviços — Vendas e Processos
                       </h3>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:justify-end">
                       <button
                         onClick={() => exportVendas(clienteIdForSub, c.nome_completo)}
                         className="text-[10px] flex items-center gap-1 hover:underline"
