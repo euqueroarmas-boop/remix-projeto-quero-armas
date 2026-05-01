@@ -8,6 +8,15 @@
 //  - NUNCA aprova por presunção.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+// pdfjs-dist (legacy build) roda em Deno: usado para extrair texto nativo
+// de PDFs antes de mandar para a IA. Não convertemos PDF em imagem aqui
+// (Deno edge não tem binário Poppler/Ghostscript). Quando o PDF é nativo
+// com camada de texto (caso típico de Receita Federal), a IA recebe o
+// texto extraído e processa normalmente. Quando o PDF é só imagem
+// escaneada (sem texto), o fallback é encaminhar para revisão humana —
+// nunca rejeitar como "campo faltando".
+// @ts-ignore esm.sh fornece tipos minimos
+import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -144,20 +153,50 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
 }
 
 /**
- * Converte a primeira página de um PDF em PNG via API pública pdf.co-like
- * usando a Cloudflare/Lovable AI Gateway? Não temos serviço próprio.
- * Estratégia: usar o conversor pdfium via api.pdfshift OU fallback para
- * envio do PDF direto. Como não há binário de PDF→imagem disponível em
- * Deno edge, adotamos a estratégia abaixo:
- *   1) Tentar enviar o PDF diretamente para o Gemini como image_url
- *      (Gemini 2.5 aceita PDFs até ~50 páginas).
- *   2) Se o resultado vier vazio, retornamos null para que o caller
- *      marque o documento como `revisao_humana` (não como inválido).
- *
- * Heurística simples para verificar se a IA "leu" o documento:
- * - tipo_correto presente, e
- * - campos_extraidos com pelo menos 1 chave útil OU divergencias com
- *   pelo menos 1 item OU motivo_rejeicao explícito da IA (não default).
+ * Baixa o PDF e tenta extrair a camada de texto nativa via pdfjs-dist.
+ * Retorna string vazia se o PDF não tem texto extraível (PDF de imagem
+ * escaneada). NÃO há conversão PDF→imagem nesta função: Deno edge não
+ * tem Poppler/Ghostscript. Quando não há texto, o caller encaminha para
+ * revisão humana.
+ */
+async function extractPdfText(supabase: any, path: string): Promise<string> {
+  try {
+    const { data, error } = await supabase.storage.from("qa-processo-docs").download(path);
+    if (error || !data) return "";
+    const arr = new Uint8Array(await data.arrayBuffer());
+    // pdfjs-dist em Deno: desligar worker
+    // @ts-ignore
+    const loadingTask = (pdfjsLib as any).getDocument({
+      data: arr,
+      disableWorker: true,
+      isEvalSupported: false,
+      useSystemFonts: false,
+    });
+    const pdf = await loadingTask.promise;
+    const maxPages = Math.min(pdf.numPages || 0, 10);
+    const partes: string[] = [];
+    for (let i = 1; i <= maxPages; i++) {
+      try {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const linha = (content.items || [])
+          .map((it: any) => (typeof it?.str === "string" ? it.str : ""))
+          .join(" ");
+        if (linha.trim()) partes.push(linha);
+      } catch (_) { /* segue */ }
+    }
+    return partes.join("\n").trim();
+  } catch (e) {
+    console.warn("[validar-ia] pdfjs falhou:", e);
+    return "";
+  }
+}
+
+/**
+ * Heurística para detectar se a IA produziu algo útil:
+ * - campos_extraidos com pelo menos 1 chave útil OU
+ * - divergências OU
+ * - rejeição explícita (tipo_correto=false + motivo_rejeicao).
  */
 function extraiuAlgo(parsed: any): boolean {
   if (!parsed || typeof parsed !== "object") return false;
