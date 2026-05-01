@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  ClipboardList, UserCheck, Tags,
+  ClipboardList, UserCheck, Tags, GraduationCap,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -43,6 +43,7 @@ const NAV_GROUPS = [
       { title: "Legislação", url: "/legislacao", icon: Scale },
       { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel },
       { title: "Modelos DOCX", url: "/modelos-docx", icon: FileBox },
+      { title: "Correções da IA", url: "/correcoes-ia", icon: GraduationCap },
     ],
   },
   {
@@ -82,7 +83,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
     location.pathname === url || location.pathname.startsWith(url + "/");
 
   const canAccess = (url: string) => {
-    if (perfil === "leitura_auditoria") return !["/gerar-peca", "/modelos-docx"].includes(url);
+    if (perfil === "leitura_auditoria") return !["/gerar-peca", "/modelos-docx", "/correcoes-ia"].includes(url);
     if (perfil === "assistente_juridico") return url !== "/configuracoes";
     return true;
   };

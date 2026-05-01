@@ -5526,6 +5526,72 @@ export type Database = {
           },
         ]
       }
+      qa_ia_correcoes_juridicas: {
+        Row: {
+          aplicar_globalmente: boolean
+          ativo: boolean
+          caso_id: string | null
+          categoria_erro: Database["public"]["Enums"]["qa_categoria_erro_ia"]
+          cliente_id: string | null
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string | null
+          explicacao: string | null
+          foco_argumentativo: string | null
+          id: string
+          peca_id: string | null
+          regra_aplicavel: string | null
+          tipo_peca: string
+          trecho_correto: string
+          trecho_errado: string
+          ultima_utilizacao: string | null
+          updated_at: string
+          usado_vezes: number
+        }
+        Insert: {
+          aplicar_globalmente?: boolean
+          ativo?: boolean
+          caso_id?: string | null
+          categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
+          cliente_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string | null
+          explicacao?: string | null
+          foco_argumentativo?: string | null
+          id?: string
+          peca_id?: string | null
+          regra_aplicavel?: string | null
+          tipo_peca: string
+          trecho_correto: string
+          trecho_errado: string
+          ultima_utilizacao?: string | null
+          updated_at?: string
+          usado_vezes?: number
+        }
+        Update: {
+          aplicar_globalmente?: boolean
+          ativo?: boolean
+          caso_id?: string | null
+          categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
+          cliente_id?: string | null
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string | null
+          explicacao?: string | null
+          foco_argumentativo?: string | null
+          id?: string
+          peca_id?: string | null
+          regra_aplicavel?: string | null
+          tipo_peca?: string
+          trecho_correto?: string
+          trecho_errado?: string
+          ultima_utilizacao?: string | null
+          updated_at?: string
+          usado_vezes?: number
+        }
+        Relationships: []
+      }
       qa_incident_reconciliation_snapshot: {
         Row: {
           cadastro_cr_id: number | null
@@ -8661,6 +8727,22 @@ export type Database = {
         | "processed"
         | "failed"
         | "ignored"
+      qa_categoria_erro_ia:
+        | "enderecamento_errado"
+        | "circunscricao_errada"
+        | "fundamento_juridico_incorreto"
+        | "tese_inadequada"
+        | "excesso_linguagem"
+        | "omissao_fato_relevante"
+        | "uso_dado_inexistente"
+        | "confusao_posse_porte"
+        | "confusao_sinarm_sigma"
+        | "confusao_pf_exercito"
+        | "prazo_administrativo_errado"
+        | "redacao_fraca"
+        | "pedido_final_incorreto"
+        | "conclusao_desalinhada"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8817,6 +8899,23 @@ export const Constants = {
         "processed",
         "failed",
         "ignored",
+      ],
+      qa_categoria_erro_ia: [
+        "enderecamento_errado",
+        "circunscricao_errada",
+        "fundamento_juridico_incorreto",
+        "tese_inadequada",
+        "excesso_linguagem",
+        "omissao_fato_relevante",
+        "uso_dado_inexistente",
+        "confusao_posse_porte",
+        "confusao_sinarm_sigma",
+        "confusao_pf_exercito",
+        "prazo_administrativo_errado",
+        "redacao_fraca",
+        "pedido_final_incorreto",
+        "conclusao_desalinhada",
+        "outro",
       ],
     },
   },
