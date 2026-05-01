@@ -412,9 +412,13 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
 
   useEffect(() => {
     if (venda) {
+      // Normaliza status legado: o constraint do banco aceita "PAGO" ou "NÃO PAGOU".
+      // Qualquer rótulo informal ("EM ABERTO", vazio, etc.) vira "NÃO PAGOU".
+      const rawStatus = String(venda.status || "").trim().toUpperCase();
+      const normalizedStatus = rawStatus === "PAGO" ? "PAGO" : "NÃO PAGOU";
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-        status: venda.status || "",
+        status: normalizedStatus,
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
         valor_aberto: String(venda.valor_aberto || 0),
       });
