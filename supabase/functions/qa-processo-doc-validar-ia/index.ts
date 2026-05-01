@@ -25,10 +25,12 @@ const APROVA_AUTO_MIN = 0.90;
 const REVISAO_HUMANA_MIN = 0.70;
 
 const TIPO_DOC_PROMPTS: Record<string, string> = {
-  rg: "RG. Extraia: nome_completo, rg, data_nascimento (YYYY-MM-DD), nome_mae, orgao_emissor, uf.",
-  cnh: "CNH. Extraia: nome_completo, cpf, rg, data_nascimento (YYYY-MM-DD), validade (YYYY-MM-DD), categoria.",
+  // === IDENTIFICAÇÃO (FASE 2: extração ampliada) ===
+  rg: "RG (Registro Geral). Extraia TODOS os dados visíveis: nome_completo, cpf (se houver), tipo_documento_detectado ('rg'), numero_documento, rg, data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD se houver). Tudo o que enxergar e tiver utilidade documental.",
+  cin: "CIN (Carteira de Identidade Nacional). Extraia TODOS os dados: nome_completo, cpf, tipo_documento_detectado ('cin'), numero_documento (pode ser igual ao CPF — isso é normal na CIN, NÃO marque divergência), rg (se ainda exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao (YYYY-MM-DD), validade (YYYY-MM-DD).",
+  cnh: "CNH (Carteira Nacional de Habilitação). Extraia TODOS: nome_completo, cpf, tipo_documento_detectado ('cnh'), numero_documento (n. registro), rg (se exibido), data_nascimento (YYYY-MM-DD), naturalidade, nacionalidade, nome_mae, nome_pai, filiacao_completa, orgao_emissor, uf_emissao, data_emissao/primeira_habilitacao (YYYY-MM-DD), validade (YYYY-MM-DD), categoria_cnh, registro_cnh, numero_espelho (se houver).",
   cpf: "Comprovante de CPF. Extraia: nome_completo, cpf (apenas dígitos).",
-  comprovante_residencia: "Conta de luz/água/telefone/internet. Extraia: nome_titular, endereco_completo, cep, cidade, uf, data_emissao (YYYY-MM-DD).",
+  comprovante_residencia: "Comprovante de residência ACEITO APENAS se for: conta de energia elétrica, água, gás, internet fixa, telefone fixo ou IPTU. NÃO aceite: fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato bancário, ou qualquer documento sem vínculo claro com o imóvel — nesses casos marque tipo_correto=false e cite em motivo_rejeicao. Quando válido, extraia TODOS: nome_titular, cpf_cnpj_titular (apenas dígitos), endereco_completo, logradouro, numero, complemento, bairro, cidade, uf, cep (apenas dígitos), data_emissao (YYYY-MM-DD), mes_referencia (YYYY-MM), tipo_conta (energia/agua/gas/internet/telefone_fixo/iptu), empresa_emissora, codigo_instalacao (matrícula/UC/instalação se houver). Se o nome_titular for diferente do nome do cliente cadastrado, NÃO trate como divergência: preencha endereco_em_nome_de_terceiro=true e os campos titular_comprovante_*; o endereço deve ser extraído normalmente.",
   comprovante_renda: "Holerite/decore/IR. Extraia: nome_titular, ocupacao, renda_mensal_aproximada, periodo_referencia, data_emissao (YYYY-MM-DD).",
   renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
   certidao_civel: "Certidão Cível Federal. Extraia: nome_titular, cpf, resultado (NADA_CONSTA ou CONSTA), data_emissao (YYYY-MM-DD).",
@@ -47,6 +49,8 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
   const docHint = TIPO_DOC_PROMPTS[tipoDoc] ||
     "Documento administrativo. Extraia nome_titular, cpf, datas, números identificadores.";
+  const isIdentificacao = ["rg", "cin", "cnh"].includes(tipoDoc);
+  const isComprovanteEnd = tipoDoc === "comprovante_residencia";
   return `Você é um auditor RIGOROSO de documentos para Polícia Federal / Exército Brasileiro.
 TAREFA: Valide a imagem/PDF e responda SEMPRE chamando "validar_documento".
 REGRAS CRÍTICAS:
@@ -56,6 +60,10 @@ REGRAS CRÍTICAS:
 4. Compare CADA campo com o cadastro abaixo. QUALQUER diferença textual relevante (nome, CPF, RG, data nascimento, endereço, CEP) é divergência.
 5. NUNCA assuma campos não vistos. Se incerto, baixe a confiança.
 6. Datas YYYY-MM-DD.
+7. EXTRAIA TUDO O QUE FOR ÚTIL: campos com correspondência no cadastro vão em "campos_extraidos"; dados úteis sem campo fixo (observações, códigos auxiliares, anotações, números de protocolo, etc.) vão em "campos_complementares"; metadados gerais do documento (resolução, idioma, observações de qualidade) vão em "metadados_documento".
+${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos somente RG, CIN ou CNH. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).` : ""}
+${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
+9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
 Tipo esperado: ${tipoDoc}
 Detalhes: ${docHint}
 Cadastro do cliente:
@@ -82,7 +90,11 @@ const VALIDAR_TOOL = {
         tipo_correto: { type: "boolean" },
         legivel: { type: "boolean" },
         confianca: { type: "number" },
+        tipo_documento_detectado: { type: "string", description: "Tipo real detectado: rg, cin, cnh, energia, agua, gas, internet, telefone_fixo, iptu, cartao_credito, boleto, extrato_bancario, outro." },
         campos_extraidos: { type: "object", additionalProperties: true },
+        campos_complementares: { type: "object", additionalProperties: true, description: "Dados úteis sem campo fixo no cadastro principal." },
+        metadados_documento: { type: "object", additionalProperties: true, description: "Metadados gerais (qualidade, idioma, observações operacionais)." },
+        orientacoes_cliente: { type: "string", description: "Orientações claras ao cliente sobre o que melhorar/enviar, se aplicável." },
         divergencias: {
           type: "array",
           items: {
@@ -264,6 +276,51 @@ Deno.serve(async (req) => {
     try { parsed = JSON.parse(args); }
     catch { return json({ error: "Falha ao parsear resposta IA" }, 500); }
 
+    // ===== FASE 2: tratamento de comprovante em nome de TERCEIRO =====
+    // Se a IA detectou que o titular não é o cliente, NÃO é divergência:
+    // promovemos para flag operacional + remove divergência de nome.
+    if (doc.tipo_documento === "comprovante_residencia") {
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const titularDoc = String(cx.nome_titular ?? cx.titular_comprovante_nome ?? "").trim();
+      const nomeCadastro = String(cliente?.nome ?? "").trim();
+      const flagIA = cx.endereco_em_nome_de_terceiro === true || cx.endereco_em_nome_de_terceiro === "true";
+      const titularDivergente = !!titularDoc && !!nomeCadastro &&
+        titularDoc.toLowerCase().replace(/\s+/g, " ") !==
+        nomeCadastro.toLowerCase().replace(/\s+/g, " ");
+      if (flagIA || titularDivergente) {
+        cx.endereco_em_nome_de_terceiro = true;
+        if (!cx.titular_comprovante_nome && titularDoc) cx.titular_comprovante_nome = titularDoc;
+        if (!cx.titular_comprovante_documento && cx.cpf_cnpj_titular) cx.titular_comprovante_documento = cx.cpf_cnpj_titular;
+        // remove divergências baseadas em nome do titular
+        parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+          const c = String(d?.campo || "").toLowerCase();
+          return !["nome", "nome_titular", "titular", "nome_completo"].includes(c);
+        });
+        const aviso = "Comprovante em nome de terceiro. Futuramente poderá ser solicitada declaração do responsável pelo imóvel e documento do titular.";
+        parsed.observacoes = parsed.observacoes ? `${parsed.observacoes} | ${aviso}` : aviso;
+      }
+      parsed.campos_extraidos = cx;
+    }
+
+    // ===== FASE 2: regras de identificação (RG/CIN/CNH) =====
+    if (["rg", "cin", "cnh"].includes(doc.tipo_documento)) {
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const cpfDigits = String(cx.cpf ?? cliente?.cpf ?? "").replace(/\D+/g, "");
+      const numDoc = String(cx.numero_documento ?? cx.rg ?? "").replace(/\D+/g, "");
+      // CIN: numero_documento == cpf é VÁLIDO. Remove qualquer divergência derivada disso.
+      if (doc.tipo_documento === "cin" && cpfDigits && numDoc && cpfDigits === numDoc) {
+        parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+          const c = String(d?.campo || "").toLowerCase();
+          return !["rg", "numero_documento"].includes(c);
+        });
+      }
+      // RG: rg == cpf gera apenas observação, não bloqueia
+      if (doc.tipo_documento === "rg" && cpfDigits && numDoc && cpfDigits === numDoc) {
+        const aviso = "Atenção: número do RG informado coincide com CPF — verificar manualmente.";
+        parsed.observacoes = parsed.observacoes ? `${parsed.observacoes} | ${aviso}` : aviso;
+      }
+    }
+
     // ===== Reconciliação de "divergências falsas" =====
     // Se a IA marcou algo como divergência mas o cadastro do cliente está vazio
     // (campo não pôde ser comparado), NÃO é divergência: é um dado novo extraído.
@@ -352,11 +409,23 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ===== FASE 2: separar campos para os novos slots aditivos =====
+    const camposExtraidosFinal: Record<string, any> = parsed.campos_extraidos || {};
+    const titularNome = camposExtraidosFinal.titular_comprovante_nome ?? null;
+    const titularDoc = camposExtraidosFinal.titular_comprovante_documento ?? null;
+    const enderecoTerceiro = camposExtraidosFinal.endereco_em_nome_de_terceiro === true;
+    const metadados = parsed.metadados_documento || {};
+    const camposComplementares = {
+      ...(parsed.campos_complementares || {}),
+      ...(parsed.tipo_documento_detectado ? { tipo_documento_detectado: parsed.tipo_documento_detectado } : {}),
+      ...(parsed.orientacoes_cliente ? { orientacoes_cliente: parsed.orientacoes_cliente } : {}),
+    };
+
     await supabase.from("qa_processo_documentos")
       .update({
         status: novoStatus,
         motivo_rejeicao: motivoRejeicao,
-        dados_extraidos_json: parsed.campos_extraidos || {},
+        dados_extraidos_json: camposExtraidosFinal,
         divergencias_json: divergencias,
         validacao_ia_status: "concluido",
         validacao_ia_erro: null,
@@ -364,6 +433,12 @@ Deno.serve(async (req) => {
         validacao_ia_modelo: "google/gemini-2.5-flash",
         data_validacao: new Date().toISOString(),
         data_validade: dataValidade,
+        // Novos campos aditivos (Fase 1)
+        metadados_documento_json: metadados,
+        campos_complementares_json: camposComplementares,
+        titular_comprovante_nome: titularNome,
+        titular_comprovante_documento: titularDoc,
+        endereco_em_nome_de_terceiro: enderecoTerceiro,
       })
       .eq("id", documento_id);
 
@@ -425,7 +500,29 @@ Deno.serve(async (req) => {
       } catch (e) { console.warn("[validar-ia] notificação falhou:", e); }
     }
 
-    return json({ success: true, status: novoStatus, motivo_rejeicao: motivoRejeicao, validacao: parsed });
+    // ===== FASE 2: retorno enriquecido =====
+    const exigeList: string[] = Array.isArray((doc.regra_validacao as any)?.exige) ? (doc.regra_validacao as any).exige : [];
+    const camposPreenchidos = Object.keys(camposExtraidosFinal).filter((k) => {
+      const v = camposExtraidosFinal[k];
+      return v !== null && v !== undefined && !(typeof v === "string" && v.trim() === "");
+    });
+    const camposAusentes = exigeList.filter((k) => !camposPreenchidos.includes(k));
+    return json({
+      success: true,
+      status: novoStatus,
+      aceito: novoStatus === "aprovado",
+      motivo_rejeicao: motivoRejeicao,
+      erros: motivoRejeicao ? [motivoRejeicao] : [],
+      campos_extraidos: camposExtraidosFinal,
+      campos_preenchidos: camposPreenchidos,
+      campos_ausentes: camposAusentes,
+      campos_complementares: camposComplementares,
+      metadados_documento: metadados,
+      orientacoes_cliente: parsed.orientacoes_cliente ?? null,
+      titular_comprovante: enderecoTerceiro ? { nome: titularNome, documento: titularDoc } : null,
+      endereco_em_nome_de_terceiro: enderecoTerceiro,
+      validacao: parsed,
+    });
   } catch (err: any) {
     console.error("qa-processo-doc-validar-ia:", err);
     return json({ error: err?.message || "Erro interno" }, 500);
