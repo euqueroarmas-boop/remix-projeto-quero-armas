@@ -296,7 +296,7 @@ export default function MonitorCadastrosDocumentos() {
     }
   };
 
-  const abrirCliente = (clienteId: string | null) => {
+  const abrirCliente = (clienteId: number | null) => {
     if (!clienteId) return;
     // Abre na própria aba Clientes via URL — não cria rota paralela.
     window.open(`/quero-armas/clientes?cliente=${clienteId}`, "_self");
