@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Shield, Mail, Hash, Copy, ExternalLink, KeyRound, Loader2,
   CheckCircle, XCircle, Eye, EyeOff, Link2, UserPlus, RefreshCw,
-  Send, AlertTriangle, Clock, History,
+  Send, AlertTriangle, Clock, History, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -74,9 +74,71 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [showPwd, setShowPwd] = useState(false);
   const [portalStatus, setPortalStatus] = useState<PortalStatus | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [diag, setDiag] = useState<any | null>(null);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const [repairLoading, setRepairLoading] = useState(false);
 
   const portalUrl = `${window.location.origin}/area-do-cliente/login`;
   const resetUrl = `${window.location.origin}/redefinir-senha`;
+
+  const runDiagnose = useCallback(async () => {
+    setDiagLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) return;
+      const { data, error } = await supabase.functions.invoke("admin-cliente-acessos", {
+        body: { action: "diagnose", qa_cliente_id: cliente.id },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (error) {
+        console.error("[ClienteAcessoPortal] diagnose error:", error);
+        setDiag(null);
+        return;
+      }
+      setDiag(data || null);
+    } finally {
+      setDiagLoading(false);
+    }
+  }, [cliente.id]);
+
+  const repairLink = useCallback(async (force = false) => {
+    setRepairLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("admin-cliente-acessos", {
+        body: { action: "repair_link", qa_cliente_id: cliente.id, force_reassign: force },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (error || data?.error) {
+        const msg = data?.message || data?.error || "Falha ao reparar vínculo";
+        if (data?.error === "auth_user_nao_encontrado") {
+          toast.error("Usuário Auth não encontrado. Gere nova credencial.");
+        } else if (data?.error === "vinculo_aponta_outro_cliente") {
+          toast.error(`Vínculo aponta para outro cliente (id=${data?.conflito_qa_cliente_id}). Revisão manual necessária.`);
+        } else {
+          toast.error(String(msg));
+        }
+        return;
+      }
+      toast.success(
+        data?.acao === "vinculo_criado" ? "Vínculo criado com sucesso." :
+        data?.acao === "vinculo_reativado" ? "Vínculo reativado com sucesso." :
+        "Vínculo revalidado.",
+      );
+      await runDiagnose();
+      await fetchCustomer();
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao reparar vínculo");
+    } finally {
+      setRepairLoading(false);
+    }
+  }, [cliente.id, runDiagnose]);
 
   const fetchPortalStatus = useCallback(async () => {
     try {
