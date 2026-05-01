@@ -86,8 +86,7 @@ export function ArsenalView({
   onArsenalChanged,
   isAdmin = false,
 }: Props) {
-  // RLS no banco já garante quem pode CRUD; flag mantida por compat para futuras UIs admin-only.
-  void isAdmin;
+  // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
     total: 0,
