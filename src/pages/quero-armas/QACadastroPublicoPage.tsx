@@ -983,15 +983,16 @@ function Step1Documents({
       {SLOTS.map(slot => {
         const Icon = slot.icon;
         const sent = !!files[slot.key];
-        const color = sent ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
+        const color = sent ? "hsl(152 60% 42%)" : "hsl(38 92% 50%)"; // ok verde / pendente âmbar
         return (
           <button
             key={slot.key}
             type="button"
             onClick={() => fileRefs[slot.key].current?.click()}
-            className="group relative w-full text-left overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-            style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
+            className="group relative w-full text-left overflow-hidden rounded-xl border border-zinc-200 bg-white px-3.5 py-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            style={{ boxShadow: `inset 0 0 0 1px ${color}14` }}
           >
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
             <div
               className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
               style={{ background: color }}
@@ -1079,16 +1080,14 @@ function Step1Documents({
       <button
         onClick={onContinue}
         disabled={!allUploaded}
-        className="w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 6px 18px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
+        className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all bg-amber-500 hover:bg-amber-600 shadow-[0_6px_18px_-6px_rgba(245,158,11,0.55)]"
       >
         Extrair dados <ChevronRight className="h-3.5 w-3.5" />
       </button>
 
       <button
         onClick={() => setManualWarnOpen(true)}
-        className="w-full h-9 text-xs font-medium underline-offset-2 hover:underline"
-        style={{ color: "hsl(220 15% 45%)" }}
+        className="w-full h-9 text-xs font-medium underline-offset-2 hover:underline text-zinc-500"
       >
         Preencher manualmente
       </button>
