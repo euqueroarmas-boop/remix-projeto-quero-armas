@@ -2539,11 +2539,11 @@ export default function QAClientesPage() {
                             ))}
                               </SortableContext>
                             </DndContext>
-                            <div className="flex justify-between pt-1 border-t border-slate-200 text-[10px]">
-                              <span className="text-slate-400">Total</span>
-                              <div className="flex gap-3">
-                                {Number(v.desconto) > 0 && <span className="text-amber-400">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
-                                <span className="text-slate-700 font-medium">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
+                            <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
+                              <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">Total</span>
+                              <div className="flex gap-3 items-center">
+                                {Number(v.desconto) > 0 && <span className="text-[12px] font-bold text-amber-600">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
+                                <span className="text-[14px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
                               </div>
                             </div>
                           </div>
