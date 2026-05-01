@@ -11,7 +11,7 @@ import {
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
-  ShoppingCart, RefreshCw, Radio,
+  ShoppingCart, RefreshCw,
 } from "lucide-react";
 import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
