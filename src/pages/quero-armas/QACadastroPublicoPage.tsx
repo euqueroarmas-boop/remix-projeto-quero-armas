@@ -1296,12 +1296,12 @@ const ESTADO_CIVIL_OPTS = [
   { value: "União Estável", label: "União Estável" },
 ];
 const CATEGORIA_OPTS: { value: CategoriaTitular | ""; label: string }[] = [
-  { value: "", label: "Selecione a categoria…" },
-  { value: "pessoa_fisica", label: "Pessoa Física (cidadão comum)" },
-  { value: "pessoa_juridica", label: "Pessoa Jurídica" },
-  { value: "seguranca_publica", label: "Segurança Pública" },
-  { value: "magistrado_mp", label: "Magistrado / MP" },
-  { value: "militar", label: "Militar das Forças Armadas" },
+  { value: "", label: "SELECIONE A CATEGORIA…" },
+  { value: "pessoa_fisica", label: "PESSOA FÍSICA (CIDADÃO COMUM)" },
+  { value: "pessoa_juridica", label: "PESSOA JURÍDICA" },
+  { value: "seguranca_publica", label: "SEGURANÇA PÚBLICA" },
+  { value: "magistrado_mp", label: "MAGISTRADO / MP" },
+  { value: "militar", label: "MILITAR DAS FORÇAS ARMADAS" },
 ];
 
 function Step3Review({
