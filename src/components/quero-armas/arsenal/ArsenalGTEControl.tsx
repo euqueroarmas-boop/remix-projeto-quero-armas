@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, CheckCircle2, ClipboardList, Clock, Crosshair, Download,
-  FileText, Loader2, MapPin, ShieldCheck, Upload, X,
+  FileText, Link2, Loader2, MapPin, RefreshCw, ShieldCheck, Upload, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,6 +33,7 @@ interface GteDoc {
   numero_gte: string | null;
   orgao_emissor: string | null;
   requerente_nome: string | null;
+  requerente_cpf: string | null;
   data_emissao: string | null;
   data_validade: string | null;
   endereco_origem: string | null;
@@ -44,6 +45,9 @@ interface GteDoc {
   clubes_json: any[];
   dados_extraidos_json: any;
   observacoes_ia: string | null;
+  armas_vinculadas_json: any[];
+  matching_status: "pendente" | "parcial" | "completo" | "sem_armas" | "erro";
+  matching_resumo_json: { total?: number; vinculadas?: number; revisao?: number; nao_encontradas?: number };
   status_processamento: "pendente" | "processando" | "concluido" | "erro";
   erro_mensagem: string | null;
   created_at: string;
