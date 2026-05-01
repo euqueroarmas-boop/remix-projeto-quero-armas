@@ -1084,52 +1084,67 @@ function Step1Documents({
 function Step2Extracting({ stages, error }: { stages: Record<string, string>; error: string | null }) {
   return (
     <div className="py-3">
-      <div className="rounded-[22px] border border-slate-200 bg-white px-4 py-5 shadow-[0_3px_12px_rgba(15,23,42,0.06)]">
-        <div className="mx-auto w-32 h-32 rounded-full flex items-center justify-center mb-5"
-          style={{ background: "hsl(220 95% 96%)" }}>
+      <div
+        className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-5 shadow-sm"
+        style={{ boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.10)" }}
+      >
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-30 blur-3xl"
+          style={{ background: "hsl(190 80% 45%)" }}
+        />
+        <div className="relative mx-auto w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
+          style={{ background: "hsl(190 80% 45% / 0.14)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.25)" }}>
           <div className="relative">
-            <FileText className="w-16 h-16" strokeWidth={1.6} style={{ color: "hsl(217 82% 58%)" }} />
-            <Search className="w-7 h-7 absolute -bottom-1 -right-1" strokeWidth={2} style={{ color: "hsl(217 82% 58%)" }} />
-            <Sparkles className="w-4 h-4 absolute -top-1 right-1 animate-pulse" style={{ color: "hsl(217 82% 68%)" }} />
+            <FileText className="w-10 h-10" strokeWidth={1.6} style={{ color: "hsl(190 80% 32%)" }} />
+            <Search className="w-4 h-4 absolute -bottom-0.5 -right-0.5" strokeWidth={2.2} style={{ color: "hsl(190 80% 32%)" }} />
+            <Sparkles className="w-3 h-3 absolute -top-0.5 right-0.5 animate-pulse" style={{ color: "hsl(190 80% 50%)" }} />
           </div>
         </div>
-        <h2 className="text-center text-[17px] leading-tight font-bold mb-3" style={{ color: "hsl(220 25% 15%)" }}>
-          Extraindo dados dos<br />documentos...
+        <div className="text-center text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(190 80% 32%)" }}>
+          Processando · IA
+        </div>
+        <h2 className="text-center text-[17px] leading-tight font-bold font-mono mb-3" style={{ color: "hsl(220 25% 15%)" }}>
+          Extraindo dados dos<br />documentos…
         </h2>
 
         <div className="h-1.5 rounded-full overflow-hidden mb-2 mx-2" style={{ background: "hsl(220 20% 92%)" }}>
           <div className="h-full animate-[progress_2.5s_ease-in-out_infinite]"
-            style={{ background: "hsl(217 82% 58%)", width: "66%" }} />
+            style={{ background: "hsl(190 80% 45%)", width: "66%" }} />
         </div>
-        <p className="text-center text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>Aguarde um momento...</p>
+        <p className="text-center text-[10px] uppercase tracking-[0.18em] font-bold mb-4" style={{ color: "hsl(220 10% 55%)" }}>Aguarde um momento</p>
 
         <div className="border-t border-slate-100 pt-3 space-y-2">
         {SLOTS.map(s => {
           const Icon = s.icon;
           const st = stages[s.key];
-          const chipStyle = s.key === "selfie"
-            ? { background: "hsl(217 95% 96%)", color: "hsl(217 82% 58%)" }
-            : { background: "hsl(152 65% 95%)", color: "hsl(152 55% 42%)" };
+          const chipColor = st === "ok" ? "hsl(152 60% 42%)" : "hsl(190 80% 45%)";
+          const chipStyle = { background: `${chipColor}14`, color: chipColor, boxShadow: `inset 0 0 0 1px ${chipColor}25` };
           return (
             <div key={s.key} className="flex items-center justify-between py-1">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={chipStyle}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={chipStyle}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-sm font-medium truncate" style={{ color: "hsl(220 25% 20%)" }}>{s.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] truncate" style={{ color: "hsl(220 25% 25%)" }}>{s.label}</span>
               </div>
               {st === "ok" && (
-                <span className="w-5 h-5 rounded-full flex items-center justify-center"
-                  style={{ background: "hsl(152 65% 45%)" }}>
-                  <CheckCircle2 className="w-4 h-4 text-white" />
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{ background: "hsl(152 60% 42% / 0.10)", color: "hsl(152 60% 32%)" }}>
+                  <CheckCircle2 className="w-3 h-3" /> OK
                 </span>
               )}
               {st === "processing" && (
-                <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "hsl(222 89% 55%)" }}>
-                  <Loader2 className="w-4 h-4 animate-spin" /> processando
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{ background: "hsl(190 80% 45% / 0.10)", color: "hsl(190 80% 32%)" }}>
+                  <Loader2 className="w-3 h-3 animate-spin" /> Lendo
                 </span>
               )}
-              {st === "fail" && <AlertCircle className="w-4 h-4" style={{ color: "hsl(0 70% 55%)" }} />}
+              {st === "fail" && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                  style={{ background: "hsl(0 70% 55% / 0.10)", color: "hsl(0 70% 45%)" }}>
+                  <AlertCircle className="w-3 h-3" /> Erro
+                </span>
+              )}
             </div>
           );
         })}
