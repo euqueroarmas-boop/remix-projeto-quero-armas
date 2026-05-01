@@ -512,6 +512,75 @@ Deno.serve(async (req) => {
       parsed.campos_extraidos = cx;
     }
 
+    // ===== PESSOA JURÍDICA (Cartão CNPJ, Contrato Social, QSA, NF empresa) =====
+    // O endereço da SEDE da empresa NÃO precisa ser igual ao endereço residencial
+    // do cliente. Empresário pode morar em outro lugar. Não tratar como divergência.
+    // O que importa é: empresa ATIVA + cliente consta no QSA/sócios.
+    {
+      const PJ_TIPOS = new Set([
+        "renda_qsa",
+        "renda_contrato_social",
+        "renda_nf_empresa",
+        "renda_cartao_cnpj",
+        "renda_cnpj_autonomo",
+        "renda_nf_recente",
+      ]);
+      if (PJ_TIPOS.has(doc.tipo_documento)) {
+        const cx: Record<string, any> = parsed.campos_extraidos || {};
+        // Mantém endereço da sede como dado extraído (vamos precisar), mas
+        // separa em campos próprios para nunca colidir com endereço do cliente.
+        const enderecoSede = cx.endereco_sede || cx.endereco_completo || cx.endereco || cx.logradouro;
+        if (enderecoSede && !cx.endereco_sede) cx.endereco_sede = enderecoSede;
+        if (cx.cep && !cx.cep_sede) cx.cep_sede = cx.cep;
+        if (cx.cidade && !cx.cidade_sede) cx.cidade_sede = cx.cidade;
+        if (cx.uf && !cx.uf_sede) cx.uf_sede = cx.uf;
+        // Remove campos que confundiriam a reconciliação com cadastro PF do cliente
+        delete cx.endereco;
+        delete cx.endereco_completo;
+        delete cx.logradouro;
+        delete cx.cep;
+        delete cx.bairro;
+        // cidade/uf/numero/complemento da sede ficam apenas em *_sede
+        delete cx.cidade;
+        delete cx.uf;
+        delete cx.estado;
+        delete cx.numero;
+        delete cx.complemento;
+
+        // Remove divergências derivadas de comparação endereço/cep/cidade/uf:
+        // não fazem sentido para documentos de empresa.
+        const CAMPOS_PJ_IGNORAR = new Set([
+          "endereco", "endereco_completo", "logradouro", "numero", "complemento",
+          "bairro", "cep", "cidade", "uf", "estado",
+          // nome do cliente também não deve gerar divergência aqui — o vínculo
+          // se prova pela presença no QSA/sócios, não pela "razao_social".
+          "nome", "nome_titular", "nome_completo", "razao_social",
+        ]);
+        parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+          const c = String(d?.campo || "").toLowerCase();
+          return !CAMPOS_PJ_IGNORAR.has(c);
+        });
+
+        // Cruzamento CNPJ ↔ QSA: marca cliente_e_socio se o CPF do cliente
+        // aparece na lista de sócios/administradores extraída.
+        const cpfCliente = String(cliente?.cpf ?? "").replace(/\D+/g, "");
+        const nomeCliente = String(cliente?.nome_completo ?? "").trim().toLowerCase();
+        const socios = Array.isArray(cx.socios) ? cx.socios : [];
+        const admins = Array.isArray(cx.administradores) ? cx.administradores : [];
+        const todos = [...socios, ...admins];
+        const ehSocio = todos.some((s: any) => {
+          const cpfS = String(s?.cpf ?? "").replace(/\D+/g, "");
+          const nomeS = String(s?.nome ?? "").trim().toLowerCase();
+          if (cpfCliente && cpfS && cpfS.length >= 11 && cpfS === cpfCliente) return true;
+          if (nomeCliente && nomeS && nomeS === nomeCliente) return true;
+          return false;
+        });
+        if (ehSocio) cx.cliente_e_socio = true;
+
+        parsed.campos_extraidos = cx;
+      }
+    }
+
     // ===== FASE 2: regras de identificação (RG/CIN/CNH) =====
     if (["rg", "cin", "cnh"].includes(doc.tipo_documento)) {
       const cx: Record<string, any> = parsed.campos_extraidos || {};
