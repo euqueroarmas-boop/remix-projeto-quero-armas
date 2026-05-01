@@ -1093,49 +1093,49 @@ function Step1Documents({
       </button>
 
       <AlertDialog open={manualWarnOpen} onOpenChange={setManualWarnOpen}>
-        <AlertDialogContent className="max-w-md">
+        <AlertDialogContent className="max-w-md bg-white border-zinc-200 max-h-[85vh] overflow-y-auto">
           <AlertDialogHeader>
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-              <AlertTriangle className="h-6 w-6 text-amber-600" strokeWidth={2.4} />
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg border border-amber-500/40 bg-amber-500/10">
+              <AlertTriangle className="h-6 w-6 text-amber-600" strokeWidth={2.2} />
             </div>
-            <AlertDialogTitle className="text-center text-base font-bold text-slate-800">
+            <div className="text-center text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700">
+              // ATENÇÃO · ENTRADA MANUAL
+            </div>
+            <AlertDialogTitle className="text-center text-base font-bold text-zinc-900 break-words">
               Tem certeza que prefere digitar manualmente?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[13px] leading-relaxed text-slate-600 text-left space-y-2 pt-2">
+            <AlertDialogDescription className="text-[13px] leading-relaxed text-zinc-600 text-left space-y-2 pt-2 break-words">
               <span className="block">
-                Preencher os dados <strong className="text-slate-800">à mão</strong> aumenta muito
+                Preencher os dados <strong className="text-zinc-900">à mão</strong> aumenta muito
                 o risco de <strong className="text-amber-700">erros de digitação</strong> em CPF,
                 RG, CEP, datas e endereço — e qualquer divergência pode causar a{" "}
                 <strong className="text-red-700">rejeição do seu cadastro pela Polícia Federal</strong>.
               </span>
               <span className="block">
-                Nossa <strong className="text-blue-700">IA é treinada para extrair os dados com
+                Nossa <strong className="text-amber-700">IA é treinada para extrair os dados com
                 altíssima precisão</strong> direto dos seus documentos. É <strong>mais rápido,
                 mais seguro</strong> e elimina o retrabalho.
               </span>
-              <span className="block text-[12px] text-slate-500">
+              <span className="block text-[12px] text-zinc-500">
                 Recomendamos fortemente enviar as fotos dos documentos.
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row gap-2">
-            <AlertDialogCancel className="mt-0 w-full sm:w-auto text-[12px] font-semibold">
-              Continuar digitando manualmente
-            </AlertDialogCancel>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
             <AlertDialogAction
               onClick={() => { setManualWarnOpen(false); }}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-[12px] font-bold uppercase tracking-wide"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold uppercase tracking-[0.16em]"
             >
               Voltar e enviar documentos
             </AlertDialogAction>
+            <button
+              type="button"
+              onClick={() => { setManualWarnOpen(false); onManual(); }}
+              className="w-full text-[11px] text-zinc-500 underline underline-offset-2 hover:text-zinc-700 font-medium"
+            >
+              Entendi os riscos, quero digitar mesmo assim
+            </button>
           </AlertDialogFooter>
-          <button
-            type="button"
-            onClick={() => { setManualWarnOpen(false); onManual(); }}
-            className="mt-1 text-[11px] text-slate-400 underline underline-offset-2 hover:text-slate-600 self-center"
-          >
-            Entendi os riscos, quero digitar mesmo assim
-          </button>
         </AlertDialogContent>
       </AlertDialog>
     </div>
