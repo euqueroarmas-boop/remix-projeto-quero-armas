@@ -367,8 +367,6 @@ export default function QACadastroPublicoPage() {
         naturalidade_uf: id.naturalidade_uf || prev.naturalidade_uf,
         titulo_eleitor: id.titulo_eleitor || prev.titulo_eleitor,
         cnh: id.cnh || prev.cnh,
-        ctps: id.ctps || prev.ctps,
-        pis_pasep: id.pis_pasep || prev.pis_pasep,
         // Data de expedição: aceita ISO ou BR e cobre múltiplos aliases da IA
         // (CIN gov.br usa "Data de Emissão / Issue Date").
         data_expedicao_rg: pickIssueDate(id) || prev.data_expedicao_rg,
