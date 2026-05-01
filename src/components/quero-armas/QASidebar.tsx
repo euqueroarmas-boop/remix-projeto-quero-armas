@@ -83,7 +83,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
     location.pathname === url || location.pathname.startsWith(url + "/");
 
   const canAccess = (url: string) => {
-    if (perfil === "leitura_auditoria") return !["/gerar-peca", "/modelos-docx"].includes(url);
+    if (perfil === "leitura_auditoria") return !["/gerar-peca", "/modelos-docx", "/correcoes-ia"].includes(url);
     if (perfil === "assistente_juridico") return url !== "/configuracoes";
     return true;
   };
