@@ -560,54 +560,49 @@ export default function QACadastroPublicoPage() {
         <div className="mb-4 flex justify-start">
           <BackButton fallback="/" />
         </div>
-        <div className="bg-white rounded-[20px] shadow-[0_10px_40px_-12px_rgba(15,23,42,0.12),0_2px_8px_-2px_rgba(15,23,42,0.04)] border border-slate-200/70 overflow-hidden">
-          {/* Cabeçalho — composição refinada com logo integrada */}
-          <div className="px-6 pt-6 pb-5 relative">
-            {/* hairline tático sutil no topo */}
-            <div
-              className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, transparent 0%, hsl(215 50% 25%) 30%, hsl(86 23% 30%) 70%, transparent 100%)",
-                opacity: 0.55,
-              }}
-            />
-            <div className="flex items-center gap-3.5">
+        <div
+          className="relative bg-white rounded-2xl border border-slate-200/80 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.10),0_2px_8px_-2px_rgba(15,23,42,0.04)] overflow-hidden"
+          style={{ boxShadow: `inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 10px 40px -12px rgba(15,23,42,0.10), 0 2px 8px -2px rgba(15,23,42,0.04)` }}
+        >
+          {/* Glow ambiente — assinatura KpiCard premium light */}
+          <div
+            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-25 blur-3xl"
+            style={{ background: "hsl(190 80% 45%)" }}
+          />
+          {/* Cabeçalho no estilo KpiCard do Arsenal */}
+          <div className="relative px-6 pt-6 pb-5">
+            <div className="flex items-start justify-between gap-2 mb-3">
               <div
-                className="shrink-0 rounded-xl p-1.5 flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, hsl(215 40% 12%) 0%, hsl(215 38% 18%) 100%)",
-                  boxShadow:
-                    "0 4px 12px hsl(215 50% 15% / 0.18), inset 0 1px 0 hsl(50 60% 88% / 0.08)",
-                }}
+                className="flex h-11 w-11 items-center justify-center rounded-xl"
+                style={{ background: "hsl(190 80% 45% / 0.14)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}
               >
-                <QALogo className="h-11 w-11 rounded-lg" />
+                <QALogo className="h-8 w-8 rounded-lg" />
               </div>
-              <div className="min-w-0 flex-1">
-                <span
-                  className="text-[9px] font-semibold uppercase tracking-[0.18em] block mb-0.5"
-                  style={{ color: "hsl(215 35% 45%)" }}
-                >
-                  Quero Armas · Cadastro
-                </span>
-                <h1
-                  className="text-[20px] font-bold leading-tight tracking-tight"
-                  style={{ color: "hsl(215 35% 14%)" }}
-                >
+              <div
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
+                style={{ background: "hsl(190 80% 45% / 0.10)", color: "hsl(190 80% 32%)" }}
+              >
+                Cadastro · Quero Armas
+              </div>
+            </div>
+            <div className="min-w-0">
+              <h1
+                className="text-[20px] font-bold leading-tight tracking-tight font-mono"
+                style={{ color: "hsl(215 35% 14%)" }}
+              >
                   {step === 0 && "Vamos começar"}
                   {step === 1 && "Seus documentos"}
                   {step === 2 && "Lendo informações"}
                   {step === 3 && "Confirme os dados"}
                   {step === 4 && "Tudo pronto"}
                 </h1>
-                <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: "hsl(220 10% 52%)" }}>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "hsl(220 12% 48%)" }}>
                   {step === 0 && "Conte rapidamente o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
                   {step === 3 && "Revise antes de enviar"}
                   {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
-              </div>
             </div>
             <Stepper current={step} />
           </div>
