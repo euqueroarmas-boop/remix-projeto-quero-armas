@@ -102,6 +102,7 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
     <div
       ref={containerRef}
       className="bg-white border border-slate-200 rounded-lg p-4 max-h-[60vh] overflow-y-auto scroll-smooth"
+      data-peca-text="true"
     >
       <div className="font-serif text-[12.5px] leading-[1.8]">
         {lines.map((line, i) => {
