@@ -2150,9 +2150,14 @@ export default function QAClientesPage() {
                   </Section>
                 )}
                 {c.observacao && (
-                  <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
-                    <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>Observações</div>
-                    <div className="text-[12px] text-slate-600 whitespace-pre-wrap leading-relaxed">{c.observacao}</div>
+                  <div className="qa-card p-4 md:p-5">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(38 92% 50% / 0.12)" }}>
+                        <FileText className="h-3.5 w-3.5" style={{ color: "hsl(38 92% 50%)" }} />
+                      </div>
+                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(38 92% 50%)" }}>Observações</h3>
+                    </div>
+                    <div className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">{c.observacao}</div>
                   </div>
                 )}
                 <Section title="Filiações a Clubes">
@@ -2322,12 +2327,12 @@ export default function QAClientesPage() {
                           <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50/40">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span
-                                className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
                                 style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}
                               >
                                 VENDA #{v.id_legado ?? v.id}
                               </span>
-                              <span className="text-[10px] text-slate-500">{formatDate(v.data_cadastro)}</span>
+                              <span className="text-[12px] font-semibold text-slate-600">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
                               <span className="w-[88px] flex justify-start">
@@ -2448,7 +2453,7 @@ export default function QAClientesPage() {
                                         ))}
                                       </SelectContent>
                                     </Select>
-                                    <span className="text-slate-700 truncate">{getServicoNome(it.servico_id)}</span>
+                                    <span className="text-[12px] font-bold text-slate-800 truncate uppercase tracking-tight">{getServicoNome(it.servico_id)}</span>
                                     {(() => {
                                       // Número identificador exibido em coluna central de largura fixa para manter o alinhamento entre todos os serviços.
                                       const inlineNumero =
@@ -2456,7 +2461,7 @@ export default function QAClientesPage() {
                                         it.servico_id === 3 ? it.numero_requerimento :
                                         it.numero_processo;
                                       return (
-                                        <span className="hidden sm:flex w-[140px] shrink-0 justify-center text-slate-400 font-mono text-[9px] tabular-nums">
+                                        <span className="hidden sm:flex w-[140px] shrink-0 justify-center text-slate-500 font-mono text-[11px] font-semibold tabular-nums">
                                           {inlineNumero || ""}
                                         </span>
                                       );
@@ -2465,11 +2470,11 @@ export default function QAClientesPage() {
                                   <div className="flex items-center gap-1 shrink-0">
                                     <span className="w-[88px] flex justify-start">
                                       {it.cortesia ? (
-                                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
                                           CORTESIA
                                         </span>
                                       ) : (
-                                        <span className="text-slate-600 font-mono tabular-nums text-[10px]">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                        <span className="text-slate-800 font-mono font-bold tabular-nums text-[12px]">R$ {Number(it.valor || 0).toFixed(0)}</span>
                                       )}
                                     </span>
                                     <Button
@@ -2534,11 +2539,11 @@ export default function QAClientesPage() {
                             ))}
                               </SortableContext>
                             </DndContext>
-                            <div className="flex justify-between pt-1 border-t border-slate-200 text-[10px]">
-                              <span className="text-slate-400">Total</span>
-                              <div className="flex gap-3">
-                                {Number(v.desconto) > 0 && <span className="text-amber-400">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
-                                <span className="text-slate-700 font-medium">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
+                            <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
+                              <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">Total</span>
+                              <div className="flex gap-3 items-center">
+                                {Number(v.desconto) > 0 && <span className="text-[12px] font-bold text-amber-600">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
+                                <span className="text-[14px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
                               </div>
                             </div>
                           </div>
@@ -3549,9 +3554,22 @@ export default function QAClientesPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
-      <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>{title}</div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">{children}</div>
+    <div className="qa-card p-4 md:p-5">
+      <div className="flex items-center gap-2.5 mb-4">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center"
+          style={{ background: "hsl(220 65% 48% / 0.12)" }}
+        >
+          <FileText className="h-3.5 w-3.5" style={{ color: "hsl(220 65% 48%)" }} />
+        </div>
+        <h3
+          className="text-[11px] uppercase tracking-[0.14em] font-bold"
+          style={{ color: "hsl(220 65% 48%)" }}
+        >
+          {title}
+        </h3>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">{children}</div>
     </div>
   );
 }
@@ -3623,11 +3641,11 @@ function Field({ label, value, icon: Icon, copyable, copyValue }: { label: strin
     <div className={`flex flex-col gap-0.5 py-1 ${copyable && value ? "cursor-pointer active:opacity-60 group" : ""}`} onClick={copyable ? handleCopy : undefined}>
       <div className="flex items-center gap-1.5">
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(220 10% 55%)" }} />}
-        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">{label}</span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-[0.14em] font-bold">{label}</span>
         {copyable && value && <span className="text-slate-300 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">📋</span>}
       </div>
         <span
-          className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5 break-words"
+          className="text-[14px] text-slate-900 font-bold uppercase pl-0.5 break-words leading-snug"
           style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
         >
           {value || "—"}
