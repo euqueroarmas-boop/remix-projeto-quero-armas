@@ -428,26 +428,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         valor_servico: c.preco != null ? Number(c.preco) : 0,
       }));
 
-      // Garante que serviços já vendidos (fora do catálogo ativo) continuem
-      // visíveis no modal de edição.
-      const idsCatalogo = new Set(lista.map((s) => s.id));
-      const idsVenda: number[] = venda
-        ? Array.from(selectedServicos.keys()).filter((id) => !idsCatalogo.has(id))
-        : [];
-      if (idsVenda.length > 0) {
-        const { data: extras } = await supabase
-          .from("qa_servicos" as any)
-          .select("id, nome_servico, valor_servico")
-          .in("id", idsVenda);
-        ((extras as any[]) ?? []).forEach((e) => {
-          lista.push({
-            id: Number(e.id),
-            nome_servico: `${e.nome_servico} (legado)`,
-            valor_servico: Number(e.valor_servico) || 0,
-          });
-        });
-      }
-
+      // REGRA GLOBAL: somente catálogo ativo. Itens legados fora do catálogo
+      // não são exibidos nem editáveis aqui.
       setServicos(lista);
     })();
   }, [open]);
