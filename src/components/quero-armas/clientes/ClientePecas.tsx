@@ -149,7 +149,7 @@ export default function ClientePecas({ cliente }: Props) {
   const [numeroRequerimento, setNumeroRequerimento] = useState("");
 
   const [circunscricao, setCircunscricao] = useState<any>(null);
-  const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "error">("idle");
+  const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "not_found" | "error">("idle");
 
   const [generating, setGenerating] = useState(false);
   const [resultado, setResultado] = useState<DraftingResult | null>(null);
@@ -209,12 +209,16 @@ export default function ClientePecas({ cliente }: Props) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // ── Circumscription ──
+  // ── Circumscription ── recalcula sempre que cidade/UF do cliente mudar
   useEffect(() => {
-    if (clienteCidade && clienteUf && circStatus === "idle") {
+    if (clienteCidade && clienteUf) {
       resolverCircunscricao(clienteCidade, clienteUf);
+    } else {
+      setCircunscricao(null);
+      setCircStatus("not_found");
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteCidade, clienteUf]);
 
   const resolverCircunscricao = async (cidade: string, uf: string) => {
     const c = cidade.replace(/\s+/g, " ").trim();
@@ -236,13 +240,14 @@ export default function ClientePecas({ cliente }: Props) {
         signal: controller.signal,
       });
       clearTimeout(timer);
-      if (!res.ok) { setCircStatus("error"); return null; }
+      if (!res.ok) { setCircunscricao(null); setCircStatus("error"); return null; }
       const data = await res.json();
-      if (!data || data.length === 0) { setCircStatus("error"); return null; }
+      if (!data || data.length === 0) { setCircunscricao(null); setCircStatus("not_found"); return null; }
       setCircunscricao(data[0]);
       setCircStatus("resolved");
       return data[0];
     } catch {
+      setCircunscricao(null);
       setCircStatus("error");
       return null;
     }
@@ -637,6 +642,30 @@ export default function ClientePecas({ cliente }: Props) {
             <span className="text-[10px] font-semibold uppercase" style={{ color: "hsl(210 60% 55%)" }}>
               RESOLVENDO CIRCUNSCRIÇÃO...
             </span>
+          </div>
+        )}
+        {(circStatus === "not_found" || circStatus === "error" || (circStatus === "idle" && (!clienteCidade || !clienteUf))) && (
+          <div className="mx-4 mb-4 mt-2 rounded-lg px-3.5 py-2.5 flex items-start gap-2.5"
+            style={{ background: "hsl(38 92% 50% / 0.08)", border: "1px solid hsl(38 92% 50% / 0.25)" }}>
+            <Building2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "hsl(35 90% 40%)" }} />
+            <div className="min-w-0 flex-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: "hsl(35 90% 40%)" }}>
+                CIRCUNSCRIÇÃO PF
+              </span>
+              <p className="text-[11px] font-bold uppercase mt-0.5" style={{ color: "hsl(35 80% 30%)" }}>
+                NÃO IDENTIFICADA — REVISE O ENDEREÇO DO CLIENTE
+              </p>
+              {clienteCidade && clienteUf && circStatus !== "idle" && (
+                <button
+                  type="button"
+                  onClick={() => resolverCircunscricao(clienteCidade, clienteUf)}
+                  className="text-[10px] font-bold uppercase tracking-wider mt-1 underline"
+                  style={{ color: "hsl(35 90% 40%)" }}
+                >
+                  TENTAR NOVAMENTE
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
