@@ -336,7 +336,68 @@ async function syncAllLinks(
   await Promise.all([
     syncCustomerLinks(supabase, params),
     syncQaClientLinks(supabase, params),
+    syncClienteAuthLink(supabase, params),
   ]);
+}
+
+/**
+ * Garante a existência (e atividade) do vínculo em `cliente_auth_links`
+ * entre o Auth User e o cliente (qa_clientes/customers). Idempotente.
+ *
+ * Sem essa linha, o login do portal falha com "Conta sem vínculo de cliente ativo",
+ * pois `QAClienteLoginPage` consulta `cliente_auth_links` por (user_id, status='active').
+ */
+async function syncClienteAuthLink(
+  supabase: SupabaseClient,
+  params: {
+    qaClientId?: number | null;
+    customerId?: string | null;
+    userId?: string | null;
+    email?: string | null;
+    document?: string | null;
+  },
+) {
+  if (!params.userId) return;
+  const email = normalizeEmail(params.email);
+  const documento = (params.document || "").replace(/\D/g, "") || null;
+
+  try {
+    // 1) Procura link existente do Auth User
+    const { data: existing } = await supabase
+      .from("cliente_auth_links")
+      .select("id, status, qa_cliente_id, customer_id, email")
+      .eq("user_id", params.userId)
+      .limit(5);
+
+    const exact = (existing || []).find(
+      (l: any) =>
+        (params.qaClientId ? l.qa_cliente_id === params.qaClientId : true) &&
+        (params.customerId ? l.customer_id === params.customerId : true),
+    ) || (existing && existing[0]) || null;
+
+    const updatePayload = {
+      qa_cliente_id: params.qaClientId ?? (exact?.qa_cliente_id ?? null),
+      customer_id: params.customerId ?? (exact?.customer_id ?? null),
+      email: email || exact?.email || null,
+      documento_normalizado: documento,
+      status: "active",
+      activated_at: new Date().toISOString(),
+      motivo: null,
+      email_pendente: null,
+    };
+
+    if (exact?.id) {
+      await supabase.from("cliente_auth_links").update(updatePayload).eq("id", exact.id);
+      return;
+    }
+
+    await supabase.from("cliente_auth_links").insert({
+      user_id: params.userId,
+      ...updatePayload,
+    });
+  } catch (err) {
+    console.error("[create-client-user] syncClienteAuthLink falhou:", err);
+  }
 }
 
 async function resolveAuthUser(
