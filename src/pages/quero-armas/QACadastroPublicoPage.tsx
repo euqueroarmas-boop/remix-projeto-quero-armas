@@ -2027,7 +2027,7 @@ function ArsenalGroup({
         </div>
       </div>
       {hint && (
-        <p className="px-4 pb-2 text-[10px] text-zinc-500">{hint}</p>
+        <p className="px-4 pb-2 text-[13px] leading-snug text-zinc-700 font-medium">{hint}</p>
       )}
       <div className="px-4 pb-4 pt-1">{children}</div>
     </div>
