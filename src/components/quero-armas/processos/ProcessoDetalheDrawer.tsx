@@ -725,6 +725,21 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                           <strong className="uppercase tracking-wider">MOTIVO:</strong> {doc.motivo_rejeicao}
                         </div>
                       )}
+                      {/* FASE 4 — Orientações ao cliente (vindas da IA) */}
+                      {(() => {
+                        const compl = (doc.campos_complementares_json && typeof doc.campos_complementares_json === "object")
+                          ? doc.campos_complementares_json as any : null;
+                        const orient = compl?.orientacoes_cliente;
+                        if (!orient || typeof orient !== "string" || orient.trim().length === 0) return null;
+                        return (
+                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-900">
+                            <div className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-amber-800">
+                              <Info className="h-3 w-3" /> O QUE PRECISA CORRIGIR
+                            </div>
+                            <p className="mt-1 leading-relaxed whitespace-pre-line">{orient}</p>
+                          </div>
+                        );
+                      })()}
                       {div.length > 0 && (
                         <div className={`text-[11px] rounded-md p-2 ${doc.status === "divergente" ? "bg-amber-100 border-2 border-amber-400" : "bg-amber-50 border border-amber-200"}`}>
                           <div className="font-bold uppercase tracking-wider text-amber-800 mb-1 inline-flex items-center gap-1">
