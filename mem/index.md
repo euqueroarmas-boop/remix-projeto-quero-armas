@@ -16,3 +16,4 @@ TODAS as telas internas/operacionais/administrativas do Quero Armas seguem padr�
 - [QA Admin Premium Light Mandate](mem://style/quero-armas/admin-premium-light-mandate) — Padrão branco premium obrigatório em TODAS as telas internas/autenticadas (admin, operacional E portal do cliente); exceções APENAS para site público, landing e arsenal digital público
 - [QA Portal Light](mem://style/quero-armas/client-portal-light-mandate) — Portal do Cliente / Arsenal Inteligente é Premium Light. data-tactical-portal foi neutralizado em src/index.css; não recriar regras dark
 - [QA Integridade Venda↔Processo](mem://features/quero-armas/integridade-venda-processo) — Bloqueia divergência Posse/Porte; qa-processo-criar valida servico_id contra qa_itens_venda + 8 testes regressão
+- [AI Supervised Correction](mem://features/quero-armas/ai-supervised-correction-system) — qa_ia_correcoes_juridicas + /correcoes-ia, 3 fases (admin/captura/injeção+checagem)
