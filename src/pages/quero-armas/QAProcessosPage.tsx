@@ -201,7 +201,7 @@ export default function QAProcessosPage() {
       </div>
 
       {selectedId && (
-        <ProcessoDetalheDrawer processoId={selectedId} adminMode onClose={() => setSelectedId(null)} onUpdated={carregar} />
+        <ProcessoDetalheDrawer processoId={selectedId} equipeMode onClose={() => setSelectedId(null)} onUpdated={carregar} />
       )}
     </div>
   );
