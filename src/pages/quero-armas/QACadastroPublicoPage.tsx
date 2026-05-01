@@ -571,38 +571,32 @@ export default function QACadastroPublicoPage() {
           />
           {/* Cabeçalho no estilo KpiCard do Arsenal */}
           <div className="relative px-6 pt-6 pb-5">
-            <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-center gap-3">
               <div
-                className="flex h-11 w-11 items-center justify-center rounded-xl"
+                className="shrink-0 flex h-14 w-14 items-center justify-center rounded-xl"
                 style={{ background: "hsl(190 80% 45% / 0.14)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}
               >
-                <QALogo className="h-8 w-8 rounded-lg" />
+                <QALogo className="h-10 w-10 rounded-lg" />
               </div>
-              <div
-                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em]"
-                style={{ background: "hsl(190 80% 45% / 0.10)", color: "hsl(190 80% 32%)" }}
-              >
-                Cadastro · Quero Armas
-              </div>
-            </div>
-            <div className="min-w-0">
-              <h1
-                className="text-[20px] font-bold leading-tight tracking-tight font-mono"
-                style={{ color: "hsl(215 35% 14%)" }}
-              >
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                <h1
+                  className="text-[20px] font-bold leading-tight tracking-tight font-mono"
+                  style={{ color: "hsl(215 35% 14%)" }}
+                >
                   {step === 0 && "Vamos começar"}
                   {step === 1 && "Seus documentos"}
                   {step === 2 && "Lendo informações"}
                   {step === 3 && "Confirme os dados"}
                   {step === 4 && "Tudo pronto"}
                 </h1>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "hsl(220 12% 48%)" }}>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: "hsl(220 12% 48%)" }}>
                   {step === 0 && "Conte rapidamente o que você precisa"}
                   {step === 1 && "Envie seus documentos para iniciar"}
                   {step === 2 && "Estamos lendo suas informações"}
                   {step === 3 && "Revise antes de enviar"}
                   {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
+              </div>
             </div>
             <Stepper current={step} />
           </div>
