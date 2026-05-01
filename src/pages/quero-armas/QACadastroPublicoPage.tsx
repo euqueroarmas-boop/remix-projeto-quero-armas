@@ -367,8 +367,6 @@ export default function QACadastroPublicoPage() {
         naturalidade_uf: id.naturalidade_uf || prev.naturalidade_uf,
         titulo_eleitor: id.titulo_eleitor || prev.titulo_eleitor,
         cnh: id.cnh || prev.cnh,
-        ctps: id.ctps || prev.ctps,
-        pis_pasep: id.pis_pasep || prev.pis_pasep,
         // Data de expedição: aceita ISO ou BR e cobre múltiplos aliases da IA
         // (CIN gov.br usa "Data de Emissão / Issue Date").
         data_expedicao_rg: pickIssueDate(id) || prev.data_expedicao_rg,
@@ -484,8 +482,6 @@ export default function QACadastroPublicoPage() {
         naturalidade_pais: extracted.naturalidade_pais || null,
         titulo_eleitor: extracted.titulo_eleitor || null,
         cnh: extracted.cnh || null,
-        ctps: extracted.ctps || null,
-        pis_pasep: extracted.pis_pasep || null,
         categoria_titular: extracted.categoria_titular || null,
         vinculo_tipo: extracted.vinculo_tipo || null,
         telefone_principal: extracted.telefone_principal.replace(/\D/g, ""),
@@ -1422,17 +1418,24 @@ function Step3Review({
           options={CATEGORIA_OPTS as any}
           status={data.categoria_titular ? "validado" : "normal"}
         />
-        <ReviewField label="Profissão" value={data.profissao} onChange={(v) => set("profissao", v)}
-          required={required.has("profissao")} status={statusOf("profissao")} />
+        <ReviewField
+          label="Profissão / Atividade lícita exercida"
+          value={data.profissao}
+          onChange={(v) => set("profissao", v)}
+          required={required.has("profissao")}
+          status={statusOf("profissao")}
+          placeholder="Ex.: Médico, Advogado, Servidor Público, Empresário…"
+        />
+        <p className="-mt-1 text-[10px] leading-snug" style={{ color: "hsl(220 12% 50%)" }}>
+          Informe <strong>exatamente</strong> como sua atividade é exercida.
+          A Polícia Federal exigirá <strong>comprovante dessa atividade</strong> (holerite,
+          contrato social, declaração de IR, etc.) e este campo abastecerá automaticamente
+          o checklist do seu processo após a aprovação do pagamento.
+        </p>
         <div className="grid grid-cols-2 gap-2">
           <ReviewField label="Título de eleitor" value={data.titulo_eleitor}
             onChange={(v) => set("titulo_eleitor", v)} status={statusOf("titulo_eleitor")} />
           <ReviewField label="CNH" value={data.cnh} onChange={(v) => set("cnh", v)} status={statusOf("cnh")} />
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <ReviewField label="CTPS" value={data.ctps} onChange={(v) => set("ctps", v)} status={statusOf("ctps")} />
-          <ReviewField label="PIS/PASEP" value={data.pis_pasep}
-            onChange={(v) => set("pis_pasep", v)} status={statusOf("pis_pasep")} />
         </div>
       </ReviewBlock>
 
