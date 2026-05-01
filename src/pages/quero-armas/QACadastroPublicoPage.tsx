@@ -1452,7 +1452,7 @@ function Step3Review({
         ) : unidadePF ? (
           <div className="rounded-lg p-3 space-y-1" style={{ background: "hsl(215 50% 96%)", border: "1px solid hsl(215 50% 88%)" }}>
             <div className="text-[11px]" style={{ color: "hsl(215 35% 30%)" }}>
-              Com base no endereço informado, seus documentos serão preparados/entregues para:
+              Com base no endereço informado, seus documentos serão protocolados na seguinte unidade da Polícia Federal:
             </div>
             <div className="text-[13px] font-bold" style={{ color: "hsl(215 50% 18%)" }}>
               {unidadePF.unidade_pf}
@@ -1466,6 +1466,40 @@ function Step3Review({
                 {unidadePF.base_legal}
               </div>
             )}
+
+            {/* ─── Prazos do processo ─── */}
+            <div className="mt-2 pt-2 border-t" style={{ borderColor: "hsl(215 50% 86%)" }}>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] mb-1.5" style={{ color: "hsl(215 50% 25%)" }}>
+                Prazos do processo
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="rounded-md p-2" style={{ background: "hsl(190 60% 96%)", border: "1px solid hsl(190 50% 85%)" }}>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "hsl(190 60% 28%)" }}>
+                    Quero Armas
+                  </div>
+                  <div className="text-[12px] font-bold" style={{ color: "hsl(190 70% 22%)" }}>
+                    7 a 25 dias
+                  </div>
+                  <div className="text-[9px] leading-tight" style={{ color: "hsl(190 30% 35%)" }}>
+                    para preparar e protocolar seu pedido na unidade acima.
+                  </div>
+                </div>
+                <div className="rounded-md p-2" style={{ background: "hsl(152 50% 96%)", border: "1px solid hsl(152 40% 85%)" }}>
+                  <div className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: "hsl(152 60% 25%)" }}>
+                    Polícia Federal
+                  </div>
+                  <div className="text-[12px] font-bold" style={{ color: "hsl(152 70% 18%)" }}>
+                    30 a 60 dias
+                  </div>
+                  <div className="text-[9px] leading-tight" style={{ color: "hsl(152 30% 30%)" }}>
+                    para análise (Lei&nbsp;nº&nbsp;9.784/1999, art.&nbsp;49).
+                  </div>
+                </div>
+              </div>
+              <div className="mt-1.5 text-[9px] italic" style={{ color: "hsl(220 10% 45%)" }}>
+                Os prazos da PF correm a partir do protocolo e podem ser prorrogados motivadamente, conforme a mesma lei.
+              </div>
+            </div>
           </div>
         ) : (
           <div className="text-[11px]" style={{ color: "hsl(30 60% 35%)" }}>
