@@ -231,6 +231,12 @@ Deno.serve(async (req) => {
             "   a) Se houver APENAS um número de identificação principal (11 dígitos), trate-o como CPF E como possível RG ao mesmo tempo: NÃO preencha o campo `rg` silenciosamente. Em vez disso, preencha cpf com esse número (com cpf_confidence ~ 0.9) E adicione o MESMO número em rg_candidato. Marque needs_confirmation=true e em confirmation_reason explique: 'Documento é CIN gov.br: o número exibido como Registro Geral é o próprio CPF (identificador nacional unificado). Confirme manualmente se deseja usar este número também como RG.'",
             "   b) Só preencha o campo `rg` da CIN se houver, ALÉM do CPF, um segundo número claramente rotulado como RG estadual antigo (com órgão expedidor estadual diferente do RIC/CIN).",
             "   c) Em CIN, emissor_rg/uf_emissor_rg só devem ser preenchidos se você visualizar EXPLICITAMENTE no documento (ex.: 'IIRGD/SP'); caso contrário deixe vazio.",
+            "8) DOCUMENTOS AUXILIARES VISÍVEIS NA CIN/RG: a CIN nova (gov.br) frequentemente lista, no verso ou em uma seção 'Outros Registros' / 'Outros Documentos' / 'Documentos Vinculados', outros números oficiais do cidadão. SEMPRE inspecione TODA a imagem (frente E verso, incluindo cabeçalhos, rodapés e colunas laterais) e, se visíveis, preencha:",
+            "   • titulo_eleitor: número do Título de Eleitor (geralmente 12 dígitos), quando rotulado como 'Título de Eleitor', 'Título Eleitoral' ou 'TE'.",
+            "   • cnh: número de registro da CNH (11 dígitos), quando rotulado como 'CNH', 'Carteira de Habilitação', 'Registro Nacional de Habilitação' ou 'RENACH'.",
+            "   • ctps: quando rotulado como 'CTPS' ou 'Carteira de Trabalho'.",
+            "   • pis_pasep: quando rotulado como 'PIS', 'PASEP' ou 'NIS'.",
+            "   Extraia APENAS dígitos (sem pontos, traços ou espaços). Se o número não estiver claramente legível, NÃO invente — deixe vazio. Esses campos são INDEPENDENTES do tipo_documento: extraia mesmo que o documento principal seja CIN, RG ou CNH.",
           ].join("\n"),
           ).catch((e) => ({ __error: String(e?.message || e) }))
         : Promise.resolve(null),
