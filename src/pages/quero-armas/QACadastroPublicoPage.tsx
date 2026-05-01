@@ -680,6 +680,7 @@ export default function QACadastroPublicoPage() {
             )}
 
             {step === 3 && (
+              <div key="step-3" className="animate-fade-in">
               <Step3Review
                 data={extracted}
                 onChange={setExtracted}
@@ -748,6 +749,7 @@ export default function QACadastroPublicoPage() {
                   }
                 }}
               />
+              </div>
             )}
 
             {step === 4 && <Step4Done firstName={extracted.nome_completo.split(" ")[0] || ""} />}
@@ -967,7 +969,7 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
                     boxShadow: active
                       ? `0 4px 14px -4px ${amber}, inset 0 0 0 2px ${amber}`
                       : done
-                        ? `inset 0 0 0 2px ${ok}`
+                        ? "inset 0 0 0 1.5px hsl(220 14% 80%)"
                         : "inset 0 0 0 1.5px hsl(220 14% 80%)",
                   }}
                 >
@@ -2027,7 +2029,7 @@ function ArsenalGroup({
         </div>
       </div>
       {hint && (
-        <p className="px-4 pb-2 text-[10px] text-zinc-500">{hint}</p>
+        <p className="px-4 pb-2 text-[13px] leading-snug text-zinc-700 font-medium">{hint}</p>
       )}
       <div className="px-4 pb-4 pt-1">{children}</div>
     </div>
