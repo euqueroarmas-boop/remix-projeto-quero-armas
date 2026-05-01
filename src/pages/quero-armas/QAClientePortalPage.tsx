@@ -939,6 +939,39 @@ export default function QAClientePortalPage() {
             </div>
             <ChevronRight className="h-4 w-4 text-amber-700 shrink-0" />
           </button>
+          {/* KPIs — padrão Arsenal Review */}
+          {itens.length > 0 && (() => {
+            const totalServ = itens.length;
+            const concluidos = itens.filter((i: any) => i.status === "CONCLUÍDO" || i.status === "DEFERIDO").length;
+            const indeferidos = itens.filter((i: any) => ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)).length;
+            const emAndamento = totalServ - concluidos - indeferidos;
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 mb-3 text-[10px]">
+                <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Total</div>
+                  <div className="text-[14px] font-bold text-slate-800">{totalServ}</div>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Concluídos</div>
+                  <div className="text-[14px] font-bold" style={{ color: "hsl(152 60% 28%)" }}>{concluidos}</div>
+                </div>
+                <div
+                  className="rounded-md border px-2 py-1.5"
+                  style={{
+                    background: emAndamento > 0 ? "hsl(38 92% 50% / 0.10)" : "white",
+                    borderColor: emAndamento > 0 ? "hsl(38 92% 50% / 0.40)" : "hsl(220 13% 90%)",
+                  }}
+                >
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Em andamento</div>
+                  <div className="text-[14px] font-bold" style={{ color: emAndamento > 0 ? "hsl(28 92% 32%)" : "hsl(220 10% 50%)" }}>{emAndamento}</div>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                  <div className="text-[9px] uppercase tracking-wider text-slate-500">Indeferidos</div>
+                  <div className="text-[14px] font-bold" style={{ color: "hsl(0 72% 45%)" }}>{indeferidos}</div>
+                </div>
+              </div>
+            );
+          })()}
           {itens.length === 0 ? (
             <p className="text-center text-sm text-slate-400 py-6">
               {cliente?.tipo_cliente === "cliente_app"
