@@ -3881,6 +3881,9 @@ export type Database = {
           email: string | null
           emissor_rg: string | null
           endereco: string | null
+          endereco_em_nome_de_terceiro: boolean
+          endereco_titular_documento: string | null
+          endereco_titular_nome: string | null
           endereco2: string | null
           escolaridade: string | null
           estado: string | null
@@ -3967,6 +3970,9 @@ export type Database = {
           email?: string | null
           emissor_rg?: string | null
           endereco?: string | null
+          endereco_em_nome_de_terceiro?: boolean
+          endereco_titular_documento?: string | null
+          endereco_titular_nome?: string | null
           endereco2?: string | null
           escolaridade?: string | null
           estado?: string | null
@@ -4053,6 +4059,9 @@ export type Database = {
           email?: string | null
           emissor_rg?: string | null
           endereco?: string | null
+          endereco_em_nome_de_terceiro?: boolean
+          endereco_titular_documento?: string | null
+          endereco_titular_nome?: string | null
           endereco2?: string | null
           escolaridade?: string | null
           estado?: string | null
@@ -4494,14 +4503,17 @@ export type Database = {
           arquivo_nome: string | null
           arquivo_storage_path: string | null
           cadastro_publico_id: string | null
+          campos_complementares_json: Json | null
           created_at: string
           customer_id: string | null
           data_emissao: string | null
           data_validade: string | null
+          endereco_em_nome_de_terceiro: boolean
           ia_dados_extraidos: Json | null
           ia_processado_em: string | null
           ia_status: string
           id: string
+          metadados_documento_json: Json | null
           motivo_reprovacao: string | null
           numero_documento: string | null
           observacoes: string | null
@@ -4512,6 +4524,8 @@ export type Database = {
           reprovado_por: string | null
           status: string
           tipo_documento: string
+          titular_comprovante_documento: string | null
+          titular_comprovante_nome: string | null
           updated_at: string
           validado_admin: boolean
           validado_em: string | null
@@ -4529,14 +4543,17 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
           cadastro_publico_id?: string | null
+          campos_complementares_json?: Json | null
           created_at?: string
           customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
+          endereco_em_nome_de_terceiro?: boolean
           ia_dados_extraidos?: Json | null
           ia_processado_em?: string | null
           ia_status?: string
           id?: string
+          metadados_documento_json?: Json | null
           motivo_reprovacao?: string | null
           numero_documento?: string | null
           observacoes?: string | null
@@ -4547,6 +4564,8 @@ export type Database = {
           reprovado_por?: string | null
           status?: string
           tipo_documento: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
           updated_at?: string
           validado_admin?: boolean
           validado_em?: string | null
@@ -4564,14 +4583,17 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
           cadastro_publico_id?: string | null
+          campos_complementares_json?: Json | null
           created_at?: string
           customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
+          endereco_em_nome_de_terceiro?: boolean
           ia_dados_extraidos?: Json | null
           ia_processado_em?: string | null
           ia_status?: string
           id?: string
+          metadados_documento_json?: Json | null
           motivo_reprovacao?: string | null
           numero_documento?: string | null
           observacoes?: string | null
@@ -4582,6 +4604,8 @@ export type Database = {
           reprovado_por?: string | null
           status?: string
           tipo_documento?: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
           updated_at?: string
           validado_admin?: boolean
           validado_em?: string | null
@@ -5784,6 +5808,7 @@ export type Database = {
         Row: {
           arquivo_storage_key: string | null
           arquivo_url: string | null
+          campos_complementares_json: Json | null
           cliente_id: number
           created_at: string
           dados_extraidos_json: Json | null
@@ -5791,12 +5816,14 @@ export type Database = {
           data_validacao: string | null
           data_validade: string | null
           divergencias_json: Json | null
+          endereco_em_nome_de_terceiro: boolean
           etapa: string
           exemplo_url: string | null
           formato_aceito: string[]
           id: string
           instrucoes: string | null
           link_emissao: string | null
+          metadados_documento_json: Json | null
           modelo_url: string | null
           motivo_rejeicao: string | null
           nome_documento: string
@@ -5810,6 +5837,8 @@ export type Database = {
           revisado_por: string | null
           status: string
           tipo_documento: string
+          titular_comprovante_documento: string | null
+          titular_comprovante_nome: string | null
           updated_at: string
           validacao_ia_confianca: number | null
           validacao_ia_erro: string | null
@@ -5820,6 +5849,7 @@ export type Database = {
         Insert: {
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
+          campos_complementares_json?: Json | null
           cliente_id: number
           created_at?: string
           dados_extraidos_json?: Json | null
@@ -5827,12 +5857,14 @@ export type Database = {
           data_validacao?: string | null
           data_validade?: string | null
           divergencias_json?: Json | null
+          endereco_em_nome_de_terceiro?: boolean
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
           id?: string
           instrucoes?: string | null
           link_emissao?: string | null
+          metadados_documento_json?: Json | null
           modelo_url?: string | null
           motivo_rejeicao?: string | null
           nome_documento: string
@@ -5846,6 +5878,8 @@ export type Database = {
           revisado_por?: string | null
           status?: string
           tipo_documento: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
           updated_at?: string
           validacao_ia_confianca?: number | null
           validacao_ia_erro?: string | null
@@ -5856,6 +5890,7 @@ export type Database = {
         Update: {
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
+          campos_complementares_json?: Json | null
           cliente_id?: number
           created_at?: string
           dados_extraidos_json?: Json | null
@@ -5863,12 +5898,14 @@ export type Database = {
           data_validacao?: string | null
           data_validade?: string | null
           divergencias_json?: Json | null
+          endereco_em_nome_de_terceiro?: boolean
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
           id?: string
           instrucoes?: string | null
           link_emissao?: string | null
+          metadados_documento_json?: Json | null
           modelo_url?: string | null
           motivo_rejeicao?: string | null
           nome_documento?: string
@@ -5882,6 +5919,8 @@ export type Database = {
           revisado_por?: string | null
           status?: string
           tipo_documento?: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
           updated_at?: string
           validacao_ia_confianca?: number | null
           validacao_ia_erro?: string | null
