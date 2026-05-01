@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X, ShieldCheck } from "lucide-react";
 
 /**
  * Seção "Dados recebidos pelo formulário público" (item 6 da Fase 22).

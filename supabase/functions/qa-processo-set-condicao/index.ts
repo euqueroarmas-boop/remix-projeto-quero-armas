@@ -159,17 +159,18 @@ function rendaPara(c: Cond): Item[] {
       },
       {
         tipo_documento: "renda_nf_empresa",
-        nome_documento: "Nota fiscal recente da empresa (se aplicável)",
-        obrigatorio: false,
+        nome_documento: "Nota fiscal recente da empresa",
+        obrigatorio: true,
         link_emissao: null,
         label_botao: "Enviar Nota Fiscal",
-        instrucoes: "1) Localize uma NF emitida pela empresa nos últimos 30 dias.\n2) Baixe o DANFE/PDF.\n3) Envie aqui.",
-        observacoes_cliente: "Se a empresa não emite notas, ignore este item.",
+        instrucoes: "1) Localize uma NF emitida pela empresa nos últimos 30 dias.\n2) Baixe o DANFE/PDF oficial.\n3) Envie aqui.\n\nSe a empresa não emite notas, fale com o operador para definir documento alternativo (ex.: Pró-labore, IRPJ, DAS).",
+        observacoes_cliente: "OBRIGATÓRIO. A NF comprova movimentação real da empresa — exigência da PF/EB para CR de empresário/sócio. Se não emite NF, contate o operador para substituição formal.",
         prazo_recomendado_dias: 30,
         checklist_operador: [
           "Conferir data (até 30 dias)",
           "Conferir CNPJ emissor",
           "Validar atividade compatível",
+          "Se empresa não emite NF, exigir Pró-labore / IRPJ / DAS substituto",
         ],
       },
     ];
