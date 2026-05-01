@@ -527,6 +527,50 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         </div>
       </div>
 
+      {/* ── Diagnóstico real do vínculo Auth ↔ Cliente ── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-slate-600" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Diagnóstico do vínculo Portal</h4>
+          </div>
+          <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={runDiagnose} disabled={diagLoading}>
+            {diagLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          </Button>
+        </div>
+        {!diag ? (
+          <p className="text-[11px] text-slate-500">Carregando diagnóstico…</p>
+        ) : (
+          <div className="space-y-1.5 text-[12px]">
+            <DiagRow label="Cliente ativo" ok={!!diag.cliente_ativo} />
+            <DiagRow label="E-mail normalizado" value={diag.email_normalizado || "—"} ok={!!diag.email_normalizado} />
+            <DiagRow label="Auth user encontrado" ok={!!diag.auth_user_encontrado} />
+            {diag.auth_user_id && <DiagRow label="Auth user id" value={String(diag.auth_user_id).slice(0, 12) + "…"} ok />}
+            <DiagRow label="Vínculo Auth → Cliente" ok={!!diag.vinculo_existe} />
+            <DiagRow label="Vínculo ativo" ok={!!diag.vinculo_ativo} />
+            <DiagRow label="Vínculo aponta para o cliente certo" ok={!diag.vinculo_aponta_outro_cliente} />
+            <DiagRow label="Último login" value={formatDateTime(diag.last_login_at)} ok={!!diag.last_login_at} />
+            <div className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-semibold ${diag.acesso_liberado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+              {diag.acesso_liberado
+                ? "Acesso liberado ao portal"
+                : (diag.motivos?.length ? `Bloqueado: ${diag.motivos.join(", ")}` : "Credencial criada, vínculo pendente")}
+            </div>
+          </div>
+        )}
+
+        {!!diag && !diag.acesso_liberado && (
+          <Button
+            size="sm"
+            className="w-full mt-3 h-9 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl"
+            onClick={() => repairLink(false)}
+            disabled={repairLoading}
+          >
+            {repairLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Wrench className="h-3.5 w-3.5 mr-2" />}
+            Reparar vínculo do portal
+          </Button>
+        )}
+      </div>
+
       {portalStatus?.portal_ultimo_envio_status === "failed" && (
         <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
           <div className="flex items-start gap-3">
