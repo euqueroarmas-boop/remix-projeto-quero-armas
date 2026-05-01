@@ -26,7 +26,7 @@ export function QALogo({
     <img
       src={logoSrc}
       alt={alt}
-      className={`object-contain ${className}`}
+      className={`object-contain rounded-xl ${className}`}
       draggable={false}
     />
   );
