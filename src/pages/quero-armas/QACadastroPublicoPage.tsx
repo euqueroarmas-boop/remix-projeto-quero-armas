@@ -1419,13 +1419,19 @@ function Step3Review({
           status={data.categoria_titular ? "validado" : "normal"}
         />
         <ReviewField
-          label="Profissão / Atividade exercida"
+          label="Profissão / Atividade lícita exercida"
           value={data.profissao}
           onChange={(v) => set("profissao", v)}
           required={required.has("profissao")}
           status={statusOf("profissao")}
-          hint="Informe exatamente como exercida — a Polícia Federal exigirá comprovante dessa atividade (holerite, contrato, declaração, etc.)."
+          placeholder="Ex.: Médico, Advogado, Servidor Público, Empresário…"
         />
+        <p className="-mt-1 text-[10px] leading-snug" style={{ color: "hsl(220 12% 50%)" }}>
+          Informe <strong>exatamente</strong> como sua atividade é exercida.
+          A Polícia Federal exigirá <strong>comprovante dessa atividade</strong> (holerite,
+          contrato social, declaração de IR, etc.) e este campo abastecerá automaticamente
+          o checklist do seu processo após a aprovação do pagamento.
+        </p>
         <div className="grid grid-cols-2 gap-2">
           <ReviewField label="Título de eleitor" value={data.titulo_eleitor}
             onChange={(v) => set("titulo_eleitor", v)} status={statusOf("titulo_eleitor")} />
