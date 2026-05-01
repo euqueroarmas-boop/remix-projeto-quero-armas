@@ -614,8 +614,26 @@ export default function QACadastroPublicoPage() {
                   {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
               </div>
+              {step > 0 && step < 4 && (
+                <button
+                  onClick={() => { setError(null); setStep((step - 1) as StepId); }}
+                  className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-amber-500/60 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 hover:border-amber-600 transition-all shadow-[0_2px_10px_-4px_rgba(245,158,11,0.5)] font-mono text-[10.5px] font-bold uppercase tracking-[0.18em]"
+                  aria-label="Voltar à etapa anterior"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2.4} />
+                  Voltar
+                </button>
+              )}
             </div>
-            <Stepper current={step} />
+            <Stepper
+              current={step}
+              onJump={(target) => {
+                if (target < step && step < 4) {
+                  setError(null);
+                  setStep(target);
+                }
+              }}
+            />
           </div>
 
           {/* Conteúdo */}
@@ -905,7 +923,7 @@ function DuplicateModal({
   );
 }
 
-function Stepper({ current }: { current: StepId }) {
+function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepId) => void }) {
   return (
     <div className="mt-4 -mx-1 overflow-x-hidden">
       <div className="flex items-start min-w-0">
@@ -917,11 +935,19 @@ function Stepper({ current }: { current: StepId }) {
           const amber = "hsl(38 92% 50%)";   // amber-500
           const amberDark = "hsl(35 91% 33%)"; // amber-700
           const ok = "hsl(152 60% 42%)";
+          const canJump = !!onJump && s.id < current && current < 4;
           return (
             <Fragment key={s.id}>
-              <div className="flex flex-col items-center shrink-0 min-w-0" style={{ width: 48 }}>
+              <button
+                type="button"
+                disabled={!canJump}
+                onClick={canJump ? () => onJump!(s.id) : undefined}
+                className={`flex flex-col items-center shrink-0 min-w-0 bg-transparent border-0 p-0 ${canJump ? "cursor-pointer group/step" : "cursor-default"}`}
+                style={{ width: 48 }}
+                aria-label={canJump ? `Voltar para ${s.label}` : s.label}
+              >
                 <div
-                  className="rounded-md flex items-center justify-center text-[10.5px] font-bold font-mono transition-all"
+                  className={`rounded-md flex items-center justify-center text-[10.5px] font-bold font-mono transition-all ${canJump ? "group-hover/step:scale-110 group-hover/step:shadow-[0_0_0_3px_hsla(38,92%,50%,0.25)]" : ""}`}
                   style={{
                     width: active ? 26 : 22,
                     height: active ? 26 : 22,
@@ -949,7 +975,7 @@ function Stepper({ current }: { current: StepId }) {
                 >
                   {s.label}
                 </span>
-              </div>
+              </button>
               {!isLast && (
                 <div
                   className="flex-1 h-px rounded-full self-start"
@@ -975,13 +1001,6 @@ function Step1Documents({
   const [manualWarnOpen, setManualWarnOpen] = useState(false);
   return (
     <div className="space-y-3">
-      {onBack && (
-        <button onClick={onBack} className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide"
-          style={{ color: "hsl(220 10% 50%)" }}>
-          <ArrowLeft className="w-3 h-3" /> Voltar
-        </button>
-      )}
-
       {/* Slots — KpiCard-like premium light */}
       {SLOTS.map(slot => {
         const Icon = slot.icon;
@@ -1149,14 +1168,6 @@ function Step1Documents({
 function Step2Extracting({ stages, error, onBack }: { stages: Record<string, string>; error: string | null; onBack?: () => void }) {
   return (
     <div className="py-3 space-y-3">
-      {onBack && (
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500 hover:text-zinc-800"
-        >
-          <ArrowLeft className="w-3 h-3" /> Voltar
-        </button>
-      )}
       <div
         className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] px-4 py-5 shadow-sm"
       >
@@ -1327,11 +1338,6 @@ function Step3Review({
 
   return (
     <div className="space-y-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}>
-      <button onClick={onBack} className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide"
-        style={{ color: "hsl(220 10% 50%)" }}>
-        <ArrowLeft className="w-3 h-3" /> Voltar
-      </button>
-
       <div className="rounded-xl p-3 flex items-center gap-2"
         style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(230 80% 92%)" }}>
         <Sparkles className="w-4 h-4 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
