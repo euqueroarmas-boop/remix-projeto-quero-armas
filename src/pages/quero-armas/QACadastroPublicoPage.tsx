@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { QALogo } from "@/components/quero-armas/QALogo";
+import { QALogo } from "@/components/QALogo";
 import { BackButton } from "@/shared/components/BackButton";
 import {
   OBJETIVOS_PRINCIPAIS,
@@ -39,8 +39,8 @@ import {
   onlyDigits,
   getCamposObrigatoriosPorCategoria,
   type CategoriaTitular,
-} from "@/shared/quero-armas/clienteSchema";
-import { trackTelemetria } from "@/shared/quero-armas/telemetria";
+} from "@/shared/clienteSchema";
+import { trackTelemetria } from "@/shared/telemetria";
 
 /* =========================================================================
  * Cadastro do Cliente — Fluxo guiado em 6 etapas

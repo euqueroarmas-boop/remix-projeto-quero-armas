@@ -16,10 +16,10 @@ import {
   BookOpen, MapPin, Building2, Info, Paperclip, FileText, X, Upload, RefreshCw,
   Search, ChevronDown, ChevronUp, XCircle, Clock, FolderOpen, User, ChevronsUpDown,
 } from "lucide-react";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
-import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
-import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/quero-armas/tiposPeca";
+import DraftingView, { type DraftingResult } from "@/components/DraftingView";
+import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/tiposPeca";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";

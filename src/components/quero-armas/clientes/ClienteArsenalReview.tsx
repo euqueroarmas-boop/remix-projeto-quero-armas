@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Crosshair, Edit, Lock, AlertTriangle, RefreshCw, Search, History, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import ArmaManualEditModal from "@/components/quero-armas/arsenal/ArmaManualEditModal";
+import ArmaManualEditModal from "@/components/arsenal/ArmaManualEditModal";
 
 interface Props {
   qaClienteId: number;

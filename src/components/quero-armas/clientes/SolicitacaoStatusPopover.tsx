@@ -4,13 +4,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Loader2, Settings2, Save, AlertTriangle, ListChecks } from "lucide-react";
 import { toast } from "sonner";
-import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
+import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/statusServico";
 // Notificações e timeline são geradas por triggers no banco.
 // Status financeiro é DERIVADO de qa_vendas — exibido apenas em modo leitura.
 
 /**
  * Status canônicos da solicitação — qa_solicitacoes_servico é a ÚNICA fonte
- * de verdade do sistema. Lista vinda de @/lib/quero-armas/statusServico
+ * de verdade do sistema. Lista vinda de @/lib/statusServico
  * (espelho do CHECK constraint no banco).
  */
 const STATUS_SERVICO = STATUS_SERVICO_QA;
@@ -163,8 +163,8 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
                   className="w-full h-8 text-[10px] border-amber-400 text-amber-900 hover:bg-amber-100"
                   onClick={() => {
                     const target = servicoId
-                      ? `/quero-armas/configuracoes#checklist-servico-${servicoId}`
-                      : `/quero-armas/configuracoes#checklist`;
+                      ? `/configuracoes#checklist-servico-${servicoId}`
+                      : `/configuracoes#checklist`;
                     window.open(target, "_blank", "noopener,noreferrer");
                   }}
                 >

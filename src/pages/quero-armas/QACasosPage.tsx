@@ -3,16 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import CaseDetailPanel from "@/components/quero-armas/CaseDetailPanel";
-import NovoCasoModal from "@/components/quero-armas/NovoCasoModal";
+import CaseDetailPanel from "@/components/CaseDetailPanel";
+import NovoCasoModal from "@/components/NovoCasoModal";
 import {
   Search, FolderOpen, PenTool, CheckCircle, XCircle, Clock, Eye,
   Shield, BookOpen, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useResilientLoad } from "@/components/quero-armas/hooks/useResilientLoad";
-import { EmptyState, ErrorRetryState, SkeletonList } from "@/components/quero-armas/LoadStates";
-import { useSubmitAction } from "@/components/quero-armas/hooks/useSubmitAction";
+import { useResilientLoad } from "@/components/hooks/useResilientLoad";
+import { EmptyState, ErrorRetryState, SkeletonList } from "@/components/LoadStates";
+import { useSubmitAction } from "@/components/hooks/useSubmitAction";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },

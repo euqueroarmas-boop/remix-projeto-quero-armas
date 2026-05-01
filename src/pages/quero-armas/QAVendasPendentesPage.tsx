@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
+import { GerarProcessoButton } from "@/components/processos/GerarProcessoButton";
 
 /* ─── Tipos ─── */
 type StatusValidacao = "pendente" | "corrigido" | "aprovado" | "reprovado" | string;

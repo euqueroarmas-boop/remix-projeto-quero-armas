@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveServicoFromInteresse } from "@/lib/quero-armas/servicoSlugMap";
+import { resolveServicoFromInteresse } from "@/lib/servicoSlugMap";
 
 /** 11 tipos de pendência cobertos pela varredura de integridade. */
 export type PendenciaTipo =

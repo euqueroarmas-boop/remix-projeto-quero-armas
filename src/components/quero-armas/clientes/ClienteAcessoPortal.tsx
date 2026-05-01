@@ -75,7 +75,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [portalStatus, setPortalStatus] = useState<PortalStatus | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
 
-  const portalUrl = `${window.location.origin}/quero-armas/area-do-cliente/login`;
+  const portalUrl = `${window.location.origin}/area-do-cliente/login`;
   const resetUrl = `${window.location.origin}/redefinir-senha`;
 
   const fetchPortalStatus = useCallback(async () => {
@@ -579,7 +579,7 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Links do Portal</h4>
         </div>
         <div className="space-y-2.5">
-          <LinkRow label="URL Login" url={portalUrl} path="/quero-armas/area-do-cliente/login" onCopy={() => copyText(portalUrl, "URL de login copiada")} onOpen={() => window.open(portalUrl, "_blank")} />
+          <LinkRow label="URL Login" url={portalUrl} path="/area-do-cliente/login" onCopy={() => copyText(portalUrl, "URL de login copiada")} onOpen={() => window.open(portalUrl, "_blank")} />
           <LinkRow label="URL Redefinição de Senha" url={resetUrl} path="/redefinir-senha" onCopy={() => copyText(resetUrl, "URL de reset copiada")} onOpen={() => window.open(resetUrl, "_blank")} />
         </div>
       </div>

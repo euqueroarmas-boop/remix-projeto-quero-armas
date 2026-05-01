@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { QALogo } from "@/components/quero-armas/QALogo";
+import { QALogo } from "@/components/QALogo";
 import { BackButton } from "@/shared/components/BackButton";
-import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
+import { requestQAPasswordReset } from "@/shared/passwordReset";
 
 export default function QALoginPage() {
   const [email, setEmail] = useState("");

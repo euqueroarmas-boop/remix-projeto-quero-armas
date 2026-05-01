@@ -15,10 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { useQAAuthContext } from "@/components/QAAuthContext";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
-import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
-import ClientePecaAuxiliaryDocs, { type AuxiliaryDocItemState } from "@/components/quero-armas/clientes/ClientePecaAuxiliaryDocs";
+import DraftingView, { type DraftingResult } from "@/components/DraftingView";
+import ClientePecaAuxiliaryDocs, { type AuxiliaryDocItemState } from "@/components/clientes/ClientePecaAuxiliaryDocs";
 
 interface Props {
   cliente: {

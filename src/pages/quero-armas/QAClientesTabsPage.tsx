@@ -6,7 +6,7 @@
  */
 import { useState } from "react";
 import { Users, KeyRound, Building2 } from "lucide-react";
-import { QALogo } from "@/components/quero-armas/QALogo";
+import { QALogo } from "@/components/QALogo";
 import QAClientesPage from "./QAClientesPage";
 import QAAcessosPage from "./QAAcessosPage";
 import QAClubesPage from "./QAClubesPage";

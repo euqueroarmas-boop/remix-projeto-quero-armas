@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
 import { ImageOff, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { LoadingState } from "@/components/quero-armas/LoadStates";
+import { LoadingState } from "@/components/LoadStates";
 import { ArmaSpecSheet } from "./ArmaSpecSheet";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
