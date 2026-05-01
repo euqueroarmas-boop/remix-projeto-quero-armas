@@ -1668,6 +1668,55 @@ export default function QAGerarPecaPage() {
           peca_id: resultado?.geracao_id || null,
         }}
       />
+
+      {/* Fase 3 — alertas pós-geração de correções já catalogadas */}
+      {showDraftingView && draftingStep === "done" && (resultado?.correcoes_ia_alertas?.length ?? 0) > 0 && (
+        <div className="mt-3">
+          <CorrecoesAlertaPanel
+            alertas={resultado!.correcoes_ia_alertas as CorrecaoAlerta[]}
+            onAplicar={(a) => {
+              // Substitui no texto exibido. Tenta primeiro o trecho_suspeito; se falhar, tenta trecho_errado.
+              let aplicado = false;
+              const replaceOnce = (txt: string, needle: string, replacement: string) => {
+                if (!needle) return txt;
+                const idx = txt.toLowerCase().indexOf(needle.toLowerCase());
+                if (idx < 0) return txt;
+                aplicado = true;
+                return txt.slice(0, idx) + replacement + txt.slice(idx + needle.length);
+              };
+              setStreamedText((prev) => {
+                let next = replaceOnce(prev, a.trecho_suspeito, a.trecho_correto);
+                if (!aplicado) next = replaceOnce(prev, a.trecho_errado, a.trecho_correto);
+                return next;
+              });
+              setResultado((prev) => {
+                if (!prev) return prev;
+                let nextMin = prev.minuta_gerada || "";
+                let appliedHere = false;
+                const replaceOnce2 = (txt: string, needle: string, replacement: string) => {
+                  if (!needle) return txt;
+                  const idx = txt.toLowerCase().indexOf(needle.toLowerCase());
+                  if (idx < 0) return txt;
+                  appliedHere = true;
+                  return txt.slice(0, idx) + replacement + txt.slice(idx + needle.length);
+                };
+                nextMin = replaceOnce2(nextMin, a.trecho_suspeito, a.trecho_correto);
+                if (!appliedHere) nextMin = replaceOnce2(nextMin, a.trecho_errado, a.trecho_correto);
+                return { ...prev, minuta_gerada: nextMin };
+              });
+              if (aplicado) {
+                toast.success("Correção aplicada à peça");
+              } else {
+                toast.warning("Trecho não localizado para substituição automática — edite manualmente");
+              }
+              return aplicado;
+            }}
+            onIgnorar={() => {
+              // Apenas fechar o alerta — não desativa a correção original.
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
