@@ -2,7 +2,7 @@
 
 export const STATUS_PROCESSO = {
   aguardando_pagamento: { label: "AGUARDANDO PAGAMENTO", color: "#94A3B8", bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700" },
-  aguardando_documentos: { label: "AGUARDANDO DOCUMENTOS", color: "#F59E0B", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800" },
+  aguardando_documentos: { label: "AGUARDANDO DOCUMENTOS", color: "#3B82F6", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-800" },
   em_validacao_ia: { label: "VALIDAÇÃO AUTOMÁTICA", color: "#6366F1", bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800" },
   em_revisao_humana: { label: "EM REVISÃO HUMANA", color: "#0EA5E9", bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-800" },
   aprovado: { label: "DOCUMENTAÇÃO APROVADA", color: "#10B981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
