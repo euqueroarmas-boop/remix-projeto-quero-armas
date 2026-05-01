@@ -1638,7 +1638,14 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
               score_confianca: scoreConfianca, versao: 1,
               caso_id: caso_id || null,
               cliente_id: cliente_id_final ?? null,
+              correcoes_ia_usadas_json: resumoCorrecoesParaMetadata(correcoesAtivas),
+              correcoes_ia_alertas_json: checarErrosConhecidosNaPeca(fullText, correcoesAtivas),
             }).select("id").single();
+
+            // Tracking de uso (somente após geração bem-sucedida)
+            await registrarUsoCorrecoes(supabase, correcoesAtivas);
+            const alertasCorrecoes = checarErrosConhecidosNaPeca(fullText, correcoesAtivas);
+            console.log(`[qa-gerar-peca] Pós-geração (stream): correcoes_injetadas=${correcoesAtivas.length}, alertas=${alertasCorrecoes.length}${alertasCorrecoes.length > 0 ? `, categorias=[${alertasCorrecoes.map(a => a.categoria).join(",")}]` : ""}`);
 
             await supabase.from("qa_logs_auditoria").insert({
               usuario_id, entidade: "qa_geracoes_pecas", entidade_id: geracaoData?.id || null,
@@ -1648,6 +1655,10 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
                 circunscricao_resolvida: circunscricao ? { unidade_pf: circunscricao.unidade_pf, sigla_unidade: circunscricao.sigla_unidade } : null,
                 fontes_count: fontesParaUsar.length, evidence_count: evidenceDocs.length,
                 score_confianca: scoreConfianca, quality_issues: qualityCheck.issues,
+                correcoes_ia_injetadas: correcoesAtivas.length,
+                correcoes_ia_ids: correcoesAtivas.map(c => c.id),
+                correcoes_ia_alertas: alertasCorrecoes.length,
+                correcoes_ia_alertas_categorias: alertasCorrecoes.map(a => a.categoria),
               },
             });
 
@@ -1675,6 +1686,8 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
                 count: evidenceDocs.length,
                 by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
               } : null,
+              correcoes_ia_alertas: alertasCorrecoes,
+              correcoes_ia_injetadas_count: correcoesAtivas.length,
             })}\n\n`));
 
             controller.close();
