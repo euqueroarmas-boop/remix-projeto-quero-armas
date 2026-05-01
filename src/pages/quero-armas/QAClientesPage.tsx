@@ -3457,80 +3457,91 @@ export default function QAClientesPage() {
               description="Ajuste os filtros ou cadastre um novo cliente para começar."
             />
           )}
-          {filtered.map(c => (
-            <button
-              key={c.id}
-              onClick={() => openClient(c)}
-              className="w-full text-left group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-sky-200 active:scale-[0.995]"
-            >
-              {/* HUD strip topo (padrão ARMORY) */}
-              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-1.5 md:px-4">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 ring-1 ring-sky-200 shrink-0">
-                    <User className="h-2.5 w-2.5" />
-                  </div>
-                  <span className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-700">CLIENTE</span>
-                  <span className="text-[9px] font-mono text-slate-400">#{String(c.id).padStart(4, "0")}</span>
-                </div>
-                <span
-                  className={`text-[9px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider ${statusColor(c.status)}`}
-                  style={{
-                    background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)",
-                    boxShadow: c.status === "ATIVO" ? "inset 0 0 0 1px hsl(152 60% 80%)" : c.status === "DESISTENTE" ? "inset 0 0 0 1px hsl(0 60% 85%)" : "inset 0 0 0 1px hsl(38 80% 80%)",
-                  }}
-                >
-                  {c.status}
-                </span>
-              </div>
-              {/* Body */}
-              <div className="relative flex items-start gap-3 px-3 py-3 md:px-4">
+          {filtered.map(c => {
+            const statusTone =
+              c.status === "ATIVO"
+                ? "hsl(152 60% 42%)"
+                : c.status === "DESISTENTE"
+                ? "hsl(0 72% 55%)"
+                : "hsl(38 92% 50%)";
+            return (
+              <button
+                key={c.id}
+                onClick={() => openClient(c)}
+                className="w-full text-left group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.997]"
+                style={{ boxShadow: `inset 0 0 0 1px ${statusTone}10, 0 1px 2px rgba(15,23,42,0.04)` }}
+              >
+                {/* Glow ambiente — assinatura do KpiCard do Arsenal */}
                 <div
-                  className="pointer-events-none absolute inset-x-0 top-0 h-16"
-                  style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.05), transparent 70%)" }}
+                  className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-30 blur-2xl"
+                  style={{ background: statusTone }}
                 />
-                {(c as any).imagem ? (
-                  <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-10 h-10 md:w-11 md:h-11 rounded-xl shrink-0 object-cover ring-1 ring-slate-200 relative" />
-                ) : (
-                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0 bg-sky-50 ring-1 ring-sky-200 relative">
-                    <User className="h-4 w-4 text-sky-600" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0 relative">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[13px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 14%)" }}>
-                      {c.nome_completo}
-                    </span>
-                    {c.cliente_lions && <span className="text-[10px] shrink-0">🦁</span>}
-                  </div>
-                  <div className="text-[10px] mt-0.5 font-mono uppercase tracking-wider text-slate-400">
-                    CPF {formatCpf(c.cpf)}
-                  </div>
-                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                    {c.celular && (
-                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                        <Phone className="h-2.5 w-2.5" /> {c.celular}
+                <div className="relative flex items-center gap-3 px-4 py-3.5">
+                  {(c as any).imagem ? (
+                    <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-12 h-12 rounded-xl shrink-0 object-cover ring-1 ring-slate-200" />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ background: `${statusTone}14`, color: statusTone, boxShadow: `inset 0 0 0 1px ${statusTone}1f` }}
+                    >
+                      <User className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
+                        {c.nome_completo}
                       </span>
-                    )}
-                    {c.cidade && (
-                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                        <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
+                      {c.cliente_lions && <span className="text-[11px] shrink-0">🦁</span>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap text-[10px] text-slate-500">
+                      <span className="font-mono tracking-wider text-slate-400">CPF {formatCpf(c.cpf)}</span>
+                      {c.celular && (
+                        <>
+                          <span className="text-slate-300">·</span>
+                          <span className="inline-flex items-center gap-1 font-mono">
+                            <Phone className="h-2.5 w-2.5 text-slate-400" /> {c.celular}
+                          </span>
+                        </>
+                      )}
+                      {c.cidade && (
+                        <>
+                          <span className="text-slate-300">·</span>
+                          <span className="inline-flex items-center gap-1 uppercase tracking-wide">
+                            <MapPin className="h-2.5 w-2.5 text-slate-400" /> {c.cidade}/{c.estado}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="hidden sm:flex flex-col items-end gap-0.5">
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
+                        style={{ background: `${statusTone}14`, color: statusTone, boxShadow: `inset 0 0 0 1px ${statusTone}33` }}
+                      >
+                        <span className="h-1 w-1 rounded-full" style={{ background: statusTone }} />
+                        {c.status}
                       </span>
-                    )}
+                      <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-slate-400">
+                        #{String(c.id).padStart(4, "0")}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
+                      }}
+                      className="h-8 w-8 rounded-xl flex items-center justify-center bg-white border border-slate-200 text-slate-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all md:opacity-0 md:group-hover:opacity-100"
+                      title="Excluir cliente"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
-                  }}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all shrink-0 relative md:opacity-0 md:group-hover:opacity-100"
-                  title="Excluir cliente"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       ) : tabView === "cadastros" ? (
         <div className="space-y-1.5">
