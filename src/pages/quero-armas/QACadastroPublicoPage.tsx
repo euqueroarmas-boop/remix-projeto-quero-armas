@@ -1063,10 +1063,10 @@ function Step1Documents({
       <button
         onClick={onContinue}
         disabled={!allUploaded}
-        className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-        style={{ background: "linear-gradient(135deg, hsl(219 90% 56%), hsl(225 88% 54%))", boxShadow: "0 6px 18px hsl(222 89% 55% / 0.28)" }}
+        className="w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 6px 18px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
       >
-        Extrair dados
+        Extrair dados <ChevronRight className="h-3.5 w-3.5" />
       </button>
 
       <button
