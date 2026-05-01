@@ -2847,3 +2847,130 @@ function TacticalSelect({
     </label>
   );
 }
+
+/* ─────────────────────── Catálogo de Serviços (Etapa 0) ─────────────────────── */
+function CatalogoServicoPicker({
+  catalogo,
+  selecionadoSlug,
+  onSelecionar,
+}: {
+  catalogo: Array<{ slug: string; nome: string; categoria: string; preco: number | null; recorrente: boolean }>;
+  selecionadoSlug: string | null;
+  onSelecionar: (slug: string | null) => void;
+}) {
+  const [open, setOpen] = useState<boolean>(!selecionadoSlug);
+  const selecionado = catalogo.find((c) => c.slug === selecionadoSlug) || null;
+
+  // Agrupa por categoria preservando a ordem do catálogo
+  const grupos = useMemo(() => {
+    const map = new Map<string, typeof catalogo>();
+    catalogo.forEach((it) => {
+      const arr = map.get(it.categoria) ?? [];
+      arr.push(it);
+      map.set(it.categoria, arr);
+    });
+    return Array.from(map.entries());
+  }, [catalogo]);
+
+  if (catalogo.length === 0) return null;
+
+  return (
+    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden">
+      {/* Cabeçalho — serviço atual */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full p-3 flex items-center justify-between gap-3 text-left hover:bg-amber-50 transition"
+      >
+        <div className="min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+            {selecionado ? "SERVIÇO SELECIONADO" : "ESCOLHA UM SERVIÇO"}
+          </div>
+          <div className="text-sm font-bold uppercase text-slate-900 leading-tight mt-0.5 truncate">
+            {selecionado ? selecionado.nome : "VER TODAS AS OPÇÕES DO CATÁLOGO"}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {selecionado && (
+            <div className="text-right">
+              {selecionado.preco != null ? (
+                <>
+                  <div className="text-base font-bold text-slate-900 tabular-nums">
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(selecionado.preco)}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    {selecionado.recorrente ? "MENSAL" : "VALOR ÚNICO"}
+                  </div>
+                </>
+              ) : (
+                <div className="text-[11px] italic text-slate-500">Sob consulta</div>
+              )}
+            </div>
+          )}
+          <ChevronDown
+            className={`h-4 w-4 text-amber-700 transition-transform ${open ? "rotate-180" : ""}`}
+            strokeWidth={2.4}
+          />
+        </div>
+      </button>
+
+      {/* Lista completa do catálogo */}
+      {open && (
+        <div className="border-t border-amber-200 bg-white max-h-[55vh] overflow-y-auto">
+          {grupos.map(([categoria, itens]) => (
+            <div key={categoria}>
+              <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                {categoria}
+              </div>
+              <div className="divide-y divide-slate-100">
+                {itens.map((it) => {
+                  const ativo = selecionadoSlug === it.slug;
+                  return (
+                    <button
+                      key={it.slug}
+                      type="button"
+                      onClick={() => {
+                        onSelecionar(it.slug);
+                        setOpen(false);
+                      }}
+                      className={`w-full px-3 py-2.5 flex items-center gap-3 text-left transition ${
+                        ativo ? "bg-amber-50" : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <div
+                        className={`h-4 w-4 shrink-0 rounded-full border-2 grid place-items-center ${
+                          ativo ? "border-amber-500 bg-amber-500" : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {ativo && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className={`text-[12.5px] uppercase leading-tight truncate ${ativo ? "font-bold text-slate-900" : "font-semibold text-slate-800"}`}>
+                          {it.nome}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {it.preco != null ? (
+                          <>
+                            <div className="text-[12px] font-bold text-slate-900 tabular-nums">
+                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(it.preco)}
+                            </div>
+                            <div className="text-[9px] uppercase tracking-wider text-slate-500">
+                              {it.recorrente ? "MENSAL" : "ÚNICO"}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-[10px] italic text-slate-500">Sob consulta</div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
