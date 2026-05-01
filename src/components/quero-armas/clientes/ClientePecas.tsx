@@ -644,6 +644,30 @@ export default function ClientePecas({ cliente }: Props) {
             </span>
           </div>
         )}
+        {(circStatus === "not_found" || circStatus === "error" || (circStatus === "idle" && (!clienteCidade || !clienteUf))) && (
+          <div className="mx-4 mb-4 mt-2 rounded-lg px-3.5 py-2.5 flex items-start gap-2.5"
+            style={{ background: "hsl(38 92% 50% / 0.08)", border: "1px solid hsl(38 92% 50% / 0.25)" }}>
+            <Building2 className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "hsl(35 90% 40%)" }} />
+            <div className="min-w-0 flex-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: "hsl(35 90% 40%)" }}>
+                CIRCUNSCRIÇÃO PF
+              </span>
+              <p className="text-[11px] font-bold uppercase mt-0.5" style={{ color: "hsl(35 80% 30%)" }}>
+                NÃO IDENTIFICADA — REVISE O ENDEREÇO DO CLIENTE
+              </p>
+              {clienteCidade && clienteUf && circStatus !== "idle" && (
+                <button
+                  type="button"
+                  onClick={() => resolverCircunscricao(clienteCidade, clienteUf)}
+                  className="text-[10px] font-bold uppercase tracking-wider mt-1 underline"
+                  style={{ color: "hsl(35 90% 40%)" }}
+                >
+                  TENTAR NOVAMENTE
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Generation Config (always visible) ── */}
