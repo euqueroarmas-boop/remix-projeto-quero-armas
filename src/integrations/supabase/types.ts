@@ -8407,6 +8407,15 @@ export type Database = {
         Returns: Json
       }
       qa_arma_norm: { Args: { s: string }; Returns: string }
+      qa_arsenal_criar_venda_pendente: {
+        Args: {
+          p_catalogo_slug: string
+          p_observacoes?: string
+          p_qa_cliente_id: number
+          p_valor: number
+        }
+        Returns: Json
+      }
       qa_arsenal_processar_pagamento_venda: {
         Args: { p_venda_id: number }
         Returns: Json

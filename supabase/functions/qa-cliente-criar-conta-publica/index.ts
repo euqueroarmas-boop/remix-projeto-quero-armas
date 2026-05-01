@@ -19,6 +19,10 @@ const BodySchema = z.object({
   telefone: z.string().trim().max(40).optional().nullable(),
   senha: z.string().min(8).max(72),
   servico_interesse: z.string().trim().max(200).optional().nullable(),
+  // FASE 17-B: criar venda pendente automaticamente quando o usuário escolheu um serviço.
+  // Aceita o slug do servico_principal (ex.: "concessao_cr") OU o slug do catálogo direto (ex.: "concessao-cr").
+  servico_principal: z.string().trim().max(80).optional().nullable(),
+  catalogo_slug: z.string().trim().max(120).optional().nullable(),
 });
 
 function json(body: unknown, status = 200) {
@@ -44,7 +48,7 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_payload", details: parsed.error.flatten() }, 400);
   }
 
-  const { cpf, nome, email, telefone, senha, servico_interesse } = parsed.data;
+  const { cpf, nome, email, telefone, senha, servico_interesse, servico_principal, catalogo_slug } = parsed.data;
   const cpfNorm = cpf.replace(/\D/g, "");
   if (cpfNorm.length !== 11) {
     return json({ error: "cpf_invalido" }, 400);
@@ -153,6 +157,69 @@ Deno.serve(async (req) => {
     console.error("[qa_cadastro_publico] update threw:", (e as Error)?.message);
   }
 
+  // 4.5) FASE 17-B: cria venda PENDENTE automaticamente quando usuário escolheu serviço.
+  // A equipe valida o valor/serviço e aprova manualmente. NÃO gera processo nem checklist.
+  let vendaCriadaId: number | null = null;
+  try {
+    let slugCatalogo: string | null = (catalogo_slug || "").trim() || null;
+    if (!slugCatalogo && servico_principal) {
+      const sp = servico_principal.trim();
+      const { data: cat } = await admin
+        .from("qa_servicos_catalogo")
+        .select("slug, preco")
+        .eq("ativo", true)
+        .or(`slug.eq.${sp},servico_principal_slug.eq.${sp}`)
+        .order("display_order", { ascending: true, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      if (cat?.slug) slugCatalogo = cat.slug;
+    }
+
+    if (slugCatalogo) {
+      const { data: catRow } = await admin
+        .from("qa_servicos_catalogo")
+        .select("slug, preco, servico_id")
+        .eq("slug", slugCatalogo)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      const qaClienteIdNum = qaClienteId ? Number(qaClienteId) : null;
+      if (!catRow) {
+        console.warn("[venda_pendente] catálogo não encontrado:", slugCatalogo);
+      } else if (catRow.servico_id == null) {
+        console.warn("[venda_pendente] catálogo sem servico_id (não pronto online):", slugCatalogo);
+      } else if (!qaClienteIdNum) {
+        console.warn("[venda_pendente] qa_cliente_id ausente, não é possível criar venda");
+      } else {
+        const valor = Number(catRow.preco ?? 0) || 1;
+        const { data: rpcRes, error: rpcErr } = await admin.rpc(
+          "qa_arsenal_criar_venda_pendente" as any,
+          {
+            p_qa_cliente_id: qaClienteIdNum,
+            p_catalogo_slug: catRow.slug,
+            p_valor: valor,
+            p_observacoes:
+              "Contratação iniciada no cadastro Arsenal — aguardando validação da equipe.",
+          } as any,
+        );
+        if (rpcErr) {
+          console.error("[venda_pendente] RPC erro:", rpcErr.message);
+        } else {
+          const r = (rpcRes ?? {}) as Record<string, unknown>;
+          vendaCriadaId = (r.venda_id as number | null) ?? null;
+          console.info("[venda_pendente] criada:", JSON.stringify(r));
+          if (vendaCriadaId && r.ja_existia !== true) {
+            admin.functions
+              .invoke("qa-notificar-admin-contratacao", { body: { venda_id: vendaCriadaId } })
+              .catch((e) => console.warn("[venda_pendente] notif admin falhou:", e));
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("[venda_pendente] threw:", (e as Error)?.message);
+  }
+
   // 5) Dispara e-mail de boas-vindas via send-smtp-email (gateway central existente)
   try {
     const html = qaArsenalWelcomeHtml({
@@ -200,5 +267,6 @@ Deno.serve(async (req) => {
     email: emailNorm,
     tipo_cliente: result.tipo_cliente ?? null,
     cliente_created: result.cliente_created ?? false,
+    venda_pendente_id: vendaCriadaId,
   });
 });

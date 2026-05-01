@@ -673,6 +673,7 @@ export default function QACadastroPublicoPage() {
             telefone: telefone || null,
             senha: arsenalSenha,
             servico_interesse: servicoInteresseLabel,
+            servico_principal: qualif.servico_principal || null,
           },
         },
       );
