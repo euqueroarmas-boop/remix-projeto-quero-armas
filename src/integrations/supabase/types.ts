@@ -5532,7 +5532,7 @@ export type Database = {
           ativo: boolean
           caso_id: string | null
           categoria_erro: Database["public"]["Enums"]["qa_categoria_erro_ia"]
-          cliente_id: string | null
+          cliente_id: number | null
           created_at: string
           criado_por: string | null
           criado_por_nome: string | null
@@ -5553,7 +5553,7 @@ export type Database = {
           ativo?: boolean
           caso_id?: string | null
           categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
-          cliente_id?: string | null
+          cliente_id?: number | null
           created_at?: string
           criado_por?: string | null
           criado_por_nome?: string | null
@@ -5574,7 +5574,7 @@ export type Database = {
           ativo?: boolean
           caso_id?: string | null
           categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
-          cliente_id?: string | null
+          cliente_id?: number | null
           created_at?: string
           criado_por?: string | null
           criado_por_nome?: string | null
