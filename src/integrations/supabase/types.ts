@@ -5652,6 +5652,48 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_pagamento_auditoria: {
+        Row: {
+          ator: string | null
+          campo: string
+          cliente_id: number | null
+          contexto: Json | null
+          created_at: string
+          id: string
+          origem: string
+          solicitacao_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+          venda_id: number | null
+        }
+        Insert: {
+          ator?: string | null
+          campo: string
+          cliente_id?: number | null
+          contexto?: Json | null
+          created_at?: string
+          id?: string
+          origem: string
+          solicitacao_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+          venda_id?: number | null
+        }
+        Update: {
+          ator?: string | null
+          campo?: string
+          cliente_id?: number | null
+          contexto?: Json | null
+          created_at?: string
+          id?: string
+          origem?: string
+          solicitacao_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
       qa_processo_documentos: {
         Row: {
           arquivo_storage_key: string | null
@@ -5888,6 +5930,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_solicitacoes_servico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_status_divergencias"
+            referencedColumns: ["solicitacao_id"]
           },
         ]
       }
@@ -6356,6 +6405,13 @@ export type Database = {
             referencedRelation: "qa_solicitacoes_servico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qa_solicitacao_eventos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_status_divergencias"
+            referencedColumns: ["solicitacao_id"]
+          },
         ]
       }
       qa_solicitacoes_servico: {
@@ -6776,6 +6832,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_solicitacoes_servico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_vendas_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_status_divergencias"
+            referencedColumns: ["solicitacao_id"]
           },
         ]
       }
@@ -7888,6 +7951,19 @@ export type Database = {
           },
         ]
       }
+      qa_status_divergencias: {
+        Row: {
+          cliente_id: number | null
+          solicitacao_id: string | null
+          solicitacao_updated_at: string | null
+          status_esperado: string | null
+          status_solicitacao: string | null
+          status_venda: string | null
+          valor_aberto: number | null
+          venda_id: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -8021,6 +8097,10 @@ export type Database = {
         Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_derive_status_financeiro: {
+        Args: { p_status_venda: string; p_valor_aberto: number }
+        Returns: string
+      }
       qa_ensure_cliente_from_auth: {
         Args: {
           p_cpf?: string
