@@ -117,6 +117,7 @@ export default function QARoutes() {
           <Route path="modelos-docx" element={<QAModelosDocxPage />} />
           <Route path="armamentos" element={<QAArmamentosAdminPage />} />
           <Route path="gerar-peca" element={<QAGerarPecaPage />} />
+          <Route path="correcoes-ia" element={<QACorrecoesIAPage />} />
           <Route path="casos" element={<QACasosPage />} />
           <Route path="processos" element={<QAProcessosPage />} />
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
