@@ -493,11 +493,12 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
       const novoPrimary = Array.from(selectedServicos.keys())[0];
       if (novoPrimary && novoPrimary !== originalPrimaryServicoId) {
         const vendaLegacyId = venda.id_legado ?? venda.id;
-        const { data: proc } = await supabase
+        const { data: procRaw } = await supabase
           .from("qa_processos" as any)
           .select("id")
           .eq("venda_id", vendaLegacyId)
           .maybeSingle();
+        const proc = procRaw as { id: string } | null;
         if (proc?.id) {
           // Roda dry_run da RPC para mostrar o impacto antes de salvar.
           const { data: previewData, error: previewErr } = await supabase.rpc(
