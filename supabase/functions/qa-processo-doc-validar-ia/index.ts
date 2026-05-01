@@ -44,6 +44,13 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   nota_fiscal_arma: "Nota fiscal de arma. Extraia: comprador_nome, comprador_cpf, modelo, calibre, numero_serie, data_emissao, valor.",
   guia_trafego: "Guia de Tráfego. Extraia: nome_titular, cpf, numero_guia, validade (YYYY-MM-DD).",
   justificativa_porte: "Justificativa fundamentada. Extraia: texto integral (resumo curto), assinatura, data.",
+  // === DOCUMENTOS DE PESSOA JURÍDICA (sócio/empresa) ===
+  // ATENÇÃO: estes documentos NÃO têm 'nome_titular' único — listam SÓCIOS e dados da EMPRESA.
+  // Não exija nome_titular. Extraia razao_social, cnpj e a lista de sócios.
+  renda_contrato_social:
+    "Contrato Social (ou última alteração consolidada) de PESSOA JURÍDICA. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), data_constituicao (YYYY-MM-DD se houver), capital_social (número), endereco_sede, cidade_sede, uf_sede, objeto_social (resumo curto), socios (array com objetos {nome, cpf, participacao_percentual, qualificacao}). NÃO exija um campo 'nome_titular' único: este documento lista sócios; preencha o array 'socios'. Se o cliente cadastrado aparecer entre os sócios, registre cliente_e_socio=true em campos_complementares.",
+  renda_qsa:
+    "QSA (Quadro de Sócios e Administradores) emitido pela Receita Federal a partir do Cartão CNPJ. Extraia: razao_social, cnpj (apenas dígitos), data_emissao (YYYY-MM-DD se houver), socios (array {nome, cpf, qualificacao, data_entrada}), administradores (array {nome, cpf, qualificacao}). NÃO exija um campo 'nome_titular' único. Se o cliente cadastrado aparecer no QSA, registre cliente_e_socio=true em campos_complementares.",
 };
 
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
