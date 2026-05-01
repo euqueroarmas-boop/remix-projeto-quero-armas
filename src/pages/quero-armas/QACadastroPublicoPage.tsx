@@ -1789,20 +1789,35 @@ function Step4Done({ firstName }: { firstName: string }) {
 }
 
 /* ─────────────────────── Bloco de boas-vindas ─────────────────────── */
+/* WelcomeBlock — assinatura Arsenal: papel off-white, grid pontilhado, glow âmbar */
 function WelcomeBlock() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-3">
-      <div className="flex items-start gap-2.5">
-        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 ring-1 ring-blue-100">
-          <Sparkles className="h-3.5 w-3.5 text-blue-600" strokeWidth={2.4} />
+    <div
+      className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] px-4 py-3.5 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
+    >
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(0,0,0,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.5) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+      <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+      <div className="relative flex items-start gap-3">
+        <div className="h-9 w-9 shrink-0 rounded-md border border-amber-500/50 bg-amber-500/10 grid place-items-center">
+          <Crosshair className="h-4 w-4 text-amber-600" strokeWidth={2.2} />
         </div>
-        <p className="text-[12px] leading-relaxed text-slate-600">
-          Cuidamos de toda a burocracia para você.{" "}
-          <span className="font-semibold text-slate-800">
-            Comece nos contando o que precisa
-          </span>
-          {" "}— seu processo será conduzido com clareza, sigilo e precisão técnica.
-        </p>
+        <div className="min-w-0">
+          <div className="text-[9px] font-mono uppercase tracking-[0.3em] text-amber-700">
+            // BRIEFING TÉCNICO
+          </div>
+          <p className="mt-1 text-[12px] leading-relaxed text-zinc-700">
+            Selecione abaixo o <span className="font-semibold text-zinc-900">objetivo</span> e o{" "}
+            <span className="font-semibold text-zinc-900">serviço</span> desejados. Conduzimos o restante do processo
+            com sigilo e precisão técnica.
+          </p>
+        </div>
       </div>
     </div>
   );
