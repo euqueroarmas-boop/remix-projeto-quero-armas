@@ -1730,19 +1730,19 @@ function ReviewSelect({
 /* ─────────────────────── Step 4 — Conclusão ─────────────────────── */
 function Step4Done({ firstName }: { firstName: string }) {
   return (
-    <div className="relative overflow-hidden text-center py-4 px-4 -mx-2 rounded-2xl border border-slate-200/80 bg-white shadow-sm"
-      style={{ boxShadow: "inset 0 0 0 1px hsl(152 60% 42% / 0.10)" }}>
+    <div className="relative overflow-hidden text-center py-4 px-4 rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-sm">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
       <div
         className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full opacity-30 blur-3xl"
         style={{ background: "hsl(152 60% 42%)" }}
       />
-      <div className="relative mt-2">
-      <div className="relative w-24 h-24 mx-auto mb-5">
+      <div className="relative mt-2 min-w-0">
+      <div className="relative w-20 h-20 mx-auto mb-4">
         {/* confetti pontos */}
         {Array.from({ length: 14 }).map((_, i) => {
           const angle = (i / 14) * Math.PI * 2;
-          const r = 50 + (i % 3) * 8;
-          const colors = ["hsl(152 60% 42%)", "hsl(190 80% 45%)", "hsl(45 90% 55%)", "hsl(220 60% 50%)"];
+          const r = 44 + (i % 3) * 6;
+          const colors = ["hsl(152 60% 42%)", "hsl(38 92% 50%)", "hsl(45 90% 55%)", "hsl(35 91% 33%)"];
           return (
             <span key={i} className="absolute w-1.5 h-1.5 rounded-full"
               style={{
@@ -1753,40 +1753,36 @@ function Step4Done({ firstName }: { firstName: string }) {
           );
         })}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-            style={{ background: "hsl(152 60% 42% / 0.14)", boxShadow: "inset 0 0 0 1.5px hsl(152 60% 42% / 0.35), 0 0 24px hsl(152 60% 42% / 0.20)" }}>
-            <CheckCircle2 className="w-8 h-8" style={{ color: "hsl(152 60% 32%)" }} />
+          <div className="w-14 h-14 rounded-lg flex items-center justify-center border border-emerald-500/40 bg-emerald-500/10">
+            <CheckCircle2 className="w-7 h-7 text-emerald-700" strokeWidth={2.2} />
           </div>
         </div>
       </div>
 
-      <div className="text-[8.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "hsl(152 60% 32%)" }}>
-        Concluído
+      <div className="text-[10px] font-mono uppercase tracking-[0.28em] mb-1 text-emerald-700">
+        // CONCLUÍDO
       </div>
-      <h2 className="text-lg font-bold font-mono mb-1.5" style={{ color: "hsl(220 25% 18%)" }}>Cadastro completo!</h2>
-      <p className="text-xs mb-4" style={{ color: "hsl(220 10% 50%)" }}>
+      <h2 className="text-[18px] font-bold tracking-tight mb-1.5 text-zinc-900 break-words">CADASTRO COMPLETO</h2>
+      <p className="text-xs mb-4 text-zinc-500 break-words">
         Suas informações foram extraídas, revisadas e enviadas com sucesso.
       </p>
 
-      <div className="rounded-2xl p-3 text-left flex gap-2 mb-5"
-        style={{ background: "hsl(190 80% 45% / 0.06)", boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.20)" }}>
-        <Info className="w-4 h-4 shrink-0 mt-0.5" style={{ color: "hsl(190 80% 32%)" }} />
-        <div className="text-[11px] leading-relaxed" style={{ color: "hsl(220 25% 25%)" }}>
+      <div className="rounded-lg p-3 text-left flex gap-2 mb-4 border border-amber-500/30 bg-amber-500/5 min-w-0">
+        <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-700" />
+        <div className="text-[11px] leading-relaxed text-zinc-700 min-w-0 break-words">
           <strong>Tudo certo{firstName ? `, ${firstName}` : ""}.</strong> Seu acesso ao sistema será liberado após validação pela nossa equipe. Você receberá um e-mail quando estiver tudo pronto.
         </div>
       </div>
 
       <a
         href="/area-do-cliente/login"
-        className="block w-full h-12 rounded-2xl text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2"
-        style={{ background: "linear-gradient(135deg, hsl(190 80% 38%), hsl(190 80% 45%))", boxShadow: "0 4px 14px hsl(190 80% 40% / 0.30), inset 0 0 0 1px hsl(190 80% 60% / 0.30)" }}
+        className="w-full h-12 rounded-lg text-[11px] font-bold uppercase tracking-[0.18em] text-white flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 shadow-[0_6px_18px_-6px_rgba(245,158,11,0.55)]"
       >
         Acessar sistema
       </a>
 
       <a href="https://wa.me/5511963166915" target="_blank" rel="noreferrer"
-        className="block mt-2 text-xs font-medium underline-offset-2 hover:underline"
-        style={{ color: "hsl(220 15% 45%)" }}>
+        className="block mt-2 text-xs font-medium underline-offset-2 hover:underline text-zinc-500">
         Quero tirar dúvidas
       </a>
       </div>
