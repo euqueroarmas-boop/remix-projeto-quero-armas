@@ -585,8 +585,21 @@ Deno.serve(async (req) => {
       novoStatus = "invalido";
       motivoRejeicao = "Documento ilegível. Envie um arquivo mais nítido.";
     } else if (camposFaltando.length > 0) {
-      novoStatus = "invalido";
-      motivoRejeicao = "Campos obrigatórios não identificados: " + camposFaltando.join(", ");
+      // Se a IA conseguiu LER o documento (achou divergências, dados
+      // complementares ou um tipo detectado) mas não preencheu o campo
+      // exato exigido pela regra, NÃO é falha do cliente — é limitação
+      // de leitura. Vai para revisão humana.
+      const temSinalDeLeitura =
+        (Array.isArray(parsed.divergencias) && parsed.divergencias.length > 0) ||
+        (parsed.tipo_documento_detectado && String(parsed.tipo_documento_detectado).length > 0) ||
+        (parsed.campos_complementares && Object.keys(parsed.campos_complementares).length > 0);
+      if (temSinalDeLeitura) {
+        novoStatus = "revisao_humana";
+        motivoRejeicao = null;
+      } else {
+        novoStatus = "invalido";
+        motivoRejeicao = "Campos obrigatórios não identificados: " + camposFaltando.join(", ");
+      }
     } else if (esperadoViolado.length > 0) {
       novoStatus = "invalido";
       motivoRejeicao = "Conteúdo esperado não confirmado: " + esperadoViolado.join("; ");
