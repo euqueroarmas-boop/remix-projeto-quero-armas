@@ -659,3 +659,14 @@ function Field({ label, value, full }: { label: string; value: string | null; fu
   );
 }
 function Empty() { return <p className="col-span-2 text-[11px] text-slate-500">Nada extraído.</p>; }
+
+function Pill({ tone, label }: { tone: "ok" | "warn" | "danger" | "muted"; label: string }) {
+  return (
+    <span
+      className="rounded-full px-2 py-[2px] text-[10px] font-bold uppercase tracking-wider"
+      style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
+    >
+      {label}
+    </span>
+  );
+}
