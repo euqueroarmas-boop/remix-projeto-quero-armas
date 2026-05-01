@@ -830,3 +830,186 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </div>
   );
 }
+
+/* ----------------- COMPONENTES DRAG & DROP ----------------- */
+
+interface CategoriaSectionProps {
+  categoria: string;
+  itens: ServicoRow[];
+  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>;
+  savingId: string | null;
+  isDirty: (row: ServicoRow) => boolean;
+  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) => void;
+  save: (row: ServicoRow) => void;
+  openEdit: (row: ServicoRow) => void;
+  removeRow: (row: ServicoRow) => void;
+}
+
+function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit, save, openEdit, removeRow }: CategoriaSectionProps) {
+  const ids = itens.map((i) => i.id);
+  const { setNodeRef: setDropRef } = useSortable({ id: `cat::${categoria}` });
+  return (
+    <section ref={setDropRef}>
+      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700 mb-2 flex items-center gap-2">
+        <span className="w-1 h-3 bg-amber-500 rounded-sm" />
+        {categoria}
+        <span className="text-[10px] font-normal text-slate-400">({itens.length})</span>
+      </h2>
+
+      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <table className="w-full text-xs">
+          <thead className="bg-slate-50 border-b border-slate-200">
+            <tr className="text-left text-[10px] uppercase tracking-widest text-slate-500">
+              <th className="px-2 py-2 font-semibold w-8"></th>
+              <th className="px-3 py-2 font-semibold">SERVIÇO</th>
+              <th className="px-3 py-2 font-semibold w-40">PREÇO (R$)</th>
+              <th className="px-3 py-2 font-semibold w-28 text-center">RECORRENTE</th>
+              <th className="px-3 py-2 font-semibold w-24 text-center">ATIVO</th>
+              <th className="px-3 py-2 font-semibold w-44 text-right">AÇÕES</th>
+            </tr>
+          </thead>
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            <tbody>
+              {itens.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 py-6 text-center text-[10px] uppercase tracking-wider text-slate-400">
+                    ARRASTE UM SERVIÇO PARA CÁ
+                  </td>
+                </tr>
+              ) : (
+                itens.map((row) => (
+                  <SortableRow
+                    key={row.id}
+                    row={row}
+                    edits={edits}
+                    savingId={savingId}
+                    isDirty={isDirty}
+                    setEdit={setEdit}
+                    save={save}
+                    openEdit={openEdit}
+                    removeRow={removeRow}
+                  />
+                ))
+              )}
+            </tbody>
+          </SortableContext>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+interface SortableRowProps {
+  row: ServicoRow;
+  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>;
+  savingId: string | null;
+  isDirty: (row: ServicoRow) => boolean;
+  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) => void;
+  save: (row: ServicoRow) => void;
+  openEdit: (row: ServicoRow) => void;
+  removeRow: (row: ServicoRow) => void;
+}
+
+function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, removeRow }: SortableRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+  const e = edits[row.id] || {};
+  const precoStr =
+    e.preco !== undefined ? e.preco : row.preco != null ? String(row.preco).replace(".", ",") : "";
+  const recorrente = e.recorrente ?? row.recorrente;
+  const ativo = e.ativo ?? row.ativo;
+  const dirty = isDirty(row);
+  const saving = savingId === row.id;
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b border-slate-100 last:border-0 hover:bg-amber-50/40">
+      <td className="px-2 py-2.5 text-center">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-amber-600"
+          aria-label="Arrastar"
+          title="Arrastar para reordenar / mover de categoria"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      </td>
+      <td className="px-3 py-2.5">
+        <div className="font-bold uppercase text-slate-900 leading-tight">{row.nome}</div>
+        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{row.slug}</div>
+      </td>
+      <td className="px-3 py-2.5">
+        <input
+          value={precoStr}
+          onChange={(ev) => setEdit(row.id, { preco: ev.target.value })}
+          placeholder="0,00"
+          inputMode="decimal"
+          className="h-8 w-full px-2 rounded-md border border-slate-200 bg-white text-xs text-slate-900 font-mono text-right focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-100"
+        />
+        {row.preco != null && e.preco === undefined && (
+          <div className="text-[10px] text-slate-400 mt-0.5 text-right">{fmtBRL(row.preco)}</div>
+        )}
+      </td>
+      <td className="px-3 py-2.5 text-center">
+        <button
+          type="button"
+          onClick={() => setEdit(row.id, { recorrente: !recorrente })}
+          className={`inline-flex items-center justify-center h-7 px-2 rounded-md text-[10px] font-bold uppercase tracking-wider border transition ${
+            recorrente
+              ? "bg-amber-100 border-amber-300 text-amber-800"
+              : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100"
+          }`}
+        >
+          {recorrente ? "MENSAL" : "ÚNICA"}
+        </button>
+      </td>
+      <td className="px-3 py-2.5 text-center">
+        <button
+          type="button"
+          onClick={() => setEdit(row.id, { ativo: !ativo })}
+          className={`inline-flex items-center justify-center w-7 h-7 rounded-md transition ${
+            ativo
+              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+              : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+          }`}
+          aria-label={ativo ? "Desativar" : "Ativar"}
+        >
+          {ativo ? <Power className="h-3.5 w-3.5" /> : <PowerOff className="h-3.5 w-3.5" />}
+        </button>
+      </td>
+      <td className="px-3 py-2.5 text-right">
+        <div className="inline-flex items-center gap-1 justify-end">
+          <button
+            type="button"
+            onClick={() => save(row)}
+            disabled={!dirty || saving}
+            title="Salvar alterações inline"
+            className="inline-flex items-center gap-1 px-2 h-8 rounded-md bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-amber-500 disabled:opacity-30 disabled:hover:bg-slate-900 transition"
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
+          </button>
+          <button
+            type="button"
+            onClick={() => openEdit(row)}
+            title="Editar tudo"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700 transition"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => removeRow(row)}
+            title="Excluir"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700 transition"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
