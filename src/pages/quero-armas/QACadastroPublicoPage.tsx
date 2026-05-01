@@ -1289,11 +1289,11 @@ const SEXO_OPTS = [
 ];
 const ESTADO_CIVIL_OPTS = [
   { value: "", label: "—" },
-  { value: "Solteiro(a)", label: "Solteiro(a)" },
-  { value: "Casado(a)", label: "Casado(a)" },
-  { value: "Divorciado(a)", label: "Divorciado(a)" },
-  { value: "Viúvo(a)", label: "Viúvo(a)" },
-  { value: "União Estável", label: "União Estável" },
+  { value: "Solteiro(a)", label: "SOLTEIRO(A)" },
+  { value: "Casado(a)", label: "CASADO(A)" },
+  { value: "Divorciado(a)", label: "DIVORCIADO(A)" },
+  { value: "Viúvo(a)", label: "VIÚVO(A)" },
+  { value: "União Estável", label: "UNIÃO ESTÁVEL" },
 ];
 const CATEGORIA_OPTS: { value: CategoriaTitular | ""; label: string }[] = [
   { value: "", label: "SELECIONE A CATEGORIA…" },
