@@ -252,8 +252,16 @@ export default function QACadastroPublicoPage() {
   const handlePick = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith("image/")) { setError("Envie um arquivo de imagem"); return; }
-    if (f.size > 10 * 1024 * 1024) { setError("Imagem deve ter no máximo 10MB"); return; }
+    const isImage = f.type.startsWith("image/");
+    const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+    if (!isImage && !isPdf) {
+      setError("Envie uma imagem (JPG/PNG) ou PDF");
+      return;
+    }
+    if (f.size > 10 * 1024 * 1024) {
+      setError("Arquivo deve ter no máximo 10MB");
+      return;
+    }
     setError(null);
     const url = await fileToDataUrl(f);
     setFiles(p => ({ ...p, [key]: url }));
@@ -1024,7 +1032,7 @@ function Step1Documents({
             <input
               ref={fileRefs[slot.key]}
               type="file"
-              accept="image/*"
+              accept={slot.key === "selfie" ? "image/*" : "image/*,application/pdf,.pdf"}
               capture={slot.capture}
               hidden
               onChange={(e) => onPick(e, slot.key)}
