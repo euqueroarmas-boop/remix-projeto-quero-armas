@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Save, Trash2, Shield, Crosshair, FileCheck, ShoppingCart, Users, CalendarDays, Hash, Key, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { TrocaServicoConfirmDialog, TrocaServicoPreview } from "./TrocaServicoConfirmDialog";
 // Eventos operacionais são gerados pela trigger qa_dispatch_notify_event.
 
 /* ─── Date helpers ─── */
@@ -395,6 +396,11 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
   const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: "", valor_aberto: "0" });
+  const [originalPrimaryServicoId, setOriginalPrimaryServicoId] = useState<number | null>(null);
+  const [trocaPreview, setTrocaPreview] = useState<TrocaServicoPreview | null>(null);
+  const [trocaProcessoId, setTrocaProcessoId] = useState<string | null>(null);
+  const [trocaOpen, setTrocaOpen] = useState(false);
+  const [trocaSaving, setTrocaSaving] = useState(false);
 
   const getDefaultItemStatus = () => (f.status === "EM ABERTO" ? "NÃO PAGOU" : "PAGO");
 
@@ -425,12 +431,15 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
           });
         });
         setSelectedServicos(map);
+        const firstId = ((data as any[]) ?? [])[0]?.servico_id ?? null;
+        setOriginalPrimaryServicoId(firstId ? Number(firstId) : null);
       });
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
       setF({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: todayBr, valor_aberto: "0" });
       setSelectedServicos(new Map());
+      setOriginalPrimaryServicoId(null);
     }
   }, [venda, open]);
 
@@ -478,6 +487,36 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
     if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
     if (!f.status) { toast.error("Selecione o status da venda"); return; }
     if (!f.forma_pagamento) { toast.error("Selecione a forma de pagamento"); return; }
+
+    // ── Detectar troca de serviço em venda já com processo aberto ──
+    if (isEdit && originalPrimaryServicoId) {
+      const novoPrimary = Array.from(selectedServicos.keys())[0];
+      if (novoPrimary && novoPrimary !== originalPrimaryServicoId) {
+        const vendaLegacyId = venda.id_legado ?? venda.id;
+        const { data: procRaw } = await supabase
+          .from("qa_processos" as any)
+          .select("id")
+          .eq("venda_id", vendaLegacyId)
+          .maybeSingle();
+        const proc = procRaw as unknown as { id: string } | null;
+        if (proc?.id) {
+          // Roda dry_run da RPC para mostrar o impacto antes de salvar.
+          const { data: previewData, error: previewErr } = await supabase.rpc(
+            "qa_processo_trocar_servico" as any,
+            { p_processo_id: proc.id, p_novo_servico_id: novoPrimary, p_dry_run: true } as any,
+          );
+          if (previewErr) { toast.error("Não foi possível pré-visualizar a troca: " + previewErr.message); return; }
+          setTrocaProcessoId(proc.id);
+          setTrocaPreview(previewData as any);
+          setTrocaOpen(true);
+          return; // só salva depois que o operador confirmar
+        }
+      }
+    }
+    await persistSave();
+  };
+
+  const persistSave = async () => {
     setSaving(true);
     try {
       const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
@@ -557,7 +596,47 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
     } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
   };
 
+  const confirmarTroca = async () => {
+    if (!trocaProcessoId || !trocaPreview) return;
+    setTrocaSaving(true);
+    try {
+      const { data, error } = await supabase.rpc(
+        "qa_processo_trocar_servico" as any,
+        {
+          p_processo_id: trocaProcessoId,
+          p_novo_servico_id: trocaPreview.servico_novo.id,
+          p_dry_run: false,
+          p_motivo: "Troca via edição de venda",
+        } as any,
+      );
+      if (error) throw error;
+      const r = data as any;
+      toast.success(
+        `Processo atualizado: ${r.reaproveitados ?? 0} reaproveitados, ${r.descartados ?? 0} descartados, ${r.novos_inseridos ?? 0} novos.`,
+      );
+      // Atualiza a referência para evitar disparar o modal de novo nesta mesma sessão.
+      const novoPrimary = Array.from(selectedServicos.keys())[0];
+      if (novoPrimary) setOriginalPrimaryServicoId(novoPrimary);
+      setTrocaOpen(false);
+      setTrocaPreview(null);
+      setTrocaProcessoId(null);
+      // Persiste a venda em si (itens + valores).
+      await persistSave();
+    } catch (e: any) {
+      toast.error("Falha ao trocar serviço: " + e.message);
+    } finally {
+      setTrocaSaving(false);
+    }
+  };
+
+  const cancelarTroca = () => {
+    setTrocaOpen(false);
+    setTrocaPreview(null);
+    setTrocaProcessoId(null);
+  };
+
   return (
+    <>
     <PremiumModalShell
       open={open}
       onClose={onClose}
@@ -737,6 +816,14 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         </div>
       </div>
     </PremiumModalShell>
+    <TrocaServicoConfirmDialog
+      open={trocaOpen}
+      preview={trocaPreview}
+      saving={trocaSaving}
+      onConfirm={confirmarTroca}
+      onCancel={cancelarTroca}
+    />
+    </>
   );
 }
 
