@@ -2319,19 +2319,39 @@ export default function QAClientesPage() {
                         });
                       return (
                         <div key={v.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
-                            <div className="text-[11px]">
-                              <span className="text-slate-700 font-medium">Venda #{v.id_legado ?? v.id}</span>
-                              <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
+                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50/40">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}
+                              >
+                                VENDA #{v.id_legado ?? v.id}
+                              </span>
+                              <span className="text-[10px] text-slate-500">{formatDate(v.data_cadastro)}</span>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
                               <span className="w-[88px] flex justify-start">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
                                   const isPago = v.status === "PAGO" || !!v.forma_pagamento;
-                                  if (allCortesia) return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">CORTESIA</span>;
-                                  if (isPago) return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">PAGO</span>;
-                                  return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">PENDENTE</span>;
+                                  if (allCortesia) return (
+                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
+                                      CORTESIA
+                                    </span>
+                                  );
+                                  if (isPago) return (
+                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                      style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(220 80% 40%)" }}>
+                                      PAGO
+                                    </span>
+                                  );
+                                  return (
+                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                      style={{ background: "hsl(38 92% 50% / 0.18)", color: "hsl(28 92% 32%)" }}>
+                                      PENDENTE
+                                    </span>
+                                  );
                                 })()}
                               </span>
                               <div className="flex items-center gap-0.5">
