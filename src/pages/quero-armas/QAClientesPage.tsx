@@ -3520,16 +3520,8 @@ export default function QAClientesPage() {
                   style={{ background: statusTone }}
                 />
                 <div className="relative flex items-center gap-3 px-4 py-3.5">
-                  {(c as any).imagem ? (
-                    <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-12 h-12 rounded-xl shrink-0 object-cover ring-1 ring-slate-200" />
-                  ) : (
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: `${statusTone}14`, color: statusTone, boxShadow: `inset 0 0 0 1px ${statusTone}1f` }}
-                    >
-                      <User className="h-5 w-5" />
-                    </div>
-                  )}
+                  {/* Avatar: foto manual OU selfie do cadastro público (resolvida em batch em loadClientes). */}
+                  <ClienteSelfieAvatar cliente={c} size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
