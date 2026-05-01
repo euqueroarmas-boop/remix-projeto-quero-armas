@@ -636,6 +636,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
   };
 
   return (
+    <>
     <PremiumModalShell
       open={open}
       onClose={onClose}
