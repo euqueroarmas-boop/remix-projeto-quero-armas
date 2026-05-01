@@ -981,7 +981,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           </button>
                         )}
 
-                        {/* Admin: aprovar/rejeitar (mantido) */}
+                        {/* Equipe Quero Armas: aprovar/rejeitar */}
                         {equipeMode && doc.status !== "aprovado" && (
                           <button onClick={() => abrirAprovacao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
                             <CheckCircle className="h-3 w-3" /> APROVAR
