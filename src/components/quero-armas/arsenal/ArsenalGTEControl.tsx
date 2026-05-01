@@ -333,7 +333,14 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
         </ul>
       )}
 
-      {openDetail && <DetailDrawer doc={openDetail} onClose={() => setOpenDetail(null)} />}
+      {openDetail && (
+        <DetailDrawer
+          doc={openDetail}
+          onClose={() => setOpenDetail(null)}
+          clienteId={clienteId}
+          onChanged={load}
+        />
+      )}
     </section>
   );
 }
@@ -352,7 +359,90 @@ function Kpi({ icon: Icon, label, value, tone }: {
   );
 }
 
-function DetailDrawer({ doc, onClose }: { doc: GteDoc; onClose: () => void }) {
+function DetailDrawer({
+  doc, onClose, clienteId, onChanged,
+}: {
+  doc: GteDoc;
+  onClose: () => void;
+  clienteId: number;
+  onChanged: () => void;
+}) {
+  const [mostrarTecnico, setMostrarTecnico] = useState(false);
+  const [armasArsenal, setArmasArsenal] = useState<any[]>([]);
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [reMatching, setReMatching] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("qa_cliente_armas" as any)
+        .select("arma_uid, marca, modelo, calibre, numero_serie, numero_sigma, numero_sinarm, numero_craf")
+        .eq("qa_cliente_id", clienteId);
+      setArmasArsenal((data as any[]) || []);
+    })();
+  }, [clienteId]);
+
+  const vinculos: any[] = Array.isArray(doc.armas_vinculadas_json) ? doc.armas_vinculadas_json : [];
+  const resumo = doc.matching_resumo_json || {};
+
+  const recalcMatching = async () => {
+    setReMatching(true);
+    try {
+      const { error } = await supabase.rpc("qa_gte_match_armas" as any, { _gte_id: doc.id });
+      if (error) throw error;
+      toast.success("Vínculos recalculados.");
+      onChanged();
+      onClose();
+    } catch (e: any) {
+      toast.error(e?.message || "Falha no recálculo");
+    } finally {
+      setReMatching(false);
+    }
+  };
+
+  const confirmarManual = async (idx: number, armaUid: string) => {
+    setSavingIdx(idx);
+    try {
+      const novo = vinculos.map((v, i) =>
+        i === idx
+          ? {
+              ...v,
+              arma_id: armaUid,
+              status: "vinculada",
+              criterio: "revisao_manual",
+              confianca: "alta",
+              motivo: "confirmado manualmente",
+              revisado_manualmente: true,
+            }
+          : v,
+      );
+      const vinculadas = novo.filter((v) => v.status === "vinculada").length;
+      const revisao = novo.filter((v) => v.status === "revisao_manual").length;
+      const nao = novo.filter((v) => v.status === "nao_encontrada").length;
+      const { error } = await supabase
+        .from("qa_gte_documentos" as any)
+        .update({
+          armas_vinculadas_json: novo,
+          matching_resumo_json: {
+            total: novo.length,
+            vinculadas,
+            revisao,
+            nao_encontradas: nao,
+          },
+          matching_status: revisao === 0 && nao === 0 ? "completo" : "parcial",
+          matching_em: new Date().toISOString(),
+        })
+        .eq("id", doc.id);
+      if (error) throw error;
+      toast.success("Vínculo confirmado.");
+      onChanged();
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao salvar vínculo");
+    } finally {
+      setSavingIdx(null);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
@@ -374,10 +464,8 @@ function DetailDrawer({ doc, onClose }: { doc: GteDoc; onClose: () => void }) {
         </header>
 
         <div className="space-y-4 p-5 text-[12px]">
-          <Section title="Identificação">
+          <Section title="Vigência">
             <Field label="Número GTE" value={doc.numero_gte} />
-            <Field label="Órgão emissor" value={doc.orgao_emissor} />
-            <Field label="Requerente" value={doc.requerente_nome} />
             <Field label="Emissão" value={fmtDate(doc.data_emissao)} />
             <Field label="Validade" value={fmtDate(doc.data_validade)} />
           </Section>
@@ -385,6 +473,94 @@ function DetailDrawer({ doc, onClose }: { doc: GteDoc; onClose: () => void }) {
           <Section title="Trajeto">
             <Field label="Origem" value={doc.endereco_origem} full />
             <Field label="Destino" value={doc.endereco_destino} full />
+          </Section>
+
+          <Section title={`Vínculo com Arsenal (${resumo.vinculadas ?? 0}/${resumo.total ?? doc.armas_total})`}>
+            <div className="col-span-2 flex flex-wrap items-center gap-2">
+              <Pill tone="ok" label={`Vinculadas ${resumo.vinculadas ?? 0}`} />
+              <Pill tone="warn" label={`Revisão ${resumo.revisao ?? 0}`} />
+              <Pill tone="danger" label={`Não encontradas ${resumo.nao_encontradas ?? 0}`} />
+              <button
+                type="button"
+                onClick={recalcMatching}
+                disabled={reMatching}
+                className="ml-auto inline-flex items-center gap-1 rounded border border-slate-200 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                {reMatching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                Recalcular
+              </button>
+            </div>
+            {vinculos.length === 0 ? (
+              <p className="col-span-2 text-[11px] text-slate-500">Sem vínculos calculados ainda.</p>
+            ) : (
+              <ul className="col-span-2 space-y-1.5">
+                {vinculos.map((v, i) => {
+                  const ex = v.extraida || {};
+                  const tone =
+                    v.status === "vinculada" ? "ok" :
+                    v.status === "revisao_manual" ? "warn" : "danger";
+                  const label =
+                    v.status === "vinculada" ? "VINCULADA" :
+                    v.status === "revisao_manual" ? "REVISÃO MANUAL" : "NÃO ENCONTRADA";
+                  return (
+                    <li key={i} className="rounded border border-slate-100 bg-slate-50 px-2.5 py-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link2 className="h-3 w-3" style={{ color: TONE_FG[tone] }} />
+                        <span className="font-bold text-slate-800">
+                          {[ex.marca, ex.modelo].filter(Boolean).join(" ") || "Arma sem identificação"}
+                        </span>
+                        <span
+                          className="rounded-full px-2 py-[1px] text-[9px] font-bold uppercase tracking-wider"
+                          style={{ background: TONE_BG[tone], color: TONE_FG[tone] }}
+                        >
+                          {label}
+                        </span>
+                        {v.criterio && (
+                          <span className="rounded bg-slate-100 px-1.5 py-[1px] text-[9px] font-semibold uppercase text-slate-600">
+                            {v.criterio.replaceAll("_", " ")}
+                          </span>
+                        )}
+                        {v.confianca && (
+                          <span className="text-[9px] uppercase text-slate-500">conf. {v.confianca}</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-slate-500">
+                        {ex.calibre ? `CAL ${ex.calibre} · ` : ""}
+                        {ex.numero_serie ? `Série ${ex.numero_serie}` : ""}
+                        {ex.numero_sigma ? ` · SIGMA ${ex.numero_sigma}` : ""}
+                      </div>
+                      {v.motivo && (
+                        <div className="mt-0.5 text-[10px] italic text-slate-500">{v.motivo}</div>
+                      )}
+                      {v.status !== "vinculada" && armasArsenal.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                            Vincular manualmente:
+                          </span>
+                          <select
+                            className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px]"
+                            disabled={savingIdx === i}
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) confirmarManual(i, e.target.value);
+                            }}
+                          >
+                            <option value="">— escolher arma do Arsenal —</option>
+                            {armasArsenal.map((a) => (
+                              <option key={a.arma_uid} value={a.arma_uid}>
+                                {[a.marca, a.modelo, a.calibre].filter(Boolean).join(" ")}
+                                {a.numero_serie ? ` · ${a.numero_serie}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {savingIdx === i && <Loader2 className="h-3 w-3 animate-spin text-slate-500" />}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Section>
 
           <Section title={`Armas autorizadas (${doc.armas_total})`}>
@@ -440,6 +616,26 @@ function DetailDrawer({ doc, onClose }: { doc: GteDoc; onClose: () => void }) {
               <p className="col-span-2 text-slate-700">{doc.observacoes_ia}</p>
             </Section>
           )}
+
+          <div className="col-span-2 border-t border-slate-100 pt-3">
+            <button
+              type="button"
+              onClick={() => setMostrarTecnico((v) => !v)}
+              className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 hover:text-slate-700"
+            >
+              {mostrarTecnico ? "▾ Ocultar dados técnicos" : "▸ Mostrar dados técnicos (titular/emissor)"}
+            </button>
+            {mostrarTecnico && (
+              <div className="mt-2 grid grid-cols-2 gap-2 rounded border border-slate-100 bg-slate-50 p-3">
+                <Field label="Órgão emissor" value={doc.orgao_emissor} />
+                <Field label="Titular (auditoria)" value={doc.requerente_nome} />
+                <Field label="CPF (auditoria)" value={doc.requerente_cpf} />
+                <p className="col-span-2 text-[10px] italic text-slate-500">
+                  Dados preservados apenas para auditoria. Não são exibidos na tela principal nem em cards.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
