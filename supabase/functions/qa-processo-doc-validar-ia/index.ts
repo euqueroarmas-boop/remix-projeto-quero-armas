@@ -596,7 +596,7 @@ Deno.serve(async (req) => {
         validacao_ia_status: "concluido",
         validacao_ia_erro: null,
         validacao_ia_confianca: conf,
-        validacao_ia_modelo: "google/gemini-2.5-flash",
+        validacao_ia_modelo: modelo,
         data_validacao: new Date().toISOString(),
         data_validade: dataValidade,
         // Novos campos aditivos (Fase 1)
