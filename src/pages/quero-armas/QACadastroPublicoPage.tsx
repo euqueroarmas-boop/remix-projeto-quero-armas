@@ -680,6 +680,7 @@ export default function QACadastroPublicoPage() {
             )}
 
             {step === 3 && (
+              <div key="step-3" className="animate-fade-in">
               <Step3Review
                 data={extracted}
                 onChange={setExtracted}
@@ -748,6 +749,7 @@ export default function QACadastroPublicoPage() {
                   }
                 }}
               />
+              </div>
             )}
 
             {step === 4 && <Step4Done firstName={extracted.nome_completo.split(" ")[0] || ""} />}
