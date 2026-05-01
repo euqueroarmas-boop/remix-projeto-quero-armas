@@ -67,8 +67,9 @@ export default function QAContratarServicoPage() {
       // Cliente logado vai direto para a tela de revisão rápida (Fase 2)
       navigate(`/area-do-cliente/contratar/${slug}/confirmar`);
     } else {
-      // Visitante: pergunta se já é cliente (login) ou abre wizard
-      navigate(`/area-do-cliente/contratar/${slug}/identificar`);
+      // Visitante: vai DIRETO para o cadastro público com o serviço pré-selecionado.
+      // O próprio wizard mostra todas as opções do catálogo caso queira trocar.
+      navigate(`/cadastro?servico=${slug}`);
     }
   };
 
