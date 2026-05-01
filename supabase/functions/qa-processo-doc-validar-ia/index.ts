@@ -81,13 +81,13 @@ Tipo esperado: ${tipoDoc}
 Detalhes: ${docHint}
 Cadastro do cliente:
 ${JSON.stringify({
-  nome: cadastro?.nome,
+  nome: cadastro?.nome_completo ?? cadastro?.nome,
   cpf: cadastro?.cpf,
   rg: cadastro?.rg,
   data_nascimento: cadastro?.data_nascimento,
   endereco: cadastro?.endereco,
   cidade: cadastro?.cidade,
-  uf: cadastro?.uf,
+  uf: cadastro?.estado ?? cadastro?.uf,
   cep: cadastro?.cep,
 }, null, 2)}`;
 }
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
 
     const { data: cliente } = await supabase
       .from("qa_clientes")
-      .select("id, nome, cpf, rg, data_nascimento, endereco, cidade, uf, cep")
+      .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep")
       .eq("id", processo.cliente_id).maybeSingle();
 
     await supabase.from("qa_processo_documentos")
