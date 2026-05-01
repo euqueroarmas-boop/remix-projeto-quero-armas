@@ -8121,6 +8121,7 @@ export type Database = {
           ja_existentes: number
         }[]
       }
+      qa_gen_temp_password: { Args: never; Returns: string }
       qa_get_senha_gov_source: {
         Args: { p_cadastro_cr_id?: number; p_cliente_id: number }
         Returns: {
