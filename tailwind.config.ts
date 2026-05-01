@@ -85,11 +85,33 @@ export default {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "doc-float": {
+          "0%, 100%": { transform: "translateY(0) rotate(-1.5deg)" },
+          "50%": { transform: "translateY(-3px) rotate(1.5deg)" },
+        },
+        "lens-scan": {
+          "0%, 100%": { transform: "translate(0, 0) rotate(-12deg)" },
+          "25%": { transform: "translate(-6px, -5px) rotate(-22deg)" },
+          "50%": { transform: "translate(2px, -7px) rotate(-4deg)" },
+          "75%": { transform: "translate(6px, -3px) rotate(8deg)" },
+        },
+        "twinkle": {
+          "0%, 100%": { opacity: "0.35", transform: "scale(0.85) rotate(0deg)" },
+          "50%": { opacity: "1", transform: "scale(1.15) rotate(15deg)" },
+        },
+        "twinkle-alt": {
+          "0%, 100%": { opacity: "1", transform: "scale(1.1) rotate(-10deg)" },
+          "50%": { opacity: "0.4", transform: "scale(0.8) rotate(8deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in-up": "fade-in-up 0.5s ease-out",
+        "doc-float": "doc-float 3.2s ease-in-out infinite",
+        "lens-scan": "lens-scan 2.6s ease-in-out infinite",
+        "twinkle": "twinkle 1.8s ease-in-out infinite",
+        "twinkle-alt": "twinkle-alt 2.2s ease-in-out infinite",
       },
     },
   },
