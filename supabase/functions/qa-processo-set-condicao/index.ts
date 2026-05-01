@@ -343,11 +343,11 @@ Deno.serve(async (req) => {
         formato_aceito: ["pdf", "jpg", "jpeg", "png"],
         regra_validacao: {
           // Documentos de PESSOA JURÍDICA não têm "nome_titular" único —
-          // listam SÓCIOS / dados da EMPRESA. Para QSA/Contrato Social,
-          // exigimos identificação da empresa (razao_social/cnpj) ao invés
-          // de nome_titular, evitando bloqueio indevido na validação IA.
+          // listam SÓCIOS / dados da EMPRESA ou NF emitida pela empresa.
+          // Exigimos identificação empresarial ao invés de nome_titular,
+          // evitando bloqueio indevido na validação IA.
           exige:
-            d.tipo_documento === "renda_qsa" || d.tipo_documento === "renda_contrato_social"
+            ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj"].includes(d.tipo_documento)
               ? ["razao_social"]
               : ["nome_titular"],
           label_botao: d.label_botao,
