@@ -335,6 +335,15 @@ export function ArsenalSummary({
     [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint],
   );
 
+  // Ordem efetiva: se cliente possuir CR (status != muted), CR vai para o início.
+  // Mantém a ordem do usuário para os demais.
+  const effectiveOrder = useMemo<KpiId[]>(() => {
+    const hasCr = crStatus !== "muted" && !!crLabel && crLabel.trim().length > 0;
+    if (!hasCr) return order;
+    if (order[0] === "status_cr") return order;
+    return ["status_cr", ...order.filter((id) => id !== "status_cr")];
+  }, [order, crStatus, crLabel]);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -397,9 +406,18 @@ export function ArsenalSummary({
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={order} strategy={rectSortingStrategy}>
-          <div className="grid auto-rows-fr grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-            {order.map((id) => {
+        <SortableContext items={effectiveOrder} strategy={rectSortingStrategy}>
+          {/*
+            Layout responsivo inteligente:
+            - Mobile: 2 colunas
+            - Tablet (sm): 3 colunas
+            - Tablet grande (md): 4 colunas
+            - Desktop (lg+): TODAS as KPIs na MESMA LINHA — usa flex com shrink
+              para que os cards reduzam de largura proporcionalmente conforme
+              entram novas KPIs (ex.: GTE), sem nunca quebrar para a próxima linha.
+          */}
+          <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:hidden">
+            {effectiveOrder.map((id) => {
               const def = definitions[id];
               if (!def) return null;
               return (
@@ -409,6 +427,25 @@ export function ArsenalSummary({
                   editing={editing}
                   onClick={() => onNavigate?.(def.target)}
                 />
+              );
+            })}
+          </div>
+          <div className="hidden lg:flex lg:flex-nowrap lg:gap-3 lg:items-stretch">
+            {effectiveOrder.map((id) => {
+              const def = definitions[id];
+              if (!def) return null;
+              return (
+                <div
+                  key={id}
+                  className="flex-1 min-w-0 basis-0"
+                  style={{ minWidth: 0 }}
+                >
+                  <KpiCard
+                    def={def}
+                    editing={editing}
+                    onClick={() => onNavigate?.(def.target)}
+                  />
+                </div>
               );
             })}
           </div>
