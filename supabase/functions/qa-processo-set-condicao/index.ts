@@ -347,7 +347,7 @@ Deno.serve(async (req) => {
           // Exigimos identificação empresarial ao invés de nome_titular,
           // evitando bloqueio indevido na validação IA.
           exige:
-            ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj"].includes(d.tipo_documento)
+            ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(d.tipo_documento)
               ? ["razao_social"]
               : ["nome_titular"],
           label_botao: d.label_botao,
