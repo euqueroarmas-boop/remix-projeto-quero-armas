@@ -3636,11 +3636,11 @@ function Field({ label, value, icon: Icon, copyable, copyValue }: { label: strin
     <div className={`flex flex-col gap-0.5 py-1 ${copyable && value ? "cursor-pointer active:opacity-60 group" : ""}`} onClick={copyable ? handleCopy : undefined}>
       <div className="flex items-center gap-1.5">
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(220 10% 55%)" }} />}
-        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">{label}</span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-[0.14em] font-bold">{label}</span>
         {copyable && value && <span className="text-slate-300 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">📋</span>}
       </div>
         <span
-          className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5 break-words"
+          className="text-[14px] text-slate-900 font-bold uppercase pl-0.5 break-words leading-snug"
           style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
         >
           {value || "—"}
