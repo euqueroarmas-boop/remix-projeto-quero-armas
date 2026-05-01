@@ -2445,6 +2445,77 @@ export type Database = {
           },
         ]
       }
+      qa_arsenal_notificacoes: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          icone: string | null
+          id: string
+          lida: boolean
+          lida_em: string | null
+          link: string | null
+          mensagem: string
+          metadata: Json | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          icone?: string | null
+          id?: string
+          lida?: boolean
+          lida_em?: string | null
+          link?: string | null
+          mensagem: string
+          metadata?: Json | null
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          icone?: string | null
+          id?: string
+          lida?: boolean
+          lida_em?: string | null
+          link?: string | null
+          mensagem?: string
+          metadata?: Json | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_arsenal_notificacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_arsenal_notificacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes_homologacao_dry_run"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_arsenal_notificacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_by_cpf"
+            referencedColumns: ["cliente_id"]
+          },
+          {
+            foreignKeyName: "qa_arsenal_notificacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gov_password_reconciliation_view"
+            referencedColumns: ["cliente_id_sugerido"]
+          },
+        ]
+      }
       qa_cadastro_cr: {
         Row: {
           check_exame_tiro: boolean | null
@@ -3778,6 +3849,10 @@ export type Database = {
       }
       qa_clientes: {
         Row: {
+          arsenal_plano: string
+          arsenal_status: string
+          arsenal_ultimo_acesso_em: string | null
+          arsenal_upgrade_em: string | null
           avatar_tatico_gerado_em: string | null
           avatar_tatico_path: string | null
           bairro: string | null
@@ -3860,6 +3935,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          arsenal_plano?: string
+          arsenal_status?: string
+          arsenal_ultimo_acesso_em?: string | null
+          arsenal_upgrade_em?: string | null
           avatar_tatico_gerado_em?: string | null
           avatar_tatico_path?: string | null
           bairro?: string | null
@@ -3942,6 +4021,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          arsenal_plano?: string
+          arsenal_status?: string
+          arsenal_ultimo_acesso_em?: string | null
+          arsenal_upgrade_em?: string | null
           avatar_tatico_gerado_em?: string | null
           avatar_tatico_path?: string | null
           bairro?: string | null
@@ -7993,6 +8076,10 @@ export type Database = {
         Returns: Json
       }
       qa_arma_norm: { Args: { s: string }; Returns: string }
+      qa_arsenal_processar_pagamento_venda: {
+        Args: { p_venda_id: number }
+        Returns: Json
+      }
       qa_atualizar_dados_basicos_cliente: {
         Args: {
           p_bairro?: string
