@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Save, Plus, Pencil, Trash2, X, Check, Settings, Database, User } from "lucide-react";
-import { useQAAuthContext } from "@/components/QAAuthContext";
-import { BLOCOS_MONITORAMENTO } from "@/components/monitoramento/blocosCatalogo";
-import { useMonitoramentoConfig } from "@/components/monitoramento/useMonitoramentoConfig";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
+import { BLOCOS_MONITORAMENTO } from "@/components/quero-armas/monitoramento/blocosCatalogo";
+import { useMonitoramentoConfig } from "@/components/quero-armas/monitoramento/useMonitoramentoConfig";
 import { Switch } from "@/components/ui/switch";
 
 interface ConfigItem { id: string; chave: string; valor: number; descricao: string | null; }

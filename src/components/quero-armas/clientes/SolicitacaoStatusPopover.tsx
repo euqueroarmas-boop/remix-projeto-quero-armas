@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import { Loader2, Settings2, Save, AlertTriangle, ListChecks } from "lucide-react";
 import { toast } from "sonner";
-import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/statusServico";
+import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
 // Notificações e timeline são geradas por triggers no banco.
 // Status financeiro é DERIVADO de qa_vendas — exibido apenas em modo leitura.
 

@@ -25,35 +25,35 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
-import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/LoadStates";
-import ClienteFormModal from "@/components/clientes/ClienteFormModal";
-import ClienteOverview from "@/components/clientes/ClienteOverview";
-import DadosFormularioPublicoSection from "@/components/clientes/DadosFormularioPublicoSection";
-import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/clientes/SubEntityModals";
+import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
+import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
+import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
+import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
+import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
-import { SolicitacaoTimeline } from "@/components/timeline/SolicitacaoTimeline";
-import SenhaGovField from "@/components/clientes/SenhaGovField";
-import { HistoricoAtualizacoes } from "@/components/clientes/HistoricoAtualizacoes";
-import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/clientes/ClienteExport";
-import ClienteAcessoPortal from "@/components/clientes/ClienteAcessoPortal";
-import ClientePecas from "@/components/clientes/ClientePecas";
-import { GerarProcessoButton } from "@/components/processos/GerarProcessoButton";
-import { AprovarValorButton } from "@/components/processos/AprovarValorButton";
-import ClienteExames from "@/components/clientes/ClienteExames";
-import ClienteDocsEnviados from "@/components/clientes/ClienteDocsEnviados";
-import ClienteDocsCadastroPublico from "@/components/clientes/ClienteDocsCadastroPublico";
-import ClienteSelfieAvatar from "@/components/clientes/ClienteSelfieAvatar";
-import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/clientes/clientFK";
-import { ArsenalView } from "@/components/arsenal/ArsenalView";
-import { useSolicitacoesPublicasDoCliente } from "@/components/clientes/useSolicitacoesPublicas";
+import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
+import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
+import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
+import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
+import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
+import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
+import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
+import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
+import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
+import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
+import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
+import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
+import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
+import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
-import { STATUS_SERVICO_QA, STATUS_LABELS, statusBadgeClass } from "@/lib/statusServico";
-import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/clientes/categoriaTitular";
-import { invalidateQADashboardSnapshot } from "@/components/dashboard/dashboardSnapshot";
+import { STATUS_SERVICO_QA, STATUS_LABELS, statusBadgeClass } from "@/lib/quero-armas/statusServico";
+import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
+import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
 import jsPDF from "jspdf";
-import DocumentScanner from "@/components/scanner/DocumentScanner";
+import DocumentScanner from "@/components/quero-armas/scanner/DocumentScanner";
 
 /* ── Pipeline "scanner" real ──
  * 1) Auto-crop: detecta as bordas do papel (regiões claras) e descarta o fundo escuro da foto.

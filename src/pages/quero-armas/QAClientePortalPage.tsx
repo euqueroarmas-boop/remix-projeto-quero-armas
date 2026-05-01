@@ -9,20 +9,20 @@ import {
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack,
 } from "lucide-react";
-import { HistoricoAtualizacoes } from "@/components/clientes/HistoricoAtualizacoes";
+import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { Button } from "@/components/ui/button";
-import { getClienteFK, getVendaFK } from "@/components/clientes/clientFK";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
-import { ClienteDocsHubModal } from "@/components/clientes/ClienteDocsHubModal";
+import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
-import { ArsenalView } from "@/components/arsenal/ArsenalView";
-import { ClienteProcessosSection } from "@/components/processos/ClienteProcessosSection";
+import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
+import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
-import { ForcePasswordChangeModal } from "@/components/clientes/ForcePasswordChangeModal";
-import { ensureClienteFromAuthUser } from "@/lib/ensureClienteFromAuthUser";
-import ArmaManualForm from "@/components/arsenal/ArmaManualForm";
-import { getQAServiceDisplayName } from "@/lib/serviceDisplay";
+import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
+import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
+import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
+import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";

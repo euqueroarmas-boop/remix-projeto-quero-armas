@@ -8,7 +8,7 @@ import {
   Database, Hash, Star, Trash2, Power, ShieldCheck, ShieldX, Zap, ZapOff,
   StarOff, Globe, Upload, Link2,
 } from "lucide-react";
-import { useQAAuthContext } from "@/components/QAAuthContext";
+import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { resolveServicoFromInteresse, type ServicoCanonico } from "@/lib/servicoSlugMap";
+import { resolveServicoFromInteresse, type ServicoCanonico } from "@/lib/quero-armas/servicoSlugMap";
 
 export type SolicitacaoPublica = {
   cadastro_publico_id: string;

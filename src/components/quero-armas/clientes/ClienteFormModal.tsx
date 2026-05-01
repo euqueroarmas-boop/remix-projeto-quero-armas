@@ -14,7 +14,7 @@ import {
   isValidTelefone,
   rgNotEqualCpf,
   cinEqualsCpf,
-} from "@/shared/clienteSchema";
+} from "@/shared/quero-armas/clienteSchema";
 import { SenhaGovField } from "./SenhaGovField";
 
 interface ClienteFormModalProps {

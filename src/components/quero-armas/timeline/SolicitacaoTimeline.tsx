@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, CircleDot, ArrowRight } from "lucide-react";
-import { statusLabel, statusBadgeClass } from "@/lib/statusServico";
+import { statusLabel, statusBadgeClass } from "@/lib/quero-armas/statusServico";
 
 type EventoRow = {
   id: string;

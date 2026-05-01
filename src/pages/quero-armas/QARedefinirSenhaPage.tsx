@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { QALogo } from "@/components/QALogo";
+import { QALogo } from "@/components/quero-armas/QALogo";
 
 /**
  * Página de redefinição de senha — destino do link de recovery enviado por e-mail.
