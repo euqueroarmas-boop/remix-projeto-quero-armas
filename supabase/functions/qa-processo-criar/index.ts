@@ -21,12 +21,13 @@ function json(body: unknown, status = 200) {
   });
 }
 
-type CondicaoProf = "clt" | "autonomo" | "empresario" | "aposentado" | "indefinido";
+type CondicaoProf = "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico" | "indefinido";
 
 function inferirCondicao(profissao: string | null): CondicaoProf {
   if (!profissao) return "indefinido";
   const p = profissao.toLowerCase();
   if (/aposent/.test(p)) return "aposentado";
+  if (/(servidor p[úu]blico|funcion[áa]rio p[úu]blico|policial|militar|professor.*p[úu]blic|magistrado|procurador|delegado|agente p[úu]blico|servidor federal|servidor estadual|servidor municipal)/.test(p)) return "funcionario_publico";
   if (/(empres[áa]r|s[óo]cio|cnpj|empreendedor|diretor|administrador)/.test(p)) return "empresario";
   if (/(aut[ôo]nomo|mei|profissional liberal|freelance|prestador)/.test(p)) return "autonomo";
   if (/(clt|assalariado|empregado|funcion[áa]rio)/.test(p)) return "clt";
