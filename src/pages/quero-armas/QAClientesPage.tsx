@@ -2417,8 +2417,8 @@ export default function QAClientesPage() {
               <TabsContent value="servicos" className="mt-3">
                 {/* Header padrão Arsenal Review */}
                 <div className="qa-card p-4 md:p-5 mb-3">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 56% / 0.12)" }}>
                         <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
                       </div>
@@ -2426,7 +2426,7 @@ export default function QAClientesPage() {
                         Serviços — Vendas e Processos
                       </h3>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:justify-end">
                       <button
                         onClick={() => exportVendas(clienteIdForSub, c.nome_completo)}
                         className="text-[10px] flex items-center gap-1 hover:underline"
@@ -2557,8 +2557,8 @@ export default function QAClientesPage() {
                         });
                       return (
                         <div key={v.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200 bg-slate-50/40">
-                            <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50/40">
+                            <div className="flex items-center gap-2 flex-wrap min-w-0">
                               <span
                                 className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
                                 style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}
@@ -2566,9 +2566,7 @@ export default function QAClientesPage() {
                                 VENDA #{v.id_legado ?? v.id}
                               </span>
                               <span className="text-[12px] font-semibold text-slate-600">{formatDate(v.data_cadastro)}</span>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="w-[88px] flex justify-start">
+                              <span className="flex justify-start sm:hidden">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
                                   const isPago = String(v.status || "").trim().toUpperCase() === "PAGO";
@@ -2592,7 +2590,33 @@ export default function QAClientesPage() {
                                   );
                                 })()}
                               </span>
-                              <div className="flex items-center gap-0.5">
+                            </div>
+                            <div className="flex items-center gap-1 sm:shrink-0 flex-wrap sm:flex-nowrap justify-end">
+                              <span className="hidden sm:flex w-[88px] justify-start">
+                                {(() => {
+                                  const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
+                                  const isPago = String(v.status || "").trim().toUpperCase() === "PAGO";
+                                  if (allCortesia) return (
+                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
+                                      CORTESIA
+                                    </span>
+                                  );
+                                  if (isPago) return (
+                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                      style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(220 80% 40%)" }}>
+                                      PAGO
+                                    </span>
+                                  );
+                                  return (
+                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
+                                      style={{ background: "hsl(38 92% 50% / 0.18)", color: "hsl(28 92% 32%)" }}>
+                                      PENDENTE
+                                    </span>
+                                  );
+                                })()}
+                              </span>
+                              <div className="flex items-center gap-0.5 flex-wrap justify-end">
                                 {/* FASE 16-C — Gerar processo a partir de venda aprovada */}
                                 {/* Aprovar valor em 1 clique (libera o checklist) */}
                                 <AprovarValorButton
