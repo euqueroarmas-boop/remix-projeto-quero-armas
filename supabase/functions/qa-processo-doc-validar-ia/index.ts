@@ -238,6 +238,13 @@ function checaCamposExigidos(
     ) {
       continue;
     }
+    // Sinônimos de razão social no Cartão CNPJ / QSA emitidos pela RF.
+    if (
+      (k === "razao_social" || k === "nome_empresarial") &&
+      temRazaoSocialOuEquivalente(extraidos)
+    ) {
+      continue;
+    }
     faltando.push(k);
   }
   return faltando;
