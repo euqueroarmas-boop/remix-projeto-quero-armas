@@ -98,6 +98,7 @@ const EMPTY_FORM: FormState = {
 };
 
 const CATEGORIAS_CUSTOM_KEY = "qa_categorias_custom_v1";
+const CATEGORIAS_OCULTAS_KEY = "qa_categorias_ocultas_v1";
 
 function loadCustomCategorias(): string[] {
   try {
@@ -118,6 +119,25 @@ function saveCustomCategorias(list: string[]) {
   }
 }
 
+function loadOcultas(): string[] {
+  try {
+    const raw = localStorage.getItem(CATEGORIAS_OCULTAS_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((s) => typeof s === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOcultas(list: string[]) {
+  try {
+    localStorage.setItem(CATEGORIAS_OCULTAS_KEY, JSON.stringify(list));
+  } catch {
+    /* noop */
+  }
+}
+
 export default function QAPrecosServicosPage() {
   const [rows, setRows] = useState<ServicoRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,6 +148,7 @@ export default function QAPrecosServicosPage() {
   const [submitting, setSubmitting] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
   const [customCategorias, setCustomCategorias] = useState<string[]>(() => loadCustomCategorias());
+  const [ocultas, setOcultas] = useState<string[]>(() => loadOcultas());
   const [catManagerOpen, setCatManagerOpen] = useState(false);
   const [novaCategoria, setNovaCategoria] = useState("");
   const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
@@ -153,6 +174,19 @@ export default function QAPrecosServicosPage() {
   }, []);
 
   const categoriasExistentes = useMemo(() => {
+    const CANONICAS = [
+      "POLÍCIA FEDERAL / DEFESA PESSOAL",
+      "EXÉRCITO / CAC",
+    ];
+    const doBanco = rows.map((r) => r.categoria.toUpperCase());
+    const ocultasSet = new Set(ocultas.map((c) => c.toUpperCase()));
+    return Array.from(new Set([...CANONICAS, ...doBanco, ...customCategorias.map((c) => c.toUpperCase())]))
+      .filter((c) => !ocultasSet.has(c))
+      .sort();
+  }, [rows, customCategorias, ocultas]);
+
+  /** Lista completa (inclusive ocultas) para o gerenciador. */
+  const todasCategoriasParaGerenciar = useMemo(() => {
     const CANONICAS = [
       "POLÍCIA FEDERAL / DEFESA PESSOAL",
       "EXÉRCITO / CAC",
@@ -371,11 +405,27 @@ export default function QAPrecosServicosPage() {
       toast.error(`CATEGORIA POSSUI ${qtd} SERVIÇO(S). MOVA OU EXCLUA OS SERVIÇOS PRIMEIRO.`);
       return;
     }
-    if (!confirm(`EXCLUIR CATEGORIA "${nome}"?`)) return;
-    const next = customCategorias.filter((c) => c.toUpperCase() !== nome);
-    setCustomCategorias(next);
-    saveCustomCategorias(next);
-    toast.success("CATEGORIA EXCLUÍDA");
+    if (!confirm(`OCULTAR CATEGORIA "${nome}"?\n\nELA SERÁ REMOVIDA DA LISTA. NENHUM SERVIÇO É EXCLUÍDO.`)) return;
+    // Remove da lista custom (se estava) e adiciona em ocultas
+    const nextCustom = customCategorias.filter((c) => c.toUpperCase() !== nome);
+    if (nextCustom.length !== customCategorias.length) {
+      setCustomCategorias(nextCustom);
+      saveCustomCategorias(nextCustom);
+    }
+    if (!ocultas.map((c) => c.toUpperCase()).includes(nome)) {
+      const nextOc = [...ocultas, nome];
+      setOcultas(nextOc);
+      saveOcultas(nextOc);
+    }
+    toast.success("CATEGORIA OCULTADA");
+  }
+
+  function restaurarCategoria(cat: string) {
+    const nome = cat.toUpperCase();
+    const next = ocultas.filter((c) => c.toUpperCase() !== nome);
+    setOcultas(next);
+    saveOcultas(next);
+    toast.success("CATEGORIA RESTAURADA");
   }
 
   /* ----------------- DRAG & DROP ----------------- */
@@ -748,9 +798,10 @@ export default function QAPrecosServicosPage() {
 
             {/* Lista */}
             <div className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
-              {categoriasExistentes.map((cat) => {
+              {todasCategoriasParaGerenciar.map((cat) => {
                 const qtd = contagemPorCategoria.get(cat.toUpperCase()) ?? 0;
                 const isRenaming = renaming?.from === cat;
+                const isOculta = ocultas.map((c) => c.toUpperCase()).includes(cat.toUpperCase());
                 return (
                   <div key={cat} className="px-3 py-2 flex items-center gap-2">
                     {isRenaming ? (
@@ -781,11 +832,25 @@ export default function QAPrecosServicosPage() {
                     ) : (
                       <>
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-bold uppercase text-slate-900 truncate">{cat}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5">
-                            {qtd} SERVIÇO{qtd === 1 ? "" : "S"}
+                          <div className={`text-xs font-bold uppercase truncate ${isOculta ? "text-slate-400 line-through" : "text-slate-900"}`}>
+                            {cat}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
+                            <span>{qtd} SERVIÇO{qtd === 1 ? "" : "S"}</span>
+                            {isOculta && <span className="text-rose-600 font-bold">OCULTA</span>}
                           </div>
                         </div>
+                        {isOculta ? (
+                          <button
+                            type="button"
+                            onClick={() => restaurarCategoria(cat)}
+                            title="Restaurar"
+                            className="h-8 px-2 rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-200"
+                          >
+                            RESTAURAR
+                          </button>
+                        ) : (
+                        <>
                         <button
                           type="button"
                           onClick={() => setRenaming({ from: cat, to: cat })}
@@ -797,12 +862,14 @@ export default function QAPrecosServicosPage() {
                         <button
                           type="button"
                           onClick={() => excluirCategoria(cat)}
-                          title={qtd > 0 ? "Mova/exclua os serviços antes" : "Excluir categoria"}
+                          title={qtd > 0 ? "Mova/exclua os serviços antes" : "Ocultar categoria"}
                           disabled={qtd > 0}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700 disabled:opacity-30 disabled:hover:bg-slate-100 disabled:hover:text-slate-500"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
+                        </>
+                        )}
                       </>
                     )}
                   </div>
@@ -813,7 +880,7 @@ export default function QAPrecosServicosPage() {
             <div className="text-[10px] uppercase tracking-wider text-slate-500 leading-relaxed">
               <strong className="text-amber-700">RENOMEAR</strong> ATUALIZA TODOS OS SERVIÇOS DA CATEGORIA NO BANCO.
               <br />
-              <strong className="text-amber-700">EXCLUIR</strong> SÓ É PERMITIDO PARA CATEGORIAS SEM SERVIÇOS — MOVA-OS ANTES PELA EDIÇÃO DE CADA SERVIÇO.
+              <strong className="text-amber-700">EXCLUIR</strong> OCULTA A CATEGORIA SEM APAGAR DADOS — MOVA OS SERVIÇOS ANTES. PODE RESTAURAR DEPOIS.
             </div>
           </div>
         </DialogContent>
