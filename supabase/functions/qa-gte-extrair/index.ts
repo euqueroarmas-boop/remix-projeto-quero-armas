@@ -244,7 +244,22 @@ Deno.serve(async (req) => {
       return json({ error: upErr.message }, 500);
     }
 
-    return json({ ok: true, gte_documento_id: gteDocumentoId, dados: updates });
+    // Matching automático com armas do Arsenal (não bloqueia em caso de erro)
+    let matching: any = null;
+    try {
+      const { data: matchData, error: matchErr } = await admin.rpc("qa_gte_match_armas", {
+        _gte_id: gteDocumentoId,
+      });
+      if (matchErr) {
+        console.error("[qa-gte-extrair] matching error:", matchErr);
+      } else {
+        matching = matchData;
+      }
+    } catch (mErr) {
+      console.error("[qa-gte-extrair] matching exception:", mErr);
+    }
+
+    return json({ ok: true, gte_documento_id: gteDocumentoId, dados: updates, matching });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "erro inesperado";
     console.error("[qa-gte-extrair]", msg);
