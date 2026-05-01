@@ -5,7 +5,7 @@
 // - Insere os itens de renda corretos (CLT / autônomo / empresário / aposentado)
 // - Itens de renda já APROVADOS são preservados; não são recriados nem cobrados de novo.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

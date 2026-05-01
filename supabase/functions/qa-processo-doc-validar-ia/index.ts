@@ -7,7 +7,7 @@
 //  - "esperado" da regra_validacao não bate (ex.: resultado != NADA_CONSTA / APTO) -> invalido
 //  - NUNCA aprova por presunção.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
