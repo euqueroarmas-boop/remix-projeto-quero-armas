@@ -126,7 +126,7 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
         {openProcessoId && (
           <ProcessoDetalheDrawer
             processoId={openProcessoId}
-            adminMode
+            equipeMode
             onClose={() => setOpenProcessoId(null)}
             onUpdated={() => onCreated?.()}
           />
@@ -311,7 +311,7 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
       {openProcessoId && (
         <ProcessoDetalheDrawer
           processoId={openProcessoId}
-          adminMode
+          equipeMode
           onClose={() => setOpenProcessoId(null)}
           onUpdated={() => onCreated?.()}
         />

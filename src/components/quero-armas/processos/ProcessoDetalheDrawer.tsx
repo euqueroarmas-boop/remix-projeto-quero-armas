@@ -71,12 +71,12 @@ interface Evento {
 
 interface Props {
   processoId: string;
-  adminMode?: boolean;
+  equipeMode?: boolean;
   onClose: () => void;
   onUpdated?: () => void;
 }
 
-export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, onUpdated }: Props) {
+export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose, onUpdated }: Props) {
   const [loading, setLoading] = useState(true);
   const [processo, setProcesso] = useState<ProcessoFull | null>(null);
   const [docs, setDocs] = useState<DocRow[]>([]);
@@ -201,7 +201,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
-  const adminSetStatus = async (docId: string, novoStatus: string, motivo?: string) => {
+  const equipeSetStatus = async (docId: string, novoStatus: string, motivo?: string) => {
     try {
       const docAtual = docs.find((d) => d.id === docId);
       // ============================================================
@@ -307,7 +307,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     if (!aprovacao || salvandoAcao) return;
     setSalvandoAcao(true);
     try {
-      await adminSetStatus(aprovacao.docId, "aprovado");
+      await equipeSetStatus(aprovacao.docId, "aprovado");
     } finally {
       setSalvandoAcao(false);
       setAprovacao(null);
@@ -327,7 +327,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
     setSalvandoAcao(true);
     try {
-      await adminSetStatus(rejeicao.docId, "invalido", motivo.toUpperCase());
+      await equipeSetStatus(rejeicao.docId, "invalido", motivo.toUpperCase());
     } finally {
       setSalvandoAcao(false);
       setRejeicao(null);
@@ -335,7 +335,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
-  const adminSetProcessoStatus = async (novoStatus: string) => {
+  const equipeSetProcessoStatus = async (novoStatus: string) => {
     try {
       const { error } = await supabase.from("qa_processos").update({ status: novoStatus }).eq("id", processoId);
       if (error) throw error;
@@ -597,7 +597,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
         <div className="flex border-b border-slate-200 bg-white">
           <TabBtn active={tab === "checklist"} onClick={() => setTab("checklist")} icon={<FileText className="h-3.5 w-3.5" />} label="CHECKLIST" />
           <TabBtn active={tab === "historico"} onClick={() => setTab("historico")} icon={<History className="h-3.5 w-3.5" />} label="HISTÓRICO" />
-          {adminMode && <TabBtn active={tab === "equipe"} onClick={() => setTab("equipe")} icon={<ShieldAlert className="h-3.5 w-3.5" />} label="EQUIPE" />}
+          {equipeMode && <TabBtn active={tab === "equipe"} onClick={() => setTab("equipe")} icon={<ShieldAlert className="h-3.5 w-3.5" />} label="EQUIPE" />}
         </div>
 
         {/* Content */}
@@ -614,7 +614,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                   Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente.
                   Após a confirmação, o checklist documental será liberado.
                 </p>
-                {adminMode && (
+                {equipeMode && (
                   <div className="mt-4 flex flex-wrap gap-2">
                     <button
                       onClick={confirmarPagamentoManual}
@@ -690,7 +690,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                       )}
 
                       {/* Checklist do Operador — exclusivo Equipe Quero Armas */}
-                      {adminMode && checklistOperador.length > 0 && (
+                      {equipeMode && checklistOperador.length > 0 && (
                         <div className="rounded-md border border-slate-300 bg-slate-50 p-2.5">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-700">
                             <ShieldAlert className="h-3 w-3" /> CHECKLIST DO OPERADOR
@@ -903,7 +903,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                                       <div className="text-amber-900 break-words">{String(c.valor_ia ?? c.valor_extraido ?? "—")}</div>
                                     </div>
                                   </div>
-                                  {adminMode && (
+                                  {equipeMode && (
                                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                                       <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">PADRÃO: MANTER VALOR ATUAL</span>
                                       <button
@@ -981,18 +981,18 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                           </button>
                         )}
 
-                        {/* Admin: aprovar/rejeitar (mantido) */}
-                        {adminMode && doc.status !== "aprovado" && (
+                        {/* Equipe Quero Armas: aprovar/rejeitar */}
+                        {equipeMode && doc.status !== "aprovado" && (
                           <button onClick={() => abrirAprovacao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-500 hover:bg-emerald-600">
                             <CheckCircle className="h-3 w-3" /> APROVAR
                           </button>
                         )}
-                        {adminMode && doc.status !== "invalido" && (
+                        {equipeMode && doc.status !== "invalido" && (
                           <button onClick={() => abrirRejeicao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
                             <XCircle className="h-3 w-3" /> REJEITAR
                           </button>
                         )}
-                        {adminMode && doc.arquivo_storage_key && (
+                        {equipeMode && doc.arquivo_storage_key && (
                           <button
                             onClick={() => reprocessarIA(doc)}
                             disabled={reprocessandoId === doc.id}
@@ -1002,7 +1002,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                             {reprocessandoId === doc.id ? "REPROCESSANDO..." : "REPROCESSAR IA"}
                           </button>
                         )}
-                        {adminMode && doc.status === "aprovado" && doc.arquivo_storage_key && !doc.usado_como_modelo && (
+                        {equipeMode && doc.status === "aprovado" && doc.arquivo_storage_key && !doc.usado_como_modelo && (
                           <button
                             onClick={async () => {
                               try {
@@ -1023,12 +1023,12 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                             <BookOpen className="h-3 w-3" /> APROVAR COMO MODELO
                           </button>
                         )}
-                        {adminMode && doc.usado_como_modelo && (
+                        {equipeMode && doc.usado_como_modelo && (
                           <span className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-amber-700 bg-amber-100 border border-amber-300">
                             <BookOpen className="h-3 w-3" /> MODELO APROVADO
                           </span>
                         )}
-                        {adminMode && doc.score_modelo_aprovado != null && (
+                        {equipeMode && doc.score_modelo_aprovado != null && (
                           <span className="h-8 px-2 inline-flex items-center gap-1 rounded-md text-[10px] uppercase tracking-wider font-mono text-slate-700 bg-slate-100 border border-slate-300">
                             SIM. MODELO {(Number(doc.score_modelo_aprovado) * 100).toFixed(0)}%
                           </span>
@@ -1062,7 +1062,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                   {Object.entries(STATUS_PROCESSO).map(([k, v]) => (
                     <button
                       key={k}
-                      onClick={() => adminSetProcessoStatus(k)}
+                      onClick={() => equipeSetProcessoStatus(k)}
                       disabled={processo?.status === k}
                       className={`h-9 px-3 rounded-md text-[10px] uppercase tracking-wider font-bold border ${processo?.status === k ? `${v.bg} ${v.text} ${v.border}` : "border-slate-200 text-slate-700 hover:bg-slate-50 bg-white"} disabled:cursor-not-allowed`}
                     >

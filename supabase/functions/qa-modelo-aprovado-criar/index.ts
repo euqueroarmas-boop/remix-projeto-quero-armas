@@ -117,6 +117,26 @@ Deno.serve(async (req) => {
       return json({ error: "Apenas documentos APROVADOS podem virar modelo." }, 400);
     }
 
+    // Proteção dura contra duplicidade: se já existe modelo para este documento_origem_id,
+    // devolve 409 com mensagem amigável (UI continua mostrando "MODELO APROVADO").
+    if (doc.usado_como_modelo) {
+      return json({ error: "Este documento já foi usado como modelo aprovado." }, 409);
+    }
+    {
+      const { data: existente } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .select("id")
+        .eq("documento_origem_id", doc.id)
+        .maybeSingle();
+      if (existente) {
+        // Garante a flag e retorna OK silencioso
+        await supabase.from("qa_processo_documentos")
+          .update({ usado_como_modelo: true })
+          .eq("id", doc.id);
+        return json({ error: "Este documento já foi usado como modelo aprovado." }, 409);
+      }
+    }
+
     // 1) Texto OCR — usa o salvo, ou re-extrai
     let texto = String(doc.texto_ocr_extraido ?? "").trim();
     if (!texto && doc.arquivo_storage_key) {
@@ -147,7 +167,16 @@ Deno.serve(async (req) => {
       })
       .select("id")
       .single();
-    if (insErr) return json({ error: insErr.message }, 500);
+    if (insErr) {
+      // 23505 = unique_violation (índice único parcial sobre documento_origem_id)
+      if ((insErr as any).code === "23505") {
+        await supabase.from("qa_processo_documentos")
+          .update({ usado_como_modelo: true })
+          .eq("id", doc.id);
+        return json({ error: "Este documento já foi usado como modelo aprovado." }, 409);
+      }
+      return json({ error: insErr.message }, 500);
+    }
 
     await supabase.from("qa_processo_documentos")
       .update({ usado_como_modelo: true, texto_ocr_extraido: texto })

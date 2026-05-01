@@ -5,16 +5,18 @@
  * Rotas antigas /acessos e /clubes permanecem ativas em QARoutes.
  */
 import { useState } from "react";
-import { Users, KeyRound, Building2 } from "lucide-react";
+import { Users, KeyRound, Building2, Activity } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import QAClientesPage from "./QAClientesPage";
 import QAAcessosPage from "./QAAcessosPage";
 import QAClubesPage from "./QAClubesPage";
+import MonitorCadastrosDocumentos from "@/components/quero-armas/clientes/MonitorCadastrosDocumentos";
 
-type TabKey = "clientes" | "acessos" | "clubes";
+type TabKey = "clientes" | "monitor" | "acessos" | "clubes";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "clientes", label: "Clientes", icon: Users },
+  { key: "monitor",  label: "Monitor",  icon: Activity },
   { key: "acessos", label: "Acessos", icon: KeyRound },
   { key: "clubes", label: "Clubes de Tiro", icon: Building2 },
 ];
@@ -68,6 +70,7 @@ export default function QAClientesTabsPage() {
       {/* Espaçamento vertical entre a faixa superior e o conteúdo (cabeçalho do cliente / listagem). */}
       <div className="pt-6 md:pt-8 pb-8">
         {tab === "clientes" && <QAClientesPage />}
+        {tab === "monitor"  && <MonitorCadastrosDocumentos />}
         {tab === "acessos" && <QAAcessosPage />}
         {tab === "clubes" && <QAClubesPage />}
       </div>
