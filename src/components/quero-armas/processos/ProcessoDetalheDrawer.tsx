@@ -76,7 +76,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
   const [processo, setProcesso] = useState<ProcessoFull | null>(null);
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
-  const [tab, setTab] = useState<"checklist" | "historico" | "admin">("checklist");
+  const [tab, setTab] = useState<"checklist" | "historico" | "equipe">("checklist");
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDocId, setPendingDocId] = useState<string | null>(null);
@@ -539,7 +539,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
         <div className="flex border-b border-slate-200 bg-white">
           <TabBtn active={tab === "checklist"} onClick={() => setTab("checklist")} icon={<FileText className="h-3.5 w-3.5" />} label="CHECKLIST" />
           <TabBtn active={tab === "historico"} onClick={() => setTab("historico")} icon={<History className="h-3.5 w-3.5" />} label="HISTÓRICO" />
-          {adminMode && <TabBtn active={tab === "admin"} onClick={() => setTab("admin")} icon={<ShieldAlert className="h-3.5 w-3.5" />} label="ADMIN" />}
+          {adminMode && <TabBtn active={tab === "equipe"} onClick={() => setTab("equipe")} icon={<ShieldAlert className="h-3.5 w-3.5" />} label="EQUIPE" />}
         </div>
 
         {/* Content */}
@@ -873,7 +873,7 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
                     {doc.status === "dispensado_grupo" ? (
                       <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
                         <div className="text-[11px] text-slate-600 leading-relaxed">
-                          <span className="font-bold uppercase tracking-wider text-slate-700">DISPENSADO PELO ADMINISTRATIVO.</span>{" "}
+                          <span className="font-bold uppercase tracking-wider text-slate-700">DISPENSADO PELA EQUIPE QUERO ARMAS.</span>{" "}
                           Outro documento do mesmo grupo já satisfaz esta exigência. Nenhuma ação necessária.
                         </div>
                       </div>
