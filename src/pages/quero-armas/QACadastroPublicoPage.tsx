@@ -674,14 +674,14 @@ export default function QACadastroPublicoPage() {
               else window.location.href = "/";
             }}
             aria-label="Voltar"
-            className="relative w-full flex items-center justify-center gap-3 px-5 py-6 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
+            className="relative w-full flex items-center justify-center gap-4 px-5 py-7 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60"
           >
-            <QALogo className="h-16 w-16" />
+            <QALogo className="h-20 w-20" />
             <div className="flex flex-col leading-tight text-left">
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/90">
                 // Arsenal
               </span>
-              <span className="text-lg font-semibold uppercase tracking-[0.18em] text-zinc-100">
+              <span className="text-xl font-semibold uppercase tracking-[0.18em] text-zinc-100">
                 Quero Armas
               </span>
             </div>
