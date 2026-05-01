@@ -409,11 +409,23 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ===== FASE 2: separar campos para os novos slots aditivos =====
+    const camposExtraidosFinal: Record<string, any> = parsed.campos_extraidos || {};
+    const titularNome = camposExtraidosFinal.titular_comprovante_nome ?? null;
+    const titularDoc = camposExtraidosFinal.titular_comprovante_documento ?? null;
+    const enderecoTerceiro = camposExtraidosFinal.endereco_em_nome_de_terceiro === true;
+    const metadados = parsed.metadados_documento || {};
+    const camposComplementares = {
+      ...(parsed.campos_complementares || {}),
+      ...(parsed.tipo_documento_detectado ? { tipo_documento_detectado: parsed.tipo_documento_detectado } : {}),
+      ...(parsed.orientacoes_cliente ? { orientacoes_cliente: parsed.orientacoes_cliente } : {}),
+    };
+
     await supabase.from("qa_processo_documentos")
       .update({
         status: novoStatus,
         motivo_rejeicao: motivoRejeicao,
-        dados_extraidos_json: parsed.campos_extraidos || {},
+        dados_extraidos_json: camposExtraidosFinal,
         divergencias_json: divergencias,
         validacao_ia_status: "concluido",
         validacao_ia_erro: null,
@@ -421,6 +433,12 @@ Deno.serve(async (req) => {
         validacao_ia_modelo: "google/gemini-2.5-flash",
         data_validacao: new Date().toISOString(),
         data_validade: dataValidade,
+        // Novos campos aditivos (Fase 1)
+        metadados_documento_json: metadados,
+        campos_complementares_json: camposComplementares,
+        titular_comprovante_nome: titularNome,
+        titular_comprovante_documento: titularDoc,
+        endereco_em_nome_de_terceiro: enderecoTerceiro,
       })
       .eq("id", documento_id);
 
@@ -482,7 +500,29 @@ Deno.serve(async (req) => {
       } catch (e) { console.warn("[validar-ia] notificação falhou:", e); }
     }
 
-    return json({ success: true, status: novoStatus, motivo_rejeicao: motivoRejeicao, validacao: parsed });
+    // ===== FASE 2: retorno enriquecido =====
+    const exigeList: string[] = Array.isArray((doc.regra_validacao as any)?.exige) ? (doc.regra_validacao as any).exige : [];
+    const camposPreenchidos = Object.keys(camposExtraidosFinal).filter((k) => {
+      const v = camposExtraidosFinal[k];
+      return v !== null && v !== undefined && !(typeof v === "string" && v.trim() === "");
+    });
+    const camposAusentes = exigeList.filter((k) => !camposPreenchidos.includes(k));
+    return json({
+      success: true,
+      status: novoStatus,
+      aceito: novoStatus === "aprovado",
+      motivo_rejeicao: motivoRejeicao,
+      erros: motivoRejeicao ? [motivoRejeicao] : [],
+      campos_extraidos: camposExtraidosFinal,
+      campos_preenchidos: camposPreenchidos,
+      campos_ausentes: camposAusentes,
+      campos_complementares: camposComplementares,
+      metadados_documento: metadados,
+      orientacoes_cliente: parsed.orientacoes_cliente ?? null,
+      titular_comprovante: enderecoTerceiro ? { nome: titularNome, documento: titularDoc } : null,
+      endereco_em_nome_de_terceiro: enderecoTerceiro,
+      validacao: parsed,
+    });
   } catch (err: any) {
     console.error("qa-processo-doc-validar-ia:", err);
     return json({ error: err?.message || "Erro interno" }, 500);
