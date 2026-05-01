@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  ClipboardList, UserCheck,
+  ClipboardList, UserCheck, Tags,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -55,6 +55,7 @@ const NAV_GROUPS = [
     label: "Financeiro",
     items: [
       { title: "Financeiro", url: "/financeiro", icon: DollarSign },
+      { title: "Preços do Catálogo", url: "/precos-servicos", icon: Tags },
       { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
     ],
   },
