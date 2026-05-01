@@ -785,3 +785,16 @@ function generateTempPassword(): string {
   }
   return pwd + "!1";
 }
+
+function DiagRow({ label, ok, value }: { label: string; ok?: boolean; value?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-0.5">
+      <span className="text-slate-600">{label}</span>
+      <span className="flex items-center gap-1.5 font-mono text-[11px]">
+        {value && <span className="text-slate-700 truncate max-w-[200px]">{value}</span>}
+        {ok === true && <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />}
+        {ok === false && <XCircle className="h-3.5 w-3.5 text-red-500" />}
+      </span>
+    </div>
+  );
+}
