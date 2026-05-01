@@ -653,7 +653,7 @@ export default function QACadastroPublicoPage() {
     <div className="min-h-[100dvh] flex flex-col bg-[#f6f5f1] overflow-x-hidden">
       <div className="w-full max-w-[480px] mx-auto px-0 pt-0 pb-6 flex-1 min-w-0 flex flex-col">
         {/* Header premium — integrado ao card, mesma palheta da logo. Logo clicável = voltar. */}
-        <div className="relative w-full overflow-hidden border-x border-b-0 border-t-0 border-zinc-200 bg-[#1E1E1E]">
+        <div className="relative w-full overflow-hidden bg-[#1E1E1E]">
           {/* Textura sutil de grid */}
           <div
             className="pointer-events-none absolute inset-0 opacity-[0.06]"
@@ -692,7 +692,7 @@ export default function QACadastroPublicoPage() {
         </div>
 
         <div
-          className="relative overflow-hidden rounded-b-xl border border-t-0 border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
+          className="relative overflow-hidden border-y border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
         >
           {/* Grid pontilhado Arsenal */}
           <div
