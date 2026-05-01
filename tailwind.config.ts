@@ -103,6 +103,25 @@ export default {
           "0%, 100%": { opacity: "1", transform: "scale(1.1) rotate(-10deg)" },
           "50%": { opacity: "0.4", transform: "scale(0.8) rotate(8deg)" },
         },
+        "confetti-fall": {
+          "0%": { transform: "translate(0, -120%) rotate(0deg)", opacity: "0" },
+          "10%": { opacity: "1" },
+          "100%": { transform: "translate(var(--cx, 0), 220%) rotate(720deg)", opacity: "0" },
+        },
+        "party-pop": {
+          "0%": { transform: "scale(0.4) rotate(-12deg)", opacity: "0" },
+          "55%": { transform: "scale(1.18) rotate(6deg)", opacity: "1" },
+          "75%": { transform: "scale(0.95) rotate(-3deg)" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        "party-bounce": {
+          "0%, 100%": { transform: "translateY(0) scale(1)" },
+          "50%": { transform: "translateY(-6px) scale(1.06)" },
+        },
+        "ring-pulse": {
+          "0%": { transform: "scale(0.6)", opacity: "0.7" },
+          "100%": { transform: "scale(2.2)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -112,6 +131,10 @@ export default {
         "lens-scan": "lens-scan 2.6s ease-in-out infinite",
         "twinkle": "twinkle 1.8s ease-in-out infinite",
         "twinkle-alt": "twinkle-alt 2.2s ease-in-out infinite",
+        "confetti-fall": "confetti-fall 2.4s ease-in infinite",
+        "party-pop": "party-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        "party-bounce": "party-bounce 1.8s ease-in-out infinite",
+        "ring-pulse": "ring-pulse 1.8s ease-out infinite",
       },
     },
   },
