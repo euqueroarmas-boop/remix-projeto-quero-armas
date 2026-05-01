@@ -276,6 +276,51 @@ Deno.serve(async (req) => {
     try { parsed = JSON.parse(args); }
     catch { return json({ error: "Falha ao parsear resposta IA" }, 500); }
 
+    // ===== FASE 2: tratamento de comprovante em nome de TERCEIRO =====
+    // Se a IA detectou que o titular não é o cliente, NÃO é divergência:
+    // promovemos para flag operacional + remove divergência de nome.
+    if (doc.tipo_documento === "comprovante_residencia") {
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const titularDoc = String(cx.nome_titular ?? cx.titular_comprovante_nome ?? "").trim();
+      const nomeCadastro = String(cliente?.nome ?? "").trim();
+      const flagIA = cx.endereco_em_nome_de_terceiro === true || cx.endereco_em_nome_de_terceiro === "true";
+      const titularDivergente = !!titularDoc && !!nomeCadastro &&
+        titularDoc.toLowerCase().replace(/\s+/g, " ") !==
+        nomeCadastro.toLowerCase().replace(/\s+/g, " ");
+      if (flagIA || titularDivergente) {
+        cx.endereco_em_nome_de_terceiro = true;
+        if (!cx.titular_comprovante_nome && titularDoc) cx.titular_comprovante_nome = titularDoc;
+        if (!cx.titular_comprovante_documento && cx.cpf_cnpj_titular) cx.titular_comprovante_documento = cx.cpf_cnpj_titular;
+        // remove divergências baseadas em nome do titular
+        parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+          const c = String(d?.campo || "").toLowerCase();
+          return !["nome", "nome_titular", "titular", "nome_completo"].includes(c);
+        });
+        const aviso = "Comprovante em nome de terceiro. Futuramente poderá ser solicitada declaração do responsável pelo imóvel e documento do titular.";
+        parsed.observacoes = parsed.observacoes ? `${parsed.observacoes} | ${aviso}` : aviso;
+      }
+      parsed.campos_extraidos = cx;
+    }
+
+    // ===== FASE 2: regras de identificação (RG/CIN/CNH) =====
+    if (["rg", "cin", "cnh"].includes(doc.tipo_documento)) {
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const cpfDigits = String(cx.cpf ?? cliente?.cpf ?? "").replace(/\D+/g, "");
+      const numDoc = String(cx.numero_documento ?? cx.rg ?? "").replace(/\D+/g, "");
+      // CIN: numero_documento == cpf é VÁLIDO. Remove qualquer divergência derivada disso.
+      if (doc.tipo_documento === "cin" && cpfDigits && numDoc && cpfDigits === numDoc) {
+        parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+          const c = String(d?.campo || "").toLowerCase();
+          return !["rg", "numero_documento"].includes(c);
+        });
+      }
+      // RG: rg == cpf gera apenas observação, não bloqueia
+      if (doc.tipo_documento === "rg" && cpfDigits && numDoc && cpfDigits === numDoc) {
+        const aviso = "Atenção: número do RG informado coincide com CPF — verificar manualmente.";
+        parsed.observacoes = parsed.observacoes ? `${parsed.observacoes} | ${aviso}` : aviso;
+      }
+    }
+
     // ===== Reconciliação de "divergências falsas" =====
     // Se a IA marcou algo como divergência mas o cadastro do cliente está vazio
     // (campo não pôde ser comparado), NÃO é divergência: é um dado novo extraído.
