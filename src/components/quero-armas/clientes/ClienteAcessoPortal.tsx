@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import {
   Shield, Mail, Hash, Copy, ExternalLink, KeyRound, Loader2,
   CheckCircle, XCircle, Eye, EyeOff, Link2, UserPlus, RefreshCw,
-  Send, AlertTriangle, Clock, History,
+  Send, AlertTriangle, Clock, History, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -74,9 +74,71 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   const [showPwd, setShowPwd] = useState(false);
   const [portalStatus, setPortalStatus] = useState<PortalStatus | null>(null);
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [diag, setDiag] = useState<any | null>(null);
+  const [diagLoading, setDiagLoading] = useState(false);
+  const [repairLoading, setRepairLoading] = useState(false);
 
   const portalUrl = `${window.location.origin}/area-do-cliente/login`;
   const resetUrl = `${window.location.origin}/redefinir-senha`;
+
+  const runDiagnose = useCallback(async () => {
+    setDiagLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) return;
+      const { data, error } = await supabase.functions.invoke("admin-cliente-acessos", {
+        body: { action: "diagnose", qa_cliente_id: cliente.id },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (error) {
+        console.error("[ClienteAcessoPortal] diagnose error:", error);
+        setDiag(null);
+        return;
+      }
+      setDiag(data || null);
+    } finally {
+      setDiagLoading(false);
+    }
+  }, [cliente.id]);
+
+  const repairLink = useCallback(async (force = false) => {
+    setRepairLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("admin-cliente-acessos", {
+        body: { action: "repair_link", qa_cliente_id: cliente.id, force_reassign: force },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (error || data?.error) {
+        const msg = data?.message || data?.error || "Falha ao reparar vínculo";
+        if (data?.error === "auth_user_nao_encontrado") {
+          toast.error("Usuário Auth não encontrado. Gere nova credencial.");
+        } else if (data?.error === "vinculo_aponta_outro_cliente") {
+          toast.error(`Vínculo aponta para outro cliente (id=${data?.conflito_qa_cliente_id}). Revisão manual necessária.`);
+        } else {
+          toast.error(String(msg));
+        }
+        return;
+      }
+      toast.success(
+        data?.acao === "vinculo_criado" ? "Vínculo criado com sucesso." :
+        data?.acao === "vinculo_reativado" ? "Vínculo reativado com sucesso." :
+        "Vínculo revalidado.",
+      );
+      await runDiagnose();
+      await fetchCustomer();
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao reparar vínculo");
+    } finally {
+      setRepairLoading(false);
+    }
+  }, [cliente.id, runDiagnose]);
 
   const fetchPortalStatus = useCallback(async () => {
     try {
@@ -211,6 +273,10 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
   useEffect(() => {
     fetchCustomer();
   }, [fetchCustomer]);
+
+  useEffect(() => {
+    void runDiagnose();
+  }, [runDiagnose]);
 
   const handleCreateAccess = async () => {
     if (!cliente.email) {
@@ -461,6 +527,50 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         </div>
       </div>
 
+      {/* ── Diagnóstico real do vínculo Auth ↔ Cliente ── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Link2 className="h-4 w-4 text-slate-600" />
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Diagnóstico do vínculo Portal</h4>
+          </div>
+          <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={runDiagnose} disabled={diagLoading}>
+            {diagLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          </Button>
+        </div>
+        {!diag ? (
+          <p className="text-[11px] text-slate-500">Carregando diagnóstico…</p>
+        ) : (
+          <div className="space-y-1.5 text-[12px]">
+            <DiagRow label="Cliente ativo" ok={!!diag.cliente_ativo} />
+            <DiagRow label="E-mail normalizado" value={diag.email_normalizado || "—"} ok={!!diag.email_normalizado} />
+            <DiagRow label="Auth user encontrado" ok={!!diag.auth_user_encontrado} />
+            {diag.auth_user_id && <DiagRow label="Auth user id" value={String(diag.auth_user_id).slice(0, 12) + "…"} ok />}
+            <DiagRow label="Vínculo Auth → Cliente" ok={!!diag.vinculo_existe} />
+            <DiagRow label="Vínculo ativo" ok={!!diag.vinculo_ativo} />
+            <DiagRow label="Vínculo aponta para o cliente certo" ok={!diag.vinculo_aponta_outro_cliente} />
+            <DiagRow label="Último login" value={formatDateTime(diag.last_login_at)} ok={!!diag.last_login_at} />
+            <div className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-semibold ${diag.acesso_liberado ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+              {diag.acesso_liberado
+                ? "Acesso liberado ao portal"
+                : (diag.motivos?.length ? `Bloqueado: ${diag.motivos.join(", ")}` : "Credencial criada, vínculo pendente")}
+            </div>
+          </div>
+        )}
+
+        {!!diag && !diag.acesso_liberado && (
+          <Button
+            size="sm"
+            className="w-full mt-3 h-9 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl"
+            onClick={() => repairLink(false)}
+            disabled={repairLoading}
+          >
+            {repairLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Wrench className="h-3.5 w-3.5 mr-2" />}
+            Reparar vínculo do portal
+          </Button>
+        )}
+      </div>
+
       {portalStatus?.portal_ultimo_envio_status === "failed" && (
         <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
           <div className="flex items-start gap-3">
@@ -674,4 +784,17 @@ function generateTempPassword(): string {
     pwd += chars[arr[i] % chars.length];
   }
   return pwd + "!1";
+}
+
+function DiagRow({ label, ok, value }: { label: string; ok?: boolean; value?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-0.5">
+      <span className="text-slate-600">{label}</span>
+      <span className="flex items-center gap-1.5 font-mono text-[11px]">
+        {value && <span className="text-slate-700 truncate max-w-[200px]">{value}</span>}
+        {ok === true && <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />}
+        {ok === false && <XCircle className="h-3.5 w-3.5 text-red-500" />}
+      </span>
+    </div>
+  );
 }
