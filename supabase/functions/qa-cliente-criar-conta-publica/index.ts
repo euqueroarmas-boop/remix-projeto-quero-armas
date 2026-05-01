@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     return json({ error: "invalid_payload", details: parsed.error.flatten() }, 400);
   }
 
-  const { cpf, nome, email, telefone, senha, servico_interesse } = parsed.data;
+  const { cpf, nome, email, telefone, senha, servico_interesse, servico_principal, catalogo_slug } = parsed.data;
   const cpfNorm = cpf.replace(/\D/g, "");
   if (cpfNorm.length !== 11) {
     return json({ error: "cpf_invalido" }, 400);
