@@ -51,6 +51,8 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
     "Contrato Social (ou última alteração consolidada) de PESSOA JURÍDICA. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), data_constituicao (YYYY-MM-DD se houver), capital_social (número), endereco_sede, cidade_sede, uf_sede, objeto_social (resumo curto), socios (array com objetos {nome, cpf, participacao_percentual, qualificacao}). NÃO exija um campo 'nome_titular' único: este documento lista sócios; preencha o array 'socios'. Se o cliente cadastrado aparecer entre os sócios, registre cliente_e_socio=true em campos_complementares.",
   renda_qsa:
     "QSA (Quadro de Sócios e Administradores) emitido pela Receita Federal a partir do Cartão CNPJ. Extraia: razao_social, cnpj (apenas dígitos), data_emissao (YYYY-MM-DD se houver), socios (array {nome, cpf, qualificacao, data_entrada}), administradores (array {nome, cpf, qualificacao}). NÃO exija um campo 'nome_titular' único. Se o cliente cadastrado aparecer no QSA, registre cliente_e_socio=true em campos_complementares.",
+  renda_nf_empresa:
+    "Nota fiscal recente emitida pela PESSOA JURÍDICA. Extraia: razao_social_emitente, cnpj_emitente (apenas dígitos), razao_social_tomador (se houver), cnpj_tomador (se houver), numero_nota, serie, data_emissao (YYYY-MM-DD), valor_total, municipio_emissao e natureza_operacao/servico. NÃO exija 'nome_titular': nota fiscal de empresa identifica a empresa por razão social/CNPJ/emitente.",
 };
 
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
@@ -140,11 +142,10 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
 /**
  * Verifica campos obrigatórios no payload extraído pela IA.
  *
- * Para documentos de PESSOA JURÍDICA (Contrato Social, QSA), `nome_titular`
- * historicamente foi cadastrado como exigido — porém esses documentos não têm
- * um único titular, e sim uma lista de SÓCIOS. Aceitamos como satisfeito
- * quando há `socios` (array) ou `razao_social`/`cnpj` no payload, de forma
- * a não invalidar QSA/Contrato Social legítimos sem tocar na regra do banco.
+ * Para documentos de PESSOA JURÍDICA, `nome_titular` historicamente foi
+ * cadastrado como exigido — porém esses documentos identificam EMPRESA,
+ * emitente/tomador ou sócios. Aceitamos como satisfeito quando há razão
+ * social/CNPJ/emitente/sócios no payload, sem afrouxar documentos de PF.
  */
 function checaCamposExigidos(
   extraidos: Record<string, any>,
@@ -152,18 +153,27 @@ function checaCamposExigidos(
   tipoDocumento?: string,
 ): string[] {
   const faltando: string[] = [];
-  const isPJ = tipoDocumento === "renda_qsa" || tipoDocumento === "renda_contrato_social";
+  const isPJ = ["renda_qsa", "renda_contrato_social", "renda_nf_empresa", "renda_cartao_cnpj"].includes(tipoDocumento || "");
   const sociosArr = Array.isArray(extraidos?.socios) ? extraidos.socios : [];
   const adminsArr = Array.isArray(extraidos?.administradores) ? extraidos.administradores : [];
+  const hasValue = (v: any) => v !== undefined && v !== null && !(typeof v === "string" && v.trim() === "");
   const temIdentPJ =
-    (typeof extraidos?.razao_social === "string" && extraidos.razao_social.trim() !== "") ||
-    (typeof extraidos?.cnpj === "string" && extraidos.cnpj.trim() !== "") ||
+    [
+      extraidos?.razao_social,
+      extraidos?.nome_fantasia,
+      extraidos?.cnpj,
+      extraidos?.razao_social_emitente,
+      extraidos?.cnpj_emitente,
+      extraidos?.emitente,
+      extraidos?.prestador,
+      extraidos?.empresa,
+    ].some(hasValue) ||
     sociosArr.length > 0 ||
     adminsArr.length > 0;
 
   for (const k of exige) {
     const v = extraidos?.[k];
-    const vazio = v === undefined || v === null || (typeof v === "string" && v.trim() === "");
+    const vazio = !hasValue(v);
     if (!vazio) continue;
     // Equivalência semântica para PJ: nome_titular / razao_social podem ser
     // satisfeitos por sócios, administradores, cnpj, razão social ou nome
