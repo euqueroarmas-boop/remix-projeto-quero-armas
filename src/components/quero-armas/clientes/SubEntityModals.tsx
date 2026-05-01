@@ -402,7 +402,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
   const [trocaOpen, setTrocaOpen] = useState(false);
   const [trocaSaving, setTrocaSaving] = useState(false);
 
-  const getDefaultItemStatus = () => (f.status === "EM ABERTO" ? "NÃO PAGOU" : "PAGO");
+  const getDefaultItemStatus = () => (f.status === "NÃO PAGOU" ? "NÃO PAGOU" : "PAGO");
 
   useEffect(() => {
     supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
@@ -524,7 +524,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
     setSaving(true);
     try {
       const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
-      const valorAberto = f.status === "EM ABERTO" ? (Number(f.valor_aberto) || 0) : 0;
+      const valorAberto = f.status === "NÃO PAGOU" ? (Number(f.valor_aberto) || 0) : 0;
       const payload: any = { ...f, data_cadastro: dataCadIso, desconto: desconto, valor_a_pagar: total, valor_aberto: valorAberto };
       let vendaId: number;
       if (isEdit) {
@@ -744,12 +744,15 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
-                {["PAGO", "EM ABERTO"].map(s => (
-                  <SelectItem key={s} value={s} className="text-sm text-slate-700">{s}</SelectItem>
+                {[
+                  { value: "PAGO", label: "PAGO" },
+                  { value: "NÃO PAGOU", label: "NÃO PAGO" },
+                ].map(s => (
+                  <SelectItem key={s.value} value={s.value} className="text-sm text-slate-700">{s.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {f.status === "EM ABERTO" && (
+            {f.status === "NÃO PAGOU" && (
               <div className="mt-2">
                 <label className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 uppercase tracking-[0.1em] mb-1">Valor em aberto (R$)</label>
                 <input
