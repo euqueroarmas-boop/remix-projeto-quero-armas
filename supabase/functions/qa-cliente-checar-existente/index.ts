@@ -67,22 +67,29 @@ Deno.serve(async (req) => {
     cpfExiste = !!data;
   }
 
-  // Email: checa via Admin API (paginado simples — busca exata)
+  // Email: checa em cliente_auth_links (rápido, sem paginar auth.users)
   if (emailNorm) {
-    try {
-      // listUsers aceita filtro por email parcial em algumas versões; aqui
-      // usamos busca por email exato via getUserByEmail-like fallback.
-      const { data, error } = await admin.auth.admin.listUsers({
-        page: 1,
-        perPage: 200,
-      });
-      if (!error && data?.users?.length) {
-        emailExiste = data.users.some(
-          (u) => (u.email || "").toLowerCase() === emailNorm,
+    const { data } = await admin
+      .from("cliente_auth_links")
+      .select("id")
+      .eq("email", emailNorm)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    emailExiste = !!data;
+
+    // Fallback: se ainda não foi vinculado mas existe em auth.users,
+    // também consideramos como "já cadastrado".
+    if (!emailExiste) {
+      try {
+        const { data: rpcData } = await admin.rpc(
+          "qa_email_existe_em_auth" as any,
+          { p_email: emailNorm },
         );
+        if (rpcData === true) emailExiste = true;
+      } catch {
+        // silencioso
       }
-    } catch {
-      // silencioso — em pior caso o usuário cai no bloqueio da Etapa 4
     }
   }
 
