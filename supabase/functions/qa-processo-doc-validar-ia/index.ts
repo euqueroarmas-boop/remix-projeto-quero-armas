@@ -15,8 +15,11 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 // texto extraído e processa normalmente. Quando o PDF é só imagem
 // escaneada (sem texto), o fallback é encaminhar para revisão humana —
 // nunca rejeitar como "campo faltando".
+// pdfjs-dist em Deno: usar a build "legacy" e desabilitar deps de canvas
+// via query string `?no-check&deps=false`. Sem isso, esm.sh tenta puxar
+// `canvas.node` (binário Node) e a função quebra no deploy.
 // @ts-ignore esm.sh fornece tipos minimos
-import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs";
+import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs?target=denonext&no-check";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
