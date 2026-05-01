@@ -75,12 +75,25 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
     if (!open) return;
     let cancel = false;
     (async () => {
-      const { data } = await supabase
-        .from("qa_servicos" as any)
-        .select("id, nome_servico")
-        .order("nome_servico");
+      // Limita à lista do catálogo ATIVO (qa_servicos_catalogo.ativo = true).
+      // Garante que apenas serviços oferecidos hoje apareçam aqui.
+      const { data: catalogo } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .select("servico_id, nome, display_order")
+        .eq("ativo", true)
+        .not("servico_id", "is", null)
+        .order("display_order", { ascending: true })
+        .order("nome", { ascending: true });
       if (cancel) return;
-      const list = ((data as any[]) ?? []) as ServicoLite[];
+      const rows = ((catalogo as any[]) ?? [])
+        .filter((r) => Number.isFinite(Number(r.servico_id)))
+        // dedup por servico_id (catálogo pode ter múltiplos slugs do mesmo serviço)
+        .reduce<Map<number, ServicoLite>>((acc, r) => {
+          const id = Number(r.servico_id);
+          if (!acc.has(id)) acc.set(id, { id, nome_servico: String(r.nome || "").trim() || `Serviço #${id}` });
+          return acc;
+        }, new Map());
+      const list = Array.from(rows.values());
       setServicos(list);
       if (servicoSugeridoId && list.some((s) => s.id === servicoSugeridoId)) {
         setServicoId(String(servicoSugeridoId));
