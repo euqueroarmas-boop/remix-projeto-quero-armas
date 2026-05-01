@@ -656,13 +656,39 @@ export default function QACadastroPublicoPage() {
           <BackButton fallback="/" />
         </div>
 
-        {/* Header preto — mesma palheta da logo (#1E1E1E), 100% da largura do container */}
-        <div className="w-full bg-[#1E1E1E] flex items-center justify-center py-4 -mb-px">
-          <QALogo className="h-14 w-14" />
+        {/* Header premium — integrado ao card, mesma palheta da logo */}
+        <div className="relative w-full overflow-hidden rounded-t-xl border border-b-0 border-zinc-200 bg-[#1E1E1E]">
+          {/* Textura sutil de grid */}
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          {/* Glow âmbar lateral */}
+          <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-amber-500/15 blur-3xl" />
+          <div className="pointer-events-none absolute -left-16 -bottom-16 h-32 w-32 rounded-full bg-amber-400/10 blur-3xl" />
+
+          <div className="relative flex items-center justify-center gap-3 px-5 py-5">
+            <QALogo className="h-12 w-12" />
+            <div className="flex flex-col leading-tight">
+              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/90">
+                // Arsenal
+              </span>
+              <span className="text-base font-semibold uppercase tracking-[0.18em] text-zinc-100">
+                Quero Armas
+              </span>
+            </div>
+          </div>
+
+          {/* Faixa âmbar separadora */}
+          <div className="relative h-px w-full bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
         </div>
 
         <div
-          className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
+          className="relative overflow-hidden rounded-b-xl border border-t-0 border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]"
         >
           {/* Grid pontilhado Arsenal */}
           <div
