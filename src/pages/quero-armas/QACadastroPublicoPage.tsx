@@ -864,32 +864,22 @@ export default function QACadastroPublicoPage() {
           <div className="relative px-4 sm:px-5 pb-5 min-w-0">
             {step === 0 && (
               <>
-                {servicoPreSelecionado && (
-                  <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
-                        SERVIÇO SELECIONADO
-                      </div>
-                      <div className="text-sm font-bold uppercase text-slate-900 leading-tight mt-0.5 truncate">
-                        {servicoPreSelecionado.nome}
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      {servicoPreSelecionado.preco != null ? (
-                        <>
-                          <div className="text-base font-bold text-slate-900 tabular-nums">
-                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(servicoPreSelecionado.preco)}
-                          </div>
-                          <div className="text-[10px] uppercase tracking-wider text-slate-500">
-                            {servicoPreSelecionado.recorrente ? "MENSAL" : "VALOR ÚNICO"}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-[11px] italic text-slate-500">Sob consulta</div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                <CatalogoServicoPicker
+                  catalogo={catalogoCompleto}
+                  selecionadoSlug={servicoPreSelecionado?.slug || null}
+                  onSelecionar={(slug) => {
+                    if (slug) {
+                      const next = new URLSearchParams(searchParams);
+                      next.set("servico", slug);
+                      setSearchParams(next, { replace: true });
+                    } else {
+                      const next = new URLSearchParams(searchParams);
+                      next.delete("servico");
+                      setSearchParams(next, { replace: true });
+                      setServicoPreSelecionado(null);
+                    }
+                  }}
+                />
               <Step0Qualificacao
                 value={qualif}
                 onChange={setQualif}
