@@ -6,6 +6,7 @@ import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users, Crosshair, Check,
+  Lock, Eye, EyeOff, Crown, Smartphone, Download,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -42,19 +43,21 @@ import {
 import { trackTelemetria } from "@/shared/quero-armas/telemetria";
 
 /* =========================================================================
- * Cadastro do Cliente — Fluxo guiado em 5 etapas
- * 0) QUALIFICAÇÃO → 1) DOCUMENTOS → 2) EXTRAÇÃO → 3) REVISÃO → 4) CONCLUSÃO
+ * Cadastro do Cliente — Fluxo guiado em 6 etapas
+ * 0) QUALIFICAÇÃO → 1) DOCUMENTOS → 2) EXTRAÇÃO → 3) REVISÃO
+ * → 4) ACESSO ARSENAL (cria conta gratuita) → 5) CONCLUSÃO + INSTALAR APP
  * Premium, mobile-first, alta UX.
  * ========================================================================= */
 
-type StepId = 0 | 1 | 2 | 3 | 4;
+type StepId = 0 | 1 | 2 | 3 | 4 | 5;
 
 const STEPS: { id: StepId; label: string }[] = [
   { id: 0, label: "Serviço" },
   { id: 1, label: "Documentos" },
   { id: 2, label: "Extração" },
   { id: 3, label: "Revisão" },
-  { id: 4, label: "Conclusão" },
+  { id: 4, label: "Arsenal" },
+  { id: 5, label: "Conclusão" },
 ];
 
 interface DocSlot {
