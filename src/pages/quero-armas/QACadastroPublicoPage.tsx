@@ -735,11 +735,8 @@ export default function QACadastroPublicoPage() {
               </span>
             </div>
 
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="h-10 w-10 shrink-0 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
-                <Crosshair className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
-              </div>
-              <div className="min-w-0 flex-1">
+            <div className="min-w-0">
+              <div className="min-w-0">
                 <h1 className="text-[18px] sm:text-[20px] font-bold leading-tight tracking-tight text-zinc-900 break-words">
                   {step === 0 && "VAMOS COMEÇAR"}
                   {step === 1 && "SEUS DOCUMENTOS"}
