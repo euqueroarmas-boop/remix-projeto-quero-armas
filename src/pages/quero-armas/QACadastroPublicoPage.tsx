@@ -682,7 +682,7 @@ export default function QACadastroPublicoPage() {
                 // Arsenal
               </span>
               <span className="font-mono text-xl font-black uppercase tracking-[0.32em] text-zinc-100 [text-shadow:0_1px_0_rgba(0,0,0,0.6)]">
-                QUERO ARMAS
+                INTELIGENTE
               </span>
             </div>
           </button>
