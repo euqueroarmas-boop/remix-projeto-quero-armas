@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DollarSign, Loader2, Save, Power, PowerOff, Search, Plus, Pencil, Trash2, X } from "lucide-react";
+import { DollarSign, Loader2, Save, Power, PowerOff, Search, Plus, Pencil, Trash2, X, FolderCog } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -79,6 +79,27 @@ const EMPTY_FORM: FormState = {
   descricao_curta: "",
 };
 
+const CATEGORIAS_CUSTOM_KEY = "qa_categorias_custom_v1";
+
+function loadCustomCategorias(): string[] {
+  try {
+    const raw = localStorage.getItem(CATEGORIAS_CUSTOM_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((s) => typeof s === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomCategorias(list: string[]) {
+  try {
+    localStorage.setItem(CATEGORIAS_CUSTOM_KEY, JSON.stringify(list));
+  } catch {
+    /* noop */
+  }
+}
+
 export default function QAPrecosServicosPage() {
   const [rows, setRows] = useState<ServicoRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +109,11 @@ export default function QAPrecosServicosPage() {
   const [form, setForm] = useState<FormState | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
+  const [customCategorias, setCustomCategorias] = useState<string[]>(() => loadCustomCategorias());
+  const [catManagerOpen, setCatManagerOpen] = useState(false);
+  const [novaCategoria, setNovaCategoria] = useState("");
+  const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
+  const [catBusy, setCatBusy] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -114,7 +140,17 @@ export default function QAPrecosServicosPage() {
       "EXÉRCITO / CAC",
     ];
     const doBanco = rows.map((r) => r.categoria.toUpperCase());
-    return Array.from(new Set([...CANONICAS, ...doBanco])).sort();
+    return Array.from(new Set([...CANONICAS, ...doBanco, ...customCategorias.map((c) => c.toUpperCase())])).sort();
+  }, [rows, customCategorias]);
+
+  /** Conta serviços por categoria (case-insensitive) */
+  const contagemPorCategoria = useMemo(() => {
+    const m = new Map<string, number>();
+    rows.forEach((r) => {
+      const k = r.categoria.toUpperCase();
+      m.set(k, (m.get(k) ?? 0) + 1);
+    });
+    return m;
   }, [rows]);
 
   const grupos = useMemo(() => {
@@ -251,6 +287,79 @@ export default function QAPrecosServicosPage() {
     setRows((prev) => prev.filter((r) => r.id !== row.id));
   }
 
+  /* ----------------- GESTÃO DE CATEGORIAS ----------------- */
+
+  function adicionarCategoria() {
+    const nome = novaCategoria.trim().toUpperCase();
+    if (!nome) return;
+    if (categoriasExistentes.includes(nome)) {
+      toast.error("CATEGORIA JÁ EXISTE");
+      return;
+    }
+    const next = [...customCategorias, nome];
+    setCustomCategorias(next);
+    saveCustomCategorias(next);
+    setNovaCategoria("");
+    toast.success("CATEGORIA ADICIONADA");
+  }
+
+  async function renomearCategoria() {
+    if (!renaming) return;
+    const from = renaming.from.trim().toUpperCase();
+    const to = renaming.to.trim().toUpperCase();
+    if (!to || from === to) {
+      setRenaming(null);
+      return;
+    }
+    setCatBusy(true);
+    // Atualiza todas as linhas do banco que têm essa categoria (case-insensitive via .ilike não funciona em UPDATE; usamos eq pela versão exata).
+    // Como salvamos sempre em UPPERCASE, o `from` casa direto.
+    const afetadas = rows.filter((r) => r.categoria.toUpperCase() === from);
+    if (afetadas.length > 0) {
+      const ids = afetadas.map((r) => r.id);
+      const { error } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .update({ categoria: to })
+        .in("id", ids);
+      if (error) {
+        setCatBusy(false);
+        toast.error("FALHA AO RENOMEAR — " + error.message.toUpperCase());
+        return;
+      }
+    }
+    // Atualiza lista custom (substitui from→to se estiver lá)
+    if (customCategorias.map((c) => c.toUpperCase()).includes(from)) {
+      const next = customCategorias.map((c) => (c.toUpperCase() === from ? to : c));
+      setCustomCategorias(next);
+      saveCustomCategorias(next);
+    } else {
+      // Se não estava, e tinha serviços, garantimos persistência futura adicionando o novo nome
+      if (!customCategorias.map((c) => c.toUpperCase()).includes(to)) {
+        const next = [...customCategorias, to];
+        setCustomCategorias(next);
+        saveCustomCategorias(next);
+      }
+    }
+    setCatBusy(false);
+    setRenaming(null);
+    toast.success(`RENOMEADA (${afetadas.length} SERVIÇO${afetadas.length === 1 ? "" : "S"} ATUALIZADO${afetadas.length === 1 ? "" : "S"})`);
+    void load();
+  }
+
+  function excluirCategoria(cat: string) {
+    const nome = cat.toUpperCase();
+    const qtd = contagemPorCategoria.get(nome) ?? 0;
+    if (qtd > 0) {
+      toast.error(`CATEGORIA POSSUI ${qtd} SERVIÇO(S). MOVA OU EXCLUA OS SERVIÇOS PRIMEIRO.`);
+      return;
+    }
+    if (!confirm(`EXCLUIR CATEGORIA "${nome}"?`)) return;
+    const next = customCategorias.filter((c) => c.toUpperCase() !== nome);
+    setCustomCategorias(next);
+    saveCustomCategorias(next);
+    toast.success("CATEGORIA EXCLUÍDA");
+  }
+
   return (
     <div className="px-4 md:px-6 py-5 max-w-6xl mx-auto">
       {/* Header */}
@@ -285,6 +394,13 @@ export default function QAPrecosServicosPage() {
             className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-amber-500 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-amber-600 transition"
           >
             <Plus className="h-3.5 w-3.5" /> NOVO SERVIÇO
+          </button>
+          <button
+            type="button"
+            onClick={() => setCatManagerOpen(true)}
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 transition"
+          >
+            <FolderCog className="h-3.5 w-3.5" /> CATEGORIAS
           </button>
         </div>
       </div>
@@ -554,6 +670,110 @@ export default function QAPrecosServicosPage() {
               {form?.id ? "SALVAR" : "CRIAR"}
             </button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de gestão de categorias */}
+      <Dialog open={catManagerOpen} onOpenChange={(open) => { if (!open) { setCatManagerOpen(false); setRenaming(null); } }}>
+        <DialogContent className="max-w-md bg-[#f6f5f1] border-slate-200 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="uppercase tracking-tight text-slate-900 text-sm font-bold">
+              GERENCIAR CATEGORIAS
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Nova categoria */}
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">NOVA CATEGORIA</div>
+                <input
+                  value={novaCategoria}
+                  onChange={(e) => setNovaCategoria(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => { if (e.key === "Enter") adicionarCategoria(); }}
+                  placeholder="EX: POLÍCIA FEDERAL / SINARM"
+                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-100"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={adicionarCategoria}
+                className="h-9 px-3 rounded-md bg-amber-500 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-amber-600"
+              >
+                <Plus className="h-3.5 w-3.5 inline mr-1" /> ADD
+              </button>
+            </div>
+
+            {/* Lista */}
+            <div className="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">
+              {categoriasExistentes.map((cat) => {
+                const qtd = contagemPorCategoria.get(cat.toUpperCase()) ?? 0;
+                const isRenaming = renaming?.from === cat;
+                return (
+                  <div key={cat} className="px-3 py-2 flex items-center gap-2">
+                    {isRenaming ? (
+                      <>
+                        <input
+                          autoFocus
+                          value={renaming.to}
+                          onChange={(e) => setRenaming({ ...renaming, to: e.target.value.toUpperCase() })}
+                          onKeyDown={(e) => { if (e.key === "Enter") void renomearCategoria(); if (e.key === "Escape") setRenaming(null); }}
+                          className="h-8 flex-1 px-2 rounded-md border border-amber-300 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-100"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void renomearCategoria()}
+                          disabled={catBusy}
+                          className="h-8 px-2 rounded-md bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-amber-600 disabled:opacity-50"
+                        >
+                          {catBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : "OK"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRenaming(null)}
+                          className="h-8 px-2 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider hover:bg-slate-200"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold uppercase text-slate-900 truncate">{cat}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            {qtd} SERVIÇO{qtd === 1 ? "" : "S"}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRenaming({ from: cat, to: cat })}
+                          title="Renomear (atualiza todos os serviços)"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-700"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => excluirCategoria(cat)}
+                          title={qtd > 0 ? "Mova/exclua os serviços antes" : "Excluir categoria"}
+                          disabled={qtd > 0}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700 disabled:opacity-30 disabled:hover:bg-slate-100 disabled:hover:text-slate-500"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="text-[10px] uppercase tracking-wider text-slate-500 leading-relaxed">
+              <strong className="text-amber-700">RENOMEAR</strong> ATUALIZA TODOS OS SERVIÇOS DA CATEGORIA NO BANCO.
+              <br />
+              <strong className="text-amber-700">EXCLUIR</strong> SÓ É PERMITIDO PARA CATEGORIAS SEM SERVIÇOS — MOVA-OS ANTES PELA EDIÇÃO DE CADA SERVIÇO.
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
