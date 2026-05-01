@@ -198,6 +198,9 @@ export function ArsenalSummary({
   crLabel,
   totalCrafs,
   alerts,
+  totalGtes = 0,
+  gteStatus = "muted",
+  gteHint = "Sem GTE cadastrada",
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
@@ -319,8 +322,17 @@ export function ArsenalSummary({
         tone: alerts === 0 ? "ok" : alerts > 2 ? "danger" : "warn",
         target: "alertas",
       },
+      gte: {
+        id: "gte",
+        icon: <ClipboardList className="h-4 w-4" />,
+        label: "GTEs",
+        value: totalGtes,
+        hint: gteHint,
+        tone: gteStatus === "muted" ? "steel" : gteStatus,
+        target: "gte",
+      },
     }),
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint],
   );
 
   const handleDragEnd = useCallback(
