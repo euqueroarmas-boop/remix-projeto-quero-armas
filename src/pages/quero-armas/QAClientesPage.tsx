@@ -2039,8 +2039,8 @@ export default function QAClientesPage() {
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
               ].map(t => (
-                <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-[#2563EB] data-[state=active]:text-white rounded-lg font-semibold">
-                  <t.icon className="h-3 w-3 mr-1" /> {t.label}
+                <TabsTrigger key={t.value} value={t.value} className="text-[12px] whitespace-nowrap px-3 data-[state=active]:bg-[#2563EB] data-[state=active]:text-white rounded-lg font-bold">
+                  <t.icon className="h-3.5 w-3.5 mr-1.5" /> {t.label}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -2474,7 +2474,7 @@ export default function QAClientesPage() {
                                           CORTESIA
                                         </span>
                                       ) : (
-                                        <span className="text-slate-800 font-mono font-bold tabular-nums text-[12px]">R$ {Number(it.valor || 0).toFixed(0)}</span>
+                                        <span className="text-slate-900 font-mono font-bold tabular-nums text-[14px]">R$ {Number(it.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                       )}
                                     </span>
                                     <Button
@@ -2542,8 +2542,8 @@ export default function QAClientesPage() {
                             <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
                               <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">Total</span>
                               <div className="flex gap-3 items-center">
-                                {Number(v.desconto) > 0 && <span className="text-[12px] font-bold text-amber-600">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
-                                <span className="text-[14px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
+                                {Number(v.desconto) > 0 && <span className="text-[14px] font-bold text-amber-600 font-mono tabular-nums">Desc: R$ {Number(v.desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
+                                <span className="text-[17px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                               </div>
                             </div>
                           </div>
