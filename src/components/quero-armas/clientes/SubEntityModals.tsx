@@ -498,7 +498,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
           .select("id")
           .eq("venda_id", vendaLegacyId)
           .maybeSingle();
-        const proc = procRaw as { id: string } | null;
+        const proc = procRaw as unknown as { id: string } | null;
         if (proc?.id) {
           // Roda dry_run da RPC para mostrar o impacto antes de salvar.
           const { data: previewData, error: previewErr } = await supabase.rpc(
