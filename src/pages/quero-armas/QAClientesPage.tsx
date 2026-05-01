@@ -3446,50 +3446,73 @@ export default function QAClientesPage() {
             />
           )}
           {filtered.map(c => (
-            <button key={c.id} onClick={() => openClient(c)}
-              className="w-full flex items-start gap-3 px-3 py-3 md:px-4 rounded-xl border transition-all hover:shadow-sm active:scale-[0.99] text-left group qa-card"
-              style={{ borderColor: "hsl(220 13% 93%)" }}>
-              {/* Avatar */}
-              {(c as any).imagem ? (
-                <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 mt-0.5 object-cover" />
-              ) : (
-                <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
-                  <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+            <button
+              key={c.id}
+              onClick={() => openClient(c)}
+              className="w-full text-left group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-sky-200 active:scale-[0.995]"
+            >
+              {/* HUD strip topo (padrão ARMORY) */}
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-1.5 md:px-4">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 ring-1 ring-sky-200 shrink-0">
+                    <User className="h-2.5 w-2.5" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-[0.22em] text-slate-700">CLIENTE</span>
+                  <span className="text-[9px] font-mono text-slate-400">#{String(c.id).padStart(4, "0")}</span>
                 </div>
-              )}
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</span>
-                  {c.cliente_lions && <span className="text-[10px] shrink-0">🦁</span>}
-                </div>
-                <div className="text-[11px] mt-0.5 font-mono" style={{ color: "hsl(220 10% 55%)" }}>
-                  {formatCpf(c.cpf)}
-                </div>
-                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                  {c.celular && (
-                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 50%)" }}>
-                      <Phone className="h-2.5 w-2.5" /> {c.celular}
-                    </span>
-                  )}
-                  {c.cidade && (
-                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 50%)" }}>
-                      <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
-                    </span>
-                  )}
-                </div>
-              </div>
-              {/* Status & actions */}
-              <div className="flex flex-col items-end gap-1.5 shrink-0">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${statusColor(c.status)}`} style={{ background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)" }}>
+                <span
+                  className={`text-[9px] px-1.5 py-0.5 rounded-md font-black uppercase tracking-wider ${statusColor(c.status)}`}
+                  style={{
+                    background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)",
+                    boxShadow: c.status === "ATIVO" ? "inset 0 0 0 1px hsl(152 60% 80%)" : c.status === "DESISTENTE" ? "inset 0 0 0 1px hsl(0 60% 85%)" : "inset 0 0 0 1px hsl(38 80% 80%)",
+                  }}
+                >
                   {c.status}
                 </span>
+              </div>
+              {/* Body */}
+              <div className="relative flex items-start gap-3 px-3 py-3 md:px-4">
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 h-16"
+                  style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.05), transparent 70%)" }}
+                />
+                {(c as any).imagem ? (
+                  <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-10 h-10 md:w-11 md:h-11 rounded-xl shrink-0 object-cover ring-1 ring-slate-200 relative" />
+                ) : (
+                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl flex items-center justify-center shrink-0 bg-sky-50 ring-1 ring-sky-200 relative">
+                    <User className="h-4 w-4 text-sky-600" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 relative">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 14%)" }}>
+                      {c.nome_completo}
+                    </span>
+                    {c.cliente_lions && <span className="text-[10px] shrink-0">🦁</span>}
+                  </div>
+                  <div className="text-[10px] mt-0.5 font-mono uppercase tracking-wider text-slate-400">
+                    CPF {formatCpf(c.cpf)}
+                  </div>
+                  <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                    {c.celular && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                        <Phone className="h-2.5 w-2.5" /> {c.celular}
+                      </span>
+                    )}
+                    {c.cidade && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                        <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
                   }}
-                  className="h-6 w-6 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all md:opacity-0 md:group-hover:opacity-100"
+                  className="h-7 w-7 rounded-lg flex items-center justify-center bg-white border border-slate-200 text-slate-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all shrink-0 relative md:opacity-0 md:group-hover:opacity-100"
+                  title="Excluir cliente"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
