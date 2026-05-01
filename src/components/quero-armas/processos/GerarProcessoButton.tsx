@@ -126,6 +126,18 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
   if (!isApproved) return null;
   if (!venda.cliente_id) return null;
 
+  // Quick-create: dispara direto se há apenas 1 serviço na venda (sem ambiguidade).
+  // Se houver múltiplos serviços, abre o modal para o operador escolher.
+  const handleQuickGenerate = async () => {
+    if (submitting) return;
+    if (!servicoSugeridoId) {
+      // Sem item de serviço identificável → abre o modal manual.
+      setOpen(true);
+      return;
+    }
+    await runGenerate(servicoSugeridoId, null);
+  };
+
   const handleGenerate = async () => {
     if (submitting) return;
     if (!servicoId) {
@@ -137,12 +149,16 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
       toast.error("Serviço inválido.");
       return;
     }
+    await runGenerate(sid, observacoes.trim() || null);
+  };
+
+  const runGenerate = async (sid: number, obs: string | null) => {
     setSubmitting(true);
     try {
       const { data, error } = await supabase.rpc("qa_venda_to_processo" as any, {
         p_venda_id: venda.id,
         p_servico_id: sid,
-        p_observacoes: observacoes.trim() || null,
+        p_observacoes: obs,
       });
       if (error) throw error;
       const res = (data || {}) as any;
@@ -152,14 +168,14 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
           description: processoId ? `Abrindo processo ${processoId.slice(0, 8)}…` : undefined,
         });
       } else {
-        toast.success("Processo gerado a partir da venda");
+        toast.success("Checklist gerado a partir da venda");
       }
       setOpen(false);
       onCreated?.();
       if (processoId) setOpenProcessoId(processoId);
     } catch (e: any) {
       console.error("[GerarProcessoButton] rpc error:", e);
-      toast.error(e?.message || "Falha ao gerar processo");
+      toast.error(e?.message || "Falha ao gerar checklist");
     } finally {
       setSubmitting(false);
     }
@@ -174,11 +190,15 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
         type="button"
         variant="ghost"
         size="sm"
-        onClick={() => setOpen(true)}
-        className="h-7 px-2 text-[10px] text-emerald-600 hover:text-emerald-800"
-        title="Gerar processo operacional"
+        onClick={handleQuickGenerate}
+        disabled={submitting}
+        className="h-7 px-2 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 rounded"
+        title="Gerar checklist desta venda em 1 clique"
       >
-        <Rocket className="h-3.5 w-3.5 mr-1" /> Gerar processo
+        {submitting
+          ? <Loader2 className="h-3 w-3 animate-spin mr-1" />
+          : <Rocket className="h-3 w-3 mr-1" />}
+        Gerar checklist
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => !submitting && setOpen(o)}>
