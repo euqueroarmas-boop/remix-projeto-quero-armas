@@ -187,13 +187,43 @@ export default function QACadastroPublicoPage() {
    * Permite que cards do portal "/area-do-cliente/contratar" e links
    * externos abram o cadastro já com o serviço escolhido — eliminando
    * o "cadastro genérico que tenta adivinhar o serviço". */
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [servicoPreSelecionado, setServicoPreSelecionado] = useState<{
     slug: string;
     nome: string;
     preco: number | null;
     recorrente: boolean;
   } | null>(null);
+  // Catálogo completo (para o usuário trocar de serviço dentro do wizard)
+  const [catalogoCompleto, setCatalogoCompleto] = useState<Array<{
+    slug: string;
+    nome: string;
+    categoria: string;
+    preco: number | null;
+    recorrente: boolean;
+  }>>([]);
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .select("slug, nome, categoria, preco, recorrente, ativo, display_order")
+        .eq("ativo", true)
+        .order("categoria", { ascending: true })
+        .order("display_order", { ascending: true });
+      if (cancel || !data) return;
+      setCatalogoCompleto(
+        (data as any[]).map((r) => ({
+          slug: r.slug,
+          nome: r.nome,
+          categoria: r.categoria,
+          preco: r.preco != null ? Number(r.preco) : null,
+          recorrente: !!r.recorrente,
+        })),
+      );
+    })();
+    return () => { cancel = true; };
+  }, []);
   useEffect(() => {
     const slug = searchParams.get("servico");
     if (!slug) return;
