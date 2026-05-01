@@ -1,7 +1,7 @@
 // FASE 17-A: Conta pública gratuita do app de arsenal (Quero Armas)
 // Cria auth.users + vincula a qa_clientes via RPC qa_cliente_criar_conta_publica.
 // NÃO cria venda, processo, pagamento, checklist ou Asaas.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
 import { qaArsenalWelcomeHtml, qaArsenalWelcomeText } from "../_shared/qaEmailTemplates.ts";
 
