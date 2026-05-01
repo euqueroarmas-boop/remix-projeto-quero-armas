@@ -37,6 +37,7 @@ import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from 
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
+import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
