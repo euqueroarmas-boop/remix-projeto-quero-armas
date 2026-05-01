@@ -31,6 +31,12 @@ export interface CorrecaoContext {
   peca_id?: string | null;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function asUuid(v: any): string | null {
+  if (typeof v !== "string") return null;
+  return UUID_RE.test(v) ? v : null;
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -47,8 +53,11 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
   const [trechoCorreto, setTrechoCorreto] = useState<string>("");
   const [explicacao, setExplicacao] = useState<string>("");
   const [regra, setRegra] = useState<string>("");
+  const clienteUuid = asUuid(context?.cliente_id);
+  const casoUuid = asUuid(context?.caso_id);
+  const pecaUuid = asUuid(context?.peca_id);
   const [escopo, setEscopo] = useState<EscopoTarget>(
-    context?.peca_id ? "peca" : context?.caso_id ? "caso" : context?.cliente_id ? "cliente" : "global",
+    pecaUuid ? "peca" : casoUuid ? "caso" : clienteUuid ? "cliente" : "global",
   );
   const [ativo, setAtivo] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -62,16 +71,16 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
     setTrechoCorreto("");
     setExplicacao("");
     setRegra("");
-    setEscopo(context?.peca_id ? "peca" : context?.caso_id ? "caso" : context?.cliente_id ? "cliente" : "global");
+    setEscopo(pecaUuid ? "peca" : casoUuid ? "caso" : clienteUuid ? "cliente" : "global");
     setAtivo(true);
   }, [open, trechoInicial, context]);
 
   // Escopos disponíveis dependem do contexto vindo da peça
   const escoposDisponiveis: { value: EscopoTarget; label: string; icon: any; available: boolean; hint?: string }[] = [
     { value: "global", label: "GLOBAL — TODAS AS PEÇAS", icon: Globe2, available: true },
-    { value: "cliente", label: "APENAS ESTE CLIENTE", icon: User, available: !!context?.cliente_id, hint: !context?.cliente_id ? "Cliente não vinculado" : undefined },
-    { value: "caso", label: "APENAS ESTE CASO", icon: FolderOpen, available: !!context?.caso_id, hint: !context?.caso_id ? "Salve o caso primeiro" : undefined },
-    { value: "peca", label: "APENAS ESTA PEÇA", icon: FileText, available: !!context?.peca_id, hint: !context?.peca_id ? "Sem peça gerada vinculada" : undefined },
+    { value: "cliente", label: "APENAS ESTE CLIENTE", icon: User, available: !!clienteUuid, hint: !clienteUuid ? "Cliente sem ID compatível" : undefined },
+    { value: "caso", label: "APENAS ESTE CASO", icon: FolderOpen, available: !!casoUuid, hint: !casoUuid ? "Salve o caso primeiro" : undefined },
+    { value: "peca", label: "APENAS ESTA PEÇA", icon: FileText, available: !!pecaUuid, hint: !pecaUuid ? "Sem peça gerada vinculada" : undefined },
   ];
 
   async function salvar() {
@@ -79,9 +88,9 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
     if (trechoCorreto.trim().length < 5) { toast.error("Trecho correto deve ter ao menos 5 caracteres"); return; }
     // Garantir coerência com a constraint do banco
     if (escopo !== "global") {
-      const ok = (escopo === "cliente" && context?.cliente_id)
-        || (escopo === "caso" && context?.caso_id)
-        || (escopo === "peca" && context?.peca_id);
+      const ok = (escopo === "cliente" && clienteUuid)
+        || (escopo === "caso" && casoUuid)
+        || (escopo === "peca" && pecaUuid);
       if (!ok) { toast.error("Escopo selecionado não tem ID disponível"); return; }
     }
     setSaving(true);
@@ -96,9 +105,9 @@ export default function MarcarErroIAModal({ open, onOpenChange, trechoInicial, c
         explicacao: explicacao.trim() || null,
         regra_aplicavel: regra.trim() || null,
         aplicar_globalmente: escopo === "global",
-        cliente_id: escopo === "cliente" ? String(context?.cliente_id) : null,
-        caso_id: escopo === "caso" ? context?.caso_id : null,
-        peca_id: escopo === "peca" ? context?.peca_id : null,
+        cliente_id: escopo === "cliente" ? clienteUuid : null,
+        caso_id: escopo === "caso" ? casoUuid : null,
+        peca_id: escopo === "peca" ? pecaUuid : null,
         ativo,
         criado_por: user?.id || null,
         criado_por_nome: user?.email || null,
