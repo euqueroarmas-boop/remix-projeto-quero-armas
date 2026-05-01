@@ -909,7 +909,7 @@ function CondicaoProfissionalCard({
 }) {
   const atual = (condicao || "").toLowerCase();
   return (
-    <div className={`rounded-xl border p-4 ${indefinida ? "bg-amber-50 border-amber-200" : "bg-white border-slate-200"}`}>
+    <div className={`rounded-xl border p-4 shadow-sm ${indefinida ? "bg-white border-blue-200 ring-1 ring-blue-100" : "bg-white border-slate-200"}`}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">CONDIÇÃO PROFISSIONAL</div>
