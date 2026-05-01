@@ -132,6 +132,34 @@ Deno.serve(async (req) => {
     return json(result, 409);
   }
 
+  // 4) Dispara e-mail de boas-vindas Arsenal (best-effort, não bloqueia o cadastro)
+  try {
+    const html = qaArsenalWelcomeHtml({
+      name: nome,
+      email: emailNorm,
+      servicoInteresse: servico_interesse ?? null,
+    });
+    const text = qaArsenalWelcomeText({
+      name: nome,
+      email: emailNorm,
+      servicoInteresse: servico_interesse ?? null,
+    });
+
+    await admin.functions.invoke("send-smtp-email", {
+      body: {
+        to: emailNorm,
+        subject: "Bem-vindo ao Arsenal — Quero Armas",
+        html,
+        text,
+        tag: "arsenal_welcome",
+      },
+    }).catch((e) => {
+      console.error("[arsenal_welcome] send failed:", e?.message || e);
+    });
+  } catch (e) {
+    console.error("[arsenal_welcome] template failed:", (e as Error)?.message);
+  }
+
   return json({
     ok: true,
     qa_cliente_id: result.qa_cliente_id ?? null,
@@ -140,7 +168,4 @@ Deno.serve(async (req) => {
     tipo_cliente: result.tipo_cliente ?? null,
     cliente_created: result.cliente_created ?? false,
   });
-
-  // 4) Dispara e-mail de boas-vindas (best-effort, não bloqueia)
-  //    Executado *antes* do return acima graças ao early-return — então movemos para cima.
 });
