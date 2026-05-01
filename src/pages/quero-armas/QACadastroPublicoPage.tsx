@@ -1776,6 +1776,28 @@ function ReviewSelect({
 
 /* ─────────────────────── Step 4 — Conclusão ─────────────────────── */
 function Step4Done({ firstName }: { firstName: string }) {
+  // Confetes caindo do topo (gerados uma vez por montagem)
+  const confetti = React.useMemo(() => {
+    const palette = [
+      "hsl(152 60% 42%)", // verde
+      "hsl(38 92% 50%)",  // âmbar
+      "hsl(45 90% 55%)",  // amarelo
+      "hsl(348 80% 60%)", // rosa
+      "hsl(220 80% 60%)", // azul
+      "hsl(280 70% 60%)", // roxo
+    ];
+    return Array.from({ length: 28 }).map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      cx: (Math.random() - 0.5) * 80, // deriva horizontal em px
+      delay: Math.random() * 2.4,
+      duration: 2 + Math.random() * 2,
+      color: palette[i % palette.length],
+      size: 4 + Math.round(Math.random() * 4),
+      shape: i % 3, // 0 quadrado, 1 círculo, 2 retângulo (fita)
+    }));
+  }, []);
+
   return (
     <div className="relative overflow-hidden text-center py-4 px-4 rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] shadow-sm">
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
@@ -1783,25 +1805,47 @@ function Step4Done({ firstName }: { firstName: string }) {
         className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full opacity-30 blur-3xl"
         style={{ background: "hsl(152 60% 42%)" }}
       />
+      {/* Confetes caindo (festa) */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {confetti.map((c) => (
+          <span
+            key={c.id}
+            className="absolute animate-confetti-fall"
+            style={{
+              left: `${c.left}%`,
+              top: "-10%",
+              width: c.shape === 2 ? c.size * 2 : c.size,
+              height: c.shape === 2 ? c.size / 1.5 : c.size,
+              background: c.color,
+              borderRadius: c.shape === 1 ? "9999px" : "1px",
+              animationDelay: `${c.delay}s`,
+              animationDuration: `${c.duration}s`,
+              ["--cx" as any]: `${c.cx}px`,
+              opacity: 0.85,
+            }}
+          />
+        ))}
+      </div>
       <div className="relative mt-2 min-w-0">
       <div className="relative w-20 h-20 mx-auto mb-4">
-        {/* confetti pontos */}
-        {Array.from({ length: 14 }).map((_, i) => {
-          const angle = (i / 14) * Math.PI * 2;
-          const r = 44 + (i % 3) * 6;
-          const colors = ["hsl(152 60% 42%)", "hsl(38 92% 50%)", "hsl(45 90% 55%)", "hsl(35 91% 33%)"];
-          return (
-            <span key={i} className="absolute w-1.5 h-1.5 rounded-full"
-              style={{
-                top: `calc(50% + ${Math.sin(angle) * r}px)`,
-                left: `calc(50% + ${Math.cos(angle) * r}px)`,
-                background: colors[i % colors.length], opacity: 0.7,
-              }} />
-          );
-        })}
+        {/* anéis de pulso */}
+        <span
+          className="absolute inset-0 m-auto w-14 h-14 rounded-lg border-2 border-emerald-500/60 animate-ring-pulse"
+          style={{ animationDelay: "0s" }}
+        />
+        <span
+          className="absolute inset-0 m-auto w-14 h-14 rounded-lg border-2 border-amber-400/60 animate-ring-pulse"
+          style={{ animationDelay: "0.6s" }}
+        />
+        {/* estrelinhas em volta */}
+        <Sparkles className="absolute -top-1 -left-1 w-3.5 h-3.5 text-amber-500 animate-twinkle" />
+        <Sparkles className="absolute -top-1 -right-1 w-3 h-3 text-emerald-500 animate-twinkle-alt" style={{ animationDelay: "0.3s" }} />
+        <Sparkles className="absolute -bottom-1 -left-1 w-3 h-3 text-rose-400 animate-twinkle-alt" style={{ animationDelay: "0.7s" }} />
+        <Sparkles className="absolute -bottom-1 -right-1 w-3.5 h-3.5 text-amber-400 animate-twinkle" style={{ animationDelay: "1s" }} />
+        {/* badge central */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-14 h-14 rounded-lg flex items-center justify-center border border-emerald-500/40 bg-emerald-500/10">
-            <CheckCircle2 className="w-7 h-7 text-emerald-700" strokeWidth={2.2} />
+          <div className="w-14 h-14 rounded-lg flex items-center justify-center border border-emerald-500/50 bg-emerald-500/10 animate-party-pop shadow-[0_8px_24px_-8px_rgba(16,185,129,0.5)]">
+            <CheckCircle2 className="w-7 h-7 text-emerald-700 animate-party-bounce" strokeWidth={2.4} />
           </div>
         </div>
       </div>
