@@ -892,9 +892,9 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
 const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico"; label: string; hint: string }[] = [
   { id: "clt", label: "CLT", hint: "Holerite + CTPS Digital + Extrato INSS" },
   { id: "autonomo", label: "AUTÔNOMO", hint: "Cartão CNPJ/MEI + NF recente" },
-  { id: "empresario", label: "EMPRESÁRIO/SÓCIO", hint: "Cartão CNPJ + QSA + Contrato Social" },
+  { id: "empresario", label: "EMPRESÁRIO/SÓCIO", hint: "Cartão CNPJ + QSA + Contrato Social + Nota Fiscal" },
   { id: "aposentado", label: "APOSENTADO", hint: "Comprovante de benefício INSS" },
-  { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO", hint: "Carteira Funcional + Holerite (últimos 30 dias)" },
+  { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO", hint: "Carteira Funcional + Holerite" },
 ];
 
 function CondicaoProfissionalCard({
@@ -933,16 +933,16 @@ function CondicaoProfissionalCard({
               key={op.id}
               disabled={!!saving}
               onClick={() => onSelect(op.id)}
-              className={`text-left rounded-lg border px-3 py-2 transition ${
+              className={`text-center rounded-lg border px-3 py-2 transition flex flex-col items-center justify-center ${
                 ativo
                   ? "bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200"
                   : "bg-white border-slate-200 hover:bg-slate-50"
               } disabled:opacity-50`}
             >
-              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800">{op.label}</div>
-              <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{op.hint}</div>
-              {ativo && <div className="text-[10px] uppercase font-bold text-emerald-700 mt-1">SELECIONADO</div>}
-              {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1">SALVANDO...</div>}
+              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800 text-center">{op.label}</div>
+              <div className="text-[10px] text-slate-500 mt-0.5 leading-tight text-center">{op.hint}</div>
+              {ativo && <div className="text-[10px] uppercase font-bold text-emerald-700 mt-1 text-center">SELECIONADO</div>}
+              {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1 text-center">SALVANDO...</div>}
             </button>
           );
         })}
