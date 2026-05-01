@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
-  Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users,
+  Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users, Crosshair, Check,
 } from "lucide-react";
 import {
   AlertDialog,
