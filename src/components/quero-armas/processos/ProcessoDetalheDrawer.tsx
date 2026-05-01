@@ -374,6 +374,59 @@ export function ProcessoDetalheDrawer({ processoId, adminMode = false, onClose, 
     }
   };
 
+  // ============================================================
+  // FASE 4 — Aplicar manualmente um valor sugerido pela IA
+  // (quando há conflito com dado já cadastrado do cliente).
+  // Por padrão mantemos o valor do cliente; este handler é opcional
+  // e exige clique humano. Faz update direto em qa_clientes e remove
+  // o conflito do campos_complementares_json do documento.
+  // ============================================================
+  const aplicarConflitoIA = async (doc: DocRow, conflito: any) => {
+    if (!processo || !conflito?.campo) return;
+    const campo = String(conflito.campo);
+    const valorIA = conflito.valor_ia ?? conflito.valor_extraido ?? null;
+    const valorAtual = conflito.valor_cliente ?? "";
+    const ok = window.confirm(
+      `ATENÇÃO: SOBRESCREVER MANUALMENTE\n\nCampo: ${campo}\nValor atual no cadastro: ${valorAtual || "—"}\nValor extraído pela IA: ${valorIA || "—"}\n\nDeseja substituir o valor do cadastro pelo valor extraído pela IA?`
+    );
+    if (!ok) return;
+    try {
+      const { error: upErr } = await supabase
+        .from("qa_clientes")
+        .update({ [campo]: valorIA } as any)
+        .eq("id", processo.cliente_id);
+      if (upErr) throw upErr;
+
+      // Remove o conflito da lista no documento
+      const compl = (doc.campos_complementares_json && typeof doc.campos_complementares_json === "object")
+        ? { ...(doc.campos_complementares_json as any) }
+        : {};
+      const lista: any[] = Array.isArray(compl.conflitos_reconciliacao) ? compl.conflitos_reconciliacao : [];
+      compl.conflitos_reconciliacao = lista.filter((c: any) => c?.campo !== campo);
+      compl.conflitos_resolvidos = [
+        ...(Array.isArray(compl.conflitos_resolvidos) ? compl.conflitos_resolvidos : []),
+        { campo, valor_anterior: valorAtual, valor_novo: valorIA, resolvido_em: new Date().toISOString(), acao: "aplicado_manualmente_operador" },
+      ];
+      await supabase.from("qa_processo_documentos")
+        .update({ campos_complementares_json: compl })
+        .eq("id", doc.id);
+
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processoId,
+        documento_id: doc.id,
+        tipo_evento: "reconciliacao_conflito_resolvido",
+        descricao: `Operador aplicou valor da IA no campo "${campo}" do cliente.`,
+        ator: "equipe_operacional",
+        dados_json: { campo, valor_anterior: valorAtual, valor_novo: valorIA, origem: "operador_manual" },
+      });
+      toast.success("Valor atualizado no cadastro do cliente.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao aplicar valor: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
   const [savingCond, setSavingCond] = useState<string | null>(null);
   const [confirmandoPagto, setConfirmandoPagto] = useState(false);
 
