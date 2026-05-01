@@ -967,7 +967,7 @@ function Stepper({ current, onJump }: { current: StepId; onJump?: (target: StepI
                     boxShadow: active
                       ? `0 4px 14px -4px ${amber}, inset 0 0 0 2px ${amber}`
                       : done
-                        ? `inset 0 0 0 2px ${ok}`
+                        ? "inset 0 0 0 1.5px hsl(220 14% 80%)"
                         : "inset 0 0 0 1.5px hsl(220 14% 80%)",
                   }}
                 >
