@@ -57,14 +57,11 @@ export function AprovarValorButton({ venda, onApproved }: Props) {
         toast.error("Venda sem valor definido — não é possível aprovar.");
         return;
       }
-      const { data: userData } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("qa_vendas" as any)
         .update({
           status_validacao_valor: "aprovado",
           valor_aprovado: valor,
-          validado_em: new Date().toISOString(),
-          validado_por: userData?.user?.email || userData?.user?.id || "operador",
         } as any)
         .eq("id", venda.id);
       if (error) throw error;
