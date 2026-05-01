@@ -591,15 +591,37 @@ export default function QACadastroPublicoPage() {
 
           {/* Cabeçalho no estilo KpiCard do Arsenal */}
           <div className="relative px-5 pt-5 pb-4 min-w-0">
+            {/* Barra de navegação tática — Voltar + indicador de etapa */}
+            <div className="mb-3 flex items-center justify-between gap-2 pb-3 border-b border-dashed border-amber-500/30">
+              {step > 0 && step < 4 ? (
+                <button
+                  onClick={() => { setError(null); setStep((step - 1) as StepId); }}
+                  className="group/back inline-flex items-center gap-2 text-amber-700 hover:text-amber-900 transition-colors"
+                  aria-label="Voltar à etapa anterior"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-md border border-amber-500/60 bg-amber-500/10 group-hover/back:bg-amber-500/20 group-hover/back:border-amber-600 transition-all">
+                    <ArrowLeft className="h-3.5 w-3.5" strokeWidth={2.6} />
+                  </span>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em]">
+                    Voltar à etapa anterior
+                  </span>
+                </button>
+              ) : (
+                <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">
+                  // ATENDIMENTO
+                </span>
+              )}
+              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-zinc-500 shrink-0">
+                ETAPA {step + 1}/5
+              </span>
+            </div>
+
             <div className="flex items-start gap-3 min-w-0">
               <div className="h-10 w-10 shrink-0 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
                 <Crosshair className="h-5 w-5 text-amber-600" strokeWidth={2.2} />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-mono uppercase tracking-[0.28em] text-amber-700 truncate">
-                  // ATENDIMENTO · ETAPA {step + 1} DE 5
-                </div>
-                <h1 className="mt-0.5 text-[18px] sm:text-[20px] font-bold leading-tight tracking-tight text-zinc-900 break-words">
+                <h1 className="text-[18px] sm:text-[20px] font-bold leading-tight tracking-tight text-zinc-900 break-words">
                   {step === 0 && "VAMOS COMEÇAR"}
                   {step === 1 && "SEUS DOCUMENTOS"}
                   {step === 2 && "LENDO INFORMAÇÕES"}
@@ -614,16 +636,6 @@ export default function QACadastroPublicoPage() {
                   {step === 4 && "Recebemos seu cadastro com sucesso"}
                 </p>
               </div>
-              {step > 0 && step < 4 && (
-                <button
-                  onClick={() => { setError(null); setStep((step - 1) as StepId); }}
-                  className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-amber-500/60 bg-amber-500/10 text-amber-800 hover:bg-amber-500/20 hover:border-amber-600 transition-all shadow-[0_2px_10px_-4px_rgba(245,158,11,0.5)] font-mono text-[10.5px] font-bold uppercase tracking-[0.18em]"
-                  aria-label="Voltar à etapa anterior"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2.4} />
-                  Voltar
-                </button>
-              )}
             </div>
             <Stepper
               current={step}
