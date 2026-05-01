@@ -792,6 +792,56 @@ Deno.serve(async (req) => {
       novoStatus = "aprovado";
     }
 
+    // ===================================================================
+    // APRENDIZADO SUPERVISIONADO — comparação contra modelos aprovados
+    // ===================================================================
+    // Reusa o texto extraído do PDF (quando disponível) ou um resumo dos
+    // campos extraídos pela IA (quando o doc é imagem). Calcula embedding
+    // e compara contra os modelos aprovados do MESMO tipo. O resultado
+    // pode REFORÇAR (subir revisão_humana → aprovado) ou ENDURECER
+    // (rebaixar aprovado para revisão_humana / invalido) a decisão.
+    let textoParaModelo = "";
+    if (typeof pdfTexto === "string" && pdfTexto.length >= 40) {
+      textoParaModelo = pdfTexto;
+    } else {
+      // Imagem: monta um proxy textual a partir dos campos extraídos.
+      try {
+        textoParaModelo = JSON.stringify(parsed.campos_extraidos ?? {});
+      } catch { textoParaModelo = ""; }
+    }
+    const textoNormParaModelo = normalizarTexto(textoParaModelo).slice(0, 12000);
+    const embeddingDoc = await gerarEmbedding(textoNormParaModelo, lovableKey);
+    const cfg = await carregarConfigTipo(supabase, doc.tipo_documento);
+    const matchModelo = await compararContraModelos(
+      supabase, embeddingDoc, textoNormParaModelo, doc.tipo_documento,
+    );
+    // Score combinado: 70% similaridade semântica + 30% cobertura de palavras-chave
+    const scoreModelo = matchModelo.modeloId
+      ? (matchModelo.similaridade * 0.7 + matchModelo.coberturaKw * 0.3)
+      : 0;
+
+    // Aplicação conservadora — NUNCA aprova doc que a IA marcou como
+    // invalido/divergente; só ajusta entre aprovado ↔ revisao_humana.
+    if (matchModelo.modeloId && novoStatus === "aprovado") {
+      // Se o tipo NÃO permite aprovação automática (ex.: CR/CRAF/laudos),
+      // sempre vai para revisão humana, mesmo com bom score.
+      if (!cfg.permiteAuto) {
+        novoStatus = "revisao_humana";
+        motivoRejeicao = null;
+      } else if (scoreModelo > 0 && scoreModelo < cfg.analiseHumana) {
+        // Modelo aprovado existe mas o doc atual é muito diferente:
+        // rebaixa para revisão humana.
+        novoStatus = "revisao_humana";
+        motivoRejeicao = null;
+      }
+    } else if (matchModelo.modeloId && novoStatus === "revisao_humana" && cfg.permiteAuto) {
+      // Sobe revisão humana → aprovado se o doc bate fortemente com modelo aprovado.
+      if (scoreModelo >= cfg.aprovaAuto && camposFaltando.length === 0 && divergencias.length === 0) {
+        novoStatus = "aprovado";
+        motivoRejeicao = null;
+      }
+    }
+
     // calcula data_validade quando aplicável
     let dataValidade: string | null = null;
     if (dataEmissao && doc.validade_dias) {
