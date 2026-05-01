@@ -568,11 +568,8 @@ export default function QACadastroPublicoPage() {
         </div>
 
         {/* Logo isolada acima do card — assinatura discreta no topo */}
-        <div className="mb-5 flex flex-col items-center gap-2.5">
+        <div className="mb-5 flex justify-center">
           <QALogo className="h-20 w-20 rounded-xl shadow-sm ring-1 ring-zinc-200" />
-          <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-zinc-500">
-            QUERO ARMAS · ATENDIMENTO
-          </div>
         </div>
 
         <div
@@ -1033,7 +1030,7 @@ function Step1Documents({
                   <img
                     src={files[slot.key]}
                     alt=""
-                    className="w-full h-full object-cover block"
+                    className={slot.key === "selfie" ? "w-full h-full object-cover block" : "w-full h-full object-contain block"}
                     style={{ width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%" }}
                   />
                 </div>
