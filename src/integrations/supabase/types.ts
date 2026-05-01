@@ -8188,6 +8188,7 @@ export type Database = {
         Args: { p_status_venda: string; p_valor_aberto: number }
         Returns: string
       }
+      qa_email_existe_em_auth: { Args: { p_email: string }; Returns: boolean }
       qa_ensure_cliente_from_auth: {
         Args: {
           p_cpf?: string
