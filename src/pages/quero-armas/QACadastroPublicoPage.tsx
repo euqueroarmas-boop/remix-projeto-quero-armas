@@ -681,8 +681,8 @@ export default function QACadastroPublicoPage() {
               <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-400/90">
                 // Arsenal
               </span>
-              <span className="text-xl font-semibold uppercase tracking-[0.18em] text-zinc-100">
-                Quero Armas
+              <span className="font-mono text-xl font-black uppercase tracking-[0.32em] text-zinc-100 [text-shadow:0_1px_0_rgba(0,0,0,0.6)]">
+                QUERO ARMAS
               </span>
             </div>
           </button>
