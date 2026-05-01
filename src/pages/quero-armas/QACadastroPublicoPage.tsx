@@ -482,8 +482,6 @@ export default function QACadastroPublicoPage() {
         naturalidade_pais: extracted.naturalidade_pais || null,
         titulo_eleitor: extracted.titulo_eleitor || null,
         cnh: extracted.cnh || null,
-        ctps: extracted.ctps || null,
-        pis_pasep: extracted.pis_pasep || null,
         categoria_titular: extracted.categoria_titular || null,
         vinculo_tipo: extracted.vinculo_tipo || null,
         telefone_principal: extracted.telefone_principal.replace(/\D/g, ""),
