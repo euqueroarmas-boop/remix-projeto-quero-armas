@@ -1001,13 +1001,6 @@ function Step1Documents({
   const [manualWarnOpen, setManualWarnOpen] = useState(false);
   return (
     <div className="space-y-3">
-      {onBack && (
-        <button onClick={onBack} className="flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide"
-          style={{ color: "hsl(220 10% 50%)" }}>
-          <ArrowLeft className="w-3 h-3" /> Voltar
-        </button>
-      )}
-
       {/* Slots — KpiCard-like premium light */}
       {SLOTS.map(slot => {
         const Icon = slot.icon;
