@@ -144,6 +144,55 @@ async function downloadAsBase64(supabase: any, path: string): Promise<{ b64: str
 }
 
 /**
+ * Converte a primeira página de um PDF em PNG via API pública pdf.co-like
+ * usando a Cloudflare/Lovable AI Gateway? Não temos serviço próprio.
+ * Estratégia: usar o conversor pdfium via api.pdfshift OU fallback para
+ * envio do PDF direto. Como não há binário de PDF→imagem disponível em
+ * Deno edge, adotamos a estratégia abaixo:
+ *   1) Tentar enviar o PDF diretamente para o Gemini como image_url
+ *      (Gemini 2.5 aceita PDFs até ~50 páginas).
+ *   2) Se o resultado vier vazio, retornamos null para que o caller
+ *      marque o documento como `revisao_humana` (não como inválido).
+ *
+ * Heurística simples para verificar se a IA "leu" o documento:
+ * - tipo_correto presente, e
+ * - campos_extraidos com pelo menos 1 chave útil OU divergencias com
+ *   pelo menos 1 item OU motivo_rejeicao explícito da IA (não default).
+ */
+function extraiuAlgo(parsed: any): boolean {
+  if (!parsed || typeof parsed !== "object") return false;
+  const cx = parsed.campos_extraidos;
+  const camposUteis = cx && typeof cx === "object"
+    ? Object.entries(cx).filter(([, v]) =>
+        v !== null && v !== undefined && !(typeof v === "string" && v.trim() === "")
+      ).length
+    : 0;
+  const divs = Array.isArray(parsed.divergencias) ? parsed.divergencias.length : 0;
+  const temMotivo = typeof parsed.motivo_rejeicao === "string" && parsed.motivo_rejeicao.trim().length > 0;
+  return camposUteis > 0 || divs > 0 || (parsed.tipo_correto === false && temMotivo);
+}
+
+/**
+ * Sinônimos comuns de "razão social" no Cartão CNPJ da Receita Federal
+ * e em documentos de PJ. Se a regra exigir `razao_social` e a IA tiver
+ * extraído um destes, consideramos satisfeito.
+ */
+const SINONIMOS_RAZAO_SOCIAL = [
+  "razao_social", "razão_social", "razao social",
+  "nome_empresarial", "nome empresarial",
+  "nome_da_empresa", "nome da empresa", "empresa",
+  "nome", "cnpj_nome", "razao_social_emitente", "emitente",
+];
+function temRazaoSocialOuEquivalente(extraidos: Record<string, any>): boolean {
+  if (!extraidos || typeof extraidos !== "object") return false;
+  for (const k of SINONIMOS_RAZAO_SOCIAL) {
+    const v = extraidos[k];
+    if (v != null && !(typeof v === "string" && v.trim() === "")) return true;
+  }
+  return false;
+}
+
+/**
  * Verifica campos obrigatórios no payload extraído pela IA.
  *
  * Para documentos de PESSOA JURÍDICA, `nome_titular` historicamente foi
@@ -186,6 +235,13 @@ function checaCamposExigidos(
       isPJ &&
       (k === "nome_titular" || k === "nome_completo" || k === "titular" || k === "razao_social") &&
       temIdentPJ
+    ) {
+      continue;
+    }
+    // Sinônimos de razão social no Cartão CNPJ / QSA emitidos pela RF.
+    if (
+      (k === "razao_social" || k === "nome_empresarial") &&
+      temRazaoSocialOuEquivalente(extraidos)
     ) {
       continue;
     }
@@ -288,15 +344,23 @@ Deno.serve(async (req) => {
     const { b64, mime } = await downloadAsBase64(supabase, path);
     const systemPrompt = buildSystemPrompt(doc.tipo_documento, cliente);
 
+    // PDFs nativos (sobretudo da Receita Federal) frequentemente vinham
+    // como image_url com mime application/pdf e produziam extração VAZIA.
+    // Estratégia atual: usar o modelo `gemini-2.5-pro` para PDFs, que
+    // possui suporte robusto a PDF nativo. Para imagens, manter o flash.
+    const isPdf = mime === "application/pdf" || /\.pdf$/i.test(path);
+    const modelo = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: modelo,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: [
-            { type: "text", text: "Analise este documento e chame validar_documento." },
+            { type: "text", text: isPdf
+                ? "Este é um PDF nativo (provavelmente emitido por órgão público como Receita Federal). LEIA o conteúdo textual do PDF e extraia TODOS os campos solicitados. Em seguida chame validar_documento."
+                : "Analise este documento e chame validar_documento." },
             { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
           ]},
         ],
@@ -330,6 +394,49 @@ Deno.serve(async (req) => {
     let parsed: any;
     try { parsed = JSON.parse(args); }
     catch { return json({ error: "Falha ao parsear resposta IA" }, 500); }
+
+    // ===== GUARDA: extração vazia =====
+    // Se a IA retornou tool_call mas sem nada de útil (campos_extraidos vazio,
+    // sem divergências, sem motivo concreto), NÃO podemos marcar como
+    // inválido: o mais provável é que o modelo não conseguiu ler o arquivo
+    // (ex.: PDF nativo da RF). Nesses casos vai para revisão humana.
+    if (!extraiuAlgo(parsed)) {
+      const motivoTec = "Não foi possível ler automaticamente o arquivo. Revisão manual necessária.";
+      await supabase.from("qa_processo_documentos")
+        .update({
+          status: "revisao_humana",
+          motivo_rejeicao: null, // não é falha do cliente
+          validacao_ia_status: "revisao_humana",
+          validacao_ia_erro: motivoTec,
+          validacao_ia_confianca: null,
+          validacao_ia_modelo: modelo,
+          data_validacao: new Date().toISOString(),
+          dados_extraidos_json: parsed?.campos_extraidos ?? {},
+        })
+        .eq("id", documento_id);
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id, documento_id,
+        tipo_evento: "validacao_ia_revisao_humana",
+        descricao: `IA não conseguiu interpretar ${doc.nome_documento}. Encaminhado para revisão manual da Equipe Quero Armas.`,
+        dados_json: { motivo_tecnico: motivoTec, modelo, mime, tipo_documento: doc.tipo_documento },
+        ator: "ia",
+      });
+      try {
+        await supabase.functions.invoke("qa-processo-notificar", {
+          body: { processo_id, documento_id, evento: "revisao_humana" },
+        });
+      } catch (e) { console.warn("[validar-ia] notificação revisao_humana falhou:", e); }
+      return json({
+        success: true,
+        status: "revisao_humana",
+        aceito: false,
+        motivo_rejeicao: null,
+        motivo_tecnico: motivoTec,
+        erros: [],
+        campos_extraidos: parsed?.campos_extraidos ?? {},
+        validacao: parsed,
+      });
+    }
 
     // ===== FASE 2: tratamento de comprovante em nome de TERCEIRO =====
     // Se a IA detectou que o titular não é o cliente, NÃO é divergência:
@@ -489,7 +596,7 @@ Deno.serve(async (req) => {
         validacao_ia_status: "concluido",
         validacao_ia_erro: null,
         validacao_ia_confianca: conf,
-        validacao_ia_modelo: "google/gemini-2.5-flash",
+        validacao_ia_modelo: modelo,
         data_validacao: new Date().toISOString(),
         data_validade: dataValidade,
         // Novos campos aditivos (Fase 1)
