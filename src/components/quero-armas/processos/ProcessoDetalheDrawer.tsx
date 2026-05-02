@@ -1331,6 +1331,29 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             >
                               <Download className="h-3 w-3" /> BAIXAR
                             </button>
+                            {/* Validador GOV.BR / ICP-Brasil — só p/ docs que exigem assinatura digital */}
+                            {tiposExigemAssinaturaGov(doc.tipo_documento) && (
+                              <>
+                                <button
+                                  onClick={() => validarAssinaturaGov(doc)}
+                                  disabled={validandoAssinaturaId === doc.id}
+                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                                  title="Valida a assinatura digital GOV.BR/ICP-Brasil embutida no PDF"
+                                >
+                                  <FileSignature className={`h-3 w-3 ${validandoAssinaturaId === doc.id ? "animate-pulse" : ""}`} />
+                                  {validandoAssinaturaId === doc.id ? "VALIDANDO..." : "VALIDAR ASSINATURA GOV.BR"}
+                                </button>
+                                <a
+                                  href="https://validar.iti.gov.br/"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 text-[11px] uppercase tracking-wider font-bold text-indigo-700 hover:bg-indigo-100"
+                                  title="Abre o validador oficial do ITI (gov.br) em nova aba"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> VALIDAR NO ITI OFICIAL
+                                </a>
+                              </>
+                            )}
                           </>
                         )}
 
