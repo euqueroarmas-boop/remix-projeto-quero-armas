@@ -9,8 +9,9 @@ type: constraint
 **Como aplicar:**
 - Sempre usar `DocumentoViewerModal` (`@/components/quero-armas/DocumentoViewerModal`) com o hook `useDocumentoViewer()`.
 - O componente baixa o arquivo via `supabase.storage.download` (ou `fetch` autenticado) e renderiza com `URL.createObjectURL(blob)` dentro de um Dialog.
+- **PDFs SEMPRE renderizados em `<canvas>` via `pdfjs-dist`**, nunca via `<object>`/`<iframe>`/`<embed>`. O viewer nativo do Edge é frequentemente bloqueado ("Esta página foi bloqueada pelo Microsoft Edge") e o PDF.js elimina essa categoria de incidente.
 - Revoga o object URL ao fechar.
-- Suporta PDF (`<object>` + `<iframe>`), imagens (`<img>`) e fallback de download para outros formatos.
+- Suporta PDF (canvas PDF.js com paginação e zoom), imagens (`<img>`) e fallback de download para outros formatos.
 
 **Por quê:** Equipe Quero Armas exige que toda navegação fique em `https://www.euqueroarmas.com.br`. Nada de `supabase.co/storage/...` ou `supabase.co/functions/...` visível ao usuário.
 
