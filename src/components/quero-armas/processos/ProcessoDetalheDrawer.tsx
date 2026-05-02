@@ -1222,6 +1222,36 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {/* SELETOR DE CONDIÇÃO PROFISSIONAL — etapa 2.
+                          O placeholder "renda_definir_condicao" é o item
+                          do checklist que substitui o antigo card fixo. */}
+                      {doc.tipo_documento === "renda_definir_condicao" && (
+                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-3">
+                          <div className="text-[10px] uppercase tracking-wider font-bold text-amber-800 mb-2">
+                            SELECIONE A CONDIÇÃO PROFISSIONAL DO TITULAR
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {CONDICAO_OPCOES.map((op) => {
+                              const carregando = savingCond === op.id;
+                              return (
+                                <button
+                                  key={op.id}
+                                  disabled={!!savingCond}
+                                  onClick={() => setCondicao(op.id)}
+                                  className="text-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 px-3 py-2 transition flex flex-col items-center justify-center"
+                                >
+                                  <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800">{op.label}</div>
+                                  <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{op.hint}</div>
+                                  {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1">SALVANDO...</div>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 text-[10px] uppercase tracking-wider text-amber-800/80">
+                            APÓS A SELEÇÃO, OS COMPROVANTES DE RENDA CORRETOS SERÃO LIBERADOS AUTOMATICAMENTE.
+                          </div>
+                        </div>
+                      )}
                       {/* Resultado da validação de assinatura GOV.BR / ICP-Brasil */}
                       {exigeAssinaturaGovBr && doc.assinatura_status && (
                         <div
