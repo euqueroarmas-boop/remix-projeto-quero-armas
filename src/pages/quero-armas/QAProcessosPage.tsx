@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, FileStack, RefreshCw, Filter, ChevronRight, FileText, AlertTriangle, CheckCircle, Clock, Sparkles, Eye, Upload, XCircle, User as UserIcon, Calendar } from "lucide-react";
+import { Search, FileStack, RefreshCw, Filter, ChevronRight, FileText, AlertTriangle, CheckCircle, Clock, Sparkles, Eye, Upload, XCircle, User as UserIcon, Calendar, Timer } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDate, formatDateTime, STATUS_PROCESSO } from "@/components/quero-armas/processos/processoConstants";
 import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/ProcessoDetalheDrawer";
 import { computeChecklistMetrics } from "@/lib/quero-armas/checklistMetrics";
@@ -16,8 +16,35 @@ interface ProcessoRow {
   data_criacao: string;
   updated_at: string;
   observacoes_admin: string | null;
+  prazo_critico_data: string | null;
+  etapa_liberada_ate: number | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
   contadores?: { total: number; cumpridos: number; pendentes: number; emAnalise: number; outros: number };
+}
+
+const ETAPA_LABEL: Record<number, string> = {
+  1: "ENDEREÇO",
+  2: "ANTECEDENTES",
+  3: "DECLARAÇÕES",
+  4: "LAUDOS",
+};
+
+function diasAteData(d: string | null): number | null {
+  if (!d) return null;
+  const t = new Date(`${d}T00:00:00`).getTime();
+  if (Number.isNaN(t)) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.floor((t - today.getTime()) / 86400000);
+}
+
+function prazoTone(dias: number | null) {
+  if (dias === null) return { bg: "bg-slate-100", text: "text-slate-500", label: "—" };
+  if (dias < 0) return { bg: "bg-red-600", text: "text-white", label: `VENCIDO ${Math.abs(dias)}D` };
+  if (dias <= 3) return { bg: "bg-red-500", text: "text-white", label: `${dias}D` };
+  if (dias <= 7) return { bg: "bg-orange-500", text: "text-white", label: `${dias}D` };
+  if (dias <= 30) return { bg: "bg-amber-500", text: "text-white", label: `${dias}D` };
+  return { bg: "bg-emerald-600", text: "text-white", label: `${dias}D` };
 }
 
 export default function QAProcessosPage() {
@@ -25,6 +52,7 @@ export default function QAProcessosPage() {
   const [processos, setProcessos] = useState<ProcessoRow[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [prazoFilter, setPrazoFilter] = useState<"todos" | "vencidos" | "7d" | "30d">("todos");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
@@ -32,7 +60,7 @@ export default function QAProcessosPage() {
     try {
       const { data: procs, error } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, servico_id, status, pagamento_status, data_criacao, updated_at, observacoes_admin")
+        .select("id, cliente_id, servico_nome, servico_id, status, pagamento_status, data_criacao, updated_at, observacoes_admin, prazo_critico_data, etapa_liberada_ate")
         .order("updated_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -77,6 +105,13 @@ export default function QAProcessosPage() {
     const s = search.trim().toLowerCase();
     return processos.filter((p) => {
       if (statusFilter !== "todos" && p.status !== statusFilter) return false;
+      if (prazoFilter !== "todos") {
+        const dias = diasAteData(p.prazo_critico_data);
+        if (dias === null) return false;
+        if (prazoFilter === "vencidos" && dias >= 0) return false;
+        if (prazoFilter === "7d" && (dias < 0 || dias > 7)) return false;
+        if (prazoFilter === "30d" && (dias < 0 || dias > 30)) return false;
+      }
       if (!s) return true;
       return (
         p.cliente?.nome_completo?.toLowerCase().includes(s) ||
@@ -85,7 +120,7 @@ export default function QAProcessosPage() {
         p.id.includes(s)
       );
     });
-  }, [processos, search, statusFilter]);
+  }, [processos, search, statusFilter, prazoFilter]);
 
   const kpis = useMemo(() => {
     const total = processos.length;
@@ -93,7 +128,17 @@ export default function QAProcessosPage() {
     const revisao = processos.filter((p) => p.status === "em_revisao_humana").length;
     const aprovados = processos.filter((p) => p.status === "aprovado" || p.status === "concluido" || p.status === "em_andamento").length;
     const bloqueados = processos.filter((p) => p.status === "bloqueado").length;
-    return { total, pendentes, revisao, aprovados, bloqueados };
+    let vencidos = 0;
+    let risco7 = 0;
+    let risco30 = 0;
+    for (const p of processos) {
+      const d = diasAteData(p.prazo_critico_data);
+      if (d === null) continue;
+      if (d < 0) vencidos++;
+      else if (d <= 7) risco7++;
+      else if (d <= 30) risco30++;
+    }
+    return { total, pendentes, revisao, aprovados, bloqueados, vencidos, risco7, risco30 };
   }, [processos]);
 
   return (
@@ -115,6 +160,31 @@ export default function QAProcessosPage() {
         <KpiCard label="REVISÃO HUMANA" value={kpis.revisao} color="#0EA5E9" icon={<Eye className="h-4 w-4" />} />
         <KpiCard label="APROVADOS / EM CURSO" value={kpis.aprovados} color="#10B981" icon={<CheckCircle className="h-4 w-4" />} />
         <KpiCard label="BLOQUEADOS" value={kpis.bloqueados} color="#EF4444" icon={<XCircle className="h-4 w-4" />} />
+      </div>
+
+      {/* Matriz de prazos */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <PrazoKpi
+          label="DOCS VENCIDOS"
+          value={kpis.vencidos}
+          color="#dc2626"
+          active={prazoFilter === "vencidos"}
+          onClick={() => setPrazoFilter(prazoFilter === "vencidos" ? "todos" : "vencidos")}
+        />
+        <PrazoKpi
+          label="EM RISCO ≤ 7 DIAS"
+          value={kpis.risco7}
+          color="#ea580c"
+          active={prazoFilter === "7d"}
+          onClick={() => setPrazoFilter(prazoFilter === "7d" ? "todos" : "7d")}
+        />
+        <PrazoKpi
+          label="ATENÇÃO ≤ 30 DIAS"
+          value={kpis.risco30}
+          color="#f59e0b"
+          active={prazoFilter === "30d"}
+          onClick={() => setPrazoFilter(prazoFilter === "30d" ? "todos" : "30d")}
+        />
       </div>
 
       {/* Filtros */}
@@ -141,6 +211,19 @@ export default function QAProcessosPage() {
             ))}
           </select>
         </div>
+        <div className="flex items-center gap-1.5">
+          <Timer className="h-3.5 w-3.5 text-slate-400" />
+          <select
+            value={prazoFilter}
+            onChange={(e) => setPrazoFilter(e.target.value as any)}
+            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          >
+            <option value="todos">TODOS OS PRAZOS</option>
+            <option value="vencidos">SOMENTE VENCIDOS</option>
+            <option value="7d">EM RISCO ≤ 7D</option>
+            <option value="30d">ATENÇÃO ≤ 30D</option>
+          </select>
+        </div>
       </div>
 
       {/* Tabela */}
@@ -157,6 +240,8 @@ export default function QAProcessosPage() {
                   <th className="text-left px-4 py-3">CLIENTE</th>
                   <th className="text-left px-4 py-3">SERVIÇO</th>
                   <th className="text-left px-4 py-3">STATUS</th>
+                  <th className="text-left px-4 py-3">ETAPA</th>
+                  <th className="text-left px-4 py-3">PRAZO CRÍTICO</th>
                   <th className="text-left px-4 py-3">DOCUMENTOS</th>
                   <th className="text-left px-4 py-3">CRIADO</th>
                   <th className="text-right px-4 py-3"></th>
@@ -166,6 +251,9 @@ export default function QAProcessosPage() {
                 {filtered.map((p) => {
                   const st = getStatusProcesso(p.status);
                   const c = p.contadores ?? { total: 0, cumpridos: 0, pendentes: 0, emAnalise: 0, outros: 0 };
+                  const dias = diasAteData(p.prazo_critico_data);
+                  const tone = prazoTone(dias);
+                  const etapa = Math.max(1, Math.min(4, p.etapa_liberada_ate ?? 1));
                   return (
                     <tr key={p.id} onClick={() => setSelectedId(p.id)} className="border-b border-slate-100 hover:bg-slate-50/60 cursor-pointer">
                       <td className="px-4 py-3">
@@ -177,6 +265,23 @@ export default function QAProcessosPage() {
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${st.bg} ${st.text} border ${st.border}`}>
                           {st.label}
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                          {etapa}/4 · {ETAPA_LABEL[etapa]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {p.prazo_critico_data ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${tone.bg} ${tone.text}`}>
+                              {tone.label}
+                            </span>
+                            <span className="text-[10px] text-slate-500">{formatDate(p.prazo_critico_data)}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] uppercase text-slate-400">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase">
@@ -215,6 +320,26 @@ function KpiCard({ label, value, color, icon }: { label: string; value: number; 
       </div>
       <div className="text-2xl font-bold mt-2" style={{ color }}>{value}</div>
     </div>
+  );
+}
+
+function PrazoKpi({ label, value, color, active, onClick }: { label: string; value: number; color: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left bg-white border rounded-xl p-4 transition hover:shadow-sm ${active ? "ring-2" : "border-slate-200"}`}
+      style={active ? { borderColor: color, boxShadow: `0 0 0 2px ${color}20` } : undefined}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">{label}</span>
+        <Timer className="h-4 w-4" style={{ color }} />
+      </div>
+      <div className="text-2xl font-bold mt-2" style={{ color }}>{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-slate-400 mt-1">
+        {active ? "FILTRO ATIVO · CLIQUE PARA LIMPAR" : "CLIQUE PARA FILTRAR"}
+      </div>
+    </button>
   );
 }
 

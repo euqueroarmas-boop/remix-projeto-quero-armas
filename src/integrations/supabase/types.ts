@@ -6507,6 +6507,44 @@ export type Database = {
           },
         ]
       }
+      qa_processos_alertas_enviados: {
+        Row: {
+          canal: string
+          cliente_id: number | null
+          created_at: string
+          id: string
+          marco_dias: number
+          prazo_data: string | null
+          processo_id: string
+        }
+        Insert: {
+          canal: string
+          cliente_id?: number | null
+          created_at?: string
+          id?: string
+          marco_dias: number
+          prazo_data?: string | null
+          processo_id: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number | null
+          created_at?: string
+          id?: string
+          marco_dias?: number
+          prazo_data?: string | null
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processos_alertas_enviados_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_referencias_preferenciais: {
         Row: {
           ativo: boolean | null
