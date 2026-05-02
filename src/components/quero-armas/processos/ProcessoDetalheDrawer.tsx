@@ -668,9 +668,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 onSelect={setCondicao}
               />
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
-              {docs
-                .filter((doc) => doc.tipo_documento !== "renda_definir_condicao")
-                .map((doc) => {
+              {/* Resumo de exigências */}
+              {totalExigencias > 0 && (
+                <div className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-wider font-bold">
+                  <span className="text-slate-500">EXIGÊNCIAS DOCUMENTAIS:</span>
+                  <span className="text-emerald-700">{cumpridos} CUMPRIDAS</span>
+                  <span className="text-amber-700">{docsPendencias.length} PENDENTES DO CLIENTE</span>
+                  <span className="text-sky-700">{docsAnalise.length} EM ANÁLISE</span>
+                  <span className="text-slate-400">TOTAL {totalExigencias}</span>
+                </div>
+              )}
+              {(() => {
+                const renderDoc = (doc: DocRow) => {
                 const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                 const labelBotao: string | null = (doc.regra_validacao && typeof doc.regra_validacao === "object" && typeof doc.regra_validacao.label_botao === "string")
                   ? doc.regra_validacao.label_botao : null;
