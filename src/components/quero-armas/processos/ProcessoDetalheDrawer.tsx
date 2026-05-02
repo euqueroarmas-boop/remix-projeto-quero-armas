@@ -1710,6 +1710,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             <XCircle className="h-3 w-3" /> REJEITAR
                           </button>
                         )}
+                        {equipeMode && doc.tipo_documento === "comprovante_endereco_revisao_ano" && doc.arquivo_storage_key && (
+                          <button
+                            onClick={() => definirAnoEndereco(doc)}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-amber-600 hover:bg-amber-700"
+                            title="Mover este comprovante para o slot do ano correto"
+                          >
+                            <CalendarClock className="h-3 w-3" /> DEFINIR ANO
+                          </button>
+                        )}
                         {equipeMode && doc.arquivo_storage_key && (
                           <button
                             onClick={() => reprocessarIA(doc)}
