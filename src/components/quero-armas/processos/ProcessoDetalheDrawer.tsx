@@ -551,12 +551,32 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const st = processo ? getStatusProcesso(processo.status) : null;
   const aguardandoPagto = processo?.pagamento_status === "aguardando";
-  const totalObrig = docs.filter((d) => d.obrigatorio).length;
-  // Obrigatório satisfeito = aprovado OU dispensado_grupo (grupo alternativo já satisfeito por outro doc)
-  const aprovObrig = docs.filter(
-    (d) => d.obrigatorio && (d.status === "aprovado" || d.status === "dispensado_grupo")
-  ).length;
-  const progresso = totalObrig > 0 ? Math.round((aprovObrig / totalObrig) * 100) : 0;
+
+  // ============================================================================
+  // PROGRESSO DOCUMENTAL — fonte única de verdade
+  // Considera TODOS os documentos exigidos no checklist (obrigatórios e
+  // complementares), não apenas a condição profissional. O item técnico
+  // "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
+  // Cumprido = aprovado OU dispensado_grupo (grupo alternativo satisfeito,
+  // o que cobre também o caso de documento substituto formal aceito).
+  // Em análise / pendente / inválido / divergente / revisão NÃO contam.
+  // ============================================================================
+  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao");
+  const totalExigencias = docsChecklist.length;
+  const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
+  const isEmAnalise = (d: DocRow) =>
+    d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
+  const isPendenciaCliente = (d: DocRow) =>
+    d.status === "pendente" || d.status === "invalido" || d.status === "divergente";
+  const cumpridos = docsChecklist.filter(isCumprido).length;
+  const progresso = totalExigencias > 0 ? Math.round((cumpridos / totalExigencias) * 100) : 0;
+
+  const docsPendencias = docsChecklist.filter(isPendenciaCliente);
+  const docsAnalise = docsChecklist.filter(isEmAnalise);
+  const docsCumpridos = docsChecklist.filter(isCumprido);
+  const docsOutros = docsChecklist.filter(
+    (d) => !isCumprido(d) && !isEmAnalise(d) && !isPendenciaCliente(d)
+  ); // fallback defensivo (status novos/desconhecidos)
 
   return (
     <div className="fixed inset-0 z-50 flex">
