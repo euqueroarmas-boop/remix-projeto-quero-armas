@@ -522,7 +522,7 @@ Deno.serve(async (req) => {
                 : `Erro IA: ${errBody}`;
       // Em falha de IA: marcar para revisão humana, NUNCA aprovar
       await supabase.from("qa_processo_documentos")
-        .update({ validacao_ia_status: "erro", validacao_ia_erro: msg, status: "revisao_humana" })
+        .update({ validacao_ia_status: "erro", validacao_ia_erro: msg, status: "revisao_humana", decisao_ia: "erro" })
         .eq("id", documento_id);
       return json({ error: msg }, status);
     }
@@ -531,7 +531,7 @@ Deno.serve(async (req) => {
     const args = aiJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!args) {
       await supabase.from("qa_processo_documentos")
-        .update({ validacao_ia_status: "erro", validacao_ia_erro: "IA não retornou tool_call", status: "revisao_humana" })
+        .update({ validacao_ia_status: "erro", validacao_ia_erro: "IA não retornou tool_call", status: "revisao_humana", decisao_ia: "erro" })
         .eq("id", documento_id);
       return json({ error: "IA não retornou validação estruturada" }, 500);
     }
