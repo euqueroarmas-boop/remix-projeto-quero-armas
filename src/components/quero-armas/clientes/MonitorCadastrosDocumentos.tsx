@@ -213,6 +213,9 @@ export default function MonitorCadastrosDocumentos() {
   const [acaoLoadingId, setAcaoLoadingId] = useState<string | null>(null);
   const [modalAcao, setModalAcao] = useState<{ doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null>(null);
   const viewer = useDocumentoViewer();
+  // Documento atualmente aberto no viewer (para ação "Aprovar como Modelo IA")
+  const [docNoViewer, setDocNoViewer] = useState<DocRow | null>(null);
+  const [aprovandoModeloViewer, setAprovandoModeloViewer] = useState(false);
 
   // -------------------------------------------------------------------------
   const carregar = async () => {
