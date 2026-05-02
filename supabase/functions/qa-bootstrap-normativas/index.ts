@@ -32,10 +32,58 @@ function chunkIt(text: string, size = 800, overlap = 150): string[] {
   return out;
 }
 
+function htmlToText(html: string): string {
+  let s = html.replace(/<script[\s\S]*?<\/script>/gi, "");
+  s = s.replace(/<style[\s\S]*?<\/style>/gi, "");
+  s = s.replace(/<nav[\s\S]*?<\/nav>/gi, "");
+  s = s.replace(/<header[\s\S]*?<\/header>/gi, "");
+  s = s.replace(/<footer[\s\S]*?<\/footer>/gi, "");
+  s = s.replace(/<aside[\s\S]*?<\/aside>/gi, "");
+  s = s.replace(/<[^>]+>/g, " ");
+  s = s.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&aacute;/gi, "á").replace(/&eacute;/gi, "é")
+    .replace(/&iacute;/gi, "í").replace(/&oacute;/gi, "ó")
+    .replace(/&uacute;/gi, "ú").replace(/&atilde;/gi, "ã")
+    .replace(/&otilde;/gi, "õ").replace(/&ccedil;/gi, "ç")
+    .replace(/&#\d+;/g, " ");
+  return sanitize(s);
+}
+
+const OFFICIAL_SOURCES: Array<{ id: string; url: string; titulo: string }> = [
+  { id: "e5f355f6-99c3-4bf4-b1e1-b3378c829420",
+    url: "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/decreto/d11615.htm",
+    titulo: "Decreto nº 11.615/2023" },
+  { id: "88414d12-0a97-42a3-b830-0289db455c26",
+    url: "https://www.gov.br/pf/pt-br/assuntos/armas/sinarm/normativos/in-201-2021-dg-pf.htm",
+    titulo: "Instrução Normativa nº 201/2021-DG/PF" },
+  { id: "86273684-2937-4855-aa33-70c0f76f1b2a",
+    url: "https://www.gov.br/pf/pt-br/assuntos/armas/sinarm/normativos/in-311-2025-dg-pf.htm",
+    titulo: "Instrução Normativa DG/PF nº 311/2025" },
+];
+
+async function fetchAndUpdateNorma(supabase: any, n: { id: string; url: string; titulo: string }) {
+  const ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+  const r = await fetch(n.url, { headers: { "User-Agent": ua, "Accept": "text/html,*/*" } });
+  if (!r.ok) throw new Error(`HTTP ${r.status} ${n.url}`);
+  const html = await r.text();
+  const txt = htmlToText(html);
+  if (txt.length < 500) throw new Error(`Texto curto demais para ${n.titulo}: ${txt.length} chars`);
+  await supabase.from("qa_fontes_normativas").update({
+    texto_integral: txt,
+    ativa: true,
+    revisada_humanamente: true,
+    updated_at: new Date().toISOString(),
+  }).eq("id", n.id);
+  return { id: n.id, titulo: n.titulo, chars: txt.length };
+}
+
 /**
  * POST body:
  * {
  *   bootstrap_token: string (must match BOOTSTRAP_TOKEN env),
+ *   download_official?: boolean,  // baixa Decreto/IN201/IN311 das fontes oficiais
  *   normas?: [{ id, texto_integral }],
  *   anexos?: [{ titulo, descricao, categoria, texto, fonte_norma_id?, fname, mime_type }]
  * }
@@ -58,6 +106,18 @@ Deno.serve(async (req) => {
 
     const supabase = sb();
     const result: any = { normas_atualizadas: [], documentos_criados: [], errors: [] };
+
+    // 0. Modo download_official: baixa direto das fontes oficiais
+    if (body.download_official) {
+      for (const src of OFFICIAL_SOURCES) {
+        try {
+          const r = await fetchAndUpdateNorma(supabase, src);
+          result.normas_atualizadas.push(r);
+        } catch (e: any) {
+          result.errors.push({ tipo: "download", id: src.id, erro: e.message });
+        }
+      }
+    }
 
     // 1. Atualizar texto_integral em qa_fontes_normativas
     if (Array.isArray(body.normas)) {
