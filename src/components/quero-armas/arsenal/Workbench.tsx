@@ -38,6 +38,7 @@ interface Props {
   documents: DocCard[];
   ammoByCalibre: { calibre: string; quantidade: number }[];
   onSelectWeapon: (w: WorkbenchWeapon, info: WeaponInfo) => void;
+  headerAction?: React.ReactNode;
 }
 
 const toneClasses = {
