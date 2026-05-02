@@ -27,9 +27,10 @@ interface Props {
 
 const ETAPA_LABELS: Record<number, string> = {
   1: "ENDEREÇO",
-  2: "ANTECEDENTES",
-  3: "DECLARAÇÕES",
-  4: "EXAMES TÉCNICOS",
+  2: "CONDIÇÃO PROFISSIONAL",
+  3: "ANTECEDENTES",
+  4: "DECLARAÇÕES",
+  5: "EXAMES TÉCNICOS",
 };
 
 const diasRestantes = (d?: string | null): number | null => {
@@ -160,7 +161,7 @@ export function ClienteProcessosSection({ clienteId }: Props) {
         const aguardandoPagto = p.pagamento_status === "aguardando";
         const dias = diasRestantes(p.prazo_critico_data);
         const tonePr = prazoTone(dias);
-        const etapa = Math.max(1, Math.min(4, p.etapa_liberada_ate ?? 1));
+        const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
         return (
           <button
             key={p.id}
@@ -183,7 +184,7 @@ export function ClienteProcessosSection({ clienteId }: Props) {
                   )}
                   {!aguardandoPagto && (
                     <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                      ETAPA {etapa}/4 · {ETAPA_LABELS[etapa]}
+                      ETAPA {etapa}/5 · {ETAPA_LABELS[etapa]}
                     </span>
                   )}
                 </div>

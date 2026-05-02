@@ -22,9 +22,10 @@ const MARCOS = [30, 15, 7, 3, 0, -1];
 
 const ETAPA_LABEL: Record<number, string> = {
   1: "Comprovante de Endereço",
-  2: "Antecedentes Criminais",
-  3: "Declarações Assinadas",
-  4: "Laudos Técnicos",
+  2: "Condição Profissional",
+  3: "Antecedentes Criminais",
+  4: "Declarações Assinadas",
+  5: "Laudos Técnicos",
 };
 
 interface ProcessoRow {
@@ -142,7 +143,7 @@ serve(async (req) => {
         const nome = cliente.nome_completo || "Cliente";
         const servico = c.processo.servico_nome || "Processo";
         const etapa = c.processo.etapa_liberada_ate
-          ? ETAPA_LABEL[Math.max(1, Math.min(4, c.processo.etapa_liberada_ate))]
+          ? ETAPA_LABEL[Math.max(1, Math.min(5, c.processo.etapa_liberada_ate))]
           : "Documentação";
         const prazoStr = fmtBR(prazoData);
 

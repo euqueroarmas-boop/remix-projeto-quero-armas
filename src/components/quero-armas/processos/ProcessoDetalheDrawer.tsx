@@ -846,17 +846,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // O item técnico "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
   // ============================================================================
 
-  // LIBERAÇÃO POR ETAPAS:
-  // 1=endereco, 2=antecedentes, 3=declaracoes, 4=exames. Itens de outras
-  // categorias ("outros") sempre aparecem (etapa 1, fluxo herdado).
-  const etapaLiberada = Math.max(1, Math.min(4, processo?.etapa_liberada_ate ?? 1));
+  // LIBERAÇÃO POR ETAPAS (5 etapas — ordem definitiva):
+  // 1=endereco · 2=condicao_profissional · 3=antecedentes · 4=declaracoes · 5=exames
+  // Itens de outras categorias ("outros") aparecem na etapa 1 (fluxo herdado).
+  const etapaLiberada = Math.max(1, Math.min(5, processo?.etapa_liberada_ate ?? 1));
 
   const etapaDoTipo = (tipo: string): number => {
     const t = (tipo || "").toLowerCase();
-    if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
-    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
+    if (t === "renda_definir_condicao" || t.startsWith("renda_")) return 2;
+    if (t.startsWith("certidao") || t.includes("antecedentes")) return 3;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 5;
     if (t.includes("endereco") || t.includes("residenc")) return 1;
-    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
     return 1; // outros: sempre liberados
   };
 
@@ -873,14 +874,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     return e < etapaLiberada;
   };
 
+  // O placeholder "renda_definir_condicao" é parte LEGÍTIMA do checklist
+  // (etapa 2). Permanece visível enquanto a profissão não foi escolhida; ao
+  // ser definida, a edge function qa-processo-set-condicao remove o
+  // placeholder e cria os documentos reais de renda no lugar.
   const docsChecklist = docs.filter(
-    (d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d) && docVisivelPorEtapa(d),
+    (d) => itemVisivel(d) && docVisivelPorEtapa(d),
   );
 
   // Para o admin: lista TODAS as etapas + status de cada uma (para o painel
   // "Liberar próxima etapa"). Calculado a partir do conjunto completo de docs
   // (sem filtro por etapa liberada), mas respeitando questionário.
-  const docsTodos = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+  const docsTodos = docs.filter((d) => itemVisivel(d));
   const docsArquivados = docsTodos.filter(docDeEtapaAnteriorConcluida);
   const etapaResumo = (n: number) => {
     const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
@@ -888,12 +893,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
   };
   const etapaCompleta = etapaResumo(etapaLiberada).completo;
-  const proximaEtapa = etapaLiberada < 4 ? etapaLiberada + 1 : null;
+  const proximaEtapa = etapaLiberada < 5 ? etapaLiberada + 1 : null;
   const ETAPA_NOMES: Record<number, string> = {
     1: "COMPROVAÇÃO DE ENDEREÇO",
-    2: "ANTECEDENTES CRIMINAIS",
-    3: "DECLARAÇÕES E COMPROMISSOS",
-    4: "EXAMES TÉCNICOS",
+    2: "CONDIÇÃO PROFISSIONAL",
+    3: "ANTECEDENTES CRIMINAIS",
+    4: "DECLARAÇÕES E COMPROMISSOS",
+    5: "EXAMES TÉCNICOS",
   };
 
   const liberarProximaEtapa = async () => {
@@ -1030,7 +1036,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           <div className="px-5 py-3 border-b border-slate-200 bg-white space-y-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-1.5">
-                {[1, 2, 3, 4].map((n) => {
+                {[1, 2, 3, 4, 5].map((n) => {
                   const r = etapaResumo(n);
                   const liberada = n <= etapaLiberada;
                   const bg = !liberada ? "#E2E8F0" : r.completo ? "#16a34a" : n === etapaLiberada ? "#F59E0B" : "#94A3B8";
@@ -1042,12 +1048,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       >
                         {r.completo ? <CheckCircle className="h-3 w-3" /> : n}
                       </div>
-                      {n < 4 && <div className="w-3 h-px bg-slate-200" />}
+                      {n < 5 && <div className="w-3 h-px bg-slate-200" />}
                     </div>
                   );
                 })}
                 <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-slate-600">
-                  ETAPA {etapaLiberada}/4: {ETAPA_NOMES[etapaLiberada]}
+                  ETAPA {etapaLiberada}/5: {ETAPA_NOMES[etapaLiberada]}
                 </span>
               </div>
               {equipeMode && proximaEtapa && (
@@ -1123,16 +1129,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               </div>
             ) : (
             <div className="space-y-3">
-              <CondicaoProfissionalCard
-                condicao={processo?.condicao_profissional ?? null}
-                indefinida={
-                  !processo?.condicao_profissional ||
-                  processo.condicao_profissional === "indefinido" ||
-                  docs.some((d) => d.tipo_documento === "renda_definir_condicao")
-                }
-                saving={savingCond}
-                onSelect={setCondicao}
-              />
+              {/* Condição Profissional NÃO é card decorativo — é o item
+                  "renda_definir_condicao" da Etapa 2. Renderizado pelo
+                  fluxo normal de docsChecklist abaixo. */}
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
               {/* Resumo de exigências */}
               {totalExigencias > 0 && (
@@ -1223,6 +1222,36 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {/* SELETOR DE CONDIÇÃO PROFISSIONAL — etapa 2.
+                          O placeholder "renda_definir_condicao" é o item
+                          do checklist que substitui o antigo card fixo. */}
+                      {doc.tipo_documento === "renda_definir_condicao" && (
+                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-3">
+                          <div className="text-[10px] uppercase tracking-wider font-bold text-amber-800 mb-2">
+                            SELECIONE A CONDIÇÃO PROFISSIONAL DO TITULAR
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {CONDICAO_OPCOES.map((op) => {
+                              const carregando = savingCond === op.id;
+                              return (
+                                <button
+                                  key={op.id}
+                                  disabled={!!savingCond}
+                                  onClick={() => setCondicao(op.id)}
+                                  className="text-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 px-3 py-2 transition flex flex-col items-center justify-center"
+                                >
+                                  <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800">{op.label}</div>
+                                  <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{op.hint}</div>
+                                  {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1">SALVANDO...</div>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 text-[10px] uppercase tracking-wider text-amber-800/80">
+                            APÓS A SELEÇÃO, OS COMPROVANTES DE RENDA CORRETOS SERÃO LIBERADOS AUTOMATICAMENTE.
+                          </div>
+                        </div>
+                      )}
                       {/* Resultado da validação de assinatura GOV.BR / ICP-Brasil */}
                       {exigeAssinaturaGovBr && doc.assinatura_status && (
                         <div
@@ -1877,7 +1906,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           </span>
                         </summary>
                         <div className="border-t border-slate-200 p-3 space-y-4 bg-white">
-                          {[1, 2, 3].filter((n) => n < etapaLiberada).map((n) => {
+                          {[1, 2, 3, 4].filter((n) => n < etapaLiberada).map((n) => {
                             const lista = docsArquivados.filter((d) => etapaDoTipo(d.tipo_documento) === n);
                             if (lista.length === 0) return null;
                             return (
@@ -2184,56 +2213,6 @@ const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado" | 
   { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO", hint: "Carteira Funcional + Holerite" },
 ];
 
-function CondicaoProfissionalCard({
-  condicao,
-  indefinida,
-  saving,
-  onSelect,
-}: {
-  condicao: string | null;
-  indefinida: boolean;
-  saving: string | null;
-  onSelect: (c: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico") => void;
-}) {
-  const atual = (condicao || "").toLowerCase();
-  return (
-    <div className={`rounded-xl border p-4 shadow-sm ${indefinida ? "bg-white border-blue-200 ring-1 ring-blue-100" : "bg-white border-slate-200"}`}>
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">CONDIÇÃO PROFISSIONAL</div>
-          <div className="text-sm font-bold text-slate-800 uppercase mt-0.5">
-            {indefinida
-              ? "DEFINA SUA CONDIÇÃO PARA LIBERAR OS COMPROVANTES DE RENDA CORRETOS"
-              : `ATUAL: ${atual.toUpperCase()}`}
-          </div>
-          <div className="text-[11px] text-slate-600 mt-1">
-            Os documentos de renda são gerados automaticamente conforme sua escolha. Itens já aprovados são preservados.
-          </div>
-        </div>
-      </div>
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
-        {CONDICAO_OPCOES.map((op) => {
-          const ativo = atual === op.id;
-          const carregando = saving === op.id;
-          return (
-            <button
-              key={op.id}
-              disabled={!!saving}
-              onClick={() => onSelect(op.id)}
-              className={`text-center rounded-lg border px-3 py-2 transition flex flex-col items-center justify-center ${
-                ativo
-                  ? "bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
-              } disabled:opacity-50`}
-            >
-              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800 text-center">{op.label}</div>
-              <div className="text-[10px] text-slate-500 mt-0.5 leading-tight text-center">{op.hint}</div>
-              {ativo && <div className="text-[10px] uppercase font-bold text-emerald-700 mt-1 text-center">SELECIONADO</div>}
-              {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1 text-center">SALVANDO...</div>}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// CondicaoProfissionalCard foi removido — a condição profissional agora é
+// um item nativo do checklist (Etapa 2, tipo_documento "renda_definir_condicao").
+// O seletor inline vive dentro do renderDoc do drawer.
