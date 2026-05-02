@@ -999,7 +999,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
                           {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
                         </div>
-                        <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{doc.nome_documento}</div>
+                        <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}>
                         {ds.label}
@@ -1087,17 +1087,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* Fase 12 — Orientação ao cliente (apenas campos preenchidos) */}
                       {(doc.instrucoes || doc.observacoes_cliente) && (
-                        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
+                        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5 min-w-0 max-w-full overflow-hidden">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-blue-800">
                             <Info className="h-3 w-3" /> COMO OBTER ESTE DOCUMENTO
                           </div>
                           {doc.instrucoes && (
-                            <p className="mt-1 text-[12px] leading-relaxed text-blue-900/90 whitespace-pre-line">
+                            <p className="mt-1 text-[12px] leading-relaxed text-blue-900/90 whitespace-pre-line break-words [overflow-wrap:anywhere]">
                               {doc.instrucoes}
                             </p>
                           )}
                           {doc.observacoes_cliente && (
-                            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-900/80 italic">
+                            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-900/80 italic break-words [overflow-wrap:anywhere]">
                               {doc.observacoes_cliente}
                             </p>
                           )}
@@ -1270,11 +1270,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         const orient = compl?.orientacoes_cliente;
                         if (!orient || typeof orient !== "string" || orient.trim().length === 0) return null;
                         return (
-                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-900">
+                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-900 min-w-0 max-w-full overflow-hidden">
                             <div className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-amber-800">
                               <Info className="h-3 w-3" /> O QUE PRECISA CORRIGIR
                             </div>
-                            <p className="mt-1 leading-relaxed whitespace-pre-line">{orient}</p>
+                            <p className="mt-1 leading-relaxed whitespace-pre-line break-words [overflow-wrap:anywhere]">{orient}</p>
                           </div>
                         );
                       })()}
