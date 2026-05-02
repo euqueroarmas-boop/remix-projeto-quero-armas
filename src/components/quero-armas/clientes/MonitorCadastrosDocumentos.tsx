@@ -652,65 +652,94 @@ export default function MonitorCadastrosDocumentos() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <KpiCard icon={Users}        label="Cadastros aguardando"        value={kpiCadastros.aguardando}     t="yellow" />
-        <KpiCard icon={ShieldCheck}  label="Cadastros aprovados hoje"    value={kpiCadastros.aprovadosHoje}  t="green" />
-        <KpiCard icon={ShieldAlert}  label="Docs em análise humana"      value={counters.analiseHumana}      t="yellow" />
-        <KpiCard icon={Bot}          label="Docs aprovados pela IA"      value={counters.aprovadosIA}        t="green" />
-        <KpiCard icon={ShieldX}      label="Docs rejeitados pela IA"     value={counters.rejeitadosIA}       t="red" />
-        <KpiCard icon={ShieldCheck}  label="Aprovados pela Equipe"       value={counters.aprovadosEquipe}    t="green" />
-        <KpiCard icon={ShieldX}      label="Rejeitados pela Equipe"      value={counters.rejeitadosEquipe}   t="red" />
-        <KpiCard icon={BookOpen}     label="Modelos de aprendizado"      value={counters.modelosAtivos}      t="blue" />
-        <KpiCard icon={FileText}     label="Tipos monitorados"           value={counters.tiposMonitorados}   t="blue" />
-        <KpiCard icon={AlertTriangle} label="Pendências críticas"        value={counters.criticos}           t="red" />
-        <KpiCard icon={Brain}        label="Confiança média da IA"
+        <KpiCard icon={Users}         label="Cadastros aguardando"     value={kpiCadastros.aguardando}    t="yellow"
+          active={kpiAtiva === "cadastros_aguardando"} onClick={() => setKpiAtiva(kpiAtiva === "cadastros_aguardando" ? null : "cadastros_aguardando")} />
+        <KpiCard icon={ShieldCheck}   label="Cadastros aprovados hoje" value={kpiCadastros.aprovadosHoje} t="green"
+          active={kpiAtiva === "cadastros_aprov_hoje"}  onClick={() => setKpiAtiva(kpiAtiva === "cadastros_aprov_hoje"  ? null : "cadastros_aprov_hoje")} />
+        <KpiCard icon={ShieldAlert}   label="Docs em análise humana"   value={counters.analiseHumana}     t="yellow"
+          active={kpiAtiva === "docs_analise_humana"}   onClick={() => setKpiAtiva(kpiAtiva === "docs_analise_humana"   ? null : "docs_analise_humana")} />
+        <KpiCard icon={Bot}           label="Docs aprovados pela IA"   value={counters.aprovadosIA}       t="green"
+          active={kpiAtiva === "docs_aprovados_ia"}     onClick={() => setKpiAtiva(kpiAtiva === "docs_aprovados_ia"     ? null : "docs_aprovados_ia")} />
+        <KpiCard icon={ShieldX}       label="Docs rejeitados pela IA"  value={counters.rejeitadosIA}      t="red"
+          active={kpiAtiva === "docs_rejeitados_ia"}    onClick={() => setKpiAtiva(kpiAtiva === "docs_rejeitados_ia"    ? null : "docs_rejeitados_ia")} />
+        <KpiCard icon={ShieldCheck}   label="Aprovados pela Equipe"    value={counters.aprovadosEquipe}   t="green"
+          active={kpiAtiva === "docs_aprovados_equipe"} onClick={() => setKpiAtiva(kpiAtiva === "docs_aprovados_equipe" ? null : "docs_aprovados_equipe")} />
+        <KpiCard icon={ShieldX}       label="Rejeitados pela Equipe"   value={counters.rejeitadosEquipe}  t="red"
+          active={kpiAtiva === "docs_rejeitados_equipe"} onClick={() => setKpiAtiva(kpiAtiva === "docs_rejeitados_equipe" ? null : "docs_rejeitados_equipe")} />
+        <KpiCard icon={BookOpen}      label="Modelos de aprendizado"   value={counters.modelosAtivos}     t="blue"
+          active={kpiAtiva === "modelos_ativos"}        onClick={() => setKpiAtiva(kpiAtiva === "modelos_ativos"        ? null : "modelos_ativos")} />
+        <KpiCard icon={FileText}      label="Tipos monitorados"        value={counters.tiposMonitorados}  t="blue"
+          active={kpiAtiva === "tipos_monitorados"}     onClick={() => setKpiAtiva(kpiAtiva === "tipos_monitorados"     ? null : "tipos_monitorados")} />
+        <KpiCard icon={AlertTriangle} label="Pendências críticas"      value={counters.criticos}          t="red"
+          active={kpiAtiva === "pendencias_criticas"}   onClick={() => setKpiAtiva(kpiAtiva === "pendencias_criticas"   ? null : "pendencias_criticas")} />
+        <KpiCard icon={Brain}         label="Confiança média da IA"
           value={counters.comScore ? `${Math.round(counters.confiancaMedia * 100)}%` : 0}
-          t={counters.confiancaMedia >= 0.85 ? "green" : counters.confiancaMedia >= 0.6 ? "yellow" : "red"} />
+          t={counters.confiancaMedia >= 0.85 ? "green" : counters.confiancaMedia >= 0.6 ? "yellow" : "red"}
+          active={kpiAtiva === "confianca_media"}       onClick={() => setKpiAtiva(kpiAtiva === "confianca_media"       ? null : "confianca_media")} />
       </div>
 
       {/* Lista operacional */}
       <section className="bg-white border border-slate-200 rounded-xl">
         <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap">
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
-            Documentos <span className="text-slate-400">({lista.length})</span>
-          </h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={fStatus} onChange={(e) => setFStatus(e.target.value)}
-              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
-            >
-              <option value="pendentes_acao">Pendentes de ação</option>
-              <option value="todos">Todos</option>
-              <option value="analise_humana">Análise humana</option>
-              <option value="aprovados_auto">Aprovados (IA)</option>
-              <option value="aprovados_manual">Aprovados (Equipe)</option>
-              <option value="rejeitados_auto">Rejeitados (IA)</option>
-              <option value="rejeitados_manual">Rejeitados (Equipe)</option>
-              <option value="modelos">Modelos aprovados</option>
-            </select>
-            <select
-              value={fTipo} onChange={(e) => setFTipo(e.target.value)}
-              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
-            >
-              <option value="todos">Todos os tipos</option>
-              {tiposUnicos.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
-            </select>
-            <input
-              value={fCliente} onChange={(e) => setFCliente(e.target.value)}
-              placeholder="CLIENTE / CPF"
-              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 w-[180px]"
-            />
-            <label className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-600">
-              <Switch checked={fScoreBaixo} onCheckedChange={setFScoreBaixo} />
-              Score baixo
-            </label>
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
+              {kpiAtiva
+                ? <>Exibindo: <span className="text-slate-900">{KPI_LABEL[kpiAtiva]}</span> — <span className="text-slate-500">{totalLista} registro(s)</span></>
+                : <>Pendentes de ação <span className="text-slate-400">({totalLista})</span></>
+              }
+            </h3>
+            {kpiAtiva && (
+              <button
+                onClick={() => setKpiAtiva(null)}
+                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50"
+              >
+                <XIcon className="h-3 w-3" /> Limpar filtro
+              </button>
+            )}
           </div>
+          {modo === "docs" && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={fTipo} onChange={(e) => setFTipo(e.target.value)}
+                className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
+              >
+                <option value="todos">Todos os tipos</option>
+                {tiposUnicos.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
+              </select>
+              <input
+                value={fCliente} onChange={(e) => setFCliente(e.target.value)}
+                placeholder="CLIENTE / CPF"
+                className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 w-[180px]"
+              />
+              <label className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-600">
+                <Switch checked={fScoreBaixo} onCheckedChange={setFScoreBaixo} />
+                Score baixo
+              </label>
+            </div>
+          )}
         </header>
         {loading ? (
           <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
-        ) : lista.length === 0 ? (
+        ) : totalLista === 0 ? (
           <div className="p-8 text-center text-[11px] uppercase tracking-wider text-slate-400">
-            Nenhum documento pendente de ação.
+            Nenhum registro para o filtro atual.
           </div>
+        ) : modo === "cadastros_aguardando" || modo === "cadastros_aprov_hoje" ? (
+          <CadastrosTable
+            rows={modo === "cadastros_aguardando" ? cadastrosAguardando : cadastrosAprovHoje}
+            modo={modo}
+            aprovandoId={aprovandoCadId}
+            onAprovar={aprovarCadastro}
+            onAbrir={abrirCadastro}
+          />
+        ) : modo === "modelos" ? (
+          <ModelosTable
+            rows={modelosDetalhe.filter(m => m.ativo)}
+            onAbrirOrigem={abrirDocOrigem}
+            onDesativar={desativarModelo}
+          />
+        ) : modo === "tipos" ? (
+          <TiposTable rows={configs} onConfigurar={() => setOpenConfig(true)} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
@@ -728,7 +757,7 @@ export default function MonitorCadastrosDocumentos() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {lista.map(d => (
+                {docsFiltrados.map(d => (
                   <tr key={d.id} className="hover:bg-slate-50">
                     <td className="px-3 py-2 align-top">
                       <div className="font-bold text-slate-900 uppercase">{d.cliente_nome ?? "—"}</div>
