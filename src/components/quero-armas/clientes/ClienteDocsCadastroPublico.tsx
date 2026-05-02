@@ -88,8 +88,6 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
     },
   });
 
-  const [opening, setOpening] = useState<string | null>(null);
-
   function handleOpen(path: string) {
     const fileName = path.split("/").pop() || "documento";
     viewer.abrirStorage(BUCKET, path, { fileName, title: fileName });
@@ -157,17 +155,10 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
                 variant="outline"
                 className="h-7 px-2 text-[10px] shrink-0"
                 onClick={() => handleOpen(path)}
-                disabled={opening === path}
                 title="Visualizar / baixar"
               >
-                {opening === path ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <>
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Visualizar
-                  </>
-                )}
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Visualizar
               </Button>
             </div>
           );
@@ -178,6 +169,12 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
         Estes arquivos vieram do formulário público de cadastro e ficam preservados como evidência.
         Para o fluxo de aprovação (CR, CRAF, GT/GTE, AC) use o Hub do Cliente abaixo.
       </p>
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }
