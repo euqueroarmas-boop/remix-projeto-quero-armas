@@ -437,6 +437,43 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     }
   };
 
+  // ============================================================================
+  // Slice 2.2 — Definir ano de competência para comprovante "em revisão"
+  // ============================================================================
+  const definirAnoEndereco = async (doc: DocRow) => {
+    const anoAtual = new Date().getFullYear();
+    const minAno = anoAtual - 4;
+    const raw = window.prompt(
+      `DEFINIR ANO DE COMPETÊNCIA do comprovante de endereço.\n\n` +
+      `Informe um ano entre ${minAno} e ${anoAtual}:`,
+      String(anoAtual),
+    );
+    if (!raw) return;
+    const ano = Number(raw.trim());
+    if (!Number.isFinite(ano) || ano < minAno || ano > anoAtual) {
+      toast.error(`Ano inválido. Permitido: ${minAno} a ${anoAtual}.`);
+      return;
+    }
+    try {
+      const { data, error } = await supabase.rpc("qa_mover_endereco_revisao_para_ano" as any, {
+        p_doc_revisao_id: doc.id,
+        p_ano: ano,
+      });
+      if (error) throw error;
+      toast.success(`Comprovante movido para o slot do ano ${ano}.`);
+      await carregar();
+      onUpdated?.();
+      void data;
+    } catch (e: any) {
+      const msg = e?.message || "desconhecido";
+      if (msg.includes("já está preenchido")) {
+        toast.error(`Slot do ano ${ano} já está preenchido. Escolha outro ano.`);
+      } else {
+        toast.error("Erro ao definir ano: " + msg);
+      }
+    }
+  };
+
   const baixarArquivo = async (key: string | null, modo: "visualizar" | "baixar" = "visualizar") => {
     if (!key) return;
     const fileName = key.split("/").pop() || "documento";
