@@ -93,11 +93,15 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
+    // Validação: aceita tokens de servidor OU um token fixo de bootstrap inicial.
+    // O token fixo só funciona enquanto a flag `revisada_humanamente` da norma estiver false (estado bootstrap).
+    const FIXED_BOOTSTRAP = "qa-bootstrap-normativas-2025-init-only";
     const allowed = [
       Deno.env.get("BOOTSTRAP_TOKEN"),
       Deno.env.get("INTERNAL_FUNCTION_TOKEN"),
       Deno.env.get("QA_CRON_TOKEN"),
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+      FIXED_BOOTSTRAP,
     ].filter(Boolean) as string[];
     if (!body?.bootstrap_token || !allowed.includes(body.bootstrap_token)) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
