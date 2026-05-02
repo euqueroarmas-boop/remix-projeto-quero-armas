@@ -21,7 +21,7 @@ const TIPO_LABEL: Record<string, string> = {
   craf: "CRAF (SIGMA)",
   sinarm: "SINARM (PF)",
   gt: "GT — Guia de Tráfego",
-  gte: "GTE — Guia de Tráfego Eventual",
+  gte: "GTE — Guia de Tráfego Especial",
   autorizacao_compra: "AC — Autorização de Compra",
   outro: "Outro Documento",
 };
