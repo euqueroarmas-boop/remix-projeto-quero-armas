@@ -77,11 +77,27 @@ interface Props {
   onUpdated?: () => void;
 }
 
+// Pseudo-documentos derivados do CADASTRO PÚBLICO do cliente.
+// Não vivem em qa_processo_documentos — são apenas exibidos como
+// EXIGÊNCIAS CUMPRIDAS no checklist e somam no % de progresso, para que o
+// cliente veja TODOS os documentos enviados em um único hub e enxergue o
+// real avanço do processo.
+interface CadastroPublicoDocs {
+  id: string;
+  selfie_path: string | null;
+  documento_identidade_path: string | null;
+  comprovante_endereco_path: string | null;
+  created_at: string | null;
+}
+
+const CADASTRO_PUB_BUCKET = "qa-cadastro-selfies";
+
 export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose, onUpdated }: Props) {
   const [loading, setLoading] = useState(true);
   const [processo, setProcesso] = useState<ProcessoFull | null>(null);
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
+  const [cadastroPublico, setCadastroPublico] = useState<CadastroPublicoDocs | null>(null);
   const [tab, setTab] = useState<"checklist" | "historico" | "equipe">("checklist");
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -115,6 +131,37 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       setProcesso({ ...p, cliente: cli ?? undefined });
       setDocs((dList ?? []) as DocRow[]);
       setEventos((evs ?? []) as Evento[]);
+
+      // Carrega documentos do CADASTRO PÚBLICO do cliente (selfie / identidade /
+      // endereço). Eles passam a contar no % e aparecem como CUMPRIDOS no
+      // checklist — concentrando todos os arquivos do cliente em um só lugar.
+      try {
+        const cliRow: any = cli;
+        const cadPubId: string | null = cliRow?.cadastro_publico_id ?? null;
+        let cadPub: any = null;
+        if (cadPubId) {
+          const { data } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("id, selfie_path, documento_identidade_path, comprovante_endereco_path, created_at")
+            .eq("id", cadPubId)
+            .maybeSingle();
+          cadPub = data;
+        }
+        if (!cadPub) {
+          const { data } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("id, selfie_path, documento_identidade_path, comprovante_endereco_path, created_at")
+            .eq("cliente_id_vinculado", p.cliente_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          cadPub = data;
+        }
+        setCadastroPublico((cadPub as CadastroPublicoDocs) ?? null);
+      } catch (e) {
+        console.warn("[drawer] falha ao carregar cadastro público:", e);
+        setCadastroPublico(null);
+      }
     } catch (e: any) {
       toast.error("Erro ao carregar processo: " + (e?.message ?? "desconhecido"));
     } finally {
