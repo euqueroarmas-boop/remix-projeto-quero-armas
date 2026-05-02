@@ -59,6 +59,7 @@ interface ProcessoFull {
   data_criacao: string;
   observacoes_admin: string | null;
   condicao_profissional?: string | null;
+  respostas_questionario_json?: Record<string, string> | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
