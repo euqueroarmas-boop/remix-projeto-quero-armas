@@ -59,6 +59,7 @@ interface ProcessoFull {
   data_criacao: string;
   observacoes_admin: string | null;
   condicao_profissional?: string | null;
+  respostas_questionario_json?: Record<string, string> | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
@@ -115,7 +116,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
@@ -128,7 +129,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       ]);
       if (dErr) throw dErr;
 
-      setProcesso({ ...p, cliente: cli ?? undefined });
+      setProcesso({ ...p, cliente: cli ?? undefined } as unknown as ProcessoFull);
       setDocs((dList ?? []) as DocRow[]);
       setEventos((evs ?? []) as Evento[]);
 
@@ -600,6 +601,122 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const aguardandoPagto = processo?.pagamento_status === "aguardando";
 
   // ============================================================================
+  // QUESTIONÁRIO CONDICIONAL — perguntas-pivot do checklist (CR e demais)
+  // Cada item com regra_validacao.tipo === "pergunta" cria uma chave em
+  // qa_processos.respostas_questionario_json. Outras regras dependem dela:
+  //   - exige_quando: { chave: valor } → item só conta no checklist se bater
+  //   - template_quando: [{ se:{...}, template_key, label }] → escolhe modelo
+  // ============================================================================
+  const respostas: Record<string, string> = (processo?.respostas_questionario_json ?? {}) as Record<string, string>;
+
+  const matchCondicao = (cond: Record<string, string> | undefined | null): boolean => {
+    if (!cond || typeof cond !== "object") return true;
+    return Object.entries(cond).every(([k, v]) => respostas[k] === v);
+  };
+
+  const pickTemplate = (rule: any): { key: string; label: string } | null => {
+    if (!rule || typeof rule !== "object") return null;
+    if (Array.isArray(rule.template_quando)) {
+      for (const opt of rule.template_quando) {
+        if (matchCondicao(opt?.se)) {
+          return { key: String(opt.template_key), label: String(opt.label || "BAIXAR MODELO PREENCHIDO") };
+        }
+      }
+      return null;
+    }
+    if (typeof rule.template_key === "string") {
+      return { key: rule.template_key, label: "BAIXAR MODELO PREENCHIDO" };
+    }
+    return null;
+  };
+
+  const isPergunta = (d: DocRow): boolean => {
+    const r = d.regra_validacao;
+    return !!(r && typeof r === "object" && r.tipo === "pergunta");
+  };
+
+  // Item visível no checklist? Respeita exige_quando E depende_de.
+  const itemVisivel = (d: DocRow): boolean => {
+    const r = d.regra_validacao;
+    if (!r || typeof r !== "object") return true;
+    if (r.depende_de && typeof r.depende_de === "object") {
+      const ok = respostas[r.depende_de.chave] === r.depende_de.valor;
+      if (!ok) return false;
+    }
+    if (r.exige_quando && typeof r.exige_quando === "object") {
+      return matchCondicao(r.exige_quando);
+    }
+    return true;
+  };
+
+  const [respondendoPerguntaId, setRespondendoPerguntaId] = useState<string | null>(null);
+  const [baixandoTemplateId, setBaixandoTemplateId] = useState<string | null>(null);
+
+  const responderPergunta = async (doc: DocRow, valor: string) => {
+    if (!processo) return;
+    setRespondendoPerguntaId(doc.id);
+    try {
+      const chave = (doc.regra_validacao as any)?.chave as string;
+      if (!chave) throw new Error("Pergunta sem chave configurada");
+      const novasRespostas = { ...respostas, [chave]: valor };
+      const { error: upErr } = await supabase
+        .from("qa_processos")
+        .update({ respostas_questionario_json: novasRespostas })
+        .eq("id", processo.id);
+      if (upErr) throw upErr;
+      // Marca a pergunta como cumprida (dispensado_grupo): some do "pendente"
+      // mas mantém histórico no checklist arquivado.
+      await supabase
+        .from("qa_processo_documentos")
+        .update({ status: "aprovado", observacoes: `Resposta: ${valor.toUpperCase()}` })
+        .eq("id", doc.id);
+      toast.success("Resposta registrada. Checklist atualizado.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao responder: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setRespondendoPerguntaId(null);
+    }
+  };
+
+  const baixarTemplatePreenchido = async (doc: DocRow, templateKey: string) => {
+    if (!processo) return;
+    setBaixandoTemplateId(doc.id);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-fill-template`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          template_key: templateKey,
+          cliente_id: processo.cliente_id,
+        }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao gerar modelo");
+      }
+      const blob = await resp.blob();
+      const a = document.createElement("a");
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = `${templateKey}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+      toast.success("Modelo baixado. Assine via GOV.BR e envie aqui.");
+    } catch (e: any) {
+      toast.error("Erro ao baixar modelo: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setBaixandoTemplateId(null);
+    }
+  };
+
+  // ============================================================================
   // PROGRESSO DOCUMENTAL — fonte única de verdade
   // Considera TODOS os documentos exigidos no checklist (obrigatórios e
   // complementares), não apenas a condição profissional. O item técnico
@@ -608,7 +725,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // o que cobre também o caso de documento substituto formal aceito).
   // Em análise / pendente / inválido / divergente / revisão NÃO contam.
   // ============================================================================
-  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao");
+  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
   const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
   const isEmAnalise = (d: DocRow) =>
     d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
@@ -779,6 +896,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   ? (doc.regra_validacao as any).checklist_operador as string[] : [];
                 const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
                 const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
+                const pergunta = isPergunta(doc) ? (doc.regra_validacao as any) : null;
+                const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
+                const tplEscolhido = pickTemplate(doc.regra_validacao);
+                const exigeAssinaturaGovBr = !!(doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).assinatura_requerida === "govbr");
                 return (
                   <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
@@ -786,6 +907,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{doc.etapa}</span>
                           {doc.obrigatorio && <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">OBRIGATÓRIO</span>}
+                          {pergunta && <span className="text-[9px] uppercase font-bold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded">PERGUNTA</span>}
+                          {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
+                          {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{doc.nome_documento}</div>
                       </div>
@@ -812,6 +936,71 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               {doc.observacoes_cliente}
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* PERGUNTA-PIVOT — botões de resposta ao invés de upload */}
+                      {pergunta && Array.isArray(pergunta.opcoes) && (
+                        <div className="rounded-md border border-violet-200 bg-violet-50/60 p-3">
+                          <div className="text-[10px] uppercase tracking-wider font-bold text-violet-800 mb-2">
+                            SUA RESPOSTA {respostaAtual ? `(REGISTRADA: ${String(respostaAtual).toUpperCase()})` : "— SELECIONE UMA OPÇÃO"}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {pergunta.opcoes.map((op: any) => {
+                              const ativo = respostaAtual === op.valor;
+                              return (
+                                <button
+                                  key={op.valor}
+                                  disabled={respondendoPerguntaId === doc.id}
+                                  onClick={() => responderPergunta(doc, op.valor)}
+                                  className={`h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border ${ativo ? "bg-violet-700 text-white border-violet-700" : "bg-white text-violet-800 border-violet-300 hover:bg-violet-100"} disabled:opacity-50`}
+                                >
+                                  {String(op.label || op.valor).toUpperCase()}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {respostaAtual && (
+                            <p className="mt-2 text-[11px] text-violet-900/80">
+                              Resposta registrada. O checklist foi ajustado automaticamente — itens dependentes desta pergunta apareceram (ou foram ocultados).
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* MODELO PREENCHÍVEL — botão para baixar .docx com dados do cliente */}
+                      {!pergunta && tplEscolhido && doc.status !== "aprovado" && (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5 flex flex-wrap items-center gap-2">
+                          <FileDown className="h-3.5 w-3.5 text-emerald-700" />
+                          <span className="text-[11px] text-emerald-900 leading-snug flex-1 min-w-[200px]">
+                            Baixe o modelo já preenchido com os seus dados, assine via GOV.BR e envie aqui o PDF assinado.
+                          </span>
+                          <button
+                            disabled={baixandoTemplateId === doc.id}
+                            onClick={() => baixarTemplatePreenchido(doc, tplEscolhido.key)}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            <Download className="h-3 w-3" />
+                            {baixandoTemplateId === doc.id ? "GERANDO..." : tplEscolhido.label.toUpperCase()}
+                          </button>
+                          <a
+                            href="https://assinador.iti.br/assinatura/index.xhtml"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-blue-800 bg-white border border-blue-300 hover:bg-blue-50"
+                          >
+                            <ExternalLink className="h-3 w-3" /> ASSINAR NO GOV.BR
+                          </a>
+                        </div>
+                      )}
+
+                      {/* MODELO CONDICIONAL — pergunta ainda não respondida */}
+                      {!pergunta && !tplEscolhido && doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).template_condicional && (
+                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2.5 text-[11px] text-amber-900 inline-flex items-start gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-amber-700 shrink-0" />
+                          <span>
+                            <strong className="uppercase tracking-wider text-[10px]">RESPONDA AS PERGUNTAS DO CHECKLIST</strong> para liberarmos o modelo correto desta declaração.
+                          </span>
                         </div>
                       )}
 
@@ -1082,7 +1271,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         )}
 
                         {/* Cliente/equipe: enviar / substituir conforme estado */}
-                        {doc.status !== "aprovado" && (
+                        {doc.status !== "aprovado" && !pergunta && (
                           <button
                             disabled={uploadingId === doc.id}
                             onClick={() => handleFileSelect(doc.id)}
