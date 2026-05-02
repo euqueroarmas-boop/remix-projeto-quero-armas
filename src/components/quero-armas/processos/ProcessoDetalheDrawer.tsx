@@ -601,6 +601,123 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const aguardandoPagto = processo?.pagamento_status === "aguardando";
 
   // ============================================================================
+  // QUESTIONÁRIO CONDICIONAL — perguntas-pivot do checklist (CR e demais)
+  // Cada item com regra_validacao.tipo === "pergunta" cria uma chave em
+  // qa_processos.respostas_questionario_json. Outras regras dependem dela:
+  //   - exige_quando: { chave: valor } → item só conta no checklist se bater
+  //   - template_quando: [{ se:{...}, template_key, label }] → escolhe modelo
+  // ============================================================================
+  const respostas: Record<string, string> = (processo?.respostas_questionario_json ?? {}) as Record<string, string>;
+
+  const matchCondicao = (cond: Record<string, string> | undefined | null): boolean => {
+    if (!cond || typeof cond !== "object") return true;
+    return Object.entries(cond).every(([k, v]) => respostas[k] === v);
+  };
+
+  const pickTemplate = (rule: any): { key: string; label: string } | null => {
+    if (!rule || typeof rule !== "object") return null;
+    if (Array.isArray(rule.template_quando)) {
+      for (const opt of rule.template_quando) {
+        if (matchCondicao(opt?.se)) {
+          return { key: String(opt.template_key), label: String(opt.label || "BAIXAR MODELO PREENCHIDO") };
+        }
+      }
+      return null;
+    }
+    if (typeof rule.template_key === "string") {
+      return { key: rule.template_key, label: "BAIXAR MODELO PREENCHIDO" };
+    }
+    return null;
+  };
+
+  const isPergunta = (d: DocRow): boolean => {
+    const r = d.regra_validacao;
+    return !!(r && typeof r === "object" && r.tipo === "pergunta");
+  };
+
+  // Item visível no checklist? Respeita exige_quando E depende_de.
+  const itemVisivel = (d: DocRow): boolean => {
+    const r = d.regra_validacao;
+    if (!r || typeof r !== "object") return true;
+    if (r.depende_de && typeof r.depende_de === "object") {
+      const ok = respostas[r.depende_de.chave] === r.depende_de.valor;
+      if (!ok) return false;
+    }
+    if (r.exige_quando && typeof r.exige_quando === "object") {
+      return matchCondicao(r.exige_quando);
+    }
+    return true;
+  };
+
+  const [respondendoPerguntaId, setRespondendoPerguntaId] = useState<string | null>(null);
+  const [baixandoTemplateId, setBaixandoTemplateId] = useState<string | null>(null);
+
+  const responderPergunta = async (doc: DocRow, valor: string) => {
+    if (!processo) return;
+    setRespondendoPerguntaId(doc.id);
+    try {
+      const chave = (doc.regra_validacao as any)?.chave as string;
+      if (!chave) throw new Error("Pergunta sem chave configurada");
+      const novasRespostas = { ...respostas, [chave]: valor };
+      const { error: upErr } = await supabase
+        .from("qa_processos")
+        .update({ respostas_questionario_json: novasRespostas })
+        .eq("id", processo.id);
+      if (upErr) throw upErr;
+      // Marca a pergunta como cumprida (dispensado_grupo): some do "pendente"
+      // mas mantém histórico no checklist arquivado.
+      await supabase
+        .from("qa_processo_documentos")
+        .update({ status: "aprovado", observacoes: `Resposta: ${valor.toUpperCase()}` })
+        .eq("processo_id", processo.id)
+        .eq("documento_id", doc.id);
+      toast.success("Resposta registrada. Checklist atualizado.");
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao responder: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setRespondendoPerguntaId(null);
+    }
+  };
+
+  const baixarTemplatePreenchido = async (doc: DocRow, templateKey: string) => {
+    if (!processo) return;
+    setBaixandoTemplateId(doc.id);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-fill-template`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          template_key: templateKey,
+          cliente_id: processo.cliente_id,
+        }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao gerar modelo");
+      }
+      const blob = await resp.blob();
+      const a = document.createElement("a");
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = `${templateKey}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+      toast.success("Modelo baixado. Assine via GOV.BR e envie aqui.");
+    } catch (e: any) {
+      toast.error("Erro ao baixar modelo: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setBaixandoTemplateId(null);
+    }
+  };
+
+  // ============================================================================
   // PROGRESSO DOCUMENTAL — fonte única de verdade
   // Considera TODOS os documentos exigidos no checklist (obrigatórios e
   // complementares), não apenas a condição profissional. O item técnico
