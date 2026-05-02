@@ -38,6 +38,7 @@ interface Props {
   documents: DocCard[];
   ammoByCalibre: { calibre: string; quantidade: number }[];
   onSelectWeapon: (w: WorkbenchWeapon, info: WeaponInfo) => void;
+  headerAction?: React.ReactNode;
 }
 
 const toneClasses = {
@@ -285,7 +286,7 @@ function DocumentTag({ d }: { d: DocCard }) {
   );
 }
 
-export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }: Props) {
+export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, headerAction }: Props) {
   const [showAll, setShowAll] = useState(false);
   const { match, byId, resolveCraf, loading: catLoading } = useArmamentoCatalogo();
 
@@ -347,7 +348,11 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon }:
           <div className="text-[10px] font-mono text-slate-400">
             {enriched.length.toString().padStart(2, "0")} ITEM(S)
           </div>
+          {headerAction}
         </div>
+        {headerAction && (
+          <div className="flex md:hidden">{headerAction}</div>
+        )}
       </div>
 
       {/* Bench body */}
