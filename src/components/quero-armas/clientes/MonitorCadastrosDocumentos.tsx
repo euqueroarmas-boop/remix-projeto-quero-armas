@@ -477,10 +477,41 @@ export default function MonitorCadastrosDocumentos() {
 
       {/* Lista operacional */}
       <section className="bg-white border border-slate-200 rounded-xl">
-        <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
-            Documentos que precisam de ação <span className="text-slate-400">({lista.length})</span>
+            Documentos <span className="text-slate-400">({lista.length})</span>
           </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={fStatus} onChange={(e) => setFStatus(e.target.value)}
+              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
+            >
+              <option value="pendentes_acao">Pendentes de ação</option>
+              <option value="todos">Todos</option>
+              <option value="analise_humana">Análise humana</option>
+              <option value="aprovados_auto">Aprovados (IA)</option>
+              <option value="aprovados_manual">Aprovados (Equipe)</option>
+              <option value="rejeitados_auto">Rejeitados (IA)</option>
+              <option value="rejeitados_manual">Rejeitados (Equipe)</option>
+              <option value="modelos">Modelos aprovados</option>
+            </select>
+            <select
+              value={fTipo} onChange={(e) => setFTipo(e.target.value)}
+              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
+            >
+              <option value="todos">Todos os tipos</option>
+              {tiposUnicos.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
+            </select>
+            <input
+              value={fCliente} onChange={(e) => setFCliente(e.target.value)}
+              placeholder="CLIENTE / CPF"
+              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 w-[180px]"
+            />
+            <label className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-600">
+              <Switch checked={fScoreBaixo} onCheckedChange={setFScoreBaixo} />
+              Score baixo
+            </label>
+          </div>
         </header>
         {loading ? (
           <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
@@ -513,7 +544,14 @@ export default function MonitorCadastrosDocumentos() {
                     </td>
                     <td className="px-3 py-2 uppercase text-slate-700">{d.servico_nome ?? "—"}</td>
                     <td className="px-3 py-2 uppercase text-slate-700">{d.tipo_documento}</td>
-                    <td className="px-3 py-2"><StatusBadge status={d.status} /></td>
+                    <td className="px-3 py-2 space-y-1">
+                      <StatusBadge status={d.status} decisaoIA={d.decisao_ia} />
+                      {d.usado_como_modelo && (
+                        <div><span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold border border-amber-200 bg-amber-50 text-amber-800">
+                          <Star className="h-2.5 w-2.5" /> Modelo
+                        </span></div>
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-mono">
                       {typeof d.validacao_ia_confianca === "number" ? `${Math.round(d.validacao_ia_confianca * 100)}%` : "—"}
                     </td>
@@ -525,21 +563,61 @@ export default function MonitorCadastrosDocumentos() {
                     </td>
                     <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{fmtDate(d.updated_at)}</td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <div className="inline-flex gap-1">
+                      <div className="inline-flex flex-wrap gap-1 justify-end">
+                        <button
+                          onClick={() => abrirDocumento(d)}
+                          disabled={!d.arquivo_storage_key || acaoLoadingId === d.id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
+                          title="Abrir documento (preview)"
+                        ><Eye className="h-3 w-3" /> Doc</button>
+                        <button
+                          onClick={() => abrirProcesso(d.processo_id)}
+                          disabled={!d.processo_id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
+                          title="Abrir processo"
+                        ><ExternalLink className="h-3 w-3" /> Processo</button>
                         <button
                           onClick={() => abrirCliente(d.cliente_id)}
-                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50"
+                          disabled={!d.cliente_id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                           title="Abrir cliente"
-                        >Abrir</button>
+                        >Cliente</button>
                         <button
                           onClick={() => reprocessar(d)}
-                          disabled={reprocessandoId === d.id}
-                          className="h-7 px-2 rounded bg-slate-700 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1"
+                          disabled={reprocessandoId === d.id || !d.arquivo_storage_key || !d.processo_id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
                           title="Reprocessar IA"
-                        >
-                          <RefreshCw className={`h-3 w-3 ${reprocessandoId === d.id ? "animate-spin" : ""}`} />
-                          IA
-                        </button>
+                        ><RefreshCw className={`h-3 w-3 ${reprocessandoId === d.id ? "animate-spin" : ""}`} /> IA</button>
+                        {d.status !== "aprovado" && (
+                          <button
+                            onClick={() => aprovar(d)}
+                            disabled={acaoLoadingId === d.id}
+                            className="h-7 px-2 rounded bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-emerald-700 disabled:opacity-40 inline-flex items-center gap-1"
+                            title="Aprovar manualmente"
+                          ><CheckCircle2 className="h-3 w-3" /> Aprovar</button>
+                        )}
+                        {d.status !== "invalido" && (
+                          <button
+                            onClick={() => setModalAcao({ doc: d, tipo: "rejeitar" })}
+                            disabled={acaoLoadingId === d.id}
+                            className="h-7 px-2 rounded bg-rose-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-rose-700 disabled:opacity-40 inline-flex items-center gap-1"
+                            title="Rejeitar (motivo obrigatório)"
+                          ><XCircle className="h-3 w-3" /> Rejeitar</button>
+                        )}
+                        <button
+                          onClick={() => setModalAcao({ doc: d, tipo: "novo_envio" })}
+                          disabled={acaoLoadingId === d.id}
+                          className="h-7 px-2 rounded bg-amber-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-amber-700 disabled:opacity-40 inline-flex items-center gap-1"
+                          title="Solicitar novo envio"
+                        ><RotateCcw className="h-3 w-3" /> Novo envio</button>
+                        {d.status === "aprovado" && !d.usado_como_modelo && (
+                          <button
+                            onClick={() => setModalAcao({ doc: d, tipo: "modelo" })}
+                            disabled={acaoLoadingId === d.id}
+                            className="h-7 px-2 rounded bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-slate-800 disabled:opacity-40 inline-flex items-center gap-1"
+                            title="Aprovar e usar como modelo"
+                          ><Star className="h-3 w-3" /> Modelo</button>
+                        )}
                       </div>
                     </td>
                   </tr>
