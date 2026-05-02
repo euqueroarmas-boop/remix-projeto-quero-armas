@@ -122,7 +122,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       if (!p) throw new Error("Processo não encontrado");
 
       const [{ data: cli }, { data: dList, error: dErr }, { data: evs }] = await Promise.all([
-        supabase.from("qa_clientes").select("nome_completo, cpf, email").eq("id", p.cliente_id).maybeSingle(),
+        supabase.from("qa_clientes").select("nome_completo, cpf, email, cadastro_publico_id").eq("id", p.cliente_id).maybeSingle(),
         supabase.from("qa_processo_documentos").select("*").eq("processo_id", processoId).order("created_at"),
         supabase.from("qa_processo_eventos").select("id, tipo_evento, descricao, ator, created_at").eq("processo_id", processoId).order("created_at", { ascending: false }).limit(100),
       ]);
