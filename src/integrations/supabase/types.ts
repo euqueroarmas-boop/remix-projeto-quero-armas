@@ -6163,6 +6163,7 @@ export type Database = {
       }
       qa_processo_documentos: {
         Row: {
+          ano_competencia: number | null
           arquivo_storage_key: string | null
           arquivo_url: string | null
           assinatura_autoridade: string | null
@@ -6223,6 +6224,7 @@ export type Database = {
           validade_dias: number | null
         }
         Insert: {
+          ano_competencia?: number | null
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
           assinatura_autoridade?: string | null
@@ -6283,6 +6285,7 @@ export type Database = {
           validade_dias?: number | null
         }
         Update: {
+          ano_competencia?: number | null
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
           assinatura_autoridade?: string | null
@@ -8681,6 +8684,10 @@ export type Database = {
           tipo_documento: string
         }[]
       }
+      qa_aproveitar_endereco_cadastro_publico: {
+        Args: { p_processo_id: string }
+        Returns: number
+      }
       qa_arma_manual_upsert: {
         Args: {
           p_calibre: string
@@ -8977,6 +8984,10 @@ export type Database = {
           uf: string
           unidade_pf: string
         }[]
+      }
+      qa_seed_endereco_5_anos: {
+        Args: { p_processo_id: string }
+        Returns: number
       }
       qa_sweep_indeferimento_por_prazo: {
         Args: never
