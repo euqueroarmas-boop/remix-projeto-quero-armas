@@ -109,7 +109,16 @@ Deno.serve(async (req) => {
                 status_validacao: "validado",
                 tipo_origem: "norma_oficial",
                 resumo_extraido: a.descricao || null,
-                fonte_norma_id: a.fonte_norma_id || null,
+                categoria: a.categoria || null,
+                ativo: true,
+                ativo_na_ia: true,
+                referencia_preferencial: true,
+                origem: "Polícia Federal - Anexos IN 201/2021",
+                metadados_json: {
+                  fonte_norma_id: a.fonte_norma_id || null,
+                  artigo_referencia: a.artigo_referencia || null,
+                  bootstrap: true,
+                },
               })
               .select("id")
               .single();
@@ -124,7 +133,15 @@ Deno.serve(async (req) => {
                 status_validacao: "validado",
                 status_processamento: "criando_chunks",
                 resumo_extraido: a.descricao || null,
-                fonte_norma_id: a.fonte_norma_id || null,
+                categoria: a.categoria || null,
+                ativo: true,
+                ativo_na_ia: true,
+                referencia_preferencial: true,
+                metadados_json: {
+                  fonte_norma_id: a.fonte_norma_id || null,
+                  artigo_referencia: a.artigo_referencia || null,
+                  bootstrap: true,
+                },
                 updated_at: new Date().toISOString(),
               })
               .eq("id", docId);
