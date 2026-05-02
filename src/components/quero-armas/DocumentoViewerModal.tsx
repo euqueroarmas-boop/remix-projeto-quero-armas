@@ -224,12 +224,12 @@ export default function DocumentoViewerModal({
       <DialogContent
         className="qa-scope max-w-5xl w-[95vw] h-[90vh] p-0 bg-white border border-slate-300 flex flex-col overflow-hidden"
       >
-        <DialogHeader className="px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
+        <DialogHeader className="px-4 py-3 pr-12 border-b border-slate-200 bg-slate-50 shrink-0">
           <div className="flex items-center justify-between gap-3">
             <DialogTitle className="text-[12px] font-bold uppercase tracking-wider text-slate-900 truncate">
               {title || fileName}
             </DialogTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mr-2">
               {allowDownload && blobUrl && (
                 <Button
                   size="sm"
