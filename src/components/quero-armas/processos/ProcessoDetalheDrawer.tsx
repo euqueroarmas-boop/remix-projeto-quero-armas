@@ -1129,16 +1129,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               </div>
             ) : (
             <div className="space-y-3">
-              <CondicaoProfissionalCard
-                condicao={processo?.condicao_profissional ?? null}
-                indefinida={
-                  !processo?.condicao_profissional ||
-                  processo.condicao_profissional === "indefinido" ||
-                  docs.some((d) => d.tipo_documento === "renda_definir_condicao")
-                }
-                saving={savingCond}
-                onSelect={setCondicao}
-              />
+              {/* Condição Profissional NÃO é card decorativo — é o item
+                  "renda_definir_condicao" da Etapa 2. Renderizado pelo
+                  fluxo normal de docsChecklist abaixo. */}
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
               {/* Resumo de exigências */}
               {totalExigencias > 0 && (
