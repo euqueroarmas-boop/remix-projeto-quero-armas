@@ -641,7 +641,7 @@ export function ArsenalView({
           headerAction={
             <button
               type="button"
-              onClick={() => setCrafUploadIA({ open: true })}
+              onClick={() => setCrafHubModal({ open: true })}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
               title="Enviar CRAF — IA lê e você confirma"
             >
@@ -710,6 +710,15 @@ export function ArsenalView({
         onClose={() => setCrafUploadIA({ open: false })}
         onSaved={refreshArsenal}
         clienteId={clienteId}
+      />
+      {/* Hub Documental — mesma lógica de envio do Hub do cliente, agora disponível na Bancada */}
+      <ClienteDocsHubModal
+        open={crafHubModal.open}
+        onClose={() => setCrafHubModal({ open: false })}
+        customerId={null}
+        qaClienteId={clienteId}
+        defaultTipo="craf"
+        onSaved={refreshArsenal}
       />
       <GteModal
         open={gteModal.open}
