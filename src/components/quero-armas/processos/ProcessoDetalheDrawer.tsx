@@ -725,7 +725,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // o que cobre também o caso de documento substituto formal aceito).
   // Em análise / pendente / inválido / divergente / revisão NÃO contam.
   // ============================================================================
-  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao");
+  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
   const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
   const isEmAnalise = (d: DocRow) =>
     d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
