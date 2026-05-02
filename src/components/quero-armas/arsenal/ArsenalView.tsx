@@ -10,6 +10,7 @@ import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
+import { CrafUploadIAModal } from "./CrafUploadIAModal";
 
 interface Props {
   clienteId: number;
@@ -171,6 +172,9 @@ export function ArsenalView({
   const gteKpi = useMemo(() => getGteKpiStatus(gteDocs), [gteDocs]);
 
   const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  // Modal NOVO: upload + leitura por IA + confirmação humana.
+  // O CrafModal antigo (acima) continua sendo usado para EDIÇÃO manual de um CRAF já cadastrado.
+  const [crafUploadIA, setCrafUploadIA] = useState<{ open: boolean }>({ open: false });
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{
     open: boolean;
@@ -633,9 +637,9 @@ export function ArsenalView({
           headerAction={
             <button
               type="button"
-              onClick={() => setCrafModal({ open: true })}
+              onClick={() => setCrafUploadIA({ open: true })}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
-              title="Enviar / cadastrar CRAF"
+              title="Enviar CRAF — IA lê e você confirma"
             >
               <Upload className="h-3.5 w-3.5" /> ENVIAR CRAF
             </button>
@@ -696,6 +700,12 @@ export function ArsenalView({
         onSaved={refreshArsenal}
         clienteId={clienteId}
         craf={crafModal.item}
+      />
+      <CrafUploadIAModal
+        open={crafUploadIA.open}
+        onClose={() => setCrafUploadIA({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
       />
       <GteModal
         open={gteModal.open}
