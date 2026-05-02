@@ -731,6 +731,10 @@ Deno.serve(async (req) => {
         const docVal = d?.valor_documento;
         const temDocVal =
           docVal != null && !(typeof docVal === "string" && docVal.trim() === "");
+        // Divergência fantasma: ambos os lados vazios. Descarta sempre.
+        if (cadVazio && !temDocVal) {
+          continue;
+        }
         if (cadVazio && temDocVal) {
           // promove para campo extraído (sem sobrescrever campo já presente)
           if (camposIA[d.campo] == null || (typeof camposIA[d.campo] === "string" && camposIA[d.campo].trim() === "")) {
