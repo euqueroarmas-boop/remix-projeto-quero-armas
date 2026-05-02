@@ -701,6 +701,12 @@ export function ArsenalView({
         clienteId={clienteId}
         craf={crafModal.item}
       />
+      <CrafUploadIAModal
+        open={crafUploadIA.open}
+        onClose={() => setCrafUploadIA({ open: false })}
+        onSaved={refreshArsenal}
+        clienteId={clienteId}
+      />
       <GteModal
         open={gteModal.open}
         onClose={() => setGteModal({ open: false })}
