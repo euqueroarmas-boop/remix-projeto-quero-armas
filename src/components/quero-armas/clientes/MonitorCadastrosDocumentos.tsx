@@ -1,25 +1,34 @@
 /**
- * Monitor de Cadastros e Documentos
+ * Monitor de Cadastros e Documentos — Fase 1 (fechamento)
  * ----------------------------------------------------------------------
  * Aba dentro de /clientes (não cria rota paralela).
- * Mostra contadores reais, lista operacional e base de aprendizado.
  * Apenas Equipe Quero Armas (área já protegida pelo layout autenticado).
  *
- * Regras:
+ * Regras de cor:
  *  - cinza/neutro = zero/sem dados
  *  - verde        = aprovado / regular
  *  - amarelo      = análise humana / dúvida
  *  - vermelho     = rejeitado / crítico
+ *
+ * Fontes reais (auditadas no banco):
+ *  - Cadastros públicos    → `qa_cadastro_publico.status` (pendente/aprovado)
+ *  - Documentos de processo → `qa_processo_documentos`
+ *      • status (operacional): pendente | em_analise | revisao_humana | aprovado | invalido | divergente
+ *      • decisao_ia (decisão pura da IA, NUNCA escrita por ação manual):
+ *          aprovado_auto | rejeitado_auto | revisao_humana | divergente | erro
+ *  - Aprovação manual = status='aprovado' AND decisao_ia <> 'aprovado_auto'.
  */
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   RefreshCw, ShieldCheck, ShieldAlert, ShieldX, Bot, BookOpen,
   Users, FileText, Brain, AlertTriangle, Settings as SettingsIcon, Loader2,
+  CheckCircle2, XCircle, RotateCcw, Star, ExternalLink, Eye, X as XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +50,8 @@ type DocRow = {
   data_envio: string | null;
   updated_at: string | null;
   arquivo_storage_key: string | null;
+  usado_como_modelo?: boolean | null;
+  decisao_ia?: string | null;
   cliente_nome?: string | null;
   cliente_doc?: string | null;
   servico_nome?: string | null;
@@ -90,17 +101,26 @@ function KpiCard({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    aprovado:        `${tone.green}`,
-    invalido:        `${tone.red}`,
-    revisao_humana:  `${tone.yellow}`,
-    em_analise:      `${tone.blue}`,
-    pendente:        `${tone.neutral}`,
-  };
+// Mapeamento status real do banco → label padronizado para exibição.
+// Mantemos compatibilidade com valores antigos (`aprovado`, `invalido`, `em_analise`).
+const LABEL_STATUS: Record<string, { label: string; tone: keyof typeof tone }> = {
+  pendente:       { label: "RECEBIDO",                 tone: "neutral" },
+  em_analise:     { label: "PROCESSANDO IA",           tone: "blue"    },
+  revisao_humana: { label: "REVISÃO HUMANA",           tone: "yellow"  },
+  divergente:     { label: "DIVERGENTE",               tone: "yellow"  },
+  aprovado:       { label: "APROVADO",                 tone: "green"   },
+  invalido:       { label: "REJEITADO",                tone: "red"     },
+};
+function StatusBadge({ status, decisaoIA }: { status: string; decisaoIA?: string | null }) {
+  const m = LABEL_STATUS[status] ?? { label: status.replace(/_/g, " ").toUpperCase(), tone: "neutral" as const };
+  const sufixo = status === "aprovado"
+    ? (decisaoIA === "aprovado_auto" ? " (AUTO)" : " (MANUAL)")
+    : status === "invalido"
+      ? (decisaoIA === "rejeitado_auto" ? " (AUTO)" : " (MANUAL)")
+      : "";
   return (
-    <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold border ${map[status] ?? tone.neutral}`}>
-      {status.replace(/_/g, " ")}
+    <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold border ${tone[m.tone]}`}>
+      {m.label}{sufixo}
     </span>
   );
 }
@@ -122,6 +142,16 @@ export default function MonitorCadastrosDocumentos() {
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
   const [openConfig, setOpenConfig] = useState(false);
 
+  // Filtros
+  const [fStatus, setFStatus] = useState<string>("todos");
+  const [fTipo, setFTipo]     = useState<string>("todos");
+  const [fCliente, setFCliente] = useState<string>("");
+  const [fScoreBaixo, setFScoreBaixo] = useState(false);
+
+  // Ações operacionais
+  const [acaoLoadingId, setAcaoLoadingId] = useState<string | null>(null);
+  const [modalAcao, setModalAcao] = useState<{ doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null>(null);
+
   // -------------------------------------------------------------------------
   const carregar = async () => {
     setLoading(true);
@@ -129,7 +159,7 @@ export default function MonitorCadastrosDocumentos() {
       // 1) Documentos relevantes (operacional + IA)
       const { data: docsData, error: docsErr } = await supabase
         .from("qa_processo_documentos")
-        .select("id, cliente_id, processo_id, tipo_documento, nome_documento, status, validacao_ia_status, validacao_ia_confianca, motivo_rejeicao, score_modelo_aprovado, modelo_aprovado_id, data_envio, updated_at, arquivo_storage_key")
+        .select("id, cliente_id, processo_id, tipo_documento, nome_documento, status, validacao_ia_status, validacao_ia_confianca, motivo_rejeicao, score_modelo_aprovado, modelo_aprovado_id, data_envio, updated_at, arquivo_storage_key, usado_como_modelo, decisao_ia")
         .order("updated_at", { ascending: false })
         .limit(500);
       if (docsErr) throw docsErr;
@@ -173,12 +203,14 @@ export default function MonitorCadastrosDocumentos() {
         .order("tipo_documento", { ascending: true });
       setConfigs((cfg ?? []) as ConfigRow[]);
 
-      // 4) KPIs de cadastros (clientes)
+      // 4) KPIs de cadastros (fonte real: qa_cadastro_publico)
+      // Status reais auditados: 'pendente' | 'aprovado' (NÃO usar qa_clientes.status,
+      // que é operacional e tem 'ATIVO'/'aguardando_analise'/'DESISTENTE'/'conta_gratuita_arsenal').
       const hoje = new Date();
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
       const [aguardando, aprovHoje] = await Promise.all([
-        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status", "aguardando_aprovacao"),
-        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status", "aprovado").gte("updated_at", inicio),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).eq("status", "pendente"),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).eq("status", "aprovado").gte("updated_at", inicio),
       ]);
       setKpiCadastros({
         aguardando:    aguardando.count ?? 0,
@@ -202,15 +234,19 @@ export default function MonitorCadastrosDocumentos() {
       aprovadosIA:   0,
       rejeitadosIA:  0,
       aprovadosEquipe: 0,
+      rejeitadosEquipe: 0,
       criticos: 0,
       somaScore: 0,
       comScore:  0,
     };
     for (const d of docs) {
       if (d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana") c.analiseHumana++;
-      if (d.validacao_ia_status === "aprovado_auto" || (d.status === "aprovado" && d.validacao_ia_confianca && d.validacao_ia_confianca >= 0.85)) c.aprovadosIA++;
-      if (d.validacao_ia_status === "invalido" || (d.status === "invalido" && d.validacao_ia_status !== null)) c.rejeitadosIA++;
-      if (d.status === "aprovado") c.aprovadosEquipe++;
+      // Aprovação automática SOMENTE via decisao_ia='aprovado_auto'.
+      if (d.decisao_ia === "aprovado_auto") c.aprovadosIA++;
+      if (d.decisao_ia === "rejeitado_auto") c.rejeitadosIA++;
+      // Aprovação manual = aprovado E NÃO foi a IA quem aprovou.
+      if (d.status === "aprovado" && d.decisao_ia !== "aprovado_auto") c.aprovadosEquipe++;
+      if (d.status === "invalido" && d.decisao_ia !== "rejeitado_auto") c.rejeitadosEquipe++;
       if (d.status === "invalido" && (d.tipo_documento === "cr" || d.tipo_documento === "craf" || d.tipo_documento === "antecedentes_criminais")) c.criticos++;
       if (typeof d.validacao_ia_confianca === "number") {
         c.somaScore += Number(d.validacao_ia_confianca);
@@ -239,24 +275,58 @@ export default function MonitorCadastrosDocumentos() {
     }
     for (const d of docs) {
       const a = acc.get(d.tipo_documento) ?? { tipo: d.tipo_documento, modelos: 0, ultima: null, auto: 0, humana: 0, rejeit: 0, somaScore: 0, comScore: 0 };
-      if (d.validacao_ia_status === "aprovado_auto" || (d.status === "aprovado" && (d.validacao_ia_confianca ?? 0) >= 0.85)) a.auto++;
+      if (d.decisao_ia === "aprovado_auto") a.auto++;
       if (d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana") a.humana++;
-      if (d.status === "invalido") a.rejeit++;
+      if (d.decisao_ia === "rejeitado_auto") a.rejeit++;
       if (typeof d.validacao_ia_confianca === "number") { a.somaScore += d.validacao_ia_confianca; a.comScore++; }
       acc.set(d.tipo_documento, a);
     }
     return Array.from(acc.values()).sort((a,b) => b.modelos - a.modelos || a.tipo.localeCompare(b.tipo));
   }, [docs, modelos]);
 
-  // Lista operacional: docs que precisam de ação
-  const lista = useMemo(() => {
-    return docs.filter(d =>
-      d.status === "revisao_humana" ||
-      d.status === "invalido" ||
-      d.validacao_ia_status === "revisao_humana" ||
-      d.validacao_ia_status === "erro"
-    ).slice(0, 100);
+  // Lista operacional + filtros
+  const tiposUnicos = useMemo(() => {
+    return Array.from(new Set(docs.map(d => d.tipo_documento))).sort();
   }, [docs]);
+
+  const lista = useMemo(() => {
+    const term = fCliente.trim().toUpperCase();
+    return docs.filter(d => {
+      // Status filter (presets que respeitam a regra de separação IA vs Equipe)
+      switch (fStatus) {
+        case "analise_humana":
+          if (!(d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana")) return false;
+          break;
+        case "aprovados_auto":
+          if (d.decisao_ia !== "aprovado_auto") return false;
+          break;
+        case "rejeitados_auto":
+          if (d.decisao_ia !== "rejeitado_auto") return false;
+          break;
+        case "aprovados_manual":
+          if (!(d.status === "aprovado" && d.decisao_ia !== "aprovado_auto")) return false;
+          break;
+        case "rejeitados_manual":
+          if (!(d.status === "invalido" && d.decisao_ia !== "rejeitado_auto")) return false;
+          break;
+        case "modelos":
+          if (!d.usado_como_modelo) return false;
+          break;
+        case "pendentes_acao":
+          if (!(d.status === "revisao_humana" || d.status === "invalido" || d.validacao_ia_status === "revisao_humana" || d.validacao_ia_status === "erro" || d.decisao_ia === "erro")) return false;
+          break;
+        case "todos":
+        default: break;
+      }
+      if (fTipo !== "todos" && d.tipo_documento !== fTipo) return false;
+      if (fScoreBaixo && (typeof d.validacao_ia_confianca !== "number" || d.validacao_ia_confianca >= 0.70)) return false;
+      if (term) {
+        const hay = `${d.cliente_nome ?? ""} ${d.cliente_doc ?? ""}`.toUpperCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    }).slice(0, 200);
+  }, [docs, fStatus, fTipo, fCliente, fScoreBaixo]);
 
   // -------------------------------------------------------------------------
   // Ações
@@ -298,8 +368,64 @@ export default function MonitorCadastrosDocumentos() {
 
   const abrirCliente = (clienteId: number | null) => {
     if (!clienteId) return;
-    // Abre na própria aba Clientes via URL — não cria rota paralela.
     window.open(`/quero-armas/clientes?cliente=${clienteId}`, "_self");
+  };
+  const abrirProcesso = (processoId: string | null) => {
+    if (!processoId) return;
+    window.open(`/quero-armas/processos?processo=${processoId}`, "_self");
+  };
+
+  // ---------- Ações operacionais (chamam qa-doc-acao-equipe) ----------
+  const callAcao = async (doc: DocRow, payload: Record<string, unknown>) => {
+    setAcaoLoadingId(doc.id);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-doc-acao-equipe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ documento_id: doc.id, ...payload }),
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(out?.error || `Falha (${r.status})`);
+      return out;
+    } finally {
+      setAcaoLoadingId(null);
+    }
+  };
+
+  const aprovar = async (doc: DocRow) => {
+    try {
+      await callAcao(doc, { acao: "aprovar" });
+      toast.success("Documento aprovado.");
+      await carregar();
+    } catch (e: any) { toast.error(e.message || "Falha ao aprovar."); }
+  };
+
+  const abrirDocumento = async (doc: DocRow) => {
+    try {
+      const out = await callAcao(doc, { acao: "signed_url" });
+      if (out?.url) window.open(out.url, "_blank", "noopener,noreferrer");
+    } catch (e: any) { toast.error(e.message || "Falha ao abrir."); }
+  };
+
+  const submitModal = async (motivo: string, nomeModelo?: string) => {
+    if (!modalAcao) return;
+    const { doc, tipo } = modalAcao;
+    try {
+      if (tipo === "rejeitar") {
+        await callAcao(doc, { acao: "rejeitar", motivo });
+        toast.success("Documento rejeitado.");
+      } else if (tipo === "novo_envio") {
+        await callAcao(doc, { acao: "solicitar_novo_envio", motivo });
+        toast.success("Novo envio solicitado ao cliente.");
+      } else if (tipo === "modelo") {
+        await callAcao(doc, { acao: "aprovar_e_modelar", nome_modelo: nomeModelo, observacoes: motivo });
+        toast.success("Documento aprovado e usado como modelo.");
+      }
+      setModalAcao(null);
+      await carregar();
+    } catch (e: any) { toast.error(e.message || "Falha na ação."); }
   };
 
   // -------------------------------------------------------------------------
@@ -340,6 +466,7 @@ export default function MonitorCadastrosDocumentos() {
         <KpiCard icon={Bot}          label="Docs aprovados pela IA"      value={counters.aprovadosIA}        t="green" />
         <KpiCard icon={ShieldX}      label="Docs rejeitados pela IA"     value={counters.rejeitadosIA}       t="red" />
         <KpiCard icon={ShieldCheck}  label="Aprovados pela Equipe"       value={counters.aprovadosEquipe}    t="green" />
+        <KpiCard icon={ShieldX}      label="Rejeitados pela Equipe"      value={counters.rejeitadosEquipe}   t="red" />
         <KpiCard icon={BookOpen}     label="Modelos de aprendizado"      value={counters.modelosAtivos}      t="blue" />
         <KpiCard icon={FileText}     label="Tipos monitorados"           value={counters.tiposMonitorados}   t="blue" />
         <KpiCard icon={AlertTriangle} label="Pendências críticas"        value={counters.criticos}           t="red" />
@@ -350,10 +477,41 @@ export default function MonitorCadastrosDocumentos() {
 
       {/* Lista operacional */}
       <section className="bg-white border border-slate-200 rounded-xl">
-        <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
-            Documentos que precisam de ação <span className="text-slate-400">({lista.length})</span>
+            Documentos <span className="text-slate-400">({lista.length})</span>
           </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={fStatus} onChange={(e) => setFStatus(e.target.value)}
+              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
+            >
+              <option value="pendentes_acao">Pendentes de ação</option>
+              <option value="todos">Todos</option>
+              <option value="analise_humana">Análise humana</option>
+              <option value="aprovados_auto">Aprovados (IA)</option>
+              <option value="aprovados_manual">Aprovados (Equipe)</option>
+              <option value="rejeitados_auto">Rejeitados (IA)</option>
+              <option value="rejeitados_manual">Rejeitados (Equipe)</option>
+              <option value="modelos">Modelos aprovados</option>
+            </select>
+            <select
+              value={fTipo} onChange={(e) => setFTipo(e.target.value)}
+              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
+            >
+              <option value="todos">Todos os tipos</option>
+              {tiposUnicos.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
+            </select>
+            <input
+              value={fCliente} onChange={(e) => setFCliente(e.target.value)}
+              placeholder="CLIENTE / CPF"
+              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 w-[180px]"
+            />
+            <label className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-600">
+              <Switch checked={fScoreBaixo} onCheckedChange={setFScoreBaixo} />
+              Score baixo
+            </label>
+          </div>
         </header>
         {loading ? (
           <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
@@ -386,7 +544,14 @@ export default function MonitorCadastrosDocumentos() {
                     </td>
                     <td className="px-3 py-2 uppercase text-slate-700">{d.servico_nome ?? "—"}</td>
                     <td className="px-3 py-2 uppercase text-slate-700">{d.tipo_documento}</td>
-                    <td className="px-3 py-2"><StatusBadge status={d.status} /></td>
+                    <td className="px-3 py-2 space-y-1">
+                      <StatusBadge status={d.status} decisaoIA={d.decisao_ia} />
+                      {d.usado_como_modelo && (
+                        <div><span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] uppercase tracking-wider font-bold border border-amber-200 bg-amber-50 text-amber-800">
+                          <Star className="h-2.5 w-2.5" /> Modelo
+                        </span></div>
+                      )}
+                    </td>
                     <td className="px-3 py-2 font-mono">
                       {typeof d.validacao_ia_confianca === "number" ? `${Math.round(d.validacao_ia_confianca * 100)}%` : "—"}
                     </td>
@@ -398,21 +563,61 @@ export default function MonitorCadastrosDocumentos() {
                     </td>
                     <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{fmtDate(d.updated_at)}</td>
                     <td className="px-3 py-2 text-right whitespace-nowrap">
-                      <div className="inline-flex gap-1">
+                      <div className="inline-flex flex-wrap gap-1 justify-end">
+                        <button
+                          onClick={() => abrirDocumento(d)}
+                          disabled={!d.arquivo_storage_key || acaoLoadingId === d.id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
+                          title="Abrir documento (preview)"
+                        ><Eye className="h-3 w-3" /> Doc</button>
+                        <button
+                          onClick={() => abrirProcesso(d.processo_id)}
+                          disabled={!d.processo_id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
+                          title="Abrir processo"
+                        ><ExternalLink className="h-3 w-3" /> Processo</button>
                         <button
                           onClick={() => abrirCliente(d.cliente_id)}
-                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50"
+                          disabled={!d.cliente_id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
                           title="Abrir cliente"
-                        >Abrir</button>
+                        >Cliente</button>
                         <button
                           onClick={() => reprocessar(d)}
-                          disabled={reprocessandoId === d.id}
-                          className="h-7 px-2 rounded bg-slate-700 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-slate-800 disabled:opacity-50 inline-flex items-center gap-1"
+                          disabled={reprocessandoId === d.id || !d.arquivo_storage_key || !d.processo_id}
+                          className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
                           title="Reprocessar IA"
-                        >
-                          <RefreshCw className={`h-3 w-3 ${reprocessandoId === d.id ? "animate-spin" : ""}`} />
-                          IA
-                        </button>
+                        ><RefreshCw className={`h-3 w-3 ${reprocessandoId === d.id ? "animate-spin" : ""}`} /> IA</button>
+                        {d.status !== "aprovado" && (
+                          <button
+                            onClick={() => aprovar(d)}
+                            disabled={acaoLoadingId === d.id}
+                            className="h-7 px-2 rounded bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-emerald-700 disabled:opacity-40 inline-flex items-center gap-1"
+                            title="Aprovar manualmente"
+                          ><CheckCircle2 className="h-3 w-3" /> Aprovar</button>
+                        )}
+                        {d.status !== "invalido" && (
+                          <button
+                            onClick={() => setModalAcao({ doc: d, tipo: "rejeitar" })}
+                            disabled={acaoLoadingId === d.id}
+                            className="h-7 px-2 rounded bg-rose-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-rose-700 disabled:opacity-40 inline-flex items-center gap-1"
+                            title="Rejeitar (motivo obrigatório)"
+                          ><XCircle className="h-3 w-3" /> Rejeitar</button>
+                        )}
+                        <button
+                          onClick={() => setModalAcao({ doc: d, tipo: "novo_envio" })}
+                          disabled={acaoLoadingId === d.id}
+                          className="h-7 px-2 rounded bg-amber-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-amber-700 disabled:opacity-40 inline-flex items-center gap-1"
+                          title="Solicitar novo envio"
+                        ><RotateCcw className="h-3 w-3" /> Novo envio</button>
+                        {d.status === "aprovado" && !d.usado_como_modelo && (
+                          <button
+                            onClick={() => setModalAcao({ doc: d, tipo: "modelo" })}
+                            disabled={acaoLoadingId === d.id}
+                            className="h-7 px-2 rounded bg-slate-900 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-slate-800 disabled:opacity-40 inline-flex items-center gap-1"
+                            title="Aprovar e usar como modelo"
+                          ><Star className="h-3 w-3" /> Modelo</button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -483,7 +688,81 @@ export default function MonitorCadastrosDocumentos() {
         onClose={() => setOpenConfig(false)}
         onSaved={async () => { setOpenConfig(false); await carregar(); }}
       />
+
+      {/* Modal de motivo / nome de modelo */}
+      <MotivoDialog
+        modal={modalAcao}
+        onClose={() => setModalAcao(null)}
+        onSubmit={submitModal}
+        loading={!!acaoLoadingId}
+      />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Modal: motivo da ação manual
+// ---------------------------------------------------------------------------
+function MotivoDialog({
+  modal, onClose, onSubmit, loading,
+}: {
+  modal: { doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null;
+  onClose: () => void;
+  onSubmit: (motivo: string, nomeModelo?: string) => Promise<void>;
+  loading: boolean;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [nomeModelo, setNomeModelo] = useState("");
+  useEffect(() => { if (modal) { setMotivo(""); setNomeModelo(modal.doc.nome_documento ?? modal.doc.tipo_documento); } }, [modal]);
+  if (!modal) return null;
+  const titulos: Record<string, string> = {
+    rejeitar: "REJEITAR DOCUMENTO",
+    novo_envio: "SOLICITAR NOVO ENVIO",
+    modelo: "APROVAR E USAR COMO MODELO",
+  };
+  const placeholders: Record<string, string> = {
+    rejeitar: "DESCREVA O MOTIVO DA REJEIÇÃO (MÍN. 5 CARACTERES). O CLIENTE VERÁ UMA MENSAGEM SIMPLES NO PORTAL.",
+    novo_envio: "DESCREVA O QUE O CLIENTE PRECISA REENVIAR (MÍN. 5 CARACTERES). MENSAGEM SIMPLES SERÁ EXIBIDA NO PORTAL.",
+    modelo: "OBSERVAÇÕES OPCIONAIS PARA A BASE DE APRENDIZADO.",
+  };
+  const exigeMotivo = modal.tipo !== "modelo";
+  const valido = exigeMotivo ? motivo.trim().length >= 5 : true;
+  return (
+    <Dialog open={!!modal} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white">
+        <DialogHeader>
+          <DialogTitle className="text-[13px] uppercase tracking-[0.14em] font-bold text-slate-900">
+            {titulos[modal.tipo]}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="text-[11px] text-slate-500 mb-3">
+          {modal.doc.cliente_nome ? <><b className="uppercase">{modal.doc.cliente_nome}</b> · </> : null}
+          <span className="uppercase">{modal.doc.tipo_documento}</span>
+        </div>
+        {modal.tipo === "modelo" && (
+          <div className="mb-3">
+            <label className="text-[10px] uppercase tracking-wider text-slate-500">Nome do modelo</label>
+            <Input value={nomeModelo} onChange={(e) => setNomeModelo(e.target.value.toUpperCase())} className="h-9 uppercase" />
+          </div>
+        )}
+        <Textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder={placeholders[modal.tipo]}
+          className="min-h-[120px] text-[12px]"
+        />
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 mt-3">
+          <Button variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button
+            onClick={() => onSubmit(motivo.trim(), nomeModelo.trim() || undefined)}
+            disabled={loading || !valido}
+            className="bg-slate-900 hover:bg-slate-800 text-white"
+          >
+            {loading ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Aplicando…</> : "Confirmar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

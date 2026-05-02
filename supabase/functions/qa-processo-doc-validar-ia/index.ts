@@ -522,7 +522,7 @@ Deno.serve(async (req) => {
                 : `Erro IA: ${errBody}`;
       // Em falha de IA: marcar para revisão humana, NUNCA aprovar
       await supabase.from("qa_processo_documentos")
-        .update({ validacao_ia_status: "erro", validacao_ia_erro: msg, status: "revisao_humana" })
+        .update({ validacao_ia_status: "erro", validacao_ia_erro: msg, status: "revisao_humana", decisao_ia: "erro" })
         .eq("id", documento_id);
       return json({ error: msg }, status);
     }
@@ -531,7 +531,7 @@ Deno.serve(async (req) => {
     const args = aiJson.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!args) {
       await supabase.from("qa_processo_documentos")
-        .update({ validacao_ia_status: "erro", validacao_ia_erro: "IA não retornou tool_call", status: "revisao_humana" })
+        .update({ validacao_ia_status: "erro", validacao_ia_erro: "IA não retornou tool_call", status: "revisao_humana", decisao_ia: "erro" })
         .eq("id", documento_id);
       return json({ error: "IA não retornou validação estruturada" }, 500);
     }
@@ -742,6 +742,10 @@ Deno.serve(async (req) => {
     const divergencias = parsed.divergencias || [];
     const conf = parsed.confianca ?? 0;
     let novoStatus: string;
+    // Decisão BRUTA da IA (antes de ajustes por modelo aprovado).
+    // É essa que vai para `decisao_ia` — separa, de forma definitiva,
+    // decisão automática vs decisão manual da Equipe.
+    let decisaoIA: "aprovado_auto" | "rejeitado_auto" | "revisao_humana" | "divergente" | "erro" = "revisao_humana";
     let motivoRejeicao: string | null = null;
 
     if (!parsed.tipo_correto) {
@@ -792,6 +796,15 @@ Deno.serve(async (req) => {
       novoStatus = "aprovado";
     }
 
+    // Mapeia a decisão BRUTA da IA. Esta variável NÃO sofre os ajustes
+    // posteriores feitos com base nos modelos aprovados — ela representa
+    // o que a IA decidiu sozinha, sem nenhum apoio de comparação com base
+    // de aprendizado nem intervenção humana.
+    if (novoStatus === "aprovado")        decisaoIA = "aprovado_auto";
+    else if (novoStatus === "invalido")   decisaoIA = "rejeitado_auto";
+    else if (novoStatus === "divergente") decisaoIA = "divergente";
+    else                                   decisaoIA = "revisao_humana";
+
     // ===================================================================
     // APRENDIZADO SUPERVISIONADO — comparação contra modelos aprovados
     // ===================================================================
@@ -828,17 +841,22 @@ Deno.serve(async (req) => {
       if (!cfg.permiteAuto) {
         novoStatus = "revisao_humana";
         motivoRejeicao = null;
+        decisaoIA = "revisao_humana";
       } else if (scoreModelo > 0 && scoreModelo < cfg.analiseHumana) {
         // Modelo aprovado existe mas o doc atual é muito diferente:
         // rebaixa para revisão humana.
         novoStatus = "revisao_humana";
         motivoRejeicao = null;
+        decisaoIA = "revisao_humana";
       }
     } else if (matchModelo.modeloId && novoStatus === "revisao_humana" && cfg.permiteAuto) {
       // Sobe revisão humana → aprovado se o doc bate fortemente com modelo aprovado.
       if (scoreModelo >= cfg.aprovaAuto && camposFaltando.length === 0 && divergencias.length === 0) {
         novoStatus = "aprovado";
         motivoRejeicao = null;
+        // A IA fechou aprovação sozinha (com apoio da base de aprendizado),
+        // sem intervenção humana — segue contando como decisão automática.
+        decisaoIA = "aprovado_auto";
       }
     }
 
@@ -886,6 +904,8 @@ Deno.serve(async (req) => {
         texto_ocr_extraido: textoParaModelo ? textoParaModelo.slice(0, 30000) : null,
         score_modelo_aprovado: matchModelo.modeloId ? Number(scoreModelo.toFixed(4)) : null,
         modelo_aprovado_id: matchModelo.modeloId,
+        // Decisão explícita da IA — separada de aprovação manual da Equipe.
+        decisao_ia: decisaoIA,
       })
       .eq("id", documento_id);
 

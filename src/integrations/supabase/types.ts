@@ -6172,6 +6172,7 @@ export type Database = {
           data_envio: string | null
           data_validacao: string | null
           data_validade: string | null
+          decisao_ia: string | null
           divergencias_json: Json | null
           endereco_em_nome_de_terceiro: boolean
           etapa: string
@@ -6217,6 +6218,7 @@ export type Database = {
           data_envio?: string | null
           data_validacao?: string | null
           data_validade?: string | null
+          decisao_ia?: string | null
           divergencias_json?: Json | null
           endereco_em_nome_de_terceiro?: boolean
           etapa?: string
@@ -6262,6 +6264,7 @@ export type Database = {
           data_envio?: string | null
           data_validacao?: string | null
           data_validade?: string | null
+          decisao_ia?: string | null
           divergencias_json?: Json | null
           endereco_em_nome_de_terceiro?: boolean
           etapa?: string
