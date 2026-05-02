@@ -796,6 +796,15 @@ Deno.serve(async (req) => {
       novoStatus = "aprovado";
     }
 
+    // Mapeia a decisão BRUTA da IA. Esta variável NÃO sofre os ajustes
+    // posteriores feitos com base nos modelos aprovados — ela representa
+    // o que a IA decidiu sozinha, sem nenhum apoio de comparação com base
+    // de aprendizado nem intervenção humana.
+    if (novoStatus === "aprovado")        decisaoIA = "aprovado_auto";
+    else if (novoStatus === "invalido")   decisaoIA = "rejeitado_auto";
+    else if (novoStatus === "divergente") decisaoIA = "divergente";
+    else                                   decisaoIA = "revisao_humana";
+
     // ===================================================================
     // APRENDIZADO SUPERVISIONADO — comparação contra modelos aprovados
     // ===================================================================
