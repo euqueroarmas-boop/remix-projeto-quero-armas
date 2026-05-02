@@ -823,6 +823,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     if (t === "renda_definir_condicao" || t.startsWith("renda_")) return 2;
     if (t.startsWith("certidao") || t.includes("antecedentes")) return 3;
     if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 5;
+    // Auxiliares condicionais da Etapa 1 (perguntas-pivot + declarações condicionais
+    // de endereço/inquérito). Tratadas como Etapa 1 — NÃO são a etapa 4 geral
+    // de Declarações e Compromissos.
+    if (
+      t === "pergunta_comprovante_em_nome" ||
+      t === "pergunta_ainda_reside_imovel" ||
+      t === "pergunta_responde_inquerito_criminal" ||
+      t === "declaracao_responsavel_imovel" ||
+      t === "declaracao_sem_inquerito_processo_criminal"
+    ) return 1;
     if (t.includes("endereco") || t.includes("residenc")) return 1;
     if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
     return 1; // outros: sempre liberados
