@@ -846,17 +846,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // O item técnico "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
   // ============================================================================
 
-  // LIBERAÇÃO POR ETAPAS:
-  // 1=endereco, 2=antecedentes, 3=declaracoes, 4=exames. Itens de outras
-  // categorias ("outros") sempre aparecem (etapa 1, fluxo herdado).
-  const etapaLiberada = Math.max(1, Math.min(4, processo?.etapa_liberada_ate ?? 1));
+  // LIBERAÇÃO POR ETAPAS (5 etapas — ordem definitiva):
+  // 1=endereco · 2=condicao_profissional · 3=antecedentes · 4=declaracoes · 5=exames
+  // Itens de outras categorias ("outros") aparecem na etapa 1 (fluxo herdado).
+  const etapaLiberada = Math.max(1, Math.min(5, processo?.etapa_liberada_ate ?? 1));
 
   const etapaDoTipo = (tipo: string): number => {
     const t = (tipo || "").toLowerCase();
-    if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
-    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
+    if (t === "renda_definir_condicao" || t.startsWith("renda_")) return 2;
+    if (t.startsWith("certidao") || t.includes("antecedentes")) return 3;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 5;
     if (t.includes("endereco") || t.includes("residenc")) return 1;
-    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
     return 1; // outros: sempre liberados
   };
 
@@ -873,14 +874,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     return e < etapaLiberada;
   };
 
+  // O placeholder "renda_definir_condicao" é parte LEGÍTIMA do checklist
+  // (etapa 2). Permanece visível enquanto a profissão não foi escolhida; ao
+  // ser definida, a edge function qa-processo-set-condicao remove o
+  // placeholder e cria os documentos reais de renda no lugar.
   const docsChecklist = docs.filter(
-    (d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d) && docVisivelPorEtapa(d),
+    (d) => itemVisivel(d) && docVisivelPorEtapa(d),
   );
 
   // Para o admin: lista TODAS as etapas + status de cada uma (para o painel
   // "Liberar próxima etapa"). Calculado a partir do conjunto completo de docs
   // (sem filtro por etapa liberada), mas respeitando questionário.
-  const docsTodos = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+  const docsTodos = docs.filter((d) => itemVisivel(d));
   const docsArquivados = docsTodos.filter(docDeEtapaAnteriorConcluida);
   const etapaResumo = (n: number) => {
     const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
@@ -888,12 +893,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
   };
   const etapaCompleta = etapaResumo(etapaLiberada).completo;
-  const proximaEtapa = etapaLiberada < 4 ? etapaLiberada + 1 : null;
+  const proximaEtapa = etapaLiberada < 5 ? etapaLiberada + 1 : null;
   const ETAPA_NOMES: Record<number, string> = {
     1: "COMPROVAÇÃO DE ENDEREÇO",
-    2: "ANTECEDENTES CRIMINAIS",
-    3: "DECLARAÇÕES E COMPROMISSOS",
-    4: "EXAMES TÉCNICOS",
+    2: "CONDIÇÃO PROFISSIONAL",
+    3: "ANTECEDENTES CRIMINAIS",
+    4: "DECLARAÇÕES E COMPROMISSOS",
+    5: "EXAMES TÉCNICOS",
   };
 
   const liberarProximaEtapa = async () => {
