@@ -23,8 +23,8 @@ const MARCOS = [30, 15, 7, 3, 0, -1];
 const ETAPA_LABEL: Record<number, string> = {
   1: "Comprovante de Endereço",
   2: "Antecedentes Criminais",
-  3: "Laudos Técnicos",
-  4: "Declarações Assinadas",
+  3: "Declarações Assinadas",
+  4: "Laudos Técnicos",
 };
 
 interface ProcessoRow {

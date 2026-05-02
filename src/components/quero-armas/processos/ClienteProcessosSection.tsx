@@ -28,8 +28,8 @@ interface Props {
 const ETAPA_LABELS: Record<number, string> = {
   1: "ENDEREÇO",
   2: "ANTECEDENTES",
-  3: "EXAMES TÉCNICOS",
-  4: "DECLARAÇÕES",
+  3: "DECLARAÇÕES",
+  4: "EXAMES TÉCNICOS",
 };
 
 const diasRestantes = (d?: string | null): number | null => {
