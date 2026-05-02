@@ -25,8 +25,8 @@ interface ProcessoRow {
 const ETAPA_LABEL: Record<number, string> = {
   1: "ENDEREÇO",
   2: "ANTECEDENTES",
-  3: "DECLARAÇÕES",
-  4: "LAUDOS",
+  3: "EXAMES",
+  4: "DECLARAÇÕES",
 };
 
 function diasAteData(d: string | null): number | null {
