@@ -144,17 +144,18 @@ function rendaPara(c: Cond): Item[] {
       },
       {
         tipo_documento: "renda_contrato_social",
-        nome_documento: "Contrato Social (ou última alteração)",
+        nome_documento: "Contrato Social (ou última alteração) — também aceitamos Ficha Cadastral Completa",
         obrigatorio: true,
         link_emissao: "https://www.jucesponline.sp.gov.br/",
         label_botao: "Emitir Contrato Social",
-        instrucoes: "1) Acesse o portal da Junta Comercial do seu estado (ex.: JUCESP em SP).\n2) Vá em \"Pesquisa de Empresas\".\n3) Busque por nome ou CNPJ e baixe o Contrato Social ou a última alteração consolidada.",
-        observacoes_cliente: "Se a empresa for de outro estado, use a Junta Comercial correspondente.",
+        instrucoes: "1) Acesse o portal da Junta Comercial do seu estado (ex.: JUCESP em SP).\n2) Vá em \"Pesquisa de Empresas\".\n3) Busque por nome ou CNPJ e baixe o Contrato Social ou a última alteração consolidada.\n\nALTERNATIVA ACEITA: a Ficha Cadastral Completa emitida pela Junta Comercial também é aceita no lugar do Contrato Social.",
+        observacoes_cliente: "Se a empresa for de outro estado, use a Junta Comercial correspondente. A Ficha Cadastral Completa é igualmente aceita.",
         orgao_emissor: "Junta Comercial",
         checklist_operador: [
           "Documento completo (todas as páginas)",
           "Conferir dados com o QSA",
           "Verificar última alteração registrada",
+          "Aceitar Ficha Cadastral Completa como alternativa ao Contrato Social",
         ],
       },
       {
