@@ -45,8 +45,12 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const expected = Deno.env.get("BOOTSTRAP_TOKEN") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!body?.bootstrap_token || body.bootstrap_token !== expected) {
+    const allowed = [
+      Deno.env.get("BOOTSTRAP_TOKEN"),
+      Deno.env.get("INTERNAL_FUNCTION_TOKEN"),
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+    ].filter(Boolean) as string[];
+    if (!body?.bootstrap_token || !allowed.includes(body.bootstrap_token)) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401, headers: { ...corsH, "Content-Type": "application/json" },
       });
