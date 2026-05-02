@@ -1,14 +1,17 @@
 ---
 name: Etapas de Liberação e Engine de Prazos
-description: Sistema de 4 etapas progressivas (endereço→antecedentes→declarações→exames) com auto-cálculo de prazos via IA e trigger SQL
+description: Sistema de 5 etapas progressivas (endereço→condição profissional→antecedentes→declarações→exames) com auto-cálculo de prazos via IA e trigger SQL
 type: feature
 ---
 
-**Liberação progressiva (qa_processos.etapa_liberada_ate, 1..4):**
+**Liberação progressiva (qa_processos.etapa_liberada_ate, 1..5):**
 - 1=COMPROVAÇÃO DE ENDEREÇO (sempre liberada e categoria padrão "outros")
-- 2=ANTECEDENTES CRIMINAIS
-- 3=DECLARAÇÕES E COMPROMISSOS
-- 4=EXAMES TÉCNICOS
+- 2=CONDIÇÃO PROFISSIONAL (item nativo `renda_definir_condicao` + docs `renda_*` gerados após seleção)
+- 3=ANTECEDENTES CRIMINAIS
+- 4=DECLARAÇÕES E COMPROMISSOS
+- 5=EXAMES TÉCNICOS
+
+**Condição Profissional (Etapa 2):** NÃO existe card fixo nem componente decorativo. O placeholder `renda_definir_condicao` é renderizado como item normal do checklist, com seletor inline (CLT/Autônomo/Empresário/Aposentado/Funcionário Público) que dispara `qa-processo-set-condicao` — esta remove o placeholder e injeta os docs reais de renda (também categoria `condicao_profissional`). Quando todos os `renda_*` ficam aprovados, a etapa 2 é colapsada em "ETAPAS CONCLUÍDAS · CONSULTA".
 
 Mapeamento por `tipo_documento` via SQL `qa_etapa_documento(text)` e mirror no front (`etapaDoTipo` no ProcessoDetalheDrawer). Tanto cliente quanto Equipe veem no checklist principal APENAS a etapa atual (`etapa_liberada_ate`). Etapas anteriores concluídas vão para a seção colapsável "ETAPAS CONCLUÍDAS · CONSULTA". Etapas futuras ficam ocultas. A aba EQUIPE pode manter visão técnica completa.
 
