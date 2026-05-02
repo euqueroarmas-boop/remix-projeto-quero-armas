@@ -1,25 +1,34 @@
 /**
- * Monitor de Cadastros e Documentos
+ * Monitor de Cadastros e Documentos — Fase 1 (fechamento)
  * ----------------------------------------------------------------------
  * Aba dentro de /clientes (não cria rota paralela).
- * Mostra contadores reais, lista operacional e base de aprendizado.
  * Apenas Equipe Quero Armas (área já protegida pelo layout autenticado).
  *
- * Regras:
+ * Regras de cor:
  *  - cinza/neutro = zero/sem dados
  *  - verde        = aprovado / regular
  *  - amarelo      = análise humana / dúvida
  *  - vermelho     = rejeitado / crítico
+ *
+ * Fontes reais (auditadas no banco):
+ *  - Cadastros públicos    → `qa_cadastro_publico.status` (pendente/aprovado)
+ *  - Documentos de processo → `qa_processo_documentos`
+ *      • status (operacional): pendente | em_analise | revisao_humana | aprovado | invalido | divergente
+ *      • decisao_ia (decisão pura da IA, NUNCA escrita por ação manual):
+ *          aprovado_auto | rejeitado_auto | revisao_humana | divergente | erro
+ *  - Aprovação manual = status='aprovado' AND decisao_ia <> 'aprovado_auto'.
  */
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   RefreshCw, ShieldCheck, ShieldAlert, ShieldX, Bot, BookOpen,
   Users, FileText, Brain, AlertTriangle, Settings as SettingsIcon, Loader2,
+  CheckCircle2, XCircle, RotateCcw, Star, ExternalLink, Eye, X as XIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +50,8 @@ type DocRow = {
   data_envio: string | null;
   updated_at: string | null;
   arquivo_storage_key: string | null;
+  usado_como_modelo?: boolean | null;
+  decisao_ia?: string | null;
   cliente_nome?: string | null;
   cliente_doc?: string | null;
   servico_nome?: string | null;
