@@ -28,3 +28,6 @@ Mapeamento por `tipo_documento` via SQL `qa_etapa_documento(text)` e mirror no f
 - `primeiro_doc_aprovado_em`: timestamp do 1º comprovante de endereço aprovado (relógio do processo começa aqui)
 
 **Bug fix download modelo:** edge function `qa-fill-template-cliente` valida ownership via `qa_clientes.user_id == auth.uid()`. Drawer faz fallback automático staff→cliente em 401/403.
+
+**Slice 2.1 — Aproveitamento do comprovante de endereço (corrigido):**
+`qa_aproveitar_endereco_cadastro_publico(uuid)` SÓ vincula o comprovante do cadastro público ao slot `comprovante_endereco_ano_<YYYY>` quando há `data_emissao` real (extraída pela IA em outro doc com mesmo `arquivo_storage_key`). Sem data, cria um item `tipo_documento='comprovante_endereco_revisao_ano'` (ano_competencia NULL, status `revisao_humana`) para a Equipe Quero Armas identificar o ano e mover ao slot correto. Nunca presume ano atual, nunca sobrescreve slot de outro ano. Eventos: `endereco_cadastro_publico_aproveitado` (com ano real) e `endereco_cadastro_publico_revisao_manual`.
