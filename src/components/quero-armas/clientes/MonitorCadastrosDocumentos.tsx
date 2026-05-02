@@ -948,9 +948,11 @@ export default function MonitorCadastrosDocumentos() {
       />
       <DocumentoViewerModal
         open={viewer.open}
-        onClose={viewer.fechar}
+        onClose={() => { viewer.fechar(); setDocNoViewer(null); }}
         source={viewer.source}
         title={viewer.title}
+        onAprovarComoModelo={docNoViewer ? aprovarComoModeloDoViewer : undefined}
+        aprovandoModelo={aprovandoModeloViewer}
       />
     </div>
   );
