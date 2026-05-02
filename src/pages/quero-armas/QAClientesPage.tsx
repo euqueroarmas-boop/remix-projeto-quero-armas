@@ -2008,9 +2008,30 @@ export default function QAClientesPage() {
       console.error("[loadSubData] erro:", e.message);
       toast.error("Erro ao carregar dados do cliente");
     } finally {
-      setLoadingSub(false);
+      if (!silent) setLoadingSub(false);
     }
   }, []);
+
+  // ─── Auto-refresh global do cliente selecionado (1s) ───
+  // Atualiza KPIs e todos os dados atrelados (CRAFs, GTEs, CR, documentos,
+  // vendas, processos, exames, armas) sem qualquer interação do administrador.
+  // Pausa quando a aba do navegador está oculta para não desperdiçar requisições.
+  useEffect(() => {
+    if (!selected) return;
+    let inFlight = false;
+    const tick = async () => {
+      if (inFlight) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      inFlight = true;
+      try {
+        await loadSubData(selected, { silent: true });
+      } finally {
+        inFlight = false;
+      }
+    };
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [selected, loadSubData]);
 
   const handleDelete = async () => {
     setDeleting(true);
