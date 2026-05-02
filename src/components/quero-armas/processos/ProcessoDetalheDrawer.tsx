@@ -1219,6 +1219,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
                 const tplEscolhido = pickTemplate(doc.regra_validacao);
                 const exigeAssinaturaGovBr = !!(doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).assinatura_requerida === "govbr");
+                // Pergunta-pivot tem ciclo próprio (PENDENTE/RESPONDIDA) — não usa
+                // o status documental do banco para a UI.
+                const perguntaBadge = pergunta
+                  ? (respostaAtual
+                      ? { label: "RESPONDIDA", color: "#7c3aed" }
+                      : { label: "AGUARDANDO SUA RESPOSTA", color: "#d97706" })
+                  : null;
                 return (
                   <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
@@ -1232,9 +1239,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}>
-                        {ds.label}
-                      </span>
+                      {perguntaBadge ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${perguntaBadge.color}15`, color: perguntaBadge.color, border: `1px solid ${perguntaBadge.color}40` }}>
+                          {perguntaBadge.label}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}>
+                          {ds.label}
+                        </span>
+                      )}
                     </div>
 
                     {/* Detalhes */}
