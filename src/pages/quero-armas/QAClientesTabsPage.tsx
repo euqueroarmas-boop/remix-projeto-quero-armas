@@ -25,7 +25,7 @@ export default function QAClientesTabsPage() {
   const [tab, setTab] = useState<TabKey>("clientes");
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
+    <div className="qa-scope min-h-screen bg-[#F7F8FA]">
       <header className="border-b border-slate-200 bg-white">
         <div className="w-full pr-4 py-5 flex items-start gap-5" style={{ paddingLeft: '25px' }}>
           {/* Logo Quero Armas — preenche o espaço quadrado à esquerda do título */}

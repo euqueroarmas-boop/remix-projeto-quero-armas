@@ -742,14 +742,18 @@ function MotivoDialog({
         {modal.tipo === "modelo" && (
           <div className="mb-3">
             <label className="text-[10px] uppercase tracking-wider text-slate-500">Nome do modelo</label>
-            <Input value={nomeModelo} onChange={(e) => setNomeModelo(e.target.value.toUpperCase())} className="h-9 uppercase" />
+            <Input
+              value={nomeModelo}
+              onChange={(e) => setNomeModelo(e.target.value.toUpperCase())}
+              className="h-9 uppercase bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus-visible:ring-slate-400"
+            />
           </div>
         )}
         <Textarea
           value={motivo}
           onChange={(e) => setMotivo(e.target.value)}
           placeholder={placeholders[modal.tipo]}
-          className="min-h-[120px] text-[12px]"
+          className="min-h-[120px] text-[12px] bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus-visible:ring-slate-400"
         />
         <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 mt-3">
           <Button variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
