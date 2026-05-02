@@ -225,18 +225,6 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           </h3>
           <span className="text-[10px] text-slate-500">Guia de Tráfego Especial</span>
         </div>
-        <div>
-          <input ref={fileRef} type="file" accept="application/pdf,image/*" hidden onChange={onFileSelected} />
-          <button
-            type="button"
-            onClick={onPickFile}
-            disabled={uploading}
-            className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-800 hover:bg-amber-100 disabled:opacity-60"
-          >
-            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-            Enviar GTE
-          </button>
-        </div>
       </header>
 
       {/* KPIs */}
@@ -255,7 +243,7 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
         <p className="py-6 text-center text-[11px] text-slate-500">Carregando GTEs…</p>
       ) : docs.length === 0 ? (
         <p className="py-6 text-center text-[11px] text-slate-500">
-          Nenhuma GTE enviada. Use “Enviar GTE” para anexar o PDF — a IA extrai armas, endereços e prazos automaticamente.
+          Nenhuma GTE enviada. Use o botão “Enviar” no topo do Arsenal para anexar o PDF — a IA extrai armas, endereços e prazos automaticamente.
         </p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
