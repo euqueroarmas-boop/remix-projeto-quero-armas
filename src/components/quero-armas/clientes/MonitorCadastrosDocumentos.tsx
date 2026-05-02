@@ -558,6 +558,68 @@ export default function MonitorCadastrosDocumentos() {
     } catch (e: any) { toast.error(e.message || "Falha na ação."); }
   };
 
+  // Aprovação rápida de cadastro público (atalho operacional dentro do drill-down)
+  const aprovarCadastro = async (cad: CadastroRow) => {
+    setAprovandoCadId(cad.id);
+    try {
+      const { error } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({ status: "aprovado", processado_em: new Date().toISOString() })
+        .eq("id", cad.id);
+      if (error) throw error;
+      toast.success("Cadastro aprovado.");
+      await carregar();
+    } catch (e: any) {
+      toast.error("Erro ao aprovar cadastro: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setAprovandoCadId(null);
+    }
+  };
+
+  const abrirCadastro = (cad: CadastroRow) => {
+    if (cad.cliente_id_vinculado) {
+      abrirCliente(cad.cliente_id_vinculado);
+      return;
+    }
+    // Fallback: abre a aba de homologação se ainda não tem cliente vinculado
+    window.open(`/quero-armas/homologacao-clientes?cadastro=${cad.id}`, "_self");
+  };
+
+  const abrirDocOrigem = async (modelo: ModeloDetalheRow) => {
+    if (!modelo.documento_origem_id) {
+      toast.error("Modelo sem documento de origem registrado.");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("qa_processo_documentos")
+      .select("id, arquivo_storage_key, nome_documento, processo_id, cliente_id")
+      .eq("id", modelo.documento_origem_id)
+      .maybeSingle();
+    if (error || !data?.arquivo_storage_key) {
+      toast.error("Documento de origem não encontrado.");
+      return;
+    }
+    const fileName = (data.arquivo_storage_key.split("/").pop()) || "documento";
+    viewer.abrirStorage("qa-processo-docs", data.arquivo_storage_key, {
+      fileName, title: data.nome_documento || fileName,
+    });
+  };
+
+  const desativarModelo = async (modelo: ModeloDetalheRow) => {
+    if (!confirm("DESATIVAR ESTE MODELO? A IA DEIXARÁ DE USÁ-LO COMO REFERÊNCIA.")) return;
+    try {
+      const { error } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .update({ ativo: false })
+        .eq("id", modelo.id);
+      if (error) throw error;
+      toast.success("Modelo desativado.");
+      await carregar();
+    } catch (e: any) {
+      toast.error("Erro ao desativar: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
   // -------------------------------------------------------------------------
   return (
     <div className="px-5 md:px-6 max-w-[1400px] mx-auto space-y-5">
