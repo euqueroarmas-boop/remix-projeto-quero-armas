@@ -1918,8 +1918,9 @@ export default function QAClientesPage() {
     loadingClientRef.current = null;
   };
 
-  const loadSubData = useCallback(async (c: Cliente) => {
-    setLoadingSub(true);
+  const loadSubData = useCallback(async (c: Cliente, opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) setLoadingSub(true);
     try {
       // CHAVE CANÔNICA: vendas/crafs/gtes/filiações historicamente usam id_legado,
       // mas o portal/app/arsenal grava com o id real (qa_clientes.id). Para garantir
