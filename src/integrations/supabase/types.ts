@@ -6165,6 +6165,14 @@ export type Database = {
         Row: {
           arquivo_storage_key: string | null
           arquivo_url: string | null
+          assinatura_autoridade: string | null
+          assinatura_cpf: string | null
+          assinatura_data: string | null
+          assinatura_detalhes_json: Json | null
+          assinatura_motivo_falha: string | null
+          assinatura_signatario: string | null
+          assinatura_status: string | null
+          assinatura_validada_em: string | null
           campos_complementares_json: Json | null
           cliente_id: number
           created_at: string
@@ -6211,6 +6219,14 @@ export type Database = {
         Insert: {
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
+          assinatura_autoridade?: string | null
+          assinatura_cpf?: string | null
+          assinatura_data?: string | null
+          assinatura_detalhes_json?: Json | null
+          assinatura_motivo_falha?: string | null
+          assinatura_signatario?: string | null
+          assinatura_status?: string | null
+          assinatura_validada_em?: string | null
           campos_complementares_json?: Json | null
           cliente_id: number
           created_at?: string
@@ -6257,6 +6273,14 @@ export type Database = {
         Update: {
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
+          assinatura_autoridade?: string | null
+          assinatura_cpf?: string | null
+          assinatura_data?: string | null
+          assinatura_detalhes_json?: Json | null
+          assinatura_motivo_falha?: string | null
+          assinatura_signatario?: string | null
+          assinatura_status?: string | null
+          assinatura_validada_em?: string | null
           campos_complementares_json?: Json | null
           cliente_id?: number
           created_at?: string

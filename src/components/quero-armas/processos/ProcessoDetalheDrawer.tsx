@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows } from "lucide-react";
+import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 
@@ -48,6 +48,15 @@ interface DocRow {
   score_modelo_aprovado?: number | null;
   modelo_aprovado_id?: string | null;
   usado_como_modelo?: boolean | null;
+  // Validação de assinatura digital GOV.BR / ICP-Brasil
+  assinatura_status?: string | null;
+  assinatura_signatario?: string | null;
+  assinatura_cpf?: string | null;
+  assinatura_data?: string | null;
+  assinatura_autoridade?: string | null;
+  assinatura_motivo_falha?: string | null;
+  assinatura_validada_em?: string | null;
+  assinatura_detalhes_json?: any;
 }
 
 interface ProcessoFull {
@@ -109,6 +118,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [aprovacao, setAprovacao] = useState<{ docId: string; nome: string; divergente: boolean } | null>(null);
   const [salvandoAcao, setSalvandoAcao] = useState(false);
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
+  const [validandoAssinaturaId, setValidandoAssinaturaId] = useState<string | null>(null);
   const viewer = useDocumentoViewer();
 
   const carregar = useCallback(async () => {
@@ -482,6 +492,46 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
     } finally {
       setReprocessandoId(null);
+    }
+  };
+
+  // ============================================================
+  // FEATURE: Validador GOV.BR / ICP-Brasil
+  // ============================================================
+  const validarAssinaturaGov = async (doc: DocRow) => {
+    if (!processo) return;
+    if (!doc.arquivo_storage_key) {
+      toast.error("Documento sem arquivo enviado.");
+      return;
+    }
+    setValidandoAssinaturaId(doc.id);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-validate-govbr-signature`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ documento_id: doc.id }),
+        },
+      );
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(json?.error || "Falha ao validar assinatura");
+      if (json.valida) {
+        toast.success(
+          `Assinatura válida${json.signatario ? " — " + json.signatario : ""}.`,
+        );
+      } else if (json.status === "sem_assinatura") {
+        toast.error("Documento não possui assinatura digital embutida.");
+      } else {
+        toast.error(`Assinatura inválida: ${json.motivo_falha ?? "desconhecido"}`);
+      }
+      await carregar();
+    } catch (e: any) {
+      toast.error("Erro ao validar assinatura: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setValidandoAssinaturaId(null);
     }
   };
 
@@ -920,6 +970,83 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {/* Resultado da validação de assinatura GOV.BR / ICP-Brasil */}
+                      {exigeAssinaturaGovBr && doc.assinatura_status && (
+                        <div
+                          className={`rounded-md p-2.5 border ${
+                            doc.assinatura_status === "valida"
+                              ? "border-emerald-200 bg-emerald-50/60"
+                              : doc.assinatura_status === "sem_assinatura"
+                              ? "border-amber-200 bg-amber-50/60"
+                              : "border-red-200 bg-red-50/60"
+                          }`}
+                        >
+                          <div
+                            className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold ${
+                              doc.assinatura_status === "valida"
+                                ? "text-emerald-800"
+                                : doc.assinatura_status === "sem_assinatura"
+                                ? "text-amber-800"
+                                : "text-red-800"
+                            }`}
+                          >
+                            {doc.assinatura_status === "valida" ? (
+                              <ShieldCheck className="h-3 w-3" />
+                            ) : (
+                              <ShieldAlert className="h-3 w-3" />
+                            )}
+                            {doc.assinatura_status === "valida"
+                              ? "ASSINATURA GOV.BR VÁLIDA"
+                              : doc.assinatura_status === "sem_assinatura"
+                              ? "DOCUMENTO SEM ASSINATURA DIGITAL"
+                              : "ASSINATURA INVÁLIDA"}
+                            {doc.assinatura_detalhes_json?.icp_brasil && (
+                              <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px]">
+                                ICP-BRASIL
+                              </span>
+                            )}
+                          </div>
+                          {doc.assinatura_status === "valida" && (
+                            <div className="mt-1.5 text-[11px] text-slate-800 leading-relaxed font-mono">
+                              {doc.assinatura_signatario && (
+                                <div>
+                                  <span className="text-slate-500">SIGNATÁRIO: </span>
+                                  <span className="font-bold uppercase">{doc.assinatura_signatario}</span>
+                                </div>
+                              )}
+                              {doc.assinatura_cpf && (
+                                <div>
+                                  <span className="text-slate-500">CPF: </span>
+                                  {doc.assinatura_cpf}
+                                </div>
+                              )}
+                              {doc.assinatura_data && (
+                                <div>
+                                  <span className="text-slate-500">DATA: </span>
+                                  {formatDateTime(doc.assinatura_data)}
+                                </div>
+                              )}
+                              {doc.assinatura_autoridade && (
+                                <div>
+                                  <span className="text-slate-500">AUTORIDADE: </span>
+                                  <span className="uppercase">{doc.assinatura_autoridade}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {doc.assinatura_status !== "valida" && doc.assinatura_motivo_falha && (
+                            <p className="mt-1 text-[11px] text-slate-700 leading-relaxed">
+                              {doc.assinatura_motivo_falha}
+                            </p>
+                          )}
+                          {doc.assinatura_validada_em && (
+                            <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-500">
+                              Verificado em {formatDateTime(doc.assinatura_validada_em)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Fase 12 — Orientação ao cliente (apenas campos preenchidos) */}
                       {(doc.instrucoes || doc.observacoes_cliente) && (
                         <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
@@ -1267,6 +1394,29 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             >
                               <Download className="h-3 w-3" /> BAIXAR
                             </button>
+                            {/* Validador GOV.BR / ICP-Brasil — só p/ docs que exigem assinatura digital */}
+                            {exigeAssinaturaGovBr && (
+                              <>
+                                <button
+                                  onClick={() => validarAssinaturaGov(doc)}
+                                  disabled={validandoAssinaturaId === doc.id}
+                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                                  title="Valida a assinatura digital GOV.BR/ICP-Brasil embutida no PDF"
+                                >
+                                  <FileSignature className={`h-3 w-3 ${validandoAssinaturaId === doc.id ? "animate-pulse" : ""}`} />
+                                  {validandoAssinaturaId === doc.id ? "VALIDANDO..." : "VALIDAR ASSINATURA GOV.BR"}
+                                </button>
+                                <a
+                                  href="https://validar.iti.gov.br/"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 text-[11px] uppercase tracking-wider font-bold text-indigo-700 hover:bg-indigo-100"
+                                  title="Abre o validador oficial do ITI (gov.br) em nova aba"
+                                >
+                                  <ExternalLink className="h-3 w-3" /> VALIDAR NO ITI OFICIAL
+                                </a>
+                              </>
+                            )}
                           </>
                         )}
 
