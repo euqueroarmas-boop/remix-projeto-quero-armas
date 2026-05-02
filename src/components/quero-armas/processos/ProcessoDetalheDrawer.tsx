@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature } from "lucide-react";
+import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
@@ -58,6 +58,13 @@ interface DocRow {
   assinatura_motivo_falha?: string | null;
   assinatura_validada_em?: string | null;
   assinatura_detalhes_json?: any;
+  // Prazos / extração de datas (novos)
+  data_emissao?: string | null;
+  proxima_leitura?: string | null;
+  data_validade_efetiva?: string | null;
+  extracao_ia_status?: string | null;
+  extracao_ia_json?: any;
+  confirmado_pelo_cliente_em?: string | null;
 }
 
 interface ProcessoFull {
@@ -70,6 +77,11 @@ interface ProcessoFull {
   observacoes_admin: string | null;
   condicao_profissional?: string | null;
   respostas_questionario_json?: Record<string, string> | null;
+  etapa_liberada_ate?: number | null;
+  primeiro_doc_aprovado_em?: string | null;
+  prazo_critico_data?: string | null;
+  prazo_critico_doc_id?: string | null;
+  observacao_prazo?: string | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
@@ -124,7 +136,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json, etapa_liberada_ate, primeiro_doc_aprovado_em, prazo_critico_data, prazo_critico_doc_id, observacao_prazo")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
@@ -249,6 +261,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         throw new Error(txt || "Falha ao registrar upload");
       }
       toast.success("Documento enviado. Validação automática iniciada.");
+      // Dispara extração de datas em background — IA lê data_emissao e
+      // proxima_leitura. Trigger SQL recalcula data_validade_efetiva e
+      // prazo_critico_data do processo automaticamente.
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-extract-doc-dates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ documento_id: docId }),
+      })
+        .then(() => setTimeout(() => carregar(), 8000))
+        .catch((e) => console.warn("[extracao-datas] falhou:", e));
       await carregar();
       onUpdated?.();
     } catch (err: any) {
@@ -786,7 +808,78 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // PROGRESSO DOCUMENTAL — fonte única de verdade: qa_processo_documentos.
   // O item técnico "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
   // ============================================================================
-  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+
+  // LIBERAÇÃO POR ETAPAS:
+  // 1=endereco, 2=antecedentes, 3=declaracoes, 4=exames. Itens de outras
+  // categorias ("outros") sempre aparecem (etapa 1, fluxo herdado).
+  const etapaLiberada = Math.max(1, Math.min(4, processo?.etapa_liberada_ate ?? 1));
+
+  const etapaDoTipo = (tipo: string): number => {
+    const t = (tipo || "").toLowerCase();
+    if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
+    if (t.includes("endereco") || t.includes("residenc")) return 1;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
+    return 1; // outros: sempre liberados
+  };
+
+  const docVisivelPorEtapa = (d: DocRow): boolean => {
+    // Equipe sempre vê tudo. Cliente só vê até a etapa liberada.
+    if (equipeMode) return true;
+    return etapaDoTipo(d.tipo_documento) <= etapaLiberada;
+  };
+
+  const docsChecklist = docs.filter(
+    (d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d) && docVisivelPorEtapa(d),
+  );
+
+  // Para o admin: lista TODAS as etapas + status de cada uma (para o painel
+  // "Liberar próxima etapa"). Calculado a partir do conjunto completo de docs
+  // (sem filtro por etapa liberada), mas respeitando questionário.
+  const docsTodos = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+  const etapaResumo = (n: number) => {
+    const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
+    const aprovados = lista.filter((d) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
+    return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
+  };
+  const etapaCompleta = etapaResumo(etapaLiberada).completo;
+  const proximaEtapa = etapaLiberada < 4 ? etapaLiberada + 1 : null;
+  const ETAPA_NOMES: Record<number, string> = {
+    1: "COMPROVAÇÃO DE ENDEREÇO",
+    2: "ANTECEDENTES CRIMINAIS",
+    3: "DECLARAÇÕES E COMPROMISSOS",
+    4: "EXAMES TÉCNICOS",
+  };
+
+  const liberarProximaEtapa = async () => {
+    if (!processo || !proximaEtapa) return;
+    const ok = window.confirm(
+      `LIBERAR ${ETAPA_NOMES[proximaEtapa]} para o cliente?\n\n` +
+      `O cliente já estava trabalhando em "${ETAPA_NOMES[etapaLiberada]}".\n` +
+      `Você pode liberar a próxima etapa MESMO sem 100% da atual concluída.`,
+    );
+    if (!ok) return;
+    try {
+      const { error } = await supabase
+        .from("qa_processos")
+        .update({ etapa_liberada_ate: proximaEtapa })
+        .eq("id", processo.id);
+      if (error) throw error;
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processo.id,
+        tipo_evento: "etapa_liberada_manualmente",
+        descricao: `EQUIPE LIBEROU ETAPA ${proximaEtapa}: ${ETAPA_NOMES[proximaEtapa]}`,
+        ator: "equipe_operacional",
+        dados_json: { etapa_anterior: etapaLiberada, etapa_nova: proximaEtapa, modo: "manual" },
+      });
+      toast.success(`ETAPA "${ETAPA_NOMES[proximaEtapa]}" LIBERADA AO CLIENTE.`);
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao liberar etapa: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
   const metrics = computeChecklistMetrics(docsChecklist);
   const isCumprido = (d: DocRow) => isChecklistCumprido(d.status);
   const isEmAnalise = (d: DocRow) => isChecklistEmAnalise(d.status);
@@ -884,6 +977,65 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* PAINEL DE ETAPAS / PRAZOS — visível ao cliente e admin */}
+        {!aguardandoPagto && processo && (
+          <div className="px-5 py-3 border-b border-slate-200 bg-white space-y-2">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4].map((n) => {
+                  const r = etapaResumo(n);
+                  const liberada = n <= etapaLiberada;
+                  const bg = !liberada ? "#E2E8F0" : r.completo ? "#16a34a" : n === etapaLiberada ? "#F59E0B" : "#94A3B8";
+                  return (
+                    <div key={n} className="flex items-center gap-1.5" title={ETAPA_NOMES[n]}>
+                      <div
+                        className="h-6 w-6 rounded-md flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ background: bg, opacity: liberada ? 1 : 0.5 }}
+                      >
+                        {r.completo ? <CheckCircle className="h-3 w-3" /> : n}
+                      </div>
+                      {n < 4 && <div className="w-3 h-px bg-slate-200" />}
+                    </div>
+                  );
+                })}
+                <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-slate-600">
+                  ETAPA {etapaLiberada}/4: {ETAPA_NOMES[etapaLiberada]}
+                </span>
+              </div>
+              {equipeMode && proximaEtapa && (
+                <button
+                  onClick={liberarProximaEtapa}
+                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                  title={etapaCompleta ? "Etapa atual concluída — pode liberar a próxima" : "Forçar liberação antecipada da próxima etapa"}
+                >
+                  <ChevronRight className="h-3 w-3" />
+                  LIBERAR ETAPA {proximaEtapa}: {ETAPA_NOMES[proximaEtapa]}
+                </button>
+              )}
+            </div>
+            {processo.prazo_critico_data && (
+              <div className="flex items-center gap-2 text-[11px]">
+                <CalendarClock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span className="uppercase tracking-wider font-bold text-amber-800">
+                  PRAZO MAIS CRÍTICO:
+                </span>
+                <span className="font-mono font-bold text-slate-800">
+                  {formatDate(processo.prazo_critico_data)}
+                </span>
+                {(() => {
+                  const dias = Math.ceil((new Date(processo.prazo_critico_data).getTime() - Date.now()) / 86400000);
+                  const cor = dias < 0 ? "#dc2626" : dias <= 5 ? "#dc2626" : dias <= 15 ? "#f59e0b" : "#16a34a";
+                  return (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: cor }}>
+                      {dias < 0 ? `VENCIDO HÁ ${Math.abs(dias)}D` : `${dias}D RESTANTES`}
+                    </span>
+                  );
+                })()}
+              </div>
+            )}
           </div>
         )}
 

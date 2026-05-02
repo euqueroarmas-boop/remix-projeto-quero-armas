@@ -8733,6 +8733,7 @@ export type Database = {
           y: number
         }[]
       }
+      qa_categoria_documento: { Args: { tipo: string }; Returns: string }
       qa_cliente_criar_conta_publica: {
         Args: {
           p_cpf: string
@@ -8794,6 +8795,7 @@ export type Database = {
         }
         Returns: Json
       }
+      qa_etapa_documento: { Args: { tipo: string }; Returns: number }
       qa_evento_ja_notificado: {
         Args: { _evento: string; _solicitacao_id: string; _status_novo: string }
         Returns: boolean
@@ -8907,6 +8909,10 @@ export type Database = {
       qa_reabrir_homologacao_cliente: {
         Args: { p_cliente_id: number; p_motivo: string }
         Returns: Json
+      }
+      qa_recalcular_prazos_processo: {
+        Args: { p_processo_id: string }
+        Returns: undefined
       }
       qa_recalcular_status_servico: {
         Args: { _solicitacao_id: string }
