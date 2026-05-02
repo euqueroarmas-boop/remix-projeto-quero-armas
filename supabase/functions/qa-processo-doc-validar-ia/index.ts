@@ -176,7 +176,7 @@ REGRAS CRÍTICAS:
 2. Se ilegível, marque legivel=false.
 3. Se faltar QUALQUER campo crítico, deixe em branco no campos_extraidos e cite em motivo_rejeicao.
 4. Compare CADA campo com o cadastro abaixo. QUALQUER diferença textual relevante (nome, CPF, RG, data nascimento, endereço, CEP) é divergência.
-REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo): NUNCA gere divergência de endereço, CEP, cidade, UF, bairro, logradouro ou nome entre a EMPRESA e o cliente. O endereço da SEDE da empresa é independente do endereço residencial do cliente. O vínculo do cliente com a empresa se prova pela presença do CPF/nome dele no QSA / lista de sócios / administradores. O que importa para PJ é: situação_cadastral=ATIVA e cliente_e_socio=true. Endereço da empresa deve ser extraído nos campos endereco_sede / cidade_sede / uf_sede / cep_sede, nunca nos campos de endereço do cliente.
+REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo): NUNCA gere divergência de endereço, CEP, cidade, UF, bairro, logradouro ou nome entre a EMPRESA e o cliente. O endereço da SEDE da empresa é INDEPENDENTE do endereço residencial do cliente — o governo (PF/Exército) NÃO exige que coincidam; o que se prova com o documento PJ é a ORIGEM DA RENDA do cliente, não onde ele mora. NÃO gere "orientacoes_cliente" pedindo para "atualizar cadastro" ou "enviar comprovante de residência" por causa de diferença entre endereço da empresa e endereço residencial — isso está EXPRESSAMENTE PROIBIDO. O vínculo do cliente com a empresa se prova pela presença do CPF/nome dele no QSA / lista de sócios / administradores. O que importa para PJ é: situação_cadastral=ATIVA e cliente_e_socio=true. Endereço da empresa deve ser extraído nos campos endereco_sede / cidade_sede / uf_sede / cep_sede, nunca nos campos de endereço do cliente.
 5. NUNCA assuma campos não vistos. Se incerto, baixe a confiança.
 6. Datas YYYY-MM-DD.
 7. EXTRAIA TUDO O QUE FOR ÚTIL: campos com correspondência no cadastro vão em "campos_extraidos"; dados úteis sem campo fixo (observações, códigos auxiliares, anotações, números de protocolo, etc.) vão em "campos_complementares"; metadados gerais do documento (resolução, idioma, observações de qualidade) vão em "metadados_documento".
@@ -658,6 +658,23 @@ Deno.serve(async (req) => {
           return !CAMPOS_PJ_IGNORAR.has(c);
         });
 
+        // Limpa orientações ao cliente que reclamem de divergência endereço
+        // empresa↔residência. O governo NÃO exige que sejam iguais; o documento
+        // PJ serve para comprovar ORIGEM DA RENDA, não local de moradia.
+        const ORIENT_PROIBIDA_RX = /(endere[çc]o|cep|residencial|cadastro|atualize|atualiz[ae])/i;
+        if (parsed.orientacoes_cliente && typeof parsed.orientacoes_cliente === "string") {
+          if (ORIENT_PROIBIDA_RX.test(parsed.orientacoes_cliente)) {
+            parsed.orientacoes_cliente = null;
+          }
+        }
+        // Também limpa em campos_complementares (caso a IA tenha colocado lá)
+        if (parsed.campos_complementares && typeof parsed.campos_complementares === "object") {
+          const cc: any = parsed.campos_complementares;
+          if (typeof cc.orientacoes_cliente === "string" && ORIENT_PROIBIDA_RX.test(cc.orientacoes_cliente)) {
+            delete cc.orientacoes_cliente;
+          }
+        }
+
         // Cruzamento CNPJ ↔ QSA: marca cliente_e_socio se o CPF do cliente
         // aparece na lista de sócios/administradores extraída.
         const cpfCliente = String(cliente?.cpf ?? "").replace(/\D+/g, "");
@@ -706,14 +723,20 @@ Deno.serve(async (req) => {
       const divsIn: any[] = Array.isArray(parsed.divergencias) ? parsed.divergencias : [];
       const divsKeep: any[] = [];
       for (const d of divsIn) {
-        const _cv = d?.valor_cadastro;
+        // A IA pode usar nomes alternativos: valor_cadastro/valor_documento OU
+        // esperado/encontrado. Aceita ambos para evitar divergência fantasma.
+        const _cv = d?.valor_cadastro ?? d?.esperado;
         const cadVazio =
           _cv == null ||
           (typeof _cv === "string" &&
             ["", "none", "null", "undefined", "n/a", "na", "-"].includes(_cv.trim().toLowerCase()));
-        const docVal = d?.valor_documento;
+        const docVal = d?.valor_documento ?? d?.encontrado;
         const temDocVal =
           docVal != null && !(typeof docVal === "string" && docVal.trim() === "");
+        // Divergência fantasma: ambos os lados vazios. Descarta sempre.
+        if (cadVazio && !temDocVal) {
+          continue;
+        }
         if (cadVazio && temDocVal) {
           // promove para campo extraído (sem sobrescrever campo já presente)
           if (camposIA[d.campo] == null || (typeof camposIA[d.campo] === "string" && camposIA[d.campo].trim() === "")) {
