@@ -742,6 +742,10 @@ Deno.serve(async (req) => {
     const divergencias = parsed.divergencias || [];
     const conf = parsed.confianca ?? 0;
     let novoStatus: string;
+    // Decisão BRUTA da IA (antes de ajustes por modelo aprovado).
+    // É essa que vai para `decisao_ia` — separa, de forma definitiva,
+    // decisão automática vs decisão manual da Equipe.
+    let decisaoIA: "aprovado_auto" | "rejeitado_auto" | "revisao_humana" | "divergente" | "erro" = "revisao_humana";
     let motivoRejeicao: string | null = null;
 
     if (!parsed.tipo_correto) {
