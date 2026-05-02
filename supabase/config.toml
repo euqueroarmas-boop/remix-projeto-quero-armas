@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.qa-cliente-criar-conta-publica]
 verify_jwt = false
+
+[functions.qa-generate-embeddings]
+verify_jwt = false
+
+[functions.qa-bootstrap-normativas]
+verify_jwt = false
