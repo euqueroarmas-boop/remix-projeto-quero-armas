@@ -712,6 +712,12 @@ export default function MonitorCadastrosDocumentos() {
         onSubmit={submitModal}
         loading={!!acaoLoadingId}
       />
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }
