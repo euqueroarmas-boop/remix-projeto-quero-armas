@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
+import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 
 interface Props {
   clienteId: number;
@@ -175,6 +176,9 @@ export function ArsenalView({
   // Modal NOVO: upload + leitura por IA + confirmação humana.
   // O CrafModal antigo (acima) continua sendo usado para EDIÇÃO manual de um CRAF já cadastrado.
   const [crafUploadIA, setCrafUploadIA] = useState<{ open: boolean }>({ open: false });
+  // Hub Documental — fluxo unificado de envio de CRAF (mesma lógica do Hub do cliente).
+  // Substitui o botão "ENVIAR CRAF" no header da Bancada para usar IA + revisão + aprovação.
+  const [crafHubModal, setCrafHubModal] = useState<{ open: boolean }>({ open: false });
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{
     open: boolean;
