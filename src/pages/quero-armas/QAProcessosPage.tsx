@@ -24,9 +24,10 @@ interface ProcessoRow {
 
 const ETAPA_LABEL: Record<number, string> = {
   1: "ENDEREÇO",
-  2: "ANTECEDENTES",
-  3: "DECLARAÇÕES",
-  4: "EXAMES",
+  2: "CONDIÇÃO PROFISSIONAL",
+  3: "ANTECEDENTES",
+  4: "DECLARAÇÕES",
+  5: "EXAMES",
 };
 
 function diasAteData(d: string | null): number | null {
@@ -253,7 +254,7 @@ export default function QAProcessosPage() {
                   const c = p.contadores ?? { total: 0, cumpridos: 0, pendentes: 0, emAnalise: 0, outros: 0 };
                   const dias = diasAteData(p.prazo_critico_data);
                   const tone = prazoTone(dias);
-                  const etapa = Math.max(1, Math.min(4, p.etapa_liberada_ate ?? 1));
+                  const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
                   return (
                     <tr key={p.id} onClick={() => setSelectedId(p.id)} className="border-b border-slate-100 hover:bg-slate-50/60 cursor-pointer">
                       <td className="px-4 py-3">
@@ -268,7 +269,7 @@ export default function QAProcessosPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
-                          {etapa}/4 · {ETAPA_LABEL[etapa]}
+                          {etapa}/5 · {ETAPA_LABEL[etapa]}
                         </span>
                       </td>
                       <td className="px-4 py-3">
