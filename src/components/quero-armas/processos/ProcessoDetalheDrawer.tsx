@@ -1751,7 +1751,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     descricao: "ITENS COMPLEMENTARES DESTE PROCESSO." };
                 };
 
-                const ORDEM_CATEGORIAS = ["antecedentes", "exames", "endereco", "declaracoes", "outros"] as const;
+                // Ordem lógica do fluxo PF: 1) Endereço, 2) Antecedentes,
+                // 3) Exames Técnicos, 4) Declarações e Compromissos, 5) Outros.
+                const ORDEM_CATEGORIAS = ["endereco", "antecedentes", "exames", "declaracoes", "outros"] as const;
 
                 const renderGrupoPendencias = (lista: DocRow[]) => {
                   if (lista.length === 0) return null;
