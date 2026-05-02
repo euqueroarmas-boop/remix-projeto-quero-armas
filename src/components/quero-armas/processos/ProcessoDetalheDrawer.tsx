@@ -929,6 +929,52 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <span className="text-slate-400">TOTAL {totalExigencias}</span>
                 </div>
               )}
+              {/* Emissão em lote de certidões oficiais */}
+              {(() => {
+                const certidoesPendentes = docs.filter(
+                  (d) =>
+                    d.tipo_documento?.startsWith("certidao") &&
+                    !!d.link_emissao &&
+                    !isChecklistCumprido(d.status),
+                );
+                if (certidoesPendentes.length === 0) return null;
+                const abrirTodas = async () => {
+                  // Copia a lista para a área de transferência (UPPERCASE para padrão QA)
+                  const lista = certidoesPendentes
+                    .map((d, i) => `${i + 1}. ${d.nome_documento.toUpperCase()} — ${d.link_emissao}`)
+                    .join("\n");
+                  try { await navigator.clipboard.writeText(lista); } catch { /* ignore */ }
+                  toast.success(`ABRINDO ${certidoesPendentes.length} CERTIDÕES — LINKS COPIADOS`);
+                  // Abre cada link em nova aba com pequeno delay (evita pop-up blocker)
+                  certidoesPendentes.forEach((d, i) => {
+                    setTimeout(() => {
+                      window.open(d.link_emissao!, "_blank", "noopener,noreferrer");
+                    }, i * 250);
+                  });
+                };
+                return (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50/70 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <ExternalLink className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-[11px] uppercase tracking-wider font-bold text-amber-900">
+                          EMITIR CERTIDÕES OFICIAIS ({certidoesPendentes.length})
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wide text-amber-800/80 mt-0.5">
+                          ABRE TODOS OS PORTAIS DOS ÓRGÃOS EMISSORES DE UMA VEZ — LINKS COPIADOS PARA COMPARTILHAR COM O CLIENTE
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={abrirTodas}
+                      className="inline-flex items-center gap-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold uppercase tracking-wider px-4 py-2 shrink-0"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      EMITIR EM LOTE
+                    </button>
+                  </div>
+                );
+              })()}
               {(() => {
                 const renderDoc = (doc: DocRow) => {
                 const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
