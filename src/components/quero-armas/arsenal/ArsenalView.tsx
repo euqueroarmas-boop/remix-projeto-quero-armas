@@ -509,8 +509,33 @@ export function ArsenalView({
       .reduce((s, a) => s + a.quantidade, 0);
   }, [selected, ammo]);
 
+  // Documentos enviados pelo cliente via Hub aguardando aprovação da equipe.
+  // Quando existem, refletimos no KPI como "EM ANÁLISE" (âmbar) — em vez de
+  // mostrar "SEM CR / SEM CRAFs / SEM GTE" cinza, que dava sensação de erro.
+  const pendingDocs = useMemo(() => {
+    const list = (meusDocs ?? []) as any[];
+    const isPending = (d: any) => {
+      const s = String(d?.status ?? "").toLowerCase();
+      return s === "pendente_aprovacao" || s === "pendente" || s === "em_analise";
+    };
+    let cr = 0;
+    let craf = 0;
+    let gte = 0;
+    for (const d of list) {
+      if (!isPending(d)) continue;
+      const t = String(d?.tipo_documento ?? "").toLowerCase();
+      if (t === "cr") cr++;
+      else if (t === "craf") craf++;
+      else if (t === "gte" || t === "gt") gte++;
+    }
+    return { cr, craf, gte };
+  }, [meusDocs]);
+
   const crStatus = (() => {
-    if (!cadastroCr?.validade_cr) return { tone: "muted" as const, label: "SEM CR" };
+    if (!cadastroCr?.validade_cr) {
+      if (pendingDocs.cr > 0) return { tone: "warn" as const, label: "EM ANÁLISE" };
+      return { tone: "muted" as const, label: "SEM CR" };
+    }
     const d = daysUntil(cadastroCr.validade_cr);
     const t = urgencyTone(d);
     if (t === "ok") return { tone: "ok" as const, label: "EM DIA" };
@@ -533,6 +558,8 @@ export function ArsenalView({
         totalGtes={gteKpi.total}
         gteStatus={gteKpi.statusVisual}
         gteHint={gteKpi.labelSecundaria}
+        crafPending={pendingDocs.craf}
+        gtePending={pendingDocs.gte}
         onNavigate={scrollToSection}
       />
 

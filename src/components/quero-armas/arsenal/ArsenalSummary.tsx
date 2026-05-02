@@ -66,6 +66,16 @@ interface Props {
   gteStatus?: "ok" | "warn" | "danger" | "muted";
   /** Subtexto dinâmico: "Tudo em dia" / "Próxima do vencimento" / "Vencida" / "Sem GTE cadastrada". */
   gteHint?: string;
+  /**
+   * Documentos do tipo CRAF aguardando aprovação da equipe.
+   * Quando > 0 e ainda não há CRAF canônico, o KPI mostra "EM ANÁLISE" (âmbar).
+   */
+  crafPending?: number;
+  /**
+   * Documentos do tipo GTE/GT aguardando aprovação da equipe.
+   * Quando > 0 e ainda não há GTE canônica, o KPI mostra "EM ANÁLISE" (âmbar).
+   */
+  gtePending?: number;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
@@ -202,6 +212,8 @@ export function ArsenalSummary({
   totalGtes = 0,
   gteStatus = "muted",
   gteHint = "Sem GTE cadastrada",
+  crafPending = 0,
+  gtePending = 0,
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
@@ -382,8 +394,20 @@ export function ArsenalSummary({
         icon: <FileBadge className="h-4 w-4" />,
         label: "CRAFs",
         value: totalCrafs,
-        hint: totalCrafs === 0 ? "Sem CRAFs cadastrados" : "Vinculados ao acervo",
-        tone: totalCrafs === 0 ? "steel" : "cyan",
+        hint:
+          totalCrafs === 0 && crafPending > 0
+            ? crafPending === 1
+              ? "1 em análise"
+              : `${crafPending} em análise`
+            : totalCrafs === 0
+              ? "Sem CRAFs cadastrados"
+              : "Vinculados ao acervo",
+        tone:
+          totalCrafs === 0 && crafPending > 0
+            ? "warn"
+            : totalCrafs === 0
+              ? "steel"
+              : "cyan",
         target: "crafs",
       },
       status_cr: {
@@ -418,13 +442,24 @@ export function ArsenalSummary({
         icon: <ClipboardList className="h-4 w-4" />,
         label: "GTEs",
         value: totalGtes,
-        hint: gteHint,
+        hint:
+          totalGtes === 0 && gtePending > 0
+            ? gtePending === 1
+              ? "1 em análise"
+              : `${gtePending} em análise`
+            : gteHint,
         // Sem GTE cadastrada → cinza, mesmo se status vier como "ok".
-        tone: totalGtes === 0 || gteStatus === "muted" ? "steel" : gteStatus,
+        // Exceção: há GTE/GT enviada pelo cliente aguardando aprovação → âmbar.
+        tone:
+          totalGtes === 0 && gtePending > 0
+            ? "warn"
+            : totalGtes === 0 || gteStatus === "muted"
+              ? "steel"
+              : gteStatus,
         target: "gte",
       },
     }),
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending],
   );
 
   // Ordem efetiva:
