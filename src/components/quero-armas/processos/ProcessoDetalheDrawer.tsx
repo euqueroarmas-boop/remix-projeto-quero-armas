@@ -1255,6 +1255,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           </div>
         </div>
       )}
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }
