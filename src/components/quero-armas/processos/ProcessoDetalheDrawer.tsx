@@ -1036,7 +1036,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           <div className="px-5 py-3 border-b border-slate-200 bg-white space-y-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-1.5">
-                {[1, 2, 3, 4].map((n) => {
+                {[1, 2, 3, 4, 5].map((n) => {
                   const r = etapaResumo(n);
                   const liberada = n <= etapaLiberada;
                   const bg = !liberada ? "#E2E8F0" : r.completo ? "#16a34a" : n === etapaLiberada ? "#F59E0B" : "#94A3B8";
@@ -1048,12 +1048,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       >
                         {r.completo ? <CheckCircle className="h-3 w-3" /> : n}
                       </div>
-                      {n < 4 && <div className="w-3 h-px bg-slate-200" />}
+                      {n < 5 && <div className="w-3 h-px bg-slate-200" />}
                     </div>
                   );
                 })}
                 <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-slate-600">
-                  ETAPA {etapaLiberada}/4: {ETAPA_NOMES[etapaLiberada]}
+                  ETAPA {etapaLiberada}/5: {ETAPA_NOMES[etapaLiberada]}
                 </span>
               </div>
               {equipeMode && proximaEtapa && (
@@ -1906,7 +1906,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           </span>
                         </summary>
                         <div className="border-t border-slate-200 p-3 space-y-4 bg-white">
-                          {[1, 2, 3].filter((n) => n < etapaLiberada).map((n) => {
+                          {[1, 2, 3, 4].filter((n) => n < etapaLiberada).map((n) => {
                             const lista = docsArquivados.filter((d) => etapaDoTipo(d.tipo_documento) === n);
                             if (lista.length === 0) return null;
                             return (
