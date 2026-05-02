@@ -876,7 +876,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const docsArquivados = docsTodos.filter(docDeEtapaAnteriorConcluida);
   const etapaResumo = (n: number) => {
     const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
-    const aprovados = lista.filter((d) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
+    // Perguntas sem resposta NÃO contam como cumpridas, mesmo se o status do
+    // banco estiver dessincronizado. Defesa em profundidade.
+    const aprovados = lista.filter((d) => {
+      if (isPergunta(d)) {
+        const chave = (d.regra_validacao as any)?.chave as string | undefined;
+        if (!chave) return false;
+        return respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
+      }
+      return d.status === "aprovado" || d.status === "dispensado_grupo";
+    }).length;
     return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
   };
   const etapaCompleta = etapaResumo(etapaLiberada).completo;
