@@ -343,6 +343,12 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           );
         })}
       </div>
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }
