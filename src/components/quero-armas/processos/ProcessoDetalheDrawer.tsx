@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
+import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 
 interface DocRow {
   id: string;
@@ -88,10 +89,7 @@ interface Props {
 }
 
 // Pseudo-documentos derivados do CADASTRO PÚBLICO do cliente.
-// Não vivem em qa_processo_documentos — são apenas exibidos como
-// EXIGÊNCIAS CUMPRIDAS no checklist e somam no % de progresso, para que o
-// cliente veja TODOS os documentos enviados em um único hub e enxergue o
-// real avanço do processo.
+// Não vivem em qa_processo_documentos, então não entram no contador real do checklist.
 interface CadastroPublicoDocs {
   id: string;
   selfie_path: string | null;
