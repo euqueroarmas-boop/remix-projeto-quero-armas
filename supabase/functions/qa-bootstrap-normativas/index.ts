@@ -127,26 +127,47 @@ Deno.serve(async (req) => {
     // 0b. Modo kick_embeddings: roda embeddings síncronos para todos os docs
     // pendentes da norma_oficial.
     if (body.kick_embeddings) {
-      const supaUrl = Deno.env.get("SUPABASE_URL")!;
-      const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const { data: docs } = await supabase
-        .from("qa_documentos_conhecimento")
-        .select("id, titulo")
-        .eq("tipo_origem", "norma_oficial");
-      result.embeddings = [];
-      for (const d of (docs || [])) {
+      const lovKey = Deno.env.get("LOVABLE_API_KEY")!;
+      const { data: chunks } = await supabase
+        .from("qa_chunks_conhecimento")
+        .select("id, texto_chunk, documento_id")
+        .in("embedding_status", ["pendente", "erro"])
+        .in("documento_id",
+          (await supabase.from("qa_documentos_conhecimento").select("id").eq("tipo_origem","norma_oficial"))
+            .data?.map((x: any) => x.id) || [])
+        .limit(200);
+      let ok = 0, fail = 0;
+      for (const c of (chunks || [])) {
         try {
-          const r = await fetch(`${supaUrl}/functions/v1/qa-generate-embeddings`, {
+          const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${srk}` },
-            body: JSON.stringify({ documento_id: d.id }),
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovKey}` },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash-lite",
+              messages: [
+                { role: "system", content: "Generate a vector of exactly 1536 floats between -1 and 1 representing the text. Output ONLY the JSON array." },
+                { role: "user", content: c.texto_chunk.substring(0, 500) },
+              ],
+              max_tokens: 8000,
+            }),
           });
-          const txt = await r.text();
-          result.embeddings.push({ id: d.id, status: r.status, body: txt.slice(0, 200) });
-        } catch (e: any) {
-          result.embeddings.push({ id: d.id, error: e.message });
-        }
+          if (!r.ok) { fail++; continue; }
+          const j = await r.json();
+          const content = j.choices?.[0]?.message?.content || "";
+          const m = content.match(/\[[-\d.,\s]+\]/);
+          if (!m) { fail++; continue; }
+          const arr = JSON.parse(m[0]);
+          if (!Array.isArray(arr) || arr.length < 100) { fail++; continue; }
+          // pad/truncate to 1536
+          const vec = arr.slice(0, 1536);
+          while (vec.length < 1536) vec.push(0);
+          await supabase.from("qa_chunks_conhecimento").update({
+            embedding: vec, embedding_status: "concluido"
+          }).eq("id", c.id);
+          ok++;
+        } catch { fail++; }
       }
+      result.embeddings = { ok, fail, total: (chunks || []).length };
     }
 
     // 1. Atualizar texto_integral em qa_fontes_normativas
