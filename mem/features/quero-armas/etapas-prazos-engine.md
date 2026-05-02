@@ -31,3 +31,9 @@ Mapeamento por `tipo_documento` via SQL `qa_etapa_documento(text)` e mirror no f
 
 **Slice 2.1 — Aproveitamento do comprovante de endereço (corrigido):**
 `qa_aproveitar_endereco_cadastro_publico(uuid)` SÓ vincula o comprovante do cadastro público ao slot `comprovante_endereco_ano_<YYYY>` quando há `data_emissao` real (extraída pela IA em outro doc com mesmo `arquivo_storage_key`). Sem data, cria um item `tipo_documento='comprovante_endereco_revisao_ano'` (ano_competencia NULL, status `revisao_humana`) para a Equipe Quero Armas identificar o ano e mover ao slot correto. Nunca presume ano atual, nunca sobrescreve slot de outro ano. Eventos: `endereco_cadastro_publico_aproveitado` (com ano real) e `endereco_cadastro_publico_revisao_manual`.
+
+**Slice 2.2 — Resolução de ano de competência:**
+- Edge `qa-extract-doc-dates` agora preenche também `ano_competencia` quando o `tipo_documento` casa `comprovante_endereco_ano_\d{4}` e a IA extrai `data_emissao`.
+- Para itens `comprovante_endereco_revisao_ano`, o trigger `qa_trg_revisao_endereco_auto_promover_t` move o arquivo automaticamente para o slot do ano detectado pela IA (apaga o item de revisão).
+- Equipe pode mover manualmente via RPC `qa_mover_endereco_revisao_para_ano(p_doc_revisao_id uuid, p_ano smallint)` (botão "DEFINIR ANO" no Drawer, modo equipe). Janela permitida: ano atual e 4 anteriores. Erros: ano fora da janela / slot já preenchido / item sem arquivo.
+- Lib pura `src/lib/quero-armas/enderecoAnoEngine.ts` espelha as regras (sem I/O) para testes determinísticos. Ver `enderecoAnoEngine.test.ts` (9 cenários).
