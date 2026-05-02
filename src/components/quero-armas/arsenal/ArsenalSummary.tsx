@@ -33,6 +33,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { TACTICAL } from "./utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
 
@@ -302,7 +303,7 @@ export function ArsenalSummary({
       if (clienteId) {
         setSaving(true);
         try {
-          await supabase.from("qa_cliente_kpi_layouts").upsert(
+          const { error } = await supabase.from("qa_cliente_kpi_layouts").upsert(
             {
               cliente_id: clienteId,
               contexto: dashboardType,
@@ -311,6 +312,13 @@ export function ArsenalSummary({
             },
             { onConflict: "cliente_id,contexto" },
           );
+          if (error) {
+            console.error("[ArsenalSummary] falha ao salvar ordem KPIs", error);
+            toast.error(`Não foi possível salvar a ordem dos KPIs: ${error.message}`);
+            return;
+          }
+          // Só marca como salvo APÓS confirmação do banco — assim a "ordem
+          // inteligente padrão" nunca sobrescreve a escolha do usuário.
           setHasSavedLayout(true);
         } finally {
           setSaving(false);
@@ -321,7 +329,7 @@ export function ArsenalSummary({
       if (!userId) return;
       setSaving(true);
       try {
-        await supabase.from("qa_dashboard_kpi_layout").upsert(
+        const { error } = await supabase.from("qa_dashboard_kpi_layout").upsert(
           {
             user_id: userId,
             cliente_id: null,
@@ -330,6 +338,11 @@ export function ArsenalSummary({
           },
           { onConflict: "user_id,dashboard_type,cliente_id" },
         );
+        if (error) {
+          console.error("[ArsenalSummary] falha ao salvar ordem KPIs (legacy)", error);
+          toast.error(`Não foi possível salvar a ordem dos KPIs: ${error.message}`);
+          return;
+        }
         setHasSavedLayout(true);
       } finally {
         setSaving(false);
