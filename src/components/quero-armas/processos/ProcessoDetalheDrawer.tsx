@@ -669,8 +669,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       await supabase
         .from("qa_processo_documentos")
         .update({ status: "aprovado", observacoes: `Resposta: ${valor.toUpperCase()}` })
-        .eq("processo_id", processo.id)
-        .eq("documento_id", doc.id);
+        .eq("id", doc.id);
       toast.success("Resposta registrada. Checklist atualizado.");
       await carregar();
       onUpdated?.();
