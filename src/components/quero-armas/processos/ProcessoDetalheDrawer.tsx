@@ -129,7 +129,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       ]);
       if (dErr) throw dErr;
 
-      setProcesso({ ...p, cliente: cli ?? undefined });
+      setProcesso({ ...p, cliente: cli ?? undefined } as unknown as ProcessoFull);
       setDocs((dList ?? []) as DocRow[]);
       setEventos((evs ?? []) as Evento[]);
 
