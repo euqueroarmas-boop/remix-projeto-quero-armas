@@ -8938,6 +8938,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      qa_mover_endereco_revisao_para_ano: {
+        Args: { p_ano: number; p_doc_revisao_id: string }
+        Returns: string
+      }
       qa_norm_cr: { Args: { p_cr: string }; Returns: string }
       qa_norm_doc: { Args: { p_doc: string }; Returns: string }
       qa_norm_email: { Args: { p_email: string }; Returns: string }
