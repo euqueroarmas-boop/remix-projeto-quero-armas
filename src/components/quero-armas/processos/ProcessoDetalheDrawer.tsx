@@ -551,12 +551,32 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const st = processo ? getStatusProcesso(processo.status) : null;
   const aguardandoPagto = processo?.pagamento_status === "aguardando";
-  const totalObrig = docs.filter((d) => d.obrigatorio).length;
-  // Obrigatório satisfeito = aprovado OU dispensado_grupo (grupo alternativo já satisfeito por outro doc)
-  const aprovObrig = docs.filter(
-    (d) => d.obrigatorio && (d.status === "aprovado" || d.status === "dispensado_grupo")
-  ).length;
-  const progresso = totalObrig > 0 ? Math.round((aprovObrig / totalObrig) * 100) : 0;
+
+  // ============================================================================
+  // PROGRESSO DOCUMENTAL — fonte única de verdade
+  // Considera TODOS os documentos exigidos no checklist (obrigatórios e
+  // complementares), não apenas a condição profissional. O item técnico
+  // "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
+  // Cumprido = aprovado OU dispensado_grupo (grupo alternativo satisfeito,
+  // o que cobre também o caso de documento substituto formal aceito).
+  // Em análise / pendente / inválido / divergente / revisão NÃO contam.
+  // ============================================================================
+  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao");
+  const totalExigencias = docsChecklist.length;
+  const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
+  const isEmAnalise = (d: DocRow) =>
+    d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
+  const isPendenciaCliente = (d: DocRow) =>
+    d.status === "pendente" || d.status === "invalido" || d.status === "divergente";
+  const cumpridos = docsChecklist.filter(isCumprido).length;
+  const progresso = totalExigencias > 0 ? Math.round((cumpridos / totalExigencias) * 100) : 0;
+
+  const docsPendencias = docsChecklist.filter(isPendenciaCliente);
+  const docsAnalise = docsChecklist.filter(isEmAnalise);
+  const docsCumpridos = docsChecklist.filter(isCumprido);
+  const docsOutros = docsChecklist.filter(
+    (d) => !isCumprido(d) && !isEmAnalise(d) && !isPendenciaCliente(d)
+  ); // fallback defensivo (status novos/desconhecidos)
 
   return (
     <div className="fixed inset-0 z-50 flex">
@@ -648,9 +668,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 onSelect={setCondicao}
               />
               {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
-              {docs
-                .filter((doc) => doc.tipo_documento !== "renda_definir_condicao")
-                .map((doc) => {
+              {/* Resumo de exigências */}
+              {totalExigencias > 0 && (
+                <div className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-wider font-bold">
+                  <span className="text-slate-500">EXIGÊNCIAS DOCUMENTAIS:</span>
+                  <span className="text-emerald-700">{cumpridos} CUMPRIDAS</span>
+                  <span className="text-amber-700">{docsPendencias.length} PENDENTES DO CLIENTE</span>
+                  <span className="text-sky-700">{docsAnalise.length} EM ANÁLISE</span>
+                  <span className="text-slate-400">TOTAL {totalExigencias}</span>
+                </div>
+              )}
+              {(() => {
+                const renderDoc = (doc: DocRow) => {
                 const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                 const labelBotao: string | null = (doc.regra_validacao && typeof doc.regra_validacao === "object" && typeof doc.regra_validacao.label_botao === "string")
                   ? doc.regra_validacao.label_botao : null;
@@ -1042,7 +1071,62 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     )}
                   </div>
                 );
-              })}
+                };
+
+                const SectionHeader = ({ color, label, count }: { color: string; label: string; count: number }) => (
+                  <div className="flex items-center gap-2 mt-4 mb-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+                    <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-600">{label}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">({count})</span>
+                  </div>
+                );
+
+                return (
+                  <>
+                    {/* 1. PENDÊNCIAS DO CLIENTE — ação necessária */}
+                    {docsPendencias.length > 0 && (
+                      <>
+                        <SectionHeader color="#F59E0B" label="PENDÊNCIAS — AÇÃO NECESSÁRIA" count={docsPendencias.length} />
+                        <div className="space-y-3">{docsPendencias.map(renderDoc)}</div>
+                      </>
+                    )}
+
+                    {/* 2. EM ANÁLISE — recebidos, aguardando IA/Equipe */}
+                    {docsAnalise.length > 0 && (
+                      <>
+                        <SectionHeader color="#0EA5E9" label="EM ANÁLISE — DOCUMENTO RECEBIDO" count={docsAnalise.length} />
+                        <div className="space-y-3">{docsAnalise.map(renderDoc)}</div>
+                      </>
+                    )}
+
+                    {/* 3. OUTROS — fallback defensivo (status novos/desconhecidos) */}
+                    {docsOutros.length > 0 && (
+                      <>
+                        <SectionHeader color="#94A3B8" label="OUTROS" count={docsOutros.length} />
+                        <div className="space-y-3">{docsOutros.map(renderDoc)}</div>
+                      </>
+                    )}
+
+                    {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
+                    {docsCumpridos.length > 0 && (
+                      <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden" open={equipeMode}>
+                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
+                          <CheckCircle className="h-4 w-4 text-emerald-600" />
+                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
+                            EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
+                          </span>
+                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
+                            {equipeMode ? "VISÃO DA EQUIPE" : "VER DETALHES"}
+                          </span>
+                        </summary>
+                        <div className="border-t border-emerald-200 p-3 space-y-3 bg-white">
+                          {docsCumpridos.map(renderDoc)}
+                        </div>
+                      </details>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             )
           ) : tab === "historico" ? (
