@@ -970,6 +970,83 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
+                      {/* Resultado da validação de assinatura GOV.BR / ICP-Brasil */}
+                      {exigeAssinaturaGovBr && doc.assinatura_status && (
+                        <div
+                          className={`rounded-md p-2.5 border ${
+                            doc.assinatura_status === "valida"
+                              ? "border-emerald-200 bg-emerald-50/60"
+                              : doc.assinatura_status === "sem_assinatura"
+                              ? "border-amber-200 bg-amber-50/60"
+                              : "border-red-200 bg-red-50/60"
+                          }`}
+                        >
+                          <div
+                            className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold ${
+                              doc.assinatura_status === "valida"
+                                ? "text-emerald-800"
+                                : doc.assinatura_status === "sem_assinatura"
+                                ? "text-amber-800"
+                                : "text-red-800"
+                            }`}
+                          >
+                            {doc.assinatura_status === "valida" ? (
+                              <ShieldCheck className="h-3 w-3" />
+                            ) : (
+                              <ShieldAlert className="h-3 w-3" />
+                            )}
+                            {doc.assinatura_status === "valida"
+                              ? "ASSINATURA GOV.BR VÁLIDA"
+                              : doc.assinatura_status === "sem_assinatura"
+                              ? "DOCUMENTO SEM ASSINATURA DIGITAL"
+                              : "ASSINATURA INVÁLIDA"}
+                            {doc.assinatura_detalhes_json?.icp_brasil && (
+                              <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px]">
+                                ICP-BRASIL
+                              </span>
+                            )}
+                          </div>
+                          {doc.assinatura_status === "valida" && (
+                            <div className="mt-1.5 text-[11px] text-slate-800 leading-relaxed font-mono">
+                              {doc.assinatura_signatario && (
+                                <div>
+                                  <span className="text-slate-500">SIGNATÁRIO: </span>
+                                  <span className="font-bold uppercase">{doc.assinatura_signatario}</span>
+                                </div>
+                              )}
+                              {doc.assinatura_cpf && (
+                                <div>
+                                  <span className="text-slate-500">CPF: </span>
+                                  {doc.assinatura_cpf}
+                                </div>
+                              )}
+                              {doc.assinatura_data && (
+                                <div>
+                                  <span className="text-slate-500">DATA: </span>
+                                  {formatDateTime(doc.assinatura_data)}
+                                </div>
+                              )}
+                              {doc.assinatura_autoridade && (
+                                <div>
+                                  <span className="text-slate-500">AUTORIDADE: </span>
+                                  <span className="uppercase">{doc.assinatura_autoridade}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {doc.assinatura_status !== "valida" && doc.assinatura_motivo_falha && (
+                            <p className="mt-1 text-[11px] text-slate-700 leading-relaxed">
+                              {doc.assinatura_motivo_falha}
+                            </p>
+                          )}
+                          {doc.assinatura_validada_em && (
+                            <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-500">
+                              Verificado em {formatDateTime(doc.assinatura_validada_em)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Fase 12 — Orientação ao cliente (apenas campos preenchidos) */}
                       {(doc.instrucoes || doc.observacoes_cliente) && (
                         <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
