@@ -817,9 +817,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const etapaDoTipo = (tipo: string): number => {
     const t = (tipo || "").toLowerCase();
     if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
-    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 3;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
     if (t.includes("endereco") || t.includes("residenc")) return 1;
-    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
     return 1; // outros: sempre liberados
   };
 
@@ -855,8 +855,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const ETAPA_NOMES: Record<number, string> = {
     1: "COMPROVAÇÃO DE ENDEREÇO",
     2: "ANTECEDENTES CRIMINAIS",
-    3: "EXAMES TÉCNICOS",
-    4: "DECLARAÇÕES E COMPROMISSOS",
+    3: "DECLARAÇÕES E COMPROMISSOS",
+    4: "EXAMES TÉCNICOS",
   };
 
   const liberarProximaEtapa = async () => {
@@ -1752,8 +1752,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 };
 
                 // Ordem lógica do fluxo PF: 1) Endereço, 2) Antecedentes,
-                // 3) Exames Técnicos, 4) Declarações e Compromissos, 5) Outros.
-                const ORDEM_CATEGORIAS = ["endereco", "antecedentes", "exames", "declaracoes", "outros"] as const;
+                // 3) Declarações e Compromissos, 4) Exames Técnicos, 5) Outros.
+                const ORDEM_CATEGORIAS = ["endereco", "antecedentes", "declaracoes", "exames", "outros"] as const;
 
                 const renderGrupoPendencias = (lista: DocRow[]) => {
                   if (lista.length === 0) return null;

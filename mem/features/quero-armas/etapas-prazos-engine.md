@@ -7,8 +7,8 @@ type: feature
 **Liberação progressiva (qa_processos.etapa_liberada_ate, 1..4):**
 - 1=COMPROVAÇÃO DE ENDEREÇO (sempre liberada e categoria padrão "outros")
 - 2=ANTECEDENTES CRIMINAIS
-- 3=EXAMES TÉCNICOS
-- 4=DECLARAÇÕES E COMPROMISSOS
+- 3=DECLARAÇÕES E COMPROMISSOS
+- 4=EXAMES TÉCNICOS
 
 Mapeamento por `tipo_documento` via SQL `qa_etapa_documento(text)` e mirror no front (`etapaDoTipo` no ProcessoDetalheDrawer). Tanto cliente quanto Equipe veem no checklist principal APENAS a etapa atual (`etapa_liberada_ate`). Etapas anteriores concluídas vão para a seção colapsável "ETAPAS CONCLUÍDAS · CONSULTA". Etapas futuras ficam ocultas. A aba EQUIPE pode manter visão técnica completa.
 
