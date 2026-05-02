@@ -466,6 +466,7 @@ export default function MonitorCadastrosDocumentos() {
         <KpiCard icon={Bot}          label="Docs aprovados pela IA"      value={counters.aprovadosIA}        t="green" />
         <KpiCard icon={ShieldX}      label="Docs rejeitados pela IA"     value={counters.rejeitadosIA}       t="red" />
         <KpiCard icon={ShieldCheck}  label="Aprovados pela Equipe"       value={counters.aprovadosEquipe}    t="green" />
+        <KpiCard icon={ShieldX}      label="Rejeitados pela Equipe"      value={counters.rejeitadosEquipe}   t="red" />
         <KpiCard icon={BookOpen}     label="Modelos de aprendizado"      value={counters.modelosAtivos}      t="blue" />
         <KpiCard icon={FileText}     label="Tipos monitorados"           value={counters.tiposMonitorados}   t="blue" />
         <KpiCard icon={AlertTriangle} label="Pendências críticas"        value={counters.criticos}           t="red" />
