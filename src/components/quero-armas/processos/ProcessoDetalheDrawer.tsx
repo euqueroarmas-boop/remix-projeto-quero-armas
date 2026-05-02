@@ -1550,13 +1550,74 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </div>
                 );
 
+                // Agrupa documentos por categoria de exigência (mesma lógica da Condição Profissional)
+                const categorizar = (d: DocRow): { key: string; label: string; color: string; icon: any; descricao: string } => {
+                  const t = (d.tipo_documento || "").toLowerCase();
+                  if (t.startsWith("certidao") || t.includes("antecedentes")) {
+                    return { key: "antecedentes", label: "ANTECEDENTES CRIMINAIS", color: "#DC2626", icon: ShieldAlert,
+                      descricao: "8 CERTIDÕES OFICIAIS EXIGIDAS PELA POLÍCIA FEDERAL — TODAS GRATUITAS E COM EMISSÃO ONLINE." };
+                  }
+                  if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) {
+                    return { key: "exames", label: "EXAMES TÉCNICOS", color: "#7C3AED", icon: ShieldCheck,
+                      descricao: "EMITIDOS POR PROFISSIONAIS CREDENCIADOS PELA PF — VALIDADE DE 1 ANO." };
+                  }
+                  if (t.includes("endereco") || t.includes("residenc") || t.includes("comprovante_endereco")) {
+                    return { key: "endereco", label: "COMPROVAÇÃO DE ENDEREÇO", color: "#0891B2", icon: Home,
+                      descricao: "HISTÓRICO COMPLETO DOS ÚLTIMOS 5 ANOS DE RESIDÊNCIA, CONFORME EXIGÊNCIA DA PF." };
+                  }
+                  if (t.includes("declaracao") || t.includes("dsa_") || t.includes("compromisso")) {
+                    return { key: "declaracoes", label: "DECLARAÇÕES E COMPROMISSOS", color: "#2563EB", icon: FileSignature,
+                      descricao: "MODELOS DO SISTEMA — BAIXE PREENCHIDO, ASSINE NO GOV.BR E ENVIE O PDF DE VOLTA." };
+                  }
+                  return { key: "outros", label: "OUTROS DOCUMENTOS", color: "#64748B", icon: FileText,
+                    descricao: "ITENS COMPLEMENTARES DESTE PROCESSO." };
+                };
+
+                const ORDEM_CATEGORIAS = ["antecedentes", "exames", "endereco", "declaracoes", "outros"] as const;
+
+                const renderGrupoPendencias = (lista: DocRow[]) => {
+                  if (lista.length === 0) return null;
+                  // Agrupa
+                  const grupos = new Map<string, { meta: ReturnType<typeof categorizar>; docs: DocRow[] }>();
+                  for (const d of lista) {
+                    const meta = categorizar(d);
+                    if (!grupos.has(meta.key)) grupos.set(meta.key, { meta, docs: [] });
+                    grupos.get(meta.key)!.docs.push(d);
+                  }
+                  const ordenadas = ORDEM_CATEGORIAS
+                    .map((k) => grupos.get(k))
+                    .filter((g): g is NonNullable<typeof g> => !!g);
+                  return ordenadas.map(({ meta, docs: dlist }) => {
+                    const Icon = meta.icon;
+                    return (
+                      <div key={meta.key} className="rounded-xl border-2 overflow-hidden mb-4" style={{ borderColor: `${meta.color}55`, background: `${meta.color}08` }}>
+                        <div className="px-4 py-3 flex items-center gap-2.5 border-b" style={{ borderColor: `${meta.color}33`, background: `${meta.color}12` }}>
+                          <Icon className="h-4 w-4 shrink-0" style={{ color: meta.color }} />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[12px] uppercase tracking-[0.14em] font-bold" style={{ color: meta.color }}>
+                              {meta.label}
+                              <span className="ml-2 text-[10px] font-bold opacity-70">({dlist.length} ITEM{dlist.length > 1 ? "S" : ""})</span>
+                            </div>
+                            <div className="text-[10px] uppercase tracking-wide text-slate-600 mt-0.5">
+                              {meta.descricao}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-3 space-y-3 bg-white">
+                          {dlist.map(renderDoc)}
+                        </div>
+                      </div>
+                    );
+                  });
+                };
+
                 return (
                   <>
                     {/* 1. PENDÊNCIAS DO CLIENTE — ação necessária */}
                     {docsPendencias.length > 0 && (
                       <>
                         <SectionHeader color="#F59E0B" label="PENDÊNCIAS — AÇÃO NECESSÁRIA" count={docsPendencias.length} />
-                        <div className="space-y-3">{docsPendencias.map(renderDoc)}</div>
+                        <div>{renderGrupoPendencias(docsPendencias)}</div>
                       </>
                     )}
 
