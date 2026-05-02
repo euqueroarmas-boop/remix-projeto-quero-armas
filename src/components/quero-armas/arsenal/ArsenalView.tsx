@@ -643,9 +643,9 @@ export function ArsenalView({
               type="button"
               onClick={() => setCrafHubModal({ open: true })}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
-              title="Enviar CRAF — IA lê e você confirma"
+              title="Enviar documento — Hub Documental com IA"
             >
-              <Upload className="h-3.5 w-3.5" /> ENVIAR CRAF
+              <Upload className="h-3.5 w-3.5" /> ENVIAR
             </button>
           }
         />
@@ -717,7 +717,6 @@ export function ArsenalView({
         onClose={() => setCrafHubModal({ open: false })}
         customerId={null}
         qaClienteId={clienteId}
-        defaultTipo="craf"
         onSaved={refreshArsenal}
       />
       <GteModal
