@@ -625,6 +625,25 @@ export function ArsenalView({
 
       {/* Bancada Tática — largura total */}
       <div id="arsenal-bancada" className="scroll-mt-28">
+        {/* Ações rápidas — envio de CRAF / GTE direto na aba Arsenal */}
+        <div className="flex flex-wrap items-center justify-end gap-2 mb-2">
+          <button
+            type="button"
+            onClick={() => setCrafModal({ open: true })}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
+            title="Enviar / cadastrar CRAF"
+          >
+            <Upload className="h-3.5 w-3.5" /> ENVIAR CRAF
+          </button>
+          <button
+            type="button"
+            onClick={() => setGteModal({ open: true })}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-[0.12em] text-slate-700 hover:bg-slate-50 transition"
+            title="Enviar / cadastrar GTE"
+          >
+            <FileBadge className="h-3.5 w-3.5" /> ENVIAR GTE
+          </button>
+        </div>
         <Workbench
           weapons={weapons}
           documents={benchDocs}
