@@ -213,10 +213,9 @@ Deno.serve(async (req) => {
     if (dataEmissao !== null)    update.data_emissao = dataEmissao;
     if (proximaLeitura !== null) update.proxima_leitura = proximaLeitura;
 
-    // Slice 2.2 — preencher ano_competencia em slots anuais de endereço quando
-    // a IA extrai uma data real. Para itens "comprovante_endereco_revisao_ano",
-    // o trigger SQL qa_trg_revisao_endereco_auto_promover_t cuida de mover o
-    // arquivo para o slot do ano correspondente.
+    // Preenche ano_competencia em slots anuais de endereço quando a IA
+    // extrai uma data real. (O tipo "comprovante_endereco_revisao_ano" foi
+    // removido — sem data, o sistema não cria item auxiliar nenhum.)
     if (dataEmissao !== null) {
       const anoExtraido = Number(dataEmissao.slice(0, 4));
       const tipo = String(doc.tipo_documento || "");
