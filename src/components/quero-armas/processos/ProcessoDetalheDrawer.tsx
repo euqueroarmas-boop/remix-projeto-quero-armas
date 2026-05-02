@@ -1200,12 +1200,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     )}
 
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
-                    {docsCumpridos.length > 0 && (
+                    {(docsCumpridos.length + pseudoDocsCadastro.length) > 0 && (
                       <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
                         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
                           <CheckCircle className="h-4 w-4 text-emerald-600" />
                           <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
-                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
+                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length + pseudoDocsCadastro.length}/{totalExigencias})
                           </span>
                           <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
                             EXPANDIR PARA VER
@@ -1213,6 +1213,38 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         </summary>
                         <div className="border-t border-emerald-200 p-3 space-y-3 bg-white">
                           {docsCumpridos.map(renderDoc)}
+                          {pseudoDocsCadastro.map((p) => (
+                            <div key={p.key} className="bg-white border border-emerald-200 rounded-xl overflow-hidden">
+                              <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-emerald-100">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">CADASTRO PÚBLICO</span>
+                                    <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">JÁ ENTREGUE</span>
+                                  </div>
+                                  <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{p.nome}</div>
+                                  {p.enviado_em && (
+                                    <div className="text-[10px] text-slate-400 mt-0.5 uppercase">
+                                      ENVIADO EM {formatDateTime(p.enviado_em)}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  CUMPRIDO
+                                </span>
+                              </div>
+                              <div className="px-4 py-2.5">
+                                <button
+                                  onClick={() => {
+                                    const fileName = p.path.split("/").pop() || "documento";
+                                    viewer.abrirStorage(p.bucket, p.path, { fileName, title: p.nome });
+                                  }}
+                                  className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                                >
+                                  <Eye className="h-3 w-3" /> VISUALIZAR
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </details>
                     )}
