@@ -998,6 +998,166 @@ function MotivoDialog({
 }
 
 // ---------------------------------------------------------------------------
+// Tabelas auxiliares para o drill-down de KPIs
+// ---------------------------------------------------------------------------
+
+function fmtServico(c: CadastroRow) {
+  return c.servico_fechado_final || c.servico_principal || c.servico_interesse || "—";
+}
+
+function CadastrosTable({
+  rows, modo, aprovandoId, onAprovar, onAbrir,
+}: {
+  rows: CadastroRow[];
+  modo: "cadastros_aguardando" | "cadastros_aprov_hoje";
+  aprovandoId: string | null;
+  onAprovar: (c: CadastroRow) => void;
+  onAbrir: (c: CadastroRow) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th className="text-left px-3 py-2">Nome</th>
+            <th className="text-left px-3 py-2">CPF/CNPJ</th>
+            <th className="text-left px-3 py-2">Serviço</th>
+            <th className="text-left px-3 py-2">Origem</th>
+            <th className="text-left px-3 py-2">{modo === "cadastros_aguardando" ? "Recebido em" : "Aprovado em"}</th>
+            <th className="text-right px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map(c => (
+            <tr key={c.id} className="hover:bg-slate-50">
+              <td className="px-3 py-2 font-bold text-slate-900 uppercase">{c.nome_completo ?? "—"}</td>
+              <td className="px-3 py-2 font-mono text-slate-700">{c.cpf || c.emp_cnpj || "—"}</td>
+              <td className="px-3 py-2 uppercase text-slate-700">{fmtServico(c)}</td>
+              <td className="px-3 py-2 uppercase text-slate-500">{c.origem_cadastro || "—"}</td>
+              <td className="px-3 py-2 text-slate-500 whitespace-nowrap">
+                {fmtDate(modo === "cadastros_aguardando" ? c.created_at : (c.processado_em || c.created_at))}
+              </td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">
+                <div className="inline-flex flex-wrap gap-1 justify-end">
+                  <button
+                    onClick={() => onAbrir(c)}
+                    className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1"
+                    title={c.cliente_id_vinculado ? "Abrir cliente" : "Abrir homologação"}
+                  >
+                    <ExternalLink className="h-3 w-3" /> {c.cliente_id_vinculado ? "Cliente" : "Homologar"}
+                  </button>
+                  {modo === "cadastros_aguardando" && (
+                    <button
+                      onClick={() => onAprovar(c)}
+                      disabled={aprovandoId === c.id}
+                      className="h-7 px-2 rounded bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-emerald-700 disabled:opacity-40 inline-flex items-center gap-1"
+                      title="Aprovar cadastro"
+                    >
+                      {aprovandoId === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                      Aprovar
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ModelosTable({
+  rows, onAbrirOrigem, onDesativar,
+}: {
+  rows: ModeloDetalheRow[];
+  onAbrirOrigem: (m: ModeloDetalheRow) => void;
+  onDesativar: (m: ModeloDetalheRow) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th className="text-left px-3 py-2">Tipo</th>
+            <th className="text-left px-3 py-2">Nome do modelo</th>
+            <th className="text-left px-3 py-2">Doc. de origem</th>
+            <th className="text-left px-3 py-2">Aprovado em</th>
+            <th className="text-left px-3 py-2">Aprovado por</th>
+            <th className="text-right px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map(m => (
+            <tr key={m.id} className="hover:bg-slate-50">
+              <td className="px-3 py-2 uppercase text-slate-800 font-bold">{m.tipo_documento}</td>
+              <td className="px-3 py-2 uppercase text-slate-700">{m.nome_modelo || "—"}</td>
+              <td className="px-3 py-2 font-mono text-[10px] text-slate-500">{m.documento_origem_id ? m.documento_origem_id.slice(0, 8) : "—"}</td>
+              <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{fmtDate(m.aprovado_em)}</td>
+              <td className="px-3 py-2 font-mono text-[10px] text-slate-500">{m.aprovado_por ? m.aprovado_por.slice(0, 8) : "—"}</td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">
+                <div className="inline-flex flex-wrap gap-1 justify-end">
+                  <button
+                    onClick={() => onAbrirOrigem(m)}
+                    disabled={!m.documento_origem_id}
+                    className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
+                    title="Abrir documento de origem"
+                  ><Eye className="h-3 w-3" /> Doc origem</button>
+                  <button
+                    onClick={() => onDesativar(m)}
+                    className="h-7 px-2 rounded border border-rose-300 bg-white text-[10px] uppercase font-bold tracking-wider text-rose-700 hover:bg-rose-50 inline-flex items-center gap-1"
+                    title="Desativar modelo"
+                  ><XIcon className="h-3 w-3" /> Desativar</button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TiposTable({ rows, onConfigurar }: { rows: ConfigRow[]; onConfigurar: () => void }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th className="text-left px-3 py-2">Tipo documental</th>
+            <th className="text-left px-3 py-2">Lim. aprov. auto</th>
+            <th className="text-left px-3 py-2">Lim. análise humana</th>
+            <th className="text-left px-3 py-2">Aprov. auto</th>
+            <th className="text-left px-3 py-2">Aprende</th>
+            <th className="text-left px-3 py-2">Ativo</th>
+            <th className="text-right px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map(c => (
+            <tr key={c.tipo_documento} className="hover:bg-slate-50">
+              <td className="px-3 py-2 uppercase text-slate-800 font-bold">{c.tipo_documento}</td>
+              <td className="px-3 py-2 font-mono">{Math.round((c.limite_aprovacao_auto ?? 0) * 100)}%</td>
+              <td className="px-3 py-2 font-mono">{Math.round((c.limite_analise_humana ?? 0) * 100)}%</td>
+              <td className="px-3 py-2 uppercase text-[10px]">{c.permite_aprovacao_auto ? "SIM" : "NÃO"}</td>
+              <td className="px-3 py-2 uppercase text-[10px]">{c.alimenta_aprendizado ? "SIM" : "NÃO"}</td>
+              <td className="px-3 py-2 uppercase text-[10px]">{c.ativo === false ? "NÃO" : "SIM"}</td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">
+                <button
+                  onClick={onConfigurar}
+                  className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1"
+                  title="Abrir configurações"
+                ><SettingsIcon className="h-3 w-3" /> Configurar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Modal: Configurações por tipo documental
 // ---------------------------------------------------------------------------
 function ConfigDialog({
