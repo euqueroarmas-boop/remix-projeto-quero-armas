@@ -817,16 +817,23 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const etapaDoTipo = (tipo: string): number => {
     const t = (tipo || "").toLowerCase();
     if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
-    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 3;
     if (t.includes("endereco") || t.includes("residenc")) return 1;
-    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
     return 1; // outros: sempre liberados
   };
 
+  // VISIBILIDADE OPERACIONAL — Mesmo a Equipe vê apenas a etapa ATUAL liberada
+  // no checklist principal. Etapas anteriores concluídas vão para a seção
+  // "ETAPAS CONCLUÍDAS" (colapsada) logo abaixo. Etapas futuras ficam ocultas.
+  // Itens "outros" (categoria default = etapa 1) seguem visíveis junto com a
+  // etapa 1 quando ela for a atual; depois passam a viver no arquivo histórico.
   const docVisivelPorEtapa = (d: DocRow): boolean => {
-    // Equipe sempre vê tudo. Cliente só vê até a etapa liberada.
-    if (equipeMode) return true;
-    return etapaDoTipo(d.tipo_documento) <= etapaLiberada;
+    return etapaDoTipo(d.tipo_documento) === etapaLiberada;
+  };
+  const docDeEtapaAnteriorConcluida = (d: DocRow): boolean => {
+    const e = etapaDoTipo(d.tipo_documento);
+    return e < etapaLiberada;
   };
 
   const docsChecklist = docs.filter(
@@ -837,6 +844,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // "Liberar próxima etapa"). Calculado a partir do conjunto completo de docs
   // (sem filtro por etapa liberada), mas respeitando questionário.
   const docsTodos = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+  const docsArquivados = docsTodos.filter(docDeEtapaAnteriorConcluida);
   const etapaResumo = (n: number) => {
     const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
     const aprovados = lista.filter((d) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
@@ -847,8 +855,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const ETAPA_NOMES: Record<number, string> = {
     1: "COMPROVAÇÃO DE ENDEREÇO",
     2: "ANTECEDENTES CRIMINAIS",
-    3: "DECLARAÇÕES E COMPROMISSOS",
-    4: "EXAMES TÉCNICOS",
+    3: "EXAMES TÉCNICOS",
+    4: "DECLARAÇÕES E COMPROMISSOS",
   };
 
   const liberarProximaEtapa = async () => {
@@ -1743,7 +1751,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     descricao: "ITENS COMPLEMENTARES DESTE PROCESSO." };
                 };
 
-                const ORDEM_CATEGORIAS = ["antecedentes", "exames", "endereco", "declaracoes", "outros"] as const;
+                // Ordem lógica do fluxo PF: 1) Endereço, 2) Antecedentes,
+                // 3) Exames Técnicos, 4) Declarações e Compromissos, 5) Outros.
+                const ORDEM_CATEGORIAS = ["endereco", "antecedentes", "exames", "declaracoes", "outros"] as const;
 
                 const renderGrupoPendencias = (lista: DocRow[]) => {
                   if (lista.length === 0) return null;
@@ -1808,6 +1818,34 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     )}
 
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
+                    {/* 3.5 ETAPAS CONCLUÍDAS — docs de etapas anteriores (consulta) */}
+                    {docsArquivados.length > 0 && (
+                      <details className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/40 overflow-hidden">
+                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-slate-100">
+                          <CheckCircle className="h-4 w-4 text-slate-500" />
+                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-700">
+                            ETAPAS CONCLUÍDAS · CONSULTA ({docsArquivados.length})
+                          </span>
+                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                            EXPANDIR PARA VER
+                          </span>
+                        </summary>
+                        <div className="border-t border-slate-200 p-3 space-y-4 bg-white">
+                          {[1, 2, 3].filter((n) => n < etapaLiberada).map((n) => {
+                            const lista = docsArquivados.filter((d) => etapaDoTipo(d.tipo_documento) === n);
+                            if (lista.length === 0) return null;
+                            return (
+                              <div key={n}>
+                                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-slate-500 mb-2">
+                                  ETAPA {n} · {ETAPA_NOMES[n]}
+                                </div>
+                                <div className="space-y-3">{lista.map(renderDoc)}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    )}
                     {(docsCumpridos.length + pseudoDocsCadastro.length) > 0 && (
                       <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
                         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
