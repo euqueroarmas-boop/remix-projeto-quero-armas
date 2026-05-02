@@ -1087,17 +1087,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* Fase 12 — Orientação ao cliente (apenas campos preenchidos) */}
                       {(doc.instrucoes || doc.observacoes_cliente) && (
-                        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5">
+                        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5 min-w-0 max-w-full overflow-hidden">
                           <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-blue-800">
                             <Info className="h-3 w-3" /> COMO OBTER ESTE DOCUMENTO
                           </div>
                           {doc.instrucoes && (
-                            <p className="mt-1 text-[12px] leading-relaxed text-blue-900/90 whitespace-pre-line">
+                            <p className="mt-1 text-[12px] leading-relaxed text-blue-900/90 whitespace-pre-line break-words [overflow-wrap:anywhere]">
                               {doc.instrucoes}
                             </p>
                           )}
                           {doc.observacoes_cliente && (
-                            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-900/80 italic">
+                            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-900/80 italic break-words [overflow-wrap:anywhere]">
                               {doc.observacoes_cliente}
                             </p>
                           )}
