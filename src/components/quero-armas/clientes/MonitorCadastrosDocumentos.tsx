@@ -213,6 +213,9 @@ export default function MonitorCadastrosDocumentos() {
   const [acaoLoadingId, setAcaoLoadingId] = useState<string | null>(null);
   const [modalAcao, setModalAcao] = useState<{ doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null>(null);
   const viewer = useDocumentoViewer();
+  // Documento atualmente aberto no viewer (para ação "Aprovar como Modelo IA")
+  const [docNoViewer, setDocNoViewer] = useState<DocRow | null>(null);
+  const [aprovandoModeloViewer, setAprovandoModeloViewer] = useState(false);
 
   // -------------------------------------------------------------------------
   const carregar = async () => {
@@ -525,6 +528,7 @@ export default function MonitorCadastrosDocumentos() {
       // caímos no signed_url emitido pela edge function e baixamos via fetch.
       const fileName = (doc.arquivo_storage_key || doc.nome_documento || "documento")
         .split("/").pop() || "documento";
+      setDocNoViewer(doc);
       if (doc.arquivo_storage_key) {
         viewer.abrirStorage("qa-processo-docs", doc.arquivo_storage_key, {
           fileName,
@@ -537,6 +541,31 @@ export default function MonitorCadastrosDocumentos() {
         viewer.abrirUrl(out.url, { fileName, title: doc.nome_documento || fileName });
       }
     } catch (e: any) { toast.error(e.message || "Falha ao abrir."); }
+  };
+
+  // Aprovar o documento aberto no viewer E promovê-lo a modelo de IA
+  // em uma única ação. Reaproveita a ação "aprovar_e_modelar" do backend,
+  // que já marca o documento como aprovado e cria o registro do modelo.
+  const aprovarComoModeloDoViewer = async () => {
+    const doc = docNoViewer;
+    if (!doc) return;
+    setAprovandoModeloViewer(true);
+    try {
+      const nomeModelo = (doc.nome_documento || doc.tipo_documento || "MODELO").toUpperCase();
+      await callAcao(doc, {
+        acao: "aprovar_e_modelar",
+        nome_modelo: nomeModelo,
+        observacoes: "Aprovado como modelo IA pelo visualizador.",
+      });
+      toast.success("Documento aprovado e promovido a modelo da IA.");
+      viewer.fechar();
+      setDocNoViewer(null);
+      await carregar();
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao aprovar como modelo.");
+    } finally {
+      setAprovandoModeloViewer(false);
+    }
   };
 
   const submitModal = async (motivo: string, nomeModelo?: string) => {
@@ -919,9 +948,11 @@ export default function MonitorCadastrosDocumentos() {
       />
       <DocumentoViewerModal
         open={viewer.open}
-        onClose={viewer.fechar}
+        onClose={() => { viewer.fechar(); setDocNoViewer(null); }}
         source={viewer.source}
         title={viewer.title}
+        onAprovarComoModelo={docNoViewer ? aprovarComoModeloDoViewer : undefined}
+        aprovandoModelo={aprovandoModeloViewer}
       />
     </div>
   );

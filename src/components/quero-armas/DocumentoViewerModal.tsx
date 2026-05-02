@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, AlertTriangle, FileText, ExternalLink, RefreshCw, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { Loader2, Download, AlertTriangle, FileText, ExternalLink, RefreshCw, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 // PDF.js — renderiza PDF em <canvas>, evitando o viewer nativo do Edge
@@ -38,6 +38,13 @@ interface Props {
   title?: string;
   /** Permite baixar o arquivo. Default: true. */
   allowDownload?: boolean;
+  /**
+   * Quando informado, exibe o botão "APROVAR COMO MODELO IA" no header.
+   * O handler deve aprovar o documento do cliente E promovê-lo a modelo
+   * de aprendizado da IA em uma única operação atômica.
+   */
+  onAprovarComoModelo?: () => Promise<void> | void;
+  aprovandoModelo?: boolean;
 }
 
 function inferMimeFromName(name: string | undefined): string {
@@ -57,6 +64,8 @@ export default function DocumentoViewerModal({
   source,
   title,
   allowDownload = true,
+  onAprovarComoModelo,
+  aprovandoModelo = false,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -230,6 +239,22 @@ export default function DocumentoViewerModal({
               {title || fileName}
             </DialogTitle>
             <div className="flex items-center gap-2 mr-2">
+              {onAprovarComoModelo && (
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-[10px] uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700"
+                  onClick={() => onAprovarComoModelo()}
+                  disabled={aprovandoModelo || loading}
+                  title="Aprova o documento do cliente E o promove a modelo de aprendizado da IA"
+                >
+                  {aprovandoModelo ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 mr-1" />
+                  )}
+                  Aprovar como Modelo IA
+                </Button>
+              )}
               {allowDownload && blobUrl && (
                 <Button
                   size="sm"
