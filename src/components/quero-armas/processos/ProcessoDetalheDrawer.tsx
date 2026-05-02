@@ -1818,6 +1818,34 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     )}
 
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
+                    {/* 3.5 ETAPAS CONCLUÍDAS — docs de etapas anteriores (consulta) */}
+                    {docsArquivados.length > 0 && (
+                      <details className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/40 overflow-hidden">
+                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-slate-100">
+                          <CheckCircle className="h-4 w-4 text-slate-500" />
+                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-700">
+                            ETAPAS CONCLUÍDAS · CONSULTA ({docsArquivados.length})
+                          </span>
+                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                            EXPANDIR PARA VER
+                          </span>
+                        </summary>
+                        <div className="border-t border-slate-200 p-3 space-y-4 bg-white">
+                          {[1, 2, 3].filter((n) => n < etapaLiberada).map((n) => {
+                            const lista = docsArquivados.filter((d) => etapaDoTipo(d.tipo_documento) === n);
+                            if (lista.length === 0) return null;
+                            return (
+                              <div key={n}>
+                                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-slate-500 mb-2">
+                                  ETAPA {n} · {ETAPA_NOMES[n]}
+                                </div>
+                                <div className="space-y-3">{lista.map(renderDoc)}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    )}
                     {(docsCumpridos.length + pseudoDocsCadastro.length) > 0 && (
                       <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
                         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
