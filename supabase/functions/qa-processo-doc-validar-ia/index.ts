@@ -904,6 +904,8 @@ Deno.serve(async (req) => {
         texto_ocr_extraido: textoParaModelo ? textoParaModelo.slice(0, 30000) : null,
         score_modelo_aprovado: matchModelo.modeloId ? Number(scoreModelo.toFixed(4)) : null,
         modelo_aprovado_id: matchModelo.modeloId,
+        // Decisão explícita da IA — separada de aprovação manual da Equipe.
+        decisao_ia: decisaoIA,
       })
       .eq("id", documento_id);
 
