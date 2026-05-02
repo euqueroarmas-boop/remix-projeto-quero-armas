@@ -919,9 +919,30 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   };
 
   const metrics = computeChecklistMetrics(docsChecklist);
-  const isCumprido = (d: DocRow) => isChecklistCumprido(d.status);
-  const isEmAnalise = (d: DocRow) => isChecklistEmAnalise(d.status);
-  const isPendenciaCliente = (d: DocRow) => isChecklistPendente(d.status);
+  // PERGUNTAS-PIVOT: o status real depende de TER resposta registrada no
+  // questionário do processo. Status do banco isolado é insuficiente — uma
+  // pergunta sem resposta NUNCA é cumprida, mesmo que o registro esteja
+  // corrompido com status='aprovado' (defesa em profundidade contra o bug
+  // histórico de auto-aprovação).
+  const perguntaSemResposta = (d: DocRow): boolean => {
+    if (!isPergunta(d)) return false;
+    const chave = (d.regra_validacao as any)?.chave as string | undefined;
+    if (!chave) return false;
+    const v = respostas[chave];
+    return v === undefined || v === null || v === "";
+  };
+  const isCumprido = (d: DocRow) => {
+    if (perguntaSemResposta(d)) return false;
+    return isChecklistCumprido(d.status);
+  };
+  const isEmAnalise = (d: DocRow) => {
+    if (perguntaSemResposta(d)) return false;
+    return isChecklistEmAnalise(d.status);
+  };
+  const isPendenciaCliente = (d: DocRow) => {
+    if (perguntaSemResposta(d)) return true;
+    return isChecklistPendente(d.status);
+  };
 
   // ── Pseudo-documentos do CADASTRO PÚBLICO (selfie / identidade / endereço) ──
   // Tratados como CUMPRIDOS porque já foram entregues e aprovados na etapa
