@@ -142,6 +142,16 @@ export default function MonitorCadastrosDocumentos() {
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
   const [openConfig, setOpenConfig] = useState(false);
 
+  // Filtros
+  const [fStatus, setFStatus] = useState<string>("todos");
+  const [fTipo, setFTipo]     = useState<string>("todos");
+  const [fCliente, setFCliente] = useState<string>("");
+  const [fScoreBaixo, setFScoreBaixo] = useState(false);
+
+  // Ações operacionais
+  const [acaoLoadingId, setAcaoLoadingId] = useState<string | null>(null);
+  const [modalAcao, setModalAcao] = useState<{ doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null>(null);
+
   // -------------------------------------------------------------------------
   const carregar = async () => {
     setLoading(true);
@@ -149,7 +159,7 @@ export default function MonitorCadastrosDocumentos() {
       // 1) Documentos relevantes (operacional + IA)
       const { data: docsData, error: docsErr } = await supabase
         .from("qa_processo_documentos")
-        .select("id, cliente_id, processo_id, tipo_documento, nome_documento, status, validacao_ia_status, validacao_ia_confianca, motivo_rejeicao, score_modelo_aprovado, modelo_aprovado_id, data_envio, updated_at, arquivo_storage_key")
+        .select("id, cliente_id, processo_id, tipo_documento, nome_documento, status, validacao_ia_status, validacao_ia_confianca, motivo_rejeicao, score_modelo_aprovado, modelo_aprovado_id, data_envio, updated_at, arquivo_storage_key, usado_como_modelo, decisao_ia")
         .order("updated_at", { ascending: false })
         .limit(500);
       if (docsErr) throw docsErr;
@@ -193,12 +203,14 @@ export default function MonitorCadastrosDocumentos() {
         .order("tipo_documento", { ascending: true });
       setConfigs((cfg ?? []) as ConfigRow[]);
 
-      // 4) KPIs de cadastros (clientes)
+      // 4) KPIs de cadastros (fonte real: qa_cadastro_publico)
+      // Status reais auditados: 'pendente' | 'aprovado' (NÃO usar qa_clientes.status,
+      // que é operacional e tem 'ATIVO'/'aguardando_analise'/'DESISTENTE'/'conta_gratuita_arsenal').
       const hoje = new Date();
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
       const [aguardando, aprovHoje] = await Promise.all([
-        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status", "aguardando_aprovacao"),
-        supabase.from("qa_clientes").select("id", { count: "exact", head: true }).eq("status", "aprovado").gte("updated_at", inicio),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).eq("status", "pendente"),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).eq("status", "aprovado").gte("updated_at", inicio),
       ]);
       setKpiCadastros({
         aguardando:    aguardando.count ?? 0,
@@ -222,15 +234,19 @@ export default function MonitorCadastrosDocumentos() {
       aprovadosIA:   0,
       rejeitadosIA:  0,
       aprovadosEquipe: 0,
+      rejeitadosEquipe: 0,
       criticos: 0,
       somaScore: 0,
       comScore:  0,
     };
     for (const d of docs) {
       if (d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana") c.analiseHumana++;
-      if (d.validacao_ia_status === "aprovado_auto" || (d.status === "aprovado" && d.validacao_ia_confianca && d.validacao_ia_confianca >= 0.85)) c.aprovadosIA++;
-      if (d.validacao_ia_status === "invalido" || (d.status === "invalido" && d.validacao_ia_status !== null)) c.rejeitadosIA++;
-      if (d.status === "aprovado") c.aprovadosEquipe++;
+      // Aprovação automática SOMENTE via decisao_ia='aprovado_auto'.
+      if (d.decisao_ia === "aprovado_auto") c.aprovadosIA++;
+      if (d.decisao_ia === "rejeitado_auto") c.rejeitadosIA++;
+      // Aprovação manual = aprovado E NÃO foi a IA quem aprovou.
+      if (d.status === "aprovado" && d.decisao_ia !== "aprovado_auto") c.aprovadosEquipe++;
+      if (d.status === "invalido" && d.decisao_ia !== "rejeitado_auto") c.rejeitadosEquipe++;
       if (d.status === "invalido" && (d.tipo_documento === "cr" || d.tipo_documento === "craf" || d.tipo_documento === "antecedentes_criminais")) c.criticos++;
       if (typeof d.validacao_ia_confianca === "number") {
         c.somaScore += Number(d.validacao_ia_confianca);
@@ -259,24 +275,58 @@ export default function MonitorCadastrosDocumentos() {
     }
     for (const d of docs) {
       const a = acc.get(d.tipo_documento) ?? { tipo: d.tipo_documento, modelos: 0, ultima: null, auto: 0, humana: 0, rejeit: 0, somaScore: 0, comScore: 0 };
-      if (d.validacao_ia_status === "aprovado_auto" || (d.status === "aprovado" && (d.validacao_ia_confianca ?? 0) >= 0.85)) a.auto++;
+      if (d.decisao_ia === "aprovado_auto") a.auto++;
       if (d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana") a.humana++;
-      if (d.status === "invalido") a.rejeit++;
+      if (d.decisao_ia === "rejeitado_auto") a.rejeit++;
       if (typeof d.validacao_ia_confianca === "number") { a.somaScore += d.validacao_ia_confianca; a.comScore++; }
       acc.set(d.tipo_documento, a);
     }
     return Array.from(acc.values()).sort((a,b) => b.modelos - a.modelos || a.tipo.localeCompare(b.tipo));
   }, [docs, modelos]);
 
-  // Lista operacional: docs que precisam de ação
-  const lista = useMemo(() => {
-    return docs.filter(d =>
-      d.status === "revisao_humana" ||
-      d.status === "invalido" ||
-      d.validacao_ia_status === "revisao_humana" ||
-      d.validacao_ia_status === "erro"
-    ).slice(0, 100);
+  // Lista operacional + filtros
+  const tiposUnicos = useMemo(() => {
+    return Array.from(new Set(docs.map(d => d.tipo_documento))).sort();
   }, [docs]);
+
+  const lista = useMemo(() => {
+    const term = fCliente.trim().toUpperCase();
+    return docs.filter(d => {
+      // Status filter (presets que respeitam a regra de separação IA vs Equipe)
+      switch (fStatus) {
+        case "analise_humana":
+          if (!(d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana")) return false;
+          break;
+        case "aprovados_auto":
+          if (d.decisao_ia !== "aprovado_auto") return false;
+          break;
+        case "rejeitados_auto":
+          if (d.decisao_ia !== "rejeitado_auto") return false;
+          break;
+        case "aprovados_manual":
+          if (!(d.status === "aprovado" && d.decisao_ia !== "aprovado_auto")) return false;
+          break;
+        case "rejeitados_manual":
+          if (!(d.status === "invalido" && d.decisao_ia !== "rejeitado_auto")) return false;
+          break;
+        case "modelos":
+          if (!d.usado_como_modelo) return false;
+          break;
+        case "pendentes_acao":
+          if (!(d.status === "revisao_humana" || d.status === "invalido" || d.validacao_ia_status === "revisao_humana" || d.validacao_ia_status === "erro" || d.decisao_ia === "erro")) return false;
+          break;
+        case "todos":
+        default: break;
+      }
+      if (fTipo !== "todos" && d.tipo_documento !== fTipo) return false;
+      if (fScoreBaixo && (typeof d.validacao_ia_confianca !== "number" || d.validacao_ia_confianca >= 0.70)) return false;
+      if (term) {
+        const hay = `${d.cliente_nome ?? ""} ${d.cliente_doc ?? ""}`.toUpperCase();
+        if (!hay.includes(term)) return false;
+      }
+      return true;
+    }).slice(0, 200);
+  }, [docs, fStatus, fTipo, fCliente, fScoreBaixo]);
 
   // -------------------------------------------------------------------------
   // Ações
@@ -318,8 +368,64 @@ export default function MonitorCadastrosDocumentos() {
 
   const abrirCliente = (clienteId: number | null) => {
     if (!clienteId) return;
-    // Abre na própria aba Clientes via URL — não cria rota paralela.
     window.open(`/quero-armas/clientes?cliente=${clienteId}`, "_self");
+  };
+  const abrirProcesso = (processoId: string | null) => {
+    if (!processoId) return;
+    window.open(`/quero-armas/processos?processo=${processoId}`, "_self");
+  };
+
+  // ---------- Ações operacionais (chamam qa-doc-acao-equipe) ----------
+  const callAcao = async (doc: DocRow, payload: Record<string, unknown>) => {
+    setAcaoLoadingId(doc.id);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const r = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-doc-acao-equipe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ documento_id: doc.id, ...payload }),
+      });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(out?.error || `Falha (${r.status})`);
+      return out;
+    } finally {
+      setAcaoLoadingId(null);
+    }
+  };
+
+  const aprovar = async (doc: DocRow) => {
+    try {
+      await callAcao(doc, { acao: "aprovar" });
+      toast.success("Documento aprovado.");
+      await carregar();
+    } catch (e: any) { toast.error(e.message || "Falha ao aprovar."); }
+  };
+
+  const abrirDocumento = async (doc: DocRow) => {
+    try {
+      const out = await callAcao(doc, { acao: "signed_url" });
+      if (out?.url) window.open(out.url, "_blank", "noopener,noreferrer");
+    } catch (e: any) { toast.error(e.message || "Falha ao abrir."); }
+  };
+
+  const submitModal = async (motivo: string, nomeModelo?: string) => {
+    if (!modalAcao) return;
+    const { doc, tipo } = modalAcao;
+    try {
+      if (tipo === "rejeitar") {
+        await callAcao(doc, { acao: "rejeitar", motivo });
+        toast.success("Documento rejeitado.");
+      } else if (tipo === "novo_envio") {
+        await callAcao(doc, { acao: "solicitar_novo_envio", motivo });
+        toast.success("Novo envio solicitado ao cliente.");
+      } else if (tipo === "modelo") {
+        await callAcao(doc, { acao: "aprovar_e_modelar", nome_modelo: nomeModelo, observacoes: motivo });
+        toast.success("Documento aprovado e usado como modelo.");
+      }
+      setModalAcao(null);
+      await carregar();
+    } catch (e: any) { toast.error(e.message || "Falha na ação."); }
   };
 
   // -------------------------------------------------------------------------
