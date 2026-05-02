@@ -118,6 +118,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [aprovacao, setAprovacao] = useState<{ docId: string; nome: string; divergente: boolean } | null>(null);
   const [salvandoAcao, setSalvandoAcao] = useState(false);
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
+  const [validandoAssinaturaId, setValidandoAssinaturaId] = useState<string | null>(null);
   const viewer = useDocumentoViewer();
 
   const carregar = useCallback(async () => {
