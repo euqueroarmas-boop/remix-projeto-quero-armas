@@ -76,6 +76,35 @@ type ConfigRow = {
   palavras_chave_esperadas_json: string[] | null;
 };
 
+type CadastroRow = {
+  id: string;
+  nome_completo: string | null;
+  cpf: string | null;
+  emp_cnpj: string | null;
+  email: string | null;
+  telefone_principal: string | null;
+  servico_fechado_final: string | null;
+  servico_principal: string | null;
+  servico_interesse: string | null;
+  origem_cadastro: string | null;
+  status: string | null;
+  created_at: string | null;
+  processado_em: string | null;
+  cliente_id_vinculado: number | null;
+};
+
+type ModeloDetalheRow = {
+  id: string;
+  tipo_documento: string;
+  nome_modelo: string | null;
+  documento_origem_id: string | null;
+  ativo: boolean;
+  observacoes: string | null;
+  aprovado_por: string | null;
+  aprovado_em: string | null;
+  updated_at: string | null;
+};
+
 // Helpers visuais ---------------------------------------------------------
 const tone = {
   neutral: "bg-slate-50 border-slate-200 text-slate-600",
@@ -86,19 +115,31 @@ const tone = {
 } as const;
 
 function KpiCard({
-  icon, label, value, t = "neutral",
-}: { icon: any; label: string; value: number | string; t?: keyof typeof tone }) {
+  icon, label, value, t = "neutral", active, onClick,
+}: {
+  icon: any; label: string; value: number | string; t?: keyof typeof tone;
+  active?: boolean; onClick?: () => void;
+}) {
   const Icon = icon;
   const isZero = value === 0 || value === "0";
   const cls = isZero ? tone.neutral : tone[t];
+  const ring = active
+    ? "ring-2 ring-slate-900 ring-offset-1 shadow-sm"
+    : onClick ? "hover:shadow-sm hover:-translate-y-[1px]" : "";
   return (
-    <div className={`rounded-xl border px-4 py-3 ${cls}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={`text-left rounded-xl border px-4 py-3 transition-all ${cls} ${ring} ${onClick ? "cursor-pointer" : "cursor-default"}`}
+    >
       <div className="flex items-center gap-2">
         <Icon className="h-3.5 w-3.5" />
         <span className="text-[10px] uppercase tracking-[0.14em] font-bold">{label}</span>
+        {active && <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-slate-700">ATIVO</span>}
       </div>
       <div className="mt-1 text-2xl font-mono font-bold tabular-nums">{value}</div>
-    </div>
+    </button>
   );
 }
 
