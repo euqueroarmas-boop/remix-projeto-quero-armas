@@ -765,20 +765,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   };
 
   // ============================================================================
-  // PROGRESSO DOCUMENTAL — fonte única de verdade
-  // Considera TODOS os documentos exigidos no checklist (obrigatórios e
-  // complementares), não apenas a condição profissional. O item técnico
-  // "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
-  // Cumprido = aprovado OU dispensado_grupo (grupo alternativo satisfeito,
-  // o que cobre também o caso de documento substituto formal aceito).
-  // Em análise / pendente / inválido / divergente / revisão NÃO contam.
+  // PROGRESSO DOCUMENTAL — fonte única de verdade: qa_processo_documentos.
+  // O item técnico "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
   // ============================================================================
   const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
-  const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
-  const isEmAnalise = (d: DocRow) =>
-    d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
-  const isPendenciaCliente = (d: DocRow) =>
-    d.status === "pendente" || d.status === "invalido" || d.status === "divergente";
+  const metrics = computeChecklistMetrics(docsChecklist);
+  const isCumprido = (d: DocRow) => isChecklistCumprido(d.status);
+  const isEmAnalise = (d: DocRow) => isChecklistEmAnalise(d.status);
+  const isPendenciaCliente = (d: DocRow) => isChecklistPendente(d.status);
 
   // ── Pseudo-documentos do CADASTRO PÚBLICO (selfie / identidade / endereço) ──
   // Tratados como CUMPRIDOS porque já foram entregues e aprovados na etapa
@@ -824,9 +818,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     }
   }
 
-  const totalExigencias = docsChecklist.length + pseudoDocsCadastro.length;
-  const cumpridos = docsChecklist.filter(isCumprido).length + pseudoDocsCadastro.length;
-  const progresso = totalExigencias > 0 ? Math.round((cumpridos / totalExigencias) * 100) : 0;
+  const totalExigencias = metrics.total;
+  const cumpridos = metrics.cumpridos;
+  const progresso = metrics.progresso;
 
   const docsPendencias = docsChecklist.filter(isPendenciaCliente);
   const docsAnalise = docsChecklist.filter(isEmAnalise);
