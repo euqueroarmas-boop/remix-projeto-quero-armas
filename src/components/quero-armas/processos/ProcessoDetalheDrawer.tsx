@@ -734,20 +734,38 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     try {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-fill-template`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          template_key: templateKey,
-          cliente_id: processo.cliente_id,
-        }),
-      });
+      const base = import.meta.env.VITE_SUPABASE_URL;
+
+      // Tenta a função staff primeiro (compatível com admin).
+      // Se o usuário não for staff (cliente do portal), cai para a função cliente,
+      // que valida ownership do processo via qa_clientes.user_id.
+      const fetchTemplate = async () => {
+        const staffResp = await fetch(`${base}/functions/v1/qa-fill-template`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ template_key: templateKey, cliente_id: processo.cliente_id }),
+        });
+        if (staffResp.ok) return staffResp;
+        if (staffResp.status === 401 || staffResp.status === 403) {
+          const clienteResp = await fetch(`${base}/functions/v1/qa-fill-template-cliente`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ template_key: templateKey, processo_id: processo.id }),
+          });
+          return clienteResp;
+        }
+        return staffResp;
+      };
+
+      const resp = await fetchTemplate();
       if (!resp.ok) {
         const txt = await resp.text();
         throw new Error(txt || "Falha ao gerar modelo");
       }
       const blob = await resp.blob();
+      if (!blob || blob.size < 200) {
+        throw new Error("Modelo gerado veio vazio. Tente novamente em alguns instantes.");
+      }
       const a = document.createElement("a");
       const objUrl = URL.createObjectURL(blob);
       a.href = objUrl;
