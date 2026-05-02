@@ -212,6 +212,8 @@ export function ArsenalSummary({
   totalGtes = 0,
   gteStatus = "muted",
   gteHint = "Sem GTE cadastrada",
+  crafPending = 0,
+  gtePending = 0,
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
