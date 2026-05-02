@@ -4019,13 +4019,18 @@ function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico
         extra["[DATA SAÍDA]"] = dataSaida;
       }
 
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-fill-template`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Authorization": `Bearer ${token}`,
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({ template_key: templateKey, cliente_id: cliente.id, extra_fields: extra }),
