@@ -688,7 +688,81 @@ export default function MonitorCadastrosDocumentos() {
         onClose={() => setOpenConfig(false)}
         onSaved={async () => { setOpenConfig(false); await carregar(); }}
       />
+
+      {/* Modal de motivo / nome de modelo */}
+      <MotivoDialog
+        modal={modalAcao}
+        onClose={() => setModalAcao(null)}
+        onSubmit={submitModal}
+        loading={!!acaoLoadingId}
+      />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Modal: motivo da ação manual
+// ---------------------------------------------------------------------------
+function MotivoDialog({
+  modal, onClose, onSubmit, loading,
+}: {
+  modal: { doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null;
+  onClose: () => void;
+  onSubmit: (motivo: string, nomeModelo?: string) => Promise<void>;
+  loading: boolean;
+}) {
+  const [motivo, setMotivo] = useState("");
+  const [nomeModelo, setNomeModelo] = useState("");
+  useEffect(() => { if (modal) { setMotivo(""); setNomeModelo(modal.doc.nome_documento ?? modal.doc.tipo_documento); } }, [modal]);
+  if (!modal) return null;
+  const titulos: Record<string, string> = {
+    rejeitar: "REJEITAR DOCUMENTO",
+    novo_envio: "SOLICITAR NOVO ENVIO",
+    modelo: "APROVAR E USAR COMO MODELO",
+  };
+  const placeholders: Record<string, string> = {
+    rejeitar: "DESCREVA O MOTIVO DA REJEIÇÃO (MÍN. 5 CARACTERES). O CLIENTE VERÁ UMA MENSAGEM SIMPLES NO PORTAL.",
+    novo_envio: "DESCREVA O QUE O CLIENTE PRECISA REENVIAR (MÍN. 5 CARACTERES). MENSAGEM SIMPLES SERÁ EXIBIDA NO PORTAL.",
+    modelo: "OBSERVAÇÕES OPCIONAIS PARA A BASE DE APRENDIZADO.",
+  };
+  const exigeMotivo = modal.tipo !== "modelo";
+  const valido = exigeMotivo ? motivo.trim().length >= 5 : true;
+  return (
+    <Dialog open={!!modal} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-white">
+        <DialogHeader>
+          <DialogTitle className="text-[13px] uppercase tracking-[0.14em] font-bold text-slate-900">
+            {titulos[modal.tipo]}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="text-[11px] text-slate-500 mb-3">
+          {modal.doc.cliente_nome ? <><b className="uppercase">{modal.doc.cliente_nome}</b> · </> : null}
+          <span className="uppercase">{modal.doc.tipo_documento}</span>
+        </div>
+        {modal.tipo === "modelo" && (
+          <div className="mb-3">
+            <label className="text-[10px] uppercase tracking-wider text-slate-500">Nome do modelo</label>
+            <Input value={nomeModelo} onChange={(e) => setNomeModelo(e.target.value.toUpperCase())} className="h-9 uppercase" />
+          </div>
+        )}
+        <Textarea
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder={placeholders[modal.tipo]}
+          className="min-h-[120px] text-[12px]"
+        />
+        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 mt-3">
+          <Button variant="outline" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button
+            onClick={() => onSubmit(motivo.trim(), nomeModelo.trim() || undefined)}
+            disabled={loading || !valido}
+            className="bg-slate-900 hover:bg-slate-800 text-white"
+          >
+            {loading ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Aplicando…</> : "Confirmar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
