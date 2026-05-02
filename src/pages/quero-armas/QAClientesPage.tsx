@@ -1918,8 +1918,9 @@ export default function QAClientesPage() {
     loadingClientRef.current = null;
   };
 
-  const loadSubData = useCallback(async (c: Cliente) => {
-    setLoadingSub(true);
+  const loadSubData = useCallback(async (c: Cliente, opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) setLoadingSub(true);
     try {
       // CHAVE CANÔNICA: vendas/crafs/gtes/filiações historicamente usam id_legado,
       // mas o portal/app/arsenal grava com o id real (qa_clientes.id). Para garantir
@@ -2007,9 +2008,30 @@ export default function QAClientesPage() {
       console.error("[loadSubData] erro:", e.message);
       toast.error("Erro ao carregar dados do cliente");
     } finally {
-      setLoadingSub(false);
+      if (!silent) setLoadingSub(false);
     }
   }, []);
+
+  // ─── Auto-refresh global do cliente selecionado (1s) ───
+  // Atualiza KPIs e todos os dados atrelados (CRAFs, GTEs, CR, documentos,
+  // vendas, processos, exames, armas) sem qualquer interação do administrador.
+  // Pausa quando a aba do navegador está oculta para não desperdiçar requisições.
+  useEffect(() => {
+    if (!selected) return;
+    let inFlight = false;
+    const tick = async () => {
+      if (inFlight) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      inFlight = true;
+      try {
+        await loadSubData(selected, { silent: true });
+      } finally {
+        inFlight = false;
+      }
+    };
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [selected, loadSubData]);
 
   const handleDelete = async () => {
     setDeleting(true);
