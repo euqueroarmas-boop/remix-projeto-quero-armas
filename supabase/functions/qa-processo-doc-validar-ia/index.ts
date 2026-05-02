@@ -841,17 +841,22 @@ Deno.serve(async (req) => {
       if (!cfg.permiteAuto) {
         novoStatus = "revisao_humana";
         motivoRejeicao = null;
+        decisaoIA = "revisao_humana";
       } else if (scoreModelo > 0 && scoreModelo < cfg.analiseHumana) {
         // Modelo aprovado existe mas o doc atual é muito diferente:
         // rebaixa para revisão humana.
         novoStatus = "revisao_humana";
         motivoRejeicao = null;
+        decisaoIA = "revisao_humana";
       }
     } else if (matchModelo.modeloId && novoStatus === "revisao_humana" && cfg.permiteAuto) {
       // Sobe revisão humana → aprovado se o doc bate fortemente com modelo aprovado.
       if (scoreModelo >= cfg.aprovaAuto && camposFaltando.length === 0 && divergencias.length === 0) {
         novoStatus = "aprovado";
         motivoRejeicao = null;
+        // A IA fechou aprovação sozinha (com apoio da base de aprendizado),
+        // sem intervenção humana — segue contando como decisão automática.
+        decisaoIA = "aprovado_auto";
       }
     }
 
