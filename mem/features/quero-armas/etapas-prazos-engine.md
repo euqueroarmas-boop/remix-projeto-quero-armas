@@ -39,3 +39,10 @@ Mapeamento por `tipo_documento` via SQL `qa_etapa_documento(text)` e mirror no f
 - Edge `qa-extract-doc-dates` agora preenche também `ano_competencia` quando o `tipo_documento` casa `comprovante_endereco_ano_\d{4}` e a IA extrai `data_emissao`.
 - O tipo `comprovante_endereco_revisao_ano`, a RPC `qa_mover_endereco_revisao_para_ano`, o trigger `qa_trg_revisao_endereco_auto_promover_t` e o botão "DEFINIR ANO" foram REMOVIDOS — não são exigência real e não devem ser recriados.
 - Lib pura `src/lib/quero-armas/enderecoAnoEngine.ts` espelha as regras (sem I/O) para testes determinísticos. Ver `enderecoAnoEngine.test.ts` (9 cenários).
+
+**Perguntas-pivot (Etapa 1) — sem default, sem auto-aprovação:**
+Perguntas condicionais (`pergunta_comprovante_em_nome`, `pergunta_ainda_reside_imovel`, `pergunta_responde_inquerito_criminal`) têm ciclo PRÓPRIO:
+- Estado inicial: `status='pendente'` e `respostas_questionario_json[chave]` ausente → UI mostra "AGUARDANDO SUA RESPOSTA" (badge âmbar) e botões de opção.
+- Após clique explícito do cliente: salva `respostas_questionario_json[chave]=valor` PRIMEIRO, depois `status='dispensado_grupo'` (NUNCA `aprovado`/`validado` — pergunta não é documento aprovado, é resposta declarada). Registra evento `pergunta_respondida` com ator/timestamp.
+- Trigger SQL `qa_trg_guard_pergunta_resposta` (BEFORE INSERT/UPDATE OF status) bloqueia qualquer tentativa de marcar pergunta-pivot como cumprida sem a chave correspondente em `respostas_questionario_json` (erro `PERGUNTA_SEM_RESPOSTA`). Coalesce/default/fallback "nao" PROIBIDOS.
+- Front (`ProcessoDetalheDrawer`) tem defesa em profundidade: `perguntaSemResposta(d)` força `pendente` na UI e no `etapaResumo` mesmo se o status do banco estiver corrompido. Pergunta sem resposta NÃO conta no progresso, NÃO vai para "Exigências cumpridas", NÃO libera próxima etapa.

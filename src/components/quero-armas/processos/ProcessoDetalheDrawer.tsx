@@ -738,12 +738,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         .update({ respostas_questionario_json: novasRespostas })
         .eq("id", processo.id);
       if (upErr) throw upErr;
-      // Marca a pergunta como cumprida (dispensado_grupo): some do "pendente"
-      // mas mantém histórico no checklist arquivado.
+      // Marca a pergunta como RESPONDIDA — usa 'dispensado_grupo' (não 'aprovado',
+      // pois pergunta nunca é documento aprovado, é só uma resposta declarada).
+      // O trigger SQL qa_guard_pergunta_sem_resposta exige que respostas_questionario_json
+      // já contenha a chave antes de aceitar este UPDATE — por isso o UPDATE acima vem 1º.
       await supabase
         .from("qa_processo_documentos")
-        .update({ status: "aprovado", observacoes: `Resposta: ${valor.toUpperCase()}` })
+        .update({ status: "dispensado_grupo", observacoes: `Resposta do cliente: ${valor.toUpperCase()} em ${new Date().toISOString()}` })
         .eq("id", doc.id);
+      // Registra evento auditável
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processo.id,
+        tipo_evento: "pergunta_respondida",
+        descricao: `Cliente respondeu "${chave}": ${valor.toUpperCase()}`,
+        ator: "cliente",
+        dados_json: { documento_id: doc.id, tipo_documento: doc.tipo_documento, chave, valor },
+      });
       toast.success("Resposta registrada. Checklist atualizado.");
       await carregar();
       onUpdated?.();
@@ -866,7 +876,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const docsArquivados = docsTodos.filter(docDeEtapaAnteriorConcluida);
   const etapaResumo = (n: number) => {
     const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
-    const aprovados = lista.filter((d) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
+    // Perguntas sem resposta NÃO contam como cumpridas, mesmo se o status do
+    // banco estiver dessincronizado. Defesa em profundidade.
+    const aprovados = lista.filter((d) => {
+      if (isPergunta(d)) {
+        const chave = (d.regra_validacao as any)?.chave as string | undefined;
+        if (!chave) return false;
+        return respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
+      }
+      return d.status === "aprovado" || d.status === "dispensado_grupo";
+    }).length;
     return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
   };
   const etapaCompleta = etapaResumo(etapaLiberada).completo;
@@ -909,9 +928,30 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   };
 
   const metrics = computeChecklistMetrics(docsChecklist);
-  const isCumprido = (d: DocRow) => isChecklistCumprido(d.status);
-  const isEmAnalise = (d: DocRow) => isChecklistEmAnalise(d.status);
-  const isPendenciaCliente = (d: DocRow) => isChecklistPendente(d.status);
+  // PERGUNTAS-PIVOT: o status real depende de TER resposta registrada no
+  // questionário do processo. Status do banco isolado é insuficiente — uma
+  // pergunta sem resposta NUNCA é cumprida, mesmo que o registro esteja
+  // corrompido com status='aprovado' (defesa em profundidade contra o bug
+  // histórico de auto-aprovação).
+  const perguntaSemResposta = (d: DocRow): boolean => {
+    if (!isPergunta(d)) return false;
+    const chave = (d.regra_validacao as any)?.chave as string | undefined;
+    if (!chave) return false;
+    const v = respostas[chave];
+    return v === undefined || v === null || v === "";
+  };
+  const isCumprido = (d: DocRow) => {
+    if (perguntaSemResposta(d)) return false;
+    return isChecklistCumprido(d.status);
+  };
+  const isEmAnalise = (d: DocRow) => {
+    if (perguntaSemResposta(d)) return false;
+    return isChecklistEmAnalise(d.status);
+  };
+  const isPendenciaCliente = (d: DocRow) => {
+    if (perguntaSemResposta(d)) return true;
+    return isChecklistPendente(d.status);
+  };
 
   // ── Pseudo-documentos do CADASTRO PÚBLICO (selfie / identidade / endereço) ──
   // Tratados como CUMPRIDOS porque já foram entregues e aprovados na etapa
@@ -1179,6 +1219,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
                 const tplEscolhido = pickTemplate(doc.regra_validacao);
                 const exigeAssinaturaGovBr = !!(doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).assinatura_requerida === "govbr");
+                // Pergunta-pivot tem ciclo próprio (PENDENTE/RESPONDIDA) — não usa
+                // o status documental do banco para a UI.
+                const perguntaBadge = pergunta
+                  ? (respostaAtual
+                      ? { label: "RESPONDIDA", color: "#7c3aed" }
+                      : { label: "AGUARDANDO SUA RESPOSTA", color: "#d97706" })
+                  : null;
                 return (
                   <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
@@ -1192,9 +1239,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}>
-                        {ds.label}
-                      </span>
+                      {perguntaBadge ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${perguntaBadge.color}15`, color: perguntaBadge.color, border: `1px solid ${perguntaBadge.color}40` }}>
+                          {perguntaBadge.label}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${ds.color}15`, color: ds.color, border: `1px solid ${ds.color}40` }}>
+                          {ds.label}
+                        </span>
+                      )}
                     </div>
 
                     {/* Detalhes */}
