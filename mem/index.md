@@ -7,6 +7,8 @@ TODAS as telas internas/operacionais/administrativas do Quero Armas seguem padr�
 
 **PROIBIDO FUNDO PRETO em forms/inputs/textarea/dialogs do painel admin QA.** Toda página admin envolvida em `.qa-scope`. Padrão visual = tela do Arsenal de Clientes (Premium Light com letras e botões legíveis). Ver mem://style/quero-armas/no-dark-forms-rule.
 
+**PROIBIDO EXPOR URL DO SUPABASE ao abrir documentos.** Toda visualização de arquivo (PDF, imagem) deve usar `DocumentoViewerModal` (`@/components/quero-armas/DocumentoViewerModal`) com blob interno via `URL.createObjectURL`. Nunca usar `window.open(signedUrl)`. Ver mem://constraints/no-supabase-url-leak.
+
 **ZERO REGRESSÃO QA (regra mestra):** NUNCA apagar tabelas/colunas, renomear campos, alterar fluxos aprovados, substituir integrações existentes (send-smtp-email, Asaas) ou criar arquitetura paralela. Sempre extensão (add), nunca substituição (replace). Em dúvida → criar novo compatível. Arquitetura canônica imutável: qa_clientes (CPF=identidade) · qa_vendas (verdade financeira, status_financeiro derivado) · qa_solicitacoes_servico · qa_processos · cliente_auth_links. status_servico: montando_pasta→documentos→verificação→protocolo→órgão→resultado. E-mail SEMPRE via send-smtp-email + naoresponda@queroarmas.com.br (proibido email_send_log/pgmq/cron/App Emails). IA extrai TUDO em campos_complementares_json/metadados_documento_json — proibido descartar dados ou exigir preenchimento manual do já extraído. Ver mem://constraints/quero-armas-diretriz-global.
 
 ## Memories
