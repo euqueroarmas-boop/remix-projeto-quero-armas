@@ -70,6 +70,11 @@ interface ProcessoFull {
   observacoes_admin: string | null;
   condicao_profissional?: string | null;
   respostas_questionario_json?: Record<string, string> | null;
+  etapa_liberada_ate?: number | null;
+  primeiro_doc_aprovado_em?: string | null;
+  prazo_critico_data?: string | null;
+  prazo_critico_doc_id?: string | null;
+  observacao_prazo?: string | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
 }
 
