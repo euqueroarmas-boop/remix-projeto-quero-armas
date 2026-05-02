@@ -351,35 +351,41 @@ export default function MonitorCadastrosDocumentos() {
     return Array.from(new Set(docs.map(d => d.tipo_documento))).sort();
   }, [docs]);
 
-  const lista = useMemo(() => {
+  // -------------------------------------------------------------------------
+  // Drill-down por KPI: cada KPI tem UM seletor de documentos, reutilizado
+  // tanto pelo contador quanto pela lista. Sem divergência possível.
+  // -------------------------------------------------------------------------
+  const SELECTORS: Record<string, (d: DocRow) => boolean> = {
+    docs_analise_humana: (d) =>
+      d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana",
+    docs_aprovados_ia:   (d) => d.decisao_ia === "aprovado_auto",
+    docs_rejeitados_ia:  (d) => d.decisao_ia === "rejeitado_auto",
+    docs_aprovados_equipe: (d) => d.status === "aprovado" && d.decisao_ia !== "aprovado_auto",
+    docs_rejeitados_equipe: (d) => d.status === "invalido" && d.decisao_ia !== "rejeitado_auto",
+    pendencias_criticas: (d) =>
+      (d.status === "invalido" && (d.tipo_documento === "cr" || d.tipo_documento === "craf" || d.tipo_documento === "antecedentes_criminais"))
+      || d.status === "revisao_humana"
+      || d.validacao_ia_status === "erro"
+      || d.decisao_ia === "erro",
+    confianca_media:     (d) => typeof d.validacao_ia_confianca === "number",
+  };
+  // Lista padrão (sem KPI ativa): pendentes de ação operacional.
+  const SELECTOR_DEFAULT = (d: DocRow) =>
+    d.status === "revisao_humana" || d.status === "invalido"
+    || d.validacao_ia_status === "revisao_humana" || d.validacao_ia_status === "erro"
+    || d.decisao_ia === "erro";
+
+  const docsFiltrados = useMemo(() => {
+    const sel = (kpiAtiva && SELECTORS[kpiAtiva]) || SELECTOR_DEFAULT;
+    let arr = docs.filter(sel);
+    // Ordenação especial para "confiança média": menor score primeiro
+    if (kpiAtiva === "confianca_media") {
+      arr = [...arr].sort((a, b) =>
+        (a.validacao_ia_confianca ?? 1) - (b.validacao_ia_confianca ?? 1));
+    }
+    // Filtros refinados (aplicáveis a qualquer lista de docs)
     const term = fCliente.trim().toUpperCase();
-    return docs.filter(d => {
-      // Status filter (presets que respeitam a regra de separação IA vs Equipe)
-      switch (fStatus) {
-        case "analise_humana":
-          if (!(d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana")) return false;
-          break;
-        case "aprovados_auto":
-          if (d.decisao_ia !== "aprovado_auto") return false;
-          break;
-        case "rejeitados_auto":
-          if (d.decisao_ia !== "rejeitado_auto") return false;
-          break;
-        case "aprovados_manual":
-          if (!(d.status === "aprovado" && d.decisao_ia !== "aprovado_auto")) return false;
-          break;
-        case "rejeitados_manual":
-          if (!(d.status === "invalido" && d.decisao_ia !== "rejeitado_auto")) return false;
-          break;
-        case "modelos":
-          if (!d.usado_como_modelo) return false;
-          break;
-        case "pendentes_acao":
-          if (!(d.status === "revisao_humana" || d.status === "invalido" || d.validacao_ia_status === "revisao_humana" || d.validacao_ia_status === "erro" || d.decisao_ia === "erro")) return false;
-          break;
-        case "todos":
-        default: break;
-      }
+    return arr.filter(d => {
       if (fTipo !== "todos" && d.tipo_documento !== fTipo) return false;
       if (fScoreBaixo && (typeof d.validacao_ia_confianca !== "number" || d.validacao_ia_confianca >= 0.70)) return false;
       if (term) {
@@ -387,8 +393,40 @@ export default function MonitorCadastrosDocumentos() {
         if (!hay.includes(term)) return false;
       }
       return true;
-    }).slice(0, 200);
-  }, [docs, fStatus, fTipo, fCliente, fScoreBaixo]);
+    });
+  }, [docs, kpiAtiva, fTipo, fCliente, fScoreBaixo]);
+
+  // Modo de exibição da seção principal — define COLUNAS e DATASET.
+  const modo: "docs" | "cadastros_aguardando" | "cadastros_aprov_hoje"
+    | "modelos" | "tipos" =
+    kpiAtiva === "cadastros_aguardando" ? "cadastros_aguardando"
+    : kpiAtiva === "cadastros_aprov_hoje" ? "cadastros_aprov_hoje"
+    : kpiAtiva === "modelos_ativos" ? "modelos"
+    : kpiAtiva === "tipos_monitorados" ? "tipos"
+    : "docs";
+
+  // Mapeamento KPI → título exibido no header da lista
+  const KPI_LABEL: Record<string, string> = {
+    cadastros_aguardando:    "Cadastros aguardando aprovação",
+    cadastros_aprov_hoje:    "Cadastros aprovados hoje",
+    docs_analise_humana:     "Documentos em análise humana",
+    docs_aprovados_ia:       "Documentos aprovados pela IA",
+    docs_rejeitados_ia:      "Documentos rejeitados pela IA",
+    docs_aprovados_equipe:   "Documentos aprovados pela Equipe",
+    docs_rejeitados_equipe:  "Documentos rejeitados pela Equipe",
+    modelos_ativos:          "Modelos de aprendizado ativos",
+    tipos_monitorados:       "Tipos documentais monitorados",
+    pendencias_criticas:     "Pendências críticas",
+    confianca_media:         "Documentos por menor confiança da IA",
+  };
+
+  // Tamanho exato da lista exibida (para o título). Cada modo conta o seu.
+  const totalLista =
+    modo === "cadastros_aguardando" ? cadastrosAguardando.length
+    : modo === "cadastros_aprov_hoje" ? cadastrosAprovHoje.length
+    : modo === "modelos" ? modelosDetalhe.filter(m => m.ativo).length
+    : modo === "tipos" ? configs.length
+    : docsFiltrados.length;
 
   // -------------------------------------------------------------------------
   // Ações
