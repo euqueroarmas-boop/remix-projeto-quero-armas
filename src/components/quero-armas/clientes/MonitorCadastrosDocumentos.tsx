@@ -101,17 +101,26 @@ function KpiCard({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    aprovado:        `${tone.green}`,
-    invalido:        `${tone.red}`,
-    revisao_humana:  `${tone.yellow}`,
-    em_analise:      `${tone.blue}`,
-    pendente:        `${tone.neutral}`,
-  };
+// Mapeamento status real do banco → label padronizado para exibição.
+// Mantemos compatibilidade com valores antigos (`aprovado`, `invalido`, `em_analise`).
+const LABEL_STATUS: Record<string, { label: string; tone: keyof typeof tone }> = {
+  pendente:       { label: "RECEBIDO",                 tone: "neutral" },
+  em_analise:     { label: "PROCESSANDO IA",           tone: "blue"    },
+  revisao_humana: { label: "REVISÃO HUMANA",           tone: "yellow"  },
+  divergente:     { label: "DIVERGENTE",               tone: "yellow"  },
+  aprovado:       { label: "APROVADO",                 tone: "green"   },
+  invalido:       { label: "REJEITADO",                tone: "red"     },
+};
+function StatusBadge({ status, decisaoIA }: { status: string; decisaoIA?: string | null }) {
+  const m = LABEL_STATUS[status] ?? { label: status.replace(/_/g, " ").toUpperCase(), tone: "neutral" as const };
+  const sufixo = status === "aprovado"
+    ? (decisaoIA === "aprovado_auto" ? " (AUTO)" : " (MANUAL)")
+    : status === "invalido"
+      ? (decisaoIA === "rejeitado_auto" ? " (AUTO)" : " (MANUAL)")
+      : "";
   return (
-    <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold border ${map[status] ?? tone.neutral}`}>
-      {status.replace(/_/g, " ")}
+    <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold border ${tone[m.tone]}`}>
+      {m.label}{sufixo}
     </span>
   );
 }
