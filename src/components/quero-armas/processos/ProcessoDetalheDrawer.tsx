@@ -497,21 +497,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   // ============================================================
   // FEATURE: Validador GOV.BR / ICP-Brasil
-  // Tipos de documento que exigem assinatura digital GOV.BR.
-  // Inclui declarações pré-preenchidas pelo sistema e documentos emitidos
-  // por entidades (clube de tiro) assinados digitalmente.
   // ============================================================
-  const tiposExigemAssinaturaGov = (tipo: string): boolean => {
-    if (!tipo) return false;
-    const t = tipo.toLowerCase();
-    return (
-      t.startsWith("declaracao_") ||
-      t.startsWith("dsa_") ||
-      t === "declaracao_compromisso_treino" ||
-      t === "declaracao_compromisso_habitualidade"
-    );
-  };
-
   const validarAssinaturaGov = async (doc: DocRow) => {
     if (!processo) return;
     if (!doc.arquivo_storage_key) {
