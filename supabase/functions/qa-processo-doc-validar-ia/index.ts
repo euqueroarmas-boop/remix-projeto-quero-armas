@@ -658,6 +658,23 @@ Deno.serve(async (req) => {
           return !CAMPOS_PJ_IGNORAR.has(c);
         });
 
+        // Limpa orientações ao cliente que reclamem de divergência endereço
+        // empresa↔residência. O governo NÃO exige que sejam iguais; o documento
+        // PJ serve para comprovar ORIGEM DA RENDA, não local de moradia.
+        const ORIENT_PROIBIDA_RX = /(endere[çc]o|cep|residencial|cadastro|atualize|atualiz[ae])/i;
+        if (parsed.orientacoes_cliente && typeof parsed.orientacoes_cliente === "string") {
+          if (ORIENT_PROIBIDA_RX.test(parsed.orientacoes_cliente)) {
+            parsed.orientacoes_cliente = null;
+          }
+        }
+        // Também limpa em campos_complementares (caso a IA tenha colocado lá)
+        if (parsed.campos_complementares && typeof parsed.campos_complementares === "object") {
+          const cc: any = parsed.campos_complementares;
+          if (typeof cc.orientacoes_cliente === "string" && ORIENT_PROIBIDA_RX.test(cc.orientacoes_cliente)) {
+            delete cc.orientacoes_cliente;
+          }
+        }
+
         // Cruzamento CNPJ ↔ QSA: marca cliente_e_socio se o CPF do cliente
         // aparece na lista de sócios/administradores extraída.
         const cpfCliente = String(cliente?.cpf ?? "").replace(/\D+/g, "");
