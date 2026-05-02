@@ -637,9 +637,9 @@ export function ArsenalView({
           headerAction={
             <button
               type="button"
-              onClick={() => setCrafModal({ open: true })}
+              onClick={() => setCrafUploadIA({ open: true })}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
-              title="Enviar / cadastrar CRAF"
+              title="Enviar CRAF — IA lê e você confirma"
             >
               <Upload className="h-3.5 w-3.5" /> ENVIAR CRAF
             </button>
