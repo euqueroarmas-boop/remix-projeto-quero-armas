@@ -2213,56 +2213,6 @@ const CONDICAO_OPCOES: { id: "clt" | "autonomo" | "empresario" | "aposentado" | 
   { id: "funcionario_publico", label: "FUNCIONÁRIO PÚBLICO", hint: "Carteira Funcional + Holerite" },
 ];
 
-function CondicaoProfissionalCard({
-  condicao,
-  indefinida,
-  saving,
-  onSelect,
-}: {
-  condicao: string | null;
-  indefinida: boolean;
-  saving: string | null;
-  onSelect: (c: "clt" | "autonomo" | "empresario" | "aposentado" | "funcionario_publico") => void;
-}) {
-  const atual = (condicao || "").toLowerCase();
-  return (
-    <div className={`rounded-xl border p-4 shadow-sm ${indefinida ? "bg-white border-blue-200 ring-1 ring-blue-100" : "bg-white border-slate-200"}`}>
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">CONDIÇÃO PROFISSIONAL</div>
-          <div className="text-sm font-bold text-slate-800 uppercase mt-0.5">
-            {indefinida
-              ? "DEFINA SUA CONDIÇÃO PARA LIBERAR OS COMPROVANTES DE RENDA CORRETOS"
-              : `ATUAL: ${atual.toUpperCase()}`}
-          </div>
-          <div className="text-[11px] text-slate-600 mt-1">
-            Os documentos de renda são gerados automaticamente conforme sua escolha. Itens já aprovados são preservados.
-          </div>
-        </div>
-      </div>
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2">
-        {CONDICAO_OPCOES.map((op) => {
-          const ativo = atual === op.id;
-          const carregando = saving === op.id;
-          return (
-            <button
-              key={op.id}
-              disabled={!!saving}
-              onClick={() => onSelect(op.id)}
-              className={`text-center rounded-lg border px-3 py-2 transition flex flex-col items-center justify-center ${
-                ativo
-                  ? "bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
-              } disabled:opacity-50`}
-            >
-              <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800 text-center">{op.label}</div>
-              <div className="text-[10px] text-slate-500 mt-0.5 leading-tight text-center">{op.hint}</div>
-              {ativo && <div className="text-[10px] uppercase font-bold text-emerald-700 mt-1 text-center">SELECIONADO</div>}
-              {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1 text-center">SALVANDO...</div>}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// CondicaoProfissionalCard foi removido — a condição profissional agora é
+// um item nativo do checklist (Etapa 2, tipo_documento "renda_definir_condicao").
+// O seletor inline vive dentro do renderDoc do drawer.
