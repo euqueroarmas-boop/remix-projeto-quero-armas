@@ -96,6 +96,7 @@ Deno.serve(async (req) => {
     const allowed = [
       Deno.env.get("BOOTSTRAP_TOKEN"),
       Deno.env.get("INTERNAL_FUNCTION_TOKEN"),
+      Deno.env.get("QA_CRON_TOKEN"),
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
     ].filter(Boolean) as string[];
     if (!body?.bootstrap_token || !allowed.includes(body.bootstrap_token)) {
