@@ -76,6 +76,35 @@ type ConfigRow = {
   palavras_chave_esperadas_json: string[] | null;
 };
 
+type CadastroRow = {
+  id: string;
+  nome_completo: string | null;
+  cpf: string | null;
+  emp_cnpj: string | null;
+  email: string | null;
+  telefone_principal: string | null;
+  servico_fechado_final: string | null;
+  servico_principal: string | null;
+  servico_interesse: string | null;
+  origem_cadastro: string | null;
+  status: string | null;
+  created_at: string | null;
+  processado_em: string | null;
+  cliente_id_vinculado: number | null;
+};
+
+type ModeloDetalheRow = {
+  id: string;
+  tipo_documento: string;
+  nome_modelo: string | null;
+  documento_origem_id: string | null;
+  ativo: boolean;
+  observacoes: string | null;
+  aprovado_por: string | null;
+  aprovado_em: string | null;
+  updated_at: string | null;
+};
+
 // Helpers visuais ---------------------------------------------------------
 const tone = {
   neutral: "bg-slate-50 border-slate-200 text-slate-600",
@@ -86,19 +115,31 @@ const tone = {
 } as const;
 
 function KpiCard({
-  icon, label, value, t = "neutral",
-}: { icon: any; label: string; value: number | string; t?: keyof typeof tone }) {
+  icon, label, value, t = "neutral", active, onClick,
+}: {
+  icon: any; label: string; value: number | string; t?: keyof typeof tone;
+  active?: boolean; onClick?: () => void;
+}) {
   const Icon = icon;
   const isZero = value === 0 || value === "0";
   const cls = isZero ? tone.neutral : tone[t];
+  const ring = active
+    ? "ring-2 ring-slate-900 ring-offset-1 shadow-sm"
+    : onClick ? "hover:shadow-sm hover:-translate-y-[1px]" : "";
   return (
-    <div className={`rounded-xl border px-4 py-3 ${cls}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={`text-left rounded-xl border px-4 py-3 transition-all ${cls} ${ring} ${onClick ? "cursor-pointer" : "cursor-default"}`}
+    >
       <div className="flex items-center gap-2">
         <Icon className="h-3.5 w-3.5" />
         <span className="text-[10px] uppercase tracking-[0.14em] font-bold">{label}</span>
+        {active && <span className="ml-auto text-[9px] font-bold uppercase tracking-wider text-slate-700">ATIVO</span>}
       </div>
       <div className="mt-1 text-2xl font-mono font-bold tabular-nums">{value}</div>
-    </div>
+    </button>
   );
 }
 
@@ -138,13 +179,32 @@ export default function MonitorCadastrosDocumentos() {
   const [loading, setLoading] = useState(true);
   const [docs, setDocs]       = useState<DocRow[]>([]);
   const [modelos, setModelos] = useState<ModeloRow[]>([]);
+  const [modelosDetalhe, setModelosDetalhe] = useState<ModeloDetalheRow[]>([]);
+  const [cadastrosAguardando, setCadastrosAguardando] = useState<CadastroRow[]>([]);
+  const [cadastrosAprovHoje, setCadastrosAprovHoje]   = useState<CadastroRow[]>([]);
   const [configs, setConfigs] = useState<ConfigRow[]>([]);
   const [kpiCadastros, setKpiCadastros] = useState({ aguardando: 0, aprovadosHoje: 0 });
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
   const [openConfig, setOpenConfig] = useState(false);
+  const [aprovandoCadId, setAprovandoCadId] = useState<string | null>(null);
+
+  // KPI ativa (drill-down). Cada KPI funciona como filtro principal.
+  // null = padrão (lista de pendentes de ação).
+  type KpiId =
+    | "cadastros_aguardando"
+    | "cadastros_aprov_hoje"
+    | "docs_analise_humana"
+    | "docs_aprovados_ia"
+    | "docs_rejeitados_ia"
+    | "docs_aprovados_equipe"
+    | "docs_rejeitados_equipe"
+    | "modelos_ativos"
+    | "tipos_monitorados"
+    | "pendencias_criticas"
+    | "confianca_media";
+  const [kpiAtiva, setKpiAtiva] = useState<KpiId | null>(null);
 
   // Filtros
-  const [fStatus, setFStatus] = useState<string>("todos");
   const [fTipo, setFTipo]     = useState<string>("todos");
   const [fCliente, setFCliente] = useState<string>("");
   const [fScoreBaixo, setFScoreBaixo] = useState(false);
@@ -198,6 +258,13 @@ export default function MonitorCadastrosDocumentos() {
         .order("updated_at", { ascending: false });
       setModelos((mods ?? []) as ModeloRow[]);
 
+      // 2.b) Modelos detalhados (para drill-down quando KPI "Modelos ativos" estiver ativa)
+      const { data: modsDet } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .select("id, tipo_documento, nome_modelo, documento_origem_id, ativo, observacoes, aprovado_por, aprovado_em, updated_at")
+        .order("aprovado_em", { ascending: false });
+      setModelosDetalhe((modsDet ?? []) as ModeloDetalheRow[]);
+
       // 3) Configurações por tipo
       const { data: cfg } = await supabase
         .from("qa_validacao_config")
@@ -218,6 +285,15 @@ export default function MonitorCadastrosDocumentos() {
         aguardando:    aguardando.count ?? 0,
         aprovadosHoje: aprovHoje.count   ?? 0,
       });
+
+      // 4.b) Listas detalhadas dos cadastros (para drill-down)
+      const cadCols = "id, nome_completo, cpf, emp_cnpj, email, telefone_principal, servico_fechado_final, servico_principal, servico_interesse, origem_cadastro, status, created_at, processado_em, cliente_id_vinculado";
+      const [{ data: cadAguard }, { data: cadAprov }] = await Promise.all([
+        supabase.from("qa_cadastro_publico" as any).select(cadCols).eq("status", "pendente").order("created_at", { ascending: false }).limit(500),
+        supabase.from("qa_cadastro_publico" as any).select(cadCols).eq("status", "aprovado").gte("updated_at", inicio).order("processado_em", { ascending: false }).limit(500),
+      ]);
+      setCadastrosAguardando((cadAguard ?? []) as unknown as CadastroRow[]);
+      setCadastrosAprovHoje((cadAprov ?? []) as unknown as CadastroRow[]);
     } catch (e: any) {
       toast.error("Erro ao carregar monitor: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -291,35 +367,41 @@ export default function MonitorCadastrosDocumentos() {
     return Array.from(new Set(docs.map(d => d.tipo_documento))).sort();
   }, [docs]);
 
-  const lista = useMemo(() => {
+  // -------------------------------------------------------------------------
+  // Drill-down por KPI: cada KPI tem UM seletor de documentos, reutilizado
+  // tanto pelo contador quanto pela lista. Sem divergência possível.
+  // -------------------------------------------------------------------------
+  const SELECTORS: Record<string, (d: DocRow) => boolean> = {
+    docs_analise_humana: (d) =>
+      d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana",
+    docs_aprovados_ia:   (d) => d.decisao_ia === "aprovado_auto",
+    docs_rejeitados_ia:  (d) => d.decisao_ia === "rejeitado_auto",
+    docs_aprovados_equipe: (d) => d.status === "aprovado" && d.decisao_ia !== "aprovado_auto",
+    docs_rejeitados_equipe: (d) => d.status === "invalido" && d.decisao_ia !== "rejeitado_auto",
+    pendencias_criticas: (d) =>
+      (d.status === "invalido" && (d.tipo_documento === "cr" || d.tipo_documento === "craf" || d.tipo_documento === "antecedentes_criminais"))
+      || d.status === "revisao_humana"
+      || d.validacao_ia_status === "erro"
+      || d.decisao_ia === "erro",
+    confianca_media:     (d) => typeof d.validacao_ia_confianca === "number",
+  };
+  // Lista padrão (sem KPI ativa): pendentes de ação operacional.
+  const SELECTOR_DEFAULT = (d: DocRow) =>
+    d.status === "revisao_humana" || d.status === "invalido"
+    || d.validacao_ia_status === "revisao_humana" || d.validacao_ia_status === "erro"
+    || d.decisao_ia === "erro";
+
+  const docsFiltrados = useMemo(() => {
+    const sel = (kpiAtiva && SELECTORS[kpiAtiva]) || SELECTOR_DEFAULT;
+    let arr = docs.filter(sel);
+    // Ordenação especial para "confiança média": menor score primeiro
+    if (kpiAtiva === "confianca_media") {
+      arr = [...arr].sort((a, b) =>
+        (a.validacao_ia_confianca ?? 1) - (b.validacao_ia_confianca ?? 1));
+    }
+    // Filtros refinados (aplicáveis a qualquer lista de docs)
     const term = fCliente.trim().toUpperCase();
-    return docs.filter(d => {
-      // Status filter (presets que respeitam a regra de separação IA vs Equipe)
-      switch (fStatus) {
-        case "analise_humana":
-          if (!(d.status === "revisao_humana" || d.validacao_ia_status === "revisao_humana")) return false;
-          break;
-        case "aprovados_auto":
-          if (d.decisao_ia !== "aprovado_auto") return false;
-          break;
-        case "rejeitados_auto":
-          if (d.decisao_ia !== "rejeitado_auto") return false;
-          break;
-        case "aprovados_manual":
-          if (!(d.status === "aprovado" && d.decisao_ia !== "aprovado_auto")) return false;
-          break;
-        case "rejeitados_manual":
-          if (!(d.status === "invalido" && d.decisao_ia !== "rejeitado_auto")) return false;
-          break;
-        case "modelos":
-          if (!d.usado_como_modelo) return false;
-          break;
-        case "pendentes_acao":
-          if (!(d.status === "revisao_humana" || d.status === "invalido" || d.validacao_ia_status === "revisao_humana" || d.validacao_ia_status === "erro" || d.decisao_ia === "erro")) return false;
-          break;
-        case "todos":
-        default: break;
-      }
+    return arr.filter(d => {
       if (fTipo !== "todos" && d.tipo_documento !== fTipo) return false;
       if (fScoreBaixo && (typeof d.validacao_ia_confianca !== "number" || d.validacao_ia_confianca >= 0.70)) return false;
       if (term) {
@@ -327,8 +409,40 @@ export default function MonitorCadastrosDocumentos() {
         if (!hay.includes(term)) return false;
       }
       return true;
-    }).slice(0, 200);
-  }, [docs, fStatus, fTipo, fCliente, fScoreBaixo]);
+    });
+  }, [docs, kpiAtiva, fTipo, fCliente, fScoreBaixo]);
+
+  // Modo de exibição da seção principal — define COLUNAS e DATASET.
+  const modo: "docs" | "cadastros_aguardando" | "cadastros_aprov_hoje"
+    | "modelos" | "tipos" =
+    kpiAtiva === "cadastros_aguardando" ? "cadastros_aguardando"
+    : kpiAtiva === "cadastros_aprov_hoje" ? "cadastros_aprov_hoje"
+    : kpiAtiva === "modelos_ativos" ? "modelos"
+    : kpiAtiva === "tipos_monitorados" ? "tipos"
+    : "docs";
+
+  // Mapeamento KPI → título exibido no header da lista
+  const KPI_LABEL: Record<string, string> = {
+    cadastros_aguardando:    "Cadastros aguardando aprovação",
+    cadastros_aprov_hoje:    "Cadastros aprovados hoje",
+    docs_analise_humana:     "Documentos em análise humana",
+    docs_aprovados_ia:       "Documentos aprovados pela IA",
+    docs_rejeitados_ia:      "Documentos rejeitados pela IA",
+    docs_aprovados_equipe:   "Documentos aprovados pela Equipe",
+    docs_rejeitados_equipe:  "Documentos rejeitados pela Equipe",
+    modelos_ativos:          "Modelos de aprendizado ativos",
+    tipos_monitorados:       "Tipos documentais monitorados",
+    pendencias_criticas:     "Pendências críticas",
+    confianca_media:         "Documentos por menor confiança da IA",
+  };
+
+  // Tamanho exato da lista exibida (para o título). Cada modo conta o seu.
+  const totalLista =
+    modo === "cadastros_aguardando" ? cadastrosAguardando.length
+    : modo === "cadastros_aprov_hoje" ? cadastrosAprovHoje.length
+    : modo === "modelos" ? modelosDetalhe.filter(m => m.ativo).length
+    : modo === "tipos" ? configs.length
+    : docsFiltrados.length;
 
   // -------------------------------------------------------------------------
   // Ações
@@ -444,6 +558,68 @@ export default function MonitorCadastrosDocumentos() {
     } catch (e: any) { toast.error(e.message || "Falha na ação."); }
   };
 
+  // Aprovação rápida de cadastro público (atalho operacional dentro do drill-down)
+  const aprovarCadastro = async (cad: CadastroRow) => {
+    setAprovandoCadId(cad.id);
+    try {
+      const { error } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({ status: "aprovado", processado_em: new Date().toISOString() })
+        .eq("id", cad.id);
+      if (error) throw error;
+      toast.success("Cadastro aprovado.");
+      await carregar();
+    } catch (e: any) {
+      toast.error("Erro ao aprovar cadastro: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setAprovandoCadId(null);
+    }
+  };
+
+  const abrirCadastro = (cad: CadastroRow) => {
+    if (cad.cliente_id_vinculado) {
+      abrirCliente(cad.cliente_id_vinculado);
+      return;
+    }
+    // Fallback: abre a aba de homologação se ainda não tem cliente vinculado
+    window.open(`/quero-armas/homologacao-clientes?cadastro=${cad.id}`, "_self");
+  };
+
+  const abrirDocOrigem = async (modelo: ModeloDetalheRow) => {
+    if (!modelo.documento_origem_id) {
+      toast.error("Modelo sem documento de origem registrado.");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("qa_processo_documentos")
+      .select("id, arquivo_storage_key, nome_documento, processo_id, cliente_id")
+      .eq("id", modelo.documento_origem_id)
+      .maybeSingle();
+    if (error || !data?.arquivo_storage_key) {
+      toast.error("Documento de origem não encontrado.");
+      return;
+    }
+    const fileName = (data.arquivo_storage_key.split("/").pop()) || "documento";
+    viewer.abrirStorage("qa-processo-docs", data.arquivo_storage_key, {
+      fileName, title: data.nome_documento || fileName,
+    });
+  };
+
+  const desativarModelo = async (modelo: ModeloDetalheRow) => {
+    if (!confirm("DESATIVAR ESTE MODELO? A IA DEIXARÁ DE USÁ-LO COMO REFERÊNCIA.")) return;
+    try {
+      const { error } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .update({ ativo: false })
+        .eq("id", modelo.id);
+      if (error) throw error;
+      toast.success("Modelo desativado.");
+      await carregar();
+    } catch (e: any) {
+      toast.error("Erro ao desativar: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
   // -------------------------------------------------------------------------
   return (
     <div className="px-5 md:px-6 max-w-[1400px] mx-auto space-y-5">
@@ -476,65 +652,94 @@ export default function MonitorCadastrosDocumentos() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        <KpiCard icon={Users}        label="Cadastros aguardando"        value={kpiCadastros.aguardando}     t="yellow" />
-        <KpiCard icon={ShieldCheck}  label="Cadastros aprovados hoje"    value={kpiCadastros.aprovadosHoje}  t="green" />
-        <KpiCard icon={ShieldAlert}  label="Docs em análise humana"      value={counters.analiseHumana}      t="yellow" />
-        <KpiCard icon={Bot}          label="Docs aprovados pela IA"      value={counters.aprovadosIA}        t="green" />
-        <KpiCard icon={ShieldX}      label="Docs rejeitados pela IA"     value={counters.rejeitadosIA}       t="red" />
-        <KpiCard icon={ShieldCheck}  label="Aprovados pela Equipe"       value={counters.aprovadosEquipe}    t="green" />
-        <KpiCard icon={ShieldX}      label="Rejeitados pela Equipe"      value={counters.rejeitadosEquipe}   t="red" />
-        <KpiCard icon={BookOpen}     label="Modelos de aprendizado"      value={counters.modelosAtivos}      t="blue" />
-        <KpiCard icon={FileText}     label="Tipos monitorados"           value={counters.tiposMonitorados}   t="blue" />
-        <KpiCard icon={AlertTriangle} label="Pendências críticas"        value={counters.criticos}           t="red" />
-        <KpiCard icon={Brain}        label="Confiança média da IA"
+        <KpiCard icon={Users}         label="Cadastros aguardando"     value={kpiCadastros.aguardando}    t="yellow"
+          active={kpiAtiva === "cadastros_aguardando"} onClick={() => setKpiAtiva(kpiAtiva === "cadastros_aguardando" ? null : "cadastros_aguardando")} />
+        <KpiCard icon={ShieldCheck}   label="Cadastros aprovados hoje" value={kpiCadastros.aprovadosHoje} t="green"
+          active={kpiAtiva === "cadastros_aprov_hoje"}  onClick={() => setKpiAtiva(kpiAtiva === "cadastros_aprov_hoje"  ? null : "cadastros_aprov_hoje")} />
+        <KpiCard icon={ShieldAlert}   label="Docs em análise humana"   value={counters.analiseHumana}     t="yellow"
+          active={kpiAtiva === "docs_analise_humana"}   onClick={() => setKpiAtiva(kpiAtiva === "docs_analise_humana"   ? null : "docs_analise_humana")} />
+        <KpiCard icon={Bot}           label="Docs aprovados pela IA"   value={counters.aprovadosIA}       t="green"
+          active={kpiAtiva === "docs_aprovados_ia"}     onClick={() => setKpiAtiva(kpiAtiva === "docs_aprovados_ia"     ? null : "docs_aprovados_ia")} />
+        <KpiCard icon={ShieldX}       label="Docs rejeitados pela IA"  value={counters.rejeitadosIA}      t="red"
+          active={kpiAtiva === "docs_rejeitados_ia"}    onClick={() => setKpiAtiva(kpiAtiva === "docs_rejeitados_ia"    ? null : "docs_rejeitados_ia")} />
+        <KpiCard icon={ShieldCheck}   label="Aprovados pela Equipe"    value={counters.aprovadosEquipe}   t="green"
+          active={kpiAtiva === "docs_aprovados_equipe"} onClick={() => setKpiAtiva(kpiAtiva === "docs_aprovados_equipe" ? null : "docs_aprovados_equipe")} />
+        <KpiCard icon={ShieldX}       label="Rejeitados pela Equipe"   value={counters.rejeitadosEquipe}  t="red"
+          active={kpiAtiva === "docs_rejeitados_equipe"} onClick={() => setKpiAtiva(kpiAtiva === "docs_rejeitados_equipe" ? null : "docs_rejeitados_equipe")} />
+        <KpiCard icon={BookOpen}      label="Modelos de aprendizado"   value={counters.modelosAtivos}     t="blue"
+          active={kpiAtiva === "modelos_ativos"}        onClick={() => setKpiAtiva(kpiAtiva === "modelos_ativos"        ? null : "modelos_ativos")} />
+        <KpiCard icon={FileText}      label="Tipos monitorados"        value={counters.tiposMonitorados}  t="blue"
+          active={kpiAtiva === "tipos_monitorados"}     onClick={() => setKpiAtiva(kpiAtiva === "tipos_monitorados"     ? null : "tipos_monitorados")} />
+        <KpiCard icon={AlertTriangle} label="Pendências críticas"      value={counters.criticos}          t="red"
+          active={kpiAtiva === "pendencias_criticas"}   onClick={() => setKpiAtiva(kpiAtiva === "pendencias_criticas"   ? null : "pendencias_criticas")} />
+        <KpiCard icon={Brain}         label="Confiança média da IA"
           value={counters.comScore ? `${Math.round(counters.confiancaMedia * 100)}%` : 0}
-          t={counters.confiancaMedia >= 0.85 ? "green" : counters.confiancaMedia >= 0.6 ? "yellow" : "red"} />
+          t={counters.confiancaMedia >= 0.85 ? "green" : counters.confiancaMedia >= 0.6 ? "yellow" : "red"}
+          active={kpiAtiva === "confianca_media"}       onClick={() => setKpiAtiva(kpiAtiva === "confianca_media"       ? null : "confianca_media")} />
       </div>
 
       {/* Lista operacional */}
       <section className="bg-white border border-slate-200 rounded-xl">
         <header className="px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2 flex-wrap">
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
-            Documentos <span className="text-slate-400">({lista.length})</span>
-          </h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={fStatus} onChange={(e) => setFStatus(e.target.value)}
-              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
-            >
-              <option value="pendentes_acao">Pendentes de ação</option>
-              <option value="todos">Todos</option>
-              <option value="analise_humana">Análise humana</option>
-              <option value="aprovados_auto">Aprovados (IA)</option>
-              <option value="aprovados_manual">Aprovados (Equipe)</option>
-              <option value="rejeitados_auto">Rejeitados (IA)</option>
-              <option value="rejeitados_manual">Rejeitados (Equipe)</option>
-              <option value="modelos">Modelos aprovados</option>
-            </select>
-            <select
-              value={fTipo} onChange={(e) => setFTipo(e.target.value)}
-              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
-            >
-              <option value="todos">Todos os tipos</option>
-              {tiposUnicos.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
-            </select>
-            <input
-              value={fCliente} onChange={(e) => setFCliente(e.target.value)}
-              placeholder="CLIENTE / CPF"
-              className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 w-[180px]"
-            />
-            <label className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-600">
-              <Switch checked={fScoreBaixo} onCheckedChange={setFScoreBaixo} />
-              Score baixo
-            </label>
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
+              {kpiAtiva
+                ? <>Exibindo: <span className="text-slate-900">{KPI_LABEL[kpiAtiva]}</span> — <span className="text-slate-500">{totalLista} registro(s)</span></>
+                : <>Pendentes de ação <span className="text-slate-400">({totalLista})</span></>
+              }
+            </h3>
+            {kpiAtiva && (
+              <button
+                onClick={() => setKpiAtiva(null)}
+                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50"
+              >
+                <XIcon className="h-3 w-3" /> Limpar filtro
+              </button>
+            )}
           </div>
+          {modo === "docs" && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={fTipo} onChange={(e) => setFTipo(e.target.value)}
+                className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700"
+              >
+                <option value="todos">Todos os tipos</option>
+                {tiposUnicos.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
+              </select>
+              <input
+                value={fCliente} onChange={(e) => setFCliente(e.target.value)}
+                placeholder="CLIENTE / CPF"
+                className="h-8 px-2 rounded border border-slate-300 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 w-[180px]"
+              />
+              <label className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-slate-600">
+                <Switch checked={fScoreBaixo} onCheckedChange={setFScoreBaixo} />
+                Score baixo
+              </label>
+            </div>
+          )}
         </header>
         {loading ? (
           <div className="p-8 flex justify-center"><Loader2 className="h-5 w-5 animate-spin text-slate-400" /></div>
-        ) : lista.length === 0 ? (
+        ) : totalLista === 0 ? (
           <div className="p-8 text-center text-[11px] uppercase tracking-wider text-slate-400">
-            Nenhum documento pendente de ação.
+            Nenhum registro para o filtro atual.
           </div>
+        ) : modo === "cadastros_aguardando" || modo === "cadastros_aprov_hoje" ? (
+          <CadastrosTable
+            rows={modo === "cadastros_aguardando" ? cadastrosAguardando : cadastrosAprovHoje}
+            modo={modo}
+            aprovandoId={aprovandoCadId}
+            onAprovar={aprovarCadastro}
+            onAbrir={abrirCadastro}
+          />
+        ) : modo === "modelos" ? (
+          <ModelosTable
+            rows={modelosDetalhe.filter(m => m.ativo)}
+            onAbrirOrigem={abrirDocOrigem}
+            onDesativar={desativarModelo}
+          />
+        ) : modo === "tipos" ? (
+          <TiposTable rows={configs} onConfigurar={() => setOpenConfig(true)} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[11px]">
@@ -552,7 +757,7 @@ export default function MonitorCadastrosDocumentos() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {lista.map(d => (
+                {docsFiltrados.map(d => (
                   <tr key={d.id} className="hover:bg-slate-50">
                     <td className="px-3 py-2 align-top">
                       <div className="font-bold text-slate-900 uppercase">{d.cliente_nome ?? "—"}</div>
@@ -789,6 +994,166 @@ function MotivoDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tabelas auxiliares para o drill-down de KPIs
+// ---------------------------------------------------------------------------
+
+function fmtServico(c: CadastroRow) {
+  return c.servico_fechado_final || c.servico_principal || c.servico_interesse || "—";
+}
+
+function CadastrosTable({
+  rows, modo, aprovandoId, onAprovar, onAbrir,
+}: {
+  rows: CadastroRow[];
+  modo: "cadastros_aguardando" | "cadastros_aprov_hoje";
+  aprovandoId: string | null;
+  onAprovar: (c: CadastroRow) => void;
+  onAbrir: (c: CadastroRow) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th className="text-left px-3 py-2">Nome</th>
+            <th className="text-left px-3 py-2">CPF/CNPJ</th>
+            <th className="text-left px-3 py-2">Serviço</th>
+            <th className="text-left px-3 py-2">Origem</th>
+            <th className="text-left px-3 py-2">{modo === "cadastros_aguardando" ? "Recebido em" : "Aprovado em"}</th>
+            <th className="text-right px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map(c => (
+            <tr key={c.id} className="hover:bg-slate-50">
+              <td className="px-3 py-2 font-bold text-slate-900 uppercase">{c.nome_completo ?? "—"}</td>
+              <td className="px-3 py-2 font-mono text-slate-700">{c.cpf || c.emp_cnpj || "—"}</td>
+              <td className="px-3 py-2 uppercase text-slate-700">{fmtServico(c)}</td>
+              <td className="px-3 py-2 uppercase text-slate-500">{c.origem_cadastro || "—"}</td>
+              <td className="px-3 py-2 text-slate-500 whitespace-nowrap">
+                {fmtDate(modo === "cadastros_aguardando" ? c.created_at : (c.processado_em || c.created_at))}
+              </td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">
+                <div className="inline-flex flex-wrap gap-1 justify-end">
+                  <button
+                    onClick={() => onAbrir(c)}
+                    className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1"
+                    title={c.cliente_id_vinculado ? "Abrir cliente" : "Abrir homologação"}
+                  >
+                    <ExternalLink className="h-3 w-3" /> {c.cliente_id_vinculado ? "Cliente" : "Homologar"}
+                  </button>
+                  {modo === "cadastros_aguardando" && (
+                    <button
+                      onClick={() => onAprovar(c)}
+                      disabled={aprovandoId === c.id}
+                      className="h-7 px-2 rounded bg-emerald-600 text-white text-[10px] uppercase font-bold tracking-wider hover:bg-emerald-700 disabled:opacity-40 inline-flex items-center gap-1"
+                      title="Aprovar cadastro"
+                    >
+                      {aprovandoId === c.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+                      Aprovar
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ModelosTable({
+  rows, onAbrirOrigem, onDesativar,
+}: {
+  rows: ModeloDetalheRow[];
+  onAbrirOrigem: (m: ModeloDetalheRow) => void;
+  onDesativar: (m: ModeloDetalheRow) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th className="text-left px-3 py-2">Tipo</th>
+            <th className="text-left px-3 py-2">Nome do modelo</th>
+            <th className="text-left px-3 py-2">Doc. de origem</th>
+            <th className="text-left px-3 py-2">Aprovado em</th>
+            <th className="text-left px-3 py-2">Aprovado por</th>
+            <th className="text-right px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map(m => (
+            <tr key={m.id} className="hover:bg-slate-50">
+              <td className="px-3 py-2 uppercase text-slate-800 font-bold">{m.tipo_documento}</td>
+              <td className="px-3 py-2 uppercase text-slate-700">{m.nome_modelo || "—"}</td>
+              <td className="px-3 py-2 font-mono text-[10px] text-slate-500">{m.documento_origem_id ? m.documento_origem_id.slice(0, 8) : "—"}</td>
+              <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{fmtDate(m.aprovado_em)}</td>
+              <td className="px-3 py-2 font-mono text-[10px] text-slate-500">{m.aprovado_por ? m.aprovado_por.slice(0, 8) : "—"}</td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">
+                <div className="inline-flex flex-wrap gap-1 justify-end">
+                  <button
+                    onClick={() => onAbrirOrigem(m)}
+                    disabled={!m.documento_origem_id}
+                    className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1"
+                    title="Abrir documento de origem"
+                  ><Eye className="h-3 w-3" /> Doc origem</button>
+                  <button
+                    onClick={() => onDesativar(m)}
+                    className="h-7 px-2 rounded border border-rose-300 bg-white text-[10px] uppercase font-bold tracking-wider text-rose-700 hover:bg-rose-50 inline-flex items-center gap-1"
+                    title="Desativar modelo"
+                  ><XIcon className="h-3 w-3" /> Desativar</button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TiposTable({ rows, onConfigurar }: { rows: ConfigRow[]; onConfigurar: () => void }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-[11px]">
+        <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th className="text-left px-3 py-2">Tipo documental</th>
+            <th className="text-left px-3 py-2">Lim. aprov. auto</th>
+            <th className="text-left px-3 py-2">Lim. análise humana</th>
+            <th className="text-left px-3 py-2">Aprov. auto</th>
+            <th className="text-left px-3 py-2">Aprende</th>
+            <th className="text-left px-3 py-2">Ativo</th>
+            <th className="text-right px-3 py-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {rows.map(c => (
+            <tr key={c.tipo_documento} className="hover:bg-slate-50">
+              <td className="px-3 py-2 uppercase text-slate-800 font-bold">{c.tipo_documento}</td>
+              <td className="px-3 py-2 font-mono">{Math.round((c.limite_aprovacao_auto ?? 0) * 100)}%</td>
+              <td className="px-3 py-2 font-mono">{Math.round((c.limite_analise_humana ?? 0) * 100)}%</td>
+              <td className="px-3 py-2 uppercase text-[10px]">{c.permite_aprovacao_auto ? "SIM" : "NÃO"}</td>
+              <td className="px-3 py-2 uppercase text-[10px]">{c.alimenta_aprendizado ? "SIM" : "NÃO"}</td>
+              <td className="px-3 py-2 uppercase text-[10px]">{c.ativo === false ? "NÃO" : "SIM"}</td>
+              <td className="px-3 py-2 text-right whitespace-nowrap">
+                <button
+                  onClick={onConfigurar}
+                  className="h-7 px-2 rounded border border-slate-300 bg-white text-[10px] uppercase font-bold tracking-wider text-slate-700 hover:bg-slate-50 inline-flex items-center gap-1"
+                  title="Abrir configurações"
+                ><SettingsIcon className="h-3 w-3" /> Configurar</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
