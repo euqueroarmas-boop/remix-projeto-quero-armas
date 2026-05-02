@@ -261,6 +261,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         throw new Error(txt || "Falha ao registrar upload");
       }
       toast.success("Documento enviado. Validação automática iniciada.");
+      // Dispara extração de datas em background — IA lê data_emissao e
+      // proxima_leitura. Trigger SQL recalcula data_validade_efetiva e
+      // prazo_critico_data do processo automaticamente.
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-extract-doc-dates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ documento_id: docId }),
+      })
+        .then(() => setTimeout(() => carregar(), 8000))
+        .catch((e) => console.warn("[extracao-datas] falhou:", e));
       await carregar();
       onUpdated?.();
     } catch (err: any) {
