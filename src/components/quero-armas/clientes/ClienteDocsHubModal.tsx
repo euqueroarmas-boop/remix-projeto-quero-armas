@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -138,16 +138,27 @@ interface Props {
   customerId: string | null;
   qaClienteId?: number | null;
   onSaved: () => void;
+  /** Tipo de documento pré-selecionado ao abrir (ex.: "craf"). Default: "cr". */
+  defaultTipo?: string;
 }
 
-export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, onSaved }: Props) {
-  const [form, setForm] = useState<FormState>(EMPTY);
+export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, onSaved, defaultTipo }: Props) {
+  const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipo || EMPTY.tipo_documento });
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Sincroniza tipo padrão a cada abertura (sem quebrar edição em andamento).
+  // Reset apenas quando o modal abre.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (open) {
+      setForm((prev) => ({ ...prev, tipo_documento: defaultTipo || prev.tipo_documento }));
+    }
+  }, [open, defaultTipo]);
 
   const showArmaFields = form.tipo_documento !== "cr";
   const tipoAtual = TIPOS.find((tipo) => tipo.value === form.tipo_documento);

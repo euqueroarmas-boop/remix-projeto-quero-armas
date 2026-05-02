@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
+import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 
 interface Props {
   clienteId: number;
@@ -175,6 +176,9 @@ export function ArsenalView({
   // Modal NOVO: upload + leitura por IA + confirmação humana.
   // O CrafModal antigo (acima) continua sendo usado para EDIÇÃO manual de um CRAF já cadastrado.
   const [crafUploadIA, setCrafUploadIA] = useState<{ open: boolean }>({ open: false });
+  // Hub Documental — fluxo unificado de envio de CRAF (mesma lógica do Hub do cliente).
+  // Substitui o botão "ENVIAR CRAF" no header da Bancada para usar IA + revisão + aprovação.
+  const [crafHubModal, setCrafHubModal] = useState<{ open: boolean }>({ open: false });
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{
     open: boolean;
@@ -637,7 +641,7 @@ export function ArsenalView({
           headerAction={
             <button
               type="button"
-              onClick={() => setCrafUploadIA({ open: true })}
+              onClick={() => setCrafHubModal({ open: true })}
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
               title="Enviar CRAF — IA lê e você confirma"
             >
@@ -706,6 +710,15 @@ export function ArsenalView({
         onClose={() => setCrafUploadIA({ open: false })}
         onSaved={refreshArsenal}
         clienteId={clienteId}
+      />
+      {/* Hub Documental — mesma lógica de envio do Hub do cliente, agora disponível na Bancada */}
+      <ClienteDocsHubModal
+        open={crafHubModal.open}
+        onClose={() => setCrafHubModal({ open: false })}
+        customerId={null}
+        qaClienteId={clienteId}
+        defaultTipo="craf"
+        onSaved={refreshArsenal}
       />
       <GteModal
         open={gteModal.open}
