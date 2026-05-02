@@ -1911,7 +1911,9 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    setTab("arsenal");
+    // Aba "Arsenal" (Armory/Bancada Tática) descontinuada — abre direto em "CRAFs".
+    // Código de Arsenal mantido oculto para remoção futura.
+    setTab("armas");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
@@ -2255,12 +2257,14 @@ export default function QAClientesPage() {
           <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
             <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
               {[
-                { value: "arsenal", icon: Crosshair, label: "Arsenal" },
+                // Aba "Arsenal" (Armory/Bancada Tática) descontinuada — escondida.
+                // Conteúdo migrado para a aba "CRAFs" (mesmo padrão de Munições/GTEs).
+                // { value: "arsenal", icon: Crosshair, label: "Arsenal" },
                 { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
-                { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
+                { value: "armas", icon: Crosshair, label: `CRAFs (${crafs.length + gtes.length})` },
                 { value: "cr", icon: Shield, label: "CR" },
                 { value: "docs", icon: FileDown, label: "Docs" },
                 { value: "exames", icon: HeartPulse, label: "Exames" },
