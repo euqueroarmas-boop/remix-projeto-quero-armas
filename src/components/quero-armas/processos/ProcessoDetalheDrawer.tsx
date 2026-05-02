@@ -77,11 +77,27 @@ interface Props {
   onUpdated?: () => void;
 }
 
+// Pseudo-documentos derivados do CADASTRO PÚBLICO do cliente.
+// Não vivem em qa_processo_documentos — são apenas exibidos como
+// EXIGÊNCIAS CUMPRIDAS no checklist e somam no % de progresso, para que o
+// cliente veja TODOS os documentos enviados em um único hub e enxergue o
+// real avanço do processo.
+interface CadastroPublicoDocs {
+  id: string;
+  selfie_path: string | null;
+  documento_identidade_path: string | null;
+  comprovante_endereco_path: string | null;
+  created_at: string | null;
+}
+
+const CADASTRO_PUB_BUCKET = "qa-cadastro-selfies";
+
 export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose, onUpdated }: Props) {
   const [loading, setLoading] = useState(true);
   const [processo, setProcesso] = useState<ProcessoFull | null>(null);
   const [docs, setDocs] = useState<DocRow[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
+  const [cadastroPublico, setCadastroPublico] = useState<CadastroPublicoDocs | null>(null);
   const [tab, setTab] = useState<"checklist" | "historico" | "equipe">("checklist");
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -106,7 +122,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       if (!p) throw new Error("Processo não encontrado");
 
       const [{ data: cli }, { data: dList, error: dErr }, { data: evs }] = await Promise.all([
-        supabase.from("qa_clientes").select("nome_completo, cpf, email").eq("id", p.cliente_id).maybeSingle(),
+        supabase.from("qa_clientes").select("nome_completo, cpf, email, cadastro_publico_id").eq("id", p.cliente_id).maybeSingle(),
         supabase.from("qa_processo_documentos").select("*").eq("processo_id", processoId).order("created_at"),
         supabase.from("qa_processo_eventos").select("id, tipo_evento, descricao, ator, created_at").eq("processo_id", processoId).order("created_at", { ascending: false }).limit(100),
       ]);
@@ -115,6 +131,37 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       setProcesso({ ...p, cliente: cli ?? undefined });
       setDocs((dList ?? []) as DocRow[]);
       setEventos((evs ?? []) as Evento[]);
+
+      // Carrega documentos do CADASTRO PÚBLICO do cliente (selfie / identidade /
+      // endereço). Eles passam a contar no % e aparecem como CUMPRIDOS no
+      // checklist — concentrando todos os arquivos do cliente em um só lugar.
+      try {
+        const cliRow: any = cli;
+        const cadPubId: string | null = cliRow?.cadastro_publico_id ?? null;
+        let cadPub: any = null;
+        if (cadPubId) {
+          const { data } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("id, selfie_path, documento_identidade_path, comprovante_endereco_path, created_at")
+            .eq("id", cadPubId)
+            .maybeSingle();
+          cadPub = data;
+        }
+        if (!cadPub) {
+          const { data } = await supabase
+            .from("qa_cadastro_publico" as any)
+            .select("id, selfie_path, documento_identidade_path, comprovante_endereco_path, created_at")
+            .eq("cliente_id_vinculado", p.cliente_id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          cadPub = data;
+        }
+        setCadastroPublico((cadPub as CadastroPublicoDocs) ?? null);
+      } catch (e) {
+        console.warn("[drawer] falha ao carregar cadastro público:", e);
+        setCadastroPublico(null);
+      }
     } catch (e: any) {
       toast.error("Erro ao carregar processo: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -562,13 +609,58 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // Em análise / pendente / inválido / divergente / revisão NÃO contam.
   // ============================================================================
   const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao");
-  const totalExigencias = docsChecklist.length;
   const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
   const isEmAnalise = (d: DocRow) =>
     d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
   const isPendenciaCliente = (d: DocRow) =>
     d.status === "pendente" || d.status === "invalido" || d.status === "divergente";
-  const cumpridos = docsChecklist.filter(isCumprido).length;
+
+  // ── Pseudo-documentos do CADASTRO PÚBLICO (selfie / identidade / endereço) ──
+  // Tratados como CUMPRIDOS porque já foram entregues e aprovados na etapa
+  // pública. Não duplicam itens existentes do checklist (a Central de
+  // Documentos do processo continua sendo a fonte canônica para identidade /
+  // residência exigidos pelo serviço; estes pseudo-itens existem APENAS para
+  // dar visibilidade unificada ao cliente e refletir progresso real).
+  type PseudoDoc = {
+    key: string;
+    nome: string;
+    bucket: string;
+    path: string;
+    enviado_em: string | null;
+  };
+  const pseudoDocsCadastro: PseudoDoc[] = [];
+  if (cadastroPublico) {
+    if (cadastroPublico.documento_identidade_path) {
+      pseudoDocsCadastro.push({
+        key: "cadpub_identidade",
+        nome: "Documento de Identidade (RG/CNH) — Cadastro",
+        bucket: CADASTRO_PUB_BUCKET,
+        path: cadastroPublico.documento_identidade_path,
+        enviado_em: cadastroPublico.created_at,
+      });
+    }
+    if (cadastroPublico.comprovante_endereco_path) {
+      pseudoDocsCadastro.push({
+        key: "cadpub_endereco",
+        nome: "Comprovante de Endereço — Cadastro",
+        bucket: CADASTRO_PUB_BUCKET,
+        path: cadastroPublico.comprovante_endereco_path,
+        enviado_em: cadastroPublico.created_at,
+      });
+    }
+    if (cadastroPublico.selfie_path) {
+      pseudoDocsCadastro.push({
+        key: "cadpub_selfie",
+        nome: "Selfie do Titular — Cadastro",
+        bucket: CADASTRO_PUB_BUCKET,
+        path: cadastroPublico.selfie_path,
+        enviado_em: cadastroPublico.created_at,
+      });
+    }
+  }
+
+  const totalExigencias = docsChecklist.length + pseudoDocsCadastro.length;
+  const cumpridos = docsChecklist.filter(isCumprido).length + pseudoDocsCadastro.length;
   const progresso = totalExigencias > 0 ? Math.round((cumpridos / totalExigencias) * 100) : 0;
 
   const docsPendencias = docsChecklist.filter(isPendenciaCliente);
@@ -1108,12 +1200,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     )}
 
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
-                    {docsCumpridos.length > 0 && (
+                    {(docsCumpridos.length + pseudoDocsCadastro.length) > 0 && (
                       <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
                         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
                           <CheckCircle className="h-4 w-4 text-emerald-600" />
                           <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
-                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
+                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length + pseudoDocsCadastro.length}/{totalExigencias})
                           </span>
                           <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
                             EXPANDIR PARA VER
@@ -1121,6 +1213,38 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         </summary>
                         <div className="border-t border-emerald-200 p-3 space-y-3 bg-white">
                           {docsCumpridos.map(renderDoc)}
+                          {pseudoDocsCadastro.map((p) => (
+                            <div key={p.key} className="bg-white border border-emerald-200 rounded-xl overflow-hidden">
+                              <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-emerald-100">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">CADASTRO PÚBLICO</span>
+                                    <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">JÁ ENTREGUE</span>
+                                  </div>
+                                  <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{p.nome}</div>
+                                  {p.enviado_em && (
+                                    <div className="text-[10px] text-slate-400 mt-0.5 uppercase">
+                                      ENVIADO EM {formatDateTime(p.enviado_em)}
+                                    </div>
+                                  )}
+                                </div>
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  CUMPRIDO
+                                </span>
+                              </div>
+                              <div className="px-4 py-2.5">
+                                <button
+                                  onClick={() => {
+                                    const fileName = p.path.split("/").pop() || "documento";
+                                    viewer.abrirStorage(p.bucket, p.path, { fileName, title: p.nome });
+                                  }}
+                                  className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                                >
+                                  <Eye className="h-3 w-3" /> VISUALIZAR
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </details>
                     )}
