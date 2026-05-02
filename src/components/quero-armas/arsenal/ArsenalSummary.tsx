@@ -33,6 +33,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { TACTICAL } from "./utils";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
 
