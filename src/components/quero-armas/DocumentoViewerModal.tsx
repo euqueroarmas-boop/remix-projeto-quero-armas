@@ -239,6 +239,22 @@ export default function DocumentoViewerModal({
               {title || fileName}
             </DialogTitle>
             <div className="flex items-center gap-2 mr-2">
+              {onAprovarComoModelo && (
+                <Button
+                  size="sm"
+                  className="h-8 px-3 text-[10px] uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700"
+                  onClick={() => onAprovarComoModelo()}
+                  disabled={aprovandoModelo || loading}
+                  title="Aprova o documento do cliente E o promove a modelo de aprendizado da IA"
+                >
+                  {aprovandoModelo ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3 mr-1" />
+                  )}
+                  Aprovar como Modelo IA
+                </Button>
+              )}
               {allowDownload && blobUrl && (
                 <Button
                   size="sm"
