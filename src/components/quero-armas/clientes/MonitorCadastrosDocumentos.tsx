@@ -258,6 +258,13 @@ export default function MonitorCadastrosDocumentos() {
         .order("updated_at", { ascending: false });
       setModelos((mods ?? []) as ModeloRow[]);
 
+      // 2.b) Modelos detalhados (para drill-down quando KPI "Modelos ativos" estiver ativa)
+      const { data: modsDet } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .select("id, tipo_documento, nome_modelo, documento_origem_id, ativo, observacoes, aprovado_por, aprovado_em, updated_at")
+        .order("aprovado_em", { ascending: false });
+      setModelosDetalhe((modsDet ?? []) as ModeloDetalheRow[]);
+
       // 3) Configurações por tipo
       const { data: cfg } = await supabase
         .from("qa_validacao_config")
@@ -278,6 +285,15 @@ export default function MonitorCadastrosDocumentos() {
         aguardando:    aguardando.count ?? 0,
         aprovadosHoje: aprovHoje.count   ?? 0,
       });
+
+      // 4.b) Listas detalhadas dos cadastros (para drill-down)
+      const cadCols = "id, nome_completo, cpf, emp_cnpj, email, telefone_principal, servico_fechado_final, servico_principal, servico_interesse, origem_cadastro, status, created_at, processado_em, cliente_id_vinculado";
+      const [{ data: cadAguard }, { data: cadAprov }] = await Promise.all([
+        supabase.from("qa_cadastro_publico" as any).select(cadCols).eq("status", "pendente").order("created_at", { ascending: false }).limit(500),
+        supabase.from("qa_cadastro_publico" as any).select(cadCols).eq("status", "aprovado").gte("updated_at", inicio).order("processado_em", { ascending: false }).limit(500),
+      ]);
+      setCadastrosAguardando((cadAguard ?? []) as unknown as CadastroRow[]);
+      setCadastrosAprovHoje((cadAprov ?? []) as unknown as CadastroRow[]);
     } catch (e: any) {
       toast.error("Erro ao carregar monitor: " + (e?.message ?? "desconhecido"));
     } finally {
