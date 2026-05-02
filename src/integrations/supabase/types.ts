@@ -6379,6 +6379,7 @@ export type Database = {
           observacoes_admin: string | null
           pagamento_id: string | null
           pagamento_status: string
+          respostas_questionario_json: Json
           servico_id: number | null
           servico_nome: string
           solicitacao_id: string | null
@@ -6396,6 +6397,7 @@ export type Database = {
           observacoes_admin?: string | null
           pagamento_id?: string | null
           pagamento_status?: string
+          respostas_questionario_json?: Json
           servico_id?: number | null
           servico_nome: string
           solicitacao_id?: string | null
@@ -6413,6 +6415,7 @@ export type Database = {
           observacoes_admin?: string | null
           pagamento_id?: string | null
           pagamento_status?: string
+          respostas_questionario_json?: Json
           servico_id?: number | null
           servico_nome?: string
           solicitacao_id?: string | null
