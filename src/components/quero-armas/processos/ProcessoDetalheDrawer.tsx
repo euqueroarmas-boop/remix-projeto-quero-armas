@@ -1536,7 +1536,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
                           <CheckCircle className="h-4 w-4 text-emerald-600" />
                           <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
-                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length + pseudoDocsCadastro.length}/{totalExigencias})
+                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
                           </span>
                           <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
                             EXPANDIR PARA VER
