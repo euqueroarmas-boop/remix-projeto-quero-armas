@@ -1332,7 +1332,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               <Download className="h-3 w-3" /> BAIXAR
                             </button>
                             {/* Validador GOV.BR / ICP-Brasil — só p/ docs que exigem assinatura digital */}
-                            {tiposExigemAssinaturaGov(doc.tipo_documento) && (
+                            {exigeAssinaturaGovBr && (
                               <>
                                 <button
                                   onClick={() => validarAssinaturaGov(doc)}
