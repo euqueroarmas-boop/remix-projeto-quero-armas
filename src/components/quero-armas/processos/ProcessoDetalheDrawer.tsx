@@ -58,6 +58,13 @@ interface DocRow {
   assinatura_motivo_falha?: string | null;
   assinatura_validada_em?: string | null;
   assinatura_detalhes_json?: any;
+  // Prazos / extração de datas (novos)
+  data_emissao?: string | null;
+  proxima_leitura?: string | null;
+  data_validade_efetiva?: string | null;
+  extracao_ia_status?: string | null;
+  extracao_ia_json?: any;
+  confirmado_pelo_cliente_em?: string | null;
 }
 
 interface ProcessoFull {
