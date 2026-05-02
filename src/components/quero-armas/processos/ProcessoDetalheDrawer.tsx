@@ -1071,7 +1071,62 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     )}
                   </div>
                 );
-              })}
+                };
+
+                const SectionHeader = ({ color, label, count }: { color: string; label: string; count: number }) => (
+                  <div className="flex items-center gap-2 mt-4 mb-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+                    <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-600">{label}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">({count})</span>
+                  </div>
+                );
+
+                return (
+                  <>
+                    {/* 1. PENDÊNCIAS DO CLIENTE — ação necessária */}
+                    {docsPendencias.length > 0 && (
+                      <>
+                        <SectionHeader color="#F59E0B" label="PENDÊNCIAS — AÇÃO NECESSÁRIA" count={docsPendencias.length} />
+                        <div className="space-y-3">{docsPendencias.map(renderDoc)}</div>
+                      </>
+                    )}
+
+                    {/* 2. EM ANÁLISE — recebidos, aguardando IA/Equipe */}
+                    {docsAnalise.length > 0 && (
+                      <>
+                        <SectionHeader color="#0EA5E9" label="EM ANÁLISE — DOCUMENTO RECEBIDO" count={docsAnalise.length} />
+                        <div className="space-y-3">{docsAnalise.map(renderDoc)}</div>
+                      </>
+                    )}
+
+                    {/* 3. OUTROS — fallback defensivo (status novos/desconhecidos) */}
+                    {docsOutros.length > 0 && (
+                      <>
+                        <SectionHeader color="#94A3B8" label="OUTROS" count={docsOutros.length} />
+                        <div className="space-y-3">{docsOutros.map(renderDoc)}</div>
+                      </>
+                    )}
+
+                    {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
+                    {docsCumpridos.length > 0 && (
+                      <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden" open={equipeMode}>
+                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
+                          <CheckCircle className="h-4 w-4 text-emerald-600" />
+                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
+                            EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
+                          </span>
+                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
+                            {equipeMode ? "VISÃO DA EQUIPE" : "VER DETALHES"}
+                          </span>
+                        </summary>
+                        <div className="border-t border-emerald-200 p-3 space-y-3 bg-white">
+                          {docsCumpridos.map(renderDoc)}
+                        </div>
+                      </details>
+                    )}
+                  </>
+                );
+              })()}
             </div>
             )
           ) : tab === "historico" ? (
