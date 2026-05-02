@@ -124,6 +124,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 0b. Modo kick_embeddings: roda embeddings síncronos para todos os docs
+    // pendentes da norma_oficial.
+    if (body.kick_embeddings) {
+      const supaUrl = Deno.env.get("SUPABASE_URL")!;
+      const srk = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const { data: docs } = await supabase
+        .from("qa_documentos_conhecimento")
+        .select("id, titulo")
+        .eq("tipo_origem", "norma_oficial");
+      result.embeddings = [];
+      for (const d of (docs || [])) {
+        try {
+          const r = await fetch(`${supaUrl}/functions/v1/qa-generate-embeddings`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${srk}` },
+            body: JSON.stringify({ documento_id: d.id }),
+          });
+          const txt = await r.text();
+          result.embeddings.push({ id: d.id, status: r.status, body: txt.slice(0, 200) });
+        } catch (e: any) {
+          result.embeddings.push({ id: d.id, error: e.message });
+        }
+      }
+    }
+
     // 1. Atualizar texto_integral em qa_fontes_normativas
     if (Array.isArray(body.normas)) {
       for (const n of body.normas) {
