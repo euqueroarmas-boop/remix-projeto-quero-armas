@@ -66,6 +66,16 @@ interface Props {
   gteStatus?: "ok" | "warn" | "danger" | "muted";
   /** Subtexto dinâmico: "Tudo em dia" / "Próxima do vencimento" / "Vencida" / "Sem GTE cadastrada". */
   gteHint?: string;
+  /**
+   * Documentos do tipo CRAF aguardando aprovação da equipe.
+   * Quando > 0 e ainda não há CRAF canônico, o KPI mostra "EM ANÁLISE" (âmbar).
+   */
+  crafPending?: number;
+  /**
+   * Documentos do tipo GTE/GT aguardando aprovação da equipe.
+   * Quando > 0 e ainda não há GTE canônica, o KPI mostra "EM ANÁLISE" (âmbar).
+   */
+  gtePending?: number;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
