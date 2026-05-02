@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import {
   Loader2, FileText, CheckCircle2, AlertCircle, ExternalLink,
   Trash2, ShieldCheck, Clock, XCircle, MessageSquareWarning,
@@ -38,6 +39,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [reprovandoId, setReprovandoId] = useState<string | null>(null);
   const [motivoTmp, setMotivoTmp] = useState("");
+  const viewer = useDocumentoViewer();
 
   // Resolve customerId (UUID) via email/CPF — uma única vez por cliente
   useEffect(() => {
@@ -129,16 +131,9 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     } catch (err: any) { toast.error(err?.message || "Falha ao reprovar."); }
   };
 
-  const handleViewFile = async (path: string) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from("qa-documentos")
-        .createSignedUrl(path, 3600);
-      if (error) throw error;
-      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    } catch (err: any) {
-      toast.error("Falha ao abrir arquivo");
-    }
+  const handleViewFile = (path: string) => {
+    const fileName = path.split("/").pop() || "documento";
+    viewer.abrirStorage("qa-documentos", path, { fileName, title: fileName });
   };
 
   const handleDelete = async (docId: string) => {
@@ -348,6 +343,12 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           );
         })}
       </div>
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }

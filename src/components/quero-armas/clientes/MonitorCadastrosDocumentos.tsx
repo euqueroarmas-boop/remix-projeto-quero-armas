@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -151,6 +152,7 @@ export default function MonitorCadastrosDocumentos() {
   // Ações operacionais
   const [acaoLoadingId, setAcaoLoadingId] = useState<string | null>(null);
   const [modalAcao, setModalAcao] = useState<{ doc: DocRow; tipo: "rejeitar" | "novo_envio" | "modelo" } | null>(null);
+  const viewer = useDocumentoViewer();
 
   // -------------------------------------------------------------------------
   const carregar = async () => {
@@ -404,8 +406,22 @@ export default function MonitorCadastrosDocumentos() {
 
   const abrirDocumento = async (doc: DocRow) => {
     try {
+      // Preferimos abrir direto pelo storage (download autenticado) — sem
+      // expor a URL do Supabase ao usuário. Se não houver storage_key,
+      // caímos no signed_url emitido pela edge function e baixamos via fetch.
+      const fileName = (doc.arquivo_storage_key || doc.nome_documento || "documento")
+        .split("/").pop() || "documento";
+      if (doc.arquivo_storage_key) {
+        viewer.abrirStorage("qa-processo-docs", doc.arquivo_storage_key, {
+          fileName,
+          title: doc.nome_documento || fileName,
+        });
+        return;
+      }
       const out = await callAcao(doc, { acao: "signed_url" });
-      if (out?.url) window.open(out.url, "_blank", "noopener,noreferrer");
+      if (out?.url) {
+        viewer.abrirUrl(out.url, { fileName, title: doc.nome_documento || fileName });
+      }
     } catch (e: any) { toast.error(e.message || "Falha ao abrir."); }
   };
 
@@ -695,6 +711,12 @@ export default function MonitorCadastrosDocumentos() {
         onClose={() => setModalAcao(null)}
         onSubmit={submitModal}
         loading={!!acaoLoadingId}
+      />
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
       />
     </div>
   );

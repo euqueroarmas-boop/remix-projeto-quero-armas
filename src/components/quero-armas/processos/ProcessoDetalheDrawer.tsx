@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
+import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 
 interface DocRow {
   id: string;
@@ -91,6 +92,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [aprovacao, setAprovacao] = useState<{ docId: string; nome: string; divergente: boolean } | null>(null);
   const [salvandoAcao, setSalvandoAcao] = useState(false);
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
+  const viewer = useDocumentoViewer();
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -359,24 +361,27 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const baixarArquivo = async (key: string | null, modo: "visualizar" | "baixar" = "visualizar") => {
     if (!key) return;
+    const fileName = key.split("/").pop() || "documento";
+    if (modo === "visualizar") {
+      // Abre dentro do app — sem expor URL do Supabase ao usuário
+      viewer.abrirStorage("qa-processo-docs", key, { fileName, title: fileName });
+      return;
+    }
     try {
-      const opts = modo === "baixar"
-        ? { download: (key.split("/").pop() || "documento") }
-        : undefined;
       const { data, error } = await supabase.storage
         .from("qa-processo-docs")
-        .createSignedUrl(key, 300, opts as any);
+        .download(key);
       if (error) throw error;
-      if (modo === "baixar") {
-        const a = document.createElement("a");
-        a.href = data.signedUrl;
-        a.rel = "noopener noreferrer";
-        a.click();
-      } else {
-        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-      }
+      const blobUrl = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
     } catch (e: any) {
-      toast.error("Erro ao gerar link: " + (e?.message ?? "desconhecido"));
+      toast.error("Erro ao baixar: " + (e?.message ?? "desconhecido"));
     }
   };
 
@@ -1250,6 +1255,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           </div>
         </div>
       )}
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }

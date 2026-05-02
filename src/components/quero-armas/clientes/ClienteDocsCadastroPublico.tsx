@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, FileImage, Loader2, ShieldAlert, IdCard, Home, User } from "lucide-react";
 import { toast } from "sonner";
+import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 
 /**
  * Bloco somente-leitura: documentos enviados durante o CADASTRO PÚBLICO
@@ -50,6 +51,7 @@ function formatDateTime(d: string | null) {
 export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }) {
   const clienteId = Number(cliente?.id) || null;
   const cadastroPublicoId: string | null = cliente?.cadastro_publico_id || null;
+  const viewer = useDocumentoViewer();
 
   const queryKey = useMemo(
     () => ["cliente-docs-cadastro-publico", clienteId, cadastroPublicoId] as const,
@@ -86,21 +88,9 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
     },
   });
 
-  const [opening, setOpening] = useState<string | null>(null);
-
-  async function handleOpen(path: string) {
-    setOpening(path);
-    try {
-      const { data: signed, error } = await supabase.storage
-        .from(BUCKET)
-        .createSignedUrl(path, 3600);
-      if (error) throw error;
-      if (signed?.signedUrl) window.open(signed.signedUrl, "_blank", "noopener,noreferrer");
-    } catch (err: any) {
-      toast.error(err?.message || "Falha ao abrir o arquivo.");
-    } finally {
-      setOpening(null);
-    }
+  function handleOpen(path: string) {
+    const fileName = path.split("/").pop() || "documento";
+    viewer.abrirStorage(BUCKET, path, { fileName, title: fileName });
   }
 
   if (!clienteId && !cadastroPublicoId) return null;
@@ -165,17 +155,10 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
                 variant="outline"
                 className="h-7 px-2 text-[10px] shrink-0"
                 onClick={() => handleOpen(path)}
-                disabled={opening === path}
                 title="Visualizar / baixar"
               >
-                {opening === path ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <>
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Visualizar
-                  </>
-                )}
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Visualizar
               </Button>
             </div>
           );
@@ -186,6 +169,12 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
         Estes arquivos vieram do formulário público de cadastro e ficam preservados como evidência.
         Para o fluxo de aprovação (CR, CRAF, GT/GTE, AC) use o Hub do Cliente abaixo.
       </p>
+      <DocumentoViewerModal
+        open={viewer.open}
+        onClose={viewer.fechar}
+        source={viewer.source}
+        title={viewer.title}
+      />
     </div>
   );
 }
