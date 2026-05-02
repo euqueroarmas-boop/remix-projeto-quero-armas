@@ -738,12 +738,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         .update({ respostas_questionario_json: novasRespostas })
         .eq("id", processo.id);
       if (upErr) throw upErr;
-      // Marca a pergunta como cumprida (dispensado_grupo): some do "pendente"
-      // mas mantém histórico no checklist arquivado.
+      // Marca a pergunta como RESPONDIDA — usa 'dispensado_grupo' (não 'aprovado',
+      // pois pergunta nunca é documento aprovado, é só uma resposta declarada).
+      // O trigger SQL qa_guard_pergunta_sem_resposta exige que respostas_questionario_json
+      // já contenha a chave antes de aceitar este UPDATE — por isso o UPDATE acima vem 1º.
       await supabase
         .from("qa_processo_documentos")
-        .update({ status: "aprovado", observacoes: `Resposta: ${valor.toUpperCase()}` })
+        .update({ status: "dispensado_grupo", observacoes: `Resposta do cliente: ${valor.toUpperCase()} em ${new Date().toISOString()}` })
         .eq("id", doc.id);
+      // Registra evento auditável
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processo.id,
+        tipo_evento: "pergunta_respondida",
+        descricao: `Cliente respondeu "${chave}": ${valor.toUpperCase()}`,
+        ator: "cliente",
+        dados_json: { documento_id: doc.id, tipo_documento: doc.tipo_documento, chave, valor },
+      });
       toast.success("Resposta registrada. Checklist atualizado.");
       await carregar();
       onUpdated?.();
