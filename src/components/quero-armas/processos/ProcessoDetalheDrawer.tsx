@@ -808,7 +808,78 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // PROGRESSO DOCUMENTAL — fonte única de verdade: qa_processo_documentos.
   // O item técnico "renda_definir_condicao" é apenas seletor e fica fora do cálculo.
   // ============================================================================
-  const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+
+  // LIBERAÇÃO POR ETAPAS:
+  // 1=endereco, 2=antecedentes, 3=declaracoes, 4=exames. Itens de outras
+  // categorias ("outros") sempre aparecem (etapa 1, fluxo herdado).
+  const etapaLiberada = Math.max(1, Math.min(4, processo?.etapa_liberada_ate ?? 1));
+
+  const etapaDoTipo = (tipo: string): number => {
+    const t = (tipo || "").toLowerCase();
+    if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
+    if (t.includes("endereco") || t.includes("residenc")) return 1;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
+    return 1; // outros: sempre liberados
+  };
+
+  const docVisivelPorEtapa = (d: DocRow): boolean => {
+    // Equipe sempre vê tudo. Cliente só vê até a etapa liberada.
+    if (equipeMode) return true;
+    return etapaDoTipo(d.tipo_documento) <= etapaLiberada;
+  };
+
+  const docsChecklist = docs.filter(
+    (d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d) && docVisivelPorEtapa(d),
+  );
+
+  // Para o admin: lista TODAS as etapas + status de cada uma (para o painel
+  // "Liberar próxima etapa"). Calculado a partir do conjunto completo de docs
+  // (sem filtro por etapa liberada), mas respeitando questionário.
+  const docsTodos = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+  const etapaResumo = (n: number) => {
+    const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
+    const aprovados = lista.filter((d) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
+    return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
+  };
+  const etapaCompleta = etapaResumo(etapaLiberada).completo;
+  const proximaEtapa = etapaLiberada < 4 ? etapaLiberada + 1 : null;
+  const ETAPA_NOMES: Record<number, string> = {
+    1: "COMPROVAÇÃO DE ENDEREÇO",
+    2: "ANTECEDENTES CRIMINAIS",
+    3: "DECLARAÇÕES E COMPROMISSOS",
+    4: "EXAMES TÉCNICOS",
+  };
+
+  const liberarProximaEtapa = async () => {
+    if (!processo || !proximaEtapa) return;
+    const ok = window.confirm(
+      `LIBERAR ${ETAPA_NOMES[proximaEtapa]} para o cliente?\n\n` +
+      `O cliente já estava trabalhando em "${ETAPA_NOMES[etapaLiberada]}".\n` +
+      `Você pode liberar a próxima etapa MESMO sem 100% da atual concluída.`,
+    );
+    if (!ok) return;
+    try {
+      const { error } = await supabase
+        .from("qa_processos")
+        .update({ etapa_liberada_ate: proximaEtapa })
+        .eq("id", processo.id);
+      if (error) throw error;
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processo.id,
+        tipo_evento: "etapa_liberada_manualmente",
+        descricao: `EQUIPE LIBEROU ETAPA ${proximaEtapa}: ${ETAPA_NOMES[proximaEtapa]}`,
+        ator: "equipe_operacional",
+        dados_json: { etapa_anterior: etapaLiberada, etapa_nova: proximaEtapa, modo: "manual" },
+      });
+      toast.success(`ETAPA "${ETAPA_NOMES[proximaEtapa]}" LIBERADA AO CLIENTE.`);
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao liberar etapa: " + (e?.message ?? "desconhecido"));
+    }
+  };
+
   const metrics = computeChecklistMetrics(docsChecklist);
   const isCumprido = (d: DocRow) => isChecklistCumprido(d.status);
   const isEmAnalise = (d: DocRow) => isChecklistEmAnalise(d.status);
