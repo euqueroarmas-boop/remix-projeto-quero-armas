@@ -1270,11 +1270,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         const orient = compl?.orientacoes_cliente;
                         if (!orient || typeof orient !== "string" || orient.trim().length === 0) return null;
                         return (
-                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-900">
+                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-900 min-w-0 max-w-full overflow-hidden">
                             <div className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-amber-800">
                               <Info className="h-3 w-3" /> O QUE PRECISA CORRIGIR
                             </div>
-                            <p className="mt-1 leading-relaxed whitespace-pre-line">{orient}</p>
+                            <p className="mt-1 leading-relaxed whitespace-pre-line break-words [overflow-wrap:anywhere]">{orient}</p>
                           </div>
                         );
                       })()}
