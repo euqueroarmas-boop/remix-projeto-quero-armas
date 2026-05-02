@@ -1271,7 +1271,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         )}
 
                         {/* Cliente/equipe: enviar / substituir conforme estado */}
-                        {doc.status !== "aprovado" && (
+                        {doc.status !== "aprovado" && !pergunta && (
                           <button
                             disabled={uploadingId === doc.id}
                             onClick={() => handleFileSelect(doc.id)}
