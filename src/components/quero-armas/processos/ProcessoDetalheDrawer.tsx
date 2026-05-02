@@ -609,13 +609,58 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // Em análise / pendente / inválido / divergente / revisão NÃO contam.
   // ============================================================================
   const docsChecklist = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao");
-  const totalExigencias = docsChecklist.length;
   const isCumprido = (d: DocRow) => d.status === "aprovado" || d.status === "dispensado_grupo";
   const isEmAnalise = (d: DocRow) =>
     d.status === "em_analise" || d.status === "revisao_humana" || d.status === "enviado";
   const isPendenciaCliente = (d: DocRow) =>
     d.status === "pendente" || d.status === "invalido" || d.status === "divergente";
-  const cumpridos = docsChecklist.filter(isCumprido).length;
+
+  // ── Pseudo-documentos do CADASTRO PÚBLICO (selfie / identidade / endereço) ──
+  // Tratados como CUMPRIDOS porque já foram entregues e aprovados na etapa
+  // pública. Não duplicam itens existentes do checklist (a Central de
+  // Documentos do processo continua sendo a fonte canônica para identidade /
+  // residência exigidos pelo serviço; estes pseudo-itens existem APENAS para
+  // dar visibilidade unificada ao cliente e refletir progresso real).
+  type PseudoDoc = {
+    key: string;
+    nome: string;
+    bucket: string;
+    path: string;
+    enviado_em: string | null;
+  };
+  const pseudoDocsCadastro: PseudoDoc[] = [];
+  if (cadastroPublico) {
+    if (cadastroPublico.documento_identidade_path) {
+      pseudoDocsCadastro.push({
+        key: "cadpub_identidade",
+        nome: "Documento de Identidade (RG/CNH) — Cadastro",
+        bucket: CADASTRO_PUB_BUCKET,
+        path: cadastroPublico.documento_identidade_path,
+        enviado_em: cadastroPublico.created_at,
+      });
+    }
+    if (cadastroPublico.comprovante_endereco_path) {
+      pseudoDocsCadastro.push({
+        key: "cadpub_endereco",
+        nome: "Comprovante de Endereço — Cadastro",
+        bucket: CADASTRO_PUB_BUCKET,
+        path: cadastroPublico.comprovante_endereco_path,
+        enviado_em: cadastroPublico.created_at,
+      });
+    }
+    if (cadastroPublico.selfie_path) {
+      pseudoDocsCadastro.push({
+        key: "cadpub_selfie",
+        nome: "Selfie do Titular — Cadastro",
+        bucket: CADASTRO_PUB_BUCKET,
+        path: cadastroPublico.selfie_path,
+        enviado_em: cadastroPublico.created_at,
+      });
+    }
+  }
+
+  const totalExigencias = docsChecklist.length + pseudoDocsCadastro.length;
+  const cumpridos = docsChecklist.filter(isCumprido).length + pseudoDocsCadastro.length;
   const progresso = totalExigencias > 0 ? Math.round((cumpridos / totalExigencias) * 100) : 0;
 
   const docsPendencias = docsChecklist.filter(isPendenciaCliente);
