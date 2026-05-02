@@ -144,7 +144,7 @@ function rendaPara(c: Cond): Item[] {
       },
       {
         tipo_documento: "renda_contrato_social",
-        nome_documento: "Contrato Social (ou última alteração) — também aceitamos Ficha Cadastral Completa",
+        nome_documento: "Contrato Social (última alteração) ou Ficha Cadastral Completa",
         obrigatorio: true,
         link_emissao: "https://www.jucesponline.sp.gov.br/",
         label_botao: "Emitir Contrato Social",
