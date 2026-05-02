@@ -817,16 +817,23 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const etapaDoTipo = (tipo: string): number => {
     const t = (tipo || "").toLowerCase();
     if (t.startsWith("certidao") || t.includes("antecedentes")) return 2;
-    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 4;
+    if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) return 3;
     if (t.includes("endereco") || t.includes("residenc")) return 1;
-    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 3;
+    if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
     return 1; // outros: sempre liberados
   };
 
+  // VISIBILIDADE OPERACIONAL — Mesmo a Equipe vê apenas a etapa ATUAL liberada
+  // no checklist principal. Etapas anteriores concluídas vão para a seção
+  // "ETAPAS CONCLUÍDAS" (colapsada) logo abaixo. Etapas futuras ficam ocultas.
+  // Itens "outros" (categoria default = etapa 1) seguem visíveis junto com a
+  // etapa 1 quando ela for a atual; depois passam a viver no arquivo histórico.
   const docVisivelPorEtapa = (d: DocRow): boolean => {
-    // Equipe sempre vê tudo. Cliente só vê até a etapa liberada.
-    if (equipeMode) return true;
-    return etapaDoTipo(d.tipo_documento) <= etapaLiberada;
+    return etapaDoTipo(d.tipo_documento) === etapaLiberada;
+  };
+  const docDeEtapaAnteriorConcluida = (d: DocRow): boolean => {
+    const e = etapaDoTipo(d.tipo_documento);
+    return e < etapaLiberada;
   };
 
   const docsChecklist = docs.filter(
@@ -837,6 +844,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // "Liberar próxima etapa"). Calculado a partir do conjunto completo de docs
   // (sem filtro por etapa liberada), mas respeitando questionário.
   const docsTodos = docs.filter((d) => d.tipo_documento !== "renda_definir_condicao" && itemVisivel(d));
+  const docsArquivados = docsTodos.filter(docDeEtapaAnteriorConcluida);
   const etapaResumo = (n: number) => {
     const lista = docsTodos.filter((d) => etapaDoTipo(d.tipo_documento) === n && d.obrigatorio);
     const aprovados = lista.filter((d) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
@@ -847,8 +855,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const ETAPA_NOMES: Record<number, string> = {
     1: "COMPROVAÇÃO DE ENDEREÇO",
     2: "ANTECEDENTES CRIMINAIS",
-    3: "DECLARAÇÕES E COMPROMISSOS",
-    4: "EXAMES TÉCNICOS",
+    3: "EXAMES TÉCNICOS",
+    4: "DECLARAÇÕES E COMPROMISSOS",
   };
 
   const liberarProximaEtapa = async () => {
