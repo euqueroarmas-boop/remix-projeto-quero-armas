@@ -496,6 +496,60 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   };
 
   // ============================================================
+  // FEATURE: Validador GOV.BR / ICP-Brasil
+  // Tipos de documento que exigem assinatura digital GOV.BR.
+  // Inclui declarações pré-preenchidas pelo sistema e documentos emitidos
+  // por entidades (clube de tiro) assinados digitalmente.
+  // ============================================================
+  const tiposExigemAssinaturaGov = (tipo: string): boolean => {
+    if (!tipo) return false;
+    const t = tipo.toLowerCase();
+    return (
+      t.startsWith("declaracao_") ||
+      t.startsWith("dsa_") ||
+      t === "declaracao_compromisso_treino" ||
+      t === "declaracao_compromisso_habitualidade"
+    );
+  };
+
+  const validarAssinaturaGov = async (doc: DocRow) => {
+    if (!processo) return;
+    if (!doc.arquivo_storage_key) {
+      toast.error("Documento sem arquivo enviado.");
+      return;
+    }
+    setValidandoAssinaturaId(doc.id);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-validate-govbr-signature`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ documento_id: doc.id }),
+        },
+      );
+      const json = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(json?.error || "Falha ao validar assinatura");
+      if (json.valida) {
+        toast.success(
+          `Assinatura válida${json.signatario ? " — " + json.signatario : ""}.`,
+        );
+      } else if (json.status === "sem_assinatura") {
+        toast.error("Documento não possui assinatura digital embutida.");
+      } else {
+        toast.error(`Assinatura inválida: ${json.motivo_falha ?? "desconhecido"}`);
+      }
+      await carregar();
+    } catch (e: any) {
+      toast.error("Erro ao validar assinatura: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setValidandoAssinaturaId(null);
+    }
+  };
+
+  // ============================================================
   // FASE 4 — Aplicar manualmente um valor sugerido pela IA
   // (quando há conflito com dado já cadastrado do cliente).
   // Por padrão mantemos o valor do cliente; este handler é opcional
