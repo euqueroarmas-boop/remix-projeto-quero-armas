@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Search, FileStack, RefreshCw, Filter, ChevronRight, FileText, AlertTriangle, CheckCircle, Clock, Sparkles, Eye, Upload, XCircle, User as UserIcon, Calendar } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDate, formatDateTime, STATUS_PROCESSO } from "@/components/quero-armas/processos/processoConstants";
 import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/ProcessoDetalheDrawer";
+import { computeChecklistMetrics } from "@/lib/quero-armas/checklistMetrics";
 
 interface ProcessoRow {
   id: string;
@@ -16,7 +17,7 @@ interface ProcessoRow {
   updated_at: string;
   observacoes_admin: string | null;
   cliente?: { nome_completo: string; cpf: string | null; email: string | null };
-  contadores?: { total: number; aprovados: number; pendentes: number; invalidos: number; divergentes: number; revisao: number };
+  contadores?: { total: number; cumpridos: number; pendentes: number; emAnalise: number; outros: number };
 }
 
 export default function QAProcessosPage() {
@@ -50,17 +51,16 @@ export default function QAProcessosPage() {
       ]);
 
       const cliMap = new Map<number, any>((clientes ?? []).map((c: any) => [c.id, c]));
-      const ctMap = new Map<string, ProcessoRow["contadores"]>();
+      const docsPorProcesso = new Map<string, Array<{ status: string | null }>>();
       (docs ?? []).forEach((d: any) => {
-        const c = ctMap.get(d.processo_id) ?? { total: 0, aprovados: 0, pendentes: 0, invalidos: 0, divergentes: 0, revisao: 0 };
-        c.total++;
-        // dispensado_grupo conta como satisfeito (não pendente, não bloqueante)
-        if (d.status === "aprovado" || d.status === "dispensado_grupo") c.aprovados++;
-        else if (d.status === "invalido") c.invalidos++;
-        else if (d.status === "divergente") c.divergentes++;
-        else if (d.status === "revisao_humana") c.revisao++;
-        else c.pendentes++;
-        ctMap.set(d.processo_id, c);
+        const list = docsPorProcesso.get(d.processo_id) ?? [];
+        list.push({ status: d.status });
+        docsPorProcesso.set(d.processo_id, list);
+      });
+      const ctMap = new Map<string, ProcessoRow["contadores"]>();
+      docsPorProcesso.forEach((procDocs, processoId) => {
+        const m = computeChecklistMetrics(procDocs);
+        ctMap.set(processoId, { total: m.total, cumpridos: m.cumpridos, pendentes: m.pendentes, emAnalise: m.emAnalise, outros: m.outros });
       });
 
       setProcessos(list.map((p) => ({ ...p, cliente: cliMap.get(p.cliente_id), contadores: ctMap.get(p.id) })));
@@ -165,7 +165,7 @@ export default function QAProcessosPage() {
               <tbody>
                 {filtered.map((p) => {
                   const st = getStatusProcesso(p.status);
-                  const c = p.contadores ?? { total: 0, aprovados: 0, pendentes: 0, invalidos: 0, divergentes: 0, revisao: 0 };
+                  const c = p.contadores ?? { total: 0, cumpridos: 0, pendentes: 0, emAnalise: 0, outros: 0 };
                   return (
                     <tr key={p.id} onClick={() => setSelectedId(p.id)} className="border-b border-slate-100 hover:bg-slate-50/60 cursor-pointer">
                       <td className="px-4 py-3">
@@ -180,11 +180,10 @@ export default function QAProcessosPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase">
-                          <Badge color="#10B981" label={`${c.aprovados}/${c.total}`} title="APROVADOS" />
+                          <Badge color="#10B981" label={`${c.cumpridos}/${c.total}`} title="CUMPRIDOS" />
                           {c.pendentes > 0 && <Badge color="#F59E0B" label={`${c.pendentes}`} title="PENDENTES" />}
-                          {c.revisao > 0 && <Badge color="#0EA5E9" label={`${c.revisao}`} title="REVISÃO" />}
-                          {c.divergentes > 0 && <Badge color="#F59E0B" label={`${c.divergentes}`} title="DIVERGENTES" />}
-                          {c.invalidos > 0 && <Badge color="#EF4444" label={`${c.invalidos}`} title="INVÁLIDOS" />}
+                          {c.emAnalise > 0 && <Badge color="#0EA5E9" label={`${c.emAnalise}`} title="EM ANÁLISE" />}
+                          {c.outros > 0 && <Badge color="#94A3B8" label={`${c.outros}`} title="OUTROS" />}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">{formatDate(p.data_criacao)}</td>
