@@ -31,7 +31,7 @@ const TIPOS = [
   { value: "craf", label: "CRAF — Registro de Arma (Exército)", short: "CRAF · SIGMA" },
   { value: "sinarm", label: "SINARM — Posse / Porte (PF)", short: "SINARM · PF" },
   { value: "gt", label: "GT — Guia de Tráfego", short: "GT" },
-  { value: "gte", label: "GTE — Guia de Tráfego Eventual", short: "GTE" },
+  { value: "gte", label: "GTE — Guia de Tráfego Especial", short: "GTE" },
   { value: "autorizacao_compra", label: "AC — Autorização de Compra", short: "AC" },
   { value: "outro", label: "Outro documento SIGMA / SINARM", short: "OUTRO" },
 ] as const;
