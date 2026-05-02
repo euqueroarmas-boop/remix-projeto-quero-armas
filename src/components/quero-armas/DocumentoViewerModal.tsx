@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Download, AlertTriangle, FileText, ExternalLink } from "lucide-react";
+import { Loader2, Download, AlertTriangle, FileText, ExternalLink, RefreshCw, ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+// PDF.js — renderiza PDF em <canvas>, evitando o viewer nativo do Edge
+// (que frequentemente é bloqueado por políticas corporativas / “Esta página
+// foi bloqueada pelo Microsoft Edge”).
+import * as pdfjsLib from "pdfjs-dist";
+// @ts-ignore - vite resolve com ?url
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl as string;
 
 /**
  * DocumentoViewerModal — Visualizador interno de arquivos.
@@ -52,9 +60,18 @@ export default function DocumentoViewerModal({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
   const [mime, setMime] = useState<string>("application/octet-stream");
   const [error, setError] = useState<string | null>(null);
   const lastUrlRef = useRef<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // PDF state
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [pdfPage, setPdfPage] = useState(1);
+  const [pdfTotal, setPdfTotal] = useState(0);
+  const [pdfScale, setPdfScale] = useState(1.2);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const fileName = useMemo(() => {
     if (!source) return "documento";
@@ -74,29 +91,34 @@ export default function DocumentoViewerModal({
     setLoading(true);
     setError(null);
     setBlobUrl(null);
+    setBlob(null);
+    setPdfDoc(null);
+    setPdfPage(1);
+    setPdfTotal(0);
 
     (async () => {
       try {
-        let blob: Blob;
+        let downloaded: Blob;
         if (source.kind === "storage") {
           const { data, error } = await supabase.storage
             .from(source.bucket)
             .download(source.path);
           if (error) throw error;
-          blob = data;
+          downloaded = data;
         } else {
           const resp = await fetch(source.url);
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          blob = await resp.blob();
+          downloaded = await resp.blob();
         }
         if (cancelled) return;
-        const detected = blob.type && blob.type !== "application/octet-stream"
-          ? blob.type
+        const detected = downloaded.type && downloaded.type !== "application/octet-stream"
+          ? downloaded.type
           : inferMimeFromName(fileName);
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(downloaded);
         lastUrlRef.current = url;
         setMime(detected);
         setBlobUrl(url);
+        setBlob(downloaded);
       } catch (e: any) {
         if (!cancelled) setError(e?.message || "Falha ao carregar arquivo.");
       } finally {
@@ -107,7 +129,65 @@ export default function DocumentoViewerModal({
     return () => {
       cancelled = true;
     };
-  }, [open, source, fileName]);
+  }, [open, source, fileName, reloadKey]);
+
+  // Carrega o documento no PDF.js a partir do blob (sem usar URL externa).
+  useEffect(() => {
+    if (!blob || !mime.includes("pdf")) {
+      setPdfDoc(null);
+      return;
+    }
+    let cancelled = false;
+    let task: any;
+    (async () => {
+      try {
+        const buf = await blob.arrayBuffer();
+        if (cancelled) return;
+        task = pdfjsLib.getDocument({ data: buf, isEvalSupported: false });
+        const doc = await task.promise;
+        if (cancelled) return;
+        setPdfDoc(doc);
+        setPdfTotal(doc.numPages);
+        setPdfPage(1);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || "Falha ao processar PDF.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try { task?.destroy?.(); } catch {}
+    };
+  }, [blob, mime]);
+
+  // Renderiza a página atual no canvas
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+    let cancelled = false;
+    let renderTask: any;
+    (async () => {
+      try {
+        const page = await pdfDoc.getPage(pdfPage);
+        if (cancelled) return;
+        const viewport = page.getViewport({ scale: pdfScale });
+        const canvas = canvasRef.current!;
+        const ctx = canvas.getContext("2d")!;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+        canvas.style.width = `${Math.floor(viewport.width)}px`;
+        canvas.style.height = `${Math.floor(viewport.height)}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        renderTask = page.render({ canvasContext: ctx, viewport });
+        await renderTask.promise;
+      } catch (e) {
+        // ignora erros de cancelamento
+      }
+    })();
+    return () => {
+      try { renderTask?.cancel?.(); } catch {}
+      cancelled = true;
+    };
+  }, [pdfDoc, pdfPage, pdfScale]);
 
   // Revoga blob ao fechar / desmontar
   useEffect(() => {
@@ -115,6 +195,8 @@ export default function DocumentoViewerModal({
       URL.revokeObjectURL(lastUrlRef.current);
       lastUrlRef.current = null;
       setBlobUrl(null);
+      setBlob(null);
+      setPdfDoc(null);
     }
     return () => {
       if (lastUrlRef.current) {
@@ -171,22 +253,92 @@ export default function DocumentoViewerModal({
           )}
 
           {!loading && error && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-700 px-6 text-center">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-700 px-6 text-center">
               <AlertTriangle className="h-8 w-8 text-amber-600" />
-              <div className="text-[12px] font-bold uppercase tracking-wider">Não foi possível abrir o arquivo</div>
-              <div className="text-[11px] text-slate-500">{error}</div>
+              <div className="text-[12px] font-bold uppercase tracking-wider">Não foi possível carregar a prévia do documento</div>
+              <div className="text-[11px] text-slate-500 max-w-md break-words">{error}</div>
+              <div className="flex items-center gap-2 mt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-3 text-[10px] uppercase tracking-wider"
+                  onClick={() => setReloadKey((k) => k + 1)}
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" /> Tentar novamente
+                </Button>
+                {allowDownload && blobUrl && (
+                  <Button
+                    size="sm"
+                    className="h-8 px-3 text-[10px] uppercase tracking-wider"
+                    onClick={handleDownload}
+                  >
+                    <Download className="h-3 w-3 mr-1" /> Baixar arquivo
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
           {!loading && !error && blobUrl && isPdf && (
-            <object
-              data={blobUrl}
-              type="application/pdf"
-              className="w-full h-full"
-              aria-label={fileName}
-            >
-              <iframe src={blobUrl} className="w-full h-full border-0" title={fileName} />
-            </object>
+            <div className="w-full h-full flex flex-col">
+              <div className="flex items-center justify-center gap-2 px-3 py-2 border-b border-slate-200 bg-white shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 w-7 p-0"
+                  disabled={pdfPage <= 1}
+                  onClick={() => setPdfPage((p) => Math.max(1, p - 1))}
+                  aria-label="Página anterior"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </Button>
+                <span className="text-[10px] uppercase tracking-wider text-slate-700 min-w-[80px] text-center">
+                  {pdfTotal ? `${pdfPage} / ${pdfTotal}` : "—"}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 w-7 p-0"
+                  disabled={pdfPage >= pdfTotal}
+                  onClick={() => setPdfPage((p) => Math.min(pdfTotal, p + 1))}
+                  aria-label="Próxima página"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+                <div className="w-px h-4 bg-slate-300 mx-1" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setPdfScale((s) => Math.max(0.5, +(s - 0.2).toFixed(2)))}
+                  aria-label="Diminuir zoom"
+                >
+                  <ZoomOut className="h-3 w-3" />
+                </Button>
+                <span className="text-[10px] uppercase tracking-wider text-slate-700 min-w-[40px] text-center">
+                  {Math.round(pdfScale * 100)}%
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 w-7 p-0"
+                  onClick={() => setPdfScale((s) => Math.min(3, +(s + 0.2).toFixed(2)))}
+                  aria-label="Aumentar zoom"
+                >
+                  <ZoomIn className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0 overflow-auto flex items-start justify-center p-4 bg-slate-200">
+                {!pdfDoc ? (
+                  <div className="flex flex-col items-center gap-2 text-slate-600 mt-10">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span className="text-[10px] uppercase tracking-wider">Renderizando PDF…</span>
+                  </div>
+                ) : (
+                  <canvas ref={canvasRef} className="shadow-lg bg-white" />
+                )}
+              </div>
+            </div>
           )}
 
           {!loading && !error && blobUrl && isImage && (
@@ -203,11 +355,10 @@ export default function DocumentoViewerModal({
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-slate-700 px-6 text-center">
               <FileText className="h-10 w-10 text-slate-400" />
               <div className="text-[12px] font-bold uppercase tracking-wider">
-                Pré-visualização não suportada
+                Pré-visualização indisponível
               </div>
               <div className="text-[11px] text-slate-500 max-w-md">
-                Este formato ({mime}) não pode ser exibido no navegador.
-                Use o botão abaixo para baixar.
+                Baixe o arquivo para visualizar ({mime}).
               </div>
               {allowDownload && (
                 <Button
