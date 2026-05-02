@@ -437,42 +437,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     }
   };
 
-  // ============================================================================
-  // Slice 2.2 — Definir ano de competência para comprovante "em revisão"
-  // ============================================================================
-  const definirAnoEndereco = async (doc: DocRow) => {
-    const anoAtual = new Date().getFullYear();
-    const minAno = anoAtual - 4;
-    const raw = window.prompt(
-      `DEFINIR ANO DE COMPETÊNCIA do comprovante de endereço.\n\n` +
-      `Informe um ano entre ${minAno} e ${anoAtual}:`,
-      String(anoAtual),
-    );
-    if (!raw) return;
-    const ano = Number(raw.trim());
-    if (!Number.isFinite(ano) || ano < minAno || ano > anoAtual) {
-      toast.error(`Ano inválido. Permitido: ${minAno} a ${anoAtual}.`);
-      return;
-    }
-    try {
-      const { data, error } = await supabase.rpc("qa_mover_endereco_revisao_para_ano" as any, {
-        p_doc_revisao_id: doc.id,
-        p_ano: ano,
-      });
-      if (error) throw error;
-      toast.success(`Comprovante movido para o slot do ano ${ano}.`);
-      await carregar();
-      onUpdated?.();
-      void data;
-    } catch (e: any) {
-      const msg = e?.message || "desconhecido";
-      if (msg.includes("já está preenchido")) {
-        toast.error(`Slot do ano ${ano} já está preenchido. Escolha outro ano.`);
-      } else {
-        toast.error("Erro ao definir ano: " + msg);
-      }
-    }
-  };
+  // (Removido) "DEFINIR ANO" — o tipo "comprovante_endereco_revisao_ano"
+  // não é exigência real e foi descontinuado. Apenas slots reais por ano
+  // (comprovante_endereco_ano_YYYY) compõem o checklist.
 
   const baixarArquivo = async (key: string | null, modo: "visualizar" | "baixar" = "visualizar") => {
     if (!key) return;
@@ -1737,15 +1704,6 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         {equipeMode && doc.status !== "invalido" && (
                           <button onClick={() => abrirRejeicao(doc)} className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-red-500 hover:bg-red-600">
                             <XCircle className="h-3 w-3" /> REJEITAR
-                          </button>
-                        )}
-                        {equipeMode && doc.tipo_documento === "comprovante_endereco_revisao_ano" && doc.arquivo_storage_key && (
-                          <button
-                            onClick={() => definirAnoEndereco(doc)}
-                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-amber-600 hover:bg-amber-700"
-                            title="Mover este comprovante para o slot do ano correto"
-                          >
-                            <CalendarClock className="h-3 w-3" /> DEFINIR ANO
                           </button>
                         )}
                         {equipeMode && doc.arquivo_storage_key && (
