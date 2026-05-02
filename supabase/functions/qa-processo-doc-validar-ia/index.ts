@@ -723,12 +723,14 @@ Deno.serve(async (req) => {
       const divsIn: any[] = Array.isArray(parsed.divergencias) ? parsed.divergencias : [];
       const divsKeep: any[] = [];
       for (const d of divsIn) {
-        const _cv = d?.valor_cadastro;
+        // A IA pode usar nomes alternativos: valor_cadastro/valor_documento OU
+        // esperado/encontrado. Aceita ambos para evitar divergência fantasma.
+        const _cv = d?.valor_cadastro ?? d?.esperado;
         const cadVazio =
           _cv == null ||
           (typeof _cv === "string" &&
             ["", "none", "null", "undefined", "n/a", "na", "-"].includes(_cv.trim().toLowerCase()));
-        const docVal = d?.valor_documento;
+        const docVal = d?.valor_documento ?? d?.encontrado;
         const temDocVal =
           docVal != null && !(typeof docVal === "string" && docVal.trim() === "");
         // Divergência fantasma: ambos os lados vazios. Descarta sempre.
