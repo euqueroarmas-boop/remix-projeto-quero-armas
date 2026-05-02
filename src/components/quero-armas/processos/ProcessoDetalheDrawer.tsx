@@ -136,7 +136,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json")
+        .select("id, cliente_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json, etapa_liberada_ate, primeiro_doc_aprovado_em, prazo_critico_data, prazo_critico_doc_id, observacao_prazo")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
