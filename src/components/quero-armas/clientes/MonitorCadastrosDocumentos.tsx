@@ -179,13 +179,32 @@ export default function MonitorCadastrosDocumentos() {
   const [loading, setLoading] = useState(true);
   const [docs, setDocs]       = useState<DocRow[]>([]);
   const [modelos, setModelos] = useState<ModeloRow[]>([]);
+  const [modelosDetalhe, setModelosDetalhe] = useState<ModeloDetalheRow[]>([]);
+  const [cadastrosAguardando, setCadastrosAguardando] = useState<CadastroRow[]>([]);
+  const [cadastrosAprovHoje, setCadastrosAprovHoje]   = useState<CadastroRow[]>([]);
   const [configs, setConfigs] = useState<ConfigRow[]>([]);
   const [kpiCadastros, setKpiCadastros] = useState({ aguardando: 0, aprovadosHoje: 0 });
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
   const [openConfig, setOpenConfig] = useState(false);
+  const [aprovandoCadId, setAprovandoCadId] = useState<string | null>(null);
+
+  // KPI ativa (drill-down). Cada KPI funciona como filtro principal.
+  // null = padrão (lista de pendentes de ação).
+  type KpiId =
+    | "cadastros_aguardando"
+    | "cadastros_aprov_hoje"
+    | "docs_analise_humana"
+    | "docs_aprovados_ia"
+    | "docs_rejeitados_ia"
+    | "docs_aprovados_equipe"
+    | "docs_rejeitados_equipe"
+    | "modelos_ativos"
+    | "tipos_monitorados"
+    | "pendencias_criticas"
+    | "confianca_media";
+  const [kpiAtiva, setKpiAtiva] = useState<KpiId | null>(null);
 
   // Filtros
-  const [fStatus, setFStatus] = useState<string>("todos");
   const [fTipo, setFTipo]     = useState<string>("todos");
   const [fCliente, setFCliente] = useState<string>("");
   const [fScoreBaixo, setFScoreBaixo] = useState(false);
