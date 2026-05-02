@@ -172,6 +172,9 @@ export function ArsenalView({
   const gteKpi = useMemo(() => getGteKpiStatus(gteDocs), [gteDocs]);
 
   const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  // Modal NOVO: upload + leitura por IA + confirmação humana.
+  // O CrafModal antigo (acima) continua sendo usado para EDIÇÃO manual de um CRAF já cadastrado.
+  const [crafUploadIA, setCrafUploadIA] = useState<{ open: boolean }>({ open: false });
   const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{
     open: boolean;
