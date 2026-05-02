@@ -558,6 +558,8 @@ export function ArsenalView({
         totalGtes={gteKpi.total}
         gteStatus={gteKpi.statusVisual}
         gteHint={gteKpi.labelSecundaria}
+        crafPending={pendingDocs.craf}
+        gtePending={pendingDocs.gte}
         onNavigate={scrollToSection}
       />
 
