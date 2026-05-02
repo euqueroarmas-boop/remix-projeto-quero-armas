@@ -980,6 +980,65 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           </div>
         )}
 
+        {/* PAINEL DE ETAPAS / PRAZOS — visível ao cliente e admin */}
+        {!aguardandoPagto && processo && (
+          <div className="px-5 py-3 border-b border-slate-200 bg-white space-y-2">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4].map((n) => {
+                  const r = etapaResumo(n);
+                  const liberada = n <= etapaLiberada;
+                  const bg = !liberada ? "#E2E8F0" : r.completo ? "#16a34a" : n === etapaLiberada ? "#F59E0B" : "#94A3B8";
+                  return (
+                    <div key={n} className="flex items-center gap-1.5" title={ETAPA_NOMES[n]}>
+                      <div
+                        className="h-6 w-6 rounded-md flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ background: bg, opacity: liberada ? 1 : 0.5 }}
+                      >
+                        {r.completo ? <CheckCircle className="h-3 w-3" /> : n}
+                      </div>
+                      {n < 4 && <div className="w-3 h-px bg-slate-200" />}
+                    </div>
+                  );
+                })}
+                <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-slate-600">
+                  ETAPA {etapaLiberada}/4: {ETAPA_NOMES[etapaLiberada]}
+                </span>
+              </div>
+              {equipeMode && proximaEtapa && (
+                <button
+                  onClick={liberarProximaEtapa}
+                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                  title={etapaCompleta ? "Etapa atual concluída — pode liberar a próxima" : "Forçar liberação antecipada da próxima etapa"}
+                >
+                  <ChevronRight className="h-3 w-3" />
+                  LIBERAR ETAPA {proximaEtapa}: {ETAPA_NOMES[proximaEtapa]}
+                </button>
+              )}
+            </div>
+            {processo.prazo_critico_data && (
+              <div className="flex items-center gap-2 text-[11px]">
+                <CalendarClock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                <span className="uppercase tracking-wider font-bold text-amber-800">
+                  PRAZO MAIS CRÍTICO:
+                </span>
+                <span className="font-mono font-bold text-slate-800">
+                  {formatDate(processo.prazo_critico_data)}
+                </span>
+                {(() => {
+                  const dias = Math.ceil((new Date(processo.prazo_critico_data).getTime() - Date.now()) / 86400000);
+                  const cor = dias < 0 ? "#dc2626" : dias <= 5 ? "#dc2626" : dias <= 15 ? "#f59e0b" : "#16a34a";
+                  return (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: cor }}>
+                      {dias < 0 ? `VENCIDO HÁ ${Math.abs(dias)}D` : `${dias}D RESTANTES`}
+                    </span>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex border-b border-slate-200 bg-white">
           <TabBtn active={tab === "checklist"} onClick={() => setTab("checklist")} icon={<FileText className="h-3.5 w-3.5" />} label="CHECKLIST" />
