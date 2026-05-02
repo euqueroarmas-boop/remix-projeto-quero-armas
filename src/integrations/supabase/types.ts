@@ -6175,16 +6175,21 @@ export type Database = {
           assinatura_validada_em: string | null
           campos_complementares_json: Json | null
           cliente_id: number
+          confirmado_pelo_cliente_em: string | null
           created_at: string
           dados_extraidos_json: Json | null
+          data_emissao: string | null
           data_envio: string | null
           data_validacao: string | null
           data_validade: string | null
+          data_validade_efetiva: string | null
           decisao_ia: string | null
           divergencias_json: Json | null
           endereco_em_nome_de_terceiro: boolean
           etapa: string
           exemplo_url: string | null
+          extracao_ia_json: Json | null
+          extracao_ia_status: string | null
           formato_aceito: string[]
           id: string
           instrucoes: string | null
@@ -6200,6 +6205,7 @@ export type Database = {
           orgao_emissor: string | null
           prazo_recomendado_dias: number | null
           processo_id: string
+          proxima_leitura: string | null
           regra_validacao: Json | null
           revisado_por: string | null
           score_modelo_aprovado: number | null
@@ -6229,16 +6235,21 @@ export type Database = {
           assinatura_validada_em?: string | null
           campos_complementares_json?: Json | null
           cliente_id: number
+          confirmado_pelo_cliente_em?: string | null
           created_at?: string
           dados_extraidos_json?: Json | null
+          data_emissao?: string | null
           data_envio?: string | null
           data_validacao?: string | null
           data_validade?: string | null
+          data_validade_efetiva?: string | null
           decisao_ia?: string | null
           divergencias_json?: Json | null
           endereco_em_nome_de_terceiro?: boolean
           etapa?: string
           exemplo_url?: string | null
+          extracao_ia_json?: Json | null
+          extracao_ia_status?: string | null
           formato_aceito?: string[]
           id?: string
           instrucoes?: string | null
@@ -6254,6 +6265,7 @@ export type Database = {
           orgao_emissor?: string | null
           prazo_recomendado_dias?: number | null
           processo_id: string
+          proxima_leitura?: string | null
           regra_validacao?: Json | null
           revisado_por?: string | null
           score_modelo_aprovado?: number | null
@@ -6283,16 +6295,21 @@ export type Database = {
           assinatura_validada_em?: string | null
           campos_complementares_json?: Json | null
           cliente_id?: number
+          confirmado_pelo_cliente_em?: string | null
           created_at?: string
           dados_extraidos_json?: Json | null
+          data_emissao?: string | null
           data_envio?: string | null
           data_validacao?: string | null
           data_validade?: string | null
+          data_validade_efetiva?: string | null
           decisao_ia?: string | null
           divergencias_json?: Json | null
           endereco_em_nome_de_terceiro?: boolean
           etapa?: string
           exemplo_url?: string | null
+          extracao_ia_json?: Json | null
+          extracao_ia_status?: string | null
           formato_aceito?: string[]
           id?: string
           instrucoes?: string | null
@@ -6308,6 +6325,7 @@ export type Database = {
           orgao_emissor?: string | null
           prazo_recomendado_dias?: number | null
           processo_id?: string
+          proxima_leitura?: string | null
           regra_validacao?: Json | null
           revisado_por?: string | null
           score_modelo_aprovado?: number | null
@@ -6399,10 +6417,16 @@ export type Database = {
           created_at: string
           data_criacao: string
           data_validacao: string | null
+          etapa_liberada_ate: number
           id: string
+          mes_protocolo_alvo: string | null
+          observacao_prazo: string | null
           observacoes_admin: string | null
           pagamento_id: string | null
           pagamento_status: string
+          prazo_critico_data: string | null
+          prazo_critico_doc_id: string | null
+          primeiro_doc_aprovado_em: string | null
           respostas_questionario_json: Json
           servico_id: number | null
           servico_nome: string
@@ -6417,10 +6441,16 @@ export type Database = {
           created_at?: string
           data_criacao?: string
           data_validacao?: string | null
+          etapa_liberada_ate?: number
           id?: string
+          mes_protocolo_alvo?: string | null
+          observacao_prazo?: string | null
           observacoes_admin?: string | null
           pagamento_id?: string | null
           pagamento_status?: string
+          prazo_critico_data?: string | null
+          prazo_critico_doc_id?: string | null
+          primeiro_doc_aprovado_em?: string | null
           respostas_questionario_json?: Json
           servico_id?: number | null
           servico_nome: string
@@ -6435,10 +6465,16 @@ export type Database = {
           created_at?: string
           data_criacao?: string
           data_validacao?: string | null
+          etapa_liberada_ate?: number
           id?: string
+          mes_protocolo_alvo?: string | null
+          observacao_prazo?: string | null
           observacoes_admin?: string | null
           pagamento_id?: string | null
           pagamento_status?: string
+          prazo_critico_data?: string | null
+          prazo_critico_doc_id?: string | null
+          primeiro_doc_aprovado_em?: string | null
           respostas_questionario_json?: Json
           servico_id?: number | null
           servico_nome?: string
@@ -7251,6 +7287,30 @@ export type Database = {
           permite_aprovacao_auto?: boolean
           tipo_documento?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_validade_documentos: {
+        Row: {
+          base_legal: string | null
+          observacao: string | null
+          tipo_documento: string
+          updated_at: string
+          validade_dias: number
+        }
+        Insert: {
+          base_legal?: string | null
+          observacao?: string | null
+          tipo_documento: string
+          updated_at?: string
+          validade_dias: number
+        }
+        Update: {
+          base_legal?: string | null
+          observacao?: string | null
+          tipo_documento?: string
+          updated_at?: string
+          validade_dias?: number
         }
         Relationships: []
       }
