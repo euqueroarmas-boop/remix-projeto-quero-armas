@@ -896,6 +896,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   ? (doc.regra_validacao as any).checklist_operador as string[] : [];
                 const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
                 const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
+                const pergunta = isPergunta(doc) ? (doc.regra_validacao as any) : null;
+                const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
+                const tplEscolhido = pickTemplate(doc.regra_validacao);
+                const exigeAssinaturaGovBr = !!(doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).assinatura_requerida === "govbr");
                 return (
                   <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
                     <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
@@ -903,6 +907,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{doc.etapa}</span>
                           {doc.obrigatorio && <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">OBRIGATÓRIO</span>}
+                          {pergunta && <span className="text-[9px] uppercase font-bold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded">PERGUNTA</span>}
+                          {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
+                          {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{doc.nome_documento}</div>
                       </div>
@@ -929,6 +936,71 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               {doc.observacoes_cliente}
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {/* PERGUNTA-PIVOT — botões de resposta ao invés de upload */}
+                      {pergunta && Array.isArray(pergunta.opcoes) && (
+                        <div className="rounded-md border border-violet-200 bg-violet-50/60 p-3">
+                          <div className="text-[10px] uppercase tracking-wider font-bold text-violet-800 mb-2">
+                            SUA RESPOSTA {respostaAtual ? `(REGISTRADA: ${String(respostaAtual).toUpperCase()})` : "— SELECIONE UMA OPÇÃO"}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {pergunta.opcoes.map((op: any) => {
+                              const ativo = respostaAtual === op.valor;
+                              return (
+                                <button
+                                  key={op.valor}
+                                  disabled={respondendoPerguntaId === doc.id}
+                                  onClick={() => responderPergunta(doc, op.valor)}
+                                  className={`h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border ${ativo ? "bg-violet-700 text-white border-violet-700" : "bg-white text-violet-800 border-violet-300 hover:bg-violet-100"} disabled:opacity-50`}
+                                >
+                                  {String(op.label || op.valor).toUpperCase()}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {respostaAtual && (
+                            <p className="mt-2 text-[11px] text-violet-900/80">
+                              Resposta registrada. O checklist foi ajustado automaticamente — itens dependentes desta pergunta apareceram (ou foram ocultados).
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* MODELO PREENCHÍVEL — botão para baixar .docx com dados do cliente */}
+                      {!pergunta && tplEscolhido && doc.status !== "aprovado" && (
+                        <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5 flex flex-wrap items-center gap-2">
+                          <FileDown className="h-3.5 w-3.5 text-emerald-700" />
+                          <span className="text-[11px] text-emerald-900 leading-snug flex-1 min-w-[200px]">
+                            Baixe o modelo já preenchido com os seus dados, assine via GOV.BR e envie aqui o PDF assinado.
+                          </span>
+                          <button
+                            disabled={baixandoTemplateId === doc.id}
+                            onClick={() => baixarTemplatePreenchido(doc, tplEscolhido.key)}
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+                          >
+                            <Download className="h-3 w-3" />
+                            {baixandoTemplateId === doc.id ? "GERANDO..." : tplEscolhido.label.toUpperCase()}
+                          </button>
+                          <a
+                            href="https://assinador.iti.br/assinatura/index.xhtml"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-blue-800 bg-white border border-blue-300 hover:bg-blue-50"
+                          >
+                            <ExternalLink className="h-3 w-3" /> ASSINAR NO GOV.BR
+                          </a>
+                        </div>
+                      )}
+
+                      {/* MODELO CONDICIONAL — pergunta ainda não respondida */}
+                      {!pergunta && !tplEscolhido && doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).template_condicional && (
+                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2.5 text-[11px] text-amber-900 inline-flex items-start gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-amber-700 shrink-0" />
+                          <span>
+                            <strong className="uppercase tracking-wider text-[10px]">RESPONDA AS PERGUNTAS DO CHECKLIST</strong> para liberarmos o modelo correto desta declaração.
+                          </span>
                         </div>
                       )}
 
