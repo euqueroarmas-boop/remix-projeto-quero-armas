@@ -1109,14 +1109,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
                     {docsCumpridos.length > 0 && (
-                      <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden" open={equipeMode}>
+                      <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
                         <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
                           <CheckCircle className="h-4 w-4 text-emerald-600" />
                           <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
-                            EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
+                            ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
                           </span>
                           <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
-                            {equipeMode ? "VISÃO DA EQUIPE" : "VER DETALHES"}
+                            EXPANDIR PARA VER
                           </span>
                         </summary>
                         <div className="border-t border-emerald-200 p-3 space-y-3 bg-white">
