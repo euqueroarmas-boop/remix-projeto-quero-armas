@@ -10,6 +10,7 @@ import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
+import { CrafUploadIAModal } from "./CrafUploadIAModal";
 
 interface Props {
   clienteId: number;
