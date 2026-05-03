@@ -65,6 +65,19 @@ export function AprovarValorButton({ venda, onApproved }: Props) {
         } as any)
         .eq("id", venda.id);
       if (error) throw error;
+      // Ao aprovar o pagamento, todo serviço da venda recebe automaticamente
+      // o primeiro status do fluxo operacional (MONTANDO PASTA), conforme
+      // ordem definida em STATUS_SERVICO_QA. Só preenche itens sem status.
+      try {
+        const vendaFk = venda.id_legado ?? venda.id;
+        await supabase
+          .from("qa_itens_venda" as any)
+          .update({ status: "montando_pasta" } as any)
+          .eq("venda_id", vendaFk)
+          .or("status.is.null,status.eq.");
+      } catch (e) {
+        console.warn("[AprovarValorButton] auto-status itens falhou:", e);
+      }
       toast.success("Valor aprovado — checklist liberado");
       onApproved?.();
     } catch (e: any) {
