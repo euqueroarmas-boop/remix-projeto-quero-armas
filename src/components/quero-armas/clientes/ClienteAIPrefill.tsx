@@ -127,8 +127,6 @@ export default function ClienteAIPrefill({
       ).length;
       // Aplicação automática imediata, sem etapa manual de "Aplicar".
       onApply(fields);
-      const firstImage = files.find((f) => (f.type || "").startsWith("image/"));
-      if (firstImage && onPhotoCandidate) onPhotoCandidate(firstImage);
       toast.success(`IA extraiu ${filled} campo(s) e aplicou no formulário.`);
       setOpen(false);
       reset();
@@ -142,9 +140,6 @@ export default function ClienteAIPrefill({
   const apply = () => {
     if (!result) return;
     onApply(result);
-    // Promove a primeira imagem enviada como foto do cliente (se ainda não houver foto).
-    const firstImage = files.find((f) => (f.type || "").startsWith("image/"));
-    if (firstImage && onPhotoCandidate) onPhotoCandidate(firstImage);
     toast.success("Formulário pré-preenchido. Revise os campos antes de salvar.");
     setOpen(false);
     reset();
