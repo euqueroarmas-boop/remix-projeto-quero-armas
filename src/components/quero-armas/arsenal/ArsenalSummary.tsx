@@ -132,6 +132,21 @@ interface KpiDefinition {
   target: ArsenalSummaryTarget;
 }
 
+/**
+ * Definição dos cards da Linha 2 (recolhível).
+ * Não compartilha `KpiId` com a Linha 1 — Linha 2 não entra no DnD nem no
+ * layout persistido, então usa seu próprio identificador `KpiSecondaryId`.
+ */
+interface KpiSecondaryDefinition {
+  id: KpiSecondaryId;
+  icon: ReactNode;
+  label: string;
+  value: string | number;
+  hint?: string;
+  tone: "cyan" | "ok" | "warn" | "danger" | "steel";
+  target: ArsenalSummaryTarget;
+}
+
 function toneColor(tone: KpiDefinition["tone"]): string {
   if (tone === "ok") return TACTICAL.ok;
   if (tone === "warn") return TACTICAL.warn;
