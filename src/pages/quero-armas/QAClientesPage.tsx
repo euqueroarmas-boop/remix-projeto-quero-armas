@@ -3861,14 +3861,31 @@ export default function QAClientesPage() {
                     {String(c.status || "").toUpperCase()}
                   </span>
                   <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
+                    role="button"
+                    tabIndex={0}
+                    aria-label={c.pago ? "Marcar como não pago" : "Marcar como pago"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (savingCadastroPublicoStatus) return;
+                      void togglePagoCadastroPublico(c);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (savingCadastroPublicoStatus) return;
+                        void togglePagoCadastroPublico(c);
+                      }
+                    }}
+                    className={`cursor-pointer select-none text-[9px] px-1.5 py-0.5 rounded-full font-semibold border transition-all ${
                       c.pago
-                        ? "bg-emerald-500 text-white border-emerald-500"
-                        : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                    }`}
-                    title={c.pago ? "Pagamento confirmado" : "Pagamento ainda não confirmado"}
+                        ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+                        : "bg-slate-50 text-slate-500 border-slate-300 hover:bg-slate-100"
+                    } ${savingCadastroPublicoStatus === `pago:${c.id}` ? "opacity-60" : ""}`}
+                    title={c.pago ? "Clique para marcar como NÃO pago" : "Clique para marcar como pago"}
                   >
-                    {c.pago ? "PAGO" : "NÃO PAGO"}
+                    {savingCadastroPublicoStatus === `pago:${c.id}` ? "..." : (c.pago ? "PAGO" : "NÃO PAGO")}
                   </span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
