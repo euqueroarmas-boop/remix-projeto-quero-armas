@@ -163,7 +163,9 @@ const SYSTEM_PROMPT = [
   "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
-  "10) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
+  "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
+  "11) Se aparecer 'SENHA DO GOV', 'SENHA GOV' ou similar, extraia senha_gov exatamente como escrito, preservando caixa, números e símbolos.",
+  "12) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
