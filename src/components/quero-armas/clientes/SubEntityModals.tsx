@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Save, Trash2, Shield, Crosshair, FileCheck, ShoppingCart, Users, CalendarDays, Hash, Key, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { TrocaServicoConfirmDialog, TrocaServicoPreview } from "./TrocaServicoConfirmDialog";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 // Eventos operacionais são gerados pela trigger qa_dispatch_notify_event.
 
 /* ─── Date helpers ─── */
@@ -582,6 +583,16 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
             .maybeSingle();
           const serviceName = (catalogoServico as any)?.nome || primaryServico?.nome_servico || "Serviço contratado";
           const serviceSlug = (catalogoServico as any)?.slug || slugifyServico(serviceName, primaryServicoId);
+          // Snapshot do status anterior para auditoria (best-effort).
+          let statusServicoAnterior: string | null = null;
+          try {
+            const { data: prevSol } = await supabase
+              .from("qa_solicitacoes_servico" as any)
+              .select("status_servico")
+              .eq("id", solicitacaoId)
+              .maybeSingle();
+            statusServicoAnterior = (prevSol as any)?.status_servico ?? null;
+          } catch { /* não bloqueia */ }
           // Atualiza solicitação canônica → fonte única de verdade do dashboard.
           // Falha NÃO pode ser silenciosa: se o update não confirmar, lança erro.
           const { data: updRows, error: updErr } = await supabase
@@ -610,6 +621,27 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
               "Falha ao finalizar solicitação: nenhum registro atualizado em qa_solicitacoes_servico."
             );
           }
+          // Auditoria universal (não bloqueia)
+          try {
+            const { data: userRes } = await supabase.auth.getUser();
+            await registrarStatusEvento({
+              origem: "equipe",
+              entidade: "solicitacao_servico",
+              entidade_id: solicitacaoId,
+              solicitacao_id: solicitacaoId,
+              cliente_id: clienteId,
+              campo_status: "status_servico",
+              status_anterior: statusServicoAnterior,
+              status_novo: "montando_pasta",
+              usuario_id: userRes?.user?.id ?? null,
+              detalhes: {
+                contexto: "SubEntityModals.persistSave",
+                service_slug: serviceSlug,
+                service_name: serviceName,
+                venda_id: vendaPk,
+              },
+            });
+          } catch { /* não bloqueia */ }
           // Notificação 'montando_pasta' é disparada automaticamente pela
           // trigger ao detectar a transição de status no banco.
         }

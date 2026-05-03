@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     // Estado atual
     const { data: atual, error: atualErr } = await supa
       .from("qa_solicitacoes_servico")
-      .select("id, cliente_id, status_servico, status_financeiro, sem_checklist_configurado")
+      .select("id, cliente_id, status_servico, status_financeiro, status_processo, sem_checklist_configurado, service_slug, service_name")
       .eq("id", solicitacao_id)
       .maybeSingle();
     if (atualErr || !atual) {
@@ -144,6 +144,53 @@ Deno.serve(async (req) => {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // 📋 Auditoria universal (best-effort, não bloqueia)
+    try {
+      const auditBase = {
+        cliente_id: atual.cliente_id ?? null,
+        solicitacao_id: solicitacao_id,
+        entidade: "solicitacao_servico",
+        entidade_id: String(solicitacao_id),
+        origem: "equipe",
+        usuario_id: null as string | null,
+        motivo: typeof observacoes === "string" ? observacoes : null,
+        detalhes: {
+          contexto: "qa-status-update",
+          ator,
+          service_slug: (atual as any).service_slug ?? null,
+          service_name: (atual as any).service_name ?? null,
+        },
+      };
+      const eventos: any[] = [];
+      if (
+        typeof payload.status_servico === "string" &&
+        payload.status_servico !== atual.status_servico
+      ) {
+        eventos.push({
+          ...auditBase,
+          campo_status: "status_servico",
+          status_anterior: atual.status_servico ?? null,
+          status_novo: payload.status_servico,
+        });
+      }
+      if (
+        typeof payload.status_processo === "string" &&
+        payload.status_processo !== (atual as any).status_processo
+      ) {
+        eventos.push({
+          ...auditBase,
+          campo_status: "status_processo",
+          status_anterior: (atual as any).status_processo ?? null,
+          status_novo: payload.status_processo,
+        });
+      }
+      if (eventos.length > 0) {
+        await supa.from("qa_status_eventos").insert(eventos);
+      }
+    } catch (auditErr) {
+      console.warn("[qa-status-update] auditoria não bloqueante falhou:", auditErr);
     }
 
     // 🚀 Gatilho automático: provisionar acesso ao Portal quando status_financeiro virar "pago"
