@@ -82,8 +82,8 @@ function Field({ label, children, span }: { label: string; children: React.React
   );
 }
 
-const inputClass = "w-full h-10 px-3 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all uppercase";
-const selectClass = "w-full h-10 px-3 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all appearance-none cursor-pointer";
+const inputClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all uppercase";
+const selectClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all appearance-none cursor-pointer";
 
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
@@ -491,7 +491,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[98vw] max-w-6xl max-h-[94dvh] overflow-hidden p-0 bg-[#f6f5f1] border border-zinc-200 text-zinc-800 qa-premium gap-0">
+      <DialogContent className="w-[98vw] max-w-6xl max-h-[94dvh] overflow-hidden p-0 bg-[#fafaf9] border border-zinc-200 text-zinc-800 qa-premium gap-0">
 
         {/* DialogHeader é obrigatório para acessibilidade — invisível visualmente */}
         <DialogHeader className="sr-only">
@@ -500,24 +500,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         </DialogHeader>
 
         {/* ── Body com layout de Dashboard (igual à tela do cliente) ── */}
-        <div className="px-5 sm:px-7 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(94vh - 80px)" }}>
+        <div className="px-5 sm:px-7 py-5 overflow-y-auto bg-[#fafaf9]" style={{ maxHeight: "calc(94vh - 80px)" }}>
           <div className="space-y-5">
             {/* ── Header Card (espelha o card de identificação do cliente) ── */}
-            <section className="relative rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] p-5 shadow-sm overflow-hidden">
-              <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl" />
-              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm overflow-hidden">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-zinc-100" />
               <div className="relative flex items-center gap-4 flex-wrap">
                 {/* Avatar / foto */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="relative h-16 w-16 rounded-xl border-2 border-dashed border-amber-500/40 hover:border-amber-500 bg-white flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors"
+                  className="relative h-16 w-16 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors"
                   aria-label="Adicionar foto"
                 >
                   {photoPreview ? (
                     <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
                   ) : (
-                    <Camera className="h-6 w-6 text-amber-600/70" />
+                    <Camera className="h-6 w-6 text-zinc-400" />
                   )}
                 </button>
                 {photoPreview && (
@@ -538,8 +537,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     <span className={cn(
                       "inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full border",
                       isEdit
-                        ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                        : "bg-amber-50 border-amber-200 text-amber-700"
+                        ? "bg-zinc-50 border-zinc-200 text-zinc-600"
+                        : "bg-zinc-50 border-zinc-200 text-zinc-600"
                     )}>
                       <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-amber-500")} />
                       {isEdit ? "Editando" : "Em cadastro"}
@@ -561,7 +560,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <button
                     type="button"
                     onClick={onClose}
-                    className="h-10 px-4 rounded-md border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 text-sm font-medium transition-colors"
+                    className="h-9 px-3.5 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 text-xs font-medium transition-colors"
                   >
                     Cancelar
                   </button>
@@ -569,9 +568,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={save}
                     disabled={saving}
-                    className="h-10 px-5 inline-flex items-center gap-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold min-w-[180px] justify-center disabled:opacity-50 transition-colors"
+                    className="h-9 px-4 inline-flex items-center gap-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold uppercase tracking-wide justify-center disabled:opacity-50 transition-colors shadow-sm"
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                     {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
                   </button>
                 </div>
@@ -590,7 +589,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             {/* IA — bloco destacado, mesmo padrão dos cards */}
             {!isEdit && (
               <section className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
                 <SectionTitle icon={Activity} label="Preencher com IA" />
                 <div className="mt-3">
                   <ClienteAIPrefill onApply={applyAIPrefill} />
@@ -601,9 +599,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <div className="space-y-5">
             {/* ── Bloco: Identificação ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={User} label="Identificação" />
-              {uploadingPhoto && <p className="text-[10px] text-amber-700 -mt-2 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...</p>}
+              {uploadingPhoto && <p className="text-[10px] text-zinc-500 -mt-2 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...</p>}
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
               </div>
@@ -630,7 +627,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 />
               </div>
               {f.tipo_documento_identidade === "CIN" && (
-                <p className="text-[10px] text-amber-700 -mt-2">
+                <p className="text-[10px] text-zinc-500 -mt-2">
                   ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
                 </p>
               )}
@@ -686,7 +683,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
             {/* ── Bloco: Filiação & Contato ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={Users} label="Filiação & Contato" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
@@ -700,7 +696,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
             {/* ── Bloco: Endereço Principal ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
@@ -730,7 +725,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={() => resolveGeoloc("")}
                     disabled={geocodeLoading || !f.endereco || !f.cidade}
-                    className="h-10 px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 px-3.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
                   </button>
@@ -739,7 +734,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
             {/* ── Bloco: Endereço Secundário ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
@@ -769,7 +763,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={() => resolveGeoloc("2")}
                     disabled={geocodeLoading || !f.endereco2 || !f.cidade2}
-                    className="h-10 px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="h-9 px-3.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
                   </button>
@@ -778,21 +772,20 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
             {/* ── Bloco: Configurações ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-5 shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={Settings} label="Configurações" />
               {/* Categoria Legal do Titular (Lei 10.826/03 art. 6º) */}
-              <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <Shield className="h-4 w-4 text-zinc-500 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700">Categoria Legal do Titular</p>
-                    <p className="text-[10px] text-amber-600/80 mt-0.5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-700">Categoria Legal do Titular</p>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">
                       Define quais documentos/exames são exigidos. Base: Lei 10.826/03 art. 6º, Decreto 11.615/23.
                     </p>
                   </div>
                 </div>
                 {!f.categoria_titular && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-100/80 border border-amber-200">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-700 flex-shrink-0" />
                     <span className="text-[11px] text-amber-800 font-medium">
                       Categoria não definida — sistema considerará todas as exigências.
@@ -808,7 +801,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 />
                 {f.categoria_titular && (
                   <>
-                    <p className="text-[10px] text-amber-700/80 italic">
+                    <p className="text-[10px] text-zinc-500 italic">
                       {CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.descricao}
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -829,12 +822,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FSelect label="Status do Cliente" value={f.status} onChange={v => set("status", v)} options={statusOptions} />
                 <Field label="Cliente Lions">
-                  <label className="flex items-center gap-3 h-10 px-3 rounded-lg border border-amber-500/30 bg-white cursor-pointer hover:bg-amber-50 transition-colors">
+                  <label className="flex items-center gap-3 h-9 px-3 rounded-md border border-zinc-200 bg-white cursor-pointer hover:bg-zinc-50 transition-colors">
                     <input
                       type="checkbox"
                       checked={f.cliente_lions}
                       onChange={e => set("cliente_lions", e.target.checked)}
-                      className="w-4 h-4 rounded border-amber-500/40 text-amber-600 focus:ring-amber-500"
+                      className="w-4 h-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500"
                     />
                     <span className="text-sm text-zinc-700">🦁 Sim, é cliente Lions</span>
                   </label>
@@ -846,7 +839,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   onChange={e => set("observacao", e.target.value)}
                   rows={4}
                   placeholder="Informações adicionais sobre o cliente..."
-                  className="w-full px-3 py-2.5 rounded-lg border border-amber-500/30 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none uppercase"
+                  className="w-full px-3 py-2.5 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all resize-none uppercase"
                 />
               </Field>
             </section>
@@ -863,10 +856,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 function SectionTitle({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-7 w-7 rounded-md border border-amber-500/40 bg-amber-500/10 flex items-center justify-center">
-        <Icon className="h-3.5 w-3.5 text-amber-600" />
+      <div className="h-7 w-7 rounded-md border border-zinc-200 bg-zinc-50 flex items-center justify-center">
+        <Icon className="h-3.5 w-3.5 text-zinc-500" />
       </div>
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-amber-700">{label}</p>
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-zinc-700">{label}</p>
+      <span className="ml-1 h-px flex-1 bg-zinc-100" />
     </div>
   );
 }
@@ -879,18 +873,19 @@ function KpiCard({ icon: Icon, label, value, tone = "info" }: {
   tone?: "ok" | "warn" | "info";
 }) {
   const toneCls = tone === "ok"
-    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+    ? "text-zinc-700 bg-white border-zinc-200"
     : tone === "warn"
-      ? "text-amber-700 bg-amber-50 border-amber-200"
+      ? "text-zinc-700 bg-white border-zinc-200"
       : "text-zinc-700 bg-white border-zinc-200";
+  const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : "bg-zinc-300";
   return (
     <div className={cn("relative rounded-lg border p-3 shadow-sm overflow-hidden", toneCls)}>
       <div className="flex items-start justify-between gap-2">
-        <Icon className="h-4 w-4 opacity-70" />
-        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] opacity-60">KPI</span>
+        <Icon className="h-4 w-4 text-zinc-400" />
+        <span className={cn("h-1.5 w-1.5 rounded-full", dotCls)} />
       </div>
-      <p className="text-lg font-bold tracking-tight mt-2 uppercase">{value}</p>
-      <p className="text-[10px] font-mono uppercase tracking-[0.18em] opacity-70 mt-0.5">{label}</p>
+      <p className="text-lg font-bold tracking-tight mt-2 uppercase text-zinc-900">{value}</p>
+      <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 mt-0.5">{label}</p>
     </div>
   );
 }
