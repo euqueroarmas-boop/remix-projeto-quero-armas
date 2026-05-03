@@ -256,6 +256,14 @@ export function ArsenalSummary({
   crUnified = null,
   crafUnified = null,
   gteUnified = null,
+  documentosUnified = null,
+  processosUnified = null,
+  autorizacoesUnified = null,
+  examesUnified = null,
+  documentosCount = 0,
+  processosCount = 0,
+  autorizacoesCount = 0,
+  examesCount = 0,
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
@@ -265,6 +273,8 @@ export function ArsenalSummary({
   const [userId, setUserId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Toggle local seguro — não persiste (regra do BLOCO 2).
+  const [showSecondary, setShowSecondary] = useState(false);
 
   // Estado: existe layout salvo por cliente?
   // Quando true → respeita estritamente a ordem do banco (não força CR primeiro).
