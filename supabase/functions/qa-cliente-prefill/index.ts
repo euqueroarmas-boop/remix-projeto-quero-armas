@@ -1,0 +1,229 @@
+// Edge Function: qa-cliente-prefill
+//
+// Pré-preenche o cadastro "Novo Cliente" da Equipe Quero Armas a partir de
+// múltiplos arquivos (imagens/PDFs) e/ou texto livre.
+//
+// Reutiliza o gateway Lovable AI (Gemini Vision) com um único tool-schema
+// abrangente cobrindo todos os campos do formulário de cliente.
+//
+// Retorna campos extraídos + confiança por campo + warnings, mas NUNCA salva
+// nada no banco — a equipe revisa e confirma antes de gravar.
+//
+// Requer JWT (verify_jwt = true por padrão neste projeto). Apenas autenticados.
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MODEL = "google/gemini-2.5-flash";
+
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+const PREFILL_TOOL = {
+  type: "function",
+  function: {
+    name: "preencher_cadastro_cliente",
+    description:
+      "Extrai e consolida TODOS os dados cadastrais possíveis a partir de múltiplos documentos brasileiros (RG, CIN, CNH, CPF, comprovante de endereço, CR, CRAF, GTE, contratos, procurações, fichas, prints, PDFs ou texto livre). Use apenas dados visíveis. Nunca invente.",
+    parameters: {
+      type: "object",
+      properties: {
+        nome_completo: { type: "string" },
+        cpf: { type: "string", description: "Apenas dígitos. 11 caracteres. NUNCA copie o RG aqui." },
+        cnpj: { type: "string", description: "Apenas dígitos. 14 caracteres se for PJ." },
+        tipo_documento_identidade: { type: "string", enum: ["RG", "CIN"], description: "RG tradicional ou CIN gov.br (CIN usa o mesmo número do CPF)." },
+        rg: { type: "string", description: "Número do RG/CIN. Se for CIN, pode coincidir com CPF (legal)." },
+        emissor_rg: { type: "string", description: "Órgão expedidor + UF (ex: SSP/SP)." },
+        data_expedicao_rg: { type: "string", description: "DD/MM/AAAA" },
+        data_nascimento: { type: "string", description: "DD/MM/AAAA" },
+        sexo: { type: "string", enum: ["M", "F", "Outro"] },
+        nacionalidade: { type: "string" },
+        estado_civil: { type: "string" },
+        profissao: { type: "string" },
+        escolaridade: { type: "string" },
+        nome_mae: { type: "string" },
+        nome_pai: { type: "string" },
+        naturalidade_municipio: { type: "string" },
+        naturalidade_uf: { type: "string", description: "2 letras" },
+        naturalidade_pais: { type: "string" },
+        titulo_eleitor: { type: "string", description: "Apenas dígitos" },
+        cnh: { type: "string", description: "Número da CNH" },
+        ctps: { type: "string" },
+        pis_pasep: { type: "string" },
+        celular: { type: "string", description: "Apenas dígitos com DDD" },
+        telefone_secundario: { type: "string" },
+        email: { type: "string" },
+        cep: { type: "string", description: "Apenas dígitos, 8 caracteres" },
+        endereco: { type: "string", description: "Logradouro sem número" },
+        numero: { type: "string" },
+        complemento: { type: "string" },
+        bairro: { type: "string" },
+        cidade: { type: "string" },
+        estado: { type: "string", description: "UF, 2 letras" },
+        pais: { type: "string" },
+        cr_numero: { type: "string", description: "Número do Certificado de Registro (CAC)" },
+        cr_categoria: { type: "string", description: "Atirador, Caçador, Colecionador" },
+        cr_data_emissao: { type: "string", description: "DD/MM/AAAA" },
+        cr_data_validade: { type: "string", description: "DD/MM/AAAA" },
+        cr_orgao_emissor: { type: "string" },
+        acervo: {
+          type: "array",
+          description: "Itens do acervo identificados (CRAFs, GTs etc.).",
+          items: {
+            type: "object",
+            properties: {
+              tipo_documento: { type: "string", enum: ["craf", "sinarm", "gt", "gte", "autorizacao_compra", "outro"] },
+              numero_documento: { type: "string" },
+              orgao_emissor: { type: "string" },
+              data_emissao: { type: "string", description: "DD/MM/AAAA" },
+              data_validade: { type: "string", description: "DD/MM/AAAA" },
+              arma_marca: { type: "string" },
+              arma_modelo: { type: "string", description: "Modelo COMERCIAL apenas. Nunca número." },
+              arma_calibre: { type: "string" },
+              arma_numero_serie: { type: "string" },
+              arma_especie: { type: "string", description: "Pistola, Revólver, Carabina, etc." },
+            },
+            additionalProperties: false,
+          },
+        },
+        observacoes: { type: "string", description: "Notas relevantes para a equipe." },
+        warnings: {
+          type: "array",
+          description: "Avisos para revisão humana (ex: 'CPF e RG idênticos — confirmar se é CIN', 'Endereço extraído divergente entre documentos').",
+          items: { type: "string" },
+        },
+        confidence: {
+          type: "object",
+          description: "Confiança de 0..1 por campo extraído. Use chaves iguais aos campos acima.",
+          additionalProperties: { type: "number" },
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
+  },
+};
+
+const SYSTEM_PROMPT = [
+  "Você é um extrator forense de dados cadastrais brasileiros para o painel da Equipe Quero Armas.",
+  "Receberá MÚLTIPLOS arquivos (RG, CIN, CNH, CPF, comprovante de endereço, CR, CRAF, GTE, contrato, procuração, ficha antiga, prints, PDFs) e/ou texto livre.",
+  "Sua missão: consolidar TODOS os dados cadastrais possíveis em um único objeto, chamando a função preencher_cadastro_cliente.",
+  "REGRAS:",
+  "1) Use APENAS o que está visível/escrito. Nunca invente.",
+  "2) CPF tem 11 dígitos e é distinto do RG. NUNCA copie um para o outro.",
+  "3) Se o documento for CIN gov.br, o número impresso como 'Registro Geral' é o próprio CPF — preencha tipo_documento_identidade='CIN' e rg=mesmo CPF.",
+  "4) Se for RG tradicional e o número for igual ao CPF, adicione warning 'RG igual ao CPF — pode ser CIN'.",
+  "5) Datas SEMPRE em DD/MM/AAAA.",
+  "6) Se diferentes documentos divergirem (ex: 2 endereços diferentes), use o mais recente e adicione um warning descrevendo a divergência.",
+  "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
+  "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
+  "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
+  "10) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
+].join("\n");
+
+async function callPrefill(content: any[]) {
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
+
+  const resp = await fetch(GATEWAY_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content },
+      ],
+      tools: [PREFILL_TOOL],
+      tool_choice: { type: "function", function: { name: "preencher_cadastro_cliente" } },
+    }),
+  });
+
+  if (resp.status === 429) throw new Error("RATE_LIMIT");
+  if (resp.status === 402) throw new Error("PAYMENT_REQUIRED");
+  if (!resp.ok) {
+    const t = await resp.text();
+    console.error("[ai-gateway]", resp.status, t);
+    throw new Error(`AI_GATEWAY_${resp.status}`);
+  }
+
+  const data = await resp.json();
+  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
+  if (!call?.function?.arguments) return {};
+  try {
+    return JSON.parse(call.function.arguments);
+  } catch {
+    return {};
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+
+  try {
+    const body = await req.json();
+    const files = Array.isArray(body?.files) ? body.files : [];
+    const text: string = typeof body?.text === "string" ? body.text.trim() : "";
+
+    if (files.length === 0 && !text) {
+      return json({ error: "Envie ao menos um arquivo ou cole um texto." }, 400);
+    }
+    if (files.length > 10) {
+      return json({ error: "Máximo de 10 arquivos por extração." }, 400);
+    }
+
+    const content: any[] = [];
+    content.push({
+      type: "text",
+      text:
+        "Analise TODOS os arquivos e textos abaixo e consolide os dados cadastrais do cliente. " +
+        "Chame preencher_cadastro_cliente UMA ÚNICA VEZ com todos os campos extraídos.",
+    });
+
+    if (text) {
+      content.push({
+        type: "text",
+        text: `\n\n=== TEXTO LIVRE / OBSERVAÇÕES ===\n${text.slice(0, 12000)}`,
+      });
+    }
+
+    for (const f of files) {
+      const dataUrl = String(f?.data_url ?? "");
+      const mime = String(f?.mime ?? "");
+      if (!dataUrl.startsWith("data:")) continue;
+      // Imagens vão como image_url. PDFs/outros vão como image_url também
+      // (Gemini 2.5 aceita PDF inline via data URL). Texto bruto seria ideal,
+      // mas mantemos a passagem ao modelo, que faz OCR/visão multimodal.
+      if (mime.startsWith("image/") || mime === "application/pdf") {
+        content.push({ type: "image_url", image_url: { url: dataUrl } });
+      } else {
+        // outros tipos: ignora silenciosamente, registra warning
+        content.push({
+          type: "text",
+          text: `\n[Aviso: arquivo ignorado por tipo não suportado: ${f?.name ?? "?"} (${mime || "sem mime"})]`,
+        });
+      }
+    }
+
+    const result = await callPrefill(content);
+    return json({ success: true, fields: result ?? {} });
+  } catch (err: any) {
+    if (err?.message === "RATE_LIMIT") {
+      return json({ error: "Limite de uso da IA atingido. Tente novamente em instantes." }, 429);
+    }
+    if (err?.message === "PAYMENT_REQUIRED") {
+      return json({ error: "Créditos da IA esgotados. Contate o administrador." }, 402);
+    }
+    console.error("[qa-cliente-prefill]", err);
+    return json({ error: err?.message || "Erro interno" }, 500);
+  }
+});
