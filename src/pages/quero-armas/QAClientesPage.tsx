@@ -3081,7 +3081,7 @@ export default function QAClientesPage() {
                       onClick={() => updateCadastroPublicoStatus("pendente")}
                       className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
                         isConferido
-                          ? "col-span-2 sm:col-span-1 bg-[#F1D9DC] text-amber-900 border-[#B43543] hover:bg-[#E5C2C6]"
+                          ? "col-span-2 sm:col-span-1 bg-[#F1D9DC] text-[#3D0E16] border-[#B43543] hover:bg-[#E5C2C6]"
                           : "font-medium hover:bg-slate-50"
                       }`}
                       style={isConferido ? undefined : { borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
