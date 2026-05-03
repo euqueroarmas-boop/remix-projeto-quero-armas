@@ -860,22 +860,42 @@ function KpiCard({ icon: Icon, label, value, tone = "info" }: {
   value: string;
   tone?: "ok" | "warn" | "info";
 }) {
-  const toneCls = tone === "ok"
-    ? "text-zinc-700 bg-white border-zinc-200"
+  // Cor do glow esfumaçado no canto sup. direito — espelha o padrão Arsenal
+  const glow = tone === "ok"
+    ? "rgba(16, 185, 129, 0.55)"      // emerald-500
     : tone === "warn"
-      ? "text-zinc-700 bg-white border-zinc-200"
-      : "text-zinc-700 bg-white border-zinc-200";
+      ? "rgba(122, 31, 43, 0.55)"     // bordo
+      : "rgba(161, 161, 170, 0.45)";  // zinc-400
   const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-[#7A1F2B]" : "bg-zinc-300";
+  const iconCls = tone === "ok" ? "text-emerald-600" : tone === "warn" ? "text-[#7A1F2B]" : "text-zinc-400";
   return (
-    <div className={cn("relative rounded-lg border p-3 shadow-sm overflow-hidden", toneCls)}>
-      <div className="flex items-start justify-between gap-2">
-        <Icon className="h-4 w-4 text-zinc-400" />
-        <span className={cn("h-1.5 w-1.5 rounded-full", dotCls)} />
+    <div className="relative rounded-lg border border-zinc-200 bg-white p-3 shadow-sm overflow-hidden transition-colors">
+      {/* Glow esfumaçado animado no canto superior direito (padrão Arsenal) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40 blur-2xl transition-[background,opacity] duration-500 ease-out"
+        style={{ background: glow }}
+      />
+      <div className="relative flex items-start justify-between gap-2">
+        <Icon className={cn("h-4 w-4 transition-colors duration-500", iconCls)} />
+        <span className={cn("h-1.5 w-1.5 rounded-full transition-colors duration-500", dotCls)} />
       </div>
-      <p className="text-lg font-bold tracking-tight mt-2 uppercase text-zinc-900">{value}</p>
-      <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 mt-0.5">{label}</p>
+      <p className="relative text-lg font-bold tracking-tight mt-2 uppercase text-zinc-900">{value}</p>
+      <p className="relative text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 mt-0.5">{label}</p>
     </div>
   );
+}
+
+/* Calcula tom do KPI a partir de progresso "X/Y" */
+function kpiTone(value: string): "ok" | "warn" | "info" {
+  const m = value.match(/^(\d+)\/(\d+)$/);
+  if (!m) return "info";
+  const filled = Number(m[1]);
+  const total = Number(m[2]);
+  if (total === 0) return "info";
+  if (filled === 0) return "warn";
+  if (filled >= total) return "ok";
+  return "warn";
 }
 
 /* ── Compute KPIs ── */
