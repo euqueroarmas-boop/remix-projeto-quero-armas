@@ -12,6 +12,12 @@ import {
   Settings2,
   RotateCcw,
   Check,
+  Files,
+  Workflow,
+  ShoppingCart,
+  Stethoscope,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   DndContext,
@@ -36,12 +42,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { StatusUnificado, CorStatus } from "@/lib/quero-armas/statusUnificado";
 
-export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
+export type ArsenalSummaryTarget =
+  | "armas"
+  | "municoes"
+  | "crafs"
+  | "cr"
+  | "calibres"
+  | "alertas"
+  | "gte"
+  | "documentos"
+  | "processos"
+  | "autorizacoes"
+  | "exames";
 
 // Identificadores fixos exigidos
 type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas" | "gte";
+// KPIs da Linha 2 (recolhível). Não entram no DEFAULT_ORDER persistido para
+// manter Zero Regression do layout existente — são renderizados separadamente.
+type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
 
 const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas", "gte"];
+const SECONDARY_ORDER: KpiSecondaryId[] = ["documentos", "processos", "autorizacoes", "exames"];
 
 const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   armas: "armas",
@@ -85,6 +106,15 @@ interface Props {
   crUnified?: StatusUnificado | null;
   crafUnified?: StatusUnificado | null;
   gteUnified?: StatusUnificado | null;
+  /** BLOCO 2 — KPIs adicionais (Linha 2 recolhível). */
+  documentosUnified?: StatusUnificado | null;
+  processosUnified?: StatusUnificado | null;
+  autorizacoesUnified?: StatusUnificado | null;
+  examesUnified?: StatusUnificado | null;
+  documentosCount?: number;
+  processosCount?: number;
+  autorizacoesCount?: number;
+  examesCount?: number;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
@@ -226,6 +256,14 @@ export function ArsenalSummary({
   crUnified = null,
   crafUnified = null,
   gteUnified = null,
+  documentosUnified = null,
+  processosUnified = null,
+  autorizacoesUnified = null,
+  examesUnified = null,
+  documentosCount = 0,
+  processosCount = 0,
+  autorizacoesCount = 0,
+  examesCount = 0,
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
@@ -235,6 +273,8 @@ export function ArsenalSummary({
   const [userId, setUserId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Toggle local seguro — não persiste (regra do BLOCO 2).
+  const [showSecondary, setShowSecondary] = useState(false);
 
   // Estado: existe layout salvo por cliente?
   // Quando true → respeita estritamente a ordem do banco (não força CR primeiro).
@@ -530,6 +570,76 @@ export function ArsenalSummary({
     void persist(DEFAULT_ORDER);
   }, [persist]);
 
+  // ── Linha 2 — KPIs adicionais (não sortable, não persistidos) ──────────────
+  const corToToneSecondary = (cor: CorStatus): KpiDefinition["tone"] => {
+    if (cor === "verde") return "ok";
+    if (cor === "azul") return "cyan";
+    if (cor === "amarelo" || cor === "laranja") return "warn";
+    if (cor === "vermelho") return "danger";
+    return "steel";
+  };
+
+  const secondaryDefs: Record<KpiSecondaryId, KpiDefinition> = useMemo(() => ({
+    documentos: {
+      id: "armas" as KpiId, // id não-usado (não há sort)
+      icon: <Files className="h-4 w-4" />,
+      label: "Documentos",
+      value: documentosCount,
+      hint: documentosUnified
+        ? documentosUnified.sub ?? documentosUnified.label
+        : documentosCount === 0
+          ? "Sem documentos"
+          : "No acervo",
+      tone: documentosUnified ? corToToneSecondary(documentosUnified.cor) : "steel",
+      target: "documentos",
+    },
+    processos: {
+      id: "armas" as KpiId,
+      icon: <Workflow className="h-4 w-4" />,
+      label: "Processos",
+      value: processosCount,
+      hint: processosUnified
+        ? processosUnified.sub ?? processosUnified.label
+        : processosCount === 0
+          ? "Sem processos"
+          : "Em andamento",
+      tone: processosUnified ? corToToneSecondary(processosUnified.cor) : "steel",
+      target: "processos",
+    },
+    autorizacoes: {
+      id: "armas" as KpiId,
+      icon: <ShoppingCart className="h-4 w-4" />,
+      label: "Autorizações",
+      value: autorizacoesCount,
+      hint: autorizacoesUnified
+        ? autorizacoesUnified.sub ?? autorizacoesUnified.label
+        : autorizacoesCount === 0
+          ? "Nenhuma solicitada"
+          : "De compra",
+      tone: autorizacoesUnified ? corToToneSecondary(autorizacoesUnified.cor) : "steel",
+      target: "autorizacoes",
+    },
+    exames: {
+      id: "armas" as KpiId,
+      icon: <Stethoscope className="h-4 w-4" />,
+      label: "Exames/Laudos",
+      value: examesCount,
+      hint: examesUnified
+        ? examesUnified.sub ?? examesUnified.label
+        : examesCount === 0
+          ? "Sem exames"
+          : "Cadastrados",
+      tone: examesUnified ? corToToneSecondary(examesUnified.cor) : "steel",
+      target: "exames",
+    },
+  }), [
+    documentosCount, processosCount, autorizacoesCount, examesCount,
+    documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+  ]);
+
+  const hasSecondaryData =
+    documentosCount > 0 || processosCount > 0 || autorizacoesCount > 0 || examesCount > 0;
+
   if (!loaded) {
     // Render padrão sem flicker enquanto carrega
   }
@@ -615,6 +725,78 @@ export function ArsenalSummary({
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* ── BLOCO 2 — Linha 2 recolhível: KPIs adicionais ───────────────── */}
+      <div className="flex items-center justify-center pt-1">
+        <button
+          type="button"
+          onClick={() => setShowSecondary((v) => !v)}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600 hover:bg-slate-50"
+          title={showSecondary ? "Recolher KPIs adicionais" : "Ver mais KPIs"}
+        >
+          {showSecondary ? (
+            <>
+              <ChevronUp className="h-3 w-3" /> Recolher
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3 w-3" /> Mais KPIs{hasSecondaryData ? "" : ""}
+            </>
+          )}
+        </button>
+      </div>
+      {showSecondary && (
+        <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {SECONDARY_ORDER.map((sid) => {
+            const def = secondaryDefs[sid];
+            const color = toneColor(def.tone);
+            return (
+              <div
+                key={sid}
+                className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.(def.target)}
+                  className="flex h-full w-full flex-col text-left focus:outline-none focus:ring-2 focus:ring-amber-300/50 rounded-xl"
+                >
+                  <div
+                    className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
+                    style={{ background: color }}
+                  />
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-xl"
+                      style={{ background: `${color}14`, color }}
+                    >
+                      {def.icon}
+                    </div>
+                    <div
+                      className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
+                      style={{ background: `${color}10`, color }}
+                    >
+                      KPI
+                    </div>
+                  </div>
+                  <div
+                    className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
+                      typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
+                    }`}
+                    title={String(def.value)}
+                  >
+                    {def.value}
+                  </div>
+                  <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                    {def.label}
+                  </div>
+                  <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

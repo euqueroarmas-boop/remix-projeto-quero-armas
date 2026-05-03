@@ -110,6 +110,13 @@ export function ArsenalView({
   // Lê apenas os campos mínimos exigidos pelo helper getGteKpiStatus.
   const [gteDocs, setGteDocs] = useState<{ id: string; data_validade: string | null; status_processamento: string | null }[]>([]);
 
+  // ─── BLOCO 2 — Datasets adicionais para os KPIs Documentos / Processos /
+  //     Autorizações / Exames (Linha 2 recolhível no ArsenalSummary).
+  //     Leitura mínima, somente leitura, sem mexer em schema.
+  const [processos, setProcessos] = useState<{ id: string; status: string | null; pagamento_status: string | null; servico_nome: string | null; service_slug?: string | null }[]>([]);
+  const [solicitacoes, setSolicitacoes] = useState<{ id: string; status_servico: string | null; status_financeiro: string | null; service_slug: string | null; service_name: string | null }[]>([]);
+  const [exames, setExames] = useState<{ id: string; tipo: string | null; data_vencimento: string | null }[]>([]);
+
   // ─── Circunscrição PF (resolve via mesma RPC usada na geração de peças) ───
   const [circ, setCirc] = useState<{ unidade_pf: string; sigla_unidade: string; municipio_sede?: string } | null>(null);
   const [circStatus, setCircStatus] = useState<"idle" | "loading" | "ok" | "not_found" | "error">("idle");
@@ -172,6 +179,34 @@ export function ArsenalView({
   }, [clienteId]);
 
   const gteKpi = useMemo(() => getGteKpiStatus(gteDocs), [gteDocs]);
+
+  // BLOCO 2 — fetch das fontes de Documentos/Processos/Autorizações/Exames.
+  // Reusa as tabelas já existentes (qa_documentos_cliente é lida via meusDocs).
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const [{ data: procs }, { data: sols }, { data: exs }] = await Promise.all([
+        supabase
+          .from("qa_processos" as any)
+          .select("id, status, pagamento_status, servico_nome")
+          .eq("cliente_id", clienteId),
+        supabase
+          .from("qa_solicitacoes_servico" as any)
+          .select("id, status_servico, status_financeiro, service_slug, service_name")
+          .eq("cliente_id", clienteId),
+        supabase
+          .from("qa_exames_cliente" as any)
+          .select("id, tipo, data_vencimento")
+          .eq("cliente_id", clienteId),
+      ]);
+      if (cancelled) return;
+      setProcessos(((procs as any[]) || []) as any);
+      setSolicitacoes(((sols as any[]) || []) as any);
+      setExames(((exs as any[]) || []) as any);
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [clienteId]);
 
   const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
   // Modal NOVO: upload + leitura por IA + confirmação humana.
@@ -617,6 +652,90 @@ export function ArsenalView({
     });
   }, [gteDocs, docsByTipo.gte]);
 
+  // ── BLOCO 2 — KPIs adicionais (Linha 2 recolhível) ────────────────────────
+  // Documentos genéricos (exclui CR/CRAF/GTE — já têm KPI próprio).
+  const docsGenericos = useMemo<DocumentoUploadLite[]>(() => {
+    const list = (meusDocs ?? []) as any[];
+    return list
+      .filter((d) => {
+        const t = String(d?.tipo_documento ?? "").toLowerCase();
+        return t && t !== "cr" && t !== "craf" && t !== "gte" && t !== "gt";
+      })
+      .map((d) => ({
+        status: d?.status ?? null,
+        ia_status: d?.ia_status ?? d?.status_ia ?? null,
+        origem: d?.origem ?? null,
+        data_validade: d?.data_validade ?? null,
+      }));
+  }, [meusDocs]);
+
+  const documentosUnified = useMemo(() => {
+    if (docsGenericos.length === 0) return null;
+    return getStatusUnificado({ tipo: "DOCUMENTO_INDIVIDUAL", documentos: docsGenericos });
+  }, [docsGenericos]);
+
+  // Processos: usa apenas as solicitações reais de processo administrativo.
+  // Filtra autorizações de compra (já têm KPI próprio).
+  const solicitacoesProcessos = useMemo(
+    () =>
+      solicitacoes.filter((s) => {
+        const slug = String(s.service_slug ?? "").toLowerCase();
+        return !(slug.includes("autorizacao") && slug.includes("compra"));
+      }),
+    [solicitacoes],
+  );
+
+  const processosUnified = useMemo(() => {
+    if (processos.length === 0 && solicitacoesProcessos.length === 0) return null;
+    return getStatusUnificado({
+      tipo: "PROCESSO_ADM",
+      processos: processos.map((p) => ({ status: p.status })),
+      solicitacoes: solicitacoesProcessos.map((s) => ({
+        status_servico: s.status_servico,
+        status_financeiro: s.status_financeiro,
+        status_processo: null,
+      })),
+    });
+  }, [processos, solicitacoesProcessos]);
+
+  // Autorizações de compra (subset das solicitações).
+  const autorizacoes = useMemo(
+    () =>
+      solicitacoes.filter((s) => {
+        const slug = String(s.service_slug ?? "").toLowerCase();
+        return slug.includes("autorizacao") && slug.includes("compra");
+      }),
+    [solicitacoes],
+  );
+
+  const autorizacoesUnified = useMemo(() => {
+    if (autorizacoes.length === 0) return null;
+    return getStatusUnificado({
+      tipo: "AUTORIZACAO_COMPRA",
+      solicitacoes: autorizacoes.map((s) => ({
+        status_servico: s.status_servico,
+        status_financeiro: s.status_financeiro,
+        status_processo: null,
+      })),
+    });
+  }, [autorizacoes]);
+
+  // Exames / Laudos — engine usa cadastro.data_validade (mais próximo).
+  const examesUnified = useMemo(() => {
+    if (exames.length === 0) return null;
+    const validades = exames
+      .map((e) => e.data_vencimento)
+      .filter(Boolean)
+      .map((v) => new Date(v as string))
+      .filter((d) => !isNaN(d.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime());
+    const maisProxima = validades[0] ?? null;
+    return getStatusUnificado({
+      tipo: "EXAME_LAUDO",
+      cadastro: maisProxima ? { data_validade: maisProxima } : null,
+    });
+  }, [exames]);
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
@@ -636,6 +755,14 @@ export function ArsenalView({
         crUnified={crUnified}
         crafUnified={crafUnified}
         gteUnified={gteUnified}
+        documentosUnified={documentosUnified}
+        processosUnified={processosUnified}
+        autorizacoesUnified={autorizacoesUnified}
+        examesUnified={examesUnified}
+        documentosCount={docsGenericos.length}
+        processosCount={processos.length + solicitacoesProcessos.length}
+        autorizacoesCount={autorizacoes.length}
+        examesCount={exames.length}
         onNavigate={scrollToSection}
       />
 
