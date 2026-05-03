@@ -418,7 +418,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     let extractedCep = onlyDigits(p.cep);
     const extractedCep2 = onlyDigits((p as any).cep_secundario);
     const senhaGovRaw = typeof (p as any).senha_gov_raw === "string" ? (p as any).senha_gov_raw : (p as any).senha_gov;
-    const senhaGovConfidence = typeof (p as any).senha_gov_confidence === "number" ? (p as any).senha_gov_confidence : (p.confidence?.senha_gov_raw ?? p.confidence?.senha_gov);
+    const senhaGovConfidence = typeof (p as any).senha_gov_confidence === "number" ? (p as any).senha_gov_confidence : (p.confidence?.senha_gov_raw ?? p.confidence?.senha_gov ?? 0);
     const canFillSenhaGov = typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && senhaGovConfidence >= 0.9 && !(p as any).senha_gov_needs_review;
     const senhaGovShouldReview = Boolean((p as any).senha_gov_needs_review) || (typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && !canFillSenhaGov);
     setAiSenhaGovFromAI(canFillSenhaGov);
