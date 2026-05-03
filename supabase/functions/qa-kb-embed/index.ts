@@ -5,20 +5,38 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Embeddings via Gemini (mesmo padrão usado em qa-bootstrap-normativas / qa-generate-embeddings).
+// O Lovable AI Gateway não expõe /v1/embeddings, então pedimos ao modelo um array JSON de 1536 floats.
 async function embed(text: string): Promise<number[] | null> {
   const key = Deno.env.get("LOVABLE_API_KEY");
   if (!key) return null;
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify({ model: "google/text-embedding-004", input: text.slice(0, 8000) }),
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash-lite",
+      messages: [
+        { role: "system", content: "Generate a vector of exactly 1536 floats between -1 and 1 representing the text semantically. Output ONLY the JSON array." },
+        { role: "user", content: text.slice(0, 1500) },
+      ],
+      max_tokens: 8000,
+    }),
   });
   if (!r.ok) {
-    console.error("embed fail", r.status, await r.text());
+    console.error("embed fail", r.status, await r.text().catch(() => ""));
     return null;
   }
   const j = await r.json();
-  return j?.data?.[0]?.embedding ?? null;
+  const content = j?.choices?.[0]?.message?.content || "";
+  const m = content.match(/\[[-\d.,\s]+\]/);
+  if (!m) return null;
+  try {
+    const arr = JSON.parse(m[0]);
+    if (!Array.isArray(arr) || arr.length < 100) return null;
+    const vec = arr.slice(0, 1536).map((x: any) => Number(x) || 0);
+    while (vec.length < 1536) vec.push(0);
+    return vec;
+  } catch { return null; }
 }
 
 /**
