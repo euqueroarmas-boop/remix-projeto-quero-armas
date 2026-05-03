@@ -615,6 +615,9 @@ export function ArsenalView({
         gteHint={gteKpi.labelSecundaria}
         crafPending={pendingDocs.craf}
         gtePending={pendingDocs.gte}
+        crUnified={crUnified}
+        crafUnified={crafUnified}
+        gteUnified={gteUnified}
         onNavigate={scrollToSection}
       />
 
