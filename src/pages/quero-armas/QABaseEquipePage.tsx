@@ -328,6 +328,7 @@ export default function QABaseEquipePage() {
           module: editing.module || "",
           audience: editing.audience || "equipe",
           description: draftDescription,
+          audit_confirmed: auditComplete(editing),
         },
       });
       if (error) throw error;
