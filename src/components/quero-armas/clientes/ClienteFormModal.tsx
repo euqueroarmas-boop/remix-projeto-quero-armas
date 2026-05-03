@@ -145,6 +145,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
     setPhotoFile(file);
+    setRequiredErrors(p => ({ ...p, photo: false }));
     const reader = new FileReader();
     reader.onload = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
