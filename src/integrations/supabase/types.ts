@@ -7928,6 +7928,26 @@ export type Database = {
         Args: { _cliente_id: number }
         Returns: boolean
       }
+      qa_kb_search_hybrid: {
+        Args: {
+          _audience?: string
+          _limit?: number
+          _qemb?: string
+          _query: string
+        }
+        Returns: {
+          audience: string
+          body: string
+          category: string
+          id: string
+          module: string
+          rank: number
+          slug: string
+          symptoms: string[]
+          tags: string[]
+          title: string
+        }[]
+      }
       qa_kb_search_text: {
         Args: { _limit?: number; _query: string }
         Returns: {
