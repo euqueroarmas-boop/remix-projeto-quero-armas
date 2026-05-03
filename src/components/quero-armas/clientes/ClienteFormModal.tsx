@@ -1069,6 +1069,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     placeholder="Resolvida automaticamente após preencher o endereço"
                     span
                   />
+                  <button
+                    type="button"
+                    onClick={() => { set("geolocalizacao", ""); resolveGeoloc(""); }}
+                    className="mt-2 text-[11px] uppercase font-semibold text-[#7A1F2B] hover:underline"
+                  >
+                    Reprocessar geolocalização
+                  </button>
                 </div>
             </section>
 
@@ -1099,6 +1106,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     placeholder="Resolvida automaticamente após preencher o endereço"
                     span
                   />
+                  <button
+                    type="button"
+                    onClick={() => { set("geolocalizacao2", ""); resolveGeoloc("2"); }}
+                    className="mt-2 text-[11px] uppercase font-semibold text-[#7A1F2B] hover:underline"
+                  >
+                    Reprocessar geolocalização
+                  </button>
                 </div>
             </section>
 
