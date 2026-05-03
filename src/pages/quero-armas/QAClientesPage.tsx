@@ -2753,7 +2753,7 @@ export default function QAClientesPage() {
                                   );
                                   if (isPago) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
+                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
                                       PAGO
                                     </span>
                                   );
@@ -2779,7 +2779,7 @@ export default function QAClientesPage() {
                                   );
                                   if (isPago) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
+                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
                                       PAGO
                                     </span>
                                   );
