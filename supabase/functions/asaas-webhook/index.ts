@@ -759,6 +759,37 @@ Deno.serve(async (req) => {
                 request_payload: { processo_id: proc.id, payment_id: payment.id, event, result: confirmRes },
                 status: "success",
               });
+              // Auditoria universal de status (não bloqueante)
+              try {
+                await supabase.from("qa_status_eventos").insert([
+                  {
+                    cliente_id: proc.cliente_id ?? null,
+                    processo_id: proc.id,
+                    origem: "webhook",
+                    entidade: "processo",
+                    entidade_id: String(proc.id),
+                    campo_status: "pagamento_status",
+                    status_anterior: "aguardando",
+                    status_novo: "confirmado",
+                    motivo: null,
+                    detalhes: { contexto: "asaas-webhook", payment_id: String(payment.id), event },
+                  },
+                  {
+                    cliente_id: proc.cliente_id ?? null,
+                    processo_id: proc.id,
+                    origem: "webhook",
+                    entidade: "processo",
+                    entidade_id: String(proc.id),
+                    campo_status: "status",
+                    status_anterior: proc.status ?? null,
+                    status_novo: "aguardando_documentos",
+                    motivo: null,
+                    detalhes: { contexto: "asaas-webhook", payment_id: String(payment.id), event },
+                  },
+                ]);
+              } catch (_auditErr) {
+                // best-effort; nunca bloqueia o webhook
+              }
             }
 
             // Dispara notificação ao cliente solicitando documentos

@@ -38,6 +38,13 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Snapshot do status anterior para auditoria (não bloqueante)
+    const { data: procPrev } = await supabase
+      .from("qa_processos")
+      .select("status, pagamento_status, cliente_id")
+      .eq("id", processo_id)
+      .maybeSingle();
+
     const { data: rpcRes, error: rpcErr } = await supabase.rpc(
       "qa_confirmar_pagamento_processo",
       { p_processo_id: processo_id, p_origem: "manual_admin" },
@@ -54,6 +61,37 @@ Deno.serve(async (req) => {
           body: { processo_id, evento: "pagamento_confirmado" },
         })
         .catch((e) => console.warn("[confirmar-pagamento] notificar falhou:", e));
+      // Auditoria universal de status (best-effort)
+      try {
+        await supabase.from("qa_status_eventos").insert([
+          {
+            cliente_id: procPrev?.cliente_id ?? null,
+            processo_id,
+            origem: "equipe",
+            entidade: "processo",
+            entidade_id: String(processo_id),
+            campo_status: "pagamento_status",
+            status_anterior: procPrev?.pagamento_status ?? null,
+            status_novo: "confirmado",
+            usuario_id: guard.userId ?? null,
+            detalhes: { contexto: "qa-processo-confirmar-pagamento" },
+          },
+          {
+            cliente_id: procPrev?.cliente_id ?? null,
+            processo_id,
+            origem: "equipe",
+            entidade: "processo",
+            entidade_id: String(processo_id),
+            campo_status: "status",
+            status_anterior: procPrev?.status ?? null,
+            status_novo: "aguardando_documentos",
+            usuario_id: guard.userId ?? null,
+            detalhes: { contexto: "qa-processo-confirmar-pagamento" },
+          },
+        ]);
+      } catch (_auditErr) {
+        // best-effort
+      }
     }
 
     return json({ success: true, ...rpcRes });
