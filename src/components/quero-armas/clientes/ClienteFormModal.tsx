@@ -351,7 +351,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         titulo_eleitor: setIfEmpty(prev.titulo_eleitor, p.titulo_eleitor),
         cnh: setIfEmpty(prev.cnh, p.cnh),
         ctps: setIfEmpty(prev.ctps, p.ctps),
-        pis_pasep: setIfEmpty(prev.pis_pasep, p.pis_pasep),
         celular: setIfEmpty(prev.celular, p.celular ? onlyDigits(p.celular) : ""),
         email: setIfEmpty(prev.email, p.email),
         cep: setIfEmpty(prev.cep, extractedCep),
