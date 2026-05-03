@@ -693,6 +693,7 @@ export function ArsenalView({
       solicitacoes: solicitacoesProcessos.map((s) => ({
         status_servico: s.status_servico,
         status_financeiro: s.status_financeiro,
+        status_processo: null,
       })),
     });
   }, [processos, solicitacoesProcessos]);
@@ -714,6 +715,7 @@ export function ArsenalView({
       solicitacoes: autorizacoes.map((s) => ({
         status_servico: s.status_servico,
         status_financeiro: s.status_financeiro,
+        status_processo: null,
       })),
     });
   }, [autorizacoes]);
