@@ -180,6 +180,34 @@ export function ArsenalView({
 
   const gteKpi = useMemo(() => getGteKpiStatus(gteDocs), [gteDocs]);
 
+  // BLOCO 2 — fetch das fontes de Documentos/Processos/Autorizações/Exames.
+  // Reusa as tabelas já existentes (qa_documentos_cliente é lida via meusDocs).
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const [{ data: procs }, { data: sols }, { data: exs }] = await Promise.all([
+        supabase
+          .from("qa_processos" as any)
+          .select("id, status, pagamento_status, servico_nome")
+          .eq("cliente_id", clienteId),
+        supabase
+          .from("qa_solicitacoes_servico" as any)
+          .select("id, status_servico, status_financeiro, service_slug, service_name")
+          .eq("cliente_id", clienteId),
+        supabase
+          .from("qa_exames_cliente" as any)
+          .select("id, tipo, data_vencimento")
+          .eq("cliente_id", clienteId),
+      ]);
+      if (cancelled) return;
+      setProcessos(((procs as any[]) || []) as any);
+      setSolicitacoes(((sols as any[]) || []) as any);
+      setExames(((exs as any[]) || []) as any);
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [clienteId]);
+
   const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
   // Modal NOVO: upload + leitura por IA + confirmação humana.
   // O CrafModal antigo (acima) continua sendo usado para EDIÇÃO manual de um CRAF já cadastrado.
