@@ -1501,6 +1501,19 @@ export default function QAClientesPage() {
         console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
       }
 
+      // Numeração sequencial de exibição (1..N) por ordem cronológica de
+      // cadastro. NÃO altera a PK no banco — só o ID mostrado ao usuário.
+      // Conta TODOS os clientes cadastrados (Quero Armas + Arsenal).
+      // Formulários públicos pendentes não entram aqui (só viram qa_clientes
+      // quando aprovados).
+      const sortedAsc = [...rows].sort((a: any, b: any) => {
+        const ta = new Date(a.created_at || 0).getTime();
+        const tb = new Date(b.created_at || 0).getTime();
+        return ta - tb || (a.id - b.id);
+      });
+      const displayMap = new Map<number, number>();
+      sortedAsc.forEach((r: any, idx: number) => displayMap.set(r.id, idx + 1));
+      for (const r of rows) (r as any).display_id = displayMap.get((r as any).id) || (r as any).id;
       setClientes(rows);
       setLoadError(null);
     } catch (err: any) {
@@ -2279,7 +2292,7 @@ export default function QAClientesPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <ClienteSelfieAvatar cliente={c} size="md" />
+                <ClienteSelfieAvatar cliente={c} size="xl" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span
@@ -2290,7 +2303,7 @@ export default function QAClientesPage() {
                       {c.status}
                     </span>
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
-                      ID #{String(c.id).padStart(4, "0")}
+                      ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
                     </span>
                   </div>
                   <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
@@ -3623,7 +3636,7 @@ export default function QAClientesPage() {
                 />
                 <div className="relative flex items-center gap-3 px-4 py-3.5">
                   {/* Avatar: foto manual OU selfie do cadastro público (resolvida em batch em loadClientes). */}
-                  <ClienteSelfieAvatar cliente={c} size="md" />
+                  <ClienteSelfieAvatar cliente={c} size="xl" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
@@ -3660,7 +3673,7 @@ export default function QAClientesPage() {
                         {c.status}
                       </span>
                       <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-slate-400">
-                        #{String(c.id).padStart(4, "0")}
+                        #{String((c as any).display_id ?? c.id).padStart(4, "0")}
                       </span>
                     </div>
                     <button
