@@ -471,6 +471,11 @@ export default function QABaseEquipePage() {
 
   // ============ REVISÃO PROGRESSIVA ============
   async function approveArticle(a: Article) {
+    const hasReal = images.some(i => (i.image_type === "screenshot_real" || i.image_type === "upload_manual") && i.status === "approved");
+    if (!hasReal) {
+      toast.error("Este artigo ainda não possui print real validado. Envie ou capture um print real antes de aprovar.");
+      return;
+    }
     setApprovingArticle(true);
     try {
       const newStatus = a.audience === "cliente" ? "published" : "audited";
@@ -524,6 +529,7 @@ export default function QABaseEquipePage() {
   async function submitReviewRegenerate() {
     if (!reviewArticle) return;
     if (!reviewReason.trim()) { toast.error("Descreva o motivo da reprovação."); return; }
+    if (!reviewFile) { toast.error("Anexe o print real da tela antes de refazer com IA."); return; }
     setReviewSubmitting(true);
     try {
       let screenshotId: string | null = null;
@@ -1107,7 +1113,7 @@ export default function QABaseEquipePage() {
             </div>
             <div>
               <label className="text-xs uppercase font-mono flex items-center gap-1">
-                <Camera className="h-3 w-3" /> Print real da tela (opcional, mas recomendado)
+                <Camera className="h-3 w-3" /> Print real da tela (obrigatório)
               </label>
               <input
                 type="file"
@@ -1121,13 +1127,13 @@ export default function QABaseEquipePage() {
                 </p>
               )}
               <p className="text-[10px] text-muted-foreground mt-1">
-                Se você anexar um print, a IA vai analisar a imagem e refazer o artigo descrevendo apenas o que aparece nela.
+                A IA vai analisar o print real e refazer o artigo descrevendo apenas o que aparece nele. Imagens geradas por IA não são aceitas como validação.
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setReviewOpen(false)} disabled={reviewSubmitting}>Cancelar</Button>
-            <Button onClick={submitReviewRegenerate} disabled={reviewSubmitting || !reviewReason.trim()} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button onClick={submitReviewRegenerate} disabled={reviewSubmitting || !reviewReason.trim() || !reviewFile} className="bg-red-600 hover:bg-red-700 text-white">
               {reviewSubmitting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1" />}
               Refazer com IA
             </Button>
