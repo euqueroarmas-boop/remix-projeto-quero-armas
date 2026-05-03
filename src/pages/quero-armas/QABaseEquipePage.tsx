@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon, ThumbsUp, ThumbsDown, Camera, Upload } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -23,7 +23,10 @@ type Article = {
   body: string;
   related_articles: string[];
   version: number;
-  status: "draft" | "published" | "archived";
+  status: "draft" | "needs_review" | "audited" | "published" | "rejected" | "archived";
+  visual_bug_detected?: boolean;
+  last_review_reason?: string | null;
+  approved_at?: string | null;
   created_at: string;
   updated_at: string;
   embedding_status?: "pendente" | "gerado" | "erro" | null;
@@ -40,6 +43,7 @@ type ArticleImage = {
   image_url: string | null;
   status: "draft" | "approved" | "archived" | "error";
   error_message: string | null;
+  image_type?: "screenshot_real" | "upload_manual" | "imagem_ia";
 };
 
 const CATEGORIES = [
