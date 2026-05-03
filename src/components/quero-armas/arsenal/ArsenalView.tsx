@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import { getStatusUnificado, type DocumentoUploadLite } from "@/lib/quero-armas/statusUnificado";
 
 interface Props {
   clienteId: number;
