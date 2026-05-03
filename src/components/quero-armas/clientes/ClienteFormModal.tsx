@@ -746,7 +746,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                       value={f.senha_gov}
                       onChange={e => set("senha_gov", e.target.value)}
                       placeholder="Senha GOV importada"
-                      className={cn(inputClass, "normal-case")}
+                      className={inputClass.replace(" uppercase", "")}
                     />
                   )}
                 </Field>
