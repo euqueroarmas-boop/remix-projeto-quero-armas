@@ -898,7 +898,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                       {isChecked && <CheckCircle2 className="h-3 w-3" />}
                     </div>
                     <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="sr-only" />
-                    <span className="flex-1 min-w-0 truncate font-medium">
+                    <span className="flex-1 min-w-0 truncate font-medium uppercase">
                       {svc.nome_servico}
                       <span className="ml-1.5 text-[9px] text-slate-400 font-normal uppercase tracking-wider">{svc.categoria}</span>
                     </span>
