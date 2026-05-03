@@ -708,9 +708,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
         }
       }
-      if (savedId && senha_gov.trim()) {
+      if (savedId && senha_gov) {
         try {
-          await setSenhaGov(persistedCrId ?? null, senha_gov.trim(), "ClienteFormModal:IA", savedId);
+          await setSenhaGov(persistedCrId ?? null, senha_gov, "ClienteFormModal:IA", savedId);
         } catch (e: any) {
           console.error("Falha ao salvar senha GOV importada:", e);
           toast.warning("Cliente salvo, mas Senha GOV importada não foi persistida");
