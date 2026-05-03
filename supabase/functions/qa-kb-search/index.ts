@@ -133,9 +133,12 @@ Deno.serve(async (req) => {
     const ids = articles.map(a => a.id);
     const { data: imgs } = await supabase
       .from("qa_kb_artigo_imagens")
-      .select("article_id,image_url,step_number,step_title,caption,status")
+      .select("article_id,image_url,step_number,step_title,caption,status,image_type,is_ai_generated_blocked,original_image_type")
       .in("article_id", ids)
       .in("status", audience === "cliente" ? ["approved"] : ["approved", "draft"])
+      .eq("is_ai_generated_blocked", false)
+      .neq("original_image_type", "imagem_ia")
+      .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"])
       .order("step_number");
     const imgsByArticle = new Map<string, any[]>();
     for (const i of (imgs ?? [])) {
