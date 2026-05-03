@@ -1871,22 +1871,17 @@ export default function QAClientesPage() {
         }
       }
 
-      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
+      // Update sem .select() para evitar "TypeError: Load failed" no Safari/iOS
+      // quando o segundo roundtrip embutido fica pendurado em rede instável.
+      const { error } = await supabase.from("qa_cadastro_publico" as any)
         .update(updatePayload)
-        .eq("id", selectedCadastroPublico.id)
-        .select("*")
-        .limit(1)
-        .maybeSingle();
+        .eq("id", selectedCadastroPublico.id);
 
       if (error) throw error;
-      if (!data) {
-        toast.error("Cadastro público não encontrado");
-        return;
-      }
 
-      const updated = data as unknown as CadastroPublico;
+      const updated = { ...selectedCadastroPublico, ...updatePayload } as CadastroPublico;
       setSelectedCadastroPublico(updated);
-      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updatePayload } : item));
       if (status === "aprovado") {
         await loadClientes();
         toast.success(clienteVinculadoId
