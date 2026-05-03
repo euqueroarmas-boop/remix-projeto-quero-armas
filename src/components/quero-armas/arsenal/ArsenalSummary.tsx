@@ -34,6 +34,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { TACTICAL } from "./utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { StatusUnificado, CorStatus } from "@/lib/quero-armas/statusUnificado";
 
 export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
 
@@ -76,6 +77,14 @@ interface Props {
    * Quando > 0 e ainda não há GTE canônica, o KPI mostra "EM ANÁLISE" (âmbar).
    */
   gtePending?: number;
+  /**
+   * BLOCO 1 — Leitura unificada (Regra-Mãe) opcional para CR/CRAF/GTE.
+   * Quando preenchidos, sobrepõem label/hint/tone do KPI correspondente.
+   * Quando ausentes/null, mantém-se a leitura legacy (Zero Regression).
+   */
+  crUnified?: StatusUnificado | null;
+  crafUnified?: StatusUnificado | null;
+  gteUnified?: StatusUnificado | null;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
@@ -214,6 +223,9 @@ export function ArsenalSummary({
   gteHint = "Sem GTE cadastrada",
   crafPending = 0,
   gtePending = 0,
+  crUnified = null,
+  crafUnified = null,
+  gteUnified = null,
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
