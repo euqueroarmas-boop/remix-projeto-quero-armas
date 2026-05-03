@@ -161,6 +161,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [requiredErrors, setRequiredErrors] = useState<Record<string, boolean>>({});
+  const [aiSenhaGovFromAI, setAiSenhaGovFromAI] = useState(false);
+  const [aiSenhaGovNeedsReview, setAiSenhaGovNeedsReview] = useState(false);
+  const [aiEmissorRgNeedsReview, setAiEmissorRgNeedsReview] = useState(false);
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
@@ -277,6 +280,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setPhotoPreview(null);
       setRequiredErrors({});
       setCadastroCrId(null);
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
       setAiPrefillKey(k => k + 1);
       return;
     }
