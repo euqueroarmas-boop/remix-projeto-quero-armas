@@ -868,7 +868,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     </p>
                     {(() => {
                       const cat = f.categoria_titular as CategoriaTitular;
-                      const isInstitucional = cat === "seguranca_publica" || cat === "magistrado_mp" || cat === "militar" || cat === "pessoa_juridica";
+                      const isInstitucional = cat === "seguranca_publica";
                       return (
                         <>
                           <div className={isInstitucional ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}>
