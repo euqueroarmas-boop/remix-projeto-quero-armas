@@ -271,13 +271,13 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
     const checked = typeof parsed?.senha === "string" ? parsed.senha : "";
     const confidence = typeof parsed?.confidence === "number" ? parsed.confidence : 0;
     const hasSymbolInSource = parsed?.has_symbol_in_source === true;
-    const proposedHasSymbol = /[^\p{L}\p{N}]/u.test(senha);
-    // Bloqueio extra: fonte tem símbolo mas senha proposta é alfanumérica → recusa.
-    if (hasSymbolInSource && !proposedHasSymbol) {
+    const checkedHasSymbol = /[^\p{L}\p{N}]/u.test(checked);
+    // Se a primeira extração perdeu um símbolo, aceita a correção literal do auditor.
+    if (hasSymbolInSource && !checkedHasSymbol) {
       return { ok: false, senha: "", confidence, warning: "Senha GOV.BR aparenta conter símbolo no documento que não foi capturado. Confira manualmente." };
     }
-    return parsed?.ok === true && checked === senha && confidence >= 0.9
-      ? { ok: true, senha, confidence, warning: "" }
+    return parsed?.ok === true && checked && confidence >= 0.9
+      ? { ok: true, senha: checked, confidence, warning: "" }
       : { ok: false, senha: "", confidence, warning: parsed?.warning || "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   } catch {
     return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
@@ -305,6 +305,7 @@ function filterFalseFutureWarnings(warnings: string[]): string[] {
   const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
   return warnings.filter((w) => {
     if (!/futuro|future/i.test(w)) return true;
+    if (/exame|psicol[oó]gico|tiro|laudo|realiza[cç][aã]o/i.test(w)) return false;
     const dates = w.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
     if (dates.length === 0) return true;
     // Se TODAS as datas do warning já passaram, descarta o warning.
