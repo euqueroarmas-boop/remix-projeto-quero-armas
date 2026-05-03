@@ -109,12 +109,14 @@ export default function ClienteSelfieAvatar({
     };
   }, [resolvedPath, primaryBucket, fallbackBucket]);
 
-  const iniciais = (cliente?.nome_completo || "?")
+  const _partes = (cliente?.nome_completo || "?")
     .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p: string) => p[0]?.toUpperCase())
-    .join("");
+    .filter(Boolean);
+  const iniciais = _partes.length === 0
+    ? "?"
+    : _partes.length === 1
+      ? (_partes[0][0] || "").toUpperCase()
+      : ((_partes[0][0] || "") + (_partes[_partes.length - 1][0] || "")).toUpperCase();
 
   if (url) {
     return (
