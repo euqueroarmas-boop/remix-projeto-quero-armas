@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
         await supabase.from("qa_kb_artigo_imagens").insert({
           article_id, step_number: step.number, step_title: step.title,
           caption: step.title, prompt_used: prompt, status: finalStatus,
-          image_url: pub, storage_path: path,
+          image_url: pub, storage_path: path, image_type: "imagem_ia",
         });
         results.push({ step: step.number, ok: true, url: pub });
       } catch (e) {
