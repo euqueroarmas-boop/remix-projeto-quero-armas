@@ -420,8 +420,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     const senhaGovRaw = typeof (p as any).senha_gov_raw === "string" ? (p as any).senha_gov_raw : (p as any).senha_gov;
     const senhaGovConfidence = typeof (p as any).senha_gov_confidence === "number" ? (p as any).senha_gov_confidence : (p.confidence?.senha_gov_raw ?? p.confidence?.senha_gov);
     const canFillSenhaGov = typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && senhaGovConfidence >= 0.9 && !(p as any).senha_gov_needs_review;
+    const senhaGovShouldReview = Boolean((p as any).senha_gov_needs_review) || (typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && !canFillSenhaGov);
     setAiSenhaGovFromAI(canFillSenhaGov);
-    setAiSenhaGovNeedsReview(Boolean((p as any).senha_gov_needs_review) || (typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && !canFillSenhaGov));
+    setAiSenhaGovNeedsReview(senhaGovShouldReview);
     setAiEmissorRgNeedsReview(Boolean((p as any).emissor_rg_needs_review));
     if (canFillSenhaGov) {
       toast.warning("Confira a senha GOV.BR caractere por caractere antes de salvar.");
@@ -489,7 +490,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
         validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
         validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
-        senha_gov: canFillSenhaGov ? senhaGovRaw : ((p as any).senha_gov_needs_review ? "" : prev.senha_gov),
+        senha_gov: canFillSenhaGov ? senhaGovRaw : (senhaGovShouldReview ? "" : prev.senha_gov),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
