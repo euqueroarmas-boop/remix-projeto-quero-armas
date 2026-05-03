@@ -39,9 +39,11 @@ export function CentralAjudaCliente() {
         if (ids.length === 0) { setArticles([]); setLoading(false); return; }
         const { data: imgs } = await supabase
           .from("qa_kb_artigo_imagens" as any)
-          .select("article_id,image_type,status")
+          .select("article_id,image_type,status,is_ai_generated_blocked,original_image_type")
           .in("article_id", ids)
           .eq("status", "approved")
+          .eq("is_ai_generated_blocked", false)
+          .neq("original_image_type", "imagem_ia")
           .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"]);
         const okSet = new Set<string>(((imgs as any[]) ?? []).map((i) => i.article_id));
         setArticles(list.filter((a) => okSet.has(a.id)));
@@ -59,6 +61,8 @@ export function CentralAjudaCliente() {
         .eq("article_id", selected.id)
         .eq("status", "approved")
         .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"])
+        .eq("is_ai_generated_blocked", false)
+        .neq("original_image_type", "imagem_ia")
         .order("step_number");
       setSelectedImages(((data ?? []) as any[]));
     })();
