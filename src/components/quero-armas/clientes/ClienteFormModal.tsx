@@ -274,6 +274,32 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   const [f, setF] = useState(EMPTY_FORM);
 
+  // Auto-resolve geolocalização sempre que endereço completo mudar (principal e secundário).
+  // Debounce simples para não chamar a API a cada tecla.
+  useEffect(() => {
+    if (!open) return;
+    const street = f.endereco?.trim();
+    const city = f.cidade?.trim();
+    if (!street || !city) return;
+    if (f.geolocalizacao?.trim()) return; // não sobrescreve valor já resolvido/manual
+    const t = setTimeout(() => {
+      autoResolveGeoloc("", { street, number: f.numero, city, state: f.estado });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [open, f.endereco, f.numero, f.bairro, f.cidade, f.estado, f.cep, f.geolocalizacao, autoResolveGeoloc]);
+
+  useEffect(() => {
+    if (!open) return;
+    const street = f.endereco2?.trim();
+    const city = f.cidade2?.trim();
+    if (!street || !city) return;
+    if (f.geolocalizacao2?.trim()) return;
+    const t = setTimeout(() => {
+      autoResolveGeoloc("2", { street, number: f.numero2, city, state: f.estado2 });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [open, f.endereco2, f.numero2, f.bairro2, f.cidade2, f.estado2, f.cep2, f.geolocalizacao2, autoResolveGeoloc]);
+
   useEffect(() => {
     if (!open) {
       // Reset COMPLETO ao fechar: nenhum dado temporário pode persistir
