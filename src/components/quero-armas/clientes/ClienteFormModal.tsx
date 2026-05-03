@@ -372,8 +372,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   // e adiciona warnings/acervo nas observações para revisão humana.
   const applyAIPrefill = useCallback(async (p: PrefillFields) => {
     const onlyDigits = (s: any) => String(s ?? "").replace(/\D/g, "");
-    const setIfEmpty = (cur: string, next: any) =>
-      cur && cur.trim() ? cur : (next == null ? cur : String(next));
+    // IA SEMPRE sobrescreve valores existentes quando tem valor extraído.
+    // Mantém o valor manual SOMENTE se a IA não trouxe nada para o campo.
+    const setIfEmpty = (cur: string, next: any) => {
+      const nextStr = next == null ? "" : String(next).trim();
+      return nextStr ? String(next) : cur;
+    };
 
     // Normaliza sexo para os valores aceitos pelo select (M/F/Outro).
     const normSexo = (v: any): string => {
