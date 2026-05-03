@@ -6091,6 +6091,7 @@ export type Database = {
           calibre: string
           cliente_id: number
           created_at: string
+          data_fabricacao: string | null
           id: string
           marca: string | null
           observacao: string | null
@@ -6101,6 +6102,7 @@ export type Database = {
           calibre: string
           cliente_id: number
           created_at?: string
+          data_fabricacao?: string | null
           id?: string
           marca?: string | null
           observacao?: string | null
@@ -6111,6 +6113,7 @@ export type Database = {
           calibre?: string
           cliente_id?: number
           created_at?: string
+          data_fabricacao?: string | null
           id?: string
           marca?: string | null
           observacao?: string | null
