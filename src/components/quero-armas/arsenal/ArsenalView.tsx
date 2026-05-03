@@ -545,6 +545,60 @@ export function ArsenalView({
     return { tone: "muted" as const, label: "SEM DATA" };
   })();
 
+  // ── BLOCO 1 — Leitura unificada (Regra-Mãe) para CR / CRAF / GTE ──────────
+  // Camada incremental: usa apenas dados já carregados pela tela.
+  // Se vier vazio, ArsenalSummary cai no fallback legacy automaticamente.
+  const docsByTipo = useMemo(() => {
+    const list = (meusDocs ?? []) as any[];
+    const toLite = (d: any): DocumentoUploadLite => ({
+      status: d?.status ?? null,
+      ia_status: d?.ia_status ?? d?.status_ia ?? null,
+      origem: d?.origem ?? null,
+      data_validade: d?.data_validade ?? null,
+    });
+    const out: Record<string, DocumentoUploadLite[]> = { cr: [], craf: [], gte: [] };
+    for (const d of list) {
+      const t = String(d?.tipo_documento ?? "").toLowerCase();
+      if (t === "cr") out.cr.push(toLite(d));
+      else if (t === "craf") out.craf.push(toLite(d));
+      else if (t === "gte" || t === "gt") out.gte.push(toLite(d));
+    }
+    return out;
+  }, [meusDocs]);
+
+  const crUnified = useMemo(
+    () =>
+      getStatusUnificado({
+        tipo: "CR",
+        cadastro: cadastroCr?.validade_cr ? { data_validade: cadastroCr.validade_cr } : null,
+        documentos: docsByTipo.cr,
+      }),
+    [cadastroCr?.validade_cr, docsByTipo.cr],
+  );
+
+  const crafUnified = useMemo(() => {
+    // Pega o CRAF de menor prioridade (mais crítico) entre os documentos.
+    if (docsByTipo.craf.length === 0 && (crafs?.length ?? 0) === 0) return null;
+    return getStatusUnificado({
+      tipo: "CRAF",
+      documentos: docsByTipo.craf,
+    });
+  }, [docsByTipo.craf, crafs]);
+
+  const gteUnified = useMemo(() => {
+    // gteDocs vem da tabela qa_gte_documentos; convertemos para DocumentoUploadLite.
+    const docs: DocumentoUploadLite[] = (gteDocs || []).map((g) => ({
+      status: null,
+      ia_status: g.status_processamento ?? null,
+      data_validade: g.data_validade ?? null,
+    }));
+    if (docs.length === 0 && docsByTipo.gte.length === 0) return null;
+    return getStatusUnificado({
+      tipo: "GTE",
+      documentos: [...docs, ...docsByTipo.gte],
+    });
+  }, [gteDocs, docsByTipo.gte]);
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
