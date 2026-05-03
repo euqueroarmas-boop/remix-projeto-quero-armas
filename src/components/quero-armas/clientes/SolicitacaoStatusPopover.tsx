@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Settings2, Save, AlertTriangle, ListChecks } from "lucide-react";
 import { toast } from "sonner";
 import { STATUS_SERVICO_QA, STATUS_LABELS } from "@/lib/quero-armas/statusServico";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 // Notificações e timeline são geradas por triggers no banco.
 // Status financeiro é DERIVADO de qa_vendas — exibido apenas em modo leitura.
 
@@ -55,13 +56,16 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
   const [semChecklist, setSemChecklist] = useState<boolean>(false);
   const [servicoId, setServicoId] = useState<number | null>(null);
   const [serviceName, setServiceName] = useState<string>("");
+  const [clienteIdLoaded, setClienteIdLoaded] = useState<number | null>(null);
+  const [statusServicoAnterior, setStatusServicoAnterior] = useState<string>("");
+  const [statusProcessoAnterior, setStatusProcessoAnterior] = useState<string>("");
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     supabase
       .from("qa_solicitacoes_servico" as any)
-      .select("status_servico, status_financeiro, status_processo, observacoes, sem_checklist_configurado, servico_id, service_name")
+      .select("status_servico, status_financeiro, status_processo, observacoes, sem_checklist_configurado, servico_id, service_name, cliente_id, service_slug")
       .eq("id", solicitacaoId)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -77,6 +81,9 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
         setSemChecklist(!!r?.sem_checklist_configurado);
         setServicoId(r?.servico_id ?? null);
         setServiceName(r?.service_name ?? "");
+        setClienteIdLoaded(r?.cliente_id ?? null);
+        setStatusServicoAnterior(r?.status_servico ?? "");
+        setStatusProcessoAnterior(r?.status_processo ?? "");
       })
       .then(() => setLoading(false));
   }, [open, solicitacaoId]);
@@ -103,6 +110,47 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
 
       // Trigger qa_log_status_change registra o evento na timeline e
       // qa_dispatch_notify_event chama qa-notify-event automaticamente.
+
+      // Auditoria universal (best-effort, não bloqueia)
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        const userId = userRes?.user?.id ?? null;
+        const baseDetalhes = {
+          contexto: "SolicitacaoStatusPopover",
+          service_slug: null,
+          service_name: serviceName || null,
+        };
+        if (!semChecklist && statusServico && statusServico !== statusServicoAnterior) {
+          await registrarStatusEvento({
+            origem: "equipe",
+            entidade: "solicitacao_servico",
+            entidade_id: solicitacaoId,
+            solicitacao_id: solicitacaoId,
+            cliente_id: clienteIdLoaded,
+            campo_status: "status_servico",
+            status_anterior: statusServicoAnterior,
+            status_novo: statusServico,
+            usuario_id: userId,
+            motivo: observacoes || null,
+            detalhes: baseDetalhes,
+          });
+        }
+        if (statusProcesso && statusProcesso !== statusProcessoAnterior) {
+          await registrarStatusEvento({
+            origem: "equipe",
+            entidade: "solicitacao_servico",
+            entidade_id: solicitacaoId,
+            solicitacao_id: solicitacaoId,
+            cliente_id: clienteIdLoaded,
+            campo_status: "status_processo",
+            status_anterior: statusProcessoAnterior,
+            status_novo: statusProcesso,
+            usuario_id: userId,
+            motivo: observacoes || null,
+            detalhes: baseDetalhes,
+          });
+        }
+      } catch { /* não bloqueia */ }
 
       toast.success("Status da solicitação atualizado");
       setOpen(false);
