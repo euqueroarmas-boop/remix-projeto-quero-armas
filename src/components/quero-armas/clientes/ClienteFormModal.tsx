@@ -754,7 +754,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
                 <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FSelect label="Sexo" value={f.sexo} onChange={v => set("sexo", v)} options={SEXO_OPTIONS} placeholder="Selecionar..." />
+                <FSelect label="Sexo" value={f.sexo} onChange={v => { set("sexo", v); if (v) setRequiredErrors(p => ({ ...p, sexo: false })); }} options={SEXO_OPTIONS} placeholder="Selecionar..." error={requiredErrors.sexo ? "Sexo é obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Naturalidade (Município)" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} />
@@ -763,7 +763,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
-                <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
+                <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => { set("estado_civil", v); if (v) setRequiredErrors(p => ({ ...p, estado_civil: false })); }} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Estado civil é obrigatório" : undefined} />
                 <FInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
