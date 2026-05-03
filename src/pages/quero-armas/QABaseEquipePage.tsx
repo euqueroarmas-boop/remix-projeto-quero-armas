@@ -668,7 +668,12 @@ export default function QABaseEquipePage() {
                       )}
                       <figcaption className="p-2 text-[11px] uppercase font-mono flex items-center justify-between gap-2">
                         <span className="truncate">{img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption ?? "—"}</span>
-                        <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : "border-amber-400 text-amber-700"}`}>
+                            {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : "IA"}
+                          </Badge>
+                          <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
+                        </div>
                       </figcaption>
                     </figure>
                   ))}
