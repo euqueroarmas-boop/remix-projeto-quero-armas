@@ -42,6 +42,7 @@ function confidenceTone(c?: number) {
 const FIELD_LABELS: Record<string, string> = {
   nome_completo: "Nome", cpf: "CPF", cnpj: "CNPJ", rg: "RG/CIN",
   tipo_documento_identidade: "Tipo doc.", emissor_rg: "Emissor",
+  uf_emissor_rg: "UF Emissor",
   data_expedicao_rg: "Expedição", data_nascimento: "Nascimento",
   sexo: "Sexo", nacionalidade: "Nacionalidade", estado_civil: "Estado civil",
   profissao: "Profissão", escolaridade: "Escolaridade",
