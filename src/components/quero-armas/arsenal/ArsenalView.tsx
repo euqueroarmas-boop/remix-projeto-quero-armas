@@ -996,6 +996,16 @@ export function ArsenalView({
           `${agregado.kpis.alertas.total} item${agregado.kpis.alertas.total > 1 ? "s" : ""}`,
         )
       : alertasUnified;
+  const municoesUnifiedFinal: StatusUnificado | null = (() => {
+    const m = agregado?.kpis.municoes;
+    if (!m || m.total === 0) return null;
+    const partes: string[] = [];
+    if (m.vencidas) partes.push(`${m.vencidas} vencida${m.vencidas > 1 ? "s" : ""}`);
+    if (m.vencendo) partes.push(`${m.vencendo} vencendo`);
+    if (m.sem_data) partes.push(`${m.sem_data} sem data`);
+    if (!partes.length && m.ok) partes.push(`${m.ok} em dia`);
+    return buildSU("MUNIÇÕES", m.tone, partes.join(" · "));
+  })();
 
   return (
     <div className="space-y-5">
