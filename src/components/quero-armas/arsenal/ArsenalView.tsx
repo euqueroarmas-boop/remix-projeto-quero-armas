@@ -933,7 +933,7 @@ export function ArsenalView({
     return "sem_dado";
   };
   const buildSU = (label: string, cor: CorStatus, sub?: string): StatusUnificado => ({
-    dimensao: "agregado",
+    dimensao: "alerta",
     codigo: corToCodigo(cor),
     label,
     sub,
