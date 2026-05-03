@@ -866,16 +866,29 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     <p className="text-[10px] text-zinc-500 italic">
                       {CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.descricao}
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <FSelect
-                        label="Subcategoria"
-                        value={f.subcategoria}
-                        onChange={v => set("subcategoria", v)}
-                        options={(CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.subcategorias || []).map(s => ({ value: s, label: s }))}
-                        placeholder="Selecione..."
-                      />
-                      <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
-                    </div>
+                    {(() => {
+                      const cat = f.categoria_titular as CategoriaTitular;
+                      const isInstitucional = cat === "seguranca_publica" || cat === "magistrado_mp" || cat === "militar" || cat === "pessoa_juridica";
+                      return (
+                        <>
+                          <div className={isInstitucional ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}>
+                            <FSelect
+                              label="Subcategoria"
+                              value={f.subcategoria}
+                              onChange={v => set("subcategoria", v)}
+                              options={(CATEGORIA_MAP[cat]?.subcategorias || []).map(s => ({ value: s, label: s }))}
+                              placeholder="Selecione..."
+                            />
+                            {isInstitucional && (
+                              <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
+                            )}
+                          </div>
+                          {isInstitucional && (
+                            <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
+                          )}
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>
