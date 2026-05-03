@@ -526,6 +526,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
+              {/* Camada de IA — apenas em "Novo Cliente" */}
+              {!isEdit && <ClienteAIPrefill onApply={applyAIPrefill} />}
               {/* Photo upload */}
               <div className="flex items-center gap-4">
                 <div className="relative">
