@@ -957,7 +957,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                           value={f.senha_gov}
                           onChange={e => { set("senha_gov", e.target.value); setAiSenhaGovNeedsReview(false); }}
                           placeholder="Senha GOV importada"
-                          className={inputClass.replace(" uppercase", "")}
+                          className={cn(inputClass.replace(" uppercase", ""), aiSenhaGovFromAI && "pr-32")}
                         />
                         {aiSenhaGovFromAI && (
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
