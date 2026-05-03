@@ -241,6 +241,8 @@ serve(async (req) => {
         dias_restantes: c.dias,
         mensagem: resumo,
         portal: PORTAL_LINK,
+        cliente_nome: nome,
+        cliente_id: c.cliente_id,
       });
 
       if (!dryRun) {
