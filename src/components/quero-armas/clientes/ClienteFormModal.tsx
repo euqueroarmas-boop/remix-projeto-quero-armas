@@ -499,19 +499,47 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   }, [lookupCep, autoResolveGeoloc]);
 
   const save = async () => {
-    if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
+    // Todos os campos são obrigatórios EXCETO: cnh, ctps, complementos,
+    // endereço secundário (todo), observação e geolocalização (auto).
     if (!isEdit) {
-      const errs = { photo: !photoFile, sexo: !f.sexo, estado_civil: !f.estado_civil };
-      if (errs.photo || errs.sexo || errs.estado_civil) {
+      const trimmed = (k: string) => !String((f as any)[k] || "").trim();
+      const errs: Record<string, boolean> = {
+        photo: !photoFile,
+        nome_completo: trimmed("nome_completo"),
+        cpf: trimmed("cpf"),
+        rg: trimmed("rg"),
+        emissor_rg: trimmed("emissor_rg"),
+        expedicao_rg: trimmed("expedicao_rg"),
+        data_nascimento: trimmed("data_nascimento"),
+        sexo: trimmed("sexo"),
+        naturalidade_municipio: trimmed("naturalidade_municipio"),
+        naturalidade_uf: trimmed("naturalidade_uf"),
+        nacionalidade: trimmed("nacionalidade"),
+        estado_civil: trimmed("estado_civil"),
+        profissao: trimmed("profissao"),
+        escolaridade: trimmed("escolaridade"),
+        titulo_eleitor: trimmed("titulo_eleitor"),
+        nome_mae: trimmed("nome_mae"),
+        nome_pai: trimmed("nome_pai"),
+        celular: trimmed("celular"),
+        email: trimmed("email"),
+        cep: trimmed("cep"),
+        endereco: trimmed("endereco"),
+        numero: trimmed("numero"),
+        bairro: trimmed("bairro"),
+        cidade: trimmed("cidade"),
+        estado: trimmed("estado"),
+        categoria_titular: trimmed("categoria_titular"),
+      };
+      const hasErr = Object.values(errs).some(Boolean);
+      if (hasErr) {
         setRequiredErrors(errs);
-        const missing: string[] = [];
-        if (errs.photo) missing.push("foto");
-        if (errs.sexo) missing.push("sexo");
-        if (errs.estado_civil) missing.push("estado civil");
-        toast.error(`Campos obrigatórios: ${missing.join(", ")}`);
+        toast.error("Preencha todos os campos obrigatórios destacados");
         return;
       }
       setRequiredErrors({});
+    } else {
+      if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
     }
     // ── Validação compartilhada (clienteSchema) ──
     if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); return; }
