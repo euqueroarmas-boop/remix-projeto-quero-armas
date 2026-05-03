@@ -12,6 +12,12 @@ import {
   Settings2,
   RotateCcw,
   Check,
+  Files,
+  Workflow,
+  ShoppingCart,
+  Stethoscope,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   DndContext,
@@ -36,12 +42,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { StatusUnificado, CorStatus } from "@/lib/quero-armas/statusUnificado";
 
-export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
+export type ArsenalSummaryTarget =
+  | "armas"
+  | "municoes"
+  | "crafs"
+  | "cr"
+  | "calibres"
+  | "alertas"
+  | "gte"
+  | "documentos"
+  | "processos"
+  | "autorizacoes"
+  | "exames";
 
 // Identificadores fixos exigidos
 type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas" | "gte";
+// KPIs da Linha 2 (recolhível). Não entram no DEFAULT_ORDER persistido para
+// manter Zero Regression do layout existente — são renderizados separadamente.
+type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
 
 const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas", "gte"];
+const SECONDARY_ORDER: KpiSecondaryId[] = ["documentos", "processos", "autorizacoes", "exames"];
 
 const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   armas: "armas",
@@ -85,6 +106,15 @@ interface Props {
   crUnified?: StatusUnificado | null;
   crafUnified?: StatusUnificado | null;
   gteUnified?: StatusUnificado | null;
+  /** BLOCO 2 — KPIs adicionais (Linha 2 recolhível). */
+  documentosUnified?: StatusUnificado | null;
+  processosUnified?: StatusUnificado | null;
+  autorizacoesUnified?: StatusUnificado | null;
+  examesUnified?: StatusUnificado | null;
+  documentosCount?: number;
+  processosCount?: number;
+  autorizacoesCount?: number;
+  examesCount?: number;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
