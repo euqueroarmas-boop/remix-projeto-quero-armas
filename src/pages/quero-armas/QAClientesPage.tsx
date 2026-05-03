@@ -29,12 +29,12 @@ import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/compo
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
-import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import { VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
 import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
-import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
+import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
@@ -1077,9 +1077,6 @@ export default function QAClientesPage() {
   // Modal states
   const [clienteModal, setClienteModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
-  const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
-  const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
-  const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
   const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
@@ -1992,9 +1989,8 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    // Aba "Arsenal" (Armory/Bancada Tática) descontinuada — abre direto em "CRAFs".
-    // Código de Arsenal mantido oculto para remoção futura.
-    setTab("armas");
+    // Abas legadas (CRAFs/CR/Docs) removidas — abre no Arsenal Inteligente.
+    setTab("arsenal");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
@@ -2367,9 +2363,6 @@ export default function QAClientesPage() {
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
-                { value: "armas", icon: Crosshair, label: `CRAFs (${crafs.length + gtes.length})` },
-                { value: "cr", icon: Shield, label: "CR" },
-                { value: "docs", icon: FileDown, label: "Docs" },
                 { value: "exames", icon: HeartPulse, label: "Exames" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
@@ -2411,7 +2404,7 @@ export default function QAClientesPage() {
                     ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
                     ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
                   ].filter((d) => d.days !== null && d.days <= 90)}
-                  onOpenAddDoc={() => setTab("docs")}
+                  onOpenAddDoc={() => setTab("hub")}
                   onArsenalChanged={async () => {
                     await loadSubData(c);
                   }}
@@ -2930,156 +2923,6 @@ export default function QAClientesPage() {
                 )}
               </TabsContent>
 
-              {/* ARMAS */}
-              <TabsContent value="armas" className="mt-3 space-y-4">
-                {/* CRAFs */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">CRAFs ({crafs.length})</span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => exportCrafs(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
-                        <Download className="h-3 w-3 mr-1" /> CSV
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
-                        <Plus className="h-3 w-3 mr-1" /> Novo CRAF
-                      </Button>
-                    </div>
-                  </div>
-                  {crafs.length === 0 ? <Empty text="Nenhum CRAF." /> : crafs.map((cr: any) => (
-                    <div key={cr.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 mb-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-slate-700 font-medium">{cr.nome_arma}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[9px] text-slate-500">Val: {formatDate(cr.data_validade)}</span>
-                          <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true, item: cr })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_crafs", id: cr.id, title: "Excluir CRAF", desc: `Excluir CRAF "${cr.nome_arma}"?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-4 mt-1 text-[9px] text-slate-500">
-                        {cr.numero_sigma && <span>SIGMA: {cr.numero_sigma}</span>}
-                        {cr.numero_arma && <span>Nº: {cr.numero_arma}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* GTEs */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">GTEs ({gtes.length})</span>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => exportGtes(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
-                        <Download className="h-3 w-3 mr-1" /> CSV
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
-                        <Plus className="h-3 w-3 mr-1" /> Novo GTE
-                      </Button>
-                    </div>
-                  </div>
-                  {gtes.length === 0 ? <Empty text="Nenhum GTE." /> : gtes.map((g: any) => (
-                    <div key={g.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 mb-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] text-slate-700 font-medium">{g.nome_arma}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[9px] text-slate-500">Val: {formatDate(g.data_validade)}</span>
-                          <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true, item: g })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_gtes", id: g.id, title: "Excluir GTE", desc: `Excluir GTE "${g.nome_arma}"?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      </div>
-                      <div className="flex gap-4 mt-1 text-[9px] text-slate-500">
-                        {g.numero_sigma && <span>SIGMA: {g.numero_sigma}</span>}
-                        {g.numero_arma && <span>Nº: {g.numero_arma}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-
-              {/* CR */}
-              <TabsContent value="cr" className="mt-3">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">Certificado de Registro</span>
-                  <div className="flex gap-1">
-                    {cadastro && (
-                      <Button variant="ghost" size="sm" onClick={() => exportCr(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
-                        <Download className="h-3 w-3 mr-1" /> CSV
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => setCrModal({ open: true, item: cadastro || undefined })} className="h-6 px-2 text-[9px] text-emerald-400">
-                      {cadastro ? <><Edit className="h-3 w-3 mr-1" /> Editar</> : <><Plus className="h-3 w-3 mr-1" /> Cadastrar CR</>}
-                    </Button>
-                    {cadastro && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteModal({
-                          open: true,
-                          table: "qa_cadastro_cr",
-                          id: cadastro.id,
-                          title: "Excluir CR",
-                          desc: `Excluir o cadastro de CR "${cadastro.numero_cr || ""}" deste cliente?`,
-                        })}
-                        className="h-6 px-2 text-[9px] text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" /> Excluir
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                {!cadastro ? <Empty text="Nenhum cadastro CR encontrado." /> : (() => {
-                  const cat = (c as any).categoria_titular as CategoriaTitular | null | undefined;
-                  const dispensaLaudo = isDispensado(cat, "laudo_psicologico");
-                  const dispensaTiro = isDispensado(cat, "exame_tiro");
-                  const baseLegal = getBaseLegalDispensa(cat);
-                  const catLabel = cat ? CATEGORIA_MAP[cat]?.label : null;
-                  return (
-                    <div className="space-y-1">
-                      {catLabel && (
-                        <div className="mb-2 px-2 py-1.5 rounded-md bg-blue-50 border border-blue-100 flex items-center gap-1.5">
-                          <Shield className="h-3 w-3 text-blue-600" />
-                          <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">{catLabel}</span>
-                        </div>
-                      )}
-                      <Field label="Nº CR" value={cadastro.numero_cr} />
-                      <Field label="Validade CR" value={formatDate(cadastro.validade_cr)} />
-                      {dispensaLaudo ? (
-                        <div className="py-1.5">
-                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Laudo Psicológico</div>
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
-                            <Shield className="h-2.5 w-2.5 text-emerald-700" />
-                            <span className="text-[10px] font-bold text-emerald-700">DISPENSADO POR LEI</span>
-                          </div>
-                          {baseLegal && <div className="text-[9px] text-slate-400 mt-0.5 italic">{baseLegal}</div>}
-                        </div>
-                      ) : (
-                        <Field label="Laudo Psicológico" value={formatDate(cadastro.validade_laudo_psicologico)} />
-                      )}
-                      {dispensaTiro ? (
-                        <div className="py-1.5">
-                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Exame de Tiro</div>
-                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
-                            <Shield className="h-2.5 w-2.5 text-emerald-700" />
-                            <span className="text-[10px] font-bold text-emerald-700">DISPENSADO POR LEI</span>
-                          </div>
-                          {baseLegal && <div className="text-[9px] text-slate-400 mt-0.5 italic">{baseLegal}</div>}
-                        </div>
-                      ) : (
-                        <Field label="Exame de Tiro" value={formatDate(cadastro.validade_exame_tiro)} />
-                      )}
-                      <SenhaGovField cadastroCrId={cadastro.id} contexto="aba CR" />
-                      {/* Checks ✓ só aparecem se NÃO dispensado E marcado */}
-                      <div className="flex gap-4 mt-2 text-[10px]">
-                        {!dispensaLaudo && cadastro.check_laudo_psi && <span className="text-emerald-400">✓ Laudo Psicológico OK</span>}
-                        {!dispensaTiro && cadastro.check_exame_tiro && <span className="text-emerald-400">✓ Exame de Tiro OK</span>}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </TabsContent>
-              {/* DOCUMENTOS */}
-              <TabsContent value="docs" className="mt-3">
-                <DocumentGenerator cliente={c} />
-              </TabsContent>
               {/* EXAMES */}
               <TabsContent value="exames" className="mt-3">
                 <ClienteExames cliente={c} />
@@ -3112,9 +2955,6 @@ export default function QAClientesPage() {
             if (data) setSelected(data as any);
           }
         }} cliente={editingCliente} />
-        <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} craf={crafModal.item} />
-        <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} gte={gteModal.item} />
-        <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} cadastro={crModal.item} />
         <VendaModal
           open={vendaModal.open}
           onClose={() => setVendaModal({ open: false })}
