@@ -184,6 +184,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [lookupCep]);
 
+  // Máscara visual de CEP — sempre formata como "XX.XXX-XXX".
+  // Aceita qualquer entrada (com ou sem pontuação) e devolve a forma padronizada.
+  const formatCepMask = (raw: string): string => {
+    const d = String(raw ?? "").replace(/\D/g, "").slice(0, 8);
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}-${d.slice(5)}`;
+  };
+
   const resolveGeoloc = useCallback(async (prefix: "" | "2") => {
     setF(prev => {
       // lê valores atuais e dispara fora do setter
@@ -249,11 +258,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         titulo_eleitor: cliente.titulo_eleitor || "",
         endereco: cliente.endereco || "", numero: cliente.numero || "",
         complemento: cliente.complemento || "", bairro: cliente.bairro || "",
-        cep: cliente.cep || "", cidade: cliente.cidade || "", estado: cliente.estado || "",
+        cep: formatCepMask(cliente.cep || ""),
+        cidade: cliente.cidade || "", estado: cliente.estado || "",
         pais: cliente.pais || "Brasil",
         endereco2: cliente.endereco2 || "", numero2: cliente.numero2 || "",
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
-        cep2: cliente.cep2 || "", cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
+        cep2: formatCepMask(cliente.cep2 || ""), cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
         pais2: cliente.pais2 || "",
         geolocalizacao: cliente.geolocalizacao || "",
         geolocalizacao2: cliente.geolocalizacao2 || "",
@@ -353,7 +363,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         ctps: setIfEmpty(prev.ctps, p.ctps),
         celular: setIfEmpty(prev.celular, p.celular ? onlyDigits(p.celular) : ""),
         email: setIfEmpty(prev.email, p.email),
-        cep: setIfEmpty(prev.cep, extractedCep),
+        cep: setIfEmpty(prev.cep, extractedCep ? formatCepMask(extractedCep) : ""),
         endereco: setIfEmpty(prev.endereco, p.endereco),
         numero: setIfEmpty(prev.numero, p.numero),
         complemento: setIfEmpty(prev.complemento, p.complemento),
@@ -361,7 +371,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade: setIfEmpty(prev.cidade, p.cidade),
         estado: setIfEmpty(prev.estado, p.estado),
         pais: setIfEmpty(prev.pais, p.pais) || prev.pais,
-        cep2: setIfEmpty(prev.cep2, extractedCep2),
+        cep2: setIfEmpty(prev.cep2, extractedCep2 ? formatCepMask(extractedCep2) : ""),
         endereco2: setIfEmpty(prev.endereco2, (p as any).endereco_secundario),
         numero2: setIfEmpty(prev.numero2, (p as any).numero_secundario),
         complemento2: setIfEmpty(prev.complemento2, (p as any).complemento_secundario),
@@ -369,6 +379,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade2: setIfEmpty(prev.cidade2, (p as any).cidade_secundario),
         estado2: setIfEmpty(prev.estado2, (p as any).estado_secundario),
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
+        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).validade_laudo_psicologico),
+        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).validade_exame_tiro),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
@@ -748,7 +760,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
+                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
                   <div className="col-span-2 sm:col-span-3">
                     <FInput label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} span />
                   </div>
@@ -786,7 +798,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
+                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
                   <div className="col-span-2 sm:col-span-3">
                     <FInput label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} span />
                   </div>
@@ -854,17 +866,29 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     <p className="text-[10px] text-zinc-500 italic">
                       {CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.descricao}
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <FSelect
-                        label="Subcategoria"
-                        value={f.subcategoria}
-                        onChange={v => set("subcategoria", v)}
-                        options={(CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.subcategorias || []).map(s => ({ value: s, label: s }))}
-                        placeholder="Selecione..."
-                      />
-                      <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
-                    </div>
-                    <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
+                    {(() => {
+                      const cat = f.categoria_titular as CategoriaTitular;
+                      const isInstitucional = cat === "seguranca_publica" || cat === "magistrado_mp" || cat === "militar" || cat === "pessoa_juridica";
+                      return (
+                        <>
+                          <div className={isInstitucional ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}>
+                            <FSelect
+                              label="Subcategoria"
+                              value={f.subcategoria}
+                              onChange={v => set("subcategoria", v)}
+                              options={(CATEGORIA_MAP[cat]?.subcategorias || []).map(s => ({ value: s, label: s }))}
+                              placeholder="Selecione..."
+                            />
+                            {isInstitucional && (
+                              <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
+                            )}
+                          </div>
+                          {isInstitucional && (
+                            <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
+                          )}
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>

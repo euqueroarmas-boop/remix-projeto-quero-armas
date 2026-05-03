@@ -82,6 +82,8 @@ const PREFILL_TOOL = {
         cr_data_emissao: { type: "string", description: "DD/MM/AAAA" },
         cr_data_validade: { type: "string", description: "DD/MM/AAAA" },
         cr_orgao_emissor: { type: "string" },
+        validade_laudo_psicologico: { type: "string", description: "DD/MM/AAAA — validade do laudo psicológico (Atestado de Aptidão Psicológica)." },
+        validade_exame_tiro: { type: "string", description: "DD/MM/AAAA — validade do exame de capacidade técnica / aptidão para manuseio de arma de fogo (exame de tiro)." },
         acervo: {
           type: "array",
           description: "Itens do acervo identificados (CRAFs, GTs etc.).",
@@ -135,6 +137,7 @@ const PREFILL_TOOL = {
         "cep_secundario", "endereco_secundario", "numero_secundario", "complemento_secundario",
         "bairro_secundario", "cidade_secundario", "estado_secundario", "pais_secundario",
         "cr_categoria", "cr_data_emissao", "cr_data_validade", "cr_orgao_emissor",
+        "validade_laudo_psicologico", "validade_exame_tiro",
         "acervo", "observacoes", "warnings", "confidence_pairs",
       ],
     },
