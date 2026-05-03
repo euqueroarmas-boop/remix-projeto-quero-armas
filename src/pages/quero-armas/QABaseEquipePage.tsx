@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -56,6 +56,8 @@ export default function QABaseEquipePage() {
   const [selected, setSelected] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Partial<Article> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [draftDescription, setDraftDescription] = useState("");
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -128,9 +130,45 @@ export default function QABaseEquipePage() {
 
   function startNew() {
     setEditing(emptyArticle());
+    setDraftDescription("");
   }
   function startEdit(a: Article) {
     setEditing({ ...a });
+    setDraftDescription("");
+  }
+
+  async function generateWithAI() {
+    if (!editing) return;
+    if (!editing.title?.trim() && !draftDescription.trim()) {
+      toast.error("Informe o título ou uma descrição para a IA gerar o rascunho.");
+      return;
+    }
+    setDrafting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-draft", {
+        body: {
+          title: editing.title || draftDescription.slice(0, 80),
+          module: editing.module || "",
+          audience: editing.audience || "equipe",
+          description: draftDescription,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const d = data as any;
+      setEditing({
+        ...editing,
+        body: d.body || editing.body,
+        tags: (d.tags?.length ? d.tags : editing.tags) ?? [],
+        symptoms: (d.symptoms?.length ? d.symptoms : editing.symptoms) ?? [],
+        status: "draft",
+      });
+      toast.success("Rascunho gerado pela IA. Revise e publique manualmente.");
+    } catch (e: any) {
+      toast.error("Erro ao gerar rascunho: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setDrafting(false);
+    }
   }
 
   async function saveArticle() {
@@ -166,6 +204,8 @@ export default function QABaseEquipePage() {
       return;
     }
     toast.success("Artigo salvo.");
+    // dispara geração de embedding em background (não bloqueia)
+    supabase.functions.invoke("qa-kb-embed", { body: { backfill: true } }).catch(() => {});
     setEditing(null);
     await loadAll();
   }
