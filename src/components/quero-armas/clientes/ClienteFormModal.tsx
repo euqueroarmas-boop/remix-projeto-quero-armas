@@ -976,9 +976,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <FSelect
                   label="Categoria *"
                   value={f.categoria_titular}
-                  onChange={v => setF(prev => ({ ...prev, categoria_titular: v as CategoriaTitular | "", subcategoria: "" }))}
+                  onChange={v => {
+                    setF(prev => ({ ...prev, categoria_titular: v as CategoriaTitular | "", subcategoria: "" }));
+                    if (v) setRequiredErrors(p => (p.categoria_titular ? { ...p, categoria_titular: false } : p));
+                  }}
                   options={CATEGORIA_OPTIONS}
                   placeholder="Selecione a categoria do titular..."
+                  error={requiredErrors.categoria_titular ? "Categoria é obrigatória" : undefined}
                 />
                 {f.categoria_titular && (
                   <>
