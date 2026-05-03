@@ -7284,7 +7284,7 @@ export type Database = {
           desconto?: number | null
           forma_pagamento?: string | null
           id?: number
-          id_legado: number
+          id_legado?: number
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
