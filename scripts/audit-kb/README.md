@@ -75,7 +75,9 @@ Estrutura persistida em `qa_kb_artigos.audit_plan_json`:
 }
 ```
 
-Se `needs_human_review=true` ou todos os steps tiverem `confidence < 0.6`,
+`needs_human_review=true` é apenas um sinalizador informativo (não bloqueia
+execução). O Playwright sempre tenta executar o plano. Se todos os steps
+tiverem `confidence < 0.6`,
 o auditor não captura imagem e marca o artigo como `needs_real_image`
 com erro `AI_PLAN_NEEDS_HUMAN_REVIEW`.
 
