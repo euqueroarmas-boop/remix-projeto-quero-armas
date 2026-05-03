@@ -212,7 +212,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
     endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
     geolocalizacao: "", geolocalizacao2: "",
-    observacao: "", status: "ATIVO", cliente_lions: false,
+    observacao: "", status: "ATIVO",
     // Categorização legal (Lei 10.826/03 art. 6º)
     categoria_titular: "" as CategoriaTitular | "",
     subcategoria: "",
@@ -256,7 +256,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         geolocalizacao: cliente.geolocalizacao || "",
         geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
-        cliente_lions: cliente.cliente_lions || false,
         categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
         subcategoria: cliente.subcategoria || "",
         orgao_vinculado: cliente.orgao_vinculado || "",
@@ -821,17 +820,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FSelect label="Status do Cliente" value={f.status} onChange={v => set("status", v)} options={statusOptions} />
-                <Field label="Cliente Lions">
-                  <label className="flex items-center gap-3 h-9 px-3 rounded-md border border-zinc-200 bg-white cursor-pointer hover:bg-zinc-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={f.cliente_lions}
-                      onChange={e => set("cliente_lions", e.target.checked)}
-                      className="w-4 h-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500"
-                    />
-                    <span className="text-sm text-zinc-700">🦁 Sim, é cliente Lions</span>
-                  </label>
-                </Field>
               </div>
               <Field label="Observações" span>
                 <textarea

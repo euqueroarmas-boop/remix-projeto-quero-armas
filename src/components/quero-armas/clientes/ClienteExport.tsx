@@ -21,8 +21,8 @@ function downloadCsv(filename: string, headers: string[], rows: string[][]) {
 export async function exportClientes() {
   const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo");
   if (!data?.length) { toast.error("Nenhum cliente"); return; }
-  const headers = ["Nome", "CPF", "RG", "Celular", "Email", "Cidade", "UF", "Status", "Lions"];
-  const rows = (data as any[]).map(c => [c.nome_completo, c.cpf, c.rg, c.celular, c.email, c.cidade, c.estado, c.status, c.cliente_lions ? "Sim" : "Não"]);
+  const headers = ["Nome", "CPF", "RG", "Celular", "Email", "Cidade", "UF", "Status"];
+  const rows = (data as any[]).map(c => [c.nome_completo, c.cpf, c.rg, c.celular, c.email, c.cidade, c.estado, c.status]);
   downloadCsv("clientes_queroarmas.csv", headers, rows);
   toast.success("CSV exportado");
 }
