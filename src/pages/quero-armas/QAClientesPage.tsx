@@ -3679,6 +3679,8 @@ export default function QAClientesPage() {
             );
           })}
         </div>
+          );
+        })()
       ) : tabView === "cadastros" ? (
         <div className="space-y-1.5">
           {filteredCadastros.length === 0 && (
