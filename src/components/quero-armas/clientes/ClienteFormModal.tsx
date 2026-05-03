@@ -135,7 +135,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const existingPhotoUrl = usePrivateStorageUrl("qa-documentos", cliente?.imagem || null);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(0);
-  const { lookupCep, cepLoading } = useBrasilApiLookup();
+  const { lookupCep, cepLoading, lookupGeocode, geocodeLoading } = useBrasilApiLookup();
 
   // Photo upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +194,26 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [lookupCep]);
 
+  const resolveGeoloc = useCallback(async (prefix: "" | "2") => {
+    setF(prev => {
+      // lê valores atuais e dispara fora do setter
+      const street = (prev as any)[`endereco${prefix}`];
+      const number = (prev as any)[`numero${prefix}`];
+      const city = (prev as any)[`cidade${prefix}`];
+      const state = (prev as any)[`estado${prefix}`];
+      if (!street || !city) return prev;
+      lookupGeocode({ street, number, city, state }).then((g) => {
+        if (!g) return;
+        const value = `${g.latitude},${g.longitude}`;
+        setF((p2) => ({
+          ...p2,
+          [`geolocalizacao${prefix}`]: value,
+        }));
+      }).catch(() => {});
+      return prev;
+    });
+  }, [lookupGeocode]);
+
   const [f, setF] = useState({
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
@@ -201,6 +221,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     email: "", celular: "", titulo_eleitor: "",
     endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
     endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+    geolocalizacao: "", geolocalizacao2: "",
     observacao: "", status: "ATIVO", cliente_lions: false,
     // Categorização legal (Lei 10.826/03 art. 6º)
     categoria_titular: "" as CategoriaTitular | "",
@@ -242,6 +263,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
         cep2: cliente.cep2 || "", cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
         pais2: cliente.pais2 || "",
+        geolocalizacao: cliente.geolocalizacao || "",
+        geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
         categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
@@ -496,18 +519,25 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="w-[96vw] max-w-3xl max-h-[90dvh] overflow-hidden p-0 bg-white border-slate-200 text-slate-800 qa-premium gap-0">
 
-        {/* ── Header ── */}
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-          <DialogTitle className="text-lg font-bold text-slate-800">
+        {/* ── Header (Arsenal UI) ── */}
+        <DialogHeader className="relative px-6 pt-5 pb-4 border-b border-amber-500/30 bg-zinc-900 text-zinc-100">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-500/15 blur-3xl" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
+          <div className="flex items-center gap-3 relative">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400">
+              Quero Armas · Cadastro
+            </span>
+          </div>
+          <DialogTitle className="font-mono text-lg font-black uppercase tracking-[0.18em] text-zinc-100 mt-1">
             {isEdit ? "Editar Cliente" : "Novo Cliente"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-400">
-            Preencha os dados cadastrais • Etapa {step + 1} de {STEPS.length}
+          <DialogDescription className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-400/80">
+            Etapa {step + 1} de {STEPS.length} · preencha os dados cadastrais
           </DialogDescription>
         </DialogHeader>
 
-        {/* ── Step Navigation ── */}
-        <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-100">
+        {/* ── Step Navigation (Arsenal UI) ── */}
+        <div className="px-6 py-3 bg-[#f6f5f1] border-b border-amber-500/20">
           <div className="flex items-center gap-1 overflow-x-auto">
             {STEPS.map((s, i) => {
               const Icon = s.icon;
@@ -518,12 +548,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   key={s.key}
                   onClick={() => setStep(i)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all",
+                    "flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-mono font-bold uppercase tracking-[0.12em] whitespace-nowrap transition-all",
                     active
-                      ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                      ? "bg-amber-500 text-zinc-900 shadow-sm shadow-amber-300"
                       : completed
-                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                        : "bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-100 border border-slate-100"
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                        : "bg-white text-zinc-500 hover:text-zinc-800 hover:bg-amber-50 border border-amber-500/20"
                   )}
                 >
                   {completed && !active ? (
@@ -538,16 +568,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             })}
           </div>
           {/* Progress bar */}
-          <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="mt-2 h-1 bg-amber-500/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-300"
               style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* ── Form Body ── */}
-        <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(90vh - 260px)" }}>
+        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(90vh - 260px)" }}>
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
@@ -686,8 +716,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 2: Endereço Principal */}
           {step === 2 && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Endereço Principal</p>
+              <div className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Endereço Principal</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
                   <div className="col-span-2 sm:col-span-3">
@@ -695,7 +725,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
+                  <FInput label="Número" value={f.numero} onChange={v => set("numero", v)} onBlur={() => resolveGeoloc("")} />
                   <FInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
                   <FInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
                 </div>
@@ -704,6 +734,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FSelect label="UF" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais} onChange={v => set("pais", v)} />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+                  <FInput
+                    label="Geolocalização (lat,long)"
+                    value={f.geolocalizacao}
+                    onChange={v => set("geolocalizacao", v)}
+                    placeholder="Ex: -23.5505,-46.6333"
+                    span
+                  />
+                  <button
+                    type="button"
+                    onClick={() => resolveGeoloc("")}
+                    disabled={geocodeLoading || !f.endereco || !f.cidade}
+                    className="h-10 px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -711,8 +758,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 3: Endereço Secundário */}
           {step === 3 && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço Secundário <span className="normal-case font-normal">(opcional)</span></p>
+              <div className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Endereço Secundário <span className="normal-case font-normal text-zinc-400">(opcional)</span></p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
                   <div className="col-span-2 sm:col-span-3">
@@ -720,7 +767,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
+                  <FInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} onBlur={() => resolveGeoloc("2")} />
                   <FInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
                   <FInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
                 </div>
@@ -728,6 +775,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
                   <FSelect label="UF" value={f.estado2} onChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+                  <FInput
+                    label="Geolocalização (lat,long)"
+                    value={f.geolocalizacao2}
+                    onChange={v => set("geolocalizacao2", v)}
+                    placeholder="Ex: -23.5505,-46.6333"
+                    span
+                  />
+                  <button
+                    type="button"
+                    onClick={() => resolveGeoloc("2")}
+                    disabled={geocodeLoading || !f.endereco2 || !f.cidade2}
+                    className="h-10 px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -809,49 +873,48 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           )}
         </div>
 
-        {/* ── Footer ── */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/40 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
+        {/* ── Footer (Arsenal UI) ── */}
+        <div className="relative px-6 py-4 border-t border-amber-500/30 bg-[#f6f5f1] flex items-center justify-between gap-3">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+          <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 text-xs"
+            className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-zinc-800 transition-colors"
           >
             Cancelar
-          </Button>
+          </button>
 
           <div className="flex items-center gap-2">
             {canGoPrev && (
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => setStep(s => s - 1)}
-                className="gap-1.5 text-xs border-slate-200 text-slate-600 hover:bg-slate-100"
+                className="h-9 px-3 inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-white text-zinc-700 hover:bg-amber-50 hover:border-amber-500 font-mono text-[10px] font-bold uppercase tracking-[0.18em] transition-colors"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
                 Anterior
-              </Button>
+              </button>
             )}
             {canGoNext && (
-              <Button
-                size="sm"
+              <button
+                type="button"
                 onClick={() => setStep(s => s + 1)}
-                className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] shadow-sm shadow-amber-300 transition-colors"
               >
                 Próximo
                 <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
+              </button>
             )}
             {isLast && (
-              <Button
-                size="sm"
+              <button
+                type="button"
                 onClick={save}
                 disabled={saving}
-                className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
+                className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] min-w-[160px] justify-center disabled:opacity-50 transition-colors"
               >
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
-              </Button>
+              </button>
             )}
           </div>
         </div>
