@@ -239,7 +239,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       const state = (prev as any)[`estado${prefix}`];
       if (!street || !city) return prev;
       lookupGeocode({ street, number, city, state }).then((g) => {
-        if (!g) return;
+        if (!g) {
+          toast.warning(`Não foi possível resolver geolocalização do endereço${prefix === "2" ? " secundário" : ""}. Reprocesse manualmente.`);
+          return;
+        }
         const value = `${g.latitude},${g.longitude}`;
         setF((p2) => ({
           ...p2,
