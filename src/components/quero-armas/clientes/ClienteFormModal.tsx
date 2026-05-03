@@ -880,7 +880,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <FInput
                   label={(f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG") + " *"}
                   value={f.emissor_rg}
-                  onChange={v => set("emissor_rg", v)}
+                  onChange={v => { set("emissor_rg", v); setAiEmissorRgNeedsReview(false); }}
                   error={requiredErrors.emissor_rg ? "Obrigatório" : undefined}
                 />
                 <FSelect
@@ -892,6 +892,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   error={requiredErrors.uf_emissor_rg ? "Obrigatório" : undefined}
                 />
               </div>
+              {aiEmissorRgNeedsReview && (
+                <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 -mt-2">
+                  <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>Verificar emissor do RG. Extração possivelmente incorreta.</span>
+                </div>
+              )}
               {f.tipo_documento_identidade === "CIN" && (
                 <p className="text-[10px] text-zinc-500 -mt-2">
                   ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
