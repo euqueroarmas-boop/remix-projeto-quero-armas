@@ -86,6 +86,31 @@ function Field({ label, children, span }: { label: string; children: React.React
 const inputClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all uppercase";
 const selectClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all appearance-none cursor-pointer";
 
+const EMPTY_FORM = {
+  nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
+  data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
+  nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
+  email: "", celular: "", titulo_eleitor: "",
+  endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
+  endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+  geolocalizacao: "", geolocalizacao2: "",
+  observacao: "", status: "ATIVO",
+  categoria_titular: "" as CategoriaTitular | "",
+  subcategoria: "",
+  orgao_vinculado: "",
+  matricula_funcional: "",
+  sexo: "",
+  tipo_documento_identidade: "RG" as "RG" | "CIN",
+  naturalidade_municipio: "",
+  naturalidade_uf: "",
+  naturalidade_pais: "Brasil",
+  cnh: "",
+  ctps: "",
+  validade_laudo_psicologico: "",
+  validade_exame_tiro: "",
+  senha_gov: "",
+};
+
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
   placeholder?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
@@ -241,30 +266,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     } catch { /* silencioso */ }
   }, [lookupGeocode]);
 
-  const EMPTY_FORM = {
-    nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
-    data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
-    nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
-    email: "", celular: "", titulo_eleitor: "",
-    endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
-    endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
-    geolocalizacao: "", geolocalizacao2: "",
-    observacao: "", status: "ATIVO",
-    categoria_titular: "" as CategoriaTitular | "",
-    subcategoria: "",
-    orgao_vinculado: "",
-    matricula_funcional: "",
-    sexo: "",
-    tipo_documento_identidade: "RG" as "RG" | "CIN",
-    naturalidade_municipio: "",
-    naturalidade_uf: "",
-    naturalidade_pais: "Brasil",
-    cnh: "",
-    ctps: "",
-    validade_laudo_psicologico: "",
-    validade_exame_tiro: "",
-    senha_gov: "",
-  };
   const [f, setF] = useState(EMPTY_FORM);
 
   useEffect(() => {
