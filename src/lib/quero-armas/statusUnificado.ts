@@ -23,6 +23,9 @@ export type DimensaoStatus =
   | "protocolo"
   | "documentacao"
   | "financeiro"
+  | "ia_ocr"
+  | "reaproveitamento"
+  | "alerta"
   | "vazio";
 
 export type CorStatus =
@@ -48,8 +51,29 @@ export interface StatusUnificado {
   sub?: string;
 }
 
-/** Tipos de KPI suportados (qualquer documento do Arsenal). */
-export type TipoKpi = "CR" | "CRAF" | "GTE";
+/**
+ * Tipos de entidade suportados pela camada de leitura unificada.
+ * Cobre todos os fluxos do sistema Quero Armas (Regra-Mãe / BLOCO 0).
+ */
+export type TipoKpi =
+  // Documentos federais
+  | "CR"
+  | "CRAF"
+  | "GTE"
+  | "AUTORIZACAO_COMPRA"
+  | "POSSE"
+  | "PORTE"
+  // Itens auxiliares
+  | "EXAME_LAUDO"
+  | "PROCESSO_ADM"
+  | "DOCUMENTO_INDIVIDUAL"
+  | "MUNICAO"
+  | "ARMA"
+  // Camadas transversais
+  | "FINANCEIRO"
+  | "IA_OCR"
+  | "ALERTA_VENCIMENTO"
+  | "GENERICO";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inputs
@@ -79,6 +103,10 @@ export interface DocumentoUploadLite {
   status: string | null;
   /** Status da leitura por IA. */
   ia_status?: string | null;
+  /** Origem do upload — Hub Cliente reaproveitado vs novo upload. */
+  origem?: "hub_cliente" | "upload_servico" | string | null;
+  /** Validade do documento individual (CNH, comprovante, exame, laudo). */
+  data_validade?: string | Date | null;
 }
 
 export interface StatusUnificadoInput {
@@ -118,6 +146,18 @@ const LABEL_TIPO: Record<TipoKpi, string> = {
   CR: "CR",
   CRAF: "CRAF",
   GTE: "GTE",
+  AUTORIZACAO_COMPRA: "AUTORIZAÇÃO DE COMPRA",
+  POSSE: "POSSE",
+  PORTE: "PORTE",
+  EXAME_LAUDO: "EXAME/LAUDO",
+  PROCESSO_ADM: "PROCESSO",
+  DOCUMENTO_INDIVIDUAL: "DOCUMENTO",
+  MUNICAO: "MUNIÇÃO",
+  ARMA: "ARMA",
+  FINANCEIRO: "FINANCEIRO",
+  IA_OCR: "LEITURA IA",
+  ALERTA_VENCIMENTO: "VENCIMENTO",
+  GENERICO: "ITEM",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -270,6 +310,28 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
     };
   }
 
+  // IA/OCR ainda processando (sub-camada de documentação)
+  if (any(input.documentos, (d) => d.ia_status === "processando" || d.ia_status === "pendente")) {
+    return {
+      dimensao: "ia_ocr",
+      codigo: "ia_processando",
+      label: "LEITURA IA EM ANDAMENTO",
+      cor: "azul",
+      prioridade: 7,
+      sub: "Aguardando OCR concluir",
+    };
+  }
+  if (any(input.documentos, (d) => d.ia_status === "falhou" || d.ia_status === "erro")) {
+    return {
+      dimensao: "ia_ocr",
+      codigo: "ia_falhou",
+      label: "FALHA NA LEITURA IA",
+      cor: "laranja",
+      prioridade: 7,
+      sub: "Reprocessar documento",
+    };
+  }
+
   if (
     solStatus.includes("aguardando_documentacao") ||
     solStatus.includes("montando_pasta") ||
@@ -331,6 +393,27 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
     };
   }
 
+  // Documentos aprovados reaproveitados do Hub Cliente, sem solicitação ativa
+  if (any(input.documentos, (d) => d.status === "aprovado" && d.origem === "hub_cliente")) {
+    return {
+      dimensao: "reaproveitamento",
+      codigo: "hub_reaproveitado",
+      label: "DOC REAPROVEITADO",
+      cor: "verde",
+      prioridade: 9,
+      sub: "Reutilizado do Hub Cliente",
+    };
+  }
+  if (any(input.documentos, (d) => d.status === "aprovado")) {
+    return {
+      dimensao: "documentacao",
+      codigo: "documento_aprovado",
+      label: `${tipo} APROVADO`,
+      cor: "verde",
+      prioridade: 9,
+    };
+  }
+
   // ── PRIORIDADE 10 — Sem dado ──────────────────────────────────────────────
   return {
     dimensao: "vazio",
@@ -339,6 +422,123 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
     cor: "cinza",
     prioridade: 10,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Agregadores — combinam múltiplos StatusUnificado em uma leitura única
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Reduz uma lista de status individuais para o status mais crítico (menor
+ * prioridade numérica). Usado para leitura agregada por cliente / serviço /
+ * arsenal. Mantém função pura: nunca consulta banco.
+ */
+export function reduzirStatus(lista: StatusUnificado[]): StatusUnificado {
+  if (!lista || lista.length === 0) {
+    return {
+      dimensao: "vazio",
+      codigo: "sem_dado",
+      label: "SEM DADO",
+      cor: "cinza",
+      prioridade: 10,
+    };
+  }
+  return [...lista].sort((a, b) => a.prioridade - b.prioridade)[0];
+}
+
+export interface StatusAgregadoCliente {
+  /** Pior status entre todos os itens do cliente. */
+  geral: StatusUnificado;
+  /** Leitura por dimensão (sempre o pior dentro de cada uma). */
+  porDimensao: Partial<Record<DimensaoStatus, StatusUnificado>>;
+  /** Quantos itens em cada cor — útil para contadores no painel da Equipe. */
+  contagem: Record<CorStatus, number>;
+}
+
+/**
+ * Consolida o status do cliente como um todo a partir das leituras já feitas
+ * por item (cada arma, documento, serviço, etc).
+ */
+export function getStatusAgregadoCliente(itens: StatusUnificado[]): StatusAgregadoCliente {
+  const contagem: Record<CorStatus, number> = {
+    verde: 0, azul: 0, amarelo: 0, laranja: 0, vermelho: 0, cinza: 0,
+  };
+  const porDimensao: Partial<Record<DimensaoStatus, StatusUnificado>> = {};
+
+  for (const s of itens) {
+    contagem[s.cor]++;
+    const atual = porDimensao[s.dimensao];
+    if (!atual || s.prioridade < atual.prioridade) porDimensao[s.dimensao] = s;
+  }
+
+  return { geral: reduzirStatus(itens), porDimensao, contagem };
+}
+
+/**
+ * Atalho: status agregado de um único serviço (1 solicitação + N documentos +
+ * N processos). Reaproveita a engine principal.
+ */
+export function getStatusServicoAgregado(input: StatusUnificadoInput): StatusUnificado {
+  return getStatusUnificado(input);
+}
+
+/**
+ * Status de uma única arma do Arsenal — combina CR, CRAF, GTE e autorização
+ * de compra associados àquela arma.
+ */
+export function getStatusItemArsenal(itensDaArma: StatusUnificado[]): StatusUnificado {
+  return reduzirStatus(itensDaArma);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers especializados (entradas mais simples para tipos não-CR/CRAF/GTE)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Avalia apenas a dimensão de validade/renovação. Útil para alertas de
+ * vencimento sobre qualquer documento (CR, CRAF, CNH, exame, laudo, etc).
+ */
+export function getStatusValidade(
+  data_validade: string | Date | null | undefined,
+  tipo: TipoKpi = "GENERICO",
+  hoje: Date = new Date(),
+): StatusUnificado {
+  return getStatusUnificado({
+    tipo,
+    cadastro: { data_validade: data_validade ?? null },
+    hoje,
+  });
+}
+
+/**
+ * Avalia apenas o estado de um documento individual (upload do cliente).
+ * Cobre IA/OCR, aprovação, reprovação e reaproveitamento do Hub.
+ */
+export function getStatusDocumento(
+  doc: DocumentoUploadLite,
+  tipo: TipoKpi = "DOCUMENTO_INDIVIDUAL",
+  hoje: Date = new Date(),
+): StatusUnificado {
+  return getStatusUnificado({
+    tipo,
+    documentos: [doc],
+    cadastro: doc.data_validade ? { data_validade: doc.data_validade } : null,
+    hoje,
+  });
+}
+
+/**
+ * Avalia apenas a camada financeira (sem documentos/processos).
+ */
+export function getStatusFinanceiro(
+  status_financeiro: string | null | undefined,
+): StatusUnificado {
+  return getStatusUnificado({
+    tipo: "FINANCEIRO",
+    solicitacoes: [
+      { status_servico: null, status_financeiro: status_financeiro ?? null, status_processo: null },
+    ],
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -372,6 +572,11 @@ export function tipoKpiPorSlug(slug?: string | null): TipoKpi | null {
   const s = slug.toLowerCase();
   if (s.includes("craf")) return "CRAF";
   if (s.includes("gte") || s.includes("trafego")) return "GTE";
+  if (s.includes("autorizacao") && s.includes("compra")) return "AUTORIZACAO_COMPRA";
+  if (s.includes("posse")) return "POSSE";
+  if (s.includes("porte")) return "PORTE";
+  if (s.includes("exame") || s.includes("laudo")) return "EXAME_LAUDO";
+  if (s.includes("municao") || s.includes("munição")) return "MUNICAO";
   if (s.includes("cr-") || s === "cr" || s.startsWith("cr_")) return "CR";
   return null;
 }
