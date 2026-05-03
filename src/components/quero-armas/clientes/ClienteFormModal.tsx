@@ -623,7 +623,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     aria-label="Adicionar foto"
                   >
                     {photoPreview ? (
-                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover object-center" />
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-contain bg-zinc-100" />
                     ) : (
                       <Camera className="h-7 w-7 text-zinc-400" />
                     )}
