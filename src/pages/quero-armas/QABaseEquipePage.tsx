@@ -795,12 +795,46 @@ export default function QABaseEquipePage() {
                   <h3 className="text-xs uppercase font-mono tracking-wider text-muted-foreground flex items-center gap-1">
                     <ImageIcon className="h-3.5 w-3.5" /> Evidências reais ({images.length})
                   </h3>
-                  <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 hover:bg-amber-50">
-                    {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
-                    Enviar screenshot real
-                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
-                  </label>
+                  <div className="flex items-center gap-1 flex-wrap justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px] uppercase font-mono"
+                      disabled={auditTriggering === selected.id}
+                      onClick={() => triggerPlaywrightAudit(selected.id)}
+                      title="Reexecuta o pipeline Playwright (auditoria real) apenas para este artigo."
+                    >
+                      {auditTriggering === selected.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      Reprocessar auditoria (Playwright)
+                    </Button>
+                    {images.some(i => i.status === "error") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] uppercase font-mono"
+                        disabled={auditTriggering === selected.id}
+                        onClick={() => triggerPlaywrightAudit(selected.id, { onlyErrors: true })}
+                        title="Reexecuta apenas as etapas que falharam."
+                      >
+                        {auditTriggering === selected.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <AlertCircle className="h-3.5 w-3.5" />}
+                        Reprocessar só erros
+                      </Button>
+                    )}
+                    <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 hover:bg-amber-50">
+                      {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                      Enviar screenshot real
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={auditReason}
+                    onChange={(e) => setAuditReason(e.target.value)}
+                    placeholder="Motivo do reprocesso (opcional)"
+                    className="h-7 text-xs"
+                  />
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {images.map(img => (
