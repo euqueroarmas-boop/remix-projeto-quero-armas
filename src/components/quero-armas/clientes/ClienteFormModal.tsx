@@ -214,6 +214,25 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     });
   }, [lookupGeocode]);
 
+  // Auto-resolve geolocation directly from passed values (sem depender do state).
+  const autoResolveGeoloc = useCallback(async (
+    prefix: "" | "2",
+    addr: { street?: string; number?: string; city?: string; state?: string }
+  ) => {
+    if (!addr.street || !addr.city) return;
+    try {
+      const g = await lookupGeocode({
+        street: addr.street,
+        number: addr.number || "",
+        city: addr.city,
+        state: addr.state || "",
+      });
+      if (!g) return;
+      const value = `${g.latitude},${g.longitude}`;
+      setF((p2) => ({ ...p2, [`geolocalizacao${prefix}`]: value }));
+    } catch { /* silencioso */ }
+  }, [lookupGeocode]);
+
   const [f, setF] = useState({
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
@@ -801,22 +820,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FSelect label="UF" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais} onChange={v => set("pais", v)} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+                <div>
                   <FInput
-                    label="Geolocalização (lat,long)"
+                    label={geocodeLoading ? "Geolocalização (lat,long) — resolvendo…" : "Geolocalização (lat,long) — automática"}
                     value={f.geolocalizacao}
                     onChange={v => set("geolocalizacao", v)}
-                    placeholder="Ex: -23.5505,-46.6333"
+                    placeholder="Resolvida automaticamente após preencher o endereço"
                     span
                   />
-                  <button
-                    type="button"
-                    onClick={() => resolveGeoloc("")}
-                    disabled={geocodeLoading || !f.endereco || !f.cidade}
-                    className="h-9 px-3.5 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                  >
-                    {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
-                  </button>
                 </div>
             </section>
 
@@ -839,22 +850,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FSelect label="UF" value={f.estado2} onChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+                <div>
                   <FInput
-                    label="Geolocalização (lat,long)"
+                    label={geocodeLoading ? "Geolocalização (lat,long) — resolvendo…" : "Geolocalização (lat,long) — automática"}
                     value={f.geolocalizacao2}
                     onChange={v => set("geolocalizacao2", v)}
-                    placeholder="Ex: -23.5505,-46.6333"
+                    placeholder="Resolvida automaticamente após preencher o endereço"
                     span
                   />
-                  <button
-                    type="button"
-                    onClick={() => resolveGeoloc("2")}
-                    disabled={geocodeLoading || !f.endereco2 || !f.cidade2}
-                    className="h-9 px-3.5 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-                  >
-                    {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
-                  </button>
                 </div>
             </section>
 
