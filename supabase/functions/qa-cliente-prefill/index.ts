@@ -169,9 +169,10 @@ const SYSTEM_PROMPT = [
     "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
-  "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
+  "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO: a data em que o exame FOI FEITO. Datas passadas nesses campos são normais, esperadas e corretas. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
+    "10.1) NUNCA reclame que DATA DE REALIZAÇÃO DO EXAME está no passado. NUNCA gere warning de futuro/vencimento/validade para data_realizacao_exame_psicologico, data_realizacao_exame_tiro, validade_laudo_psicologico ou validade_exame_tiro quando o documento indicar que é data do exame realizado.",
     "11) SENHA GOV.BR É CAMPO SENSÍVEL DE TRANSCRIÇÃO LITERAL/RAW. Use senha_gov_raw, não senha_gov. NÃO normalize, NÃO corrija, NÃO interprete, NÃO converta maiúscula/minúscula, NÃO remova acentos, NÃO troque símbolos, NÃO complete e NÃO infira por contexto.",
-    "11.1) senha_gov_raw deve refletir EXATAMENTE o que aparece no print/documento. Exemplo literal: senha_gov_raw: \"Eduisa7050$\". Se houver dúvida em qualquer caractere, retorne senha_gov_raw='' e senha_gov_needs_review=true.",
+    "11.1) senha_gov_raw deve refletir EXATAMENTE o que aparece no print/documento, caractere por caractere, respeitando letras, números, maiúsculas, minúsculas, acentos, espaços e caracteres especiais. Exemplo literal: senha_gov_raw: \"Eduisa7050$\". Se houver dúvida em qualquer caractere, retorne senha_gov_raw='' e senha_gov_needs_review=true.",
     "11.1.1) ATENÇÃO ESPECIAL A SÍMBOLOS: $ # @ ! % & * ? / \\ + - _ . , ; : ' \". Nunca converta '$' em '6' ou 'S'. Nunca converta '!' em '1'. Nunca converta '@' em 'a'. Nunca converta 'O' em '0' nem o contrário. Se o último caractere for um símbolo, transcreva o símbolo, não o omita.",
     "11.1.2) Se a senha visualmente parece terminar em símbolo (ex: $) e você está em dúvida, deixe senha_gov_raw='' e senha_gov_needs_review=true. NUNCA salve uma versão sanitizada/alfanumérica de uma senha que contém símbolo.",
     "11.2) Só use senha_gov_confidence >= 0.9 quando todos os caracteres estiverem visualmente/textualmente nítidos. Caso contrário, deixe a senha vazia e adicione warning: 'Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.'.",
@@ -238,8 +239,9 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
             "Você é um auditor forense de senha GOV.BR. Confira APENAS o campo senha_gov nos documentos. " +
             "Nunca corrija por aproximação, nunca normalize, nunca troque símbolos/letras/números parecidos. " +
             "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"confidence\":number,\"warning\":string,\"has_symbol_in_source\":boolean}. " +
-            "ok só pode ser true se a senha proposta estiver EXATAMENTE igual ao documento, caractere por caractere. " +
-            "Se qualquer caractere estiver duvidoso, ilegível, inferido ou diferente, ok=false e senha=\"\". " +
+            "Extraia novamente a senha diretamente do documento/print e retorne em senha exatamente como aparece, caractere por caractere. " +
+            "ok só pode ser true se a senha retornada estiver EXATAMENTE igual ao documento, mesmo que seja diferente da senha proposta. " +
+            "Se qualquer caractere estiver duvidoso, ilegível ou inferido, ok=false e senha=\"\". " +
             "has_symbol_in_source=true se a senha visível no documento contém qualquer símbolo ($, #, @, !, %, &, *, ?, /, \\, +, -, _, ., ,, ;, :, ', \"). " +
             "Se has_symbol_in_source=true e a senha proposta NÃO contiver esse símbolo, retorne ok=false. " +
             "confidence só pode ser >=0.9 quando houver correspondência literal nítida no trecho visual/textual extraído.",
@@ -251,7 +253,7 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
               type: "text",
               text:
                 `Senha proposta para conferência literal: ${senha}\n` +
-                "Confira nos arquivos/textos abaixo se essa senha aparece exatamente como escrita. Responda somente JSON.",
+                "Confira nos arquivos/textos abaixo e, se necessário, corrija pela transcrição literal do print. Preserve símbolos como $, #, @, ! sem trocar por números/letras. Responda somente JSON.",
             },
             ...content.slice(1),
           ],
@@ -269,13 +271,13 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
     const checked = typeof parsed?.senha === "string" ? parsed.senha : "";
     const confidence = typeof parsed?.confidence === "number" ? parsed.confidence : 0;
     const hasSymbolInSource = parsed?.has_symbol_in_source === true;
-    const proposedHasSymbol = /[^\p{L}\p{N}]/u.test(senha);
-    // Bloqueio extra: fonte tem símbolo mas senha proposta é alfanumérica → recusa.
-    if (hasSymbolInSource && !proposedHasSymbol) {
+    const checkedHasSymbol = /[^\p{L}\p{N}]/u.test(checked);
+    // Se a primeira extração perdeu um símbolo, aceita a correção literal do auditor.
+    if (hasSymbolInSource && !checkedHasSymbol) {
       return { ok: false, senha: "", confidence, warning: "Senha GOV.BR aparenta conter símbolo no documento que não foi capturado. Confira manualmente." };
     }
-    return parsed?.ok === true && checked === senha && confidence >= 0.9
-      ? { ok: true, senha, confidence, warning: "" }
+    return parsed?.ok === true && checked && confidence >= 0.9
+      ? { ok: true, senha: checked, confidence, warning: "" }
       : { ok: false, senha: "", confidence, warning: parsed?.warning || "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   } catch {
     return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
@@ -303,6 +305,7 @@ function filterFalseFutureWarnings(warnings: string[]): string[] {
   const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
   return warnings.filter((w) => {
     if (!/futuro|future/i.test(w)) return true;
+    if (/exame|psicol[oó]gico|tiro|laudo|realiza[cç][aã]o/i.test(w)) return false;
     const dates = w.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
     if (dates.length === 0) return true;
     // Se TODAS as datas do warning já passaram, descarta o warning.
