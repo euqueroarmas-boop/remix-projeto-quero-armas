@@ -3260,17 +3260,30 @@ export default function QAClientesPage() {
                   {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
                   Rejeitar
                 </button>
-                <button
-                  disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
-                  onClick={() => updateCadastroPublicoStatus("pendente")}
-                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50 flex items-center justify-center gap-1"
-                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-                >
-                  {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {["aprovado", "conferido", "validado", "formulario_conferido"].includes(String(c.status || "").toLowerCase())
-                    ? "Remover conferência"
-                    : "Pendente"}
-                </button>
+                {(() => {
+                  const isConferido = ["aprovado", "conferido", "validado", "formulario_conferido"]
+                    .includes(String(c.status || "").toLowerCase());
+                  return (
+                    <button
+                      disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
+                      onClick={() => updateCadastroPublicoStatus("pendente")}
+                      className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
+                        isConferido
+                          ? "col-span-2 sm:col-span-1 bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
+                          : "font-medium hover:bg-slate-50"
+                      }`}
+                      style={isConferido ? undefined : { borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                      title={isConferido ? "Voltar para pendente (remove a conferência)" : "Marcar como pendente"}
+                    >
+                      {savingCadastroPublicoStatus === "pendente" ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : isConferido ? (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      ) : null}
+                      {isConferido ? "Remover conferência" : "Pendente"}
+                    </button>
+                  );
+                })()}
                 <button
                   disabled={!!savingCadastroPublicoStatus}
                   onClick={() => togglePagoCadastroPublico()}
