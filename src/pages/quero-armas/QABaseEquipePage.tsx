@@ -438,6 +438,13 @@ export default function QABaseEquipePage() {
         .eq("article_id", articleId).neq("status", "archived").order("step_number");
       setImages(((imgs ?? []) as any[]) as ArticleImage[]);
       await loadImageStats();
+      if (selected?.id === articleId) {
+        const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", articleId).maybeSingle();
+        if (fresh && auditComplete(fresh as any)) {
+          await supabase.from("qa_kb_artigos" as any).update({ status: "needs_review" }).eq("id", articleId).in("status", ["needs_real_image", "audit_pending"]);
+          setSelected({ ...(fresh as any), status: "needs_review" } as Article);
+        }
+      }
     } catch (e: any) {
       toast.error("Erro ao enviar print real: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -602,6 +609,7 @@ export default function QABaseEquipePage() {
           reason: reviewReason, notes: reviewNotes,
           screenshot_id: screenshotId, screenshot_url: screenshotUrl,
           reviewed_by: userId,
+          audit_confirmed: auditComplete(reviewArticle),
         },
       });
       if (error) throw error;
@@ -624,6 +632,8 @@ export default function QABaseEquipePage() {
     switch (s) {
       case "published": return "bg-emerald-100 text-emerald-800 border-emerald-300";
       case "audited": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "audit_pending": return "bg-orange-100 text-orange-800 border-orange-300";
+      case "needs_real_image": return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "needs_review": return "bg-amber-100 text-amber-800 border-amber-300";
       case "rejected": return "bg-red-100 text-red-800 border-red-300";
       case "draft": return "bg-slate-100 text-slate-700 border-slate-300";
