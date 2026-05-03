@@ -664,14 +664,22 @@ export const COR_DOT_CLASS: Record<CorStatus, string> = {
  */
 export function tipoKpiPorSlug(slug?: string | null): TipoKpi | null {
   if (!slug) return null;
-  const s = slug.toLowerCase();
+  const s = normalizeQaStatus(slug);
+
+  // Canônicos da plataforma — comparados explicitamente.
+  if (s === "posse_arma_fogo") return "POSSE";
+  if (s === "porte_arma_fogo") return "PORTE";
+  if (s === "registro_arma_fogo" || s === "craf") return "CRAF";
+  if (s === "concessao_cr" || s === "cr") return "CR";
+
+  // Fallbacks tolerantes (slugs antigos/variantes).
   if (s.includes("craf")) return "CRAF";
   if (s.includes("gte") || s.includes("trafego")) return "GTE";
   if (s.includes("autorizacao") && s.includes("compra")) return "AUTORIZACAO_COMPRA";
   if (s.includes("posse")) return "POSSE";
   if (s.includes("porte")) return "PORTE";
   if (s.includes("exame") || s.includes("laudo")) return "EXAME_LAUDO";
-  if (s.includes("municao") || s.includes("munição")) return "MUNICAO";
-  if (s.includes("cr-") || s === "cr" || s.startsWith("cr_")) return "CR";
+  if (s.includes("municao")) return "MUNICAO";
+  if (s.startsWith("cr_") || s.includes("_cr_")) return "CR";
   return null;
 }
