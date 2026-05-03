@@ -421,8 +421,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         .select("servico_id, nome, preco, display_order, slug, categoria, descricao_curta")
         .eq("ativo", true)
         .not("servico_id", "is", null)
-        .order("categoria", { ascending: true })
-        .order("display_order", { ascending: true });
+        .order("nome", { ascending: true });
 
       // REGRA: somente itens com slug válido e preço numérico (>= 0).
       // Itens sem slug ou sem preço definido são EXCLUÍDOS da lista de venda.
@@ -437,6 +436,11 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
           categoria: String(c.categoria || ""),
           descricao_curta: c.descricao_curta ?? null,
         }));
+
+      // Ordenação alfabética por nome do serviço (pt-BR, sem case-sensitive).
+      lista.sort((a, b) =>
+        a.nome_servico.localeCompare(b.nome_servico, "pt-BR", { sensitivity: "base" })
+      );
 
       // REGRA GLOBAL: somente catálogo ativo. Itens legados fora do catálogo
       // não são exibidos nem editáveis aqui.
