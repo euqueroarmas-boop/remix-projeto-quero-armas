@@ -58,7 +58,7 @@ const NAV_GROUPS = [
     label: "Financeiro",
     items: [
       { title: "Financeiro", url: "/financeiro", icon: DollarSign },
-      { title: "Preços do Catálogo", url: "/precos-servicos", icon: Tags },
+      { title: "Catálogo de Preços", url: "/precos-servicos", icon: Tags },
       { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
     ],
   },
