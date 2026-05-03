@@ -586,7 +586,7 @@ export function ArsenalSummary({
   }, [persist]);
 
   // ── Linha 2 — KPIs adicionais (não sortable, não persistidos) ──────────────
-  const corToToneSecondary = (cor: CorStatus): KpiDefinition["tone"] => {
+  const corToToneSecondary = (cor: CorStatus): KpiSecondaryDefinition["tone"] => {
     if (cor === "verde") return "ok";
     if (cor === "azul") return "cyan";
     if (cor === "amarelo" || cor === "laranja") return "warn";
@@ -594,9 +594,9 @@ export function ArsenalSummary({
     return "steel";
   };
 
-  const secondaryDefs: Record<KpiSecondaryId, KpiDefinition> = useMemo(() => ({
+  const secondaryDefs: Record<KpiSecondaryId, KpiSecondaryDefinition> = useMemo(() => ({
     documentos: {
-      id: "armas" as KpiId, // id não-usado (não há sort)
+      id: "documentos",
       icon: <Files className="h-4 w-4" />,
       label: "Documentos",
       value: documentosCount,
@@ -609,7 +609,7 @@ export function ArsenalSummary({
       target: "documentos",
     },
     processos: {
-      id: "armas" as KpiId,
+      id: "processos",
       icon: <Workflow className="h-4 w-4" />,
       label: "Processos",
       value: processosCount,
@@ -622,7 +622,7 @@ export function ArsenalSummary({
       target: "processos",
     },
     autorizacoes: {
-      id: "armas" as KpiId,
+      id: "autorizacoes",
       icon: <ShoppingCart className="h-4 w-4" />,
       label: "Autorizações",
       value: autorizacoesCount,
@@ -635,7 +635,7 @@ export function ArsenalSummary({
       target: "autorizacoes",
     },
     exames: {
-      id: "armas" as KpiId,
+      id: "exames",
       icon: <Stethoscope className="h-4 w-4" />,
       label: "Exames/Laudos",
       value: examesCount,
