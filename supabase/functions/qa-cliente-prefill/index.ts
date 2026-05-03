@@ -172,10 +172,13 @@ const SYSTEM_PROMPT = [
   "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
     "11) SENHA GOV.BR É CAMPO SENSÍVEL DE TRANSCRIÇÃO LITERAL/RAW. Use senha_gov_raw, não senha_gov. NÃO normalize, NÃO corrija, NÃO interprete, NÃO converta maiúscula/minúscula, NÃO remova acentos, NÃO troque símbolos, NÃO complete e NÃO infira por contexto.",
     "11.1) senha_gov_raw deve refletir EXATAMENTE o que aparece no print/documento. Exemplo literal: senha_gov_raw: \"Eduisa7050$\". Se houver dúvida em qualquer caractere, retorne senha_gov_raw='' e senha_gov_needs_review=true.",
+    "11.1.1) ATENÇÃO ESPECIAL A SÍMBOLOS: $ # @ ! % & * ? / \\ + - _ . , ; : ' \". Nunca converta '$' em '6' ou 'S'. Nunca converta '!' em '1'. Nunca converta '@' em 'a'. Nunca converta 'O' em '0' nem o contrário. Se o último caractere for um símbolo, transcreva o símbolo, não o omita.",
+    "11.1.2) Se a senha visualmente parece terminar em símbolo (ex: $) e você está em dúvida, deixe senha_gov_raw='' e senha_gov_needs_review=true. NUNCA salve uma versão sanitizada/alfanumérica de uma senha que contém símbolo.",
     "11.2) Só use senha_gov_confidence >= 0.9 quando todos os caracteres estiverem visualmente/textualmente nítidos. Caso contrário, deixe a senha vazia e adicione warning: 'Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.'.",
     "11.3) Para senha GOV.BR, releia 2x antes de retornar. Qualquer caractere errado bloqueia o acesso do cliente.",
     "12) Emissor RG/CIN: se o emissor extraído for incomum, inconsistente ou de baixa confiança, marque emissor_rg_needs_review=true e adicione warning 'Verificar emissor do RG. Extração possivelmente incorreta.'. Exemplo: 'SSP ISP' deve gerar revisão.",
     "13) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
+    "14) NUNCA gere warning de 'data no futuro' a menos que tenha certeza absoluta da data atual. Datas em DD/MM/AAAA podem ser confundidas com MM/DD/AAAA — não emita esse tipo de warning.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
@@ -234,9 +237,11 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
           content:
             "Você é um auditor forense de senha GOV.BR. Confira APENAS o campo senha_gov nos documentos. " +
             "Nunca corrija por aproximação, nunca normalize, nunca troque símbolos/letras/números parecidos. " +
-            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"confidence\":number,\"warning\":string}. " +
+            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"confidence\":number,\"warning\":string,\"has_symbol_in_source\":boolean}. " +
             "ok só pode ser true se a senha proposta estiver EXATAMENTE igual ao documento, caractere por caractere. " +
             "Se qualquer caractere estiver duvidoso, ilegível, inferido ou diferente, ok=false e senha=\"\". " +
+            "has_symbol_in_source=true se a senha visível no documento contém qualquer símbolo ($, #, @, !, %, &, *, ?, /, \\, +, -, _, ., ,, ;, :, ', \"). " +
+            "Se has_symbol_in_source=true e a senha proposta NÃO contiver esse símbolo, retorne ok=false. " +
             "confidence só pode ser >=0.9 quando houver correspondência literal nítida no trecho visual/textual extraído.",
         },
         {
@@ -263,12 +268,50 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     const checked = typeof parsed?.senha === "string" ? parsed.senha : "";
     const confidence = typeof parsed?.confidence === "number" ? parsed.confidence : 0;
+    const hasSymbolInSource = parsed?.has_symbol_in_source === true;
+    const proposedHasSymbol = /[^\p{L}\p{N}]/u.test(senha);
+    // Bloqueio extra: fonte tem símbolo mas senha proposta é alfanumérica → recusa.
+    if (hasSymbolInSource && !proposedHasSymbol) {
+      return { ok: false, senha: "", confidence, warning: "Senha GOV.BR aparenta conter símbolo no documento que não foi capturado. Confira manualmente." };
+    }
     return parsed?.ok === true && checked === senha && confidence >= 0.9
       ? { ok: true, senha, confidence, warning: "" }
       : { ok: false, senha: "", confidence, warning: parsed?.warning || "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   } catch {
     return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   }
+}
+
+// Parse de data brasileira (DD/MM/AAAA) ou ISO. Retorna Date em UTC ou null.
+function parseBrDate(s: string): Date | null {
+  const t = s.trim();
+  let m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) {
+    const [, dd, mm, yyyy] = m;
+    const d = new Date(Date.UTC(+yyyy, +mm - 1, +dd));
+    if (d.getUTCFullYear() === +yyyy && d.getUTCMonth() === +mm - 1 && d.getUTCDate() === +dd) return d;
+    return null;
+  }
+  m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return null;
+}
+
+// Remove warnings falsos sobre "data no futuro" quando a data citada já passou.
+function filterFalseFutureWarnings(warnings: string[]): string[] {
+  const today = new Date();
+  const todayUtc = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+  return warnings.filter((w) => {
+    if (!/futuro|future/i.test(w)) return true;
+    const dates = w.match(/\d{2}\/\d{2}\/\d{4}/g) || [];
+    if (dates.length === 0) return true;
+    // Se TODAS as datas do warning já passaram, descarta o warning.
+    const allPast = dates.every((d) => {
+      const parsed = parseBrDate(d);
+      return parsed != null && parsed.getTime() <= todayUtc.getTime();
+    });
+    return !allPast;
+  });
 }
 
 function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
@@ -367,6 +410,10 @@ Deno.serve(async (req) => {
       if (!normalized.warnings.includes("Verificar emissor do RG. Extração possivelmente incorreta.")) {
         normalized.warnings.push("Verificar emissor do RG. Extração possivelmente incorreta.");
       }
+    }
+    // Filtra warnings falsos de "data no futuro" quando a data já passou.
+    if (Array.isArray(normalized.warnings)) {
+      normalized.warnings = filterFalseFutureWarnings(normalized.warnings);
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {
