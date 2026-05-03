@@ -3692,7 +3692,7 @@ export default function QAClientesPage() {
                 />
                 <div className="relative flex items-center gap-3 px-4 py-3.5">
                   {/* Avatar: foto manual OU selfie do cadastro público (resolvida em batch em loadClientes). */}
-                  <ClienteSelfieAvatar cliente={c} size="xl" />
+                  <ClienteSelfieAvatar cliente={c} size="lg" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
@@ -3717,10 +3717,10 @@ export default function QAClientesPage() {
                           </span>
                         </>
                       )}
-                      {(((c as any).servicos_contratados as string[] | undefined) || []).length > 0 && (
+                       {(((c as any).servicos_contratados as string[] | undefined) || []).length > 0 && (
                         <>
                           <span className="text-slate-300">·</span>
-                          <span className="inline-flex items-center gap-1 uppercase tracking-wide font-semibold" style={{ color: "#7A1F2B" }}>
+                          <span className="inline-flex items-center gap-1 uppercase tracking-wide">
                             {(((c as any).servicos_contratados as string[]) || []).join(" • ")}
                           </span>
                         </>
