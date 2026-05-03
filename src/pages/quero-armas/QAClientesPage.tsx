@@ -29,7 +29,7 @@ import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/compo
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
-import { VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
 import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
@@ -1078,7 +1078,6 @@ export default function QAClientesPage() {
   const [clienteModal, setClienteModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
-  const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
@@ -2492,26 +2491,6 @@ export default function QAClientesPage() {
                     <div className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">{c.observacao}</div>
                   </div>
                 )}
-                <Section title="Filiações a Clubes">
-                  <div className="flex items-center justify-end mb-1">
-                    <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
-                      <Plus className="h-3 w-3 mr-1" /> Nova Filiação
-                    </Button>
-                  </div>
-                  {filiacoes.length === 0 ? <Empty text="Nenhuma filiação." /> : filiacoes.map((f: any) => (
-                    <div key={f.id} className="flex items-center justify-between text-[10px] bg-white rounded px-2.5 py-1.5 border border-slate-200 mb-1">
-                      <div>
-                        <span className="text-slate-700">Filiação #{f.numero_filiacao || "—"}</span>
-                        <span className="text-slate-400 ml-2">Clube #{f.clube_id}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-slate-500 text-[9px]">Val: {formatDate(f.validade_filiacao)}</span>
-                        <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true, item: f })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_filiacoes", id: f.id, title: "Excluir Filiação", desc: `Excluir filiação #${f.numero_filiacao}?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
-                      </div>
-                    </div>
-                  ))}
-                </Section>
               </TabsContent>
 
               {/* SERVIÇOS / VENDAS */}
@@ -2966,7 +2945,6 @@ export default function QAClientesPage() {
           venda={vendaModal.item}
           solicitacaoId={vendaModal.solicitacaoId ?? null}
         />
-        <FiliacaoModal open={filiacaoModal.open} onClose={() => setFiliacaoModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} filiacao={filiacaoModal.item} />
         <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} />
       </div>
     );
