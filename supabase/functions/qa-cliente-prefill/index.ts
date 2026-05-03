@@ -271,6 +271,17 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
   }
 }
 
+function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
+  const raw = String(value ?? "").trim();
+  if (!raw) return false;
+  const compact = raw.toUpperCase().replace(/[^A-Z]/g, "");
+  if (typeof confidence === "number" && confidence < 0.75) return true;
+  if (/SSP\s*ISP/i.test(raw) || compact.includes("SSPISP")) return true;
+  const common = new Set(["SSP", "SSPPC", "PC", "PCMG", "PCRJ", "DETRAN", "IFP", "IIRGD", "SJS", "SESP", "SDS", "DGPC"]);
+  if (compact.startsWith("SSP") && !["SSP", "SSPPC"].includes(compact)) return true;
+  return compact.length > 0 && !common.has(compact) && compact.length > 8;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
