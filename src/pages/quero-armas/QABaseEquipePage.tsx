@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -56,12 +56,17 @@ export default function QABaseEquipePage() {
   const [loading, setLoading] = useState(true);
   const [filterCat, setFilterCat] = useState<string>("__all__");
   const [filterText, setFilterText] = useState("");
+  const [filterEmb, setFilterEmb] = useState<string>("__all__");
   const [selected, setSelected] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Partial<Article> | null>(null);
   const [saving, setSaving] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [draftDescription, setDraftDescription] = useState("");
   const [processingEmb, setProcessingEmb] = useState(false);
+  const [reprocessingId, setReprocessingId] = useState<string | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
+  const [logs, setLogs] = useState<Array<{ id: string; article_id: string; status: string; error_message: string | null; modelo: string | null; created_at: string }>>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -91,6 +96,10 @@ export default function QABaseEquipePage() {
     const q = filterText.trim().toLowerCase();
     return articles.filter(a => {
       if (filterCat !== "__all__" && a.category !== filterCat) return false;
+      if (filterEmb !== "__all__") {
+        const es = a.embedding_status ?? "pendente";
+        if (es !== filterEmb) return false;
+      }
       if (!q) return true;
       return (
         a.title.toLowerCase().includes(q) ||
@@ -98,7 +107,7 @@ export default function QABaseEquipePage() {
         a.symptoms.some(s => s.toLowerCase().includes(q))
       );
     });
-  }, [articles, filterCat, filterText]);
+  }, [articles, filterCat, filterText, filterEmb]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Article[]>();
@@ -133,6 +142,49 @@ export default function QABaseEquipePage() {
     } finally {
       setProcessingEmb(false);
     }
+  }
+
+  async function reprocessOne(articleId: string) {
+    setReprocessingId(articleId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-embed", {
+        body: { article_id: articleId },
+      });
+      if (error) throw error;
+      const d = data as any;
+      if ((d?.processed ?? 0) > 0) toast.success("Vetor reprocessado.");
+      else toast.error("Falha ao reprocessar vetor. Verifique os logs.");
+      await loadAll();
+      if (showLogs) await loadLogs();
+      if (selected?.id === articleId) {
+        const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", articleId).maybeSingle();
+        if (fresh) setSelected(fresh as any as Article);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setReprocessingId(null);
+    }
+  }
+
+  async function loadLogs() {
+    setLogsLoading(true);
+    const { data, error } = await supabase
+      .from("qa_kb_embeddings_log" as any)
+      .select("id, article_id, status, error_message, modelo, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) toast.error("Erro ao carregar logs: " + error.message);
+    setLogs(((data ?? []) as any[]).map(r => ({
+      id: r.id, article_id: r.article_id, status: r.status,
+      error_message: r.error_message, modelo: r.modelo, created_at: r.created_at,
+    })));
+    setLogsLoading(false);
+  }
+
+  async function openLogs() {
+    setShowLogs(true);
+    await loadLogs();
   }
 
   async function runAiSearch() {
@@ -268,6 +320,10 @@ export default function QABaseEquipePage() {
                 <CardTitle className="text-2xl uppercase">{selected.title}</CardTitle>
               </div>
               <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => reprocessOne(selected.id)} disabled={reprocessingId === selected.id}>
+                  {reprocessingId === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                  Reprocessar vetor
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => startEdit(selected)}>
                   <Edit3 className="h-4 w-4 mr-1" /> Editar
                 </Button>
@@ -278,6 +334,16 @@ export default function QABaseEquipePage() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="mb-3 flex items-center gap-2 text-[11px] uppercase font-mono text-muted-foreground">
+              <span>Vetor:</span>
+              {(() => {
+                const es = selected.embedding_status ?? "pendente";
+                if (es === "gerado") return <span className="inline-flex items-center gap-1 text-emerald-700"><CheckCircle2 className="h-3 w-3" /> gerado</span>;
+                if (es === "erro") return <span className="inline-flex items-center gap-1 text-red-700" title={selected.embedding_error ?? ""}><AlertCircle className="h-3 w-3" /> erro</span>;
+                return <span className="inline-flex items-center gap-1 text-amber-700"><Clock className="h-3 w-3" /> pendente</span>;
+              })()}
+              {selected.embedding_updated_at && <span>· {new Date(selected.embedding_updated_at).toLocaleString("pt-BR")}</span>}
+            </div>
             <article className="prose prose-sm md:prose-base max-w-none">
               <ReactMarkdown>{selected.body}</ReactMarkdown>
             </article>
@@ -480,6 +546,9 @@ export default function QABaseEquipePage() {
             {processingEmb ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
             Processar embeddings pendentes
           </Button>
+          <Button size="sm" variant="ghost" onClick={openLogs}>
+            <ScrollText className="h-3.5 w-3.5 mr-1" /> Ver logs
+          </Button>
         </CardContent>
       </Card>
 
@@ -496,6 +565,15 @@ export default function QABaseEquipePage() {
           <SelectContent>
             <SelectItem value="__all__">Todas categorias</SelectItem>
             {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterEmb} onValueChange={setFilterEmb}>
+          <SelectTrigger className="md:max-w-[200px]"><SelectValue placeholder="Status do vetor" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Vetor: todos</SelectItem>
+            <SelectItem value="gerado">Vetor: gerado</SelectItem>
+            <SelectItem value="pendente">Vetor: pendente</SelectItem>
+            <SelectItem value="erro">Vetor: erro</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -550,6 +628,57 @@ export default function QABaseEquipePage() {
       )}
 
       {renderEditor()}
+
+      <Dialog open={showLogs} onOpenChange={setShowLogs}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="uppercase font-mono text-sm flex items-center gap-2">
+              <ScrollText className="h-4 w-4" /> Logs de geração de vetores
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-end mb-2">
+            <Button size="sm" variant="ghost" onClick={loadLogs} disabled={logsLoading}>
+              {logsLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+              Atualizar
+            </Button>
+          </div>
+          {logsLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          ) : logs.length === 0 ? (
+            <p className="text-center text-xs text-muted-foreground py-8 uppercase font-mono">Nenhum registro.</p>
+          ) : (
+            <div className="space-y-1">
+              {logs.map(l => {
+                const art = articles.find(a => a.id === l.article_id);
+                const ok = l.status === "sucesso";
+                return (
+                  <div key={l.id} className="border rounded-md p-2 text-xs flex items-start gap-2">
+                    <div className="shrink-0 mt-0.5">
+                      {ok ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          : <AlertCircle className="h-3.5 w-3.5 text-red-600" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold uppercase truncate">{art?.title ?? l.article_id}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono uppercase">
+                        {l.status} · {new Date(l.created_at).toLocaleString("pt-BR")}{l.modelo ? ` · ${l.modelo}` : ""}
+                      </div>
+                      {l.error_message && (
+                        <div className="text-[11px] text-red-700 mt-1 break-words">{l.error_message}</div>
+                      )}
+                    </div>
+                    {art && !ok && (
+                      <Button size="sm" variant="outline" className="shrink-0" onClick={() => reprocessOne(art.id)} disabled={reprocessingId === art.id}>
+                        {reprocessingId === art.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                        Tentar novamente
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
