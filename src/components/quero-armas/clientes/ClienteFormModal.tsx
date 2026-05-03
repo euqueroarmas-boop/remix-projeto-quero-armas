@@ -717,31 +717,41 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field label="Senha Gov.br">
-                  <SenhaGovField
-                    cadastroCrId={cadastroCrId}
-                    clienteId={cliente?.id ?? null}
-                    contexto="ClienteFormModal"
-                    variant="row"
-                    autoReveal
-                    onCreateCadastro={async () => {
-                      if (!cliente?.id) return null;
-                      const { data: stub, error } = await supabase
-                        .from("qa_cadastro_cr" as any)
-                        .insert({ cliente_id: cliente.id })
-                        .select("id")
-                        .single();
-                      if (error) {
-                        toast.error("Falha ao preparar CR: " + error.message);
-                        return null;
-                      }
-                      const newId = (stub as any)?.id ?? null;
-                      setCadastroCrId(newId);
-                      return newId;
-                    }}
-                  />
+                  {isEdit ? (
+                    <SenhaGovField
+                      cadastroCrId={cadastroCrId}
+                      clienteId={cliente?.id ?? null}
+                      contexto="ClienteFormModal"
+                      variant="row"
+                      autoReveal
+                      onCreateCadastro={async () => {
+                        if (!cliente?.id) return null;
+                        const { data: stub, error } = await supabase
+                          .from("qa_cadastro_cr" as any)
+                          .insert({ cliente_id: cliente.id })
+                          .select("id")
+                          .single();
+                        if (error) {
+                          toast.error("Falha ao preparar CR: " + error.message);
+                          return null;
+                        }
+                        const newId = (stub as any)?.id ?? null;
+                        setCadastroCrId(newId);
+                        return newId;
+                      }}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={f.senha_gov}
+                      onChange={e => set("senha_gov", e.target.value)}
+                      placeholder="Senha GOV importada"
+                      className={cn(inputClass, "normal-case")}
+                    />
+                  )}
                 </Field>
                 <FInput
-                  label="Validade Laudo Psicológico"
+                  label="Data de Realização Exame Psicológico"
                   value={f.validade_laudo_psicologico}
                   onChange={v => set("validade_laudo_psicologico", normalizeDateInput(v))}
                   placeholder="DD/MM/AAAA"
@@ -749,7 +759,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   maxLength={10}
                 />
                 <FInput
-                  label="Validade Exame de Tiro"
+                  label="Data de Realização Exame de Tiro"
                   value={f.validade_exame_tiro}
                   onChange={v => set("validade_exame_tiro", normalizeDateInput(v))}
                   placeholder="DD/MM/AAAA"
