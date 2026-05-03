@@ -312,6 +312,10 @@ export default function QABaseEquipePage() {
 
   async function generateWithAI() {
     if (!editing) return;
+    if (!auditComplete(editing)) {
+      toast.error("Audite checklist, base de conhecimento e procedimento real antes de gerar o passo a passo.");
+      return;
+    }
     if (!editing.title?.trim() && !draftDescription.trim()) {
       toast.error("Informe o título ou uma descrição para a IA gerar o rascunho.");
       return;
@@ -334,9 +338,9 @@ export default function QABaseEquipePage() {
         body: d.body || editing.body,
         tags: (d.tags?.length ? d.tags : editing.tags) ?? [],
         symptoms: (d.symptoms?.length ? d.symptoms : editing.symptoms) ?? [],
-        status: "draft",
+        status: "needs_real_image",
       });
-      toast.success("Rascunho gerado pela IA. Revise e publique manualmente.");
+      toast.success("Rascunho gerado após auditoria. Anexe print real antes de aprovar/publicar.");
     } catch (e: any) {
       toast.error("Erro ao gerar rascunho: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -362,7 +366,13 @@ export default function QABaseEquipePage() {
       symptoms: (editing.symptoms ?? []).map(t => t.trim()).filter(Boolean),
       body: editing.body,
       related_articles: editing.related_articles ?? [],
-      status: editing.status ?? "published",
+      status: editing.status ?? "audit_pending",
+      audit_status: editing.audit_status ?? "pending_audit",
+      audit_session_id: editing.audit_session_id ?? null,
+      checklist_audited_at: editing.checklist_audited_at ?? null,
+      knowledge_base_audited_at: editing.knowledge_base_audited_at ?? null,
+      procedure_tested_at: editing.procedure_tested_at ?? null,
+      audit_ready_at: editing.audit_ready_at ?? null,
       version: editing.version ?? 1,
     };
     let res;
