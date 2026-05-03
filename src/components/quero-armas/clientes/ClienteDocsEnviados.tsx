@@ -188,7 +188,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
         <div className="flex items-center gap-2 text-xs">
-          <ShieldCheck className="h-4 w-4 text-blue-600" />
+          <ShieldCheck className="h-4 w-4 text-[#7A1F2B]" />
           <span className="font-semibold text-slate-700">Hub do Cliente</span>
           <span className="text-slate-400">·</span>
           <span className="text-slate-500">{docs.length} documento(s)</span>
@@ -232,7 +232,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                       <span className="text-[9px] font-bold uppercase">{badge.label}</span>
                     </span>
                     {d.origem === "cliente" && (
-                      <span className="text-[9px] uppercase font-semibold text-blue-600">via portal</span>
+                      <span className="text-[9px] uppercase font-semibold text-[#7A1F2B]">via portal</span>
                     )}
                   </div>
 
@@ -265,7 +265,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 
                   <div className="text-[9px] text-slate-400 mt-1.5">
                     Enviado em {new Date(d.created_at).toLocaleString("pt-BR")}
-                    {d.ia_status === "sucesso" && <span className="ml-2 text-blue-500">✦ Preenchido com IA</span>}
+                    {d.ia_status === "sucesso" && <span className="ml-2 text-[#7A1F2B]">✦ Preenchido com IA</span>}
                   </div>
                   {isReprovado && d.motivo_reprovacao && (
                     <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-700">

@@ -444,7 +444,7 @@ export default function QARelatoriosPage() {
           <button
             onClick={sendEmailAlerts}
             disabled={emailSending || totalCriticos === 0}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-all shadow-sm disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium bg-[#FBF3F4] border border-[#E5C2C6] text-[#7A1F2B] hover:bg-[#FBF3F4] transition-all shadow-sm disabled:opacity-40"
           >
             <Mail className="h-3.5 w-3.5" />
             {emailSending ? "Enviando..." : `E-mail (${totalCriticos})`}
@@ -455,7 +455,7 @@ export default function QARelatoriosPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total de Serviços", value: totalItens, icon: FileText, color: "text-blue-600", bgIcon: "bg-blue-50" },
+          { label: "Total de Serviços", value: totalItens, icon: FileText, color: "text-[#7A1F2B]", bgIcon: "bg-[#FBF3F4]" },
           { label: "Pendentes", value: totalPendentes, icon: Clock, color: "text-amber-600", bgIcon: "bg-amber-50" },
           { label: "Críticos (25d+)", value: totalCriticos, icon: AlertTriangle, color: "text-red-600", bgIcon: "bg-red-50" },
           { label: "Deferidos", value: totalDeferidos, icon: CheckCircle, color: "text-emerald-600", bgIcon: "bg-emerald-50" },
@@ -502,7 +502,7 @@ export default function QARelatoriosPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar por nome, CPF, e-mail, telefone ou serviço..."
-              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B] transition-all shadow-sm"
             />
             {search && (
               <button onClick={() => setSearch("")} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
@@ -604,7 +604,7 @@ export default function QARelatoriosPage() {
                                   <select
                                     value={editForm[field.key] || ""}
                                     onChange={e => setEditForm(prev => ({ ...prev, [field.key]: e.target.value }))}
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B] transition-all"
                                   >
                                     <option value="">Selecionar...</option>
                                     {STATUS_OPTIONS.map(s => (
@@ -621,7 +621,7 @@ export default function QARelatoriosPage() {
                                       setEditForm(prev => ({ ...prev, [field.key]: val }));
                                     }}
                                     placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+                                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B] transition-all"
                                   />
                                 )}
                               </div>

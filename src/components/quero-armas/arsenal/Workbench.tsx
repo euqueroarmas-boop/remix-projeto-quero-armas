@@ -145,7 +145,7 @@ function WeaponCard({
             <div className="mt-1 truncate text-[15px] font-black uppercase tracking-tight text-slate-900 leading-tight">
               {marca}
             </div>
-            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-600">
+            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
               {modelo}
             </div>
             <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
@@ -161,7 +161,7 @@ function WeaponCard({
             <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
               {w.source}
               {w.hasGte && (
-                <span className="rounded bg-sky-100 px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-sky-700">
+                <span className="rounded bg-[#FBF3F4] px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-[#7A1F2B]">
                   + GTE
                 </span>
               )}
@@ -216,7 +216,7 @@ function WeaponCard({
         </div>
 
         <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
-          <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-sky-600 ml-auto">
+          <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#7A1F2B] ml-auto">
             INSPECIONAR <ChevronRight className="h-3 w-3" />
           </span>
         </div>
@@ -256,7 +256,7 @@ function DocumentTag({ d }: { d: DocCard }) {
         onClick={d.onOpen}
         className="flex flex-1 items-center gap-2.5 text-left min-w-0"
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FBF3F4] text-[#7A1F2B]">
           <FileText className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -330,7 +330,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
       {/* Top HUD strip */}
       <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100 text-sky-600 ring-1 ring-sky-200">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FBF3F4] text-[#7A1F2B] ring-1 ring-[#7A1F2B]">
             <Crosshair className="h-3.5 w-3.5" />
           </div>
           <div>
@@ -411,7 +411,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                 <button
                   type="button"
                   onClick={() => setShowAll(true)}
-                  className="rounded-full border border-sky-200 bg-sky-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-sky-700 hover:bg-sky-100"
+                  className="rounded-full border border-[#E5C2C6] bg-[#FBF3F4] px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7A1F2B] hover:bg-[#FBF3F4]"
                 >
                   Ver todos (+{overflow})
                 </button>
@@ -424,7 +424,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         <div className="relative mt-6 grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <div className="mb-2 flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-sky-600" />
+              <Layers className="h-3.5 w-3.5 text-[#7A1F2B]" />
               <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-700">
                 Munições · Por Calibre
               </div>
@@ -448,7 +448,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                     </div>
                     <div className="mt-1 h-1 w-full rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-600"
+                        className="h-full rounded-full bg-gradient-to-r from-[#7A1F2B] to-[#641722]"
                         style={{ width: `${Math.min(100, (a.quantidade / 200) * 100)}%` }}
                       />
                     </div>
@@ -460,7 +460,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
 
           <div className="lg:col-span-2">
             <div className="mb-2 flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5 text-sky-600" />
+              <FileText className="h-3.5 w-3.5 text-[#7A1F2B]" />
               <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-700">
                 Documentos na Bancada
               </div>

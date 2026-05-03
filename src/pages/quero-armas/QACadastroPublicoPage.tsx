@@ -2733,7 +2733,7 @@ function AdminSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-10 pl-3 pr-9 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all appearance-none cursor-pointer"
+        className="w-full h-10 pl-3 pr-9 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B] transition-all appearance-none cursor-pointer"
       >
         <option value="">{placeholder}</option>
         {options.map((o) => (

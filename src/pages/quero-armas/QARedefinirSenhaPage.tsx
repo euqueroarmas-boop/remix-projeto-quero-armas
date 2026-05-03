@@ -168,7 +168,7 @@ export default function QARedefinirSenhaPage() {
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm pr-10"
+                    className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"
                     placeholder="Mínimo 8 caracteres"
                     autoComplete="new-password"
                   />
@@ -198,7 +198,7 @@ export default function QARedefinirSenhaPage() {
                     minLength={8}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
-                    className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm pr-10"
+                    className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"
                     placeholder="Repita a nova senha"
                     autoComplete="new-password"
                   />

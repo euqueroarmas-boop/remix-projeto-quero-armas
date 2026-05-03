@@ -236,7 +236,7 @@ export default function QAClienteContratacoesPage() {
                 <div
                   key={p.id}
                   className={`bg-white border rounded-xl overflow-hidden ${
-                    aguardandoPagto ? "border-blue-300 ring-1 ring-blue-200" :
+                    aguardandoPagto ? "border-[#E5C2C6] ring-1 ring-[#7A1F2B]" :
                     cancelado ? "border-slate-200 opacity-75" :
                     concluido ? "border-emerald-200" :
                     "border-slate-200"

@@ -303,7 +303,7 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-[#7A1F2B] cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Sem selfie"}
       >
@@ -367,7 +367,7 @@ function DocumentThumb({
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-[#7A1F2B] cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Não enviado"}
       >
@@ -2300,7 +2300,7 @@ export default function QAClientesPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => { setEditingCliente(c); setClienteModal(true); }}
-                    className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+                    className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#7A1F2B] hover:border-[#E5C2C6] hover:bg-[#FBF3F4]"
                     title="Editar cliente"
                   >
                     <Edit className="h-4 w-4" />
@@ -2854,7 +2854,7 @@ export default function QAClientesPage() {
                                                 setItemEditForm(prev => ({ ...prev, [field.key]: val }));
                                               }}
                                               placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-blue-500"}`}
+                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-[#7A1F2B]"}`}
                                             />
                                           </div>
                                         ))}
@@ -2880,7 +2880,7 @@ export default function QAClientesPage() {
                           {/* Timeline operacional — só quando há solicitação canônica vinculada */}
                           {v.solicitacao_id && (
                             <details className="border-t border-slate-100 px-3 py-2 bg-slate-50/40">
-                              <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-indigo-600 select-none">
+                              <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-[#7A1F2B] select-none">
                                 Linha do tempo do serviço
                               </summary>
                               <div className="mt-3 pl-1">
@@ -2967,7 +2967,7 @@ export default function QAClientesPage() {
         key={`edit-${fieldKey}`}
         value={ef[fieldKey] || ""}
         onChange={e => setEf(fieldKey, e.target.value.toUpperCase())}
-        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
+        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5"
         style={{ color: "hsl(220 20% 18%)" }}
       />
     );
@@ -3204,7 +3204,7 @@ export default function QAClientesPage() {
                   <select
                     value={ef.servico_interesse || ""}
                     onChange={e => setEf("servico_interesse", e.target.value)}
-                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
                     style={{ color: "hsl(220 20% 18%)" }}
                   >
                     <option value="">Selecione...</option>
@@ -3238,7 +3238,7 @@ export default function QAClientesPage() {
                     value={ef.servico_fechado_final || ""}
                     onChange={e => setEf("servico_fechado_final", e.target.value)}
                     placeholder="Defina após negociação"
-                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
                     style={{ color: "hsl(220 20% 18%)" }}
                   />
                 </div>
@@ -3295,7 +3295,7 @@ export default function QAClientesPage() {
                       value={ef.rg || ""}
                       onChange={e => setEf("rg", maskRg(e.target.value))}
                       placeholder="00.000.000-X"
-                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5"
                       style={{ color: "hsl(220 20% 18%)" }}
                     />
                   </div>
@@ -3308,7 +3308,7 @@ export default function QAClientesPage() {
                     <select
                       value={ef.uf_emissor_rg || ""}
                       onChange={e => setEf("uf_emissor_rg", e.target.value)}
-                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
                       style={{ color: "hsl(220 20% 18%)" }}
                     >
                       <option value="">Selecione</option>
@@ -3442,7 +3442,7 @@ export default function QAClientesPage() {
                   value={ef.observacoes || ""}
                   onChange={e => setEf("observacoes", e.target.value.toUpperCase())}
                   rows={3}
-                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-blue-500"
+                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-[#7A1F2B]"
                   style={{ color: "hsl(220 20% 25%)", borderColor: "hsl(220 13% 88%)" }}
                 />
               ) : (
@@ -3504,7 +3504,7 @@ export default function QAClientesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nome, CPF, telefone ou e-mail..."
-          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
+          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
           style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
         />
       </div>

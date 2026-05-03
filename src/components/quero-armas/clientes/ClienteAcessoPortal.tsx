@@ -52,7 +52,7 @@ const formatDateTime = (iso?: string | null) => {
 
 const eventoLabel: Record<string, { label: string; color: string; icon: any }> = {
   portal_provisionado: { label: "Portal provisionado", color: "text-emerald-700 bg-emerald-100", icon: CheckCircle },
-  credenciais_enviadas: { label: "Credenciais enviadas", color: "text-blue-700 bg-blue-100", icon: Send },
+  credenciais_enviadas: { label: "Credenciais enviadas", color: "text-[#7A1F2B] bg-[#FBF3F4]", icon: Send },
   senha_resetada: { label: "Senha redefinida", color: "text-amber-700 bg-amber-100", icon: KeyRound },
   falha_envio_email: { label: "Falha no envio", color: "text-red-700 bg-red-100", icon: AlertTriangle },
 };
@@ -596,18 +596,18 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
 
       {hasAccount ? (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
+          <div className="rounded-2xl border border-[#E5C2C6] bg-[#FBF3F4] p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Send className="h-4 w-4 text-blue-600" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700">Reenviar credenciais</h4>
+              <Send className="h-4 w-4 text-[#7A1F2B]" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#7A1F2B]">Reenviar credenciais</h4>
             </div>
-            <p className="text-[11px] text-blue-700/80 mb-3">
+            <p className="text-[11px] text-[#7A1F2B] mb-3">
               Reenvia o e-mail com a senha temporária atual. Se a senha não estiver mais disponível,
               uma nova será gerada automaticamente.
             </p>
             <Button
               size="sm"
-              className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl"
+              className="w-full h-9 bg-[#7A1F2B] hover:bg-[#641722] text-white text-xs font-bold rounded-xl"
               onClick={handleResend}
               disabled={resendLoading}
             >

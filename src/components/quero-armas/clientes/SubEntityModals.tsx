@@ -50,7 +50,7 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
   return (
     <div className="group flex-1">
       <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">
-        {Icon && <Icon className="h-3 w-3 text-indigo-400" />}
+        {Icon && <Icon className="h-3 w-3 text-[#7A1F2B]" />}
         {label}
         {required && <span className="text-red-400">*</span>}
       </label>
@@ -69,8 +69,8 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
         className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg
           placeholder:text-slate-300 font-medium
           transition-all duration-200
-          hover:border-indigo-300 hover:bg-white
-          focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:ring-offset-0 focus-visible:border-indigo-400 focus-visible:bg-white"
+          hover:border-[#E5C2C6] hover:bg-white
+          focus-visible:ring-2 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0 focus-visible:border-[#7A1F2B] focus-visible:bg-white"
       />
     </div>
   );
@@ -153,7 +153,7 @@ function ModalActions({ onClose, onSave, saving, saveLabel = "Salvar" }: {
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="h-9 px-5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+        className="h-9 px-5 text-xs rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white shadow-sm disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
         {saveLabel}
@@ -194,7 +194,7 @@ export function CrafModal({ open, onClose, onSaved, clienteId, craf }: CrafModal
   };
 
   return (
-    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar CRAF" : "Novo CRAF"} icon={Shield} accentColor="bg-indigo-600">
+    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar CRAF" : "Novo CRAF"} icon={Shield} accentColor="bg-[#7A1F2B]">
       <div className="space-y-4">
         <PremiumField label="Nome da Arma" value={f.nome_arma} onChange={v => setF(p => ({ ...p, nome_arma: v }))} icon={Crosshair} required />
         <PremiumField label="Nome CRAF" value={f.nome_craf} onChange={v => setF(p => ({ ...p, nome_craf: v }))} icon={FileCheck} />
@@ -710,7 +710,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
       onClose={onClose}
       title={isEdit ? "Editar Venda" : "Nova Venda"}
       icon={ShoppingCart}
-      accentColor="bg-blue-600"
+      accentColor="bg-[#7A1F2B]"
       footer={
         <div className="space-y-3">
           {/* Totals */}
@@ -728,12 +728,12 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                 placeholder="0"
                 value={f.desconto}
                 onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
-                className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0"
+                className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0"
               />
             </div>
             <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-200/80">
               <span className="text-slate-800 font-bold">Total</span>
-              <span className="text-indigo-700 font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
+              <span className="text-[#7A1F2B] font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
             </div>
           </div>
           {/* Actions */}
@@ -750,7 +750,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
               type="button"
               onClick={save}
               disabled={saving}
-              className="h-11 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+              className="h-11 text-xs rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white shadow-sm disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
               {isEdit ? "Salvar" : "Cadastrar Venda"}
@@ -767,7 +767,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
           <div className="flex-1 min-w-0">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Forma Pagamento</label>
             <Select value={f.forma_pagamento} onValueChange={v => setF(p => ({ ...p, forma_pagamento: v }))}>
-              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-[#E5C2C6] hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-[#7A1F2B] focus:ring-offset-0 focus:border-[#7A1F2B]">
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl z-[100]">
@@ -786,7 +786,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
           <div className="flex-1 min-w-0">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Status</label>
             <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
-              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-[#E5C2C6] hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-[#7A1F2B] focus:ring-offset-0 focus:border-[#7A1F2B]">
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
@@ -819,7 +819,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
         <div>
           <div className="flex items-center justify-between mb-2.5">
             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em]">Serviços Contratados</label>
-            <span className="text-[10px] text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">{selectedServicos.size} sel.</span>
+            <span className="text-[10px] text-[#7A1F2B] font-bold bg-[#FBF3F4] px-2 py-0.5 rounded-full">{selectedServicos.size} sel.</span>
           </div>
           <div className="max-h-[44vh] sm:max-h-[220px] overflow-y-auto space-y-1 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2">
             {servicos.map(svc => {
@@ -830,13 +830,13 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                   key={svc.id}
                   className={`rounded-lg px-2.5 py-2 text-xs transition-all duration-200 ${
                     isChecked
-                      ? "bg-indigo-50 border border-indigo-200/60 text-slate-800 shadow-sm"
+                      ? "bg-[#FBF3F4] border border-[#E5C2C6] text-slate-800 shadow-sm"
                       : "text-slate-500 hover:bg-white border border-transparent"
                   }`}
                 >
                   <label className="flex items-center gap-2 cursor-pointer">
                     <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 transition-colors ${
-                      isChecked ? "bg-indigo-600 text-white" : "bg-slate-200"
+                      isChecked ? "bg-[#7A1F2B] text-white" : "bg-slate-200"
                     }`}>
                       {isChecked && <CheckCircle2 className="h-3 w-3" />}
                     </div>
@@ -850,7 +850,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                         onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
                         onClick={e => e.preventDefault()}
                         disabled={!!svcData?.cortesia}
-                        className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0 font-mono disabled:opacity-50 disabled:line-through"
+                        className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0 font-mono disabled:opacity-50 disabled:line-through"
                       />
                     ) : (
                       <span className="text-[10px] text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
@@ -943,16 +943,16 @@ export function FiliacaoModal({ open, onClose, onSaved, clienteId, filiacao }: F
   };
 
   return (
-    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Filiação" : "Nova Filiação"} icon={Users} accentColor="bg-violet-600">
+    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Filiação" : "Nova Filiação"} icon={Users} accentColor="bg-[#7A1F2B]">
       <div className="space-y-4">
         <div>
           <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">
-            <Users className="h-3 w-3 text-indigo-400" />
+            <Users className="h-3 w-3 text-[#7A1F2B]" />
             Clube de Tiro
             <span className="text-red-400">*</span>
           </label>
           <Select value={f.clube_id} onValueChange={v => setF(p => ({ ...p, clube_id: v }))}>
-            <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+            <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-[#E5C2C6] hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-[#7A1F2B] focus:ring-offset-0 focus:border-[#7A1F2B]">
               <SelectValue placeholder="Selecionar clube" />
             </SelectTrigger>
             <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">

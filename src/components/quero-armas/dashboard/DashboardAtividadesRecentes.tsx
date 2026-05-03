@@ -15,9 +15,9 @@ interface AuditRow {
 }
 
 const ENTITY_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-  qa_clientes: { label: "Cliente", icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+  qa_clientes: { label: "Cliente", icon: Users, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4]" },
   qa_casos: { label: "Caso", icon: FolderOpen, color: "text-amber-600", bg: "bg-amber-50" },
-  qa_geracoes_pecas: { label: "Peça", icon: PenTool, color: "text-violet-600", bg: "bg-violet-50" },
+  qa_geracoes_pecas: { label: "Peça", icon: PenTool, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4]" },
   qa_documentos_conhecimento: { label: "Documento", icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
   qa_armamentos: { label: "Armamento", icon: ShieldCheck, color: "text-slate-700", bg: "bg-slate-100" },
 };

@@ -233,7 +233,7 @@ export default function QAContratacoesPendentesPage() {
                           <Mail className="h-3 w-3 text-slate-400 shrink-0" />
                           <a
                             href={`mailto:${p.cliente.email}`}
-                            className="text-blue-700 hover:underline truncate"
+                            className="text-[#7A1F2B] hover:underline truncate"
                           >
                             {p.cliente.email}
                           </a>

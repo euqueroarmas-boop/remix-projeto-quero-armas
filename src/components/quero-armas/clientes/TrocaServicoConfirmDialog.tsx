@@ -138,7 +138,7 @@ function Stat({ icon, count, label, tone }: { icon: React.ReactNode; count: numb
     emerald: "bg-emerald-50 border-emerald-200 text-emerald-800",
     rose:    "bg-rose-50 border-rose-200 text-rose-800",
     amber:   "bg-amber-50 border-amber-200 text-amber-800",
-    indigo:  "bg-indigo-50 border-indigo-200 text-indigo-800",
+    indigo:  "bg-[#FBF3F4] border-[#E5C2C6] text-[#7A1F2B]",
   };
   return (
     <div className={`rounded-md border px-2.5 py-2 ${colors[tone]}`}>
@@ -156,7 +156,7 @@ function DetailBlock({ title, tipos, tone }: { title: string; tipos: string[]; t
     emerald: "border-emerald-200 text-emerald-900",
     rose:    "border-rose-200 text-rose-900",
     amber:   "border-amber-200 text-amber-900",
-    indigo:  "border-indigo-200 text-indigo-900",
+    indigo:  "border-[#E5C2C6] text-[#7A1F2B]",
   };
   return (
     <div className={`rounded-md border px-2.5 py-2 ${colors[tone]} bg-white`}>

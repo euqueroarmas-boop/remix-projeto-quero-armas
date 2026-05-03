@@ -62,7 +62,7 @@ export function SolicitacaoTimeline({ solicitacaoId }: { solicitacaoId: string }
       {rows.map((e) => (
         <li key={e.id} className="ms-3">
           <span className="absolute -start-1.5 mt-1 flex h-3 w-3 items-center justify-center rounded-full bg-white border border-slate-300">
-            <CircleDot className="h-2.5 w-2.5 text-indigo-500" />
+            <CircleDot className="h-2.5 w-2.5 text-[#7A1F2B]" />
           </span>
           <div className="text-[10px] text-slate-400 uppercase tracking-wider">
             {new Date(e.created_at).toLocaleString("pt-BR")}

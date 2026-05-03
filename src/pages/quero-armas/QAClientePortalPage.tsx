@@ -606,7 +606,7 @@ export default function QAClientePortalPage() {
             <button
               type="button"
               onClick={() => setShowAddDoc(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-cyan-700 shadow-sm hover:bg-cyan-100"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-sm hover:bg-[#FBF3F4]"
             >
               <Upload className="h-3.5 w-3.5" /> Enviar
             </button>
@@ -711,7 +711,7 @@ export default function QAClientePortalPage() {
             <button
               type="button"
               onClick={() => setShowArmaManual(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/40 bg-indigo-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-indigo-700 shadow-sm hover:bg-indigo-100"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-sm hover:bg-[#FBF3F4]"
             >
               <Plus className="h-3.5 w-3.5" /> Cadastrar arma manualmente
             </button>
@@ -780,7 +780,7 @@ export default function QAClientePortalPage() {
                       {generatingAvatar ? "Criando avatar..." : "Gerar avatar tático com IA"}
                     </Button>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-blue-50 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-[#FBF3F4] text-[10px] font-semibold uppercase tracking-wider text-slate-700">
                       <BadgeCheck className="h-3 w-3 text-emerald-600" /> Avatar tático ativo
                     </span>
                   )}
@@ -1170,7 +1170,7 @@ export default function QAClientePortalPage() {
                               </span>
                             )}
                             {d.ia_status === "sugerido" && d.status !== "aprovado" && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 inline-flex items-center gap-0.5">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#FBF3F4] text-[#7A1F2B] inline-flex items-center gap-0.5">
                                 <Sparkles className="h-2.5 w-2.5" /> IA
                               </span>
                             )}

@@ -166,7 +166,7 @@ export function ClienteProcessosSection({ clienteId }: Props) {
           <button
             key={p.id}
             onClick={() => setOpenId(p.id)}
-            className={`w-full text-left bg-white border rounded-xl p-4 hover:shadow-md transition ${aguardandoPagto ? "border-blue-300 ring-1 ring-blue-200" : precisaAcao ? "border-amber-300 ring-1 ring-amber-200" : "border-slate-200"}`}
+            className={`w-full text-left bg-white border rounded-xl p-4 hover:shadow-md transition ${aguardandoPagto ? "border-[#E5C2C6] ring-1 ring-[#7A1F2B]" : precisaAcao ? "border-amber-300 ring-1 ring-amber-200" : "border-slate-200"}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -195,11 +195,11 @@ export function ClienteProcessosSection({ clienteId }: Props) {
                   </div>
                 )}
                 {aguardandoPagto ? (
-                  <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3">
-                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-blue-800">
+                  <div className="mt-3 rounded-lg bg-[#FBF3F4] border border-[#E5C2C6] p-3">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#7A1F2B]">
                       <CreditCard className="h-3 w-3" /> AGUARDANDO PAGAMENTO
                     </div>
-                    <p className="text-[11px] text-blue-900/80 mt-1 leading-relaxed normal-case">
+                    <p className="text-[11px] text-[#7A1F2B] mt-1 leading-relaxed normal-case">
                       Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente. Após a confirmação, o checklist documental será liberado.
                     </p>
                     <a

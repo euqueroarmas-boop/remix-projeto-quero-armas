@@ -260,7 +260,7 @@ export function ArmaSpecSheet({
                   <button
                     type="button"
                     onClick={onBuscarGoogle}
-                    className="text-[11px] font-mono font-bold text-blue-700 hover:text-blue-900 inline-flex items-center gap-2 self-start uppercase tracking-wider"
+                    className="text-[11px] font-mono font-bold text-[#7A1F2B] hover:text-[#7A1F2B] inline-flex items-center gap-2 self-start uppercase tracking-wider"
                     title="Abrir Google Imagens em nova aba"
                   >
                     🔍 Buscar no Google Imagens →

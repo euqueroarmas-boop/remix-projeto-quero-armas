@@ -678,7 +678,7 @@ export default function QABaseEquipePage() {
   function statusBadgeColor(s: string) {
     switch (s) {
       case "published": return "bg-emerald-100 text-emerald-800 border-emerald-300";
-      case "audited": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "audited": return "bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6]";
       case "audit_pending": return "bg-orange-100 text-orange-800 border-orange-300";
       case "needs_real_image": return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "needs_review": return "bg-amber-100 text-amber-800 border-amber-300";
@@ -847,7 +847,7 @@ export default function QABaseEquipePage() {
                       <figcaption className="p-2 text-[11px] uppercase font-mono flex items-center justify-between gap-2">
                         <span className="truncate">{img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption ?? "—"}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : img.image_type === "documento_real" ? "border-purple-400 text-purple-700" : "border-slate-400 text-slate-700"}`}>
+                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-[#7A1F2B] text-[#7A1F2B]" : img.image_type === "documento_real" ? "border-purple-400 text-purple-700" : "border-slate-400 text-slate-700"}`}>
                             {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : img.image_type === "documento_real" ? "DOC REAL" : "AUDITORIA"}
                           </Badge>
                           <Badge variant="outline" className="text-[9px]">{img.status}</Badge>

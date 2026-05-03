@@ -102,7 +102,7 @@ const KPI_VARIANTS = {
   d30:     { dot: "bg-amber-500",  text: "text-amber-700",  ring: "ring-amber-300",  bg: "bg-amber-50",  border: "border-amber-200",  label: "≤ 30 DIAS", icon: Clock },
   d45:     { dot: "bg-yellow-400", text: "text-yellow-700", ring: "ring-yellow-300", bg: "bg-yellow-50", border: "border-yellow-200", label: "≤ 45 DIAS", icon: Activity },
   vigente: { dot: "bg-emerald-500",text: "text-emerald-700",ring: "ring-emerald-300",bg: "bg-emerald-50",border: "border-emerald-200",label: "VIGENTES",  icon: ShieldCheck },
-  pend:    { dot: "bg-blue-500",   text: "text-blue-700",   ring: "ring-blue-300",   bg: "bg-blue-50",   border: "border-blue-200",   label: "C/ PEND.",  icon: Users },
+  pend:    { dot: "bg-[#7A1F2B]",   text: "text-[#7A1F2B]",   ring: "ring-[#7A1F2B]",   bg: "bg-[#FBF3F4]",   border: "border-[#E5C2C6]",   label: "C/ PEND.",  icon: Users },
 } as const;
 
 /* ================================================================
@@ -410,7 +410,7 @@ function ClienteCard({
             <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">CLIENTE</span>
               {group.temServicoPendente ? (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#FBF3F4] text-[#7A1F2B] border border-[#E5C2C6]">
                   <Users className="h-2.5 w-2.5" /> SERVIÇO PENDENTE
                 </span>
               ) : (
@@ -421,7 +421,7 @@ function ClienteCard({
             </div>
             <Link
               to={`/clientes?cliente=${group.clienteIdCanonical}`}
-              className="block font-bold text-slate-900 text-[14px] break-words uppercase hover:text-blue-700 hover:underline transition-colors"
+              className="block font-bold text-slate-900 text-[14px] break-words uppercase hover:text-[#7A1F2B] hover:underline transition-colors"
               title={`Abrir cadastro de ${group.clienteNome}`}
             >
               {group.clienteNome}
@@ -468,12 +468,12 @@ function ClienteCard({
               {group.servicosPendentes.map(({ nome, entidade }) => (
                 <span
                   key={nome}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#FBF3F4] text-[#7A1F2B] border border-[#E5C2C6]"
                 >
                   <span
                     className={`inline-flex items-center px-1.5 py-px rounded text-[9px] font-bold tracking-wider ${
                       entidade === "PF"
-                        ? "bg-blue-600 text-white"
+                        ? "bg-[#7A1F2B] text-white"
                         : entidade === "EB"
                         ? "bg-emerald-700 text-white"
                         : "bg-slate-500 text-white"
@@ -535,9 +535,9 @@ function ExameLine({ item }: { item: ExameDashItem }) {
     <li className={`rounded-md border ${c.border} ${c.bg} px-2.5 py-1.5`}>
       <div className="flex items-center gap-2 flex-wrap">
         {isPsi
-          ? <HeartPulse className="h-3 w-3 text-violet-600 shrink-0" />
+          ? <HeartPulse className="h-3 w-3 text-[#7A1F2B] shrink-0" />
           : <Crosshair className="h-3 w-3 text-orange-600 shrink-0" />}
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${isPsi ? "text-violet-700" : "text-orange-700"}`}>
+        <span className={`text-[10px] font-bold uppercase tracking-wider ${isPsi ? "text-[#7A1F2B]" : "text-orange-700"}`}>
           {isPsi ? "Psicológico" : "Tiro"}
         </span>
         <span className="text-[10px] text-slate-500 flex items-center gap-1">

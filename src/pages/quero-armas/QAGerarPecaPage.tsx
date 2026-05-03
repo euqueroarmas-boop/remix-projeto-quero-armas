@@ -253,7 +253,7 @@ function stageProgress(s: DocUploadStage): number {
 function stageColor(s: DocUploadStage): string {
   if (s === "done") return "text-emerald-400";
   if (s === "failed") return "text-red-400";
-  return "text-blue-600";
+  return "text-[#7A1F2B]";
 }
 
 function ElapsedTime({ startedAt }: { startedAt?: number }) {
@@ -1417,7 +1417,7 @@ export default function QAGerarPecaPage() {
                       <CommandGroup>
                         {municipiosList.map(m => (
                           <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
-                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-blue-50/60 data-[selected=true]:text-blue-600">
+                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-[#FBF3F4] data-[selected=true]:text-[#7A1F2B]">
                             <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
                             {toTitleCase(m)}
                           </CommandItem>
@@ -1604,7 +1604,7 @@ export default function QAGerarPecaPage() {
         {docTotal > 0 && (
           <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
-            docActive > 0 ? "border-slate-300/30 bg-blue-50/40 text-blue-600" :
+            docActive > 0 ? "border-slate-300/30 bg-[#FBF3F4] text-[#7A1F2B]" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-neutral-700 bg-slate-100/50 text-slate-600"
