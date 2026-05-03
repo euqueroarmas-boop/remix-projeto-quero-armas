@@ -499,9 +499,17 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const save = async () => {
     if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
     if (!isEdit) {
-      if (!photoFile) { toast.error("Foto do cliente é obrigatória"); return; }
-      if (!f.sexo) { toast.error("Sexo é obrigatório"); return; }
-      if (!f.estado_civil) { toast.error("Estado civil é obrigatório"); return; }
+      const errs = { photo: !photoFile, sexo: !f.sexo, estado_civil: !f.estado_civil };
+      if (errs.photo || errs.sexo || errs.estado_civil) {
+        setRequiredErrors(errs);
+        const missing: string[] = [];
+        if (errs.photo) missing.push("foto");
+        if (errs.sexo) missing.push("sexo");
+        if (errs.estado_civil) missing.push("estado civil");
+        toast.error(`Campos obrigatórios: ${missing.join(", ")}`);
+        return;
+      }
+      setRequiredErrors({});
     }
     // ── Validação compartilhada (clienteSchema) ──
     if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); return; }
