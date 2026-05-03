@@ -106,6 +106,12 @@ interface Props {
   crUnified?: StatusUnificado | null;
   crafUnified?: StatusUnificado | null;
   gteUnified?: StatusUnificado | null;
+  /**
+   * BLOCO 3 — Status agregado dos alertas globais de vencimento (engine).
+   * Quando preenchido, dirige label/hint/cor do KPI "Alertas".
+   * Quando null, mantém o comportamento legacy (contagem genérica).
+   */
+  alertasUnified?: StatusUnificado | null;
   /** BLOCO 2 — KPIs adicionais (Linha 2 recolhível). */
   documentosUnified?: StatusUnificado | null;
   processosUnified?: StatusUnificado | null;
@@ -271,6 +277,7 @@ export function ArsenalSummary({
   crUnified = null,
   crafUnified = null,
   gteUnified = null,
+  alertasUnified = null,
   documentosUnified = null,
   processosUnified = null,
   autorizacoesUnified = null,
