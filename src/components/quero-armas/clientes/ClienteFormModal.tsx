@@ -631,13 +631,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className={cn(
-                      "relative h-20 w-20 rounded-xl border border-dashed flex items-center justify-center overflow-hidden transition-colors",
+                      "relative h-24 aspect-[3/4] rounded-xl border border-dashed flex items-center justify-center overflow-hidden transition-colors",
                       requiredErrors.photo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : "border-zinc-300 hover:border-zinc-400 bg-zinc-50"
                     )}
                     aria-label="Adicionar foto"
                   >
                     {photoPreview ? (
-                      <img src={photoPreview} alt="Foto" className="w-full h-full object-contain bg-zinc-100" />
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover rounded-xl" />
                     ) : (
                       <Camera className="h-7 w-7 text-zinc-400" />
                     )}
