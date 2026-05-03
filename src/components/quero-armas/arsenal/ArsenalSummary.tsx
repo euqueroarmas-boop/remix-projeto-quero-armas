@@ -117,6 +117,8 @@ interface Props {
   processosUnified?: StatusUnificado | null;
   autorizacoesUnified?: StatusUnificado | null;
   examesUnified?: StatusUnificado | null;
+  /** Validade de munições (fab + 60m). Quando preenchido, dirige cor/hint do KPI. */
+  municoesUnified?: StatusUnificado | null;
   documentosCount?: number;
   processosCount?: number;
   autorizacoesCount?: number;
@@ -282,6 +284,7 @@ export function ArsenalSummary({
   processosUnified = null,
   autorizacoesUnified = null,
   examesUnified = null,
+  municoesUnified = null,
   documentosCount = 0,
   processosCount = 0,
   autorizacoesCount = 0,
@@ -468,8 +471,10 @@ export function ArsenalSummary({
         icon: <Boxes className="h-4 w-4" />,
         label: "Munições",
         value: totalMunicoes.toLocaleString("pt-BR"),
-        hint: totalCalibres > 0 ? `${totalCalibres} calibres` : "Sem estoque",
-        tone: "steel",
+        hint: municoesUnified
+          ? municoesUnified.sub ?? municoesUnified.label
+          : totalCalibres > 0 ? `${totalCalibres} calibres` : "Sem estoque",
+        tone: municoesUnified ? corToTone(municoesUnified.cor) : "steel",
         target: "municoes",
       },
       craf: {
@@ -559,7 +564,7 @@ export function ArsenalSummary({
       },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified, municoesUnified],
   );
 
   // Ordem efetiva:
