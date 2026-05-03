@@ -350,8 +350,12 @@ export default function QABaseEquipePage() {
 
   async function saveArticle() {
     if (!editing) return;
-    if (!editing.title?.trim() || !editing.body?.trim()) {
-      toast.error("Título e corpo são obrigatórios.");
+    if (!editing.title?.trim()) {
+      toast.error("Título é obrigatório.");
+      return;
+    }
+    if (!editing.body?.trim() && (editing.status ?? "audit_pending") !== "audit_pending") {
+      toast.error("Corpo é obrigatório após a auditoria.");
       return;
     }
     if (["audited", "published"].includes(editing.status ?? "") && !auditComplete(editing)) {
@@ -372,7 +376,7 @@ export default function QABaseEquipePage() {
       audience: editing.audience ?? "equipe",
       tags: (editing.tags ?? []).map(t => t.trim()).filter(Boolean),
       symptoms: (editing.symptoms ?? []).map(t => t.trim()).filter(Boolean),
-      body: editing.body,
+      body: editing.body?.trim() || "## Auditoria pendente\n\nArtigo bloqueado até auditoria do checklist, conferência da base de conhecimento e teste do procedimento real.",
       related_articles: editing.related_articles ?? [],
       status: editing.status ?? "audit_pending",
       audit_status: editing.audit_status ?? "pending_audit",
