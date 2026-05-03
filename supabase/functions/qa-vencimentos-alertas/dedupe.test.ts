@@ -12,7 +12,11 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
  * (fonte, ref_id, marco_dias, canal, data_referencia).
  */
 
-Deno.test("dedupe: dois candidatos iguais resultam em 1 inserção", async () => {
+Deno.test({
+  name: "dedupe: dois candidatos iguais resultam em 1 inserção",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
   const ref_id = `test:dedupe:${crypto.randomUUID()}`;
   const base = {
@@ -54,9 +58,14 @@ Deno.test("dedupe: dois candidatos iguais resultam em 1 inserção", async () =>
 
   // Limpeza
   await sb.from("qa_vencimentos_alertas_enviados").delete().eq("ref_id", ref_id);
+  },
 });
 
-Deno.test("dedupe: nova data_referencia permite reenviar", async () => {
+Deno.test({
+  name: "dedupe: nova data_referencia permite reenviar",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  fn: async () => {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
   const ref_id = `test:reciclo:${crypto.randomUUID()}`;
   const base = {
@@ -86,4 +95,5 @@ Deno.test("dedupe: nova data_referencia permite reenviar", async () => {
   assertEquals(data?.length, 2);
 
   await sb.from("qa_vencimentos_alertas_enviados").delete().eq("ref_id", ref_id);
+  },
 });
