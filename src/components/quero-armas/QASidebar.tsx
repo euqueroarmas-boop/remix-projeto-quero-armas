@@ -5,6 +5,7 @@ import {
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
   ClipboardList, UserCheck, Tags, GraduationCap,
+  History,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -26,6 +27,7 @@ const NAV_GROUPS = [
       { title: "Processos & Documentos", url: "/processos", icon: FileStack },
       { title: "Homologação de Clientes", url: "/operacao/homologacao-clientes", icon: UserCheck },
       { title: "Alertas de Vencimento", url: "/operacao/alertas-vencimento", icon: Activity },
+      { title: "Histórico de Status", url: "/operacao/historico-status", icon: History },
     ],
   },
   {
