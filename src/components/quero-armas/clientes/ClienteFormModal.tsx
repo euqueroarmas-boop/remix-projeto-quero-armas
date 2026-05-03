@@ -16,6 +16,7 @@ import {
   cinEqualsCpf,
 } from "@/shared/quero-armas/clienteSchema";
 import { SenhaGovField } from "./SenhaGovField";
+import ClienteAIPrefill, { type PrefillFields } from "./ClienteAIPrefill";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -288,6 +289,102 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   }, [cliente, existingPhotoUrl, open]);
 
   const set = (key: string, val: any) => setF(prev => ({ ...prev, [key]: val }));
+
+  // Aplica os dados extraídos pela IA no formulário existente, sem destruir
+  // valores já preenchidos manualmente. Dispara CEP lookup quando aplicável,
+  // e adiciona warnings/acervo nas observações para revisão humana.
+  const applyAIPrefill = useCallback(async (p: PrefillFields) => {
+    const onlyDigits = (s: any) => String(s ?? "").replace(/\D/g, "");
+    const setIfEmpty = (cur: string, next: any) =>
+      cur && cur.trim() ? cur : (next == null ? cur : String(next));
+
+    // Detecta divergência de endereço (CEP vs endereço extraído)
+    let addressDivergence: string | null = null;
+    let extractedCep = onlyDigits(p.cep);
+
+    setF(prev => {
+      const cinDetected = String(p.tipo_documento_identidade || "").toUpperCase() === "CIN";
+      const cpfDigits = onlyDigits(p.cpf);
+      const rgValue = String(p.rg ?? "");
+      return {
+        ...prev,
+        nome_completo: setIfEmpty(prev.nome_completo, p.nome_completo),
+        cpf: setIfEmpty(prev.cpf, cpfDigits),
+        tipo_documento_identidade: cinDetected ? "CIN" : prev.tipo_documento_identidade,
+        rg: setIfEmpty(prev.rg, rgValue),
+        emissor_rg: setIfEmpty(prev.emissor_rg, p.emissor_rg),
+        expedicao_rg: setIfEmpty(prev.expedicao_rg, p.data_expedicao_rg),
+        data_nascimento: setIfEmpty(prev.data_nascimento, p.data_nascimento),
+        sexo: setIfEmpty(prev.sexo, p.sexo),
+        nome_mae: setIfEmpty(prev.nome_mae, p.nome_mae),
+        nome_pai: setIfEmpty(prev.nome_pai, p.nome_pai),
+        nacionalidade: setIfEmpty(prev.nacionalidade, p.nacionalidade) || prev.nacionalidade,
+        estado_civil: setIfEmpty(prev.estado_civil, p.estado_civil),
+        profissao: setIfEmpty(prev.profissao, p.profissao),
+        escolaridade: setIfEmpty(prev.escolaridade, p.escolaridade),
+        naturalidade_municipio: setIfEmpty(prev.naturalidade_municipio, p.naturalidade_municipio),
+        naturalidade_uf: setIfEmpty(prev.naturalidade_uf, p.naturalidade_uf),
+        naturalidade_pais: setIfEmpty(prev.naturalidade_pais, p.naturalidade_pais) || prev.naturalidade_pais,
+        titulo_eleitor: setIfEmpty(prev.titulo_eleitor, p.titulo_eleitor),
+        cnh: setIfEmpty(prev.cnh, p.cnh),
+        ctps: setIfEmpty(prev.ctps, p.ctps),
+        pis_pasep: setIfEmpty(prev.pis_pasep, p.pis_pasep),
+        celular: setIfEmpty(prev.celular, p.celular ? onlyDigits(p.celular) : ""),
+        email: setIfEmpty(prev.email, p.email),
+        cep: setIfEmpty(prev.cep, extractedCep),
+        endereco: setIfEmpty(prev.endereco, p.endereco),
+        numero: setIfEmpty(prev.numero, p.numero),
+        complemento: setIfEmpty(prev.complemento, p.complemento),
+        bairro: setIfEmpty(prev.bairro, p.bairro),
+        cidade: setIfEmpty(prev.cidade, p.cidade),
+        estado: setIfEmpty(prev.estado, p.estado),
+        pais: setIfEmpty(prev.pais, p.pais) || prev.pais,
+        observacao: [
+          prev.observacao,
+          Array.isArray(p.warnings) && p.warnings.length
+            ? `\n\n⚠️ AVISOS DA IA:\n- ${p.warnings.join("\n- ")}`
+            : "",
+          Array.isArray(p.acervo) && p.acervo.length
+            ? `\n\n📦 ACERVO IDENTIFICADO PELA IA:\n${p.acervo.map((a: any, i: number) =>
+                `${i + 1}. ${[a.tipo_documento, a.arma_marca, a.arma_modelo, a.arma_calibre, a.arma_numero_serie]
+                  .filter(Boolean).join(" · ")}`).join("\n")}`
+            : "",
+          p.observacoes ? `\n\n📝 ${p.observacoes}` : "",
+        ].filter(Boolean).join("").trim(),
+      };
+    });
+
+    // CEP lookup automático se a IA trouxe CEP
+    if (extractedCep && extractedCep.length === 8) {
+      try {
+        const result = await lookupCep(extractedCep);
+        if (result) {
+          setF(prev => {
+            const cepCity = (result.city || "").trim().toLowerCase();
+            const aiCity = String(p.cidade || "").trim().toLowerCase();
+            if (cepCity && aiCity && cepCity !== aiCity) {
+              addressDivergence = `Cidade do CEP (${result.city}) difere da cidade extraída (${p.cidade}).`;
+            }
+            return {
+              ...prev,
+              endereco: prev.endereco || result.street || "",
+              bairro: prev.bairro || result.neighborhood || "",
+              cidade: prev.cidade || result.city || "",
+              estado: prev.estado || result.state || "",
+            };
+          });
+        }
+      } catch { /* lookup falha silenciosa — usuário revê manualmente */ }
+    }
+
+    if (addressDivergence) {
+      toast.warning("Divergência de endereço detectada — revise.");
+      setF(prev => ({
+        ...prev,
+        observacao: `${prev.observacao}\n\n⚠️ ${addressDivergence}`.trim(),
+      }));
+    }
+  }, [lookupCep]);
 
   const save = async () => {
     if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); setStep(0); return; }
