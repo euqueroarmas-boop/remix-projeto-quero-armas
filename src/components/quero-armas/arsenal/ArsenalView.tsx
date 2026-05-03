@@ -652,6 +652,88 @@ export function ArsenalView({
     });
   }, [gteDocs, docsByTipo.gte]);
 
+  // ── BLOCO 2 — KPIs adicionais (Linha 2 recolhível) ────────────────────────
+  // Documentos genéricos (exclui CR/CRAF/GTE — já têm KPI próprio).
+  const docsGenericos = useMemo<DocumentoUploadLite[]>(() => {
+    const list = (meusDocs ?? []) as any[];
+    return list
+      .filter((d) => {
+        const t = String(d?.tipo_documento ?? "").toLowerCase();
+        return t && t !== "cr" && t !== "craf" && t !== "gte" && t !== "gt";
+      })
+      .map((d) => ({
+        status: d?.status ?? null,
+        ia_status: d?.ia_status ?? d?.status_ia ?? null,
+        origem: d?.origem ?? null,
+        data_validade: d?.data_validade ?? null,
+      }));
+  }, [meusDocs]);
+
+  const documentosUnified = useMemo(() => {
+    if (docsGenericos.length === 0) return null;
+    return getStatusUnificado({ tipo: "DOCUMENTO_INDIVIDUAL", documentos: docsGenericos });
+  }, [docsGenericos]);
+
+  // Processos: usa apenas as solicitações reais de processo administrativo.
+  // Filtra autorizações de compra (já têm KPI próprio).
+  const solicitacoesProcessos = useMemo(
+    () =>
+      solicitacoes.filter((s) => {
+        const slug = String(s.service_slug ?? "").toLowerCase();
+        return !(slug.includes("autorizacao") && slug.includes("compra"));
+      }),
+    [solicitacoes],
+  );
+
+  const processosUnified = useMemo(() => {
+    if (processos.length === 0 && solicitacoesProcessos.length === 0) return null;
+    return getStatusUnificado({
+      tipo: "PROCESSO_ADM",
+      processos: processos.map((p) => ({ status: p.status })),
+      solicitacoes: solicitacoesProcessos.map((s) => ({
+        status_servico: s.status_servico,
+        status_financeiro: s.status_financeiro,
+      })),
+    });
+  }, [processos, solicitacoesProcessos]);
+
+  // Autorizações de compra (subset das solicitações).
+  const autorizacoes = useMemo(
+    () =>
+      solicitacoes.filter((s) => {
+        const slug = String(s.service_slug ?? "").toLowerCase();
+        return slug.includes("autorizacao") && slug.includes("compra");
+      }),
+    [solicitacoes],
+  );
+
+  const autorizacoesUnified = useMemo(() => {
+    if (autorizacoes.length === 0) return null;
+    return getStatusUnificado({
+      tipo: "AUTORIZACAO_COMPRA",
+      solicitacoes: autorizacoes.map((s) => ({
+        status_servico: s.status_servico,
+        status_financeiro: s.status_financeiro,
+      })),
+    });
+  }, [autorizacoes]);
+
+  // Exames / Laudos — engine usa cadastro.data_validade (mais próximo).
+  const examesUnified = useMemo(() => {
+    if (exames.length === 0) return null;
+    const validades = exames
+      .map((e) => e.data_vencimento)
+      .filter(Boolean)
+      .map((v) => new Date(v as string))
+      .filter((d) => !isNaN(d.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime());
+    const maisProxima = validades[0] ?? null;
+    return getStatusUnificado({
+      tipo: "EXAME_LAUDO",
+      cadastro: maisProxima ? { data_validade: maisProxima } : null,
+    });
+  }, [exames]);
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
