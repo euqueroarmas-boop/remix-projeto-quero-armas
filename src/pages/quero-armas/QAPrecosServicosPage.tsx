@@ -551,7 +551,7 @@ export default function QAPrecosServicosPage() {
           </div>
           <div>
             <h1 className="text-base md:text-lg font-bold uppercase tracking-tight text-slate-900">
-              PREÇOS DO CATÁLOGO
+              CATÁLOGO DE PREÇOS
             </h1>
             <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 uppercase tracking-wider">
               EDITE PREÇO, RECORRÊNCIA E DISPONIBILIDADE DE CADA SERVIÇO
@@ -572,7 +572,7 @@ export default function QAPrecosServicosPage() {
           <button
             type="button"
             onClick={openCreate}
-            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-amber-500 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-amber-600 transition"
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] transition"
           >
             <Plus className="h-3.5 w-3.5" /> NOVO SERVIÇO
           </button>
@@ -756,7 +756,7 @@ export default function QAPrecosServicosPage() {
               type="button"
               onClick={submitForm}
               disabled={submitting}
-              className="h-9 px-4 rounded-md bg-amber-500 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-amber-600 disabled:opacity-50"
+              className="h-9 px-4 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
             >
               {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin inline" /> : <Save className="h-3.5 w-3.5 inline mr-1" />}
               {form?.id ? "SALVAR" : "CRIAR"}
@@ -790,7 +790,7 @@ export default function QAPrecosServicosPage() {
               <button
                 type="button"
                 onClick={adicionarCategoria}
-                className="h-9 px-3 rounded-md bg-amber-500 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-amber-600"
+                className="h-9 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
               >
                 <Plus className="h-3.5 w-3.5 inline mr-1" /> ADD
               </button>
@@ -817,7 +817,7 @@ export default function QAPrecosServicosPage() {
                           type="button"
                           onClick={() => void renomearCategoria()}
                           disabled={catBusy}
-                          className="h-8 px-2 rounded-md bg-amber-500 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-amber-600 disabled:opacity-50"
+                          className="h-8 px-2 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
                         >
                           {catBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : "OK"}
                         </button>
