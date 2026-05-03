@@ -2161,11 +2161,13 @@ export default function QAClientesPage() {
   const isRejeitado = (s: string | null | undefined) => String(s || "").toLowerCase() === "rejeitado";
   const cadastrosNaoRejeitados = cadastrosPublicos.filter(c => !isRejeitado(c.status));
   const cadastrosRejeitados = cadastrosPublicos.filter(c => isRejeitado(c.status));
+  const APROVADO_STATUSES = new Set(["aprovado", "conferido", "validado", "formulario_conferido"]);
+  const isAprovadoStatus = (s: string | null | undefined) =>
+    APROVADO_STATUSES.has(String(s || "").toLowerCase());
   const filteredCadastros = cadastrosNaoRejeitados.filter(c => {
     if (!matchSearch(c)) return false;
-    const status = String(c.status || "").toLowerCase();
-    if (cadastroFilter === "aprovado") return status === "aprovado";
-    return status !== "aprovado"; // pendente / em análise / etc.
+    if (cadastroFilter === "aprovado") return isAprovadoStatus(c.status);
+    return !isAprovadoStatus(c.status); // pendente / em análise / etc.
   });
   const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
