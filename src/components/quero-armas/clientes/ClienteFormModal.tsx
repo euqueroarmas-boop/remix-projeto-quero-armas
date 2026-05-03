@@ -661,13 +661,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <FInput label="CTPS" value={f.ctps} onChange={v => set("ctps", v)} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <FInput label="PIS/PASEP" value={f.pis_pasep} onChange={v => set("pis_pasep", v)} />
                 <Field label="Senha Gov.br">
                   <SenhaGovField
                     cadastroCrId={cadastroCrId}
                     clienteId={cliente?.id ?? null}
                     contexto="ClienteFormModal"
                     variant="row"
+                    autoReveal
                     onCreateCadastro={async () => {
                       if (!cliente?.id) return null;
                       const { data: stub, error } = await supabase
@@ -685,7 +685,22 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     }}
                   />
                 </Field>
-                <FInput label="Naturalidade (legado)" value={f.naturalidade} onChange={v => set("naturalidade", v)} placeholder="Compatibilidade" />
+                <FInput
+                  label="Validade Laudo Psicológico"
+                  value={f.validade_laudo_psicologico}
+                  onChange={v => set("validade_laudo_psicologico", normalizeDateInput(v))}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
+                <FInput
+                  label="Validade Exame de Tiro"
+                  value={f.validade_exame_tiro}
+                  onChange={v => set("validade_exame_tiro", normalizeDateInput(v))}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
               </div>
             </section>
 
