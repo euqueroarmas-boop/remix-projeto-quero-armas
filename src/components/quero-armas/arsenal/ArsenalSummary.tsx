@@ -522,9 +522,14 @@ export function ArsenalSummary({
         icon: <AlertTriangle className="h-4 w-4" />,
         label: "Alertas",
         value: alerts,
-        hint: alerts === 0 ? "Tudo em dia" : "Vencimentos próximos",
-        // Zerado é cinza/neutro (regra global). Com alertas: amarelo/vermelho.
-        tone: alerts === 0 ? "steel" : alerts > 2 ? "danger" : "warn",
+        hint: alertasUnified
+          ? alertasUnified.sub ?? alertasUnified.label
+          : alerts === 0 ? "Tudo em dia" : "Vencimentos próximos",
+        // Cor agora dirigida pela engine (vencido→vermelho, vencendo→laranja/amarelo,
+        // em dia→verde, sem dado→cinza). Fallback legacy preservado.
+        tone: alertasUnified
+          ? corToTone(alertasUnified.cor)
+          : alerts === 0 ? "steel" : alerts > 2 ? "danger" : "warn",
         target: "alertas",
       },
       gte: {
