@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import { toast } from "sonner";
 import {
   Inbox, RefreshCw, CheckCircle2, Clock, User, Phone, Mail,
@@ -85,6 +86,8 @@ export default function QAContratacoesPendentesPage() {
       return;
     setConfirmingId(row.id);
     try {
+      const prevStatus = row.status ?? null;
+      const prevPgto = row.pagamento_status ?? null;
       const { error } = await supabase
         .from("qa_processos")
         .update({
@@ -94,6 +97,31 @@ export default function QAContratacoesPendentesPage() {
         })
         .eq("id", row.id);
       if (error) throw error;
+      const usuario_id = (await supabase.auth.getUser()).data.user?.id ?? null;
+      void registrarStatusEvento({
+        cliente_id: row.cliente_id,
+        processo_id: row.id,
+        origem: "equipe",
+        entidade: "processo",
+        entidade_id: row.id,
+        campo_status: "pagamento_status",
+        status_anterior: prevPgto,
+        status_novo: "confirmado",
+        usuario_id,
+        detalhes: { contexto: "QAContratacoesPendentesPage.confirmarPagamento", servico_nome: row.servico_nome },
+      });
+      void registrarStatusEvento({
+        cliente_id: row.cliente_id,
+        processo_id: row.id,
+        origem: "equipe",
+        entidade: "processo",
+        entidade_id: row.id,
+        campo_status: "status",
+        status_anterior: prevStatus,
+        status_novo: "aguardando_documentos",
+        usuario_id,
+        detalhes: { contexto: "QAContratacoesPendentesPage.confirmarPagamento" },
+      });
 
       // Dispara notificação ao cliente
       supabase.functions
