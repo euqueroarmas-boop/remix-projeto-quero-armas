@@ -333,13 +333,25 @@ Deno.serve(async (req) => {
 
     const result = await callPrefill(content);
     const normalized: any = { ...(result ?? {}) };
-    if (normalized.senha_gov) {
-      const checked = await verifySenhaGov(content, normalized.senha_gov);
+    const senhaCandidate = typeof normalized.senha_gov_raw === "string" ? normalized.senha_gov_raw : normalized.senha_gov;
+    delete normalized.senha_gov;
+    if (senhaCandidate) {
+      const checked = await verifySenhaGov(content, senhaCandidate);
       if (!checked.ok) {
-        delete normalized.senha_gov;
+        normalized.senha_gov_raw = "";
+        normalized.senha_gov_confidence = checked.confidence ?? 0;
+        normalized.senha_gov_needs_review = true;
         normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
         normalized.warnings.push(checked.warning);
+      } else {
+        normalized.senha_gov_raw = checked.senha;
+        normalized.senha_gov = checked.senha;
+        normalized.senha_gov_confidence = checked.confidence;
+        normalized.senha_gov_needs_review = true;
       }
+    } else if (normalized.senha_gov_needs_review) {
+      normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+      normalized.warnings.push("Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.");
     }
     // Convert confidence_pairs[] -> confidence{} for frontend compatibility
     if (Array.isArray(normalized.confidence_pairs)) {
@@ -349,6 +361,13 @@ Deno.serve(async (req) => {
       }
       normalized.confidence = conf;
       delete normalized.confidence_pairs;
+    }
+    if (emissorRgNeedsReview(normalized.emissor_rg, normalized.confidence?.emissor_rg)) {
+      normalized.emissor_rg_needs_review = true;
+      normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+      if (!normalized.warnings.includes("Verificar emissor do RG. Extração possivelmente incorreta.")) {
+        normalized.warnings.push("Verificar emissor do RG. Extração possivelmente incorreta.");
+      }
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {
