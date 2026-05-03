@@ -5312,48 +5312,170 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_kb_article_reviews: {
+        Row: {
+          action: string
+          article_id: string
+          id: string
+          new_body: string | null
+          notes: string | null
+          old_body: string | null
+          reason: string | null
+          reviewed_at: string
+          reviewed_by: string | null
+          screenshot_id: string | null
+          screenshot_url: string | null
+        }
+        Insert: {
+          action: string
+          article_id: string
+          id?: string
+          new_body?: string | null
+          notes?: string | null
+          old_body?: string | null
+          reason?: string | null
+          reviewed_at?: string
+          reviewed_by?: string | null
+          screenshot_id?: string | null
+          screenshot_url?: string | null
+        }
+        Update: {
+          action?: string
+          article_id?: string
+          id?: string
+          new_body?: string | null
+          notes?: string | null
+          old_body?: string | null
+          reason?: string | null
+          reviewed_at?: string
+          reviewed_by?: string | null
+          screenshot_id?: string | null
+          screenshot_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_article_reviews_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_kb_article_reviews_screenshot_id_fkey"
+            columns: ["screenshot_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigo_imagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_kb_article_versions: {
+        Row: {
+          article_id: string
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          images_snapshot: Json
+          reason: string | null
+          status: string
+          title: string
+          version_number: number
+        }
+        Insert: {
+          article_id: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          images_snapshot?: Json
+          reason?: string | null
+          status: string
+          title: string
+          version_number: number
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          images_snapshot?: Json
+          reason?: string | null
+          status?: string
+          title?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_kb_artigo_imagens: {
         Row: {
           article_id: string
+          audit_session_id: string | null
           caption: string | null
+          captured_at: string | null
           created_at: string
+          device: string | null
           error_message: string | null
           id: string
+          image_type: string
           image_url: string | null
           prompt_used: string | null
+          route_path: string | null
           status: string
           step_number: number
           step_title: string | null
           storage_path: string | null
           updated_at: string
+          viewport: string | null
         }
         Insert: {
           article_id: string
+          audit_session_id?: string | null
           caption?: string | null
+          captured_at?: string | null
           created_at?: string
+          device?: string | null
           error_message?: string | null
           id?: string
+          image_type?: string
           image_url?: string | null
           prompt_used?: string | null
+          route_path?: string | null
           status?: string
           step_number?: number
           step_title?: string | null
           storage_path?: string | null
           updated_at?: string
+          viewport?: string | null
         }
         Update: {
           article_id?: string
+          audit_session_id?: string | null
           caption?: string | null
+          captured_at?: string | null
           created_at?: string
+          device?: string | null
           error_message?: string | null
           id?: string
+          image_type?: string
           image_url?: string | null
           prompt_used?: string | null
+          route_path?: string | null
           status?: string
           step_number?: number
           step_title?: string | null
           storage_path?: string | null
           updated_at?: string
+          viewport?: string | null
         }
         Relationships: [
           {
@@ -5363,10 +5485,19 @@ export type Database = {
             referencedRelation: "qa_kb_artigos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "qa_kb_artigo_imagens_audit_session_id_fkey"
+            columns: ["audit_session_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_audit_sessions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       qa_kb_artigos: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           audience: string
           author_id: string | null
           body: string
@@ -5377,6 +5508,7 @@ export type Database = {
           embedding_status: string
           embedding_updated_at: string | null
           id: string
+          last_review_reason: string | null
           module: string | null
           related_articles: string[]
           search_tsv: unknown
@@ -5387,8 +5519,11 @@ export type Database = {
           title: string
           updated_at: string
           version: number
+          visual_bug_detected: boolean
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           audience?: string
           author_id?: string | null
           body?: string
@@ -5399,6 +5534,7 @@ export type Database = {
           embedding_status?: string
           embedding_updated_at?: string | null
           id?: string
+          last_review_reason?: string | null
           module?: string | null
           related_articles?: string[]
           search_tsv?: unknown
@@ -5409,8 +5545,11 @@ export type Database = {
           title: string
           updated_at?: string
           version?: number
+          visual_bug_detected?: boolean
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           audience?: string
           author_id?: string | null
           body?: string
@@ -5421,6 +5560,7 @@ export type Database = {
           embedding_status?: string
           embedding_updated_at?: string | null
           id?: string
+          last_review_reason?: string | null
           module?: string | null
           related_articles?: string[]
           search_tsv?: unknown
@@ -5431,6 +5571,52 @@ export type Database = {
           title?: string
           updated_at?: string
           version?: number
+          visual_bug_detected?: boolean
+        }
+        Relationships: []
+      }
+      qa_kb_audit_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          modules_audited: string[]
+          notes: string | null
+          routes_audited: string[]
+          started_at: string
+          status: string
+          title: string
+          total_screenshots: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          modules_audited?: string[]
+          notes?: string | null
+          routes_audited?: string[]
+          started_at?: string
+          status?: string
+          title: string
+          total_screenshots?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          modules_audited?: string[]
+          notes?: string | null
+          routes_audited?: string[]
+          started_at?: string
+          status?: string
+          title?: string
+          total_screenshots?: number
+          updated_at?: string
         }
         Relationships: []
       }
