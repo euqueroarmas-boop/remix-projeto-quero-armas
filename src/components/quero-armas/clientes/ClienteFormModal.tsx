@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair, Phone, Activity, FileBadge, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair, Phone, Activity, FileBadge, CheckCircle2, Stethoscope, Target } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
@@ -228,7 +228,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     naturalidade_pais: "Brasil",
     cnh: "",
     ctps: "",
-    pis_pasep: "",
+    // Validades de exames (gravadas em qa_cadastro_cr)
+    validade_laudo_psicologico: "",
+    validade_exame_tiro: "",
   });
 
   useEffect(() => {
@@ -267,7 +269,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         naturalidade_pais: cliente.naturalidade_pais || "Brasil",
         cnh: cliente.cnh || "",
         ctps: cliente.ctps || "",
-        pis_pasep: cliente.pis_pasep || "",
+        validade_laudo_psicologico: "",
+        validade_exame_tiro: "",
       });
       // Load existing photo preview
       if (cliente.imagem) {
@@ -281,13 +284,20 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         try {
           const { data: row } = await supabase
             .from("qa_cadastro_cr" as any)
-            .select("id")
+            .select("id, validade_laudo_psicologico, validade_exame_tiro")
             .eq("cliente_id", cliente.id)
             .is("consolidado_em", null)
             .order("id", { ascending: false })
             .limit(1)
             .maybeSingle();
           setCadastroCrId((row as any)?.id ?? null);
+          if (row) {
+            setF(prev => ({
+              ...prev,
+              validade_laudo_psicologico: formatDateForDisplay((row as any).validade_laudo_psicologico || ""),
+              validade_exame_tiro: formatDateForDisplay((row as any).validade_exame_tiro || ""),
+            }));
+          }
         } catch {
           setCadastroCrId(null);
         }
