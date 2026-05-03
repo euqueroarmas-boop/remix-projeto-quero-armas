@@ -1140,7 +1140,7 @@ function kpiTone(value: string): "ok" | "warn" | "info" {
 /* ── Compute KPIs ── */
 function kpiIdent(f: any): string {
   const fields = [
-    "nome_completo", "cpf", "rg", "emissor_rg", "expedicao_rg",
+    "nome_completo", "cpf", "rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg",
     "data_nascimento", "sexo", "naturalidade_municipio", "naturalidade_uf",
     "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
     "nome_mae", "nome_pai",
