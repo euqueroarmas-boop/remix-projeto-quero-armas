@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X, Shield, AlertTriangle } from "lucide-react";
+import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
@@ -134,7 +134,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const isEdit = !!cliente;
   const existingPhotoUrl = usePrivateStorageUrl("qa-documentos", cliente?.imagem || null);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState(0);
   const { lookupCep, cepLoading, lookupGeocode, geocodeLoading } = useBrasilApiLookup();
 
   // Photo upload state
@@ -242,7 +241,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   });
 
   useEffect(() => {
-    if (!open) { setStep(0); setPhotoFile(null); setPhotoPreview(null); return; }
+    if (!open) { setPhotoFile(null); setPhotoPreview(null); return; }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
