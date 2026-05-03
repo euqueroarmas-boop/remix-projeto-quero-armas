@@ -434,11 +434,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   }, [lookupCep]);
 
   const save = async () => {
-    if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); setStep(0); return; }
+    if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
     // ── Validação compartilhada (clienteSchema) ──
-    if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); setStep(0); return; }
-    if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); setStep(1); return; }
-    if (f.celular && !isValidTelefone(f.celular)) { toast.error("Telefone inválido"); setStep(1); return; }
+    if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); return; }
+    if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); return; }
+    if (f.celular && !isValidTelefone(f.celular)) { toast.error("Telefone inválido"); return; }
     // CIN substitui o RG e PODE ter o mesmo número do CPF (legal).
     // Só bloqueia quando o tipo é RG tradicional.
     if (f.tipo_documento_identidade !== "CIN" && !rgNotEqualCpf(f.rg, f.cpf)) {
