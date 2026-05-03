@@ -1145,6 +1145,11 @@ export function ArsenalView({
         description={deleteModal.desc}
         loading={deleting}
       />
+      <AlertasDrillDownModal
+        open={alertasModal}
+        onClose={() => setAlertasModal(false)}
+        alertas={alertasDetalhados}
+      />
     </div>
   );
 }
