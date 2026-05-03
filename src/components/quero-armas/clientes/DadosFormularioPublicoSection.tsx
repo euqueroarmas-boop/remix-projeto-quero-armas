@@ -16,6 +16,10 @@ import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 const norm = (v?: string | null) => (v || "").replace(/\D/g, "");
 const filled = (v: any) => v != null && String(v).trim() !== "";
 
+// Campos cuja comparação deve ser feita apenas por dígitos (CEP, telefone, CPF…),
+// evitando falsas divergências por causa de máscara ("05630-050" vs "05630050").
+const DIGIT_ONLY_FIELDS = new Set(["cep", "celular", "telefone_principal", "cpf", "rg"]);
+
 type Cad = Record<string, any>;
 type Cli = Record<string, any>;
 
