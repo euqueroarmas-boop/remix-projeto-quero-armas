@@ -309,7 +309,7 @@ export function ArsenalView({
       return;
     }
     const sectionId =
-      target === "alertas" || target === "crafs"
+      target === "crafs"
         ? "arsenal-situacao"
         : target === "municoes" || target === "calibres"
         ? "arsenal-municoes"
