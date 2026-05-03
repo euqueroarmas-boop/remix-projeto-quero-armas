@@ -2258,6 +2258,14 @@ export default function QAClientesPage() {
   const isManual = (c: any) => String((c as any).origem || "") === "manual";
   const filteredManuais = filtered.filter(isManual);
 
+  // App Arsenal Inteligente (FREE): clientes que estão usando o app na conta gratuita.
+  // Considera-se FREE quando arsenal_plano = 'free' (default no banco) e o cliente
+  // tem evidência de uso (ultimo acesso registrado OU vinculo auth ativo via user_id).
+  const isArsenalFree = (c: any) =>
+    String((c as any).arsenal_plano || "free").toLowerCase() === "free" &&
+    (!!(c as any).arsenal_ultimo_acesso_em || !!(c as any).user_id);
+  const filteredArsenalFree = filtered.filter(isArsenalFree);
+
   const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
