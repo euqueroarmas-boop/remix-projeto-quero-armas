@@ -17,6 +17,7 @@ import {
 } from "@/shared/quero-armas/clienteSchema";
 import { SenhaGovField } from "./SenhaGovField";
 import ClienteAIPrefill, { type PrefillFields } from "./ClienteAIPrefill";
+import { setSenhaGov } from "./senhaGovApi";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -237,9 +238,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     naturalidade_pais: "Brasil",
     cnh: "",
     ctps: "",
-    // Validades de exames (gravadas em qa_cadastro_cr)
+    // Datas de realização dos exames (colunas legadas em qa_cadastro_cr)
     validade_laudo_psicologico: "",
     validade_exame_tiro: "",
+    senha_gov: "",
   });
 
   useEffect(() => {
@@ -281,6 +283,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         ctps: cliente.ctps || "",
         validade_laudo_psicologico: "",
         validade_exame_tiro: "",
+        senha_gov: "",
       });
       // Load existing photo preview
       if (cliente.imagem) {
@@ -314,7 +317,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         // estado de senha não é mais mantido aqui; SenhaGovField gerencia tudo.
       })();
     } else {
-      setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
+      setF(prev => ({
+        ...prev,
+        nome_completo: "", cpf: "", rg: "", email: "", celular: "",
+        validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "",
+      }));
       setPhotoPreview(null);
       setCadastroCrId(null);
     }
@@ -379,8 +386,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade2: setIfEmpty(prev.cidade2, (p as any).cidade_secundario),
         estado2: setIfEmpty(prev.estado2, (p as any).estado_secundario),
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
-        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).validade_laudo_psicologico),
-        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).validade_exame_tiro),
+        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
+        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
+        senha_gov: setIfEmpty(prev.senha_gov, (p as any).senha_gov),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
@@ -462,8 +470,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
     setSaving(true);
     try {
-      // Separa campos que pertencem ao CR (exames) do payload do cliente
-      const { validade_laudo_psicologico, validade_exame_tiro, ...clienteFields } = f;
+      // Separa campos que pertencem ao CR/credenciais do payload do cliente
+      const { validade_laudo_psicologico, validade_exame_tiro, senha_gov, ...clienteFields } = f;
       const payload: any = {
         ...clienteFields,
         numero_documento_identidade: f.rg || null,
@@ -500,10 +508,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         }
         toast.success("Cliente cadastrado");
       }
-      // Persiste validades de exames em qa_cadastro_cr (cria stub se necessário)
+      // Persiste datas de realização dos exames em qa_cadastro_cr (cria stub se necessário)
+      let persistedCrId = cadastroCrId;
       if (savedId && (validade_laudo_psicologico || validade_exame_tiro)) {
         try {
-          let crId = cadastroCrId;
+          let crId = persistedCrId;
           if (!crId) {
             const { data: stub } = await supabase
               .from("qa_cadastro_cr" as any)
@@ -513,6 +522,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             crId = (stub as any)?.id ?? null;
           }
           if (crId) {
+            persistedCrId = crId;
             await supabase.from("qa_cadastro_cr" as any).update({
               validade_laudo_psicologico: formatDateForDatabase(validade_laudo_psicologico),
               validade_exame_tiro: formatDateForDatabase(validade_exame_tiro),
@@ -523,8 +533,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
         }
       }
-      // Senha GOV não é mais salva em fluxo "save cliente" — o SenhaGovField
-      // grava de forma isolada, sempre com `cliente_id` validado server-side.
+      if (savedId && senha_gov.trim()) {
+        try {
+          await setSenhaGov(persistedCrId ?? null, senha_gov.trim(), "ClienteFormModal:IA", savedId);
+        } catch (e: any) {
+          console.error("Falha ao salvar senha GOV importada:", e);
+          toast.warning("Cliente salvo, mas Senha GOV importada não foi persistida");
+        }
+      }
       onSaved();
       onClose();
     } catch (e: any) {
@@ -701,31 +717,41 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field label="Senha Gov.br">
-                  <SenhaGovField
-                    cadastroCrId={cadastroCrId}
-                    clienteId={cliente?.id ?? null}
-                    contexto="ClienteFormModal"
-                    variant="row"
-                    autoReveal
-                    onCreateCadastro={async () => {
-                      if (!cliente?.id) return null;
-                      const { data: stub, error } = await supabase
-                        .from("qa_cadastro_cr" as any)
-                        .insert({ cliente_id: cliente.id })
-                        .select("id")
-                        .single();
-                      if (error) {
-                        toast.error("Falha ao preparar CR: " + error.message);
-                        return null;
-                      }
-                      const newId = (stub as any)?.id ?? null;
-                      setCadastroCrId(newId);
-                      return newId;
-                    }}
-                  />
+                  {isEdit ? (
+                    <SenhaGovField
+                      cadastroCrId={cadastroCrId}
+                      clienteId={cliente?.id ?? null}
+                      contexto="ClienteFormModal"
+                      variant="row"
+                      autoReveal
+                      onCreateCadastro={async () => {
+                        if (!cliente?.id) return null;
+                        const { data: stub, error } = await supabase
+                          .from("qa_cadastro_cr" as any)
+                          .insert({ cliente_id: cliente.id })
+                          .select("id")
+                          .single();
+                        if (error) {
+                          toast.error("Falha ao preparar CR: " + error.message);
+                          return null;
+                        }
+                        const newId = (stub as any)?.id ?? null;
+                        setCadastroCrId(newId);
+                        return newId;
+                      }}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={f.senha_gov}
+                      onChange={e => set("senha_gov", e.target.value)}
+                      placeholder="Senha GOV importada"
+                      className={inputClass.replace(" uppercase", "")}
+                    />
+                  )}
                 </Field>
                 <FInput
-                  label="Validade Laudo Psicológico"
+                  label="Data de Realização Exame Psicológico"
                   value={f.validade_laudo_psicologico}
                   onChange={v => set("validade_laudo_psicologico", normalizeDateInput(v))}
                   placeholder="DD/MM/AAAA"
@@ -733,7 +759,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   maxLength={10}
                 />
                 <FInput
-                  label="Validade Exame de Tiro"
+                  label="Data de Realização Exame de Tiro"
                   value={f.validade_exame_tiro}
                   onChange={v => set("validade_exame_tiro", normalizeDateInput(v))}
                   placeholder="DD/MM/AAAA"

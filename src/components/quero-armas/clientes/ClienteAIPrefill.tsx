@@ -57,7 +57,10 @@ const FIELD_LABELS: Record<string, string> = {
   estado_secundario: "UF 2", pais_secundario: "País 2",
   cr_numero: "CR nº", cr_categoria: "CR cat.", cr_data_emissao: "CR emissão",
   cr_data_validade: "CR validade", cr_orgao_emissor: "CR órgão",
-  validade_laudo_psicologico: "Val. Psi.", validade_exame_tiro: "Val. Tiro",
+  data_realizacao_exame_psicologico: "Data exame psicológico",
+  data_realizacao_exame_tiro: "Data exame de tiro",
+  validade_laudo_psicologico: "Data exame psicológico", validade_exame_tiro: "Data exame de tiro",
+  senha_gov: "Senha GOV",
 };
 
 export default function ClienteAIPrefill({

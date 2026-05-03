@@ -82,8 +82,11 @@ const PREFILL_TOOL = {
         cr_data_emissao: { type: "string", description: "DD/MM/AAAA" },
         cr_data_validade: { type: "string", description: "DD/MM/AAAA" },
         cr_orgao_emissor: { type: "string" },
-        validade_laudo_psicologico: { type: "string", description: "DD/MM/AAAA — validade do laudo psicológico (Atestado de Aptidão Psicológica)." },
-        validade_exame_tiro: { type: "string", description: "DD/MM/AAAA — validade do exame de capacidade técnica / aptidão para manuseio de arma de fogo (exame de tiro)." },
+        data_realizacao_exame_psicologico: { type: "string", description: "DD/MM/AAAA — DATA DE REALIZAÇÃO do exame/laudo psicológico. Não é data de validade." },
+        data_realizacao_exame_tiro: { type: "string", description: "DD/MM/AAAA — DATA DE REALIZAÇÃO do exame de capacidade técnica/tiro. Não é data de validade." },
+        validade_laudo_psicologico: { type: "string", description: "Legado: preencher com a DATA DE REALIZAÇÃO do exame/laudo psicológico quando o formulário antigo usar este nome." },
+        validade_exame_tiro: { type: "string", description: "Legado: preencher com a DATA DE REALIZAÇÃO do exame de tiro quando o formulário antigo usar este nome." },
+        senha_gov: { type: "string", description: "Senha do GOV.BR exatamente como visível no documento/ficha/print. Preservar maiúsculas, minúsculas, números e símbolos." },
         acervo: {
           type: "array",
           description: "Itens do acervo identificados (CRAFs, GTs etc.).",
@@ -137,7 +140,8 @@ const PREFILL_TOOL = {
         "cep_secundario", "endereco_secundario", "numero_secundario", "complemento_secundario",
         "bairro_secundario", "cidade_secundario", "estado_secundario", "pais_secundario",
         "cr_categoria", "cr_data_emissao", "cr_data_validade", "cr_orgao_emissor",
-        "validade_laudo_psicologico", "validade_exame_tiro",
+        "data_realizacao_exame_psicologico", "data_realizacao_exame_tiro",
+        "validade_laudo_psicologico", "validade_exame_tiro", "senha_gov",
         "acervo", "observacoes", "warnings", "confidence_pairs",
       ],
     },
@@ -159,7 +163,9 @@ const SYSTEM_PROMPT = [
   "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
-  "10) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
+  "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
+  "11) Se aparecer 'SENHA DO GOV', 'SENHA GOV' ou similar, extraia senha_gov exatamente como escrito, preservando caixa, números e símbolos.",
+  "12) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
