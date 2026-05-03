@@ -129,11 +129,27 @@ Deno.serve(async (req) => {
     const aiJson = await aiResp.json();
     const answer = aiJson?.choices?.[0]?.message?.content ?? "Sem resposta da IA.";
 
+    // Anexa imagens (approved e draft p/ equipe) por artigo
+    const ids = articles.map(a => a.id);
+    const { data: imgs } = await supabase
+      .from("qa_kb_artigo_imagens")
+      .select("article_id,image_url,step_number,step_title,caption,status")
+      .in("article_id", ids)
+      .in("status", audience === "cliente" ? ["approved"] : ["approved", "draft"])
+      .order("step_number");
+    const imgsByArticle = new Map<string, any[]>();
+    for (const i of (imgs ?? [])) {
+      const arr = imgsByArticle.get(i.article_id) ?? [];
+      arr.push(i);
+      imgsByArticle.set(i.article_id, arr);
+    }
+
     return new Response(JSON.stringify({
       answer,
       articles: articles.map(a => ({
         id: a.id, title: a.title, slug: a.slug, category: a.category,
         module: a.module, tags: a.tags, rank: a.rank,
+        images: imgsByArticle.get(a.id) ?? [],
       })),
     }), { headers: { ...cors, "Content-Type": "application/json" } });
   } catch (e) {

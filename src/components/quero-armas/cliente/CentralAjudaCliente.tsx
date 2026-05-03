@@ -16,6 +16,7 @@ export function CentralAjudaCliente() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Article | null>(null);
+  const [selectedImages, setSelectedImages] = useState<Array<{ id: string; image_url: string | null; step_number: number; step_title: string | null; caption: string | null }>>([]);
   const [aiQuery, setAiQuery] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAnswer, setAiAnswer] = useState("");
@@ -34,6 +35,19 @@ export function CentralAjudaCliente() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!selected) { setSelectedImages([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("qa_kb_artigo_imagens" as any)
+        .select("id,image_url,step_number,step_title,caption")
+        .eq("article_id", selected.id)
+        .eq("status", "approved")
+        .order("step_number");
+      setSelectedImages(((data ?? []) as any[]));
+    })();
+  }, [selected?.id]);
 
   async function ask() {
     if (aiQuery.trim().length < 3) {
@@ -69,6 +83,22 @@ export function CentralAjudaCliente() {
             <article className="prose prose-sm max-w-none">
               <ReactMarkdown>{selected.body}</ReactMarkdown>
             </article>
+            {selectedImages.length > 0 && (
+              <div className="mt-4 grid gap-3">
+                {selectedImages.map(img => (
+                  <figure key={img.id} className="border rounded-md overflow-hidden bg-white">
+                    {img.image_url && (
+                      <img src={img.image_url} alt={img.caption ?? img.step_title ?? "ilustração"} className="w-full h-auto" loading="lazy" />
+                    )}
+                    {(img.step_title || img.caption) && (
+                      <figcaption className="p-2 text-[11px] text-slate-600">
+                        {img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
