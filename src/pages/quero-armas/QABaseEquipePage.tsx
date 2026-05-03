@@ -661,8 +661,8 @@ export default function QABaseEquipePage() {
                 <CardTitle className="text-2xl uppercase">{selected.title}</CardTitle>
               </div>
               <div className="flex gap-2">
-                {(selected.status === "needs_review" || selected.status === "draft" || selected.status === "rejected") && (
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => approveArticle(selected)} disabled={approvingArticle}>
+                {(["audit_pending", "needs_real_image", "needs_review", "draft", "rejected"].includes(selected.status)) && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => approveArticle(selected)} disabled={approvingArticle || !auditComplete(selected) || !hasApprovedRealImage(images)}>
                     {approvingArticle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
                     Aprovar artigo
                   </Button>
@@ -688,18 +688,47 @@ export default function QABaseEquipePage() {
                 <Badge className="bg-red-100 text-red-800 border-red-300 text-[10px] uppercase">⚠ bug visual detectado</Badge>
               )}
               {(() => {
-                const hasReal = images.some(i =>
-                  i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
-                );
+                const hasReal = hasApprovedRealImage(images);
                 if (hasReal) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">com print real</Badge>;
                 return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">precisa de print real</Badge>;
               })()}
+              {auditComplete(selected) ? (
+                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">auditoria completa</Badge>
+              ) : (
+                <Badge className="bg-orange-50 text-orange-700 border-orange-300 text-[10px] uppercase">auditoria pendente</Badge>
+              )}
               {selected.last_review_reason && (
                 <span className="text-[11px] text-muted-foreground italic">última reprovação: {selected.last_review_reason}</span>
               )}
             </div>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 rounded-md border border-dashed p-3 bg-amber-50/40">
+              <div className="flex items-center gap-2 text-xs uppercase font-mono text-amber-800 mb-2">
+                <ShieldCheck className="h-4 w-4" /> Auditoria obrigatória antes do passo a passo
+              </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                <Button size="sm" variant={selected.checklist_audited_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "checklist")}>
+                  {selected.checklist_audited_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Clock className="h-3.5 w-3.5 mr-1" />}
+                  Checklist auditado
+                </Button>
+                <Button size="sm" variant={selected.knowledge_base_audited_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "kb")} disabled={!selected.checklist_audited_at}>
+                  {selected.knowledge_base_audited_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Clock className="h-3.5 w-3.5 mr-1" />}
+                  Base auditada
+                </Button>
+                <Button size="sm" variant={selected.procedure_tested_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "procedure")} disabled={!selected.checklist_audited_at || !selected.knowledge_base_audited_at}>
+                  {selected.procedure_tested_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Clock className="h-3.5 w-3.5 mr-1" />}
+                  Procedimento testado
+                </Button>
+                <Button size="sm" variant={selected.audit_ready_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "ready")} disabled={!selected.checklist_audited_at || !selected.knowledge_base_audited_at || !selected.procedure_tested_at}>
+                  {selected.audit_ready_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <ShieldCheck className="h-3.5 w-3.5 mr-1" />}
+                  Liberar escrita
+                </Button>
+              </div>
+              <p className="mt-2 text-[10px] uppercase font-mono text-muted-foreground">
+                O artigo só pode ser aprovado/publicado após checklist auditado, base conferida, procedimento testado e imagem real aprovada.
+              </p>
+            </div>
             <div className="mb-3 flex items-center gap-2 text-[11px] uppercase font-mono text-muted-foreground">
               <span>Vetor:</span>
               {(() => {
