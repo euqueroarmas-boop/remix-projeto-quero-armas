@@ -108,17 +108,17 @@ function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLen
   );
 }
 
-function FSelect({ label, value, onChange, options, placeholder = "Selecionar..." }: {
+function FSelect({ label, value, onChange, options, placeholder = "Selecionar...", error }: {
   label: string; value: string; onChange: (v: string) => void;
   options: { value: string; label: string }[]; placeholder?: string; error?: string;
 }) {
   return (
     <Field label={label}>
-      <select value={value} onChange={e => onChange(e.target.value)} className={cn(selectClass, arguments[0]?.error && "border-red-500 ring-1 ring-red-500")}>
+      <select value={value} onChange={e => onChange(e.target.value)} className={cn(selectClass, error && "border-red-500 ring-1 ring-red-500")}>
         <option value="">{placeholder}</option>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      {arguments[0]?.error && <p className="text-[10px] text-red-600 mt-1">{arguments[0].error}</p>}
+      {error && <p className="text-[10px] text-red-600 mt-1 uppercase">{error}</p>}
     </Field>
   );
 }
