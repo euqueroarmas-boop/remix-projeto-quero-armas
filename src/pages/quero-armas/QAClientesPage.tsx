@@ -3267,7 +3267,9 @@ export default function QAClientesPage() {
                   style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
                 >
                   {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  Pendente
+                  {["aprovado", "conferido", "validado", "formulario_conferido"].includes(String(c.status || "").toLowerCase())
+                    ? "Remover conferência"
+                    : "Pendente"}
                 </button>
                 <button
                   disabled={!!savingCadastroPublicoStatus}
