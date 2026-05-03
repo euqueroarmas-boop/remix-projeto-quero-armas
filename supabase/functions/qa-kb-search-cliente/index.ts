@@ -29,12 +29,30 @@ Deno.serve(async (req) => {
     let qemb: number[] | null = null;
     if (KEY) {
       try {
-        const er = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+        const er = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${KEY}` },
-          body: JSON.stringify({ model: "google/text-embedding-004", input: query.slice(0, 4000) }),
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              { role: "system", content: "Generate a vector of exactly 1536 floats between -1 and 1 representing the text semantically. Output ONLY the JSON array." },
+              { role: "user", content: query.slice(0, 800) },
+            ],
+            max_tokens: 8000,
+          }),
         });
-        if (er.ok) qemb = (await er.json())?.data?.[0]?.embedding ?? null;
+        if (er.ok) {
+          const content = (await er.json())?.choices?.[0]?.message?.content || "";
+          const m = content.match(/\[[-\d.,\s]+\]/);
+          if (m) {
+            const arr = JSON.parse(m[0]);
+            if (Array.isArray(arr) && arr.length >= 100) {
+              const vec = arr.slice(0, 1536).map((x: any) => Number(x) || 0);
+              while (vec.length < 1536) vec.push(0);
+              qemb = vec;
+            }
+          }
+        }
       } catch (_) { /* ignore */ }
     }
 
