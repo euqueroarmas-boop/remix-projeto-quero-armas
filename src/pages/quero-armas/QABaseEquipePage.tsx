@@ -144,6 +144,49 @@ export default function QABaseEquipePage() {
     }
   }
 
+  async function reprocessOne(articleId: string) {
+    setReprocessingId(articleId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-embed", {
+        body: { article_id: articleId },
+      });
+      if (error) throw error;
+      const d = data as any;
+      if ((d?.processed ?? 0) > 0) toast.success("Vetor reprocessado.");
+      else toast.error("Falha ao reprocessar vetor. Verifique os logs.");
+      await loadAll();
+      if (showLogs) await loadLogs();
+      if (selected?.id === articleId) {
+        const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", articleId).maybeSingle();
+        if (fresh) setSelected(fresh as any as Article);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setReprocessingId(null);
+    }
+  }
+
+  async function loadLogs() {
+    setLogsLoading(true);
+    const { data, error } = await supabase
+      .from("qa_kb_embeddings_log" as any)
+      .select("id, article_id, status, error_message, modelo, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) toast.error("Erro ao carregar logs: " + error.message);
+    setLogs(((data ?? []) as any[]).map(r => ({
+      id: r.id, article_id: r.article_id, status: r.status,
+      error_message: r.error_message, modelo: r.modelo, created_at: r.created_at,
+    })));
+    setLogsLoading(false);
+  }
+
+  async function openLogs() {
+    setShowLogs(true);
+    await loadLogs();
+  }
+
   async function runAiSearch() {
     if (aiQuery.trim().length < 3) {
       toast.error("Descreva o problema com mais detalhes.");
