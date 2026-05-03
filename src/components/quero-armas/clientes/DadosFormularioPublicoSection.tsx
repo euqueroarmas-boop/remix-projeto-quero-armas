@@ -71,8 +71,9 @@ function diff(form: Cad, cli: Cli): { aplicaveis: Diferenca[]; divergentes: Dife
         colunaCliente: m.colunaCli,
       });
     } else {
-      const a = String(vf).trim().toUpperCase();
-      const b = String(vc).trim().toUpperCase();
+      const digitsOnly = DIGIT_ONLY_FIELDS.has(m.colunaCli) || DIGIT_ONLY_FIELDS.has(m.campoForm);
+      const a = digitsOnly ? norm(String(vf)) : String(vf).trim().toUpperCase().replace(/\s+/g, " ");
+      const b = digitsOnly ? norm(String(vc)) : String(vc).trim().toUpperCase().replace(/\s+/g, " ");
       if (a !== b) {
         divergentes.push({
           campo: m.campoForm,
