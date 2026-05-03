@@ -135,7 +135,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const existingPhotoUrl = usePrivateStorageUrl("qa-documentos", cliente?.imagem || null);
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState(0);
-  const { lookupCep, cepLoading } = useBrasilApiLookup();
+  const { lookupCep, cepLoading, lookupGeocode, geocodeLoading } = useBrasilApiLookup();
 
   // Photo upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +194,26 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [lookupCep]);
 
+  const resolveGeoloc = useCallback(async (prefix: "" | "2") => {
+    setF(prev => {
+      // lê valores atuais e dispara fora do setter
+      const street = (prev as any)[`endereco${prefix}`];
+      const number = (prev as any)[`numero${prefix}`];
+      const city = (prev as any)[`cidade${prefix}`];
+      const state = (prev as any)[`estado${prefix}`];
+      if (!street || !city) return prev;
+      lookupGeocode({ street, number, city, state }).then((g) => {
+        if (!g) return;
+        const value = `${g.latitude},${g.longitude}`;
+        setF((p2) => ({
+          ...p2,
+          [`geolocalizacao${prefix}`]: value,
+        }));
+      }).catch(() => {});
+      return prev;
+    });
+  }, [lookupGeocode]);
+
   const [f, setF] = useState({
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
@@ -201,6 +221,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     email: "", celular: "", titulo_eleitor: "",
     endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
     endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+    geolocalizacao: "", geolocalizacao2: "",
     observacao: "", status: "ATIVO", cliente_lions: false,
     // Categorização legal (Lei 10.826/03 art. 6º)
     categoria_titular: "" as CategoriaTitular | "",
@@ -242,6 +263,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
         cep2: cliente.cep2 || "", cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
         pais2: cliente.pais2 || "",
+        geolocalizacao: cliente.geolocalizacao || "",
+        geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
         cliente_lions: cliente.cliente_lions || false,
         categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
