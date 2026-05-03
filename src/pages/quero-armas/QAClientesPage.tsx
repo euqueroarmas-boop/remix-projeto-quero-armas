@@ -772,7 +772,7 @@ interface Cliente {
   data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
   estado_civil: string; profissao: string; email: string; celular: string; endereco: string; numero: string;
   bairro: string; cep: string; cidade: string; estado: string; observacao: string; complemento: string;
-  status: string; cliente_lions: boolean; created_at: string; escolaridade?: string; titulo_eleitor?: string;
+  status: string; created_at: string; escolaridade?: string; titulo_eleitor?: string;
   endereco2?: string; numero2?: string; bairro2?: string; cep2?: string; cidade2?: string; estado2?: string;
   complemento2?: string; pais?: string; pais2?: string; expedicao_rg?: string;
 }
@@ -925,7 +925,6 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
     estado2: pickNew(estado2, cur?.estado2),
     observacao,
     status: cur?.status ?? "ATIVO",
-    cliente_lions: cur?.cliente_lions ?? false,
   };
 };
 
