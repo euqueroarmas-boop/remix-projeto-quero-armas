@@ -3263,7 +3263,7 @@ export default function QAClientesPage() {
                   }`}
                   title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
                 >
-                  {savingCadastroPublicoStatus === "pago" ? (
+                  {savingCadastroPublicoStatus?.startsWith("pago") ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
