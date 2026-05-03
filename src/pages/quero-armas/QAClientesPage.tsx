@@ -3705,7 +3705,7 @@ export default function QAClientesPage() {
                         <>
                           <span className="text-slate-300">·</span>
                           <span className="inline-flex items-center gap-1 font-mono">
-                            <Phone className="h-2.5 w-2.5 text-slate-400" /> {c.celular}
+                            <Phone className="h-2.5 w-2.5 text-slate-400" /> {formatPhone(c.celular)}
                           </span>
                         </>
                       )}
@@ -3714,6 +3714,14 @@ export default function QAClientesPage() {
                           <span className="text-slate-300">·</span>
                           <span className="inline-flex items-center gap-1 uppercase tracking-wide">
                             <MapPin className="h-2.5 w-2.5 text-slate-400" /> {c.cidade}/{c.estado}
+                          </span>
+                        </>
+                      )}
+                      {(((c as any).servicos_contratados as string[] | undefined) || []).length > 0 && (
+                        <>
+                          <span className="text-slate-300">·</span>
+                          <span className="inline-flex items-center gap-1 uppercase tracking-wide font-semibold" style={{ color: "#7A1F2B" }}>
+                            {(((c as any).servicos_contratados as string[]) || []).join(" • ")}
                           </span>
                         </>
                       )}
