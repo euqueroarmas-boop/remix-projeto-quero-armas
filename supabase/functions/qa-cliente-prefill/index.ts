@@ -206,6 +206,59 @@ async function callPrefill(content: any[]) {
   }
 }
 
+async function verifySenhaGov(content: any[], proposed: unknown) {
+  const senha = typeof proposed === "string" ? proposed : "";
+  if (!senha.trim()) return { ok: false, senha: "", warning: "Senha GOV não conferida." };
+
+  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
+
+  const resp = await fetch(GATEWAY_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Você é um auditor forense de senha GOV.BR. Confira APENAS o campo senha_gov nos documentos. " +
+            "Nunca corrija por aproximação, nunca normalize, nunca troque símbolos/letras/números parecidos. " +
+            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"warning\":string}. " +
+            "ok só pode ser true se a senha proposta estiver EXATAMENTE igual ao documento, caractere por caractere. " +
+            "Se qualquer caractere estiver duvidoso, ilegível ou diferente, ok=false e senha=\"\".",
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text:
+                `Senha proposta para conferência: ${senha}\n` +
+                "Confira nos arquivos/textos abaixo se essa senha aparece exatamente como escrita. Responda somente JSON.",
+            },
+            ...content.slice(1),
+          ],
+        },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+
+  if (!resp.ok) return { ok: false, senha: "", warning: "Senha GOV não conferida pela auditoria." };
+  try {
+    const data = await resp.json();
+    const raw = data?.choices?.[0]?.message?.content;
+    const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+    const checked = typeof parsed?.senha === "string" ? parsed.senha : "";
+    return parsed?.ok === true && checked === senha
+      ? { ok: true, senha, warning: "" }
+      : { ok: false, senha: "", warning: parsed?.warning || "Senha GOV divergente/duvidosa — preencher manualmente." };
+  } catch {
+    return { ok: false, senha: "", warning: "Senha GOV não conferida pela auditoria." };
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -257,6 +310,14 @@ Deno.serve(async (req) => {
 
     const result = await callPrefill(content);
     const normalized: any = { ...(result ?? {}) };
+    if (normalized.senha_gov) {
+      const checked = await verifySenhaGov(content, normalized.senha_gov);
+      if (!checked.ok) {
+        delete normalized.senha_gov;
+        normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+        normalized.warnings.push(checked.warning);
+      }
+    }
     // Convert confidence_pairs[] -> confidence{} for frontend compatibility
     if (Array.isArray(normalized.confidence_pairs)) {
       const conf: Record<string, number> = {};
