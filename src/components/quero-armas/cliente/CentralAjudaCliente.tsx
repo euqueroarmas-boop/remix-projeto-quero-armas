@@ -31,7 +31,21 @@ export function CentralAjudaCliente() {
         .eq("audience", "cliente")
         .order("category")
         .order("title");
-      if (!error) setArticles((data as any[]) ?? []);
+      if (!error) {
+        const list = (data as any[]) ?? [];
+        // Cliente só pode ver artigos que já tenham PRINT REAL ou UPLOAD MANUAL aprovado.
+        // (Imagens geradas por IA não contam.)
+        const ids = list.map((a) => a.id);
+        if (ids.length === 0) { setArticles([]); setLoading(false); return; }
+        const { data: imgs } = await supabase
+          .from("qa_kb_artigo_imagens" as any)
+          .select("article_id,image_type,status")
+          .in("article_id", ids)
+          .eq("status", "approved")
+          .in("image_type", ["screenshot_real", "upload_manual"]);
+        const okSet = new Set<string>(((imgs as any[]) ?? []).map((i) => i.article_id));
+        setArticles(list.filter((a) => okSet.has(a.id)));
+      }
       setLoading(false);
     })();
   }, []);
@@ -41,9 +55,10 @@ export function CentralAjudaCliente() {
     (async () => {
       const { data } = await supabase
         .from("qa_kb_artigo_imagens" as any)
-        .select("id,image_url,step_number,step_title,caption")
+        .select("id,image_url,step_number,step_title,caption,image_type")
         .eq("article_id", selected.id)
         .eq("status", "approved")
+        .in("image_type", ["screenshot_real", "upload_manual"])
         .order("step_number");
       setSelectedImages(((data ?? []) as any[]));
     })();

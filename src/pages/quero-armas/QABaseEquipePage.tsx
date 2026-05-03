@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon, ThumbsUp, ThumbsDown, Camera } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -23,7 +23,10 @@ type Article = {
   body: string;
   related_articles: string[];
   version: number;
-  status: "draft" | "published" | "archived";
+  status: "draft" | "needs_review" | "audited" | "published" | "rejected" | "archived";
+  visual_bug_detected?: boolean;
+  last_review_reason?: string | null;
+  approved_at?: string | null;
   created_at: string;
   updated_at: string;
   embedding_status?: "pendente" | "gerado" | "erro" | null;
@@ -40,6 +43,7 @@ type ArticleImage = {
   image_url: string | null;
   status: "draft" | "approved" | "archived" | "error";
   error_message: string | null;
+  image_type?: "screenshot_real" | "upload_manual" | "imagem_ia";
 };
 
 const CATEGORIES = [
@@ -68,6 +72,7 @@ export default function QABaseEquipePage() {
   const [filterCat, setFilterCat] = useState<string>("__all__");
   const [filterText, setFilterText] = useState("");
   const [filterEmb, setFilterEmb] = useState<string>("__all__");
+  const [filterReview, setFilterReview] = useState<string>("__all__");
   const [selected, setSelected] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Partial<Article> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -84,6 +89,15 @@ export default function QABaseEquipePage() {
   const [retryingErrors, setRetryingErrors] = useState(false);
   const [approvingDrafts, setApprovingDrafts] = useState(false);
   const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
+
+  // Revisão progressiva
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewArticle, setReviewArticle] = useState<Article | null>(null);
+  const [reviewReason, setReviewReason] = useState("");
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewFile, setReviewFile] = useState<File | null>(null);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [approvingArticle, setApprovingArticle] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -148,6 +162,9 @@ export default function QABaseEquipePage() {
         const es = a.embedding_status ?? "pendente";
         if (es !== filterEmb) return false;
       }
+      if (filterReview !== "__all__") {
+        if (a.status !== filterReview) return false;
+      }
       if (!q) return true;
       return (
         a.title.toLowerCase().includes(q) ||
@@ -155,7 +172,7 @@ export default function QABaseEquipePage() {
         a.symptoms.some(s => s.toLowerCase().includes(q))
       );
     });
-  }, [articles, filterCat, filterText, filterEmb]);
+  }, [articles, filterCat, filterText, filterEmb, filterReview]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Article[]>();
@@ -452,6 +469,113 @@ export default function QABaseEquipePage() {
     await loadAll();
   }
 
+  // ============ REVISÃO PROGRESSIVA ============
+  async function approveArticle(a: Article) {
+    setApprovingArticle(true);
+    try {
+      const newStatus = a.audience === "cliente" ? "published" : "audited";
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      const { error } = await supabase.from("qa_kb_artigos" as any).update({
+        status: newStatus,
+        approved_by: userId,
+        approved_at: new Date().toISOString(),
+      }).eq("id", a.id);
+      if (error) throw error;
+      await supabase.from("qa_kb_article_reviews" as any).insert({
+        article_id: a.id, action: "approved", reviewed_by: userId,
+      });
+      toast.success(`Artigo aprovado (${newStatus}).`);
+      await loadAll();
+      if (selected?.id === a.id) {
+        const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", a.id).maybeSingle();
+        if (fresh) setSelected(fresh as any as Article);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao aprovar: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setApprovingArticle(false);
+    }
+  }
+
+  function openReview(a: Article) {
+    setReviewArticle(a); setReviewReason(""); setReviewNotes(""); setReviewFile(null); setReviewOpen(true);
+  }
+
+  async function uploadReviewScreenshot(articleId: string, file: File): Promise<{ id: string | null; url: string | null }> {
+    const path = `${articleId}/review-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage.from("qa-kb-imagens").upload(path, file, {
+      contentType: file.type || "image/png", upsert: false,
+    });
+    if (upErr) throw upErr;
+    const url = supabase.storage.from("qa-kb-imagens").getPublicUrl(path).data.publicUrl;
+    const { data: ins, error: insErr } = await supabase.from("qa_kb_artigo_imagens" as any).insert({
+      article_id: articleId, step_number: 0, step_title: "Print de revisão",
+      caption: "Print enviado durante revisão da equipe",
+      image_url: url, storage_path: path, status: "approved",
+      image_type: "upload_manual", route_path: window.location.pathname,
+      captured_at: new Date().toISOString(),
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+    }).select("id").maybeSingle();
+    if (insErr) throw insErr;
+    return { id: (ins as any)?.id ?? null, url };
+  }
+
+  async function submitReviewRegenerate() {
+    if (!reviewArticle) return;
+    if (!reviewReason.trim()) { toast.error("Descreva o motivo da reprovação."); return; }
+    setReviewSubmitting(true);
+    try {
+      let screenshotId: string | null = null;
+      let screenshotUrl: string | null = null;
+      if (reviewFile) {
+        const r = await uploadReviewScreenshot(reviewArticle.id, reviewFile);
+        screenshotId = r.id; screenshotUrl = r.url;
+      }
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      // Marca rejeição antes de regenerar (registra o evento)
+      await supabase.from("qa_kb_article_reviews" as any).insert({
+        article_id: reviewArticle.id, action: "rejected",
+        reason: reviewReason, notes: reviewNotes,
+        screenshot_id: screenshotId, screenshot_url: screenshotUrl,
+        reviewed_by: userId,
+      });
+      const { data, error } = await supabase.functions.invoke("qa-kb-regenerate-from-review", {
+        body: {
+          article_id: reviewArticle.id,
+          reason: reviewReason, notes: reviewNotes,
+          screenshot_id: screenshotId, screenshot_url: screenshotUrl,
+          reviewed_by: userId,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Artigo refeito pela IA — revise novamente.");
+      setReviewOpen(false);
+      await loadAll();
+      const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", reviewArticle.id).maybeSingle();
+      if (fresh) setSelected(fresh as any as Article);
+      // dispara embedding em background
+      supabase.functions.invoke("qa-kb-embed", { body: { article_id: reviewArticle.id } }).catch(() => {});
+    } catch (e: any) {
+      toast.error("Erro ao refazer artigo: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
+  function statusBadgeColor(s: string) {
+    switch (s) {
+      case "published": return "bg-emerald-100 text-emerald-800 border-emerald-300";
+      case "audited": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "needs_review": return "bg-amber-100 text-amber-800 border-amber-300";
+      case "rejected": return "bg-red-100 text-red-800 border-red-300";
+      case "draft": return "bg-slate-100 text-slate-700 border-slate-300";
+      case "archived": return "bg-zinc-100 text-zinc-600 border-zinc-300";
+      default: return "";
+    }
+  }
+
   // ===== READ VIEW =====
   if (selected) {
     return (
@@ -471,6 +595,15 @@ export default function QABaseEquipePage() {
                 <CardTitle className="text-2xl uppercase">{selected.title}</CardTitle>
               </div>
               <div className="flex gap-2">
+                {(selected.status === "needs_review" || selected.status === "draft" || selected.status === "rejected") && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => approveArticle(selected)} disabled={approvingArticle}>
+                    {approvingArticle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+                    Aprovar artigo
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => openReview(selected)}>
+                  <ThumbsDown className="h-4 w-4 mr-1" /> Reprovar e refazer
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => reprocessOne(selected.id)} disabled={reprocessingId === selected.id}>
                   {reprocessingId === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
                   Reprocessar vetor
@@ -482,6 +615,22 @@ export default function QABaseEquipePage() {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge className={`${statusBadgeColor(selected.status)} text-[10px] uppercase`}>{selected.status}</Badge>
+              {selected.visual_bug_detected && (
+                <Badge className="bg-red-100 text-red-800 border-red-300 text-[10px] uppercase">⚠ bug visual detectado</Badge>
+              )}
+              {(() => {
+                const hasReal = images.some(i => i.image_type === "screenshot_real" || i.image_type === "upload_manual");
+                const hasIa = images.some(i => i.image_type === "imagem_ia" || !i.image_type);
+                if (hasReal) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">com print real</Badge>;
+                if (hasIa) return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">apenas imagem IA</Badge>;
+                return <Badge variant="outline" className="text-[10px] uppercase">sem print</Badge>;
+              })()}
+              {selected.last_review_reason && (
+                <span className="text-[11px] text-muted-foreground italic">última reprovação: {selected.last_review_reason}</span>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -519,7 +668,12 @@ export default function QABaseEquipePage() {
                       )}
                       <figcaption className="p-2 text-[11px] uppercase font-mono flex items-center justify-between gap-2">
                         <span className="truncate">{img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption ?? "—"}</span>
-                        <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : "border-amber-400 text-amber-700"}`}>
+                            {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : "IA"}
+                          </Badge>
+                          <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
+                        </div>
                       </figcaption>
                     </figure>
                   ))}
@@ -621,7 +775,10 @@ export default function QABaseEquipePage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="published">Publicado</SelectItem>
+                    <SelectItem value="audited">Auditado</SelectItem>
+                    <SelectItem value="needs_review">Aguardando revisão</SelectItem>
                     <SelectItem value="draft">Rascunho</SelectItem>
+                    <SelectItem value="rejected">Reprovado</SelectItem>
                     <SelectItem value="archived">Arquivado</SelectItem>
                   </SelectContent>
                 </Select>
@@ -801,6 +958,18 @@ export default function QABaseEquipePage() {
             <SelectItem value="erro">Vetor: erro</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={filterReview} onValueChange={setFilterReview}>
+          <SelectTrigger className="md:max-w-[220px]"><SelectValue placeholder="Status do artigo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Revisão: todos</SelectItem>
+            <SelectItem value="needs_review">⏳ Aguardando revisão</SelectItem>
+            <SelectItem value="audited">🔵 Auditado (equipe)</SelectItem>
+            <SelectItem value="published">🟢 Publicado (cliente)</SelectItem>
+            <SelectItem value="rejected">🔴 Reprovado</SelectItem>
+            <SelectItem value="draft">📝 Rascunho</SelectItem>
+            <SelectItem value="archived">📦 Arquivado</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Lista agrupada */}
@@ -836,7 +1005,7 @@ export default function QABaseEquipePage() {
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      {a.status !== "published" && <Badge variant="outline" className="text-[10px]">{a.status}</Badge>}
+                      <Badge className={`${statusBadgeColor(a.status)} text-[10px] uppercase`}>{a.status}</Badge>
                       {(() => {
                         const es = a.embedding_status ?? "pendente";
                         if (es === "gerado") return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-label="vetor gerado" />;
@@ -902,6 +1071,67 @@ export default function QABaseEquipePage() {
               })}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={reviewOpen} onOpenChange={(o) => !reviewSubmitting && setReviewOpen(o)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="uppercase font-mono text-sm flex items-center gap-2">
+              <ThumbsDown className="h-4 w-4 text-red-600" /> Reprovar e refazer com IA
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {reviewArticle && (
+              <p className="text-xs uppercase font-mono text-muted-foreground truncate">
+                {reviewArticle.title}
+              </p>
+            )}
+            <div>
+              <label className="text-xs uppercase font-mono">Motivo da reprovação *</label>
+              <Input
+                value={reviewReason}
+                onChange={(e) => setReviewReason(e.target.value.toUpperCase())}
+                placeholder="EX: TELA DESCRITA NÃO É A TELA REAL"
+                className="uppercase"
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase font-mono">Observação da equipe</label>
+              <Textarea
+                rows={3}
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                placeholder="O que está errado, o que falta, comportamento real observado..."
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase font-mono flex items-center gap-1">
+                <Camera className="h-3 w-3" /> Print real da tela (opcional, mas recomendado)
+              </label>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => setReviewFile(e.target.files?.[0] ?? null)}
+                className="text-xs mt-1 block"
+              />
+              {reviewFile && (
+                <p className="text-[10px] text-emerald-700 font-mono uppercase mt-1">
+                  ✓ {reviewFile.name}
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Se você anexar um print, a IA vai analisar a imagem e refazer o artigo descrevendo apenas o que aparece nela.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReviewOpen(false)} disabled={reviewSubmitting}>Cancelar</Button>
+            <Button onClick={submitReviewRegenerate} disabled={reviewSubmitting || !reviewReason.trim()} className="bg-red-600 hover:bg-red-700 text-white">
+              {reviewSubmitting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1" />}
+              Refazer com IA
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
