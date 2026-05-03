@@ -820,17 +820,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FSelect label="Status do Cliente" value={f.status} onChange={v => set("status", v)} options={statusOptions} />
-                <Field label="Cliente Lions">
-                  <label className="flex items-center gap-3 h-9 px-3 rounded-md border border-zinc-200 bg-white cursor-pointer hover:bg-zinc-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={f.cliente_lions}
-                      onChange={e => set("cliente_lions", e.target.checked)}
-                      className="w-4 h-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500"
-                    />
-                    <span className="text-sm text-zinc-700">🦁 Sim, é cliente Lions</span>
-                  </label>
-                </Field>
               </div>
               <Field label="Observações" span>
                 <textarea
