@@ -437,7 +437,10 @@ export default function QABaseEquipePage() {
 
   // ============ REVISÃO PROGRESSIVA ============
   async function approveArticle(a: Article) {
-    const hasReal = images.some(i => (i.image_type === "screenshot_real" || i.image_type === "upload_manual") && i.status === "approved");
+    const hasReal = images.some(i =>
+      i.status === "approved" &&
+      i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
+    );
     if (!hasReal) {
       toast.error("Este artigo ainda não possui print real validado. Envie ou capture um print real antes de aprovar.");
       return;
