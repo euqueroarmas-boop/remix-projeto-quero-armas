@@ -1882,11 +1882,30 @@ export default function QAClientesPage() {
       const updated = { ...selectedCadastroPublico, ...updatePayload } as CadastroPublico;
       setSelectedCadastroPublico(updated);
       setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updatePayload } : item));
+      // Auditoria de mudança de status do cadastro público
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        void registrarStatusEvento({
+          origem: "equipe",
+          entidade: "cadastro_publico",
+          entidade_id: selectedCadastroPublico.id,
+          cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
+          campo_status: "status",
+          status_anterior: selectedCadastroPublico.status ?? null,
+          status_novo: status,
+          usuario_id: userRes?.user?.id ?? null,
+          detalhes: { contexto: "QAClientesPage.updateCadastroPublicoStatus" },
+        });
+      } catch (auditErr) {
+        console.warn("[updateCadastroPublicoStatus] auditoria falhou:", auditErr);
+      }
       if (status === "aprovado") {
         await loadClientes();
         toast.success(clienteVinculadoId
           ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}.${historicoMsg}`
           : "Cadastro aprovado com sucesso");
+      } else if (status === "pendente" && APROVADO_STATUSES_RUNTIME.has(String(selectedCadastroPublico.status || "").toLowerCase())) {
+        toast.success("Conferência removida. Cadastro voltou para pendentes.");
       } else {
         toast.success(`Cadastro marcado como ${status}`);
       }
