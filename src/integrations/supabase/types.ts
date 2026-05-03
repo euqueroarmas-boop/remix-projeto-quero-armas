@@ -5428,7 +5428,9 @@ export type Database = {
           id: string
           image_type: string
           image_url: string | null
+          is_ai_generated_blocked: boolean
           origem: string | null
+          original_image_type: string | null
           prompt_used: string | null
           route_path: string | null
           status: string
@@ -5451,7 +5453,9 @@ export type Database = {
           id?: string
           image_type?: string
           image_url?: string | null
+          is_ai_generated_blocked?: boolean
           origem?: string | null
+          original_image_type?: string | null
           prompt_used?: string | null
           route_path?: string | null
           status?: string
@@ -5474,7 +5478,9 @@ export type Database = {
           id?: string
           image_type?: string
           image_url?: string | null
+          is_ai_generated_blocked?: boolean
           origem?: string | null
+          original_image_type?: string | null
           prompt_used?: string | null
           route_path?: string | null
           status?: string
