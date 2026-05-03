@@ -8838,10 +8838,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      qa_atualizar_status_homologacao_cliente: {
-        Args: { p_cliente_id: number; p_observacao?: string; p_status: string }
-        Returns: Json
-      }
       qa_busca_auxiliar_caso: {
         Args: {
           match_count?: number
@@ -8974,47 +8970,10 @@ export type Database = {
           total: number
         }[]
       }
-      qa_gov_reconcile_build_plan: {
-        Args: never
-        Returns: {
-          cliente_id_atualmente_vinculado: number
-          cliente_id_correto: number
-          cpf_access: string
-          cr_id_no_sistema: number
-          id_access: string
-          nome_access: string
-          nome_cliente_atualmente_vinculado: string
-          nome_cliente_correto: string
-          numero_cr_access: string
-          senha_plaintext: string
-          tem_senha_sistema: boolean
-        }[]
-      }
-      qa_gov_reconcile_build_plan_safe: {
-        Args: never
-        Returns: {
-          cliente_id_atualmente_vinculado: number
-          cliente_id_correto: number
-          cpf_access: string
-          cr_id_no_sistema: number
-          id_access: string
-          nome_access: string
-          nome_cliente_atualmente_vinculado: string
-          nome_cliente_correto: string
-          numero_cr_access: string
-          senha_plaintext: string
-          tem_senha_sistema: boolean
-        }[]
-      }
-      qa_gov_reconcile_realign_atomic: { Args: never; Returns: Json }
       qa_gte_match_armas: { Args: { _gte_id: string }; Returns: Json }
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
-      }
-      qa_homologar_cliente: {
-        Args: { p_cliente_id: number; p_observacao?: string }
-        Returns: Json
       }
       qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
       qa_is_owner_of_cliente: {
@@ -9027,8 +8986,6 @@ export type Database = {
           municipio: string
         }[]
       }
-      qa_load_staging_admin: { Args: { p_payload: Json }; Returns: Json }
-      qa_load_staging_chunk: { Args: { p_payload: Json }; Returns: Json }
       qa_log_tentativa_bloqueada: {
         Args: {
           _ator: string
@@ -9051,10 +9008,6 @@ export type Database = {
           p_novo_servico_id: number
           p_processo_id: string
         }
-        Returns: Json
-      }
-      qa_reabrir_homologacao_cliente: {
-        Args: { p_cliente_id: number; p_motivo: string }
         Returns: Json
       }
       qa_recalcular_prazos_processo: {
