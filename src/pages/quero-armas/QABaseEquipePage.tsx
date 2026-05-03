@@ -1073,6 +1073,67 @@ export default function QABaseEquipePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={reviewOpen} onOpenChange={(o) => !reviewSubmitting && setReviewOpen(o)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="uppercase font-mono text-sm flex items-center gap-2">
+              <ThumbsDown className="h-4 w-4 text-red-600" /> Reprovar e refazer com IA
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {reviewArticle && (
+              <p className="text-xs uppercase font-mono text-muted-foreground truncate">
+                {reviewArticle.title}
+              </p>
+            )}
+            <div>
+              <label className="text-xs uppercase font-mono">Motivo da reprovação *</label>
+              <Input
+                value={reviewReason}
+                onChange={(e) => setReviewReason(e.target.value.toUpperCase())}
+                placeholder="EX: TELA DESCRITA NÃO É A TELA REAL"
+                className="uppercase"
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase font-mono">Observação da equipe</label>
+              <Textarea
+                rows={3}
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                placeholder="O que está errado, o que falta, comportamento real observado..."
+              />
+            </div>
+            <div>
+              <label className="text-xs uppercase font-mono flex items-center gap-1">
+                <Camera className="h-3 w-3" /> Print real da tela (opcional, mas recomendado)
+              </label>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => setReviewFile(e.target.files?.[0] ?? null)}
+                className="text-xs mt-1 block"
+              />
+              {reviewFile && (
+                <p className="text-[10px] text-emerald-700 font-mono uppercase mt-1">
+                  ✓ {reviewFile.name}
+                </p>
+              )}
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Se você anexar um print, a IA vai analisar a imagem e refazer o artigo descrevendo apenas o que aparece nela.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReviewOpen(false)} disabled={reviewSubmitting}>Cancelar</Button>
+            <Button onClick={submitReviewRegenerate} disabled={reviewSubmitting || !reviewReason.trim()} className="bg-red-600 hover:bg-red-700 text-white">
+              {reviewSubmitting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1" />}
+              Refazer com IA
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
