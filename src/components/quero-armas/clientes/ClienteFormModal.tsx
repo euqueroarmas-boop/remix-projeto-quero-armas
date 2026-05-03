@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair, Phone, Activity, FileBadge, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair, Phone, Activity, FileBadge, CheckCircle2, Stethoscope, Target } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
@@ -228,7 +228,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     naturalidade_pais: "Brasil",
     cnh: "",
     ctps: "",
-    pis_pasep: "",
+    // Validades de exames (gravadas em qa_cadastro_cr)
+    validade_laudo_psicologico: "",
+    validade_exame_tiro: "",
   });
 
   useEffect(() => {
@@ -267,7 +269,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         naturalidade_pais: cliente.naturalidade_pais || "Brasil",
         cnh: cliente.cnh || "",
         ctps: cliente.ctps || "",
-        pis_pasep: cliente.pis_pasep || "",
+        validade_laudo_psicologico: "",
+        validade_exame_tiro: "",
       });
       // Load existing photo preview
       if (cliente.imagem) {
@@ -281,13 +284,20 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         try {
           const { data: row } = await supabase
             .from("qa_cadastro_cr" as any)
-            .select("id")
+            .select("id, validade_laudo_psicologico, validade_exame_tiro")
             .eq("cliente_id", cliente.id)
             .is("consolidado_em", null)
             .order("id", { ascending: false })
             .limit(1)
             .maybeSingle();
           setCadastroCrId((row as any)?.id ?? null);
+          if (row) {
+            setF(prev => ({
+              ...prev,
+              validade_laudo_psicologico: formatDateForDisplay((row as any).validade_laudo_psicologico || ""),
+              validade_exame_tiro: formatDateForDisplay((row as any).validade_exame_tiro || ""),
+            }));
+          }
         } catch {
           setCadastroCrId(null);
         }
@@ -341,7 +351,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         titulo_eleitor: setIfEmpty(prev.titulo_eleitor, p.titulo_eleitor),
         cnh: setIfEmpty(prev.cnh, p.cnh),
         ctps: setIfEmpty(prev.ctps, p.ctps),
-        pis_pasep: setIfEmpty(prev.pis_pasep, p.pis_pasep),
         celular: setIfEmpty(prev.celular, p.celular ? onlyDigits(p.celular) : ""),
         email: setIfEmpty(prev.email, p.email),
         cep: setIfEmpty(prev.cep, extractedCep),
@@ -441,8 +450,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
     setSaving(true);
     try {
+      // Separa campos que pertencem ao CR (exames) do payload do cliente
+      const { validade_laudo_psicologico, validade_exame_tiro, ...clienteFields } = f;
       const payload: any = {
-        ...f,
+        ...clienteFields,
         numero_documento_identidade: f.rg || null,
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
@@ -477,6 +488,29 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         }
         toast.success("Cliente cadastrado");
       }
+      // Persiste validades de exames em qa_cadastro_cr (cria stub se necessário)
+      if (savedId && (validade_laudo_psicologico || validade_exame_tiro)) {
+        try {
+          let crId = cadastroCrId;
+          if (!crId) {
+            const { data: stub } = await supabase
+              .from("qa_cadastro_cr" as any)
+              .insert({ cliente_id: savedId })
+              .select("id")
+              .single();
+            crId = (stub as any)?.id ?? null;
+          }
+          if (crId) {
+            await supabase.from("qa_cadastro_cr" as any).update({
+              validade_laudo_psicologico: formatDateForDatabase(validade_laudo_psicologico),
+              validade_exame_tiro: formatDateForDatabase(validade_exame_tiro),
+            }).eq("id", crId);
+          }
+        } catch (e: any) {
+          console.error("Falha ao salvar exames:", e);
+          toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
+        }
+      }
       // Senha GOV não é mais salva em fluxo "save cliente" — o SenhaGovField
       // grava de forma isolada, sempre com `cliente_id` validado server-side.
       onSaved();
@@ -506,29 +540,31 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="absolute bottom-0 left-0 right-0 h-px bg-zinc-100" />
               <div className="relative flex items-center gap-4 flex-wrap">
                 {/* Avatar / foto */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="relative h-16 w-16 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors"
-                  aria-label="Adicionar foto"
-                >
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
-                  ) : (
-                    <Camera className="h-6 w-6 text-zinc-400" />
-                  )}
-                </button>
-                {photoPreview && (
+                <div className="relative flex-shrink-0">
                   <button
                     type="button"
-                    onClick={removePhoto}
-                    className="-ml-3 -mt-10 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    aria-label="Remover foto"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative h-20 w-20 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden transition-colors"
+                    aria-label="Adicionar foto"
                   >
-                    <X className="h-3 w-3" />
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover object-center" />
+                    ) : (
+                      <Camera className="h-7 w-7 text-zinc-400" />
+                    )}
                   </button>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                      aria-label="Remover foto"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                </div>
 
                 {/* Identidade do cliente */}
                 <div className="flex-1 min-w-[220px]">
@@ -577,11 +613,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
               {/* KPIs (espelha a tira de KPIs do dashboard do cliente) */}
               <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <KpiCard icon={User} label="Identificação" value={kpiIdent(f)} />
-                <KpiCard icon={Phone} label="Contato" value={kpiContato(f)} />
-                <KpiCard icon={MapPin} label="Endereço" value={kpiEndereco(f)} />
+                <KpiCard icon={User} label="Identificação" value={kpiIdent(f)} tone={kpiTone(kpiIdent(f))} />
+                <KpiCard icon={Phone} label="Contato" value={kpiContato(f)} tone={kpiTone(kpiContato(f))} />
+                <KpiCard icon={MapPin} label="Endereço" value={kpiEndereco(f)} tone={kpiTone(kpiEndereco(f))} />
                 <KpiCard icon={Shield} label="Categoria" value={f.categoria_titular ? "OK" : "Pendente"} tone={f.categoria_titular ? "ok" : "warn"} />
-                <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone="info" />
+                <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone={isEdit ? "ok" : "info"} />
               </div>
             </section>
 
@@ -652,13 +688,13 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <FInput label="CTPS" value={f.ctps} onChange={v => set("ctps", v)} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <FInput label="PIS/PASEP" value={f.pis_pasep} onChange={v => set("pis_pasep", v)} />
                 <Field label="Senha Gov.br">
                   <SenhaGovField
                     cadastroCrId={cadastroCrId}
                     clienteId={cliente?.id ?? null}
                     contexto="ClienteFormModal"
                     variant="row"
+                    autoReveal
                     onCreateCadastro={async () => {
                       if (!cliente?.id) return null;
                       const { data: stub, error } = await supabase
@@ -676,7 +712,22 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     }}
                   />
                 </Field>
-                <FInput label="Naturalidade (legado)" value={f.naturalidade} onChange={v => set("naturalidade", v)} placeholder="Compatibilidade" />
+                <FInput
+                  label="Validade Laudo Psicológico"
+                  value={f.validade_laudo_psicologico}
+                  onChange={v => set("validade_laudo_psicologico", normalizeDateInput(v))}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
+                <FInput
+                  label="Validade Exame de Tiro"
+                  value={f.validade_exame_tiro}
+                  onChange={v => set("validade_exame_tiro", normalizeDateInput(v))}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
               </div>
             </section>
 
@@ -860,22 +911,42 @@ function KpiCard({ icon: Icon, label, value, tone = "info" }: {
   value: string;
   tone?: "ok" | "warn" | "info";
 }) {
-  const toneCls = tone === "ok"
-    ? "text-zinc-700 bg-white border-zinc-200"
+  // Cor do glow esfumaçado no canto sup. direito — espelha o padrão Arsenal
+  const glow = tone === "ok"
+    ? "rgba(16, 185, 129, 0.55)"      // emerald-500
     : tone === "warn"
-      ? "text-zinc-700 bg-white border-zinc-200"
-      : "text-zinc-700 bg-white border-zinc-200";
+      ? "rgba(122, 31, 43, 0.55)"     // bordo
+      : "rgba(161, 161, 170, 0.45)";  // zinc-400
   const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-[#7A1F2B]" : "bg-zinc-300";
+  const iconCls = tone === "ok" ? "text-emerald-600" : tone === "warn" ? "text-[#7A1F2B]" : "text-zinc-400";
   return (
-    <div className={cn("relative rounded-lg border p-3 shadow-sm overflow-hidden", toneCls)}>
-      <div className="flex items-start justify-between gap-2">
-        <Icon className="h-4 w-4 text-zinc-400" />
-        <span className={cn("h-1.5 w-1.5 rounded-full", dotCls)} />
+    <div className="relative rounded-lg border border-zinc-200 bg-white p-3 shadow-sm overflow-hidden transition-colors">
+      {/* Glow esfumaçado animado no canto superior direito (padrão Arsenal) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40 blur-2xl transition-[background,opacity] duration-500 ease-out"
+        style={{ background: glow }}
+      />
+      <div className="relative flex items-start justify-between gap-2">
+        <Icon className={cn("h-4 w-4 transition-colors duration-500", iconCls)} />
+        <span className={cn("h-1.5 w-1.5 rounded-full transition-colors duration-500", dotCls)} />
       </div>
-      <p className="text-lg font-bold tracking-tight mt-2 uppercase text-zinc-900">{value}</p>
-      <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 mt-0.5">{label}</p>
+      <p className="relative text-lg font-bold tracking-tight mt-2 uppercase text-zinc-900">{value}</p>
+      <p className="relative text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 mt-0.5">{label}</p>
     </div>
   );
+}
+
+/* Calcula tom do KPI a partir de progresso "X/Y" */
+function kpiTone(value: string): "ok" | "warn" | "info" {
+  const m = value.match(/^(\d+)\/(\d+)$/);
+  if (!m) return "info";
+  const filled = Number(m[1]);
+  const total = Number(m[2]);
+  if (total === 0) return "info";
+  if (filled === 0) return "warn";
+  if (filled >= total) return "ok";
+  return "warn";
 }
 
 /* ── Compute KPIs ── */

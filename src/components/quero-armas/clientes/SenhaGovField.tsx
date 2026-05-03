@@ -63,13 +63,19 @@ interface Props {
    * `qa_cadastro_cr` e devolve o id recém-criado para salvar a senha.
    */
   onCreateCadastro?: () => Promise<number | null>;
+  /**
+   * Quando true, carrega e revela a senha automaticamente ao montar
+   * (uso restrito ao admin autenticado dentro do ClienteFormModal —
+   * a auditoria continua sendo registrada server-side).
+   */
+  autoReveal?: boolean;
 }
 
 /**
  * Exibe a Senha Gov sob demanda, decifrando via edge function `qa-senha-gov`.
  * Cada revelação registra auditoria em qa_senha_gov_acessos.
  */
-export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contexto, onCreateCadastro }: Props) {
+export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contexto, onCreateCadastro, autoReveal = false }: Props) {
   const [senha, setSenha] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -128,6 +134,19 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
 
   // ⚠️  Política pós-P0: NUNCA carregar a senha automaticamente.
   // Mesmo no variant "exposed" o admin precisa clicar em "Revelar".
+  // Exceção controlada: prop `autoReveal` para painéis admin (ClienteFormModal),
+  // sempre validando cliente↔CR no servidor (mesma auditoria do clique manual).
+  useEffect(() => {
+    if (!autoReveal) return;
+    if (!clienteId) return;
+    let cancel = false;
+    (async () => {
+      const s = await ensure();
+      if (!cancel && s != null) setVisible(true);
+    })();
+    return () => { cancel = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoReveal, effectiveCrId, clienteId]);
 
   // Sem cadastroCrId, sem clienteId e sem callback: nada a fazer (modo legado),
   // exceto no variant "exposed" que sempre exibe o slot (mostra "—").
