@@ -1593,18 +1593,19 @@ export default function QAClientesPage() {
     }
   };
 
-  const togglePagoCadastroPublico = async () => {
-    if (!selectedCadastroPublico) return;
-    const cadastroId = selectedCadastroPublico.id;
-    const pagoAnterior = Boolean(selectedCadastroPublico.pago);
+  const togglePagoCadastroPublico = async (target?: CadastroPublico | null) => {
+    const alvo = target ?? selectedCadastroPublico;
+    if (!alvo) return;
+    const cadastroId = alvo.id;
+    const pagoAnterior = Boolean(alvo.pago);
     const novoPago = !pagoAnterior;
-    setSavingCadastroPublicoStatus("pago");
+    setSavingCadastroPublicoStatus(`pago:${cadastroId}`);
     setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: novoPago } : item));
     setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: novoPago } : prev);
     try {
       const updateBody: Record<string, any> = { pago: novoPago };
       // Inicia o relógio de SLA na primeira marcação como pago
-      if (novoPago && !(selectedCadastroPublico as any).pago_em) {
+      if (novoPago && !(alvo as any).pago_em) {
         updateBody.pago_em = new Date().toISOString();
       }
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
@@ -1653,7 +1654,7 @@ export default function QAClientesPage() {
             origem: "equipe",
             entidade: "cadastro_publico",
             entidade_id: cadastroId,
-            cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
+            cliente_id: (alvo as any)?.cliente_id_vinculado ?? null,
             campo_status: "pago",
             status_anterior: pagoAnterior ? "true" : "false",
             status_novo: novoPago ? "true" : "false",
