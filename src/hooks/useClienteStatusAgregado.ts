@@ -31,6 +31,7 @@ import {
   type TipoKpi,
 } from "@/lib/quero-armas/statusUnificado";
 import { getStatusTone, piorTone } from "@/lib/quero-armas/statusColors";
+import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
 
 // ─────────── Tipos públicos ────────────────────────────────────────────────
 
@@ -73,6 +74,15 @@ export interface KpiProcessos {
   tone: CorStatus;
 }
 
+export interface KpiMunicoes {
+  total: number;
+  vencidas: number;
+  vencendo: number;
+  ok: number;
+  sem_data: number;
+  tone: CorStatus;
+}
+
 export interface KpiGtes extends KpiValidade {
   pendentes_leitura: number;
 }
@@ -107,7 +117,7 @@ export interface ClienteStatusAgregado {
     documentos: KpiDocumentos;
     autorizacoes: KpiValidade;
     processos: KpiProcessos;
-    municoes: { total: number; tone: CorStatus; nota: string };
+    municoes: KpiMunicoes;
     alertas: KpiAlertas;
   };
 }
@@ -180,6 +190,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         docsResp,
         procDocResp,
         procResp,
+        municoesResp,
       ] = await Promise.all([
         sb.from("qa_cadastro_cr").select("validade_cr, consolidado_em").eq("cliente_id", clienteId).order("id", { ascending: false }).limit(1),
         sb.from("qa_crafs").select("data_validade, nome_craf").eq("cliente_id", clienteId),
@@ -189,6 +200,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         sb.from("qa_documentos_cliente").select("status, data_validade, tipo_documento, origem").eq("qa_cliente_id", clienteId).neq("status", "excluido"),
         sb.from("qa_processo_documentos").select("status, data_validade_efetiva, processo_id").eq("cliente_id", clienteId),
         sb.from("qa_processos").select("status, pagamento_status").eq("cliente_id", clienteId),
+        sb.from("qa_municoes").select("data_fabricacao").eq("cliente_id", clienteId),
       ]);
 
       const cr = crResp?.data?.[0] ?? null;
@@ -199,6 +211,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       const docs: any[] = docsResp?.data ?? [];
       const procDocs: any[] = procDocResp?.data ?? [];
       const procs: any[] = procResp?.data ?? [];
+      const municoes: any[] = municoesResp?.data ?? [];
 
       // ─── KPI: CR ──────────────────────────────────────────────────────────
       const crStatusU: StatusUnificado = cr?.validade_cr
@@ -328,6 +341,33 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         tone: piorTone(tonesProc.length ? tonesProc : ["cinza"]),
       };
 
+      // ─── KPI: Munições (validade = data_fabricacao + 60 meses) ───────────
+      let municoesOk = 0,
+        municoesVencendo = 0,
+        municoesVencidas = 0,
+        municoesSemData = 0;
+      const tonesMun: CorStatus[] = [];
+      for (const m of municoes) {
+        const v = calcularValidadeMunicao(m?.data_fabricacao ?? null);
+        if (v.sem_data) {
+          municoesSemData++;
+          tonesMun.push("cinza");
+          continue;
+        }
+        tonesMun.push(v.status.cor);
+        if (v.status.cor === "vermelho") municoesVencidas++;
+        else if (v.status.cor === "amarelo" || v.status.cor === "laranja") municoesVencendo++;
+        else if (v.status.cor === "verde") municoesOk++;
+      }
+      const kpiMunicoes: KpiMunicoes = {
+        total: municoes.length,
+        vencidas: municoesVencidas,
+        vencendo: municoesVencendo,
+        ok: municoesOk,
+        sem_data: municoesSemData,
+        tone: piorTone(tonesMun.length ? tonesMun : ["cinza"]),
+      };
+
       // ─── Alertas (tudo com prazo) ─────────────────────────────────────────
       const alertas: AlertaItem[] = [];
       const empurra = (
@@ -412,11 +452,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
           documentos: kpiDocs,
           autorizacoes: kpiAuth,
           processos: kpiProc,
-          municoes: {
-            total: 0,
-            tone: "cinza",
-            nota: "Aguardando migração de data_fabricacao",
-          },
+          municoes: kpiMunicoes,
           alertas: kpiAlertas,
         },
       } as ClienteStatusAgregado);
