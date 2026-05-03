@@ -784,8 +784,29 @@ export function ArsenalView({
     ].filter((s): s is StatusUnificado => !!s);
     itens.push(...incluir);
 
-    if (itens.length === 0) return null;
-    return reduzirStatus(itens);
+    // Filtra: só conta como ALERTA o que exige atenção real.
+    // Estados "ok", "deferido", "documento_aprovado", "vencendo_180" (verde
+    // "EM DIA"), "em_analise_orgao", "hub_reaproveitado" e "sem_dado" NÃO
+    // geram alerta — KPI deve ficar neutro/cinza nesses casos.
+    const ALERT_CODES = new Set([
+      "indeferido",
+      "vencido",
+      "pagamento_falhou",
+      "exigencia_pf",
+      "iminente",
+      "vencendo_15",
+      "vencendo_30",
+      "vencendo_60",
+      "vencendo_90",
+      "documentos_invalidos",
+      "documentos_incompletos",
+      "ia_falhou",
+      "aguardando_pagamento",
+      "aguardando_documentacao",
+    ]);
+    const alertas = itens.filter((s) => ALERT_CODES.has(s.codigo));
+    if (alertas.length === 0) return null;
+    return reduzirStatus(alertas);
   }, [
     expDocs, processos,
     crUnified, crafUnified, gteUnified,
