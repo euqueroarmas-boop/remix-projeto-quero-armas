@@ -258,7 +258,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         titulo_eleitor: cliente.titulo_eleitor || "",
         endereco: cliente.endereco || "", numero: cliente.numero || "",
         complemento: cliente.complemento || "", bairro: cliente.bairro || "",
-        cep: cliente.cep || "", cidade: cliente.cidade || "", estado: cliente.estado || "",
+        cep: cliente.cep ? (String(cliente.cep).includes("-") || String(cliente.cep).includes(".") ? String(cliente.cep) : "") : "",
         pais: cliente.pais || "Brasil",
         endereco2: cliente.endereco2 || "", numero2: cliente.numero2 || "",
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
