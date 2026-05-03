@@ -86,6 +86,31 @@ function Field({ label, children, span }: { label: string; children: React.React
 const inputClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all uppercase";
 const selectClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all appearance-none cursor-pointer";
 
+const EMPTY_FORM = {
+  nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
+  data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
+  nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
+  email: "", celular: "", titulo_eleitor: "",
+  endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
+  endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+  geolocalizacao: "", geolocalizacao2: "",
+  observacao: "", status: "ATIVO",
+  categoria_titular: "" as CategoriaTitular | "",
+  subcategoria: "",
+  orgao_vinculado: "",
+  matricula_funcional: "",
+  sexo: "",
+  tipo_documento_identidade: "RG" as "RG" | "CIN",
+  naturalidade_municipio: "",
+  naturalidade_uf: "",
+  naturalidade_pais: "Brasil",
+  cnh: "",
+  ctps: "",
+  validade_laudo_psicologico: "",
+  validade_exame_tiro: "",
+  senha_gov: "",
+};
+
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
   placeholder?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
@@ -139,6 +164,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
+  // Chave que força a remontagem do bloco "Preencher com IA" sempre que o
+  // modal é fechado/reaberto — garante que nenhum arquivo, texto ou
+  // resultado de extração anterior fique em memória.
+  const [aiPrefillKey, setAiPrefillKey] = useState(0);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -237,38 +266,20 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     } catch { /* silencioso */ }
   }, [lookupGeocode]);
 
-  const [f, setF] = useState({
-    nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
-    data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
-    nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
-    email: "", celular: "", titulo_eleitor: "",
-    endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
-    endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
-    geolocalizacao: "", geolocalizacao2: "",
-    observacao: "", status: "ATIVO",
-    // Categorização legal (Lei 10.826/03 art. 6º)
-    categoria_titular: "" as CategoriaTitular | "",
-    subcategoria: "",
-    orgao_vinculado: "",
-    matricula_funcional: "",
-    // ── Entrega B (sincronizado com clienteSchema) ──
-    sexo: "",
-    // Tipo do documento de identidade — RG ou CIN.
-    // CIN substitui o RG e usa o MESMO número do CPF (legalmente permitido).
-    tipo_documento_identidade: "RG" as "RG" | "CIN",
-    naturalidade_municipio: "",
-    naturalidade_uf: "",
-    naturalidade_pais: "Brasil",
-    cnh: "",
-    ctps: "",
-    // Datas de realização dos exames (colunas legadas em qa_cadastro_cr)
-    validade_laudo_psicologico: "",
-    validade_exame_tiro: "",
-    senha_gov: "",
-  });
+  const [f, setF] = useState(EMPTY_FORM);
 
   useEffect(() => {
-    if (!open) { setPhotoFile(null); setPhotoPreview(null); return; }
+    if (!open) {
+      // Reset COMPLETO ao fechar: nenhum dado temporário pode persistir
+      // entre aberturas do formulário.
+      setF(EMPTY_FORM);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setRequiredErrors({});
+      setCadastroCrId(null);
+      setAiPrefillKey(k => k + 1);
+      return;
+    }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
@@ -361,8 +372,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   // e adiciona warnings/acervo nas observações para revisão humana.
   const applyAIPrefill = useCallback(async (p: PrefillFields) => {
     const onlyDigits = (s: any) => String(s ?? "").replace(/\D/g, "");
-    const setIfEmpty = (cur: string, next: any) =>
-      cur && cur.trim() ? cur : (next == null ? cur : String(next));
+    // IA SEMPRE sobrescreve valores existentes quando tem valor extraído.
+    // Mantém o valor manual SOMENTE se a IA não trouxe nada para o campo.
+    const setIfEmpty = (cur: string, next: any) => {
+      const nextStr = next == null ? "" : String(next).trim();
+      return nextStr ? String(next) : cur;
+    };
 
     // Normaliza sexo para os valores aceitos pelo select (M/F/Outro).
     const normSexo = (v: any): string => {
@@ -795,6 +810,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <SectionTitle icon={Activity} label="Preencher com IA" />
                 <div className="mt-3">
                   <ClienteAIPrefill
+                    key={aiPrefillKey}
                     onApply={applyAIPrefill}
                     onPhotoCandidate={(file) => {
                       // Só assume a foto se ainda não houver uma selecionada.
