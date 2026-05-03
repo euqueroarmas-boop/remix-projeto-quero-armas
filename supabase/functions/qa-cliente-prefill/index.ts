@@ -217,7 +217,9 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
+      // Auditor independente roda em modelo Flash (mais rápido) — a tarefa
+      // é binária (confere/não confere) e não exige raciocínio profundo.
+      model: "google/gemini-2.5-flash",
       messages: [
         {
           role: "system",
