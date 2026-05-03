@@ -345,7 +345,6 @@ Deno.serve(async (req) => {
         normalized.warnings.push(checked.warning);
       } else {
         normalized.senha_gov_raw = checked.senha;
-        normalized.senha_gov = checked.senha;
         normalized.senha_gov_confidence = checked.confidence;
         normalized.senha_gov_needs_review = false;
       }
