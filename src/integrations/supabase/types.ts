@@ -5514,6 +5514,9 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           audience: string
+          audit_plan_generated_at: string | null
+          audit_plan_json: Json | null
+          audit_plan_model: string | null
           audit_ready_at: string | null
           audit_session_id: string | null
           audit_status: string
@@ -5546,6 +5549,9 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           audience?: string
+          audit_plan_generated_at?: string | null
+          audit_plan_json?: Json | null
+          audit_plan_model?: string | null
           audit_ready_at?: string | null
           audit_session_id?: string | null
           audit_status?: string
@@ -5578,6 +5584,9 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           audience?: string
+          audit_plan_generated_at?: string | null
+          audit_plan_json?: Json | null
+          audit_plan_model?: string | null
           audit_ready_at?: string | null
           audit_session_id?: string | null
           audit_status?: string
