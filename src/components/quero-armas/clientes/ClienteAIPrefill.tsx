@@ -61,7 +61,9 @@ const FIELD_LABELS: Record<string, string> = {
   data_realizacao_exame_psicologico: "Data exame psicológico",
   data_realizacao_exame_tiro: "Data exame de tiro",
   validade_laudo_psicologico: "Data exame psicológico", validade_exame_tiro: "Data exame de tiro",
-  senha_gov: "Senha GOV",
+  senha_gov: "Senha GOV", senha_gov_raw: "Senha GOV literal",
+  senha_gov_confidence: "Confiança senha GOV", senha_gov_needs_review: "Revisar senha GOV",
+  emissor_rg_needs_review: "Revisar emissor RG",
 };
 
 export default function ClienteAIPrefill({
@@ -124,7 +126,7 @@ export default function ClienteAIPrefill({
       const fields = (data as any)?.fields ?? {};
       setResult(fields);
       const filled = Object.keys(fields).filter(
-        (k) => k !== "confidence" && k !== "warnings" && k !== "acervo" && fields[k],
+        (k) => !["confidence", "warnings", "acervo", "senha_gov_confidence", "senha_gov_needs_review", "emissor_rg_needs_review"].includes(k) && fields[k],
       ).length;
       // Aplicação automática imediata, sem etapa manual de "Aplicar".
       onApply(fields);
