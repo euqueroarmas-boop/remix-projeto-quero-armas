@@ -108,7 +108,7 @@ export interface ClienteStatusAgregado {
     documentos: KpiDocumentos;
     autorizacoes: KpiValidade;
     processos: KpiProcessos;
-    municoes: { total: number; tone: CorStatz } extends never ? never : { total: number; tone: CorStatus; nota: string };
+    municoes: { total: number; tone: CorStatus; nota: string };
     alertas: KpiAlertas;
   };
 }
