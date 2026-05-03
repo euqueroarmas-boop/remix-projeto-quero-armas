@@ -85,7 +85,15 @@ Deno.serve(async (req) => {
         .select("title,module,category,tags,symptoms,body")
         .eq("id", id)
         .maybeSingle();
-      if (!a) { failed++; continue; }
+      if (!a) {
+        failed++;
+        await supabase.from("qa_kb_embeddings_log").insert({
+          article_id: id, status: "erro",
+          error_message: "artigo não encontrado",
+          modelo: "google/gemini-2.5-flash-lite",
+        });
+        continue;
+      }
       const text = [
         a.title,
         a.category, a.module ?? "",
@@ -94,12 +102,49 @@ Deno.serve(async (req) => {
         a.body,
       ].join("\n");
       const v = await embed(text);
-      if (!v) { failed++; continue; }
+      if (!v) {
+        failed++;
+        await supabase.from("qa_kb_artigos")
+          .update({
+            embedding_status: "erro",
+            embedding_error: "falha ao gerar vetor de apoio (gateway/parse)",
+            embedding_updated_at: new Date().toISOString(),
+          })
+          .eq("id", id);
+        await supabase.from("qa_kb_embeddings_log").insert({
+          article_id: id, status: "erro",
+          error_message: "falha ao gerar vetor de apoio",
+          modelo: "google/gemini-2.5-flash-lite",
+        });
+        continue;
+      }
       const { error } = await supabase
         .from("qa_kb_artigos")
-        .update({ embedding: v as any })
+        .update({
+          embedding: v as any,
+          embedding_status: "gerado",
+          embedding_error: null,
+          embedding_updated_at: new Date().toISOString(),
+        })
         .eq("id", id);
-      if (error) { console.error("update fail", error); failed++; } else processed++;
+      if (error) {
+        console.error("update fail", error);
+        failed++;
+        await supabase.from("qa_kb_artigos")
+          .update({ embedding_status: "erro", embedding_error: error.message, embedding_updated_at: new Date().toISOString() })
+          .eq("id", id);
+        await supabase.from("qa_kb_embeddings_log").insert({
+          article_id: id, status: "erro",
+          error_message: error.message,
+          modelo: "google/gemini-2.5-flash-lite",
+        });
+      } else {
+        processed++;
+        await supabase.from("qa_kb_embeddings_log").insert({
+          article_id: id, status: "sucesso",
+          modelo: "google/gemini-2.5-flash-lite",
+        });
+      }
     }
 
     return new Response(JSON.stringify({ processed, failed, total: ids.length }), {

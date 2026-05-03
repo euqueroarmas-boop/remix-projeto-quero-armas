@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2 } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -26,6 +26,9 @@ type Article = {
   status: "draft" | "published" | "archived";
   created_at: string;
   updated_at: string;
+  embedding_status?: "pendente" | "gerado" | "erro" | null;
+  embedding_error?: string | null;
+  embedding_updated_at?: string | null;
 };
 
 const CATEGORIES = [
@@ -58,6 +61,7 @@ export default function QABaseEquipePage() {
   const [saving, setSaving] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [draftDescription, setDraftDescription] = useState("");
+  const [processingEmb, setProcessingEmb] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -104,6 +108,32 @@ export default function QABaseEquipePage() {
     }
     return Array.from(map.entries());
   }, [filtered]);
+
+  const embStats = useMemo(() => {
+    const s = { gerado: 0, pendente: 0, erro: 0 };
+    for (const a of articles) {
+      const k = (a.embedding_status ?? "pendente") as "gerado" | "pendente" | "erro";
+      if (k in s) s[k]++;
+    }
+    return s;
+  }, [articles]);
+
+  async function processPendingEmbeddings() {
+    setProcessingEmb(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-embed", {
+        body: { backfill: true, limit: 10 },
+      });
+      if (error) throw error;
+      const d = data as any;
+      toast.success(`Vetores: ${d?.processed ?? 0} processados, ${d?.failed ?? 0} falhas (lote de até 10).`);
+      await loadAll();
+    } catch (e: any) {
+      toast.error("Erro ao processar vetores: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setProcessingEmb(false);
+    }
+  }
 
   async function runAiSearch() {
     if (aiQuery.trim().length < 3) {
@@ -386,7 +416,8 @@ export default function QABaseEquipePage() {
       <Card className="border-amber-500/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm uppercase font-mono flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-600" /> Pergunte em linguagem natural
+            <Sparkles className="h-4 w-4 text-amber-600" /> Busca textual avançada + sintomas + tags
+            <span className="text-[10px] font-normal text-muted-foreground normal-case">(com apoio vetorial experimental)</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -419,6 +450,36 @@ export default function QABaseEquipePage() {
               })}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Status técnico do vetor de apoio */}
+      <Card className="border-dashed">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs uppercase font-mono flex items-center gap-2">
+            <Zap className="h-3.5 w-3.5" /> Vetor de apoio (experimental)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase">
+          <span className="inline-flex items-center gap-1 text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" /> {embStats.gerado} gerado{embStats.gerado === 1 ? "" : "s"}
+          </span>
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <Clock className="h-3.5 w-3.5" /> {embStats.pendente} pendente{embStats.pendente === 1 ? "" : "s"}
+          </span>
+          <span className="inline-flex items-center gap-1 text-red-700">
+            <AlertCircle className="h-3.5 w-3.5" /> {embStats.erro} com erro
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            onClick={processPendingEmbeddings}
+            disabled={processingEmb || (embStats.pendente === 0 && embStats.erro === 0)}
+          >
+            {processingEmb ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
+            Processar embeddings pendentes
+          </Button>
         </CardContent>
       </Card>
 
@@ -471,7 +532,15 @@ export default function QABaseEquipePage() {
                         </div>
                       )}
                     </div>
-                    {a.status !== "published" && <Badge variant="outline" className="text-[10px]">{a.status}</Badge>}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      {a.status !== "published" && <Badge variant="outline" className="text-[10px]">{a.status}</Badge>}
+                      {(() => {
+                        const es = a.embedding_status ?? "pendente";
+                        if (es === "gerado") return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-label="vetor gerado" />;
+                        if (es === "erro") return <AlertCircle className="h-3.5 w-3.5 text-red-600" aria-label={a.embedding_error ?? "vetor com erro"} />;
+                        return <Clock className="h-3.5 w-3.5 text-amber-600" aria-label="vetor pendente" />;
+                      })()}
+                    </div>
                   </button>
                 ))}
               </div>
