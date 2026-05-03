@@ -772,10 +772,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <SectionTitle icon={User} label="Identificação" />
               {uploadingPhoto && <p className="text-[10px] text-zinc-500 -mt-2 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...</p>}
               <div className="grid grid-cols-1 gap-4">
-                <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
+                <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span error={requiredErrors.nome_completo ? "Obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
+                <FInput label="CPF *" value={f.cpf} onChange={v => set("cpf", v)} error={requiredErrors.cpf ? "Obrigatório" : undefined} />
                 <FSelect
                   label="Tipo de Documento"
                   value={f.tipo_documento_identidade}
@@ -786,14 +786,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   ]}
                 />
                 <FInput
-                  label={f.tipo_documento_identidade === "CIN" ? "CIN (nº)" : "RG (nº)"}
+                  label={(f.tipo_documento_identidade === "CIN" ? "CIN (nº)" : "RG (nº)") + " *"}
                   value={f.rg}
                   onChange={v => set("rg", v)}
+                  error={requiredErrors.rg ? "Obrigatório" : undefined}
                 />
                 <FInput
-                  label={f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG"}
+                  label={(f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG") + " *"}
                   value={f.emissor_rg}
                   onChange={v => set("emissor_rg", v)}
+                  error={requiredErrors.emissor_rg ? "Obrigatório" : undefined}
                 />
               </div>
               {f.tipo_documento_identidade === "CIN" && (
@@ -802,23 +804,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 </p>
               )}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FSelect label="Sexo" value={f.sexo} onChange={v => { set("sexo", v); if (v) setRequiredErrors(p => ({ ...p, sexo: false })); }} options={SEXO_OPTIONS} placeholder="Selecionar..." error={requiredErrors.sexo ? "Sexo é obrigatório" : undefined} />
+                <FInput label="Expedição RG *" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} error={requiredErrors.expedicao_rg ? "Obrigatório" : undefined} />
+                <FInput label="Data de Nascimento *" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} error={requiredErrors.data_nascimento ? "Obrigatório" : undefined} />
+                <FSelect label="Sexo *" value={f.sexo} onChange={v => set("sexo", v)} options={SEXO_OPTIONS} placeholder="Selecionar..." error={requiredErrors.sexo ? "Obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="Naturalidade (Município)" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} />
-                <FSelect label="Naturalidade (UF)" value={f.naturalidade_uf} onChange={v => set("naturalidade_uf", v)} options={ufOptions} placeholder="UF" />
-                <FInput label="Naturalidade (País)" value={f.naturalidade_pais} onChange={v => set("naturalidade_pais", v)} />
+                <FInput label="Naturalidade (Município) *" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} error={requiredErrors.naturalidade_municipio ? "Obrigatório" : undefined} />
+                <FSelect label="Naturalidade (UF) *" value={f.naturalidade_uf} onChange={v => set("naturalidade_uf", v)} options={ufOptions} placeholder="UF" error={requiredErrors.naturalidade_uf ? "Obrigatório" : undefined} />
+                <FInput label="Naturalidade (País) *" value={f.naturalidade_pais} onChange={v => set("naturalidade_pais", v)} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
-                <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => { set("estado_civil", v); if (v) setRequiredErrors(p => ({ ...p, estado_civil: false })); }} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Estado civil é obrigatório" : undefined} />
-                <FInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
+                <FInput label="Nacionalidade *" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} error={requiredErrors.nacionalidade ? "Obrigatório" : undefined} />
+                <FSelect label="Estado Civil *" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Obrigatório" : undefined} />
+                <FInput label="Profissão *" value={f.profissao} onChange={v => set("profissao", v)} error={requiredErrors.profissao ? "Obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <FInput label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} />
-                <FInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} />
+                <FInput label="Escolaridade *" value={f.escolaridade} onChange={v => set("escolaridade", v)} error={requiredErrors.escolaridade ? "Obrigatório" : undefined} />
+                <FInput label="Título de Eleitor *" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} error={requiredErrors.titulo_eleitor ? "Obrigatório" : undefined} />
                 <FInput label="CNH" value={f.cnh} onChange={v => set("cnh", v)} />
                 <FInput label="CTPS" value={f.ctps} onChange={v => set("ctps", v)} />
               </div>
@@ -880,12 +882,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={Users} label="Filiação & Contato" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
-                <FInput label="Nome do Pai" value={f.nome_pai} onChange={v => set("nome_pai", v)} />
+                <FInput label="Nome da Mãe *" value={f.nome_mae} onChange={v => set("nome_mae", v)} error={requiredErrors.nome_mae ? "Obrigatório" : undefined} />
+                <FInput label="Nome do Pai *" value={f.nome_pai} onChange={v => set("nome_pai", v)} error={requiredErrors.nome_pai ? "Obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FInput label="Celular" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" />
-                <FInput label="E-mail" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" />
+                <FInput label="Celular *" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" error={requiredErrors.celular ? "Obrigatório" : undefined} />
+                <FInput label="E-mail *" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" error={requiredErrors.email ? "Obrigatório" : undefined} />
               </div>
             </section>
 
@@ -893,19 +895,19 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
+                  <FInput label={(cepLoading ? "CEP ⏳" : "CEP") + " *"} value={f.cep} onChange={v => set("cep", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00.000-000" maxLength={10} inputMode="numeric" error={requiredErrors.cep ? "Obrigatório" : undefined} />
                   <div className="col-span-2 sm:col-span-3">
-                    <FInput label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} span />
+                    <FInput label="Logradouro *" value={f.endereco} onChange={v => set("endereco", v)} span error={requiredErrors.endereco ? "Obrigatório" : undefined} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero} onChange={v => set("numero", v)} onBlur={() => resolveGeoloc("")} />
+                  <FInput label="Número *" value={f.numero} onChange={v => set("numero", v)} onBlur={() => resolveGeoloc("")} error={requiredErrors.numero ? "Obrigatório" : undefined} />
                   <FInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
-                  <FInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
+                  <FInput label="Bairro *" value={f.bairro} onChange={v => set("bairro", v)} error={requiredErrors.bairro ? "Obrigatório" : undefined} />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
-                  <FSelect label="UF" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
+                  <FInput label="Cidade *" value={f.cidade} onChange={v => set("cidade", v)} error={requiredErrors.cidade ? "Obrigatório" : undefined} />
+                  <FSelect label="UF *" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" error={requiredErrors.estado ? "Obrigatório" : undefined} />
                   <FInput label="País" value={f.pais} onChange={v => set("pais", v)} />
                 </div>
                 <div>
