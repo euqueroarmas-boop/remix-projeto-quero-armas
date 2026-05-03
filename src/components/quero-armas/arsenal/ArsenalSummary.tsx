@@ -570,6 +570,76 @@ export function ArsenalSummary({
     void persist(DEFAULT_ORDER);
   }, [persist]);
 
+  // ── Linha 2 — KPIs adicionais (não sortable, não persistidos) ──────────────
+  const corToToneSecondary = (cor: CorStatus): KpiDefinition["tone"] => {
+    if (cor === "verde") return "ok";
+    if (cor === "azul") return "cyan";
+    if (cor === "amarelo" || cor === "laranja") return "warn";
+    if (cor === "vermelho") return "danger";
+    return "steel";
+  };
+
+  const secondaryDefs: Record<KpiSecondaryId, KpiDefinition> = useMemo(() => ({
+    documentos: {
+      id: "armas" as KpiId, // id não-usado (não há sort)
+      icon: <Files className="h-4 w-4" />,
+      label: "Documentos",
+      value: documentosCount,
+      hint: documentosUnified
+        ? documentosUnified.sub ?? documentosUnified.label
+        : documentosCount === 0
+          ? "Sem documentos"
+          : "No acervo",
+      tone: documentosUnified ? corToToneSecondary(documentosUnified.cor) : "steel",
+      target: "documentos",
+    },
+    processos: {
+      id: "armas" as KpiId,
+      icon: <Workflow className="h-4 w-4" />,
+      label: "Processos",
+      value: processosCount,
+      hint: processosUnified
+        ? processosUnified.sub ?? processosUnified.label
+        : processosCount === 0
+          ? "Sem processos"
+          : "Em andamento",
+      tone: processosUnified ? corToToneSecondary(processosUnified.cor) : "steel",
+      target: "processos",
+    },
+    autorizacoes: {
+      id: "armas" as KpiId,
+      icon: <ShoppingCart className="h-4 w-4" />,
+      label: "Autorizações",
+      value: autorizacoesCount,
+      hint: autorizacoesUnified
+        ? autorizacoesUnified.sub ?? autorizacoesUnified.label
+        : autorizacoesCount === 0
+          ? "Nenhuma solicitada"
+          : "De compra",
+      tone: autorizacoesUnified ? corToToneSecondary(autorizacoesUnified.cor) : "steel",
+      target: "autorizacoes",
+    },
+    exames: {
+      id: "armas" as KpiId,
+      icon: <Stethoscope className="h-4 w-4" />,
+      label: "Exames/Laudos",
+      value: examesCount,
+      hint: examesUnified
+        ? examesUnified.sub ?? examesUnified.label
+        : examesCount === 0
+          ? "Sem exames"
+          : "Cadastrados",
+      tone: examesUnified ? corToToneSecondary(examesUnified.cor) : "steel",
+      target: "exames",
+    },
+  }), [
+    documentosCount, processosCount, autorizacoesCount, examesCount,
+    documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+  ]);
+
+  const hasSecondaryData =
+    documentosCount > 0 || processosCount > 0 || autorizacoesCount > 0 || examesCount > 0;
+
   if (!loaded) {
     // Render padrão sem flicker enquanto carrega
   }
