@@ -320,6 +320,10 @@ export default function QABaseEquipePage() {
                 <CardTitle className="text-2xl uppercase">{selected.title}</CardTitle>
               </div>
               <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => reprocessOne(selected.id)} disabled={reprocessingId === selected.id}>
+                  {reprocessingId === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                  Reprocessar vetor
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => startEdit(selected)}>
                   <Edit3 className="h-4 w-4 mr-1" /> Editar
                 </Button>
@@ -330,6 +334,16 @@ export default function QABaseEquipePage() {
             </div>
           </CardHeader>
           <CardContent>
+            <div className="mb-3 flex items-center gap-2 text-[11px] uppercase font-mono text-muted-foreground">
+              <span>Vetor:</span>
+              {(() => {
+                const es = selected.embedding_status ?? "pendente";
+                if (es === "gerado") return <span className="inline-flex items-center gap-1 text-emerald-700"><CheckCircle2 className="h-3 w-3" /> gerado</span>;
+                if (es === "erro") return <span className="inline-flex items-center gap-1 text-red-700" title={selected.embedding_error ?? ""}><AlertCircle className="h-3 w-3" /> erro</span>;
+                return <span className="inline-flex items-center gap-1 text-amber-700"><Clock className="h-3 w-3" /> pendente</span>;
+              })()}
+              {selected.embedding_updated_at && <span>· {new Date(selected.embedding_updated_at).toLocaleString("pt-BR")}</span>}
+            </div>
             <article className="prose prose-sm md:prose-base max-w-none">
               <ReactMarkdown>{selected.body}</ReactMarkdown>
             </article>
