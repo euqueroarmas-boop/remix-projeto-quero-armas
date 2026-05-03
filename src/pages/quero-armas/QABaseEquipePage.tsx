@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon, ThumbsUp, ThumbsDown, Camera } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon, ThumbsUp, ThumbsDown, Camera, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -23,7 +23,13 @@ type Article = {
   body: string;
   related_articles: string[];
   version: number;
-  status: "draft" | "needs_review" | "audited" | "published" | "rejected" | "archived";
+  status: "draft" | "audit_pending" | "needs_review" | "needs_real_image" | "audited" | "published" | "rejected" | "archived";
+  audit_status?: "pending_audit" | "checklist_audited" | "kb_audited" | "procedure_tested" | "ready_to_write" | "completed" | "rejected";
+  audit_session_id?: string | null;
+  checklist_audited_at?: string | null;
+  knowledge_base_audited_at?: string | null;
+  procedure_tested_at?: string | null;
+  audit_ready_at?: string | null;
   visual_bug_detected?: boolean;
   last_review_reason?: string | null;
   approved_at?: string | null;
@@ -63,8 +69,20 @@ function emptyArticle(): Partial<Article> {
   return {
     title: "", slug: "", category: CATEGORIES[0], module: "",
     audience: "equipe", tags: [], symptoms: [], body: "",
-    related_articles: [], version: 1, status: "published",
+    related_articles: [], version: 1, status: "audit_pending", audit_status: "pending_audit",
   };
+}
+
+const REAL_IMAGE_TYPES = ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"];
+
+function hasApprovedRealImage(items: ArticleImage[]) {
+  return items.some(i => i.status === "approved" && i.image_type && REAL_IMAGE_TYPES.includes(i.image_type));
+}
+
+function auditComplete(a?: Partial<Article> | null) {
+  if (!a) return false;
+  return ["ready_to_write", "completed"].includes(a.audit_status ?? "") &&
+    !!a.checklist_audited_at && !!a.knowledge_base_audited_at && !!a.procedure_tested_at && !!a.audit_ready_at;
 }
 
 export default function QABaseEquipePage() {
@@ -294,6 +312,10 @@ export default function QABaseEquipePage() {
 
   async function generateWithAI() {
     if (!editing) return;
+    if (!auditComplete(editing)) {
+      toast.error("Audite checklist, base de conhecimento e procedimento real antes de gerar o passo a passo.");
+      return;
+    }
     if (!editing.title?.trim() && !draftDescription.trim()) {
       toast.error("Informe o título ou uma descrição para a IA gerar o rascunho.");
       return;
@@ -306,6 +328,7 @@ export default function QABaseEquipePage() {
           module: editing.module || "",
           audience: editing.audience || "equipe",
           description: draftDescription,
+          audit_confirmed: auditComplete(editing),
         },
       });
       if (error) throw error;
@@ -316,9 +339,9 @@ export default function QABaseEquipePage() {
         body: d.body || editing.body,
         tags: (d.tags?.length ? d.tags : editing.tags) ?? [],
         symptoms: (d.symptoms?.length ? d.symptoms : editing.symptoms) ?? [],
-        status: "draft",
+        status: "needs_real_image",
       });
-      toast.success("Rascunho gerado pela IA. Revise e publique manualmente.");
+      toast.success("Rascunho gerado após auditoria. Anexe print real antes de aprovar/publicar.");
     } catch (e: any) {
       toast.error("Erro ao gerar rascunho: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -328,8 +351,20 @@ export default function QABaseEquipePage() {
 
   async function saveArticle() {
     if (!editing) return;
-    if (!editing.title?.trim() || !editing.body?.trim()) {
-      toast.error("Título e corpo são obrigatórios.");
+    if (!editing.title?.trim()) {
+      toast.error("Título é obrigatório.");
+      return;
+    }
+    if (!editing.body?.trim() && (editing.status ?? "audit_pending") !== "audit_pending") {
+      toast.error("Corpo é obrigatório após a auditoria.");
+      return;
+    }
+    if (["audited", "published"].includes(editing.status ?? "") && !auditComplete(editing)) {
+      toast.error("Não publique/aprove antes da auditoria completa: checklist, base e procedimento testado.");
+      return;
+    }
+    if (["audited", "published"].includes(editing.status ?? "") && editing.id === selected?.id && !hasApprovedRealImage(images)) {
+      toast.error("Este artigo ainda não possui imagem real auditável aprovada.");
       return;
     }
     setSaving(true);
@@ -342,9 +377,15 @@ export default function QABaseEquipePage() {
       audience: editing.audience ?? "equipe",
       tags: (editing.tags ?? []).map(t => t.trim()).filter(Boolean),
       symptoms: (editing.symptoms ?? []).map(t => t.trim()).filter(Boolean),
-      body: editing.body,
+      body: editing.body?.trim() || "## Auditoria pendente\n\nArtigo bloqueado até auditoria do checklist, conferência da base de conhecimento e teste do procedimento real.",
       related_articles: editing.related_articles ?? [],
-      status: editing.status ?? "published",
+      status: editing.status ?? "audit_pending",
+      audit_status: editing.audit_status ?? "pending_audit",
+      audit_session_id: editing.audit_session_id ?? null,
+      checklist_audited_at: editing.checklist_audited_at ?? null,
+      knowledge_base_audited_at: editing.knowledge_base_audited_at ?? null,
+      procedure_tested_at: editing.procedure_tested_at ?? null,
+      audit_ready_at: editing.audit_ready_at ?? null,
       version: editing.version ?? 1,
     };
     let res;
@@ -402,6 +443,13 @@ export default function QABaseEquipePage() {
         .eq("article_id", articleId).neq("status", "archived").order("step_number");
       setImages(((imgs ?? []) as any[]) as ArticleImage[]);
       await loadImageStats();
+      if (selected?.id === articleId) {
+        const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", articleId).maybeSingle();
+        if (fresh && auditComplete(fresh as any)) {
+          await supabase.from("qa_kb_artigos" as any).update({ status: "needs_review" }).eq("id", articleId).in("status", ["needs_real_image", "audit_pending"]);
+          setSelected({ ...(fresh as any), status: "needs_review" } as Article);
+        }
+      }
     } catch (e: any) {
       toast.error("Erro ao enviar print real: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -432,6 +480,40 @@ export default function QABaseEquipePage() {
     }
   }
 
+  async function markAuditStep(a: Article, step: "checklist" | "kb" | "procedure" | "ready") {
+    const now = new Date().toISOString();
+    const payload: Record<string, any> = { status: "audit_pending" };
+    if (step === "checklist") {
+      payload.checklist_audited_at = now;
+      payload.audit_status = "checklist_audited";
+    }
+    if (step === "kb") {
+      if (!a.checklist_audited_at) { toast.error("Audite o checklist antes da base de conhecimento."); return; }
+      payload.knowledge_base_audited_at = now;
+      payload.audit_status = "kb_audited";
+    }
+    if (step === "procedure") {
+      if (!a.checklist_audited_at || !a.knowledge_base_audited_at) { toast.error("Audite checklist e base antes de testar o procedimento."); return; }
+      payload.procedure_tested_at = now;
+      payload.audit_status = "procedure_tested";
+    }
+    if (step === "ready") {
+      if (!a.checklist_audited_at || !a.knowledge_base_audited_at || !a.procedure_tested_at) {
+        toast.error("Finalize checklist, base e teste do procedimento antes de liberar a escrita.");
+        return;
+      }
+      payload.audit_ready_at = now;
+      payload.audit_status = "ready_to_write";
+      payload.status = hasApprovedRealImage(images) ? "needs_review" : "needs_real_image";
+    }
+    const { error } = await supabase.from("qa_kb_artigos" as any).update(payload).eq("id", a.id);
+    if (error) { toast.error("Erro ao registrar auditoria: " + error.message); return; }
+    toast.success("Etapa de auditoria registrada.");
+    await loadAll();
+    const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", a.id).maybeSingle();
+    if (fresh) setSelected(fresh as any as Article);
+  }
+
   async function deleteArticle(a: Article) {
     if (!confirm(`Remover artigo "${a.title}"?`)) return;
     const { error } = await supabase.from("qa_kb_artigos" as any).delete().eq("id", a.id);
@@ -443,10 +525,11 @@ export default function QABaseEquipePage() {
 
   // ============ REVISÃO PROGRESSIVA ============
   async function approveArticle(a: Article) {
-    const hasReal = images.some(i =>
-      i.status === "approved" &&
-      i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
-    );
+    if (!auditComplete(a)) {
+      toast.error("Auditoria obrigatória pendente: audite checklist, base de conhecimento e procedimento testado antes de aprovar.");
+      return;
+    }
+    const hasReal = hasApprovedRealImage(images);
     if (!hasReal) {
       toast.error("Este artigo ainda não possui print real validado. Envie ou capture um print real antes de aprovar.");
       return;
@@ -531,6 +614,7 @@ export default function QABaseEquipePage() {
           reason: reviewReason, notes: reviewNotes,
           screenshot_id: screenshotId, screenshot_url: screenshotUrl,
           reviewed_by: userId,
+          audit_confirmed: auditComplete(reviewArticle),
         },
       });
       if (error) throw error;
@@ -553,6 +637,8 @@ export default function QABaseEquipePage() {
     switch (s) {
       case "published": return "bg-emerald-100 text-emerald-800 border-emerald-300";
       case "audited": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "audit_pending": return "bg-orange-100 text-orange-800 border-orange-300";
+      case "needs_real_image": return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "needs_review": return "bg-amber-100 text-amber-800 border-amber-300";
       case "rejected": return "bg-red-100 text-red-800 border-red-300";
       case "draft": return "bg-slate-100 text-slate-700 border-slate-300";
@@ -580,8 +666,8 @@ export default function QABaseEquipePage() {
                 <CardTitle className="text-2xl uppercase">{selected.title}</CardTitle>
               </div>
               <div className="flex gap-2">
-                {(selected.status === "needs_review" || selected.status === "draft" || selected.status === "rejected") && (
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => approveArticle(selected)} disabled={approvingArticle}>
+                {(["audit_pending", "needs_real_image", "needs_review", "draft", "rejected"].includes(selected.status)) && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => approveArticle(selected)} disabled={approvingArticle || !auditComplete(selected) || !hasApprovedRealImage(images)}>
                     {approvingArticle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
                     Aprovar artigo
                   </Button>
@@ -607,18 +693,47 @@ export default function QABaseEquipePage() {
                 <Badge className="bg-red-100 text-red-800 border-red-300 text-[10px] uppercase">⚠ bug visual detectado</Badge>
               )}
               {(() => {
-                const hasReal = images.some(i =>
-                  i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
-                );
+                const hasReal = hasApprovedRealImage(images);
                 if (hasReal) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">com print real</Badge>;
                 return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">precisa de print real</Badge>;
               })()}
+              {auditComplete(selected) ? (
+                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">auditoria completa</Badge>
+              ) : (
+                <Badge className="bg-orange-50 text-orange-700 border-orange-300 text-[10px] uppercase">auditoria pendente</Badge>
+              )}
               {selected.last_review_reason && (
                 <span className="text-[11px] text-muted-foreground italic">última reprovação: {selected.last_review_reason}</span>
               )}
             </div>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 rounded-md border border-dashed p-3 bg-amber-50/40">
+              <div className="flex items-center gap-2 text-xs uppercase font-mono text-amber-800 mb-2">
+                <ShieldCheck className="h-4 w-4" /> Auditoria obrigatória antes do passo a passo
+              </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                <Button size="sm" variant={selected.checklist_audited_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "checklist")}>
+                  {selected.checklist_audited_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Clock className="h-3.5 w-3.5 mr-1" />}
+                  Checklist auditado
+                </Button>
+                <Button size="sm" variant={selected.knowledge_base_audited_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "kb")} disabled={!selected.checklist_audited_at}>
+                  {selected.knowledge_base_audited_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Clock className="h-3.5 w-3.5 mr-1" />}
+                  Base auditada
+                </Button>
+                <Button size="sm" variant={selected.procedure_tested_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "procedure")} disabled={!selected.checklist_audited_at || !selected.knowledge_base_audited_at}>
+                  {selected.procedure_tested_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <Clock className="h-3.5 w-3.5 mr-1" />}
+                  Procedimento testado
+                </Button>
+                <Button size="sm" variant={selected.audit_ready_at ? "secondary" : "outline"} onClick={() => markAuditStep(selected, "ready")} disabled={!selected.checklist_audited_at || !selected.knowledge_base_audited_at || !selected.procedure_tested_at}>
+                  {selected.audit_ready_at ? <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> : <ShieldCheck className="h-3.5 w-3.5 mr-1" />}
+                  Liberar escrita
+                </Button>
+              </div>
+              <p className="mt-2 text-[10px] uppercase font-mono text-muted-foreground">
+                O artigo só pode ser aprovado/publicado após checklist auditado, base conferida, procedimento testado e imagem real aprovada.
+              </p>
+            </div>
             <div className="mb-3 flex items-center gap-2 text-[11px] uppercase font-mono text-muted-foreground">
               <span>Vetor:</span>
               {(() => {
@@ -710,25 +825,25 @@ export default function QABaseEquipePage() {
             <DialogTitle className="uppercase">{editing.id ? "Editar artigo" : "Novo artigo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {!editing.id && (
+            {(!editing.id || auditComplete(editing)) && (
               <div className="rounded-md border border-amber-300 bg-amber-50/60 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-xs uppercase font-mono text-amber-700">
-                  <Wand2 className="h-3.5 w-3.5" /> Gerar rascunho com IA
+                  <Wand2 className="h-3.5 w-3.5" /> Gerar rascunho após auditoria
                 </div>
                 <Textarea
                   rows={2}
-                  placeholder="Descreva o problema, a tela ou o fluxo. A IA vai gerar um rascunho operacional para revisão."
+                  placeholder="Descreva a auditoria concluída, a tela real e o procedimento testado."
                   value={draftDescription}
                   onChange={(e) => setDraftDescription(e.target.value)}
                 />
                 <div className="flex justify-end">
-                  <Button size="sm" variant="outline" onClick={generateWithAI} disabled={drafting}>
+                  <Button size="sm" variant="outline" onClick={generateWithAI} disabled={drafting || !auditComplete(editing)}>
                     {drafting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1" />}
                     Gerar rascunho
                   </Button>
                 </div>
                 <p className="text-[10px] text-amber-700/80 uppercase font-mono">
-                  O rascunho fica como DRAFT — revise antes de publicar.
+                  Sem auditoria completa, a escrita permanece bloqueada.
                 </p>
               </div>
             )}
@@ -767,6 +882,8 @@ export default function QABaseEquipePage() {
                   <SelectContent>
                     <SelectItem value="published">Publicado</SelectItem>
                     <SelectItem value="audited">Auditado</SelectItem>
+                    <SelectItem value="audit_pending">Auditoria pendente</SelectItem>
+                    <SelectItem value="needs_real_image">Precisa de imagem real</SelectItem>
                     <SelectItem value="needs_review">Aguardando revisão</SelectItem>
                     <SelectItem value="draft">Rascunho</SelectItem>
                     <SelectItem value="rejected">Reprovado</SelectItem>
@@ -948,6 +1065,8 @@ export default function QABaseEquipePage() {
           <SelectTrigger className="md:max-w-[220px]"><SelectValue placeholder="Status do artigo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all__">Revisão: todos</SelectItem>
+            <SelectItem value="audit_pending">🛡️ Auditoria pendente</SelectItem>
+            <SelectItem value="needs_real_image">🖼️ Precisa de imagem real</SelectItem>
             <SelectItem value="needs_review">⏳ Aguardando revisão</SelectItem>
             <SelectItem value="audited">🔵 Auditado (equipe)</SelectItem>
             <SelectItem value="published">🟢 Publicado (cliente)</SelectItem>

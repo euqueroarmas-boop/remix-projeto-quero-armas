@@ -13,6 +13,8 @@ TODAS as telas internas/operacionais/administrativas do Quero Armas seguem padr�
 
 **ZERO REGRESSÃO QA (regra mestra):** NUNCA apagar tabelas/colunas, renomear campos, alterar fluxos aprovados, substituir integrações existentes (send-smtp-email, Asaas) ou criar arquitetura paralela. Sempre extensão (add), nunca substituição (replace). Em dúvida → criar novo compatível. Arquitetura canônica imutável: qa_clientes (CPF=identidade) · qa_vendas (verdade financeira, status_financeiro derivado) · qa_solicitacoes_servico · qa_processos · cliente_auth_links. status_servico: montando_pasta→documentos→verificação→protocolo→órgão→resultado. E-mail SEMPRE via send-smtp-email + naoresponda@queroarmas.com.br (proibido email_send_log/pgmq/cron/App Emails). IA extrai TUDO em campos_complementares_json/metadados_documento_json — proibido descartar dados ou exigir preenchimento manual do já extraído. Ver mem://constraints/quero-armas-diretriz-global.
 
+Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + base + procedimento real testado. Sem imagem IA/genérica; só evidência real aprovada.
+
 ## Memories
 - [🚨 REGRA-MÃE QA — BLOCO 0](mem://architecture/quero-armas/regra-mae-fluxo-operacional) — Pagamento=gatilho, 5 dimensões status (Financeiro/Doc/Protocolo/Decisão/Validade), KPIs reais, padrão de cores, escopo Arsenal, proibição do termo "admin"
 - [Diretriz Global QA](mem://constraints/quero-armas-diretriz-global) — Regra permanente: zero regressão, extensão sobre substituição, arquitetura canônica preservada, infra de e-mail reutilizada, IA não perde dados
@@ -25,3 +27,4 @@ TODAS as telas internas/operacionais/administrativas do Quero Armas seguem padr�
 - [QA Integridade Venda↔Processo](mem://features/quero-armas/integridade-venda-processo) — Bloqueia divergência Posse/Porte; qa-processo-criar valida servico_id contra qa_itens_venda + 8 testes regressão
 - [AI Supervised Correction](mem://features/quero-armas/ai-supervised-correction-system) — qa_ia_correcoes_juridicas + /correcoes-ia, 3 fases (admin/captura/injeção+checagem)
 - [QA No AI Images](mem://constraints/quero-armas-no-ai-images) — Imagens da Base só podem ser reais/auditáveis; geração por IA bloqueada em DB+edge+UI
+- [QA KB Audit Before Writing](mem://constraints/quero-armas-kb-audit-before-writing) — Base só escreve/publica após checklist, base e procedimento auditados; exige evidência real aprovada

@@ -77,10 +77,16 @@ Deno.serve(async (req) => {
     const screenshot_url: string | undefined = body.screenshot_url;
     const screenshot_id: string | undefined = body.screenshot_id;
     const reviewed_by: string | undefined = body.reviewed_by;
+    const audit_confirmed: boolean = body.audit_confirmed === true;
 
     if (!article_id) {
       return new Response(JSON.stringify({ error: "article_id obrigatório" }), {
         status: 400, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    if (!audit_confirmed) {
+      return new Response(JSON.stringify({ error: "Auditoria obrigatória pendente. Audite checklist, base de conhecimento e procedimento real antes de refazer o passo a passo.", code: "AUDIT_REQUIRED_BEFORE_REWRITE" }), {
+        status: 428, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     const key = Deno.env.get("LOVABLE_API_KEY");
@@ -97,11 +103,18 @@ Deno.serve(async (req) => {
 
     const { data: art, error: aErr } = await supabase
       .from("qa_kb_artigos")
-      .select("id,title,body,module,category,audience,version,status,tags,symptoms")
+      .select("id,title,body,module,category,audience,version,status,tags,symptoms,audit_status,checklist_audited_at,knowledge_base_audited_at,procedure_tested_at,audit_ready_at")
       .eq("id", article_id).maybeSingle();
     if (aErr || !art) {
       return new Response(JSON.stringify({ error: "artigo não encontrado" }), {
         status: 404, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    const dbAuditComplete = ["ready_to_write", "completed"].includes(art.audit_status ?? "") &&
+      !!art.checklist_audited_at && !!art.knowledge_base_audited_at && !!art.procedure_tested_at && !!art.audit_ready_at;
+    if (!dbAuditComplete) {
+      return new Response(JSON.stringify({ error: "Auditoria incompleta no banco. O artigo só pode ser refeito após checklist, base e procedimento testados.", code: "DB_AUDIT_INCOMPLETE" }), {
+        status: 428, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
 
@@ -167,12 +180,12 @@ Deno.serve(async (req) => {
       reason: `Snapshot pré-regeneração: ${reason || "sem motivo"}`,
     });
 
-    // Atualiza artigo (sempre volta a needs_review)
+    // Atualiza artigo (sempre volta a needs_real_image até imagem real aprovada)
     const upd: Record<string, any> = {
       title: parsed.title,
       body: parsed.body,
       version: nextVersion,
-      status: "needs_review",
+      status: "needs_real_image",
       last_review_reason: reason || null,
       visual_bug_detected: !!parsed.visual_bug_detected,
       embedding_status: "pendente",

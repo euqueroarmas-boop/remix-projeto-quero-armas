@@ -6,6 +6,7 @@ const cors = {
 const SYSTEM = `Você é o redator técnico-operacional da Base de Conhecimento da Equipe Quero Armas.
 Gere SEMPRE em português, em Markdown, no formato OPERACIONAL OBRIGATÓRIO abaixo. Nunca use o termo "admin" — use "Equipe Quero Armas".
 Nunca invente telas, botões ou regras: se faltar informação, escreva "(A confirmar)". Mantenha tom direto, sem marketing.
+REGRA CRÍTICA: só escreva após auditoria concluída do checklist, da base de conhecimento e do procedimento real testado. Nunca gere, peça ou descreva imagem artificial. Se houver necessidade visual, sinalize que exige print real auditável.
 
 ## Objetivo
 ## Quando usar
@@ -24,10 +25,15 @@ Nunca invente telas, botões ou regras: se faltar informação, escreva "(A conf
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
-    const { title, module: mod, audience = "equipe", description } = await req.json();
+    const { title, module: mod, audience = "equipe", description, audit_confirmed = false } = await req.json();
     if (!title || String(title).trim().length < 3) {
       return new Response(JSON.stringify({ error: "Título obrigatório" }), {
         status: 400, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    if (audit_confirmed !== true) {
+      return new Response(JSON.stringify({ error: "Auditoria obrigatória pendente. Audite checklist, base de conhecimento e procedimento real antes de gerar o passo a passo.", code: "AUDIT_REQUIRED_BEFORE_DRAFT" }), {
+        status: 428, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     const key = Deno.env.get("LOVABLE_API_KEY");
@@ -42,7 +48,7 @@ Módulo: ${mod || "(não informado)"}
 Público-alvo: ${audience === "cliente" ? "CLIENTE FINAL (linguagem simples, sem termos técnicos internos)" : "EQUIPE QUERO ARMAS (linguagem operacional interna)"}
 Descrição/sintomas: ${description || "(usar o título como base)"}
 
-Gere o artigo seguindo o formato exigido. NÃO publique — será revisado pela Equipe Quero Armas.`;
+Gere o artigo seguindo o formato exigido. NÃO publique — será revisado pela Equipe Quero Armas. Não gere nem sugira imagem IA; quando precisar de visual, escreva que exige print real auditável.`;
 
     const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -74,7 +80,7 @@ Gere o artigo seguindo o formato exigido. NÃO publique — será revisado pela 
     const tags = grab("Tags").split(/[,\n]/).map((s: string) => s.replace(/^[-*\s]+/, "").trim()).filter(Boolean);
     const symptoms = grab("Sintomas de busca").split(/\n/).map((s: string) => s.replace(/^[-*\s]+/, "").trim()).filter(Boolean);
 
-    return new Response(JSON.stringify({ body, tags, symptoms, status: "draft" }), {
+    return new Response(JSON.stringify({ body, tags, symptoms, status: "needs_real_image" }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
