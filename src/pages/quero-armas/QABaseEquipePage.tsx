@@ -775,7 +775,10 @@ export default function QABaseEquipePage() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="published">Publicado</SelectItem>
+                    <SelectItem value="audited">Auditado</SelectItem>
+                    <SelectItem value="needs_review">Aguardando revisão</SelectItem>
                     <SelectItem value="draft">Rascunho</SelectItem>
+                    <SelectItem value="rejected">Reprovado</SelectItem>
                     <SelectItem value="archived">Arquivado</SelectItem>
                   </SelectContent>
                 </Select>
