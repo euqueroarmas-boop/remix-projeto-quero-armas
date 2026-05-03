@@ -17,6 +17,7 @@ import {
 } from "@/shared/quero-armas/clienteSchema";
 import { SenhaGovField } from "./SenhaGovField";
 import ClienteAIPrefill, { type PrefillFields } from "./ClienteAIPrefill";
+import { setSenhaGov } from "./senhaGovApi";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -237,9 +238,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     naturalidade_pais: "Brasil",
     cnh: "",
     ctps: "",
-    // Validades de exames (gravadas em qa_cadastro_cr)
+    // Datas de realização dos exames (colunas legadas em qa_cadastro_cr)
     validade_laudo_psicologico: "",
     validade_exame_tiro: "",
+    senha_gov: "",
   });
 
   useEffect(() => {
