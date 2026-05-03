@@ -625,7 +625,7 @@ export default function QAClientePortalPage() {
             if (!isFree || !isEmpty) return null;
             return (
               <div className="mb-4 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm overflow-hidden">
-                <div className="h-1 w-full bg-gradient-to-r from-[#8E2532] to-blue-500" />
+                <div className="h-1 w-full bg-gradient-to-r from-[#7A1F2B] to-zinc-900" />
                 <div className="p-4 sm:p-5 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 shrink-0 rounded-xl bg-[#FBF3F4] text-[#641722] border border-[#E5C2C6] flex items-center justify-center">
