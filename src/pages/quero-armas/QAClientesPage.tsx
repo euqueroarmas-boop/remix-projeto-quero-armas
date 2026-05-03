@@ -1992,9 +1992,8 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    // Aba "Arsenal" (Armory/Bancada Tática) descontinuada — abre direto em "CRAFs".
-    // Código de Arsenal mantido oculto para remoção futura.
-    setTab("armas");
+    // Abas legadas (CRAFs/CR/Docs) removidas — abre no Arsenal Inteligente.
+    setTab("arsenal");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
@@ -2367,9 +2366,6 @@ export default function QAClientesPage() {
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
-                { value: "armas", icon: Crosshair, label: `CRAFs (${crafs.length + gtes.length})` },
-                { value: "cr", icon: Shield, label: "CR" },
-                { value: "docs", icon: FileDown, label: "Docs" },
                 { value: "exames", icon: HeartPulse, label: "Exames" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
@@ -2411,7 +2407,7 @@ export default function QAClientesPage() {
                     ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
                     ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
                   ].filter((d) => d.days !== null && d.days <= 90)}
-                  onOpenAddDoc={() => setTab("docs")}
+                  onOpenAddDoc={() => setTab("hub")}
                   onArsenalChanged={async () => {
                     await loadSubData(c);
                   }}
