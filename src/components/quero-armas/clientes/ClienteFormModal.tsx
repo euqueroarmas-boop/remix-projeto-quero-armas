@@ -469,7 +469,20 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         observacao: `${prev.observacao}\n\n⚠️ ${addressDivergence}`.trim(),
       }));
     }
-  }, [lookupCep]);
+
+    // Auto-resolve geolocalização imediatamente após o prefill da IA
+    setTimeout(() => {
+      setF(curr => {
+        if (!curr.geolocalizacao && curr.endereco && curr.cidade) {
+          autoResolveGeoloc("", { street: curr.endereco, number: curr.numero, city: curr.cidade, state: curr.estado });
+        }
+        if (!curr.geolocalizacao2 && curr.endereco2 && curr.cidade2) {
+          autoResolveGeoloc("2", { street: curr.endereco2, number: curr.numero2, city: curr.cidade2, state: curr.estado2 });
+        }
+        return curr;
+      });
+    }, 400);
+  }, [lookupCep, autoResolveGeoloc]);
 
   const save = async () => {
     if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
