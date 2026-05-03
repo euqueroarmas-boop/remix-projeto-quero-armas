@@ -39,26 +39,16 @@ Deno.test("DB: aprovar registro com origem IA deve falhar", async () => {
   assert(error, "Aprovar registro IA deveria ter falhado");
 });
 
-Deno.test("Edge: qa-kb-generate-article-images retorna 410", async () => {
-  const r = await fetch(`${SUPABASE_URL}/functions/v1/qa-kb-generate-article-images`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
-    body: "{}",
-  });
-  const body = await r.json();
-  assertEquals(r.status, 410);
-  assertEquals(body.code, "AI_IMAGE_GENERATION_DISABLED");
-});
+Deno.test("Source: edge functions de geração/backfill estão neutralizadas (410)", async () => {
+  const gen = await Deno.readTextFile(
+    new URL("../qa-kb-generate-article-images/index.ts", import.meta.url),
+  );
+  assert(gen.includes("AI_IMAGE_GENERATION_DISABLED"), "qa-kb-generate-article-images não está bloqueada");
+  assert(gen.includes("status: 410"), "qa-kb-generate-article-images deve retornar 410");
 
-Deno.test("Edge: qa-kb-backfill-images (backfill) retorna 410", async () => {
-  const r = await fetch(`${SUPABASE_URL}/functions/v1/qa-kb-backfill-images`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
-    body: JSON.stringify({ action: "backfill" }),
-  });
-  const body = await r.json();
-  assertEquals(r.status, 410);
-  assertEquals(body.code, "AI_IMAGE_GENERATION_DISABLED");
+  const back = await Deno.readTextFile(new URL("./index.ts", import.meta.url));
+  assert(back.includes("AI_IMAGE_GENERATION_DISABLED"), "qa-kb-backfill-images não está bloqueada");
+  assert(back.includes("status: 410"), "qa-kb-backfill-images deve retornar 410");
 });
 
 Deno.test("Leitura: nenhuma imagem ativa pode ter origem IA", async () => {
