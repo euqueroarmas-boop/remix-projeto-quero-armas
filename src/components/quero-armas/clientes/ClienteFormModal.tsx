@@ -363,7 +363,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         ctps: setIfEmpty(prev.ctps, p.ctps),
         celular: setIfEmpty(prev.celular, p.celular ? onlyDigits(p.celular) : ""),
         email: setIfEmpty(prev.email, p.email),
-        cep: setIfEmpty(prev.cep, extractedCep),
+        cep: setIfEmpty(prev.cep, extractedCep ? formatCepMask(extractedCep) : ""),
         endereco: setIfEmpty(prev.endereco, p.endereco),
         numero: setIfEmpty(prev.numero, p.numero),
         complemento: setIfEmpty(prev.complemento, p.complemento),
@@ -371,7 +371,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade: setIfEmpty(prev.cidade, p.cidade),
         estado: setIfEmpty(prev.estado, p.estado),
         pais: setIfEmpty(prev.pais, p.pais) || prev.pais,
-        cep2: setIfEmpty(prev.cep2, extractedCep2),
+        cep2: setIfEmpty(prev.cep2, extractedCep2 ? formatCepMask(extractedCep2) : ""),
         endereco2: setIfEmpty(prev.endereco2, (p as any).endereco_secundario),
         numero2: setIfEmpty(prev.numero2, (p as any).numero_secundario),
         complemento2: setIfEmpty(prev.complemento2, (p as any).complemento_secundario),
@@ -379,6 +379,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade2: setIfEmpty(prev.cidade2, (p as any).cidade_secundario),
         estado2: setIfEmpty(prev.estado2, (p as any).estado_secundario),
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
+        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).validade_laudo_psicologico),
+        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).validade_exame_tiro),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
