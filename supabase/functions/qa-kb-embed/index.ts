@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         .from("qa_kb_artigos")
         .select("id")
         .is("embedding", null)
-        .limit(20);
+        .limit(Math.min(Number(body.limit) || 5, 10));
       ids = (data ?? []).map((x: any) => x.id);
     } else {
       return new Response(JSON.stringify({ error: "Informe article_id, backfill ou query" }), {
