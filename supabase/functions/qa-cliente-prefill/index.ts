@@ -41,7 +41,8 @@ const PREFILL_TOOL = {
         cnpj: { type: "string", description: "Apenas dígitos. 14 caracteres se for PJ." },
         tipo_documento_identidade: { type: "string", description: "RG ou CIN. CIN usa o mesmo número do CPF." },
         rg: { type: "string", description: "Número do RG/CIN. Se for CIN, pode coincidir com CPF (legal)." },
-        emissor_rg: { type: "string", description: "Órgão expedidor + UF (ex: SSP/SP)." },
+        emissor_rg: { type: "string", description: "Órgão expedidor SEM a UF (ex: SSP, DETRAN, SSP-PC). NÃO incluir a UF aqui." },
+        uf_emissor_rg: { type: "string", description: "UF do órgão emissor do RG/CIN, SEMPRE em 2 letras maiúsculas (ex: SP, RJ, MG). Extraia separadamente do órgão." },
         data_expedicao_rg: { type: "string", description: "DD/MM/AAAA" },
         data_nascimento: { type: "string", description: "DD/MM/AAAA" },
         sexo: { type: "string", description: "M, F ou Outro" },
@@ -132,7 +133,7 @@ const PREFILL_TOOL = {
       },
       required: [
         "nome_completo", "cpf", "cnpj", "tipo_documento_identidade", "rg", "emissor_rg",
-        "data_expedicao_rg", "data_nascimento", "sexo", "nacionalidade", "estado_civil",
+        "uf_emissor_rg", "data_expedicao_rg", "data_nascimento", "sexo", "nacionalidade", "estado_civil",
         "profissao", "escolaridade", "nome_mae", "nome_pai", "naturalidade_municipio",
         "naturalidade_uf", "naturalidade_pais", "titulo_eleitor", "cnh", "ctps",
         "pis_pasep", "celular", "telefone_secundario", "email", "cep", "endereco",
