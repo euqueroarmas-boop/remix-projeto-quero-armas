@@ -742,6 +742,14 @@ const formatCpf = (v: string | null | undefined): string => {
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
+const formatPhone = (v: string | null | undefined): string => {
+  if (!v) return "";
+  const d = v.replace(/\D/g, "").slice(-11);
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return v;
+};
+
 const daysUntilDate = (d: string | null | undefined): number | null => {
   if (!d) return null;
   const parsed = new Date(d);
