@@ -238,7 +238,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   }, [lookupGeocode]);
 
   const [f, setF] = useState({
-    nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
+    nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
     nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
     email: "", celular: "", titulo_eleitor: "",
@@ -273,6 +273,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
         rg: cliente.rg || "", emissor_rg: cliente.emissor_rg || "",
+        uf_emissor_rg: cliente.uf_emissor_rg || "",
         expedicao_rg: formatDateForDisplay(cliente.expedicao_rg || ""),
         data_nascimento: formatDateForDisplay(cliente.data_nascimento || ""),
         naturalidade: cliente.naturalidade || "", nacionalidade: cliente.nacionalidade || "Brasileira",
@@ -342,7 +343,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     } else {
       setF(prev => ({
         ...prev,
-        nome_completo: "", cpf: "", rg: "", email: "", celular: "",
+        nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", email: "", celular: "",
         validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "",
       }));
       setPhotoPreview(null);
