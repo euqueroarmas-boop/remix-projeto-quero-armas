@@ -2220,6 +2220,8 @@ export default function QAClientesPage() {
     if (c.email?.toLowerCase().includes(s)) return true;
     if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
     if (sDigits && c.celular?.replace(/\D/g, "").includes(sDigits)) return true;
+    const servs = ((c as any).servicos_contratados as string[] | undefined) || [];
+    if (servs.some(srv => srv.toLowerCase().includes(s))) return true;
     return false;
   });
 
