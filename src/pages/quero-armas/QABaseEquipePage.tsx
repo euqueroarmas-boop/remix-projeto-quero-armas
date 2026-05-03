@@ -357,82 +357,49 @@ export default function QABaseEquipePage() {
     toast.success("Artigo salvo.");
     // dispara geração de embedding em background (não bloqueia)
     supabase.functions.invoke("qa-kb-embed", { body: { backfill: true } }).catch(() => {});
-    // dispara geração automática de imagens em background (não bloqueia)
-    const newId = (res as any)?.data?.[0]?.id ?? editing.id;
-    if (newId) {
-      supabase.functions.invoke("qa-kb-generate-article-images", {
-        body: {
-          article_id: newId,
-          force: !editing.id ? false : true,
-          // artigos da equipe e operacionais seguros já nascem aprovados
-          approve: (editing.audience ?? "equipe") === "equipe" || (editing.audience === "cliente"),
-        },
-      }).catch(() => {});
-      toast.message("Gerando imagens ilustrativas em segundo plano...");
-    }
+    // ❌ Geração de imagens por IA está PROIBIDA — artigo nasce sem imagem
+    // e exige upload de print real pela equipe.
     setEditing(null);
     await loadAll();
   }
 
-  async function regenerateImagesFor(articleId: string) {
-    setGeneratingImages(true);
+  async function uploadRealScreenshotFor(articleId: string, file: File) {
+    setUploadingScreenshot(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-generate-article-images", {
-        body: { article_id: articleId, force: true },
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${articleId}/real-${Date.now()}-${safe}`;
+      const { error: upErr } = await supabase.storage.from("qa-kb-imagens").upload(path, file, {
+        contentType: file.type || "image/png", upsert: false,
       });
-      if (error) throw error;
-      toast.success(`Imagens geradas (${(data as any)?.generated ?? 0}).`);
-      // recarrega imagens do selecionado
-      if (selected?.id === articleId) {
-        const { data: imgs } = await supabase
-          .from("qa_kb_artigo_imagens" as any)
-          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
-          .eq("article_id", articleId).neq("status", "archived").order("step_number");
-        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
-      }
-    } catch (e: any) {
-      toast.error("Erro ao gerar imagens: " + (e?.message ?? "desconhecido"));
-    } finally {
-      setGeneratingImages(false);
-    }
-  }
-
-  async function backfillAllImages() {
-    setBackfillingImages(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
-        body: { limit: 5, only_missing: true },
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("qa-kb-imagens").getPublicUrl(path).data.publicUrl;
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      const { error: insErr } = await supabase.from("qa_kb_artigo_imagens" as any).insert({
+        article_id: articleId,
+        step_number: (images?.length ?? 0) + 1,
+        step_title: "Print real do sistema",
+        caption: "Print real enviado pela Equipe Quero Armas",
+        image_url: url, storage_path: path, status: "approved",
+        image_type: "screenshot_real",
+        origem: "upload_equipe",
+        uploaded_by: userId,
+        captured_at: new Date().toISOString(),
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
       });
-      if (error) throw error;
-      toast.success(`Lote processado: ${(data as any)?.processed ?? 0} artigo(s).`);
+      if (insErr) throw insErr;
+      toast.success("Print real anexado.");
+      // recarrega
+      const { data: imgs } = await supabase
+        .from("qa_kb_artigo_imagens" as any)
+        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message,image_type")
+        .eq("article_id", articleId).neq("status", "archived").order("step_number");
+      setImages(((imgs ?? []) as any[]) as ArticleImage[]);
       await loadImageStats();
     } catch (e: any) {
-      toast.error("Erro no backfill de imagens: " + (e?.message ?? "desconhecido"));
+      toast.error("Erro ao enviar print real: " + (e?.message ?? "desconhecido"));
     } finally {
-      setBackfillingImages(false);
-    }
-  }
-
-  async function retryImageErrors() {
-    setRetryingErrors(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
-        body: { action: "retry_errors", limit: 10 },
-      });
-      if (error) throw error;
-      toast.success(`Reprocessados: ${(data as any)?.retried ?? 0} artigo(s).`);
-      await loadImageStats();
-      if (selected) {
-        const { data: imgs } = await supabase
-          .from("qa_kb_artigo_imagens" as any)
-          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
-          .eq("article_id", selected.id).neq("status", "archived").order("step_number");
-        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
-      }
-    } catch (e: any) {
-      toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
-    } finally {
-      setRetryingErrors(false);
+      setUploadingScreenshot(false);
     }
   }
 
