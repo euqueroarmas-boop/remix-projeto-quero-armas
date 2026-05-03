@@ -5428,6 +5428,7 @@ export type Database = {
           id: string
           image_type: string
           image_url: string | null
+          origem: string | null
           prompt_used: string | null
           route_path: string | null
           status: string
@@ -5435,6 +5436,8 @@ export type Database = {
           step_title: string | null
           storage_path: string | null
           updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
           viewport: string | null
         }
         Insert: {
@@ -5448,6 +5451,7 @@ export type Database = {
           id?: string
           image_type?: string
           image_url?: string | null
+          origem?: string | null
           prompt_used?: string | null
           route_path?: string | null
           status?: string
@@ -5455,6 +5459,8 @@ export type Database = {
           step_title?: string | null
           storage_path?: string | null
           updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
           viewport?: string | null
         }
         Update: {
@@ -5468,6 +5474,7 @@ export type Database = {
           id?: string
           image_type?: string
           image_url?: string | null
+          origem?: string | null
           prompt_used?: string | null
           route_path?: string | null
           status?: string
@@ -5475,6 +5482,8 @@ export type Database = {
           step_title?: string | null
           storage_path?: string | null
           updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
           viewport?: string | null
         }
         Relationships: [
