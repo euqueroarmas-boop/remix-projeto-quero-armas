@@ -2440,6 +2440,7 @@ export default function QAClientesPage() {
                   cliente={c as any}
                   onApplied={async () => {
                     await loadSubData(c);
+                    await loadCadastrosPublicos();
                   }}
                 />
                 <Section title="Identificação">
