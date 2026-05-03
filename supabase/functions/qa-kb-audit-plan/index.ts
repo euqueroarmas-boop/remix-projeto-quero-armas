@@ -49,7 +49,9 @@ REGRAS DURAS:
 2. Use SOMENTE rotas reais da lista fornecida. Nunca invente rota.
 3. Se não houver rota plausível, retorne steps=[] e confidence baixo.
 4. Cada passo deve listar 1-3 textos esperados (expected_text) que provam que a tela é a correta.
-5. confidence ∈ [0,1]. Se < 0.6, marque needs_human_review=true.
+5. confidence ∈ [0,1]. needs_human_review é APENAS um sinalizador informativo
+   (telemetria) — NÃO bloqueia a execução do Playwright. Marque true quando
+   o overall_confidence < 0.6 para que a equipe veja na auditoria.
 6. Não suponha botões/ações que você não tenha certeza que existem.
 `;
 

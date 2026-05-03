@@ -191,16 +191,14 @@ async function auditArticle(browser: Browser, sessionId: string, article: Articl
   let steps = parseAuditSteps(article.body);
   let source: "manual" | "ai_plan" = "manual";
 
-  // 2. Se não houver manual, gera/usa plano de IA.
+  // 2. Se não houver manual, gera/usa plano de IA e EXECUTA automaticamente.
+  //    Sem approval gate: o Playwright tenta capturar; só vira evidência real
+  //    se a tela existir, expected_text bater e não cair em login/404.
   if (steps.length === 0) {
     const plan = await ensureAuditPlan(article);
     log.audit_plan = plan;
-    if (plan?.needs_human_review) {
-      log.skipped = "ai_plan: needs_human_review";
-      await recordFailure(sessionId, article, null, "AI_PLAN_NEEDS_HUMAN_REVIEW: " + (plan.notes ?? ""), BASE_URL);
-      await ensureNeedsReviewIfNoSuccess(article, false);
-      return { log, success: 0, routes: [], modules: [] };
-    }
+    log.plan_overall_confidence = plan?.overall_confidence ?? null;
+    log.plan_flagged_low_confidence = plan?.needs_human_review === true;
     steps = planToSteps(plan, 0.6);
     source = "ai_plan";
   }
