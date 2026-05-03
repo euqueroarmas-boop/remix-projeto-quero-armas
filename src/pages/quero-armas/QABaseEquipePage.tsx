@@ -43,7 +43,8 @@ type ArticleImage = {
   image_url: string | null;
   status: "draft" | "approved" | "archived" | "error";
   error_message: string | null;
-  image_type?: "screenshot_real" | "upload_manual" | "imagem_ia";
+  // imagens IA estão PROIBIDAS — só tipos reais auditáveis
+  image_type?: "screenshot_real" | "upload_manual" | "documento_real" | "auditoria_real";
 };
 
 const CATEGORIES = [
@@ -84,9 +85,7 @@ export default function QABaseEquipePage() {
   const [logs, setLogs] = useState<Array<{ id: string; article_id: string; status: string; error_message: string | null; modelo: string | null; created_at: string }>>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [images, setImages] = useState<ArticleImage[]>([]);
-  const [generatingImages, setGeneratingImages] = useState(false);
-  const [backfillingImages, setBackfillingImages] = useState(false);
-  const [retryingErrors, setRetryingErrors] = useState(false);
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [approvingDrafts, setApprovingDrafts] = useState(false);
   const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
 
