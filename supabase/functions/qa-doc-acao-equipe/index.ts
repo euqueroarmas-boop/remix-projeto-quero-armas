@@ -55,6 +55,33 @@ Deno.serve(async (req) => {
       }).then(() => {}, () => {});
     };
 
+    // Auditoria universal de status (qa_status_eventos). Não bloqueante.
+    const auditarStatus = async (statusNovo: string, motivoTxt?: string | null, contexto?: string) => {
+      try {
+        if (!doc.status || doc.status === statusNovo) return;
+        await supabase.from("qa_status_eventos").insert({
+          cliente_id: doc.cliente_id ?? null,
+          processo_id: doc.processo_id ?? null,
+          documento_id: doc.id,
+          origem: "equipe",
+          entidade: "processo_documento",
+          entidade_id: String(doc.id),
+          campo_status: "status",
+          status_anterior: doc.status,
+          status_novo: statusNovo,
+          usuario_id: guard.userId ?? null,
+          motivo: motivoTxt ?? null,
+          detalhes: {
+            tipo_documento: doc.tipo_documento,
+            nome_documento: doc.nome_documento,
+            contexto: contexto ?? "qa-doc-acao-equipe",
+          },
+        });
+      } catch (_e) {
+        // best-effort
+      }
+    };
+
     switch (acao) {
       case "signed_url": {
         if (!doc.arquivo_storage_key) return json({ error: "Documento sem arquivo." }, 404);
@@ -73,6 +100,7 @@ Deno.serve(async (req) => {
           data_validacao: new Date().toISOString(),
         }).eq("id", documento_id);
         await evento("aprovacao_manual", `Equipe aprovou manualmente "${doc.nome_documento}".`);
+        await auditarStatus("aprovado", null, "aprovar");
         return json({ ok: true });
       }
 
@@ -86,6 +114,7 @@ Deno.serve(async (req) => {
           data_validacao: new Date().toISOString(),
         }).eq("id", documento_id);
         await evento("rejeicao_manual", `Equipe rejeitou "${doc.nome_documento}".`, { motivo: m });
+        await auditarStatus("invalido", m, "rejeitar");
         return json({ ok: true });
       }
 
@@ -101,6 +130,7 @@ Deno.serve(async (req) => {
           observacoes_cliente: m,
         }).eq("id", documento_id);
         await evento("novo_envio_solicitado", `Equipe solicitou novo envio de "${doc.nome_documento}".`, { motivo: m });
+        await auditarStatus("pendente", m, "solicitar_novo_envio");
         return json({ ok: true });
       }
 
@@ -117,6 +147,7 @@ Deno.serve(async (req) => {
             data_validacao: new Date().toISOString(),
           }).eq("id", documento_id);
           await evento("aprovacao_manual", `Equipe aprovou "${doc.nome_documento}" (encadeado a modelo).`);
+          await auditarStatus("aprovado", observacoes ?? null, "aprovar_e_modelar");
         }
         // 2) Encadeia a função de promoção a modelo (passando o JWT da equipe)
         const auth = req.headers.get("Authorization") || "";
