@@ -4,7 +4,7 @@ const insertMock = vi.fn().mockResolvedValue({ error: null });
 const fromMock = vi.fn(() => ({ insert: insertMock }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { from: (...a: unknown[]) => fromMock(...a) },
+  supabase: { from: (table: string) => fromMock(table) },
 }));
 
 import { registrarStatusEvento } from "../registrarStatusEvento";
