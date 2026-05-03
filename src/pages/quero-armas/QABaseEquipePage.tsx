@@ -354,6 +354,14 @@ export default function QABaseEquipePage() {
       toast.error("Título e corpo são obrigatórios.");
       return;
     }
+    if (["audited", "published"].includes(editing.status ?? "") && !auditComplete(editing)) {
+      toast.error("Não publique/aprove antes da auditoria completa: checklist, base e procedimento testado.");
+      return;
+    }
+    if (["audited", "published"].includes(editing.status ?? "") && editing.id === selected?.id && !hasApprovedRealImage(images)) {
+      toast.error("Este artigo ainda não possui imagem real auditável aprovada.");
+      return;
+    }
     setSaving(true);
     const slug = editing.slug?.trim() || slugify(editing.title);
     const payload = {
@@ -460,6 +468,40 @@ export default function QABaseEquipePage() {
     }
   }
 
+  async function markAuditStep(a: Article, step: "checklist" | "kb" | "procedure" | "ready") {
+    const now = new Date().toISOString();
+    const payload: Record<string, any> = { status: "audit_pending" };
+    if (step === "checklist") {
+      payload.checklist_audited_at = now;
+      payload.audit_status = "checklist_audited";
+    }
+    if (step === "kb") {
+      if (!a.checklist_audited_at) { toast.error("Audite o checklist antes da base de conhecimento."); return; }
+      payload.knowledge_base_audited_at = now;
+      payload.audit_status = "kb_audited";
+    }
+    if (step === "procedure") {
+      if (!a.checklist_audited_at || !a.knowledge_base_audited_at) { toast.error("Audite checklist e base antes de testar o procedimento."); return; }
+      payload.procedure_tested_at = now;
+      payload.audit_status = "procedure_tested";
+    }
+    if (step === "ready") {
+      if (!a.checklist_audited_at || !a.knowledge_base_audited_at || !a.procedure_tested_at) {
+        toast.error("Finalize checklist, base e teste do procedimento antes de liberar a escrita.");
+        return;
+      }
+      payload.audit_ready_at = now;
+      payload.audit_status = "ready_to_write";
+      payload.status = hasApprovedRealImage(images) ? "needs_review" : "needs_real_image";
+    }
+    const { error } = await supabase.from("qa_kb_artigos" as any).update(payload).eq("id", a.id);
+    if (error) { toast.error("Erro ao registrar auditoria: " + error.message); return; }
+    toast.success("Etapa de auditoria registrada.");
+    await loadAll();
+    const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", a.id).maybeSingle();
+    if (fresh) setSelected(fresh as any as Article);
+  }
+
   async function deleteArticle(a: Article) {
     if (!confirm(`Remover artigo "${a.title}"?`)) return;
     const { error } = await supabase.from("qa_kb_artigos" as any).delete().eq("id", a.id);
@@ -471,10 +513,11 @@ export default function QABaseEquipePage() {
 
   // ============ REVISÃO PROGRESSIVA ============
   async function approveArticle(a: Article) {
-    const hasReal = images.some(i =>
-      i.status === "approved" &&
-      i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
-    );
+    if (!auditComplete(a)) {
+      toast.error("Auditoria obrigatória pendente: audite checklist, base de conhecimento e procedimento testado antes de aprovar.");
+      return;
+    }
+    const hasReal = hasApprovedRealImage(images);
     if (!hasReal) {
       toast.error("Este artigo ainda não possui print real validado. Envie ou capture um print real antes de aprovar.");
       return;
