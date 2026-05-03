@@ -2303,7 +2303,7 @@ export default function QAClientesPage() {
                       {c.status}
                     </span>
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
-                      ID #{String(c.id).padStart(4, "0")}
+                      ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
                     </span>
                   </div>
                   <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
@@ -3673,7 +3673,7 @@ export default function QAClientesPage() {
                         {c.status}
                       </span>
                       <span className="text-[9px] font-mono uppercase tracking-[0.18em] text-slate-400">
-                        #{String(c.id).padStart(4, "0")}
+                        #{String((c as any).display_id ?? c.id).padStart(4, "0")}
                       </span>
                     </div>
                     <button
