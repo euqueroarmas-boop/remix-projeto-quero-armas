@@ -629,7 +629,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="relative h-20 w-20 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden transition-colors"
+                    className={cn(
+                      "relative h-20 w-20 rounded-xl border border-dashed flex items-center justify-center overflow-hidden transition-colors",
+                      requiredErrors.photo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : "border-zinc-300 hover:border-zinc-400 bg-zinc-50"
+                    )}
                     aria-label="Adicionar foto"
                   >
                     {photoPreview ? (
@@ -638,6 +641,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                       <Camera className="h-7 w-7 text-zinc-400" />
                     )}
                   </button>
+                  {requiredErrors.photo && (
+                    <p className="text-[10px] text-red-600 mt-1 uppercase">Foto obrigatória</p>
+                  )}
                   {photoPreview && (
                     <button
                       type="button"
