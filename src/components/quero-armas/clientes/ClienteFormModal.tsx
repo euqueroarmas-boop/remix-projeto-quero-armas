@@ -450,8 +450,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
     setSaving(true);
     try {
+      // Separa campos que pertencem ao CR (exames) do payload do cliente
+      const { validade_laudo_psicologico, validade_exame_tiro, ...clienteFields } = f;
       const payload: any = {
-        ...f,
+        ...clienteFields,
         numero_documento_identidade: f.rg || null,
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
@@ -485,6 +487,29 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           }
         }
         toast.success("Cliente cadastrado");
+      }
+      // Persiste validades de exames em qa_cadastro_cr (cria stub se necessário)
+      if (savedId && (validade_laudo_psicologico || validade_exame_tiro)) {
+        try {
+          let crId = cadastroCrId;
+          if (!crId) {
+            const { data: stub } = await supabase
+              .from("qa_cadastro_cr" as any)
+              .insert({ cliente_id: savedId })
+              .select("id")
+              .single();
+            crId = (stub as any)?.id ?? null;
+          }
+          if (crId) {
+            await supabase.from("qa_cadastro_cr" as any).update({
+              validade_laudo_psicologico: formatDateForDatabase(validade_laudo_psicologico),
+              validade_exame_tiro: formatDateForDatabase(validade_exame_tiro),
+            }).eq("id", crId);
+          }
+        } catch (e: any) {
+          console.error("Falha ao salvar exames:", e);
+          toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
+        }
       }
       // Senha GOV não é mais salva em fluxo "save cliente" — o SenhaGovField
       // grava de forma isolada, sempre com `cliente_id` validado server-side.
