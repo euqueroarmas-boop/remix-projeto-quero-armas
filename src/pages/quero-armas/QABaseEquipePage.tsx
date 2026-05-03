@@ -594,11 +594,11 @@ export default function QABaseEquipePage() {
                 <Badge className="bg-red-100 text-red-800 border-red-300 text-[10px] uppercase">⚠ bug visual detectado</Badge>
               )}
               {(() => {
-                const hasReal = images.some(i => i.image_type === "screenshot_real" || i.image_type === "upload_manual");
-                const hasIa = images.some(i => i.image_type === "imagem_ia" || !i.image_type);
+                const hasReal = images.some(i =>
+                  i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
+                );
                 if (hasReal) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">com print real</Badge>;
-                if (hasIa) return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">apenas imagem IA</Badge>;
-                return <Badge variant="outline" className="text-[10px] uppercase">sem print</Badge>;
+                return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">precisa de print real</Badge>;
               })()}
               {selected.last_review_reason && (
                 <span className="text-[11px] text-muted-foreground italic">última reprovação: {selected.last_review_reason}</span>
@@ -621,14 +621,16 @@ export default function QABaseEquipePage() {
             </article>
             {images.length > 0 && (
               <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <h3 className="text-xs uppercase font-mono tracking-wider text-muted-foreground flex items-center gap-1">
-                    <ImageIcon className="h-3.5 w-3.5" /> Imagens ilustrativas ({images.length})
+                    <ImageIcon className="h-3.5 w-3.5" /> Evidências reais ({images.length})
                   </h3>
-                  <Button size="sm" variant="outline" onClick={() => regenerateImagesFor(selected.id)} disabled={generatingImages}>
-                    {generatingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-                    Regenerar imagens
-                  </Button>
+                  <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 hover:bg-amber-50">
+                    {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                    Enviar screenshot real
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
+                  </label>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {images.map(img => (
@@ -641,8 +643,8 @@ export default function QABaseEquipePage() {
                       <figcaption className="p-2 text-[11px] uppercase font-mono flex items-center justify-between gap-2">
                         <span className="truncate">{img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption ?? "—"}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : "border-amber-400 text-amber-700"}`}>
-                            {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : "IA"}
+                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : img.image_type === "documento_real" ? "border-purple-400 text-purple-700" : "border-slate-400 text-slate-700"}`}>
+                            {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : img.image_type === "documento_real" ? "DOC REAL" : "AUDITORIA"}
                           </Badge>
                           <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
                         </div>
@@ -653,12 +655,16 @@ export default function QABaseEquipePage() {
               </div>
             )}
             {images.length === 0 && (
-              <div className="mt-6 flex items-center justify-between border border-dashed rounded-md p-3">
-                <span className="text-xs text-muted-foreground font-mono uppercase">Sem imagens vinculadas.</span>
-                <Button size="sm" variant="outline" onClick={() => regenerateImagesFor(selected.id)} disabled={generatingImages}>
-                  {generatingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
-                  Gerar imagens agora
-                </Button>
+              <div className="mt-6 flex items-center justify-between border border-dashed rounded-md p-3 bg-amber-50/40">
+                <span className="text-xs text-amber-800 font-mono uppercase">
+                  Este artigo precisa de screenshot real do sistema.
+                </span>
+                <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 bg-white hover:bg-amber-50">
+                  {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                  Anexar imagem auditável
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
+                </label>
               </div>
             )}
             {selected.tags.length > 0 && (
