@@ -106,6 +106,8 @@ export default function QABaseEquipePage() {
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [approvingDrafts, setApprovingDrafts] = useState(false);
   const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
+  const [auditTriggering, setAuditTriggering] = useState<string | null>(null);
+  const [auditReason, setAuditReason] = useState("");
 
   // Revisão progressiva
   const [reviewOpen, setReviewOpen] = useState(false);
