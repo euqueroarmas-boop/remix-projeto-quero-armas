@@ -535,6 +535,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cpf: trimmed("cpf"),
         rg: trimmed("rg"),
         emissor_rg: trimmed("emissor_rg"),
+        uf_emissor_rg: trimmed("uf_emissor_rg"),
         expedicao_rg: trimmed("expedicao_rg"),
         data_nascimento: trimmed("data_nascimento"),
         sexo: trimmed("sexo"),
