@@ -1,8 +1,17 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertTriangle, Mail, RefreshCw } from "lucide-react";
+import { Loader2, AlertTriangle, Mail, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface Preview {
   destinatario: string;
@@ -35,6 +44,14 @@ export default function QAAlertasVencimentoPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DryRunResp | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [confirmStep, setConfirmStep] = useState<0 | 1 | 2>(0);
+  const [confirmText, setConfirmText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [lastSendResult, setLastSendResult] = useState<{
+    enviados: number;
+    pulados: number;
+    erros: number;
+  } | null>(null);
 
   const carregar = async () => {
     setLoading(true);
@@ -63,6 +80,35 @@ export default function QAAlertasVencimentoPage() {
     }
   };
 
+  const enviarReal = async () => {
+    setSending(true);
+    try {
+      const { data: resp, error } = await supabase.functions.invoke("qa-vencimentos-alertas", {
+        body: { dry_run: false },
+      });
+      if (error) {
+        toast.error(`Falha ao enviar: ${String(error?.message || error)}`);
+        return;
+      }
+      const r = resp as DryRunResp & { erros_count?: number };
+      const erros = (r as any).erros_count ?? 0;
+      setLastSendResult({
+        enviados: r.enviados_reais || 0,
+        pulados: r.pulados_dedupe_ou_sem_email || 0,
+        erros,
+      });
+      toast.success(`Envio concluído: ${r.enviados_reais} enviado(s)`);
+      setConfirmStep(0);
+      setConfirmText("");
+      // Recarregar preview para refletir dedupe atualizado
+      await carregar();
+    } catch (e: any) {
+      toast.error(`Erro inesperado: ${String(e?.message || e)}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const previews = data?.previews || [];
 
   const totaisFonte = useMemo(() => {
@@ -88,19 +134,39 @@ export default function QAAlertasVencimentoPage() {
             Modo dry-run · Nenhum e-mail é enviado · Cobre lacunas (CR · CRAF · Documentos · Autorizações)
           </p>
         </div>
-        <Button
-          onClick={carregar}
-          disabled={loading}
-          className="bg-amber-900 hover:bg-amber-800 text-amber-50 uppercase tracking-wide font-mono text-xs"
-        >
-          {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-          {data ? "Recarregar" : "Pré-visualizar alertas de vencimento"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={carregar}
+            disabled={loading || sending}
+            className="bg-amber-900 hover:bg-amber-800 text-amber-50 uppercase tracking-wide font-mono text-xs"
+          >
+            {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+            {data ? "Recarregar" : "Pré-visualizar alertas de vencimento"}
+          </Button>
+          {data && previews.length > 0 && (
+            <Button
+              onClick={() => setConfirmStep(1)}
+              disabled={loading || sending}
+              className="bg-red-800 hover:bg-red-700 text-red-50 uppercase tracking-wide font-mono text-xs"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Enviar alertas agora ({previews.length})
+            </Button>
+          )}
+        </div>
       </div>
 
       {errMsg && (
         <div className="border-l-4 border-red-700 bg-red-50 text-red-900 p-3 text-sm font-mono uppercase">
           {errMsg}
+        </div>
+      )}
+
+      {lastSendResult && (
+        <div className="border-l-4 border-emerald-700 bg-emerald-50 text-emerald-900 p-3 text-xs font-mono uppercase grid grid-cols-3 gap-3">
+          <div><span className="text-stone-600">Enviados reais:</span> <strong>{lastSendResult.enviados}</strong></div>
+          <div><span className="text-stone-600">Pulados (dedupe):</span> <strong>{lastSendResult.pulados}</strong></div>
+          <div><span className="text-stone-600">Erros:</span> <strong>{lastSendResult.erros}</strong></div>
         </div>
       )}
 
@@ -164,6 +230,77 @@ export default function QAAlertasVencimentoPage() {
           </div>
         </>
       )}
+
+      <Dialog open={confirmStep > 0} onOpenChange={(o) => { if (!o) { setConfirmStep(0); setConfirmText(""); } }}>
+        <DialogContent className="bg-stone-50 border-amber-900/30 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-mono uppercase tracking-wider text-amber-900 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-700" />
+              {confirmStep === 1 ? "Confirmar envio real" : "Confirmação final"}
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs uppercase text-stone-600">
+              Esta ação dispara e-mails reais via send-smtp-email.
+            </DialogDescription>
+          </DialogHeader>
+
+          {confirmStep === 1 && (
+            <div className="space-y-3 font-mono text-sm">
+              <div className="border border-amber-900/30 bg-amber-50 p-3 uppercase text-xs">
+                <div className="text-stone-700">Quantidade de e-mails a enviar:</div>
+                <div className="text-3xl text-red-800 font-bold mt-1">{previews.length}</div>
+              </div>
+              <ul className="text-[11px] uppercase text-stone-700 list-disc pl-4 space-y-1">
+                <li>Remetente: naoresponda@queroarmas.com.br</li>
+                <li>Itens já enviados (dedupe) serão pulados</li>
+                <li>Resultado gravado em qa_vencimentos_alertas_enviados</li>
+              </ul>
+            </div>
+          )}
+
+          {confirmStep === 2 && (
+            <div className="space-y-3 font-mono text-sm">
+              <p className="text-xs uppercase text-stone-700">
+                Para confirmar, digite exatamente: <strong className="text-red-800">ENVIAR ALERTAS</strong>
+              </p>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
+                placeholder="ENVIAR ALERTAS"
+                className="font-mono uppercase"
+                autoFocus
+              />
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setConfirmStep(0); setConfirmText(""); }}
+              disabled={sending}
+              className="font-mono uppercase text-xs"
+            >
+              Cancelar
+            </Button>
+            {confirmStep === 1 ? (
+              <Button
+                onClick={() => setConfirmStep(2)}
+                className="bg-amber-900 hover:bg-amber-800 text-amber-50 font-mono uppercase text-xs"
+              >
+                Continuar
+              </Button>
+            ) : (
+              <Button
+                onClick={enviarReal}
+                disabled={sending || confirmText !== "ENVIAR ALERTAS"}
+                className="bg-red-800 hover:bg-red-700 text-red-50 font-mono uppercase text-xs"
+              >
+                {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                Enviar agora
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
