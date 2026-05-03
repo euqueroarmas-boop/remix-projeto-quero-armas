@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon, ThumbsUp, ThumbsDown, Camera } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon, ThumbsUp, ThumbsDown, Camera, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -23,7 +23,13 @@ type Article = {
   body: string;
   related_articles: string[];
   version: number;
-  status: "draft" | "needs_review" | "audited" | "published" | "rejected" | "archived";
+  status: "draft" | "audit_pending" | "needs_review" | "needs_real_image" | "audited" | "published" | "rejected" | "archived";
+  audit_status?: "pending_audit" | "checklist_audited" | "kb_audited" | "procedure_tested" | "ready_to_write" | "completed" | "rejected";
+  audit_session_id?: string | null;
+  checklist_audited_at?: string | null;
+  knowledge_base_audited_at?: string | null;
+  procedure_tested_at?: string | null;
+  audit_ready_at?: string | null;
   visual_bug_detected?: boolean;
   last_review_reason?: string | null;
   approved_at?: string | null;
@@ -63,8 +69,20 @@ function emptyArticle(): Partial<Article> {
   return {
     title: "", slug: "", category: CATEGORIES[0], module: "",
     audience: "equipe", tags: [], symptoms: [], body: "",
-    related_articles: [], version: 1, status: "published",
+    related_articles: [], version: 1, status: "audit_pending", audit_status: "pending_audit",
   };
+}
+
+const REAL_IMAGE_TYPES = ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"];
+
+function hasApprovedRealImage(items: ArticleImage[]) {
+  return items.some(i => i.status === "approved" && i.image_type && REAL_IMAGE_TYPES.includes(i.image_type));
+}
+
+function auditComplete(a?: Partial<Article> | null) {
+  if (!a) return false;
+  return ["ready_to_write", "completed"].includes(a.audit_status ?? "") &&
+    !!a.checklist_audited_at && !!a.knowledge_base_audited_at && !!a.procedure_tested_at && !!a.audit_ready_at;
 }
 
 export default function QABaseEquipePage() {
