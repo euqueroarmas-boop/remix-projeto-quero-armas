@@ -1031,6 +1031,7 @@ export function ArsenalView({
         processosUnified={processosUnifiedFinal}
         autorizacoesUnified={autorizacoesUnifiedFinal}
         examesUnified={examesUnifiedFinal}
+        municoesUnified={municoesUnifiedFinal}
         documentosCount={docsGenericos.length}
         processosCount={processos.length + solicitacoesProcessos.length}
         autorizacoesCount={autorizacoes.length}
