@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, History, Filter, ChevronDown, ChevronRight, Search } from "lucide-react";
+import { Loader2, History, Filter, Search } from "lucide-react";
 import { getStatusColor } from "@/lib/quero-armas/statusColors";
 
 interface EventoRow {
@@ -70,7 +70,6 @@ export default function QAHistoricoStatusPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [detailJson, setDetailJson] = useState<any>(null);
 
   // Filtros
@@ -143,14 +142,6 @@ export default function QAHistoricoStatusPage() {
   }, [filtros, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  const toggleExpand = (id: string) => {
-    setExpanded(prev => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id); else n.add(id);
-      return n;
-    });
-  };
 
   const resetFiltros = () => {
     setFCliente("");
@@ -274,7 +265,6 @@ export default function QAHistoricoStatusPage() {
             <table className="w-full text-xs">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr className="text-[10px] uppercase tracking-[0.1em] text-slate-500">
-                  <th className="w-8 px-2 py-2"></th>
                   <th className="px-2 py-2 text-left font-semibold">Data/Hora</th>
                   <th className="px-2 py-2 text-left font-semibold">Cliente</th>
                   <th className="px-2 py-2 text-left font-semibold">Entidade</th>
@@ -290,20 +280,9 @@ export default function QAHistoricoStatusPage() {
               </thead>
               <tbody>
                 {rows.map((r) => {
-                  const isOpen = expanded.has(r.id);
                   const hasDetalhes = r.detalhes && Object.keys(r.detalhes).length > 0;
                   return (
                     <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50 align-top">
-                      <td className="px-2 py-2">
-                        {hasDetalhes ? (
-                          <button
-                            onClick={() => toggleExpand(r.id)}
-                            className="text-slate-400 hover:text-slate-700"
-                          >
-                            {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                          </button>
-                        ) : null}
-                      </td>
                       <td className="px-2 py-2 whitespace-nowrap text-slate-600">{formatDateTime(r.criado_em)}</td>
                       <td className="px-2 py-2 text-slate-700 font-mono">{r.cliente_id ?? "—"}</td>
                       <td className="px-2 py-2 text-slate-700 uppercase tracking-wider">{r.entidade}</td>
