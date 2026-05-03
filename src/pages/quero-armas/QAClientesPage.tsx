@@ -3652,6 +3652,16 @@ export default function QAClientesPage() {
           <FileText className="h-3.5 w-3.5 inline mr-1" /> FORMULÁRIOS INTERNET ({filteredCadastros.length})
         </button>
         <button
+          onClick={() => setTabView("arsenal_free")}
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          style={{
+            background: tabView === "arsenal_free" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "arsenal_free" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "arsenal_free" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <Shield className="h-3.5 w-3.5 inline mr-1" /> APP ARSENAL INTELIGENTE (FREE) ({filteredArsenalFree.length})
+        </button>
+        <button
           onClick={() => setTabView("rejeitados")}
           className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
           style={{
