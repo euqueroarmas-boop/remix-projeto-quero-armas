@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair } from "lucide-react";
+import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair, Phone, Activity, FileBadge, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
@@ -491,76 +491,119 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-5xl max-h-[92dvh] overflow-hidden p-0 bg-[#f6f5f1] border border-zinc-200 text-zinc-800 qa-premium gap-0">
+      <DialogContent className="w-[98vw] max-w-6xl max-h-[94dvh] overflow-hidden p-0 bg-[#f6f5f1] border border-zinc-200 text-zinc-800 qa-premium gap-0">
 
-        {/* ── Header tático (Arsenal UI — papel) ── */}
-        <DialogHeader className="relative px-6 pt-5 pb-5 border-b border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] overflow-hidden">
-          <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl" />
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px)",
-              backgroundSize: "30px 30px",
-            }}
-          />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
-          <div className="relative flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg border border-amber-500/50 bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-              <Crosshair className="h-5 w-5 text-amber-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-amber-700">
-                // QUERO ARMAS · CADASTRO DE TITULAR
-              </p>
-              <DialogTitle className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 mt-0.5">
-                {isEdit ? "Editar Cliente" : "Novo Cliente"}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-zinc-500 mt-0.5">
-                Preencha todos os dados cadastrais em um único formulário · revise antes de salvar.
-              </DialogDescription>
-            </div>
-          </div>
+        {/* DialogHeader é obrigatório para acessibilidade — invisível visualmente */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
+          <DialogDescription>Cadastro completo do titular em formulário único.</DialogDescription>
         </DialogHeader>
 
-        {/* ── Form Body ── */}
-        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(92vh - 200px)" }}>
-          <div className="space-y-6">
+        {/* ── Body com layout de Dashboard (igual à tela do cliente) ── */}
+        <div className="px-5 sm:px-7 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(94vh - 80px)" }}>
+          <div className="space-y-5">
+            {/* ── Header Card (espelha o card de identificação do cliente) ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] p-5 shadow-sm overflow-hidden">
+              <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl" />
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+              <div className="relative flex items-center gap-4 flex-wrap">
+                {/* Avatar / foto */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative h-16 w-16 rounded-xl border-2 border-dashed border-amber-500/40 hover:border-amber-500 bg-white flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors"
+                  aria-label="Adicionar foto"
+                >
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera className="h-6 w-6 text-amber-600/70" />
+                  )}
+                </button>
+                {photoPreview && (
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="-ml-3 -mt-10 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    aria-label="Remover foto"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+
+                {/* Identidade do cliente */}
+                <div className="flex-1 min-w-[220px]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn(
+                      "inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full border",
+                      isEdit
+                        ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                        : "bg-amber-50 border-amber-200 text-amber-700"
+                    )}>
+                      <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-amber-500")} />
+                      {isEdit ? "Editando" : "Em cadastro"}
+                    </span>
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+                      ID {isEdit && cliente?.id ? `#${String(cliente.id).padStart(4, "0")}` : "#----"}
+                    </span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 uppercase mt-1 break-words">
+                    {f.nome_completo || (isEdit ? "Cliente" : "NOVO CLIENTE")}
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mt-0.5">
+                    CPF {f.cpf || "—"}
+                  </p>
+                </div>
+
+                {/* Ações */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="h-10 px-4 rounded-md border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 text-sm font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={save}
+                    disabled={saving}
+                    className="h-10 px-5 inline-flex items-center gap-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold min-w-[180px] justify-center disabled:opacity-50 transition-colors"
+                  >
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
+                  </button>
+                </div>
+              </div>
+
+              {/* KPIs (espelha a tira de KPIs do dashboard do cliente) */}
+              <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <KpiCard icon={User} label="Identificação" value={kpiIdent(f)} />
+                <KpiCard icon={Phone} label="Contato" value={kpiContato(f)} />
+                <KpiCard icon={MapPin} label="Endereço" value={kpiEndereco(f)} />
+                <KpiCard icon={Shield} label="Categoria" value={f.categoria_titular ? "OK" : "Pendente"} tone={f.categoria_titular ? "ok" : "warn"} />
+                <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone="info" />
+              </div>
+            </section>
+
+            {/* IA — bloco destacado, mesmo padrão dos cards */}
+            {!isEdit && (
+              <section className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+                <SectionTitle icon={Activity} label="Preencher com IA" />
+                <div className="mt-3">
+                  <ClienteAIPrefill onApply={applyAIPrefill} />
+                </div>
+              </section>
+            )}
+
+            <div className="space-y-5">
             {/* ── Bloco: Identificação ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={User} label="Identificação" />
-              {/* Camada de IA — apenas em "Novo Cliente" */}
-              {!isEdit && <ClienteAIPrefill onApply={applyAIPrefill} />}
-              {/* Photo upload */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-20 h-20 rounded-xl border-2 border-dashed border-amber-500/40 hover:border-amber-500 flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-[#f6f5f1]"
-                  >
-                    {photoPreview ? (
-                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
-                    ) : (
-                      <Camera className="h-6 w-6 text-amber-500/60" />
-                    )}
-                  </div>
-                  {photoPreview && (
-                    <button
-                      onClick={removePhoto}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Foto do Cliente</p>
-                  <p className="text-[10px] text-zinc-500 mt-0.5">Clique para adicionar ou trocar a foto</p>
-                  {uploadingPhoto && <p className="text-[10px] text-amber-700 mt-0.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando...</p>}
-                </div>
-              </div>
+              {uploadingPhoto && <p className="text-[10px] text-amber-700 -mt-2 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...</p>}
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
               </div>
@@ -807,29 +850,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 />
               </Field>
             </section>
+            </div>
           </div>
         </div>
 
-        {/* ── Footer (Arsenal UI) ── */}
-        <div className="relative px-6 py-4 border-t border-zinc-200 bg-white flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-10 px-4 rounded-md border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 text-sm font-medium transition-colors"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="h-10 px-5 inline-flex items-center gap-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold min-w-[200px] justify-center disabled:opacity-50 transition-colors"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
-          </button>
-        </div>
       </DialogContent>
     </Dialog>
   );
@@ -838,11 +862,52 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 /* ── Section title (Arsenal UI) ── */
 function SectionTitle({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
   return (
-    <div className="flex items-center gap-2 pb-3 border-b border-zinc-200">
+    <div className="flex items-center gap-2">
       <div className="h-7 w-7 rounded-md border border-amber-500/40 bg-amber-500/10 flex items-center justify-center">
         <Icon className="h-3.5 w-3.5 text-amber-600" />
       </div>
       <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-amber-700">{label}</p>
     </div>
   );
+}
+
+/* ── KPI Card (espelha os cards KPI do dashboard) ── */
+function KpiCard({ icon: Icon, label, value, tone = "info" }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  tone?: "ok" | "warn" | "info";
+}) {
+  const toneCls = tone === "ok"
+    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+    : tone === "warn"
+      ? "text-amber-700 bg-amber-50 border-amber-200"
+      : "text-zinc-700 bg-white border-zinc-200";
+  return (
+    <div className={cn("relative rounded-lg border p-3 shadow-sm overflow-hidden", toneCls)}>
+      <div className="flex items-start justify-between gap-2">
+        <Icon className="h-4 w-4 opacity-70" />
+        <span className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] opacity-60">KPI</span>
+      </div>
+      <p className="text-lg font-bold tracking-tight mt-2 uppercase">{value}</p>
+      <p className="text-[10px] font-mono uppercase tracking-[0.18em] opacity-70 mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+/* ── Compute KPIs ── */
+function kpiIdent(f: any): string {
+  const fields = ["nome_completo", "cpf", "rg", "data_nascimento", "sexo", "naturalidade_municipio"];
+  const filled = fields.filter(k => String(f?.[k] || "").trim()).length;
+  return `${filled}/${fields.length}`;
+}
+function kpiContato(f: any): string {
+  const fields = ["celular", "email"];
+  const filled = fields.filter(k => String(f?.[k] || "").trim()).length;
+  return `${filled}/${fields.length}`;
+}
+function kpiEndereco(f: any): string {
+  const fields = ["cep", "endereco", "numero", "bairro", "cidade", "estado"];
+  const filled = fields.filter(k => String(f?.[k] || "").trim()).length;
+  return `${filled}/${fields.length}`;
 }
