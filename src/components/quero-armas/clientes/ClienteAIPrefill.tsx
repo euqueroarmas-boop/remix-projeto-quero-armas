@@ -125,7 +125,13 @@ export default function ClienteAIPrefill({
       const filled = Object.keys(fields).filter(
         (k) => k !== "confidence" && k !== "warnings" && k !== "acervo" && fields[k],
       ).length;
-      toast.success(`IA extraiu ${filled} campo(s). Revise antes de aplicar.`);
+      // Aplicação automática imediata, sem etapa manual de "Aplicar".
+      onApply(fields);
+      const firstImage = files.find((f) => (f.type || "").startsWith("image/"));
+      if (firstImage && onPhotoCandidate) onPhotoCandidate(firstImage);
+      toast.success(`IA extraiu ${filled} campo(s) e aplicou no formulário.`);
+      setOpen(false);
+      reset();
     } catch (e: any) {
       toast.error(e?.message || "Não foi possível extrair os dados.");
     } finally {
