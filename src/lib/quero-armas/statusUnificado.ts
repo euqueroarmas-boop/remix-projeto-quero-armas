@@ -23,6 +23,9 @@ export type DimensaoStatus =
   | "protocolo"
   | "documentacao"
   | "financeiro"
+  | "ia_ocr"
+  | "reaproveitamento"
+  | "alerta"
   | "vazio";
 
 export type CorStatus =
@@ -48,8 +51,29 @@ export interface StatusUnificado {
   sub?: string;
 }
 
-/** Tipos de KPI suportados (qualquer documento do Arsenal). */
-export type TipoKpi = "CR" | "CRAF" | "GTE";
+/**
+ * Tipos de entidade suportados pela camada de leitura unificada.
+ * Cobre todos os fluxos do sistema Quero Armas (Regra-Mãe / BLOCO 0).
+ */
+export type TipoKpi =
+  // Documentos federais
+  | "CR"
+  | "CRAF"
+  | "GTE"
+  | "AUTORIZACAO_COMPRA"
+  | "POSSE"
+  | "PORTE"
+  // Itens auxiliares
+  | "EXAME_LAUDO"
+  | "PROCESSO_ADM"
+  | "DOCUMENTO_INDIVIDUAL"
+  | "MUNICAO"
+  | "ARMA"
+  // Camadas transversais
+  | "FINANCEIRO"
+  | "IA_OCR"
+  | "ALERTA_VENCIMENTO"
+  | "GENERICO";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inputs
@@ -79,6 +103,10 @@ export interface DocumentoUploadLite {
   status: string | null;
   /** Status da leitura por IA. */
   ia_status?: string | null;
+  /** Origem do upload — Hub Cliente reaproveitado vs novo upload. */
+  origem?: "hub_cliente" | "upload_servico" | string | null;
+  /** Validade do documento individual (CNH, comprovante, exame, laudo). */
+  data_validade?: string | Date | null;
 }
 
 export interface StatusUnificadoInput {
