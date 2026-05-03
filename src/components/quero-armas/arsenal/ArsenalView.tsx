@@ -12,7 +12,13 @@ import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
-import { getStatusUnificado, type DocumentoUploadLite } from "@/lib/quero-armas/statusUnificado";
+import {
+  getStatusUnificado,
+  getStatusValidade,
+  reduzirStatus,
+  type DocumentoUploadLite,
+  type StatusUnificado,
+} from "@/lib/quero-armas/statusUnificado";
 
 interface Props {
   clienteId: number;
@@ -736,6 +742,56 @@ export function ArsenalView({
     });
   }, [exames]);
 
+  // ── BLOCO 3 — Alertas Globais de Vencimento ───────────────────────────────
+  // Consolida TODOS os prazos do cliente usando a engine já criada
+  // (janelas 180/90/60/30/15/7/vencido + indeferido/inválido).
+  // Não cria nova infra: lê `expDocs` (já calculado por ClienteOverview /
+  // QAClientePortalPage), `processos` (com prazo crítico) e os KPIs já
+  // unificados desta tela. Reduz para o pior status.
+  const alertasUnified = useMemo<StatusUnificado | null>(() => {
+    const itens: StatusUnificado[] = [];
+
+    // 1) Cada item de validade vira um StatusUnificado por categoria.
+    const catToTipo: Record<string, Parameters<typeof getStatusValidade>[1]> = {
+      CR: "CR",
+      CRAF: "CRAF",
+      GTE: "GTE",
+      EXAME: "EXAME_LAUDO",
+      "EXAME PSICOLÓGICO": "EXAME_LAUDO",
+      "EXAME DE TIRO": "EXAME_LAUDO",
+      LAUDO: "EXAME_LAUDO",
+      "FILIAÇÃO": "GENERICO",
+      SERVIÇO: "GENERICO",
+    };
+    for (const d of expDocs ?? []) {
+      if (!d?.date) continue;
+      const tipo = catToTipo[String(d.category ?? "").toUpperCase()] ?? "GENERICO";
+      itens.push(getStatusValidade(d.date, tipo));
+    }
+
+    // 2) Processos com prazo crítico (etapa_liberada_ate) entram como validade genérica.
+    for (const p of processos ?? []) {
+      const prazo = (p as any)?.etapa_liberada_ate ?? null;
+      if (!prazo) continue;
+      itens.push(getStatusValidade(prazo, "PROCESSO_ADM"));
+    }
+
+    // 3) Inclui leituras unificadas já feitas (capturam indeferido/inválido,
+    //    não apenas data). Mantém pesos da engine.
+    const incluir = [
+      crUnified, crafUnified, gteUnified,
+      documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+    ].filter((s): s is StatusUnificado => !!s);
+    itens.push(...incluir);
+
+    if (itens.length === 0) return null;
+    return reduzirStatus(itens);
+  }, [
+    expDocs, processos,
+    crUnified, crafUnified, gteUnified,
+    documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+  ]);
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
@@ -755,6 +811,7 @@ export function ArsenalView({
         crUnified={crUnified}
         crafUnified={crafUnified}
         gteUnified={gteUnified}
+        alertasUnified={alertasUnified}
         documentosUnified={documentosUnified}
         processosUnified={processosUnified}
         autorizacoesUnified={autorizacoesUnified}

@@ -106,6 +106,12 @@ interface Props {
   crUnified?: StatusUnificado | null;
   crafUnified?: StatusUnificado | null;
   gteUnified?: StatusUnificado | null;
+  /**
+   * BLOCO 3 — Status agregado dos alertas globais de vencimento (engine).
+   * Quando preenchido, dirige label/hint/cor do KPI "Alertas".
+   * Quando null, mantém o comportamento legacy (contagem genérica).
+   */
+  alertasUnified?: StatusUnificado | null;
   /** BLOCO 2 — KPIs adicionais (Linha 2 recolhível). */
   documentosUnified?: StatusUnificado | null;
   processosUnified?: StatusUnificado | null;
@@ -271,6 +277,7 @@ export function ArsenalSummary({
   crUnified = null,
   crafUnified = null,
   gteUnified = null,
+  alertasUnified = null,
   documentosUnified = null,
   processosUnified = null,
   autorizacoesUnified = null,
@@ -515,9 +522,14 @@ export function ArsenalSummary({
         icon: <AlertTriangle className="h-4 w-4" />,
         label: "Alertas",
         value: alerts,
-        hint: alerts === 0 ? "Tudo em dia" : "Vencimentos próximos",
-        // Zerado é cinza/neutro (regra global). Com alertas: amarelo/vermelho.
-        tone: alerts === 0 ? "steel" : alerts > 2 ? "danger" : "warn",
+        hint: alertasUnified
+          ? alertasUnified.sub ?? alertasUnified.label
+          : alerts === 0 ? "Tudo em dia" : "Vencimentos próximos",
+        // Cor agora dirigida pela engine (vencido→vermelho, vencendo→laranja/amarelo,
+        // em dia→verde, sem dado→cinza). Fallback legacy preservado.
+        tone: alertasUnified
+          ? corToTone(alertasUnified.cor)
+          : alerts === 0 ? "steel" : alerts > 2 ? "danger" : "warn",
         target: "alertas",
       },
       gte: {
@@ -547,7 +559,7 @@ export function ArsenalSummary({
       },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified],
   );
 
   // Ordem efetiva:
