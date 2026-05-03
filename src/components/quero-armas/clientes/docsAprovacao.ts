@@ -8,6 +8,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 
 export type DocStatus =
   | "pendente_aprovacao"
@@ -17,6 +18,71 @@ export type DocStatus =
   | "excluido";
 
 export type DocOrigem = "admin" | "cliente" | "sistema" | "scanner" | "importacao";
+
+/** Snapshot leve do documento usado para registrar o status anterior na auditoria. */
+async function snapshotDoc(docId: string): Promise<{
+  status: string | null;
+  cliente_id: number | null;
+  tipo_documento: string | null;
+} | null> {
+  try {
+    const { data, error } = await supabase
+      .from("qa_documentos_cliente" as any)
+      .select("status, cliente_id, tipo_documento")
+      .eq("id", docId)
+      .maybeSingle();
+    if (error || !data) return null;
+    const d = data as any;
+    return {
+      status: d.status ?? null,
+      cliente_id: d.cliente_id ?? null,
+      tipo_documento: d.tipo_documento ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function currentUserId(): Promise<string | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Registra mudança de status do documento na tabela de auditoria.
+ * Não bloqueia o fluxo se falhar.
+ */
+async function auditarStatusDoc(opts: {
+  docId: string;
+  prev: Awaited<ReturnType<typeof snapshotDoc>>;
+  novo: string;
+  origem: "equipe" | "ia" | "sistema";
+  motivo?: string | null;
+  contexto?: string;
+}) {
+  if (!opts.prev) return;
+  const usuario_id = await currentUserId();
+  await registrarStatusEvento({
+    cliente_id: opts.prev.cliente_id,
+    documento_id: opts.docId,
+    origem: opts.origem,
+    entidade: "documento",
+    entidade_id: opts.docId,
+    campo_status: "status",
+    status_anterior: opts.prev.status,
+    status_novo: opts.novo,
+    usuario_id,
+    motivo: opts.motivo ?? null,
+    detalhes: {
+      tipo_documento: opts.prev.tipo_documento,
+      contexto: opts.contexto ?? "docsAprovacao",
+    },
+  });
+}
 
 /** Verifica se o usuário logado é membro da Equipe Quero Armas — usado para definir status/origem default. */
 export async function isCurrentUserStaff(): Promise<boolean> {
@@ -34,6 +100,7 @@ export async function isCurrentUserStaff(): Promise<boolean> {
 
 /** Aprova um documento. Apenas Equipe Quero Armas. */
 export async function aprovarDocumento(docId: string) {
+  const prev = await snapshotDoc(docId);
   const { error } = await supabase
     .from("qa_documentos_cliente" as any)
     .update({
@@ -45,12 +112,14 @@ export async function aprovarDocumento(docId: string) {
     })
     .eq("id", docId);
   if (error) throw error;
+  void auditarStatusDoc({ docId, prev, novo: "aprovado", origem: "equipe", contexto: "aprovarDocumento" });
 }
 
 /** Reprova com motivo obrigatório. Apenas Equipe Quero Armas. */
 export async function reprovarDocumento(docId: string, motivo: string) {
   const m = (motivo || "").trim();
   if (m.length < 3) throw new Error("Informe o motivo da reprovação.");
+  const prev = await snapshotDoc(docId);
   const { error } = await supabase
     .from("qa_documentos_cliente" as any)
     .update({
@@ -62,15 +131,18 @@ export async function reprovarDocumento(docId: string, motivo: string) {
     })
     .eq("id", docId);
   if (error) throw error;
+  void auditarStatusDoc({ docId, prev, novo: "reprovado", origem: "equipe", motivo: m, contexto: "reprovarDocumento" });
 }
 
 /** Marca como excluído (soft delete) para sumir do portal mas preservar auditoria. */
 export async function excluirDocumentoLogico(docId: string) {
+  const prev = await snapshotDoc(docId);
   const { error } = await supabase
     .from("qa_documentos_cliente" as any)
     .update({ status: "excluido" })
     .eq("id", docId);
   if (error) throw error;
+  void auditarStatusDoc({ docId, prev, novo: "excluido", origem: "equipe", contexto: "excluirDocumentoLogico" });
 }
 
 /** Label PT-BR + classes Tailwind para badges de status. */
