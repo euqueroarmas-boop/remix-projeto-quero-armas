@@ -281,6 +281,28 @@ export default function QABaseEquipePage() {
             <DialogTitle className="uppercase">{editing.id ? "Editar artigo" : "Novo artigo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {!editing.id && (
+              <div className="rounded-md border border-amber-300 bg-amber-50/60 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs uppercase font-mono text-amber-700">
+                  <Wand2 className="h-3.5 w-3.5" /> Gerar rascunho com IA
+                </div>
+                <Textarea
+                  rows={2}
+                  placeholder="Descreva o problema, a tela ou o fluxo. A IA vai gerar um rascunho operacional para revisão."
+                  value={draftDescription}
+                  onChange={(e) => setDraftDescription(e.target.value)}
+                />
+                <div className="flex justify-end">
+                  <Button size="sm" variant="outline" onClick={generateWithAI} disabled={drafting}>
+                    {drafting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1" />}
+                    Gerar rascunho
+                  </Button>
+                </div>
+                <p className="text-[10px] text-amber-700/80 uppercase font-mono">
+                  O rascunho fica como DRAFT — revise antes de publicar.
+                </p>
+              </div>
+            )}
             <div>
               <label className="text-xs uppercase font-mono">Título</label>
               <Input value={editing.title ?? ""} onChange={e => setEditing({ ...editing, title: e.target.value })} className="uppercase" />
