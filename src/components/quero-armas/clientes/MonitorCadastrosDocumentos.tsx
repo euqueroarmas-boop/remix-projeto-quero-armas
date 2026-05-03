@@ -610,8 +610,8 @@ export default function MonitorCadastrosDocumentos() {
       abrirCliente(cad.cliente_id_vinculado);
       return;
     }
-    // Fallback: abre a aba de homologação se ainda não tem cliente vinculado
-    window.open(`/quero-armas/homologacao-clientes?cadastro=${cad.id}`, "_self");
+    // Sem cliente vinculado: encaminha para a lista de cadastros públicos para revisão manual.
+    window.open(`/quero-armas/cadastros-publicos?cadastro=${cad.id}`, "_self");
   };
 
   const abrirDocOrigem = async (modelo: ModeloDetalheRow) => {
