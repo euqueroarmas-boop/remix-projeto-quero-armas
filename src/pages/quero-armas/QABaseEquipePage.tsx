@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -56,12 +56,17 @@ export default function QABaseEquipePage() {
   const [loading, setLoading] = useState(true);
   const [filterCat, setFilterCat] = useState<string>("__all__");
   const [filterText, setFilterText] = useState("");
+  const [filterEmb, setFilterEmb] = useState<string>("__all__");
   const [selected, setSelected] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Partial<Article> | null>(null);
   const [saving, setSaving] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [draftDescription, setDraftDescription] = useState("");
   const [processingEmb, setProcessingEmb] = useState(false);
+  const [reprocessingId, setReprocessingId] = useState<string | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
+  const [logs, setLogs] = useState<Array<{ id: string; article_id: string; status: string; error_message: string | null; modelo: string | null; created_at: string }>>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -91,6 +96,10 @@ export default function QABaseEquipePage() {
     const q = filterText.trim().toLowerCase();
     return articles.filter(a => {
       if (filterCat !== "__all__" && a.category !== filterCat) return false;
+      if (filterEmb !== "__all__") {
+        const es = a.embedding_status ?? "pendente";
+        if (es !== filterEmb) return false;
+      }
       if (!q) return true;
       return (
         a.title.toLowerCase().includes(q) ||
@@ -98,7 +107,7 @@ export default function QABaseEquipePage() {
         a.symptoms.some(s => s.toLowerCase().includes(q))
       );
     });
-  }, [articles, filterCat, filterText]);
+  }, [articles, filterCat, filterText, filterEmb]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Article[]>();
