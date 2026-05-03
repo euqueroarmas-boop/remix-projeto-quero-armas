@@ -5312,6 +5312,59 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_kb_artigo_imagens: {
+        Row: {
+          article_id: string
+          caption: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string | null
+          prompt_used: string | null
+          status: string
+          step_number: number
+          step_title: string | null
+          storage_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          caption?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          prompt_used?: string | null
+          status?: string
+          step_number?: number
+          step_title?: string | null
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          caption?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          prompt_used?: string | null
+          status?: string
+          step_number?: number
+          step_title?: string | null
+          storage_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_artigo_imagens_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_kb_artigos: {
         Row: {
           audience: string
