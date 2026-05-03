@@ -416,7 +416,8 @@ export default function QABaseEquipePage() {
       <Card className="border-amber-500/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm uppercase font-mono flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-600" /> Pergunte em linguagem natural
+            <Sparkles className="h-4 w-4 text-amber-600" /> Busca textual avançada + sintomas + tags
+            <span className="text-[10px] font-normal text-muted-foreground normal-case">(com apoio vetorial experimental)</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -449,6 +450,36 @@ export default function QABaseEquipePage() {
               })}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Status técnico do vetor de apoio */}
+      <Card className="border-dashed">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs uppercase font-mono flex items-center gap-2">
+            <Zap className="h-3.5 w-3.5" /> Vetor de apoio (experimental)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase">
+          <span className="inline-flex items-center gap-1 text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" /> {embStats.gerado} gerado{embStats.gerado === 1 ? "" : "s"}
+          </span>
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <Clock className="h-3.5 w-3.5" /> {embStats.pendente} pendente{embStats.pendente === 1 ? "" : "s"}
+          </span>
+          <span className="inline-flex items-center gap-1 text-red-700">
+            <AlertCircle className="h-3.5 w-3.5" /> {embStats.erro} com erro
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            onClick={processPendingEmbeddings}
+            disabled={processingEmb || (embStats.pendente === 0 && embStats.erro === 0)}
+          >
+            {processingEmb ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
+            Processar embeddings pendentes
+          </Button>
         </CardContent>
       </Card>
 
