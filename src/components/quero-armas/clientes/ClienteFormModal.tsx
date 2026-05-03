@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle } from "lucide-react";
+import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
@@ -72,27 +72,18 @@ const formatDateForDatabase = (value: string): string | null => {
   return `${year}-${month}-${day}`;
 };
 
-/* ── Steps Config ── */
-const STEPS = [
-  { key: "identificacao", label: "Identificação", icon: User },
-  { key: "filiacao", label: "Filiação & Contato", icon: Users },
-  { key: "endereco1", label: "Endereço", icon: MapPin },
-  { key: "endereco2", label: "End. Secundário", icon: Home },
-  { key: "config", label: "Configurações", icon: Settings },
-] as const;
-
 /* ── Reusable Field Components ── */
 function Field({ label, children, span }: { label: string; children: React.ReactNode; span?: boolean }) {
   return (
     <div className={cn("space-y-1.5", span && "col-span-full")}>
-      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{label}</label>
+      <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputClass = "w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all uppercase";
-const selectClass = "w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all appearance-none cursor-pointer";
+const inputClass = "w-full h-10 px-3 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all uppercase";
+const selectClass = "w-full h-10 px-3 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all appearance-none cursor-pointer";
 
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
@@ -500,30 +491,44 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-5xl max-h-[92dvh] overflow-hidden p-0 bg-white border-amber-500/30 text-zinc-800 qa-premium gap-0">
+      <DialogContent className="w-[96vw] max-w-5xl max-h-[92dvh] overflow-hidden p-0 bg-[#f6f5f1] border border-zinc-200 text-zinc-800 qa-premium gap-0">
 
-        {/* ── Header (Arsenal UI) ── */}
-        <DialogHeader className="relative px-6 pt-5 pb-4 border-b border-amber-500/30 bg-zinc-900 text-zinc-100">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-500/15 blur-3xl" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
-          <div className="flex items-center gap-3 relative">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400">
-              Quero Armas · Cadastro
-            </span>
+        {/* ── Header tático (Arsenal UI — papel) ── */}
+        <DialogHeader className="relative px-6 pt-5 pb-5 border-b border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] overflow-hidden">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-amber-500/10 blur-3xl" />
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, #000 1px, transparent 1px), linear-gradient(to bottom, #000 1px, transparent 1px)",
+              backgroundSize: "30px 30px",
+            }}
+          />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+          <div className="relative flex items-start gap-3">
+            <div className="h-10 w-10 rounded-lg border border-amber-500/50 bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+              <Crosshair className="h-5 w-5 text-amber-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.3em] text-amber-700">
+                // QUERO ARMAS · CADASTRO DE TITULAR
+              </p>
+              <DialogTitle className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 mt-0.5">
+                {isEdit ? "Editar Cliente" : "Novo Cliente"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-zinc-500 mt-0.5">
+                Preencha todos os dados cadastrais em um único formulário · revise antes de salvar.
+              </DialogDescription>
+            </div>
           </div>
-          <DialogTitle className="font-mono text-lg font-black uppercase tracking-[0.18em] text-zinc-100 mt-1">
-            {isEdit ? "Editar Cliente" : "Novo Cliente"}
-          </DialogTitle>
-          <DialogDescription className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-400/80">
-            Preencha todos os dados cadastrais · revise antes de salvar
-          </DialogDescription>
         </DialogHeader>
 
         {/* ── Form Body ── */}
-        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(92vh - 180px)" }}>
+        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(92vh - 200px)" }}>
           <div className="space-y-6">
             {/* ── Bloco: Identificação ── */}
-            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={User} label="Identificação" />
               {/* Camada de IA — apenas em "Novo Cliente" */}
               {!isEdit && <ClienteAIPrefill onApply={applyAIPrefill} />}
@@ -637,7 +642,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             </section>
 
             {/* ── Bloco: Filiação & Contato ── */}
-            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={Users} label="Filiação & Contato" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
@@ -650,7 +656,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             </section>
 
             {/* ── Bloco: Endereço Principal ── */}
-            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
@@ -688,7 +695,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             </section>
 
             {/* ── Bloco: Endereço Secundário ── */}
-            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
@@ -726,7 +734,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             </section>
 
             {/* ── Bloco: Configurações ── */}
-            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-5">
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-5 shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
               <SectionTitle icon={Settings} label="Configurações" />
               {/* Categoria Legal do Titular (Lei 10.826/03 art. 6º) */}
               <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
@@ -802,27 +811,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         </div>
 
         {/* ── Footer (Arsenal UI) ── */}
-        <div className="relative px-6 py-4 border-t border-amber-500/30 bg-[#f6f5f1] flex items-center justify-between gap-3">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+        <div className="relative px-6 py-4 border-t border-zinc-200 bg-white flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 hover:text-zinc-800 transition-colors"
+            className="h-10 px-4 rounded-md border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50 text-sm font-medium transition-colors"
           >
             Cancelar
           </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={save}
-              disabled={saving}
-              className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] min-w-[180px] justify-center disabled:opacity-50 transition-colors shadow-sm shadow-amber-300"
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="h-10 px-5 inline-flex items-center gap-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold min-w-[200px] justify-center disabled:opacity-50 transition-colors"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
+          </button>
         </div>
       </DialogContent>
     </Dialog>
@@ -832,9 +838,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 /* ── Section title (Arsenal UI) ── */
 function SectionTitle({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
   return (
-    <div className="flex items-center gap-2 pb-2 border-b border-amber-500/20">
-      <Icon className="h-3.5 w-3.5 text-amber-600" />
-      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">{label}</p>
+    <div className="flex items-center gap-2 pb-3 border-b border-zinc-200">
+      <div className="h-7 w-7 rounded-md border border-amber-500/40 bg-amber-500/10 flex items-center justify-center">
+        <Icon className="h-3.5 w-3.5 text-amber-600" />
+      </div>
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-amber-700">{label}</p>
     </div>
   );
 }
