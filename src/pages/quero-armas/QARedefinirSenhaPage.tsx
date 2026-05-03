@@ -144,7 +144,7 @@ export default function QARedefinirSenhaPage() {
               <Button
                 type="button"
                 onClick={() => navigate("/login", { replace: true })}
-                className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-10 text-sm"
+                className="w-full bg-[#7A1F2B] hover:bg-[#641722] text-white h-10 text-sm"
               >
                 Voltar para o login
               </Button>
@@ -216,7 +216,7 @@ export default function QARedefinirSenhaPage() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white h-10 text-sm font-medium"
+                className="w-full bg-[#7A1F2B] hover:bg-[#641722] text-white h-10 text-sm font-medium"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

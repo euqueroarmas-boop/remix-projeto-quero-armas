@@ -129,7 +129,7 @@ export default function QAAtivarAcessoPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <div className="text-xs font-semibold text-slate-900 pl-3 border-l-2 border-[#2563EB]">
+          <div className="text-xs font-semibold text-slate-900 pl-3 border-l-2 border-[#7A1F2B]">
             {stepLabel[step]}
           </div>
         </div>
@@ -153,14 +153,14 @@ export default function QAAtivarAcessoPage() {
                 autoCorrect="off"
                 spellCheck={false}
                 autoFocus
-                className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-slate-900 transition-colors"
+                className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#7A1F2B] focus:ring-1 focus:ring-slate-900 transition-colors"
               />
             </div>
             <button
               type="button"
               onClick={() => requestOtp()}
               disabled={loading}
-              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
               Localizar / enviar código
@@ -195,14 +195,14 @@ export default function QAAtivarAcessoPage() {
                 autoComplete="email"
                 autoCapitalize="none"
                 spellCheck={false}
-                className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-slate-900"
+                className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#7A1F2B] focus:ring-1 focus:ring-slate-900"
               />
             </div>
             <button
               type="button"
               onClick={() => requestOtp({ withEmail: true })}
               disabled={loading}
-              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold transition-colors disabled:opacity-50"
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
               Enviar código
@@ -229,7 +229,7 @@ export default function QAAtivarAcessoPage() {
                   value={otpId || ""}
                   onChange={(e) => setOtpId(e.target.value)}
                   placeholder="cole o token do link"
-                  className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-slate-900"
+                  className="w-full h-10 px-3 text-sm rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#7A1F2B] focus:ring-1 focus:ring-slate-900"
                 />
               </div>
             )}
@@ -244,14 +244,14 @@ export default function QAAtivarAcessoPage() {
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
-                className="w-full h-14 px-3 text-center text-2xl font-mono tracking-[0.5em] rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-300 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-slate-900"
+                className="w-full h-14 px-3 text-center text-2xl font-mono tracking-[0.5em] rounded-md border border-slate-200 bg-white text-slate-900 placeholder:text-slate-300 outline-none focus:border-[#7A1F2B] focus:ring-1 focus:ring-slate-900"
               />
             </div>
             <button
               type="button"
               onClick={() => verifyCode()}
               disabled={loading}
-              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold transition-colors disabled:opacity-50"
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold transition-colors disabled:opacity-50"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
               Validar / liberar acesso
@@ -302,7 +302,7 @@ export default function QAAtivarAcessoPage() {
                   },
                 })
               }
-              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold transition-colors"
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold transition-colors"
             >
               <ShieldCheck className="h-4 w-4" />
               Ir para o portal
@@ -322,7 +322,7 @@ export default function QAAtivarAcessoPage() {
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold"
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold"
             >
               <ChevronLeft className="h-4 w-4" />
               Voltar ao início
@@ -341,7 +341,7 @@ export default function QAAtivarAcessoPage() {
             <button
               type="button"
               onClick={() => navigate("/cadastro")}
-              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold"
+              className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold"
             >
               <ShieldCheck className="h-4 w-4" />
               Fazer pré-cadastro

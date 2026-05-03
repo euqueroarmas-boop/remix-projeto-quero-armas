@@ -2,11 +2,11 @@
 
 export const STATUS_PROCESSO = {
   aguardando_pagamento: { label: "AGUARDANDO PAGAMENTO", color: "#94A3B8", bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700" },
-  aguardando_documentos: { label: "AGUARDANDO DOCUMENTOS", color: "#3B82F6", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
+  aguardando_documentos: { label: "AGUARDANDO DOCUMENTOS", color: "#7A1F2B", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
   em_validacao_ia: { label: "VALIDAÇÃO AUTOMÁTICA", color: "#6366F1", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
   em_revisao_humana: { label: "EM REVISÃO HUMANA", color: "#0EA5E9", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
   aprovado: { label: "DOCUMENTAÇÃO APROVADA", color: "#10B981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
-  em_andamento: { label: "EM ANDAMENTO", color: "#3B82F6", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
+  em_andamento: { label: "EM ANDAMENTO", color: "#7A1F2B", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
   concluido: { label: "CONCLUÍDO", color: "#10B981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
   cancelado: { label: "CANCELADO", color: "#64748B", bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-600" },
   bloqueado: { label: "BLOQUEADO", color: "#EF4444", bg: "bg-red-50", border: "border-red-200", text: "text-red-800" },

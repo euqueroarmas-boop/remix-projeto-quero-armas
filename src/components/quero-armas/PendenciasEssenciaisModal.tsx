@@ -105,7 +105,7 @@ export default function PendenciasEssenciaisModal({
 
         {loading ? (
           <div className="py-10 flex flex-col items-center justify-center gap-2">
-            <div className="w-5 h-5 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
             <span className="text-[11px] text-slate-500">Verificando pendências...</span>
           </div>
         ) : pendencias.length === 0 ? (

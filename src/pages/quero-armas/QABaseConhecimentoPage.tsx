@@ -882,7 +882,7 @@ export default function QABaseConhecimentoPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
         </div>
       ) : docs.length === 0 ? (
         <div className="qa-card text-center py-16">

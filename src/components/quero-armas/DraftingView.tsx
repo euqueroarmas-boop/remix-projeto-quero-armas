@@ -379,7 +379,7 @@ export default function DraftingView({
             <Button
               onClick={handleCopyClick}
               disabled={!streamedText}
-              className="h-14 text-base font-medium bg-[#2563EB] hover:bg-[#1D4ED8] text-white active:scale-[0.98] transition-transform border-0"
+              className="h-14 text-base font-medium bg-[#7A1F2B] hover:bg-[#641722] text-white active:scale-[0.98] transition-transform border-0"
             >
               {copied ? (
                 <><Check className="h-5 w-5 mr-2" /> Texto copiado com sucesso</>

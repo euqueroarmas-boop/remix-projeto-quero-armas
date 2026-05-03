@@ -197,7 +197,7 @@ export default function QARecursosAuditoriaPage() {
         </div>
         <button
           onClick={exportCSV}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-[#2563EB] text-white hover:bg-[#1D4ED8] transition"
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-[#7A1F2B] text-white hover:bg-[#641722] transition"
         >
           <Download className="h-3.5 w-3.5" /> Exportar CSV
         </button>
@@ -304,7 +304,7 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
     <button
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition ${
-        active ? "bg-[#2563EB] text-white border-[#2563EB]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
+        active ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
       }`}
     >{label}</button>
   );

@@ -277,7 +277,7 @@ export default function QAClienteLoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center gap-2 h-10 px-5 rounded-md bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold tracking-wide transition disabled:opacity-60 shadow-sm"
+                  className="inline-flex items-center gap-2 h-10 px-5 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-sm font-semibold tracking-wide transition disabled:opacity-60 shadow-sm"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {loading ? "Entrando..." : "Entrar"}

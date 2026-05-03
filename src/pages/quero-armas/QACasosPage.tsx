@@ -260,13 +260,13 @@ export default function QACasosPage() {
       <div className="flex gap-1 bg-white border rounded-xl p-1 w-fit" style={{ borderColor: "hsl(220 13% 91%)" }}>
         <button onClick={() => setActiveTab("casos")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "casos" ? "bg-[#2563EB] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+            activeTab === "casos" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           }`}>
           <FolderOpen className="h-3.5 w-3.5" /> Casos ({casosAtivos.length})
         </button>
         <button onClick={() => setActiveTab("servicos")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "servicos" ? "bg-[#2563EB] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+            activeTab === "servicos" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           }`}>
           <Shield className="h-3.5 w-3.5" /> Deferidos ({servicosConcluidos.length})
         </button>

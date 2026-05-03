@@ -47,7 +47,7 @@ export default function QATacticalLoader() {
         {/* Trilho */}
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
           <div
-            className="h-full rounded-full bg-[#2563EB] transition-[width] duration-200 ease-out"
+            className="h-full rounded-full bg-[#7A1F2B] transition-[width] duration-200 ease-out"
             style={{
               width: `${pct}%`,
               boxShadow: "0 0 12px rgba(15,23,42,0.18)",
@@ -56,7 +56,7 @@ export default function QATacticalLoader() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#2563EB]" />
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#7A1F2B]" />
           <span className="font-mono text-[9px] uppercase tracking-[0.32em] text-slate-400">
             Sistema de Armas · Inicializando Modulos
           </span>

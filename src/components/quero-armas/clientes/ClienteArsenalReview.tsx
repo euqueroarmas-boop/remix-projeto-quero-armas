@@ -242,7 +242,7 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
               onClick={() => setFiltro(f.key)}
               className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition ${
                 active
-                  ? "bg-[#2563EB] text-white border-[#2563EB]"
+                  ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
                   : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
               }`}
             >
