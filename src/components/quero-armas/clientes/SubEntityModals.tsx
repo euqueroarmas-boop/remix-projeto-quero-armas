@@ -394,7 +394,8 @@ interface VendaModalProps {
 export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitacaoId }: VendaModalProps) {
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
-  const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
+  const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number; slug: string; categoria: string; descricao_curta?: string | null }[]>([]);
+  const [servicoSearch, setServicoSearch] = useState("");
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
   const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: "", valor_aberto: "0" });
   const [originalPrimaryServicoId, setOriginalPrimaryServicoId] = useState<number | null>(null);
@@ -417,17 +418,25 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
     (async () => {
       const { data: catalogo } = await supabase
         .from("qa_servicos_catalogo" as any)
-        .select("servico_id, nome, preco, display_order")
+        .select("servico_id, nome, preco, display_order, slug, categoria, descricao_curta")
         .eq("ativo", true)
         .not("servico_id", "is", null)
         .order("categoria", { ascending: true })
         .order("display_order", { ascending: true });
 
-      const lista = ((catalogo as any[]) ?? []).map((c) => ({
-        id: Number(c.servico_id),
-        nome_servico: c.nome,
-        valor_servico: c.preco != null ? Number(c.preco) : 0,
-      }));
+      // REGRA: somente itens com slug válido e preço numérico (>= 0).
+      // Itens sem slug ou sem preço definido são EXCLUÍDOS da lista de venda.
+      const lista = ((catalogo as any[]) ?? [])
+        .filter((c) => c?.servico_id != null && c?.slug && c?.nome)
+        .filter((c) => c?.preco != null && !Number.isNaN(Number(c.preco)))
+        .map((c) => ({
+          id: Number(c.servico_id),
+          nome_servico: String(c.nome),
+          valor_servico: Number(c.preco),
+          slug: String(c.slug),
+          categoria: String(c.categoria || ""),
+          descricao_curta: c.descricao_curta ?? null,
+        }));
 
       // REGRA GLOBAL: somente catálogo ativo. Itens legados fora do catálogo
       // não são exibidos nem editáveis aqui.
@@ -516,6 +525,28 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
     if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
     if (!f.status) { toast.error("Selecione o status da venda"); return; }
     if (!f.forma_pagamento) { toast.error("Selecione a forma de pagamento"); return; }
+
+    // Validação obrigatória: re-checar catálogo no momento do save para
+    // garantir que todos os serviços selecionados ainda estão ativos e que
+    // o preço bate com o catálogo atual (snapshot é tirado deste estado).
+    if (!isEdit) {
+      const ids = Array.from(selectedServicos.keys());
+      const { data: vivos, error: catErr } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .select("servico_id, ativo, preco")
+        .in("servico_id", ids);
+      if (catErr) { toast.error("Falha ao revalidar catálogo: " + catErr.message); return; }
+      const map = new Map<number, { ativo: boolean; preco: number }>(
+        ((vivos as any[]) ?? []).map((v) => [Number(v.servico_id), { ativo: !!v.ativo, preco: Number(v.preco) }]),
+      );
+      for (const id of ids) {
+        const v = map.get(id);
+        if (!v || !v.ativo) {
+          toast.error("Catálogo desatualizado: serviço removido ou desativado. Recarregue a tela.");
+          return;
+        }
+      }
+    }
 
     // ── Detectar troca de serviço em venda já com processo aberto ──
     if (isEdit && originalPrimaryServicoId) {
