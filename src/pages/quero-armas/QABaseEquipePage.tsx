@@ -72,6 +72,7 @@ export default function QABaseEquipePage() {
   const [filterCat, setFilterCat] = useState<string>("__all__");
   const [filterText, setFilterText] = useState("");
   const [filterEmb, setFilterEmb] = useState<string>("__all__");
+  const [filterReview, setFilterReview] = useState<string>("__all__");
   const [selected, setSelected] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Partial<Article> | null>(null);
   const [saving, setSaving] = useState(false);
@@ -88,6 +89,15 @@ export default function QABaseEquipePage() {
   const [retryingErrors, setRetryingErrors] = useState(false);
   const [approvingDrafts, setApprovingDrafts] = useState(false);
   const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
+
+  // Revisão progressiva
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewArticle, setReviewArticle] = useState<Article | null>(null);
+  const [reviewReason, setReviewReason] = useState("");
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [reviewFile, setReviewFile] = useState<File | null>(null);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [approvingArticle, setApprovingArticle] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -152,6 +162,9 @@ export default function QABaseEquipePage() {
         const es = a.embedding_status ?? "pendente";
         if (es !== filterEmb) return false;
       }
+      if (filterReview !== "__all__") {
+        if (a.status !== filterReview) return false;
+      }
       if (!q) return true;
       return (
         a.title.toLowerCase().includes(q) ||
@@ -159,7 +172,7 @@ export default function QABaseEquipePage() {
         a.symptoms.some(s => s.toLowerCase().includes(q))
       );
     });
-  }, [articles, filterCat, filterText, filterEmb]);
+  }, [articles, filterCat, filterText, filterEmb, filterReview]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Article[]>();
@@ -454,6 +467,113 @@ export default function QABaseEquipePage() {
     toast.success("Removido.");
     if (selected?.id === a.id) setSelected(null);
     await loadAll();
+  }
+
+  // ============ REVISÃO PROGRESSIVA ============
+  async function approveArticle(a: Article) {
+    setApprovingArticle(true);
+    try {
+      const newStatus = a.audience === "cliente" ? "published" : "audited";
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      const { error } = await supabase.from("qa_kb_artigos" as any).update({
+        status: newStatus,
+        approved_by: userId,
+        approved_at: new Date().toISOString(),
+      }).eq("id", a.id);
+      if (error) throw error;
+      await supabase.from("qa_kb_article_reviews" as any).insert({
+        article_id: a.id, action: "approved", reviewed_by: userId,
+      });
+      toast.success(`Artigo aprovado (${newStatus}).`);
+      await loadAll();
+      if (selected?.id === a.id) {
+        const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", a.id).maybeSingle();
+        if (fresh) setSelected(fresh as any as Article);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao aprovar: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setApprovingArticle(false);
+    }
+  }
+
+  function openReview(a: Article) {
+    setReviewArticle(a); setReviewReason(""); setReviewNotes(""); setReviewFile(null); setReviewOpen(true);
+  }
+
+  async function uploadReviewScreenshot(articleId: string, file: File): Promise<{ id: string | null; url: string | null }> {
+    const path = `${articleId}/review-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage.from("qa-kb-imagens").upload(path, file, {
+      contentType: file.type || "image/png", upsert: false,
+    });
+    if (upErr) throw upErr;
+    const url = supabase.storage.from("qa-kb-imagens").getPublicUrl(path).data.publicUrl;
+    const { data: ins, error: insErr } = await supabase.from("qa_kb_artigo_imagens" as any).insert({
+      article_id: articleId, step_number: 0, step_title: "Print de revisão",
+      caption: "Print enviado durante revisão da equipe",
+      image_url: url, storage_path: path, status: "approved",
+      image_type: "upload_manual", route_path: window.location.pathname,
+      captured_at: new Date().toISOString(),
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+    }).select("id").maybeSingle();
+    if (insErr) throw insErr;
+    return { id: (ins as any)?.id ?? null, url };
+  }
+
+  async function submitReviewRegenerate() {
+    if (!reviewArticle) return;
+    if (!reviewReason.trim()) { toast.error("Descreva o motivo da reprovação."); return; }
+    setReviewSubmitting(true);
+    try {
+      let screenshotId: string | null = null;
+      let screenshotUrl: string | null = null;
+      if (reviewFile) {
+        const r = await uploadReviewScreenshot(reviewArticle.id, reviewFile);
+        screenshotId = r.id; screenshotUrl = r.url;
+      }
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      // Marca rejeição antes de regenerar (registra o evento)
+      await supabase.from("qa_kb_article_reviews" as any).insert({
+        article_id: reviewArticle.id, action: "rejected",
+        reason: reviewReason, notes: reviewNotes,
+        screenshot_id: screenshotId, screenshot_url: screenshotUrl,
+        reviewed_by: userId,
+      });
+      const { data, error } = await supabase.functions.invoke("qa-kb-regenerate-from-review", {
+        body: {
+          article_id: reviewArticle.id,
+          reason: reviewReason, notes: reviewNotes,
+          screenshot_id: screenshotId, screenshot_url: screenshotUrl,
+          reviewed_by: userId,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Artigo refeito pela IA — revise novamente.");
+      setReviewOpen(false);
+      await loadAll();
+      const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", reviewArticle.id).maybeSingle();
+      if (fresh) setSelected(fresh as any as Article);
+      // dispara embedding em background
+      supabase.functions.invoke("qa-kb-embed", { body: { article_id: reviewArticle.id } }).catch(() => {});
+    } catch (e: any) {
+      toast.error("Erro ao refazer artigo: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
+  function statusBadgeColor(s: string) {
+    switch (s) {
+      case "published": return "bg-emerald-100 text-emerald-800 border-emerald-300";
+      case "audited": return "bg-blue-100 text-blue-800 border-blue-300";
+      case "needs_review": return "bg-amber-100 text-amber-800 border-amber-300";
+      case "rejected": return "bg-red-100 text-red-800 border-red-300";
+      case "draft": return "bg-slate-100 text-slate-700 border-slate-300";
+      case "archived": return "bg-zinc-100 text-zinc-600 border-zinc-300";
+      default: return "";
+    }
   }
 
   // ===== READ VIEW =====
