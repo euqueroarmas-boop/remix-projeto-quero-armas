@@ -3527,6 +3527,16 @@ export default function QAClientesPage() {
           <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES <br />({filtered.length})
         </button>
         <button
+          onClick={() => setTabView("manuais")}
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          style={{
+            background: tabView === "manuais" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "manuais" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "manuais" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <Plus className="h-3.5 w-3.5 inline mr-1" /> MANUAIS <br />({filteredManuais.length})
+        </button>
+        <button
           onClick={() => setTabView("cadastros")}
           className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
           style={{
