@@ -230,6 +230,8 @@ export function ArsenalView({
     onConfirm: () => Promise<void>;
   }>({ open: false, title: "", desc: "", onConfirm: async () => {} });
   const [deleting, setDeleting] = useState(false);
+  // BLOCO 4 — drill-down do KPI Alertas
+  const [alertasModal, setAlertasModal] = useState(false);
 
   const refreshArsenal = async () => { await onArsenalChanged?.(); };
 
@@ -296,6 +298,10 @@ export function ArsenalView({
     // Clique no KPI "Status CR" abre o modal de CR (criar ou editar) — controle total.
     if (target === "cr") {
       setCrModal({ open: true, item: cadastroCr || undefined });
+      return;
+    }
+    if (target === "alertas") {
+      setAlertasModal(true);
       return;
     }
     if (target === "gte") {
