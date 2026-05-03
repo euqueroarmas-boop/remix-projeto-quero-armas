@@ -628,6 +628,57 @@ export default function QABaseEquipePage() {
       )}
 
       {renderEditor()}
+
+      <Dialog open={showLogs} onOpenChange={setShowLogs}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="uppercase font-mono text-sm flex items-center gap-2">
+              <ScrollText className="h-4 w-4" /> Logs de geração de vetores
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-end mb-2">
+            <Button size="sm" variant="ghost" onClick={loadLogs} disabled={logsLoading}>
+              {logsLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+              Atualizar
+            </Button>
+          </div>
+          {logsLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+          ) : logs.length === 0 ? (
+            <p className="text-center text-xs text-muted-foreground py-8 uppercase font-mono">Nenhum registro.</p>
+          ) : (
+            <div className="space-y-1">
+              {logs.map(l => {
+                const art = articles.find(a => a.id === l.article_id);
+                const ok = l.status === "sucesso";
+                return (
+                  <div key={l.id} className="border rounded-md p-2 text-xs flex items-start gap-2">
+                    <div className="shrink-0 mt-0.5">
+                      {ok ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          : <AlertCircle className="h-3.5 w-3.5 text-red-600" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold uppercase truncate">{art?.title ?? l.article_id}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono uppercase">
+                        {l.status} · {new Date(l.created_at).toLocaleString("pt-BR")}{l.modelo ? ` · ${l.modelo}` : ""}
+                      </div>
+                      {l.error_message && (
+                        <div className="text-[11px] text-red-700 mt-1 break-words">{l.error_message}</div>
+                      )}
+                    </div>
+                    {art && !ok && (
+                      <Button size="sm" variant="outline" className="shrink-0" onClick={() => reprocessOne(art.id)} disabled={reprocessingId === art.id}>
+                        {reprocessingId === art.id ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                        Tentar novamente
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
