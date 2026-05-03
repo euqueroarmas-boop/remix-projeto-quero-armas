@@ -1060,6 +1060,8 @@ export default function QABaseEquipePage() {
           <SelectTrigger className="md:max-w-[220px]"><SelectValue placeholder="Status do artigo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all__">Revisão: todos</SelectItem>
+            <SelectItem value="audit_pending">🛡️ Auditoria pendente</SelectItem>
+            <SelectItem value="needs_real_image">🖼️ Precisa de imagem real</SelectItem>
             <SelectItem value="needs_review">⏳ Aguardando revisão</SelectItem>
             <SelectItem value="audited">🔵 Auditado (equipe)</SelectItem>
             <SelectItem value="published">🟢 Publicado (cliente)</SelectItem>
