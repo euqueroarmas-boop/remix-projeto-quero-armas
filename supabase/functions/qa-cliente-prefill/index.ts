@@ -234,7 +234,21 @@ Deno.serve(async (req) => {
     }
 
     const result = await callPrefill(content);
-    return json({ success: true, fields: result ?? {} });
+    const normalized: any = { ...(result ?? {}) };
+    // Convert confidence_pairs[] -> confidence{} for frontend compatibility
+    if (Array.isArray(normalized.confidence_pairs)) {
+      const conf: Record<string, number> = {};
+      for (const p of normalized.confidence_pairs) {
+        if (p?.field && typeof p.score === "number") conf[p.field] = p.score;
+      }
+      normalized.confidence = conf;
+      delete normalized.confidence_pairs;
+    }
+    // Strip empty strings so frontend "fill only empty" logic works cleanly
+    for (const k of Object.keys(normalized)) {
+      if (normalized[k] === "") delete normalized[k];
+    }
+    return json({ success: true, fields: normalized });
   } catch (err: any) {
     if (err?.message === "RATE_LIMIT") {
       return json({ error: "Limite de uso da IA atingido. Tente novamente em instantes." }, 429);
