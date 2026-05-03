@@ -42,7 +42,7 @@ export function CentralAjudaCliente() {
           .select("article_id,image_type,status")
           .in("article_id", ids)
           .eq("status", "approved")
-          .in("image_type", ["screenshot_real", "upload_manual"]);
+          .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"]);
         const okSet = new Set<string>(((imgs as any[]) ?? []).map((i) => i.article_id));
         setArticles(list.filter((a) => okSet.has(a.id)));
       }
@@ -58,7 +58,7 @@ export function CentralAjudaCliente() {
         .select("id,image_url,step_number,step_title,caption,image_type")
         .eq("article_id", selected.id)
         .eq("status", "approved")
-        .in("image_type", ["screenshot_real", "upload_manual"])
+        .in("image_type", ["screenshot_real", "upload_manual", "documento_real", "auditoria_real"])
         .order("step_number");
       setSelectedImages(((data ?? []) as any[]));
     })();

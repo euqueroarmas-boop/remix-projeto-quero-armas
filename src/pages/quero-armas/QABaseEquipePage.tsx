@@ -43,7 +43,8 @@ type ArticleImage = {
   image_url: string | null;
   status: "draft" | "approved" | "archived" | "error";
   error_message: string | null;
-  image_type?: "screenshot_real" | "upload_manual" | "imagem_ia";
+  // imagens IA estão PROIBIDAS — só tipos reais auditáveis
+  image_type?: "screenshot_real" | "upload_manual" | "documento_real" | "auditoria_real";
 };
 
 const CATEGORIES = [
@@ -84,9 +85,7 @@ export default function QABaseEquipePage() {
   const [logs, setLogs] = useState<Array<{ id: string; article_id: string; status: string; error_message: string | null; modelo: string | null; created_at: string }>>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [images, setImages] = useState<ArticleImage[]>([]);
-  const [generatingImages, setGeneratingImages] = useState(false);
-  const [backfillingImages, setBackfillingImages] = useState(false);
-  const [retryingErrors, setRetryingErrors] = useState(false);
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [approvingDrafts, setApprovingDrafts] = useState(false);
   const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
 
@@ -358,82 +357,49 @@ export default function QABaseEquipePage() {
     toast.success("Artigo salvo.");
     // dispara geração de embedding em background (não bloqueia)
     supabase.functions.invoke("qa-kb-embed", { body: { backfill: true } }).catch(() => {});
-    // dispara geração automática de imagens em background (não bloqueia)
-    const newId = (res as any)?.data?.[0]?.id ?? editing.id;
-    if (newId) {
-      supabase.functions.invoke("qa-kb-generate-article-images", {
-        body: {
-          article_id: newId,
-          force: !editing.id ? false : true,
-          // artigos da equipe e operacionais seguros já nascem aprovados
-          approve: (editing.audience ?? "equipe") === "equipe" || (editing.audience === "cliente"),
-        },
-      }).catch(() => {});
-      toast.message("Gerando imagens ilustrativas em segundo plano...");
-    }
+    // ❌ Geração de imagens por IA está PROIBIDA — artigo nasce sem imagem
+    // e exige upload de print real pela equipe.
     setEditing(null);
     await loadAll();
   }
 
-  async function regenerateImagesFor(articleId: string) {
-    setGeneratingImages(true);
+  async function uploadRealScreenshotFor(articleId: string, file: File) {
+    setUploadingScreenshot(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-generate-article-images", {
-        body: { article_id: articleId, force: true },
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${articleId}/real-${Date.now()}-${safe}`;
+      const { error: upErr } = await supabase.storage.from("qa-kb-imagens").upload(path, file, {
+        contentType: file.type || "image/png", upsert: false,
       });
-      if (error) throw error;
-      toast.success(`Imagens geradas (${(data as any)?.generated ?? 0}).`);
-      // recarrega imagens do selecionado
-      if (selected?.id === articleId) {
-        const { data: imgs } = await supabase
-          .from("qa_kb_artigo_imagens" as any)
-          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
-          .eq("article_id", articleId).neq("status", "archived").order("step_number");
-        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
-      }
-    } catch (e: any) {
-      toast.error("Erro ao gerar imagens: " + (e?.message ?? "desconhecido"));
-    } finally {
-      setGeneratingImages(false);
-    }
-  }
-
-  async function backfillAllImages() {
-    setBackfillingImages(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
-        body: { limit: 5, only_missing: true },
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("qa-kb-imagens").getPublicUrl(path).data.publicUrl;
+      const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+      const { error: insErr } = await supabase.from("qa_kb_artigo_imagens" as any).insert({
+        article_id: articleId,
+        step_number: (images?.length ?? 0) + 1,
+        step_title: "Print real do sistema",
+        caption: "Print real enviado pela Equipe Quero Armas",
+        image_url: url, storage_path: path, status: "approved",
+        image_type: "screenshot_real",
+        origem: "upload_equipe",
+        uploaded_by: userId,
+        captured_at: new Date().toISOString(),
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        device: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
       });
-      if (error) throw error;
-      toast.success(`Lote processado: ${(data as any)?.processed ?? 0} artigo(s).`);
+      if (insErr) throw insErr;
+      toast.success("Print real anexado.");
+      // recarrega
+      const { data: imgs } = await supabase
+        .from("qa_kb_artigo_imagens" as any)
+        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message,image_type")
+        .eq("article_id", articleId).neq("status", "archived").order("step_number");
+      setImages(((imgs ?? []) as any[]) as ArticleImage[]);
       await loadImageStats();
     } catch (e: any) {
-      toast.error("Erro no backfill de imagens: " + (e?.message ?? "desconhecido"));
+      toast.error("Erro ao enviar print real: " + (e?.message ?? "desconhecido"));
     } finally {
-      setBackfillingImages(false);
-    }
-  }
-
-  async function retryImageErrors() {
-    setRetryingErrors(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
-        body: { action: "retry_errors", limit: 10 },
-      });
-      if (error) throw error;
-      toast.success(`Reprocessados: ${(data as any)?.retried ?? 0} artigo(s).`);
-      await loadImageStats();
-      if (selected) {
-        const { data: imgs } = await supabase
-          .from("qa_kb_artigo_imagens" as any)
-          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
-          .eq("article_id", selected.id).neq("status", "archived").order("step_number");
-        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
-      }
-    } catch (e: any) {
-      toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
-    } finally {
-      setRetryingErrors(false);
+      setUploadingScreenshot(false);
     }
   }
 
@@ -471,7 +437,10 @@ export default function QABaseEquipePage() {
 
   // ============ REVISÃO PROGRESSIVA ============
   async function approveArticle(a: Article) {
-    const hasReal = images.some(i => (i.image_type === "screenshot_real" || i.image_type === "upload_manual") && i.status === "approved");
+    const hasReal = images.some(i =>
+      i.status === "approved" &&
+      i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
+    );
     if (!hasReal) {
       toast.error("Este artigo ainda não possui print real validado. Envie ou capture um print real antes de aprovar.");
       return;
@@ -628,11 +597,11 @@ export default function QABaseEquipePage() {
                 <Badge className="bg-red-100 text-red-800 border-red-300 text-[10px] uppercase">⚠ bug visual detectado</Badge>
               )}
               {(() => {
-                const hasReal = images.some(i => i.image_type === "screenshot_real" || i.image_type === "upload_manual");
-                const hasIa = images.some(i => i.image_type === "imagem_ia" || !i.image_type);
+                const hasReal = images.some(i =>
+                  i.image_type && ["screenshot_real","upload_manual","documento_real","auditoria_real"].includes(i.image_type)
+                );
                 if (hasReal) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">com print real</Badge>;
-                if (hasIa) return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">apenas imagem IA</Badge>;
-                return <Badge variant="outline" className="text-[10px] uppercase">sem print</Badge>;
+                return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">precisa de print real</Badge>;
               })()}
               {selected.last_review_reason && (
                 <span className="text-[11px] text-muted-foreground italic">última reprovação: {selected.last_review_reason}</span>
@@ -655,14 +624,16 @@ export default function QABaseEquipePage() {
             </article>
             {images.length > 0 && (
               <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                   <h3 className="text-xs uppercase font-mono tracking-wider text-muted-foreground flex items-center gap-1">
-                    <ImageIcon className="h-3.5 w-3.5" /> Imagens ilustrativas ({images.length})
+                    <ImageIcon className="h-3.5 w-3.5" /> Evidências reais ({images.length})
                   </h3>
-                  <Button size="sm" variant="outline" onClick={() => regenerateImagesFor(selected.id)} disabled={generatingImages}>
-                    {generatingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-                    Regenerar imagens
-                  </Button>
+                  <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 hover:bg-amber-50">
+                    {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                    Enviar screenshot real
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
+                  </label>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {images.map(img => (
@@ -675,8 +646,8 @@ export default function QABaseEquipePage() {
                       <figcaption className="p-2 text-[11px] uppercase font-mono flex items-center justify-between gap-2">
                         <span className="truncate">{img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption ?? "—"}</span>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : "border-amber-400 text-amber-700"}`}>
-                            {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : "IA"}
+                          <Badge variant="outline" className={`text-[9px] ${img.image_type === "screenshot_real" ? "border-emerald-400 text-emerald-700" : img.image_type === "upload_manual" ? "border-blue-400 text-blue-700" : img.image_type === "documento_real" ? "border-purple-400 text-purple-700" : "border-slate-400 text-slate-700"}`}>
+                            {img.image_type === "screenshot_real" ? "PRINT REAL" : img.image_type === "upload_manual" ? "UPLOAD" : img.image_type === "documento_real" ? "DOC REAL" : "AUDITORIA"}
                           </Badge>
                           <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
                         </div>
@@ -687,12 +658,16 @@ export default function QABaseEquipePage() {
               </div>
             )}
             {images.length === 0 && (
-              <div className="mt-6 flex items-center justify-between border border-dashed rounded-md p-3">
-                <span className="text-xs text-muted-foreground font-mono uppercase">Sem imagens vinculadas.</span>
-                <Button size="sm" variant="outline" onClick={() => regenerateImagesFor(selected.id)} disabled={generatingImages}>
-                  {generatingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
-                  Gerar imagens agora
-                </Button>
+              <div className="mt-6 flex items-center justify-between border border-dashed rounded-md p-3 bg-amber-50/40">
+                <span className="text-xs text-amber-800 font-mono uppercase">
+                  Este artigo precisa de screenshot real do sistema.
+                </span>
+                <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 bg-white hover:bg-amber-50">
+                  {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                  Anexar imagem auditável
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
+                </label>
               </div>
             )}
             {selected.tags.length > 0 && (
@@ -900,10 +875,6 @@ export default function QABaseEquipePage() {
           <Button size="sm" variant="ghost" onClick={openLogs}>
             <ScrollText className="h-3.5 w-3.5 mr-1" /> Ver logs
           </Button>
-          <Button size="sm" variant="ghost" onClick={backfillAllImages} disabled={backfillingImages}>
-            {backfillingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
-            Gerar imagens pendentes
-          </Button>
         </CardContent>
       </Card>
 
@@ -928,15 +899,14 @@ export default function QABaseEquipePage() {
             <BookOpen className="h-3.5 w-3.5" /> {imgStats.semImagem} sem imagem
           </span>
           <div className="ml-auto flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={retryImageErrors} disabled={retryingErrors || imgStats.erro === 0}>
-              {retryingErrors ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-              Reprocessar erros
-            </Button>
             <Button size="sm" variant="outline" onClick={approveSafeDrafts} disabled={approvingDrafts || imgStats.draft === 0}>
               {approvingDrafts ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-              Aprovar drafts em lote
+              Aprovar prints reais em lote
             </Button>
           </div>
+          <p className="basis-full text-[10px] text-muted-foreground normal-case">
+            ⚠ Geração automática de imagens por IA está bloqueada por regra de negócio. Apenas screenshots reais, uploads manuais ou documentos auditáveis são aceitos.
+          </p>
         </CardContent>
       </Card>
 
