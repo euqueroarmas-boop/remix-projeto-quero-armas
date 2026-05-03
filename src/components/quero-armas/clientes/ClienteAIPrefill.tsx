@@ -286,10 +286,11 @@ export default function ClienteAIPrefill({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[10px]">
             {Object.entries(result)
               .filter(([k, v]) =>
-                k !== "confidence" && k !== "warnings" && k !== "acervo" &&
+                !["confidence", "warnings", "acervo", "senha_gov_confidence", "senha_gov_needs_review", "emissor_rg_needs_review"].includes(k) &&
                 v != null && String(v).trim() !== "")
               .map(([k, v]) => {
                 const conf = result.confidence?.[k];
+                const isSenhaGov = k === "senha_gov" || k === "senha_gov_raw";
                 return (
                   <div key={k} className="border border-slate-100 rounded px-2 py-1 bg-slate-50/60">
                     <div className="flex items-center justify-between gap-1">
@@ -302,7 +303,14 @@ export default function ClienteAIPrefill({
                         </span>
                       )}
                     </div>
-                    <div className="text-slate-800 truncate" title={String(v)}>{String(v)}</div>
+                    <div className="flex items-center gap-1 min-w-0">
+                      <div className="text-slate-800 truncate" title={String(v)}>{String(v)}</div>
+                      {isSenhaGov && (
+                        <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-1 py-0.5 text-[8px] font-bold uppercase text-amber-700">
+                          conferir senha GOV
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
