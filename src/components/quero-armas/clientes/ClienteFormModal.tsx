@@ -540,29 +540,31 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="absolute bottom-0 left-0 right-0 h-px bg-zinc-100" />
               <div className="relative flex items-center gap-4 flex-wrap">
                 {/* Avatar / foto */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="relative h-16 w-16 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors"
-                  aria-label="Adicionar foto"
-                >
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
-                  ) : (
-                    <Camera className="h-6 w-6 text-zinc-400" />
-                  )}
-                </button>
-                {photoPreview && (
+                <div className="relative flex-shrink-0">
                   <button
                     type="button"
-                    onClick={removePhoto}
-                    className="-ml-3 -mt-10 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    aria-label="Remover foto"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative h-20 w-20 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden transition-colors"
+                    aria-label="Adicionar foto"
                   >
-                    <X className="h-3 w-3" />
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover object-center" />
+                    ) : (
+                      <Camera className="h-7 w-7 text-zinc-400" />
+                    )}
                   </button>
-                )}
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={removePhoto}
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                      aria-label="Remover foto"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
+                </div>
 
                 {/* Identidade do cliente */}
                 <div className="flex-1 min-w-[220px]">
