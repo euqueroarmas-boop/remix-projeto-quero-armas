@@ -863,12 +863,24 @@ export default function QABaseEquipePage() {
                 <span className="text-xs text-amber-800 font-mono uppercase">
                   Este artigo precisa de screenshot real do sistema.
                 </span>
-                <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 bg-white hover:bg-amber-50">
+                <div className="flex items-center gap-1 flex-wrap justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] uppercase font-mono"
+                    disabled={auditTriggering === selected.id}
+                    onClick={() => triggerPlaywrightAudit(selected.id)}
+                  >
+                    {auditTriggering === selected.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Reprocessar auditoria (Playwright)
+                  </Button>
+                  <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 bg-white hover:bg-amber-50">
                   {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
                   Anexar imagem auditável
                   <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
-                </label>
+                  </label>
+                </div>
               </div>
             )}
             {selected.tags.length > 0 && (
