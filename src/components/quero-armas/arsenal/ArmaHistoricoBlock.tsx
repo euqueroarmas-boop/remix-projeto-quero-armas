@@ -23,7 +23,7 @@ const fmtDateTime = (iso: string) => {
 
 const ACAO_LABEL: Record<string, { label: string; color: string }> = {
   criada:           { label: "CRIADA",           color: "hsl(152 60% 38%)" },
-  editada:          { label: "EDITADA",          color: "hsl(220 80% 45%)" },
+  editada:          { label: "EDITADA",          color: "hsl(352 60% 45%)" },
   marcada_revisada: { label: "REVISADA",         color: "hsl(190 80% 35%)" },
   marcada_revisao:  { label: "MARCADA P/ REVISÃO", color: "hsl(28 92% 38%)" },
   excluida:         { label: "EXCLUÍDA",         color: "hsl(0 72% 50%)" },

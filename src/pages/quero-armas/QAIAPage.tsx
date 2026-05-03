@@ -79,7 +79,7 @@ export default function QAIAPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-          <Bot className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} /> IA Jurídica
+          <Bot className="h-6 w-6" style={{ color: "hsl(352 60% 30%)" }} /> IA Jurídica
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Consulta assistida com base viva de conhecimento</p>
       </div>

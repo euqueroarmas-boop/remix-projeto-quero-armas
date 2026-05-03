@@ -472,7 +472,7 @@ export default function QAClientePortalPage() {
   // Timeline
   const timeline = useMemo(() => {
     const events: { date: string; label: string; icon: any; color: string }[] = [];
-    vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(230 80% 56%)" }));
+    vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(352 60% 30%)" }));
     itens.forEach((it: any) => {
       const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || "Serviço";
       if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${servicoLabel} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
@@ -732,7 +732,7 @@ export default function QAClientePortalPage() {
         <div className="qa-resumo-light space-y-4">
         {/* ═══ WELCOME HEADER ═══ */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%))" }} />
+          <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(352 60% 30%), hsl(262 60% 55%))" }} />
           <div className="p-5 md:p-6">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <ClientAvatar
@@ -801,7 +801,7 @@ export default function QAClientePortalPage() {
             {analysis && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5 pt-4 border-t border-slate-100">
                 {[
-                  { label: "SERVIÇOS", value: analysis.totalServicos, color: "hsl(230 80% 56%)", icon: Target },
+                  { label: "SERVIÇOS", value: analysis.totalServicos, color: "hsl(352 60% 30%)", icon: Target },
                   { label: "EM ANDAMENTO", value: analysis.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
                   { label: "CONCLUÍDOS", value: analysis.concluidos, color: "hsl(152 60% 42%)", icon: CheckCircle },
                   { label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), color: "hsl(220 20% 25%)", icon: DollarSign },
@@ -931,7 +931,7 @@ export default function QAClientePortalPage() {
           </SectionCard>
         )}
 
-        <SectionCard icon={Target} title="Meus Serviços" color="hsl(230 80% 56%)">
+        <SectionCard icon={Target} title="Meus Serviços" color="hsl(352 60% 30%)">
           {/* CTA — Contratar novo serviço */}
           <button
             onClick={() => navigate("/area-do-cliente/contratar")}

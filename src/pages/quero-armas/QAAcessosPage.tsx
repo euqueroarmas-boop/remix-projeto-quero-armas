@@ -149,7 +149,7 @@ export default function QAAcessosPage() {
           onClick={load}
           disabled={loading}
           className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm no-glow disabled:opacity-60"
-          style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}
+          style={{ background: "hsl(352 60% 30%)", color: "#ffffff" }}
         >
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
           <span className="hidden sm:inline">Atualizar</span>
@@ -159,7 +159,7 @@ export default function QAAcessosPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         {([
-          { key: "all", label: "Total", value: counts.all, icon: Users, color: "hsl(230 80% 56%)" },
+          { key: "all", label: "Total", value: counts.all, icon: Users, color: "hsl(352 60% 30%)" },
           { key: "active", label: "Ativos", value: counts.active, icon: CheckCircle2, color: "hsl(152 60% 42%)" },
           { key: "pending", label: "Pendentes", value: counts.pending, icon: Clock, color: "hsl(38 92% 50%)" },
           { key: "awaiting_admin", label: "Aguard. Admin", value: counts.awaiting_admin, icon: ShieldAlert, color: "hsl(24 90% 54%)" },
@@ -205,7 +205,7 @@ export default function QAAcessosPage() {
               className="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-md transition-all"
               style={
                 isActive
-                  ? { background: "hsl(230 80% 56%)", color: "#ffffff" }
+                  ? { background: "hsl(352 60% 30%)", color: "#ffffff" }
                   : { color: "hsl(220 10% 45%)" }
               }
             >

@@ -103,8 +103,8 @@ export function HistoricoAtualizacoes({ clienteId, showSnapshot = false }: Props
               onClick={() => setOpenId(isOpen ? null : r.id)}
               className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
-                <FileText className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(352 33% 97%)" }}>
+                <FileText className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[12px] font-semibold text-slate-700">

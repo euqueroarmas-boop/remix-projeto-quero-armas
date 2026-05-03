@@ -229,7 +229,7 @@ function Card({
   const palette = {
     neutral: { bg: "hsl(220 20% 98%)", icon: "hsl(220 15% 40%)", border: "hsl(220 18% 92%)" },
     amber: { bg: "hsl(38 92% 96%)", icon: "hsl(38 92% 45%)", border: "hsl(38 80% 88%)" },
-    blue: { bg: "hsl(220 90% 97%)", icon: "hsl(220 80% 50%)", border: "hsl(220 80% 90%)" },
+    blue: { bg: "hsl(220 90% 97%)", icon: "hsl(352 60% 50%)", border: "hsl(352 60% 90%)" },
     rose: { bg: "hsl(0 80% 97%)", icon: "hsl(0 70% 50%)", border: "hsl(0 70% 90%)" },
   }[tone];
 

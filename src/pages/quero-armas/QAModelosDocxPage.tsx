@@ -89,7 +89,7 @@ export default function QAModelosDocxPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-            <FileText className="h-5 w-5" style={{ color: "hsl(230 80% 56%)" }} /> Modelos DOCX
+            <FileText className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Modelos DOCX
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Templates para geração de peças editáveis</p>
         </div>
@@ -105,14 +105,14 @@ export default function QAModelosDocxPage() {
         <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: "hsl(220 10% 45%)" }}>Variáveis Suportadas</h3>
         <div className="flex flex-wrap gap-2">
           {VARIAVEIS.map(v => (
-            <code key={v} className="text-[10px] px-2 py-1 rounded-lg font-mono" style={{ background: "hsl(220 20% 97%)", color: "hsl(230 80% 56%)", border: "1px solid hsl(220 13% 91%)" }}>{v}</code>
+            <code key={v} className="text-[10px] px-2 py-1 rounded-lg font-mono" style={{ background: "hsl(220 20% 97%)", color: "hsl(352 60% 30%)", border: "1px solid hsl(220 13% 91%)" }}>{v}</code>
           ))}
         </div>
       </div>
 
       {/* New model form */}
       {showForm && (
-        <div className="qa-card p-5 space-y-4" style={{ borderColor: "hsl(230 80% 90%)" }}>
+        <div className="qa-card p-5 space-y-4" style={{ borderColor: "hsl(352 40% 83%)" }}>
           <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Cadastrar Novo Modelo</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">

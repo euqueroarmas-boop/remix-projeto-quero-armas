@@ -2492,10 +2492,10 @@ export default function QAClientesPage() {
                 <div className="qa-card p-4 md:p-5 mb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 56% / 0.12)" }}>
-                        <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 60% 30% / 0.12)" }}>
+                        <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
                       </div>
-                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(230 80% 56%)" }}>
+                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(352 60% 30%)" }}>
                         Serviços — Vendas e Processos
                       </h3>
                     </div>
@@ -2534,7 +2534,7 @@ export default function QAClientesPage() {
                         </div>
                         <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
                           <div className="text-[9px] uppercase tracking-wider text-slate-500">Pagas</div>
-                          <div className="text-[14px] font-bold" style={{ color: "hsl(220 80% 40%)" }}>{totalPagas}</div>
+                          <div className="text-[14px] font-bold" style={{ color: "hsl(352 60% 40%)" }}>{totalPagas}</div>
                         </div>
                         <div
                           className="rounded-md border px-2 py-1.5"
@@ -2634,7 +2634,7 @@ export default function QAClientesPage() {
                             <div className="flex items-center gap-2 flex-wrap min-w-0">
                               <span
                                 className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
-                                style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}
+                                style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}
                               >
                                 VENDA #{v.id_legado ?? v.id}
                               </span>
@@ -2651,7 +2651,7 @@ export default function QAClientesPage() {
                                   );
                                   if (isPago) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(220 80% 40%)" }}>
+                                      style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
                                       PAGO
                                     </span>
                                   );
@@ -2677,7 +2677,7 @@ export default function QAClientesPage() {
                                   );
                                   if (isPago) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(220 80% 40%)" }}>
+                                      style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
                                       PAGO
                                     </span>
                                   );
@@ -3117,7 +3117,7 @@ export default function QAClientesPage() {
                   disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
                   onClick={() => updateCadastroPublicoStatus("aprovado")}
                   className="col-span-2 sm:col-span-1 h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
-                  style={{ background: "hsl(230 80% 56%)" }}
+                  style={{ background: "hsl(352 60% 30%)" }}
                 >
                   {savingCadastroPublicoStatus === "aprovado" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -3481,7 +3481,7 @@ export default function QAClientesPage() {
         {/* Mobile: full-width primary CTA */}
         <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
           className="flex sm:hidden items-center justify-center gap-1.5 w-full h-10 rounded-xl text-xs font-bold tracking-wide"
-          style={{ background: "hsl(230 80% 56%)", color: "#fff" }}>
+          style={{ background: "hsl(352 60% 30%)", color: "#fff" }}>
           <Plus className="h-4 w-4" /> NOVO CLIENTE
         </button>
         {/* Desktop: inline actions */}
@@ -3491,7 +3491,7 @@ export default function QAClientesPage() {
           </Button>
           <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
             className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm"
-            style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}>
+            style={{ background: "hsl(352 60% 30%)", color: "#ffffff" }}>
             <Plus className="h-3.5 w-3.5" /> NOVO CLIENTE
           </button>
         </div>
@@ -3691,7 +3691,7 @@ export default function QAClientesPage() {
                   <span>{c.email || "—"}</span>
                 </div>
                 {c.servico_interesse && (
-                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(230 80% 56%)" }}>🎯 {c.servico_interesse}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(352 60% 30%)" }}>🎯 {c.servico_interesse}</div>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
