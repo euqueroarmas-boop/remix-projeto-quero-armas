@@ -532,23 +532,26 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
 
     // Validação obrigatória: re-checar catálogo no momento do save para
     // garantir que todos os serviços selecionados ainda estão ativos e que
-    // o preço bate com o catálogo atual (snapshot é tirado deste estado).
-    if (!isEdit) {
-      const ids = Array.from(selectedServicos.keys());
-      const { data: vivos, error: catErr } = await supabase
-        .from("qa_servicos_catalogo" as any)
-        .select("servico_id, ativo, preco")
-        .in("servico_id", ids);
-      if (catErr) { toast.error("Falha ao revalidar catálogo: " + catErr.message); return; }
-      const map = new Map<number, { ativo: boolean; preco: number }>(
-        ((vivos as any[]) ?? []).map((v) => [Number(v.servico_id), { ativo: !!v.ativo, preco: Number(v.preco) }]),
-      );
-      for (const id of ids) {
-        const v = map.get(id);
-        if (!v || !v.ativo) {
-          toast.error("Catálogo desatualizado: serviço removido ou desativado. Recarregue a tela.");
-          return;
-        }
+    // o preço bate com o catálogo atual. Desconto deve ser lançado no campo
+    // próprio; o valor do item é sempre snapshot do Catálogo de Preços.
+    const ids = Array.from(selectedServicos.keys());
+    const { data: vivos, error: catErr } = await supabase
+      .from("qa_servicos_catalogo" as any)
+      .select("servico_id, ativo, preco")
+      .in("servico_id", ids);
+    if (catErr) { toast.error("Falha ao revalidar catálogo: " + catErr.message); return; }
+    const map = new Map<number, { ativo: boolean; preco: number }>(
+      ((vivos as any[]) ?? []).map((v) => [Number(v.servico_id), { ativo: !!v.ativo, preco: Number(v.preco) }]),
+    );
+    for (const [id, sel] of selectedServicos.entries()) {
+      const v = map.get(id);
+      if (!v || !v.ativo || Number.isNaN(v.preco)) {
+        toast.error("Catálogo desatualizado: serviço removido, desativado ou sem preço. Recarregue a tela.");
+        return;
+      }
+      if (!sel.cortesia && Number(sel.valor) !== Number(v.preco)) {
+        toast.error("Preço divergente do Catálogo de Preços. Recarregue o catálogo antes de salvar.");
+        return;
       }
     }
 
