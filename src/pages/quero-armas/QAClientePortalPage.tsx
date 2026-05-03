@@ -34,8 +34,8 @@ const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
   try { const p = new Date(d); return isNaN(p.getTime()) ? null : Math.ceil((p.getTime() - Date.now()) / 86400000); } catch { return null; }
 };
-const urgencyColor = (d: number | null) => d === null ? "text-slate-400" : d < 0 ? "text-red-600" : d <= 30 ? "text-red-500" : d <= 90 ? "text-amber-500" : "text-emerald-600";
-const urgencyBg = (d: number | null) => d === null ? "bg-slate-50 border-slate-200" : d < 0 ? "bg-red-50/60 border-red-200/60" : d <= 30 ? "bg-red-50/60 border-red-200/60" : d <= 90 ? "bg-amber-50/60 border-amber-200/60" : "bg-emerald-50/60 border-emerald-200/60";
+const urgencyColor = (d: number | null) => d === null ? "text-slate-400" : d < 0 ? "text-red-600" : d <= 30 ? "text-red-500" : d <= 90 ? "text-[#7A1F2B]" : "text-emerald-600";
+const urgencyBg = (d: number | null) => d === null ? "bg-slate-50 border-slate-200" : d < 0 ? "bg-red-50/60 border-red-200/60" : d <= 30 ? "bg-red-50/60 border-red-200/60" : d <= 90 ? "bg-[#7A1F2B]/60 border-[#7A1F2B]/60" : "bg-emerald-50/60 border-emerald-200/60";
 const urgencyLabel = (d: number | null) => d === null ? "SEM DATA" : d < 0 ? `VENCIDO HÁ ${Math.abs(d)}D` : d === 0 ? "VENCE HOJE" : `${d}D RESTANTES`;
 
 
@@ -74,7 +74,7 @@ function ClientAvatar({
     .join("");
 
   const ring = isTactical
-    ? "ring-2 ring-amber-400 ring-offset-2 ring-offset-white"
+    ? "ring-2 ring-[#8E2532] ring-offset-2 ring-offset-white"
     : "ring-1 ring-slate-200 ring-offset-2 ring-offset-white";
 
   if (hasPhoto && url) {
@@ -86,7 +86,7 @@ function ClientAvatar({
         {isTactical && (
           <span
             title="Avatar tático"
-            className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-md"
+            className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-[#8E2532] to-[#641722] text-white shadow-md"
           >
             <BadgeCheck className="h-3.5 w-3.5" />
           </span>
@@ -98,12 +98,12 @@ function ClientAvatar({
   return (
     <div className="relative shrink-0">
       <div
-        className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-md text-white font-bold text-xl tracking-wider ring-1 ring-amber-200/50"
+        className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-md text-white font-bold text-xl tracking-wider ring-1 ring-[#7A1F2B]/50"
         style={{ background: "linear-gradient(135deg, hsl(220 25% 18%), hsl(220 30% 28%))" }}
       >
-        <span className="text-amber-300">{initials || "?"}</span>
+        <span className="text-[#B43543]">{initials || "?"}</span>
       </div>
-      <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-slate-900 shadow-md">
+      <span className="absolute -bottom-1 -right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#8E2532] text-slate-900 shadow-md">
         <Camera className="h-3 w-3" />
       </span>
     </div>
@@ -625,10 +625,10 @@ export default function QAClientePortalPage() {
             if (!isFree || !isEmpty) return null;
             return (
               <div className="mb-4 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm overflow-hidden">
-                <div className="h-1 w-full bg-gradient-to-r from-amber-400 to-blue-500" />
+                <div className="h-1 w-full bg-gradient-to-r from-[#7A1F2B] to-zinc-900" />
                 <div className="p-4 sm:p-5 space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center">
+                    <div className="h-10 w-10 shrink-0 rounded-xl bg-[#FBF3F4] text-[#641722] border border-[#E5C2C6] flex items-center justify-center">
                       <CrosshairIcon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0">
@@ -652,7 +652,7 @@ export default function QAClientePortalPage() {
                     <button
                       type="button"
                       onClick={() => setShowAddDoc(true)}
-                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider shadow-sm transition"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#7A1F2B] hover:bg-[#8E2532] text-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider shadow-sm transition"
                     >
                       <Upload className="h-3.5 w-3.5" /> Enviar documento do acervo
                     </button>
@@ -673,7 +673,7 @@ export default function QAClientePortalPage() {
                       { n: "4", t: "Contrate se precisar", d: "Solicite assessoria diretamente pelo portal." },
                     ].map((step) => (
                       <div key={step.n} className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <span className="h-6 w-6 shrink-0 rounded-md bg-white border border-slate-200 text-amber-600 text-[11px] font-bold flex items-center justify-center">{step.n}</span>
+                        <span className="h-6 w-6 shrink-0 rounded-md bg-white border border-slate-200 text-[#641722] text-[11px] font-bold flex items-center justify-center">{step.n}</span>
                         <div className="min-w-0">
                           <div className="text-[12px] font-semibold text-slate-900">{step.t}</div>
                           <div className="text-[11px] text-slate-500 leading-snug">{step.d}</div>
@@ -749,7 +749,7 @@ export default function QAClientePortalPage() {
                     <Button
                       size="sm"
                       onClick={() => navigate("/cadastro/foto")}
-                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-sm"
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-[#7A1F2B] to-[#641722] text-white hover:from-[#641722] hover:to-[#4F121C] shadow-sm"
                     >
                       <Camera className="h-3.5 w-3.5 mr-1.5" /> Enviar minha foto
                     </Button>
@@ -824,10 +824,10 @@ export default function QAClientePortalPage() {
 
         {/* ═══ ALERTS ═══ */}
         {analysis && analysis.alerts.length > 0 && (
-          <div className="bg-white rounded-2xl border border-amber-200/60 shadow-sm p-4">
+          <div className="bg-white rounded-2xl border border-[#7A1F2B]/60 shadow-sm p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Bell className="h-4 w-4 text-amber-500" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600">
+              <Bell className="h-4 w-4 text-[#7A1F2B]" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#641722]">
                 {analysis.alerts.length} {analysis.alerts.length === 1 ? "ALERTA" : "ALERTAS"}
               </span>
             </div>
@@ -935,9 +935,9 @@ export default function QAClientePortalPage() {
           {/* CTA — Contratar novo serviço */}
           <button
             onClick={() => navigate("/area-do-cliente/contratar")}
-            className="w-full mb-3 flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-amber-100/60 hover:from-amber-100 hover:to-amber-200/60 border border-amber-200 hover:border-amber-300 transition group"
+            className="w-full mb-3 flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-[#FBF3F4] to-[#7A1F2B]/60 hover:from-[#F1D9DC] hover:to-[#7A1F2B]/60 border border-[#E5C2C6] hover:border-[#B43543] transition group"
           >
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-amber-500 text-white shrink-0 group-hover:scale-105 transition">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-[#7A1F2B] text-white shrink-0 group-hover:scale-105 transition">
               <ShoppingBag className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0 text-left">
@@ -948,7 +948,7 @@ export default function QAClientePortalPage() {
                 Posse, porte, CRAF, CR, GTE e mais — escolha e agilizamos para você.
               </div>
             </div>
-            <ChevronRight className="h-4 w-4 text-amber-700 shrink-0" />
+            <ChevronRight className="h-4 w-4 text-[#4F121C] shrink-0" />
           </button>
           {/* KPIs — padrão Arsenal Review */}
           {itens.length > 0 && (() => {
@@ -998,9 +998,9 @@ export default function QAClientePortalPage() {
                 return (
                   <div key={it.id} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200/80 hover:shadow-sm transition-all">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      done ? "bg-emerald-50" : bad ? "bg-red-50" : "bg-amber-50"
+                      done ? "bg-emerald-50" : bad ? "bg-red-50" : "bg-[#FBF3F4]"
                     }`}>
-                      {done ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : bad ? <XCircle className="h-4 w-4 text-red-500" /> : <Zap className="h-4 w-4 text-amber-600" />}
+                      {done ? <CheckCircle className="h-4 w-4 text-emerald-600" /> : bad ? <XCircle className="h-4 w-4 text-red-500" /> : <Zap className="h-4 w-4 text-[#641722]" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[12px] font-semibold text-slate-800 truncate">
@@ -1015,7 +1015,7 @@ export default function QAClientePortalPage() {
                       </div>
                     </div>
                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                      done ? "text-emerald-700 bg-emerald-50" : bad ? "text-red-700 bg-red-50" : "text-amber-700 bg-amber-50"
+                      done ? "text-emerald-700 bg-emerald-50" : bad ? "text-red-700 bg-red-50" : "text-[#4F121C] bg-[#FBF3F4]"
                     }`}>{it.status}</span>
                   </div>
                 );
@@ -1062,7 +1062,7 @@ export default function QAClientePortalPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <div className="text-[13px] font-bold font-mono text-slate-800">{formatCurrency(Number(v.valor_a_pagar || 0))}</div>
-                      {Number(v.desconto) > 0 && <div className="text-[10px] text-amber-600 font-mono">-{formatCurrency(Number(v.desconto))}</div>}
+                      {Number(v.desconto) > 0 && <div className="text-[10px] text-[#641722] font-mono">-{formatCurrency(Number(v.desconto))}</div>}
                     </div>
                   </div>
                 );
@@ -1160,7 +1160,7 @@ export default function QAClientePortalPage() {
                               </span>
                             )}
                             {d.status === "pendente_aprovacao" && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 inline-flex items-center gap-0.5">
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#F1D9DC] text-[#4F121C] inline-flex items-center gap-0.5">
                                 AGUARDANDO ANÁLISE
                               </span>
                             )}

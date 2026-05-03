@@ -2179,11 +2179,11 @@ export default function QAClientesPage() {
   });
   const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
-  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
+  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-[#641722]";
   const svcStatusColor = (s: string) => {
     if (s === "DEFERIDO" || s === "CONCLUÍDO") return "text-emerald-700 bg-emerald-50";
     if (s === "INDEFERIDO") return "text-red-700 bg-red-50";
-    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-amber-700 bg-amber-50";
+    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-[#4F121C] bg-[#FBF3F4]";
     return "text-slate-600 bg-slate-100";
   };
   const formatDate = (d: string | null) => {
@@ -2559,18 +2559,18 @@ export default function QAClientesPage() {
                 {/* Solicitações de serviço vindas do formulário público
                     — exibidas como leads operacionais; não criam pagamento. */}
                 {solicitacoesPublicas.filter(s => !s.ja_convertido).length > 0 && (
-                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                  <div className="mb-4 rounded-lg border border-[#E5C2C6] bg-[#7A1F2B]/60 p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#4F121C]">
                         Solicitações — Formulário público
                       </span>
-                      <span className="text-[10px] text-amber-700">
+                      <span className="text-[10px] text-[#4F121C]">
                         {solicitacoesPublicas.filter(s => !s.ja_convertido).length} aguardando contratação
                       </span>
                     </div>
                     <div className="space-y-2">
                       {solicitacoesPublicas.filter(s => !s.ja_convertido).map(s => (
-                        <div key={s.cadastro_publico_id} className="rounded-md border border-amber-200 bg-white p-2.5">
+                        <div key={s.cadastro_publico_id} className="rounded-md border border-[#E5C2C6] bg-white p-2.5">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="text-[12px] font-semibold text-slate-800 truncate">
@@ -2583,7 +2583,7 @@ export default function QAClientesPage() {
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#F1D9DC] text-[#3D0E16] border border-[#E5C2C6]">
                                   Aguardando contratação
                                 </span>
                                 <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
@@ -2834,7 +2834,7 @@ export default function QAClientesPage() {
                                       </div>
                                     </div>
                                     {!isStatusDefinido(it.status) ? (
-                                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-700">
+                                      <div className="rounded-md border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-2 text-[10px] text-[#4F121C]">
                                         ⚠️ Selecione o <strong>status</strong> deste serviço para liberar o preenchimento do formulário.
                                       </div>
                                     ) : (
@@ -2872,7 +2872,7 @@ export default function QAClientesPage() {
                             <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
                               <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">Total</span>
                               <div className="flex gap-3 items-center">
-                                {Number(v.desconto) > 0 && <span className="text-[14px] font-bold text-amber-600 font-mono tabular-nums">Desc: R$ {Number(v.desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
+                                {Number(v.desconto) > 0 && <span className="text-[14px] font-bold text-[#641722] font-mono tabular-nums">Desc: R$ {Number(v.desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
                                 <span className="text-[17px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                               </div>
                             </div>
@@ -2945,7 +2945,7 @@ export default function QAClientesPage() {
 
   const cadastroStatusColor = (s: string) => {
     if (s === "aprovado") return "text-emerald-600 bg-emerald-50";
-    if (s === "pendente") return "text-amber-600 bg-amber-50";
+    if (s === "pendente") return "text-[#641722] bg-[#FBF3F4]";
     if (s === "rejeitado") return "text-red-600 bg-red-50";
     return "text-slate-500 bg-slate-100";
   };
@@ -3081,7 +3081,7 @@ export default function QAClientesPage() {
                       onClick={() => updateCadastroPublicoStatus("pendente")}
                       className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
                         isConferido
-                          ? "col-span-2 sm:col-span-1 bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
+                          ? "col-span-2 sm:col-span-1 bg-[#F1D9DC] text-[#3D0E16] border-[#B43543] hover:bg-[#E5C2C6]"
                           : "font-medium hover:bg-slate-50"
                       }`}
                       style={isConferido ? undefined : { borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}

@@ -539,7 +539,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                         ? "bg-zinc-50 border-zinc-200 text-zinc-600"
                         : "bg-zinc-50 border-zinc-200 text-zinc-600"
                     )}>
-                      <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-amber-500")} />
+                      <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-[#7A1F2B]")} />
                       {isEdit ? "Editando" : "Em cadastro"}
                     </span>
                     <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
@@ -567,7 +567,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={save}
                     disabled={saving}
-                    className="h-9 px-4 inline-flex items-center gap-2 rounded-md bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold uppercase tracking-wide justify-center disabled:opacity-50 transition-colors shadow-sm"
+                    className="h-9 px-4 inline-flex items-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-xs font-semibold uppercase tracking-wide justify-center disabled:opacity-50 transition-colors shadow-sm"
                   >
                     {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                     {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
@@ -724,7 +724,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={() => resolveGeoloc("")}
                     disabled={geocodeLoading || !f.endereco || !f.cidade}
-                    className="h-9 px-3.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    className="h-9 px-3.5 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
                   </button>
@@ -762,7 +762,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={() => resolveGeoloc("2")}
                     disabled={geocodeLoading || !f.endereco2 || !f.cidade2}
-                    className="h-9 px-3.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+                    className="h-9 px-3.5 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
                   >
                     {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
                   </button>
@@ -784,9 +784,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                 </div>
                 {!f.categoria_titular && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-50 border border-amber-200">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-700 flex-shrink-0" />
-                    <span className="text-[11px] text-amber-800 font-medium">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#FBF3F4] border border-[#E5C2C6]">
+                    <AlertTriangle className="h-3.5 w-3.5 text-[#4F121C] flex-shrink-0" />
+                    <span className="text-[11px] text-[#3D0E16] font-medium">
                       Categoria não definida — sistema considerará todas as exigências.
                     </span>
                   </div>
@@ -865,7 +865,7 @@ function KpiCard({ icon: Icon, label, value, tone = "info" }: {
     : tone === "warn"
       ? "text-zinc-700 bg-white border-zinc-200"
       : "text-zinc-700 bg-white border-zinc-200";
-  const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-amber-500" : "bg-zinc-300";
+  const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-[#7A1F2B]" : "bg-zinc-300";
   return (
     <div className={cn("relative rounded-lg border p-3 shadow-sm overflow-hidden", toneCls)}>
       <div className="flex items-start justify-between gap-2">
