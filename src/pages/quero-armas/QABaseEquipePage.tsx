@@ -872,10 +872,6 @@ export default function QABaseEquipePage() {
           <Button size="sm" variant="ghost" onClick={openLogs}>
             <ScrollText className="h-3.5 w-3.5 mr-1" /> Ver logs
           </Button>
-          <Button size="sm" variant="ghost" onClick={backfillAllImages} disabled={backfillingImages}>
-            {backfillingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
-            Gerar imagens pendentes
-          </Button>
         </CardContent>
       </Card>
 
@@ -900,15 +896,14 @@ export default function QABaseEquipePage() {
             <BookOpen className="h-3.5 w-3.5" /> {imgStats.semImagem} sem imagem
           </span>
           <div className="ml-auto flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={retryImageErrors} disabled={retryingErrors || imgStats.erro === 0}>
-              {retryingErrors ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
-              Reprocessar erros
-            </Button>
             <Button size="sm" variant="outline" onClick={approveSafeDrafts} disabled={approvingDrafts || imgStats.draft === 0}>
               {approvingDrafts ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-              Aprovar drafts em lote
+              Aprovar prints reais em lote
             </Button>
           </div>
+          <p className="basis-full text-[10px] text-muted-foreground normal-case">
+            ⚠ Geração automática de imagens por IA está bloqueada por regra de negócio. Apenas screenshots reais, uploads manuais ou documentos auditáveis são aceitos.
+          </p>
         </CardContent>
       </Card>
 
