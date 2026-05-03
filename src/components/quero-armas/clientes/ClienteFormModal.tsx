@@ -395,13 +395,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       const cinDetected = String(p.tipo_documento_identidade || "").toUpperCase() === "CIN";
       const cpfDigits = onlyDigits(p.cpf);
       const rgValue = String(p.rg ?? "");
+      // Separa "SSP/SP" → emissor="SSP", uf="SP" (mantém compatibilidade caso vier separado)
+      const rawEmissor = String(p.emissor_rg ?? "").trim();
+      const rawUfEmissor = String((p as any).uf_emissor_rg ?? "").trim().toUpperCase();
+      let parsedEmissor = rawEmissor;
+      let parsedUfEmissor = rawUfEmissor;
+      const m = rawEmissor.match(/^(.+?)[\/\-\s]+([A-Z]{2})$/i);
+      if (m && !parsedUfEmissor) {
+        parsedEmissor = m[1].trim().toUpperCase();
+        parsedUfEmissor = m[2].toUpperCase();
+      }
       return {
         ...prev,
         nome_completo: setIfEmpty(prev.nome_completo, p.nome_completo),
         cpf: setIfEmpty(prev.cpf, cpfDigits),
         tipo_documento_identidade: cinDetected ? "CIN" : prev.tipo_documento_identidade,
         rg: setIfEmpty(prev.rg, rgValue),
-        emissor_rg: setIfEmpty(prev.emissor_rg, p.emissor_rg),
+        emissor_rg: setIfEmpty(prev.emissor_rg, parsedEmissor),
+        uf_emissor_rg: setIfEmpty(prev.uf_emissor_rg, parsedUfEmissor),
         expedicao_rg: setIfEmpty(prev.expedicao_rg, p.data_expedicao_rg),
         data_nascimento: setIfEmpty(prev.data_nascimento, p.data_nascimento),
         sexo: setIfEmpty(prev.sexo, normSexo(p.sexo)),
