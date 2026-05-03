@@ -350,7 +350,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [cliente, existingPhotoUrl, open]);
 
-  const set = (key: string, val: any) => setF(prev => ({ ...prev, [key]: val }));
+  const set = (key: string, val: any) => {
+    setF(prev => ({ ...prev, [key]: val }));
+    if (val) setRequiredErrors(p => (p[key] ? { ...p, [key]: false } : p));
+  };
 
   // Aplica os dados extraídos pela IA no formulário existente, sem destruir
   // valores já preenchidos manualmente. Dispara CEP lookup quando aplicável,
