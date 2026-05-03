@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap, RefreshCw, ScrollText, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -29,6 +29,17 @@ type Article = {
   embedding_status?: "pendente" | "gerado" | "erro" | null;
   embedding_error?: string | null;
   embedding_updated_at?: string | null;
+};
+
+type ArticleImage = {
+  id: string;
+  article_id: string;
+  step_number: number;
+  step_title: string | null;
+  caption: string | null;
+  image_url: string | null;
+  status: "draft" | "approved" | "archived" | "error";
+  error_message: string | null;
 };
 
 const CATEGORIES = [
@@ -67,6 +78,9 @@ export default function QABaseEquipePage() {
   const [showLogs, setShowLogs] = useState(false);
   const [logs, setLogs] = useState<Array<{ id: string; article_id: string; status: string; error_message: string | null; modelo: string | null; created_at: string }>>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+  const [images, setImages] = useState<ArticleImage[]>([]);
+  const [generatingImages, setGeneratingImages] = useState(false);
+  const [backfillingImages, setBackfillingImages] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -91,6 +105,19 @@ export default function QABaseEquipePage() {
   }
 
   useEffect(() => { loadAll(); }, []);
+
+  useEffect(() => {
+    if (!selected) { setImages([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("qa_kb_artigo_imagens" as any)
+        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
+        .eq("article_id", selected.id)
+        .neq("status", "archived")
+        .order("step_number");
+      setImages(((data ?? []) as any[]) as ArticleImage[]);
+    })();
+  }, [selected?.id]);
 
   const filtered = useMemo(() => {
     const q = filterText.trim().toLowerCase();
@@ -288,8 +315,54 @@ export default function QABaseEquipePage() {
     toast.success("Artigo salvo.");
     // dispara geração de embedding em background (não bloqueia)
     supabase.functions.invoke("qa-kb-embed", { body: { backfill: true } }).catch(() => {});
+    // dispara geração automática de imagens em background (não bloqueia)
+    const newId = (res as any)?.data?.[0]?.id ?? editing.id;
+    if (newId) {
+      supabase.functions.invoke("qa-kb-generate-article-images", {
+        body: { article_id: newId, force: !editing.id ? false : true },
+      }).catch(() => {});
+      toast.message("Gerando imagens ilustrativas em segundo plano...");
+    }
     setEditing(null);
     await loadAll();
+  }
+
+  async function regenerateImagesFor(articleId: string) {
+    setGeneratingImages(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-generate-article-images", {
+        body: { article_id: articleId, force: true },
+      });
+      if (error) throw error;
+      toast.success(`Imagens geradas (${(data as any)?.generated ?? 0}).`);
+      // recarrega imagens do selecionado
+      if (selected?.id === articleId) {
+        const { data: imgs } = await supabase
+          .from("qa_kb_artigo_imagens" as any)
+          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
+          .eq("article_id", articleId).neq("status", "archived").order("step_number");
+        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao gerar imagens: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setGeneratingImages(false);
+    }
+  }
+
+  async function backfillAllImages() {
+    setBackfillingImages(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
+        body: { limit: 5, only_missing: true },
+      });
+      if (error) throw error;
+      toast.success(`Lote processado: ${(data as any)?.processed ?? 0} artigo(s).`);
+    } catch (e: any) {
+      toast.error("Erro no backfill de imagens: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setBackfillingImages(false);
+    }
   }
 
   async function deleteArticle(a: Article) {
@@ -347,6 +420,43 @@ export default function QABaseEquipePage() {
             <article className="prose prose-sm md:prose-base max-w-none">
               <ReactMarkdown>{selected.body}</ReactMarkdown>
             </article>
+            {images.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs uppercase font-mono tracking-wider text-muted-foreground flex items-center gap-1">
+                    <ImageIcon className="h-3.5 w-3.5" /> Imagens ilustrativas ({images.length})
+                  </h3>
+                  <Button size="sm" variant="outline" onClick={() => regenerateImagesFor(selected.id)} disabled={generatingImages}>
+                    {generatingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+                    Regenerar imagens
+                  </Button>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {images.map(img => (
+                    <figure key={img.id} className="border rounded-md overflow-hidden bg-white">
+                      {img.image_url ? (
+                        <img src={img.image_url} alt={img.caption ?? img.step_title ?? "etapa"} className="w-full h-auto" loading="lazy" />
+                      ) : (
+                        <div className="aspect-video flex items-center justify-center bg-red-50 text-red-700 text-xs p-2">{img.error_message ?? "sem imagem"}</div>
+                      )}
+                      <figcaption className="p-2 text-[11px] uppercase font-mono flex items-center justify-between gap-2">
+                        <span className="truncate">{img.step_number > 0 ? `${img.step_number}. ` : ""}{img.step_title ?? img.caption ?? "—"}</span>
+                        <Badge variant="outline" className="text-[9px]">{img.status}</Badge>
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            )}
+            {images.length === 0 && (
+              <div className="mt-6 flex items-center justify-between border border-dashed rounded-md p-3">
+                <span className="text-xs text-muted-foreground font-mono uppercase">Sem imagens vinculadas.</span>
+                <Button size="sm" variant="outline" onClick={() => regenerateImagesFor(selected.id)} disabled={generatingImages}>
+                  {generatingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
+                  Gerar imagens agora
+                </Button>
+              </div>
+            )}
             {selected.tags.length > 0 && (
               <div className="mt-6 flex flex-wrap gap-1">
                 {selected.tags.map(t => (
@@ -548,6 +658,10 @@ export default function QABaseEquipePage() {
           </Button>
           <Button size="sm" variant="ghost" onClick={openLogs}>
             <ScrollText className="h-3.5 w-3.5 mr-1" /> Ver logs
+          </Button>
+          <Button size="sm" variant="ghost" onClick={backfillAllImages} disabled={backfillingImages}>
+            {backfillingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
+            Gerar imagens pendentes
           </Button>
         </CardContent>
       </Card>
