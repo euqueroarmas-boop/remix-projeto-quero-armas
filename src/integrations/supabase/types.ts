@@ -5514,17 +5514,23 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           audience: string
+          audit_ready_at: string | null
+          audit_session_id: string | null
+          audit_status: string
           author_id: string | null
           body: string
           category: string
+          checklist_audited_at: string | null
           created_at: string
           embedding: string | null
           embedding_error: string | null
           embedding_status: string
           embedding_updated_at: string | null
           id: string
+          knowledge_base_audited_at: string | null
           last_review_reason: string | null
           module: string | null
+          procedure_tested_at: string | null
           related_articles: string[]
           search_tsv: unknown
           slug: string
@@ -5540,17 +5546,23 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           audience?: string
+          audit_ready_at?: string | null
+          audit_session_id?: string | null
+          audit_status?: string
           author_id?: string | null
           body?: string
           category: string
+          checklist_audited_at?: string | null
           created_at?: string
           embedding?: string | null
           embedding_error?: string | null
           embedding_status?: string
           embedding_updated_at?: string | null
           id?: string
+          knowledge_base_audited_at?: string | null
           last_review_reason?: string | null
           module?: string | null
+          procedure_tested_at?: string | null
           related_articles?: string[]
           search_tsv?: unknown
           slug: string
@@ -5566,17 +5578,23 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           audience?: string
+          audit_ready_at?: string | null
+          audit_session_id?: string | null
+          audit_status?: string
           author_id?: string | null
           body?: string
           category?: string
+          checklist_audited_at?: string | null
           created_at?: string
           embedding?: string | null
           embedding_error?: string | null
           embedding_status?: string
           embedding_updated_at?: string | null
           id?: string
+          knowledge_base_audited_at?: string | null
           last_review_reason?: string | null
           module?: string | null
+          procedure_tested_at?: string | null
           related_articles?: string[]
           search_tsv?: unknown
           slug?: string
@@ -5588,7 +5606,15 @@ export type Database = {
           version?: number
           visual_bug_detected?: boolean
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_artigos_audit_session_id_fkey"
+            columns: ["audit_session_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_audit_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_kb_audit_sessions: {
         Row: {
@@ -8224,6 +8250,20 @@ export type Database = {
       qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
       qa_is_owner_of_cliente: {
         Args: { _cliente_id: number }
+        Returns: boolean
+      }
+      qa_kb_article_audit_complete: {
+        Args: {
+          _audit_ready_at: string
+          _audit_status: string
+          _checklist_audited_at: string
+          _knowledge_base_audited_at: string
+          _procedure_tested_at: string
+        }
+        Returns: boolean
+      }
+      qa_kb_article_has_approved_real_image: {
+        Args: { _article_id: string }
         Returns: boolean
       }
       qa_kb_search_hybrid: {
