@@ -134,6 +134,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [requiredErrors, setRequiredErrors] = useState<{ photo?: boolean; sexo?: boolean; estado_civil?: boolean }>({});
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
