@@ -29,3 +29,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [QA No AI Images](mem://constraints/quero-armas-no-ai-images) — Imagens da Base só podem ser reais/auditáveis; geração por IA bloqueada em DB+edge+UI
 - [QA KB Audit Before Writing](mem://constraints/quero-armas-kb-audit-before-writing) — Base só escreve/publica após checklist, base e procedimento auditados; exige evidência real aprovada
 - [QA KB Audit Screenshots Pipeline](mem://features/quero-armas/kb-audit-screenshots-pipeline) — Workflow GitHub Actions + Playwright real loga como equipe, captura screenshot real e grava em qa_kb_artigo_imagens com image_type='auditoria_real'; nunca gera imagem
+- [QA Status Color Immutability](mem://style/quero-armas/status-color-immutability) — Cores semânticas de status (verde=ativo/pago, vermelho=erro, âmbar=alerta) NUNCA podem ser alteradas em restyling de UI
