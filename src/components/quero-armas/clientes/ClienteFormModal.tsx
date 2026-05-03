@@ -326,6 +326,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         validade_exame_tiro: "",
         senha_gov: "",
       });
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
       // Load existing photo preview
       if (cliente.imagem) {
         setPhotoPreview(existingPhotoUrl || null);
@@ -365,6 +368,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       }));
       setPhotoPreview(null);
       setCadastroCrId(null);
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
     }
   }, [cliente, existingPhotoUrl, open]);
 
