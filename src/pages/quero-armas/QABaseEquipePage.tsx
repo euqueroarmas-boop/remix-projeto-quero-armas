@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2 } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2, CheckCircle2, AlertCircle, Clock, Zap } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -26,6 +26,9 @@ type Article = {
   status: "draft" | "published" | "archived";
   created_at: string;
   updated_at: string;
+  embedding_status?: "pendente" | "gerado" | "erro" | null;
+  embedding_error?: string | null;
+  embedding_updated_at?: string | null;
 };
 
 const CATEGORIES = [
@@ -58,6 +61,7 @@ export default function QABaseEquipePage() {
   const [saving, setSaving] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [draftDescription, setDraftDescription] = useState("");
+  const [processingEmb, setProcessingEmb] = useState(false);
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -104,6 +108,32 @@ export default function QABaseEquipePage() {
     }
     return Array.from(map.entries());
   }, [filtered]);
+
+  const embStats = useMemo(() => {
+    const s = { gerado: 0, pendente: 0, erro: 0 };
+    for (const a of articles) {
+      const k = (a.embedding_status ?? "pendente") as "gerado" | "pendente" | "erro";
+      if (k in s) s[k]++;
+    }
+    return s;
+  }, [articles]);
+
+  async function processPendingEmbeddings() {
+    setProcessingEmb(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-embed", {
+        body: { backfill: true, limit: 10 },
+      });
+      if (error) throw error;
+      const d = data as any;
+      toast.success(`Vetores: ${d?.processed ?? 0} processados, ${d?.failed ?? 0} falhas (lote de até 10).`);
+      await loadAll();
+    } catch (e: any) {
+      toast.error("Erro ao processar vetores: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setProcessingEmb(false);
+    }
+  }
 
   async function runAiSearch() {
     if (aiQuery.trim().length < 3) {
