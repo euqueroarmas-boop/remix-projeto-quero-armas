@@ -806,6 +806,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <SectionTitle icon={Activity} label="Preencher com IA" />
                 <div className="mt-3">
                   <ClienteAIPrefill
+                    key={aiPrefillKey}
                     onApply={applyAIPrefill}
                     onPhotoCandidate={(file) => {
                       // Só assume a foto se ainda não houver uma selecionada.
