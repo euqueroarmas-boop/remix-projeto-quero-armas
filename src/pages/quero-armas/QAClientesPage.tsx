@@ -1397,7 +1397,7 @@ export default function QAClientesPage() {
   };
 
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
-  const [tabView, setTabView] = useState<"clientes" | "manuais" | "cadastros" | "rejeitados">("clientes");
+  const [tabView, setTabView] = useState<"clientes" | "manuais" | "arsenal_free" | "cadastros" | "rejeitados">("clientes");
   const [cadastroFilter, setCadastroFilter] = useState<"pendente" | "aprovado">("pendente");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
