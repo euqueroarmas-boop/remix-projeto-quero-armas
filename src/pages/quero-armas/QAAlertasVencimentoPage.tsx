@@ -46,7 +46,7 @@ export default function QAAlertasVencimentoPage() {
       if (error) {
         const msg = String(error?.message || error);
         if (msg.includes("401") || /unauthor/i.test(msg)) {
-          setErrMsg("Sessão expirada ou sem permissão de equipe. Faça login novamente como administrador Quero Armas.");
+          setErrMsg("Sessão expirada ou sem permissão de equipe. Faça login novamente como Equipe Quero Armas.");
         } else {
           setErrMsg(`Falha ao carregar pré-visualização: ${msg}`);
         }
