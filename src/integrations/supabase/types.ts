@@ -3574,7 +3574,7 @@ export type Database = {
           homologado_em: string | null
           homologado_por: string | null
           id: number
-          id_legado: number
+          id_legado: number | null
           imagem: string | null
           matricula_funcional: string | null
           nacionalidade: string | null
@@ -3660,7 +3660,7 @@ export type Database = {
           homologado_em?: string | null
           homologado_por?: string | null
           id?: number
-          id_legado: number
+          id_legado?: number | null
           imagem?: string | null
           matricula_funcional?: string | null
           nacionalidade?: string | null
@@ -3746,7 +3746,7 @@ export type Database = {
           homologado_em?: string | null
           homologado_por?: string | null
           id?: number
-          id_legado?: number
+          id_legado?: number | null
           imagem?: string | null
           matricula_funcional?: string | null
           nacionalidade?: string | null
