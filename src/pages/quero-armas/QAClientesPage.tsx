@@ -3577,7 +3577,7 @@ export default function QAClientesPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+          placeholder="Buscar por nome, CPF, telefone, e-mail ou serviço..."
           className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
           style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
         />
