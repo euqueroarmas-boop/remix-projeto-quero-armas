@@ -8,6 +8,7 @@ const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
 const QADashboardPage = lazyRetry(() => import("./QADashboardPage"), "QADashboardPage");
 const QAMonitoramentoPage = lazyRetry(() => import("./QAMonitoramentoPage"), "QAMonitoramentoPage");
 const QABaseConhecimentoPage = lazyRetry(() => import("./QABaseConhecimentoPage"), "QABaseConhecimentoPage");
+const QABaseEquipePage = lazyRetry(() => import("./QABaseEquipePage"), "QABaseEquipePage");
 const QADocumentoDetalhePage = lazyRetry(() => import("./QADocumentoDetalhePage"), "QADocumentoDetalhePage");
 const QALegislacaoPage = lazyRetry(() => import("./QALegislacaoPage"), "QALegislacaoPage");
 const QAJurisprudenciaPage = lazyRetry(() => import("./QAJurisprudenciaPage"), "QAJurisprudenciaPage");
@@ -113,6 +114,7 @@ export default function QARoutes() {
           <Route path="ia" element={<QAIAPage />} />
           <Route path="base-conhecimento" element={<QABaseConhecimentoPage />} />
           <Route path="base-conhecimento/:id" element={<QADocumentoDetalhePage />} />
+          <Route path="base-equipe" element={<QABaseEquipePage />} />
           <Route path="legislacao" element={<QALegislacaoPage />} />
           <Route path="jurisprudencia" element={<QAJurisprudenciaPage />} />
           <Route path="modelos-docx" element={<QAModelosDocxPage />} />

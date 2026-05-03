@@ -5,7 +5,7 @@ import {
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
   ClipboardList, Tags, GraduationCap,
-  History,
+  History, LifeBuoy,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
@@ -65,6 +65,7 @@ const NAV_GROUPS = [
   {
     label: "Sistema",
     items: [
+      { title: "Base da Equipe", url: "/base-equipe", icon: LifeBuoy },
       { title: "Auditoria", url: "/auditoria", icon: ShieldCheck },
       { title: "Configurações", url: "/configuracoes", icon: Settings },
     ],
