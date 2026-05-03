@@ -489,7 +489,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
         validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
         validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
-        senha_gov: canFillSenhaGov ? senhaGovRaw : prev.senha_gov,
+        senha_gov: canFillSenhaGov ? senhaGovRaw : ((p as any).senha_gov_needs_review ? "" : prev.senha_gov),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
@@ -971,7 +971,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                           <span>Confira a senha GOV.BR caractere por caractere antes de salvar.</span>
                         </div>
                       )}
-                      {aiSenhaGovNeedsReview && !f.senha_gov && (
+                      {aiSenhaGovNeedsReview && (
                         <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
                           <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
                           <span>Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.</span>
