@@ -3545,7 +3545,6 @@ export type Database = {
           cep2: string | null
           cidade: string | null
           cidade2: string | null
-          cliente_legado: boolean
           cliente_lions: boolean | null
           cnh: string | null
           complemento: string | null
@@ -3608,8 +3607,6 @@ export type Database = {
           sexo: string | null
           status: string | null
           subcategoria: string | null
-          tentativa_compra_legado_count: number
-          tentativa_compra_legado_em: string | null
           tipo_cliente: string | null
           tipo_documento_identidade: string
           titulo_eleitor: string | null
@@ -3634,7 +3631,6 @@ export type Database = {
           cep2?: string | null
           cidade?: string | null
           cidade2?: string | null
-          cliente_legado?: boolean
           cliente_lions?: boolean | null
           cnh?: string | null
           complemento?: string | null
@@ -3697,8 +3693,6 @@ export type Database = {
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
-          tentativa_compra_legado_count?: number
-          tentativa_compra_legado_em?: string | null
           tipo_cliente?: string | null
           tipo_documento_identidade?: string
           titulo_eleitor?: string | null
@@ -3723,7 +3717,6 @@ export type Database = {
           cep2?: string | null
           cidade?: string | null
           cidade2?: string | null
-          cliente_legado?: boolean
           cliente_lions?: boolean | null
           cnh?: string | null
           complemento?: string | null
@@ -3786,8 +3779,6 @@ export type Database = {
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
-          tentativa_compra_legado_count?: number
-          tentativa_compra_legado_em?: string | null
           tipo_cliente?: string | null
           tipo_documento_identidade?: string
           titulo_eleitor?: string | null
