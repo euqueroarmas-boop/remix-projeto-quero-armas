@@ -86,10 +86,10 @@ function Field({ label, children, span }: { label: string; children: React.React
 const inputClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all uppercase";
 const selectClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all appearance-none cursor-pointer";
 
-function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled }: {
+function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
   placeholder?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
-  maxLength?: number; span?: boolean; disabled?: boolean;
+  maxLength?: number; span?: boolean; disabled?: boolean; error?: string;
 }) {
   return (
     <Field label={label} span={span}>
@@ -102,8 +102,9 @@ function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLen
         inputMode={inputMode}
         maxLength={maxLength}
         disabled={disabled}
-        className={cn(inputClass, disabled && "opacity-50 cursor-not-allowed")}
+        className={cn(inputClass, disabled && "opacity-50 cursor-not-allowed", error && "border-red-500 ring-1 ring-red-500")}
       />
+      {error && <p className="text-[10px] text-red-600 mt-1 uppercase">{error}</p>}
     </Field>
   );
 }
