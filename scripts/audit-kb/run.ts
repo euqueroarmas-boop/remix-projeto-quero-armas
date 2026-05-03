@@ -14,7 +14,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { loginAsTeam } from "./login.ts";
-import { parseAuditSteps, type AuditStep } from "./parseSteps.ts";
+import { parseAuditSteps, planToSteps, type AuditStep, type AuditPlan } from "./parseSteps.ts";
 import { captureStep } from "./capture.ts";
 
 const SUPABASE_URL = required("SUPABASE_URL");
@@ -44,16 +44,55 @@ function required(name: string): string {
   return v;
 }
 
-type Article = { id: string; title: string; slug: string; body: string; status: string };
+type Article = {
+  id: string;
+  title: string;
+  slug: string;
+  body: string;
+  status: string;
+  audit_plan_json: AuditPlan | null;
+};
 
 async function loadArticles(): Promise<Article[]> {
-  let q = sb.from("qa_kb_artigos").select("id,title,slug,body,status");
+  let q = sb.from("qa_kb_artigos").select("id,title,slug,body,status,audit_plan_json");
   if (ARTICLE_IDS.length > 0) q = q.in("id", ARTICLE_IDS);
   else q = q.eq("status", "needs_real_image");
   q = q.limit(MAX);
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as Article[];
+}
+
+/**
+ * Garante que o artigo tenha um audit_plan_json. Se não tiver, chama a
+ * edge function qa-kb-audit-plan (Lovable AI) para gerar.
+ * NUNCA gera imagem — só plano de navegação.
+ */
+async function ensureAuditPlan(article: Article): Promise<AuditPlan | null> {
+  if (article.audit_plan_json && Array.isArray(article.audit_plan_json.steps)) {
+    return article.audit_plan_json;
+  }
+  try {
+    const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/qa-kb-audit-plan`;
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({ article_id: article.id }),
+    });
+    if (!r.ok) {
+      console.warn(`[qa-kb-audit] plano IA falhou (${r.status}) para ${article.slug}`);
+      return null;
+    }
+    const j = await r.json();
+    return (j?.plan ?? null) as AuditPlan | null;
+  } catch (e) {
+    console.warn(`[qa-kb-audit] erro chamando qa-kb-audit-plan:`, e);
+    return null;
+  }
 }
 
 async function openAuditSession(): Promise<string> {
@@ -110,7 +149,7 @@ async function recordSuccess(sessionId: string, article: Article, step: AuditSte
     captured_at: new Date().toISOString(),
     viewport: `${VW}x${VH}`,
     device: DEVICE,
-    origem: `playwright:${finalUrl}`,
+    origem: `playwright[${step.source ?? "manual"}|conf=${step.confidence ?? 1}]:${finalUrl}`,
   });
 }
 
@@ -147,14 +186,32 @@ async function ensureNeedsReviewIfNoSuccess(article: Article, anySuccess: boolea
 
 async function auditArticle(browser: Browser, sessionId: string, article: Article) {
   const log: any = { article_id: article.id, slug: article.slug, steps: [] };
-  const steps = parseAuditSteps(article.body);
+
+  // 1. Manual audit-step (fallback canônico).
+  let steps = parseAuditSteps(article.body);
+  let source: "manual" | "ai_plan" = "manual";
+
+  // 2. Se não houver manual, gera/usa plano de IA.
+  if (steps.length === 0) {
+    const plan = await ensureAuditPlan(article);
+    log.audit_plan = plan;
+    if (plan?.needs_human_review) {
+      log.skipped = "ai_plan: needs_human_review";
+      await recordFailure(sessionId, article, null, "AI_PLAN_NEEDS_HUMAN_REVIEW: " + (plan.notes ?? ""), BASE_URL);
+      await ensureNeedsReviewIfNoSuccess(article, false);
+      return { log, success: 0, routes: [], modules: [] };
+    }
+    steps = planToSteps(plan, 0.6);
+    source = "ai_plan";
+  }
 
   if (steps.length === 0) {
-    log.skipped = "no audit-step blocks in body";
-    await recordFailure(sessionId, article, null, "NO_AUDIT_STEPS_DECLARED", BASE_URL);
+    log.skipped = "no manual audit-step and no confident ai plan";
+    await recordFailure(sessionId, article, null, "NO_AUDIT_STEPS_AVAILABLE (manual e IA sem plano confiável)", BASE_URL);
     await ensureNeedsReviewIfNoSuccess(article, false);
     return { log, success: 0, routes: [], modules: [] };
   }
+  log.steps_source = source;
 
   const ctx = await browser.newContext({
     viewport: { width: VW, height: VH },
@@ -175,11 +232,11 @@ async function auditArticle(browser: Browser, sessionId: string, article: Articl
       if (r.ok) {
         const path = await uploadScreenshot(sessionId, article.id, step, r.buffer);
         await recordSuccess(sessionId, article, step, path, r.finalUrl);
-        log.steps.push({ n: step.n, route: step.route, ok: true, path });
+        log.steps.push({ n: step.n, route: step.route, ok: true, path, source: step.source });
         success++;
       } else {
         await recordFailure(sessionId, article, step, r.error, r.finalUrl);
-        log.steps.push({ n: step.n, route: step.route, ok: false, error: r.error });
+        log.steps.push({ n: step.n, route: step.route, ok: false, error: r.error, source: step.source });
       }
     }
   } catch (e) {

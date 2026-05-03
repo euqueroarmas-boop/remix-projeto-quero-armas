@@ -29,15 +29,23 @@ Pipeline de **auditoria automatizada** da Base de Conhecimento Quero Armas.
 
 ## Como o artigo é "lido"
 
-Cada artigo de KB pode declarar passos auditáveis no `body` usando blocos:
+O auditor tenta, em ordem:
+
+1. **`audit-step` manual** no `body` (controle máximo, fallback canônico).
+2. **`audit_plan_json`** já gravado no artigo.
+3. **Plano gerado pela IA** via `qa-kb-audit-plan` (Lovable AI, `google/gemini-2.5-flash`)
+   — chama a edge function, persiste o plano em `qa_kb_artigos.audit_plan_json`
+   e usa apenas passos com `confidence ≥ 0.6`.
+
+> A IA **não** desenha imagem. Ela só sugere `route`, `expected_text`, `click`, `wait`.
+> Quem captura é o Playwright. Se nenhum `expected_text` aparece na tela,
+> o screenshot **não** é salvo e o artigo continua `needs_real_image`.
+
+### Bloco manual (override)
 
 ```
 <!-- audit-step n="1" route="/quero-armas/clientes" wait="text=Clientes" -->
 Acessar a lista de clientes
-<!-- /audit-step -->
-
-<!-- audit-step n="2" route="/quero-armas/clientes" click="text=Novo Cliente" wait="text=Cadastrar" -->
-Abrir modal de cadastro
 <!-- /audit-step -->
 ```
 
@@ -48,9 +56,28 @@ Atributos suportados:
 - `click`: seletor a ser clicado depois de carregar a rota
 - `fill`: `seletor::valor` para preencher antes do print
 
-Se o artigo **não** tiver blocos `audit-step`, o auditor faz uma única
-captura na rota declarada em `qa_kb_artigos.module` ou no metadado
-`audit_route` da sessão atual. Sem rota válida → `needs_real_image`.
+### Plano IA (`audit_plan_json`)
+
+Estrutura persistida em `qa_kb_artigos.audit_plan_json`:
+
+```json
+{
+  "intent": "Cadastrar um novo cliente",
+  "entities": ["cliente", "CPF"],
+  "candidate_routes": ["/quero-armas/clientes"],
+  "steps": [
+    { "n": 1, "route": "/quero-armas/clientes",
+      "expected_text": ["Clientes", "Novo cliente"],
+      "confidence": 0.86 }
+  ],
+  "overall_confidence": 0.86,
+  "needs_human_review": false
+}
+```
+
+Se `needs_human_review=true` ou todos os steps tiverem `confidence < 0.6`,
+o auditor não captura imagem e marca o artigo como `needs_real_image`
+com erro `AI_PLAN_NEEDS_HUMAN_REVIEW`.
 
 ## Resultado
 

@@ -43,6 +43,26 @@ export async function captureStep(
       await page.waitForTimeout(500);
     }
 
+    // Validação semântica: pelo menos UM expected_text deve estar visível.
+    if (step.expected_text && step.expected_text.length > 0) {
+      let matched = 0;
+      for (const phrase of step.expected_text) {
+        const ok = await page
+          .getByText(phrase, { exact: false })
+          .first()
+          .isVisible({ timeout: 4_000 })
+          .catch(() => false);
+        if (ok) matched++;
+      }
+      if (matched === 0) {
+        return {
+          ok: false,
+          error: `EXPECTED_TEXT_NOT_FOUND: nenhum de [${step.expected_text.join(" | ")}] encontrado em ${page.url()}`,
+          finalUrl: page.url(),
+        };
+      }
+    }
+
     const buffer = await page.screenshot({ fullPage: true, type: "png" });
     return { ok: true, buffer, finalUrl: page.url() };
   } catch (e) {
