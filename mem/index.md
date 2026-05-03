@@ -28,3 +28,4 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [AI Supervised Correction](mem://features/quero-armas/ai-supervised-correction-system) — qa_ia_correcoes_juridicas + /correcoes-ia, 3 fases (admin/captura/injeção+checagem)
 - [QA No AI Images](mem://constraints/quero-armas-no-ai-images) — Imagens da Base só podem ser reais/auditáveis; geração por IA bloqueada em DB+edge+UI
 - [QA KB Audit Before Writing](mem://constraints/quero-armas-kb-audit-before-writing) — Base só escreve/publica após checklist, base e procedimento auditados; exige evidência real aprovada
+- [QA KB Audit Screenshots Pipeline](mem://features/quero-armas/kb-audit-screenshots-pipeline) — Workflow GitHub Actions + Playwright real loga como equipe, captura screenshot real e grava em qa_kb_artigo_imagens com image_type='auditoria_real'; nunca gera imagem
