@@ -805,7 +805,17 @@ export function ArsenalView({
       "aguardando_documentacao",
     ]);
     const alertas = itens.filter((s) => ALERT_CODES.has(s.codigo));
-    if (alertas.length === 0) return null;
+    if (alertas.length === 0) {
+      // Sem alerta real: força neutro/cinza com "Tudo em dia",
+      // mesmo que `alerts.length` legado seja > 0 (filtro <=90d cru).
+      return {
+        dimensao: "vazio",
+        codigo: "sem_alerta",
+        label: "TUDO EM DIA",
+        cor: "cinza",
+        prioridade: 10,
+      } satisfies StatusUnificado;
+    }
     return reduzirStatus(alertas);
   }, [
     expDocs, processos,
