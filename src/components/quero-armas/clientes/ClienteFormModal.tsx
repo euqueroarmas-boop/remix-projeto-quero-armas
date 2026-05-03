@@ -577,11 +577,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
               {/* KPIs (espelha a tira de KPIs do dashboard do cliente) */}
               <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                <KpiCard icon={User} label="Identificação" value={kpiIdent(f)} />
-                <KpiCard icon={Phone} label="Contato" value={kpiContato(f)} />
-                <KpiCard icon={MapPin} label="Endereço" value={kpiEndereco(f)} />
+                <KpiCard icon={User} label="Identificação" value={kpiIdent(f)} tone={kpiTone(kpiIdent(f))} />
+                <KpiCard icon={Phone} label="Contato" value={kpiContato(f)} tone={kpiTone(kpiContato(f))} />
+                <KpiCard icon={MapPin} label="Endereço" value={kpiEndereco(f)} tone={kpiTone(kpiEndereco(f))} />
                 <KpiCard icon={Shield} label="Categoria" value={f.categoria_titular ? "OK" : "Pendente"} tone={f.categoria_titular ? "ok" : "warn"} />
-                <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone="info" />
+                <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone={isEdit ? "ok" : "info"} />
               </div>
             </section>
 
