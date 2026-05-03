@@ -317,7 +317,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         // estado de senha não é mais mantido aqui; SenhaGovField gerencia tudo.
       })();
     } else {
-      setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
+      setF(prev => ({
+        ...prev,
+        nome_completo: "", cpf: "", rg: "", email: "", celular: "",
+        validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "",
+      }));
       setPhotoPreview(null);
       setCadastroCrId(null);
     }
