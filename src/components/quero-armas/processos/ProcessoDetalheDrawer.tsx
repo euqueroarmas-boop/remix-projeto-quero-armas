@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
@@ -417,8 +418,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const equipeSetProcessoStatus = async (novoStatus: string) => {
     try {
+      const statusAnterior = processo?.status ?? null;
+      const clienteIdLocal = processo?.cliente_id ?? null;
       const { error } = await supabase.from("qa_processos").update({ status: novoStatus }).eq("id", processoId);
       if (error) throw error;
+      void registrarStatusEvento({
+        cliente_id: clienteIdLocal,
+        processo_id: processoId,
+        origem: "equipe",
+        entidade: "processo",
+        entidade_id: processoId,
+        campo_status: "status",
+        status_anterior: statusAnterior,
+        status_novo: novoStatus,
+        usuario_id: (await supabase.auth.getUser()).data.user?.id ?? null,
+        detalhes: { contexto: "ProcessoDetalheDrawer.equipeSetProcessoStatus" },
+      });
       const eventoEmail =
         novoStatus === "aprovado" ? "documentacao_aprovada" :
         novoStatus === "concluido" ? "processo_concluido" :
