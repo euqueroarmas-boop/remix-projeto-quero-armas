@@ -955,6 +955,18 @@ export default function QABaseEquipePage() {
             <SelectItem value="erro">Vetor: erro</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={filterReview} onValueChange={setFilterReview}>
+          <SelectTrigger className="md:max-w-[220px]"><SelectValue placeholder="Status do artigo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Revisão: todos</SelectItem>
+            <SelectItem value="needs_review">⏳ Aguardando revisão</SelectItem>
+            <SelectItem value="audited">🔵 Auditado (equipe)</SelectItem>
+            <SelectItem value="published">🟢 Publicado (cliente)</SelectItem>
+            <SelectItem value="rejected">🔴 Reprovado</SelectItem>
+            <SelectItem value="draft">📝 Rascunho</SelectItem>
+            <SelectItem value="archived">📦 Arquivado</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Lista agrupada */}
