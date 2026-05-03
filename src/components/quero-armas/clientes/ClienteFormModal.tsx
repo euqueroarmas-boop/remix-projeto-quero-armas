@@ -283,6 +283,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         ctps: cliente.ctps || "",
         validade_laudo_psicologico: "",
         validade_exame_tiro: "",
+        senha_gov: "",
       });
       // Load existing photo preview
       if (cliente.imagem) {
@@ -381,8 +382,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade2: setIfEmpty(prev.cidade2, (p as any).cidade_secundario),
         estado2: setIfEmpty(prev.estado2, (p as any).estado_secundario),
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
-        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).validade_laudo_psicologico),
-        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).validade_exame_tiro),
+        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
+        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
+        senha_gov: setIfEmpty(prev.senha_gov, (p as any).senha_gov),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
