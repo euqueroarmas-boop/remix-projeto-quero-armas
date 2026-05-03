@@ -1904,7 +1904,7 @@ export default function QAClientesPage() {
         toast.success(clienteVinculadoId
           ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}.${historicoMsg}`
           : "Cadastro aprovado com sucesso");
-      } else if (status === "pendente" && APROVADO_STATUSES_RUNTIME.has(String(selectedCadastroPublico.status || "").toLowerCase())) {
+      } else if (status === "pendente" && ["aprovado", "conferido", "validado", "formulario_conferido"].includes(String(selectedCadastroPublico.status || "").toLowerCase())) {
         toast.success("Conferência removida. Cadastro voltou para pendentes.");
       } else {
         toast.success(`Cadastro marcado como ${status}`);
