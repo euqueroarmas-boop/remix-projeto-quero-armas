@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench } from "lucide-react";
+import { Loader2, Plus, Search, Sparkles, BookOpen, Edit3, Trash2, ArrowLeft, Tag, Wrench, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -56,6 +56,8 @@ export default function QABaseEquipePage() {
   const [selected, setSelected] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Partial<Article> | null>(null);
   const [saving, setSaving] = useState(false);
+  const [drafting, setDrafting] = useState(false);
+  const [draftDescription, setDraftDescription] = useState("");
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -128,9 +130,45 @@ export default function QABaseEquipePage() {
 
   function startNew() {
     setEditing(emptyArticle());
+    setDraftDescription("");
   }
   function startEdit(a: Article) {
     setEditing({ ...a });
+    setDraftDescription("");
+  }
+
+  async function generateWithAI() {
+    if (!editing) return;
+    if (!editing.title?.trim() && !draftDescription.trim()) {
+      toast.error("Informe o título ou uma descrição para a IA gerar o rascunho.");
+      return;
+    }
+    setDrafting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-draft", {
+        body: {
+          title: editing.title || draftDescription.slice(0, 80),
+          module: editing.module || "",
+          audience: editing.audience || "equipe",
+          description: draftDescription,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const d = data as any;
+      setEditing({
+        ...editing,
+        body: d.body || editing.body,
+        tags: (d.tags?.length ? d.tags : editing.tags) ?? [],
+        symptoms: (d.symptoms?.length ? d.symptoms : editing.symptoms) ?? [],
+        status: "draft",
+      });
+      toast.success("Rascunho gerado pela IA. Revise e publique manualmente.");
+    } catch (e: any) {
+      toast.error("Erro ao gerar rascunho: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setDrafting(false);
+    }
   }
 
   async function saveArticle() {
@@ -166,6 +204,8 @@ export default function QABaseEquipePage() {
       return;
     }
     toast.success("Artigo salvo.");
+    // dispara geração de embedding em background (não bloqueia)
+    supabase.functions.invoke("qa-kb-embed", { body: { backfill: true } }).catch(() => {});
     setEditing(null);
     await loadAll();
   }
@@ -241,6 +281,28 @@ export default function QABaseEquipePage() {
             <DialogTitle className="uppercase">{editing.id ? "Editar artigo" : "Novo artigo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {!editing.id && (
+              <div className="rounded-md border border-amber-300 bg-amber-50/60 p-3 space-y-2">
+                <div className="flex items-center gap-2 text-xs uppercase font-mono text-amber-700">
+                  <Wand2 className="h-3.5 w-3.5" /> Gerar rascunho com IA
+                </div>
+                <Textarea
+                  rows={2}
+                  placeholder="Descreva o problema, a tela ou o fluxo. A IA vai gerar um rascunho operacional para revisão."
+                  value={draftDescription}
+                  onChange={(e) => setDraftDescription(e.target.value)}
+                />
+                <div className="flex justify-end">
+                  <Button size="sm" variant="outline" onClick={generateWithAI} disabled={drafting}>
+                    {drafting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1" />}
+                    Gerar rascunho
+                  </Button>
+                </div>
+                <p className="text-[10px] text-amber-700/80 uppercase font-mono">
+                  O rascunho fica como DRAFT — revise antes de publicar.
+                </p>
+              </div>
+            )}
             <div>
               <label className="text-xs uppercase font-mono">Título</label>
               <Input value={editing.title ?? ""} onChange={e => setEditing({ ...editing, title: e.target.value })} className="uppercase" />

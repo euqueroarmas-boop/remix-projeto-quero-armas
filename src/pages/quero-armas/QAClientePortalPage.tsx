@@ -10,6 +10,7 @@ import {
   ShoppingBag, FileStack,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
+import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
@@ -1107,6 +1108,11 @@ export default function QAClientePortalPage() {
             <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
           </SectionCard>
         )}
+
+        {/* ═══ CENTRAL DE AJUDA (Base Operacional do Cliente) ═══ */}
+        <SectionCard icon={Bell} title="Central de Ajuda" color="hsl(35 92% 48%)">
+          <CentralAjudaCliente />
+        </SectionCard>
 
         {/* ═══ MEU HUB DE DOCUMENTOS (CR, CRAF, GT, AC...) ═══ */}
         {(customerId || cliente?.id) && (
