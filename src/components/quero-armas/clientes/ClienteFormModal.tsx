@@ -806,7 +806,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span error={requiredErrors.nome_completo ? "Obrigatório" : undefined} />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <FInput label="CPF *" value={f.cpf} onChange={v => set("cpf", v)} error={requiredErrors.cpf ? "Obrigatório" : undefined} />
                 <FSelect
                   label="Tipo de Documento"
@@ -828,6 +828,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   value={f.emissor_rg}
                   onChange={v => set("emissor_rg", v)}
                   error={requiredErrors.emissor_rg ? "Obrigatório" : undefined}
+                />
+                <FSelect
+                  label="UF Emissor *"
+                  value={f.uf_emissor_rg}
+                  onChange={v => set("uf_emissor_rg", v)}
+                  options={ufOptions}
+                  placeholder="UF..."
+                  error={requiredErrors.uf_emissor_rg ? "Obrigatório" : undefined}
                 />
               </div>
               {f.tipo_documento_identidade === "CIN" && (
