@@ -32,7 +32,7 @@ const fmtDate = (d: string | null) => {
 function FonteBadge({ fonte }: { fonte: string }) {
   const cfg = (() => {
     switch ((fonte || "").toLowerCase()) {
-      case "craf":   return { label: "CRAF",   bg: "hsl(220 80% 56% / 0.10)", color: "hsl(352 60% 40%)" };
+      case "craf":   return { label: "CRAF",   bg: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" };
       case "manual": return { label: "MANUAL", bg: "hsl(262 60% 55% / 0.10)", color: "hsl(262 60% 40%)" };
       case "ocr":
       case "ia":     return { label: "IA/OCR", bg: "hsl(190 80% 42% / 0.12)", color: "hsl(190 80% 32%)" };

@@ -156,7 +156,7 @@ export default function QAEnviarFotoPage() {
                 onClick={lookup}
                 disabled={loading}
                 className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}
+                style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 CONTINUAR
@@ -176,7 +176,7 @@ export default function QAEnviarFotoPage() {
 
               {!selfie && !stream && (
                 <div className="space-y-3">
-                  <button onClick={startCamera} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}>
+                  <button onClick={startCamera} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}>
                     <Camera className="w-4 h-4" /> ABRIR CÂMERA
                   </button>
                   <button onClick={() => fileRef.current?.click()} className="w-full h-12 rounded-lg font-semibold border flex items-center justify-center gap-2" style={{ borderColor: "hsl(220 13% 80%)", color: "hsl(220 20% 25%)" }}>
@@ -191,7 +191,7 @@ export default function QAEnviarFotoPage() {
                   <div className="rounded-xl overflow-hidden bg-black aspect-square">
                     <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
                   </div>
-                  <button onClick={capture} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}>
+                  <button onClick={capture} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}>
                     <Camera className="w-4 h-4" /> CAPTURAR
                   </button>
                 </div>

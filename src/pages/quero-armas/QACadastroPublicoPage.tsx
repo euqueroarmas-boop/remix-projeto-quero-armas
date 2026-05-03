@@ -1178,7 +1178,7 @@ function DuplicateModal({
             onClick={onConfirm}
             disabled={busy}
             className="flex-1 min-w-0 h-11 rounded-lg text-xs font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-1.5 px-3"
-            style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}
+            style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
           >
             {busy ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
             <span className="truncate">{hasChanges ? "Confirmar atualização" : "Atualizar mesmo assim"}</span>
@@ -1960,7 +1960,7 @@ function Step3Review({
         onClick={onContinue}
         disabled={busy || !podeAvancar}
         className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-        style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
+        style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))", boxShadow: "0 4px 14px hsl(352 60% 30% / 0.35)" }}
       >
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
         Concluir cadastro

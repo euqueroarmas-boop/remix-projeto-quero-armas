@@ -2492,7 +2492,7 @@ export default function QAClientesPage() {
                 <div className="qa-card p-4 md:p-5 mb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 56% / 0.12)" }}>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 60% 30% / 0.12)" }}>
                         <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
                       </div>
                       <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(352 60% 30%)" }}>
@@ -2634,7 +2634,7 @@ export default function QAClientesPage() {
                             <div className="flex items-center gap-2 flex-wrap min-w-0">
                               <span
                                 className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
-                                style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(352 60% 40%)" }}
+                                style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}
                               >
                                 VENDA #{v.id_legado ?? v.id}
                               </span>
@@ -2651,7 +2651,7 @@ export default function QAClientesPage() {
                                   );
                                   if (isPago) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(352 60% 40%)" }}>
+                                      style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
                                       PAGO
                                     </span>
                                   );
@@ -2677,7 +2677,7 @@ export default function QAClientesPage() {
                                   );
                                   if (isPago) return (
                                     <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(220 80% 56% / 0.10)", color: "hsl(352 60% 40%)" }}>
+                                      style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
                                       PAGO
                                     </span>
                                   );

@@ -621,7 +621,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                     {[a.marca, a.modelo, a.calibre].filter(Boolean).join(" ").toUpperCase() || "ARMA"}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(352 60% 40%)" }}>
+                    <span className="px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}>
                       {a.origem === "ocr" || a.origem === "ia" ? "IA" : "MANUAL"}
                     </span>
                     {a.needs_review && (
