@@ -3989,7 +3989,7 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
         <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>
           {label}:
         </span>
-        <span className={`text-sm font-medium uppercase min-w-0 flex-1 break-words ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
+        <span className={`text-[13px] font-bold uppercase min-w-0 flex-1 break-words ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
           style={{
             ...(isInvalid || highlight ? {} : { color: "hsl(220 20% 18%)" }),
             wordBreak: "break-word",
