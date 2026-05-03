@@ -184,6 +184,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [lookupCep]);
 
+  // Máscara visual de CEP — sempre formata como "XX.XXX-XXX".
+  // Aceita qualquer entrada (com ou sem pontuação) e devolve a forma padronizada.
+  const formatCepMask = (raw: string): string => {
+    const d = String(raw ?? "").replace(/\D/g, "").slice(0, 8);
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}-${d.slice(5)}`;
+  };
+
   const resolveGeoloc = useCallback(async (prefix: "" | "2") => {
     setF(prev => {
       // lê valores atuais e dispara fora do setter
