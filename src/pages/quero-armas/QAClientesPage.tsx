@@ -2435,7 +2435,7 @@ export default function QAClientesPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">{v.label}</div>
-                      <div className={`text-[13px] font-bold text-slate-800 truncate ${v.mono ? "font-mono" : "uppercase"}`}>
+                      <div className="text-[13px] font-bold text-slate-800 truncate uppercase">
                         {v.value}
                       </div>
                     </div>
