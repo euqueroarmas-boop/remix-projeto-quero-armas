@@ -1389,7 +1389,7 @@ export default function QAClientesPage() {
   };
 
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
-  const [tabView, setTabView] = useState<"clientes" | "cadastros" | "rejeitados">("clientes");
+  const [tabView, setTabView] = useState<"clientes" | "manuais" | "cadastros" | "rejeitados">("clientes");
   const [cadastroFilter, setCadastroFilter] = useState<"pendente" | "aprovado">("pendente");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
@@ -2155,6 +2155,11 @@ export default function QAClientesPage() {
     if (sDigits && c.celular?.replace(/\D/g, "").includes(sDigits)) return true;
     return false;
   });
+
+  // Origem do cliente: "manual" = cadastrado pela equipe via formulário interno.
+  // Demais (formulario_publico, equipe legada, null) → "outros".
+  const isManual = (c: any) => String((c as any).origem || "") === "manual";
+  const filteredManuais = filtered.filter(isManual);
 
   const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
@@ -3522,6 +3527,16 @@ export default function QAClientesPage() {
           <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES <br />({filtered.length})
         </button>
         <button
+          onClick={() => setTabView("manuais")}
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          style={{
+            background: tabView === "manuais" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "manuais" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "manuais" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <Plus className="h-3.5 w-3.5 inline mr-1" /> MANUAIS <br />({filteredManuais.length})
+        </button>
+        <button
           onClick={() => setTabView("cadastros")}
           className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
           style={{
@@ -3575,16 +3590,19 @@ export default function QAClientesPage() {
           onRetry={loadClientes}
           title="Não foi possível carregar os clientes"
         />
-      ) : tabView === "clientes" ? (
+      ) : tabView === "clientes" || tabView === "manuais" ? (
+        (() => {
+          const list = tabView === "manuais" ? filteredManuais : filtered;
+          return (
         <div className="space-y-2">
-          {filtered.length === 0 && (
+          {list.length === 0 && (
             <EmptyState
               icon={<User className="h-5 w-5" />}
-              title="Nenhum cliente encontrado"
-              description="Ajuste os filtros ou cadastre um novo cliente para começar."
+              title={tabView === "manuais" ? "Nenhum cliente cadastrado manualmente" : "Nenhum cliente encontrado"}
+              description={tabView === "manuais" ? "Clientes cadastrados pela equipe via formulário interno aparecem aqui." : "Ajuste os filtros ou cadastre um novo cliente para começar."}
             />
           )}
-          {filtered.map(c => {
+          {list.map(c => {
             const statusTone =
               c.status === "ATIVO"
                 ? "hsl(152 60% 42%)"
@@ -3661,6 +3679,8 @@ export default function QAClientesPage() {
             );
           })}
         </div>
+          );
+        })()
       ) : tabView === "cadastros" ? (
         <div className="space-y-1.5">
           {filteredCadastros.length === 0 && (
