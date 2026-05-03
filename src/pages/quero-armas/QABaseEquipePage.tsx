@@ -81,6 +81,9 @@ export default function QABaseEquipePage() {
   const [images, setImages] = useState<ArticleImage[]>([]);
   const [generatingImages, setGeneratingImages] = useState(false);
   const [backfillingImages, setBackfillingImages] = useState(false);
+  const [retryingErrors, setRetryingErrors] = useState(false);
+  const [approvingDrafts, setApprovingDrafts] = useState(false);
+  const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
 
   // IA search
   const [aiQuery, setAiQuery] = useState("");
@@ -105,6 +108,24 @@ export default function QABaseEquipePage() {
   }
 
   useEffect(() => { loadAll(); }, []);
+
+  async function loadImageStats() {
+    // contagens globais
+    const [{ data: arts }, { data: imgs }] = await Promise.all([
+      supabase.from("qa_kb_artigos" as any).select("id"),
+      supabase.from("qa_kb_artigo_imagens" as any).select("article_id,status").neq("status", "archived"),
+    ]);
+    const allIds = new Set(((arts ?? []) as any[]).map(a => a.id));
+    const withActive = new Set<string>();
+    let approved = 0, draft = 0, erro = 0;
+    for (const i of (imgs ?? []) as any[]) {
+      if (i.status === "approved") { approved++; withActive.add(i.article_id); }
+      else if (i.status === "draft") { draft++; withActive.add(i.article_id); }
+      else if (i.status === "error") { erro++; }
+    }
+    setImgStats({ semImagem: allIds.size - withActive.size, approved, draft, erro });
+  }
+  useEffect(() => { loadImageStats(); }, [articles.length]);
 
   useEffect(() => {
     if (!selected) { setImages([]); return; }
@@ -324,7 +345,12 @@ export default function QABaseEquipePage() {
     const newId = (res as any)?.data?.[0]?.id ?? editing.id;
     if (newId) {
       supabase.functions.invoke("qa-kb-generate-article-images", {
-        body: { article_id: newId, force: !editing.id ? false : true },
+        body: {
+          article_id: newId,
+          force: !editing.id ? false : true,
+          // artigos da equipe e operacionais seguros já nascem aprovados
+          approve: (editing.audience ?? "equipe") === "equipe" || (editing.audience === "cliente"),
+        },
       }).catch(() => {});
       toast.message("Gerando imagens ilustrativas em segundo plano...");
     }
@@ -363,10 +389,57 @@ export default function QABaseEquipePage() {
       });
       if (error) throw error;
       toast.success(`Lote processado: ${(data as any)?.processed ?? 0} artigo(s).`);
+      await loadImageStats();
     } catch (e: any) {
       toast.error("Erro no backfill de imagens: " + (e?.message ?? "desconhecido"));
     } finally {
       setBackfillingImages(false);
+    }
+  }
+
+  async function retryImageErrors() {
+    setRetryingErrors(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
+        body: { action: "retry_errors", limit: 10 },
+      });
+      if (error) throw error;
+      toast.success(`Reprocessados: ${(data as any)?.retried ?? 0} artigo(s).`);
+      await loadImageStats();
+      if (selected) {
+        const { data: imgs } = await supabase
+          .from("qa_kb_artigo_imagens" as any)
+          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
+          .eq("article_id", selected.id).neq("status", "archived").order("step_number");
+        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setRetryingErrors(false);
+    }
+  }
+
+  async function approveSafeDrafts() {
+    setApprovingDrafts(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-backfill-images", {
+        body: { action: "approve_drafts" },
+      });
+      if (error) throw error;
+      toast.success(`Aprovadas: ${(data as any)?.approved ?? 0} imagem(ns).`);
+      await loadImageStats();
+      if (selected) {
+        const { data: imgs } = await supabase
+          .from("qa_kb_artigo_imagens" as any)
+          .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
+          .eq("article_id", selected.id).neq("status", "archived").order("step_number");
+        setImages(((imgs ?? []) as any[]) as ArticleImage[]);
+      }
+    } catch (e: any) {
+      toast.error("Erro ao aprovar drafts: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setApprovingDrafts(false);
     }
   }
 
@@ -668,6 +741,39 @@ export default function QABaseEquipePage() {
             {backfillingImages ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5 mr-1" />}
             Gerar imagens pendentes
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Painel de imagens da Base */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs uppercase font-mono flex items-center gap-2">
+            <ImageIcon className="h-3.5 w-3.5" /> Base visual — status das imagens
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3 text-xs font-mono uppercase">
+          <span className="inline-flex items-center gap-1 text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" /> {imgStats.approved} approved
+          </span>
+          <span className="inline-flex items-center gap-1 text-amber-700">
+            <Clock className="h-3.5 w-3.5" /> {imgStats.draft} draft
+          </span>
+          <span className="inline-flex items-center gap-1 text-red-700">
+            <AlertCircle className="h-3.5 w-3.5" /> {imgStats.erro} erro{imgStats.erro === 1 ? "" : "s"}
+          </span>
+          <span className="inline-flex items-center gap-1 text-slate-700">
+            <BookOpen className="h-3.5 w-3.5" /> {imgStats.semImagem} sem imagem
+          </span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={retryImageErrors} disabled={retryingErrors || imgStats.erro === 0}>
+              {retryingErrors ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 mr-1" />}
+              Reprocessar erros
+            </Button>
+            <Button size="sm" variant="outline" onClick={approveSafeDrafts} disabled={approvingDrafts || imgStats.draft === 0}>
+              {approvingDrafts ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+              Aprovar drafts em lote
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
