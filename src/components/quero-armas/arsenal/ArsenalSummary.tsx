@@ -34,6 +34,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { TACTICAL } from "./utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { StatusUnificado, CorStatus } from "@/lib/quero-armas/statusUnificado";
 
 export type ArsenalSummaryTarget = "armas" | "municoes" | "crafs" | "cr" | "calibres" | "alertas" | "gte";
 
@@ -76,6 +77,14 @@ interface Props {
    * Quando > 0 e ainda não há GTE canônica, o KPI mostra "EM ANÁLISE" (âmbar).
    */
   gtePending?: number;
+  /**
+   * BLOCO 1 — Leitura unificada (Regra-Mãe) opcional para CR/CRAF/GTE.
+   * Quando preenchidos, sobrepõem label/hint/tone do KPI correspondente.
+   * Quando ausentes/null, mantém-se a leitura legacy (Zero Regression).
+   */
+  crUnified?: StatusUnificado | null;
+  crafUnified?: StatusUnificado | null;
+  gteUnified?: StatusUnificado | null;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
@@ -214,6 +223,9 @@ export function ArsenalSummary({
   gteHint = "Sem GTE cadastrada",
   crafPending = 0,
   gtePending = 0,
+  crUnified = null,
+  crafUnified = null,
+  gteUnified = null,
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
@@ -370,7 +382,16 @@ export function ArsenalSummary({
   );
 
   const definitions: Record<KpiId, KpiDefinition> = useMemo(
-    () => ({
+    () => {
+      // Mapeia cor canônica da Regra-Mãe → tone do card. Pure helper.
+      const corToTone = (cor: CorStatus): KpiDefinition["tone"] => {
+        if (cor === "verde") return "ok";
+        if (cor === "azul") return "cyan";
+        if (cor === "amarelo" || cor === "laranja") return "warn";
+        if (cor === "vermelho") return "danger";
+        return "steel";
+      };
+      return ({
       armas: {
         id: "armas",
         icon: <Crosshair className="h-4 w-4" />,
@@ -394,7 +415,9 @@ export function ArsenalSummary({
         icon: <FileBadge className="h-4 w-4" />,
         label: "CRAFs",
         value: totalCrafs,
-        hint:
+        hint: crafUnified
+          ? crafUnified.sub ?? crafUnified.label
+          :
           totalCrafs === 0 && crafPending > 0
             ? crafPending === 1
               ? "1 em análise"
@@ -402,7 +425,9 @@ export function ArsenalSummary({
             : totalCrafs === 0
               ? "Sem CRAFs cadastrados"
               : "Vinculados ao acervo",
-        tone:
+        tone: crafUnified
+          ? corToTone(crafUnified.cor)
+          :
           totalCrafs === 0 && crafPending > 0
             ? "warn"
             : totalCrafs === 0
@@ -414,8 +439,11 @@ export function ArsenalSummary({
         id: "status_cr",
         icon: <ShieldCheck className="h-4 w-4" />,
         label: "Status CR",
-        value: crLabel,
-        tone: crStatus === "muted" ? "steel" : crStatus,
+        value: crUnified ? crUnified.label : crLabel,
+        hint: crUnified ? crUnified.sub : undefined,
+        tone: crUnified
+          ? corToTone(crUnified.cor)
+          : (crStatus === "muted" ? "steel" : crStatus),
         target: "cr",
       },
       calibres: {
@@ -442,7 +470,9 @@ export function ArsenalSummary({
         icon: <ClipboardList className="h-4 w-4" />,
         label: "GTEs",
         value: totalGtes,
-        hint:
+        hint: gteUnified
+          ? gteUnified.sub ?? gteUnified.label
+          :
           totalGtes === 0 && gtePending > 0
             ? gtePending === 1
               ? "1 em análise"
@@ -450,7 +480,9 @@ export function ArsenalSummary({
             : gteHint,
         // Sem GTE cadastrada → cinza, mesmo se status vier como "ok".
         // Exceção: há GTE/GT enviada pelo cliente aguardando aprovação → âmbar.
-        tone:
+        tone: gteUnified
+          ? corToTone(gteUnified.cor)
+          :
           totalGtes === 0 && gtePending > 0
             ? "warn"
             : totalGtes === 0 || gteStatus === "muted"
@@ -458,8 +490,9 @@ export function ArsenalSummary({
               : gteStatus,
         target: "gte",
       },
-    }),
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending],
+      });
+    },
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified],
   );
 
   // Ordem efetiva:
