@@ -3631,7 +3631,7 @@ export default function QAClientesPage() {
             color: tabView === "manuais" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "manuais" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <Plus className="h-3.5 w-3.5 inline mr-1" /> MANUAIS ({filteredManuais.length})
+          <Plus className="h-3.5 w-3.5 inline mr-1" /> CADASTRO MANUAL ({filteredManuais.length})
         </button>
         <button
           onClick={() => setTabView("cadastros")}
