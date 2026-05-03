@@ -718,7 +718,18 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <section className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm overflow-hidden">
                 <SectionTitle icon={Activity} label="Preencher com IA" />
                 <div className="mt-3">
-                  <ClienteAIPrefill onApply={applyAIPrefill} />
+                  <ClienteAIPrefill
+                    onApply={applyAIPrefill}
+                    onPhotoCandidate={(file) => {
+                      // Só assume a foto se ainda não houver uma selecionada.
+                      if (photoFile || photoPreview) return;
+                      setPhotoFile(file);
+                      setRequiredErrors((p) => ({ ...p, photo: false }));
+                      const reader = new FileReader();
+                      reader.onload = () => setPhotoPreview(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }}
+                  />
                 </div>
               </section>
             )}

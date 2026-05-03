@@ -65,8 +65,10 @@ const FIELD_LABELS: Record<string, string> = {
 
 export default function ClienteAIPrefill({
   onApply,
+  onPhotoCandidate,
 }: {
   onApply: (fields: PrefillFields) => void;
+  onPhotoCandidate?: (file: File) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -134,6 +136,9 @@ export default function ClienteAIPrefill({
   const apply = () => {
     if (!result) return;
     onApply(result);
+    // Promove a primeira imagem enviada como foto do cliente (se ainda não houver foto).
+    const firstImage = files.find((f) => (f.type || "").startsWith("image/"));
+    if (firstImage && onPhotoCandidate) onPhotoCandidate(firstImage);
     toast.success("Formulário pré-preenchido. Revise os campos antes de salvar.");
     setOpen(false);
     reset();
