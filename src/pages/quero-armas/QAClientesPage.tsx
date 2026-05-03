@@ -2156,6 +2156,11 @@ export default function QAClientesPage() {
     return false;
   });
 
+  // Origem do cliente: "manual" = cadastrado pela equipe via formulário interno.
+  // Demais (formulario_publico, equipe legada, null) → "outros".
+  const isManual = (c: any) => String((c as any).origem || "") === "manual";
+  const filteredManuais = filtered.filter(isManual);
+
   const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
