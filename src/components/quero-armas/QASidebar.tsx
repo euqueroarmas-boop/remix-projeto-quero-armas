@@ -25,6 +25,7 @@ const NAV_GROUPS = [
       { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
       { title: "Processos & Documentos", url: "/processos", icon: FileStack },
       { title: "Homologação de Clientes", url: "/operacao/homologacao-clientes", icon: UserCheck },
+      { title: "Alertas de Vencimento", url: "/operacao/alertas-vencimento", icon: Activity },
     ],
   },
   {
