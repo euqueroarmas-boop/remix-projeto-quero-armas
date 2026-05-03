@@ -498,25 +498,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   };
 
-  const canGoNext = step < STEPS.length - 1;
-  const canGoPrev = step > 0;
-  const isLast = step === STEPS.length - 1;
-
-  /* ── Step badge completeness ── */
-  const stepComplete = (idx: number): boolean => {
-    switch (idx) {
-      case 0: return !!(f.nome_completo && f.cpf);
-      case 1: return !!(f.nome_mae && f.celular);
-      case 2: return !!(f.endereco && f.cidade);
-      case 3: return true; // optional
-      case 4: return true;
-      default: return false;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-3xl max-h-[90dvh] overflow-hidden p-0 bg-white border-slate-200 text-slate-800 qa-premium gap-0">
+      <DialogContent className="w-[96vw] max-w-5xl max-h-[92dvh] overflow-hidden p-0 bg-white border-amber-500/30 text-zinc-800 qa-premium gap-0">
 
         {/* ── Header (Arsenal UI) ── */}
         <DialogHeader className="relative px-6 pt-5 pb-4 border-b border-amber-500/30 bg-zinc-900 text-zinc-100">
@@ -531,55 +515,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             {isEdit ? "Editar Cliente" : "Novo Cliente"}
           </DialogTitle>
           <DialogDescription className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-400/80">
-            Etapa {step + 1} de {STEPS.length} · preencha os dados cadastrais
+            Preencha todos os dados cadastrais · revise antes de salvar
           </DialogDescription>
         </DialogHeader>
 
-        {/* ── Step Navigation (Arsenal UI) ── */}
-        <div className="px-6 py-3 bg-[#f6f5f1] border-b border-amber-500/20">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {STEPS.map((s, i) => {
-              const Icon = s.icon;
-              const active = i === step;
-              const completed = stepComplete(i) && i !== step;
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => setStep(i)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-mono font-bold uppercase tracking-[0.12em] whitespace-nowrap transition-all",
-                    active
-                      ? "bg-amber-500 text-zinc-900 shadow-sm shadow-amber-300"
-                      : completed
-                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
-                        : "bg-white text-zinc-500 hover:text-zinc-800 hover:bg-amber-50 border border-amber-500/20"
-                  )}
-                >
-                  {completed && !active ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : (
-                    <Icon className="h-3.5 w-3.5" />
-                  )}
-                  <span className="hidden sm:inline">{s.label}</span>
-                  <span className="sm:hidden">{i + 1}</span>
-                </button>
-              );
-            })}
-          </div>
-          {/* Progress bar */}
-          <div className="mt-2 h-1 bg-amber-500/10 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-300"
-              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
-        </div>
-
         {/* ── Form Body ── */}
-        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(90vh - 260px)" }}>
-          {/* Step 0: Identificação */}
-          {step === 0 && (
-            <div className="space-y-5">
+        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(92vh - 180px)" }}>
+          <div className="space-y-6">
+            {/* ── Bloco: Identificação ── */}
+            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+              <SectionTitle icon={User} label="Identificação" />
               {/* Camada de IA — apenas em "Novo Cliente" */}
               {!isEdit && <ClienteAIPrefill onApply={applyAIPrefill} />}
               {/* Photo upload */}
@@ -587,12 +532,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <div className="relative">
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-slate-50"
+                    className="w-20 h-20 rounded-xl border-2 border-dashed border-amber-500/40 hover:border-amber-500 flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-[#f6f5f1]"
                   >
                     {photoPreview ? (
                       <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
                     ) : (
-                      <Camera className="h-6 w-6 text-slate-300" />
+                      <Camera className="h-6 w-6 text-amber-500/60" />
                     )}
                   </div>
                   {photoPreview && (
@@ -606,9 +551,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Foto do Cliente</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Clique para adicionar ou trocar a foto</p>
-                  {uploadingPhoto && <p className="text-[10px] text-blue-500 mt-0.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando...</p>}
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Foto do Cliente</p>
+                  <p className="text-[10px] text-zinc-500 mt-0.5">Clique para adicionar ou trocar a foto</p>
+                  {uploadingPhoto && <p className="text-[10px] text-amber-700 mt-0.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando...</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
@@ -637,7 +582,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 />
               </div>
               {f.tipo_documento_identidade === "CIN" && (
-                <p className="text-[10px] text-blue-600 -mt-2">
+                <p className="text-[10px] text-amber-700 -mt-2">
                   ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
                 </p>
               )}
@@ -689,34 +634,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 </Field>
                 <FInput label="Naturalidade (legado)" value={f.naturalidade} onChange={v => set("naturalidade", v)} placeholder="Compatibilidade" />
               </div>
-            </div>
-          )}
+            </section>
 
-          {/* Step 1: Filiação & Contato */}
-          {step === 1 && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Filiação</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
-                  <FInput label="Nome do Pai" value={f.nome_pai} onChange={v => set("nome_pai", v)} />
-                </div>
+            {/* ── Bloco: Filiação & Contato ── */}
+            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+              <SectionTitle icon={Users} label="Filiação & Contato" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
+                <FInput label="Nome do Pai" value={f.nome_pai} onChange={v => set("nome_pai", v)} />
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Contato</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FInput label="Celular" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" />
-                  <FInput label="E-mail" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FInput label="Celular" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" />
+                <FInput label="E-mail" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" />
               </div>
-            </div>
-          )}
+            </section>
 
-          {/* Step 2: Endereço Principal */}
-          {step === 2 && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Endereço Principal</p>
+            {/* ── Bloco: Endereço Principal ── */}
+            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+              <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
                   <div className="col-span-2 sm:col-span-3">
@@ -750,15 +685,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
+            </section>
 
-          {/* Step 3: Endereço Secundário */}
-          {step === 3 && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
-                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Endereço Secundário <span className="normal-case font-normal text-zinc-400">(opcional)</span></p>
+            {/* ── Bloco: Endereço Secundário ── */}
+            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+              <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
                   <div className="col-span-2 sm:col-span-3">
@@ -792,13 +723,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
                   </button>
                 </div>
-              </div>
-            </div>
-          )}
+            </section>
 
-          {/* Step 4: Configurações */}
-          {step === 4 && (
-            <div className="space-y-5">
+            {/* ── Bloco: Configurações ── */}
+            <section className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-5">
+              <SectionTitle icon={Settings} label="Configurações" />
               {/* Categoria Legal do Titular (Lei 10.826/03 art. 6º) */}
               <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
                 <div className="flex items-start gap-2">
@@ -848,14 +777,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FSelect label="Status do Cliente" value={f.status} onChange={v => set("status", v)} options={statusOptions} />
                 <Field label="Cliente Lions">
-                  <label className="flex items-center gap-3 h-10 px-3 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                  <label className="flex items-center gap-3 h-10 px-3 rounded-lg border border-amber-500/30 bg-white cursor-pointer hover:bg-amber-50 transition-colors">
                     <input
                       type="checkbox"
                       checked={f.cliente_lions}
                       onChange={e => set("cliente_lions", e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 rounded border-amber-500/40 text-amber-600 focus:ring-amber-500"
                     />
-                    <span className="text-sm text-slate-700">🦁 Sim, é cliente Lions</span>
+                    <span className="text-sm text-zinc-700">🦁 Sim, é cliente Lions</span>
                   </label>
                 </Field>
               </div>
@@ -865,11 +794,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   onChange={e => set("observacao", e.target.value)}
                   rows={4}
                   placeholder="Informações adicionais sobre o cliente..."
-                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none uppercase"
+                  className="w-full px-3 py-2.5 rounded-lg border border-amber-500/30 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 transition-all resize-none uppercase"
                 />
               </Field>
-            </div>
-          )}
+            </section>
+          </div>
         </div>
 
         {/* ── Footer (Arsenal UI) ── */}
@@ -884,40 +813,28 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           </button>
 
           <div className="flex items-center gap-2">
-            {canGoPrev && (
-              <button
-                type="button"
-                onClick={() => setStep(s => s - 1)}
-                className="h-9 px-3 inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-white text-zinc-700 hover:bg-amber-50 hover:border-amber-500 font-mono text-[10px] font-bold uppercase tracking-[0.18em] transition-colors"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Anterior
-              </button>
-            )}
-            {canGoNext && (
-              <button
-                type="button"
-                onClick={() => setStep(s => s + 1)}
-                className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] shadow-sm shadow-amber-300 transition-colors"
-              >
-                Próximo
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
-            )}
-            {isLast && (
-              <button
-                type="button"
-                onClick={save}
-                disabled={saving}
-                className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-[10px] font-bold uppercase tracking-[0.18em] min-w-[160px] justify-center disabled:opacity-50 transition-colors"
-              >
-                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] min-w-[180px] justify-center disabled:opacity-50 transition-colors shadow-sm shadow-amber-300"
+            >
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
+            </button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ── Section title (Arsenal UI) ── */
+function SectionTitle({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
+  return (
+    <div className="flex items-center gap-2 pb-2 border-b border-amber-500/20">
+      <Icon className="h-3.5 w-3.5 text-amber-600" />
+      <p className="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">{label}</p>
+    </div>
   );
 }
