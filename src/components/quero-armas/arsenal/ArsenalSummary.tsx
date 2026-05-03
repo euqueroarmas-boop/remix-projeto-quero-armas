@@ -725,6 +725,78 @@ export function ArsenalSummary({
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* ── BLOCO 2 — Linha 2 recolhível: KPIs adicionais ───────────────── */}
+      <div className="flex items-center justify-center pt-1">
+        <button
+          type="button"
+          onClick={() => setShowSecondary((v) => !v)}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600 hover:bg-slate-50"
+          title={showSecondary ? "Recolher KPIs adicionais" : "Ver mais KPIs"}
+        >
+          {showSecondary ? (
+            <>
+              <ChevronUp className="h-3 w-3" /> Recolher
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-3 w-3" /> Mais KPIs{hasSecondaryData ? "" : ""}
+            </>
+          )}
+        </button>
+      </div>
+      {showSecondary && (
+        <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {SECONDARY_ORDER.map((sid) => {
+            const def = secondaryDefs[sid];
+            const color = toneColor(def.tone);
+            return (
+              <div
+                key={sid}
+                className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                style={{ boxShadow: `inset 0 0 0 1px ${color}10` }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onNavigate?.(def.target)}
+                  className="flex h-full w-full flex-col text-left focus:outline-none focus:ring-2 focus:ring-amber-300/50 rounded-xl"
+                >
+                  <div
+                    className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-2xl"
+                    style={{ background: color }}
+                  />
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      className="flex h-9 w-9 items-center justify-center rounded-xl"
+                      style={{ background: `${color}14`, color }}
+                    >
+                      {def.icon}
+                    </div>
+                    <div
+                      className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
+                      style={{ background: `${color}10`, color }}
+                    >
+                      KPI
+                    </div>
+                  </div>
+                  <div
+                    className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
+                      typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
+                    }`}
+                    title={String(def.value)}
+                  >
+                    {def.value}
+                  </div>
+                  <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                    {def.label}
+                  </div>
+                  <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
