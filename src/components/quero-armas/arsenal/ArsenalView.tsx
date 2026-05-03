@@ -755,6 +755,14 @@ export function ArsenalView({
         crUnified={crUnified}
         crafUnified={crafUnified}
         gteUnified={gteUnified}
+        documentosUnified={documentosUnified}
+        processosUnified={processosUnified}
+        autorizacoesUnified={autorizacoesUnified}
+        examesUnified={examesUnified}
+        documentosCount={docsGenericos.length}
+        processosCount={processos.length + solicitacoesProcessos.length}
+        autorizacoesCount={autorizacoes.length}
+        examesCount={exames.length}
         onNavigate={scrollToSection}
       />
 
