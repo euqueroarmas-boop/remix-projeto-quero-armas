@@ -3590,16 +3590,19 @@ export default function QAClientesPage() {
           onRetry={loadClientes}
           title="Não foi possível carregar os clientes"
         />
-      ) : tabView === "clientes" ? (
+      ) : tabView === "clientes" || tabView === "manuais" ? (
+        (() => {
+          const list = tabView === "manuais" ? filteredManuais : filtered;
+          return (
         <div className="space-y-2">
-          {filtered.length === 0 && (
+          {list.length === 0 && (
             <EmptyState
               icon={<User className="h-5 w-5" />}
-              title="Nenhum cliente encontrado"
-              description="Ajuste os filtros ou cadastre um novo cliente para começar."
+              title={tabView === "manuais" ? "Nenhum cliente cadastrado manualmente" : "Nenhum cliente encontrado"}
+              description={tabView === "manuais" ? "Clientes cadastrados pela equipe via formulário interno aparecem aqui." : "Ajuste os filtros ou cadastre um novo cliente para começar."}
             />
           )}
-          {filtered.map(c => {
+          {list.map(c => {
             const statusTone =
               c.status === "ATIVO"
                 ? "hsl(152 60% 42%)"
