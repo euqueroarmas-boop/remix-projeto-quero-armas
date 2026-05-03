@@ -5535,6 +5535,9 @@ export type Database = {
           module: string | null
           procedure_tested_at: string | null
           related_articles: string[]
+          reprocess_reason: string | null
+          reprocessed_at: string | null
+          reprocessed_by: string | null
           search_tsv: unknown
           slug: string
           status: string
@@ -5570,6 +5573,9 @@ export type Database = {
           module?: string | null
           procedure_tested_at?: string | null
           related_articles?: string[]
+          reprocess_reason?: string | null
+          reprocessed_at?: string | null
+          reprocessed_by?: string | null
           search_tsv?: unknown
           slug: string
           status?: string
@@ -5605,6 +5611,9 @@ export type Database = {
           module?: string | null
           procedure_tested_at?: string | null
           related_articles?: string[]
+          reprocess_reason?: string | null
+          reprocessed_at?: string | null
+          reprocessed_by?: string | null
           search_tsv?: unknown
           slug?: string
           status?: string

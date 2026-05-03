@@ -106,6 +106,8 @@ export default function QABaseEquipePage() {
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [approvingDrafts, setApprovingDrafts] = useState(false);
   const [imgStats, setImgStats] = useState({ semImagem: 0, approved: 0, draft: 0, erro: 0 });
+  const [auditTriggering, setAuditTriggering] = useState<string | null>(null);
+  const [auditReason, setAuditReason] = useState("");
 
   // Revisão progressiva
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -457,6 +459,46 @@ export default function QABaseEquipePage() {
     }
   }
 
+  async function triggerPlaywrightAudit(articleId: string, opts: { onlyErrors?: boolean; reason?: string } = {}) {
+    setAuditTriggering(articleId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-audit-trigger", {
+        body: {
+          article_id: articleId,
+          only_errors: opts.onlyErrors === true,
+          reason: (opts.reason ?? auditReason ?? "").trim() || null,
+          viewport: "1440x900",
+        },
+      });
+      if (error) throw error;
+      const arch = (data as any)?.archived_images ?? 0;
+      toast.success(
+        `Auditoria Playwright disparada. ${arch} imagem(ns) arquivada(s). Acompanhe pelos logs do GitHub Actions.`,
+      );
+      setAuditReason("");
+      // Recarrega imagens (as antigas viram archived) e o artigo (status pode ter mudado).
+      const { data: imgs } = await supabase
+        .from("qa_kb_artigo_imagens" as any)
+        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message,image_type,original_image_type,is_ai_generated_blocked")
+        .eq("article_id", articleId)
+        .not("status", "in", "(archived,archived_invalid_ai)")
+        .eq("is_ai_generated_blocked", false)
+        .order("step_number");
+      setImages(((imgs ?? []) as any[]) as ArticleImage[]);
+      const { data: fresh } = await supabase
+        .from("qa_kb_artigos" as any)
+        .select("*")
+        .eq("id", articleId)
+        .maybeSingle();
+      if (fresh) setSelected(fresh as any as Article);
+      await loadAll();
+    } catch (e: any) {
+      toast.error("Falha na captura — ver logs. " + (e?.message ?? ""));
+    } finally {
+      setAuditTriggering(null);
+    }
+  }
+
   async function approveSafeDrafts() {
     setApprovingDrafts(true);
     try {
@@ -753,12 +795,46 @@ export default function QABaseEquipePage() {
                   <h3 className="text-xs uppercase font-mono tracking-wider text-muted-foreground flex items-center gap-1">
                     <ImageIcon className="h-3.5 w-3.5" /> Evidências reais ({images.length})
                   </h3>
-                  <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 hover:bg-amber-50">
-                    {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
-                    Enviar screenshot real
-                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
-                  </label>
+                  <div className="flex items-center gap-1 flex-wrap justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px] uppercase font-mono"
+                      disabled={auditTriggering === selected.id}
+                      onClick={() => triggerPlaywrightAudit(selected.id)}
+                      title="Reexecuta o pipeline Playwright (auditoria real) apenas para este artigo."
+                    >
+                      {auditTriggering === selected.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      Reprocessar auditoria (Playwright)
+                    </Button>
+                    {images.some(i => i.status === "error") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] uppercase font-mono"
+                        disabled={auditTriggering === selected.id}
+                        onClick={() => triggerPlaywrightAudit(selected.id, { onlyErrors: true })}
+                        title="Reexecuta apenas as etapas que falharam."
+                      >
+                        {auditTriggering === selected.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <AlertCircle className="h-3.5 w-3.5" />}
+                        Reprocessar só erros
+                      </Button>
+                    )}
+                    <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 hover:bg-amber-50">
+                      {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                      Enviar screenshot real
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
+                    </label>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={auditReason}
+                    onChange={(e) => setAuditReason(e.target.value)}
+                    placeholder="Motivo do reprocesso (opcional)"
+                    className="h-7 text-xs"
+                  />
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {images.map(img => (
@@ -787,12 +863,24 @@ export default function QABaseEquipePage() {
                 <span className="text-xs text-amber-800 font-mono uppercase">
                   Este artigo precisa de screenshot real do sistema.
                 </span>
-                <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 bg-white hover:bg-amber-50">
+                <div className="flex items-center gap-1 flex-wrap justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] uppercase font-mono"
+                    disabled={auditTriggering === selected.id}
+                    onClick={() => triggerPlaywrightAudit(selected.id)}
+                  >
+                    {auditTriggering === selected.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Reprocessar auditoria (Playwright)
+                  </Button>
+                  <label className="inline-flex items-center gap-1 text-xs uppercase font-mono cursor-pointer border rounded-md px-2 py-1 bg-white hover:bg-amber-50">
                   {uploadingScreenshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
                   Anexar imagem auditável
                   <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRealScreenshotFor(selected.id, f); e.currentTarget.value = ""; }} />
-                </label>
+                  </label>
+                </div>
               </div>
             )}
             {selected.tags.length > 0 && (
