@@ -496,6 +496,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   const save = async () => {
     if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
+    if (!isEdit) {
+      if (!photoFile) { toast.error("Foto do cliente é obrigatória"); return; }
+      if (!f.sexo) { toast.error("Sexo é obrigatório"); return; }
+      if (!f.estado_civil) { toast.error("Estado civil é obrigatório"); return; }
+    }
     // ── Validação compartilhada (clienteSchema) ──
     if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); return; }
     if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); return; }
