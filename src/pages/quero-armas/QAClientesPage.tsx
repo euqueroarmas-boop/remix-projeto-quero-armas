@@ -3804,6 +3804,14 @@ export default function QAClientesPage() {
       )}
 
       <ClienteFormModal open={clienteModal} onClose={() => { setClienteModal(false); setEditingCliente(null); }} onSaved={loadClientes} cliente={editingCliente} />
+      <DeleteConfirm
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ ...deleteModal, open: false })}
+        onConfirm={handleDelete}
+        title={deleteModal.title}
+        description={deleteModal.desc}
+        loading={deleting}
+      />
     </div>
   );
 }
