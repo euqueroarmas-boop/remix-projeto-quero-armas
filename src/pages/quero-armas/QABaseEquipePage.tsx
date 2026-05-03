@@ -459,6 +459,46 @@ export default function QABaseEquipePage() {
     }
   }
 
+  async function triggerPlaywrightAudit(articleId: string, opts: { onlyErrors?: boolean; reason?: string } = {}) {
+    setAuditTriggering(articleId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-kb-audit-trigger", {
+        body: {
+          article_id: articleId,
+          only_errors: opts.onlyErrors === true,
+          reason: (opts.reason ?? auditReason ?? "").trim() || null,
+          viewport: "1440x900",
+        },
+      });
+      if (error) throw error;
+      const arch = (data as any)?.archived_images ?? 0;
+      toast.success(
+        `Auditoria Playwright disparada. ${arch} imagem(ns) arquivada(s). Acompanhe pelos logs do GitHub Actions.`,
+      );
+      setAuditReason("");
+      // Recarrega imagens (as antigas viram archived) e o artigo (status pode ter mudado).
+      const { data: imgs } = await supabase
+        .from("qa_kb_artigo_imagens" as any)
+        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message,image_type,original_image_type,is_ai_generated_blocked")
+        .eq("article_id", articleId)
+        .not("status", "in", "(archived,archived_invalid_ai)")
+        .eq("is_ai_generated_blocked", false)
+        .order("step_number");
+      setImages(((imgs ?? []) as any[]) as ArticleImage[]);
+      const { data: fresh } = await supabase
+        .from("qa_kb_artigos" as any)
+        .select("*")
+        .eq("id", articleId)
+        .maybeSingle();
+      if (fresh) setSelected(fresh as any as Article);
+      await loadAll();
+    } catch (e: any) {
+      toast.error("Falha na captura — ver logs. " + (e?.message ?? ""));
+    } finally {
+      setAuditTriggering(null);
+    }
+  }
+
   async function approveSafeDrafts() {
     setApprovingDrafts(true);
     try {
