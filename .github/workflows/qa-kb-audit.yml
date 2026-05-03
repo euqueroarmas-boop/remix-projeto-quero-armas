@@ -1,0 +1,67 @@
+name: QA KB Audit Screenshots
+
+# Auditoria automatizada da Base de Conhecimento Quero Armas.
+# - Lê artigos com status 'needs_real_image' (ou IDs explícitos via input)
+# - Abre o sistema real autenticado com Playwright
+# - Captura screenshot REAL de cada passo
+# - Envia para o bucket qa-kb-imagens via service_role
+# - Insere em qa_kb_artigo_imagens com image_type='auditoria_real'
+# - Se a tela não existir → mantém 'needs_real_image' e registra erro
+#
+# PROIBIDO gerar imagem por IA. Esta pipeline NÃO desenha nada.
+
+on:
+  workflow_dispatch:
+    inputs:
+      article_ids:
+        description: "UUIDs separados por vírgula (vazio = todos com needs_real_image)"
+        required: false
+        default: ""
+      max_articles:
+        description: "Limite de artigos por execução"
+        required: false
+        default: "10"
+      viewport:
+        description: "Viewport (ex: 1440x900 ou 390x844)"
+        required: false
+        default: "1440x900"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      QA_AUDIT_BASE_URL: ${{ secrets.QA_AUDIT_BASE_URL }}
+      QA_AUDIT_EMAIL: ${{ secrets.QA_AUDIT_EMAIL }}
+      QA_AUDIT_PASSWORD: ${{ secrets.QA_AUDIT_PASSWORD }}
+      QA_AUDIT_ARTICLE_IDS: ${{ inputs.article_ids }}
+      QA_AUDIT_MAX: ${{ inputs.max_articles }}
+      QA_AUDIT_VIEWPORT: ${{ inputs.viewport }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install audit deps
+        working-directory: scripts/audit-kb
+        run: bun install
+
+      - name: Install Playwright browsers
+        working-directory: scripts/audit-kb
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run KB audit
+        working-directory: scripts/audit-kb
+        run: bun run run.ts
+
+      - name: Upload audit logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-audit-logs
+          path: scripts/audit-kb/logs/
+          if-no-files-found: ignore
