@@ -876,7 +876,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                       />
                       <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
                     </div>
-                    <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
                   </>
                 )}
               </div>
