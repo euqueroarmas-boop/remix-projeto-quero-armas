@@ -20,6 +20,8 @@ import {
   type DocumentoUploadLite,
   type StatusUnificado,
 } from "@/lib/quero-armas/statusUnificado";
+import { useClienteStatusAgregado, type KpiValidade, type KpiCR } from "@/hooks/useClienteStatusAgregado";
+import type { CorStatus } from "@/lib/quero-armas/statusUnificado";
 
 interface Props {
   clienteId: number;
