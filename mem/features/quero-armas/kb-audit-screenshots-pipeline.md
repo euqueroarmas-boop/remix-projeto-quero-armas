@@ -9,7 +9,8 @@ Pipeline `qa-kb-audit-screenshots`:
 - Código: `scripts/audit-kb/{run,login,parseSteps,capture}.ts`.
 - Lê artigos com `status='needs_real_image'` (ou IDs explícitos).
 - Abre `QA_AUDIT_BASE_URL` com Playwright (Chromium real), loga via `/quero-armas/login` usando `QA_AUDIT_EMAIL`/`QA_AUDIT_PASSWORD` (usuário-robô dedicado).
-- Resolução de passos em ordem: (1) `audit-step` manual no body; (2) `qa_kb_artigos.audit_plan_json` existente; (3) plano gerado pela edge function `qa-kb-audit-plan` (Lovable AI google/gemini-2.5-flash, tool calling com `emit_audit_plan`). Apenas passos com `confidence ≥ 0.6` são executados.
+- Resolução de passos em ordem: (1) `audit-step` manual no body (override opcional); (2) `qa_kb_artigos.audit_plan_json` existente; (3) plano gerado pela edge function `qa-kb-audit-plan` (Lovable AI google/gemini-2.5-flash, tool calling com `emit_audit_plan`). Apenas passos com `confidence ≥ 0.6` são executados.
+- **Sem approval gate técnico**: o plano IA é executado AUTOMATICAMENTE pelo Playwright. `needs_human_review` é apenas telemetria informativa; não bloqueia execução. Não existe `audit_plan_status`, nem `approved_by/approved_at` para plano. Aprovação humana é só sobre o conteúdo final do artigo na revisão editorial da Base.
 - Validação semântica: cada step pode listar `expected_text[]` — Playwright só captura screenshot se pelo menos uma frase estiver visível na rota. Caso contrário, registra erro `EXPECTED_TEXT_NOT_FOUND` e mantém `needs_real_image`.
 - Plano IA é persistido em `qa_kb_artigos.audit_plan_json` (+ `audit_plan_generated_at`, `audit_plan_model`) para revisão da equipe.
 - A IA NÃO gera imagem em nenhuma etapa — só sugere rotas, textos esperados e ações. Captura é sempre real via Playwright.
