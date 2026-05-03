@@ -307,6 +307,7 @@ serve(async (req) => {
         previews_count: previews.length,
         pulados_dedupe_ou_sem_email: pulados,
         enviados_reais: enviados,
+        erros_count: inserts.filter((i) => i.status === "erro").length,
         previews,
       }, null, 2),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
