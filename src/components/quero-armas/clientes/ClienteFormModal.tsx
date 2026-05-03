@@ -950,13 +950,34 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                       }}
                     />
                   ) : (
-                    <input
-                      type="text"
-                      value={f.senha_gov}
-                      onChange={e => set("senha_gov", e.target.value)}
-                      placeholder="Senha GOV importada"
-                      className={inputClass.replace(" uppercase", "")}
-                    />
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={f.senha_gov}
+                          onChange={e => { set("senha_gov", e.target.value); setAiSenhaGovNeedsReview(false); }}
+                          placeholder="Senha GOV importada"
+                          className={inputClass.replace(" uppercase", "")}
+                        />
+                        {aiSenhaGovFromAI && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+                            conferir senha GOV
+                          </span>
+                        )}
+                      </div>
+                      {aiSenhaGovFromAI && (
+                        <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Confira a senha GOV.BR caractere por caractere antes de salvar.</span>
+                        </div>
+                      )}
+                      {aiSenhaGovNeedsReview && !f.senha_gov && (
+                        <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.</span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </Field>
                 <FInput
