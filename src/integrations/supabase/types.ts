@@ -7094,6 +7094,60 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_status_eventos: {
+        Row: {
+          campo_status: string
+          cliente_id: number | null
+          criado_em: string
+          detalhes: Json | null
+          documento_id: string | null
+          entidade: string
+          entidade_id: string
+          id: string
+          motivo: string | null
+          origem: string
+          processo_id: string | null
+          solicitacao_id: string | null
+          status_anterior: string | null
+          status_novo: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          campo_status: string
+          cliente_id?: number | null
+          criado_em?: string
+          detalhes?: Json | null
+          documento_id?: string | null
+          entidade: string
+          entidade_id: string
+          id?: string
+          motivo?: string | null
+          origem: string
+          processo_id?: string | null
+          solicitacao_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          campo_status?: string
+          cliente_id?: number | null
+          criado_em?: string
+          detalhes?: Json | null
+          documento_id?: string | null
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          motivo?: string | null
+          origem?: string
+          processo_id?: string | null
+          solicitacao_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       qa_status_servico: {
         Row: {
           ativo: boolean
