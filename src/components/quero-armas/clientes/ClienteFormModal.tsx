@@ -568,6 +568,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      // Normaliza telefone para o formato (XX) XXXXX-XXXX
+      if (payload.celular) {
+        const d = String(payload.celular).replace(/\D/g, "").slice(-11);
+        if (d.length === 11) payload.celular = `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+        else if (d.length === 10) payload.celular = `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+      }
       // Hardening: Postgres rejeita string vazia em colunas date/timestamp/numeric.
       // Convertemos QUALQUER "" → null para evitar regressão se novos campos forem
       // adicionados ao formulário no futuro. Booleans e zeros são preservados.

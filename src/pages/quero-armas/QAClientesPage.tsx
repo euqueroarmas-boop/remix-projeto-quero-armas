@@ -742,6 +742,14 @@ const formatCpf = (v: string | null | undefined): string => {
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
+const formatPhone = (v: string | null | undefined): string => {
+  if (!v) return "";
+  const d = v.replace(/\D/g, "").slice(-11);
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return v;
+};
+
 const daysUntilDate = (d: string | null | undefined): number | null => {
   if (!d) return null;
   const parsed = new Date(d);
@@ -1501,6 +1509,52 @@ export default function QAClientesPage() {
         console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
       }
 
+      // Enriquece com lista de serviços contratados (em batch).
+      try {
+        const ids = rows.map((r: any) => r.id).filter(Boolean);
+        const idsLeg = rows.map((r: any) => r.id_legado).filter(Boolean);
+        const allCids = Array.from(new Set([...ids, ...idsLeg]));
+        const servicosByCli = new Map<number, Set<string>>();
+        if (allCids.length > 0) {
+          const { data: vendas } = await supabase
+            .from("qa_vendas" as any)
+            .select("id, id_legado, cliente_id")
+            .in("cliente_id", allCids);
+          const vendasArr = (vendas as any[]) || [];
+          const vendaIds = vendasArr.map((v: any) => v.id_legado ?? v.id).filter(Boolean);
+          const vendaToCli = new Map<number, number>();
+          vendasArr.forEach((v: any) => vendaToCli.set(v.id_legado ?? v.id, v.cliente_id));
+          if (vendaIds.length > 0) {
+            const { data: itens } = await supabase
+              .from("qa_itens_venda" as any)
+              .select("venda_id, servico_id")
+              .in("venda_id", vendaIds);
+            const servIds = Array.from(new Set(((itens as any[]) || []).map((i: any) => i.servico_id).filter(Boolean)));
+            const servNomes = new Map<number, string>();
+            if (servIds.length > 0) {
+              const { data: servs } = await supabase
+                .from("qa_servicos" as any)
+                .select("id, nome_servico")
+                .in("id", servIds);
+              ((servs as any[]) || []).forEach((s: any) => servNomes.set(s.id, s.nome_servico));
+            }
+            ((itens as any[]) || []).forEach((it: any) => {
+              const cid = vendaToCli.get(it.venda_id);
+              const nome = servNomes.get(it.servico_id);
+              if (!cid || !nome) return;
+              if (!servicosByCli.has(cid)) servicosByCli.set(cid, new Set());
+              servicosByCli.get(cid)!.add(nome);
+            });
+          }
+        }
+        for (const r of rows) {
+          const set = servicosByCli.get(r.id) || servicosByCli.get(r.id_legado);
+          (r as any).servicos_contratados = set ? Array.from(set) : [];
+        }
+      } catch (servErr) {
+        console.warn("[QAClientes] enrich serviços falhou (não crítico):", servErr);
+      }
+
       // Numeração sequencial de exibição (1..N) por ordem cronológica de
       // cadastro. NÃO altera a PK no banco — só o ID mostrado ao usuário.
       // Conta TODOS os clientes cadastrados (Quero Armas + Arsenal).
@@ -2166,6 +2220,8 @@ export default function QAClientesPage() {
     if (c.email?.toLowerCase().includes(s)) return true;
     if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
     if (sDigits && c.celular?.replace(/\D/g, "").includes(sDigits)) return true;
+    const servs = ((c as any).servicos_contratados as string[] | undefined) || [];
+    if (servs.some(srv => srv.toLowerCase().includes(s))) return true;
     return false;
   });
 
@@ -3521,7 +3577,7 @@ export default function QAClientesPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+          placeholder="Buscar por nome, CPF, telefone, e-mail ou serviço..."
           className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
           style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
         />
@@ -3649,7 +3705,7 @@ export default function QAClientesPage() {
                         <>
                           <span className="text-slate-300">·</span>
                           <span className="inline-flex items-center gap-1 font-mono">
-                            <Phone className="h-2.5 w-2.5 text-slate-400" /> {c.celular}
+                            <Phone className="h-2.5 w-2.5 text-slate-400" /> {formatPhone(c.celular)}
                           </span>
                         </>
                       )}
@@ -3658,6 +3714,14 @@ export default function QAClientesPage() {
                           <span className="text-slate-300">·</span>
                           <span className="inline-flex items-center gap-1 uppercase tracking-wide">
                             <MapPin className="h-2.5 w-2.5 text-slate-400" /> {c.cidade}/{c.estado}
+                          </span>
+                        </>
+                      )}
+                      {(((c as any).servicos_contratados as string[] | undefined) || []).length > 0 && (
+                        <>
+                          <span className="text-slate-300">·</span>
+                          <span className="inline-flex items-center gap-1 uppercase tracking-wide font-semibold" style={{ color: "#7A1F2B" }}>
+                            {(((c as any).servicos_contratados as string[]) || []).join(" • ")}
                           </span>
                         </>
                       )}
