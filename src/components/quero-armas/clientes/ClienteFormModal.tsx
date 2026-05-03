@@ -241,7 +241,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     } catch { /* silencioso */ }
   }, [lookupGeocode]);
 
-  const [f, setF] = useState({
+  const EMPTY_FORM = {
     nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
     nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
@@ -250,29 +250,35 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
     geolocalizacao: "", geolocalizacao2: "",
     observacao: "", status: "ATIVO",
-    // Categorização legal (Lei 10.826/03 art. 6º)
     categoria_titular: "" as CategoriaTitular | "",
     subcategoria: "",
     orgao_vinculado: "",
     matricula_funcional: "",
-    // ── Entrega B (sincronizado com clienteSchema) ──
     sexo: "",
-    // Tipo do documento de identidade — RG ou CIN.
-    // CIN substitui o RG e usa o MESMO número do CPF (legalmente permitido).
     tipo_documento_identidade: "RG" as "RG" | "CIN",
     naturalidade_municipio: "",
     naturalidade_uf: "",
     naturalidade_pais: "Brasil",
     cnh: "",
     ctps: "",
-    // Datas de realização dos exames (colunas legadas em qa_cadastro_cr)
     validade_laudo_psicologico: "",
     validade_exame_tiro: "",
     senha_gov: "",
-  });
+  };
+  const [f, setF] = useState(EMPTY_FORM);
 
   useEffect(() => {
-    if (!open) { setPhotoFile(null); setPhotoPreview(null); return; }
+    if (!open) {
+      // Reset COMPLETO ao fechar: nenhum dado temporário pode persistir
+      // entre aberturas do formulário.
+      setF(EMPTY_FORM);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setRequiredErrors({});
+      setCadastroCrId(null);
+      setAiPrefillKey(k => k + 1);
+      return;
+    }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
