@@ -166,13 +166,16 @@ const SYSTEM_PROMPT = [
   "5) Datas SEMPRE em DD/MM/AAAA.",
   "6) Se diferentes documentos divergirem (ex: 2 endereços diferentes), use o mais recente e adicione um warning descrevendo a divergência.",
   "6.1) Se houver MAIS DE UM endereço (ex: residencial + comercial, ou principal + alternativo), preencha o primeiro em cep/endereco/... e o segundo em cep_secundario/endereco_secundario/...",
-  "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
+    "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
   "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
-  "11) Se aparecer 'SENHA DO GOV', 'SENHA GOV' ou similar, extraia senha_gov LITERALMENTE caractere por caractere, preservando MAIÚSCULAS, minúsculas, números e símbolos. NÃO normalize, NÃO substitua símbolos parecidos (ex: '$' nunca vira '/' ou 'S'; '0' nunca vira 'O'). Se houver QUALQUER dúvida sobre um caractere específico, adicione warning 'Senha GOV — confirmar caractere X' ao invés de chutar.",
-  "11.1) Para senha_gov, releia 2x antes de retornar. A senha é dado crítico — qualquer caractere errado bloqueia o acesso do cliente.",
-  "12) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
+    "11) SENHA GOV.BR É CAMPO SENSÍVEL DE TRANSCRIÇÃO LITERAL/RAW. Use senha_gov_raw, não senha_gov. NÃO normalize, NÃO corrija, NÃO interprete, NÃO converta maiúscula/minúscula, NÃO remova acentos, NÃO troque símbolos, NÃO complete e NÃO infira por contexto.",
+    "11.1) senha_gov_raw deve refletir EXATAMENTE o que aparece no print/documento. Exemplo literal: senha_gov_raw: \"Eduisa7050$\". Se houver dúvida em qualquer caractere, retorne senha_gov_raw='' e senha_gov_needs_review=true.",
+    "11.2) Só use senha_gov_confidence >= 0.9 quando todos os caracteres estiverem visualmente/textualmente nítidos. Caso contrário, deixe a senha vazia e adicione warning: 'Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.'.",
+    "11.3) Para senha GOV.BR, releia 2x antes de retornar. Qualquer caractere errado bloqueia o acesso do cliente.",
+    "12) Emissor RG/CIN: se o emissor extraído for incomum, inconsistente ou de baixa confiança, marque emissor_rg_needs_review=true e adicione warning 'Verificar emissor do RG. Extração possivelmente incorreta.'. Exemplo: 'SSP ISP' deve gerar revisão.",
+    "13) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
