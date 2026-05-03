@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
+import { excluirDocumentoLogico } from "@/components/quero-armas/clientes/docsAprovacao";
 import { AlertasDrillDownModal, type AlertaItem } from "./AlertasDrillDownModal";
 import {
   getStatusUnificado,
