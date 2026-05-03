@@ -830,6 +830,92 @@ export function ArsenalView({
     documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
   ]);
 
+  // BLOCO 4 — Lista detalhada de alertas (drill-down do KPI Alertas).
+  // Reusa exatamente a mesma whitelist da consolidação acima, sem
+  // recalcular nada. Cada item carrega título humano, tipo, status,
+  // data de vencimento e dias restantes.
+  const alertasDetalhados = useMemo<AlertaItem[]>(() => {
+    const ALERT_CODES = new Set([
+      "indeferido", "vencido", "pagamento_falhou", "exigencia_pf", "iminente",
+      "vencendo_15", "vencendo_30", "vencendo_60", "vencendo_90",
+      "documentos_invalidos", "documentos_incompletos", "ia_falhou",
+      "aguardando_pagamento", "aguardando_documentacao",
+    ]);
+    const catToTipo: Record<string, Parameters<typeof getStatusValidade>[1]> = {
+      CR: "CR", CRAF: "CRAF", GTE: "GTE",
+      EXAME: "EXAME_LAUDO", "EXAME PSICOLÓGICO": "EXAME_LAUDO",
+      "EXAME DE TIRO": "EXAME_LAUDO", LAUDO: "EXAME_LAUDO",
+      "FILIAÇÃO": "GENERICO", SERVIÇO: "GENERICO",
+    };
+    const out: AlertaItem[] = [];
+
+    // 1) Itens com data (expDocs) — driver mais comum de alerta.
+    (expDocs ?? []).forEach((d, i) => {
+      if (!d?.date) return;
+      const cat = String(d.category ?? "").toUpperCase();
+      const tipo = catToTipo[cat] ?? "GENERICO";
+      const status = getStatusValidade(d.date, tipo);
+      if (!ALERT_CODES.has(status.codigo)) return;
+      out.push({
+        id: `exp-${i}-${d.label}`,
+        titulo: (d.label || cat || "ITEM").toUpperCase(),
+        tipo: cat || "DOCUMENTO",
+        status,
+        dataVencimento: d.date,
+        diasRestantes: d.days ?? null,
+      });
+    });
+
+    // 2) Processos com prazo crítico (etapa_liberada_ate).
+    (processos ?? []).forEach((p) => {
+      const prazo = (p as any)?.etapa_liberada_ate ?? null;
+      if (!prazo) return;
+      const status = getStatusValidade(prazo, "PROCESSO_ADM");
+      if (!ALERT_CODES.has(status.codigo)) return;
+      out.push({
+        id: `proc-${p.id}`,
+        titulo: (p.servico_nome || "PROCESSO ADMINISTRATIVO").toUpperCase(),
+        tipo: "PROCESSO",
+        status,
+        dataVencimento: typeof prazo === "string" ? prazo : null,
+        diasRestantes: daysUntil(typeof prazo === "string" ? prazo : null),
+      });
+    });
+
+    // 3) Estados não-data (indeferido/inválido/exigência/pagamento) já
+    //    consolidados nos KPIs unificados.
+    const unificadosLabel: { s: StatusUnificado | null; tipo: string; titulo: string }[] = [
+      { s: crUnified, tipo: "CR", titulo: "CERTIFICADO DE REGISTRO (CR)" },
+      { s: crafUnified, tipo: "CRAF", titulo: "REGISTRO DE ARMA (CRAF)" },
+      { s: gteUnified, tipo: "GTE", titulo: "GUIA DE TRÁFEGO (GTE)" },
+      { s: documentosUnified, tipo: "DOCUMENTO", titulo: "DOCUMENTOS GERAIS" },
+      { s: processosUnified, tipo: "PROCESSO", titulo: "PROCESSOS EM ANDAMENTO" },
+      { s: autorizacoesUnified, tipo: "AUTORIZAÇÃO", titulo: "AUTORIZAÇÕES DE COMPRA" },
+      { s: examesUnified, tipo: "EXAME", titulo: "EXAMES E LAUDOS" },
+    ];
+    unificadosLabel.forEach(({ s, tipo, titulo }, i) => {
+      if (!s || !ALERT_CODES.has(s.codigo)) return;
+      // Evita duplicar com itens de expDocs (que já cobrem datas).
+      // Mantém aqui apenas códigos não-data (decisão/exigência/financeiro/docs).
+      const codigosDeData = new Set(["vencido", "iminente", "vencendo_15", "vencendo_30", "vencendo_60", "vencendo_90"]);
+      if (codigosDeData.has(s.codigo)) return;
+      out.push({
+        id: `uni-${tipo}-${i}`,
+        titulo,
+        tipo,
+        status: s,
+        dataVencimento: null,
+        diasRestantes: null,
+      });
+    });
+
+    return out;
+  }, [
+    expDocs, processos,
+    crUnified, crafUnified, gteUnified,
+    documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+  ]);
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
