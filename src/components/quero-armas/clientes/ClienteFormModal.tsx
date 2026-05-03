@@ -108,16 +108,17 @@ function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLen
   );
 }
 
-function FSelect({ label, value, onChange, options, placeholder = "Selecionar..." }: {
+function FSelect({ label, value, onChange, options, placeholder = "Selecionar...", error }: {
   label: string; value: string; onChange: (v: string) => void;
-  options: { value: string; label: string }[]; placeholder?: string;
+  options: { value: string; label: string }[]; placeholder?: string; error?: string;
 }) {
   return (
     <Field label={label}>
-      <select value={value} onChange={e => onChange(e.target.value)} className={selectClass}>
+      <select value={value} onChange={e => onChange(e.target.value)} className={cn(selectClass, error && "border-red-500 ring-1 ring-red-500")}>
         <option value="">{placeholder}</option>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+      {error && <p className="text-[10px] text-red-600 mt-1 uppercase">{error}</p>}
     </Field>
   );
 }
@@ -133,6 +134,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [requiredErrors, setRequiredErrors] = useState<{ photo?: boolean; sexo?: boolean; estado_civil?: boolean }>({});
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
@@ -143,6 +145,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
     setPhotoFile(file);
+    setRequiredErrors(p => ({ ...p, photo: false }));
     const reader = new FileReader();
     reader.onload = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -497,9 +500,17 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const save = async () => {
     if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
     if (!isEdit) {
-      if (!photoFile) { toast.error("Foto do cliente é obrigatória"); return; }
-      if (!f.sexo) { toast.error("Sexo é obrigatório"); return; }
-      if (!f.estado_civil) { toast.error("Estado civil é obrigatório"); return; }
+      const errs = { photo: !photoFile, sexo: !f.sexo, estado_civil: !f.estado_civil };
+      if (errs.photo || errs.sexo || errs.estado_civil) {
+        setRequiredErrors(errs);
+        const missing: string[] = [];
+        if (errs.photo) missing.push("foto");
+        if (errs.sexo) missing.push("sexo");
+        if (errs.estado_civil) missing.push("estado civil");
+        toast.error(`Campos obrigatórios: ${missing.join(", ")}`);
+        return;
+      }
+      setRequiredErrors({});
     }
     // ── Validação compartilhada (clienteSchema) ──
     if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); return; }
@@ -619,7 +630,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="relative h-20 w-20 rounded-xl border border-dashed border-zinc-300 hover:border-zinc-400 bg-zinc-50 flex items-center justify-center overflow-hidden transition-colors"
+                    className={cn(
+                      "relative h-20 w-20 rounded-xl border border-dashed flex items-center justify-center overflow-hidden transition-colors",
+                      requiredErrors.photo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : "border-zinc-300 hover:border-zinc-400 bg-zinc-50"
+                    )}
                     aria-label="Adicionar foto"
                   >
                     {photoPreview ? (
@@ -628,6 +642,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                       <Camera className="h-7 w-7 text-zinc-400" />
                     )}
                   </button>
+                  {requiredErrors.photo && (
+                    <p className="text-[10px] text-red-600 mt-1 uppercase">Foto obrigatória</p>
+                  )}
                   {photoPreview && (
                     <button
                       type="button"
@@ -744,7 +761,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
                 <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FSelect label="Sexo" value={f.sexo} onChange={v => set("sexo", v)} options={SEXO_OPTIONS} placeholder="Selecionar..." />
+                <FSelect label="Sexo" value={f.sexo} onChange={v => { set("sexo", v); if (v) setRequiredErrors(p => ({ ...p, sexo: false })); }} options={SEXO_OPTIONS} placeholder="Selecionar..." error={requiredErrors.sexo ? "Sexo é obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Naturalidade (Município)" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} />
@@ -753,7 +770,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
-                <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
+                <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => { set("estado_civil", v); if (v) setRequiredErrors(p => ({ ...p, estado_civil: false })); }} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Estado civil é obrigatório" : undefined} />
                 <FInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
