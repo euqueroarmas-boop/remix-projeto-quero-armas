@@ -823,22 +823,22 @@ export default function QABaseEquipePage() {
             {!editing.id && (
               <div className="rounded-md border border-amber-300 bg-amber-50/60 p-3 space-y-2">
                 <div className="flex items-center gap-2 text-xs uppercase font-mono text-amber-700">
-                  <Wand2 className="h-3.5 w-3.5" /> Gerar rascunho com IA
+                  <Wand2 className="h-3.5 w-3.5" /> Gerar rascunho após auditoria
                 </div>
                 <Textarea
                   rows={2}
-                  placeholder="Descreva o problema, a tela ou o fluxo. A IA vai gerar um rascunho operacional para revisão."
+                  placeholder="Descreva a auditoria concluída, a tela real e o procedimento testado."
                   value={draftDescription}
                   onChange={(e) => setDraftDescription(e.target.value)}
                 />
                 <div className="flex justify-end">
-                  <Button size="sm" variant="outline" onClick={generateWithAI} disabled={drafting}>
+                  <Button size="sm" variant="outline" onClick={generateWithAI} disabled={drafting || !auditComplete(editing)}>
                     {drafting ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Wand2 className="h-3.5 w-3.5 mr-1" />}
                     Gerar rascunho
                   </Button>
                 </div>
                 <p className="text-[10px] text-amber-700/80 uppercase font-mono">
-                  O rascunho fica como DRAFT — revise antes de publicar.
+                  Sem auditoria completa, a escrita permanece bloqueada.
                 </p>
               </div>
             )}
@@ -877,6 +877,8 @@ export default function QABaseEquipePage() {
                   <SelectContent>
                     <SelectItem value="published">Publicado</SelectItem>
                     <SelectItem value="audited">Auditado</SelectItem>
+                    <SelectItem value="audit_pending">Auditoria pendente</SelectItem>
+                    <SelectItem value="needs_real_image">Precisa de imagem real</SelectItem>
                     <SelectItem value="needs_review">Aguardando revisão</SelectItem>
                     <SelectItem value="draft">Rascunho</SelectItem>
                     <SelectItem value="rejected">Reprovado</SelectItem>
