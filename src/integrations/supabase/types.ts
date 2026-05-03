@@ -5312,6 +5312,66 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_kb_artigos: {
+        Row: {
+          audience: string
+          author_id: string | null
+          body: string
+          category: string
+          created_at: string
+          embedding: string | null
+          id: string
+          module: string | null
+          related_articles: string[]
+          search_tsv: unknown
+          slug: string
+          status: string
+          symptoms: string[]
+          tags: string[]
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          audience?: string
+          author_id?: string | null
+          body?: string
+          category: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          module?: string | null
+          related_articles?: string[]
+          search_tsv?: unknown
+          slug: string
+          status?: string
+          symptoms?: string[]
+          tags?: string[]
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          audience?: string
+          author_id?: string | null
+          body?: string
+          category?: string
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          module?: string | null
+          related_articles?: string[]
+          search_tsv?: unknown
+          slug?: string
+          status?: string
+          symptoms?: string[]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       qa_logs_auditoria: {
         Row: {
           acao: string
@@ -7867,6 +7927,20 @@ export type Database = {
       qa_is_owner_of_cliente: {
         Args: { _cliente_id: number }
         Returns: boolean
+      }
+      qa_kb_search_text: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          body: string
+          category: string
+          id: string
+          module: string
+          rank: number
+          slug: string
+          symptoms: string[]
+          tags: string[]
+          title: string
+        }[]
       }
       qa_listar_municipios_por_uf: {
         Args: { p_uf: string }
