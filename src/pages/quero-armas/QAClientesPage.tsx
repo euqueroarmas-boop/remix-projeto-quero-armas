@@ -49,6 +49,7 @@ import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clien
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { STATUS_SERVICO_QA, STATUS_LABELS, statusBadgeClass } from "@/lib/quero-armas/statusServico";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
