@@ -519,18 +519,25 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
       <DialogContent className="w-[96vw] max-w-3xl max-h-[90dvh] overflow-hidden p-0 bg-white border-slate-200 text-slate-800 qa-premium gap-0">
 
-        {/* ── Header ── */}
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-          <DialogTitle className="text-lg font-bold text-slate-800">
+        {/* ── Header (Arsenal UI) ── */}
+        <DialogHeader className="relative px-6 pt-5 pb-4 border-b border-amber-500/30 bg-zinc-900 text-zinc-100">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-500/15 blur-3xl" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/70 to-transparent" />
+          <div className="flex items-center gap-3 relative">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.25em] text-amber-400">
+              Quero Armas · Cadastro
+            </span>
+          </div>
+          <DialogTitle className="font-mono text-lg font-black uppercase tracking-[0.18em] text-zinc-100 mt-1">
             {isEdit ? "Editar Cliente" : "Novo Cliente"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-slate-400">
-            Preencha os dados cadastrais • Etapa {step + 1} de {STEPS.length}
+          <DialogDescription className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-400/80">
+            Etapa {step + 1} de {STEPS.length} · preencha os dados cadastrais
           </DialogDescription>
         </DialogHeader>
 
-        {/* ── Step Navigation ── */}
-        <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-100">
+        {/* ── Step Navigation (Arsenal UI) ── */}
+        <div className="px-6 py-3 bg-[#f6f5f1] border-b border-amber-500/20">
           <div className="flex items-center gap-1 overflow-x-auto">
             {STEPS.map((s, i) => {
               const Icon = s.icon;
@@ -541,12 +548,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   key={s.key}
                   onClick={() => setStep(i)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all",
+                    "flex items-center gap-1.5 px-3 py-2 rounded-md text-[11px] font-mono font-bold uppercase tracking-[0.12em] whitespace-nowrap transition-all",
                     active
-                      ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                      ? "bg-amber-500 text-zinc-900 shadow-sm shadow-amber-300"
                       : completed
-                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                        : "bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-100 border border-slate-100"
+                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+                        : "bg-white text-zinc-500 hover:text-zinc-800 hover:bg-amber-50 border border-amber-500/20"
                   )}
                 >
                   {completed && !active ? (
@@ -561,16 +568,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             })}
           </div>
           {/* Progress bar */}
-          <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="mt-2 h-1 bg-amber-500/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
+              className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-300"
               style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
             />
           </div>
         </div>
 
         {/* ── Form Body ── */}
-        <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(90vh - 260px)" }}>
+        <div className="px-6 py-5 overflow-y-auto bg-[#f6f5f1]" style={{ maxHeight: "calc(90vh - 260px)" }}>
           {/* Step 0: Identificação */}
           {step === 0 && (
             <div className="space-y-5">
