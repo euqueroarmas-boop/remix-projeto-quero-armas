@@ -36,7 +36,7 @@ export default function QAAuditoriaPage() {
   return (
     <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#2563EB] text-white">
+        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#7A1F2B] text-white">
           <ShieldCheck className="h-5 w-5" />
         </div>
         <div>
@@ -51,11 +51,11 @@ export default function QAAuditoriaPage() {
           const card = (
             <div className={`group h-full p-5 rounded-xl border transition-all ${
               m.available
-                ? "bg-white border-slate-200 hover:border-[#2563EB] hover:shadow-md cursor-pointer"
+                ? "bg-white border-slate-200 hover:border-[#7A1F2B] hover:shadow-md cursor-pointer"
                 : "bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed"
             }`}>
               <div className="flex items-start justify-between gap-3">
-                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-slate-100 group-hover:bg-[#1D4ED8] group-hover:text-white transition">
+                <div className="h-9 w-9 rounded-lg flex items-center justify-center bg-slate-100 group-hover:bg-[#641722] group-hover:text-white transition">
                   <Icon className="h-4 w-4" />
                 </div>
                 {m.available && (

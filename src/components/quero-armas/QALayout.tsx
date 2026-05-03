@@ -14,7 +14,7 @@ function QALayoutInner() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(220 20% 97%)" }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
           <span className="text-xs text-slate-400 tracking-wider">Carregando...</span>
         </div>
       </div>

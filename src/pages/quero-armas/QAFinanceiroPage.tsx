@@ -497,7 +497,7 @@ export default function QAFinanceiroPage() {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
           <span className="text-xs text-slate-400 tracking-wider">Carregando painel financeiro...</span>
         </div>
       </div>

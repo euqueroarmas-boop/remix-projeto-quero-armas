@@ -158,7 +158,7 @@ export default function QAHistoricoStatusPage() {
     <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#2563EB] text-white">
+        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#7A1F2B] text-white">
           <History className="h-5 w-5" />
         </div>
         <div>

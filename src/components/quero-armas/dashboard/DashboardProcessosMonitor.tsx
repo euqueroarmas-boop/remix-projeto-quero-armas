@@ -891,7 +891,7 @@ function EntityPanel({
       {/* Header da entidade */}
       <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className={`size-2.5 rounded-full ${entidade === "PF" ? "bg-[#2563EB]" : "bg-emerald-700"}`} />
+          <span className={`size-2.5 rounded-full ${entidade === "PF" ? "bg-[#7A1F2B]" : "bg-emerald-700"}`} />
           <h4 className="text-sm font-bold uppercase tracking-wide text-slate-900">{meta.label}</h4>
         </div>
         <span className="font-mono text-[10px] font-semibold text-slate-500 bg-slate-200/60 px-2 py-0.5 rounded">{meta.ref}</span>
@@ -1032,7 +1032,7 @@ function FilterChip({
       onClick={onClick}
       className={`px-2.5 h-7 rounded-full text-[11px] font-medium border transition-colors ${
         active
-          ? "bg-[#2563EB] text-white border-[#2563EB]"
+          ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
       }`}
     >

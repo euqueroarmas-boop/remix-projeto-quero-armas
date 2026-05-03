@@ -414,7 +414,7 @@ export default function QARelatoriosPage() {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
           <span className="text-xs text-slate-400 tracking-wider">Carregando relatórios...</span>
         </div>
       </div>
@@ -483,7 +483,7 @@ export default function QARelatoriosPage() {
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
               tab === t.key
-                ? "bg-[#2563EB] text-white shadow-sm"
+                ? "bg-[#7A1F2B] text-white shadow-sm"
                 : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}
           >

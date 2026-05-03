@@ -1855,7 +1855,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       descricao: "HISTÓRICO COMPLETO DOS ÚLTIMOS 5 ANOS DE RESIDÊNCIA, CONFORME EXIGÊNCIA DA PF." };
                   }
                   if (t.includes("declaracao") || t.includes("dsa_") || t.includes("compromisso")) {
-                    return { key: "declaracoes", label: "DECLARAÇÕES E COMPROMISSOS", color: "#2563EB", icon: FileSignature,
+                    return { key: "declaracoes", label: "DECLARAÇÕES E COMPROMISSOS", color: "#7A1F2B", icon: FileSignature,
                       descricao: "MODELOS DO SISTEMA — BAIXE PREENCHIDO, ASSINE NO GOV.BR E ENVIE O PDF DE VOLTA." };
                   }
                   return { key: "outros", label: "OUTROS DOCUMENTOS", color: "#64748B", icon: FileText,

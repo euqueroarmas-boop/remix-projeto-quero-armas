@@ -98,7 +98,7 @@ export default function QALoginPage() {
               </button>
             </div>
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white border-0 h-10 text-sm font-medium transition-all active:scale-[0.98]">
+          <Button type="submit" disabled={loading} className="w-full bg-[#7A1F2B] hover:bg-[#641722] text-white border-0 h-10 text-sm font-medium transition-all active:scale-[0.98]">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
           </Button>
           <div className="text-center pt-1">

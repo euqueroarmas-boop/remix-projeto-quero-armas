@@ -515,7 +515,7 @@ export default function QAClientePortalPage() {
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             {/* Monograma premium light */}
             <div className="relative shrink-0">
-              <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#2563EB] ring-1 ring-slate-200 shadow-sm">
+              <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
                 <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
                   {(userName || "C")
                     .split(" ")
@@ -585,7 +585,7 @@ export default function QAClientePortalPage() {
                 onClick={() => setActiveTab("arsenal")}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
                   activeTab === "arsenal"
-                    ? "bg-[#2563EB] text-white shadow-sm"
+                    ? "bg-[#7A1F2B] text-white shadow-sm"
                     : "text-slate-500 hover:bg-slate-50"
                 }`}
               >
@@ -596,7 +596,7 @@ export default function QAClientePortalPage() {
                 onClick={() => setActiveTab("resumo")}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
                   activeTab === "resumo"
-                    ? "bg-[#2563EB] text-white shadow-sm"
+                    ? "bg-[#7A1F2B] text-white shadow-sm"
                     : "text-slate-500 hover:bg-slate-50"
                 }`}
               >
@@ -774,7 +774,7 @@ export default function QAClientePortalPage() {
                           setGeneratingAvatar(false);
                         }
                       }}
-                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-sm"
+                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-[#7A1F2B] text-white hover:bg-[#641722] shadow-sm"
                     >
                       <Wand2 className="h-3.5 w-3.5 mr-1.5" />
                       {generatingAvatar ? "Criando avatar..." : "Gerar avatar tático com IA"}
@@ -920,7 +920,7 @@ export default function QAClientePortalPage() {
           <SectionCard icon={FolderArchive} title="Central de Documentos" color="hsl(262 70% 55%)">
             <button
               onClick={() => navigate("/area-do-cliente/contratacoes")}
-              className="w-full mb-3 inline-flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-[11px] uppercase tracking-wider font-bold transition"
+              className="w-full mb-3 inline-flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] uppercase tracking-wider font-bold transition"
             >
               <span className="inline-flex items-center gap-2">
                 <FileStack className="h-3.5 w-3.5" /> Ver todas as minhas contratações
