@@ -126,7 +126,10 @@ export default function QABaseEquipePage() {
     // contagens globais
     const [{ data: arts }, { data: imgs }] = await Promise.all([
       supabase.from("qa_kb_artigos" as any).select("id"),
-      supabase.from("qa_kb_artigo_imagens" as any).select("article_id,status").neq("status", "archived"),
+      supabase.from("qa_kb_artigo_imagens" as any)
+        .select("article_id,status,is_ai_generated_blocked,original_image_type")
+        .not("status", "in", "(archived,archived_invalid_ai)")
+        .eq("is_ai_generated_blocked", false),
     ]);
     const allIds = new Set(((arts ?? []) as any[]).map(a => a.id));
     const withActive = new Set<string>();
@@ -145,9 +148,10 @@ export default function QABaseEquipePage() {
     (async () => {
       const { data } = await supabase
         .from("qa_kb_artigo_imagens" as any)
-        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message")
+        .select("id,article_id,step_number,step_title,caption,image_url,status,error_message,image_type,original_image_type,is_ai_generated_blocked")
         .eq("article_id", selected.id)
-        .neq("status", "archived")
+        .not("status", "in", "(archived,archived_invalid_ai)")
+        .eq("is_ai_generated_blocked", false)
         .order("step_number");
       setImages(((data ?? []) as any[]) as ArticleImage[]);
     })();
