@@ -716,8 +716,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 2: Endereço Principal */}
           {step === 2 && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Endereço Principal</p>
+              <div className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Endereço Principal</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
                   <div className="col-span-2 sm:col-span-3">
@@ -725,7 +725,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
+                  <FInput label="Número" value={f.numero} onChange={v => set("numero", v)} onBlur={() => resolveGeoloc("")} />
                   <FInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
                   <FInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
                 </div>
@@ -734,6 +734,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FSelect label="UF" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais} onChange={v => set("pais", v)} />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+                  <FInput
+                    label="Geolocalização (lat,long)"
+                    value={f.geolocalizacao}
+                    onChange={v => set("geolocalizacao", v)}
+                    placeholder="Ex: -23.5505,-46.6333"
+                    span
+                  />
+                  <button
+                    type="button"
+                    onClick={() => resolveGeoloc("")}
+                    disabled={geocodeLoading || !f.endereco || !f.cidade}
+                    className="h-10 px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -741,8 +758,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           {/* Step 3: Endereço Secundário */}
           {step === 3 && (
             <div className="space-y-5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço Secundário <span className="normal-case font-normal">(opcional)</span></p>
+              <div className="rounded-xl border border-amber-500/30 bg-white p-4 space-y-4">
+                <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">Endereço Secundário <span className="normal-case font-normal text-zinc-400">(opcional)</span></p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
                   <div className="col-span-2 sm:col-span-3">
@@ -750,7 +767,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
+                  <FInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} onBlur={() => resolveGeoloc("2")} />
                   <FInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
                   <FInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
                 </div>
@@ -758,6 +775,23 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
                   <FSelect label="UF" value={f.estado2} onChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+                  <FInput
+                    label="Geolocalização (lat,long)"
+                    value={f.geolocalizacao2}
+                    onChange={v => set("geolocalizacao2", v)}
+                    placeholder="Ex: -23.5505,-46.6333"
+                    span
+                  />
+                  <button
+                    type="button"
+                    onClick={() => resolveGeoloc("2")}
+                    disabled={geocodeLoading || !f.endereco2 || !f.cidade2}
+                    className="h-10 px-4 rounded-md bg-amber-500 hover:bg-amber-600 text-zinc-900 font-mono text-[10px] font-bold uppercase tracking-[0.18em] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {geocodeLoading ? "Resolvendo…" : "Resolver via endereço"}
+                  </button>
                 </div>
               </div>
             </div>
