@@ -811,6 +811,7 @@ export function ArsenalView({
         crUnified={crUnified}
         crafUnified={crafUnified}
         gteUnified={gteUnified}
+        alertasUnified={alertasUnified}
         documentosUnified={documentosUnified}
         processosUnified={processosUnified}
         autorizacoesUnified={autorizacoesUnified}
