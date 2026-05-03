@@ -301,6 +301,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     // Detecta divergência de endereço (CEP vs endereço extraído)
     let addressDivergence: string | null = null;
     let extractedCep = onlyDigits(p.cep);
+    const extractedCep2 = onlyDigits((p as any).cep_secundario);
 
     setF(prev => {
       const cinDetected = String(p.tipo_documento_identidade || "").toUpperCase() === "CIN";
@@ -339,6 +340,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cidade: setIfEmpty(prev.cidade, p.cidade),
         estado: setIfEmpty(prev.estado, p.estado),
         pais: setIfEmpty(prev.pais, p.pais) || prev.pais,
+        cep2: setIfEmpty(prev.cep2, extractedCep2),
+        endereco2: setIfEmpty(prev.endereco2, (p as any).endereco_secundario),
+        numero2: setIfEmpty(prev.numero2, (p as any).numero_secundario),
+        complemento2: setIfEmpty(prev.complemento2, (p as any).complemento_secundario),
+        bairro2: setIfEmpty(prev.bairro2, (p as any).bairro_secundario),
+        cidade2: setIfEmpty(prev.cidade2, (p as any).cidade_secundario),
+        estado2: setIfEmpty(prev.estado2, (p as any).estado_secundario),
+        pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
@@ -375,6 +384,22 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           });
         }
       } catch { /* lookup falha silenciosa — usuário revê manualmente */ }
+    }
+
+    // CEP lookup automático para endereço secundário
+    if (extractedCep2 && extractedCep2.length === 8) {
+      try {
+        const result2 = await lookupCep(extractedCep2);
+        if (result2) {
+          setF(prev => ({
+            ...prev,
+            endereco2: prev.endereco2 || result2.street || "",
+            bairro2: prev.bairro2 || result2.neighborhood || "",
+            cidade2: prev.cidade2 || result2.city || "",
+            estado2: prev.estado2 || result2.state || "",
+          }));
+        }
+      } catch { /* silencioso */ }
     }
 
     if (addressDivergence) {

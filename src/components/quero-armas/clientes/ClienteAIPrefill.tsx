@@ -51,6 +51,10 @@ const FIELD_LABELS: Record<string, string> = {
   celular: "Celular", telefone_secundario: "Tel. 2", email: "E-mail",
   cep: "CEP", endereco: "Logradouro", numero: "Nº", complemento: "Compl.",
   bairro: "Bairro", cidade: "Cidade", estado: "UF", pais: "País",
+  cep_secundario: "CEP 2", endereco_secundario: "Logradouro 2",
+  numero_secundario: "Nº 2", complemento_secundario: "Compl. 2",
+  bairro_secundario: "Bairro 2", cidade_secundario: "Cidade 2",
+  estado_secundario: "UF 2", pais_secundario: "País 2",
   cr_numero: "CR nº", cr_categoria: "CR cat.", cr_data_emissao: "CR emissão",
   cr_data_validade: "CR validade", cr_orgao_emissor: "CR órgão",
 };
