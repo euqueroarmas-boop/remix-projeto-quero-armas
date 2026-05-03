@@ -18,7 +18,7 @@ const corsHeaders = {
 };
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "google/gemini-2.5-pro";
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -164,7 +164,8 @@ const SYSTEM_PROMPT = [
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
   "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
-  "11) Se aparecer 'SENHA DO GOV', 'SENHA GOV' ou similar, extraia senha_gov exatamente como escrito, preservando caixa, números e símbolos.",
+  "11) Se aparecer 'SENHA DO GOV', 'SENHA GOV' ou similar, extraia senha_gov LITERALMENTE caractere por caractere, preservando MAIÚSCULAS, minúsculas, números e símbolos. NÃO normalize, NÃO substitua símbolos parecidos (ex: '$' nunca vira '/' ou 'S'; '0' nunca vira 'O'). Se houver QUALQUER dúvida sobre um caractere específico, adicione warning 'Senha GOV — confirmar caractere X' ao invés de chutar.",
+  "11.1) Para senha_gov, releia 2x antes de retornar. A senha é dado crítico — qualquer caractere errado bloqueia o acesso do cliente.",
   "12) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
 ].join("\n");
 

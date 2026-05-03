@@ -363,6 +363,28 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     const setIfEmpty = (cur: string, next: any) =>
       cur && cur.trim() ? cur : (next == null ? cur : String(next));
 
+    // Normaliza sexo para os valores aceitos pelo select (M/F/Outro).
+    const normSexo = (v: any): string => {
+      const s = String(v ?? "").trim().toUpperCase();
+      if (!s) return "";
+      if (s === "M" || s.startsWith("MASC")) return "M";
+      if (s === "F" || s.startsWith("FEM")) return "F";
+      if (s === "OUTRO" || s === "O") return "Outro";
+      return "";
+    };
+    // Normaliza estado civil para os valores aceitos pelo select.
+    const normEstadoCivil = (v: any): string => {
+      const s = String(v ?? "").trim().toLowerCase();
+      if (!s) return "";
+      if (s.startsWith("solt")) return "Solteiro(a)";
+      if (s.startsWith("cas")) return "Casado(a)";
+      if (s.startsWith("div")) return "Divorciado(a)";
+      if (s.startsWith("viú") || s.startsWith("viu")) return "Viúvo(a)";
+      if (s.startsWith("sep")) return "Separado(a)";
+      if (s.includes("união") || s.includes("uniao") || s.includes("estável") || s.includes("estavel")) return "União Estável";
+      return "";
+    };
+
     // Detecta divergência de endereço (CEP vs endereço extraído)
     let addressDivergence: string | null = null;
     let extractedCep = onlyDigits(p.cep);
@@ -381,11 +403,11 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         emissor_rg: setIfEmpty(prev.emissor_rg, p.emissor_rg),
         expedicao_rg: setIfEmpty(prev.expedicao_rg, p.data_expedicao_rg),
         data_nascimento: setIfEmpty(prev.data_nascimento, p.data_nascimento),
-        sexo: setIfEmpty(prev.sexo, p.sexo),
+        sexo: setIfEmpty(prev.sexo, normSexo(p.sexo)),
         nome_mae: setIfEmpty(prev.nome_mae, p.nome_mae),
         nome_pai: setIfEmpty(prev.nome_pai, p.nome_pai),
         nacionalidade: setIfEmpty(prev.nacionalidade, p.nacionalidade) || prev.nacionalidade,
-        estado_civil: setIfEmpty(prev.estado_civil, p.estado_civil),
+        estado_civil: setIfEmpty(prev.estado_civil, normEstadoCivil(p.estado_civil)),
         profissao: setIfEmpty(prev.profissao, p.profissao),
         escolaridade: setIfEmpty(prev.escolaridade, p.escolaridade),
         naturalidade_municipio: setIfEmpty(prev.naturalidade_municipio, p.naturalidade_municipio),
@@ -568,6 +590,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      // Normaliza telefone para o formato (XX) XXXXX-XXXX
+      if (payload.celular) {
+        const d = String(payload.celular).replace(/\D/g, "").slice(-11);
+        if (d.length === 11) payload.celular = `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+        else if (d.length === 10) payload.celular = `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+      }
       // Hardening: Postgres rejeita string vazia em colunas date/timestamp/numeric.
       // Convertemos QUALQUER "" → null para evitar regressão se novos campos forem
       // adicionados ao formulário no futuro. Booleans e zeros são preservados.
