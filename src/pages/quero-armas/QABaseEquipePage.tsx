@@ -546,6 +546,9 @@ export default function QABaseEquipePage() {
             {processingEmb ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Zap className="h-3.5 w-3.5 mr-1" />}
             Processar embeddings pendentes
           </Button>
+          <Button size="sm" variant="ghost" onClick={openLogs}>
+            <ScrollText className="h-3.5 w-3.5 mr-1" /> Ver logs
+          </Button>
         </CardContent>
       </Card>
 
@@ -562,6 +565,15 @@ export default function QABaseEquipePage() {
           <SelectContent>
             <SelectItem value="__all__">Todas categorias</SelectItem>
             {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={filterEmb} onValueChange={setFilterEmb}>
+          <SelectTrigger className="md:max-w-[200px]"><SelectValue placeholder="Status do vetor" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Vetor: todos</SelectItem>
+            <SelectItem value="gerado">Vetor: gerado</SelectItem>
+            <SelectItem value="pendente">Vetor: pendente</SelectItem>
+            <SelectItem value="erro">Vetor: erro</SelectItem>
           </SelectContent>
         </Select>
       </div>
