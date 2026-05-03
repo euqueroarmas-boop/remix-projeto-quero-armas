@@ -123,7 +123,7 @@ export default function QADashboardPage() {
   const alerts = [
     stats.erros > 0 && { label: `${stats.erros} documento(s) com erro de processamento`, icon: XCircle, color: "text-red-500", bg: "bg-red-50 border-red-100", link: "/base-conhecimento" },
     stats.pendentes > 0 && { label: `${stats.pendentes} documento(s) pendente(s) de validação`, icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 border-amber-100", link: "/base-conhecimento" },
-    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-blue-500", bg: "bg-blue-50 border-blue-100", link: "/historico" },
+    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4] border-[#E5C2C6]", link: "/historico" },
   ].filter(Boolean) as any[];
 
   return (
@@ -253,5 +253,5 @@ function KPICard({ icon: Icon, label, value, to }: {
       <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
     </div>
   );
-  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl">{content}</Link> : content;
+  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] rounded-xl">{content}</Link> : content;
 }

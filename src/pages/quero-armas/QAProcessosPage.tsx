@@ -196,7 +196,7 @@ export default function QAProcessosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value.toUpperCase())}
             placeholder="BUSCAR POR CLIENTE, CPF, SERVIÇO OU ID..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
           />
         </div>
         <div className="flex items-center gap-1.5">
@@ -204,7 +204,7 @@ export default function QAProcessosPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
           >
             <option value="todos">TODOS OS STATUS</option>
             {Object.entries(STATUS_PROCESSO).map(([k, v]) => (
@@ -217,7 +217,7 @@ export default function QAProcessosPage() {
           <select
             value={prazoFilter}
             onChange={(e) => setPrazoFilter(e.target.value as any)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
           >
             <option value="todos">TODOS OS PRAZOS</option>
             <option value="vencidos">SOMENTE VENCIDOS</option>

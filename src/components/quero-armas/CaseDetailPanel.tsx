@@ -135,13 +135,13 @@ export default function CaseDetailPanel({
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-white border border-slate-200 h-8 w-full">
-          <TabsTrigger value="resumo" className="text-[10px] flex-1 data-[state=active]:bg-blue-50 data-[state=active]:text-[#2563EB]">
+          <TabsTrigger value="resumo" className="text-[10px] flex-1 data-[state=active]:bg-[#FBF3F4] data-[state=active]:text-[#2563EB]">
             <User className="h-3 w-3 mr-1" /> Resumo
           </TabsTrigger>
-          <TabsTrigger value="documentos" className="text-[10px] flex-1 data-[state=active]:bg-blue-50 data-[state=active]:text-[#2563EB]">
+          <TabsTrigger value="documentos" className="text-[10px] flex-1 data-[state=active]:bg-[#FBF3F4] data-[state=active]:text-[#2563EB]">
             <FileText className="h-3 w-3 mr-1" /> Docs ({docs.length})
           </TabsTrigger>
-          <TabsTrigger value="peticao" className="text-[10px] flex-1 data-[state=active]:bg-blue-50 data-[state=active]:text-[#2563EB]">
+          <TabsTrigger value="peticao" className="text-[10px] flex-1 data-[state=active]:bg-[#FBF3F4] data-[state=active]:text-[#2563EB]">
             <BookOpen className="h-3 w-3 mr-1" /> Petição
           </TabsTrigger>
         </TabsList>
@@ -216,7 +216,7 @@ export default function CaseDetailPanel({
                         {/* Extracted fields */}
                         {hasCampos && (
                           <div>
-                            <div className="text-[9px] text-blue-600 uppercase tracking-[0.12em] mb-1.5 font-semibold">Dados Extraídos</div>
+                            <div className="text-[9px] text-[#7A1F2B] uppercase tracking-[0.12em] mb-1.5 font-semibold">Dados Extraídos</div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                               {Object.entries(campos).map(([key, val]) => (
                                 <div key={key} className="flex items-start gap-1.5 text-[10px] bg-white rounded px-2 py-1 border border-[#1a1a1a]">
@@ -245,7 +245,7 @@ export default function CaseDetailPanel({
                               <span className="text-[9px] text-slate-400 uppercase tracking-[0.12em]">Texto Extraído</span>
                               <button
                                 onClick={() => copyText(doc.texto_extraido!)}
-                                className="text-[9px] text-slate-400 hover:text-blue-600 flex items-center gap-0.5"
+                                className="text-[9px] text-slate-400 hover:text-[#7A1F2B] flex items-center gap-0.5"
                               >
                                 <Copy className="h-2.5 w-2.5" /> Copiar
                               </button>
@@ -325,7 +325,7 @@ export default function CaseDetailPanel({
                           setDownloadingDocx(false);
                         }}
                         disabled={downloadingDocx}
-                        className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 transition-colors font-medium"
+                        className="flex items-center gap-1 text-[9px] text-[#7A1F2B] hover:text-[#7A1F2B] transition-colors font-medium"
                       >
                         {downloadingDocx ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Download className="h-2.5 w-2.5" />}
                         {downloadingDocx ? "Gerando..." : "Baixar DOCX"}
@@ -333,7 +333,7 @@ export default function CaseDetailPanel({
                     )}
                     <button
                       onClick={() => copyText(minutaText)}
-                      className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-blue-600 transition-colors"
+                      className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-[#7A1F2B] transition-colors"
                     >
                       {copied ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5" />}
                       {copied ? "Copiado" : "Copiar tudo"}

@@ -74,7 +74,7 @@ export default function QACasosPage() {
     if (s === "gerado" || s === "revisado") return { bg: "bg-emerald-50", text: "text-emerald-700" };
     if (s === "deferido") return { bg: "bg-green-50", text: "text-green-700" };
     if (s === "indeferido") return { bg: "bg-red-50", text: "text-red-600" };
-    if (s === "em_geracao") return { bg: "bg-blue-50", text: "text-blue-600" };
+    if (s === "em_geracao") return { bg: "bg-[#FBF3F4]", text: "text-[#7A1F2B]" };
     if (s === "arquivado") return { bg: "bg-slate-100", text: "text-slate-500" };
     if (s === "rascunho") return { bg: "bg-amber-50", text: "text-amber-700" };
     return { bg: "bg-slate-100", text: "text-slate-500" };

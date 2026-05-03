@@ -66,7 +66,7 @@ export default function DashboardSlaClientesNovos() {
             <p className="text-xs text-slate-500">Prazo 1–25 dias desde o pagamento. Pausa quando aguardando documentos do cliente.</p>
           </div>
         </div>
-        <Link to="/clientes" className="text-xs font-medium text-blue-600 flex items-center gap-1 hover:underline">
+        <Link to="/clientes" className="text-xs font-medium text-[#7A1F2B] flex items-center gap-1 hover:underline">
           Ver todos <ArrowRight className="w-3 h-3" />
         </Link>
       </div>

@@ -168,7 +168,7 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-[10px] text-slate-500 hover:text-indigo-600"
+          className="h-7 px-2 text-[10px] text-slate-500 hover:text-[#7A1F2B]"
           title="Atualizar status da solicitação"
         >
           <Settings2 className="h-3.5 w-3.5 mr-1" />
@@ -258,7 +258,7 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
                 rows={2}
-                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
                 placeholder="Opcional"
               />
             </div>
@@ -275,7 +275,7 @@ export function SolicitacaoStatusPopover({ solicitacaoId, onUpdated }: Props) {
                 size="sm"
                 onClick={save}
                 disabled={saving}
-                className="h-8 text-[10px] bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-8 text-[10px] bg-[#7A1F2B] hover:bg-[#641722] text-white"
               >
                 {saving ? (
                   <Loader2 className="h-3 w-3 animate-spin mr-1" />
@@ -316,7 +316,7 @@ function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className={`w-full h-8 text-xs border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 ${
+        className={`w-full h-8 text-xs border rounded-md px-2 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B] ${
           disabled
             ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
             : "bg-slate-50 border-slate-200 text-slate-700"

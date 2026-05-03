@@ -1135,11 +1135,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
             aguardandoPagto ? (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-                <div className="text-[11px] uppercase tracking-wider font-bold text-blue-800">
+              <div className="rounded-xl border border-[#E5C2C6] bg-[#FBF3F4] p-5">
+                <div className="text-[11px] uppercase tracking-wider font-bold text-[#7A1F2B]">
                   AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO
                 </div>
-                <p className="mt-2 text-sm text-blue-900/90 leading-relaxed">
+                <p className="mt-2 text-sm text-[#7A1F2B] leading-relaxed">
                   Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente.
                   Após a confirmação, o checklist documental será liberado.
                 </p>
@@ -1148,12 +1148,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     <button
                       onClick={confirmarPagamentoManual}
                       disabled={confirmandoPagto}
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white text-xs font-bold uppercase tracking-wider px-4 py-2"
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] disabled:opacity-60 text-white text-xs font-bold uppercase tracking-wider px-4 py-2"
                     >
                       <CheckCircle className="h-4 w-4" />
                       {confirmandoPagto ? "Confirmando..." : "Confirmar pagamento manualmente"}
                     </button>
-                    <span className="text-[10px] uppercase tracking-wider text-blue-700/70 self-center">
+                    <span className="text-[10px] uppercase tracking-wider text-[#7A1F2B] self-center">
                       Ação restrita à Equipe Operacional
                     </span>
                   </div>
@@ -1171,7 +1171,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <span className="text-slate-500">EXIGÊNCIAS DOCUMENTAIS:</span>
                   <span className="text-emerald-700">{cumpridos} CUMPRIDAS</span>
                   <span className="text-amber-700">{docsPendencias.length} PENDENTES DO CLIENTE</span>
-                  <span className="text-sky-700">{docsAnalise.length} EM ANÁLISE</span>
+                  <span className="text-[#7A1F2B]">{docsAnalise.length} EM ANÁLISE</span>
                   <span className="text-slate-400">TOTAL {totalExigencias}</span>
                 </div>
               )}
@@ -1248,9 +1248,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{doc.etapa}</span>
                           {doc.obrigatorio && <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">OBRIGATÓRIO</span>}
-                          {pergunta && <span className="text-[9px] uppercase font-bold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded">PERGUNTA</span>}
+                          {pergunta && <span className="text-[9px] uppercase font-bold text-[#7A1F2B] bg-[#FBF3F4] px-1.5 py-0.5 rounded">PERGUNTA</span>}
                           {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
-                          {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
+                          {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-[#7A1F2B] bg-[#FBF3F4] px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
                         </div>
                         <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
@@ -1376,17 +1376,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* Fase 12 — Orientação ao cliente (apenas campos preenchidos) */}
                       {(doc.instrucoes || doc.observacoes_cliente) && (
-                        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2.5 min-w-0 max-w-full overflow-hidden">
-                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-blue-800">
+                        <div className="rounded-md border border-[#E5C2C6] bg-[#FBF3F4] p-2.5 min-w-0 max-w-full overflow-hidden">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-[#7A1F2B]">
                             <Info className="h-3 w-3" /> COMO OBTER ESTE DOCUMENTO
                           </div>
                           {doc.instrucoes && (
-                            <p className="mt-1 text-[12px] leading-relaxed text-blue-900/90 whitespace-pre-line break-words [overflow-wrap:anywhere]">
+                            <p className="mt-1 text-[12px] leading-relaxed text-[#7A1F2B] whitespace-pre-line break-words [overflow-wrap:anywhere]">
                               {doc.instrucoes}
                             </p>
                           )}
                           {doc.observacoes_cliente && (
-                            <p className="mt-1.5 text-[11px] leading-relaxed text-blue-900/80 italic break-words [overflow-wrap:anywhere]">
+                            <p className="mt-1.5 text-[11px] leading-relaxed text-[#7A1F2B] italic break-words [overflow-wrap:anywhere]">
                               {doc.observacoes_cliente}
                             </p>
                           )}
@@ -1395,8 +1395,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* PERGUNTA-PIVOT — botões de resposta ao invés de upload */}
                       {pergunta && Array.isArray(pergunta.opcoes) && (
-                        <div className="rounded-md border border-violet-200 bg-violet-50/60 p-3">
-                          <div className="text-[10px] uppercase tracking-wider font-bold text-violet-800 mb-2">
+                        <div className="rounded-md border border-[#E5C2C6] bg-[#FBF3F4] p-3">
+                          <div className="text-[10px] uppercase tracking-wider font-bold text-[#7A1F2B] mb-2">
                             SUA RESPOSTA {respostaAtual ? `(REGISTRADA: ${String(respostaAtual).toUpperCase()})` : "— SELECIONE UMA OPÇÃO"}
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -1407,7 +1407,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                   key={op.valor}
                                   disabled={respondendoPerguntaId === doc.id}
                                   onClick={() => responderPergunta(doc, op.valor)}
-                                  className={`h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border ${ativo ? "bg-violet-700 text-white border-violet-700" : "bg-white text-violet-800 border-violet-300 hover:bg-violet-100"} disabled:opacity-50`}
+                                  className={`h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border ${ativo ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-[#7A1F2B] border-[#E5C2C6] hover:bg-[#FBF3F4]"} disabled:opacity-50`}
                                 >
                                   {String(op.label || op.valor).toUpperCase()}
                                 </button>
@@ -1415,7 +1415,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             })}
                           </div>
                           {respostaAtual && (
-                            <p className="mt-2 text-[11px] text-violet-900/80">
+                            <p className="mt-2 text-[11px] text-[#7A1F2B]">
                               Resposta registrada. O checklist foi ajustado automaticamente — itens dependentes desta pergunta apareceram (ou foram ocultados).
                             </p>
                           )}
@@ -1441,7 +1441,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             href="https://assinador.iti.br/assinatura/index.xhtml"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-blue-800 bg-white border border-blue-300 hover:bg-blue-50"
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-[#7A1F2B] bg-white border border-[#E5C2C6] hover:bg-[#FBF3F4]"
                           >
                             <ExternalLink className="h-3 w-3" /> ASSINAR NO GOV.BR
                           </a>
@@ -1514,7 +1514,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               href={doc.exemplo_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2 py-0.5 rounded bg-violet-50 border border-violet-200 text-violet-800 font-bold inline-flex items-center gap-1 hover:bg-violet-100"
+                              className="px-2 py-0.5 rounded bg-[#FBF3F4] border border-[#E5C2C6] text-[#7A1F2B] font-bold inline-flex items-center gap-1 hover:bg-[#FBF3F4]"
                             >
                               <BookOpen className="h-3 w-3" /> VER EXEMPLO
                             </a>
@@ -1540,7 +1540,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               href={doc.link_emissao}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-blue-700 font-bold inline-flex items-center gap-1 hover:bg-blue-100"
+                              className="px-2 py-0.5 rounded bg-[#FBF3F4] border border-[#E5C2C6] text-[#7A1F2B] font-bold inline-flex items-center gap-1 hover:bg-[#FBF3F4]"
                             >
                               <ExternalLink className="h-3 w-3" /> {labelBotao ? labelBotao.toUpperCase() : "EMITIR ONLINE"}
                             </a>
@@ -1597,18 +1597,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* FASE 4 — Endereço em nome de terceiro */}
                       {doc.endereco_em_nome_de_terceiro && (
-                        <div className="rounded-md border border-violet-200 bg-violet-50/70 p-2.5">
-                          <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-violet-800">
+                        <div className="rounded-md border border-[#E5C2C6] bg-[#FBF3F4] p-2.5">
+                          <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-[#7A1F2B]">
                             <Home className="h-3 w-3" /> ENDEREÇO EM NOME DE TERCEIRO
                           </div>
-                          <div className="mt-1.5 text-[11px] text-violet-900/90 leading-relaxed">
+                          <div className="mt-1.5 text-[11px] text-[#7A1F2B] leading-relaxed">
                             {doc.titular_comprovante_nome && (
                               <div><strong className="uppercase">TITULAR:</strong> {doc.titular_comprovante_nome}</div>
                             )}
                             {doc.titular_comprovante_documento && (
                               <div><strong className="uppercase">DOCUMENTO:</strong> {doc.titular_comprovante_documento}</div>
                             )}
-                            <div className="mt-1 italic text-violet-800/80">
+                            <div className="mt-1 italic text-[#7A1F2B]">
                               Será necessária declaração do responsável pelo imóvel em etapa futura.
                             </div>
                           </div>
@@ -1727,7 +1727,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                 <button
                                   onClick={() => validarAssinaturaGov(doc)}
                                   disabled={validandoAssinaturaId === doc.id}
-                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-[#7A1F2B] hover:bg-[#641722] disabled:opacity-50"
                                   title="Valida a assinatura digital GOV.BR/ICP-Brasil embutida no PDF"
                                 >
                                   <FileSignature className={`h-3 w-3 ${validandoAssinaturaId === doc.id ? "animate-pulse" : ""}`} />
@@ -1737,7 +1737,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                   href="https://validar.iti.gov.br/"
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 text-[11px] uppercase tracking-wider font-bold text-indigo-700 hover:bg-indigo-100"
+                                  className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-[#E5C2C6] bg-[#FBF3F4] text-[11px] uppercase tracking-wider font-bold text-[#7A1F2B] hover:bg-[#FBF3F4]"
                                   title="Abre o validador oficial do ITI (gov.br) em nova aba"
                                 >
                                   <ExternalLink className="h-3 w-3" /> VALIDAR NO ITI OFICIAL
@@ -2234,7 +2234,7 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`flex-1 h-11 inline-flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-bold border-b-2 transition-colors ${active ? "border-blue-500 text-blue-600 bg-blue-50/40" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+      className={`flex-1 h-11 inline-flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-bold border-b-2 transition-colors ${active ? "border-[#7A1F2B] text-[#7A1F2B] bg-[#FBF3F4]" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
     >
       {icon} {label}
     </button>

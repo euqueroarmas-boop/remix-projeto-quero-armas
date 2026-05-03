@@ -116,7 +116,7 @@ function fmtDateTime(s: string | null): string {
 
 function badgeForStatus(status: StatusValidacao | null, hasProc: boolean) {
   if (status === "aprovado" && hasProc) return { txt: "Processo gerado", cls: "bg-emerald-100 text-emerald-700 border-emerald-200" };
-  if (status === "aprovado") return { txt: "Aprovado", cls: "bg-blue-100 text-blue-700 border-blue-200" };
+  if (status === "aprovado") return { txt: "Aprovado", cls: "bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6]" };
   if (status === "corrigido") return { txt: "Corrigido", cls: "bg-amber-100 text-amber-700 border-amber-200" };
   if (status === "reprovado") return { txt: "Reprovado", cls: "bg-red-100 text-red-700 border-red-200" };
   return { txt: "Aguardando", cls: "bg-slate-100 text-slate-600 border-slate-200" };
@@ -332,7 +332,7 @@ function HistoricoModal({ open, onClose, vendaId, eventos }: {
           ) : eventos.map((e) => (
             <div key={e.id} className="border border-slate-200 rounded-md p-2 bg-slate-50">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">{e.tipo_evento}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B]">{e.tipo_evento}</span>
                 <span className="text-[10px] text-slate-400">{fmtDateTime(e.created_at)}</span>
               </div>
               {e.descricao && <p className="text-[11px] text-slate-700 mt-1">{e.descricao}</p>}
@@ -547,7 +547,7 @@ export default function QAVendasPendentesPage() {
           return (
             <button key={f.id} onClick={() => setFiltro(f.id)}
               className={`h-8 px-3 inline-flex items-center gap-1.5 rounded-full text-[11px] uppercase tracking-wider font-bold border transition ${
-                active ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                active ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}>
               {f.label}
               <span className={`px-1.5 py-0.5 rounded text-[9px] ${active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>{n}</span>
@@ -627,7 +627,7 @@ export default function QAVendasPendentesPage() {
                       {cli?.email && (
                         <div className="flex items-center gap-1.5 truncate">
                           <Mail className="h-3 w-3 text-slate-400 shrink-0" />
-                          <a href={`mailto:${cli.email}`} className="text-blue-700 hover:underline truncate">{cli.email}</a>
+                          <a href={`mailto:${cli.email}`} className="text-[#7A1F2B] hover:underline truncate">{cli.email}</a>
                         </div>
                       )}
                       {cli?.celular && (

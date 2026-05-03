@@ -74,7 +74,7 @@ export default function QALoginPage() {
             <Input
               id="email" type="email" required value={email}
               onChange={e => setEmail(e.target.value)}
-              className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm"
+              className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm"
               placeholder="seu@email.com"
             />
           </div>
@@ -84,7 +84,7 @@ export default function QALoginPage() {
               <Input
                 id="password" type={showPassword ? "text" : "password"} required value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="bg-white border-slate-200 text-slate-700 focus:border-blue-500 focus:ring-blue-500/20 h-10 text-sm pr-10"
+                className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"
                 placeholder="••••••••"
               />
               <button
@@ -103,7 +103,7 @@ export default function QALoginPage() {
           </Button>
           <div className="text-center pt-1">
             <button type="button" onClick={handleForgotPassword}
-              className="text-[10px] text-slate-400 hover:text-blue-600 transition-colors">
+              className="text-[10px] text-slate-400 hover:text-[#7A1F2B] transition-colors">
               Esqueci minha senha
             </button>
           </div>

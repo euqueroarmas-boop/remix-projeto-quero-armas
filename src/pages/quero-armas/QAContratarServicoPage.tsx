@@ -169,7 +169,7 @@ export default function QAContratarServicoPage() {
             ))
           )}
 
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-100 text-[11px] text-blue-900">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-[#FBF3F4] border border-[#E5C2C6] text-[11px] text-[#7A1F2B]">
             <FileText className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <p>
               Ao contratar, você será levado(a) ao cadastro guiado em 5 etapas. Se já é cliente,

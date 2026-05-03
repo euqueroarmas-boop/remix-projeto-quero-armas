@@ -356,11 +356,11 @@ export default function DadosFormularioPublicoSection({
   };
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 mb-3">
+    <div className="rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] p-3 mb-3">
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <FileText className="h-4 w-4 text-blue-700 shrink-0" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-800">
+          <FileText className="h-4 w-4 text-[#7A1F2B] shrink-0" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7A1F2B]">
             Dados recebidos pelo formulário público
           </span>
         </div>

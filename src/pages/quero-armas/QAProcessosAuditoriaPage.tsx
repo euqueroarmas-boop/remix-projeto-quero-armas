@@ -280,7 +280,7 @@ export default function QAProcessosAuditoriaPage() {
                         </div>
                         {d.validacao_ia_status && (
                           <div className="mt-1 text-slate-500 flex items-center gap-2 flex-wrap">
-                            <Sparkles className="h-3 w-3 text-indigo-500" />
+                            <Sparkles className="h-3 w-3 text-[#7A1F2B]" />
                             <span className="uppercase">IA: {d.validacao_ia_status}</span>
                             {d.validacao_ia_confianca != null && <span className="font-mono">conf {Number(d.validacao_ia_confianca).toFixed(2)}</span>}
                             {d.validacao_ia_modelo && <span className="text-slate-400 uppercase">{d.validacao_ia_modelo}</span>}

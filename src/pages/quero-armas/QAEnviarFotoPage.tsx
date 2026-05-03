@@ -143,7 +143,7 @@ export default function QAEnviarFotoPage() {
                 value={cpf}
                 onChange={e => setCpf(maskCpf(e.target.value))}
                 placeholder="000.000.000-00"
-                className="w-full h-12 px-4 rounded-lg border outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full h-12 px-4 rounded-lg border outline-none focus:ring-2 focus:ring-[#7A1F2B]"
                 style={{ borderColor: "hsl(220 13% 88%)" }}
                 onKeyDown={e => e.key === "Enter" && lookup()}
               />

@@ -37,7 +37,7 @@ const CAT_META: Record<Categoria, { label: string; tone: string; icon: any; desc
   REVERTIDO:       { label: "Revertido (Deferido)", tone: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2, desc: "Recurso teve êxito" },
   PERDIDO:         { label: "Perdido",              tone: "bg-rose-50 text-rose-700 border-rose-200",          icon: XCircle,      desc: "Recurso indeferido" },
   PRAZO_EXPIRADO:  { label: "Prazo Expirado",       tone: "bg-amber-50 text-amber-800 border-amber-200",       icon: AlertTriangle,desc: "Sem decisão após 10 dias úteis" },
-  EM_CURSO:        { label: "Em Curso",             tone: "bg-blue-50 text-blue-700 border-blue-200",          icon: Clock,        desc: "Dentro do prazo de 10 dias" },
+  EM_CURSO:        { label: "Em Curso",             tone: "bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6]",          icon: Clock,        desc: "Dentro do prazo de 10 dias" },
   NAO_APROVEITADO: { label: "Não Aproveitado",      tone: "bg-zinc-100 text-zinc-700 border-zinc-300",         icon: FileWarning,  desc: "Indeferido sem recurso" },
 };
 
@@ -261,7 +261,7 @@ export default function QARecursosAuditoriaPage() {
                     <td className="px-3 py-2 tabular-nums text-slate-600">{fmtBR(decisao)}</td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       {l.diasSemDecisao !== null
-                        ? <span className={l.diasSemDecisao > 10 ? "text-rose-600 font-semibold" : "text-blue-600"}>{l.diasSemDecisao}d s/ decisão</span>
+                        ? <span className={l.diasSemDecisao > 10 ? "text-rose-600 font-semibold" : "text-[#7A1F2B]"}>{l.diasSemDecisao}d s/ decisão</span>
                         : l.diasParaRecorrer !== null
                           ? <span className="text-slate-500">{l.diasParaRecorrer}d p/ recorrer</span>
                           : <span className="text-slate-300">—</span>}
@@ -282,13 +282,13 @@ function KpiCard({ label, value, hint, tone }: { label: string; value: string | 
     emerald: "border-emerald-200 bg-emerald-50",
     rose: "border-rose-200 bg-rose-50",
     amber: "border-amber-200 bg-amber-50",
-    blue: "border-blue-200 bg-blue-50",
+    blue: "border-[#E5C2C6] bg-[#FBF3F4]",
   }[tone];
   const valueColor = {
     emerald: "text-emerald-700",
     rose: "text-rose-700",
     amber: "text-amber-800",
-    blue: "text-blue-700",
+    blue: "text-[#7A1F2B]",
   }[tone];
   return (
     <div className={`p-4 rounded-xl border ${toneClass}`}>

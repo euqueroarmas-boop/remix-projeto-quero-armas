@@ -88,9 +88,9 @@ function buildAutoMeta(rawKey: string): StatusMeta {
 
 const TONE_CLASSES: Record<StatusMeta["tone"], { bg: string; border: string; text: string; ring: string; dot: string }> = {
   amber:   { bg: "bg-amber-50",   border: "border-amber-200",   text: "text-amber-700",   ring: "ring-amber-300",   dot: "bg-amber-500" },
-  blue:    { bg: "bg-blue-50",    border: "border-blue-200",    text: "text-blue-700",    ring: "ring-blue-300",    dot: "bg-blue-500" },
-  violet:  { bg: "bg-violet-50",  border: "border-violet-200",  text: "text-violet-700",  ring: "ring-violet-300",  dot: "bg-violet-500" },
-  indigo:  { bg: "bg-indigo-50",  border: "border-indigo-200",  text: "text-indigo-700",  ring: "ring-indigo-300",  dot: "bg-indigo-500" },
+  blue:    { bg: "bg-[#FBF3F4]",    border: "border-[#E5C2C6]",    text: "text-[#7A1F2B]",    ring: "ring-[#7A1F2B]",    dot: "bg-[#7A1F2B]" },
+  violet:  { bg: "bg-[#FBF3F4]",  border: "border-[#E5C2C6]",  text: "text-[#7A1F2B]",  ring: "ring-[#7A1F2B]",  dot: "bg-[#7A1F2B]" },
+  indigo:  { bg: "bg-[#FBF3F4]",  border: "border-[#E5C2C6]",  text: "text-[#7A1F2B]",  ring: "ring-[#7A1F2B]",  dot: "bg-[#7A1F2B]" },
   slate:   { bg: "bg-slate-50",   border: "border-slate-200",   text: "text-slate-700",   ring: "ring-slate-300",   dot: "bg-slate-500" },
   emerald: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", ring: "ring-emerald-300", dot: "bg-emerald-500" },
   rose:    { bg: "bg-rose-50",    border: "border-rose-200",    text: "text-rose-700",    ring: "ring-rose-300",    dot: "bg-rose-500" },
@@ -533,7 +533,7 @@ export default function DashboardProcessosMonitor() {
         </div>
         <div className="hidden md:flex items-center gap-3 text-[11px] shrink-0">
           <span className="inline-flex items-center gap-1.5 text-slate-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Ativos: <b className="text-slate-700">{counts.ativos}</b>
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7A1F2B]" /> Ativos: <b className="text-slate-700">{counts.ativos}</b>
           </span>
           <span className="inline-flex items-center gap-1.5 text-slate-500">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Encerrados: <b className="text-slate-700">{counts.encerrados}</b>
@@ -604,13 +604,13 @@ export default function DashboardProcessosMonitor() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Cliente, serviço ou nº venda..."
-                className="pl-7 pr-3 h-8 w-full md:w-56 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="pl-7 pr-3 h-8 w-full md:w-56 text-xs rounded-md border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
               />
             </div>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="h-8 text-xs rounded-md border border-slate-200 bg-white px-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="h-8 text-xs rounded-md border border-slate-200 bg-white px-2 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
             >
               <option value="tempo_parado">Mais tempo no status</option>
               <option value="recente">Mais recente</option>
@@ -657,14 +657,14 @@ export default function DashboardProcessosMonitor() {
                     const tone = TONE_CLASSES[r.meta.tone];
                     const encerrado = r.meta.group === "encerrado";
                     return (
-                      <tr key={r.key} className={`border-t border-slate-100 hover:bg-slate-50/60 align-top ${r.isComboGroup ? "bg-indigo-50/20" : ""}`}>
+                      <tr key={r.key} className={`border-t border-slate-100 hover:bg-slate-50/60 align-top ${r.isComboGroup ? "bg-[#FBF3F4]" : ""}`}>
                         <td className="px-3 py-2.5 font-medium text-slate-700 align-top">
                           <div className="flex items-center gap-1.5">
-                            {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+                            {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-[#7A1F2B] shrink-0" />}
                             {r.clienteId ? (
                               <Link
                                 to={`/clientes?cliente=${r.clienteId}`}
-                                className="truncate text-blue-700 hover:text-blue-900 hover:underline"
+                                className="truncate text-[#7A1F2B] hover:text-[#7A1F2B] hover:underline"
                                 title="Abrir cadastro do cliente"
                               >
                                 {r.clienteNome}
@@ -677,13 +677,13 @@ export default function DashboardProcessosMonitor() {
                         <td className="px-3 py-2.5 text-slate-600 align-top">
                           {r.isComboGroup ? (
                             <div className="space-y-1.5">
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700 bg-indigo-100 border border-indigo-200 rounded px-1.5 py-0.5">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#7A1F2B] bg-[#FBF3F4] border border-[#E5C2C6] rounded px-1.5 py-0.5">
                                 COMBO · {r.servicosList.length} serviços
                               </span>
                               <ul className="text-[11.5px] text-slate-700 space-y-0.5">
                                 {r.servicosList.map((s, i) => (
                                   <li key={i} className="flex gap-1.5">
-                                    <span className="text-indigo-400">›</span>
+                                    <span className="text-[#7A1F2B]">›</span>
                                     <span>{s.replace(/^COMBO\s*[-–·•]?\s*/i, "")}</span>
                                   </li>
                                 ))}
@@ -743,7 +743,7 @@ export default function DashboardProcessosMonitor() {
                           {r.clienteId && (
                             <Link
                               to={`/clientes?cliente=${r.clienteId}`}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 hover:underline"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-[#7A1F2B] hover:underline"
                             >
                               Abrir <ArrowUpRight className="w-3 h-3" />
                             </Link>
@@ -762,15 +762,15 @@ export default function DashboardProcessosMonitor() {
                 const tone = TONE_CLASSES[r.meta.tone];
                 const encerrado = r.meta.group === "encerrado";
                 return (
-                  <div key={r.key} className={`p-3 ${r.isComboGroup ? "bg-indigo-50/30" : ""}`}>
+                  <div key={r.key} className={`p-3 ${r.isComboGroup ? "bg-[#FBF3F4]" : ""}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />}
+                          {r.isComboGroup && <Sparkles className="w-3.5 h-3.5 text-[#7A1F2B] shrink-0" />}
                           {r.clienteId ? (
                             <Link
                               to={`/clientes?cliente=${r.clienteId}`}
-                              className="text-[13px] font-semibold text-blue-700 truncate hover:underline"
+                              className="text-[13px] font-semibold text-[#7A1F2B] truncate hover:underline"
                             >
                               {r.clienteNome}
                             </Link>
@@ -780,13 +780,13 @@ export default function DashboardProcessosMonitor() {
                         </div>
                         {r.isComboGroup ? (
                           <div className="mt-1.5 space-y-1">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-indigo-700 bg-indigo-100 border border-indigo-200 rounded px-1.5 py-0.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#7A1F2B] bg-[#FBF3F4] border border-[#E5C2C6] rounded px-1.5 py-0.5">
                               COMBO · {r.servicosList.length} serviços
                             </span>
                             <ul className="text-[11px] text-slate-700 space-y-0.5">
                               {r.servicosList.map((s, i) => (
                                 <li key={i} className="flex gap-1.5">
-                                  <span className="text-indigo-400">›</span>
+                                  <span className="text-[#7A1F2B]">›</span>
                                   <span>{s.replace(/^COMBO\s*[-–·•]?\s*/i, "")}</span>
                                 </li>
                               ))}
@@ -844,7 +844,7 @@ export default function DashboardProcessosMonitor() {
                       <div className="mt-1.5 flex justify-end">
                         <Link
                           to={`/clientes?cliente=${r.clienteId}`}
-                          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-blue-600"
+                          className="shrink-0 inline-flex items-center gap-1 text-[11px] font-medium text-[#7A1F2B]"
                         >
                           Abrir cliente <ChevronRight className="w-3 h-3" />
                         </Link>
@@ -1065,7 +1065,7 @@ function StatusEditor({
         value={status}
         onChange={(e) => setStatus(e.target.value as StatusKey)}
         disabled={saving}
-        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200 max-w-[180px]"
+        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B] max-w-[180px]"
       >
         <optgroup label="Em andamento">
           {catalog.filter(s => s.group === "ativo").map(s => (
@@ -1084,7 +1084,7 @@ function StatusEditor({
         onChange={(e) => setDate(e.target.value)}
         disabled={saving}
         title="Data do protocolo (zera o tempo no status)"
-        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-blue-200"
+        className="h-7 text-[11px] rounded-md border border-slate-200 bg-white px-1.5 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
       />
       <button
         onClick={() => onSave(status, date)}

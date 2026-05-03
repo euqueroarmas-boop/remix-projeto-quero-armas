@@ -351,12 +351,12 @@ export default function DashboardNovosCadastrosRecebidos() {
           <Inbox className="w-5 h-5" style={{ color: "hsl(220 30% 30%)" }} />
           <div>
             <h3 className="text-sm font-bold uppercase tracking-wide" style={{ color: "hsl(220 20% 18%)" }}>
-              Novos Cadastros Recebidos {!loading && <span className="text-blue-600">— {totalPendentes} pendente{totalPendentes !== 1 ? "s" : ""}</span>}
+              Novos Cadastros Recebidos {!loading && <span className="text-[#7A1F2B]">— {totalPendentes} pendente{totalPendentes !== 1 ? "s" : ""}</span>}
             </h3>
             <p className="text-xs text-slate-500">Clientes que entraram pelo formulário público — ordenados do mais antigo para o mais novo.</p>
           </div>
         </div>
-        <Link to="/clientes" className="text-xs font-medium text-blue-600 flex items-center gap-1 hover:underline">
+        <Link to="/clientes" className="text-xs font-medium text-[#7A1F2B] flex items-center gap-1 hover:underline">
           Ver clientes <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
@@ -367,7 +367,7 @@ export default function DashboardNovosCadastrosRecebidos() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition ${
-              filter === f.key ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+              filter === f.key ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
             }`}
           >
             {f.label}
@@ -454,7 +454,7 @@ export default function DashboardNovosCadastrosRecebidos() {
                           });
                         }
                       }}
-                      className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 font-medium"
+                      className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-[#E5C2C6] text-[#7A1F2B] bg-[#FBF3F4] hover:bg-[#FBF3F4] font-medium"
                     >
                       <User className="w-3 h-3" /> Abrir cliente <ExternalLink className="w-3 h-3" />
                     </Link>
@@ -469,7 +469,7 @@ export default function DashboardNovosCadastrosRecebidos() {
                     {r.venda && (
                       <Link
                         to={`/financeiro?venda=${r.venda.id}`}
-                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-violet-200 text-violet-700 bg-violet-50 hover:bg-violet-100"
+                        className="text-[11px] inline-flex items-center gap-1 px-2 py-1 rounded border border-[#E5C2C6] text-[#7A1F2B] bg-[#FBF3F4] hover:bg-[#FBF3F4]"
                       >
                         <CreditCard className="w-3 h-3" /> Abrir venda
                       </Link>

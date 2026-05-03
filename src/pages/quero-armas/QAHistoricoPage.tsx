@@ -138,7 +138,7 @@ export default function QAHistoricoPage() {
     const map: Record<string, { bg: string; text: string }> = {
       rascunho: { bg: "bg-slate-100", text: "text-slate-600" },
       em_revisao: { bg: "bg-amber-50", text: "text-amber-700" },
-      corrigido: { bg: "bg-blue-50", text: "text-blue-700" },
+      corrigido: { bg: "bg-[#FBF3F4]", text: "text-[#7A1F2B]" },
       aprovado: { bg: "bg-emerald-50", text: "text-emerald-700" },
       aprovado_como_referencia: { bg: "bg-purple-50", text: "text-purple-700" },
       rejeitado: { bg: "bg-red-50", text: "text-red-600" },
@@ -205,7 +205,7 @@ export default function QAHistoricoPage() {
                       <button
                         onClick={() => handleDownload(item)}
                         disabled={isDownloading}
-                        className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
+                        className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#FBF3F4] transition-colors"
                         style={{ color: "hsl(220 60% 50%)" }}
                         title="Baixar DOCX"
                       >
@@ -261,7 +261,7 @@ export default function QAHistoricoPage() {
                 <div className="space-y-0.5 mt-1">
                   {(detailItem?.fontes_recuperadas_json || detailItem?.fundamentos_utilizados_json)?.map((f: any, i: number) => (
                     <div key={i} className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(220 10% 45%)" }}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#7A1F2B] shrink-0" />
                       <span className="truncate uppercase">{f.titulo}</span>
                     </div>
                   ))}
@@ -281,7 +281,7 @@ export default function QAHistoricoPage() {
                 <button
                   onClick={() => handleDownload(detailItem)}
                   disabled={downloadingId === detailItem?.id}
-                  className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
+                  className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[#FBF3F4] text-[#7A1F2B] border border-[#E5C2C6] hover:bg-[#FBF3F4] transition-all"
                 >
                   {downloadingId === detailItem?.id ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Gerando...</>
@@ -328,7 +328,7 @@ export default function QAHistoricoPage() {
                 <Star className="h-3.5 w-3.5" /> Ref
               </button>
               <button onClick={() => submitReview("correcao")} disabled={saving}
-                className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all">
+                className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[#FBF3F4] text-[#7A1F2B] border border-[#E5C2C6] hover:bg-[#FBF3F4] transition-all">
                 <PenTool className="h-3.5 w-3.5" /> Corrigir
               </button>
               <button onClick={() => submitReview("rejeicao")} disabled={saving}

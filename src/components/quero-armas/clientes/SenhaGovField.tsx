@@ -305,7 +305,7 @@ export function SenhaGovField({ cadastroCrId, clienteId, variant = "row", contex
             placeholder="Digite a senha gov.br"
             autoFocus
             disabled={saving}
-            className="h-7 px-2 text-[13px] font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-56"
+            className="h-7 px-2 text-[13px] font-mono border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-[#7A1F2B] w-56"
             onKeyDown={(e) => {
               if (e.key === "Enter") save();
               if (e.key === "Escape") cancelEdit();

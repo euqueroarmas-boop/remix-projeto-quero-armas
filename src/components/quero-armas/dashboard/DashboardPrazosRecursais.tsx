@@ -354,14 +354,14 @@ export default function DashboardPrazosRecursais() {
                     {tone.label}
                   </span>
                 </div>
-                <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 group-hover:underline uppercase">
+                <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-[#7A1F2B] group-hover:underline uppercase">
                   {r.clienteNome}
                 </div>
                 <div className="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 leading-none">
                   {r.tipo} PF · {r.evento}
                 </div>
                 {r.status && (
-                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-blue-700 leading-none truncate">
+                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-[#7A1F2B] leading-none truncate">
                     Status: {r.status}
                   </div>
                 )}
