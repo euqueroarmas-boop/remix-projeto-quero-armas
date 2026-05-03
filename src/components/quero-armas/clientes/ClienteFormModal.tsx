@@ -139,6 +139,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
+  // Chave que força a remontagem do bloco "Preencher com IA" sempre que o
+  // modal é fechado/reaberto — garante que nenhum arquivo, texto ou
+  // resultado de extração anterior fique em memória.
+  const [aiPrefillKey, setAiPrefillKey] = useState(0);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
