@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X, ShieldCheck } from "lucide-react";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 
 /**
  * Seção "Dados recebidos pelo formulário público" (item 6 da Fase 22).
@@ -311,6 +312,44 @@ export default function DadosFormularioPublicoSection({
     }
   };
 
+  const removerConferencia = async () => {
+    const statusAnterior = String(cad.status || "").toLowerCase() || null;
+    setBusy(true);
+    try {
+      const { error } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({ status: "pendente" })
+        .eq("id", cad.id);
+      if (error) throw error;
+
+      const { data: userRes } = await supabase.auth.getUser();
+      await audit("remover_conferencia", {
+        campo: "status",
+        valor_anterior: statusAnterior,
+        valor_novo: "pendente",
+      });
+      void registrarStatusEvento({
+        origem: "equipe",
+        entidade: "cadastro_publico",
+        entidade_id: cad.id,
+        cliente_id: cliente.id,
+        campo_status: "status",
+        status_anterior: statusAnterior,
+        status_novo: "pendente",
+        usuario_id: userRes?.user?.id ?? null,
+        detalhes: { contexto: "DadosFormularioPublicoSection.removerConferencia" },
+      });
+
+      setCad((prev) => (prev ? { ...prev, status: "pendente" } : prev));
+      toast.success("Conferência removida. Cadastro voltou para pendente.");
+      onApplied?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao remover conferência.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-3 mb-3">
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -420,14 +459,19 @@ export default function DadosFormularioPublicoSection({
         </>
       )}
 
-      <div className="flex items-center justify-end pt-1">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-1">
         {isConferido && (
-          <Button size="sm" className="h-7 text-[10px] mr-2 bg-emerald-600 hover:bg-emerald-700" disabled={busy} onClick={() => void aprovarCadastro()}>
-            <ShieldCheck className="h-3 w-3 mr-1" /> Aprovar e sincronizar tudo
-          </Button>
+          <>
+            <Button size="sm" variant="outline" className="h-8 text-[10px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100" disabled={busy} onClick={() => void removerConferencia()}>
+              <RefreshCw className="h-3 w-3 mr-1" /> Remover conferência
+            </Button>
+            <Button size="sm" className="h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700" disabled={busy} onClick={() => void aprovarCadastro()}>
+              <ShieldCheck className="h-3 w-3 mr-1" /> Aprovar e sincronizar tudo
+            </Button>
+          </>
         )}
         {!isConferido && (
-          <Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={busy} onClick={() => void marcarConferido()}>
+          <Button size="sm" variant="outline" className="h-8 text-[10px]" disabled={busy} onClick={() => void marcarConferido()}>
             <CheckCircle2 className="h-3 w-3 mr-1" /> Marcar formulário como conferido
           </Button>
         )}
