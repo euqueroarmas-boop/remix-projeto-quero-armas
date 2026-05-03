@@ -370,7 +370,7 @@ Deno.serve(async (req) => {
     }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {
-      if (normalized[k] === "") delete normalized[k];
+      if (normalized[k] === "" && k !== "senha_gov_raw") delete normalized[k];
     }
     return json({ success: true, fields: normalized });
   } catch (err: any) {
