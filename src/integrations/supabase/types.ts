@@ -7355,6 +7355,51 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_vencimentos_alertas_enviados: {
+        Row: {
+          canal: string
+          cliente_id: number | null
+          data_referencia: string
+          destinatario: string | null
+          detalhes: Json | null
+          enviado_em: string
+          erro_mensagem: string | null
+          fonte: string
+          id: string
+          marco_dias: number
+          ref_id: string
+          status: string
+        }
+        Insert: {
+          canal: string
+          cliente_id?: number | null
+          data_referencia: string
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          fonte: string
+          id?: string
+          marco_dias: number
+          ref_id: string
+          status?: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number | null
+          data_referencia?: string
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          fonte?: string
+          id?: string
+          marco_dias?: number
+          ref_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       qa_venda_eventos: {
         Row: {
           ator: string | null
