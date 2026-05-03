@@ -5320,6 +5320,9 @@ export type Database = {
           category: string
           created_at: string
           embedding: string | null
+          embedding_error: string | null
+          embedding_status: string
+          embedding_updated_at: string | null
           id: string
           module: string | null
           related_articles: string[]
@@ -5339,6 +5342,9 @@ export type Database = {
           category: string
           created_at?: string
           embedding?: string | null
+          embedding_error?: string | null
+          embedding_status?: string
+          embedding_updated_at?: string | null
           id?: string
           module?: string | null
           related_articles?: string[]
@@ -5358,6 +5364,9 @@ export type Database = {
           category?: string
           created_at?: string
           embedding?: string | null
+          embedding_error?: string | null
+          embedding_status?: string
+          embedding_updated_at?: string | null
           id?: string
           module?: string | null
           related_articles?: string[]
@@ -5371,6 +5380,41 @@ export type Database = {
           version?: number
         }
         Relationships: []
+      }
+      qa_kb_embeddings_log: {
+        Row: {
+          article_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          modelo: string | null
+          status: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          modelo?: string | null
+          status: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          modelo?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_embeddings_log_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_logs_auditoria: {
         Row: {
