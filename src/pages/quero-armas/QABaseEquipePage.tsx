@@ -595,6 +595,15 @@ export default function QABaseEquipePage() {
                 <CardTitle className="text-2xl uppercase">{selected.title}</CardTitle>
               </div>
               <div className="flex gap-2">
+                {(selected.status === "needs_review" || selected.status === "draft" || selected.status === "rejected") && (
+                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => approveArticle(selected)} disabled={approvingArticle}>
+                    {approvingArticle ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ThumbsUp className="h-4 w-4 mr-1" />}
+                    Aprovar artigo
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50" onClick={() => openReview(selected)}>
+                  <ThumbsDown className="h-4 w-4 mr-1" /> Reprovar e refazer
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => reprocessOne(selected.id)} disabled={reprocessingId === selected.id}>
                   {reprocessingId === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
                   Reprocessar vetor
@@ -606,6 +615,22 @@ export default function QABaseEquipePage() {
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <Badge className={`${statusBadgeColor(selected.status)} text-[10px] uppercase`}>{selected.status}</Badge>
+              {selected.visual_bug_detected && (
+                <Badge className="bg-red-100 text-red-800 border-red-300 text-[10px] uppercase">⚠ bug visual detectado</Badge>
+              )}
+              {(() => {
+                const hasReal = images.some(i => i.image_type === "screenshot_real" || i.image_type === "upload_manual");
+                const hasIa = images.some(i => i.image_type === "imagem_ia" || !i.image_type);
+                if (hasReal) return <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] uppercase">com print real</Badge>;
+                if (hasIa) return <Badge className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] uppercase">apenas imagem IA</Badge>;
+                return <Badge variant="outline" className="text-[10px] uppercase">sem print</Badge>;
+              })()}
+              {selected.last_review_reason && (
+                <span className="text-[11px] text-muted-foreground italic">última reprovação: {selected.last_review_reason}</span>
+              )}
             </div>
           </CardHeader>
           <CardContent>
