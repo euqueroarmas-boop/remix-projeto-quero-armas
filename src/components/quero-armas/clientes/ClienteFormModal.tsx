@@ -423,34 +423,42 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       };
     });
 
-    // CEP lookup automático se a IA trouxe CEP
+    // CEP lookup automático + geocode encadeado (principal)
     if (extractedCep && extractedCep.length === 8) {
       try {
         const result = await lookupCep(extractedCep);
         if (result) {
-          setF(prev => {
-            const cepCity = (result.city || "").trim().toLowerCase();
-            const aiCity = String(p.cidade || "").trim().toLowerCase();
-            if (cepCity && aiCity && cepCity !== aiCity) {
-              addressDivergence = `Cidade do CEP (${result.city}) difere da cidade extraída (${p.cidade}).`;
-            }
-            return {
-              ...prev,
-              endereco: prev.endereco || result.street || "",
-              bairro: prev.bairro || result.neighborhood || "",
-              cidade: prev.cidade || result.city || "",
-              estado: prev.estado || result.state || "",
-            };
-          });
+          const cepCity = (result.city || "").trim().toLowerCase();
+          const aiCity = String(p.cidade || "").trim().toLowerCase();
+          if (cepCity && aiCity && cepCity !== aiCity) {
+            addressDivergence = `Cidade do CEP (${result.city}) difere da cidade extraída (${p.cidade}).`;
+          }
+          const street1 = String(p.endereco || result.street || "");
+          const number1 = String(p.numero || "");
+          const city1 = String(p.cidade || result.city || "");
+          const state1 = String(p.estado || result.state || "");
+          setF(prev => ({
+            ...prev,
+            endereco: prev.endereco || result.street || "",
+            bairro: prev.bairro || result.neighborhood || "",
+            cidade: prev.cidade || result.city || "",
+            estado: prev.estado || result.state || "",
+          }));
+          // Geocode imediato com valores garantidos
+          autoResolveGeoloc("", { street: street1, number: number1, city: city1, state: state1 });
         }
       } catch { /* lookup falha silenciosa — usuário revê manualmente */ }
     }
 
-    // CEP lookup automático para endereço secundário
+    // CEP lookup automático + geocode encadeado (secundário)
     if (extractedCep2 && extractedCep2.length === 8) {
       try {
         const result2 = await lookupCep(extractedCep2);
         if (result2) {
+          const street2 = String((p as any).endereco_secundario || result2.street || "");
+          const number2 = String((p as any).numero_secundario || "");
+          const city2 = String((p as any).cidade_secundario || result2.city || "");
+          const state2 = String((p as any).estado_secundario || result2.state || "");
           setF(prev => ({
             ...prev,
             endereco2: prev.endereco2 || result2.street || "",
@@ -458,6 +466,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             cidade2: prev.cidade2 || result2.city || "",
             estado2: prev.estado2 || result2.state || "",
           }));
+          autoResolveGeoloc("2", { street: street2, number: number2, city: city2, state: state2 });
         }
       } catch { /* silencioso */ }
     }
@@ -470,7 +479,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       }));
     }
 
-    // Auto-resolve geolocalização imediatamente após o prefill da IA
+    // Fallback: caso o CEP não tenha sido extraído mas o endereço sim,
+    // ainda tenta geocodar a partir dos campos já preenchidos pela IA.
     setTimeout(() => {
       setF(curr => {
         if (!curr.geolocalizacao && curr.endereco && curr.cidade) {
@@ -481,7 +491,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         }
         return curr;
       });
-    }, 400);
+    }, 1500);
   }, [lookupCep, autoResolveGeoloc]);
 
   const save = async () => {
