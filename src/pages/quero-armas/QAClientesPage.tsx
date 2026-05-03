@@ -1593,18 +1593,19 @@ export default function QAClientesPage() {
     }
   };
 
-  const togglePagoCadastroPublico = async () => {
-    if (!selectedCadastroPublico) return;
-    const cadastroId = selectedCadastroPublico.id;
-    const pagoAnterior = Boolean(selectedCadastroPublico.pago);
+  const togglePagoCadastroPublico = async (target?: CadastroPublico | null) => {
+    const alvo = target ?? selectedCadastroPublico;
+    if (!alvo) return;
+    const cadastroId = alvo.id;
+    const pagoAnterior = Boolean(alvo.pago);
     const novoPago = !pagoAnterior;
-    setSavingCadastroPublicoStatus("pago");
+    setSavingCadastroPublicoStatus(`pago:${cadastroId}`);
     setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: novoPago } : item));
     setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: novoPago } : prev);
     try {
       const updateBody: Record<string, any> = { pago: novoPago };
       // Inicia o relógio de SLA na primeira marcação como pago
-      if (novoPago && !(selectedCadastroPublico as any).pago_em) {
+      if (novoPago && !(alvo as any).pago_em) {
         updateBody.pago_em = new Date().toISOString();
       }
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
@@ -1653,7 +1654,7 @@ export default function QAClientesPage() {
             origem: "equipe",
             entidade: "cadastro_publico",
             entidade_id: cadastroId,
-            cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
+            cliente_id: (alvo as any)?.cliente_id_vinculado ?? null,
             campo_status: "pago",
             status_anterior: pagoAnterior ? "true" : "false",
             status_novo: novoPago ? "true" : "false",
@@ -3262,7 +3263,7 @@ export default function QAClientesPage() {
                   }`}
                   title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
                 >
-                  {savingCadastroPublicoStatus === "pago" ? (
+                  {savingCadastroPublicoStatus?.startsWith("pago") ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
@@ -3860,14 +3861,31 @@ export default function QAClientesPage() {
                     {String(c.status || "").toUpperCase()}
                   </span>
                   <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
+                    role="button"
+                    tabIndex={0}
+                    aria-label={c.pago ? "Marcar como não pago" : "Marcar como pago"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (savingCadastroPublicoStatus) return;
+                      void togglePagoCadastroPublico(c);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (savingCadastroPublicoStatus) return;
+                        void togglePagoCadastroPublico(c);
+                      }
+                    }}
+                    className={`cursor-pointer select-none text-[9px] px-1.5 py-0.5 rounded-full font-semibold border transition-all ${
                       c.pago
-                        ? "bg-emerald-500 text-white border-emerald-500"
-                        : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                    }`}
-                    title={c.pago ? "Pagamento confirmado" : "Pagamento ainda não confirmado"}
+                        ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+                        : "bg-slate-50 text-slate-500 border-slate-300 hover:bg-slate-100"
+                    } ${savingCadastroPublicoStatus === `pago:${c.id}` ? "opacity-60" : ""}`}
+                    title={c.pago ? "Clique para marcar como NÃO pago" : "Clique para marcar como pago"}
                   >
-                    {c.pago ? "PAGO" : "NÃO PAGO"}
+                    {savingCadastroPublicoStatus === `pago:${c.id}` ? "..." : (c.pago ? "PAGO" : "NÃO PAGO")}
                   </span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
