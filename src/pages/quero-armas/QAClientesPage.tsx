@@ -2796,7 +2796,7 @@ export default function QAClientesPage() {
                                 {/* Aprovar valor em 1 clique (libera o checklist) */}
                                 <AprovarValorButton
                                   venda={v}
-                                  onApproved={() => loadSubData(selected!)}
+                                  onApproved={() => { loadSubData(selected!); loadClientes(); }}
                                 />
                                 <GerarProcessoButton
                                   venda={v}
