@@ -60,3 +60,21 @@ Deno.test("Leitura: nenhuma imagem ativa pode ter origem IA", async () => {
   assert(!error, error?.message);
   assertEquals((data ?? []).length, 0, "Existem imagens APROVADAS com origem IA");
 });
+
+Deno.test("DB: artigo não pode ser aprovado/publicado sem auditoria completa", async () => {
+  const slug = `regressao-auditoria-${crypto.randomUUID()}`;
+  const { data: art, error: insErr } = await admin.from("qa_kb_artigos").insert({
+    title: "REGRESSÃO AUDITORIA OBRIGATÓRIA",
+    slug,
+    category: "Manutenção técnica",
+    audience: "equipe",
+    body: "## Auditoria pendente",
+    status: "audit_pending",
+    audit_status: "pending_audit",
+  } as any).select("id").maybeSingle();
+  assert(!insErr, insErr?.message);
+  const { error } = await admin.from("qa_kb_artigos").update({ status: "published" }).eq("id", (art as any).id);
+  assert(error, "Publicar sem auditoria completa deveria falhar");
+  assert(/audite checklist|auditoria|BLOQUEADO/i.test(error!.message), `Mensagem inesperada: ${error!.message}`);
+  await admin.from("qa_kb_artigos").delete().eq("id", (art as any).id);
+});
