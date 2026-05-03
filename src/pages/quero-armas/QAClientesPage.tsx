@@ -1501,6 +1501,19 @@ export default function QAClientesPage() {
         console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
       }
 
+      // Numeração sequencial de exibição (1..N) por ordem cronológica de
+      // cadastro. NÃO altera a PK no banco — só o ID mostrado ao usuário.
+      // Conta TODOS os clientes cadastrados (Quero Armas + Arsenal).
+      // Formulários públicos pendentes não entram aqui (só viram qa_clientes
+      // quando aprovados).
+      const sortedAsc = [...rows].sort((a: any, b: any) => {
+        const ta = new Date(a.created_at || 0).getTime();
+        const tb = new Date(b.created_at || 0).getTime();
+        return ta - tb || (a.id - b.id);
+      });
+      const displayMap = new Map<number, number>();
+      sortedAsc.forEach((r: any, idx: number) => displayMap.set(r.id, idx + 1));
+      for (const r of rows) (r as any).display_id = displayMap.get((r as any).id) || (r as any).id;
       setClientes(rows);
       setLoadError(null);
     } catch (err: any) {
