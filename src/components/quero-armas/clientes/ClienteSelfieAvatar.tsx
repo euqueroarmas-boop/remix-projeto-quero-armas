@@ -23,10 +23,19 @@ export default function ClienteSelfieAvatar({
   size = "md",
 }: {
   cliente: any;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }) {
+  // "xl" = mesmo dimensionamento do espaço de foto do modal de cadastro:
+  // h-24 (96px) com aspect-[3/4] → ~72px de largura. Usado no detalhe do
+  // cliente e nas linhas da lista para ter foto retrato proeminente.
   const dim =
-    size === "lg" ? "w-16 h-16" : size === "sm" ? "w-9 h-9" : "w-12 h-12";
+    size === "xl"
+      ? "h-24 aspect-[3/4]"
+      : size === "lg"
+      ? "w-16 h-16"
+      : size === "sm"
+      ? "w-9 h-9"
+      : "w-12 h-12";
 
   const clienteId = Number(cliente?.id) || null;
   const cadastroPublicoId: string | null = cliente?.cadastro_publico_id || null;
@@ -112,7 +121,7 @@ export default function ClienteSelfieAvatar({
       <img
         src={url}
         alt={cliente?.nome_completo || "Selfie do titular"}
-        className={`${dim} rounded-2xl object-cover shrink-0 border border-slate-200 shadow-sm bg-white`}
+        className={`${dim} ${size === "xl" ? "rounded-xl" : "rounded-2xl"} object-cover shrink-0 border border-slate-200 shadow-sm bg-white`}
         loading="lazy"
       />
     );
