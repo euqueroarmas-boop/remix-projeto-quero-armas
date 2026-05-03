@@ -110,6 +110,13 @@ export function ArsenalView({
   // Lê apenas os campos mínimos exigidos pelo helper getGteKpiStatus.
   const [gteDocs, setGteDocs] = useState<{ id: string; data_validade: string | null; status_processamento: string | null }[]>([]);
 
+  // ─── BLOCO 2 — Datasets adicionais para os KPIs Documentos / Processos /
+  //     Autorizações / Exames (Linha 2 recolhível no ArsenalSummary).
+  //     Leitura mínima, somente leitura, sem mexer em schema.
+  const [processos, setProcessos] = useState<{ id: string; status: string | null; pagamento_status: string | null; servico_nome: string | null; service_slug?: string | null }[]>([]);
+  const [solicitacoes, setSolicitacoes] = useState<{ id: string; status_servico: string | null; status_financeiro: string | null; service_slug: string | null; service_name: string | null }[]>([]);
+  const [exames, setExames] = useState<{ id: string; tipo: string | null; data_vencimento: string | null }[]>([]);
+
   // ─── Circunscrição PF (resolve via mesma RPC usada na geração de peças) ───
   const [circ, setCirc] = useState<{ unidade_pf: string; sigla_unidade: string; municipio_sede?: string } | null>(null);
   const [circStatus, setCircStatus] = useState<"idle" | "loading" | "ok" | "not_found" | "error">("idle");
