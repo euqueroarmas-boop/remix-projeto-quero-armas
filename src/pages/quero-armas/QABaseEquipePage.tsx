@@ -181,14 +181,19 @@ export default function QABaseEquipePage() {
       const d = data as any;
       if ((d?.processed ?? 0) > 0) toast.success("Vetor reprocessado.");
       else toast.error("Falha ao reprocessar vetor. Verifique os logs.");
-      await loadAll();
-      if (showLogs) await loadLogs();
+      // pequeno delay para garantir que o trigger/log foi persistido
+      await new Promise(r => setTimeout(r, 400));
+      await Promise.all([
+        loadAll(),
+        loadLogs(),
+      ]);
       if (selected?.id === articleId) {
         const { data: fresh } = await supabase.from("qa_kb_artigos" as any).select("*").eq("id", articleId).maybeSingle();
         if (fresh) setSelected(fresh as any as Article);
       }
     } catch (e: any) {
       toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
+      await loadLogs().catch(() => {});
     } finally {
       setReprocessingId(null);
     }
