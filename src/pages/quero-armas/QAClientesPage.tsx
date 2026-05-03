@@ -2287,12 +2287,6 @@ export default function QAClientesPage() {
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
                       ID #{String(c.id).padStart(4, "0")}
                     </span>
-                    {c.cliente_lions && (
-                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold uppercase tracking-wider"
-                        style={{ boxShadow: "inset 0 0 0 1px hsl(38 92% 75%)" }}>
-                        🦁 LIONS
-                      </span>
-                    )}
                   </div>
                   <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
                     {c.nome_completo}
@@ -3617,7 +3611,6 @@ export default function QAClientesPage() {
                       <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
                         {c.nome_completo}
                       </span>
-                      {c.cliente_lions && <span className="text-[11px] shrink-0">🦁</span>}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap text-[10px] text-slate-500">
                       <span className="font-mono tracking-wider text-slate-400">CPF {formatCpf(c.cpf)}</span>
