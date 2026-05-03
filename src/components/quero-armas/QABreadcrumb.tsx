@@ -23,6 +23,7 @@ const LABELS: Record<string, string> = {
   relatorios: "Relatórios",
   auditoria: "Auditoria",
   "recursos-administrativos": "Recursos Administrativos",
+  "precos-servicos": "Catálogo de Preços",
 };
 
 const labelOf = (slug: string) =>
