@@ -559,7 +559,7 @@ export function ArsenalSummary({
       },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified],
   );
 
   // Ordem efetiva:
