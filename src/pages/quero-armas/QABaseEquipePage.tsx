@@ -532,7 +532,15 @@ export default function QABaseEquipePage() {
                         </div>
                       )}
                     </div>
-                    {a.status !== "published" && <Badge variant="outline" className="text-[10px]">{a.status}</Badge>}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      {a.status !== "published" && <Badge variant="outline" className="text-[10px]">{a.status}</Badge>}
+                      {(() => {
+                        const es = a.embedding_status ?? "pendente";
+                        if (es === "gerado") return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-label="vetor gerado" />;
+                        if (es === "erro") return <AlertCircle className="h-3.5 w-3.5 text-red-600" aria-label={a.embedding_error ?? "vetor com erro"} />;
+                        return <Clock className="h-3.5 w-3.5 text-amber-600" aria-label="vetor pendente" />;
+                      })()}
+                    </div>
                   </button>
                 ))}
               </div>
