@@ -1505,6 +1505,34 @@ export default function QAClientesPage() {
           const sp = fromCad || fromCli || null;
           if (sp) (r as any).selfie_path = sp;
         }
+
+        // Assina TODAS as URLs em batch (createSignedUrls) por bucket — evita
+        // N requisições sequenciais nos avatares da listagem (gargalo da UI).
+        try {
+          const manualPaths = Array.from(new Set(rows.map((r: any) => r.imagem).filter((p: any) => p && !/^https?:\/\//i.test(p))));
+          const selfiePaths = Array.from(new Set(rows.map((r: any) => (r as any).selfie_path).filter((p: any) => p && !/^https?:\/\//i.test(p))));
+          const urlByPath = new Map<string, string>();
+          const signBatch = async (bucket: string, paths: string[]) => {
+            if (paths.length === 0) return;
+            const { data } = await supabase.storage.from(bucket).createSignedUrls(paths, 3600);
+            for (const it of (data as any[]) || []) {
+              if (it?.signedUrl && it?.path) urlByPath.set(it.path, it.signedUrl);
+            }
+          };
+          await Promise.all([
+            signBatch("qa-documentos", manualPaths as string[]),
+            signBatch("qa-cadastro-selfies", selfiePaths as string[]),
+          ]);
+          for (const r of rows) {
+            const p = r.imagem || (r as any).selfie_path;
+            if (p) {
+              const u = /^https?:\/\//i.test(p) ? p : urlByPath.get(p);
+              if (u) (r as any).avatar_url = u;
+            }
+          }
+        } catch (signErr) {
+          console.warn("[QAClientes] batch sign URLs falhou (não crítico):", signErr);
+        }
       } catch (enrichErr) {
         console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
       }

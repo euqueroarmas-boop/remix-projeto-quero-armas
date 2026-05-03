@@ -43,11 +43,13 @@ export default function ClienteSelfieAvatar({
   // Override opcional: quando a tela já carrega o selfie_path em batch (lista de clientes),
   // evita uma query por linha.
   const selfiePathInline: string | null = cliente?.selfie_path || null;
+  // Override TOTAL: URL já assinada em batch pela tela. Evita signedUrl por linha.
+  const avatarUrlInline: string | null = cliente?.avatar_url || null;
 
   // 1) Busca o selfie_path no cadastro público quando NÃO há foto manual nem inline
   const { data: selfiePath } = useQuery<string | null>({
     queryKey: ["cliente-selfie-path", clienteId, cadastroPublicoId],
-    enabled: !imagemManual && !selfiePathInline && Boolean(clienteId || cadastroPublicoId),
+    enabled: !avatarUrlInline && !imagemManual && !selfiePathInline && Boolean(clienteId || cadastroPublicoId),
     staleTime: 60_000,
     queryFn: async () => {
       if (cadastroPublicoId) {
@@ -84,6 +86,7 @@ export default function ClienteSelfieAvatar({
   useEffect(() => {
     let abort = false;
     setUrl(null);
+    if (avatarUrlInline) { setUrl(avatarUrlInline); return; }
     if (!resolvedPath) return;
     if (/^https?:\/\//i.test(resolvedPath)) {
       setUrl(resolvedPath);
@@ -107,7 +110,7 @@ export default function ClienteSelfieAvatar({
     return () => {
       abort = true;
     };
-  }, [resolvedPath, primaryBucket, fallbackBucket]);
+  }, [resolvedPath, primaryBucket, fallbackBucket, avatarUrlInline]);
 
   const _partes = (cliente?.nome_completo || "?")
     .split(/\s+/)
