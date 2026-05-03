@@ -757,7 +757,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
+                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
                   <div className="col-span-2 sm:col-span-3">
                     <FInput label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} span />
                   </div>
@@ -795,7 +795,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
+                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
                   <div className="col-span-2 sm:col-span-3">
                     <FInput label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} span />
                   </div>
