@@ -586,6 +586,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         savedId = cliente.id;
         toast.success("Cliente atualizado");
       } else {
+        // Marca origem='manual' para distinguir cadastros feitos pela equipe
+        // dos enviados via formulário público.
+        payload.origem = "manual";
         const { data, error } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
         if (error) throw error;
         savedId = (data as any)?.id;
