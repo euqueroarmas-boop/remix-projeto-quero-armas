@@ -2279,7 +2279,7 @@ export default function QAClientesPage() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <ClienteSelfieAvatar cliente={c} size="md" />
+                <ClienteSelfieAvatar cliente={c} size="xl" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span
@@ -3623,7 +3623,7 @@ export default function QAClientesPage() {
                 />
                 <div className="relative flex items-center gap-3 px-4 py-3.5">
                   {/* Avatar: foto manual OU selfie do cadastro público (resolvida em batch em loadClientes). */}
-                  <ClienteSelfieAvatar cliente={c} size="md" />
+                  <ClienteSelfieAvatar cliente={c} size="xl" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
