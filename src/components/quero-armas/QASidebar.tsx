@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  ClipboardList, UserCheck, Tags, GraduationCap,
+  ClipboardList, Tags, GraduationCap,
   History,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
