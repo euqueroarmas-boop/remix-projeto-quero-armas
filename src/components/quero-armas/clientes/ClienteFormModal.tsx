@@ -238,7 +238,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   }, [lookupGeocode]);
 
   const [f, setF] = useState({
-    nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
+    nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
     data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
     nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
     email: "", celular: "", titulo_eleitor: "",
@@ -273,6 +273,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
         rg: cliente.rg || "", emissor_rg: cliente.emissor_rg || "",
+        uf_emissor_rg: cliente.uf_emissor_rg || "",
         expedicao_rg: formatDateForDisplay(cliente.expedicao_rg || ""),
         data_nascimento: formatDateForDisplay(cliente.data_nascimento || ""),
         naturalidade: cliente.naturalidade || "", nacionalidade: cliente.nacionalidade || "Brasileira",
@@ -342,7 +343,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     } else {
       setF(prev => ({
         ...prev,
-        nome_completo: "", cpf: "", rg: "", email: "", celular: "",
+        nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", email: "", celular: "",
         validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "",
       }));
       setPhotoPreview(null);
@@ -394,13 +395,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       const cinDetected = String(p.tipo_documento_identidade || "").toUpperCase() === "CIN";
       const cpfDigits = onlyDigits(p.cpf);
       const rgValue = String(p.rg ?? "");
+      // Separa "SSP/SP" → emissor="SSP", uf="SP" (mantém compatibilidade caso vier separado)
+      const rawEmissor = String(p.emissor_rg ?? "").trim();
+      const rawUfEmissor = String((p as any).uf_emissor_rg ?? "").trim().toUpperCase();
+      let parsedEmissor = rawEmissor;
+      let parsedUfEmissor = rawUfEmissor;
+      const m = rawEmissor.match(/^(.+?)[\/\-\s]+([A-Z]{2})$/i);
+      if (m && !parsedUfEmissor) {
+        parsedEmissor = m[1].trim().toUpperCase();
+        parsedUfEmissor = m[2].toUpperCase();
+      }
       return {
         ...prev,
         nome_completo: setIfEmpty(prev.nome_completo, p.nome_completo),
         cpf: setIfEmpty(prev.cpf, cpfDigits),
         tipo_documento_identidade: cinDetected ? "CIN" : prev.tipo_documento_identidade,
         rg: setIfEmpty(prev.rg, rgValue),
-        emissor_rg: setIfEmpty(prev.emissor_rg, p.emissor_rg),
+        emissor_rg: setIfEmpty(prev.emissor_rg, parsedEmissor),
+        uf_emissor_rg: setIfEmpty(prev.uf_emissor_rg, parsedUfEmissor),
         expedicao_rg: setIfEmpty(prev.expedicao_rg, p.data_expedicao_rg),
         data_nascimento: setIfEmpty(prev.data_nascimento, p.data_nascimento),
         sexo: setIfEmpty(prev.sexo, normSexo(p.sexo)),
@@ -534,6 +546,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         cpf: trimmed("cpf"),
         rg: trimmed("rg"),
         emissor_rg: trimmed("emissor_rg"),
+        uf_emissor_rg: trimmed("uf_emissor_rg"),
         expedicao_rg: trimmed("expedicao_rg"),
         data_nascimento: trimmed("data_nascimento"),
         sexo: trimmed("sexo"),
@@ -805,7 +818,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-1 gap-4">
                 <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span error={requiredErrors.nome_completo ? "Obrigatório" : undefined} />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <FInput label="CPF *" value={f.cpf} onChange={v => set("cpf", v)} error={requiredErrors.cpf ? "Obrigatório" : undefined} />
                 <FSelect
                   label="Tipo de Documento"
@@ -827,6 +840,14 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   value={f.emissor_rg}
                   onChange={v => set("emissor_rg", v)}
                   error={requiredErrors.emissor_rg ? "Obrigatório" : undefined}
+                />
+                <FSelect
+                  label="UF Emissor *"
+                  value={f.uf_emissor_rg}
+                  onChange={v => set("uf_emissor_rg", v)}
+                  options={ufOptions}
+                  placeholder="UF..."
+                  error={requiredErrors.uf_emissor_rg ? "Obrigatório" : undefined}
                 />
               </div>
               {f.tipo_documento_identidade === "CIN" && (
@@ -1130,7 +1151,7 @@ function kpiTone(value: string): "ok" | "warn" | "info" {
 /* ── Compute KPIs ── */
 function kpiIdent(f: any): string {
   const fields = [
-    "nome_completo", "cpf", "rg", "emissor_rg", "expedicao_rg",
+    "nome_completo", "cpf", "rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg",
     "data_nascimento", "sexo", "naturalidade_municipio", "naturalidade_uf",
     "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
     "nome_mae", "nome_pai",
