@@ -918,6 +918,85 @@ export function ArsenalView({
     documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
   ]);
 
+  // ── BLOCO CANÔNICO — useClienteStatusAgregado ─────────────────────────────
+  // Integração incremental, não destrutiva. Se o hook trouxer dados, eles
+  // sobrepõem os *Unified locais. Se vier vazio/erro, mantemos a leitura
+  // legacy (Zero Regression).
+  const { data: agregado } = useClienteStatusAgregado(clienteId);
+
+  const corToCodigo = (cor: CorStatus): string => {
+    if (cor === "verde") return "ok";
+    if (cor === "vermelho") return "vencido";
+    if (cor === "laranja") return "vencendo_30";
+    if (cor === "amarelo") return "vencendo_60";
+    if (cor === "azul") return "em_andamento";
+    return "sem_dado";
+  };
+  const buildSU = (label: string, cor: CorStatus, sub?: string): StatusUnificado => ({
+    dimensao: "agregado",
+    codigo: corToCodigo(cor),
+    label,
+    sub,
+    cor,
+    prioridade: 5,
+  });
+  const subValidade = (k: KpiValidade): string | undefined => {
+    if (k.total === 0) return undefined;
+    const partes: string[] = [];
+    if (k.vencidos) partes.push(`${k.vencidos} vencido${k.vencidos > 1 ? "s" : ""}`);
+    if (k.vencendo) partes.push(`${k.vencendo} vencendo`);
+    if (!partes.length && k.ok) partes.push(`${k.ok} em dia`);
+    return partes.join(" · ");
+  };
+
+  const crUnifiedFinal: StatusUnificado | null = agregado?.kpis.cr.data_validade
+    ? buildSU(
+        (agregado.kpis.cr as KpiCR).label,
+        agregado.kpis.cr.tone,
+        agregado.kpis.cr.dias_restantes != null ? `${agregado.kpis.cr.dias_restantes} dias` : undefined,
+      )
+    : crUnified;
+  const crafUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.crafs.total > 0
+      ? buildSU("CRAFs", agregado.kpis.crafs.tone, subValidade(agregado.kpis.crafs))
+      : crafUnified;
+  const gteUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.gtes.total > 0
+      ? buildSU("GTEs", agregado.kpis.gtes.tone, subValidade(agregado.kpis.gtes))
+      : gteUnified;
+  const documentosUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.documentos.total > 0
+      ? buildSU(
+          "DOCUMENTOS",
+          agregado.kpis.documentos.tone,
+          `${agregado.kpis.documentos.aprovados} aprov · ${agregado.kpis.documentos.pendentes} pend`,
+        )
+      : documentosUnified;
+  const processosUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.processos.total > 0
+      ? buildSU(
+          "PROCESSOS",
+          agregado.kpis.processos.tone,
+          `${agregado.kpis.processos.deferidos} deferidos · ${agregado.kpis.processos.aguardando_documentos} aguard`,
+        )
+      : processosUnified;
+  const autorizacoesUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.autorizacoes.total > 0
+      ? buildSU("AUTORIZAÇÕES", agregado.kpis.autorizacoes.tone, subValidade(agregado.kpis.autorizacoes))
+      : autorizacoesUnified;
+  const examesUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.exames.total > 0
+      ? buildSU("EXAMES", agregado.kpis.exames.tone, subValidade(agregado.kpis.exames))
+      : examesUnified;
+  const alertasUnifiedFinal: StatusUnificado | null =
+    agregado && agregado.kpis.alertas.total > 0
+      ? buildSU(
+          agregado.kpis.alertas.criticos > 0 ? "ATENÇÃO CRÍTICA" : "ATENÇÃO",
+          agregado.kpis.alertas.criticos > 0 ? "vermelho" : agregado.kpis.alertas.atencao > 0 ? "laranja" : "cinza",
+          `${agregado.kpis.alertas.total} item${agregado.kpis.alertas.total > 1 ? "s" : ""}`,
+        )
+      : alertasUnified;
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
@@ -934,14 +1013,14 @@ export function ArsenalView({
         gteHint={gteKpi.labelSecundaria}
         crafPending={pendingDocs.craf}
         gtePending={pendingDocs.gte}
-        crUnified={crUnified}
-        crafUnified={crafUnified}
-        gteUnified={gteUnified}
-        alertasUnified={alertasUnified}
-        documentosUnified={documentosUnified}
-        processosUnified={processosUnified}
-        autorizacoesUnified={autorizacoesUnified}
-        examesUnified={examesUnified}
+        crUnified={crUnifiedFinal}
+        crafUnified={crafUnifiedFinal}
+        gteUnified={gteUnifiedFinal}
+        alertasUnified={alertasUnifiedFinal}
+        documentosUnified={documentosUnifiedFinal}
+        processosUnified={processosUnifiedFinal}
+        autorizacoesUnified={autorizacoesUnifiedFinal}
+        examesUnified={examesUnifiedFinal}
         documentosCount={docsGenericos.length}
         processosCount={processos.length + solicitacoesProcessos.length}
         autorizacoesCount={autorizacoes.length}
