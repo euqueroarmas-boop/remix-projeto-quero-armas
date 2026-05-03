@@ -142,6 +142,61 @@ function any<T>(arr: T[] | undefined, fn: (x: T) => boolean): boolean {
   return !!arr?.some(fn);
 }
 
+/**
+ * Normaliza qualquer string de status vinda do banco para um formato
+ * comparável: minúsculas, sem acentos, sem espaços nas pontas e com
+ * separadores unificados em "_". Aceita variações legadas e devolve
+ * sempre uma string segura para comparar com os enums internos.
+ */
+export function normalizeQaStatus(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return String(raw)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .replace(/[\s\-/]+/g, "_")
+    .replace(/_+/g, "_");
+}
+
+/** Mapa de aliases legados → códigos canônicos usados pela engine. */
+const STATUS_ALIASES: Record<string, string> = {
+  // documentação
+  aguardando_documentos: "aguardando_documentacao",
+  documentos_pendentes: "aguardando_documentacao",
+  em_validacao: "documentos_em_analise",
+  em_validacao_ia: "documentos_em_analise",
+  em_revisao_humana: "documentos_em_analise",
+  em_analise: "documentos_em_analise",
+  documentacao_aprovada: "documentos_aprovados",
+  aprovado: "documentos_aprovados",
+  // documentos individuais (uploads)
+  reprovado: "invalido",
+  invalidado: "invalido",
+  divergente: "invalido",
+  // protocolo
+  protocolado: "enviado_ao_orgao",
+  em_analise_pf: "em_analise_orgao",
+  exigencia_emitida: "notificado",
+  cumprindo_exigencia: "notificado",
+  // financeiro
+  pendente: "aguardando_pagamento",
+  pago: "confirmado",
+  confirmado_pagamento: "confirmado",
+  falhado: "falhou",
+  recusado: "falhou",
+  // ia
+  erro: "falhou",
+  pendente_ia: "processando",
+  // decisão
+  arquivado: "indeferido",
+};
+
+function canonStatus(raw: string | null | undefined): string {
+  const n = normalizeQaStatus(raw);
+  return STATUS_ALIASES[n] ?? n;
+}
+
 const LABEL_TIPO: Record<TipoKpi, string> = {
   CR: "CR",
   CRAF: "CRAF",
@@ -168,13 +223,20 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
   const hoje = input.hoje ?? new Date();
   const tipo = LABEL_TIPO[input.tipo];
 
-  // Agregadores de status das solicitações vinculadas
-  const solStatus = (input.solicitacoes ?? []).map((s) => s.status_servico ?? "");
-  const procStatus = (input.processos ?? []).map((p) => p.status ?? "");
-  const finStatus = (input.solicitacoes ?? []).map((s) => s.status_financeiro ?? "");
+  // Agregadores normalizados (toda comparação usa canonStatus).
+  const solStatus = (input.solicitacoes ?? []).map((s) => canonStatus(s.status_servico));
+  const procStatus = (input.processos ?? []).map((p) => canonStatus(p.status));
+  const finStatus = (input.solicitacoes ?? []).map((s) => canonStatus(s.status_financeiro));
+  const docs = (input.documentos ?? []).map((d) => ({
+    ...d,
+    _status: canonStatus(d.status),
+    _ia: canonStatus(d.ia_status),
+    _origem: canonStatus(d.origem),
+  }));
+  const has = (arr: string[], code: string) => arr.includes(code);
 
   // ── PRIORIDADE 1 — Decisão crítica (indeferido / arquivado) ────────────────
-  if (solStatus.includes("indeferido")) {
+  if (has(solStatus, "indeferido")) {
     return {
       dimensao: "decisao",
       codigo: "indeferido",
@@ -201,8 +263,20 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
     }
   }
 
+  // ── PRIORIDADE 2.5 — Pagamento falhou (vermelho, mais grave) ──────────────
+  if (has(finStatus, "falhou") || has(finStatus, "cancelado") || has(finStatus, "reembolsado")) {
+    return {
+      dimensao: "financeiro",
+      codigo: "pagamento_falhou",
+      label: "PAGAMENTO FALHOU",
+      cor: "vermelho",
+      prioridade: 2,
+      sub: "Refazer pagamento",
+    };
+  }
+
   // ── PRIORIDADE 3 — Exigência / notificação do órgão ────────────────────────
-  if (solStatus.includes("notificado") || solStatus.includes("recurso_administrativo")) {
+  if (has(solStatus, "notificado") || has(solStatus, "recurso_administrativo")) {
     return {
       dimensao: "protocolo",
       codigo: "exigencia_pf",
@@ -213,7 +287,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
     };
   }
 
-  // ── PRIORIDADE 4 — Vencendo em janelas (180/90/60/30/15/7/iminente) ───────
+  // ── PRIORIDADE 4 — Vencendo em janelas (7/15/30/60/90/180) ────────────────
   if (validade) {
     const dias = diasAte(validade, hoje);
     if (dias <= 7) {
@@ -226,13 +300,33 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
         sub: `${dias}d restantes`,
       };
     }
+    if (dias <= 15) {
+      return {
+        dimensao: "validade",
+        codigo: "vencendo_15",
+        label: "VENCE EM 15 DIAS",
+        cor: "laranja",
+        prioridade: 4,
+        sub: `${dias}d restantes`,
+      };
+    }
     if (dias <= 30) {
       return {
         dimensao: "validade",
         codigo: "vencendo_30",
-        label: "VENCE EM BREVE",
+        label: "VENCE EM 30 DIAS",
         cor: "amarelo",
         prioridade: 4,
+        sub: `${dias}d restantes`,
+      };
+    }
+    if (dias <= 60) {
+      return {
+        dimensao: "validade",
+        codigo: "vencendo_60",
+        label: "VENCE EM 60 DIAS",
+        cor: "amarelo",
+        prioridade: 5,
         sub: `${dias}d restantes`,
       };
     }
@@ -240,8 +334,18 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
       return {
         dimensao: "validade",
         codigo: "vencendo_90",
-        label: `${tipo} EM DIA`,
+        label: "VENCE EM 90 DIAS",
         cor: "amarelo",
+        prioridade: 5,
+        sub: `vence em ${dias}d`,
+      };
+    }
+    if (dias <= 180) {
+      return {
+        dimensao: "validade",
+        codigo: "vencendo_180",
+        label: `${tipo} EM DIA`,
+        cor: "verde",
         prioridade: 5,
         sub: `vence em ${dias}d`,
       };
@@ -250,9 +354,9 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
 
   // ── PRIORIDADE 5 — Em análise no órgão / protocolado ──────────────────────
   if (
-    solStatus.includes("em_analise_orgao") ||
-    solStatus.includes("enviado_ao_orgao") ||
-    solStatus.includes("restituido")
+    has(solStatus, "em_analise_orgao") ||
+    has(solStatus, "enviado_ao_orgao") ||
+    has(solStatus, "restituido")
   ) {
     return {
       dimensao: "protocolo",
@@ -263,7 +367,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
       sub: "Aguardando decisão",
     };
   }
-  if (solStatus.includes("pronto_para_protocolo")) {
+  if (has(solStatus, "pronto_para_protocolo")) {
     return {
       dimensao: "protocolo",
       codigo: "pronto_protocolo",
@@ -273,18 +377,8 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
     };
   }
 
-  // ── PRIORIDADE 6 — Documentos com problema (incompleto/inválido) ──────────
-  if (solStatus.includes("documentos_incompletos")) {
-    return {
-      dimensao: "documentacao",
-      codigo: "documentos_incompletos",
-      label: "DOCS INCOMPLETOS",
-      cor: "laranja",
-      prioridade: 6,
-      sub: "Cliente precisa corrigir",
-    };
-  }
-  if (any(input.documentos, (d) => d.status === "reprovado")) {
+  // ── PRIORIDADE 6 — Documento INVÁLIDO antes de incompleto/em análise ──────
+  if (any(docs, (d) => d._status === "invalido")) {
     return {
       dimensao: "documentacao",
       codigo: "documentos_invalidos",
@@ -294,11 +388,21 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
       sub: "Reenviar documento",
     };
   }
+  if (has(solStatus, "documentos_incompletos")) {
+    return {
+      dimensao: "documentacao",
+      codigo: "documentos_incompletos",
+      label: "DOCS INCOMPLETOS",
+      cor: "laranja",
+      prioridade: 6,
+      sub: "Cliente precisa corrigir",
+    };
+  }
 
   // ── PRIORIDADE 7 — Documentos em análise interna ──────────────────────────
   if (
-    solStatus.includes("documentos_em_analise") ||
-    any(input.documentos, (d) => d.status === "pendente" || d.status === "em_analise")
+    has(solStatus, "documentos_em_analise") ||
+    any(docs, (d) => d._status === "pendente" || d._status === "documentos_em_analise" || d._status === "enviado")
   ) {
     return {
       dimensao: "documentacao",
@@ -311,7 +415,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
   }
 
   // IA/OCR ainda processando (sub-camada de documentação)
-  if (any(input.documentos, (d) => d.ia_status === "processando" || d.ia_status === "pendente")) {
+  if (any(docs, (d) => d._ia === "processando")) {
     return {
       dimensao: "ia_ocr",
       codigo: "ia_processando",
@@ -321,7 +425,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
       sub: "Aguardando OCR concluir",
     };
   }
-  if (any(input.documentos, (d) => d.ia_status === "falhou" || d.ia_status === "erro")) {
+  if (any(docs, (d) => d._ia === "falhou")) {
     return {
       dimensao: "ia_ocr",
       codigo: "ia_falhou",
@@ -333,9 +437,9 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
   }
 
   if (
-    solStatus.includes("aguardando_documentacao") ||
-    solStatus.includes("montando_pasta") ||
-    procStatus.includes("aguardando_documentos")
+    has(solStatus, "aguardando_documentacao") ||
+    has(solStatus, "montando_pasta") ||
+    has(procStatus, "aguardando_documentacao")
   ) {
     return {
       dimensao: "documentacao",
@@ -348,7 +452,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
   }
 
   // ── PRIORIDADE 8 — Financeiro pendente ────────────────────────────────────
-  if (finStatus.some((s) => s === "aguardando_pagamento" || s === "pendente")) {
+  if (has(finStatus, "aguardando_pagamento")) {
     return {
       dimensao: "financeiro",
       codigo: "aguardando_pagamento",
@@ -356,15 +460,6 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
       cor: "laranja",
       prioridade: 8,
       sub: "Pagamento não confirmado",
-    };
-  }
-  if (finStatus.includes("falhou")) {
-    return {
-      dimensao: "financeiro",
-      codigo: "pagamento_falhou",
-      label: "PAGAMENTO FALHOU",
-      cor: "vermelho",
-      prioridade: 8,
     };
   }
 
@@ -382,7 +477,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
   }
 
   // Decisão deferida sem validade ainda registrada → estado intermediário
-  if (solStatus.includes("deferido") || solStatus.includes("finalizado")) {
+  if (has(solStatus, "deferido") || has(solStatus, "finalizado")) {
     return {
       dimensao: "decisao",
       codigo: "deferido",
@@ -394,7 +489,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
   }
 
   // Documentos aprovados reaproveitados do Hub Cliente, sem solicitação ativa
-  if (any(input.documentos, (d) => d.status === "aprovado" && d.origem === "hub_cliente")) {
+  if (any(docs, (d) => d._status === "documentos_aprovados" && d._origem === "hub_cliente")) {
     return {
       dimensao: "reaproveitamento",
       codigo: "hub_reaproveitado",
@@ -404,7 +499,7 @@ export function getStatusUnificado(input: StatusUnificadoInput): StatusUnificado
       sub: "Reutilizado do Hub Cliente",
     };
   }
-  if (any(input.documentos, (d) => d.status === "aprovado")) {
+  if (any(docs, (d) => d._status === "documentos_aprovados")) {
     return {
       dimensao: "documentacao",
       codigo: "documento_aprovado",
@@ -569,14 +664,22 @@ export const COR_DOT_CLASS: Record<CorStatus, string> = {
  */
 export function tipoKpiPorSlug(slug?: string | null): TipoKpi | null {
   if (!slug) return null;
-  const s = slug.toLowerCase();
+  const s = normalizeQaStatus(slug);
+
+  // Canônicos da plataforma — comparados explicitamente.
+  if (s === "posse_arma_fogo") return "POSSE";
+  if (s === "porte_arma_fogo") return "PORTE";
+  if (s === "registro_arma_fogo" || s === "craf") return "CRAF";
+  if (s === "concessao_cr" || s === "cr") return "CR";
+
+  // Fallbacks tolerantes (slugs antigos/variantes).
   if (s.includes("craf")) return "CRAF";
   if (s.includes("gte") || s.includes("trafego")) return "GTE";
   if (s.includes("autorizacao") && s.includes("compra")) return "AUTORIZACAO_COMPRA";
   if (s.includes("posse")) return "POSSE";
   if (s.includes("porte")) return "PORTE";
   if (s.includes("exame") || s.includes("laudo")) return "EXAME_LAUDO";
-  if (s.includes("municao") || s.includes("munição")) return "MUNICAO";
-  if (s.includes("cr-") || s === "cr" || s.startsWith("cr_")) return "CR";
+  if (s.includes("municao")) return "MUNICAO";
+  if (s.startsWith("cr_") || s.includes("_cr_")) return "CR";
   return null;
 }
