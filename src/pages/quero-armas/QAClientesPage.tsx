@@ -1509,6 +1509,52 @@ export default function QAClientesPage() {
         console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
       }
 
+      // Enriquece com lista de serviços contratados (em batch).
+      try {
+        const ids = rows.map((r: any) => r.id).filter(Boolean);
+        const idsLeg = rows.map((r: any) => r.id_legado).filter(Boolean);
+        const allCids = Array.from(new Set([...ids, ...idsLeg]));
+        const servicosByCli = new Map<number, Set<string>>();
+        if (allCids.length > 0) {
+          const { data: vendas } = await supabase
+            .from("qa_vendas" as any)
+            .select("id, id_legado, cliente_id")
+            .in("cliente_id", allCids);
+          const vendasArr = (vendas as any[]) || [];
+          const vendaIds = vendasArr.map((v: any) => v.id_legado ?? v.id).filter(Boolean);
+          const vendaToCli = new Map<number, number>();
+          vendasArr.forEach((v: any) => vendaToCli.set(v.id_legado ?? v.id, v.cliente_id));
+          if (vendaIds.length > 0) {
+            const { data: itens } = await supabase
+              .from("qa_itens_venda" as any)
+              .select("venda_id, servico_id")
+              .in("venda_id", vendaIds);
+            const servIds = Array.from(new Set(((itens as any[]) || []).map((i: any) => i.servico_id).filter(Boolean)));
+            const servNomes = new Map<number, string>();
+            if (servIds.length > 0) {
+              const { data: servs } = await supabase
+                .from("qa_servicos" as any)
+                .select("id, nome_servico")
+                .in("id", servIds);
+              ((servs as any[]) || []).forEach((s: any) => servNomes.set(s.id, s.nome_servico));
+            }
+            ((itens as any[]) || []).forEach((it: any) => {
+              const cid = vendaToCli.get(it.venda_id);
+              const nome = servNomes.get(it.servico_id);
+              if (!cid || !nome) return;
+              if (!servicosByCli.has(cid)) servicosByCli.set(cid, new Set());
+              servicosByCli.get(cid)!.add(nome);
+            });
+          }
+        }
+        for (const r of rows) {
+          const set = servicosByCli.get(r.id) || servicosByCli.get(r.id_legado);
+          (r as any).servicos_contratados = set ? Array.from(set) : [];
+        }
+      } catch (servErr) {
+        console.warn("[QAClientes] enrich serviços falhou (não crítico):", servErr);
+      }
+
       // Numeração sequencial de exibição (1..N) por ordem cronológica de
       // cadastro. NÃO altera a PK no banco — só o ID mostrado ao usuário.
       // Conta TODOS os clientes cadastrados (Quero Armas + Arsenal).
