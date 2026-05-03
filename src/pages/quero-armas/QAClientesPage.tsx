@@ -1397,7 +1397,7 @@ export default function QAClientesPage() {
   };
 
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
-  const [tabView, setTabView] = useState<"clientes" | "manuais" | "cadastros" | "rejeitados">("clientes");
+  const [tabView, setTabView] = useState<"clientes" | "manuais" | "arsenal_free" | "cadastros" | "rejeitados">("clientes");
   const [cadastroFilter, setCadastroFilter] = useState<"pendente" | "aprovado">("pendente");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
@@ -2257,6 +2257,14 @@ export default function QAClientesPage() {
   // Demais (formulario_publico, equipe legada, null) → "outros".
   const isManual = (c: any) => String((c as any).origem || "") === "manual";
   const filteredManuais = filtered.filter(isManual);
+
+  // App Arsenal Inteligente (FREE): clientes que estão usando o app na conta gratuita.
+  // Considera-se FREE quando arsenal_plano = 'free' (default no banco) e o cliente
+  // tem evidência de uso (ultimo acesso registrado OU vinculo auth ativo via user_id).
+  const isArsenalFree = (c: any) =>
+    String((c as any).arsenal_plano || "free").toLowerCase() === "free" &&
+    (!!(c as any).arsenal_ultimo_acesso_em || !!(c as any).user_id);
+  const filteredArsenalFree = filtered.filter(isArsenalFree);
 
   const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
@@ -3644,6 +3652,16 @@ export default function QAClientesPage() {
           <FileText className="h-3.5 w-3.5 inline mr-1" /> FORMULÁRIOS INTERNET ({filteredCadastros.length})
         </button>
         <button
+          onClick={() => setTabView("arsenal_free")}
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          style={{
+            background: tabView === "arsenal_free" ? "hsl(0 0% 100%)" : "transparent",
+            color: tabView === "arsenal_free" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
+            boxShadow: tabView === "arsenal_free" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>
+          <Shield className="h-3.5 w-3.5 inline mr-1" /> APP ARSENAL INTELIGENTE (FREE) ({filteredArsenalFree.length})
+        </button>
+        <button
           onClick={() => setTabView("rejeitados")}
           className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
           style={{
@@ -3687,16 +3705,33 @@ export default function QAClientesPage() {
           onRetry={loadClientes}
           title="Não foi possível carregar os clientes"
         />
-      ) : tabView === "clientes" || tabView === "manuais" ? (
+      ) : tabView === "clientes" || tabView === "manuais" || tabView === "arsenal_free" ? (
         (() => {
-          const list = tabView === "manuais" ? filteredManuais : filtered;
+          const list =
+            tabView === "manuais"
+              ? filteredManuais
+              : tabView === "arsenal_free"
+              ? filteredArsenalFree
+              : filtered;
           return (
         <div className="space-y-2">
           {list.length === 0 && (
             <EmptyState
               icon={<User className="h-5 w-5" />}
-              title={tabView === "manuais" ? "Nenhum cliente cadastrado manualmente" : "Nenhum cliente encontrado"}
-              description={tabView === "manuais" ? "Clientes cadastrados pela equipe via formulário interno aparecem aqui." : "Ajuste os filtros ou cadastre um novo cliente para começar."}
+              title={
+                tabView === "manuais"
+                  ? "Nenhum cliente cadastrado manualmente"
+                  : tabView === "arsenal_free"
+                  ? "Nenhum usuário FREE do App Arsenal Inteligente"
+                  : "Nenhum cliente encontrado"
+              }
+              description={
+                tabView === "manuais"
+                  ? "Clientes cadastrados pela equipe via formulário interno aparecem aqui."
+                  : tabView === "arsenal_free"
+                  ? "Clientes que estão usando o App Arsenal Inteligente na conta gratuita aparecem aqui."
+                  : "Ajuste os filtros ou cadastre um novo cliente para começar."
+              }
             />
           )}
           {list.map(c => {

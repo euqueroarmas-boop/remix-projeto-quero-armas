@@ -882,7 +882,27 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                   </div>
                 );
               }
-              return filtered.map(svc => {
+              // Agrupa por categoria (sistema/órgão) e ordena grupos + itens
+              const groups = new Map<string, typeof filtered>();
+              for (const s of filtered) {
+                const key = (s.categoria || "OUTROS").toUpperCase();
+                if (!groups.has(key)) groups.set(key, [] as any);
+                (groups.get(key) as any).push(s);
+              }
+              const orderedKeys = Array.from(groups.keys()).sort((a, b) =>
+                a.localeCompare(b, "pt-BR", { sensitivity: "base" })
+              );
+              return orderedKeys.map((groupKey) => {
+                const items = (groups.get(groupKey) || []).slice().sort((a, b) =>
+                  a.nome_servico.localeCompare(b.nome_servico, "pt-BR", { sensitivity: "base" })
+                );
+                return (
+                  <div key={groupKey} className="space-y-1">
+                    <div className="sticky top-0 z-10 -mx-2 px-3 py-1 bg-[#7A1F2B] text-white text-[9px] font-bold uppercase tracking-[0.12em] rounded-md shadow-sm">
+                      {groupKey}
+                      <span className="ml-2 opacity-70 font-normal">({items.length})</span>
+                    </div>
+                    {items.map((svc) => {
               const isChecked = selectedServicos.has(svc.id);
               const svcData = selectedServicos.get(svc.id);
               return (
@@ -901,9 +921,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                       {isChecked && <CheckCircle2 className="h-3 w-3" />}
                     </div>
                     <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="sr-only" />
-                    <span className="flex-1 min-w-0 truncate font-medium uppercase">
+                   <span className="flex-1 min-w-0 truncate font-medium uppercase">
                       {svc.nome_servico}
-                      <span className="ml-1.5 text-[9px] text-slate-400 font-normal uppercase tracking-wider">{svc.categoria}</span>
                     </span>
                     {isChecked ? (
                       <Input
@@ -945,6 +964,9 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                   )}
                 </div>
               );
+                    })}
+                  </div>
+                );
               });
             })()}
           </div>
