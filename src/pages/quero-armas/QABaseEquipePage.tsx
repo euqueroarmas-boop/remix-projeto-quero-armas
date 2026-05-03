@@ -1002,7 +1002,7 @@ export default function QABaseEquipePage() {
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      {a.status !== "published" && <Badge variant="outline" className="text-[10px]">{a.status}</Badge>}
+                      <Badge className={`${statusBadgeColor(a.status)} text-[10px] uppercase`}>{a.status}</Badge>
                       {(() => {
                         const es = a.embedding_status ?? "pendente";
                         if (es === "gerado") return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-label="vetor gerado" />;
