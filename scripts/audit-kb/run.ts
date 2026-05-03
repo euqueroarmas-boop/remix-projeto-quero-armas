@@ -149,7 +149,7 @@ async function recordSuccess(sessionId: string, article: Article, step: AuditSte
     captured_at: new Date().toISOString(),
     viewport: `${VW}x${VH}`,
     device: DEVICE,
-    origem: `playwright:${finalUrl}`,
+    origem: `playwright[${step.source ?? "manual"}|conf=${step.confidence ?? 1}]:${finalUrl}`,
   });
 }
 
