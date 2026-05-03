@@ -25,7 +25,6 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getStatusValidade,
-  getStatusUnificado,
   normalizeQaStatus,
   type StatusUnificado,
   type CorStatus,
@@ -168,6 +167,10 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
     setError(null);
     try {
       const sb = supabase as any;
+      // NOTA: qa_itens_venda NÃO possui cliente_id; sua leitura aqui exigiria
+      // join via venda_id. Como esse KPI ainda não é consumido, evitamos a
+      // query global (proibido buscar sem vínculo de cliente). Será reintroduzida
+      // quando ArsenalSummary realmente precisar dessa dimensão.
       const [
         crResp,
         crafResp,
@@ -177,19 +180,15 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         docsResp,
         procDocResp,
         procResp,
-        solResp,
-        itensResp,
       ] = await Promise.all([
         sb.from("qa_cadastro_cr").select("validade_cr, consolidado_em").eq("cliente_id", clienteId).order("id", { ascending: false }).limit(1),
         sb.from("qa_crafs").select("data_validade, nome_craf").eq("cliente_id", clienteId),
-        sb.from("qa_gtes").select("data_validade, status_documental").eq("cliente_id", clienteId),
+        sb.from("qa_gtes").select("data_validade").eq("cliente_id", clienteId),
         sb.from("qa_gte_documentos").select("data_validade, status_processamento, matching_status").eq("cliente_id", clienteId),
         sb.from("qa_exames_cliente").select("data_vencimento, tipo").eq("cliente_id", clienteId),
         sb.from("qa_documentos_cliente").select("status, data_validade, tipo_documento, origem").eq("qa_cliente_id", clienteId).neq("status", "excluido"),
         sb.from("qa_processo_documentos").select("status, data_validade_efetiva, processo_id").eq("cliente_id", clienteId),
         sb.from("qa_processos").select("status, pagamento_status").eq("cliente_id", clienteId),
-        sb.from("qa_solicitacoes_servico").select("status_servico, status_financeiro, status_processo, service_slug").eq("cliente_id", clienteId),
-        sb.from("qa_itens_venda").select("status, data_protocolo, data_deferimento, data_vencimento, servico_id, venda_id"),
       ]);
 
       const cr = crResp?.data?.[0] ?? null;
@@ -200,8 +199,6 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       const docs: any[] = docsResp?.data ?? [];
       const procDocs: any[] = procDocResp?.data ?? [];
       const procs: any[] = procResp?.data ?? [];
-      const sols: any[] = solResp?.data ?? [];
-      const itens: any[] = itensResp?.data ?? [];
 
       // ─── KPI: CR ──────────────────────────────────────────────────────────
       const crStatusU: StatusUnificado = cr?.validade_cr
@@ -423,10 +420,6 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
           alertas: kpiAlertas,
         },
       } as ClienteStatusAgregado);
-      // suprimir uso de getStatusUnificado/itens não-utilizados via no-op tipado
-      void getStatusUnificado;
-      void itens;
-      void sols;
     } catch (e: any) {
       setError(String(e?.message || e));
       setData(null);
