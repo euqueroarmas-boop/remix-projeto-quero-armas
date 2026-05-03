@@ -216,7 +216,7 @@ async function callPrefill(content: any[]) {
 
 async function verifySenhaGov(content: any[], proposed: unknown) {
   const senha = typeof proposed === "string" ? proposed : "";
-  if (!senha.trim()) return { ok: false, senha: "", warning: "Senha GOV não conferida." };
+  if (!senha) return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
 
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
@@ -234,9 +234,10 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
           content:
             "Você é um auditor forense de senha GOV.BR. Confira APENAS o campo senha_gov nos documentos. " +
             "Nunca corrija por aproximação, nunca normalize, nunca troque símbolos/letras/números parecidos. " +
-            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"warning\":string}. " +
+            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"confidence\":number,\"warning\":string}. " +
             "ok só pode ser true se a senha proposta estiver EXATAMENTE igual ao documento, caractere por caractere. " +
-            "Se qualquer caractere estiver duvidoso, ilegível ou diferente, ok=false e senha=\"\".",
+            "Se qualquer caractere estiver duvidoso, ilegível, inferido ou diferente, ok=false e senha=\"\". " +
+            "confidence só pode ser >=0.9 quando houver correspondência literal nítida no trecho visual/textual extraído.",
         },
         {
           role: "user",
@@ -244,7 +245,7 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
             {
               type: "text",
               text:
-                `Senha proposta para conferência: ${senha}\n` +
+                `Senha proposta para conferência literal: ${senha}\n` +
                 "Confira nos arquivos/textos abaixo se essa senha aparece exatamente como escrita. Responda somente JSON.",
             },
             ...content.slice(1),
@@ -255,17 +256,18 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
     }),
   });
 
-  if (!resp.ok) return { ok: false, senha: "", warning: "Senha GOV não conferida pela auditoria." };
+  if (!resp.ok) return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   try {
     const data = await resp.json();
     const raw = data?.choices?.[0]?.message?.content;
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     const checked = typeof parsed?.senha === "string" ? parsed.senha : "";
-    return parsed?.ok === true && checked === senha
-      ? { ok: true, senha, warning: "" }
-      : { ok: false, senha: "", warning: parsed?.warning || "Senha GOV divergente/duvidosa — preencher manualmente." };
+    const confidence = typeof parsed?.confidence === "number" ? parsed.confidence : 0;
+    return parsed?.ok === true && checked === senha && confidence >= 0.9
+      ? { ok: true, senha, confidence, warning: "" }
+      : { ok: false, senha: "", confidence, warning: parsed?.warning || "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   } catch {
-    return { ok: false, senha: "", warning: "Senha GOV não conferida pela auditoria." };
+    return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   }
 }
 
