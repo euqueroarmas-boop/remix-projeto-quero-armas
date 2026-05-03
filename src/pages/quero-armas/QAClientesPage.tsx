@@ -49,6 +49,7 @@ import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clien
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
 import { STATUS_SERVICO_QA, STATUS_LABELS, statusBadgeClass } from "@/lib/quero-armas/statusServico";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
@@ -1619,6 +1620,71 @@ export default function QAClientesPage() {
         setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
       }
       toast.success(novoPago ? "Marcado como pago" : "Marcado como não pagou");
+
+      // ── Propagação do status financeiro para a(s) solicitação(ões)
+      // vinculadas ao cadastro público (best-effort, NÃO bloqueia o fluxo).
+      // pago=true  → status_financeiro = 'pago' (libera fluxo operacional;
+      //               status_servico já é 'aguardando_documentacao' por
+      //               default, o que mantém o checklist liberado).
+      // pago=false → reverte para 'sem_cobranca_vinculada'.
+      // Não altera Asaas/webhook/qa_vendas/processos: somente reflete no
+      // painel operacional o que a Equipe acabou de marcar.
+      void (async () => {
+        try {
+          const novoFinanceiro = novoPago ? "pago" : "sem_cobranca_vinculada";
+          const { data: solsPrev } = await supabase
+            .from("qa_solicitacoes_servico" as any)
+            .select("id, cliente_id, service_slug, service_name, status_financeiro")
+            .eq("cadastro_publico_id", cadastroId);
+          const sols = (solsPrev as any[]) ?? [];
+          if (sols.length === 0) return;
+          const { error: updErr } = await supabase
+            .from("qa_solicitacoes_servico" as any)
+            .update({ status_financeiro: novoFinanceiro, updated_at: new Date().toISOString() })
+            .eq("cadastro_publico_id", cadastroId);
+          if (updErr) {
+            console.warn("[togglePagoCadastroPublico] propagar status_financeiro falhou:", updErr.message);
+            return;
+          }
+          const { data: userRes } = await supabase.auth.getUser();
+          const usuarioId = userRes?.user?.id ?? null;
+          // Auditoria do flag pago no próprio cadastro público
+          void registrarStatusEvento({
+            origem: "equipe",
+            entidade: "cadastro_publico",
+            entidade_id: cadastroId,
+            cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
+            campo_status: "pago",
+            status_anterior: pagoAnterior ? "true" : "false",
+            status_novo: novoPago ? "true" : "false",
+            usuario_id: usuarioId,
+            detalhes: { contexto: "QAClientesPage.togglePagoCadastroPublico" },
+          });
+          // Auditoria por solicitação afetada
+          for (const s of sols) {
+            if ((s.status_financeiro ?? null) === novoFinanceiro) continue;
+            void registrarStatusEvento({
+              origem: "equipe",
+              entidade: "solicitacao_servico",
+              entidade_id: s.id,
+              solicitacao_id: s.id,
+              cliente_id: s.cliente_id ?? null,
+              campo_status: "status_financeiro",
+              status_anterior: s.status_financeiro ?? null,
+              status_novo: novoFinanceiro,
+              usuario_id: usuarioId,
+              detalhes: {
+                contexto: "QAClientesPage.togglePagoCadastroPublico",
+                cadastro_publico_id: cadastroId,
+                service_slug: s.service_slug ?? null,
+                service_name: s.service_name ?? null,
+              },
+            });
+          }
+        } catch (err) {
+          console.warn("[togglePagoCadastroPublico] propagação best-effort falhou:", err);
+        }
+      })();
     } catch (e: any) {
       setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: pagoAnterior } : item));
       setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: pagoAnterior } : prev);
