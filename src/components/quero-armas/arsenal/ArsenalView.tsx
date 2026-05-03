@@ -579,8 +579,17 @@ export function ArsenalView({
   const crafUnified = useMemo(() => {
     // Pega o CRAF de menor prioridade (mais crítico) entre os documentos.
     if (docsByTipo.craf.length === 0 && (crafs?.length ?? 0) === 0) return null;
+    // Validade mais próxima entre os CRAFs do cliente (driver de vencido/vencendo).
+    const validades = (crafs ?? [])
+      .map((c: any) => c?.data_validade ?? c?.validade ?? null)
+      .filter(Boolean) as (string | Date)[];
+    const maisProxima = validades
+      .map((v) => new Date(v as any))
+      .filter((d) => !isNaN(d.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
     return getStatusUnificado({
       tipo: "CRAF",
+      cadastro: maisProxima ? { data_validade: maisProxima } : null,
       documentos: docsByTipo.craf,
     });
   }, [docsByTipo.craf, crafs]);
@@ -593,8 +602,17 @@ export function ArsenalView({
       data_validade: g.data_validade ?? null,
     }));
     if (docs.length === 0 && docsByTipo.gte.length === 0) return null;
+    // Validade mais próxima entre as GTEs (engine usa cadastro.data_validade).
+    const validades = (gteDocs ?? [])
+      .map((g) => g.data_validade)
+      .filter(Boolean) as string[];
+    const maisProxima = validades
+      .map((v) => new Date(v))
+      .filter((d) => !isNaN(d.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
     return getStatusUnificado({
       tipo: "GTE",
+      cadastro: maisProxima ? { data_validade: maisProxima } : null,
       documentos: [...docs, ...docsByTipo.gte],
     });
   }, [gteDocs, docsByTipo.gte]);
