@@ -29,12 +29,12 @@ import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/compo
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
-import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
+import { VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
 import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
 import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
-import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
+import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
@@ -1077,9 +1077,6 @@ export default function QAClientesPage() {
   // Modal states
   const [clienteModal, setClienteModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
-  const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
-  const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
-  const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
   const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
@@ -2958,9 +2955,6 @@ export default function QAClientesPage() {
             if (data) setSelected(data as any);
           }
         }} cliente={editingCliente} />
-        <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} craf={crafModal.item} />
-        <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} gte={gteModal.item} />
-        <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteCadastroIdForSub} cadastro={crModal.item} />
         <VendaModal
           open={vendaModal.open}
           onClose={() => setVendaModal({ open: false })}
