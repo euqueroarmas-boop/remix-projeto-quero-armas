@@ -87,7 +87,11 @@ const PREFILL_TOOL = {
         data_realizacao_exame_tiro: { type: "string", description: "DD/MM/AAAA — DATA DE REALIZAÇÃO do exame de capacidade técnica/tiro. Não é data de validade." },
         validade_laudo_psicologico: { type: "string", description: "Legado: preencher com a DATA DE REALIZAÇÃO do exame/laudo psicológico quando o formulário antigo usar este nome." },
         validade_exame_tiro: { type: "string", description: "Legado: preencher com a DATA DE REALIZAÇÃO do exame de tiro quando o formulário antigo usar este nome." },
-        senha_gov: { type: "string", description: "Senha do GOV.BR exatamente como visível no documento/ficha/print. Preservar maiúsculas, minúsculas, números e símbolos." },
+        senha_gov: { type: "string", description: "LEGADO: deixe vazio. Use senha_gov_raw para senha GOV.BR." },
+        senha_gov_raw: { type: "string", description: "Campo literal/raw. Transcreva a senha GOV.BR EXATAMENTE como aparece no print/documento, entre aspas, preservando maiúsculas, minúsculas, acentos, números, espaços e símbolos. Se houver dúvida em qualquer caractere, deixe vazio." },
+        senha_gov_confidence: { type: "number", description: "Confiança 0..1 da transcrição literal da senha GOV.BR. Use >=0.9 apenas quando todos os caracteres estiverem nítidos." },
+        senha_gov_needs_review: { type: "boolean", description: "true se a senha GOV.BR estiver ausente, duvidosa, ilegível, inferida ou com qualquer caractere de baixa confiança." },
+        emissor_rg_needs_review: { type: "boolean", description: "true quando o emissor RG/CIN extraído for incomum, inconsistente ou de baixa confiança." },
         acervo: {
           type: "array",
           description: "Itens do acervo identificados (CRAFs, GTs etc.).",
@@ -143,6 +147,7 @@ const PREFILL_TOOL = {
         "cr_categoria", "cr_data_emissao", "cr_data_validade", "cr_orgao_emissor",
         "data_realizacao_exame_psicologico", "data_realizacao_exame_tiro",
         "validade_laudo_psicologico", "validade_exame_tiro", "senha_gov",
+        "senha_gov_raw", "senha_gov_confidence", "senha_gov_needs_review", "emissor_rg_needs_review",
         "acervo", "observacoes", "warnings", "confidence_pairs",
       ],
     },
@@ -161,13 +166,16 @@ const SYSTEM_PROMPT = [
   "5) Datas SEMPRE em DD/MM/AAAA.",
   "6) Se diferentes documentos divergirem (ex: 2 endereços diferentes), use o mais recente e adicione um warning descrevendo a divergência.",
   "6.1) Se houver MAIS DE UM endereço (ex: residencial + comercial, ou principal + alternativo), preencha o primeiro em cep/endereco/... e o segundo em cep_secundario/endereco_secundario/...",
-  "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
+    "7) Para cada campo preenchido, registre a confiança em confidence (0..1). Campos com confidence < 0.6 devem aparecer como warning de 'campo a revisar'.",
   "8) NÃO preencha o número da arma (arma_numero_serie) no campo arma_modelo. Modelo é COMERCIAL (G2C, TS9, 1911, etc.).",
   "9) Se houver vários CRAFs/GTs, retorne todos em acervo[].",
   "10) Em fichas antigas, os campos 'DATA EXAME PSICOLÓGICO' e 'DATA EXAME DE TIRO' são DATAS DE REALIZAÇÃO. Retorne em data_realizacao_exame_psicologico e data_realizacao_exame_tiro, nunca trate como validade.",
-  "11) Se aparecer 'SENHA DO GOV', 'SENHA GOV' ou similar, extraia senha_gov LITERALMENTE caractere por caractere, preservando MAIÚSCULAS, minúsculas, números e símbolos. NÃO normalize, NÃO substitua símbolos parecidos (ex: '$' nunca vira '/' ou 'S'; '0' nunca vira 'O'). Se houver QUALQUER dúvida sobre um caractere específico, adicione warning 'Senha GOV — confirmar caractere X' ao invés de chutar.",
-  "11.1) Para senha_gov, releia 2x antes de retornar. A senha é dado crítico — qualquer caractere errado bloqueia o acesso do cliente.",
-  "12) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
+    "11) SENHA GOV.BR É CAMPO SENSÍVEL DE TRANSCRIÇÃO LITERAL/RAW. Use senha_gov_raw, não senha_gov. NÃO normalize, NÃO corrija, NÃO interprete, NÃO converta maiúscula/minúscula, NÃO remova acentos, NÃO troque símbolos, NÃO complete e NÃO infira por contexto.",
+    "11.1) senha_gov_raw deve refletir EXATAMENTE o que aparece no print/documento. Exemplo literal: senha_gov_raw: \"Eduisa7050$\". Se houver dúvida em qualquer caractere, retorne senha_gov_raw='' e senha_gov_needs_review=true.",
+    "11.2) Só use senha_gov_confidence >= 0.9 quando todos os caracteres estiverem visualmente/textualmente nítidos. Caso contrário, deixe a senha vazia e adicione warning: 'Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.'.",
+    "11.3) Para senha GOV.BR, releia 2x antes de retornar. Qualquer caractere errado bloqueia o acesso do cliente.",
+    "12) Emissor RG/CIN: se o emissor extraído for incomum, inconsistente ou de baixa confiança, marque emissor_rg_needs_review=true e adicione warning 'Verificar emissor do RG. Extração possivelmente incorreta.'. Exemplo: 'SSP ISP' deve gerar revisão.",
+    "13) Se nada útil for encontrado, retorne objeto vazio sem warnings falsos.",
 ].join("\n");
 
 async function callPrefill(content: any[]) {
@@ -208,7 +216,7 @@ async function callPrefill(content: any[]) {
 
 async function verifySenhaGov(content: any[], proposed: unknown) {
   const senha = typeof proposed === "string" ? proposed : "";
-  if (!senha.trim()) return { ok: false, senha: "", warning: "Senha GOV não conferida." };
+  if (!senha) return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
 
   const apiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
@@ -226,9 +234,10 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
           content:
             "Você é um auditor forense de senha GOV.BR. Confira APENAS o campo senha_gov nos documentos. " +
             "Nunca corrija por aproximação, nunca normalize, nunca troque símbolos/letras/números parecidos. " +
-            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"warning\":string}. " +
+            "Retorne JSON puro: {\"ok\":boolean,\"senha\":string,\"confidence\":number,\"warning\":string}. " +
             "ok só pode ser true se a senha proposta estiver EXATAMENTE igual ao documento, caractere por caractere. " +
-            "Se qualquer caractere estiver duvidoso, ilegível ou diferente, ok=false e senha=\"\".",
+            "Se qualquer caractere estiver duvidoso, ilegível, inferido ou diferente, ok=false e senha=\"\". " +
+            "confidence só pode ser >=0.9 quando houver correspondência literal nítida no trecho visual/textual extraído.",
         },
         {
           role: "user",
@@ -236,7 +245,7 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
             {
               type: "text",
               text:
-                `Senha proposta para conferência: ${senha}\n` +
+                `Senha proposta para conferência literal: ${senha}\n` +
                 "Confira nos arquivos/textos abaixo se essa senha aparece exatamente como escrita. Responda somente JSON.",
             },
             ...content.slice(1),
@@ -247,18 +256,30 @@ async function verifySenhaGov(content: any[], proposed: unknown) {
     }),
   });
 
-  if (!resp.ok) return { ok: false, senha: "", warning: "Senha GOV não conferida pela auditoria." };
+  if (!resp.ok) return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   try {
     const data = await resp.json();
     const raw = data?.choices?.[0]?.message?.content;
     const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     const checked = typeof parsed?.senha === "string" ? parsed.senha : "";
-    return parsed?.ok === true && checked === senha
-      ? { ok: true, senha, warning: "" }
-      : { ok: false, senha: "", warning: parsed?.warning || "Senha GOV divergente/duvidosa — preencher manualmente." };
+    const confidence = typeof parsed?.confidence === "number" ? parsed.confidence : 0;
+    return parsed?.ok === true && checked === senha && confidence >= 0.9
+      ? { ok: true, senha, confidence, warning: "" }
+      : { ok: false, senha: "", confidence, warning: parsed?.warning || "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   } catch {
-    return { ok: false, senha: "", warning: "Senha GOV não conferida pela auditoria." };
+    return { ok: false, senha: "", confidence: 0, warning: "Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento." };
   }
+}
+
+function emissorRgNeedsReview(value: unknown, confidence?: number): boolean {
+  const raw = String(value ?? "").trim();
+  if (!raw) return false;
+  const compact = raw.toUpperCase().replace(/[^A-Z]/g, "");
+  if (typeof confidence === "number" && confidence < 0.75) return true;
+  if (/SSP\s*ISP/i.test(raw) || compact.includes("SSPISP")) return true;
+  const common = new Set(["SSP", "SSPPC", "PC", "PCMG", "PCRJ", "DETRAN", "IFP", "IIRGD", "SJS", "SESP", "SDS", "DGPC"]);
+  if (compact.startsWith("SSP") && !["SSP", "SSPPC"].includes(compact)) return true;
+  return compact.length > 0 && !common.has(compact) && compact.length > 8;
 }
 
 Deno.serve(async (req) => {
@@ -312,13 +333,24 @@ Deno.serve(async (req) => {
 
     const result = await callPrefill(content);
     const normalized: any = { ...(result ?? {}) };
-    if (normalized.senha_gov) {
-      const checked = await verifySenhaGov(content, normalized.senha_gov);
+    const senhaCandidate = typeof normalized.senha_gov_raw === "string" ? normalized.senha_gov_raw : normalized.senha_gov;
+    delete normalized.senha_gov;
+    if (senhaCandidate) {
+      const checked = await verifySenhaGov(content, senhaCandidate);
       if (!checked.ok) {
-        delete normalized.senha_gov;
+        normalized.senha_gov_raw = "";
+        normalized.senha_gov_confidence = checked.confidence ?? 0;
+        normalized.senha_gov_needs_review = true;
         normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
         normalized.warnings.push(checked.warning);
+      } else {
+        normalized.senha_gov_raw = checked.senha;
+        normalized.senha_gov_confidence = checked.confidence;
+        normalized.senha_gov_needs_review = false;
       }
+    } else if (normalized.senha_gov_needs_review) {
+      normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+      normalized.warnings.push("Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.");
     }
     // Convert confidence_pairs[] -> confidence{} for frontend compatibility
     if (Array.isArray(normalized.confidence_pairs)) {
@@ -329,9 +361,16 @@ Deno.serve(async (req) => {
       normalized.confidence = conf;
       delete normalized.confidence_pairs;
     }
+    if (emissorRgNeedsReview(normalized.emissor_rg, normalized.confidence?.emissor_rg)) {
+      normalized.emissor_rg_needs_review = true;
+      normalized.warnings = Array.isArray(normalized.warnings) ? normalized.warnings : [];
+      if (!normalized.warnings.includes("Verificar emissor do RG. Extração possivelmente incorreta.")) {
+        normalized.warnings.push("Verificar emissor do RG. Extração possivelmente incorreta.");
+      }
+    }
     // Strip empty strings so frontend "fill only empty" logic works cleanly
     for (const k of Object.keys(normalized)) {
-      if (normalized[k] === "") delete normalized[k];
+      if (normalized[k] === "" && k !== "senha_gov_raw") delete normalized[k];
     }
     return json({ success: true, fields: normalized });
   } catch (err: any) {

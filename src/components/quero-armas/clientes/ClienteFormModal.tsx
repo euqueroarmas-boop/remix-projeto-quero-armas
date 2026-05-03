@@ -161,6 +161,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [requiredErrors, setRequiredErrors] = useState<Record<string, boolean>>({});
+  const [aiSenhaGovFromAI, setAiSenhaGovFromAI] = useState(false);
+  const [aiSenhaGovNeedsReview, setAiSenhaGovNeedsReview] = useState(false);
+  const [aiEmissorRgNeedsReview, setAiEmissorRgNeedsReview] = useState(false);
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
@@ -277,6 +280,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setPhotoPreview(null);
       setRequiredErrors({});
       setCadastroCrId(null);
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
       setAiPrefillKey(k => k + 1);
       return;
     }
@@ -320,6 +326,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         validade_exame_tiro: "",
         senha_gov: "",
       });
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
       // Load existing photo preview
       if (cliente.imagem) {
         setPhotoPreview(existingPhotoUrl || null);
@@ -359,6 +368,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       }));
       setPhotoPreview(null);
       setCadastroCrId(null);
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
     }
   }, [cliente, existingPhotoUrl, open]);
 
@@ -405,6 +417,21 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     let addressDivergence: string | null = null;
     let extractedCep = onlyDigits(p.cep);
     const extractedCep2 = onlyDigits((p as any).cep_secundario);
+    const senhaGovRaw = typeof (p as any).senha_gov_raw === "string" ? (p as any).senha_gov_raw : (p as any).senha_gov;
+    const senhaGovConfidence = typeof (p as any).senha_gov_confidence === "number" ? (p as any).senha_gov_confidence : (p.confidence?.senha_gov_raw ?? p.confidence?.senha_gov ?? 0);
+    const canFillSenhaGov = typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && senhaGovConfidence >= 0.9 && !(p as any).senha_gov_needs_review;
+    const senhaGovShouldReview = Boolean((p as any).senha_gov_needs_review) || (typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && !canFillSenhaGov);
+    setAiSenhaGovFromAI(canFillSenhaGov);
+    setAiSenhaGovNeedsReview(senhaGovShouldReview);
+    setAiEmissorRgNeedsReview(Boolean((p as any).emissor_rg_needs_review));
+    if (canFillSenhaGov) {
+      toast.warning("Confira a senha GOV.BR caractere por caractere antes de salvar.");
+    } else if ((p as any).senha_gov_needs_review) {
+      toast.warning("Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.");
+    }
+    if ((p as any).emissor_rg_needs_review) {
+      toast.warning("Verificar emissor do RG. Extração possivelmente incorreta.");
+    }
 
     setF(prev => {
       const cinDetected = String(p.tipo_documento_identidade || "").toUpperCase() === "CIN";
@@ -463,7 +490,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
         validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
         validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
-        senha_gov: setIfEmpty(prev.senha_gov, (p as any).senha_gov),
+        senha_gov: canFillSenhaGov ? senhaGovRaw : (senhaGovShouldReview ? "" : prev.senha_gov),
         observacao: [
           prev.observacao,
           Array.isArray(p.warnings) && p.warnings.length
@@ -682,9 +709,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
         }
       }
-      if (savedId && senha_gov.trim()) {
+      if (savedId && senha_gov) {
         try {
-          await setSenhaGov(persistedCrId ?? null, senha_gov.trim(), "ClienteFormModal:IA", savedId);
+          await setSenhaGov(persistedCrId ?? null, senha_gov, "ClienteFormModal:IA", savedId);
         } catch (e: any) {
           console.error("Falha ao salvar senha GOV importada:", e);
           toast.warning("Cliente salvo, mas Senha GOV importada não foi persistida");
@@ -854,7 +881,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <FInput
                   label={(f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG") + " *"}
                   value={f.emissor_rg}
-                  onChange={v => set("emissor_rg", v)}
+                  onChange={v => { set("emissor_rg", v); setAiEmissorRgNeedsReview(false); }}
                   error={requiredErrors.emissor_rg ? "Obrigatório" : undefined}
                 />
                 <FSelect
@@ -866,6 +893,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   error={requiredErrors.uf_emissor_rg ? "Obrigatório" : undefined}
                 />
               </div>
+              {aiEmissorRgNeedsReview && (
+                <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 -mt-2">
+                  <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>Verificar emissor do RG. Extração possivelmente incorreta.</span>
+                </div>
+              )}
               {f.tipo_documento_identidade === "CIN" && (
                 <p className="text-[10px] text-zinc-500 -mt-2">
                   ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
@@ -918,13 +951,34 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                       }}
                     />
                   ) : (
-                    <input
-                      type="text"
-                      value={f.senha_gov}
-                      onChange={e => set("senha_gov", e.target.value)}
-                      placeholder="Senha GOV importada"
-                      className={inputClass.replace(" uppercase", "")}
-                    />
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={f.senha_gov}
+                          onChange={e => { set("senha_gov", e.target.value); setAiSenhaGovNeedsReview(false); }}
+                          placeholder="Senha GOV importada"
+                          className={cn(inputClass.replace(" uppercase", ""), aiSenhaGovFromAI && "pr-32")}
+                        />
+                        {aiSenhaGovFromAI && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+                            conferir senha GOV
+                          </span>
+                        )}
+                      </div>
+                      {aiSenhaGovFromAI && (
+                        <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Confira a senha GOV.BR caractere por caractere antes de salvar.</span>
+                        </div>
+                      )}
+                      {aiSenhaGovNeedsReview && (
+                        <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.</span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </Field>
                 <FInput
