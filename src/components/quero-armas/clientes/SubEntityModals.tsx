@@ -852,8 +852,30 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em]">Serviços Contratados</label>
             <span className="text-[10px] text-[#7A1F2B] font-bold bg-[#FBF3F4] px-2 py-0.5 rounded-full">{selectedServicos.size} sel.</span>
           </div>
+          <Input
+            type="text"
+            value={servicoSearch}
+            onChange={(e) => setServicoSearch(e.target.value)}
+            placeholder="Pesquisar serviço (nome, slug, categoria)…"
+            className="h-9 mb-2 text-xs bg-white border-slate-200 text-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0"
+          />
           <div className="max-h-[44vh] sm:max-h-[220px] overflow-y-auto space-y-1 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2">
-            {servicos.map(svc => {
+            {(() => {
+              const q = servicoSearch.trim().toLowerCase();
+              const filtered = q
+                ? servicos.filter((s) =>
+                    [s.nome_servico, s.slug, s.categoria, s.descricao_curta || ""]
+                      .some((f) => String(f).toLowerCase().includes(q)),
+                  )
+                : servicos;
+              if (filtered.length === 0) {
+                return (
+                  <div className="text-center py-6 text-[11px] text-slate-500 uppercase tracking-wider">
+                    Nenhum serviço encontrado no catálogo
+                  </div>
+                );
+              }
+              return filtered.map(svc => {
               const isChecked = selectedServicos.has(svc.id);
               const svcData = selectedServicos.get(svc.id);
               return (
@@ -872,7 +894,10 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                       {isChecked && <CheckCircle2 className="h-3 w-3" />}
                     </div>
                     <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="sr-only" />
-                    <span className="flex-1 min-w-0 truncate font-medium">{svc.nome_servico}</span>
+                    <span className="flex-1 min-w-0 truncate font-medium">
+                      {svc.nome_servico}
+                      <span className="ml-1.5 text-[9px] text-slate-400 font-normal uppercase tracking-wider">{svc.categoria}</span>
+                    </span>
                     {isChecked ? (
                       <Input
                         type="number"
@@ -913,7 +938,8 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitac
                   )}
                 </div>
               );
-            })}
+              });
+            })()}
           </div>
         </div>
       </div>
