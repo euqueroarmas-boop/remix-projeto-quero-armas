@@ -18,7 +18,7 @@ import type { MonitoramentoBlocoKey } from "./blocosCatalogo";
  */
 
 const COLORS = {
-  blue: "hsl(230 80% 56%)",
+  blue: "hsl(352 60% 30%)",
   purple: "hsl(262 60% 55%)",
   cyan: "hsl(190 80% 42%)",
   green: "hsl(152 60% 42%)",
@@ -485,7 +485,7 @@ function RecentList({ title, subtitle, items, linkTo, icon: Icon, statusBadge, i
           <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>{title}</h3>
           <p className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>{subtitle}</p>
         </div>
-        <Link to={linkTo} className="text-xs font-medium flex items-center gap-1 transition-colors" style={{ color: "hsl(230 80% 56%)" }}>
+        <Link to={linkTo} className="text-xs font-medium flex items-center gap-1 transition-colors" style={{ color: "hsl(352 60% 30%)" }}>
           Ver tudo <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>

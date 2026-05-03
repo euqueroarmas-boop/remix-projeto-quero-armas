@@ -163,8 +163,8 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           title={collapsed ? item.title : undefined}
                           className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
                           style={{
-                            background: active ? "hsl(230 80% 96%)" : "transparent",
-                            color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 46%)",
+                            background: active ? "hsl(352 33% 97%)" : "transparent",
+                            color: active ? "hsl(352 60% 46%)" : "hsl(220 10% 46%)",
                           }}
                           onMouseEnter={e => {
                             if (!active) {
@@ -180,7 +180,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           }}
                         >
                           <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{
-                            color: active ? "hsl(230 80% 56%)" : "hsl(220 10% 62%)",
+                            color: active ? "hsl(352 60% 30%)" : "hsl(220 10% 62%)",
                           }} />
                           {!collapsed && <span className="truncate">{item.title}</span>}
                         </Link>
@@ -198,7 +198,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1">
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                style={{ background: "hsl(230 80% 56%)" }}>
+                style={{ background: "hsl(352 60% 30%)" }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">

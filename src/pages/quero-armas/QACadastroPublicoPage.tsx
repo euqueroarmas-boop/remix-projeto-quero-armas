@@ -1099,7 +1099,7 @@ function DuplicateModal({
         {/* Cabeçalho */}
         <div className="px-4 sm:px-5 pt-4 pb-3 border-b border-slate-100 shrink-0">
           <div className="flex items-start gap-2 mb-1.5">
-            <Info className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+            <Info className="w-5 h-5 mt-0.5 shrink-0" style={{ color: "hsl(352 60% 30%)" }} />
             <h3 className="text-base font-bold leading-snug break-words min-w-0 flex-1" style={{ color: "hsl(220 25% 15%)" }}>
               Cadastro já existe
             </h3>
@@ -1121,7 +1121,7 @@ function DuplicateModal({
                 Atual
               </span>
               <span className="w-3.5" />
-              <span className="text-[9px] font-semibold uppercase tracking-wider text-right" style={{ color: "hsl(230 80% 56%)" }}>
+              <span className="text-[9px] font-semibold uppercase tracking-wider text-right" style={{ color: "hsl(352 60% 30%)" }}>
                 Novo
               </span>
             </div>
@@ -1131,7 +1131,7 @@ function DuplicateModal({
                 <div
                   key={r.label}
                   className="rounded-lg border p-2.5 min-w-0"
-                  style={{ borderColor: "hsl(230 80% 92%)", background: "hsl(230 90% 98%)" }}
+                  style={{ borderColor: "hsl(352 60% 92%)", background: "hsl(230 90% 98%)" }}
                 >
                   <div className="text-[9px] font-semibold uppercase tracking-wide mb-1.5" style={{ color: "hsl(220 15% 45%)" }}>
                     {r.label}
@@ -1143,10 +1143,10 @@ function DuplicateModal({
                     >
                       {r.oldVal || <span className="italic opacity-60">vazio</span>}
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+                    <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: "hsl(352 60% 30%)" }} />
                     <div
                       className="text-[12px] font-semibold px-2 py-1.5 rounded-md min-w-0 break-all"
-                      style={{ background: "white", color: "hsl(230 70% 35%)", border: "1px solid hsl(230 80% 80%)", overflowWrap: "anywhere" }}
+                      style={{ background: "white", color: "hsl(230 70% 35%)", border: "1px solid hsl(352 60% 80%)", overflowWrap: "anywhere" }}
                     >
                       {r.newVal || <span className="italic opacity-60">vazio</span>}
                     </div>
@@ -1178,7 +1178,7 @@ function DuplicateModal({
             onClick={onConfirm}
             disabled={busy}
             className="flex-1 min-w-0 h-11 rounded-lg text-xs font-semibold text-white disabled:opacity-50 flex items-center justify-center gap-1.5 px-3"
-            style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
+            style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}
           >
             {busy ? <Loader2 className="w-4 h-4 shrink-0 animate-spin" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
             <span className="truncate">{hasChanges ? "Confirmar atualização" : "Atualizar mesmo assim"}</span>
@@ -1622,8 +1622,8 @@ function Step3Review({
   return (
     <div className="space-y-3" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 8px)" }}>
       <div className="rounded-xl p-3 flex items-center gap-2"
-        style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(230 80% 92%)" }}>
-        <Sparkles className="w-4 h-4 shrink-0" style={{ color: "hsl(230 80% 56%)" }} />
+        style={{ background: "hsl(230 90% 97%)", border: "1px solid hsl(352 60% 92%)" }}>
+        <Sparkles className="w-4 h-4 shrink-0" style={{ color: "hsl(352 60% 30%)" }} />
         <span className="text-[11px] font-medium" style={{ color: "hsl(230 50% 35%)" }}>
           Revise os dados em todos os blocos antes de enviar
         </span>
@@ -1960,7 +1960,7 @@ function Step3Review({
         onClick={onContinue}
         disabled={busy || !podeAvancar}
         className="w-full h-12 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-        style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
+        style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))", boxShadow: "0 4px 14px hsl(230 80% 56% / 0.35)" }}
       >
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronRight className="w-4 h-4" />}
         Concluir cadastro
@@ -2082,7 +2082,7 @@ function Step5Done({ firstName, email, clienteExistente }: { firstName: string; 
       "hsl(38 92% 50%)",  // âmbar
       "hsl(45 90% 55%)",  // amarelo
       "hsl(348 80% 60%)", // rosa
-      "hsl(220 80% 60%)", // azul
+      "hsl(352 60% 60%)", // azul
       "hsl(280 70% 60%)", // roxo
     ];
     return Array.from({ length: 42 }).map((_, i) => ({
@@ -2206,7 +2206,7 @@ function Step5Done({ firstName, email, clienteExistente }: { firstName: string; 
                   <linearGradient id="hatGrad" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor="hsl(348 85% 62%)" />
                     <stop offset="50%" stopColor="hsl(280 75% 60%)" />
-                    <stop offset="100%" stopColor="hsl(220 80% 58%)" />
+                    <stop offset="100%" stopColor="hsl(352 60% 58%)" />
                   </linearGradient>
                 </defs>
                 {/* cone do chapéu */}

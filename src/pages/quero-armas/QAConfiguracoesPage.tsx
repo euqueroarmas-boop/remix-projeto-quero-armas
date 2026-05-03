@@ -295,7 +295,7 @@ export default function QAConfiguracoesPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-          <Settings className="h-5 w-5" style={{ color: "hsl(230 80% 56%)" }} /> Configurações
+          <Settings className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Configurações
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Status do sistema, serviços e pesos de ranking</p>
       </div>
@@ -303,7 +303,7 @@ export default function QAConfiguracoesPage() {
       {/* System Status */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Database className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+          <Database className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Status</span>
         </div>
         <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
@@ -340,7 +340,7 @@ export default function QAConfiguracoesPage() {
                       className="h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-colors"
                       style={{
                         background: activeTab === "catalogo" ? "white" : "transparent",
-                        color: activeTab === "catalogo" ? "hsl(230 80% 56%)" : "hsl(220 10% 55%)",
+                        color: activeTab === "catalogo" ? "hsl(352 60% 30%)" : "hsl(220 10% 55%)",
                         boxShadow: activeTab === "catalogo" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
                       }}
                     >
@@ -351,7 +351,7 @@ export default function QAConfiguracoesPage() {
                       className="h-7 px-3 rounded-md text-[11px] font-semibold uppercase tracking-wider transition-colors"
                       style={{
                         background: activeTab === "internos" ? "white" : "transparent",
-                        color: activeTab === "internos" ? "hsl(230 80% 56%)" : "hsl(220 10% 55%)",
+                        color: activeTab === "internos" ? "hsl(352 60% 30%)" : "hsl(220 10% 55%)",
                         boxShadow: activeTab === "internos" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
                       }}
                     >
@@ -627,7 +627,7 @@ export default function QAConfiguracoesPage() {
       {/* Profile */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
-          <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+          <User className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>Perfil</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
@@ -659,7 +659,7 @@ function MonitoramentoToggles() {
   return (
     <div className="qa-card p-5">
       <div className="flex items-center gap-2 mb-1">
-        <Settings className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+        <Settings className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
           Configurações de Monitoramento
         </span>

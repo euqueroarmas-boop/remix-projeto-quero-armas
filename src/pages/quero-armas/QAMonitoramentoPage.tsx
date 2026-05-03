@@ -36,7 +36,7 @@ export default function QAMonitoramentoPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-            <Activity className="h-5 w-5" style={{ color: "hsl(230 80% 56%)" }} />
+            <Activity className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} />
             Monitoramento
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>

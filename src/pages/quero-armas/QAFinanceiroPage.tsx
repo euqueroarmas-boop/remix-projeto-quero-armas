@@ -26,7 +26,7 @@ const COLORS = {
   emerald: "#10b981",
   amber: "#f59e0b",
   red: "#ef4444",
-  blue: "#3b82f6",
+  blue: "#7A1F2B",
   purple: "#8b5cf6",
   pink: "#ec4899",
   indigo: "#6366f1",

@@ -597,7 +597,7 @@ function Badge({ children, variant = "default" }: { children: React.ReactNode; v
   const styles: Record<string, { bg: string; color: string; border: string }> = {
     default: { bg: "hsl(220 14% 96%)", color: "hsl(220 25% 25%)", border: "hsl(220 13% 88%)" },
     amber: { bg: "hsl(40 95% 95%)", color: "hsl(35 80% 30%)", border: "hsl(40 80% 80%)" },
-    blue: { bg: "hsl(220 95% 96%)", color: "hsl(220 80% 35%)", border: "hsl(220 80% 85%)" },
+    blue: { bg: "hsl(220 95% 96%)", color: "hsl(352 60% 35%)", border: "hsl(352 60% 85%)" },
     purple: { bg: "hsl(270 80% 96%)", color: "hsl(270 60% 35%)", border: "hsl(270 60% 85%)" },
     green: { bg: "hsl(140 60% 95%)", color: "hsl(140 60% 25%)", border: "hsl(140 50% 80%)" },
     gray: { bg: "hsl(220 10% 94%)", color: "hsl(220 8% 45%)", border: "hsl(220 13% 85%)" },

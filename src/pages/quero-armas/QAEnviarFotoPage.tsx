@@ -156,13 +156,13 @@ export default function QAEnviarFotoPage() {
                 onClick={lookup}
                 disabled={loading}
                 className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
+                style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 CONTINUAR
               </button>
               <div className="mt-6 pt-4 border-t text-[11px] flex items-start gap-2" style={{ borderColor: "hsl(220 13% 90%)", color: "hsl(220 10% 50%)" }}>
-                <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "hsl(230 80% 56%)" }} />
+                <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "hsl(352 60% 30%)" }} />
                 Seus dados são tratados conforme a LGPD. A foto é usada apenas para identificação no atendimento.
               </div>
             </>
@@ -176,7 +176,7 @@ export default function QAEnviarFotoPage() {
 
               {!selfie && !stream && (
                 <div className="space-y-3">
-                  <button onClick={startCamera} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}>
+                  <button onClick={startCamera} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}>
                     <Camera className="w-4 h-4" /> ABRIR CÂMERA
                   </button>
                   <button onClick={() => fileRef.current?.click()} className="w-full h-12 rounded-lg font-semibold border flex items-center justify-center gap-2" style={{ borderColor: "hsl(220 13% 80%)", color: "hsl(220 20% 25%)" }}>
@@ -191,7 +191,7 @@ export default function QAEnviarFotoPage() {
                   <div className="rounded-xl overflow-hidden bg-black aspect-square">
                     <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
                   </div>
-                  <button onClick={capture} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}>
+                  <button onClick={capture} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(240 80% 60%))" }}>
                     <Camera className="w-4 h-4" /> CAPTURAR
                   </button>
                 </div>

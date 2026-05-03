@@ -161,7 +161,7 @@ export default function QALegislacaoPage() {
           onChange={e => setBusca(e.target.value)}
           className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
           style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-          onFocus={e => e.currentTarget.style.borderColor = "hsl(230 80% 56%)"}
+          onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
           onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
         />
       </div>

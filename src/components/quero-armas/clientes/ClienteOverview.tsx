@@ -200,7 +200,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         sublabel: servicosNomes ? `Serviços: ${servicosNomes}${v.forma_pagamento ? ` · ${v.forma_pagamento}` : ""}` : undefined,
         type: "venda",
         icon: CreditCard,
-        color: "hsl(230 80% 56%)",
+        color: "hsl(352 60% 30%)",
         vendaNum,
       });
     });
@@ -308,10 +308,10 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     <div className="space-y-4 md:space-y-5">
       {/* ═══ QUICK STATS (sem duplicar nome/CPF/status do header oficial) ═══ */}
       <div className="qa-card overflow-hidden">
-        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%), hsl(190 80% 42%))" }} />
+        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(352 60% 30%), hsl(262 60% 55%), hsl(190 80% 42%))" }} />
         <div className="p-4 md:p-5 space-y-3">
           <div className="flex flex-wrap gap-1.5 md:gap-2">
-            <StatPill label="Serviços" value={analysis.totalServicos} color="hsl(230 80% 56%)" />
+            <StatPill label="Serviços" value={analysis.totalServicos} color="hsl(352 60% 30%)" />
             <StatPill label="Andamento" value={analysis.emAndamento} color="hsl(38 92% 50%)" />
             <StatPill label="Concluídos" value={analysis.concluidos} color="hsl(152 60% 42%)" />
             <StatPill label="Armas" value={analysis.totalArmas} color="hsl(262 60% 55%)" />
@@ -388,7 +388,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
       {/* ═══ KPI CARDS ═══ */}
       <div className="grid grid-cols-2 gap-2.5 md:gap-3 lg:grid-cols-4">
         {[
-          { icon: ShoppingBag, label: "SERVIÇOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
+          { icon: ShoppingBag, label: "SERVIÇOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(352 60% 30%)", tab: "servicos" },
           { icon: Activity, label: "ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancel.` : "nenhum cancel.", color: "hsl(38 92% 50%)", tab: "servicos" },
           { icon: Crosshair, label: "ARMAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs${armasManual.length ? ` · ${armasManual.length} MAN/IA` : ""}`, color: "hsl(262 60% 55%)", tab: "armas" },
           { icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
@@ -413,7 +413,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
 
       {/* ═══ STEP FLOW / SERVICES ═══ */}
       <div className="qa-card p-4 md:p-5">
-        <SectionHeader icon={Target} title="Serviços e Andamento" color="hsl(230 80% 56%)" action="Ver Todos" onAction={() => onNavigate("servicos")} />
+        <SectionHeader icon={Target} title="Serviços e Andamento" color="hsl(352 60% 30%)" action="Ver Todos" onAction={() => onNavigate("servicos")} />
         {itens.length === 0 ? (
           <div className="text-center py-10 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço contratado ainda.</div>
         ) : (
@@ -459,7 +459,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               );
             })}
             {itens.length > 10 && (
-              <button onClick={() => onNavigate("servicos")} className="w-full text-center py-2 text-[11px] font-semibold hover:underline" style={{ color: "hsl(230 80% 56%)" }}>
+              <button onClick={() => onNavigate("servicos")} className="w-full text-center py-2 text-[11px] font-semibold hover:underline" style={{ color: "hsl(352 60% 30%)" }}>
                 + {itens.length - 10} serviços adicionais
               </button>
             )}
@@ -621,7 +621,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                     {[a.marca, a.modelo, a.calibre].filter(Boolean).join(" ").toUpperCase() || "ARMA"}
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(230 80% 40%)" }}>
+                    <span className="px-1.5 py-[1px] rounded text-[8px] font-bold uppercase tracking-wider" style={{ background: "hsl(230 80% 56% / 0.10)", color: "hsl(352 60% 40%)" }}>
                       {a.origem === "ocr" || a.origem === "ia" ? "IA" : "MANUAL"}
                     </span>
                     {a.needs_review && (

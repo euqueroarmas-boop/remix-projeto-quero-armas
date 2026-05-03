@@ -86,8 +86,8 @@ export default function DashboardAtividadesRecentes() {
     <div className="qa-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(230 80% 96%)" }}>
-            <Activity className="h-3.5 w-3.5" style={{ color: "hsl(230 80% 56%)" }} />
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 33% 97%)" }}>
+            <Activity className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
           </div>
           <div>
             <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Atividades Recentes</h3>
@@ -99,7 +99,7 @@ export default function DashboardAtividadesRecentes() {
         <Link
           to="/auditoria"
           className="flex items-center gap-1 text-xs font-medium hover:underline"
-          style={{ color: "hsl(230 80% 56%)" }}
+          style={{ color: "hsl(352 60% 30%)" }}
         >
           Ver tudo <ArrowRight className="h-3 w-3" />
         </Link>
