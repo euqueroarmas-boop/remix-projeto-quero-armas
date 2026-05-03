@@ -142,6 +142,61 @@ function any<T>(arr: T[] | undefined, fn: (x: T) => boolean): boolean {
   return !!arr?.some(fn);
 }
 
+/**
+ * Normaliza qualquer string de status vinda do banco para um formato
+ * comparável: minúsculas, sem acentos, sem espaços nas pontas e com
+ * separadores unificados em "_". Aceita variações legadas e devolve
+ * sempre uma string segura para comparar com os enums internos.
+ */
+export function normalizeQaStatus(raw: string | null | undefined): string {
+  if (!raw) return "";
+  return String(raw)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .replace(/[\s\-/]+/g, "_")
+    .replace(/_+/g, "_");
+}
+
+/** Mapa de aliases legados → códigos canônicos usados pela engine. */
+const STATUS_ALIASES: Record<string, string> = {
+  // documentação
+  aguardando_documentos: "aguardando_documentacao",
+  documentos_pendentes: "aguardando_documentacao",
+  em_validacao: "documentos_em_analise",
+  em_validacao_ia: "documentos_em_analise",
+  em_revisao_humana: "documentos_em_analise",
+  em_analise: "documentos_em_analise",
+  documentacao_aprovada: "documentos_aprovados",
+  aprovado: "documentos_aprovados",
+  // documentos individuais (uploads)
+  reprovado: "invalido",
+  invalidado: "invalido",
+  divergente: "invalido",
+  // protocolo
+  protocolado: "enviado_ao_orgao",
+  em_analise_pf: "em_analise_orgao",
+  exigencia_emitida: "notificado",
+  cumprindo_exigencia: "notificado",
+  // financeiro
+  pendente: "aguardando_pagamento",
+  pago: "confirmado",
+  confirmado_pagamento: "confirmado",
+  falhado: "falhou",
+  recusado: "falhou",
+  // ia
+  erro: "falhou",
+  pendente_ia: "processando",
+  // decisão
+  arquivado: "indeferido",
+};
+
+function canonStatus(raw: string | null | undefined): string {
+  const n = normalizeQaStatus(raw);
+  return STATUS_ALIASES[n] ?? n;
+}
+
 const LABEL_TIPO: Record<TipoKpi, string> = {
   CR: "CR",
   CRAF: "CRAF",
