@@ -738,6 +738,45 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
         }
       }
+      // ── Sincronia automática com módulo Exames (qa_exames_cliente) ──
+      // Cria/atualiza registros oficiais a partir das datas extraídas pela IA
+      // ou digitadas no cadastro. Não duplica (mesma data+tipo) e preserva histórico.
+      if (savedId) {
+        try {
+          const pares: Array<{ tipo: "psicologico" | "tiro"; dataISO: string | null }> = [
+            { tipo: "psicologico", dataISO: formatDateForDatabase(validade_laudo_psicologico) },
+            { tipo: "tiro", dataISO: formatDateForDatabase(validade_exame_tiro) },
+          ];
+          for (const { tipo, dataISO } of pares) {
+            if (!dataISO) continue;
+            // Calcula vencimento = data_realizacao + 365 dias (mesmo dia ano seguinte)
+            const [yy, mm, dd] = dataISO.split("-").map(Number);
+            const vencDate = new Date(yy + 1, (mm || 1) - 1, dd || 1);
+            const vencISO = `${vencDate.getFullYear()}-${String(vencDate.getMonth() + 1).padStart(2, "0")}-${String(vencDate.getDate()).padStart(2, "0")}`;
+            // Verifica duplicidade (mesma data+tipo)
+            const { data: existentes } = await supabase
+              .from("qa_exames_cliente" as any)
+              .select("id, data_realizacao")
+              .eq("cliente_id", savedId)
+              .eq("tipo", tipo)
+              .eq("data_realizacao", dataISO)
+              .limit(1);
+            if (existentes && existentes.length > 0) continue; // já existe, não duplica
+            await supabase.from("qa_exames_cliente" as any).insert({
+              cliente_id: savedId,
+              tipo,
+              data_realizacao: dataISO,
+              data_vencimento: vencISO,
+              observacoes: "Importado automaticamente do cadastro do cliente",
+              cadastrado_por: user?.id || null,
+              cadastrado_por_nome: user?.email || null,
+            });
+          }
+        } catch (e: any) {
+          console.error("Falha ao sincronizar módulo Exames:", e);
+          toast.warning("Cliente salvo, mas exames não foram sincronizados no módulo Exames");
+        }
+      }
       if (savedId && senha_gov) {
         try {
           await setSenhaGov(persistedCrId ?? null, senha_gov, "ClienteFormModal:IA", savedId);
