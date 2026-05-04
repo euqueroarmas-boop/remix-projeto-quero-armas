@@ -1753,23 +1753,53 @@ export default function QAGerarPecaPage() {
             <Label className="text-slate-500 text-[11px]">Nº do Requerimento <span className="text-slate-400">(opcional)</span></Label>
             <Input
               value={numeroRequerimento}
-              onChange={e => setNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
+              onChange={e => onChangeNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
               className="bg-white border-slate-200 text-slate-700 h-9 text-sm"
               placeholder="Ex: 2026/001234-5"
             />
+            {origemNumReq && (
+              <span className={`text-[10px] ${corOrigem(origemNumReq)}`}>{labelOrigem(origemNumReq)}</span>
+            )}
           </div>
         </div>
 
         {/* ── Tempestividade ── */}
         {needsTempestividade && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-500/5 border border-amber-500/10 rounded p-3">
-            <div className="space-y-1.5">
-              <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
-              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" />
+          <div className="space-y-2 bg-amber-500/5 border border-amber-500/10 rounded p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
+                <Input type="date" value={dataNotificacao} onChange={e => onChangeDataNotificacao(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" />
+                {origemDataNotif && (
+                  <span className={`text-[10px] ${corOrigem(origemDataNotif)}`}>{labelOrigem(origemDataNotif)}</span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo / tempestividade</Label>
+                <Textarea value={infoTempestividade} onChange={e => onChangeInfoTempestividade(e.target.value)} className="bg-white border-slate-200 text-slate-700 min-h-[60px] text-sm" placeholder="Calculado automaticamente a partir do serviço, ou preencha manualmente." />
+                {origemTempest && (
+                  <span className={`text-[10px] ${corOrigem(origemTempest)}`}>{labelOrigem(origemTempest)}</span>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo</Label>
-              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {clienteIdVinculado && (
+                <Button type="button" variant="outline" size="sm"
+                  className="bg-white border-slate-200 text-slate-600 h-7 text-[10px]"
+                  onClick={() => autopreencherDoServico({ force: true })}
+                  disabled={autoPreenchLoading}>
+                  {autoPreenchLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                  Usar dados do serviço
+                </Button>
+              )}
+              <Button type="button" variant="outline" size="sm"
+                className="bg-white border-slate-200 text-slate-600 h-7 text-[10px]"
+                onClick={recalcularTempestividade}>
+                <Clock className="h-3 w-3 mr-1" /> Recalcular tempestividade
+              </Button>
+              {autoPreenchInfo.sugestao === null && clienteIdVinculado && (
+                <span className="text-[10px] text-slate-400">Nenhum serviço com dados encontrados para este cliente.</span>
+              )}
             </div>
           </div>
         )}
