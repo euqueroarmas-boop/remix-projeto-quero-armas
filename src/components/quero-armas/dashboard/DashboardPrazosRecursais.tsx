@@ -91,7 +91,7 @@ interface PrazoRow {
   protocolo: string | null;
   tipo: string;
   /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
-  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO";
+  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO" | "MANDADO DE SEGURANÇA";
   /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
   status: string | null;
   dataEvento: string;
