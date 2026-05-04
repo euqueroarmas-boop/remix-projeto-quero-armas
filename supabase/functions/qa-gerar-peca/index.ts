@@ -1025,6 +1025,9 @@ Deno.serve(async (req) => {
       numero_requerimento, caso_id: req_caso_id,
       cliente_id: reqClienteId,
     } = reqBody;
+    // Análise estruturada do indeferimento, quando for recurso_administrativo.
+    const indeferimento_texto: string | null = reqBody.indeferimento_texto ? String(reqBody.indeferimento_texto) : null;
+    const indeferimento_analise: any = reqBody.indeferimento_analise || null;
     const wantStream = !!reqBody.stream;
 
     // IDs de documentos auxiliares enviados explicitamente pelo front
