@@ -125,7 +125,7 @@ export function ArsenalView({
   //     Leitura mínima, somente leitura, sem mexer em schema.
   const [processos, setProcessos] = useState<{ id: string; status: string | null; pagamento_status: string | null; servico_nome: string | null; service_slug?: string | null }[]>([]);
   const [solicitacoes, setSolicitacoes] = useState<{ id: string; status_servico: string | null; status_financeiro: string | null; service_slug: string | null; service_name: string | null }[]>([]);
-  const [exames, setExames] = useState<{ id: string; tipo: string | null; data_vencimento: string | null }[]>([]);
+  const [exames, setExames] = useState<{ id: string; tipo: string | null; data_realizacao: string | null; data_vencimento: string | null }[]>([]);
 
   // ─── Circunscrição PF (resolve via mesma RPC usada na geração de peças) ───
   const [circ, setCirc] = useState<{ unidade_pf: string; sigla_unidade: string; municipio_sede?: string } | null>(null);
@@ -206,7 +206,7 @@ export function ArsenalView({
           .eq("cliente_id", clienteId),
         supabase
           .from("qa_exames_cliente" as any)
-          .select("id, tipo, data_vencimento")
+          .select("id, tipo, data_realizacao, data_vencimento")
           .eq("cliente_id", clienteId),
       ]);
       if (cancelled) return;
