@@ -2475,7 +2475,7 @@ export default function QAClientesPage() {
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
-                { value: "exames", icon: HeartPulse, label: "Exames" },
+                { value: "exames", icon: HeartPulse, label: `Exames (${examesAtuais.length})` },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
@@ -3017,7 +3017,7 @@ export default function QAClientesPage() {
 
               {/* EXAMES */}
               <TabsContent value="exames" className="mt-3">
-                <ClienteExames cliente={c} />
+                <ClienteExames cliente={c} onChanged={async () => { await loadSubData(c); }} />
               </TabsContent>
               {/* PEÇAS JURÍDICAS */}
               <TabsContent value="pecas" className="mt-3">
