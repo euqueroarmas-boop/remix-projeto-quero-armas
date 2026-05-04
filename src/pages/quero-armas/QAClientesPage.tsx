@@ -2369,14 +2369,7 @@ export default function QAClientesPage() {
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
         {/* Header — padrão ARSENAL (Premium KPI cluster) */}
-        <ClienteHeaderCard
-          cliente={c}
-          clienteCadastroIdForSub={clienteCadastroIdForSub}
-          onBack={() => setSelected(null)}
-          onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
-          onDelete={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
-        />
-        {false && (() => {
+        {(() => {
           // Status cadastral (selo pequeno) — mantém comportamento legado
           const statusCadastralTone =
             c.status === "ATIVO"
