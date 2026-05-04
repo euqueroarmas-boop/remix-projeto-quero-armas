@@ -2405,6 +2405,7 @@ export default function QAClientesPage() {
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusTone }} />
                       {c.status}
                     </span>
+                    <ClienteHealthBadge clienteId={clienteCadastroIdForSub || c.id} variant="full" />
                     <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
                       ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
                     </span>
