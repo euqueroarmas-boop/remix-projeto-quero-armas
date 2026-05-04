@@ -11,7 +11,19 @@ import { Phone, MapPin, Trash2 } from "lucide-react";
 import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
 import type { CorStatus } from "@/lib/quero-armas/statusUnificado";
 import ClienteSelfieAvatar from "./ClienteSelfieAvatar";
-import { formatCpf, formatPhone } from "@/lib/quero-armas/format";
+
+const onlyDigits = (v: string | null | undefined) => String(v || "").replace(/\D/g, "");
+const formatCpf = (v: string | null | undefined): string => {
+  const d = onlyDigits(v);
+  if (d.length !== 11) return v ?? "";
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+};
+const formatPhone = (v: string | null | undefined): string => {
+  const d = onlyDigits(v);
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return v ?? "";
+};
 
 const TONE_HSL: Record<CorStatus, string> = {
   verde: "hsl(152 60% 42%)",
