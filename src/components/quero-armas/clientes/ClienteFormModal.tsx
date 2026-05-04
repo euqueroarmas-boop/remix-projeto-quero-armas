@@ -743,6 +743,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       // ou digitadas no cadastro. Não duplica (mesma data+tipo) e preserva histórico.
       if (savedId) {
         try {
+          const { data: authData } = await supabase.auth.getUser();
+          const authUser = authData?.user ?? null;
           const pares: Array<{ tipo: "psicologico" | "tiro"; dataISO: string | null }> = [
             { tipo: "psicologico", dataISO: formatDateForDatabase(validade_laudo_psicologico) },
             { tipo: "tiro", dataISO: formatDateForDatabase(validade_exame_tiro) },
@@ -768,8 +770,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               data_realizacao: dataISO,
               data_vencimento: vencISO,
               observacoes: "Importado automaticamente do cadastro do cliente",
-              cadastrado_por: user?.id || null,
-              cadastrado_por_nome: user?.email || null,
+              cadastrado_por: authUser?.id || null,
+              cadastrado_por_nome: authUser?.email || null,
             });
           }
         } catch (e: any) {
