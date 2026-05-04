@@ -88,9 +88,10 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 
 interface Props {
   cliente: { id: number; nome_completo?: string | null };
+  onChanged?: () => void | Promise<void>;
 }
 
-export default function ClienteExames({ cliente }: Props) {
+export default function ClienteExames({ cliente, onChanged }: Props) {
   const { user } = useQAAuthContext();
   const [exames, setExames] = useState<ExameComStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +154,7 @@ export default function ClienteExames({ cliente }: Props) {
       toast.success(`${TIPO_LABEL[tipo]} registrado`);
       setNovo((p) => ({ ...p, [tipo]: { data: todayISO(), obs: "" } }));
       await load();
+      try { await onChanged?.(); } catch {}
     } catch (err: any) {
       console.error("[ClienteExames] insert:", err);
       toast.error(err?.message || "Falha ao salvar exame");
@@ -168,6 +170,7 @@ export default function ClienteExames({ cliente }: Props) {
       if (error) throw error;
       toast.success("Lançamento removido");
       await load();
+      try { await onChanged?.(); } catch {}
     } catch (err: any) {
       toast.error(err?.message || "Falha ao remover");
     }
