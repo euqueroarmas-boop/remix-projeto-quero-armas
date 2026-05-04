@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
@@ -7,7 +7,7 @@ import {
   AlertCircle, PenTool, User, Scale, Sparkles, Send,
   Mail, Phone, MapPin, Building2, Shield, Briefcase,
   Calendar, Heart, GraduationCap, Flag, Users, BookOpen, Info,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Gavel, Upload,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -147,6 +147,12 @@ export default function ClientePecas({ cliente }: Props) {
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
   const [numeroRequerimento, setNumeroRequerimento] = useState("");
+
+  // ── Indeferimento (recurso_administrativo) ──
+  const [indeferimentoTexto, setIndeferimentoTexto] = useState("");
+  const [indeferimentoAnalise, setIndeferimentoAnalise] = useState<any | null>(null);
+  const [analisandoIndef, setAnalisandoIndef] = useState(false);
+  const indefFileRef = useRef<HTMLInputElement | null>(null);
 
   const [circunscricao, setCircunscricao] = useState<any>(null);
   const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "not_found" | "error">("idle");
@@ -390,6 +396,8 @@ export default function ClientePecas({ cliente }: Props) {
           info_tempestividade: infoTempestividade.trim() || null,
           numero_requerimento: numeroRequerimento.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
+          indeferimento_texto: tipoPeca === "recurso_administrativo" ? (indeferimentoTexto.trim() || null) : null,
+          indeferimento_analise: tipoPeca === "recurso_administrativo" ? (indeferimentoAnalise || null) : null,
         }),
       });
 
