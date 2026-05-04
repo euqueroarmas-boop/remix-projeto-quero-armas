@@ -3663,13 +3663,14 @@ export default function QAClientesPage() {
         </button>
         <button
           onClick={() => setTabView("arsenal_free")}
-          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
+          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all inline-flex items-center justify-center gap-1.5 whitespace-nowrap overflow-hidden text-ellipsis"
           style={{
             background: tabView === "arsenal_free" ? "hsl(0 0% 100%)" : "transparent",
             color: tabView === "arsenal_free" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "arsenal_free" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <Shield className="h-3.5 w-3.5 inline mr-1" /> APP ARSENAL INTELIGENTE (FREE) ({filteredArsenalFree.length})
+          <Shield className="h-3.5 w-3.5 shrink-0" />
+          <span className="whitespace-nowrap">APP ARSENAL INTELIGENTE (FREE) ({filteredArsenalFree.length})</span>
         </button>
         <button
           onClick={() => setTabView("rejeitados")}
