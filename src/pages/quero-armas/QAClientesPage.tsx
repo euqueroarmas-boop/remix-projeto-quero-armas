@@ -1126,17 +1126,27 @@ export default function QAClientesPage() {
   //   20 → Concessão de CR no Exército Brasileiro sem clube / Militar
   //   31 → Concessão de CR no Exército Brasileiro
   // Mantemos 27/29 por compatibilidade defensiva caso voltem ao catálogo.
-  const SERVICOS_CR = [13, 20, 27, 29, 31];
+  // CR EB — legado (13, 20, 27, 29, 31) + catálogo novo:
+  //   32 RENOVAÇÃO DE CR · 42 MUDANÇA DE SERVIÇO (POSSE→CR) · 44 CONCESSÃO DE CR
+  const SERVICOS_CR = [13, 20, 27, 29, 31, 32, 42, 44];
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
     // OBS: Concessão de CR (13, 20, 27, 31) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
   // OBS: Autorização de compra de arma de fogo no EB (5, 15) foi REMOVIDA daqui — possui apenas campos específicos da autorização
   // OBS: COMBO - Registro de arma de fogo CRAF no EB (id=6) foi REMOVIDA daqui — possui formulário próprio com dados da arma
-  const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18];
+  // CAC — legado + catálogo novo:
+  //   33 REGISTRO E APOSTILAMENTO (CAC) · 34 GTE (CAC) · 45 APOSTILAMENTO
+  const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18, 33, 34, 45];
   // Serviços de Autorização de compra de arma de fogo no Exército Brasileiro
-  const SERVICOS_AUTORIZACAO_EB = [5, 15];
+  // Autorização de compra EB — legado (5, 15) + catálogo: 38 (AUTORIZAÇÃO CAC)
+  const SERVICOS_AUTORIZACAO_EB = [5, 15, 38];
   // Serviço de Posse na Polícia Federal
-  const SERVICOS_POSSE = [2];
+  // POSSE PF — legado (2) + catálogo: 35 (AQUISIÇÃO/POSSE) e 36 (RENOVAÇÃO POSSE)
+  const SERVICOS_POSSE = [2, 35, 36];
+  // PORTE PF — legado (3) + catálogo: 41 (PORTE) e 37 (RENOVAÇÃO PORTE)
+  const SERVICOS_PORTE_PF = [3, 37, 41];
+  // CRAF PF (registro de arma de defesa pessoal) — legado (26) + catálogo: 43
+  const SERVICOS_CRAF_PF = [26, 43];
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
 
