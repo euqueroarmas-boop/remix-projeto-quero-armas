@@ -44,6 +44,7 @@ import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEn
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
+import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
@@ -2368,104 +2369,15 @@ export default function QAClientesPage() {
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
         {/* Header — padrão ARSENAL (Premium KPI cluster) */}
-        {(() => {
-          const statusTone =
-            c.status === "ATIVO"
-              ? "hsl(152 60% 42%)"
-              : c.status === "DESISTENTE"
-              ? "hsl(0 72% 55%)"
-              : "hsl(38 92% 50%)";
-          return (
-            <div
-              className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
-              style={{ boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 1px 2px rgba(15,23,42,0.04)" }}
-            >
-              {/* Glow ambiente (mesmo tratamento do KpiCard do Arsenal) */}
-              <div
-                className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
-                style={{ background: statusTone }}
-              />
-              <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelected(null)}
-                  className="h-8 w-8 p-0 shrink-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                  title="Voltar"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <ClienteSelfieAvatar cliente={c} size="xl" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
-                      style={{ background: `${statusTone}14`, color: statusTone, boxShadow: `inset 0 0 0 1px ${statusTone}33` }}
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusTone }} />
-                      {c.status}
-                    </span>
-                    <ClienteHealthBadge clienteId={clienteCadastroIdForSub || c.id} variant="full" />
-                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
-                      ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
-                    </span>
-                  </div>
-                  <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
-                    {c.nome_completo}
-                  </h1>
-                  <div className="mt-0.5 text-[11px] font-mono tracking-wider text-slate-400">
-                    CPF {formatCpf(c.cpf)}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setEditingCliente(c); setClienteModal(true); }}
-                    className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#7A1F2B] hover:border-[#E5C2C6] hover:bg-[#FBF3F4]"
-                    title="Editar cliente"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
-                    className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
-                    title="Excluir cliente"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              {/* Vitals row — mesma linguagem dos KpiCards do Arsenal */}
-              <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
-                {[
-                  { icon: Phone, color: "hsl(190 80% 45%)", label: "Telefone", value: c.celular || "—" },
-                  { icon: MapPin, color: "hsl(220 20% 28%)", label: "Localização", value: c.cidade ? `${c.cidade}/${c.estado}` : "—" },
-                  { icon: FileText, color: "hsl(152 60% 42%)", label: "Vendas", value: vendas.length },
-                  { icon: Crosshair, color: "hsl(38 92% 50%)", label: "Armas", value: crafs.length + gtes.length },
-                ].map((v, i) => (
-                  <div key={i} className="flex items-center gap-2.5 px-4 py-3 first:border-l-0">
-                    <div
-                      className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
-                      style={{ background: `${v.color}14`, color: v.color, boxShadow: `inset 0 0 0 1px ${v.color}1f` }}
-                    >
-                      <v.icon className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">{v.label}</div>
-                      <div className="text-[13px] font-bold text-slate-800 truncate uppercase">
-                        {v.value}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <CircunscricaoKpi cidade={c.cidade} uf={c.estado} />
-              </div>
-            </div>
-          );
-        })()}
+        <ClienteHeaderCard
+          cliente={c}
+          clienteCadastroIdForSub={clienteCadastroIdForSub}
+          vendasCount={vendas.length}
+          armasCount={crafs.length + gtes.length}
+          onBack={() => setSelected(null)}
+          onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
+          onDelete={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
+        />
 
         <Tabs value={tab} onValueChange={setTab}>
           {/* Scrollable tabs for mobile */}
@@ -4248,6 +4160,142 @@ function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico
             </button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ── ClienteHeaderCard ─────────────────────────────────────────────────────────
+// Card principal do cliente (detalhe). Cor do fundo/glow/borda reflete o
+// SEMÁFORO OPERACIONAL consolidado (CR · CRAFs · GTEs · Exames · Autorizações
+// · Processos · Documentos), não apenas o status cadastral ATIVO/DESISTENTE.
+// O selo "ATIVO" pequeno permanece verde — representa apenas o cadastro.
+function ClienteHeaderCard({
+  cliente: c,
+  clienteCadastroIdForSub,
+  vendasCount,
+  armasCount,
+  onBack,
+  onEdit,
+  onDelete,
+}: {
+  cliente: any;
+  clienteCadastroIdForSub: number;
+  vendasCount: number;
+  armasCount: number;
+  onBack: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { data: agregado } = useClienteStatusAgregado(clienteCadastroIdForSub || c.id);
+  // Status cadastral (selo pequeno) — mantém comportamento legado
+  const statusCadastralTone =
+    c.status === "ATIVO" ? "hsl(152 60% 42%)"
+    : c.status === "DESISTENTE" ? "hsl(0 72% 55%)"
+    : "hsl(38 92% 50%)";
+  // Status operacional consolidado — pior cor entre todas as dimensões.
+  const tomOperacional = agregado?.tom_geral ?? null;
+  const operacionalTone =
+    tomOperacional === "vermelho" ? "hsl(0 72% 55%)" :
+    tomOperacional === "laranja" ? "hsl(20 90% 50%)" :
+    tomOperacional === "amarelo" ? "hsl(38 92% 50%)" :
+    tomOperacional === "azul" ? "hsl(210 80% 50%)" :
+    tomOperacional === "verde" ? "hsl(152 60% 42%)" :
+    statusCadastralTone;
+  // Quando o cadastro está DESISTENTE/PENDENTE, ele dita o card.
+  const statusTone = c.status === "ATIVO" ? operacionalTone : statusCadastralTone;
+  const cardBorderClass =
+    c.status === "ATIVO" && tomOperacional === "vermelho"
+      ? "border-red-200/80"
+      : c.status === "ATIVO" && (tomOperacional === "laranja" || tomOperacional === "amarelo")
+      ? "border-amber-200/80"
+      : "border-slate-200/80";
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border bg-white shadow-sm ${cardBorderClass}`}
+      style={{ boxShadow: `inset 0 0 0 1px ${statusTone}14, 0 1px 2px rgba(15,23,42,0.04)` }}
+    >
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
+        style={{ background: statusTone }}
+      />
+      <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="h-8 w-8 p-0 shrink-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+          title="Voltar"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <ClienteSelfieAvatar cliente={c} size="xl" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
+              style={{ background: `${statusCadastralTone}14`, color: statusCadastralTone, boxShadow: `inset 0 0 0 1px ${statusCadastralTone}33` }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusCadastralTone }} />
+              {c.status}
+            </span>
+            <ClienteHealthBadge clienteId={clienteCadastroIdForSub || c.id} variant="full" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
+              ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
+            </span>
+          </div>
+          <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
+            {c.nome_completo}
+          </h1>
+          <div className="mt-0.5 text-[11px] font-mono tracking-wider text-slate-400">
+            CPF {formatCpf(c.cpf)}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#7A1F2B] hover:border-[#E5C2C6] hover:bg-[#FBF3F4]"
+            title="Editar cliente"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDelete}
+            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+            title="Excluir cliente"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
+        {[
+          { icon: Phone, color: "hsl(190 80% 45%)", label: "Telefone", value: c.celular || "—" },
+          { icon: MapPin, color: "hsl(220 20% 28%)", label: "Localização", value: c.cidade ? `${c.cidade}/${c.estado}` : "—" },
+          { icon: FileText, color: "hsl(152 60% 42%)", label: "Vendas", value: vendasCount },
+          { icon: Crosshair, color: "hsl(38 92% 50%)", label: "Armas", value: armasCount },
+        ].map((v, i) => (
+          <div key={i} className="flex items-center gap-2.5 px-4 py-3 first:border-l-0">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
+              style={{ background: `${v.color}14`, color: v.color, boxShadow: `inset 0 0 0 1px ${v.color}1f` }}
+            >
+              <v.icon className="h-3.5 w-3.5" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">{v.label}</div>
+              <div className="text-[13px] font-bold text-slate-800 truncate uppercase">
+                {v.value}
+              </div>
+            </div>
+          </div>
+        ))}
+        <CircunscricaoKpi cidade={c.cidade} uf={c.estado} />
       </div>
     </div>
   );
