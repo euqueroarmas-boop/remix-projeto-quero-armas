@@ -10,6 +10,8 @@ import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
+import ArsenalCRAFControl from "./ArsenalCRAFControl";
+import ArsenalAutorizacoesControl from "./ArsenalAutorizacoesControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { excluirDocumentoLogico } from "@/components/quero-armas/clientes/docsAprovacao";
