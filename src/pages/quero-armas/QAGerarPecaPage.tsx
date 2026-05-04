@@ -602,6 +602,48 @@ export default function QAGerarPecaPage() {
     await resolverCircunscricao(clienteCidade, clienteUf);
   };
 
+  /* ── Indeferimento — análise ── */
+  const handleIndefFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo acima de 5MB. Cole o texto manualmente."); return; }
+    const ext = file.name.toLowerCase().split(".").pop() || "";
+    if (ext === "txt") {
+      const txt = await file.text();
+      setIndeferimentoTexto(txt);
+      toast.success("Texto carregado. Revise e clique em ANALISAR.");
+      return;
+    }
+    toast.info("PDF/imagem detectados — anexe também na seção Documentos Auxiliares (tipo Indeferimento) para que o texto seja extraído. Aqui, cole o conteúdo no campo abaixo.");
+  };
+
+  const analisarIndeferimento = async () => {
+    const texto = indeferimentoTexto.trim();
+    if (texto.length < 100) { toast.error("Cole o conteúdo do indeferimento (mínimo 100 caracteres)."); return; }
+    setAnalisandoIndef(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error("Sessão expirada.");
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-analisar-indeferimento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ texto, caso_id: casoId || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || `Falha na análise (${res.status})`);
+      setIndeferimentoAnalise(json.analise);
+      toast.success("Indeferimento analisado. A peça será gerada rebatendo ponto a ponto.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao analisar indeferimento");
+    } finally {
+      setAnalisandoIndef(false);
+    }
+  };
+
   /* ── File name sanitization ── */
   const sanitizeFileName = (name: string): string => {
     let s = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
