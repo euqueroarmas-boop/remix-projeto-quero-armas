@@ -51,8 +51,8 @@ interface CorrecaoIA {
   tipo_peca: string;
   foco_argumentativo: string | null;
   categoria_erro: string;
-  trecho_errado: string;
-  trecho_correto: string;
+  trecho_errado: string | null;
+  trecho_correto: string | null;
   explicacao: string | null;
   regra_aplicavel: string | null;
   aplicar_globalmente: boolean;
@@ -63,6 +63,14 @@ interface CorrecaoIA {
   usado_vezes: number;
   ultima_utilizacao: string | null;
   updated_at: string;
+  // Treinamento jurídico direto
+  tipo_registro?: "correcao_erro" | "treinamento_direto" | null;
+  titulo?: string | null;
+  instrucao?: string | null;
+  servico_procedimento?: string | null;
+  categoria?: string | null;
+  exemplo_aplicacao?: string | null;
+  prioridade?: "baixa" | "media" | "alta" | "critica" | null;
 }
 
 interface CorrecaoComEscopo extends CorrecaoIA {
