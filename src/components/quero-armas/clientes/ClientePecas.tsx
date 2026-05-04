@@ -323,6 +323,50 @@ export default function ClientePecas({ cliente }: Props) {
 
   // ── Generate ──
   const gerar = async () => {
+    // moved below
+    return _gerar();
+  };
+
+  const handleIndefFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.name.toLowerCase().endsWith(".txt")) {
+      const txt = await file.text();
+      setIndeferimentoTexto(txt);
+      setIndeferimentoAnalise(null);
+      toast.success("Texto carregado. Clique em ANALISAR INDEFERIMENTO COM IA.");
+      return;
+    }
+    toast.info("PDF/imagem detectados — cole o conteúdo no campo abaixo.");
+  };
+
+  const analisarIndeferimento = async () => {
+    const texto = indeferimentoTexto.trim();
+    if (texto.length < 100) { toast.error("Cole o conteúdo do indeferimento (mínimo 100 caracteres)."); return; }
+    setAnalisandoIndef(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-analisar-indeferimento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ texto }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Falha ao analisar");
+      setIndeferimentoAnalise(json.analise);
+      toast.success("Indeferimento analisado. A peça rebaterá ponto a ponto.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao analisar indeferimento");
+    } finally {
+      setAnalisandoIndef(false);
+    }
+  };
+
+  const _gerar = async () => {
     if (!cliente.nome_completo.trim()) { toast.error("Nome do requerente ausente"); return; }
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
     if (!clienteCidade.trim() || !clienteUf.trim()) { toast.error("Cidade e estado são obrigatórios"); return; }
