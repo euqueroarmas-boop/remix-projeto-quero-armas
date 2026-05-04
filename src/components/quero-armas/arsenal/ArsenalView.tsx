@@ -1036,6 +1036,178 @@ export function ArsenalView({
     return buildSU("MUNIÇÕES", m.tone, partes.join(" · "));
   })();
 
+  // ── F1B-1: Ordem manual dos grupos do Arsenal ─────────────────────────────
+  const grupos = useArsenalGruposLayout(clienteId);
+  const [organizandoGrupos, setOrganizandoGrupos] = useState(false);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    grupos.reorder(String(active.id), String(over.id));
+  };
+
+  // Renderiza cada grupo isoladamente (mesmo conteúdo de antes, só envelopado).
+  const renderGrupo = (id: ArsenalGroupId) => {
+    switch (id) {
+      case "proximos_vencimentos":
+        return (
+          <aside id="arsenal-situacao" className="scroll-mt-28">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+              {(() => {
+                const criticos = alertasDetalhados.filter((a) => a.status.cor === "vermelho").length;
+                const preventivos = alertasDetalhados.filter((a) => a.status.cor === "laranja" || a.status.cor === "amarelo").length;
+                const total = alertasDetalhados.length;
+                const subtitulo = total === 0
+                  ? "Tudo em dia"
+                  : criticos > 0
+                    ? "Ação imediata necessária"
+                    : preventivos > 0
+                      ? "Atenção preventiva"
+                      : "Acompanhamento recomendado";
+                const cor = total === 0
+                  ? "text-emerald-600"
+                  : criticos > 0
+                    ? "text-red-600"
+                    : "text-amber-600";
+                return (
+                  <>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <AlertTriangle className={`h-3.5 w-3.5 ${cor}`} />
+                        <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
+                          Próximos Vencimentos
+                        </div>
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider ${cor}`}>{subtitulo}</span>
+                    </div>
+                    {total === 0 ? (
+                      <p className="text-[11px] text-slate-500">Nenhum vencimento próximo. Tudo em dia.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {alertasDetalhados.slice(0, 6).map((a) => (
+                          <div key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="truncate text-slate-700">
+                              <span className="font-bold uppercase">{a.titulo}</span>
+                              <span className="ml-1 text-[9px] uppercase tracking-wider text-slate-400">· {a.tipo}</span>
+                            </span>
+                            <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-600">
+                              {a.diasRestantes === null
+                                ? "—"
+                                : a.diasRestantes < 0
+                                  ? `Vencido há ${Math.abs(a.diasRestantes)}d`
+                                  : a.diasRestantes === 0
+                                    ? "Vence hoje"
+                                    : `${a.diasRestantes}d`}
+                            </span>
+                          </div>
+                        ))}
+                        {alertasDetalhados.length > 6 && (
+                          <p className="pt-1 text-[10px] text-slate-400">+{alertasDetalhados.length - 6} outros</p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </aside>
+        );
+      case "circunscricao_pf":
+        return (
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Landmark className="h-3.5 w-3.5 text-slate-600" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
+                Circunscrição PF
+              </div>
+            </div>
+            {circStatus === "loading" && (
+              <p className="text-[11px] text-slate-500">Resolvendo circunscrição…</p>
+            )}
+            {circStatus === "ok" && circ && (
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-[12px] font-bold uppercase text-slate-800 leading-tight break-words">
+                    {circ.unidade_pf}
+                  </div>
+                  {circ.municipio_sede && (
+                    <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">
+                      Sede: {circ.municipio_sede}
+                    </div>
+                  )}
+                </div>
+                <span
+                  className="shrink-0 rounded-md px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+                  style={{ background: "hsl(220 13% 92%)", color: "hsl(220 10% 30%)" }}
+                >
+                  {circ.sigla_unidade}
+                </span>
+              </div>
+            )}
+            {circStatus === "not_found" && (
+              <p className="text-[11px] text-slate-500">
+                Circunscrição não localizada para {String(clienteCidade || "—")}/{String(clienteUf || "—")}.
+              </p>
+            )}
+            {circStatus === "error" && (
+              <p className="text-[11px] text-amber-700">Falha ao consultar circunscrição. Tente novamente.</p>
+            )}
+            {circStatus === "idle" && (
+              <p className="text-[11px] text-slate-500">Cadastre cidade e UF do cliente para resolver a circunscrição.</p>
+            )}
+          </div>
+        );
+      case "bancada":
+        return (
+          <div id="arsenal-bancada" className="scroll-mt-28">
+            <Workbench
+              weapons={weapons}
+              documents={benchDocs}
+              ammoByCalibre={ammo.byCalibre}
+              onSelectWeapon={(w) => setSelected(w)}
+              headerAction={
+                <button
+                  type="button"
+                  onClick={() => setCrafHubModal({ open: true })}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
+                  title="Enviar documento — Hub Documental com IA"
+                >
+                  <Upload className="h-3.5 w-3.5" /> ENVIAR
+                </button>
+              }
+            />
+          </div>
+        );
+      case "craf":
+        return (
+          <div id="arsenal-craf" className="scroll-mt-28">
+            <ArsenalCRAFControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
+          </div>
+        );
+      case "autorizacoes":
+        return (
+          <div id="arsenal-autorizacoes" className="scroll-mt-28">
+            <ArsenalAutorizacoesControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
+          </div>
+        );
+      case "gte":
+        return (
+          <div id="arsenal-gte" className="scroll-mt-28">
+            <ArsenalGTEControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
+          </div>
+        );
+      case "municoes":
+        return (
+          <div id="arsenal-municoes" className="scroll-mt-28">
+            <MunicoesManager clienteId={clienteId} onChange={setAmmo} />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
@@ -1071,154 +1243,33 @@ export function ArsenalView({
         onNavigate={scrollToSection}
       />
 
-      {/* Próximos Vencimentos — F1A: bloco "Situação Geral" foi removido para
-          evitar duplicação com os grupos operacionais (Controle de CRAF/GTE/
-          Autorizações) e KPIs do topo. Mantemos somente o resumo dos
-          próximos vencimentos consolidados. */}
-      <aside id="arsenal-situacao" className="scroll-mt-28">
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-            {(() => {
-              const criticos = alertasDetalhados.filter((a) => a.status.cor === "vermelho").length;
-              const preventivos = alertasDetalhados.filter((a) => a.status.cor === "laranja" || a.status.cor === "amarelo").length;
-              const total = alertasDetalhados.length;
-              const subtitulo = total === 0
-                ? "Tudo em dia"
-                : criticos > 0
-                  ? "Ação imediata necessária"
-                  : preventivos > 0
-                    ? "Atenção preventiva"
-                    : "Acompanhamento recomendado";
-              const cor = total === 0
-                ? "text-emerald-600"
-                : criticos > 0
-                  ? "text-red-600"
-                  : "text-amber-600";
-              return (
-                <>
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <AlertTriangle className={`h-3.5 w-3.5 ${cor}`} />
-                      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
-                        Próximos Vencimentos
-                      </div>
-                    </div>
-                    <span className={`text-[9px] font-bold uppercase tracking-wider ${cor}`}>{subtitulo}</span>
-                  </div>
-                  {total === 0 ? (
-                    <p className="text-[11px] text-slate-500">Nenhum vencimento próximo. Tudo em dia.</p>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {alertasDetalhados.slice(0, 6).map((a) => (
-                        <div key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
-                          <span className="truncate text-slate-700">
-                            <span className="font-bold uppercase">{a.titulo}</span>
-                            <span className="ml-1 text-[9px] uppercase tracking-wider text-slate-400">· {a.tipo}</span>
-                          </span>
-                          <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-600">
-                            {a.diasRestantes === null
-                              ? "—"
-                              : a.diasRestantes < 0
-                                ? `Vencido há ${Math.abs(a.diasRestantes)}d`
-                                : a.diasRestantes === 0
-                                  ? "Vence hoje"
-                                  : `${a.diasRestantes}d`}
-                          </span>
-                        </div>
-                      ))}
-                      {alertasDetalhados.length > 6 && (
-                        <p className="pt-1 text-[10px] text-slate-400">+{alertasDetalhados.length - 6} outros</p>
-                      )}
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+      {/* F1B-1 — Toolbar para reordenar manualmente os grupos do Arsenal */}
+      <ArsenalGruposToolbar
+        editing={organizandoGrupos}
+        saving={grupos.saving}
+        onToggle={() => setOrganizandoGrupos((v) => !v)}
+        onRestoreDefault={() => grupos.restoreDefault()}
+      />
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={grupos.order} strategy={verticalListSortingStrategy}>
+          <div className="space-y-5">
+            {grupos.order.map((id, idx) => (
+              <ArsenalGroupItem
+                key={id}
+                id={id}
+                editing={organizandoGrupos}
+                isFirst={idx === 0}
+                isLast={idx === grupos.order.length - 1}
+                onMoveUp={() => grupos.move(id, -1)}
+                onMoveDown={() => grupos.move(id, 1)}
+              >
+                {renderGrupo(id)}
+              </ArsenalGroupItem>
+            ))}
           </div>
-      </aside>
-
-      {/* Circunscrição PF do cliente — visível na aba Arsenal */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-        <div className="mb-2 flex items-center gap-1.5">
-          <Landmark className="h-3.5 w-3.5 text-slate-600" />
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
-            Circunscrição PF
-          </div>
-        </div>
-        {circStatus === "loading" && (
-          <p className="text-[11px] text-slate-500">Resolvendo circunscrição…</p>
-        )}
-        {circStatus === "ok" && circ && (
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-[12px] font-bold uppercase text-slate-800 leading-tight break-words">
-                {circ.unidade_pf}
-              </div>
-              {circ.municipio_sede && (
-                <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">
-                  Sede: {circ.municipio_sede}
-                </div>
-              )}
-            </div>
-            <span
-              className="shrink-0 rounded-md px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
-              style={{ background: "hsl(220 13% 92%)", color: "hsl(220 10% 30%)" }}
-            >
-              {circ.sigla_unidade}
-            </span>
-          </div>
-        )}
-        {circStatus === "not_found" && (
-          <p className="text-[11px] text-slate-500">
-            Circunscrição não localizada para {String(clienteCidade || "—")}/{String(clienteUf || "—")}.
-          </p>
-        )}
-        {circStatus === "error" && (
-          <p className="text-[11px] text-amber-700">Falha ao consultar circunscrição. Tente novamente.</p>
-        )}
-        {circStatus === "idle" && (
-          <p className="text-[11px] text-slate-500">Cadastre cidade e UF do cliente para resolver a circunscrição.</p>
-        )}
-      </div>
-
-      {/* Bancada Tática — largura total */}
-      <div id="arsenal-bancada" className="scroll-mt-28">
-        <Workbench
-          weapons={weapons}
-          documents={benchDocs}
-          ammoByCalibre={ammo.byCalibre}
-          onSelectWeapon={(w) => setSelected(w)}
-          headerAction={
-            <button
-              type="button"
-              onClick={() => setCrafHubModal({ open: true })}
-              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-amber-400/60 bg-amber-50 text-[11px] font-bold uppercase tracking-[0.12em] text-amber-800 hover:bg-amber-100 transition"
-              title="Enviar documento — Hub Documental com IA"
-            >
-              <Upload className="h-3.5 w-3.5" /> ENVIAR
-            </button>
-          }
-        />
-      </div>
-
-      {/* Controle de CRAF — F1A (somente leitura/indicadores) */}
-      <div id="arsenal-craf" className="scroll-mt-28">
-        <ArsenalCRAFControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
-      </div>
-
-      {/* Controle de Autorizações — F1A (somente leitura/indicadores) */}
-      <div id="arsenal-autorizacoes" className="scroll-mt-28">
-        <ArsenalAutorizacoesControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
-      </div>
-
-      {/* Controle de GTE — extração IA + KPIs (cliente + equipe) */}
-      <div id="arsenal-gte" className="scroll-mt-28">
-        <ArsenalGTEControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
-      </div>
-
-      {/* Munições */}
-      <div id="arsenal-municoes" className="scroll-mt-28">
-        <MunicoesManager clienteId={clienteId} onChange={setAmmo} />
-      </div>
+        </SortableContext>
+      </DndContext>
 
       <WeaponDrawer
         open={!!selected}
