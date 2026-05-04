@@ -108,9 +108,11 @@ async function buscarCorrecoesRelevantes(
     if (!rows) return;
     for (const r of rows) {
       if (!r?.id || !r.ativo) continue;
-      // Filtro de tipo de peça (correções específicas podem não ter o tipo idêntico,
-      // mas mantemos consistência com o tipo solicitado)
-      if (r.tipo_peca && r.tipo_peca !== tipo_peca) continue;
+      // Filtro de tipo de peça:
+      // - vazio = wildcard (regra serve a qualquer peça)
+      // - "todos" = wildcard explícito
+      // - igual ao tipo solicitado = ok
+      if (r.tipo_peca && r.tipo_peca !== tipo_peca && r.tipo_peca !== "todos") continue;
       const existente = acumulado.get(r.id);
       if (!existente || existente._prioridade < prioridade) {
         acumulado.set(r.id, { ...r, _escopo: escopo, _prioridade: prioridade });
@@ -152,15 +154,15 @@ async function buscarCorrecoesRelevantes(
       addAll(data as CorrecaoIA[] | null, "cliente", 200);
     }
 
-    // 4) Globais do tipo de peça
+    // 4) Globais (do tipo de peça OU wildcard "todos" / vazio)
     {
       const { data } = await supabase
         .from("qa_ia_correcoes_juridicas")
         .select("*")
         .eq("ativo", true)
         .eq("aplicar_globalmente", true)
-        .eq("tipo_peca", tipo_peca)
-        .limit(100);
+        .or(`tipo_peca.eq.${tipo_peca},tipo_peca.eq.todos,tipo_peca.is.null`)
+        .limit(200);
       addAll(data as CorrecaoIA[] | null, "global", 100);
     }
   } catch (err) {
