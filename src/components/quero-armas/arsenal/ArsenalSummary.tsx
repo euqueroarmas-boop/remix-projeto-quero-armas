@@ -131,6 +131,17 @@ interface Props {
   processosCount?: number;
   autorizacoesCount?: number;
   examesCount?: number;
+  /**
+   * Lista detalhada de exames (psicológico/tiro) para o painel inteligente
+   * de exames/laudos. Quando preenchido, ativa exibição de status por exame,
+   * próximo vencimento, contagem de dias e drill-down via popover.
+   */
+  examesDetalhados?: Array<{
+    id: string;
+    tipo: string | null;
+    data_realizacao?: string | null;
+    data_vencimento: string | null;
+  }>;
   onNavigate?: (target: ArsenalSummaryTarget) => void;
   /** Cliente atual em foco (admin). Permite layouts independentes por cliente, se desejado. */
   clienteId?: number | null;
@@ -297,6 +308,7 @@ export function ArsenalSummary({
   processosCount = 0,
   autorizacoesCount = 0,
   examesCount = 0,
+  examesDetalhados = [],
   onNavigate,
   clienteId = null,
   dashboardType = "arsenal",
