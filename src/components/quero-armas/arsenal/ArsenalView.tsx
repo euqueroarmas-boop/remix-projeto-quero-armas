@@ -881,6 +881,23 @@ export function ArsenalView({
       });
     });
 
+    // 2.b) Exames / laudos — cada item individualmente (não estão em expDocs).
+    (exames ?? []).forEach((e) => {
+      const venc = e.data_vencimento;
+      if (!venc) return;
+      const status = getStatusValidade(venc, "EXAME_LAUDO");
+      if (!ALERT_CODES.has(status.codigo)) return;
+      const tipoExame = (e.tipo || "EXAME").toUpperCase();
+      out.push({
+        id: `exame-${e.id}`,
+        titulo: tipoExame.includes("EXAME") ? tipoExame : `EXAME ${tipoExame}`,
+        tipo: "EXAME",
+        status,
+        dataVencimento: venc,
+        diasRestantes: daysUntil(venc),
+      });
+    });
+
     // 3) Estados não-data (indeferido/inválido/exigência/pagamento) já
     //    consolidados nos KPIs unificados.
     const unificadosLabel: { s: StatusUnificado | null; tipo: string; titulo: string }[] = [
