@@ -8,6 +8,7 @@ export interface DashboardItemSnapshotRow {
   data_indeferimento: string | null;
   data_notificacao: string | null;
   data_recurso_administrativo: string | null;
+  data_indeferimento_recurso: string | null;
   data_protocolo: string | null;
   data_ultima_atualizacao: string | null;
   data_deferimento: string | null;
@@ -79,7 +80,7 @@ async function fetchDashboardSnapshot(): Promise<QADashboardSnapshot> {
     supabase
       .from("qa_itens_venda" as any)
       .select(
-        "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_recurso_administrativo, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf"
+        "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_recurso_administrativo, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf"
       ),
     supabase
       .from("qa_exames_cliente" as any)
