@@ -202,7 +202,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         sb.from("qa_processos").select("status, pagamento_status").eq("cliente_id", clienteId),
         sb
           .from("qa_municoes_saldos" as any)
-          .select("data_fabricacao,data_validade,saldo")
+          .select("calibre,marca,lote,data_fabricacao,data_validade,saldo")
           .eq("cliente_id", clienteId),
       ]);
 
@@ -409,7 +409,12 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
           : m?.data_fabricacao
             ? calcularValidadeMunicao(m.data_fabricacao).data_validade
             : null;
-        empurra("MUNICAO", "MUNIÇÃO", dv, "MUNICAO");
+        const partes = [m?.calibre, m?.marca, m?.lote ? `LOTE ${m.lote}` : null]
+          .filter((x: string | null | undefined) => x && String(x).trim().length > 0);
+        const titulo = partes.length
+          ? `MUNIÇÃO ${partes.join(" · ")}${m?.saldo ? ` (${m.saldo} un.)` : ""}`
+          : "MUNIÇÃO";
+        empurra("MUNICAO", titulo, dv, "MUNICAO");
       });
 
       const kpiAlertas: KpiAlertas = {
