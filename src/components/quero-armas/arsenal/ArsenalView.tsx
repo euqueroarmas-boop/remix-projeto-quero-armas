@@ -1023,6 +1023,7 @@ export function ArsenalView({
 
   return (
     <div className="space-y-5">
+      {(() => { return null; })()}
       {/* KPIs */}
       <ArsenalSummary
         totalArmas={weapons.length}
@@ -1031,7 +1032,9 @@ export function ArsenalView({
         crStatus={crStatus.tone}
         crLabel={crStatus.label}
         totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
-        alerts={alerts.length}
+        alerts={alertasDetalhados.length}
+        alertasCriticos={alertasDetalhados.filter((a) => a.status.cor === "vermelho").length}
+        alertasPreventivos={alertasDetalhados.filter((a) => a.status.cor === "laranja" || a.status.cor === "amarelo").length}
         totalGtes={gteKpi.total}
         gteStatus={gteKpi.statusVisual}
         gteHint={gteKpi.labelSecundaria}
