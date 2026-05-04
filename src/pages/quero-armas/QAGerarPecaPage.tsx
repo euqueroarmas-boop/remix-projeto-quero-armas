@@ -381,6 +381,8 @@ export default function QAGerarPecaPage() {
         setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
         setCircunscricaoStatus("resolved");
       }
+      if (c.indeferimento_texto) setIndeferimentoTexto(c.indeferimento_texto);
+      if (c.indeferimento_analise) setIndeferimentoAnalise(c.indeferimento_analise);
 
       // 2) Se houver vínculo real com cliente, hidrata dados frescos (sobrepõe snapshot apenas onde houver valor)
       if (c.cliente_id) {
