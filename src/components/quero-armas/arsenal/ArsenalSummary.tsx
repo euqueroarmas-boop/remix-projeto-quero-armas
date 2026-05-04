@@ -319,7 +319,8 @@ export function ArsenalSummary({
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   // Toggle local seguro — não persiste (regra do BLOCO 2).
-  const [showSecondary, setShowSecondary] = useState(false);
+  // KPIs secundárias sempre visíveis — sem recolhimento (decisão UX: nada
+  // recolhido no Arsenal do cliente; tudo à mostra para leitura imediata).
 
   // Estado: existe layout salvo por cliente?
   // Quando true → respeita estritamente a ordem do banco (não força CR primeiro).
