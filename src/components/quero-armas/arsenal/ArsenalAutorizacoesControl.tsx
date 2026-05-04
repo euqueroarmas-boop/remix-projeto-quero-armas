@@ -204,13 +204,16 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
         <p className="py-6 text-center text-[11px] text-slate-500">Carregando autorizações…</p>
       ) : documentos.length === 0 && solicitacoes.length === 0 ? (
         <p className="py-6 text-center text-[11px] text-slate-500">
-          Nenhuma autorização vinculada a este cliente. Cadastro manual e leitura por IA serão liberados na próxima etapa.
+          Nenhuma autorização vinculada a este cliente.
         </p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
           {documentos.map((d) => {
             const sv = statusVisual(d.data_validade, d.status);
-            const pendente = !d.validado_admin;
+            // `validado_admin` é coluna legada — encapsulamos como
+            // `validadoPelaEquipe` para evitar expor o termo em textos.
+            const validadoPelaEquipe = !!d.validado_admin;
+            const pendente = !validadoPelaEquipe;
             return (
               <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
                 <FileText className="h-4 w-4 shrink-0 text-slate-400" />
@@ -266,10 +269,6 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
           ))}
         </ul>
       )}
-
-      <p className="mt-3 text-[10px] italic text-slate-400">
-        Cadastro manual e edição completa serão liberados na próxima etapa.
-      </p>
     </section>
   );
 }
