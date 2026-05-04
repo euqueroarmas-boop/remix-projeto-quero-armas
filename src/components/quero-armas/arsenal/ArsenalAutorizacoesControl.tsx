@@ -1,25 +1,31 @@
 /**
  * ArsenalAutorizacoesControl
  *
- * Bloco "Controle de Autorizações" da aba Arsenal — F1A.
- * Padrão visual idêntico ao ArsenalGTEControl / ArsenalCRAFControl.
+ * Bloco "Controle de Autorizações" da aba Arsenal — F1B-3.
  *
- * Fontes de leitura (NÃO escreve nada nesta etapa):
- *   - qa_solicitacoes_servico:  solicitações de serviço cujo slug aponta para
- *                               "autorizacao" + "compra" (ou tipo equivalente).
- *   - qa_documentos_cliente:    documentos com tipo AUTORIZAÇÃO (PDF emitido
- *                               pela PF, etc.), aprovados ou pendentes.
+ * Fontes:
+ *   - qa_solicitacoes_servico: solicitações em andamento (slug autorizacao+compra).
+ *   - qa_documentos_cliente:   autorizações emitidas (tipo_documento ~ AUTORIZ).
  *
- * Indicadores: total, válidas, próx. vencer, vencidas, pendentes,
- * armas vinculadas e utilizadas/baixadas (quando essa informação existe).
- *
- * Cadastro/edição manual e OCR/IA serão liberados na F1B.
+ * Funcionalidades:
+ *   - Upload + OCR via edge `qa-autorizacao-extrair`.
+ *   - Cadastro manual.
+ *   - Edição completa.
+ *   - Vínculo opcional com arma (não sobrescreve sem confirmação).
+ *   - Baixa/utilização e cancelamento com histórico/auditoria.
+ *   - Status visual: válida, próx. vencer, vencida, pendente revisão,
+ *     utilizada/baixada, cancelada.
+ *   - Validade alimenta Alertas/Próximos Vencimentos via data_validade.
  */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, CheckCircle2, ClipboardList, Clock, Crosshair, FileText, ShoppingCart, Loader2,
+  AlertTriangle, Ban, CheckCircle2, ClipboardList, Clock, Crosshair, Download,
+  FileText, Loader2, PackageCheck, Pencil, Plus, RefreshCw, ShoppingCart, Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import ArsenalAutorizacaoEditModal from "./ArsenalAutorizacaoEditModal";
+import ArsenalAutorizacaoBaixaModal from "./ArsenalAutorizacaoBaixaModal";
 
 interface Props {
   clienteId: number;
@@ -39,6 +45,7 @@ interface Solicitacao {
 
 interface AutorizacaoDoc {
   id: string;
+  qa_cliente_id: number;
   tipo_documento: string | null;
   numero_documento: string | null;
   orgao_emissor: string | null;
@@ -48,11 +55,15 @@ interface AutorizacaoDoc {
   arma_modelo: string | null;
   arma_calibre: string | null;
   arma_numero_serie: string | null;
+  arma_especie: string | null;
   status: string | null;
   ia_status: string | null;
   validado_admin: boolean | null;
   arquivo_nome: string | null;
+  arquivo_storage_path: string | null;
+  ia_dados_extraidos: any;
   observacoes: string | null;
+  origem: string | null;
   created_at: string;
 }
 
@@ -113,6 +124,10 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [documentos, setDocumentos] = useState<AutorizacaoDoc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState<AutorizacaoDoc | null>(null);
+  const [baixa, setBaixa] = useState<{ doc: AutorizacaoDoc; modo: "utilizar" | "cancelar" } | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -125,7 +140,7 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
       supabase
         .from("qa_documentos_cliente" as any)
         .select(
-          "id,tipo_documento,numero_documento,orgao_emissor,data_emissao,data_validade,arma_marca,arma_modelo,arma_calibre,arma_numero_serie,status,ia_status,validado_admin,arquivo_nome,observacoes,created_at",
+          "id,qa_cliente_id,tipo_documento,numero_documento,orgao_emissor,data_emissao,data_validade,arma_marca,arma_modelo,arma_calibre,arma_numero_serie,arma_especie,status,ia_status,validado_admin,arquivo_nome,arquivo_storage_path,ia_dados_extraidos,observacoes,origem,created_at",
         )
         .eq("qa_cliente_id", clienteId)
         .ilike("tipo_documento", "%AUTORIZ%")
@@ -146,6 +161,85 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [clienteId, load]);
+
+  const onPickFile = () => fileRef.current?.click();
+
+  const onFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (file.size > 20 * 1024 * 1024) { toast.error("Arquivo muito grande (limite 20 MB)."); return; }
+    setUploading(true);
+    try {
+      const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 80);
+      const path = `autorizacoes/${clienteId}/${Date.now()}_${safe}`;
+      const { error: upErr } = await supabase.storage.from("qa-documentos").upload(path, file, {
+        contentType: file.type || "application/pdf",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
+      const { data: inserted, error: insErr } = await supabase
+        .from("qa_documentos_cliente" as any)
+        .insert({
+          qa_cliente_id: clienteId,
+          tipo_documento: "AUTORIZACAO_COMPRA",
+          arquivo_storage_path: path,
+          arquivo_nome: file.name,
+          arquivo_mime: file.type || "application/pdf",
+          ia_status: "pendente",
+          status: "EM_ANALISE",
+          origem: _origem === "equipe" ? "equipe" : "portal_cliente",
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+      toast.success("Autorização enviada. Extraindo dados…");
+      supabase.functions
+        .invoke("qa-autorizacao-extrair", { body: { documento_id: (inserted as any).id } })
+        .then(({ error }) => { if (error) toast.error(`Falha na leitura: ${error.message}`); })
+        .catch((err) => toast.error(err?.message || "Falha na leitura"));
+      await load();
+    } catch (err: any) {
+      toast.error(err?.message || "Falha no upload");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onReprocessar = async (d: AutorizacaoDoc) => {
+    if (!d.arquivo_storage_path) { toast.error("Documento sem arquivo no storage."); return; }
+    const { error } = await supabase.functions.invoke("qa-autorizacao-extrair", { body: { documento_id: d.id } });
+    if (error) toast.error(error.message); else toast.success("Reprocessamento iniciado.");
+  };
+
+  const onDownload = async (d: AutorizacaoDoc) => {
+    if (!d.arquivo_storage_path) return;
+    const { data, error } = await supabase.storage.from("qa-documentos").download(d.arquivo_storage_path);
+    if (error || !data) { toast.error(error?.message || "Falha ao baixar"); return; }
+    const url = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = d.arquivo_nome || `autorizacao-${d.id}.pdf`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const onCadastroManual = async () => {
+    const { data: inserted, error } = await supabase
+      .from("qa_documentos_cliente" as any)
+      .insert({
+        qa_cliente_id: clienteId,
+        tipo_documento: "AUTORIZACAO_COMPRA",
+        ia_status: "pendente_revisao",
+        status: "EM_ANALISE",
+        origem: _origem === "equipe" ? "equipe" : "portal_cliente",
+      })
+      .select("id,qa_cliente_id,tipo_documento,numero_documento,orgao_emissor,data_emissao,data_validade,arma_marca,arma_modelo,arma_calibre,arma_numero_serie,arma_especie,status,ia_status,validado_admin,arquivo_nome,arquivo_storage_path,ia_dados_extraidos,observacoes,origem,created_at")
+      .single();
+    if (error) { toast.error(error.message); return; }
+    setEditing(inserted as any as AutorizacaoDoc);
+  };
 
   const kpis = useMemo(() => {
     let validas = 0, vencidas = 0, proximas = 0, utilizadas = 0;
@@ -186,6 +280,24 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
             Autorizações de compra vinculadas ao cliente
           </span>
         </div>
+        <div className="flex items-center gap-2">
+          <input ref={fileRef} type="file" className="hidden" accept="application/pdf,image/*" onChange={onFileSelected} />
+          <button
+            onClick={onCadastroManual}
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+          >
+            <Plus className="h-3 w-3" /> Cadastrar manual
+          </button>
+          <button
+            onClick={onPickFile}
+            disabled={uploading}
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white disabled:opacity-50"
+            style={{ background: "#7A1F2B" }}
+          >
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+            Enviar autorização
+          </button>
+        </div>
       </header>
 
       {/* KPIs */}
@@ -210,10 +322,16 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
           {documentos.map((d) => {
             const sv = statusVisual(d.data_validade, d.status);
-            // `validado_admin` é coluna legada — encapsulamos como
-            // `validadoPelaEquipe` para evitar expor o termo em textos.
             const validadoPelaEquipe = !!d.validado_admin;
-            const pendente = !validadoPelaEquipe;
+            const ia = (d.ia_status || "").toLowerCase();
+            const processando = ia === "processando";
+            const erroIA = ia === "erro";
+            const revisaoNecessaria = !!(d.ia_dados_extraidos as any)?.revisao_necessaria;
+            const pendente = !validadoPelaEquipe || ia === "pendente_revisao" || revisaoNecessaria;
+            const baixada = (d.status || "").toUpperCase() === "UTILIZADA"
+              || (d.status || "").toUpperCase() === "BAIXADA";
+            const cancelada = (d.status || "").toUpperCase() === "CANCELADA";
+            const finalizada = baixada || cancelada;
             return (
               <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
                 <FileText className="h-4 w-4 shrink-0 text-slate-400" />
@@ -228,20 +346,79 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
                     >
                       {sv.label}
                     </span>
-                    {pendente && (
+                    {processando && (
+                      <span className="inline-flex items-center gap-1 rounded px-1.5 py-[1px] text-[9px] font-semibold uppercase text-slate-700"
+                            style={{ background: "hsl(220 13% 92%)" }}>
+                        <Loader2 className="h-2.5 w-2.5 animate-spin" /> PROCESSANDO IA
+                      </span>
+                    )}
+                    {erroIA && (
+                      <span className="rounded px-1.5 py-[1px] text-[9px] font-semibold uppercase text-red-700"
+                            style={{ background: "hsl(0 78% 55% / 0.15)" }}>
+                        ERRO DE LEITURA
+                      </span>
+                    )}
+                    {pendente && !processando && !erroIA && !finalizada && (
                       <span className="rounded px-1.5 py-[1px] text-[9px] font-semibold uppercase text-amber-800"
                             style={{ background: "hsl(38 92% 50% / 0.18)" }}>
-                        PENDENTE REVISÃO
+                        {revisaoNecessaria ? "REVISÃO NECESSÁRIA" : "PENDENTE REVISÃO"}
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
                     <span>Validade: <b className="text-slate-700">{fmtDate(d.data_validade)}</b></span>
                     {d.orgao_emissor && <span>Órgão: <b className="text-slate-700">{d.orgao_emissor}</b></span>}
+                    {d.arma_especie && <span>Espécie: <b className="text-slate-700">{d.arma_especie}</b></span>}
                     {d.arma_modelo && <span>Modelo: <b className="text-slate-700">{d.arma_modelo}</b></span>}
                     {d.arma_calibre && <span>Calibre: <b className="text-slate-700">{d.arma_calibre}</b></span>}
                     {d.arma_numero_serie && <span>Nº série: <b className="text-slate-700">{d.arma_numero_serie}</b></span>}
                   </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    onClick={() => setEditing(d)}
+                    className="rounded p-1 text-slate-500 hover:bg-slate-100"
+                    title="Editar"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  {d.arquivo_storage_path && (
+                    <button
+                      onClick={() => onReprocessar(d)}
+                      disabled={processando}
+                      className="rounded p-1 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
+                      title="Reprocessar IA"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {d.arquivo_storage_path && (
+                    <button
+                      onClick={() => onDownload(d)}
+                      className="rounded p-1 text-slate-500 hover:bg-slate-100"
+                      title="Baixar arquivo"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {!finalizada && (
+                    <>
+                      <button
+                        onClick={() => setBaixa({ doc: d, modo: "utilizar" })}
+                        className="rounded p-1 text-emerald-700 hover:bg-emerald-50"
+                        title="Dar baixa / Utilizar"
+                      >
+                        <PackageCheck className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setBaixa({ doc: d, modo: "cancelar" })}
+                        className="rounded p-1 text-red-700 hover:bg-red-50"
+                        title="Cancelar"
+                      >
+                        <Ban className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             );
@@ -268,6 +445,23 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
             </li>
           ))}
         </ul>
+      )}
+
+      {editing && (
+        <ArsenalAutorizacaoEditModal
+          doc={editing as any}
+          clienteId={clienteId}
+          onClose={() => setEditing(null)}
+          onSaved={() => { load(); }}
+        />
+      )}
+      {baixa && (
+        <ArsenalAutorizacaoBaixaModal
+          doc={baixa.doc as any}
+          modo={baixa.modo}
+          onClose={() => setBaixa(null)}
+          onSaved={() => { load(); }}
+        />
       )}
     </section>
   );
