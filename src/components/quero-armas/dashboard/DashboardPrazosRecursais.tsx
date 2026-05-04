@@ -108,22 +108,6 @@ const TIPO_CURTO: Record<number, string> = {
   26: "CRAF",   // CRAF na Polícia Federal
 };
 
-// Hoje no fuso local (evita drift UTC que joga o dia para trás em BRT/-03)
-const todayISO = () => {
-  const n = new Date();
-  const y = n.getFullYear();
-  const m = String(n.getMonth() + 1).padStart(2, "0");
-  const d = String(n.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-// Diferença em dias usando UTC puro nas duas pontas (sem efeito de timezone)
-const diffDays = (a: string, b: string) => {
-  const [ay, am, ad] = a.split("-").map(Number);
-  const [by, bm, bd] = b.split("-").map(Number);
-  const aUTC = Date.UTC(ay, am - 1, ad);
-  const bUTC = Date.UTC(by, bm - 1, bd);
-  return Math.round((bUTC - aUTC) / 86_400_000);
-};
 function toneFor(dias: number) {
   if (dias < 0)  return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
   if (dias <= 4) return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
