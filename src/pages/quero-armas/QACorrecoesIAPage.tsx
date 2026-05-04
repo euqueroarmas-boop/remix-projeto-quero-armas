@@ -716,17 +716,33 @@ function ToggleRow({ checked, onChange, title, desc, icon }:
 function CorrecaoCard({ it, onEdit, onToggle, onDelete }:
   { it: Correcao; onEdit: () => void; onToggle: () => void; onDelete: () => void }) {
   const dim = !it.ativo;
+  const isTreinamento = (it.tipo_registro || "correcao_erro") === "treinamento_direto";
+  const prioColors: Record<string, { bg: string; color: string; border: string }> = {
+    baixa:   { bg: "hsl(220 14% 96%)", color: "hsl(220 25% 25%)", border: "hsl(220 13% 88%)" },
+    media:   { bg: "hsl(40 95% 95%)",  color: "hsl(35 80% 30%)",  border: "hsl(40 80% 80%)" },
+    alta:    { bg: "hsl(20 90% 95%)",  color: "hsl(20 80% 35%)",  border: "hsl(20 70% 80%)" },
+    critica: { bg: "hsl(0 70% 95%)",   color: "hsl(0 70% 35%)",   border: "hsl(0 60% 80%)" },
+  };
   return (
     <div
       className="rounded-xl border bg-white p-4 transition-all"
       style={{
-        borderColor: dim ? "hsl(220 13% 88%)" : "hsl(36 20% 85%)",
+        borderColor: dim ? "hsl(220 13% 88%)" : (isTreinamento ? "hsl(220 70% 80%)" : "hsl(36 20% 85%)"),
         opacity: dim ? 0.6 : 1,
       }}
     >
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <Badge>{getTipoPecaLabel(it.tipo_peca)}</Badge>
-        <Badge variant="amber">{getCategoriaLabel(it.categoria_erro)}</Badge>
+        {isTreinamento
+          ? <Badge variant="blue"><Sparkles className="h-3 w-3 mr-1 inline" />TREINAMENTO DIRETO</Badge>
+          : <Badge variant="amber"><AlertOctagon className="h-3 w-3 mr-1 inline" />CORREÇÃO DE ERRO</Badge>}
+        <Badge>{it.tipo_peca === "todos" ? "TODAS AS PEÇAS" : getTipoPecaLabel(it.tipo_peca)}</Badge>
+        {!isTreinamento && <Badge variant="amber">{getCategoriaLabel(it.categoria_erro)}</Badge>}
+        {isTreinamento && (
+          <span
+            className="inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.1em] px-2 py-0.5 rounded border"
+            style={prioColors[it.prioridade || "media"]}
+          >PRIORIDADE {it.prioridade || "media"}</span>
+        )}
         {it.aplicar_globalmente
           ? <Badge variant="blue"><Globe2 className="h-3 w-3 mr-1 inline" />GLOBAL</Badge>
           : <Badge variant="purple"><User className="h-3 w-3 mr-1 inline" />ESPECÍFICA</Badge>}
@@ -737,20 +753,54 @@ function CorrecaoCard({ it, onEdit, onToggle, onDelete }:
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-        <div className="rounded-lg p-3 border" style={{ background: "hsl(0 70% 97%)", borderColor: "hsl(0 60% 88%)" }}>
-          <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(0 60% 40%)" }}>TRECHO ERRADO</div>
-          <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_errado}</div>
+      {isTreinamento ? (
+        <div className="space-y-3 text-xs">
+          {it.titulo && (
+            <div className="text-sm font-bold uppercase tracking-wide" style={{ color: "hsl(220 25% 18%)" }}>{it.titulo}</div>
+          )}
+          <div className="rounded-lg p-3 border" style={{ background: "hsl(220 70% 98%)", borderColor: "hsl(220 60% 88%)" }}>
+            <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(220 70% 35%)" }}>INSTRUÇÃO OBRIGATÓRIA PARA A IA</div>
+            <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.instrucao}</div>
+          </div>
+          {(it.servico_procedimento || it.categoria) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+              {it.servico_procedimento && (
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>SERVIÇO/PROCEDIMENTO</div>
+                  <div className="uppercase" style={{ color: "hsl(220 15% 30%)" }}>{it.servico_procedimento}</div>
+                </div>
+              )}
+              {it.categoria && (
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>CATEGORIA</div>
+                  <div className="uppercase" style={{ color: "hsl(220 15% 30%)" }}>{it.categoria}</div>
+                </div>
+              )}
+            </div>
+          )}
+          {it.exemplo_aplicacao && (
+            <div className="rounded-lg p-3 border" style={{ background: "hsl(140 50% 97%)", borderColor: "hsl(140 40% 85%)" }}>
+              <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(140 50% 30%)" }}>EXEMPLO DE APLICAÇÃO</div>
+              <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.exemplo_aplicacao}</div>
+            </div>
+          )}
         </div>
-        <div className="rounded-lg p-3 border" style={{ background: "hsl(140 50% 97%)", borderColor: "hsl(140 40% 85%)" }}>
-          <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(140 50% 30%)" }}>TRECHO CORRETO</div>
-          <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_correto}</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div className="rounded-lg p-3 border" style={{ background: "hsl(0 70% 97%)", borderColor: "hsl(0 60% 88%)" }}>
+            <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(0 60% 40%)" }}>TRECHO ERRADO</div>
+            <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_errado}</div>
+          </div>
+          <div className="rounded-lg p-3 border" style={{ background: "hsl(140 50% 97%)", borderColor: "hsl(140 40% 85%)" }}>
+            <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(140 50% 30%)" }}>TRECHO CORRETO</div>
+            <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_correto}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {(it.explicacao || it.regra_aplicavel) && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-          {it.explicacao && (
+          {it.explicacao && !isTreinamento && (
             <div>
               <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>EXPLICAÇÃO</div>
               <div style={{ color: "hsl(220 15% 30%)" }}>{it.explicacao}</div>
@@ -758,7 +808,7 @@ function CorrecaoCard({ it, onEdit, onToggle, onDelete }:
           )}
           {it.regra_aplicavel && (
             <div>
-              <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>REGRA APLICÁVEL</div>
+              <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>{isTreinamento ? "NORMA / FUNDAMENTO" : "REGRA APLICÁVEL"}</div>
               <div className="uppercase" style={{ color: "hsl(220 15% 30%)" }}>{it.regra_aplicavel}</div>
             </div>
           )}
