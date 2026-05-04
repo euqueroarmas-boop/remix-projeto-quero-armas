@@ -72,6 +72,7 @@ interface ItemRow {
   data_indeferimento: string | null;
   data_notificacao: string | null;
   data_recurso_administrativo: string | null;
+  data_indeferimento_recurso: string | null;
   numero_processo: string | null;
   numero_requerimento: string | null;
   numero_posse: string | null;
@@ -91,7 +92,7 @@ interface PrazoRow {
   protocolo: string | null;
   tipo: string;
   /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
-  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO";
+  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO" | "MANDADO DE SEGURANÇA";
   /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
   status: string | null;
   dataEvento: string;
@@ -123,7 +124,10 @@ export default function DashboardPrazosRecursais() {
   const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
     const snapshot = await loadQADashboardSnapshot(signal);
     const itensList = snapshot.itens.filter(
-      (item) => item.data_indeferimento || item.data_notificacao,
+      (item) =>
+        item.data_indeferimento ||
+        item.data_notificacao ||
+        item.data_indeferimento_recurso,
     ) as ItemRow[];
     if (!itensList.length) return [];
 
@@ -165,6 +169,7 @@ export default function DashboardPrazosRecursais() {
         data_notificacao: it.data_notificacao,
         data_indeferimento: it.data_indeferimento,
         data_recurso_administrativo: it.data_recurso_administrativo,
+        data_indeferimento_recurso: it.data_indeferimento_recurso,
       });
       if (!prazo) continue;
       const tipoCurto = it.servico_id ? TIPO_CURTO[it.servico_id] ?? "ADM" : "ADM";

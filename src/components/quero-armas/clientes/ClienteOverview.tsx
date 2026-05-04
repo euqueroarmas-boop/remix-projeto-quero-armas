@@ -161,8 +161,9 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     filiacoes.forEach((f: any) => { if (f.validade_filiacao) expDocs.push({ label: `Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, date: f.validade_filiacao, days: daysUntil(f.validade_filiacao), category: "FILIAÇÃO" }); });
     itens.forEach((it: any) => { if (it.data_vencimento) expDocs.push({ label: `Serviço — ${SERVICO_MAP[it.servico_id] || `#${it.servico_id}`}`, date: it.data_vencimento, days: daysUntil(it.data_vencimento), category: "SERVIÇO" }); });
 
-    // Prazos processuais administrativos de 10 dias (notificação / indeferimento /
-    // restituição). Fonte única: lib/quero-armas/prazosProcessuais.
+    // Prazos processuais administrativos: 10 dias (notificação / indeferimento /
+    // restituição) ou 120 dias (Mandado de Segurança após indeferimento do
+    // recurso administrativo). Fonte única: lib/quero-armas/prazosProcessuais.
     const prazosProc = calcularPrazosProcessuais(
       itens.map((it: any) => ({
         id: it.id,
@@ -173,12 +174,19 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         data_notificacao: it.data_notificacao,
         data_indeferimento: it.data_indeferimento,
         data_recurso_administrativo: it.data_recurso_administrativo,
+        data_indeferimento_recurso: it.data_indeferimento_recurso,
       })),
     );
     for (const p of prazosProc) {
       const nome = p.servicoNome || `Serviço #${p.servicoId ?? "?"}`;
+      const sufixoPrazo =
+        p.evento === "MANDADO DE SEGURANÇA"
+          ? "para impetração de MS (120d · art. 23 Lei 12.016/09)"
+          : p.evento === "RESTITUIÇÃO"
+            ? "para manifestação (10d)"
+            : "para recurso (10d)";
       expDocs.push({
-        label: `${p.evento} — ${nome} · prazo ${p.evento === "RESTITUIÇÃO" ? "para manifestação" : "para recurso"} (10d)`,
+        label: `${p.evento} — ${nome} · prazo ${sufixoPrazo}`,
         date: p.dataLimite,
         days: p.diasRestantes,
         category: "PRAZO ADM",
