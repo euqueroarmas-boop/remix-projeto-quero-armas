@@ -156,6 +156,12 @@ export default function QADashboardPage() {
         </div>
       </div>
 
+      {/* Prazos processuais 10 dias — SEMPRE primeiro card, nada sobrepõe.
+          Renderiza fora do gate `mountHeavy` para garantir prioridade absoluta. */}
+      <Suspense fallback={<Spinner />}>
+        <DashboardPrazosRecursais />
+      </Suspense>
+
       {/* Alerts */}
       {alerts.length > 0 && (
         <div className="space-y-2">
@@ -174,13 +180,6 @@ export default function QADashboardPage() {
       {mountHeavy && (
         <Suspense fallback={<Spinner />}>
           <DashboardNovosCadastrosRecebidos />
-        </Suspense>
-      )}
-
-      {/* Prazos processuais 10 dias */}
-      {mountHeavy && (
-        <Suspense fallback={<Spinner />}>
-          <DashboardPrazosRecursais />
         </Suspense>
       )}
 
