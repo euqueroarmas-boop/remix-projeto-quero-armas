@@ -24,6 +24,7 @@ import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/Forc
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
+import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
