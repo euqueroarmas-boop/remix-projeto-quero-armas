@@ -2403,6 +2403,36 @@ export type Database = {
           },
         ]
       }
+      qa_arsenal_grupos_layout: {
+        Row: {
+          cliente_id: number
+          contexto: string
+          created_at: string
+          id: string
+          ordem_grupos: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          ordem_grupos?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          ordem_grupos?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       qa_arsenal_notificacoes: {
         Row: {
           cliente_id: number
