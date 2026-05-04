@@ -88,7 +88,7 @@ export interface KpiGtes extends KpiValidade {
 }
 
 export interface AlertaItem {
-  fonte: "CR" | "CRAF" | "GTE" | "EXAME" | "DOCUMENTO" | "AUTORIZACAO" | "PROCESSO";
+  fonte: "CR" | "CRAF" | "GTE" | "EXAME" | "DOCUMENTO" | "AUTORIZACAO" | "PROCESSO" | "MUNICAO";
   titulo: string;
   data_validade: string | null;
   dias_restantes: number | null;
@@ -409,7 +409,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
           : m?.data_fabricacao
             ? calcularValidadeMunicao(m.data_fabricacao).data_validade
             : null;
-        empurra("MUNICAO" as any, "MUNIÇÃO", dv, "MUNICAO" as any);
+        empurra("MUNICAO", "MUNIÇÃO", dv, "MUNICAO");
       });
 
       const kpiAlertas: KpiAlertas = {
