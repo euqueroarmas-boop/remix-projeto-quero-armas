@@ -1173,44 +1173,44 @@ export default function QAClientesPage() {
      * Posse PF (id=2) FOI REMOVIDA das listas abaixo — possui form próprio.
      * ================================================================ */
     { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
+    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB] },
     // Nº do Requerimento — exclusivo de Porte na Polícia Federal
-    { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
+    { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: SERVICOS_PORTE_PF },
     // Data Notificação — Porte PF (3) e CRAF PF (26) também precisam exibir para
     // controle do prazo recursal de 10 dias (Lei 9.784/99 art. 59).
-    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: [3, 26] },
+    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: [...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF] },
     { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO (exceto Posse, que tem regra própria acima)
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27, 31] },
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27, 31, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB, ...SERVICOS_CR] },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
-    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
+    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC] },
     // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo" (REMOVIDO de Posse PF)
     { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
-    { key: "numero_processo", label: "Nº do Requerimento", type: "text", servicos: [26] },
-    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18] },
+    { key: "numero_processo", label: "Nº do Requerimento", type: "text", servicos: SERVICOS_CRAF_PF },
+    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB] },
     // Campos exclusivos de CAC — NÃO aparecem em Posse na PF, Concessão de CR, nem CRAF EB (id=6)
     { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
     // Nº CR — aparece em CAC e em Concessão de CR (com rótulo "Nº de Certificado de Registro (CR)")
     { key: "numero_cr", label: "Nº de Certificado de Registro (CR)", type: "text", servicos: SERVICOS_CR },
     { key: "numero_cr", label: "Nº CR", type: "text", servicos: SERVICOS_CAC },
-    { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [3, ...SERVICOS_CAC] },
+    { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [...SERVICOS_PORTE_PF, ...SERVICOS_CAC] },
     { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
     { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
     // Nº CAD SINARM — obrigatório em CRAF na Polícia Federal
-    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: [26], required: true },
+    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: SERVICOS_CRAF_PF, required: true },
     // Autorização de compra EB (Posse PF tem campos próprios na seção dedicada acima)
-    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [5, 15] },
-    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [5, 15] },
+    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: SERVICOS_AUTORIZACAO_EB },
+    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: SERVICOS_AUTORIZACAO_EB },
     // CRAF na Polícia Federal — dados da arma
-    { key: "numero_registro", label: "Nº Registro", type: "text", servicos: [26] },
-    { key: "numero_serie", label: "Nº Série", type: "text", servicos: [26] },
-    { key: "fabricante", label: "Fabricante", type: "text", servicos: [26] },
-    { key: "modelo", label: "Modelo", type: "text", servicos: [26] },
-    { key: "calibre", label: "Calibre", type: "text", servicos: [26] },
+    { key: "numero_registro", label: "Nº Registro", type: "text", servicos: SERVICOS_CRAF_PF },
+    { key: "numero_serie", label: "Nº Série", type: "text", servicos: SERVICOS_CRAF_PF },
+    { key: "fabricante", label: "Fabricante", type: "text", servicos: SERVICOS_CRAF_PF },
+    { key: "modelo", label: "Modelo", type: "text", servicos: SERVICOS_CRAF_PF },
+    { key: "calibre", label: "Calibre", type: "text", servicos: SERVICOS_CRAF_PF },
     // COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro — dados da arma
     { key: "numero_serie", label: "Nº de Série da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
     { key: "fabricante", label: "Fabricante da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
