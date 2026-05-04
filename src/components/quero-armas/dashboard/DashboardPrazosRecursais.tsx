@@ -1,11 +1,12 @@
 /**
  * Dashboard — Prazos Recursais (PF: Posse, Porte e CRAF)
  *
- * Trigger: item com data_notificacao OU data_indeferimento preenchida E
- * serviço sendo Posse PF (id=2), Porte PF (id=3) ou CRAF PF (id=26).
+ * Trigger: QUALQUER item com data_notificacao, data_indeferimento ou
+ * data_restituicao preenchida (independente do serviço — todos abrem prazo
+ * administrativo de 10 dias para manifestação/recurso).
  * Janela: D = data mais recente entre notificação/indeferimento; prazo = D+10
  * (Lei 9.784/99 art. 59 + Decreto 9.847/19 art. 10).
- * Vencidos NÃO aparecem (filtra diasRestantes >= 0).
+ * Vencidos APARECEM (são alertas críticos da equipe).
  * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
  *
  * FKs em produção:
@@ -24,6 +25,7 @@ import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
+import { extrairPrazoDoItem } from "@/lib/quero-armas/prazosProcessuais";
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
@@ -87,9 +89,9 @@ interface PrazoRow {
   cpf: string | null;
   cadastroCrId: number | null;
   protocolo: string | null;
-  tipo: "Posse" | "Porte" | "CRAF";
+  tipo: string;
   /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
-  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO";
+  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO";
   /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
   status: string | null;
   dataEvento: string;
@@ -98,8 +100,9 @@ interface PrazoRow {
 }
 
 const MAX_CARDS = 9; // 9 cards individuais + 1 card "+N"
-// IDs dos serviços PF que disparam prazo recursal
-const SERVICOS_PF_RECURSO: Record<number, "Posse" | "Porte" | "CRAF"> = {
+// Mapa de tipo curto para os serviços conhecidos (rótulo no card).
+// Demais serviços usam o nome do próprio serviço como rótulo.
+const TIPO_CURTO: Record<number, string> = {
   2: "Posse",   // Posse na Polícia Federal
   3: "Porte",   // Porte na Polícia Federal
   26: "CRAF",   // CRAF na Polícia Federal
@@ -121,17 +124,8 @@ const diffDays = (a: string, b: string) => {
   const bUTC = Date.UTC(by, bm - 1, bd);
   return Math.round((bUTC - aUTC) / 86_400_000);
 };
-const addDaysISO = (iso: string, days: number) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d + days));
-  const yy = dt.getUTCFullYear();
-  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getUTCDate()).padStart(2, "0");
-  return `${yy}-${mm}-${dd}`;
-};
-
 function toneFor(dias: number) {
-  // dias = dias restantes até o limite (D+10). Sempre 0..10 aqui (vencidos já filtrados).
+  if (dias < 0)  return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
   if (dias <= 4) return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
   if (dias <= 7) return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
   return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
@@ -144,12 +138,8 @@ export default function DashboardPrazosRecursais() {
 
   const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
     const snapshot = await loadQADashboardSnapshot(signal);
-    const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
     const itensList = snapshot.itens.filter(
-      (item) =>
-        (item.data_indeferimento || item.data_notificacao) &&
-        item.servico_id != null &&
-        servicoIdsPF.includes(item.servico_id)
+      (item) => item.data_indeferimento || item.data_notificacao,
     ) as ItemRow[];
     if (!itensList.length) return [];
 
@@ -178,32 +168,22 @@ export default function DashboardPrazosRecursais() {
       }
     }
 
-    const today = todayISO();
     const built: PrazoRow[] = [];
     for (const it of itensList) {
-      const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
-      if (!tipo) continue;
       const venda = vMap.get(it.venda_id);
       const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
       if (!cliente) continue;
-      // Usa a data mais recente entre Notificação e Indeferimento como gatilho
-      // do prazo recursal — assim o card reflete a janela ativa.
-      const dNotif = it.data_notificacao || null;
-      const dIndef = it.data_indeferimento || null;
-      let dEvento: string | null = null;
-      let evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" = "INDEFERIMENTO";
-      if (dNotif && dIndef) {
-        if (dNotif >= dIndef) { dEvento = dNotif; evento = "NOTIFICAÇÃO"; }
-        else { dEvento = dIndef; evento = "INDEFERIMENTO"; }
-      } else if (dNotif) {
-        dEvento = dNotif; evento = "NOTIFICAÇÃO";
-      } else if (dIndef) {
-        dEvento = dIndef; evento = "INDEFERIMENTO";
-      }
-      if (!dEvento) continue;
-      const dLimite = addDaysISO(dEvento, 10);
-      const diasRestantes = diffDays(today, dLimite);
-      if (diasRestantes < 0 || diasRestantes > 10) continue;
+      const prazo = extrairPrazoDoItem({
+        id: it.id,
+        servico_id: it.servico_id,
+        status: it.status,
+        numero_processo: it.numero_processo,
+        data_notificacao: it.data_notificacao,
+        data_indeferimento: it.data_indeferimento,
+        data_recurso_administrativo: it.data_recurso_administrativo,
+      });
+      if (!prazo) continue;
+      const tipoCurto = it.servico_id ? TIPO_CURTO[it.servico_id] ?? "ADM" : "ADM";
       built.push({
         itemId: it.id,
         clienteIdLegado: cliente.id_legado ?? null,
@@ -225,12 +205,12 @@ export default function DashboardPrazosRecursais() {
           it.numero_porte ??
           it.numero_craf ??
           null,
-        tipo,
-        evento,
+        tipo: tipoCurto,
+        evento: prazo.evento,
         status: it.status ?? null,
-        dataEvento: dEvento,
-        dataLimite: dLimite,
-        diasRestantes,
+        dataEvento: prazo.dataEvento,
+        dataLimite: prazo.dataLimite,
+        diasRestantes: prazo.diasRestantes,
       });
     }
     built.sort((a, b) => a.diasRestantes - b.diasRestantes);
