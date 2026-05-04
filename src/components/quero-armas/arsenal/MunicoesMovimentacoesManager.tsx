@@ -484,9 +484,23 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                               {m.observacao && <span className="text-[10px] italic text-slate-500">"{m.observacao}"</span>}
                             </div>
                             {m.documento_url && (
-                              <a href={m.documento_url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-[#7A1F2B]">
+                              <button
+                                type="button"
+                                title={m.documento_nome ?? "Anexo"}
+                                onClick={async () => {
+                                  const { data, error } = await supabase.storage
+                                    .from("qa-documentos")
+                                    .createSignedUrl(m.documento_url!, 60);
+                                  if (error || !data?.signedUrl) {
+                                    toast.error("Não foi possível abrir anexo.");
+                                    return;
+                                  }
+                                  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                                }}
+                                className="text-slate-400 hover:text-[#7A1F2B]"
+                              >
                                 <Paperclip className="h-3 w-3" />
-                              </a>
+                              </button>
                             )}
                           </div>
                         ))}
