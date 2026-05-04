@@ -892,7 +892,7 @@ export function ArsenalSummary({
           {SECONDARY_ORDER.map((sid) => {
             const def = secondaryDefs[sid];
             const color = toneColor(def.tone);
-            return (
+            const cardEl = (
               <div
                 key={sid}
                 className="group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -914,12 +914,30 @@ export function ArsenalSummary({
                     >
                       {def.icon}
                     </div>
-                    <div
-                      className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
-                      style={{ background: `${color}10`, color }}
-                    >
-                      KPI
-                    </div>
+                    {sid === "exames" && examesAnalytics.total > 0 ? (
+                      <div
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
+                        style={{ background: `${color}10`, color }}
+                      >
+                        {examesAnalytics.vencidos > 0 ? (
+                          <XCircle className="h-3 w-3" />
+                        ) : examesAnalytics.aVencer > 0 ? (
+                          <AlertTriangle className="h-3 w-3" />
+                        ) : (
+                          <CheckCircle2 className="h-3 w-3" />
+                        )}
+                        {examesAnalytics.vencidos > 0 ? "Vencido"
+                          : examesAnalytics.aVencer > 0 ? "Atenção"
+                          : "Em dia"}
+                      </div>
+                    ) : (
+                      <div
+                        className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.18em]"
+                        style={{ background: `${color}10`, color }}
+                      >
+                        KPI
+                      </div>
+                    )}
                   </div>
                   <div
                     className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
@@ -932,10 +950,85 @@ export function ArsenalSummary({
                   <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
                     {def.label}
                   </div>
-                  <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+                  <div
+                    className="mt-2 min-h-[14px] text-[10px] font-medium leading-tight"
+                    style={{ color: sid === "exames" && examesAnalytics.total > 0 ? color : "rgb(148 163 184)" }}
+                  >
+                    {def.hint || ""}
+                  </div>
                 </button>
               </div>
             );
+            if (sid === "exames" && examesAnalytics.total > 0) {
+              return (
+                <Popover key={sid}>
+                  <PopoverTrigger asChild>
+                    <div className="cursor-pointer">{cardEl}</div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-0 bg-white border-slate-200" align="end">
+                    <div className="p-3 border-b border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <Stethoscope className="h-4 w-4 text-slate-700" />
+                        <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-700">
+                          Exames / Laudos
+                        </div>
+                      </div>
+                      <div className="mt-1 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                          {examesAnalytics.vigentes} vigente{examesAnalytics.vigentes !== 1 ? "s" : ""}
+                        </span>
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+                          {examesAnalytics.aVencer} a vencer
+                        </span>
+                        <span className="rounded-full bg-red-50 px-2 py-0.5 text-red-700">
+                          {examesAnalytics.vencidos} vencido{examesAnalytics.vencidos !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {examesAnalytics.rows.map((r) => {
+                        const statusCfg =
+                          r.status === "vencido" ? { c: "text-red-700", bg: "bg-red-50", lbl: "VENCIDO", Icon: XCircle } :
+                          r.status === "critico" ? { c: "text-red-600", bg: "bg-red-50", lbl: "CRÍTICO", Icon: AlertTriangle } :
+                          r.status === "atencao" ? { c: "text-amber-700", bg: "bg-amber-50", lbl: "ATENÇÃO", Icon: AlertTriangle } :
+                          r.status === "vigente" ? { c: "text-emerald-700", bg: "bg-emerald-50", lbl: "VIGENTE", Icon: CheckCircle2 } :
+                          { c: "text-slate-500", bg: "bg-slate-50", lbl: "SEM DATA", Icon: Clock };
+                        const StatusIcon = statusCfg.Icon;
+                        const fmt = (d: Date | null) => d ? d.toLocaleDateString("pt-BR") : "—";
+                        const diasTxt =
+                          r.diasRestantes === null ? "—" :
+                          r.diasRestantes < 0 ? `vencido há ${Math.abs(r.diasRestantes)}d` :
+                          r.diasRestantes === 0 ? "vence hoje" :
+                          `${r.diasRestantes} dias restantes`;
+                        return (
+                          <div key={r.id} className="px-3 py-2 border-b border-slate-50 last:border-b-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="text-[12px] font-semibold text-slate-800">{r.tipoLabel}</div>
+                              <div className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold ${statusCfg.bg} ${statusCfg.c}`}>
+                                <StatusIcon className="h-2.5 w-2.5" /> {statusCfg.lbl}
+                              </div>
+                            </div>
+                            <div className="mt-1 grid grid-cols-2 gap-1 text-[10px] text-slate-500">
+                              <div>Realização: <span className="font-mono text-slate-700">{fmt(r.dataRealizacao)}</span></div>
+                              <div>Vencimento: <span className="font-mono text-slate-700">{fmt(r.dataVencimento)}</span></div>
+                            </div>
+                            <div className={`mt-0.5 text-[10px] font-bold ${statusCfg.c}`}>{diasTxt}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate?.("exames")}
+                      className="w-full px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600 hover:bg-slate-50 border-t border-slate-100 inline-flex items-center justify-center gap-1"
+                    >
+                      Ver aba Exames <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </PopoverContent>
+                </Popover>
+              );
+            }
+            return cardEl;
           })}
         </div>
       )}
