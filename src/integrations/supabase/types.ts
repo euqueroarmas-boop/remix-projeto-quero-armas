@@ -5031,19 +5031,26 @@ export type Database = {
           aplicar_globalmente: boolean
           ativo: boolean
           caso_id: string | null
+          categoria: string | null
           categoria_erro: Database["public"]["Enums"]["qa_categoria_erro_ia"]
           cliente_id: number | null
           created_at: string
           criado_por: string | null
           criado_por_nome: string | null
+          exemplo_aplicacao: string | null
           explicacao: string | null
           foco_argumentativo: string | null
           id: string
+          instrucao: string | null
           peca_id: string | null
+          prioridade: Database["public"]["Enums"]["qa_ia_prioridade"]
           regra_aplicavel: string | null
+          servico_procedimento: string | null
           tipo_peca: string
-          trecho_correto: string
-          trecho_errado: string
+          tipo_registro: Database["public"]["Enums"]["qa_ia_tipo_registro"]
+          titulo: string | null
+          trecho_correto: string | null
+          trecho_errado: string | null
           ultima_utilizacao: string | null
           updated_at: string
           usado_vezes: number
@@ -5052,19 +5059,26 @@ export type Database = {
           aplicar_globalmente?: boolean
           ativo?: boolean
           caso_id?: string | null
+          categoria?: string | null
           categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
           cliente_id?: number | null
           created_at?: string
           criado_por?: string | null
           criado_por_nome?: string | null
+          exemplo_aplicacao?: string | null
           explicacao?: string | null
           foco_argumentativo?: string | null
           id?: string
+          instrucao?: string | null
           peca_id?: string | null
+          prioridade?: Database["public"]["Enums"]["qa_ia_prioridade"]
           regra_aplicavel?: string | null
+          servico_procedimento?: string | null
           tipo_peca: string
-          trecho_correto: string
-          trecho_errado: string
+          tipo_registro?: Database["public"]["Enums"]["qa_ia_tipo_registro"]
+          titulo?: string | null
+          trecho_correto?: string | null
+          trecho_errado?: string | null
           ultima_utilizacao?: string | null
           updated_at?: string
           usado_vezes?: number
@@ -5073,19 +5087,26 @@ export type Database = {
           aplicar_globalmente?: boolean
           ativo?: boolean
           caso_id?: string | null
+          categoria?: string | null
           categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
           cliente_id?: number | null
           created_at?: string
           criado_por?: string | null
           criado_por_nome?: string | null
+          exemplo_aplicacao?: string | null
           explicacao?: string | null
           foco_argumentativo?: string | null
           id?: string
+          instrucao?: string | null
           peca_id?: string | null
+          prioridade?: Database["public"]["Enums"]["qa_ia_prioridade"]
           regra_aplicavel?: string | null
+          servico_procedimento?: string | null
           tipo_peca?: string
-          trecho_correto?: string
-          trecho_errado?: string
+          tipo_registro?: Database["public"]["Enums"]["qa_ia_tipo_registro"]
+          titulo?: string | null
+          trecho_correto?: string | null
+          trecho_errado?: string | null
           ultima_utilizacao?: string | null
           updated_at?: string
           usado_vezes?: number
@@ -8468,6 +8489,8 @@ export type Database = {
         | "pedido_final_incorreto"
         | "conclusao_desalinhada"
         | "outro"
+      qa_ia_prioridade: "baixa" | "media" | "alta" | "critica"
+      qa_ia_tipo_registro: "correcao_erro" | "treinamento_direto"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8642,6 +8665,8 @@ export const Constants = {
         "conclusao_desalinhada",
         "outro",
       ],
+      qa_ia_prioridade: ["baixa", "media", "alta", "critica"],
+      qa_ia_tipo_registro: ["correcao_erro", "treinamento_direto"],
     },
   },
 } as const
