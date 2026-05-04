@@ -447,6 +447,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               const statusDone = it.status === "CONCLUÍDO" || it.status === "DEFERIDO";
               const statusBad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(it.status);
               const progress = statusDone ? 100 : statusBad ? 0 : 60;
+              const prazoItem = analysis.prazosProc.find((p) => p.itemId === it.id);
               return (
                 <div key={it.id} className="group flex items-center gap-3 py-3 px-4 rounded-xl border transition-all hover:shadow-sm" style={{ borderColor: "hsl(220 13% 93%)" }}>
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
@@ -464,6 +465,20 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                       {it.numero_processo && <span className="font-mono">{it.numero_processo}</span>}
                       {it.data_protocolo && <span>Prot: {formatDate(it.data_protocolo)}</span>}
                     </div>
+                    {prazoItem && (
+                      <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                        style={{
+                          background: prazoItem.diasRestantes < 0 ? "hsl(0 80% 95%)"
+                            : prazoItem.diasRestantes <= 2 ? "hsl(0 80% 95%)"
+                            : prazoItem.diasRestantes <= 5 ? "hsl(38 92% 92%)"
+                            : "hsl(152 60% 92%)",
+                          color: prazoItem.diasRestantes <= 5 || prazoItem.diasRestantes < 0 ? "hsl(0 72% 40%)" : "hsl(152 60% 30%)",
+                        }}
+                        title={`${prazoItem.evento} em ${prazoItem.dataEvento.split("-").reverse().join("/")} · prazo fatal ${prazoItem.dataLimite.split("-").reverse().join("/")}`}
+                      >
+                        {prazoItem.evento} · {prazoItem.statusLabel}
+                      </div>
+                    )}
                     {/* Progress bar */}
                     <div className="w-full h-1 rounded-full mt-2" style={{ background: "hsl(220 13% 94%)" }}>
                       <div className="h-full rounded-full transition-all" style={{
