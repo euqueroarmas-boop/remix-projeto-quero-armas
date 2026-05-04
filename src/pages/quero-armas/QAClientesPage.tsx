@@ -44,6 +44,7 @@ import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEn
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
+import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
 import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
