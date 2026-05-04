@@ -2370,16 +2370,36 @@ export default function QAClientesPage() {
       <div className="space-y-3 md:space-y-4 px-0.5">
         {/* Header — padrão ARSENAL (Premium KPI cluster) */}
         {(() => {
-          const statusTone =
+          // Status cadastral (selo pequeno) — mantém comportamento legado
+          const statusCadastralTone =
             c.status === "ATIVO"
               ? "hsl(152 60% 42%)"
               : c.status === "DESISTENTE"
               ? "hsl(0 72% 55%)"
               : "hsl(38 92% 50%)";
+          // Status operacional consolidado — dirige fundo/borda/glow do card
+          // Pior cor entre CR · CRAFs · GTEs · Exames · Autorizações · Processos · Documentos
+          const tomOperacional = healthData?.tom_geral ?? null;
+          const operacionalTone =
+            tomOperacional === "vermelho" ? "hsl(0 72% 55%)" :
+            tomOperacional === "laranja" ? "hsl(20 90% 50%)" :
+            tomOperacional === "amarelo" ? "hsl(38 92% 50%)" :
+            tomOperacional === "azul" ? "hsl(210 80% 50%)" :
+            tomOperacional === "verde" ? "hsl(152 60% 42%)" :
+            statusCadastralTone;
+          // Quando o cadastro está DESISTENTE/PENDENTE, o estado cadastral
+          // continua ditando o card (não há operação relevante).
+          const statusTone = c.status === "ATIVO" ? operacionalTone : statusCadastralTone;
+          const cardBorderClass =
+            c.status === "ATIVO" && tomOperacional === "vermelho"
+              ? "border-red-200/80"
+              : c.status === "ATIVO" && (tomOperacional === "laranja" || tomOperacional === "amarelo")
+              ? "border-amber-200/80"
+              : "border-slate-200/80";
           return (
             <div
-              className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
-              style={{ boxShadow: "inset 0 0 0 1px hsl(190 80% 45% / 0.06), 0 1px 2px rgba(15,23,42,0.04)" }}
+              className={`relative overflow-hidden rounded-2xl border bg-white shadow-sm ${cardBorderClass}`}
+              style={{ boxShadow: `inset 0 0 0 1px ${statusTone}14, 0 1px 2px rgba(15,23,42,0.04)` }}
             >
               {/* Glow ambiente (mesmo tratamento do KpiCard do Arsenal) */}
               <div
@@ -2401,9 +2421,9 @@ export default function QAClientesPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
-                      style={{ background: `${statusTone}14`, color: statusTone, boxShadow: `inset 0 0 0 1px ${statusTone}33` }}
+                      style={{ background: `${statusCadastralTone}14`, color: statusCadastralTone, boxShadow: `inset 0 0 0 1px ${statusCadastralTone}33` }}
                     >
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusTone }} />
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusCadastralTone }} />
                       {c.status}
                     </span>
                     <ClienteHealthBadge clienteId={clienteCadastroIdForSub || c.id} variant="full" />
