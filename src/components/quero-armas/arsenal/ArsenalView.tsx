@@ -16,6 +16,18 @@ import { CrafUploadIAModal } from "./CrafUploadIAModal";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { excluirDocumentoLogico } from "@/components/quero-armas/clientes/docsAprovacao";
 import { AlertasDrillDownModal, type AlertaItem } from "./AlertasDrillDownModal";
+import { useArsenalGruposLayout, type ArsenalGroupId } from "./useArsenalGruposLayout";
+import { ArsenalGruposToolbar } from "./ArsenalGruposToolbar";
+import { ArsenalGroupItem } from "./ArsenalGroupItem";
+import {
+  DndContext,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import {
   getStatusUnificado,
   getStatusValidade,
@@ -38,7 +50,8 @@ interface Props {
   onOpenAddDoc: () => void;
   onUpdateAvatarClick?: () => void;
   onArsenalChanged?: () => Promise<void> | void;
-  /** Quando true, exibe controles de exclusão de docs genéricos (admin tem permissão total). */
+  /** Quando true, indica que o painel está sendo usado pela Equipe Quero Armas
+   *  (perfil interno) — habilita controles de exclusão de docs genéricos. */
   isAdmin?: boolean;
   /** Cidade do cliente (usada para resolver Circunscrição PF). */
   clienteCidade?: string | null;
