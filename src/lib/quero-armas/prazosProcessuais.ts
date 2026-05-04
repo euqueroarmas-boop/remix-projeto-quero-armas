@@ -4,15 +4,22 @@
  * estes helpers para evitar divergência entre Dashboard, KPIs do cliente,
  * Arsenal, "Próximos vencimentos" e a aba Serviços.
  *
- * Eventos que abrem prazo de 10 dias corridos:
- *   - data_notificacao             → NOTIFICAÇÃO da PF
- *   - data_indeferimento           → INDEFERIMENTO
- *   - data_restituicao (opcional)  → RESTITUIÇÃO
+ * Eventos que abrem prazo administrativo:
+ *   - data_notificacao             → NOTIFICAÇÃO da PF       (10 dias · Lei 9.784/99)
+ *   - data_indeferimento           → INDEFERIMENTO           (10 dias · Lei 9.784/99)
+ *   - data_restituicao             → RESTITUIÇÃO             (10 dias · Lei 9.784/99)
+ *   - data_indeferimento_recurso   → MANDADO DE SEGURANÇA    (120 dias · art. 23 Lei 12.016/09)
  *
- * Quando há mais de uma data, vence a MAIS RECENTE (janela ativa).
+ * Regra de prioridade: se houver `data_indeferimento_recurso`, ela SOBREPÕE
+ * qualquer outro evento (já se esgotou a via administrativa, agora corre o
+ * prazo decadencial do MS). Caso contrário, vence a data MAIS RECENTE.
  */
 
-export type EventoPrazo = "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO";
+export type EventoPrazo =
+  | "NOTIFICAÇÃO"
+  | "INDEFERIMENTO"
+  | "RESTITUIÇÃO"
+  | "MANDADO DE SEGURANÇA";
 
 export interface PrazoProcessual {
   itemId: number | string;
@@ -26,9 +33,12 @@ export interface PrazoProcessual {
   statusLabel: string;
   numeroProcesso: string | null;
   itemStatus: string | null;
+  /** Quantos dias o prazo total tem (10 ou 120). Útil para UI/labels. */
+  prazoTotalDias: number;
 }
 
-const PRAZO_DIAS = 10;
+const PRAZO_DIAS_PADRAO = 10;
+const PRAZO_DIAS_MS = 120;
 
 function todayISOLocal(): string {
   const n = new Date();
@@ -80,8 +90,11 @@ export interface ItemComPrazo {
   /** Opcional: alguns serviços usam restituição como evento de 10 dias. */
   data_restituicao?: string | null;
   /** Opcional — se preenchida e for posterior à notificação/indeferimento,
-   * o recurso já foi protocolado e o prazo não corre mais. */
+   * o recurso já foi protocolado e o prazo de 10 dias não corre mais. */
   data_recurso_administrativo?: string | null;
+  /** Indeferimento do recurso administrativo. Inicia IMEDIATAMENTE o prazo
+   *  decadencial de 120 dias para impetração de Mandado de Segurança. */
+  data_indeferimento_recurso?: string | null;
 }
 
 /** Extrai (no máximo) UM prazo ativo por item, baseado na data de evento mais recente. */
@@ -89,14 +102,7 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dNotif = normalizeDateISO(item.data_notificacao);
   const dIndef = normalizeDateISO(item.data_indeferimento);
   const dRest = normalizeDateISO(item.data_restituicao);
-  const candidatos: { data: string; evento: EventoPrazo }[] = [];
-  if (dNotif) candidatos.push({ data: dNotif, evento: "NOTIFICAÇÃO" });
-  if (dIndef) candidatos.push({ data: dIndef, evento: "INDEFERIMENTO" });
-  if (dRest) candidatos.push({ data: dRest, evento: "RESTITUIÇÃO" });
-  if (candidatos.length === 0) return null;
-
-  candidatos.sort((a, b) => (a.data < b.data ? 1 : -1));
-  const ativo = candidatos[0];
+  const dIndefRec = normalizeDateISO(item.data_indeferimento_recurso);
 
   // Status finais cancelam o prazo (já não corre): deferido, concluído,
   // cancelado, desistiu. Indeferido/notificado/em análise mantêm o prazo
@@ -105,7 +111,24 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const FINALIZADOS = ["DEFERIDO", "CONCLUÍDO", "CONCLUIDO", "CANCELADO", "DESISTIU"];
   if (FINALIZADOS.includes(statusUpper)) return null;
 
-  const dataLimite = addDaysISO(ativo.data, PRAZO_DIAS);
+  // PRIORIDADE 1: Indeferimento do recurso administrativo → MS 120 dias.
+  // Sobrepõe qualquer prazo de 10 dias da PF (esgotada a via administrativa).
+  let ativo: { data: string; evento: EventoPrazo } | null = null;
+  let prazoTotal = PRAZO_DIAS_PADRAO;
+  if (dIndefRec) {
+    ativo = { data: dIndefRec, evento: "MANDADO DE SEGURANÇA" };
+    prazoTotal = PRAZO_DIAS_MS;
+  } else {
+    const candidatos: { data: string; evento: EventoPrazo }[] = [];
+    if (dNotif) candidatos.push({ data: dNotif, evento: "NOTIFICAÇÃO" });
+    if (dIndef) candidatos.push({ data: dIndef, evento: "INDEFERIMENTO" });
+    if (dRest) candidatos.push({ data: dRest, evento: "RESTITUIÇÃO" });
+    if (candidatos.length === 0) return null;
+    candidatos.sort((a, b) => (a.data < b.data ? 1 : -1));
+    ativo = candidatos[0];
+  }
+
+  const dataLimite = addDaysISO(ativo.data, prazoTotal);
   const diasRestantes = diffDaysISO(todayISOLocal(), dataLimite);
   const { status, label } = statusFor(diasRestantes);
 
@@ -121,6 +144,7 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
     statusLabel: label,
     numeroProcesso: item.numero_processo ?? null,
     itemStatus: item.status ?? null,
+    prazoTotalDias: prazoTotal,
   };
 }
 
