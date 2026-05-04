@@ -8,6 +8,7 @@ import {
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import ClienteArsenalReview from "@/components/quero-armas/clientes/ClienteArsenalReview";
+import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 
 interface Props {
   cliente: any;
@@ -160,6 +161,30 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     filiacoes.forEach((f: any) => { if (f.validade_filiacao) expDocs.push({ label: `Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, date: f.validade_filiacao, days: daysUntil(f.validade_filiacao), category: "FILIAÇÃO" }); });
     itens.forEach((it: any) => { if (it.data_vencimento) expDocs.push({ label: `Serviço — ${SERVICO_MAP[it.servico_id] || `#${it.servico_id}`}`, date: it.data_vencimento, days: daysUntil(it.data_vencimento), category: "SERVIÇO" }); });
 
+    // Prazos processuais administrativos de 10 dias (notificação / indeferimento /
+    // restituição). Fonte única: lib/quero-armas/prazosProcessuais.
+    const prazosProc = calcularPrazosProcessuais(
+      itens.map((it: any) => ({
+        id: it.id,
+        servico_id: it.servico_id,
+        servico_nome: SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`,
+        status: it.status,
+        numero_processo: it.numero_processo,
+        data_notificacao: it.data_notificacao,
+        data_indeferimento: it.data_indeferimento,
+        data_recurso_administrativo: it.data_recurso_administrativo,
+      })),
+    );
+    for (const p of prazosProc) {
+      const nome = p.servicoNome || `Serviço #${p.servicoId ?? "?"}`;
+      expDocs.push({
+        label: `${p.evento} — ${nome} · prazo ${p.evento === "RESTITUIÇÃO" ? "para manifestação" : "para recurso"} (10d)`,
+        date: p.dataLimite,
+        days: p.diasRestantes,
+        category: "PRAZO ADM",
+      });
+    }
+
     expDocs.sort((a, b) => {
       if (a.days === null && b.days === null) return 0;
       if (a.days === null) return 1;
@@ -171,8 +196,8 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const vencidos = expDocs.filter(d => d.days !== null && d.days < 0);
     const validos = expDocs.filter(d => d.days !== null && d.days > 90);
 
-    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, armasReview, expDocs, alerts, vencidos, validos };
-  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual]);
+    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, armasReview, expDocs, alerts, vencidos, validos, prazosProc };
+  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual, SERVICO_MAP]);
 
   // Timeline events — ORDEM CRONOLÓGICA ASCENDENTE com TODOS os marcos por serviço
   const timeline = useMemo(() => {
