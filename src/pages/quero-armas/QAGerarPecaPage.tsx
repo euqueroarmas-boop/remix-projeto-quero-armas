@@ -297,6 +297,12 @@ export default function QAGerarPecaPage() {
 
   // Editing existing case
   const [casoId, setCasoId] = useState<string | null>(null);
+
+  // ── Indeferimento (recurso_administrativo) ──
+  const [indeferimentoTexto, setIndeferimentoTexto] = useState("");
+  const [indeferimentoAnalise, setIndeferimentoAnalise] = useState<any | null>(null);
+  const [analisandoIndef, setAnalisandoIndef] = useState(false);
+  const indefFileRef = useRef<HTMLInputElement>(null);
   // Cliente vinculado ao caso (preservado entre carregamento e geração)
   const [clienteIdVinculado, setClienteIdVinculado] = useState<number | null>(null);
 
