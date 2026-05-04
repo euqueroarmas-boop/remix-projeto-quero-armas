@@ -12,7 +12,7 @@ import {
 import { toast } from "sonner";
 import {
   Plus, Search, Pencil, Power, Trash2, Loader2, GraduationCap, Globe2, User,
-  BookMarked, Filter,
+  BookMarked, Filter, AlertOctagon, Sparkles, Layers,
 } from "lucide-react";
 
 // =============================================================
@@ -38,13 +38,30 @@ export const CATEGORIAS_ERRO = [
   { value: "outro", label: "Outro" },
 ] as const;
 
+const PRIORIDADES = [
+  { value: "baixa", label: "BAIXA" },
+  { value: "media", label: "MÉDIA" },
+  { value: "alta", label: "ALTA" },
+  { value: "critica", label: "CRÍTICA" },
+] as const;
+
+type TipoRegistro = "correcao_erro" | "treinamento_direto";
+type Prioridade = "baixa" | "media" | "alta" | "critica";
+
 type Correcao = {
   id: string;
+  tipo_registro: TipoRegistro;
+  titulo: string | null;
+  instrucao: string | null;
+  servico_procedimento: string | null;
+  categoria: string | null;
+  exemplo_aplicacao: string | null;
+  prioridade: Prioridade;
   tipo_peca: string;
   foco_argumentativo: string | null;
   categoria_erro: string;
-  trecho_errado: string;
-  trecho_correto: string;
+  trecho_errado: string | null;
+  trecho_correto: string | null;
   explicacao: string | null;
   regra_aplicavel: string | null;
   aplicar_globalmente: boolean;
@@ -60,6 +77,13 @@ type Correcao = {
 
 type FormState = {
   id?: string;
+  tipo_registro: TipoRegistro;
+  titulo: string;
+  instrucao: string;
+  servico_procedimento: string;
+  categoria: string;
+  exemplo_aplicacao: string;
+  prioridade: Prioridade;
   tipo_peca: string;
   foco_argumentativo: string;
   categoria_erro: string;
@@ -72,6 +96,13 @@ type FormState = {
 };
 
 const EMPTY_FORM: FormState = {
+  tipo_registro: "correcao_erro",
+  titulo: "",
+  instrucao: "",
+  servico_procedimento: "",
+  categoria: "",
+  exemplo_aplicacao: "",
+  prioridade: "media",
   tipo_peca: TIPOS_PECA[0].value,
   foco_argumentativo: "",
   categoria_erro: "outro",
@@ -98,6 +129,7 @@ export default function QACorrecoesIAPage() {
   const [filterCategoria, setFilterCategoria] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterEscopo, setFilterEscopo] = useState<string>("all");
+  const [aba, setAba] = useState<"todas" | "correcao_erro" | "treinamento_direto">("todas");
 
   const [openModal, setOpenModal] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -124,40 +156,50 @@ export default function QACorrecoesIAPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return items.filter(it => {
+      if (aba !== "todas" && (it.tipo_registro || "correcao_erro") !== aba) return false;
       if (filterTipo !== "all" && it.tipo_peca !== filterTipo) return false;
-      if (filterCategoria !== "all" && it.categoria_erro !== filterCategoria) return false;
+      if (filterCategoria !== "all" && it.categoria_erro !== filterCategoria && (it.tipo_registro || "correcao_erro") === "correcao_erro") return false;
       if (filterStatus === "ativo" && !it.ativo) return false;
       if (filterStatus === "inativo" && it.ativo) return false;
       if (filterEscopo === "global" && !it.aplicar_globalmente) return false;
       if (filterEscopo === "especifico" && it.aplicar_globalmente) return false;
       if (q) {
-        const blob = `${it.trecho_errado} ${it.trecho_correto} ${it.explicacao || ""} ${it.regra_aplicavel || ""}`.toLowerCase();
+        const blob = `${it.titulo || ""} ${it.instrucao || ""} ${it.exemplo_aplicacao || ""} ${it.servico_procedimento || ""} ${it.categoria || ""} ${it.trecho_errado || ""} ${it.trecho_correto || ""} ${it.explicacao || ""} ${it.regra_aplicavel || ""}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;
     });
-  }, [items, search, filterTipo, filterCategoria, filterStatus, filterEscopo]);
+  }, [items, search, filterTipo, filterCategoria, filterStatus, filterEscopo, aba]);
 
   const stats = useMemo(() => {
     const total = items.length;
     const ativas = items.filter(i => i.ativo).length;
     const globais = items.filter(i => i.aplicar_globalmente && i.ativo).length;
     const usos = items.reduce((acc, i) => acc + (i.usado_vezes || 0), 0);
-    return { total, ativas, globais, usos };
+    const treinamentos = items.filter(i => (i.tipo_registro || "correcao_erro") === "treinamento_direto").length;
+    const correcoes = items.filter(i => (i.tipo_registro || "correcao_erro") === "correcao_erro").length;
+    return { total, ativas, globais, usos, treinamentos, correcoes };
   }, [items]);
 
-  function openCreate() {
-    setForm(EMPTY_FORM);
+  function openCreate(tipo: TipoRegistro = "correcao_erro") {
+    setForm({ ...EMPTY_FORM, tipo_registro: tipo });
     setOpenModal(true);
   }
   function openEdit(it: Correcao) {
     setForm({
       id: it.id,
+      tipo_registro: (it.tipo_registro || "correcao_erro"),
+      titulo: it.titulo || "",
+      instrucao: it.instrucao || "",
+      servico_procedimento: it.servico_procedimento || "",
+      categoria: it.categoria || "",
+      exemplo_aplicacao: it.exemplo_aplicacao || "",
+      prioridade: (it.prioridade || "media"),
       tipo_peca: it.tipo_peca,
       foco_argumentativo: it.foco_argumentativo || "",
       categoria_erro: it.categoria_erro,
-      trecho_errado: it.trecho_errado,
-      trecho_correto: it.trecho_correto,
+      trecho_errado: it.trecho_errado || "",
+      trecho_correto: it.trecho_correto || "",
       explicacao: it.explicacao || "",
       regra_aplicavel: it.regra_aplicavel || "",
       aplicar_globalmente: it.aplicar_globalmente,
@@ -167,23 +209,41 @@ export default function QACorrecoesIAPage() {
   }
 
   async function salvar() {
-    if (form.trecho_errado.trim().length < 5) {
-      toast.error("Trecho errado deve ter pelo menos 5 caracteres");
-      return;
-    }
-    if (form.trecho_correto.trim().length < 5) {
-      toast.error("Trecho correto deve ter pelo menos 5 caracteres");
-      return;
+    if (form.tipo_registro === "correcao_erro") {
+      if (form.trecho_errado.trim().length < 5) {
+        toast.error("Trecho errado deve ter pelo menos 5 caracteres");
+        return;
+      }
+      if (form.trecho_correto.trim().length < 5) {
+        toast.error("Trecho correto deve ter pelo menos 5 caracteres");
+        return;
+      }
+    } else {
+      if (form.titulo.trim().length < 3) {
+        toast.error("Informe um título para a orientação");
+        return;
+      }
+      if (form.instrucao.trim().length < 10) {
+        toast.error("Descreva a instrução obrigatória para a IA (mín. 10 caracteres)");
+        return;
+      }
     }
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const payload: any = {
+        tipo_registro: form.tipo_registro,
+        titulo: form.titulo.trim() || null,
+        instrucao: form.instrucao.trim() || null,
+        servico_procedimento: form.servico_procedimento.trim() || null,
+        categoria: form.categoria.trim() || null,
+        exemplo_aplicacao: form.exemplo_aplicacao.trim() || null,
+        prioridade: form.prioridade,
         tipo_peca: form.tipo_peca,
         foco_argumentativo: form.foco_argumentativo.trim() || null,
         categoria_erro: form.categoria_erro,
-        trecho_errado: form.trecho_errado.trim(),
-        trecho_correto: form.trecho_correto.trim(),
+        trecho_errado: form.tipo_registro === "correcao_erro" ? form.trecho_errado.trim() : null,
+        trecho_correto: form.tipo_registro === "correcao_erro" ? form.trecho_correto.trim() : null,
         explicacao: form.explicacao.trim() || null,
         regra_aplicavel: form.regra_aplicavel.trim() || null,
         aplicar_globalmente: form.aplicar_globalmente,
@@ -195,7 +255,7 @@ export default function QACorrecoesIAPage() {
           .update(payload)
           .eq("id", form.id);
         if (error) throw error;
-        toast.success("Correção atualizada");
+        toast.success(form.tipo_registro === "correcao_erro" ? "Correção atualizada" : "Treinamento atualizado");
       } else {
         payload.criado_por = user?.id || null;
         payload.criado_por_nome = user?.email || null;
@@ -203,7 +263,7 @@ export default function QACorrecoesIAPage() {
           .from("qa_ia_correcoes_juridicas")
           .insert(payload);
         if (error) throw error;
-        toast.success("Correção registrada");
+        toast.success(form.tipo_registro === "correcao_erro" ? "Correção registrada" : "Treinamento registrado");
       }
       setOpenModal(false);
       await load();
@@ -260,21 +320,51 @@ export default function QACorrecoesIAPage() {
               Cadastre trechos errados gerados pela IA e a versão correta. Cada correção ativa será injetada como regra obrigatória nas próximas peças jurídicas.
             </p>
           </div>
-          <button
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors"
-            style={{ background: "hsl(35 90% 50%)", color: "white" }}
-          >
-            <Plus className="h-4 w-4" /> Nova Correção
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => openCreate("correcao_erro")}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-md text-xs font-semibold uppercase tracking-wider border transition-colors"
+              style={{ borderColor: "hsl(0 50% 80%)", color: "hsl(0 60% 40%)", background: "white" }}
+            >
+              <AlertOctagon className="h-4 w-4" /> Nova Correção
+            </button>
+            <button
+              onClick={() => openCreate("treinamento_direto")}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors"
+              style={{ background: "hsl(220 70% 35%)", color: "white" }}
+            >
+              <Sparkles className="h-4 w-4" /> + Novo Treinamento
+            </button>
+          </div>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KPI label="Total" value={stats.total} icon={<BookMarked className="h-4 w-4" />} />
+          <KPI label="Total" value={stats.total} icon={<Layers className="h-4 w-4" />} />
           <KPI label="Ativas" value={stats.ativas} icon={<Power className="h-4 w-4" />} accent />
-          <KPI label="Globais" value={stats.globais} icon={<Globe2 className="h-4 w-4" />} />
+          <KPI label="Treinamentos" value={stats.treinamentos} icon={<Sparkles className="h-4 w-4" />} />
           <KPI label="Usos Acumulados" value={stats.usos} icon={<GraduationCap className="h-4 w-4" />} />
+        </div>
+
+        {/* Abas */}
+        <div className="flex items-center gap-1 border-b" style={{ borderColor: "hsl(36 20% 85%)" }}>
+          {([
+            { v: "todas", label: `TODAS AS REGRAS (${stats.total})`, icon: <Layers className="h-3.5 w-3.5" /> },
+            { v: "correcao_erro", label: `CORREÇÕES DE ERRO (${stats.correcoes})`, icon: <AlertOctagon className="h-3.5 w-3.5" /> },
+            { v: "treinamento_direto", label: `TREINAMENTOS DIRETOS (${stats.treinamentos})`, icon: <Sparkles className="h-3.5 w-3.5" /> },
+          ] as const).map(t => (
+            <button
+              key={t.v}
+              onClick={() => setAba(t.v as any)}
+              className="inline-flex items-center gap-1.5 px-3 h-9 text-[11px] font-semibold uppercase tracking-wider transition-colors -mb-px border-b-2"
+              style={{
+                borderColor: aba === t.v ? "hsl(220 70% 35%)" : "transparent",
+                color: aba === t.v ? "hsl(220 70% 30%)" : "hsl(220 10% 50%)",
+              }}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
         </div>
 
         {/* Filtros */}
@@ -365,33 +455,105 @@ export default function QACorrecoesIAPage() {
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto qa-scope">
           <DialogHeader>
             <DialogTitle className="uppercase tracking-wide text-base">
-              {form.id ? "EDITAR CORREÇÃO" : "NOVA CORREÇÃO DA IA"}
+              {form.id
+                ? (form.tipo_registro === "correcao_erro" ? "EDITAR CORREÇÃO" : "EDITAR TREINAMENTO")
+                : (form.tipo_registro === "correcao_erro" ? "NOVA CORREÇÃO DA IA" : "NOVO TREINAMENTO JURÍDICO DIRETO")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Toggle tipo de registro (apenas no criar) */}
+            {!form.id && (
+              <div className="grid grid-cols-2 gap-2 p-1 rounded-lg border" style={{ borderColor: "hsl(36 20% 88%)", background: "hsl(36 30% 96%)" }}>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, tipo_registro: "correcao_erro" }))}
+                  className="h-8 rounded-md text-[11px] font-semibold uppercase tracking-wider inline-flex items-center justify-center gap-1.5"
+                  style={{
+                    background: form.tipo_registro === "correcao_erro" ? "hsl(0 60% 45%)" : "transparent",
+                    color: form.tipo_registro === "correcao_erro" ? "white" : "hsl(220 15% 35%)",
+                  }}
+                ><AlertOctagon className="h-3 w-3" /> Correção de erro</button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, tipo_registro: "treinamento_direto" }))}
+                  className="h-8 rounded-md text-[11px] font-semibold uppercase tracking-wider inline-flex items-center justify-center gap-1.5"
+                  style={{
+                    background: form.tipo_registro === "treinamento_direto" ? "hsl(220 70% 35%)" : "transparent",
+                    color: form.tipo_registro === "treinamento_direto" ? "white" : "hsl(220 15% 35%)",
+                  }}
+                ><Sparkles className="h-3 w-3" /> Treinamento direto</button>
+              </div>
+            )}
+
+            {form.tipo_registro === "treinamento_direto" && (
+              <Field label="TÍTULO DA ORIENTAÇÃO *">
+                <Input
+                  value={form.titulo}
+                  onChange={e => setForm(f => ({ ...f, titulo: e.target.value.toUpperCase() }))}
+                  placeholder="EX: EXIGÊNCIAS CUMPRIDAS — RESPOSTA TÉCNICA À NOTIFICAÇÃO"
+                  className="h-9 text-xs uppercase"
+                />
+              </Field>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="TIPO DE PEÇA *">
                 <Select value={form.tipo_peca} onValueChange={v => setForm(f => ({ ...f, tipo_peca: v }))}>
                   <SelectTrigger className="h-9 text-xs uppercase"><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="todos" className="text-xs uppercase">TODOS OS TIPOS (CURINGA)</SelectItem>
                     {TIPOS_PECA.map(t => (
                       <SelectItem key={t.value} value={t.value} className="text-xs uppercase">{t.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="CATEGORIA DO ERRO *">
-                <Select value={form.categoria_erro} onValueChange={v => setForm(f => ({ ...f, categoria_erro: v }))}>
-                  <SelectTrigger className="h-9 text-xs uppercase"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIAS_ERRO.map(c => (
-                      <SelectItem key={c.value} value={c.value} className="text-xs uppercase">{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
+              {form.tipo_registro === "correcao_erro" ? (
+                <Field label="CATEGORIA DO ERRO *">
+                  <Select value={form.categoria_erro} onValueChange={v => setForm(f => ({ ...f, categoria_erro: v }))}>
+                    <SelectTrigger className="h-9 text-xs uppercase"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIAS_ERRO.map(c => (
+                        <SelectItem key={c.value} value={c.value} className="text-xs uppercase">{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              ) : (
+                <Field label="PRIORIDADE *">
+                  <Select value={form.prioridade} onValueChange={v => setForm(f => ({ ...f, prioridade: v as Prioridade }))}>
+                    <SelectTrigger className="h-9 text-xs uppercase"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PRIORIDADES.map(p => (
+                        <SelectItem key={p.value} value={p.value} className="text-xs uppercase">{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              )}
             </div>
+
+            {form.tipo_registro === "treinamento_direto" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="SERVIÇO / PROCEDIMENTO RELACIONADO">
+                  <Input
+                    value={form.servico_procedimento}
+                    onChange={e => setForm(f => ({ ...f, servico_procedimento: e.target.value.toUpperCase() }))}
+                    placeholder="EX: CR/SIGMA, RENOVAÇÃO POSSE, GTE..."
+                    className="h-9 text-xs uppercase"
+                  />
+                </Field>
+                <Field label="CATEGORIA (LIVRE)">
+                  <Input
+                    value={form.categoria}
+                    onChange={e => setForm(f => ({ ...f, categoria: e.target.value.toUpperCase() }))}
+                    placeholder="EX: PRAZO PROCESSUAL, TESE, ESTILO..."
+                    className="h-9 text-xs uppercase"
+                  />
+                </Field>
+              </div>
+            )}
 
             <Field label="FOCO ARGUMENTATIVO (OPCIONAL)">
               <Input
@@ -402,34 +564,58 @@ export default function QACorrecoesIAPage() {
               />
             </Field>
 
-            <Field label="TRECHO ERRADO GERADO PELA IA *">
-              <Textarea
-                value={form.trecho_errado}
-                onChange={e => setForm(f => ({ ...f, trecho_errado: e.target.value }))}
-                placeholder="Cole aqui o trecho exato que a IA gerou e está incorreto..."
-                className="min-h-[100px] text-xs"
-              />
-            </Field>
-
-            <Field label="TRECHO CORRETO ESPERADO *">
-              <Textarea
-                value={form.trecho_correto}
-                onChange={e => setForm(f => ({ ...f, trecho_correto: e.target.value }))}
-                placeholder="Escreva como a IA deveria ter redigido..."
-                className="min-h-[100px] text-xs"
-              />
-            </Field>
+            {form.tipo_registro === "correcao_erro" ? (
+              <>
+                <Field label="TRECHO ERRADO GERADO PELA IA *">
+                  <Textarea
+                    value={form.trecho_errado}
+                    onChange={e => setForm(f => ({ ...f, trecho_errado: e.target.value }))}
+                    placeholder="Cole aqui o trecho exato que a IA gerou e está incorreto..."
+                    className="min-h-[100px] text-xs"
+                  />
+                </Field>
+                <Field label="TRECHO CORRETO ESPERADO *">
+                  <Textarea
+                    value={form.trecho_correto}
+                    onChange={e => setForm(f => ({ ...f, trecho_correto: e.target.value }))}
+                    placeholder="Escreva como a IA deveria ter redigido..."
+                    className="min-h-[100px] text-xs"
+                  />
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="INSTRUÇÃO OBRIGATÓRIA PARA A IA *">
+                  <Textarea
+                    value={form.instrucao}
+                    onChange={e => setForm(f => ({ ...f, instrucao: e.target.value }))}
+                    placeholder="Ex: Quando a delegacia solicitar exigências, informar tecnicamente que as exigências foram cumpridas e fundamentar juridicamente o cumprimento..."
+                    className="min-h-[120px] text-xs"
+                  />
+                </Field>
+                <Field label="EXEMPLO DE COMO APLICAR (OPCIONAL)">
+                  <Textarea
+                    value={form.exemplo_aplicacao}
+                    onChange={e => setForm(f => ({ ...f, exemplo_aplicacao: e.target.value }))}
+                    placeholder="Ex: 'Em resposta à notificação NOT-XXX, esclarece-se que as exigências foram integralmente cumpridas, conforme...'"
+                    className="min-h-[80px] text-xs"
+                  />
+                </Field>
+              </>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="EXPLICAÇÃO DO ERRO">
-                <Textarea
-                  value={form.explicacao}
-                  onChange={e => setForm(f => ({ ...f, explicacao: e.target.value }))}
-                  placeholder="Por que o trecho está errado?"
-                  className="min-h-[80px] text-xs"
-                />
-              </Field>
-              <Field label="REGRA / NORMA APLICÁVEL">
+              {form.tipo_registro === "correcao_erro" && (
+                <Field label="EXPLICAÇÃO DO ERRO">
+                  <Textarea
+                    value={form.explicacao}
+                    onChange={e => setForm(f => ({ ...f, explicacao: e.target.value }))}
+                    placeholder="Por que o trecho está errado?"
+                    className="min-h-[80px] text-xs"
+                  />
+                </Field>
+              )}
+              <Field label={form.tipo_registro === "correcao_erro" ? "REGRA / NORMA APLICÁVEL" : "NORMA OU FUNDAMENTO RELACIONADO"}>
                 <Textarea
                   value={form.regra_aplicavel}
                   onChange={e => setForm(f => ({ ...f, regra_aplicavel: e.target.value }))}
@@ -445,15 +631,16 @@ export default function QACorrecoesIAPage() {
                 <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "hsl(220 25% 18%)" }}>APLICAR GLOBALMENTE</div>
                   <div className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>
-                    Correções criadas aqui valem para TODAS as peças do mesmo tipo. Para correções específicas de cliente/caso/peça, use "MARCAR COMO ERRO" diretamente na peça gerada.
+                    Regras criadas aqui valem para TODAS as peças do mesmo tipo. Para regras específicas de cliente/caso/peça, use "MARCAR COMO ERRO" diretamente na peça gerada.
                   </div>
+                  <div className="mt-2"><Switch checked={form.aplicar_globalmente} onCheckedChange={v => setForm(f => ({ ...f, aplicar_globalmente: v }))} /></div>
                 </div>
               </div>
               <ToggleRow
                 checked={form.ativo}
                 onChange={v => setForm(f => ({ ...f, ativo: v }))}
                 title="ATIVA"
-                desc="Correções inativas não são usadas."
+                desc="Regras inativas não são usadas pela IA."
                 icon={<Power className="h-4 w-4" />}
               />
             </div>
@@ -471,10 +658,10 @@ export default function QACorrecoesIAPage() {
               onClick={salvar}
               disabled={saving}
               className="h-9 px-5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors inline-flex items-center gap-2"
-              style={{ background: "hsl(35 90% 50%)", color: "white" }}
+              style={{ background: form.tipo_registro === "correcao_erro" ? "hsl(0 60% 45%)" : "hsl(220 70% 35%)", color: "white" }}
             >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <GraduationCap className="h-3.5 w-3.5" />}
-              {form.id ? "Salvar alterações" : "Registrar correção"}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (form.tipo_registro === "correcao_erro" ? <AlertOctagon className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />)}
+              {form.id ? "Salvar alterações" : (form.tipo_registro === "correcao_erro" ? "Registrar correção" : "Registrar treinamento")}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -529,17 +716,33 @@ function ToggleRow({ checked, onChange, title, desc, icon }:
 function CorrecaoCard({ it, onEdit, onToggle, onDelete }:
   { it: Correcao; onEdit: () => void; onToggle: () => void; onDelete: () => void }) {
   const dim = !it.ativo;
+  const isTreinamento = (it.tipo_registro || "correcao_erro") === "treinamento_direto";
+  const prioColors: Record<string, { bg: string; color: string; border: string }> = {
+    baixa:   { bg: "hsl(220 14% 96%)", color: "hsl(220 25% 25%)", border: "hsl(220 13% 88%)" },
+    media:   { bg: "hsl(40 95% 95%)",  color: "hsl(35 80% 30%)",  border: "hsl(40 80% 80%)" },
+    alta:    { bg: "hsl(20 90% 95%)",  color: "hsl(20 80% 35%)",  border: "hsl(20 70% 80%)" },
+    critica: { bg: "hsl(0 70% 95%)",   color: "hsl(0 70% 35%)",   border: "hsl(0 60% 80%)" },
+  };
   return (
     <div
       className="rounded-xl border bg-white p-4 transition-all"
       style={{
-        borderColor: dim ? "hsl(220 13% 88%)" : "hsl(36 20% 85%)",
+        borderColor: dim ? "hsl(220 13% 88%)" : (isTreinamento ? "hsl(220 70% 80%)" : "hsl(36 20% 85%)"),
         opacity: dim ? 0.6 : 1,
       }}
     >
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <Badge>{getTipoPecaLabel(it.tipo_peca)}</Badge>
-        <Badge variant="amber">{getCategoriaLabel(it.categoria_erro)}</Badge>
+        {isTreinamento
+          ? <Badge variant="blue"><Sparkles className="h-3 w-3 mr-1 inline" />TREINAMENTO DIRETO</Badge>
+          : <Badge variant="amber"><AlertOctagon className="h-3 w-3 mr-1 inline" />CORREÇÃO DE ERRO</Badge>}
+        <Badge>{it.tipo_peca === "todos" ? "TODAS AS PEÇAS" : getTipoPecaLabel(it.tipo_peca)}</Badge>
+        {!isTreinamento && <Badge variant="amber">{getCategoriaLabel(it.categoria_erro)}</Badge>}
+        {isTreinamento && (
+          <span
+            className="inline-flex items-center text-[10px] font-semibold uppercase tracking-[0.1em] px-2 py-0.5 rounded border"
+            style={prioColors[it.prioridade || "media"]}
+          >PRIORIDADE {it.prioridade || "media"}</span>
+        )}
         {it.aplicar_globalmente
           ? <Badge variant="blue"><Globe2 className="h-3 w-3 mr-1 inline" />GLOBAL</Badge>
           : <Badge variant="purple"><User className="h-3 w-3 mr-1 inline" />ESPECÍFICA</Badge>}
@@ -550,20 +753,54 @@ function CorrecaoCard({ it, onEdit, onToggle, onDelete }:
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-        <div className="rounded-lg p-3 border" style={{ background: "hsl(0 70% 97%)", borderColor: "hsl(0 60% 88%)" }}>
-          <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(0 60% 40%)" }}>TRECHO ERRADO</div>
-          <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_errado}</div>
+      {isTreinamento ? (
+        <div className="space-y-3 text-xs">
+          {it.titulo && (
+            <div className="text-sm font-bold uppercase tracking-wide" style={{ color: "hsl(220 25% 18%)" }}>{it.titulo}</div>
+          )}
+          <div className="rounded-lg p-3 border" style={{ background: "hsl(220 70% 98%)", borderColor: "hsl(220 60% 88%)" }}>
+            <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(220 70% 35%)" }}>INSTRUÇÃO OBRIGATÓRIA PARA A IA</div>
+            <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.instrucao}</div>
+          </div>
+          {(it.servico_procedimento || it.categoria) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
+              {it.servico_procedimento && (
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>SERVIÇO/PROCEDIMENTO</div>
+                  <div className="uppercase" style={{ color: "hsl(220 15% 30%)" }}>{it.servico_procedimento}</div>
+                </div>
+              )}
+              {it.categoria && (
+                <div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>CATEGORIA</div>
+                  <div className="uppercase" style={{ color: "hsl(220 15% 30%)" }}>{it.categoria}</div>
+                </div>
+              )}
+            </div>
+          )}
+          {it.exemplo_aplicacao && (
+            <div className="rounded-lg p-3 border" style={{ background: "hsl(140 50% 97%)", borderColor: "hsl(140 40% 85%)" }}>
+              <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(140 50% 30%)" }}>EXEMPLO DE APLICAÇÃO</div>
+              <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.exemplo_aplicacao}</div>
+            </div>
+          )}
         </div>
-        <div className="rounded-lg p-3 border" style={{ background: "hsl(140 50% 97%)", borderColor: "hsl(140 40% 85%)" }}>
-          <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(140 50% 30%)" }}>TRECHO CORRETO</div>
-          <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_correto}</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          <div className="rounded-lg p-3 border" style={{ background: "hsl(0 70% 97%)", borderColor: "hsl(0 60% 88%)" }}>
+            <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(0 60% 40%)" }}>TRECHO ERRADO</div>
+            <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_errado}</div>
+          </div>
+          <div className="rounded-lg p-3 border" style={{ background: "hsl(140 50% 97%)", borderColor: "hsl(140 40% 85%)" }}>
+            <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-1" style={{ color: "hsl(140 50% 30%)" }}>TRECHO CORRETO</div>
+            <div className="whitespace-pre-wrap leading-relaxed" style={{ color: "hsl(220 25% 20%)" }}>{it.trecho_correto}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       {(it.explicacao || it.regra_aplicavel) && (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px]">
-          {it.explicacao && (
+          {it.explicacao && !isTreinamento && (
             <div>
               <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>EXPLICAÇÃO</div>
               <div style={{ color: "hsl(220 15% 30%)" }}>{it.explicacao}</div>
@@ -571,7 +808,7 @@ function CorrecaoCard({ it, onEdit, onToggle, onDelete }:
           )}
           {it.regra_aplicavel && (
             <div>
-              <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>REGRA APLICÁVEL</div>
+              <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: "hsl(220 10% 45%)" }}>{isTreinamento ? "NORMA / FUNDAMENTO" : "REGRA APLICÁVEL"}</div>
               <div className="uppercase" style={{ color: "hsl(220 15% 30%)" }}>{it.regra_aplicavel}</div>
             </div>
           )}

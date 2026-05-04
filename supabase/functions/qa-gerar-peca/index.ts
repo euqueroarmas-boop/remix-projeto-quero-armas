@@ -51,8 +51,8 @@ interface CorrecaoIA {
   tipo_peca: string;
   foco_argumentativo: string | null;
   categoria_erro: string;
-  trecho_errado: string;
-  trecho_correto: string;
+  trecho_errado: string | null;
+  trecho_correto: string | null;
   explicacao: string | null;
   regra_aplicavel: string | null;
   aplicar_globalmente: boolean;
@@ -63,6 +63,14 @@ interface CorrecaoIA {
   usado_vezes: number;
   ultima_utilizacao: string | null;
   updated_at: string;
+  // Treinamento jurídico direto
+  tipo_registro?: "correcao_erro" | "treinamento_direto" | null;
+  titulo?: string | null;
+  instrucao?: string | null;
+  servico_procedimento?: string | null;
+  categoria?: string | null;
+  exemplo_aplicacao?: string | null;
+  prioridade?: "baixa" | "media" | "alta" | "critica" | null;
 }
 
 interface CorrecaoComEscopo extends CorrecaoIA {
@@ -100,9 +108,11 @@ async function buscarCorrecoesRelevantes(
     if (!rows) return;
     for (const r of rows) {
       if (!r?.id || !r.ativo) continue;
-      // Filtro de tipo de peça (correções específicas podem não ter o tipo idêntico,
-      // mas mantemos consistência com o tipo solicitado)
-      if (r.tipo_peca && r.tipo_peca !== tipo_peca) continue;
+      // Filtro de tipo de peça:
+      // - vazio = wildcard (regra serve a qualquer peça)
+      // - "todos" = wildcard explícito
+      // - igual ao tipo solicitado = ok
+      if (r.tipo_peca && r.tipo_peca !== tipo_peca && r.tipo_peca !== "todos") continue;
       const existente = acumulado.get(r.id);
       if (!existente || existente._prioridade < prioridade) {
         acumulado.set(r.id, { ...r, _escopo: escopo, _prioridade: prioridade });
@@ -144,15 +154,15 @@ async function buscarCorrecoesRelevantes(
       addAll(data as CorrecaoIA[] | null, "cliente", 200);
     }
 
-    // 4) Globais do tipo de peça
+    // 4) Globais (do tipo de peça OU wildcard "todos" / vazio)
     {
       const { data } = await supabase
         .from("qa_ia_correcoes_juridicas")
         .select("*")
         .eq("ativo", true)
         .eq("aplicar_globalmente", true)
-        .eq("tipo_peca", tipo_peca)
-        .limit(100);
+        .or(`tipo_peca.eq.${tipo_peca},tipo_peca.eq.todos,tipo_peca.is.null`)
+        .limit(200);
       addAll(data as CorrecaoIA[] | null, "global", 100);
     }
   } catch (err) {
@@ -182,7 +192,13 @@ async function buscarCorrecoesRelevantes(
 }
 
 function montarBlocoCorrecoesParaPrompt(correcoes: CorrecaoComEscopo[]): string {
-  if (correcoes.length === 0) return "";
+  // Apenas correções de erro entram neste bloco (treinamentos diretos têm bloco próprio)
+  const apenasCorrecoes = correcoes.filter(
+    (c) => (c.tipo_registro || "correcao_erro") === "correcao_erro"
+      && (c.trecho_errado || "").trim().length >= 5
+      && (c.trecho_correto || "").trim().length >= 5,
+  );
+  if (apenasCorrecoes.length === 0) return "";
 
   const escopoLabel: Record<string, string> = {
     peca: "específica desta peça",
@@ -191,14 +207,14 @@ function montarBlocoCorrecoesParaPrompt(correcoes: CorrecaoComEscopo[]): string 
     global: "global do tipo de peça",
   };
 
-  const linhas = correcoes.map((c, idx) => {
+  const linhas = apenasCorrecoes.map((c, idx) => {
     const partes = [
       `${idx + 1}. Categoria: ${c.categoria_erro}`,
       `   Escopo: ${escopoLabel[c._escopo] || c._escopo}`,
       `   Trecho errado que NÃO deve ser repetido:`,
-      `   "${c.trecho_errado.trim()}"`,
+      `   "${(c.trecho_errado || "").trim()}"`,
       `   Forma correta esperada:`,
-      `   "${c.trecho_correto.trim()}"`,
+      `   "${(c.trecho_correto || "").trim()}"`,
     ];
     if (c.explicacao && c.explicacao.trim()) {
       partes.push(`   Explicação: "${c.explicacao.trim()}"`);
@@ -221,6 +237,58 @@ REGRA ABSOLUTA SOBRE CORREÇÕES:
 - NÃO confunda posse com porte, PF com Exército, SINARM com SIGMA.
 - NÃO use circunscrição/delegacia errada quando houver dado correto fornecido no caso.
 - NÃO altere o tipo de peça solicitado.
+`;
+}
+
+// ─── Bloco separado: TREINAMENTOS JURÍDICOS DIRETOS (instruções positivas) ───
+function montarBlocoTreinamentosDiretos(regras: CorrecaoComEscopo[]): string {
+  const treinamentos = regras.filter(
+    (r) => r.tipo_registro === "treinamento_direto"
+      && (r.instrucao || "").trim().length >= 5,
+  );
+  if (treinamentos.length === 0) return "";
+
+  // ordena por prioridade (critica > alta > media > baixa) e depois por _prioridade já calculada
+  const pesoPrio: Record<string, number> = { critica: 4, alta: 3, media: 2, baixa: 1 };
+  treinamentos.sort((a, b) => {
+    const pa = pesoPrio[a.prioridade || "media"] || 2;
+    const pb = pesoPrio[b.prioridade || "media"] || 2;
+    if (pb !== pa) return pb - pa;
+    return (b._prioridade || 0) - (a._prioridade || 0);
+  });
+
+  const linhas = treinamentos.map((r, idx) => {
+    const partes = [
+      `${idx + 1}. ${(r.titulo || "Orientação interna").trim()}  [prioridade: ${r.prioridade || "media"}]`,
+      `   Instrução obrigatória: ${(r.instrucao || "").trim()}`,
+    ];
+    if (r.servico_procedimento && r.servico_procedimento.trim()) {
+      partes.push(`   Serviço/procedimento: ${r.servico_procedimento.trim()}`);
+    }
+    if (r.foco_argumentativo && r.foco_argumentativo.trim()) {
+      partes.push(`   Foco argumentativo: ${r.foco_argumentativo.trim()}`);
+    }
+    if (r.categoria && r.categoria.trim()) {
+      partes.push(`   Categoria: ${r.categoria.trim()}`);
+    }
+    if (r.regra_aplicavel && r.regra_aplicavel.trim()) {
+      partes.push(`   Norma/fundamento: ${r.regra_aplicavel.trim()}`);
+    }
+    if (r.exemplo_aplicacao && r.exemplo_aplicacao.trim()) {
+      partes.push(`   Exemplo de aplicação: ${r.exemplo_aplicacao.trim()}`);
+    }
+    return partes.join("\n");
+  });
+
+  return `\n\nREGRAS INTERNAS DA EQUIPE QUERO ARMAS — OBRIGATÓRIAS
+As orientações abaixo foram registradas pela Equipe Quero Armas como diretrizes jurídicas, técnicas, operacionais e textuais obrigatórias. Aplique-as com prioridade sobre tendências genéricas do modelo, desde que não contrariem norma legal expressa ou dados do caso concreto. Trate-as como instruções de estilo, tese, estrutura e interpretação operacional.
+
+${linhas.join("\n\n")}
+
+REGRA ABSOLUTA SOBRE ESTAS ORIENTAÇÕES:
+- OBEDEÇA às instruções acima; quando ambíguas, prefira a interpretação mais conservadora e tecnicamente fundamentada.
+- NÃO contradiga, NÃO relativize e NÃO substitua estas orientações por padrões genéricos.
+- Se uma orientação conflitar diretamente com lei expressa, registre o cumprimento legal mas mantenha o espírito da orientação no que for compatível.
 `;
 }
 
@@ -1520,6 +1588,7 @@ Deno.serve(async (req) => {
       peca_id: null, // a peça ainda não foi gerada nesta execução
     });
     const blocoCorrecoes = montarBlocoCorrecoesParaPrompt(correcoesAtivas);
+    const blocoTreinamentos = montarBlocoTreinamentosDiretos(correcoesAtivas);
     console.log(`[qa-gerar-peca] Correções injetadas no prompt: ${correcoesAtivas.length} (tipo=${tipo_peca}, cliente=${cliente_id_final ?? "—"}, caso=${caso_id ?? "—"})`);
     if (correcoesAtivas.length > 0) {
       console.log(`[qa-gerar-peca] Correções IDs: ${correcoesAtivas.map(c => `${c.id}(${c._escopo})`).join(", ")}`);
@@ -1538,7 +1607,7 @@ MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
 UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}${numero_requerimento ? `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}` : ""}
 ${evidenceSummaryForPrompt}
-${parametros}${blocoCorrecoes}
+${parametros}${blocoCorrecoes}${blocoTreinamentos}
 
 DESCRIÇÃO COMPLETA DO CASO:
 ${entrada_caso}
