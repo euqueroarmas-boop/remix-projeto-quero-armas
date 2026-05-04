@@ -306,6 +306,22 @@ export default function QAGerarPecaPage() {
   // Cliente vinculado ao caso (preservado entre carregamento e geração)
   const [clienteIdVinculado, setClienteIdVinculado] = useState<number | null>(null);
 
+  // ── Fase 1: Autopreenchimento a partir do serviço/processo ──
+  type OrigemCampo = "manual" | "servico" | "historico" | "calculo" | null;
+  const [origemDataNotif, setOrigemDataNotif] = useState<OrigemCampo>(null);
+  const [origemNumReq, setOrigemNumReq] = useState<OrigemCampo>(null);
+  const [origemTempest, setOrigemTempest] = useState<OrigemCampo>(null);
+  const [autoPreenchInfo, setAutoPreenchInfo] = useState<{
+    itemId?: number;
+    numero_processo?: string | null;
+    prazoFonte?: string;
+    diasRestantes?: number;
+    sugestao?: { dataNotificacao?: string; numeroRequerimento?: string; infoTempestividade?: string } | null;
+  }>({});
+  const [autoPreenchLoading, setAutoPreenchLoading] = useState(false);
+  const autoPreenchReqRef = useRef(0);
+  const ultimoAutoServicoRef = useRef<string>(""); // chave clienteId|tipoPeca já aplicada
+
   // CEP
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
   const cepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -343,6 +359,196 @@ export default function QAGerarPecaPage() {
   const [showDraftingView, setShowDraftingView] = useState(false);
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
+
+  /* ── Helpers de autopreenchimento (Fase 1) ── */
+  const onChangeDataNotificacao = (v: string) => {
+    setDataNotificacao(v);
+    setOrigemDataNotif("manual");
+  };
+  const onChangeNumeroRequerimento = (v: string) => {
+    setNumeroRequerimento(v);
+    setOrigemNumReq("manual");
+  };
+  const onChangeInfoTempestividade = (v: string) => {
+    setInfoTempestividade(v);
+    setOrigemTempest("manual");
+  };
+
+  const formatBR = (iso?: string | null) => {
+    if (!iso) return "";
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso);
+  };
+
+  const calcularTempestividade = (
+    baseISO: string,
+    prazoDias: number,
+    descrEvento: string,
+    fontePrazo: string,
+  ): { texto: string; diasRestantes: number } => {
+    const base = new Date(baseISO + "T00:00:00");
+    const fim = new Date(base);
+    fim.setDate(fim.getDate() + prazoDias);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((fim.getTime() - hoje.getTime()) / 86400000);
+    let txt = "";
+    if (diff > 0) {
+      txt = `Tempestividade verificada com base na ${descrEvento} ocorrida em ${formatBR(baseISO)}. Considerando o prazo aplicável de ${prazoDias} dias (${fontePrazo}), o prazo final ocorre em ${formatBR(fim.toISOString().slice(0,10))}, restando ${diff} dia(s), razão pela qual a presente manifestação/recurso é tempestiva.`;
+    } else if (diff === 0) {
+      txt = `Tempestividade verificada com base na ${descrEvento} ocorrida em ${formatBR(baseISO)}. O prazo final se encerra na presente data, razão pela qual a manifestação/recurso deve ser protocolada imediatamente.`;
+    } else {
+      txt = `Alerta: o prazo de ${prazoDias} dias (${fontePrazo}) calculado com base na ${descrEvento} de ${formatBR(baseISO)} indica possível intempestividade (vencido há ${Math.abs(diff)} dia(s)). Revisar manualmente antes de gerar a peça.`;
+    }
+    return { texto: txt, diasRestantes: diff };
+  };
+
+  const buscarPrazoConfigurado = async (tipoPecaKey: string) => {
+    const { data } = await supabase
+      .from("qa_prazos_procedimentos" as any)
+      .select("prazo_dias, base_calculo, tipo_peca, procedimento_servico, descricao")
+      .eq("ativo", true)
+      .or(`tipo_peca.eq.${tipoPecaKey},procedimento_servico.eq.${tipoPecaKey}`)
+      .order("prioridade", { ascending: true })
+      .limit(1);
+    return (data && data[0]) ? (data[0] as any) : null;
+  };
+
+  const autopreencherDoServico = useCallback(async (opts: { force?: boolean } = {}) => {
+    if (!clienteIdVinculado) return;
+    const reqId = ++autoPreenchReqRef.current;
+    setAutoPreenchLoading(true);
+    try {
+      // 1) Busca itens de venda do cliente (via vendas)
+      const { data: vendas } = await supabase
+        .from("qa_vendas" as any)
+        .select("id")
+        .eq("cliente_id", clienteIdVinculado);
+      const vendaIds = (vendas as any[] | null)?.map(v => v.id) ?? [];
+      if (reqId !== autoPreenchReqRef.current) return;
+      if (!vendaIds.length) {
+        setAutoPreenchInfo({ sugestao: null });
+        return;
+      }
+      const { data: itens } = await supabase
+        .from("qa_itens_venda" as any)
+        .select("id, venda_id, numero_requerimento, numero_processo, data_notificacao, data_indeferimento, data_indeferimento_recurso, data_recurso_administrativo, status, tipo_venda, data_ultima_atualizacao")
+        .in("venda_id", vendaIds)
+        .order("data_ultima_atualizacao", { ascending: false, nullsFirst: false });
+      if (reqId !== autoPreenchReqRef.current) return;
+      const arr = (itens as any[] | null) ?? [];
+      if (!arr.length) {
+        setAutoPreenchInfo({ sugestao: null });
+        return;
+      }
+
+      // 2) Seleciona melhor item conforme tipo de peça
+      let candidato: any = null;
+      if (tipoPeca === "recurso_administrativo") {
+        candidato = arr.find(i => i.data_indeferimento_recurso) || arr.find(i => i.data_indeferimento) || arr[0];
+      } else if (tipoPeca === "resposta_a_notificacao") {
+        candidato = arr.find(i => i.data_notificacao) || arr[0];
+      } else {
+        candidato = arr.find(i => i.numero_requerimento || i.data_notificacao) || arr[0];
+      }
+      if (!candidato) { setAutoPreenchInfo({ sugestao: null }); return; }
+
+      // 3) Determina datas-base
+      const dataNotifSugestao: string | null =
+        candidato.data_notificacao || candidato.data_indeferimento || candidato.data_indeferimento_recurso || null;
+      const numReqSugestao: string | null = candidato.numero_requerimento || candidato.numero_processo || null;
+
+      // 4) Busca prazo configurado
+      let infoTempestSugestao: string | undefined;
+      let prazoFonte = "";
+      let diasRestantes: number | undefined;
+      if (needsTempestividade && dataNotifSugestao) {
+        const prazo = await buscarPrazoConfigurado(tipoPeca);
+        if (reqId !== autoPreenchReqRef.current) return;
+        if (prazo) {
+          const evento = tipoPeca === "recurso_administrativo" ? "ciência do indeferimento" : "notificação";
+          prazoFonte = prazo.tipo_peca === tipoPeca
+            ? "prazo configurado para o tipo de peça"
+            : "prazo configurado no procedimento";
+          const calc = calcularTempestividade(dataNotifSugestao, prazo.prazo_dias, evento, prazoFonte);
+          infoTempestSugestao = calc.texto;
+          diasRestantes = calc.diasRestantes;
+        } else {
+          infoTempestSugestao = `Prazo não configurado no sistema. Configure em "Prazos & Procedimentos" ou preencha manualmente. Data de referência: ${formatBR(dataNotifSugestao)}.`;
+        }
+      }
+
+      setAutoPreenchInfo({
+        itemId: candidato.id,
+        numero_processo: candidato.numero_processo,
+        prazoFonte,
+        diasRestantes,
+        sugestao: {
+          dataNotificacao: dataNotifSugestao || undefined,
+          numeroRequerimento: numReqSugestao || undefined,
+          infoTempestividade: infoTempestSugestao,
+        },
+      });
+
+      // 5) Aplica respeitando preenchimento manual
+      const force = !!opts.force;
+      if (dataNotifSugestao && (force || (!dataNotificacao && origemDataNotif !== "manual"))) {
+        setDataNotificacao(dataNotifSugestao);
+        setOrigemDataNotif("servico");
+      }
+      if (numReqSugestao && (force || (!numeroRequerimento && origemNumReq !== "manual"))) {
+        setNumeroRequerimento(numReqSugestao);
+        setOrigemNumReq("servico");
+      }
+      if (infoTempestSugestao && (force || (!infoTempestividade && origemTempest !== "manual"))) {
+        setInfoTempestividade(infoTempestSugestao);
+        setOrigemTempest("calculo");
+      }
+    } catch (err) {
+      console.warn("[QAGerarPeca] autopreencherDoServico falhou:", err);
+    } finally {
+      if (reqId === autoPreenchReqRef.current) setAutoPreenchLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteIdVinculado, tipoPeca, needsTempestividade, dataNotificacao, numeroRequerimento, infoTempestividade, origemDataNotif, origemNumReq, origemTempest]);
+
+  // Dispara autopreenchimento quando cliente vinculado ou tipo de peça mudam
+  useEffect(() => {
+    if (!clienteIdVinculado) return;
+    const key = `${clienteIdVinculado}|${tipoPeca}`;
+    if (ultimoAutoServicoRef.current === key) return;
+    ultimoAutoServicoRef.current = key;
+    void autopreencherDoServico();
+  }, [clienteIdVinculado, tipoPeca, autopreencherDoServico]);
+
+  const recalcularTempestividade = async () => {
+    if (!dataNotificacao) {
+      toast.error("Informe a data da notificação/decisão para recalcular.");
+      return;
+    }
+    const prazo = await buscarPrazoConfigurado(tipoPeca);
+    if (!prazo) {
+      toast.warning("Prazo não configurado no sistema para este tipo de peça. Cadastre em 'Prazos & Procedimentos'.");
+      return;
+    }
+    const evento = tipoPeca === "recurso_administrativo" ? "ciência do indeferimento" : "notificação";
+    const fonte = prazo.tipo_peca === tipoPeca ? "prazo configurado para o tipo de peça" : "prazo configurado no procedimento";
+    const calc = calcularTempestividade(dataNotificacao, prazo.prazo_dias, evento, fonte);
+    setInfoTempestividade(calc.texto);
+    setOrigemTempest("calculo");
+    toast.success(`Tempestividade recalculada (${prazo.prazo_dias} dias, ${calc.diasRestantes} dia(s) restantes).`);
+  };
+
+  const labelOrigem = (o: OrigemCampo) =>
+    o === "servico" ? "preenchido pelo serviço"
+      : o === "historico" ? "preenchido pelo histórico"
+      : o === "calculo" ? "calculado automaticamente"
+      : o === "manual" ? "preenchido manualmente"
+      : "";
+  const corOrigem = (o: OrigemCampo) =>
+    o === "manual" ? "text-slate-400"
+      : o === "calculo" ? "text-amber-600"
+      : o ? "text-emerald-600" : "text-slate-400";
 
   // Doc counters
   const docTotal = arquivosAuxiliares.length;
@@ -1547,23 +1753,53 @@ export default function QAGerarPecaPage() {
             <Label className="text-slate-500 text-[11px]">Nº do Requerimento <span className="text-slate-400">(opcional)</span></Label>
             <Input
               value={numeroRequerimento}
-              onChange={e => setNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
+              onChange={e => onChangeNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
               className="bg-white border-slate-200 text-slate-700 h-9 text-sm"
               placeholder="Ex: 2026/001234-5"
             />
+            {origemNumReq && (
+              <span className={`text-[10px] ${corOrigem(origemNumReq)}`}>{labelOrigem(origemNumReq)}</span>
+            )}
           </div>
         </div>
 
         {/* ── Tempestividade ── */}
         {needsTempestividade && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-500/5 border border-amber-500/10 rounded p-3">
-            <div className="space-y-1.5">
-              <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
-              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" />
+          <div className="space-y-2 bg-amber-500/5 border border-amber-500/10 rounded p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
+                <Input type="date" value={dataNotificacao} onChange={e => onChangeDataNotificacao(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" />
+                {origemDataNotif && (
+                  <span className={`text-[10px] ${corOrigem(origemDataNotif)}`}>{labelOrigem(origemDataNotif)}</span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo / tempestividade</Label>
+                <Textarea value={infoTempestividade} onChange={e => onChangeInfoTempestividade(e.target.value)} className="bg-white border-slate-200 text-slate-700 min-h-[60px] text-sm" placeholder="Calculado automaticamente a partir do serviço, ou preencha manualmente." />
+                {origemTempest && (
+                  <span className={`text-[10px] ${corOrigem(origemTempest)}`}>{labelOrigem(origemTempest)}</span>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo</Label>
-              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {clienteIdVinculado && (
+                <Button type="button" variant="outline" size="sm"
+                  className="bg-white border-slate-200 text-slate-600 h-7 text-[10px]"
+                  onClick={() => autopreencherDoServico({ force: true })}
+                  disabled={autoPreenchLoading}>
+                  {autoPreenchLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                  Usar dados do serviço
+                </Button>
+              )}
+              <Button type="button" variant="outline" size="sm"
+                className="bg-white border-slate-200 text-slate-600 h-7 text-[10px]"
+                onClick={recalcularTempestividade}>
+                <Clock className="h-3 w-3 mr-1" /> Recalcular tempestividade
+              </Button>
+              {autoPreenchInfo.sugestao === null && clienteIdVinculado && (
+                <span className="text-[10px] text-slate-400">Nenhum serviço com dados encontrados para este cliente.</span>
+              )}
             </div>
           </div>
         )}

@@ -5968,6 +5968,54 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_prazos_procedimentos: {
+        Row: {
+          ativo: boolean
+          base_calculo: string
+          created_at: string
+          descricao: string | null
+          evento_base: string | null
+          id: string
+          janela_alerta_dias: number
+          prazo_dias: number
+          prioridade: number
+          procedimento_servico: string | null
+          tipo_contagem: string
+          tipo_peca: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_calculo?: string
+          created_at?: string
+          descricao?: string | null
+          evento_base?: string | null
+          id?: string
+          janela_alerta_dias?: number
+          prazo_dias: number
+          prioridade?: number
+          procedimento_servico?: string | null
+          tipo_contagem?: string
+          tipo_peca?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_calculo?: string
+          created_at?: string
+          descricao?: string | null
+          evento_base?: string | null
+          id?: string
+          janela_alerta_dias?: number
+          prazo_dias?: number
+          prioridade?: number
+          procedimento_servico?: string | null
+          tipo_contagem?: string
+          tipo_peca?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_processo_documentos: {
         Row: {
           ano_competencia: number | null
