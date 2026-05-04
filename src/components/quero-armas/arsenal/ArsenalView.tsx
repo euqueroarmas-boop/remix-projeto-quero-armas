@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, History, Plus, Sparkles, Upload, FileBadge, Cr
 import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
-import { MunicoesManager } from "./MunicoesManager";
+import { MunicoesMovimentacoesManager } from "./MunicoesMovimentacoesManager";
 import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
@@ -1200,7 +1200,7 @@ export function ArsenalView({
       case "municoes":
         return (
           <div id="arsenal-municoes" className="scroll-mt-28">
-            <MunicoesManager clienteId={clienteId} onChange={setAmmo} />
+            <MunicoesMovimentacoesManager clienteId={clienteId} onChange={setAmmo} />
           </div>
         );
       default:

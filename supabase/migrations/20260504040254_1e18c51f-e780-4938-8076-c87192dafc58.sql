@@ -1,0 +1,1 @@
+ALTER VIEW public.qa_municoes_saldos SET (security_invoker = true);

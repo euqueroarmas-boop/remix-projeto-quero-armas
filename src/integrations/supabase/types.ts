@@ -5956,6 +5956,66 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_municoes_movimentacoes: {
+        Row: {
+          calibre: string
+          cliente_id: number
+          created_at: string
+          created_by: string | null
+          data_fabricacao: string | null
+          data_movimentacao: string
+          data_validade: string | null
+          documento_nome: string | null
+          documento_url: string | null
+          id: string
+          lote: string | null
+          marca: string | null
+          motivo: string | null
+          observacao: string | null
+          quantidade: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          calibre: string
+          cliente_id: number
+          created_at?: string
+          created_by?: string | null
+          data_fabricacao?: string | null
+          data_movimentacao?: string
+          data_validade?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
+          id?: string
+          lote?: string | null
+          marca?: string | null
+          motivo?: string | null
+          observacao?: string | null
+          quantidade: number
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          calibre?: string
+          cliente_id?: number
+          created_at?: string
+          created_by?: string | null
+          data_fabricacao?: string | null
+          data_movimentacao?: string
+          data_validade?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
+          id?: string
+          lote?: string | null
+          marca?: string | null
+          motivo?: string | null
+          observacao?: string | null
+          quantidade?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_pagamento_auditoria: {
         Row: {
           ator: string | null
@@ -8071,6 +8131,21 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      qa_municoes_saldos: {
+        Row: {
+          calibre: string | null
+          cliente_id: number | null
+          data_fabricacao: string | null
+          data_validade: string | null
+          lote: string | null
+          marca: string | null
+          saldo: number | null
+          total_entradas: number | null
+          total_saidas: number | null
+          ultima_movimentacao: string | null
+        }
+        Relationships: []
       }
       qa_senha_gov_incident_audit: {
         Row: {
