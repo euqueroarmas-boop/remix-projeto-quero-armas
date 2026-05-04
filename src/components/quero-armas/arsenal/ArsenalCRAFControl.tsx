@@ -148,9 +148,18 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
     });
     const armasVinculadas = canonicos.filter((c) => (c.numero_arma || c.numero_sigma)).length;
     const semVinculo = canonicos.length - armasVinculadas;
-    const pendentesRevisao = documentos.filter(
-      (d) => !d.validado_admin && (d.ia_status === "pendente" || d.ia_status === "processando" || d.status === "EM_ANALISE" || d.status === "PENDENTE"),
-    ).length;
+    // `validado_admin` é o nome da coluna legada no banco — encapsulamos
+    // internamente como `validadoPelaEquipe`, para nunca expor "admin" em
+    // textos visíveis.
+    const pendentesRevisao = documentos.filter((d) => {
+      const validadoPelaEquipe = !!d.validado_admin;
+      return !validadoPelaEquipe && (
+        d.ia_status === "pendente" ||
+        d.ia_status === "processando" ||
+        d.status === "EM_ANALISE" ||
+        d.status === "PENDENTE"
+      );
+    }).length;
     return {
       total: canonicos.length,
       validos,
@@ -230,7 +239,8 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
             ))
             .map((d) => {
               const sv = statusVisual(d.data_validade);
-              const pendente = !d.validado_admin;
+              const validadoPelaEquipe = !!d.validado_admin;
+              const pendente = !validadoPelaEquipe;
               return (
                 <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
                   <FileText className="h-4 w-4 shrink-0 text-slate-400" />

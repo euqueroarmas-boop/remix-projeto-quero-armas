@@ -210,7 +210,10 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
           {documentos.map((d) => {
             const sv = statusVisual(d.data_validade, d.status);
-            const pendente = !d.validado_admin;
+            // `validado_admin` é coluna legada — encapsulamos como
+            // `validadoPelaEquipe` para evitar expor o termo em textos.
+            const validadoPelaEquipe = !!d.validado_admin;
+            const pendente = !validadoPelaEquipe;
             return (
               <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
                 <FileText className="h-4 w-4 shrink-0 text-slate-400" />
