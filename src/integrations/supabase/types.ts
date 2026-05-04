@@ -3035,6 +3035,8 @@ export type Database = {
           foco_argumentativo: string | null
           geracao_id: string | null
           id: string
+          indeferimento_analise: Json | null
+          indeferimento_texto: string | null
           minuta_gerada: string | null
           nome_requerente: string
           sigla_unidade_pf: string | null
@@ -3062,6 +3064,8 @@ export type Database = {
           foco_argumentativo?: string | null
           geracao_id?: string | null
           id?: string
+          indeferimento_analise?: Json | null
+          indeferimento_texto?: string | null
           minuta_gerada?: string | null
           nome_requerente?: string
           sigla_unidade_pf?: string | null
@@ -3089,6 +3093,8 @@ export type Database = {
           foco_argumentativo?: string | null
           geracao_id?: string | null
           id?: string
+          indeferimento_analise?: Json | null
+          indeferimento_texto?: string | null
           minuta_gerada?: string | null
           nome_requerente?: string
           sigla_unidade_pf?: string | null

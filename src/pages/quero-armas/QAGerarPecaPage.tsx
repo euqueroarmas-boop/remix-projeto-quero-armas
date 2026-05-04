@@ -297,6 +297,12 @@ export default function QAGerarPecaPage() {
 
   // Editing existing case
   const [casoId, setCasoId] = useState<string | null>(null);
+
+  // ── Indeferimento (recurso_administrativo) ──
+  const [indeferimentoTexto, setIndeferimentoTexto] = useState("");
+  const [indeferimentoAnalise, setIndeferimentoAnalise] = useState<any | null>(null);
+  const [analisandoIndef, setAnalisandoIndef] = useState(false);
+  const indefFileRef = useRef<HTMLInputElement>(null);
   // Cliente vinculado ao caso (preservado entre carregamento e geração)
   const [clienteIdVinculado, setClienteIdVinculado] = useState<number | null>(null);
 
@@ -375,6 +381,8 @@ export default function QAGerarPecaPage() {
         setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
         setCircunscricaoStatus("resolved");
       }
+      if (c.indeferimento_texto) setIndeferimentoTexto(c.indeferimento_texto);
+      if (c.indeferimento_analise) setIndeferimentoAnalise(c.indeferimento_analise);
 
       // 2) Se houver vínculo real com cliente, hidrata dados frescos (sobrepõe snapshot apenas onde houver valor)
       if (c.cliente_id) {
@@ -592,6 +600,48 @@ export default function QAGerarPecaPage() {
       return;
     }
     await resolverCircunscricao(clienteCidade, clienteUf);
+  };
+
+  /* ── Indeferimento — análise ── */
+  const handleIndefFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo acima de 5MB. Cole o texto manualmente."); return; }
+    const ext = file.name.toLowerCase().split(".").pop() || "";
+    if (ext === "txt") {
+      const txt = await file.text();
+      setIndeferimentoTexto(txt);
+      toast.success("Texto carregado. Revise e clique em ANALISAR.");
+      return;
+    }
+    toast.info("PDF/imagem detectados — anexe também na seção Documentos Auxiliares (tipo Indeferimento) para que o texto seja extraído. Aqui, cole o conteúdo no campo abaixo.");
+  };
+
+  const analisarIndeferimento = async () => {
+    const texto = indeferimentoTexto.trim();
+    if (texto.length < 100) { toast.error("Cole o conteúdo do indeferimento (mínimo 100 caracteres)."); return; }
+    setAnalisandoIndef(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error("Sessão expirada.");
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-analisar-indeferimento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ texto, caso_id: casoId || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || `Falha na análise (${res.status})`);
+      setIndeferimentoAnalise(json.analise);
+      toast.success("Indeferimento analisado. A peça será gerada rebatendo ponto a ponto.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao analisar indeferimento");
+    } finally {
+      setAnalisandoIndef(false);
+    }
   };
 
   /* ── File name sanitization ── */
@@ -934,6 +984,11 @@ export default function QAGerarPecaPage() {
         updated_at: new Date().toISOString(),
       };
 
+      if (tipoPeca === "recurso_administrativo") {
+        casoData.indeferimento_texto = indeferimentoTexto.trim() || null;
+        casoData.indeferimento_analise = indeferimentoAnalise || null;
+      }
+
       if (geracaoResult?.geracao_id) {
         casoData.geracao_id = geracaoResult.geracao_id;
       }
@@ -1110,6 +1165,8 @@ export default function QAGerarPecaPage() {
           info_tempestividade: infoTempestividade.trim() || null,
           numero_requerimento: numeroRequerimento.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
+          indeferimento_texto: tipoPeca === "recurso_administrativo" ? (indeferimentoTexto.trim() || null) : null,
+          indeferimento_analise: tipoPeca === "recurso_administrativo" ? (indeferimentoAnalise || null) : null,
         }),
       });
 
@@ -1518,6 +1575,110 @@ export default function QAGerarPecaPage() {
             className="bg-white border-slate-200 text-slate-700 min-h-[180px] text-sm"
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso..." />
         </div>
+
+        {/* ── Decisão Administrativa / Indeferimento (somente recurso_administrativo) ── */}
+        {tipoPeca === "recurso_administrativo" && (
+          <div className="space-y-3 border border-[#7A1F2B]/20 bg-[#FBF3F4] rounded p-3">
+            <div className="flex items-center gap-2">
+              <Gavel className="h-3.5 w-3.5 text-[#7A1F2B]" />
+              <span className="text-[10px] text-[#7A1F2B] uppercase tracking-[0.15em] font-semibold">
+                Decisão Administrativa / Indeferimento
+              </span>
+              {indeferimentoAnalise && (
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded">
+                  ✓ Analisado
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500">
+              Cole a decisão da PF abaixo. A IA extrairá os fundamentos do indeferimento e gerará seções específicas
+              ("DA NULIDADE DO INDEFERIMENTO" e "DO ENFRENTAMENTO DOS FUNDAMENTOS") rebatendo ponto a ponto.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={indefFileRef}
+                type="file"
+                accept=".txt,.pdf,.png,.jpg,.jpeg,.webp"
+                className="hidden"
+                onChange={e => { handleIndefFile(e.target.files?.[0] || null); e.target.value = ""; }}
+              />
+              <Button
+                type="button" variant="outline" size="sm"
+                className="bg-white border-slate-200 text-slate-600 h-7 text-[11px]"
+                onClick={() => indefFileRef.current?.click()}
+              >
+                <Upload className="h-3 w-3 mr-1.5" /> Anexar decisão da delegacia (indeferimento)
+              </Button>
+              <span className="text-[9px] text-slate-400">.txt carrega direto. PDF/imagem: cole o texto manualmente abaixo.</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-slate-500 text-[11px]">Conteúdo do indeferimento *</Label>
+              <Textarea
+                value={indeferimentoTexto}
+                onChange={e => { setIndeferimentoTexto(e.target.value); if (indeferimentoAnalise) setIndeferimentoAnalise(null); }}
+                className="bg-white border-slate-200 text-slate-700 min-h-[160px] text-sm font-mono text-[12px]"
+                placeholder="Cole aqui a decisão completa da Polícia Federal..."
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] text-slate-400">{indeferimentoTexto.trim().length} caracteres</span>
+                <Button
+                  type="button" size="sm"
+                  disabled={analisandoIndef || indeferimentoTexto.trim().length < 100}
+                  onClick={analisarIndeferimento}
+                  className="bg-[#7A1F2B] hover:bg-[#641722] text-white h-7 text-[11px] disabled:opacity-40"
+                >
+                  {analisandoIndef ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Scale className="h-3 w-3 mr-1.5" />}
+                  ANALISAR INDEFERIMENTO COM IA
+                </Button>
+              </div>
+            </div>
+
+            {indeferimentoAnalise && (
+              <div className="space-y-2 bg-white border border-slate-200 rounded p-2.5 text-[11px] text-slate-700">
+                {indeferimentoAnalise.resumo_decisao && (
+                  <div><span className="font-semibold text-[#7A1F2B]">Resumo:</span> {indeferimentoAnalise.resumo_decisao}</div>
+                )}
+                {Array.isArray(indeferimentoAnalise.fundamentos_de_indef) && indeferimentoAnalise.fundamentos_de_indef.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Fundamentos do indeferimento ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
+                    <ul className="list-decimal list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.fundamentos_de_indef.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.artigos_citados) && indeferimentoAnalise.artigos_citados.length > 0 && (
+                  <div><span className="font-semibold text-[#7A1F2B]">Dispositivos citados:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
+                )}
+                {Array.isArray(indeferimentoAnalise.falhas_logicas) && indeferimentoAnalise.falhas_logicas.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Falhas lógicas:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.falhas_logicas.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.vicios_formais) && indeferimentoAnalise.vicios_formais.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Vícios formais:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.vicios_formais.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.pontos_nao_enfrentados) && indeferimentoAnalise.pontos_nao_enfrentados.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Pontos não enfrentados pela autoridade:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.pontos_nao_enfrentados.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Auxiliary Documents ── */}
         <div className="space-y-3">

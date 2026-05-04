@@ -1025,6 +1025,9 @@ Deno.serve(async (req) => {
       numero_requerimento, caso_id: req_caso_id,
       cliente_id: reqClienteId,
     } = reqBody;
+    // Análise estruturada do indeferimento, quando for recurso_administrativo.
+    const indeferimento_texto: string | null = reqBody.indeferimento_texto ? String(reqBody.indeferimento_texto) : null;
+    const indeferimento_analise: any = reqBody.indeferimento_analise || null;
     const wantStream = !!reqBody.stream;
 
     // IDs de documentos auxiliares enviados explicitamente pelo front
@@ -1417,6 +1420,53 @@ Deno.serve(async (req) => {
     if (cliente_cep) dadosAdicionais += `\nCEP DO CLIENTE: ${cliente_cep}`;
     if (numero_requerimento) dadosAdicionais += `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}`;
     if (exameContextGerar) dadosAdicionais += exameContextGerar;
+
+    // ═══ INDEFERIMENTO — somente em recurso_administrativo ═══
+    let analiseIndefForUse: any = indeferimento_analise;
+    let textoIndefForUse: string | null = indeferimento_texto;
+    if (tipo_peca === "recurso_administrativo" && (!analiseIndefForUse || !textoIndefForUse) && caso_id) {
+      const { data: casoIndef } = await supabase
+        .from("qa_casos")
+        .select("indeferimento_texto, indeferimento_analise")
+        .eq("id", caso_id)
+        .maybeSingle();
+      if (casoIndef) {
+        if (!textoIndefForUse && casoIndef.indeferimento_texto) textoIndefForUse = casoIndef.indeferimento_texto;
+        if (!analiseIndefForUse && casoIndef.indeferimento_analise) analiseIndefForUse = casoIndef.indeferimento_analise;
+      }
+    }
+    if (tipo_peca === "recurso_administrativo" && analiseIndefForUse) {
+      const a = analiseIndefForUse;
+      const fundamentos = Array.isArray(a.fundamentos_de_indef) ? a.fundamentos_de_indef : [];
+      const artigos = Array.isArray(a.artigos_citados) ? a.artigos_citados : [];
+      const naoEnfrentados = Array.isArray(a.pontos_nao_enfrentados) ? a.pontos_nao_enfrentados : [];
+      const falhas = Array.isArray(a.falhas_logicas) ? a.falhas_logicas : [];
+      const vicios = Array.isArray(a.vicios_formais) ? a.vicios_formais : [];
+
+      let blocoIndef = "\n\n═══════════════════════════════════════════\n";
+      blocoIndef += "DECISÃO ADMINISTRATIVA DE INDEFERIMENTO — ANÁLISE OBRIGATÓRIA\n";
+      blocoIndef += "═══════════════════════════════════════════\n";
+      if (a.autoridade) blocoIndef += `AUTORIDADE/UNIDADE: ${a.autoridade}\n`;
+      if (a.resumo_decisao) blocoIndef += `RESUMO DA DECISÃO: ${a.resumo_decisao}\n`;
+      if (artigos.length) blocoIndef += `\nDISPOSITIVOS CITADOS PELA AUTORIDADE:\n${artigos.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
+      if (fundamentos.length) blocoIndef += `\nFUNDAMENTOS INVOCADOS PELA AUTORIDADE PARA INDEFERIR (REBATER PONTO A PONTO):\n${fundamentos.map((x: string, i: number) => `  P${i + 1}. ${x}`).join("\n")}\n`;
+      if (naoEnfrentados.length) blocoIndef += `\nPONTOS QUE A AUTORIDADE IGNOROU/NÃO ENFRENTOU:\n${naoEnfrentados.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
+      if (falhas.length) blocoIndef += `\nFALHAS LÓGICAS / EXTRAPOLAÇÃO DE DISCRICIONARIEDADE:\n${falhas.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
+      if (vicios.length) blocoIndef += `\nVÍCIOS FORMAIS (Lei 9.784/99 – motivação, ampla defesa):\n${vicios.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
+      if (textoIndefForUse) {
+        const corte = textoIndefForUse.length > 12000 ? textoIndefForUse.substring(0, 12000) + "\n[...trecho omitido por limite...]" : textoIndefForUse;
+        blocoIndef += `\nTEXTO INTEGRAL DA DECISÃO (referência factual — não copiar):\n────────\n${corte}\n────────\n`;
+      }
+      blocoIndef += `\nINSTRUÇÕES OBRIGATÓRIAS PARA ESTE RECURSO:\n` +
+        `1. Criar seção "DA NULIDADE DO INDEFERIMENTO" antes de DOS FATOS, expondo vícios formais e falhas (Lei 9.784/99 art. 2º, 50, 53; princípios da legalidade, motivação, razoabilidade, proporcionalidade).\n` +
+        `2. Criar seção "DO ENFRENTAMENTO DOS FUNDAMENTOS DO INDEFERIMENTO" estruturada como:\n` +
+        `   "P1 — [reproduzir o fundamento] → [resposta jurídica direta]" para CADA fundamento listado acima.\n` +
+        `3. Demonstrar que o requerente atende plenamente os requisitos legais (Lei 10.826/03, Decreto 11.615/23, IN 201/2021-DG/PF).\n` +
+        `4. Atacar diretamente: motivação genérica, ausência de análise individual, extrapolação de discricionariedade, omissão sobre documentos enviados.\n` +
+        `5. PROIBIDO ignorar qualquer fundamento listado — TODOS devem ser rebatidos.\n` +
+        `6. Tom firme, técnico, objetivo. Sem linguagem emocional. Sem inventar fatos ou jurisprudência.\n`;
+      dadosAdicionais += blocoIndef;
+    }
 
     // Evidence-specific instructions for the user prompt
     const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
