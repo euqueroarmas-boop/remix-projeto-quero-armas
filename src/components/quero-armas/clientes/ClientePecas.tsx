@@ -297,6 +297,10 @@ export default function ClientePecas({ cliente }: Props) {
         usuario_id: user?.id || null,
         updated_at: new Date().toISOString(),
       };
+      if (tipoPeca === "recurso_administrativo") {
+        casoData.indeferimento_texto = indeferimentoTexto.trim() || null;
+        casoData.indeferimento_analise = indeferimentoAnalise || null;
+      }
       if (geracaoResult?.geracao_id) casoData.geracao_id = geracaoResult.geracao_id;
       const { data, error } = await supabase
         .from("qa_casos" as any)
