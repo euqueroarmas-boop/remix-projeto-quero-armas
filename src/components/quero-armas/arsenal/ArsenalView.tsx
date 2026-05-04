@@ -1033,6 +1033,7 @@ export function ArsenalView({
         processosCount={processos.length + solicitacoesProcessos.length}
         autorizacoesCount={autorizacoes.length}
         examesCount={exames.length}
+        examesDetalhados={exames}
         onNavigate={scrollToSection}
       />
 
