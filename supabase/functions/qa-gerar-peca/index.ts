@@ -190,7 +190,13 @@ async function buscarCorrecoesRelevantes(
 }
 
 function montarBlocoCorrecoesParaPrompt(correcoes: CorrecaoComEscopo[]): string {
-  if (correcoes.length === 0) return "";
+  // Apenas correções de erro entram neste bloco (treinamentos diretos têm bloco próprio)
+  const apenasCorrecoes = correcoes.filter(
+    (c) => (c.tipo_registro || "correcao_erro") === "correcao_erro"
+      && (c.trecho_errado || "").trim().length >= 5
+      && (c.trecho_correto || "").trim().length >= 5,
+  );
+  if (apenasCorrecoes.length === 0) return "";
 
   const escopoLabel: Record<string, string> = {
     peca: "específica desta peça",
@@ -199,14 +205,14 @@ function montarBlocoCorrecoesParaPrompt(correcoes: CorrecaoComEscopo[]): string 
     global: "global do tipo de peça",
   };
 
-  const linhas = correcoes.map((c, idx) => {
+  const linhas = apenasCorrecoes.map((c, idx) => {
     const partes = [
       `${idx + 1}. Categoria: ${c.categoria_erro}`,
       `   Escopo: ${escopoLabel[c._escopo] || c._escopo}`,
       `   Trecho errado que NÃO deve ser repetido:`,
-      `   "${c.trecho_errado.trim()}"`,
+      `   "${(c.trecho_errado || "").trim()}"`,
       `   Forma correta esperada:`,
-      `   "${c.trecho_correto.trim()}"`,
+      `   "${(c.trecho_correto || "").trim()}"`,
     ];
     if (c.explicacao && c.explicacao.trim()) {
       partes.push(`   Explicação: "${c.explicacao.trim()}"`);
@@ -229,6 +235,58 @@ REGRA ABSOLUTA SOBRE CORREÇÕES:
 - NÃO confunda posse com porte, PF com Exército, SINARM com SIGMA.
 - NÃO use circunscrição/delegacia errada quando houver dado correto fornecido no caso.
 - NÃO altere o tipo de peça solicitado.
+`;
+}
+
+// ─── Bloco separado: TREINAMENTOS JURÍDICOS DIRETOS (instruções positivas) ───
+function montarBlocoTreinamentosDiretos(regras: CorrecaoComEscopo[]): string {
+  const treinamentos = regras.filter(
+    (r) => r.tipo_registro === "treinamento_direto"
+      && (r.instrucao || "").trim().length >= 5,
+  );
+  if (treinamentos.length === 0) return "";
+
+  // ordena por prioridade (critica > alta > media > baixa) e depois por _prioridade já calculada
+  const pesoPrio: Record<string, number> = { critica: 4, alta: 3, media: 2, baixa: 1 };
+  treinamentos.sort((a, b) => {
+    const pa = pesoPrio[a.prioridade || "media"] || 2;
+    const pb = pesoPrio[b.prioridade || "media"] || 2;
+    if (pb !== pa) return pb - pa;
+    return (b._prioridade || 0) - (a._prioridade || 0);
+  });
+
+  const linhas = treinamentos.map((r, idx) => {
+    const partes = [
+      `${idx + 1}. ${(r.titulo || "Orientação interna").trim()}  [prioridade: ${r.prioridade || "media"}]`,
+      `   Instrução obrigatória: ${(r.instrucao || "").trim()}`,
+    ];
+    if (r.servico_procedimento && r.servico_procedimento.trim()) {
+      partes.push(`   Serviço/procedimento: ${r.servico_procedimento.trim()}`);
+    }
+    if (r.foco_argumentativo && r.foco_argumentativo.trim()) {
+      partes.push(`   Foco argumentativo: ${r.foco_argumentativo.trim()}`);
+    }
+    if (r.categoria && r.categoria.trim()) {
+      partes.push(`   Categoria: ${r.categoria.trim()}`);
+    }
+    if (r.regra_aplicavel && r.regra_aplicavel.trim()) {
+      partes.push(`   Norma/fundamento: ${r.regra_aplicavel.trim()}`);
+    }
+    if (r.exemplo_aplicacao && r.exemplo_aplicacao.trim()) {
+      partes.push(`   Exemplo de aplicação: ${r.exemplo_aplicacao.trim()}`);
+    }
+    return partes.join("\n");
+  });
+
+  return `\n\nREGRAS INTERNAS DA EQUIPE QUERO ARMAS — OBRIGATÓRIAS
+As orientações abaixo foram registradas pela Equipe Quero Armas como diretrizes jurídicas, técnicas, operacionais e textuais obrigatórias. Aplique-as com prioridade sobre tendências genéricas do modelo, desde que não contrariem norma legal expressa ou dados do caso concreto. Trate-as como instruções de estilo, tese, estrutura e interpretação operacional.
+
+${linhas.join("\n\n")}
+
+REGRA ABSOLUTA SOBRE ESTAS ORIENTAÇÕES:
+- OBEDEÇA às instruções acima; quando ambíguas, prefira a interpretação mais conservadora e tecnicamente fundamentada.
+- NÃO contradiga, NÃO relativize e NÃO substitua estas orientações por padrões genéricos.
+- Se uma orientação conflitar diretamente com lei expressa, registre o cumprimento legal mas mantenha o espírito da orientação no que for compatível.
 `;
 }
 
