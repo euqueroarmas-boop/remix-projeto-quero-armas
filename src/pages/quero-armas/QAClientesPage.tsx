@@ -2369,7 +2369,7 @@ export default function QAClientesPage() {
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
         {/* Header — padrão ARSENAL (Premium KPI cluster) */}
-        <ClienteDetailHeader
+        <ClienteHeaderCard
           cliente={c}
           clienteCadastroIdForSub={clienteCadastroIdForSub}
           onBack={() => setSelected(null)}
