@@ -8,6 +8,7 @@ import {
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import ClienteArsenalReview from "@/components/quero-armas/clientes/ClienteArsenalReview";
+import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 
 interface Props {
   cliente: any;
@@ -160,6 +161,30 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     filiacoes.forEach((f: any) => { if (f.validade_filiacao) expDocs.push({ label: `Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, date: f.validade_filiacao, days: daysUntil(f.validade_filiacao), category: "FILIAÇÃO" }); });
     itens.forEach((it: any) => { if (it.data_vencimento) expDocs.push({ label: `Serviço — ${SERVICO_MAP[it.servico_id] || `#${it.servico_id}`}`, date: it.data_vencimento, days: daysUntil(it.data_vencimento), category: "SERVIÇO" }); });
 
+    // Prazos processuais administrativos de 10 dias (notificação / indeferimento /
+    // restituição). Fonte única: lib/quero-armas/prazosProcessuais.
+    const prazosProc = calcularPrazosProcessuais(
+      itens.map((it: any) => ({
+        id: it.id,
+        servico_id: it.servico_id,
+        servico_nome: SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`,
+        status: it.status,
+        numero_processo: it.numero_processo,
+        data_notificacao: it.data_notificacao,
+        data_indeferimento: it.data_indeferimento,
+        data_recurso_administrativo: it.data_recurso_administrativo,
+      })),
+    );
+    for (const p of prazosProc) {
+      const nome = p.servicoNome || `Serviço #${p.servicoId ?? "?"}`;
+      expDocs.push({
+        label: `${p.evento} — ${nome} · prazo ${p.evento === "RESTITUIÇÃO" ? "para manifestação" : "para recurso"} (10d)`,
+        date: p.dataLimite,
+        days: p.diasRestantes,
+        category: "PRAZO ADM",
+      });
+    }
+
     expDocs.sort((a, b) => {
       if (a.days === null && b.days === null) return 0;
       if (a.days === null) return 1;
@@ -171,8 +196,8 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const vencidos = expDocs.filter(d => d.days !== null && d.days < 0);
     const validos = expDocs.filter(d => d.days !== null && d.days > 90);
 
-    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, armasReview, expDocs, alerts, vencidos, validos };
-  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual]);
+    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, armasReview, expDocs, alerts, vencidos, validos, prazosProc };
+  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual, SERVICO_MAP]);
 
   // Timeline events — ORDEM CRONOLÓGICA ASCENDENTE com TODOS os marcos por serviço
   const timeline = useMemo(() => {
@@ -422,6 +447,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               const statusDone = it.status === "CONCLUÍDO" || it.status === "DEFERIDO";
               const statusBad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(it.status);
               const progress = statusDone ? 100 : statusBad ? 0 : 60;
+              const prazoItem = analysis.prazosProc.find((p) => p.itemId === it.id);
               return (
                 <div key={it.id} className="group flex items-center gap-3 py-3 px-4 rounded-xl border transition-all hover:shadow-sm" style={{ borderColor: "hsl(220 13% 93%)" }}>
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
@@ -439,6 +465,20 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                       {it.numero_processo && <span className="font-mono">{it.numero_processo}</span>}
                       {it.data_protocolo && <span>Prot: {formatDate(it.data_protocolo)}</span>}
                     </div>
+                    {prazoItem && (
+                      <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                        style={{
+                          background: prazoItem.diasRestantes < 0 ? "hsl(0 80% 95%)"
+                            : prazoItem.diasRestantes <= 2 ? "hsl(0 80% 95%)"
+                            : prazoItem.diasRestantes <= 5 ? "hsl(38 92% 92%)"
+                            : "hsl(152 60% 92%)",
+                          color: prazoItem.diasRestantes <= 5 || prazoItem.diasRestantes < 0 ? "hsl(0 72% 40%)" : "hsl(152 60% 30%)",
+                        }}
+                        title={`${prazoItem.evento} em ${prazoItem.dataEvento.split("-").reverse().join("/")} · prazo fatal ${prazoItem.dataLimite.split("-").reverse().join("/")}`}
+                      >
+                        {prazoItem.evento} · {prazoItem.statusLabel}
+                      </div>
+                    )}
                     {/* Progress bar */}
                     <div className="w-full h-1 rounded-full mt-2" style={{ background: "hsl(220 13% 94%)" }}>
                       <div className="h-full rounded-full transition-all" style={{
