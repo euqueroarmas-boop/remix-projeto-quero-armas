@@ -192,7 +192,7 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
         <p className="py-6 text-center text-[11px] text-slate-500">Carregando CRAFs…</p>
       ) : canonicos.length === 0 && documentos.length === 0 ? (
         <p className="py-6 text-center text-[11px] text-slate-500">
-          Nenhum CRAF vinculado a este cliente. Cadastro manual e leitura por IA serão liberados na próxima etapa.
+          Nenhum CRAF vinculado a este cliente.
         </p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
