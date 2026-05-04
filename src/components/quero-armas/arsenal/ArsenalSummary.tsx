@@ -90,6 +90,9 @@ interface Props {
   crLabel: string;
   totalCrafs: number;
   alerts: number;
+  /** Breakdown opcional do total de alertas para subtítulo coerente. */
+  alertasCriticos?: number;
+  alertasPreventivos?: number;
   /** Total de GTEs do cliente (concluídas, com leitura ok). */
   totalGtes?: number;
   /** Status visual agregado da GTE: ok/warn/danger/muted. */
@@ -290,6 +293,8 @@ export function ArsenalSummary({
   crLabel,
   totalCrafs,
   alerts,
+  alertasCriticos = 0,
+  alertasPreventivos = 0,
   totalGtes = 0,
   gteStatus = "muted",
   gteHint = "Sem GTE cadastrada",
@@ -548,14 +553,23 @@ export function ArsenalSummary({
         icon: <AlertTriangle className="h-4 w-4" />,
         label: "Alertas",
         value: alerts,
-        hint: alertasUnified
-          ? alertasUnified.sub ?? alertasUnified.label
-          : alerts === 0 ? "Tudo em dia" : "Vencimentos próximos",
+        hint: (() => {
+          if (alerts === 0) return "Tudo em dia";
+          const partes: string[] = [];
+          if (alertasCriticos > 0) partes.push(`${alertasCriticos} crítico${alertasCriticos > 1 ? "s" : ""}`);
+          if (alertasPreventivos > 0) partes.push(`${alertasPreventivos} preventivo${alertasPreventivos > 1 ? "s" : ""}`);
+          if (partes.length > 0) return partes.join(" · ");
+          return alertasUnified ? alertasUnified.sub ?? alertasUnified.label : "Vencimentos próximos";
+        })(),
         // Cor agora dirigida pela engine (vencido→vermelho, vencendo→laranja/amarelo,
         // em dia→verde, sem dado→cinza). Fallback legacy preservado.
-        tone: alertasUnified
-          ? corToTone(alertasUnified.cor)
-          : alerts === 0 ? "steel" : alerts > 2 ? "danger" : "warn",
+        tone: alerts === 0
+          ? "steel"
+          : alertasCriticos > 0
+            ? "danger"
+            : alertasPreventivos > 0
+              ? "warn"
+              : (alertasUnified ? corToTone(alertasUnified.cor) : "warn"),
         target: "alertas",
       },
       gte: {
@@ -585,7 +599,7 @@ export function ArsenalSummary({
       },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified, municoesUnified],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, alertasCriticos, alertasPreventivos, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified, municoesUnified],
   );
 
   // Ordem efetiva:
