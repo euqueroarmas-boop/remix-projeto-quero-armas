@@ -319,7 +319,8 @@ export function ArsenalSummary({
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   // Toggle local seguro — não persiste (regra do BLOCO 2).
-  const [showSecondary, setShowSecondary] = useState(false);
+  // KPIs secundárias sempre visíveis — sem recolhimento (decisão UX: nada
+  // recolhido no Arsenal do cliente; tudo à mostra para leitura imediata).
 
   // Estado: existe layout salvo por cliente?
   // Quando true → respeita estritamente a ordem do banco (não força CR primeiro).
@@ -868,27 +869,8 @@ export function ArsenalSummary({
         </SortableContext>
       </DndContext>
 
-      {/* ── BLOCO 2 — Linha 2 recolhível: KPIs adicionais ───────────────── */}
-      <div className="flex items-center justify-center pt-1">
-        <button
-          type="button"
-          onClick={() => setShowSecondary((v) => !v)}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600 hover:bg-slate-50"
-          title={showSecondary ? "Recolher KPIs adicionais" : "Ver mais KPIs"}
-        >
-          {showSecondary ? (
-            <>
-              <ChevronUp className="h-3 w-3" /> Recolher
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-3 w-3" /> Mais KPIs{hasSecondaryData ? "" : ""}
-            </>
-          )}
-        </button>
-      </div>
-      {showSecondary && (
-        <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+      {/* ── BLOCO 2 — KPIs adicionais (sempre visíveis) ─────────────────── */}
+      <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {SECONDARY_ORDER.map((sid) => {
             const def = secondaryDefs[sid];
             const color = toneColor(def.tone);
@@ -1031,7 +1013,6 @@ export function ArsenalSummary({
             return cardEl;
           })}
         </div>
-      )}
     </div>
   );
 }
