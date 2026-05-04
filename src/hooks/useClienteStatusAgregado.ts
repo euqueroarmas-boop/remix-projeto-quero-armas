@@ -200,7 +200,10 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         sb.from("qa_documentos_cliente").select("status, data_validade, tipo_documento, origem").eq("qa_cliente_id", clienteId).neq("status", "excluido"),
         sb.from("qa_processo_documentos").select("status, data_validade_efetiva, processo_id").eq("cliente_id", clienteId),
         sb.from("qa_processos").select("status, pagamento_status").eq("cliente_id", clienteId),
-        sb.from("qa_municoes").select("data_fabricacao").eq("cliente_id", clienteId),
+        sb
+          .from("qa_municoes_saldos" as any)
+          .select("data_fabricacao,data_validade,saldo")
+          .eq("cliente_id", clienteId),
       ]);
 
       const cr = crResp?.data?.[0] ?? null;
