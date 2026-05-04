@@ -129,12 +129,14 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
     data_validade: "",
     observacao: "",
   });
+  const [fileEntrada, setFileEntrada] = useState<File | null>(null);
 
   const [formSaida, setFormSaida] = useState({
     quantidade: "",
     motivo: "treino" as MotivoSaida,
     observacao: "",
   });
+  const [fileSaida, setFileSaida] = useState<File | null>(null);
 
   const reload = async () => {
     setLoading(true);
@@ -201,6 +203,22 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
       }
     }
     setSaving(true);
+    let documento_url: string | null = null;
+    let documento_nome: string | null = null;
+    if (fileEntrada) {
+      const safeName = fileEntrada.name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+      const path = `clientes/${clienteId}/municoes/${Date.now()}-${safeName}`;
+      const up = await supabase.storage.from("qa-documentos").upload(path, fileEntrada, {
+        cacheControl: "3600", upsert: false, contentType: fileEntrada.type || undefined,
+      });
+      if (up.error) {
+        setSaving(false);
+        toast.error("Falha ao enviar anexo: " + up.error.message);
+        return;
+      }
+      documento_url = path;
+      documento_nome = fileEntrada.name;
+    }
     const { error } = await supabase.from("qa_municoes_movimentacoes" as any).insert({
       cliente_id: clienteId,
       tipo: "ENTRADA",
@@ -211,6 +229,8 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
       data_fabricacao: isoFab,
       data_validade: isoVal,
       observacao: formEntrada.observacao.trim() || null,
+      documento_url,
+      documento_nome,
     } as any);
     setSaving(false);
     if (error) {
@@ -222,6 +242,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
       calibre: "9MM", marca: "", lote: "", quantidade: "",
       data_fabricacao: "", data_validade: "", observacao: "",
     });
+    setFileEntrada(null);
     reload();
   };
 
@@ -237,6 +258,22 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
       return;
     }
     setSaving(true);
+    let documento_url: string | null = null;
+    let documento_nome: string | null = null;
+    if (fileSaida) {
+      const safeName = fileSaida.name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+      const path = `clientes/${clienteId}/municoes/${Date.now()}-${safeName}`;
+      const up = await supabase.storage.from("qa-documentos").upload(path, fileSaida, {
+        cacheControl: "3600", upsert: false, contentType: fileSaida.type || undefined,
+      });
+      if (up.error) {
+        setSaving(false);
+        toast.error("Falha ao enviar anexo: " + up.error.message);
+        return;
+      }
+      documento_url = path;
+      documento_nome = fileSaida.name;
+    }
     const { error } = await supabase.from("qa_municoes_movimentacoes" as any).insert({
       cliente_id: clienteId,
       tipo: "SAIDA",
@@ -246,6 +283,8 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
       quantidade: qtd,
       motivo: formSaida.motivo,
       observacao: formSaida.observacao.trim() || null,
+      documento_url,
+      documento_nome,
     } as any);
     setSaving(false);
     if (error) {
@@ -255,6 +294,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
     toast.success("Saída registrada.");
     setShowSaida(null);
     setFormSaida({ quantidade: "", motivo: "treino", observacao: "" });
+    setFileSaida(null);
     reload();
   };
 
@@ -343,6 +383,20 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
           onChange={(e) => setFormEntrada((f) => ({ ...f, observacao: e.target.value }))}
           className="mt-2 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] text-slate-700"
         />
+        <label className="mt-2 flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-[11px] text-slate-600 hover:border-[#7A1F2B]/40">
+          <Paperclip className="h-3.5 w-3.5" />
+          {fileEntrada ? <span className="truncate">{fileEntrada.name}</span> : "Anexar nota fiscal / comprovante (opcional)"}
+          <input
+            type="file" className="hidden"
+            accept="image/*,application/pdf"
+            onChange={(e) => setFileEntrada(e.target.files?.[0] ?? null)}
+          />
+          {fileEntrada && (
+            <button type="button" onClick={(e) => { e.preventDefault(); setFileEntrada(null); }} className="ml-auto text-slate-400 hover:text-red-500">
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </label>
         <div className="mt-1.5 text-[10px] text-slate-500">
           Validade padrão = fabricação + 60 meses (preenchida automaticamente se em branco).
         </div>
@@ -483,6 +537,20 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                 rows={3}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-700"
               />
+              <label className="flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-[11px] text-slate-600 hover:border-[#7A1F2B]/40">
+                <Paperclip className="h-3.5 w-3.5" />
+                {fileSaida ? <span className="truncate">{fileSaida.name}</span> : "Anexar comprovante (opcional)"}
+                <input
+                  type="file" className="hidden"
+                  accept="image/*,application/pdf"
+                  onChange={(e) => setFileSaida(e.target.files?.[0] ?? null)}
+                />
+                {fileSaida && (
+                  <button type="button" onClick={(e) => { e.preventDefault(); setFileSaida(null); }} className="ml-auto text-slate-400 hover:text-red-500">
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </label>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => setShowSaida(null)} className="h-9 text-[11px] uppercase">
                   Cancelar
