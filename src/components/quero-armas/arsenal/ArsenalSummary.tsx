@@ -631,6 +631,93 @@ export function ArsenalSummary({
     return "steel";
   };
 
+  // ── Analítico inteligente de Exames/Laudos ───────────────────────────────
+  // Calcula vigentes / a vencer / vencidos, identifica próximo crítico,
+  // dias restantes individuais e tone visual do KPI.
+  const examesAnalytics = useMemo(() => {
+    const parseDate = (s?: string | null): Date | null => {
+      if (!s) return null;
+      // ISO ou DD/MM/YYYY
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        const d = new Date(s);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      const m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(s);
+      if (m) {
+        const d = new Date(`${m[3]}-${m[2]}-${m[1]}`);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    type Row = {
+      id: string;
+      tipo: string;
+      tipoLabel: string;
+      dataRealizacao: Date | null;
+      dataVencimento: Date | null;
+      diasRestantes: number | null;
+      status: "vigente" | "atencao" | "critico" | "vencido" | "sem_data";
+    };
+    const rows: Row[] = (examesDetalhados || []).map((e) => {
+      const tipo = String(e.tipo || "").toLowerCase();
+      const tipoLabel =
+        tipo === "psicologico" ? "Psicológico" :
+        tipo === "tiro" ? "Exame de Tiro" :
+        (e.tipo || "Exame").toString();
+      const dv = parseDate(e.data_vencimento);
+      const dr = parseDate(e.data_realizacao);
+      let diff: number | null = null;
+      let status: Row["status"] = "sem_data";
+      if (dv) {
+        diff = Math.ceil((dv.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        if (diff < 0) status = "vencido";
+        else if (diff <= 15) status = "critico";
+        else if (diff <= 60) status = "atencao";
+        else status = "vigente";
+      }
+      return { id: e.id, tipo, tipoLabel, dataRealizacao: dr, dataVencimento: dv, diasRestantes: diff, status };
+    });
+    rows.sort((a, b) => {
+      // vencidos primeiro, depois mais próximos do vencimento
+      if (a.diasRestantes === null && b.diasRestantes === null) return 0;
+      if (a.diasRestantes === null) return 1;
+      if (b.diasRestantes === null) return -1;
+      return a.diasRestantes - b.diasRestantes;
+    });
+    const vigentes = rows.filter((r) => r.status === "vigente").length;
+    const aVencer = rows.filter((r) => r.status === "atencao" || r.status === "critico").length;
+    const vencidos = rows.filter((r) => r.status === "vencido").length;
+    const proximo = rows[0] || null;
+    const tone: KpiSecondaryDefinition["tone"] =
+      vencidos > 0 ? "danger" :
+      rows.some((r) => r.status === "critico") ? "danger" :
+      rows.some((r) => r.status === "atencao") ? "warn" :
+      rows.length > 0 ? "ok" : "steel";
+    return { rows, vigentes, aVencer, vencidos, proximo, tone, total: rows.length };
+  }, [examesDetalhados]);
+
+  const examesHint = useMemo(() => {
+    const a = examesAnalytics;
+    if (a.total === 0) return "Sem exames";
+    const partes: string[] = [];
+    if (a.vencidos) partes.push(`${a.vencidos} vencido${a.vencidos > 1 ? "s" : ""}`);
+    if (a.aVencer) partes.push(`${a.aVencer} a vencer`);
+    if (!partes.length && a.vigentes) partes.push(`${a.vigentes} vigente${a.vigentes > 1 ? "s" : ""}`);
+    if (a.proximo && a.proximo.diasRestantes !== null) {
+      const d = a.proximo.diasRestantes;
+      const tipoCurto = a.proximo.tipoLabel.replace("Exame de ", "");
+      const cd =
+        d < 0 ? `${tipoCurto} VENCIDO há ${Math.abs(d)}d` :
+        d === 0 ? `${tipoCurto} vence HOJE` :
+        `Próximo: ${tipoCurto} em ${d}d`;
+      partes.push(cd);
+    }
+    return partes.join(" · ");
+  }, [examesAnalytics]);
+
   const secondaryDefs: Record<KpiSecondaryId, KpiSecondaryDefinition> = useMemo(() => ({
     documentos: {
       id: "documentos",
@@ -676,17 +763,20 @@ export function ArsenalSummary({
       icon: <Stethoscope className="h-4 w-4" />,
       label: "Exames/Laudos",
       value: examesCount,
-      hint: examesUnified
-        ? examesUnified.sub ?? examesUnified.label
-        : examesCount === 0
-          ? "Sem exames"
-          : "Cadastrados",
-      tone: examesUnified ? corToToneSecondary(examesUnified.cor) : "steel",
+      hint: examesAnalytics.total > 0
+        ? examesHint
+        : examesUnified
+          ? examesUnified.sub ?? examesUnified.label
+          : "Sem exames",
+      tone: examesAnalytics.total > 0
+        ? examesAnalytics.tone
+        : (examesUnified ? corToToneSecondary(examesUnified.cor) : "steel"),
       target: "exames",
     },
   }), [
     documentosCount, processosCount, autorizacoesCount, examesCount,
     documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+    examesAnalytics, examesHint,
   ]);
 
   const hasSecondaryData =
