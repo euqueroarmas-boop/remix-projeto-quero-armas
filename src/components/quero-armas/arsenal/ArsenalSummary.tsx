@@ -1013,7 +1013,6 @@ export function ArsenalSummary({
             return cardEl;
           })}
         </div>
-      )}
     </div>
   );
 }
