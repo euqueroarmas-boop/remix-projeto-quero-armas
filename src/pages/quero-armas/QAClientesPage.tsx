@@ -3694,16 +3694,18 @@ export default function QAClientesPage() {
               }
             />
           )}
-          {list.map(c => {
-            const statusTone =
-              c.status === "ATIVO"
-                ? "hsl(152 60% 42%)"
-                : c.status === "DESISTENTE"
-                ? "hsl(0 72% 55%)"
-                : "hsl(38 92% 50%)";
-            return (
-              <button
-                key={c.id}
+          {list.map(c => (
+            <ClienteSearchRow
+              key={c.id}
+              c={c}
+              openClient={openClient}
+              setDeleteModal={setDeleteModal}
+            />
+          ))}
+        </div>
+          );
+        })()
+      ) : tabView === "cadastros" ? (
                 onClick={() => openClient(c)}
                 className="w-full text-left group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.997]"
                 style={{ boxShadow: `inset 0 0 0 1px ${statusTone}10, 0 1px 2px rgba(15,23,42,0.04)` }}
