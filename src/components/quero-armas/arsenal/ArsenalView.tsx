@@ -1083,28 +1083,62 @@ export function ArsenalView({
           </div>
 
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5 text-slate-600" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
-                Próximos vencimentos
-              </div>
-            </div>
-            {alerts.length === 0 ? (
-              <p className="text-[11px] text-slate-500">Nenhum vencimento próximo. Tudo em dia.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {alerts.slice(0, 5).map((a, i) => (
-                  <div key={i} className="flex items-center justify-between text-[11px]">
-                    <span className="truncate text-slate-700">{a.label}</span>
-                    <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-600">
-                      {a.days! < 0
-                        ? `Vencido há ${Math.abs(a.days!)} ${Math.abs(a.days!) === 1 ? "dia" : "dias"}`
-                        : `${a.days} ${a.days === 1 ? "dia" : "dias"}`}
-                    </span>
+            {(() => {
+              const criticos = alertasDetalhados.filter((a) => a.status.cor === "vermelho").length;
+              const preventivos = alertasDetalhados.filter((a) => a.status.cor === "laranja" || a.status.cor === "amarelo").length;
+              const total = alertasDetalhados.length;
+              const subtitulo = total === 0
+                ? "Tudo em dia"
+                : criticos > 0
+                  ? "Ação imediata necessária"
+                  : preventivos > 0
+                    ? "Atenção preventiva"
+                    : "Acompanhamento recomendado";
+              const cor = total === 0
+                ? "text-emerald-600"
+                : criticos > 0
+                  ? "text-red-600"
+                  : "text-amber-600";
+              return (
+                <>
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <AlertTriangle className={`h-3.5 w-3.5 ${cor}`} />
+                      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
+                        Próximos Vencimentos
+                      </div>
+                    </div>
+                    <span className={`text-[9px] font-bold uppercase tracking-wider ${cor}`}>{subtitulo}</span>
                   </div>
-                ))}
-              </div>
-            )}
+                  {total === 0 ? (
+                    <p className="text-[11px] text-slate-500">Nenhum vencimento próximo. Tudo em dia.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {alertasDetalhados.slice(0, 6).map((a) => (
+                        <div key={a.id} className="flex items-center justify-between gap-2 text-[11px]">
+                          <span className="truncate text-slate-700">
+                            <span className="font-bold uppercase">{a.titulo}</span>
+                            <span className="ml-1 text-[9px] uppercase tracking-wider text-slate-400">· {a.tipo}</span>
+                          </span>
+                          <span className="ml-2 shrink-0 font-mono text-[10px] text-slate-600">
+                            {a.diasRestantes === null
+                              ? "—"
+                              : a.diasRestantes < 0
+                                ? `Vencido há ${Math.abs(a.diasRestantes)}d`
+                                : a.diasRestantes === 0
+                                  ? "Vence hoje"
+                                  : `${a.diasRestantes}d`}
+                          </span>
+                        </div>
+                      ))}
+                      {alertasDetalhados.length > 6 && (
+                        <p className="pt-1 text-[10px] text-slate-400">+{alertasDetalhados.length - 6} outros</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
       </aside>
 
