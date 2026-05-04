@@ -745,6 +745,9 @@ export default function QAClientePortalPage() {
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-bold" style={{ color: "hsl(220 20% 18%)" }}>Olá, {cliente.nome_completo.split(" ")[0]}!</h1>
                 <p className="text-[12px] mt-1" style={{ color: "hsl(220 10% 55%)" }}>Aqui está o resumo completo do seu atendimento conosco.</p>
+                <div className="mt-2">
+                  <ClienteHealthBadge clienteId={cliente.id} variant="full" />
+                </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {!hasAnyPhoto ? (
                     <Button
