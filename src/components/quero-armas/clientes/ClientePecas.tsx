@@ -322,11 +322,6 @@ export default function ClientePecas({ cliente }: Props) {
   };
 
   // ── Generate ──
-  const gerar = async () => {
-    // moved below
-    return _gerar();
-  };
-
   const handleIndefFile = async (file: File | null) => {
     if (!file) return;
     if (file.name.toLowerCase().endsWith(".txt")) {
@@ -366,7 +361,7 @@ export default function ClientePecas({ cliente }: Props) {
     }
   };
 
-  const _gerar = async () => {
+  const gerar = async () => {
     if (!cliente.nome_completo.trim()) { toast.error("Nome do requerente ausente"); return; }
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
     if (!clienteCidade.trim() || !clienteUf.trim()) { toast.error("Cidade e estado são obrigatórios"); return; }
