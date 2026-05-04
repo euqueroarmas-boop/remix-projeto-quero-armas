@@ -1588,6 +1588,7 @@ Deno.serve(async (req) => {
       peca_id: null, // a peça ainda não foi gerada nesta execução
     });
     const blocoCorrecoes = montarBlocoCorrecoesParaPrompt(correcoesAtivas);
+    const blocoTreinamentos = montarBlocoTreinamentosDiretos(correcoesAtivas);
     console.log(`[qa-gerar-peca] Correções injetadas no prompt: ${correcoesAtivas.length} (tipo=${tipo_peca}, cliente=${cliente_id_final ?? "—"}, caso=${caso_id ?? "—"})`);
     if (correcoesAtivas.length > 0) {
       console.log(`[qa-gerar-peca] Correções IDs: ${correcoesAtivas.map(c => `${c.id}(${c._escopo})`).join(", ")}`);
@@ -1606,7 +1607,7 @@ MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
 UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}${numero_requerimento ? `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}` : ""}
 ${evidenceSummaryForPrompt}
-${parametros}${blocoCorrecoes}
+${parametros}${blocoCorrecoes}${blocoTreinamentos}
 
 DESCRIÇÃO COMPLETA DO CASO:
 ${entrada_caso}
