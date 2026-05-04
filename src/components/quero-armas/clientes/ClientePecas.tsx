@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
@@ -7,7 +7,7 @@ import {
   AlertCircle, PenTool, User, Scale, Sparkles, Send,
   Mail, Phone, MapPin, Building2, Shield, Briefcase,
   Calendar, Heart, GraduationCap, Flag, Users, BookOpen, Info,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Gavel, Upload,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -147,6 +147,12 @@ export default function ClientePecas({ cliente }: Props) {
   const [dataNotificacao, setDataNotificacao] = useState("");
   const [infoTempestividade, setInfoTempestividade] = useState("");
   const [numeroRequerimento, setNumeroRequerimento] = useState("");
+
+  // ── Indeferimento (recurso_administrativo) ──
+  const [indeferimentoTexto, setIndeferimentoTexto] = useState("");
+  const [indeferimentoAnalise, setIndeferimentoAnalise] = useState<any | null>(null);
+  const [analisandoIndef, setAnalisandoIndef] = useState(false);
+  const indefFileRef = useRef<HTMLInputElement | null>(null);
 
   const [circunscricao, setCircunscricao] = useState<any>(null);
   const [circStatus, setCircStatus] = useState<"idle" | "resolving" | "resolved" | "not_found" | "error">("idle");
@@ -291,6 +297,10 @@ export default function ClientePecas({ cliente }: Props) {
         usuario_id: user?.id || null,
         updated_at: new Date().toISOString(),
       };
+      if (tipoPeca === "recurso_administrativo") {
+        casoData.indeferimento_texto = indeferimentoTexto.trim() || null;
+        casoData.indeferimento_analise = indeferimentoAnalise || null;
+      }
       if (geracaoResult?.geracao_id) casoData.geracao_id = geracaoResult.geracao_id;
       const { data, error } = await supabase
         .from("qa_casos" as any)
@@ -312,6 +322,45 @@ export default function ClientePecas({ cliente }: Props) {
   };
 
   // ── Generate ──
+  const handleIndefFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.name.toLowerCase().endsWith(".txt")) {
+      const txt = await file.text();
+      setIndeferimentoTexto(txt);
+      setIndeferimentoAnalise(null);
+      toast.success("Texto carregado. Clique em ANALISAR INDEFERIMENTO COM IA.");
+      return;
+    }
+    toast.info("PDF/imagem detectados — cole o conteúdo no campo abaixo.");
+  };
+
+  const analisarIndeferimento = async () => {
+    const texto = indeferimentoTexto.trim();
+    if (texto.length < 100) { toast.error("Cole o conteúdo do indeferimento (mínimo 100 caracteres)."); return; }
+    setAnalisandoIndef(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-analisar-indeferimento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ texto }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Falha ao analisar");
+      setIndeferimentoAnalise(json.analise);
+      toast.success("Indeferimento analisado. A peça rebaterá ponto a ponto.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao analisar indeferimento");
+    } finally {
+      setAnalisandoIndef(false);
+    }
+  };
+
   const gerar = async () => {
     if (!cliente.nome_completo.trim()) { toast.error("Nome do requerente ausente"); return; }
     if (!entradaCaso.trim()) { toast.error("Descreva o caso"); return; }
@@ -390,6 +439,8 @@ export default function ClientePecas({ cliente }: Props) {
           info_tempestividade: infoTempestividade.trim() || null,
           numero_requerimento: numeroRequerimento.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
+          indeferimento_texto: tipoPeca === "recurso_administrativo" ? (indeferimentoTexto.trim() || null) : null,
+          indeferimento_analise: tipoPeca === "recurso_administrativo" ? (indeferimentoAnalise || null) : null,
         }),
       });
 
@@ -748,6 +799,107 @@ export default function ClientePecas({ cliente }: Props) {
                 className="h-10 text-[11px] uppercase rounded-lg border-2 font-semibold bg-white"
                 style={{ borderColor: "hsl(220 15% 90%)", color: "hsl(220 20% 18%)" }} />
             </div>
+          </div>
+        )}
+
+        {tipoPeca === "recurso_administrativo" && (
+          <div className="space-y-3 rounded-lg border-2 p-3" style={{ borderColor: "#7A1F2B33", background: "#FBF3F4" }}>
+            <div className="flex items-center gap-2">
+              <Gavel className="h-3.5 w-3.5" style={{ color: "#7A1F2B" }} />
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7A1F2B" }}>
+                DECISÃO ADMINISTRATIVA / INDEFERIMENTO
+              </span>
+              {indeferimentoAnalise && (
+                <span className="text-[9px] px-2 py-0.5 rounded" style={{ background: "hsl(145 60% 40% / 0.12)", color: "hsl(145 60% 30%)" }}>✓ ANALISADO</span>
+              )}
+            </div>
+            <p className="text-[10px] uppercase font-medium" style={{ color: "hsl(220 10% 50%)" }}>
+              COLE A DECISÃO DA PF. A IA EXTRAIRÁ OS FUNDAMENTOS E GERARÁ "DA NULIDADE DO INDEFERIMENTO" E "DO ENFRENTAMENTO DOS FUNDAMENTOS" REBATENDO PONTO A PONTO.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={indefFileRef}
+                type="file"
+                accept=".txt,.pdf,.png,.jpg,.jpeg,.webp"
+                className="hidden"
+                onChange={e => { handleIndefFile(e.target.files?.[0] || null); e.target.value = ""; }}
+              />
+              <Button type="button" variant="outline" size="sm" className="h-8 text-[10px] uppercase font-bold"
+                onClick={() => indefFileRef.current?.click()}>
+                <Upload className="h-3 w-3 mr-1.5" /> ANEXAR DECISÃO (.TXT)
+              </Button>
+              <span className="text-[9px] uppercase font-medium" style={{ color: "hsl(220 10% 55%)" }}>.TXT CARREGA DIRETO. PDF/IMAGEM: COLE MANUALMENTE.</span>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 50%)" }}>
+                CONTEÚDO DO INDEFERIMENTO *
+              </Label>
+              <Textarea
+                value={indeferimentoTexto}
+                onChange={e => { setIndeferimentoTexto(e.target.value); if (indeferimentoAnalise) setIndeferimentoAnalise(null); }}
+                className="min-h-[160px] text-[11px] resize-none rounded-lg border-2 font-mono bg-white"
+                style={{ borderColor: "hsl(220 15% 90%)", color: "hsl(220 20% 18%)" }}
+                placeholder="COLE AQUI A DECISÃO COMPLETA DA POLÍCIA FEDERAL..."
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] font-medium" style={{ color: "hsl(220 10% 55%)" }}>
+                  {indeferimentoTexto.trim().length} CARACTERES
+                </span>
+                <Button
+                  type="button" size="sm"
+                  disabled={analisandoIndef || indeferimentoTexto.trim().length < 100}
+                  onClick={analisarIndeferimento}
+                  className="h-8 text-[10px] uppercase font-bold text-white disabled:opacity-40"
+                  style={{ background: "#7A1F2B" }}
+                >
+                  {analisandoIndef ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Scale className="h-3 w-3 mr-1.5" />}
+                  ANALISAR INDEFERIMENTO COM IA
+                </Button>
+              </div>
+            </div>
+            {indeferimentoAnalise && (
+              <div className="space-y-2 rounded-lg border-2 p-2.5 text-[11px] bg-white"
+                style={{ borderColor: "hsl(220 15% 90%)", color: "hsl(220 20% 25%)" }}>
+                {indeferimentoAnalise.resumo_decisao && (
+                  <div><span className="font-bold uppercase" style={{ color: "#7A1F2B" }}>RESUMO:</span> {indeferimentoAnalise.resumo_decisao}</div>
+                )}
+                {Array.isArray(indeferimentoAnalise.fundamentos_de_indef) && indeferimentoAnalise.fundamentos_de_indef.length > 0 && (
+                  <div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>FUNDAMENTOS DO INDEFERIMENTO ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
+                    <ul className="list-decimal list-inside space-y-0.5">
+                      {indeferimentoAnalise.fundamentos_de_indef.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.artigos_citados) && indeferimentoAnalise.artigos_citados.length > 0 && (
+                  <div><span className="font-bold uppercase" style={{ color: "#7A1F2B" }}>DISPOSITIVOS CITADOS:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
+                )}
+                {Array.isArray(indeferimentoAnalise.falhas_logicas) && indeferimentoAnalise.falhas_logicas.length > 0 && (
+                  <div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>FALHAS LÓGICAS:</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {indeferimentoAnalise.falhas_logicas.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.vicios_formais) && indeferimentoAnalise.vicios_formais.length > 0 && (
+                  <div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>VÍCIOS FORMAIS:</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {indeferimentoAnalise.vicios_formais.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.pontos_nao_enfrentados) && indeferimentoAnalise.pontos_nao_enfrentados.length > 0 && (
+                  <div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>PONTOS NÃO ENFRENTADOS:</div>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {indeferimentoAnalise.pontos_nao_enfrentados.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
