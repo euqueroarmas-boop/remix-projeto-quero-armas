@@ -72,6 +72,7 @@ interface ItemRow {
   data_indeferimento: string | null;
   data_notificacao: string | null;
   data_recurso_administrativo: string | null;
+  data_indeferimento_recurso: string | null;
   numero_processo: string | null;
   numero_requerimento: string | null;
   numero_posse: string | null;
