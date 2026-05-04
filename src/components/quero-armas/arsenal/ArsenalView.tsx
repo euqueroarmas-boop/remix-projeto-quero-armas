@@ -1187,6 +1187,16 @@ export function ArsenalView({
         />
       </div>
 
+      {/* Controle de CRAF — F1A (somente leitura/indicadores) */}
+      <div id="arsenal-craf" className="scroll-mt-28">
+        <ArsenalCRAFControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
+      </div>
+
+      {/* Controle de Autorizações — F1A (somente leitura/indicadores) */}
+      <div id="arsenal-autorizacoes" className="scroll-mt-28">
+        <ArsenalAutorizacoesControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
+      </div>
+
       {/* Controle de GTE — extração IA + KPIs (cliente + equipe) */}
       <div id="arsenal-gte" className="scroll-mt-28">
         <ArsenalGTEControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
