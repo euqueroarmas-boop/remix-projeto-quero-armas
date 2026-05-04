@@ -1160,6 +1160,8 @@ export default function QAGerarPecaPage() {
           info_tempestividade: infoTempestividade.trim() || null,
           numero_requerimento: numeroRequerimento.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
+          indeferimento_texto: tipoPeca === "recurso_administrativo" ? (indeferimentoTexto.trim() || null) : null,
+          indeferimento_analise: tipoPeca === "recurso_administrativo" ? (indeferimentoAnalise || null) : null,
         }),
       });
 
