@@ -1023,7 +1023,6 @@ export function ArsenalView({
 
   return (
     <div className="space-y-5">
-      {(() => { return null; })()}
       {/* KPIs */}
       <ArsenalSummary
         totalArmas={weapons.length}
