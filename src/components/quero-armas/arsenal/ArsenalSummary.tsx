@@ -70,7 +70,14 @@ type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas
 type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
 
 const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas", "gte"];
-const SECONDARY_ORDER: KpiSecondaryId[] = ["documentos", "processos", "autorizacoes", "exames"];
+// F1A — Reorganização do Arsenal:
+// Os KPIs "Documentos", "Processos" e "Autorizações" foram REMOVIDOS do grid
+// principal. Agora existem grupos operacionais próprios (Controle de CRAF,
+// Controle de Autorizações, Controle de GTE). Mantemos apenas "Exames/Laudos"
+// como KPI resumido na Linha 2. As props (documentosUnified/Count, etc.)
+// continuam sendo aceitas para preservar compatibilidade dos consumidores
+// existentes — apenas não são renderizadas.
+const SECONDARY_ORDER: KpiSecondaryId[] = ["exames"];
 
 const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   armas: "armas",

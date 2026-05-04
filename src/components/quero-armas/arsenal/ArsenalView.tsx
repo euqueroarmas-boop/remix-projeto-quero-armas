@@ -10,6 +10,8 @@ import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalGTEControl from "./ArsenalGTEControl";
+import ArsenalCRAFControl from "./ArsenalCRAFControl";
+import ArsenalAutorizacoesControl from "./ArsenalAutorizacoesControl";
 import { CrafUploadIAModal } from "./CrafUploadIAModal";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
 import { excluirDocumentoLogico } from "@/components/quero-armas/clientes/docsAprovacao";
@@ -1056,31 +1058,11 @@ export function ArsenalView({
         onNavigate={scrollToSection}
       />
 
-      {/* Situação Geral + Próximos vencimentos — strip horizontal acima da bancada */}
-      <aside
-        id="arsenal-situacao"
-        className="scroll-mt-28 grid gap-3 md:grid-cols-2"
-      >
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-center gap-1.5">
-              <Activity className="h-3.5 w-3.5" style={{ color: TACTICAL.cyan }} />
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-700">
-                Situação Geral
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-3">
-              <Row
-                label="Documentos em dia"
-                value={`${expDocs.length - alerts.length}/${expDocs.length || 0}`}
-                tone={alerts.length === 0 ? "ok" : "warn"}
-              />
-              <Row label="Validade do CR" value={crStatus.label} tone={crStatus.tone} />
-              <Row label="CRAFs vinculados" value={String(weapons.filter((w) => w.source === "CRAF").length)} tone="cyan" />
-              <Row label="Guias ativas" value={String(gtes.length)} tone="cyan" />
-              <Row label="Munições totais" value={ammo.total.toLocaleString("pt-BR")} tone="ok" />
-            </div>
-          </div>
-
+      {/* Próximos Vencimentos — F1A: bloco "Situação Geral" foi removido para
+          evitar duplicação com os grupos operacionais (Controle de CRAF/GTE/
+          Autorizações) e KPIs do topo. Mantemos somente o resumo dos
+          próximos vencimentos consolidados. */}
+      <aside id="arsenal-situacao" className="scroll-mt-28">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
             {(() => {
               const criticos = alertasDetalhados.filter((a) => a.status.cor === "vermelho").length;
@@ -1203,6 +1185,16 @@ export function ArsenalView({
             </button>
           }
         />
+      </div>
+
+      {/* Controle de CRAF — F1A (somente leitura/indicadores) */}
+      <div id="arsenal-craf" className="scroll-mt-28">
+        <ArsenalCRAFControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
+      </div>
+
+      {/* Controle de Autorizações — F1A (somente leitura/indicadores) */}
+      <div id="arsenal-autorizacoes" className="scroll-mt-28">
+        <ArsenalAutorizacoesControl clienteId={clienteId} origem={isAdmin ? "equipe" : "cliente"} />
       </div>
 
       {/* Controle de GTE — extração IA + KPIs (cliente + equipe) */}
