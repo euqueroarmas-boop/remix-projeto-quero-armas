@@ -927,7 +927,7 @@ export function ArsenalView({
 
     return out;
   }, [
-    expDocs, processos,
+    expDocs, processos, exames,
     crUnified, crafUnified, gteUnified,
     documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
   ]);
