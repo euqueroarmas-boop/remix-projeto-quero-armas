@@ -265,10 +265,6 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
             })}
         </ul>
       )}
-
-      <p className="mt-3 text-[10px] italic text-slate-400">
-        Cadastro manual e edição completa serão liberados na próxima etapa.
-      </p>
     </section>
   );
 }

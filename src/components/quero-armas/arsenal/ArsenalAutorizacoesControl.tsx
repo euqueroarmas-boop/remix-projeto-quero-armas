@@ -204,7 +204,7 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
         <p className="py-6 text-center text-[11px] text-slate-500">Carregando autorizações…</p>
       ) : documentos.length === 0 && solicitacoes.length === 0 ? (
         <p className="py-6 text-center text-[11px] text-slate-500">
-          Nenhuma autorização vinculada a este cliente. Cadastro manual e leitura por IA serão liberados na próxima etapa.
+          Nenhuma autorização vinculada a este cliente.
         </p>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-100">
@@ -266,10 +266,6 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
           ))}
         </ul>
       )}
-
-      <p className="mt-3 text-[10px] italic text-slate-400">
-        Cadastro manual e edição completa serão liberados na próxima etapa.
-      </p>
     </section>
   );
 }
