@@ -345,25 +345,31 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       };
 
       // ─── KPI: Munições (validade = data_fabricacao + 60 meses) ───────────
+      const municoesAtivas = (municoes as any[]).filter((m) => Number(m?.saldo ?? 0) > 0);
       let municoesOk = 0,
         municoesVencendo = 0,
         municoesVencidas = 0,
         municoesSemData = 0;
       const tonesMun: CorStatus[] = [];
-      for (const m of municoes) {
-        const v = calcularValidadeMunicao(m?.data_fabricacao ?? null);
-        if (v.sem_data) {
+      for (const m of municoesAtivas) {
+        // Preferimos data_validade explícita do lote; senão derivamos por fab+60m
+        let status;
+        if (m?.data_validade) {
+          status = getStatusValidade(m.data_validade, "MUNICAO");
+        } else if (m?.data_fabricacao) {
+          status = calcularValidadeMunicao(m.data_fabricacao).status;
+        } else {
           municoesSemData++;
           tonesMun.push("cinza");
           continue;
         }
-        tonesMun.push(v.status.cor);
-        if (v.status.cor === "vermelho") municoesVencidas++;
-        else if (v.status.cor === "amarelo" || v.status.cor === "laranja") municoesVencendo++;
-        else if (v.status.cor === "verde") municoesOk++;
+        tonesMun.push(status.cor);
+        if (status.cor === "vermelho") municoesVencidas++;
+        else if (status.cor === "amarelo" || status.cor === "laranja") municoesVencendo++;
+        else if (status.cor === "verde") municoesOk++;
       }
       const kpiMunicoes: KpiMunicoes = {
-        total: municoes.length,
+        total: municoesAtivas.length,
         vencidas: municoesVencidas,
         vencendo: municoesVencendo,
         ok: municoesOk,
@@ -397,6 +403,14 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       exames.forEach((e) => empurra("EXAME", e.tipo || "EXAME", e.data_vencimento, "EXAME_LAUDO"));
       docsGerais.forEach((d) => empurra("DOCUMENTO", d.tipo_documento || "DOCUMENTO", d.data_validade, "DOCUMENTO_INDIVIDUAL"));
       autorizacoes.forEach((a) => empurra("AUTORIZACAO", a.tipo_documento || "AUTORIZAÇÃO", a.data_validade, "AUTORIZACAO_COMPRA"));
+      municoesAtivas.forEach((m: any) => {
+        const dv = m?.data_validade
+          ? m.data_validade
+          : m?.data_fabricacao
+            ? calcularValidadeMunicao(m.data_fabricacao).data_validade
+            : null;
+        empurra("MUNICAO" as any, "MUNIÇÃO", dv, "MUNICAO" as any);
+      });
 
       const kpiAlertas: KpiAlertas = {
         total: alertas.length,
