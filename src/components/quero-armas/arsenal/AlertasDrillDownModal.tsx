@@ -85,19 +85,24 @@ export function AlertasDrillDownModal({ open, onClose, alertas }: Props) {
   }
 
   const total = ordenados.length;
+  const totalCriticos = ordenados.filter((a) => a.status.cor === "vermelho").length;
+  const totalPreventivos = total - totalCriticos;
+  const apenasPreventivos = totalCriticos === 0 && totalPreventivos > 0;
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md max-h-[85vh] overflow-hidden bg-white text-slate-900 border-slate-200">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-900 uppercase tracking-wide">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertTriangle className={`h-4 w-4 ${totalCriticos > 0 ? "text-red-600" : apenasPreventivos ? "text-amber-600" : "text-emerald-600"}`} />
             ALERTAS DE VENCIMENTO
           </DialogTitle>
           <DialogDescription className="text-slate-600 text-xs">
             {total === 0
-              ? "Nenhum alerta crítico no momento."
-              : `${total} ${total === 1 ? "item exige" : "itens exigem"} atenção.`}
+              ? "Nenhum alerta no momento."
+              : apenasPreventivos
+              ? `Nenhum alerta crítico, mas ${totalPreventivos} ${totalPreventivos === 1 ? "alerta preventivo exige" : "alertas preventivos exigem"} acompanhamento.`
+              : `${totalCriticos} ${totalCriticos === 1 ? "alerta crítico" : "alertas críticos"}${totalPreventivos > 0 ? ` e ${totalPreventivos} preventivo${totalPreventivos === 1 ? "" : "s"}` : ""}.`}
           </DialogDescription>
         </DialogHeader>
 
