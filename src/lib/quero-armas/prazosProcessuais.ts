@@ -89,8 +89,6 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dNotif = normalizeDateISO(item.data_notificacao);
   const dIndef = normalizeDateISO(item.data_indeferimento);
   const dRest = normalizeDateISO(item.data_restituicao);
-  const dRecurso = normalizeDateISO(item.data_recurso_administrativo);
-
   const candidatos: { data: string; evento: EventoPrazo }[] = [];
   if (dNotif) candidatos.push({ data: dNotif, evento: "NOTIFICAÇÃO" });
   if (dIndef) candidatos.push({ data: dIndef, evento: "INDEFERIMENTO" });
@@ -100,8 +98,12 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   candidatos.sort((a, b) => (a.data < b.data ? 1 : -1));
   const ativo = candidatos[0];
 
-  // Se o recurso já foi protocolado depois do evento, o prazo não corre mais.
-  if (dRecurso && dRecurso >= ativo.data) return null;
+  // Status finais cancelam o prazo (já não corre): deferido, concluído,
+  // cancelado, desistiu. Indeferido/notificado/em análise mantêm o prazo
+  // visível conforme regra de negócio.
+  const statusUpper = (item.status || "").toString().toUpperCase();
+  const FINALIZADOS = ["DEFERIDO", "CONCLUÍDO", "CONCLUIDO", "CANCELADO", "DESISTIU"];
+  if (FINALIZADOS.includes(statusUpper)) return null;
 
   const dataLimite = addDaysISO(ativo.data, PRAZO_DIAS);
   const diasRestantes = diffDaysISO(todayISOLocal(), dataLimite);
