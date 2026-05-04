@@ -18,6 +18,9 @@ import {
   Stethoscope,
   ChevronDown,
   ChevronUp,
+  CheckCircle2,
+  Clock,
+  XCircle,
 } from "lucide-react";
 import {
   DndContext,
@@ -41,6 +44,11 @@ import { TACTICAL } from "./utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { StatusUnificado, CorStatus } from "@/lib/quero-armas/statusUnificado";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export type ArsenalSummaryTarget =
   | "armas"
