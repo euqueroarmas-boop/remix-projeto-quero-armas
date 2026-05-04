@@ -236,6 +236,7 @@ export default function QAFinanceiroPage() {
   const [servicos, setServicos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string | null>(String(new Date().getFullYear()));
 
   const load = async () => {
     setLoading(true);
@@ -281,11 +282,26 @@ export default function QAFinanceiroPage() {
     return Array.from(set).sort();
   }, [vendas]);
 
+  // All years available
+  const allYears = useMemo(() => {
+    const set = new Set<string>();
+    vendas.forEach(v => {
+      const y = (v.data_cadastro || "").slice(0, 4);
+      if (y) set.add(y);
+    });
+    return Array.from(set).sort().reverse();
+  }, [vendas]);
+
   // Filtered vendas/itens by selected month
   const filteredVendas = useMemo(() => {
-    if (!selectedMonth) return vendas;
-    return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedMonth));
-  }, [vendas, selectedMonth]);
+    if (selectedMonth) {
+      return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedMonth));
+    }
+    if (selectedYear) {
+      return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedYear));
+    }
+    return vendas;
+  }, [vendas, selectedMonth, selectedYear]);
 
   const filteredItens = useMemo(() => {
     if (!selectedMonth) return itens;
@@ -491,7 +507,9 @@ export default function QAFinanceiroPage() {
 
   const selectedMonthLabel = selectedMonth
     ? (() => { const [y, m] = selectedMonth.split("-"); return `${MONTH_NAMES[+m - 1]} ${y}`; })()
-    : "Todos os meses";
+    : selectedYear
+    ? `Ano ${selectedYear}`
+    : "Todos os períodos";
 
   if (loading) {
     return (
@@ -522,8 +540,40 @@ export default function QAFinanceiroPage() {
 
       {/* Month Selector */}
       <div className="rounded-xl border border-slate-200/80 bg-white p-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">Filtrar por período</p>
-        <MonthSelector months={allMonths} selected={selectedMonth} onSelect={setSelectedMonth} />
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Filtrar por período</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {allYears.map(y => (
+              <button
+                key={y}
+                onClick={() => { setSelectedYear(y); setSelectedMonth(null); }}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all ${
+                  selectedYear === y && !selectedMonth
+                    ? "bg-[#7A1F2B] text-white"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                }`}
+              >
+                {y}
+              </button>
+            ))}
+            <button
+              onClick={() => { setSelectedYear(null); setSelectedMonth(null); }}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all ${
+                !selectedYear && !selectedMonth
+                  ? "bg-slate-800 text-white"
+                  : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
+              }`}
+              title="Liberar visualização completa do faturamento (todos os anos)"
+            >
+              VER TUDO
+            </button>
+          </div>
+        </div>
+        <MonthSelector
+          months={selectedYear ? allMonths.filter(m => m.startsWith(selectedYear)) : allMonths}
+          selected={selectedMonth}
+          onSelect={setSelectedMonth}
+        />
       </div>
 
       {/* ─── KPI Row 1: Revenue ─── */}
