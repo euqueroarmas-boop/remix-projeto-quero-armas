@@ -2560,7 +2560,16 @@ export default function QAClientesPage() {
                       const its = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
                       return its.length > 0 && its.every((i: any) => i.cortesia);
                     }).length;
+                    const valorTotalServicos = vendas.reduce(
+                      (acc: number, v: any) => acc + Number(v.valor_a_pagar || 0),
+                      0
+                    );
+                    const valorTotalPago = vendas
+                      .filter((v: any) => String(v.status || "").trim().toUpperCase() === "PAGO")
+                      .reduce((acc: number, v: any) => acc + Number(v.valor_a_pagar || 0), 0);
+                    const valorTotalPendente = valorTotalServicos - valorTotalPago;
                     return (
+                      <>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[10px]">
                         <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
                           <div className="text-[9px] uppercase tracking-wider text-slate-500">Total</div>
@@ -2587,6 +2596,32 @@ export default function QAClientesPage() {
                           <div className="text-[14px] font-bold" style={{ color: "hsl(152 60% 28%)" }}>{totalCortesia}</div>
                         </div>
                       </div>
+                      <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[10px]">
+                        <div className="rounded-md border px-2 py-1.5"
+                          style={{ background: "hsl(352 60% 30% / 0.06)", borderColor: "hsl(352 60% 30% / 0.30)" }}>
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Valor Total em Serviços</div>
+                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: "hsl(352 60% 30%)" }}>
+                            R$ {valorTotalServicos.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total Pago</div>
+                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: "hsl(152 60% 28%)" }}>
+                            R$ {valorTotalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                        <div className="rounded-md border px-2 py-1.5"
+                          style={{
+                            background: valorTotalPendente > 0 ? "hsl(38 92% 50% / 0.10)" : "white",
+                            borderColor: valorTotalPendente > 0 ? "hsl(38 92% 50% / 0.40)" : "hsl(220 13% 90%)",
+                          }}>
+                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total Pendente</div>
+                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: valorTotalPendente > 0 ? "hsl(28 92% 32%)" : "hsl(220 10% 50%)" }}>
+                            R$ {valorTotalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </div>
+                        </div>
+                      </div>
+                      </>
                     );
                   })()}
                 </div>
