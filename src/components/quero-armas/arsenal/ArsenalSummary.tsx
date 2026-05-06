@@ -166,6 +166,10 @@ interface Props {
   examesUnified?: StatusUnificado | null;
   /** Validade de munições (fab + 60m). Quando preenchido, dirige cor/hint do KPI. */
   municoesUnified?: StatusUnificado | null;
+  /** Lista de munições por calibre (ordem decrescente por quantidade). */
+  municoesPorCalibre?: { calibre: string; quantidade: number }[];
+  /** Quantidade de lotes/registros sem data de fabricação. */
+  municoesLotesSemData?: number;
   documentosCount?: number;
   processosCount?: number;
   autorizacoesCount?: number;
