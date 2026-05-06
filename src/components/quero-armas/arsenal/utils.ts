@@ -250,3 +250,59 @@ export const WEAPON_KIND_LABEL: Record<WeaponKind, string> = {
   submetralhadora: "SUBMETRALHADORA",
   outra: "ARMAMENTO",
 };
+
+/**
+ * Define se a GTE (Guia de Tráfego) é exigível como documento permanente
+ * vinculado à arma.
+ *
+ * Regra de domínio (Lei 10.826/03):
+ *  - Arma SINARM registrada para DEFESA PESSOAL → GTE NÃO é exigível.
+ *    Sua ausência não é irregularidade nem alerta.
+ *  - Arma SIGMA / CAC / acervo de tiro, caça ou colecionamento, ou vinculada
+ *    ao Exército → GTE/guia equivalente é exigível.
+ *  - Casos indefinidos → conservadoramente retornar `false` (não exigir),
+ *    para não gerar falso alerta. Movimentação/transporte específico de arma
+ *    SINARM é tratado por outro evento, não como GTE permanente.
+ */
+export interface WeaponRegimeInput {
+  sistema?: string | null;
+  origem_registro?: string | null;
+  origem?: string | null;
+  tipo_acervo?: string | null;
+  finalidade?: string | null;
+  categoria?: string | null;
+  tipo_uso?: string | null;
+  source?: string | null;
+}
+
+const _norm = (s: string | null | undefined) =>
+  String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+export function isGteExigivelParaArma(arma: WeaponRegimeInput | null | undefined): boolean {
+  if (!arma) return false;
+  const sistema = _norm([arma.sistema, arma.origem_registro, arma.origem, arma.tipo_acervo].filter(Boolean).join(" "));
+  const finalidade = _norm([arma.finalidade, arma.categoria, arma.tipo_uso].filter(Boolean).join(" "));
+
+  // SINARM + Defesa Pessoal → NÃO exigível.
+  if (sistema.includes("SINARM") && (finalidade.includes("DEFESA") || !finalidade)) return false;
+
+  // SIGMA / CAC / Tiro / Caça / Colecionamento / Exército → exigível.
+  if (
+    sistema.includes("SIGMA") ||
+    sistema.includes("EXERCITO") ||
+    finalidade.includes("CAC") ||
+    finalidade.includes("TIRO") ||
+    finalidade.includes("CACA") ||
+    finalidade.includes("COLECIONAMENTO")
+  ) return true;
+
+  // Indefinido → não exigir (evita falso alerta).
+  return false;
+}
+
+export function gteExigibilidadeLabel(exigivel: boolean): string {
+  return exigivel ? "AUSENTE" : "NÃO EXIGÍVEL";
+}
