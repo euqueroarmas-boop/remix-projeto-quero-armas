@@ -12,9 +12,13 @@ import {
   getGteKpiStatus,
   normalizeCalibre,
   isGteExigivelParaArma,
-  gtDeclaracaoKey,
   type GtDocStatus,
 } from "./utils";
+import {
+  listGtDeclaracoes,
+  weaponKeyOf,
+  type GtDeclaracaoRow,
+} from "./gtDeclaracoes";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,6 +144,8 @@ interface WeaponLinkState {
   gtStatus: GtDocStatus;
   /** Cliente declarou que não possui mais a GT. */
   gtDeclaradaNaoPossui: boolean;
+  /** Data/hora ISO da declaração persistida no banco (quando houver). */
+  gtDeclaradaEm: string | null;
   semVinculo: boolean;
   hasWeakCrafDoc: boolean;
   hasWeakGteDoc: boolean;
@@ -162,13 +168,42 @@ export function ArsenalView({
 }: Props) {
   // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
-  // Bump quando o usuário declara/reverte "Não possuo mais a GT" (leitura local).
-  const [gtDeclaracaoTick, setGtDeclaracaoTick] = useState(0);
+  // Declarações persistentes "Não possuo mais a GT" — fonte de verdade no banco.
+  const [gtDeclaracoes, setGtDeclaracoes] = useState<GtDeclaracaoRow[]>([]);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
     total: 0,
     byCalibre: [],
   });
   const { match: matchCatalogo, byId: catalogoById, resolveCraf, loading: catalogoLoading } = useArmamentoCatalogo();
+
+  // Carrega declarações GT persistentes + realtime para refletir mudanças
+  // feitas pela Equipe ou em outra aba/dispositivo.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const rows = await listGtDeclaracoes(clienteId);
+      if (!cancelled) setGtDeclaracoes(rows);
+    };
+    void load();
+    const ch = supabase
+      .channel(`arsenal_gt_decl_${clienteId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "qa_arma_gt_declaracoes", filter: `qa_cliente_id=eq.${clienteId}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [clienteId]);
+
+  const gtDeclaracaoMap = useMemo(() => {
+    const m = new Map<string, GtDeclaracaoRow>();
+    gtDeclaracoes.forEach((r) => m.set(r.weapon_key, r));
+    return m;
+  }, [gtDeclaracoes]);
 
   // ─── Estados dos modais de CRUD do Arsenal ───
   const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
@@ -556,15 +591,10 @@ export function ArsenalView({
       const gteValida = gteMatches.some((g) => isValidDateFromToday(g?.data_validade, today));
       const craf = statusFor(crafMatches, crafValido, hasWeakCrafDoc, "VÁLIDO");
       const gte = statusFor(gteMatches, gteValida, hasWeakGteDoc, "ATIVA");
-      // Declaração local "não possuo mais a GT" (persistida em localStorage até
-      // existir backend/auditoria dedicada).
-      const declKey = gtDeclaracaoKey(clienteId, `${w.source}-${w.id}`);
-      let gtDeclaradaNaoPossui = false;
-      try {
-        if (typeof window !== "undefined") {
-          gtDeclaradaNaoPossui = window.localStorage.getItem(declKey) === "1";
-        }
-      } catch { /* noop */ }
+      // Declaração "não possuo mais a GT" — persistida em qa_arma_gt_declaracoes.
+      const decl = gtDeclaracaoMap.get(weaponKeyOf(w));
+      const gtDeclaradaNaoPossui = !!decl && decl.status === "nao_possuo";
+      const gtDeclaradaEm = gtDeclaradaNaoPossui ? decl!.declarado_em : null;
       // Status da GT — sempre informativo, nunca crítico.
       let gtStatus: GtDocStatus;
       if (gtDeclaradaNaoPossui) gtStatus = "nao_possuo";
@@ -590,13 +620,14 @@ export function ArsenalView({
         gteValida,
         gtStatus,
         gtDeclaradaNaoPossui,
+        gtDeclaradaEm,
         semVinculo: keys.length === 0 && !cat,
         hasWeakCrafDoc,
         hasWeakGteDoc,
       });
     });
     return out;
-  }, [weapons, crafs, gtes, meusDocs, catalogoById, clienteId, gtDeclaracaoTick]);
+  }, [weapons, crafs, gtes, meusDocs, catalogoById, clienteId, gtDeclaracaoMap]);
 
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
@@ -614,6 +645,7 @@ export function ArsenalView({
         gtStatus: link?.gtStatus,
         hasGt: !!(link?.gtMatches && link.gtMatches.length > 0),
         gtDeclaradaNaoPossui: !!link?.gtDeclaradaNaoPossui,
+        gtDeclaradaEm: link?.gtDeclaradaEm ?? null,
         linkReview: !!(link?.hasWeakCrafDoc || link?.hasWeakGteDoc || link?.semVinculo),
       };
     }),
