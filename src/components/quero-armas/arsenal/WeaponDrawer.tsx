@@ -1,4 +1,4 @@
-import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2 } from "lucide-react";
+import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2, Eye } from "lucide-react";
 import { WeaponSilhouette } from "./WeaponSilhouette";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
 import {
@@ -17,11 +17,15 @@ import { toast } from "sonner";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { useEffect, useMemo, useState } from "react";
+import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 
 interface RelatedDoc {
   category: string;
   title: string;
   date: string | null;
+  bucket?: string;
+  path?: string | null;
+  fileName?: string | null;
 }
 
 interface Props {
@@ -49,6 +53,7 @@ const formatDate = (d: string | null) => {
 
 export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClose, onDelete, clienteId, onGtDeclaracaoChange }: Props) {
   const { items, match } = useArmamentoCatalogo();
+  const viewer = useDocumentoViewer();
   const [confirmDel, setConfirmDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [gtConfirm, setGtConfirm] = useState(false);
@@ -497,12 +502,39 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     </span>
                     <span className="text-[11px] font-semibold text-slate-800">{d.title}</span>
                   </div>
-                  <span className="font-mono text-[10px] text-slate-500">{formatDate(d.date)}</span>
+                  <div className="flex items-center gap-2">
+                    {d.path ? (
+                      <button
+                        type="button"
+                        onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: d.fileName || undefined, title: `${d.category} · ${d.fileName || d.title}` })}
+                        className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                        title="Visualizar arquivo original"
+                      >
+                        <Eye className="h-3 w-3" /> Ver
+                      </button>
+                    ) : (["CRAF", "GTE"].includes(d.category) && d.date) ? (
+                      <span
+                        className="text-[9px] uppercase tracking-wider text-amber-700"
+                        title="Documento cadastrado, mas o arquivo original não foi localizado."
+                      >
+                        sem arquivo
+                      </span>
+                    ) : null}
+                    <span className="font-mono text-[10px] text-slate-500">{formatDate(d.date)}</span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Viewer interno (blob) — nunca expõe URL do storage */}
+        <DocumentoViewerModal
+          open={viewer.open}
+          onClose={viewer.fechar}
+          source={viewer.source}
+          title={viewer.title}
+        />
 
         {/* Zona de risco — Excluir armamento */}
         {onDelete && (

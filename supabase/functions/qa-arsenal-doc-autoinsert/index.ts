@@ -339,6 +339,13 @@ Deno.serve(async (req) => {
             if (full && !full.nome_craf && campos.numero_documento) patch.nome_craf = up(campos.numero_documento);
             if (full && !full.numero_arma && numeroSerie) patch.numero_arma = numeroSerie;
             if (full && !full.numero_sigma && numeroSigma) patch.numero_sigma = numeroSigma;
+            // Sempre garante o vínculo do arquivo original (mesmo em update)
+            if (arquivo_storage_path) {
+              patch.arquivo_storage_path = arquivo_storage_path;
+              patch.arquivo_nome = arquivo_nome;
+              patch.arquivo_mime = arquivo_mime;
+              patch.documento_origem_id = (inserted as any).id;
+            }
             if (Object.keys(patch).length) {
               await supabase.from("qa_crafs").update(patch).eq("id", (dup as any).id);
             }
@@ -358,6 +365,10 @@ Deno.serve(async (req) => {
                 numero_arma: numeroSerie,
                 numero_sigma: numeroSigma,
                 data_validade: dataIsoFromBr(campos.data_validade),
+                arquivo_storage_path: arquivo_storage_path,
+                arquivo_nome: arquivo_nome,
+                arquivo_mime: arquivo_mime,
+                documento_origem_id: (inserted as any).id,
               })
               .select("id")
               .single();
@@ -397,6 +408,7 @@ Deno.serve(async (req) => {
               nome_original: arquivo_nome,
               mime_type: arquivo_mime,
               origem_envio: "sistema",
+              documento_origem_id: (inserted as any).id,
               numero_gte: numeroGte,
               orgao_emissor: up(campos.orgao_emissor),
               data_emissao: dataIsoFromBr(campos.data_emissao),
@@ -467,6 +479,7 @@ Deno.serve(async (req) => {
                 observacao: `AUTO-CADASTRO NF · emitente ${up(campos.emitente) || "—"}`,
                 documento_url: arquivo_storage_path,
                 documento_nome: arquivo_nome,
+                documento_origem_id: (inserted as any).id,
                 ia_status: "auto_aprovado",
                 revisao_obrigatoria: false,
                 ia_dados_extraidos: {
