@@ -1124,7 +1124,9 @@ export function ArsenalView({
       });
       if (crafValido) comCrafValido++;
 
-      // Vínculo GTE (mesma precedência; GTE NUNCA torna a arma irregular)
+      // Vínculo GTE (mesma precedência). REGRA ATUAL: GTE ausente/vencida
+      // É tratada como irregularidade do armamento (Lei 10.826/03 — porte
+      // de trânsito exigível para o acervo CAC).
       let gteMatches: any[] = [];
       if (wCatalogo) (gteByCatalogo.get(wCatalogo) || []).forEach((g) => gteMatches.push(g));
       if (gteMatches.length === 0) {
@@ -1146,11 +1148,12 @@ export function ArsenalView({
       const vencendo = dias != null && dias >= 0 && dias <= 60;
       if (vencendo) comVencimento++;
 
-      // Irregularidade: vencido OU sem vínculo confiável (sem nº de série e SIGMA)
-      // OU sem CRAF válido vinculado (CRAF é obrigatório por arma).
+      // Irregularidade: vencido OU sem vínculo confiável (sem nº de série e
+      // SIGMA) OU sem CRAF válido vinculado OU sem GTE ativa vinculada.
       const semVinculo = !serial && !sigma;
       const semCrafValido = !crafValido;
-      if (vencido || semVinculo || semCrafValido) comIrregularidade++;
+      const semGteAtiva = !gteValida;
+      if (vencido || semVinculo || semCrafValido || semGteAtiva) comIrregularidade++;
     }
 
     const piorStatus: "ok" | "warn" | "danger" | "muted" =

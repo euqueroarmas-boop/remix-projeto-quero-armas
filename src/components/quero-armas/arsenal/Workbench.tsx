@@ -312,8 +312,8 @@ function WeaponCard({
             <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-bold uppercase tracking-wider text-slate-700">
               CRAF · {w.source === "CRAF" ? urgencyText(w.daysToExpire) : "—"}
             </span>
-            <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-[#FBF3F4] text-[#7A1F2B]" : "bg-slate-50 text-slate-400"}`}>
-              GTE · {w.hasGte ? "ATIVA" : "S/ VÍNCULO"}
+            <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
+              GTE · {w.hasGte ? "ATIVA" : "AUSENTE"}
             </span>
             <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-700">
               MUN · {(ammoCount ?? 0).toLocaleString("pt-BR")}
