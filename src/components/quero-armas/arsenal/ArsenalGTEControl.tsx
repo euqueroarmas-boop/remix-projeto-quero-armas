@@ -346,6 +346,9 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
                   {d.status_processamento === "erro" && d.erro_mensagem && (
                     <p className="mt-1 text-[10px] text-red-600">⚠ {d.erro_mensagem}</p>
                   )}
+                  {(d.status_processamento as any) === "revisao_obrigatoria" && d.erro_mensagem && (
+                    <p className="mt-1 text-[10px] text-amber-700">🛡 {d.erro_mensagem}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <button
