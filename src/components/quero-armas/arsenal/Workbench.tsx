@@ -8,6 +8,9 @@ import {
   normalizeCalibre,
   WeaponInfo,
   WEAPON_KIND_LABEL,
+  GT_STATUS_LABEL,
+  gtChipTone,
+  type GtDocStatus,
 } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
@@ -50,6 +53,14 @@ export interface WorkbenchWeapon {
   finalidade?: string | null;
   /** Indica se a GTE é documento permanente exigível para esta arma. */
   gteExigivel?: boolean;
+  /**
+   * GT (Guia de Tráfego de retirada/transporte inicial da loja).
+   * Documento histórico/informativo — NÃO é GTE e sua ausência NÃO pinta
+   * a KPI ARMAS de vermelho.
+   */
+  gtStatus?: GtDocStatus;
+  hasGt?: boolean;
+  gtDeclaradaNaoPossui?: boolean;
   /**
    * Quando o card representa um documento enviado pelo próprio cliente
    * (GTE/CRAF/AC em qa_documentos_cliente), exibimos um thumbnail do
@@ -113,6 +124,7 @@ function WeaponCard({
   ammoCount?: number;
 }) {
   const baseTone = urgencyTone(w.daysToExpire);
+  // GT NUNCA participa do tom crítico do card.
   const gteAlerta = w.gteExigivel !== false && (w.gteStatus === "ausente" || w.gteStatus === "vencido" || w.gteStatus === "revisar");
   const tone = gteAlerta || w.crafStatus === "ausente" || w.crafStatus === "vencido" || w.crafStatus === "revisar"
     ? "danger"
@@ -328,6 +340,22 @@ function WeaponCard({
             CRAF · {w.crafLabel || (w.hasCraf ? "VÁLIDO" : "AUSENTE")}
           </span>
           {(() => {
+            const status: GtDocStatus = w.gtStatus
+              || (w.gtDeclaradaNaoPossui ? "nao_possuo" : (w.hasGt ? "enviada" : "nao_enviada"));
+            const t = gtChipTone(status);
+            const cls = t === "ok"
+              ? "bg-emerald-50 text-emerald-700"
+              : t === "warn"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-slate-100 text-slate-600";
+            return (
+              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
+                title="GT — Guia de Tráfego (retirada/transporte inicial da loja). Documento histórico, não é GTE.">
+                GT · {GT_STATUS_LABEL[status]}
+              </span>
+            );
+          })()}
+          {(() => {
             const naoExigivel = w.gteExigivel === false && !w.hasGte;
             const cls = naoExigivel
               ? "bg-slate-100 text-slate-600"
@@ -340,7 +368,8 @@ function WeaponCard({
               ? "NÃO EXIGÍVEL"
               : (w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE"));
             return (
-              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}>
+              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
+                title="GTE — Guia de Tráfego Especial (SIGMA/CAC). Aplicável conforme regime do acervo.">
                 GTE · {label}
               </span>
             );
