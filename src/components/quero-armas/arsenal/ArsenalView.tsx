@@ -1424,7 +1424,7 @@ export function ArsenalView({
         return (
           <div id="arsenal-bancada" className="scroll-mt-28">
             <Workbench
-              weapons={weapons}
+              weapons={weaponsWithLinkedStatus}
               documents={benchDocs}
               ammoByCalibre={ammo.byCalibre}
               onSelectWeapon={(w) => setSelected(w)}
