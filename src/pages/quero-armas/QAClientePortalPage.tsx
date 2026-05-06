@@ -524,26 +524,41 @@ export default function QAClientePortalPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            {/* Monograma premium light */}
-            <div className="relative shrink-0">
-              <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
-                <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
-                  {(userName || "C")
-                    .split(" ")
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((p) => p[0])
-                    .join("")
-                    .toUpperCase()}
-                </span>
-              </div>
+            {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
+            <button
+              type="button"
+              onClick={() => navigate("/cadastro/foto")}
+              title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
+              className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
+            >
+              {hasAnyPhoto && avatarUrl ? (
+                <div className="h-12 w-12 sm:h-[52px] sm:w-[52px] overflow-hidden rounded-full ring-1 ring-slate-200 shadow-sm bg-white">
+                  <img
+                    src={avatarUrl}
+                    alt={userName || "Foto do cliente"}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
+                  <span className="font-serif text-[16px] sm:text-[18px] font-bold tracking-wider text-white">
+                    {(userName || "C")
+                      .split(" ")
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((p) => p[0])
+                      .join("")
+                      .toUpperCase()}
+                  </span>
+                </div>
+              )}
               <span
-                className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white"
-                title="Cliente verificado"
+                className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#7A1F2B] ring-2 ring-white shadow-sm opacity-90 group-hover:opacity-100 transition"
+                title={hasAnyPhoto ? "Alterar foto" : "Enviar foto"}
               >
-                <BadgeCheck className="h-2.5 w-2.5 text-white" />
+                <Camera className="h-2.5 w-2.5 text-white" />
               </span>
-            </div>
+            </button>
 
             <div className="hidden sm:block h-11 w-px bg-slate-200" />
 
