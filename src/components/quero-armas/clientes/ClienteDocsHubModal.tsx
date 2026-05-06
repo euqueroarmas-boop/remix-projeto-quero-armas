@@ -660,20 +660,26 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 <div
                   className={cn(
                     "mt-3 rounded-2xl border p-3",
-                    classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO"
+                    autoResult?.safe === false
                       ? "border-amber-300 bg-amber-50"
-                      : "border-emerald-300 bg-emerald-50",
+                      : autoResult?.safe
+                        ? "border-emerald-400 bg-emerald-50"
+                        : "border-emerald-300 bg-emerald-50",
                   )}
                 >
                   <div className="flex items-start gap-2">
-                    {classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO" ? (
+                    {autoResult?.safe === false ? (
                       <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-700" />
                     ) : (
-                      <ScanLine className="mt-0.5 h-4 w-4 text-emerald-700" />
+                      autoResult?.safe ? (
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-700" />
+                      ) : (
+                        <ScanLine className="mt-0.5 h-4 w-4 text-emerald-700" />
+                      )
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Tipo identificado pela IA
+                        {autoResult?.safe ? "Cadastrado automaticamente no Arsenal" : "Tipo identificado pela IA"}
                       </div>
                       <div className="mt-0.5 text-sm font-bold uppercase text-foreground">
                         {tipoAtual?.label || form.tipo_documento.toUpperCase()}{" "}
@@ -686,20 +692,46 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                           {classificacao.justificativa}
                         </p>
                       )}
-                      {(classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO") && (
-                        <p className="mt-1 text-xs font-semibold text-amber-800">
-                          Documento ilegível ou não identificado. Revise os campos antes de salvar.
+                      {autoResult?.safe === false && (
+                        <div className="mt-2 rounded-lg bg-amber-100/70 p-2">
+                          <p className="text-xs font-semibold text-amber-900">
+                            {MOTIVOS[autoResult.motivo] || "Não foi possível cadastrar automaticamente."}
+                          </p>
+                          {autoResult.campos_faltando?.length ? (
+                            <p className="mt-1 text-[11px] text-amber-900">
+                              Campos ilegíveis: {autoResult.campos_faltando.join(", ")}
+                            </p>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFile(null);
+                              setClassificacao(null);
+                              setAutoResult(null);
+                              fileInputRef.current?.click();
+                            }}
+                            className="mt-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-amber-700 px-3 text-xs font-semibold uppercase tracking-wide text-white hover:bg-amber-800"
+                          >
+                            <Upload className="h-3.5 w-3.5" /> Enviar novamente
+                          </button>
+                        </div>
+                      )}
+                      {autoResult?.safe && (
+                        <p className="mt-1 text-xs font-semibold text-emerald-800">
+                          Tudo certo! O documento já está vinculado ao seu Arsenal.
                         </p>
                       )}
-                      <button
+                      {!autoResult?.safe && (
+                        <button
                         type="button"
                         onClick={() => setShowTipoOverride((v) => !v)}
                         className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-2 hover:underline"
                       >
                         <Pencil className="h-3 w-3" />
                         {showTipoOverride ? "Manter tipo identificado" : "Não é esse tipo? Alterar manualmente"}
-                      </button>
-                      {showTipoOverride && (
+                        </button>
+                      )}
+                      {showTipoOverride && !autoResult?.safe && (
                         <div className="mt-2">
                           <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
                             <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
