@@ -371,6 +371,18 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           onChanged={load}
         />
       )}
+      {classif && (
+        <DocClassReviewModal
+          open={showReview}
+          tipoSelecionado="GTE"
+          classificacao={classif}
+          onResolve={(r) => {
+            setShowReview(false);
+            if (r.decision === "cancelar") { setPendingFile(null); return; }
+            if (pendingFile) proceedUpload(pendingFile, r.revisaoObrigatoria, classif);
+          }}
+        />
+      )}
     </section>
   );
 }
