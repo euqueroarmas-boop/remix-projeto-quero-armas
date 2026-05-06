@@ -399,6 +399,8 @@ export function ArsenalSummary({
   autorizacoesUnified = null,
   examesUnified = null,
   municoesUnified = null,
+  municoesPorCalibre = [],
+  municoesLotesSemData = 0,
   documentosCount = 0,
   processosCount = 0,
   autorizacoesCount = 0,
