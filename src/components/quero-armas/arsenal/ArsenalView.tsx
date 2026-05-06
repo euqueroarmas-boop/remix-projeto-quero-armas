@@ -377,10 +377,12 @@ export function ArsenalView({
         daysToExpire: daysUntil(c.data_validade),
         hasGte: !!gte,
         catalogo_id: c.catalogo_id || null,
-        // Arma documentada por CRAF/SINARM = registro civil para defesa pessoal.
-        // GTE não é documento permanente exigível.
-        sistema: "SINARM",
-        finalidade: "DEFESA PESSOAL",
+        // CRAF é certificado da arma e NÃO prova sozinho que o registro é SINARM
+        // de defesa pessoal — armas SIGMA/CAC também possuem CRAF/certificado.
+        // Mantemos sistema/finalidade indefinidos até haver indício confiável
+        // (campo explícito do CRAF, vínculo com GT/GTE, etc.).
+        sistema: null,
+        finalidade: null,
       };
     });
     // Chave única por arma física = número de série (numero_arma) OU número SIGMA.
@@ -408,13 +410,13 @@ export function ArsenalView({
         const nome = normalizeDocWeaponName(d);
         const tipoUpper = String(d.tipo_documento || "DOC").toUpperCase();
         const tipoLower = String(d.tipo_documento || "").toLowerCase();
-        // Origem do registro pelo tipo do documento. SINARM/CRAF = defesa pessoal;
-        // GT/GTE/SIGMA = acervo SIGMA (CAC/Tiro/Caça/Coleção).
+        // Inferência conservadora de regime: somente documentos do acervo
+        // SIGMA (GT/GTE/SIGMA) indicam CAC. CRAF/SINARM/autorização de compra
+        // NÃO são prova suficiente de SINARM/Defesa Pessoal — deixamos
+        // indefinido para não mascarar irregularidade de armas SIGMA com CRAF.
         const sistemaInferido =
-          ["sigma", "gt", "gte"].includes(tipoLower) ? "SIGMA"
-          : ["craf", "sinarm", "autorizacao_compra"].includes(tipoLower) ? "SINARM"
-          : null;
-        const finalidadeInferida = sistemaInferido === "SINARM" ? "DEFESA PESSOAL" : sistemaInferido === "SIGMA" ? "CAC" : null;
+          ["sigma", "gt", "gte"].includes(tipoLower) ? "SIGMA" : null;
+        const finalidadeInferida = sistemaInferido === "SIGMA" ? "CAC" : null;
         return {
           id: `doc-${d.id}`,
           source: (tipoUpper === "GTE" ? "GTE" : "CRAF") as "CRAF" | "GTE",
@@ -708,7 +710,7 @@ export function ArsenalView({
     if (!link?.gteValida) {
       const gteExigivel = isGteExigivelParaArma(selected as any);
       if (!gteExigivel) {
-        out.push({ category: "GTE", title: "GTE não exigível para arma SINARM registrada para defesa pessoal.", date: null });
+        out.push({ category: "GTE", title: "GTE não exigível para esta arma (sem indício de acervo SIGMA/CAC).", date: null });
       } else {
         out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
       }
