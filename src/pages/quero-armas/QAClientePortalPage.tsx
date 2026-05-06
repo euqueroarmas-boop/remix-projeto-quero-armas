@@ -357,6 +357,36 @@ export default function QAClientePortalPage() {
     load();
   }, [navigate, docsReloadKey]);
 
+  useEffect(() => {
+    const clienteId = Number((cliente as any)?.id);
+    if (!Number.isFinite(clienteId)) {
+      setAvatarOficial(null);
+      setAvatarLoading(false);
+      return;
+    }
+
+    let active = true;
+    setAvatarLoading(true);
+    void supabase.functions
+      .invoke("qa-cliente-avatar", { body: { cliente_id: clienteId } })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error("[Portal] avatar oficial não resolvido:", error.message);
+          setAvatarOficial({ url: null, path: null, bucket: null, source: null, hasPhoto: false });
+          return;
+        }
+        setAvatarOficial((data as ClienteAvatarOficial) || { url: null, path: null, bucket: null, source: null, hasPhoto: false });
+      })
+      .finally(() => {
+        if (active) setAvatarLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/area-do-cliente/login", { replace: true });
