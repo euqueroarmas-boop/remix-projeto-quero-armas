@@ -318,6 +318,7 @@ function WeaponCard({
 }
 
 function MiniStat({ label, value, color }: { label: string; value: number | null; color: string }) {
+  // (declarado abaixo)
   const v = Math.max(0, Math.min(100, value ?? 0));
   return (
     <div>
