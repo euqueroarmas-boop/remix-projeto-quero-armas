@@ -153,15 +153,7 @@ function WeaponCard({
         <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-slate-300" />
       </div>
 
-      <div
-        className="relative p-4"
-        style={{
-          // Encolhe TUDO de forma proporcional (texto, imagem, stats, padding)
-          // usando font-size como base — todas as classes text-[Npx] herdam.
-          // Como a maioria dos tamanhos é fixa em px, replicamos via CSS variable.
-          fontSize: size === "sm" ? "10px" : size === "md" ? "12px" : "14px",
-        }}
-      >
+      <div className="relative p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
