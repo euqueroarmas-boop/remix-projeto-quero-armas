@@ -10,6 +10,7 @@ import {
 } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
+import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 
 export interface WorkbenchWeapon {
   id: number | string;
@@ -21,6 +22,17 @@ export interface WorkbenchWeapon {
   daysToExpire: number | null;
   hasGte?: boolean;
   catalogo_id?: string | null;
+  /**
+   * Quando o card representa um documento enviado pelo próprio cliente
+   * (GTE/CRAF/AC em qa_documentos_cliente), exibimos um thumbnail do
+   * documento no lugar da silhueta do catálogo, para deixar claro que
+   * é um documento e não outra arma cadastrada.
+   */
+  documentPreview?: {
+    bucket: string;
+    storagePath: string;
+    mime?: string | null;
+  } | null;
 }
 
 interface DocCard {
