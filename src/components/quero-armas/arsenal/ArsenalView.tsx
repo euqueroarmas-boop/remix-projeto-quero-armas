@@ -457,12 +457,15 @@ export function ArsenalView({
         // e NÃO cria arma sozinha — fica vinculada à arma existente.
         const ehDocDeArma = ["craf", "sinarm", "gte", "autorizacao_compra", "outro"].includes(tipo);
         if (!ehDocDeArma || !normalizeDocWeaponName(d)) return false;
-        // Regra de domínio: documento SEM número de série físico NÃO cria
-        // arma automaticamente — marca+modelo+calibre são insuficientes para
-        // identificar uma unidade física. Documentos assim aparecem na
-        // bancada como "documento sem vínculo", para revisão.
+        // Regra de domínio: documento sem identificador físico (sem nº de
+        // série e sem nº SIGMA/SINARM) NÃO cria arma automaticamente —
+        // marca+modelo+calibre são insuficientes para uma unidade física.
+        // Esses documentos aparecem na bancada como "sem vínculo" / revisão.
         const serial = String(d.arma_numero_serie || "").trim();
-        if (!serial) return false;
+        const sigmaLike = ["craf", "sinarm"].includes(tipo)
+          ? String(d.numero_documento || "").trim()
+          : "";
+        if (!serial && !sigmaLike) return false;
         return true;
       })
       .map((d: any) => {
