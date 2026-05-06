@@ -75,6 +75,7 @@ const fmtDate = (d: string | null) => {
 };
 
 const statusVisual = (validade: string | null, status: GteDoc["status_processamento"]) => {
+  if ((status as any) === "revisao_obrigatoria") return { tone: "warn" as const, label: "REVISÃO OBRIGATÓRIA" };
   if (status === "erro") return { tone: "danger" as const, label: "ERRO NA LEITURA" };
   if (status === "pendente" || status === "processando")
     return { tone: "muted" as const, label: status === "processando" ? "PROCESSANDO" : "PENDENTE" };
