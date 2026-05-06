@@ -1198,19 +1198,38 @@ export function ArsenalView({
       return s || null;
     };
     const set = new Set<string>();
+    // 1) Campo estruturado quando disponível (catálogo > parsing de nome)
     for (const w of weapons) {
+      const cat = (w as any).catalogo_id ? catalogoById((w as any).catalogo_id) : null;
+      const fromCatalog = norm(cat?.calibre);
+      if (fromCatalog) { set.add(fromCatalog); continue; }
       const info = buildWeaponInfo(w.nome_arma, w.numero_arma);
       const c = norm(info.calibre);
       if (c) set.add(c);
     }
+    // 2) Munições (campo estruturado real)
     for (const a of ammo.byCalibre) {
       const c = norm(a.calibre);
       if (c) set.add(c);
     }
-    for (const c of crafs as any[]) { const k = norm(c?.calibre); if (k) set.add(k); }
-    for (const g of gtes as any[]) { const k = norm(g?.calibre); if (k) set.add(k); }
+    // 3) CRAFs/GTEs — preferir catálogo vinculado; fallback para campo legado
+    for (const c of crafs as any[]) {
+      const cat = c?.catalogo_id ? catalogoById(c.catalogo_id) : null;
+      const k = norm(cat?.calibre || c?.calibre);
+      if (k) set.add(k);
+    }
+    for (const g of gtes as any[]) {
+      const cat = g?.catalogo_id ? catalogoById(g.catalogo_id) : null;
+      const k = norm(cat?.calibre || g?.calibre);
+      if (k) set.add(k);
+    }
+    // 4) Documentos do cliente (arma_calibre extraído por OCR/IA)
+    for (const d of meusDocs as any[]) {
+      const k = norm(d?.arma_calibre);
+      if (k) set.add(k);
+    }
     return set.size;
-  }, [weapons, ammo.byCalibre, crafs, gtes]);
+  }, [weapons, ammo.byCalibre, crafs, gtes, meusDocs, catalogoById]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
