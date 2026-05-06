@@ -336,6 +336,7 @@ export function ArsenalSummary({
   gteHint = "Sem GTE cadastrada",
   crafPending = 0,
   gtePending = 0,
+  armasBreakdown,
   crUnified = null,
   crafUnified = null,
   gteUnified = null,
