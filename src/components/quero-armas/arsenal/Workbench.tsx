@@ -153,7 +153,14 @@ function WeaponCard({
         <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-slate-300" />
       </div>
 
-      <div className="relative p-4">
+      <div
+        className="relative p-4"
+        style={{
+          // Encolhe TODO o conteúdo do card de uma vez (texto, imagem, stats, padding)
+          // de forma proporcional, sem precisar redimensionar cada elemento manualmente.
+          zoom: size === "sm" ? 0.7 : size === "md" ? 0.85 : 1,
+        }}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -196,7 +203,7 @@ function WeaponCard({
 
         {/* Weapon render with glow — transparent, large, detailed */}
         <div
-          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : size === "sm" ? "h-32 md:h-36" : "h-60 md:h-64"} w-full`}
+          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
           {isDocCard ? (
