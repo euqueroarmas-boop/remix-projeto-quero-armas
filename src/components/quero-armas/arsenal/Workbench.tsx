@@ -409,6 +409,7 @@ function SortableWeaponCard({
   catalog: ArmamentoCatalogo | null;
   onClick: () => void;
   size?: "lg" | "md" | "sm";
+  ammoCount?: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style: React.CSSProperties = {
@@ -625,6 +626,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                         catalog={catalog}
                         onClick={() => onSelectWeapon(w, info)}
                         size={longaSize}
+                        ammoCount={ammoCountFor(catalog?.calibre || info.calibre)}
                       />
                     ))}
                   </div>
@@ -645,6 +647,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                         catalog={catalog}
                         onClick={() => onSelectWeapon(w, info)}
                         size={curtaSize}
+                        ammoCount={ammoCountFor(catalog?.calibre || info.calibre)}
                       />
                     ))}
                   </div>
