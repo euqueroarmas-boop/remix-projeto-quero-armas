@@ -26,6 +26,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalAutorizacaoEditModal from "./ArsenalAutorizacaoEditModal";
 import ArsenalAutorizacaoBaixaModal from "./ArsenalAutorizacaoBaixaModal";
+import {
+  ArsenalCardSizeToggle,
+  SIZE_CLASSES,
+  TONE_BORDER,
+  TONE_ROW_BG,
+  useArsenalCardSize,
+} from "./useArsenalCardSize";
 
 interface Props {
   clienteId: number;
@@ -128,6 +135,8 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
   const [editing, setEditing] = useState<AutorizacaoDoc | null>(null);
   const [baixa, setBaixa] = useState<{ doc: AutorizacaoDoc; modo: "utilizar" | "cancelar" } | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  const sz = SIZE_CLASSES[cardSize];
 
   const load = useCallback(async () => {
     setLoading(true);
