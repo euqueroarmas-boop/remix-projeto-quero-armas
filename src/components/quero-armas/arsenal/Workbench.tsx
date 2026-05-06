@@ -113,7 +113,8 @@ function WeaponCard({
   ammoCount?: number;
 }) {
   const baseTone = urgencyTone(w.daysToExpire);
-  const tone = w.gteStatus === "ausente" || w.gteStatus === "vencido" || w.gteStatus === "revisar" || w.crafStatus === "ausente" || w.crafStatus === "vencido" || w.crafStatus === "revisar"
+  const gteAlerta = w.gteExigivel !== false && (w.gteStatus === "ausente" || w.gteStatus === "vencido" || w.gteStatus === "revisar");
+  const tone = gteAlerta || w.crafStatus === "ausente" || w.crafStatus === "vencido" || w.crafStatus === "revisar"
     ? "danger"
     : baseTone;
   const c = toneClasses[tone];
@@ -326,9 +327,24 @@ function WeaponCard({
           <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasCraf ? "bg-emerald-50 text-emerald-700" : w.crafStatus === "revisar" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
             CRAF · {w.crafLabel || (w.hasCraf ? "VÁLIDO" : "AUSENTE")}
           </span>
-          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-emerald-50 text-emerald-700" : w.gteStatus === "revisar" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
-            GTE · {w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE")}
-          </span>
+          {(() => {
+            const naoExigivel = w.gteExigivel === false && !w.hasGte;
+            const cls = naoExigivel
+              ? "bg-slate-100 text-slate-600"
+              : w.hasGte
+                ? "bg-emerald-50 text-emerald-700"
+                : w.gteStatus === "revisar"
+                  ? "bg-amber-50 text-amber-700"
+                  : "bg-red-50 text-red-700";
+            const label = naoExigivel
+              ? "NÃO EXIGÍVEL"
+              : (w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE"));
+            return (
+              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}>
+                GTE · {label}
+              </span>
+            );
+          })()}
           <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-700">
             MUN · {(ammoCount ?? 0).toLocaleString("pt-BR")}
           </span>
