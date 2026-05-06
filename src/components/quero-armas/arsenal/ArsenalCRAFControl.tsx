@@ -291,6 +291,7 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" className="hidden" accept="application/pdf,image/*" onChange={onFileSelected} />
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           <button
             onClick={onCadastroManual}
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
