@@ -901,39 +901,75 @@ export function ArsenalSummary({
               para que os cards reduzam de largura proporcionalmente conforme
               entram novas KPIs (ex.: GTE), sem nunca quebrar para a próxima linha.
           */}
-          <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:hidden">
-            {effectiveOrder.map((id) => {
+          {(() => {
+            const armasExtraSlot = armasBreakdown && armasBreakdown.total > 0 ? (
+              <ul className="mt-3 space-y-1 text-[11px] text-slate-700">
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span><strong className="font-semibold">{armasBreakdown.comCrafValido}</strong> com CRAF válido</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span><strong className="font-semibold">{armasBreakdown.comGteAtiva}</strong> com GTE ativa</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full ${armasBreakdown.comVencimento > 0 ? "bg-amber-500" : "bg-slate-300"}`} />
+                  <span><strong className="font-semibold">{armasBreakdown.comVencimento}</strong> com vencimento</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full ${armasBreakdown.comIrregularidade > 0 ? "bg-red-500" : "bg-slate-300"}`} />
+                  <span><strong className="font-semibold">{armasBreakdown.comIrregularidade}</strong> com irregularidade</span>
+                </li>
+              </ul>
+            ) : null;
+            const armasBadge = armasBreakdown
+              ? armasBreakdown.comIrregularidade > 0
+                ? { tone: "danger" as const, label: `${armasBreakdown.comIrregularidade} arma${armasBreakdown.comIrregularidade > 1 ? "s" : ""} com irregularidade` }
+                : armasBreakdown.comVencimento > 0
+                  ? { tone: "warn" as const, label: `Atenção — ${armasBreakdown.comVencimento} arma${armasBreakdown.comVencimento > 1 ? "s" : ""} com vencimento` }
+                  : null
+              : null;
+            const armasFooter = "CRAF e GTE são visualizados dentro de cada arma na Bancada Tática.";
+            const renderCard = (id: KpiId, klass: string) => {
               const def = definitions[id];
               if (!def) return null;
+              const isArmas = id === "armas";
               return (
-                <KpiCard
-                  key={id}
-                  def={def}
-                  editing={editing}
-                  onClick={() => onNavigate?.(def.target)}
-                />
-              );
-            })}
-          </div>
-          <div className="hidden lg:flex lg:flex-nowrap lg:gap-3 lg:items-stretch">
-            {effectiveOrder.map((id) => {
-              const def = definitions[id];
-              if (!def) return null;
-              return (
-                <div
-                  key={id}
-                  className="flex-1 min-w-0 basis-0"
-                  style={{ minWidth: 0 }}
-                >
+                <div key={id} className={klass} style={{ minWidth: 0 }}>
                   <KpiCard
                     def={def}
                     editing={editing}
                     onClick={() => onNavigate?.(def.target)}
+                    featured={isArmas}
+                    extraSlot={isArmas ? armasExtraSlot : undefined}
+                    badge={isArmas ? armasBadge : null}
+                    footerNote={isArmas ? armasFooter : undefined}
                   />
                 </div>
               );
-            })}
-          </div>
+            };
+            return (
+              <>
+                {/* Mobile / tablet: ARMAS ocupa as 2 colunas */}
+                <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:hidden">
+                  {effectiveOrder.map((id) =>
+                    renderCard(id, id === "armas" ? "col-span-2" : ""),
+                  )}
+                </div>
+                {/* Desktop: ARMAS ganha o dobro do espaço */}
+                <div className="hidden lg:flex lg:flex-nowrap lg:gap-3 lg:items-stretch">
+                  {effectiveOrder.map((id) =>
+                    renderCard(
+                      id,
+                      id === "armas"
+                        ? "min-w-0 basis-0 flex-[2.2]"
+                        : "flex-1 min-w-0 basis-0",
+                    ),
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </SortableContext>
       </DndContext>
 
