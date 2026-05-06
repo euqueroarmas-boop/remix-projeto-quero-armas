@@ -9,9 +9,10 @@ import {
   WEAPON_KIND_LABEL,
   GT_STATUS_LABEL,
   gtChipTone,
-  gtDeclaracaoKey,
   type GtDocStatus,
 } from "./utils";
+import { declararNaoPossuoGt, reverterDeclaracaoGt } from "./gtDeclaracoes";
+import { toast } from "sonner";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { useEffect, useMemo, useState } from "react";
@@ -50,6 +51,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
   const [confirmDel, setConfirmDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [gtConfirm, setGtConfirm] = useState(false);
+  const [gtSaving, setGtSaving] = useState(false);
   useEffect(() => { setConfirmDel(false); setDeleting(false); }, [weapon?.id, open]);
   const info = weapon ? buildWeaponInfo(weapon.nome_arma, weapon.numero_arma) : null;
   const catalog: ArmamentoCatalogo | null = useMemo(
