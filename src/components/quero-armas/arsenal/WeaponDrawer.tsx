@@ -10,6 +10,7 @@ import {
   GT_STATUS_LABEL,
   gtChipTone,
   type GtDocStatus,
+  type WeaponRegime,
 } from "./utils";
 import { declararNaoPossuoGt, reverterDeclaracaoGt } from "./gtDeclaracoes";
 import { toast } from "sonner";
@@ -311,6 +312,43 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
               Documentos da arma
             </div>
           </div>
+
+          {/* Bloco REGIME — SIGMA / SINARM / REVISAR */}
+          {weapon && (() => {
+            const regime: WeaponRegime = (weapon.regime as WeaponRegime) || "REVISAR";
+            const regimeLabel = regime === "SIGMA"
+              ? "SIGMA / CAC"
+              : regime === "SINARM"
+                ? "SINARM / DEFESA PESSOAL"
+                : "REGIME INDEFINIDO — REVISAR CADASTRO";
+            const exigivel = regime === "SIGMA";
+            const motivo = regime === "SIGMA"
+              ? "Acervo SIGMA/CAC: GTE é documento permanente exigível."
+              : regime === "SINARM"
+                ? "Registro SINARM para defesa pessoal: GTE não é exigível como documento permanente."
+                : "Sem indício confiável (sistema, finalidade, GT/GTE ou nº SIGMA). Revisar o cadastro da arma.";
+            const cls = regime === "SIGMA"
+              ? "border-[#7A1F2B]/30 bg-[#FBF3F4] text-[#7A1F2B]"
+              : regime === "SINARM"
+                ? "border-slate-300 bg-slate-50 text-slate-800"
+                : "border-amber-300 bg-amber-50 text-amber-900";
+            return (
+              <div className={`mb-3 rounded-md border p-3 shadow-sm ${cls}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                    REGIME DA ARMA
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.18em]">
+                    {regimeLabel}
+                  </span>
+                </div>
+                <p className="mt-1.5 text-[11px] leading-snug">
+                  GTE / Guia · <b>{exigivel ? "EXIGÍVEL" : regime === "SINARM" ? "NÃO EXIGÍVEL" : "REVISAR REGIME"}</b>
+                  {" "}— {motivo}
+                </p>
+              </div>
+            );
+          })()}
 
           {/* Bloco GT — Guia de Tráfego (retirada/transporte inicial) */}
           {weapon && (() => {
