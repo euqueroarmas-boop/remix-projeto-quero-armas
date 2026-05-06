@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
 import { getStatusValidade, type CorStatus } from "@/lib/quero-armas/statusUnificado";
+import DocClassReviewModal, { type ClassificacaoIA } from "./DocClassReviewModal";
+import { classifyArsenalDoc } from "./classifyDoc";
 
 type MotivoSaida =
   | "treino"
@@ -138,6 +140,14 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
   });
   const [fileSaida, setFileSaida] = useState<File | null>(null);
 
+  // Estado da revisão IA (sempre exibida quando um anexo é enviado)
+  const [iaReview, setIaReview] = useState<{
+    contexto: "entrada" | "saida";
+    file: File;
+    classificacao: ClassificacaoIA;
+  } | null>(null);
+  const [iaLoading, setIaLoading] = useState(false);
+
   const reload = async () => {
     setLoading(true);
     const [sResp, mResp] = await Promise.all([
@@ -202,6 +212,40 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
         return;
       }
     }
+    // Se houver anexo, sempre passar pela revisão IA antes de salvar.
+    if (fileEntrada) {
+      setIaLoading(true);
+      try {
+        const classificacao = await classifyArsenalDoc({
+          file: fileEntrada,
+          tipoSelecionado: "NOTA_FISCAL",
+        });
+        setIaLoading(false);
+        if (!classificacao) {
+          // IA indisponível → tratar como revisão obrigatória (não contamina KPI)
+          setIaReview({
+            contexto: "entrada",
+            file: fileEntrada,
+            classificacao: {
+              tipoDetectado: "DESCONHECIDO",
+              confianca: 0,
+              justificativa: "Classificação automática indisponível no momento.",
+              camposExtraidos: {},
+              divergenciaComSelecaoManual: false,
+              recomendacao: "revisao_obrigatoria",
+              revisao_obrigatoria: true,
+            },
+          });
+        } else {
+          setIaReview({ contexto: "entrada", file: fileEntrada, classificacao });
+        }
+        return; // Aguarda decisão do cliente para realmente persistir.
+      } catch (e) {
+        setIaLoading(false);
+        toast.error("Falha ao classificar anexo. Tente novamente.");
+        return;
+      }
+    }
     setSaving(true);
     let documento_url: string | null = null;
     let documento_nome: string | null = null;
@@ -256,6 +300,38 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
     if (formSaida.motivo === "outro" && !formSaida.observacao.trim()) {
       toast.error("Para motivo OUTRO, observação é obrigatória.");
       return;
+    }
+    if (fileSaida) {
+      setIaLoading(true);
+      try {
+        const classificacao = await classifyArsenalDoc({
+          file: fileSaida,
+          tipoSelecionado: "NOTA_FISCAL",
+        });
+        setIaLoading(false);
+        if (!classificacao) {
+          setIaReview({
+            contexto: "saida",
+            file: fileSaida,
+            classificacao: {
+              tipoDetectado: "DESCONHECIDO",
+              confianca: 0,
+              justificativa: "Classificação automática indisponível no momento.",
+              camposExtraidos: {},
+              divergenciaComSelecaoManual: false,
+              recomendacao: "revisao_obrigatoria",
+              revisao_obrigatoria: true,
+            },
+          });
+        } else {
+          setIaReview({ contexto: "saida", file: fileSaida, classificacao });
+        }
+        return;
+      } catch (e) {
+        setIaLoading(false);
+        toast.error("Falha ao classificar anexo. Tente novamente.");
+        return;
+      }
     }
     setSaving(true);
     let documento_url: string | null = null;
