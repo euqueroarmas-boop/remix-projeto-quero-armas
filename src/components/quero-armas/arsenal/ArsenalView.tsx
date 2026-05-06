@@ -1662,9 +1662,10 @@ export function ArsenalView({
         ammoSameCalibre={ammoSameCalibre}
         onClose={() => setSelected(null)}
         clienteId={clienteId}
-        onGtDeclaracaoChange={() => {
-          // Bumpa um state local mínimo para reavaliar leitura do localStorage.
-          setGtDeclaracaoTick((n) => n + 1);
+        onGtDeclaracaoChange={async () => {
+          // Recarrega imediatamente; realtime também atualizará para outras abas/staff.
+          const rows = await listGtDeclaracoes(clienteId);
+          setGtDeclaracoes(rows);
         }}
         onDelete={async (w) => {
           // ref_id: para fontes "doc-..." manda o id real do documento
