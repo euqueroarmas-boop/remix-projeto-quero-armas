@@ -359,21 +359,45 @@ function WeaponCard({
             );
           })()}
           {(() => {
-            const naoExigivel = w.gteExigivel === false && !w.hasGte;
-            const cls = naoExigivel
-              ? "bg-slate-100 text-slate-600"
-              : w.hasGte
+            const regime = w.regime || "REVISAR";
+            // Regra: NÃO EXIGÍVEL só para SINARM. SIGMA sem GTE = AUSENTE/VENCIDA.
+            // REVISAR (regime indefinido) = REVISAR REGIME.
+            let label: string;
+            let cls: string;
+            if (regime === "SINARM") {
+              label = w.hasGte ? (w.gteLabel || "ATIVA") : "NÃO EXIGÍVEL";
+              cls = w.hasGte ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600";
+            } else if (regime === "REVISAR") {
+              label = "REVISAR REGIME";
+              cls = "bg-amber-50 text-amber-700";
+            } else {
+              // SIGMA — GTE é exigível.
+              label = w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE");
+              cls = w.hasGte
                 ? "bg-emerald-50 text-emerald-700"
                 : w.gteStatus === "revisar"
                   ? "bg-amber-50 text-amber-700"
                   : "bg-red-50 text-red-700";
-            const label = naoExigivel
-              ? "NÃO EXIGÍVEL"
-              : (w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE"));
+            }
             return (
               <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
                 title="GTE — Guia de Tráfego Especial (SIGMA/CAC). Aplicável conforme regime do acervo.">
                 GTE · {label}
+              </span>
+            );
+          })()}
+          {(() => {
+            const regime = w.regime || "REVISAR";
+            const cls = regime === "SIGMA"
+              ? "bg-[#7A1F2B]/10 text-[#7A1F2B] border border-[#7A1F2B]/30"
+              : regime === "SINARM"
+                ? "bg-slate-900 text-white"
+                : "bg-amber-50 text-amber-800 border border-amber-300";
+            const label = regime === "SIGMA" ? "SIGMA" : regime === "SINARM" ? "SINARM" : "REVISAR";
+            return (
+              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
+                title="Regime do registro da arma — define exigibilidade da GTE.">
+                SISTEMA · {label}
               </span>
             );
           })()}
