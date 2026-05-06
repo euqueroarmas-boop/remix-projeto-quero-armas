@@ -532,7 +532,7 @@ export default function QAClientePortalPage() {
             {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
             <button
               type="button"
-              onClick={() => navigate("/cadastro/foto")}
+              onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
               title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
               className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
             >
