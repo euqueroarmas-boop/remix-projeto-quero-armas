@@ -949,17 +949,20 @@ export function ArsenalSummary({
               : null;
             const armasFooter = "CRAF e GTE são visualizados dentro de cada arma na Bancada Tática.";
             // Slot extra para MUNIÇÕES — lista resumida de calibres + alerta de lotes sem data.
-            const municoesExtraSlot = totalMunicoes > 0 && (municoesPorCalibre.length > 0 || municoesLotesSemData > 0) ? (
+            const calibresOrdenados = [...municoesPorCalibre]
+              .filter((c) => c && c.quantidade > 0)
+              .sort((a, b) => b.quantidade - a.quantidade);
+            const municoesExtraSlot = totalMunicoes > 0 && (calibresOrdenados.length > 0 || municoesLotesSemData > 0) ? (
               <div className="mt-2 space-y-1">
-                {municoesPorCalibre.slice(0, 2).map((c) => (
+                {calibresOrdenados.slice(0, 2).map((c) => (
                   <div key={c.calibre} className="flex items-center justify-between gap-2 text-[10.5px] text-slate-700">
                     <span className="font-mono font-semibold truncate">{c.calibre}</span>
                     <span className="font-mono tabular-nums text-slate-500">{c.quantidade.toLocaleString("pt-BR")}</span>
                   </div>
                 ))}
-                {municoesPorCalibre.length > 2 && (
+                {calibresOrdenados.length > 2 && (
                   <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-slate-400">
-                    + {municoesPorCalibre.length - 2} calibre{municoesPorCalibre.length - 2 > 1 ? "s" : ""}
+                    + {calibresOrdenados.length - 2} calibre{calibresOrdenados.length - 2 > 1 ? "s" : ""}
                   </div>
                 )}
                 {municoesLotesSemData > 0 && (
