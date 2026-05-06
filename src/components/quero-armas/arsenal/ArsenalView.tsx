@@ -12,6 +12,7 @@ import {
   getGteKpiStatus,
   normalizeCalibre,
   isGteExigivelParaArma,
+  getWeaponRegime,
   type GtDocStatus,
 } from "./utils";
 import {
@@ -685,15 +686,27 @@ export function ArsenalView({
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
-      const gteExigivel = isGteExigivelParaArma(w as any);
+      const hasGteVinculada = !!(link?.gteMatches && link.gteMatches.length > 0);
+      const hasGtVinculada = !!(link?.gtMatches && link.gtMatches.length > 0);
+      const regime = getWeaponRegime(w as any, {
+        hasGteVinculada,
+        hasGtVinculada,
+        numeroSigma: w.numero_sigma,
+      });
+      const gteExigivel = regime === "SIGMA";
       return {
         ...w,
+        regime,
         hasCraf: !!link?.crafValido,
         hasGte: !!link?.gteValida,
         crafStatus: link?.crafStatus,
         gteStatus: link?.gteStatus,
         crafLabel: link?.crafLabel,
-        gteLabel: !gteExigivel && !link?.gteValida ? "NÃO EXIGÍVEL" : link?.gteLabel,
+        gteLabel: regime === "SINARM" && !link?.gteValida
+          ? "NÃO EXIGÍVEL"
+          : regime === "REVISAR"
+            ? "REVISAR REGIME"
+            : link?.gteLabel,
         gteExigivel,
         gtStatus: link?.gtStatus,
         hasGt: !!(link?.gtMatches && link.gtMatches.length > 0),
