@@ -1221,94 +1221,15 @@ export function ArsenalView({
   // validade >= hoje. Idem para GTE. Documentos sem vínculo confiável não
   // tornam a arma "regular" — ficam como pendência (irregularidade).
   const armasBreakdown = useMemo(() => {
-    const norm = (s: string | null | undefined) =>
-      String(s || "").replace(/\s+/g, "").toUpperCase().trim();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Ordem oficial de vínculo (CRAF/GTE → ARMA):
-    //   1) arma_id explícito (não existe ainda no schema; reservado p/ futuro)
-    //   2) vínculo manual confirmado (catalogo_id pareado entre arma e doc)
-    //   3) número de série
-    //   4) SIGMA/SINARM
-    //   5) CRAF vinculado à arma (transitivo — usado p/ GTE)
-    //   6) marca + modelo + calibre (fallback fraco — exige revisão)
-    // Indexa por chave física (série e SIGMA) e por catálogo.
-    const crafByKey = new Map<string, any[]>();
-    const crafByCatalogo = new Map<string, any[]>();
-    (crafs || []).forEach((c: any) => {
-      [norm(c.numero_arma), norm(c.numero_sigma)].forEach((k) => {
-        if (!k) return;
-        const arr = crafByKey.get(k) || [];
-        arr.push(c);
-        crafByKey.set(k, arr);
-      });
-      if (c.catalogo_id) {
-        const arr = crafByCatalogo.get(String(c.catalogo_id)) || [];
-        arr.push(c);
-        crafByCatalogo.set(String(c.catalogo_id), arr);
-      }
-    });
-    const gteByKey = new Map<string, any[]>();
-    const gteByCatalogo = new Map<string, any[]>();
-    (gtes || []).forEach((g: any) => {
-      [norm(g.numero_arma), norm(g.numero_sigma)].forEach((k) => {
-        if (!k) return;
-        const arr = gteByKey.get(k) || [];
-        arr.push(g);
-        gteByKey.set(k, arr);
-      });
-      if (g.catalogo_id) {
-        const arr = gteByCatalogo.get(String(g.catalogo_id)) || [];
-        arr.push(g);
-        gteByCatalogo.set(String(g.catalogo_id), arr);
-      }
-    });
-
     let comCrafValido = 0;
     let comGteAtiva = 0;
     let comVencimento = 0;
     let comIrregularidade = 0;
 
     for (const w of weapons) {
-      const serial = norm(w.numero_arma);
-      const sigma = norm(w.numero_sigma);
-      const keys = [serial, sigma].filter(Boolean);
-      const wCatalogo = (w as any).catalogo_id ? String((w as any).catalogo_id) : null;
-
-      // Vínculo CRAF (precedência: catalogo_id → série → SIGMA)
-      let crafMatches: any[] = [];
-      if (wCatalogo) (crafByCatalogo.get(wCatalogo) || []).forEach((c) => crafMatches.push(c));
-      if (crafMatches.length === 0) {
-        keys.forEach((k) => {
-          (crafByKey.get(k) || []).forEach((c) => {
-            if (!crafMatches.includes(c)) crafMatches.push(c);
-          });
-        });
-      }
-      const crafValido = crafMatches.some((c) => {
-        const v = c?.data_validade ? new Date(c.data_validade) : null;
-        return v && !isNaN(v.getTime()) && v.getTime() >= today.getTime();
-      });
-      if (crafValido) comCrafValido++;
-
-      // Vínculo GTE (mesma precedência). REGRA ATUAL: GTE ausente/vencida
-      // É tratada como irregularidade do armamento (Lei 10.826/03 — porte
-      // de trânsito exigível para o acervo CAC).
-      let gteMatches: any[] = [];
-      if (wCatalogo) (gteByCatalogo.get(wCatalogo) || []).forEach((g) => gteMatches.push(g));
-      if (gteMatches.length === 0) {
-        keys.forEach((k) => {
-          (gteByKey.get(k) || []).forEach((g) => {
-            if (!gteMatches.includes(g)) gteMatches.push(g);
-          });
-        });
-      }
-      const gteValida = gteMatches.some((g) => {
-        const v = g?.data_validade ? new Date(g.data_validade) : null;
-        return v && !isNaN(v.getTime()) && v.getTime() >= today.getTime();
-      });
-      if (gteValida) comGteAtiva++;
+      const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      if (link?.crafValido) comCrafValido++;
+      if (link?.gteValida) comGteAtiva++;
 
       // Vencimento próximo (<= 60d) ou vencido
       const dias = w.daysToExpire;
@@ -1318,9 +1239,9 @@ export function ArsenalView({
 
       // Irregularidade: vencido OU sem vínculo confiável (sem nº de série e
       // SIGMA) OU sem CRAF válido vinculado OU sem GTE ativa vinculada.
-      const semVinculo = !serial && !sigma;
-      const semCrafValido = !crafValido;
-      const semGteAtiva = !gteValida;
+      const semVinculo = !!link?.semVinculo;
+      const semCrafValido = !link?.crafValido;
+      const semGteAtiva = !link?.gteValida;
       if (vencido || semVinculo || semCrafValido || semGteAtiva) comIrregularidade++;
     }
 
@@ -1341,62 +1262,41 @@ export function ArsenalView({
       comIrregularidade,
       piorStatus,
     };
-  }, [weapons, crafs, gtes]);
+  }, [weapons, weaponLinkState]);
 
   // ── Calibres distintos NORMALIZADOS (armas + munições + crafs/gtes) ──────
   // Evita contagem inflada por variações como "12", "CAL .12", "12 GA",
   // "9mm", "9 MM", "9x19", ".40", ".380 ACP", etc.
   const totalCalibresNormalizados = useMemo(() => {
-    const norm = (raw: string | null | undefined): string | null => {
-      if (!raw) return null;
-      let s = String(raw).toUpperCase();
-      s = s.replace(/CAL\.?|CALIBRE/g, "");
-      s = s.replace(/[^0-9A-Z.]/g, "");
-      // canônicos
-      if (/^\.?12(GA)?$/.test(s)) return "12";
-      if (/^\.?20(GA)?$/.test(s)) return "20";
-      if (/^\.?9(MM|X19|LUGER|PARA)?$/.test(s)) return "9MM";
-      if (/^\.?40(SW|S\.?W\.?)?$/.test(s)) return ".40";
-      if (/^\.?380(ACP)?$/.test(s)) return ".380";
-      if (/^\.?45(ACP|AUTO)?$/.test(s)) return ".45";
-      if (/^\.?38(SPL|SPECIAL)?$/.test(s)) return ".38";
-      if (/^\.?357(MAGNUM|MAG)?$/.test(s)) return ".357";
-      if (/^\.?22(LR)?$/.test(s)) return ".22";
-      if (/^\.?44(MAGNUM|MAG)?$/.test(s)) return ".44";
-      if (/^\.?32$/.test(s)) return ".32";
-      // fallback: remove ACP/MAG/SW/GA spurious
-      s = s.replace(/(ACP|AUTO|MAGNUM|MAG|SW|GA|SPL|SPECIAL|LR|LUGER|PARA)/g, "");
-      return s || null;
-    };
     const set = new Set<string>();
     // 1) Campo estruturado quando disponível (catálogo > parsing de nome)
     for (const w of weapons) {
       const cat = (w as any).catalogo_id ? catalogoById((w as any).catalogo_id) : null;
-      const fromCatalog = norm(cat?.calibre);
+      const fromCatalog = normalizeCalibre(cat?.calibre);
       if (fromCatalog) { set.add(fromCatalog); continue; }
       const info = buildWeaponInfo(w.nome_arma, w.numero_arma);
-      const c = norm(info.calibre);
+      const c = normalizeCalibre(info.calibre);
       if (c) set.add(c);
     }
     // 2) Munições (campo estruturado real)
     for (const a of ammo.byCalibre) {
-      const c = norm(a.calibre);
+      const c = normalizeCalibre(a.calibre);
       if (c) set.add(c);
     }
     // 3) CRAFs/GTEs — preferir catálogo vinculado; fallback para campo legado
     for (const c of crafs as any[]) {
       const cat = c?.catalogo_id ? catalogoById(c.catalogo_id) : null;
-      const k = norm(cat?.calibre || c?.calibre);
+      const k = normalizeCalibre(cat?.calibre || c?.calibre);
       if (k) set.add(k);
     }
     for (const g of gtes as any[]) {
       const cat = g?.catalogo_id ? catalogoById(g.catalogo_id) : null;
-      const k = norm(cat?.calibre || g?.calibre);
+      const k = normalizeCalibre(cat?.calibre || g?.calibre);
       if (k) set.add(k);
     }
     // 4) Documentos do cliente (arma_calibre extraído por OCR/IA)
     for (const d of meusDocs as any[]) {
-      const k = norm(d?.arma_calibre);
+      const k = normalizeCalibre(d?.arma_calibre);
       if (k) set.add(k);
     }
     return set.size;
