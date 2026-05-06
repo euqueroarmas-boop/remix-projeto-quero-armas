@@ -450,7 +450,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 Adicionar Documento
               </h2>
               <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Anexe seu documento, deixe a IA sugerir os campos e revise tudo antes de salvar.
+                Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
               </p>
             </div>
 
@@ -468,29 +468,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]">
           <div className="space-y-5 pb-6">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <Field label="Que tipo de documento é?">
-                <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
-                  <SelectTrigger className={cn(inputClassName, "h-12 rounded-2xl text-left text-sm font-medium")}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="border-border bg-popover text-popover-foreground">
-                    {TIPOS.map((tipo) => (
-                      <SelectItem key={tipo.value} value={tipo.value} className="focus:bg-muted focus:text-foreground">
-                        {tipo.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Arquivo</div>
-                  <div className="mt-1 text-sm text-foreground">Envie foto ou PDF do documento</div>
+                  <div className="mt-1 text-sm text-foreground">A IA identifica o tipo automaticamente</div>
                 </div>
-                {tipoAtual ? (
+                {classificacao && tipoAtual ? (
                   <span className="rounded-full bg-accent/18 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent-foreground">
                     {tipoAtual.short}
                   </span>
@@ -556,7 +539,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,application/pdf"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
               <input
@@ -564,23 +547,80 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 type="file"
                 accept="image/*"
                 capture="environment"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
 
-              <Button
-                type="button"
-                onClick={handleExtract}
-                disabled={!file || extracting || !(file.type.startsWith("image/") || file.type === "application/pdf")}
-                className="mt-3 h-12 w-full rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                {extracting ? "Lendo documento com IA..." : "Preencher com IA"}
-              </Button>
+              {extracting && (
+                <div className="mt-3 flex items-center justify-center gap-2 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Lendo o documento e identificando o tipo…
+                </div>
+              )}
 
-              <p className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
-                A IA sugere os campos e você confirma antes de salvar.
-              </p>
+              {!extracting && classificacao && (
+                <div
+                  className={cn(
+                    "mt-3 rounded-2xl border p-3",
+                    classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO"
+                      ? "border-amber-300 bg-amber-50"
+                      : "border-emerald-300 bg-emerald-50",
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    {classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO" ? (
+                      <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-700" />
+                    ) : (
+                      <ScanLine className="mt-0.5 h-4 w-4 text-emerald-700" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Tipo identificado pela IA
+                      </div>
+                      <div className="mt-0.5 text-sm font-bold uppercase text-foreground">
+                        {tipoAtual?.label || form.tipo_documento.toUpperCase()}{" "}
+                        <span className="text-xs font-medium text-muted-foreground">
+                          · {Math.round((classificacao.confianca || 0) * 100)}% confiança
+                        </span>
+                      </div>
+                      {classificacao.justificativa && (
+                        <p className="mt-1 text-xs leading-snug text-muted-foreground">
+                          {classificacao.justificativa}
+                        </p>
+                      )}
+                      {(classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO") && (
+                        <p className="mt-1 text-xs font-semibold text-amber-800">
+                          Documento ilegível ou não identificado. Revise os campos antes de salvar.
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowTipoOverride((v) => !v)}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-2 hover:underline"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {showTipoOverride ? "Manter tipo identificado" : "Não é esse tipo? Alterar manualmente"}
+                      </button>
+                      {showTipoOverride && (
+                        <div className="mt-2">
+                          <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
+                            <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-border bg-popover text-popover-foreground">
+                              {TIPOS.map((tipo) => (
+                                <SelectItem key={tipo.value} value={tipo.value} className="focus:bg-muted focus:text-foreground">
+                                  {tipo.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <SectionTitle title="Dados do documento" />
