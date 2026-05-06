@@ -4,7 +4,17 @@ import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesMovimentacoesManager } from "./MunicoesMovimentacoesManager";
-import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus, normalizeCalibre, isGteExigivelParaArma } from "./utils";
+import {
+  TACTICAL,
+  urgencyTone,
+  buildWeaponInfo,
+  isInvalidWeaponModel,
+  getGteKpiStatus,
+  normalizeCalibre,
+  isGteExigivelParaArma,
+  gtDeclaracaoKey,
+  type GtDocStatus,
+} from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,12 +129,17 @@ type LinkedDocStatus = "valido" | "ativo" | "vencido" | "ausente" | "revisar";
 interface WeaponLinkState {
   crafMatches: any[];
   gteMatches: any[];
+  gtMatches: any[];
   crafStatus: LinkedDocStatus;
   gteStatus: LinkedDocStatus;
   crafLabel: string;
   gteLabel: string;
   crafValido: boolean;
   gteValida: boolean;
+  /** Status da GT (retirada/transporte inicial) — informativo, nunca crítico. */
+  gtStatus: GtDocStatus;
+  /** Cliente declarou que não possui mais a GT. */
+  gtDeclaradaNaoPossui: boolean;
   semVinculo: boolean;
   hasWeakCrafDoc: boolean;
   hasWeakGteDoc: boolean;
@@ -147,6 +162,8 @@ export function ArsenalView({
 }: Props) {
   // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
+  // Bump quando o usuário declara/reverte "Não possuo mais a GT" (leitura local).
+  const [gtDeclaracaoTick, setGtDeclaracaoTick] = useState(0);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
     total: 0,
     byCalibre: [],
@@ -401,9 +418,9 @@ export function ArsenalView({
     const fromDocs = meusDocs
       .filter((d: any) => {
         const tipo = String(d.tipo_documento || "").toLowerCase();
-        // Documentos vinculados a arma (CRAF, SINARM, GT, GTE, autorização) entram no arsenal
-        // desde que tenham marca/modelo válidos extraídos.
-        const ehDocDeArma = ["craf", "sinarm", "gt", "gte", "autorizacao_compra", "outro"].includes(tipo);
+        // GT (guia de retirada/transporte inicial da loja) é histórica/informativa
+        // e NÃO cria arma sozinha — fica vinculada à arma existente.
+        const ehDocDeArma = ["craf", "sinarm", "gte", "autorizacao_compra", "outro"].includes(tipo);
         return ehDocDeArma && normalizeDocWeaponName(d);
       })
       .map((d: any) => {
@@ -479,17 +496,24 @@ export function ArsenalView({
       });
       return map;
     };
-    const typedDocs = (tipo: "craf" | "gte") => (meusDocs || [])
+    const typedDocs = (tipo: "craf" | "gte" | "gt") => (meusDocs || [])
       .filter((d: any) => {
         const t = String(d?.tipo_documento || "").toLowerCase();
-        return docApproved(d) && (tipo === "craf" ? ["craf", "sinarm"].includes(t) : ["gte", "gt"].includes(t));
+        if (!docApproved(d)) return false;
+        if (tipo === "craf") return ["craf", "sinarm"].includes(t);
+        if (tipo === "gte") return t === "gte";
+        // GT (Guia de Tráfego de retirada/transporte inicial — informativa).
+        return t === "gt";
       });
     const crafSources = [...(crafs || []), ...typedDocs("craf").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: d.numero_documento, __doc: true }))];
     const gteSources = [...(gtes || []), ...typedDocs("gte").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: null, __doc: true }))];
+    const gtSources = [...typedDocs("gt").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: null, __doc: true }))];
     const crafByKey = byKey(crafSources);
     const gteByKey = byKey(gteSources);
+    const gtByKey = byKey(gtSources);
     const crafByCatalogo = byCatalogo(crafSources);
     const gteByCatalogo = byCatalogo(gteSources);
+    const gtByCatalogo = byCatalogo(gtSources);
     const weakDocs = (tipo: "craf" | "gte", w: WorkbenchWeapon) => {
       const wCat = w.catalogo_id ? catalogoById(w.catalogo_id) : null;
       const wInfo = buildWeaponInfo(w.nome_arma, w.numero_arma);
@@ -525,28 +549,54 @@ export function ArsenalView({
       };
       const crafMatches = collect(crafByCatalogo, crafByKey);
       const gteMatches = collect(gteByCatalogo, gteByKey);
+      const gtMatches = collect(gtByCatalogo, gtByKey);
       const hasWeakCrafDoc = weakDocs("craf", w).length > 0;
       const hasWeakGteDoc = weakDocs("gte", w).length > 0;
       const crafValido = crafMatches.some((c) => isValidDateFromToday(c?.data_validade, today));
       const gteValida = gteMatches.some((g) => isValidDateFromToday(g?.data_validade, today));
       const craf = statusFor(crafMatches, crafValido, hasWeakCrafDoc, "VÁLIDO");
       const gte = statusFor(gteMatches, gteValida, hasWeakGteDoc, "ATIVA");
+      // Declaração local "não possuo mais a GT" (persistida em localStorage até
+      // existir backend/auditoria dedicada).
+      const declKey = gtDeclaracaoKey(clienteId, `${w.source}-${w.id}`);
+      let gtDeclaradaNaoPossui = false;
+      try {
+        if (typeof window !== "undefined") {
+          gtDeclaradaNaoPossui = window.localStorage.getItem(declKey) === "1";
+        }
+      } catch { /* noop */ }
+      // Status da GT — sempre informativo, nunca crítico.
+      let gtStatus: GtDocStatus;
+      if (gtDeclaradaNaoPossui) gtStatus = "nao_possuo";
+      else if (gtMatches.some((g) => {
+        const s = String(g?.status || "").toLowerCase();
+        return s === "aprovado" || s === "validado" || s === "concluido";
+      })) gtStatus = "aprovada";
+      else if (gtMatches.some((g) => {
+        const s = String(g?.status || "").toLowerCase();
+        return s === "pendente_aprovacao" || s === "em_analise" || s === "pendente";
+      })) gtStatus = "em_analise";
+      else if (gtMatches.length > 0) gtStatus = "enviada";
+      else gtStatus = "nao_enviada";
       out.set(key, {
         crafMatches,
         gteMatches,
+        gtMatches,
         crafStatus: craf.status,
         gteStatus: gte.status,
         crafLabel: craf.label,
         gteLabel: gte.label,
         crafValido,
         gteValida,
+        gtStatus,
+        gtDeclaradaNaoPossui,
         semVinculo: keys.length === 0 && !cat,
         hasWeakCrafDoc,
         hasWeakGteDoc,
       });
     });
     return out;
-  }, [weapons, crafs, gtes, meusDocs, catalogoById]);
+  }, [weapons, crafs, gtes, meusDocs, catalogoById, clienteId, gtDeclaracaoTick]);
 
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
@@ -561,6 +611,9 @@ export function ArsenalView({
         crafLabel: link?.crafLabel,
         gteLabel: !gteExigivel && !link?.gteValida ? "NÃO EXIGÍVEL" : link?.gteLabel,
         gteExigivel,
+        gtStatus: link?.gtStatus,
+        hasGt: !!(link?.gtMatches && link.gtMatches.length > 0),
+        gtDeclaradaNaoPossui: !!link?.gtDeclaradaNaoPossui,
         linkReview: !!(link?.hasWeakCrafDoc || link?.hasWeakGteDoc || link?.semVinculo),
       };
     }),
@@ -706,7 +759,14 @@ export function ArsenalView({
     const out: { category: string; title: string; date: string | null }[] = [];
     (link?.crafMatches || []).forEach((c) => out.push({ category: "CRAF", title: c.nome_arma || c.nome_craf || "CRAF vinculado", date: c.data_validade }));
     (link?.gteMatches || []).forEach((g) => out.push({ category: "GTE", title: g.nome_arma || g.nome_gte || "GTE vinculada", date: g.data_validade }));
+    (link?.gtMatches || []).forEach((g: any) => out.push({ category: "GT", title: g.arquivo_nome || "GT enviada (retirada/transporte inicial)", date: g.data_emissao || null }));
     if (!link?.crafValido) out.push({ category: "CRAF", title: link?.hasWeakCrafDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "CRAF ausente — regularizar documento da arma.", date: null });
+    // GT — sempre informativa
+    if (link?.gtDeclaradaNaoPossui) {
+      out.push({ category: "GT", title: "Cliente declarou que não possui mais este documento.", date: null });
+    } else if (!link?.gtMatches || link.gtMatches.length === 0) {
+      out.push({ category: "GT", title: "GT não enviada — documento histórico de retirada/transporte (não bloqueia o cadastro).", date: null });
+    }
     if (!link?.gteValida) {
       const gteExigivel = isGteExigivelParaArma(selected as any);
       if (!gteExigivel) {
@@ -1569,6 +1629,11 @@ export function ArsenalView({
         relatedDocs={relatedDocs}
         ammoSameCalibre={ammoSameCalibre}
         onClose={() => setSelected(null)}
+        clienteId={clienteId}
+        onGtDeclaracaoChange={() => {
+          // Bumpa um state local mínimo para reavaliar leitura do localStorage.
+          setGtDeclaracaoTick((n) => n + 1);
+        }}
         onDelete={async (w) => {
           // ref_id: para fontes "doc-..." manda o id real do documento
           const isDoc = typeof w.id === "string" && w.id.startsWith("doc-");

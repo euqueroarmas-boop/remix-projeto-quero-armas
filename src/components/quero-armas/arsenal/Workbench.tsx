@@ -8,6 +8,9 @@ import {
   normalizeCalibre,
   WeaponInfo,
   WEAPON_KIND_LABEL,
+  GT_STATUS_LABEL,
+  gtChipTone,
+  type GtDocStatus,
 } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
@@ -50,6 +53,14 @@ export interface WorkbenchWeapon {
   finalidade?: string | null;
   /** Indica se a GTE é documento permanente exigível para esta arma. */
   gteExigivel?: boolean;
+  /**
+   * GT (Guia de Tráfego de retirada/transporte inicial da loja).
+   * Documento histórico/informativo — NÃO é GTE e sua ausência NÃO pinta
+   * a KPI ARMAS de vermelho.
+   */
+  gtStatus?: GtDocStatus;
+  hasGt?: boolean;
+  gtDeclaradaNaoPossui?: boolean;
   /**
    * Quando o card representa um documento enviado pelo próprio cliente
    * (GTE/CRAF/AC em qa_documentos_cliente), exibimos um thumbnail do
@@ -113,6 +124,7 @@ function WeaponCard({
   ammoCount?: number;
 }) {
   const baseTone = urgencyTone(w.daysToExpire);
+  // GT NUNCA participa do tom crítico do card.
   const gteAlerta = w.gteExigivel !== false && (w.gteStatus === "ausente" || w.gteStatus === "vencido" || w.gteStatus === "revisar");
   const tone = gteAlerta || w.crafStatus === "ausente" || w.crafStatus === "vencido" || w.crafStatus === "revisar"
     ? "danger"
@@ -328,6 +340,22 @@ function WeaponCard({
             CRAF · {w.crafLabel || (w.hasCraf ? "VÁLIDO" : "AUSENTE")}
           </span>
           {(() => {
+            const status: GtDocStatus = w.gtStatus
+              || (w.gtDeclaradaNaoPossui ? "nao_possuo" : (w.hasGt ? "enviada" : "nao_enviada"));
+            const t = gtChipTone(status);
+            const cls = t === "ok"
+              ? "bg-emerald-50 text-emerald-700"
+              : t === "warn"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-slate-100 text-slate-600";
+            return (
+              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
+                title="GT — Guia de Tráfego (retirada/transporte inicial da loja). Documento histórico, não é GTE.">
+                GT · {GT_STATUS_LABEL[status]}
+              </span>
+            );
+          })()}
+          {(() => {
             const naoExigivel = w.gteExigivel === false && !w.hasGte;
             const cls = naoExigivel
               ? "bg-slate-100 text-slate-600"
@@ -340,7 +368,8 @@ function WeaponCard({
               ? "NÃO EXIGÍVEL"
               : (w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE"));
             return (
-              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}>
+              <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${cls}`}
+                title="GTE — Guia de Tráfego Especial (SIGMA/CAC). Aplicável conforme regime do acervo.">
                 GTE · {label}
               </span>
             );
@@ -638,15 +667,39 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         />
 
         {enriched.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
             <ShieldAlert className="h-10 w-10 text-slate-300" />
-            <div>
+            <div className="max-w-xl">
               <div className="text-[12px] font-bold uppercase tracking-wider text-slate-700">
-                NENHUMA ARMA NO ACERVO
+                CADASTRE SEU PRIMEIRO ARMAMENTO
               </div>
-              <p className="mt-1 max-w-sm text-[11px] text-slate-400">
-                Cadastre seus CRAFs para que o sistema monte automaticamente sua bancada.
+              <p className="mt-1 text-[11px] text-slate-500">
+                Para organizar seu Arsenal, envie os documentos principais da arma.
+                Você poderá cadastrar CRAF, GT e GTE quando aplicável.
               </p>
+              <div className="mt-3 grid gap-2 text-left sm:grid-cols-3">
+                <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">CRAF</div>
+                  <p className="mt-1 text-[10px] leading-snug text-slate-600">
+                    Certificado de Registro de Arma de Fogo. Identifica a arma, titular,
+                    nº de série, calibre e validade. <b>Documento principal.</b>
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-700">GT</div>
+                  <p className="mt-1 text-[10px] leading-snug text-slate-600">
+                    Guia usada para retirar a arma da loja e transportar até o destino
+                    autorizado. Documento histórico — se não tiver mais, é possível declarar.
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">GTE</div>
+                  <p className="mt-1 text-[10px] leading-snug text-slate-600">
+                    Guia de Tráfego Especial. Pode ser exigida em acervos vinculados ao
+                    SIGMA/CAC, conforme o regime do acervo.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

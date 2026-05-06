@@ -306,3 +306,43 @@ export function isGteExigivelParaArma(arma: WeaponRegimeInput | null | undefined
 export function gteExigibilidadeLabel(exigivel: boolean): string {
   return exigivel ? "AUSENTE" : "NÃO EXIGÍVEL";
 }
+
+/**
+ * GT (Guia de Tráfego de retirada/transporte inicial da loja) NÃO é o mesmo
+ * que GTE (Guia de Tráfego Especial — SIGMA/CAC). A GT é informativa /
+ * histórica e sua ausência NUNCA pode pintar a KPI ARMAS de vermelho nem
+ * gerar alerta crítico automático. Status possíveis:
+ *   - enviada | aprovada | em_analise | nao_enviada | nao_possuo | revisar
+ */
+export type GtDocStatus =
+  | "enviada"
+  | "aprovada"
+  | "em_analise"
+  | "nao_enviada"
+  | "nao_possuo"
+  | "revisar";
+
+export const GT_STATUS_LABEL: Record<GtDocStatus, string> = {
+  enviada: "ENVIADA",
+  aprovada: "APROVADA",
+  em_analise: "EM ANÁLISE",
+  nao_enviada: "NÃO ENVIADA",
+  nao_possuo: "NÃO POSSUO MAIS",
+  revisar: "REVISAR DOCUMENTO",
+};
+
+/**
+ * Tom visual de chip da GT — sempre informativo, nunca vermelho.
+ * O vermelho da KPI ARMAS é reservado a CRAF essencial e GTE exigível.
+ */
+export function gtChipTone(status: GtDocStatus): "ok" | "warn" | "muted" {
+  if (status === "aprovada" || status === "enviada") return "ok";
+  if (status === "em_analise" || status === "revisar") return "warn";
+  // nao_enviada e nao_possuo são informativos (cinza), não críticos.
+  return "muted";
+}
+
+/** Chave estável para declaração local "não possuo mais a GT". */
+export function gtDeclaracaoKey(clienteId: number | string, weaponKey: string): string {
+  return `qa.gt-nao-possui.${clienteId}.${weaponKey}`;
+}
