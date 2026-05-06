@@ -869,6 +869,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         </div>
 
         <div className="shrink-0 border-t border-border bg-background px-4 py-4 sm:px-6">
+          {autoResult?.safe ? (
+            <div className="flex">
+              <Button
+                onClick={onClose}
+                className="h-11 flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
+              </Button>
+            </div>
+          ) : (
           <div className="flex gap-2.5">
             <Button
               variant="outline"
@@ -879,13 +889,23 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving}
+              disabled={
+                saving ||
+                extracting ||
+                // Bloqueia cadastro manual quando a IA já bloqueou por insegurança.
+                // Cliente é orientado a reenviar o documento mais nítido.
+                (autoResult?.safe === false &&
+                  (autoResult.motivo === "documento_nao_identificado" ||
+                    autoResult.motivo === "confianca_insuficiente" ||
+                    autoResult.motivo === "campos_ilegiveis"))
+              }
               className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
               {saving ? "Salvando..." : "Salvar documento"}
             </Button>
           </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
