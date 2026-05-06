@@ -73,14 +73,14 @@ export type ArsenalSummaryTarget =
 // da arma — não aparecem como KPIs independentes no topo. Eles continuam
 // existindo em todo o resto do sistema (uploads, OCR, controles), apenas
 // não competem mais com ARMAS no painel de KPIs.
-type KpiId = "armas" | "municoes" | "status_cr" | "calibres" | "alertas";
+type KpiId = "armas" | "municoes" | "status_cr" | "calibres" | "alertas" | "exames";
 // KPIs da Linha 2 (recolhível). Não entram no DEFAULT_ORDER persistido para
 // manter Zero Regression do layout existente — são renderizados separadamente.
-type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
+type KpiSecondaryId = "documentos" | "processos" | "autorizacoes";
 
-// Ordem padrão: CR | ARMAS | CALIBRES | MUNIÇÕES | ALERTAS
+// Ordem padrão: CR | ARMAS | CALIBRES | MUNIÇÕES | ALERTAS | EXAMES/LAUDOS
 // (CRAF e GTE foram removidos como KPIs — as informações ficam dentro da arma).
-const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "alertas"];
+const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "alertas", "exames"];
 // F1A — Reorganização do Arsenal:
 // Os KPIs "Documentos", "Processos" e "Autorizações" foram REMOVIDOS do grid
 // principal. Agora existem grupos operacionais próprios (Controle de CRAF,
@@ -88,7 +88,8 @@ const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "a
 // como KPI resumido na Linha 2. As props (documentosUnified/Count, etc.)
 // continuam sendo aceitas para preservar compatibilidade dos consumidores
 // existentes — apenas não são renderizadas.
-const SECONDARY_ORDER: KpiSecondaryId[] = ["exames"];
+// Linha 2 (recolhível) — vazia por padrão; EXAMES/LAUDOS voltou para a Linha 1.
+const SECONDARY_ORDER: KpiSecondaryId[] = [];
 
 // Ids legados que podem existir em layouts persistidos antigos. Devem ser
 // silenciosamente ignorados na renderização (Zero Regression para usuários
@@ -101,6 +102,7 @@ const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   status_cr: "cr",
   calibres: "calibres",
   alertas: "alertas",
+  exames: "exames",
 };
 
 interface Props {
