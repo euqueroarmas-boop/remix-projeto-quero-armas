@@ -408,6 +408,13 @@ export function ArsenalView({
         const nome = normalizeDocWeaponName(d);
         const tipoUpper = String(d.tipo_documento || "DOC").toUpperCase();
         const tipoLower = String(d.tipo_documento || "").toLowerCase();
+        // Origem do registro pelo tipo do documento. SINARM/CRAF = defesa pessoal;
+        // GT/GTE/SIGMA = acervo SIGMA (CAC/Tiro/Caça/Coleção).
+        const sistemaInferido =
+          ["sigma", "gt", "gte"].includes(tipoLower) ? "SIGMA"
+          : ["craf", "sinarm", "autorizacao_compra"].includes(tipoLower) ? "SINARM"
+          : null;
+        const finalidadeInferida = sistemaInferido === "SINARM" ? "DEFESA PESSOAL" : sistemaInferido === "SIGMA" ? "CAC" : null;
         return {
           id: `doc-${d.id}`,
           source: (tipoUpper === "GTE" ? "GTE" : "CRAF") as "CRAF" | "GTE",
@@ -417,6 +424,8 @@ export function ArsenalView({
           data_validade: d.data_validade,
           daysToExpire: daysUntil(d.data_validade),
           hasGte: false,
+          sistema: sistemaInferido,
+          finalidade: finalidadeInferida,
           documentPreview: tipoUpper === "GTE" && d.arquivo_storage_path
             ? {
                 bucket: "qa-documentos",
