@@ -662,7 +662,14 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                       </div>
                       <div className="space-y-1">
                         {histArr.map((m) => (
-                          <div key={m.id} className="flex items-center justify-between gap-2 rounded border border-slate-200 bg-white px-2 py-1 text-[11px]">
+                          <div
+                            key={m.id}
+                            className={`flex items-center justify-between gap-2 rounded border px-2 py-1 text-[11px] ${
+                              m.revisao_obrigatoria || ["pendente_revisao","revisao_obrigatoria","aguardando_revisao_equipe","documento_divergente","documento_nao_identificado"].includes(String(m.ia_status || ""))
+                                ? "border-amber-300 bg-amber-50/60"
+                                : "border-slate-200 bg-white"
+                            }`}
+                          >
                             <div className="flex items-center gap-2">
                               <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                                 m.tipo === "ENTRADA" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
@@ -672,6 +679,11 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                               <span className="font-mono text-slate-600">{isoToBr(m.data_movimentacao)}</span>
                               {m.motivo && <span className="text-[10px] uppercase text-slate-500">· {MOTIVO_LABEL[m.motivo as MotivoSaida] ?? m.motivo}</span>}
                               {m.observacao && <span className="text-[10px] italic text-slate-500">"{m.observacao}"</span>}
+                              {(m.revisao_obrigatoria || ["pendente_revisao","revisao_obrigatoria","aguardando_revisao_equipe","documento_divergente","documento_nao_identificado"].includes(String(m.ia_status || ""))) && (
+                                <span className="rounded bg-amber-200/70 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-900">
+                                  Aguardando validação documental
+                                </span>
+                              )}
                             </div>
                             {m.documento_url && (
                               <button
