@@ -3,18 +3,25 @@
 // Cadastra automaticamente um documento do Arsenal quando a IA classificou e
 // extraiu campos obrigatórios com segurança.
 //
-// Regras (espelham o pedido do produto):
+// Regras:
 //  - tipoDetectado != DESCONHECIDO
 //  - confianca >= 0.85
 //  - Campos obrigatórios do tipo legíveis (não vazios, sem placeholders)
-//  - Não inventar nada: se faltou campo obrigatório, devolve safe=false e
-//    o frontend pede reenvio do documento.
+//  - Não inventar nada.
 //
-// Quando aprovado, grava em qa_documentos_cliente com:
-//   status='aprovado', origem='sistema', validado_admin=true,
-//   ia_status='auto_aprovado', ia_dados_extraidos = payload completo da IA.
-// O recálculo de KPI/status do serviço continua disparado pelas triggers
-// existentes (qa_doc_cliente_recalcular).
+// Quando aprovado, grava em qa_documentos_cliente (auditoria + histórico) e
+// PROMOVE para as tabelas canônicas que alimentam o Arsenal operacional:
+//   CRAF           -> qa_crafs              (Bancada Tática / cards de arma / KPI ARMAS)
+//   GTE            -> qa_gte_documentos     (KPI GTE)
+//   NOTA_FISCAL    -> qa_municoes_movimentacoes (entrada de estoque, KPI MUNIÇÕES)
+//   CR / GT /
+//   GUIA_TRANSITO /
+//   AUTORIZACAO_COMPRA -> apenas qa_documentos_cliente (já alimenta KPIs/alertas)
+//
+// Deduplicação física:
+//   - CRAF: procura arma por numero_arma OU numero_sigma; se existir, anexa.
+//   - GTE:  procura GTE por numero_gte; se existir, ignora promoção.
+//   - NF:   procura por chave de acesso; se existir, ignora promoção.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -66,6 +73,31 @@ function dataIsoFromBr(v?: string | null): string | null {
   const m = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!m) return null;
   return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function up(v?: string | null): string | null {
+  if (!v) return null;
+  const s = String(v).trim();
+  return s ? s.toUpperCase() : null;
+}
+
+function normSerie(v?: string | null): string | null {
+  if (!v) return null;
+  const s = String(v).replace(/\s+/g, "").toUpperCase();
+  return s || null;
+}
+
+/** Empacota cada campo sensível com a estrutura de auditoria pedida. */
+function packCampo(valor: string | undefined | null, fonte: "vision" | "ocr" | "texto_pdf" | "sistema", confianca: number) {
+  const legivel = isLegivel(valor);
+  return {
+    valor_original: valor ?? null,
+    valor_normalizado: legivel ? up(String(valor).trim()) : null,
+    confianca: legivel ? confianca : 0,
+    fonte,
+    legivel,
+    observacao: legivel ? null : "ilegivel_ou_vazio",
+  };
 }
 
 /** Retorna lista de campos obrigatórios faltando (vazia = OK). */
@@ -123,7 +155,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const customer_id: string | null = body?.customer_id ?? null;
-    const qa_cliente_id: number | null = body?.qa_cliente_id ?? null;
+    let qa_cliente_id: number | null = body?.qa_cliente_id ?? null;
     const arquivo_storage_path: string | null = body?.arquivo_storage_path ?? null;
     const arquivo_nome: string | null = body?.arquivo_nome ?? null;
     const arquivo_mime: string | null = body?.arquivo_mime ?? null;
@@ -174,6 +206,16 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
+    // Resolve qa_cliente_id (integer) — necessário para promover às canônicas
+    if (!qa_cliente_id && customer_id) {
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("id")
+        .eq("customer_id", customer_id)
+        .maybeSingle();
+      if (cli?.id) qa_cliente_id = cli.id as number;
+    }
+
     // Bloqueio de duplicidade por (cliente, tipo, número)
     const numeroNorm = String(campos.numero_documento || "").replace(/\s+/g, "").toUpperCase();
     if (numeroNorm) {
@@ -201,6 +243,22 @@ Deno.serve(async (req) => {
 
     const showArma = tipoDb !== "cr";
 
+    // Campos sensíveis empacotados (auditoria fiel)
+    const campos_sensiveis = {
+      numero_documento: packCampo(campos.numero_documento, "vision", conf),
+      data_validade:    packCampo(campos.data_validade, "vision", conf),
+      arma_marca:       packCampo(campos.arma_marca, "vision", conf),
+      arma_modelo:      packCampo(campos.arma_modelo, "vision", conf),
+      arma_calibre:     packCampo(campos.arma_calibre, "vision", conf),
+      arma_numero_serie:packCampo(campos.arma_numero_serie, "vision", conf),
+      sigma_ou_sinarm:  packCampo(campos.sigma_ou_sinarm, "vision", conf),
+      nf_chave_acesso:  packCampo(campos.nf_chave_acesso, "vision", conf),
+      nf_produto:       packCampo(campos.nf_produto, "vision", conf),
+      nf_calibre:       packCampo(campos.nf_calibre, "vision", conf),
+      nf_quantidade:    packCampo(campos.nf_quantidade, "vision", conf),
+      emitente:         packCampo(campos.emitente, "vision", conf),
+    };
+
     const payload: Record<string, unknown> = {
       customer_id,
       qa_cliente_id,
@@ -221,6 +279,7 @@ Deno.serve(async (req) => {
         ...auditoria,
         origem_fluxo: "arsenal_hub_documental",
         auto_cadastro: true,
+        campos_sensiveis,
       },
       ia_processado_em: new Date().toISOString(),
       status: "aprovado",
@@ -242,11 +301,218 @@ Deno.serve(async (req) => {
       return json({ safe: false, motivo: "erro_insercao", erro: insErr.message, auditoria }, 500);
     }
 
+    // ------------------------------------------------------------------
+    // PROMOÇÃO PARA TABELAS CANÔNICAS DO ARSENAL OPERACIONAL
+    // ------------------------------------------------------------------
+    const promocao: Record<string, unknown> = { tabela: null, criado: false, motivo: null };
+    try {
+      if (!qa_cliente_id) {
+        promocao.motivo = "sem_qa_cliente_id";
+      } else if (tipoIA === "CRAF") {
+        const numeroSerie = normSerie(campos.arma_numero_serie);
+        const numeroSigma = normSerie(campos.sigma_ou_sinarm) || normSerie(campos.numero_documento);
+        if (!numeroSerie && !numeroSigma) {
+          promocao.motivo = "sem_identificador_fisico";
+        } else {
+          // Procura arma já cadastrada (mesma série OU mesmo SIGMA) para evitar duplicidade
+          const { data: existentes } = await supabase
+            .from("qa_crafs")
+            .select("id, numero_arma, numero_sigma")
+            .eq("cliente_id", qa_cliente_id);
+          const dup = (existentes || []).find((e: any) => {
+            const s = normSerie(e.numero_arma);
+            const g = normSerie(e.numero_sigma);
+            return (numeroSerie && s === numeroSerie) || (numeroSigma && g === numeroSigma);
+          });
+          if (dup) {
+            // Atualiza só campos vazios (não sobrescreve dados validados anteriores)
+            const patch: Record<string, unknown> = {};
+            if (!dup) {/* noop */}
+            const { data: full } = await supabase
+              .from("qa_crafs")
+              .select("data_validade, nome_craf, numero_arma, numero_sigma, nome_arma")
+              .eq("id", (dup as any).id)
+              .maybeSingle();
+            if (full && !full.data_validade && dataIsoFromBr(campos.data_validade)) {
+              patch.data_validade = dataIsoFromBr(campos.data_validade);
+            }
+            if (full && !full.nome_craf && campos.numero_documento) patch.nome_craf = up(campos.numero_documento);
+            if (full && !full.numero_arma && numeroSerie) patch.numero_arma = numeroSerie;
+            if (full && !full.numero_sigma && numeroSigma) patch.numero_sigma = numeroSigma;
+            if (Object.keys(patch).length) {
+              await supabase.from("qa_crafs").update(patch).eq("id", (dup as any).id);
+            }
+            promocao.tabela = "qa_crafs";
+            promocao.criado = false;
+            promocao.craf_id = (dup as any).id;
+            promocao.motivo = "vinculado_arma_existente";
+          } else {
+            const nomeArma = [up(campos.arma_marca), up(campos.arma_modelo), up(campos.arma_calibre)]
+              .filter(Boolean).join(" ").trim() || up(campos.arma_modelo) || "ARMA";
+            const { data: novoCraf, error: crafErr } = await supabase
+              .from("qa_crafs")
+              .insert({
+                cliente_id: qa_cliente_id,
+                nome_arma: nomeArma,
+                nome_craf: up(campos.numero_documento),
+                numero_arma: numeroSerie,
+                numero_sigma: numeroSigma,
+                data_validade: dataIsoFromBr(campos.data_validade),
+              })
+              .select("id")
+              .single();
+            if (crafErr) {
+              promocao.motivo = `erro_qa_crafs:${crafErr.message}`;
+            } else {
+              promocao.tabela = "qa_crafs";
+              promocao.criado = true;
+              promocao.craf_id = (novoCraf as any).id;
+            }
+          }
+        }
+      } else if (tipoIA === "GTE") {
+        const numeroGte = up(campos.numero_documento);
+        // dedup por número
+        if (numeroGte) {
+          const { data: existing } = await supabase
+            .from("qa_gte_documentos")
+            .select("id, numero_gte")
+            .eq("cliente_id", qa_cliente_id);
+          const dup = (existing || []).find(
+            (e: any) => up(e.numero_gte) === numeroGte,
+          );
+          if (dup) {
+            promocao.tabela = "qa_gte_documentos";
+            promocao.criado = false;
+            promocao.gte_documento_id = (dup as any).id;
+            promocao.motivo = "gte_ja_existente";
+          }
+        }
+        if (!promocao.tabela) {
+          const { data: novoGte, error: gteErr } = await supabase
+            .from("qa_gte_documentos")
+            .insert({
+              cliente_id: qa_cliente_id,
+              storage_path: arquivo_storage_path || "auto-cadastro/sem-arquivo",
+              nome_original: arquivo_nome,
+              mime_type: arquivo_mime,
+              origem_envio: "sistema",
+              numero_gte: numeroGte,
+              orgao_emissor: up(campos.orgao_emissor),
+              data_emissao: dataIsoFromBr(campos.data_emissao),
+              data_validade: dataIsoFromBr(campos.data_validade),
+              endereco_origem: up(campos.origem),
+              endereco_destino: up(campos.destino),
+              status_processamento: "concluido",
+              processado_em: new Date().toISOString(),
+              dados_extraidos_json: { auto_cadastro: true, ...auditoria, campos_sensiveis },
+              armas_json: [],
+              enderecos_json: [],
+              clubes_json: [],
+              armas_vinculadas_json: [],
+              matching_status: "pendente",
+              matching_resumo_json: {},
+              armas_total: 0,
+              enderecos_total: 0,
+            })
+            .select("id")
+            .single();
+          if (gteErr) {
+            promocao.motivo = `erro_qa_gte_documentos:${gteErr.message}`;
+          } else {
+            promocao.tabela = "qa_gte_documentos";
+            promocao.criado = true;
+            promocao.gte_documento_id = (novoGte as any).id;
+          }
+        }
+      } else if (tipoIA === "NOTA_FISCAL") {
+        const calibre = up(campos.nf_calibre) || up(campos.arma_calibre);
+        const qtdRaw = String(campos.nf_quantidade || "").replace(/\D+/g, "");
+        const qtd = qtdRaw ? parseInt(qtdRaw, 10) : 0;
+        const chave = normSerie(campos.nf_chave_acesso);
+        if (!calibre || !qtd || qtd <= 0) {
+          promocao.motivo = "nf_sem_estoque_seguro";
+        } else {
+          // dedup por chave de acesso
+          let dupId: string | null = null;
+          if (chave) {
+            const { data: existing } = await supabase
+              .from("qa_municoes_movimentacoes")
+              .select("id, ia_dados_extraidos")
+              .eq("cliente_id", qa_cliente_id)
+              .eq("tipo", "ENTRADA");
+            for (const e of (existing || []) as any[]) {
+              const ck = normSerie(e?.ia_dados_extraidos?.campos_sensiveis?.nf_chave_acesso?.valor_normalizado)
+                || normSerie(e?.ia_dados_extraidos?.camposExtraidos?.nf_chave_acesso);
+              if (ck && ck === chave) { dupId = e.id; break; }
+            }
+          }
+          if (dupId) {
+            promocao.tabela = "qa_municoes_movimentacoes";
+            promocao.criado = false;
+            promocao.movimentacao_id = dupId;
+            promocao.motivo = "nf_ja_lancada";
+          } else {
+            const { data: novoMov, error: movErr } = await supabase
+              .from("qa_municoes_movimentacoes")
+              .insert({
+                cliente_id: qa_cliente_id,
+                tipo: "ENTRADA",
+                calibre,
+                marca: up(campos.nf_produto),
+                lote: up(campos.nf_lote),
+                quantidade: qtd,
+                data_movimentacao: new Date().toISOString().slice(0, 10),
+                data_validade: dataIsoFromBr(campos.data_validade),
+                observacao: `AUTO-CADASTRO NF · emitente ${up(campos.emitente) || "—"}`,
+                documento_url: arquivo_storage_path,
+                documento_nome: arquivo_nome,
+                ia_status: "auto_aprovado",
+                revisao_obrigatoria: false,
+                ia_dados_extraidos: {
+                  ...auditoria,
+                  origem_fluxo: "arsenal_hub_documental",
+                  auto_cadastro: true,
+                  campos_sensiveis,
+                },
+              })
+              .select("id")
+              .single();
+            if (movErr) {
+              promocao.motivo = `erro_qa_municoes_movimentacoes:${movErr.message}`;
+            } else {
+              promocao.tabela = "qa_municoes_movimentacoes";
+              promocao.criado = true;
+              promocao.movimentacao_id = (novoMov as any).id;
+            }
+          }
+        }
+      } else {
+        // CR / GT / GUIA_TRANSITO / AUTORIZACAO_COMPRA: já basta qa_documentos_cliente
+        promocao.motivo = "tipo_nao_requer_promocao";
+      }
+
+      // Persiste resultado da promoção dentro do próprio documento (auditoria)
+      await supabase
+        .from("qa_documentos_cliente")
+        .update({
+          ia_dados_extraidos: {
+            ...(payload.ia_dados_extraidos as object),
+            promocao_canonica: promocao,
+          },
+        })
+        .eq("id", (inserted as any).id);
+    } catch (promErr) {
+      console.error("[qa-arsenal-doc-autoinsert] promocao erro:", promErr);
+      promocao.motivo = `excecao:${(promErr as any)?.message || "desconhecida"}`;
+    }
+
     return json({
       safe: true,
       auto_cadastrado: true,
       documento_id: inserted?.id || null,
       tipo_documento: tipoDb,
+      promocao_canonica: promocao,
       auditoria,
     });
   } catch (err) {
