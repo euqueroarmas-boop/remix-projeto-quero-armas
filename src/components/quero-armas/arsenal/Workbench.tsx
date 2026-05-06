@@ -45,6 +45,11 @@ export interface WorkbenchWeapon {
   gteLabel?: string;
   linkReview?: boolean;
   catalogo_id?: string | null;
+  /** Regime/sistema do registro (SINARM, SIGMA, etc) e finalidade declarada. */
+  sistema?: string | null;
+  finalidade?: string | null;
+  /** Indica se a GTE é documento permanente exigível para esta arma. */
+  gteExigivel?: boolean;
   /**
    * Quando o card representa um documento enviado pelo próprio cliente
    * (GTE/CRAF/AC em qa_documentos_cliente), exibimos um thumbnail do
