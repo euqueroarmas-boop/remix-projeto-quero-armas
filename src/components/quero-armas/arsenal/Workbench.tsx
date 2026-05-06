@@ -5,6 +5,7 @@ import {
   maskSerial,
   TACTICAL,
   urgencyTone,
+  normalizeCalibre,
   WeaponInfo,
   WEAPON_KIND_LABEL,
 } from "./utils";
@@ -37,6 +38,12 @@ export interface WorkbenchWeapon {
   data_validade: string | null;
   daysToExpire: number | null;
   hasGte?: boolean;
+  hasCraf?: boolean;
+  crafStatus?: "valido" | "ativo" | "vencido" | "ausente" | "revisar";
+  gteStatus?: "valido" | "ativo" | "vencido" | "ausente" | "revisar";
+  crafLabel?: string;
+  gteLabel?: string;
+  linkReview?: boolean;
   catalogo_id?: string | null;
   /**
    * Quando o card representa um documento enviado pelo próprio cliente
@@ -100,7 +107,10 @@ function WeaponCard({
   size?: "lg" | "md" | "sm";
   ammoCount?: number;
 }) {
-  const tone = urgencyTone(w.daysToExpire);
+  const baseTone = urgencyTone(w.daysToExpire);
+  const tone = w.gteStatus === "ausente" || w.gteStatus === "vencido" || w.gteStatus === "revisar" || w.crafStatus === "ausente" || w.crafStatus === "vencido" || w.crafStatus === "revisar"
+    ? "danger"
+    : baseTone;
   const c = toneClasses[tone];
   // Aura/fundo do card sempre neutro (sem amarelo/dourado).
   // Cores semânticas ficam apenas em chips, dots e badges de urgência.
@@ -307,19 +317,17 @@ function WeaponCard({
           </div>
         )}
 
-        {!isSm && (
-          <div className={`mt-2 flex items-center justify-between gap-2 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
-            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-bold uppercase tracking-wider text-slate-700">
-              CRAF · {w.source === "CRAF" ? urgencyText(w.daysToExpire) : "—"}
-            </span>
-            <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
-              GTE · {w.hasGte ? "ATIVA" : "AUSENTE"}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-700">
-              MUN · {(ammoCount ?? 0).toLocaleString("pt-BR")}
-            </span>
-          </div>
-        )}
+        <div className={`mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-200 pt-2 ${isSm ? "text-[7px]" : isMd ? "text-[9px]" : "text-[10px]"}`}>
+          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasCraf ? "bg-emerald-50 text-emerald-700" : w.crafStatus === "revisar" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+            CRAF · {w.crafLabel || (w.hasCraf ? "VÁLIDO" : "AUSENTE")}
+          </span>
+          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-emerald-50 text-emerald-700" : w.gteStatus === "revisar" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
+            GTE · {w.gteLabel || (w.hasGte ? "ATIVA" : "AUSENTE")}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-700">
+            MUN · {(ammoCount ?? 0).toLocaleString("pt-BR")}
+          </span>
+        </div>
 
         {!isSm && (
           <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
@@ -482,12 +490,12 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
     [weapons, match, byId],
   );
 
-  // Total de munições por calibre (normaliza espaços p/ casar com card)
+  // Total de munições por calibre usando a mesma normalização forte da KPI CALIBRES.
   const ammoCountFor = (calibre: string | null | undefined): number => {
-    const target = String(calibre || "").replace(/\s/g, "");
+    const target = normalizeCalibre(calibre);
     if (!target) return 0;
     return ammoByCalibre
-      .filter((a) => a.calibre.replace(/\s/g, "") === target)
+      .filter((a) => normalizeCalibre(a.calibre) === target)
       .reduce((s, a) => s + a.quantidade, 0);
   };
 

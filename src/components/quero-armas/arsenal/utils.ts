@@ -156,6 +156,27 @@ export function extractCalibre(...inputs: (string | null | undefined)[]): string
   return raw.startsWith(".") ? raw : raw;
 }
 
+/** Normalização canônica usada em KPIs, cards e estoque de munições. */
+export function normalizeCalibre(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let s = String(raw).toUpperCase();
+  s = s.replace(/CAL\.?|CALIBRE/g, "");
+  s = s.replace(/[^0-9A-Z.]/g, "");
+  if (/^\.?12(GA)?$/.test(s)) return "12";
+  if (/^\.?20(GA)?$/.test(s)) return "20";
+  if (/^\.?9(MM|X19|LUGER|PARA)?$/.test(s)) return "9MM";
+  if (/^\.?40(SW|S\.?W\.?)?$/.test(s)) return ".40";
+  if (/^\.?380(ACP)?$/.test(s)) return ".380";
+  if (/^\.?45(ACP|AUTO)?$/.test(s)) return ".45";
+  if (/^\.?38(SPL|SPECIAL)?$/.test(s)) return ".38";
+  if (/^\.?357(MAGNUM|MAG)?$/.test(s)) return ".357";
+  if (/^\.?22(LR)?$/.test(s)) return ".22";
+  if (/^\.?44(MAGNUM|MAG)?$/.test(s)) return ".44";
+  if (/^\.?32$/.test(s)) return ".32";
+  s = s.replace(/(ACP|AUTO|MAGNUM|MAG|SW|GA|SPL|SPECIAL|LR|LUGER|PARA)/g, "");
+  return s || null;
+}
+
 export function extractMarcaModelo(nome: string | null | undefined): { marca: string | null; modelo: string | null } {
   if (!nome) return { marca: null, modelo: null };
   const cleaned = nome.replace(CALIBRE_REGEX, "").trim();
