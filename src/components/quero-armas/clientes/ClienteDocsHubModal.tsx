@@ -10,8 +10,10 @@ import {
   Hash,
   Image as ImageIcon,
   Loader2,
+  AlertTriangle,
+  Pencil,
+  ScanLine,
   ShieldCheck,
-  Sparkles,
   Upload,
   X,
 } from "lucide-react";
@@ -35,6 +37,37 @@ const TIPOS = [
   { value: "autorizacao_compra", label: "AC — Autorização de Compra", short: "AC" },
   { value: "outro", label: "Outro documento SIGMA / SINARM", short: "OUTRO" },
 ] as const;
+
+// Mapeia o `tipoDetectado` retornado pela edge `qa-classificar-documento-arma`
+// para o `tipo_documento` salvo em `qa_documentos_cliente`.
+const IA_TO_TIPO: Record<string, string> = {
+  CR: "cr",
+  CRAF: "craf",
+  SINARM: "sinarm",
+  GT: "gt",
+  GTE: "gte",
+  GUIA_TRANSITO: "gt",
+  AUTORIZACAO_COMPRA: "autorizacao_compra",
+  NOTA_FISCAL: "outro",
+  EXAME_LAUDO: "outro",
+  DESCONHECIDO: "outro",
+};
+
+type IAClass = {
+  tipoDetectado: string;
+  confianca: number;
+  justificativa?: string;
+  camposExtraidos?: Record<string, string | undefined> | null;
+  recomendacao?: "aceitar" | "confirmar" | "revisao_obrigatoria";
+  revisao_obrigatoria?: boolean;
+};
+
+function dataIsoFromBr(v?: string | null): string {
+  if (!v) return "";
+  const m = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return "";
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
 
 type FormState = {
   tipo_documento: string;
@@ -148,6 +181,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [classificacao, setClassificacao] = useState<IAClass | null>(null);
+  const [showTipoOverride, setShowTipoOverride] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -157,6 +192,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   useEffect(() => {
     if (open) {
       setForm((prev) => ({ ...prev, tipo_documento: defaultTipo || prev.tipo_documento }));
+      setClassificacao(null);
+      setShowTipoOverride(false);
     }
   }, [open, defaultTipo]);
 
@@ -167,13 +204,13 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleExtract() {
-    if (!file) {
+  async function classifyAndExtract(target: File | null) {
+    if (!target) {
       toast.error("Selecione um arquivo primeiro.");
       return;
     }
-    const isImage = file.type.startsWith("image/");
-    const isPdf = file.type === "application/pdf";
+    const isImage = target.type.startsWith("image/");
+    const isPdf = target.type === "application/pdf";
     if (!isImage && !isPdf) {
       toast.error("Envie uma foto (JPG/PNG) ou PDF para a IA ler.");
       return;
@@ -181,34 +218,78 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
     setExtracting(true);
     try {
-      const dataUrl = await fileToDataUrl(file);
-      const { data, error } = await supabase.functions.invoke("qa-extract-cliente-doc", {
-        body: { tipo_documento: form.tipo_documento, imageDataUrl: dataUrl },
-      });
+      const dataUrl = await fileToDataUrl(target);
 
-      if (error) throw error;
+      // 1) Classifica automaticamente (sem depender da seleção manual).
+      const { data: cls, error: clsErr } = await supabase.functions.invoke(
+        "qa-classificar-documento-arma",
+        { body: { imageDataUrl: dataUrl } },
+      );
+      if (clsErr) throw clsErr;
 
-      const sugestao = (data as any)?.sugestao || {};
+      const ia = (cls || {}) as IAClass;
+      setClassificacao(ia);
+
+      const tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      const campos = ia.camposExtraidos || {};
+
       setForm((prev) => ({
         ...prev,
-        numero_documento: sugestao.numero_documento || prev.numero_documento,
-        orgao_emissor: sugestao.orgao_emissor || prev.orgao_emissor,
-        data_emissao: sugestao.data_emissao || prev.data_emissao,
-        data_validade: sugestao.data_validade || prev.data_validade,
-        observacoes: sugestao.observacoes || prev.observacoes,
-        arma_marca: sugestao.arma_marca || prev.arma_marca,
-        arma_modelo: sugestao.arma_modelo || prev.arma_modelo,
-        arma_calibre: sugestao.arma_calibre || prev.arma_calibre,
-        arma_numero_serie: sugestao.arma_numero_serie || prev.arma_numero_serie,
-        arma_especie: sugestao.arma_especie || prev.arma_especie,
+        // tipo definido pela IA; cliente pode sobrescrever depois
+        tipo_documento: tipoIA,
+        numero_documento: campos.numero_documento || prev.numero_documento,
+        orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
+        data_emissao: dataIsoFromBr(campos.data_emissao) || prev.data_emissao,
+        data_validade: dataIsoFromBr(campos.data_validade) || prev.data_validade,
+        arma_marca: campos.arma_marca || prev.arma_marca,
+        arma_modelo: campos.arma_modelo || prev.arma_modelo,
+        arma_calibre: campos.arma_calibre || prev.arma_calibre,
+        arma_numero_serie: campos.arma_numero_serie || prev.arma_numero_serie,
       }));
 
-      toast.success("Campos sugeridos pela IA. Revise antes de salvar.");
+      // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
+      try {
+        const { data: extra } = await supabase.functions.invoke("qa-extract-cliente-doc", {
+          body: { tipo_documento: tipoIA, imageDataUrl: dataUrl },
+        });
+        const sugestao = (extra as any)?.sugestao || {};
+        setForm((prev) => ({
+          ...prev,
+          numero_documento: prev.numero_documento || sugestao.numero_documento || "",
+          orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
+          data_emissao: prev.data_emissao || sugestao.data_emissao || "",
+          data_validade: prev.data_validade || sugestao.data_validade || "",
+          observacoes: prev.observacoes || sugestao.observacoes || "",
+          arma_marca: prev.arma_marca || sugestao.arma_marca || "",
+          arma_modelo: prev.arma_modelo || sugestao.arma_modelo || "",
+          arma_calibre: prev.arma_calibre || sugestao.arma_calibre || "",
+          arma_numero_serie: prev.arma_numero_serie || sugestao.arma_numero_serie || "",
+          arma_especie: prev.arma_especie || sugestao.arma_especie || "",
+        }));
+      } catch (eExt) {
+        console.warn("[extract complementar] ignorado:", eExt);
+      }
+
+      if (ia.revisao_obrigatoria || ia.tipoDetectado === "DESCONHECIDO") {
+        toast.warning("Documento ilegível ou não identificado. Revise manualmente antes de salvar.");
+      } else {
+        toast.success(`Documento identificado como ${ia.tipoDetectado}. Revise os dados antes de salvar.`);
+      }
     } catch (e: any) {
-      console.error("[extract] error:", e);
+      console.error("[classify+extract] error:", e);
       toast.error(e?.message || "Falha ao processar o documento.");
     } finally {
       setExtracting(false);
+    }
+  }
+
+  async function handleFileChange(f: File | null) {
+    setFile(f);
+    setClassificacao(null);
+    setShowTipoOverride(false);
+    if (f) {
+      // Dispara IA imediatamente — cliente não precisa escolher tipo antes.
+      await classifyAndExtract(f);
     }
   }
 
@@ -345,7 +426,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     event.preventDefault();
     setDragOver(false);
     const droppedFile = event.dataTransfer.files?.[0];
-    if (droppedFile) setFile(droppedFile);
+    if (droppedFile) void handleFileChange(droppedFile);
   }
 
   return (
@@ -368,7 +449,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 Adicionar Documento
               </h2>
               <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-                Anexe seu documento, deixe a IA sugerir os campos e revise tudo antes de salvar.
+                Anexe foto ou PDF — a IA identifica o tipo e preenche os campos automaticamente. Você só revisa antes de salvar.
               </p>
             </div>
 
@@ -386,29 +467,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]">
           <div className="space-y-5 pb-6">
             <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <Field label="Que tipo de documento é?">
-                <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
-                  <SelectTrigger className={cn(inputClassName, "h-12 rounded-2xl text-left text-sm font-medium")}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="border-border bg-popover text-popover-foreground">
-                    {TIPOS.map((tipo) => (
-                      <SelectItem key={tipo.value} value={tipo.value} className="focus:bg-muted focus:text-foreground">
-                        {tipo.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Arquivo</div>
-                  <div className="mt-1 text-sm text-foreground">Envie foto ou PDF do documento</div>
+                  <div className="mt-1 text-sm text-foreground">A IA identifica o tipo automaticamente</div>
                 </div>
-                {tipoAtual ? (
+                {classificacao && tipoAtual ? (
                   <span className="rounded-full bg-accent/18 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent-foreground">
                     {tipoAtual.short}
                   </span>
@@ -474,7 +538,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,application/pdf"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
               <input
@@ -482,23 +546,80 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 type="file"
                 accept="image/*"
                 capture="environment"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                onChange={(event) => void handleFileChange(event.target.files?.[0] || null)}
                 className="hidden"
               />
 
-              <Button
-                type="button"
-                onClick={handleExtract}
-                disabled={!file || extracting || !(file.type.startsWith("image/") || file.type === "application/pdf")}
-                className="mt-3 h-12 w-full rounded-2xl bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                {extracting ? "Lendo documento com IA..." : "Preencher com IA"}
-              </Button>
+              {extracting && (
+                <div className="mt-3 flex items-center justify-center gap-2 rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Lendo o documento e identificando o tipo…
+                </div>
+              )}
 
-              <p className="mt-2 text-center text-xs leading-relaxed text-muted-foreground">
-                A IA sugere os campos e você confirma antes de salvar.
-              </p>
+              {!extracting && classificacao && (
+                <div
+                  className={cn(
+                    "mt-3 rounded-2xl border p-3",
+                    classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO"
+                      ? "border-amber-300 bg-amber-50"
+                      : "border-emerald-300 bg-emerald-50",
+                  )}
+                >
+                  <div className="flex items-start gap-2">
+                    {classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO" ? (
+                      <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-700" />
+                    ) : (
+                      <ScanLine className="mt-0.5 h-4 w-4 text-emerald-700" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        Tipo identificado pela IA
+                      </div>
+                      <div className="mt-0.5 text-sm font-bold uppercase text-foreground">
+                        {tipoAtual?.label || form.tipo_documento.toUpperCase()}{" "}
+                        <span className="text-xs font-medium text-muted-foreground">
+                          · {Math.round((classificacao.confianca || 0) * 100)}% confiança
+                        </span>
+                      </div>
+                      {classificacao.justificativa && (
+                        <p className="mt-1 text-xs leading-snug text-muted-foreground">
+                          {classificacao.justificativa}
+                        </p>
+                      )}
+                      {(classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO") && (
+                        <p className="mt-1 text-xs font-semibold text-amber-800">
+                          Documento ilegível ou não identificado. Revise os campos antes de salvar.
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowTipoOverride((v) => !v)}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-2 hover:underline"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        {showTipoOverride ? "Manter tipo identificado" : "Não é esse tipo? Alterar manualmente"}
+                      </button>
+                      {showTipoOverride && (
+                        <div className="mt-2">
+                          <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
+                            <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="border-border bg-popover text-popover-foreground">
+                              {TIPOS.map((tipo) => (
+                                <SelectItem key={tipo.value} value={tipo.value} className="focus:bg-muted focus:text-foreground">
+                                  {tipo.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <SectionTitle title="Dados do documento" />
