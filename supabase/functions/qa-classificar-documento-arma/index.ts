@@ -45,10 +45,13 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const TIPOS = [
+  "CR",
   "CRAF",
+  "SINARM",
   "GT",
   "GTE",
   "GUIA_TRANSITO",
+  "AUTORIZACAO_COMPRA",
   "NOTA_FISCAL",
   "EXAME_LAUDO",
   "DESCONHECIDO",
@@ -68,7 +71,7 @@ const tool = {
           type: "string",
           enum: TIPOS as unknown as string[],
           description:
-            "Tipo identificado. CRAF=Certificado de Registro de Arma de Fogo (PF/Exército). GT=Guia de Tráfego (retirada na loja, transporte inicial). GTE=Guia de Tráfego Especial (Exército, acervo SIGMA/CAC, validade prolongada). GUIA_TRANSITO=Guia de Trânsito SINARM/PF (autorização de movimentação). NOTA_FISCAL=NF-e/DANFE de arma ou munição. EXAME_LAUDO=laudo psicológico/técnico/aptidão. DESCONHECIDO=baixa confiança.",
+            "Tipo identificado. CR=Certificado de Registro CAC (Exército, sem arma específica). CRAF=Certificado de Registro de Arma de Fogo (Exército/SIGMA, vinculado a uma arma). SINARM=Registro/Posse/Porte da Polícia Federal (SINARM, vinculado a uma arma civil). GT=Guia de Tráfego (retirada na loja, transporte inicial). GTE=Guia de Tráfego Especial (Exército, acervo SIGMA/CAC, validade prolongada). GUIA_TRANSITO=Guia de Trânsito SINARM/PF (autorização de movimentação). AUTORIZACAO_COMPRA=Autorização de Compra de arma/munição emitida pelo Exército ou PF. NOTA_FISCAL=NF-e/DANFE de arma ou munição. EXAME_LAUDO=laudo psicológico/técnico/aptidão. DESCONHECIDO=baixa confiança ou ilegível.",
         },
         confianca: {
           type: "number",
@@ -114,29 +117,41 @@ const tool = {
 
 const SYSTEM_PROMPT = [
   "Você é especialista em documentos brasileiros de armas de fogo (Polícia Federal, Exército, SINARM, SIGMA, CAC).",
-  "Sua tarefa é identificar o TIPO do documento enviado e extrair os campos principais.",
+  "Sua tarefa é identificar o TIPO do documento enviado e extrair fielmente os campos principais.",
   "Sinais por tipo:",
+  "• CR: 'Certificado de Registro' de CAC (Exército), número do CR, sem vínculo a uma arma específica, validade longa.",
   "• CRAF: 'Certificado de Registro de Arma de Fogo', número do CRAF, dados da arma (marca/modelo/série/calibre), SIGMA ou SINARM, validade.",
+  "• SINARM: registro/posse/porte da Polícia Federal, número SINARM, dados da arma civil.",
   "• GT: 'Guia de Tráfego' (retirada da loja / transporte inicial), origem=loja/vendedor, destino=residência/clube, validade curta.",
   "• GTE: 'Guia de Tráfego Especial', Exército, acervo CAC/SIGMA, lista de armas, clubes/locais autorizados, validade prolongada.",
   "• GUIA_TRANSITO: 'Guia de Trânsito' SINARM/Polícia Federal — autorização de transporte/movimentação, origem/destino, validade.",
+  "• AUTORIZACAO_COMPRA: 'Autorização de Compra' (AC) de arma ou munição, emitida pelo Exército ou PF, com prazo para execução.",
   "• NOTA_FISCAL: NF-e/DANFE, chave de acesso de 44 dígitos, emitente, produto arma/munição.",
   "• EXAME_LAUDO: laudo psicológico, capacidade técnica, aptidão; profissional/instrutor/psicólogo.",
   "• DESCONHECIDO: quando não houver evidências fortes — use confianca < 0.5.",
-  "Responda EXCLUSIVAMENTE chamando a função classificar_documento_arma. Datas em DD/MM/AAAA. Campos não identificados ficam vazios.",
+  "REGRA DE OURO — EXTRAÇÃO FIEL:",
+  "• Extraia EXATAMENTE como está escrito no documento. NÃO troque letras por números nem números por letras.",
+  "• NÃO transforme 'O' em '0', 'I' em '1', 'S' em '5', 'B' em '8' sem ter certeza visual absoluta.",
+  "• NÃO invente, NÃO complete por dedução, NÃO normalize números de série/SIGMA/SINARM/CPF/CNPJ/calibre/validade.",
+  "• Se um caractere estiver ilegível, deixe o campo INTEIRO vazio (não substitua por '?', '_' ou aproximação).",
+  "• Datas em DD/MM/AAAA exatamente como aparecem (se faltar dia, mês ou ano, deixe vazio).",
+  "• Em caso de dúvida, prefira deixar vazio a inventar.",
+  "Responda EXCLUSIVAMENTE chamando a função classificar_documento_arma.",
 ].join("\n");
 
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
   const x = String(t).trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if (x === "CR") return "CR";
   if (x === "CRAF") return "CRAF";
+  if (x === "SINARM" || x.includes("POSSE") || x.includes("PORTE")) return "SINARM";
   if (x === "GT" || x === "GUIA_DE_TRAFEGO" || x === "GUIA_TRAFEGO") return "GT";
   if (x === "GTE" || x === "GUIA_DE_TRAFEGO_ESPECIAL" || x === "GUIA_TRAFEGO_ESPECIAL") return "GTE";
   if (x.includes("TRANSITO") || x.includes("TRÂNSITO") || x === "GUIA_TRANSITO") return "GUIA_TRANSITO";
   if (x.includes("NOTA") || x === "NF" || x === "NFE" || x === "DANFE" || x === "NOTA_FISCAL")
     return "NOTA_FISCAL";
   if (x.includes("EXAME") || x.includes("LAUDO") || x === "EXAME_LAUDO") return "EXAME_LAUDO";
-  if (x.includes("AUTORIZ")) return null; // autorização de compra: não está no escopo desta classificação
+  if (x.includes("AUTORIZ") || x === "AC") return "AUTORIZACAO_COMPRA";
   return null;
 }
 
