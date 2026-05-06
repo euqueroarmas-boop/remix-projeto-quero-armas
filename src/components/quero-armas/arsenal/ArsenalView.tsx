@@ -1439,48 +1439,131 @@ export function ArsenalView({
   }, [weapons, weaponLinkState]);
 
   // ── Calibres distintos NORMALIZADOS ──────────────────────────────────────
-  // REGRA: contar SOMENTE calibres das armas físicas consolidadas e válidas.
-  // Documentos órfãos (CRAF/GTE/GT/OCR) e munições sem arma vinculada NÃO
-  // entram na KPI — evitam "calibre fantasma" (ex.: .40 que não existe).
+  // REGRA DE VÍNCULO:
+  //   1) Calibre só conta se vier de ARMA FÍSICA CONSOLIDADA, OU
+  //   2) de CRAF/GTE/munição/documento explicitamente VINCULADO a uma arma
+  //      consolidada (mesma série, SIGMA/SINARM, arma_id ou catalogo_id).
+  //   Documento órfão, OCR sem vínculo e munição sem arma NÃO entram na KPI
+  //   principal — evita "calibre fantasma" (ex.: .40 que não existe).
+  //
+  //   Como CRAFs/docs vinculados normalmente compartilham o calibre da arma
+  //   consolidada, esse conjunto também é dominado pelas armas — mas a regra
+  //   garante rastreabilidade e diagnóstico.
   const totalCalibresNormalizados = useMemo(() => {
-    const calibresDasArmasConsolidadas = new Set<string>();
+    const normKey = (s: any) =>
+      String(s || "").replace(/\s+/g, "").toUpperCase().trim();
+    // Conjunto de identificadores físicos das armas consolidadas.
+    const physicalSerials = new Set<string>();
+    const physicalSigmas = new Set<string>();
+    const physicalCatalogIds = new Set<string>();
+    const physicalArmaIds = new Set<string>();
+    for (const w of weapons) {
+      const s = normKey((w as any).numero_arma);
+      const g = normKey((w as any).numero_sigma);
+      const cat = (w as any).catalogo_id ? String((w as any).catalogo_id) : "";
+      const aid = (w as any).arma_id ? String((w as any).arma_id) : "";
+      if (s) physicalSerials.add(s);
+      if (g) physicalSigmas.add(g);
+      if (cat) physicalCatalogIds.add(cat);
+      if (aid) physicalArmaIds.add(aid);
+    }
+    const isLinkedToWeapon = (item: any): boolean => {
+      const s = normKey(item?.numero_arma ?? item?.arma_numero_serie);
+      const g = normKey(item?.numero_sigma ?? item?.numero_documento);
+      const cat = item?.catalogo_id ? String(item.catalogo_id) : "";
+      const aid = item?.arma_id ? String(item.arma_id) : "";
+      if (aid && physicalArmaIds.has(aid)) return true;
+      if (s && (physicalSerials.has(s) || physicalSigmas.has(s))) return true;
+      if (g && (physicalSigmas.has(g) || physicalSerials.has(g))) return true;
+      // catálogo só vincula se houver também série/SIGMA conhecido — sozinho
+      // não prova mesma unidade física (mesma regra do keyOf).
+      if (cat && physicalCatalogIds.has(cat) && (s || g)) return true;
+      return false;
+    };
+
+    // 1) Armas consolidadas (fonte primária e sempre rastreável).
+    const fromArmas = new Set<string>();
     for (const w of weapons) {
       const cat = (w as any).catalogo_id ? catalogoById((w as any).catalogo_id) : null;
       const fromCatalog = normalizeCalibre(cat?.calibre);
-      if (fromCatalog) { calibresDasArmasConsolidadas.add(fromCatalog); continue; }
+      if (fromCatalog) { fromArmas.add(fromCatalog); continue; }
       const info = buildWeaponInfo(w.nome_arma, w.numero_arma);
       const c = normalizeCalibre(info.calibre);
-      if (c) calibresDasArmasConsolidadas.add(c);
+      if (c) fromArmas.add(c);
     }
+
+    // 2) CRAFs/GTEs/munições/docs — apenas se VINCULADOS.
+    const fromCrafsVinculados = new Set<string>();
+    const fromCrafsOrfaos = new Set<string>();
+    for (const c of crafs as any[]) {
+      const cat = c?.catalogo_id ? catalogoById(c.catalogo_id) : null;
+      const k = normalizeCalibre(cat?.calibre || c?.calibre);
+      if (!k) continue;
+      if (isLinkedToWeapon(c)) fromCrafsVinculados.add(k);
+      else fromCrafsOrfaos.add(k);
+    }
+    const fromGtesVinculados = new Set<string>();
+    const fromGtesOrfaos = new Set<string>();
+    for (const g of gtes as any[]) {
+      const cat = g?.catalogo_id ? catalogoById(g.catalogo_id) : null;
+      const k = normalizeCalibre(cat?.calibre || g?.calibre);
+      if (!k) continue;
+      if (isLinkedToWeapon(g)) fromGtesVinculados.add(k);
+      else fromGtesOrfaos.add(k);
+    }
+    const fromDocsVinculados = new Set<string>();
+    const fromDocsOrfaos = new Set<string>();
+    for (const d of meusDocs as any[]) {
+      const k = normalizeCalibre(d?.arma_calibre);
+      if (!k) continue;
+      if (isLinkedToWeapon(d)) fromDocsVinculados.add(k);
+      else fromDocsOrfaos.add(k);
+    }
+    // Munições: comparar calibre normalizado com os calibres das armas.
+    const fromMunicoesVinculadas = new Set<string>();
+    const fromMunicoesOrfas = new Set<string>();
+    for (const a of ammo.byCalibre) {
+      const k = normalizeCalibre(a.calibre);
+      if (!k) continue;
+      if (fromArmas.has(k)) fromMunicoesVinculadas.add(k);
+      else fromMunicoesOrfas.add(k);
+    }
+
+    // União final = armas + vinculados.
+    const final = new Set<string>([
+      ...fromArmas,
+      ...fromCrafsVinculados,
+      ...fromGtesVinculados,
+      ...fromDocsVinculados,
+      ...fromMunicoesVinculadas,
+    ]);
 
     if (import.meta.env.DEV) {
-      const calibresDosCrafsVinculados = new Set<string>();
-      for (const c of crafs as any[]) {
-        const cat = c?.catalogo_id ? catalogoById(c.catalogo_id) : null;
-        const k = normalizeCalibre(cat?.calibre || c?.calibre);
-        if (k) calibresDosCrafsVinculados.add(k);
-      }
-      const calibresDasMunicoesVinculadas = new Set<string>();
-      for (const a of ammo.byCalibre) {
-        const k = normalizeCalibre(a.calibre);
-        if (k) calibresDasMunicoesVinculadas.add(k);
-      }
-      const calibresDosDocumentosOrfaos = new Set<string>();
-      for (const d of meusDocs as any[]) {
-        const k = normalizeCalibre(d?.arma_calibre);
-        if (k) calibresDosDocumentosOrfaos.add(k);
-      }
+      const j = (s: Set<string>) => Array.from(s).sort().join(", ") || "—";
+      // eslint-disable-next-line no-console
+      console.groupCollapsed(`[Arsenal] KPI CALIBRES — diagnóstico (${final.size})`);
       // eslint-disable-next-line no-console
       console.table({
-        calibresDasArmasConsolidadas: Array.from(calibresDasArmasConsolidadas).join(", "),
-        calibresDosCrafsVinculados: Array.from(calibresDosCrafsVinculados).join(", "),
-        calibresDasMunicoesVinculadas: Array.from(calibresDasMunicoesVinculadas).join(", "),
-        calibresDosDocumentosOrfaos: Array.from(calibresDosDocumentosOrfaos).join(", "),
-        calibresContadosNaKpi: Array.from(calibresDasArmasConsolidadas).join(", "),
+        "1. Armas consolidadas": j(fromArmas),
+        "2. CRAFs vinculados": j(fromCrafsVinculados),
+        "3. GTEs vinculadas": j(fromGtesVinculados),
+        "4. Munições vinculadas": j(fromMunicoesVinculadas),
+        "5. Documentos vinculados": j(fromDocsVinculados),
+        "— CRAFs órfãos (ignorados)": j(fromCrafsOrfaos),
+        "— GTEs órfãs (ignoradas)": j(fromGtesOrfaos),
+        "— Munições órfãs (ignoradas)": j(fromMunicoesOrfas),
+        "— Docs órfãos (ignorados)": j(fromDocsOrfaos),
+        "= Calibres CONTADOS na KPI": j(final),
       });
+      if (final.size === 0 && weapons.length > 0) {
+        // eslint-disable-next-line no-console
+        console.warn("[Arsenal] KPI CALIBRES = 0 mas há armas — verifique se o calibre está parseável (catálogo/nome).");
+      }
+      // eslint-disable-next-line no-console
+      console.groupEnd();
     }
 
-    return calibresDasArmasConsolidadas.size;
+    return final.size;
   }, [weapons, ammo.byCalibre, crafs, gtes, meusDocs, catalogoById]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 

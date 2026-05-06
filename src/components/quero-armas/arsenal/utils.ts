@@ -160,7 +160,7 @@ export function extractCalibre(...inputs: (string | null | undefined)[]): string
 export function normalizeCalibre(raw: string | null | undefined): string | null {
   if (!raw) return null;
   let s = String(raw).toUpperCase();
-  s = s.replace(/CAL\.?|CALIBRE/g, "");
+  s = s.replace(/CALIBRE|CAL\.?/g, "");
   s = s.replace(/[^0-9A-Z.]/g, "");
   if (/^\.?12(GA)?$/.test(s)) return "12";
   if (/^\.?20(GA)?$/.test(s)) return "20";
