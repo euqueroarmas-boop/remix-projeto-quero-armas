@@ -153,14 +153,7 @@ function WeaponCard({
         <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-slate-300" />
       </div>
 
-      <div
-        className="relative p-4"
-        style={{
-          // Encolhe TODO o conteúdo do card de uma vez (texto, imagem, stats, padding)
-          // de forma proporcional, sem precisar redimensionar cada elemento manualmente.
-          zoom: size === "sm" ? 0.7 : size === "md" ? 0.85 : 1,
-        }}
-      >
+      <div className="relative p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -361,13 +354,20 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
   // Cards "longos" usam lg por padrão; quando o cliente escolhe md/sm, reduzimos.
   const longaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : cardSize === "md" ? "md" : "lg";
   const curtaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : "md";
+  // No mobile (440px) o grid normalmente é 1 coluna — para o toggle ter efeito
+  // visual real, aumentamos a quantidade de colunas conforme o tamanho diminui.
   const curtaCols =
     cardSize === "sm"
-      ? "sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
+      ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
       : cardSize === "md"
-      ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
-  const longaCols = cardSize === "sm" ? "md:grid-cols-3" : "md:grid-cols-2";
+      ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  const longaCols =
+    cardSize === "sm"
+      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      : cardSize === "md"
+      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+      : "grid-cols-1 md:grid-cols-2";
 
   const enriched = useMemo(
     () => weapons.map((w) => ({
