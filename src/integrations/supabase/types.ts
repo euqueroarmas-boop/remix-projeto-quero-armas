@@ -4026,9 +4026,13 @@ export type Database = {
       }
       qa_crafs: {
         Row: {
+          arquivo_mime: string | null
+          arquivo_nome: string | null
+          arquivo_storage_path: string | null
           catalogo_id: string | null
           cliente_id: number | null
           data_validade: string | null
+          documento_origem_id: string | null
           id: number
           id_legado: number | null
           nome_arma: string | null
@@ -4037,9 +4041,13 @@ export type Database = {
           numero_sigma: string | null
         }
         Insert: {
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
           catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
+          documento_origem_id?: string | null
           id?: number
           id_legado?: number | null
           nome_arma?: string | null
@@ -4048,9 +4056,13 @@ export type Database = {
           numero_sigma?: string | null
         }
         Update: {
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
           catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
+          documento_origem_id?: string | null
           id?: number
           id_legado?: number | null
           nome_arma?: string | null
@@ -4999,6 +5011,7 @@ export type Database = {
           dados_extraidos_json: Json
           data_emissao: string | null
           data_validade: string | null
+          documento_origem_id: string | null
           endereco_destino: string | null
           endereco_origem: string | null
           enderecos_json: Json
@@ -5033,6 +5046,7 @@ export type Database = {
           dados_extraidos_json?: Json
           data_emissao?: string | null
           data_validade?: string | null
+          documento_origem_id?: string | null
           endereco_destino?: string | null
           endereco_origem?: string | null
           enderecos_json?: Json
@@ -5067,6 +5081,7 @@ export type Database = {
           dados_extraidos_json?: Json
           data_emissao?: string | null
           data_validade?: string | null
+          documento_origem_id?: string | null
           endereco_destino?: string | null
           endereco_origem?: string | null
           enderecos_json?: Json
@@ -6047,6 +6062,7 @@ export type Database = {
           data_movimentacao: string
           data_validade: string | null
           documento_nome: string | null
+          documento_origem_id: string | null
           documento_revisado_em: string | null
           documento_revisado_por: string | null
           documento_url: string | null
@@ -6071,6 +6087,7 @@ export type Database = {
           data_movimentacao?: string
           data_validade?: string | null
           documento_nome?: string | null
+          documento_origem_id?: string | null
           documento_revisado_em?: string | null
           documento_revisado_por?: string | null
           documento_url?: string | null
@@ -6095,6 +6112,7 @@ export type Database = {
           data_movimentacao?: string
           data_validade?: string | null
           documento_nome?: string | null
+          documento_origem_id?: string | null
           documento_revisado_em?: string | null
           documento_revisado_por?: string | null
           documento_url?: string | null
