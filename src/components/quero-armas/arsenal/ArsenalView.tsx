@@ -4,7 +4,7 @@ import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesMovimentacoesManager } from "./MunicoesMovimentacoesManager";
-import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus } from "./utils";
+import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus, normalizeCalibre } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,6 +104,31 @@ const daysUntil = (d: string | null): number | null => {
     return null;
   }
 };
+
+const normWeaponKey = (s: string | null | undefined) =>
+  String(s || "").replace(/\s+/g, "").toUpperCase().trim();
+
+const isValidDateFromToday = (value: string | null | undefined, today: Date) => {
+  if (!value) return false;
+  const d = new Date(value);
+  return !isNaN(d.getTime()) && d.getTime() >= today.getTime();
+};
+
+type LinkedDocStatus = "valido" | "ativo" | "vencido" | "ausente" | "revisar";
+
+interface WeaponLinkState {
+  crafMatches: any[];
+  gteMatches: any[];
+  crafStatus: LinkedDocStatus;
+  gteStatus: LinkedDocStatus;
+  crafLabel: string;
+  gteLabel: string;
+  crafValido: boolean;
+  gteValida: boolean;
+  semVinculo: boolean;
+  hasWeakCrafDoc: boolean;
+  hasWeakGteDoc: boolean;
+}
 
 export function ArsenalView({
   clienteId,
