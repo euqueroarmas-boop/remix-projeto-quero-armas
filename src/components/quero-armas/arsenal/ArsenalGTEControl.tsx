@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import DocClassReviewModal, { type ClassificacaoIA } from "./DocClassReviewModal";
+import { classifyArsenalDoc } from "./classifyDoc";
 import {
   ArsenalCardSizeToggle,
   SIZE_CLASSES,
@@ -104,6 +106,9 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
   const sz = SIZE_CLASSES[cardSize];
   const [openDetail, setOpenDetail] = useState<GteDoc | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [classif, setClassif] = useState<ClassificacaoIA | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [showReview, setShowReview] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -142,6 +147,20 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
       toast.error("Arquivo muito grande (limite 20 MB).");
       return;
     }
+    // Classificação prévia
+    setUploading(true);
+    const c = await classifyArsenalDoc({ file, tipoSelecionado: "GTE" });
+    setUploading(false);
+    if (c && (c.divergenciaComSelecaoManual || c.recomendacao !== "aceitar")) {
+      setClassif(c);
+      setPendingFile(file);
+      setShowReview(true);
+      return;
+    }
+    await proceedUpload(file, false, c);
+  };
+
+  const proceedUpload = async (file: File, revisaoObrigatoria: boolean, classificacao: ClassificacaoIA | null) => {
     setUploading(true);
     try {
       const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -162,18 +181,25 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           mime_type: file.type || "application/pdf",
           tamanho_bytes: file.size,
           origem_envio: origem,
-          status_processamento: "pendente",
+          status_processamento: revisaoObrigatoria ? "erro" : "pendente",
+          erro_mensagem: revisaoObrigatoria
+            ? `REVISÃO OBRIGATÓRIA — IA classificou como ${classificacao?.tipoDetectado || "DESCONHECIDO"} (${Math.round((classificacao?.confianca || 0) * 100)}%). Cliente manteve GTE.`
+            : null,
+          dados_extraidos_json: classificacao ? { classificacao_arsenal: classificacao, revisao_obrigatoria: revisaoObrigatoria } : null,
         })
         .select("id")
         .single();
       if (insErr) throw insErr;
 
-      toast.success("GTE enviada. Extraindo dados…");
-      // Dispara extração em background (não bloqueia a UI; realtime atualiza)
-      supabase.functions
-        .invoke("qa-gte-extrair", { body: { gte_documento_id: (inserted as any).id } })
-        .then(({ error }) => { if (error) toast.error(`Falha na leitura: ${error.message}`); })
-        .catch((err) => toast.error(err?.message || "Falha na leitura"));
+      if (revisaoObrigatoria) {
+        toast.success("Documento salvo em REVISÃO OBRIGATÓRIA. Não alimentará KPIs até a Equipe revisar.");
+      } else {
+        toast.success("GTE enviada. Extraindo dados…");
+        supabase.functions
+          .invoke("qa-gte-extrair", { body: { gte_documento_id: (inserted as any).id } })
+          .then(({ error }) => { if (error) toast.error(`Falha na leitura: ${error.message}`); })
+          .catch((err) => toast.error(err?.message || "Falha na leitura"));
+      }
       await load();
     } catch (err: any) {
       toast.error(err?.message || "Falha no upload");
