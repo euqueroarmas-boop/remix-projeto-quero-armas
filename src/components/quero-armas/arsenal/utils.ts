@@ -61,6 +61,15 @@ export function getGteKpiStatus(gtes: GteKpiInput[] | null | undefined): GteKpiS
 
   for (const g of list) {
     const status = (g?.status_processamento || "").toLowerCase();
+    // Exclui documentos em revisão obrigatória / pendente revisão da contagem de "válidas".
+    if (
+      status === "revisao_obrigatoria" ||
+      status === "pendente_revisao" ||
+      status === "aguardando_revisao_equipe"
+    ) {
+      semData++;
+      continue;
+    }
     if (!g?.data_validade || (status && status !== "concluido")) {
       semData++;
       continue;
