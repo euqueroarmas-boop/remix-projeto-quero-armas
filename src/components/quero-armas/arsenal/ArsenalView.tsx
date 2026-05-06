@@ -4,7 +4,7 @@ import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesMovimentacoesManager } from "./MunicoesMovimentacoesManager";
-import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus, normalizeCalibre } from "./utils";
+import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus, normalizeCalibre, isGteExigivelParaArma } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
@@ -377,6 +377,10 @@ export function ArsenalView({
         daysToExpire: daysUntil(c.data_validade),
         hasGte: !!gte,
         catalogo_id: c.catalogo_id || null,
+        // Arma documentada por CRAF/SINARM = registro civil para defesa pessoal.
+        // GTE não é documento permanente exigível.
+        sistema: "SINARM",
+        finalidade: "DEFESA PESSOAL",
       };
     });
     // Chave única por arma física = número de série (numero_arma) OU número SIGMA.
@@ -404,6 +408,13 @@ export function ArsenalView({
         const nome = normalizeDocWeaponName(d);
         const tipoUpper = String(d.tipo_documento || "DOC").toUpperCase();
         const tipoLower = String(d.tipo_documento || "").toLowerCase();
+        // Origem do registro pelo tipo do documento. SINARM/CRAF = defesa pessoal;
+        // GT/GTE/SIGMA = acervo SIGMA (CAC/Tiro/Caça/Coleção).
+        const sistemaInferido =
+          ["sigma", "gt", "gte"].includes(tipoLower) ? "SIGMA"
+          : ["craf", "sinarm", "autorizacao_compra"].includes(tipoLower) ? "SINARM"
+          : null;
+        const finalidadeInferida = sistemaInferido === "SINARM" ? "DEFESA PESSOAL" : sistemaInferido === "SIGMA" ? "CAC" : null;
         return {
           id: `doc-${d.id}`,
           source: (tipoUpper === "GTE" ? "GTE" : "CRAF") as "CRAF" | "GTE",
@@ -413,6 +424,8 @@ export function ArsenalView({
           data_validade: d.data_validade,
           daysToExpire: daysUntil(d.data_validade),
           hasGte: false,
+          sistema: sistemaInferido,
+          finalidade: finalidadeInferida,
           documentPreview: tipoUpper === "GTE" && d.arquivo_storage_path
             ? {
                 bucket: "qa-documentos",
@@ -536,6 +549,7 @@ export function ArsenalView({
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      const gteExigivel = isGteExigivelParaArma(w as any);
       return {
         ...w,
         hasCraf: !!link?.crafValido,
@@ -543,7 +557,8 @@ export function ArsenalView({
         crafStatus: link?.crafStatus,
         gteStatus: link?.gteStatus,
         crafLabel: link?.crafLabel,
-        gteLabel: link?.gteLabel,
+        gteLabel: !gteExigivel && !link?.gteValida ? "NÃO EXIGÍVEL" : link?.gteLabel,
+        gteExigivel,
         linkReview: !!(link?.hasWeakCrafDoc || link?.hasWeakGteDoc || link?.semVinculo),
       };
     }),
@@ -690,7 +705,14 @@ export function ArsenalView({
     (link?.crafMatches || []).forEach((c) => out.push({ category: "CRAF", title: c.nome_arma || c.nome_craf || "CRAF vinculado", date: c.data_validade }));
     (link?.gteMatches || []).forEach((g) => out.push({ category: "GTE", title: g.nome_arma || g.nome_gte || "GTE vinculada", date: g.data_validade }));
     if (!link?.crafValido) out.push({ category: "CRAF", title: link?.hasWeakCrafDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "CRAF ausente — regularizar documento da arma.", date: null });
-    if (!link?.gteValida) out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
+    if (!link?.gteValida) {
+      const gteExigivel = isGteExigivelParaArma(selected as any);
+      if (!gteExigivel) {
+        out.push({ category: "GTE", title: "GTE não exigível para arma SINARM registrada para defesa pessoal.", date: null });
+      } else {
+        out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
+      }
+    }
     return out;
   }, [selected, weaponLinkState]);
 
@@ -943,7 +965,8 @@ export function ArsenalView({
     weapons.forEach((w) => {
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
       if (!link) return;
-      if (!link.gteValida) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "GTE AUSENTE", cor: "vermelho", prioridade: 3, sub: "Regularizar vínculo/documento da arma" });
+      const gteExigivel = isGteExigivelParaArma(w as any);
+      if (gteExigivel && !link.gteValida) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "GTE AUSENTE", cor: "vermelho", prioridade: 3, sub: "Regularizar vínculo/documento da arma" });
       if (!link.crafValido) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "CRAF AUSENTE", cor: "vermelho", prioridade: 3, sub: "Revisar vínculo/documento da arma" });
       if (link.hasWeakCrafDoc || link.hasWeakGteDoc || link.semVinculo) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "REVISAR VÍNCULO", cor: "laranja", prioridade: 4, sub: "Documento sem vínculo confiável com arma" });
     });
@@ -1088,7 +1111,8 @@ export function ArsenalView({
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
       if (!link) return;
       const nome = (w.nome_arma || "ARMA").toUpperCase();
-      if (!link.gteValida) out.push({
+      const gteExigivel = isGteExigivelParaArma(w as any);
+      if (gteExigivel && !link.gteValida) out.push({
         id: `arma-gte-${w.source}-${w.id}`,
         titulo: `${nome} — GTE AUSENTE`,
         tipo: "ARMA/GTE",
@@ -1241,7 +1265,10 @@ export function ArsenalView({
       // SIGMA) OU sem CRAF válido vinculado OU sem GTE ativa vinculada.
       const semVinculo = !!link?.semVinculo;
       const semCrafValido = !link?.crafValido;
-      const semGteAtiva = !link?.gteValida;
+      // GTE só conta como irregularidade quando é exigível para o regime da arma.
+      // Arma SINARM/Defesa Pessoal: GTE não é documento permanente.
+      const gteExigivel = isGteExigivelParaArma(w as any);
+      const semGteAtiva = gteExigivel && !link?.gteValida;
       if (vencido || semVinculo || semCrafValido || semGteAtiva) comIrregularidade++;
     }
 
