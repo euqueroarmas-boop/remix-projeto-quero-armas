@@ -388,12 +388,24 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     análise documental da Equipe Quero Armas{declaradaEm ? ` · ${formatDate(declaradaEm)}` : ""}.
                   </p>
                 )}
+                {gtStatus === "nao_possuo" && (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    title="Declaração já registrada"
+                    className="mt-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 opacity-60 cursor-not-allowed"
+                  >
+                    Declaração já registrada
+                  </button>
+                )}
                 {podeDeclarar && (
                   !gtConfirm ? (
                     <button
                       type="button"
                       onClick={() => setGtConfirm(true)}
-                      className="mt-2 inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                      disabled={gtSaving}
+                      className="mt-2 inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       Não possuo mais a GT
                     </button>
