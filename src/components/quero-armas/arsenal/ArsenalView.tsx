@@ -710,7 +710,7 @@ export function ArsenalView({
     if (!link?.gteValida) {
       const gteExigivel = isGteExigivelParaArma(selected as any);
       if (!gteExigivel) {
-        out.push({ category: "GTE", title: "GTE não exigível para arma SINARM registrada para defesa pessoal.", date: null });
+        out.push({ category: "GTE", title: "GTE não exigível para esta arma (sem indício de acervo SIGMA/CAC).", date: null });
       } else {
         out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
       }
