@@ -4,7 +4,17 @@ import { ArsenalSummary, ArsenalSummaryTarget } from "./ArsenalSummary";
 import { Workbench, WorkbenchWeapon } from "./Workbench";
 import { WeaponDrawer } from "./WeaponDrawer";
 import { MunicoesMovimentacoesManager } from "./MunicoesMovimentacoesManager";
-import { TACTICAL, urgencyTone, buildWeaponInfo, isInvalidWeaponModel, getGteKpiStatus, normalizeCalibre, isGteExigivelParaArma } from "./utils";
+import {
+  TACTICAL,
+  urgencyTone,
+  buildWeaponInfo,
+  isInvalidWeaponModel,
+  getGteKpiStatus,
+  normalizeCalibre,
+  isGteExigivelParaArma,
+  gtDeclaracaoKey,
+  type GtDocStatus,
+} from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { CrModal, CrafModal, GteModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,12 +129,17 @@ type LinkedDocStatus = "valido" | "ativo" | "vencido" | "ausente" | "revisar";
 interface WeaponLinkState {
   crafMatches: any[];
   gteMatches: any[];
+  gtMatches: any[];
   crafStatus: LinkedDocStatus;
   gteStatus: LinkedDocStatus;
   crafLabel: string;
   gteLabel: string;
   crafValido: boolean;
   gteValida: boolean;
+  /** Status da GT (retirada/transporte inicial) — informativo, nunca crítico. */
+  gtStatus: GtDocStatus;
+  /** Cliente declarou que não possui mais a GT. */
+  gtDeclaradaNaoPossui: boolean;
   semVinculo: boolean;
   hasWeakCrafDoc: boolean;
   hasWeakGteDoc: boolean;
