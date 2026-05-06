@@ -98,18 +98,20 @@ Deno.serve(async (req) => {
     }
 
     const sources = [
-      { path: cliente.imagem as string | null, bucket: "qa-documentos", source: "qa_clientes.imagem" },
-      { path: selfiePath, bucket: "qa-cadastro-selfies", source: "qa_cadastro_publico.selfie_path" },
-      { path: cliente.avatar_tatico_path as string | null, bucket: "qa-cadastro-selfies", source: "avatar_tatico_path" },
-    ].filter((s) => !!s.path) as { path: string; bucket: string; source: string }[];
+      { path: cliente.imagem as string | null, buckets: ["qa-documentos", "qa-cadastro-selfies"], source: "qa_clientes.imagem" },
+      { path: selfiePath, buckets: ["qa-cadastro-selfies", "qa-documentos"], source: "qa_cadastro_publico.selfie_path" },
+      { path: cliente.avatar_tatico_path as string | null, buckets: ["qa-cadastro-selfies", "qa-documentos"], source: "avatar_tatico_path" },
+    ].filter((s) => !!s.path) as { path: string; buckets: string[]; source: string }[];
 
     for (const s of sources) {
       if (/^https?:\/\//i.test(s.path)) {
         return json({ url: s.path, path: s.path, bucket: null, source: s.source, hasPhoto: true });
       }
-      const { data, error } = await admin.storage.from(s.bucket).createSignedUrl(s.path, 3600);
-      if (!error && data?.signedUrl) {
-        return json({ url: data.signedUrl, path: s.path, bucket: s.bucket, source: s.source, hasPhoto: true });
+      for (const bucket of s.buckets) {
+        const { data, error } = await admin.storage.from(bucket).createSignedUrl(s.path, 3600);
+        if (!error && data?.signedUrl) {
+          return json({ url: data.signedUrl, path: s.path, bucket, source: s.source, hasPhoto: true });
+        }
       }
     }
 
