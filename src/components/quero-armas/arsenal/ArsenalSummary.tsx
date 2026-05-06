@@ -655,7 +655,7 @@ export function ArsenalSummary({
       },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown, examesCount],
   );
 
   // Ordem efetiva:
