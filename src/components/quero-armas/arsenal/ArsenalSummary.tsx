@@ -21,6 +21,11 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  FileText,
+  Hash,
+  Fingerprint,
+  CalendarClock,
+  Info,
 } from "lucide-react";
 import {
   DndContext,
@@ -63,13 +68,19 @@ export type ArsenalSummaryTarget =
   | "autorizacoes"
   | "exames";
 
-// Identificadores fixos exigidos
-type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas" | "gte";
+// Identificadores fixos exigidos.
+// REGRA DE DOMÍNIO: a ARMA é a entidade principal. CRAF e GTE são vínculos
+// da arma — não aparecem como KPIs independentes no topo. Eles continuam
+// existindo em todo o resto do sistema (uploads, OCR, controles), apenas
+// não competem mais com ARMAS no painel de KPIs.
+type KpiId = "armas" | "municoes" | "status_cr" | "calibres" | "alertas";
 // KPIs da Linha 2 (recolhível). Não entram no DEFAULT_ORDER persistido para
 // manter Zero Regression do layout existente — são renderizados separadamente.
 type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
 
-const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas", "gte"];
+// Ordem padrão: CR | ARMAS | CALIBRES | MUNIÇÕES | ALERTAS
+// (CRAF e GTE foram removidos como KPIs — as informações ficam dentro da arma).
+const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "alertas"];
 // F1A — Reorganização do Arsenal:
 // Os KPIs "Documentos", "Processos" e "Autorizações" foram REMOVIDOS do grid
 // principal. Agora existem grupos operacionais próprios (Controle de CRAF,
@@ -79,14 +90,17 @@ const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calib
 // existentes — apenas não são renderizadas.
 const SECONDARY_ORDER: KpiSecondaryId[] = ["exames"];
 
+// Ids legados que podem existir em layouts persistidos antigos. Devem ser
+// silenciosamente ignorados na renderização (Zero Regression para usuários
+// que já tinham a ordem salva com CRAF/GTE como KPIs).
+const LEGACY_REMOVED_IDS = new Set<string>(["craf", "gte"]);
+
 const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   armas: "armas",
   municoes: "municoes",
-  craf: "crafs",
   status_cr: "cr",
   calibres: "calibres",
   alertas: "alertas",
-  gte: "gte",
 };
 
 interface Props {
@@ -97,6 +111,19 @@ interface Props {
   crLabel: string;
   totalCrafs: number;
   alerts: number;
+  /**
+   * Breakdown das armas por vínculo físico (nº de série / SIGMA / arma_id).
+   * Quando ausente, o card ARMAS exibe apenas o total (compatibilidade).
+   */
+  armasBreakdown?: {
+    total: number;
+    comCrafValido: number;
+    comGteAtiva: number;
+    comVencimento: number;
+    comIrregularidade: number;
+    /** "ok" | "warn" | "danger" — pior status consolidado entre as armas. */
+    piorStatus: "ok" | "warn" | "danger" | "muted";
+  };
   /** Breakdown opcional do total de alertas para subtítulo coerente. */
   alertasCriticos?: number;
   alertasPreventivos?: number;
@@ -282,9 +309,11 @@ function KpiCard({
 
 function sanitizeOrder(value: unknown): KpiId[] {
   if (!Array.isArray(value)) return DEFAULT_ORDER;
-  const filtered = value.filter((id): id is KpiId =>
-    DEFAULT_ORDER.includes(id as KpiId),
-  );
+  // Filtra ids legados removidos (craf/gte) e ids desconhecidos.
+  const filtered = value.filter((id): id is KpiId => {
+    if (LEGACY_REMOVED_IDS.has(String(id))) return false;
+    return DEFAULT_ORDER.includes(id as KpiId);
+  });
   // garante que todos os ids estejam presentes (mesmo que faltem novos)
   for (const id of DEFAULT_ORDER) {
     if (!filtered.includes(id)) filtered.push(id);
