@@ -12,6 +12,21 @@ import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCata
 import { backgroundForKind, renderForKind } from "./weaponAssets";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useArsenalCardSize, ArsenalCardSizeToggle } from "./useArsenalCardSize";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  arrayMove,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export interface WorkbenchWeapon {
   id: number | string;
@@ -52,6 +67,7 @@ interface Props {
   ammoByCalibre: { calibre: string; quantidade: number }[];
   onSelectWeapon: (w: WorkbenchWeapon, info: WeaponInfo) => void;
   headerAction?: React.ReactNode;
+  clienteId?: number | null;
 }
 
 const toneClasses = {
