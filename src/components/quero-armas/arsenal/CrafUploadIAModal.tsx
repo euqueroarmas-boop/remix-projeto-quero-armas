@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import DocClassReviewModal, { type ClassificacaoIA } from "./DocClassReviewModal";
+import { classifyArsenalDoc } from "./classifyDoc";
 
 interface Props {
   open: boolean;
@@ -111,6 +113,10 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
   const [file, setFile] = useState<File | null>(null);
   const [storagePath, setStoragePath] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [classificacao, setClassificacao] = useState<ClassificacaoIA | null>(null);
+  const [revisaoObrigatoria, setRevisaoObrigatoria] = useState<boolean>(false);
+  const [showReview, setShowReview] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   // Campos editáveis exibidos para o cliente confirmar
   const [nomeArma, setNomeArma] = useState("");
@@ -131,6 +137,10 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
       setNumeroArma("");
       setNumeroSigma("");
       setDataValidadeBr("");
+      setClassificacao(null);
+      setRevisaoObrigatoria(false);
+      setShowReview(false);
+      setPendingFile(null);
     }
   }, [open]);
 
@@ -145,6 +155,24 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
       return;
     }
     setErro(null);
+    setPendingFile(f);
+    setPhase("extracting");
+
+    // Classificação prévia
+    const classif = await classifyArsenalDoc({ file: f, tipoSelecionado: "CRAF" });
+    if (classif && (classif.divergenciaComSelecaoManual || classif.recomendacao !== "aceitar")) {
+      setClassificacao(classif);
+      setShowReview(true);
+      setPhase("pick");
+      return;
+    }
+    // alta confiança e tipo bate → segue direto
+    setClassificacao(classif);
+    setRevisaoObrigatoria(false);
+    await proceedUpload(f);
+  };
+
+  const proceedUpload = async (f: File) => {
     setFile(f);
     setPhase("uploading");
 
@@ -200,10 +228,16 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
         numero_arma: numeroArma.trim() ? numeroArma.trim().toUpperCase() : null,
         numero_sigma: numeroSigma.trim() ? numeroSigma.trim().toUpperCase() : null,
         data_validade: brToIso(dataValidadeBr) || null,
+        // Marcador de revisão para que KPIs e regularidade não considerem este CRAF
+        // até a Equipe Quero Armas confirmar.
+        ia_revisao_obrigatoria: revisaoObrigatoria || null,
+        ia_classificacao_json: classificacao || null,
       };
       const { error } = await supabase.from("qa_crafs" as any).insert(payload);
       if (error) throw error;
-      toast.success("CRAF cadastrado.");
+      toast.success(revisaoObrigatoria
+        ? "CRAF salvo em REVISÃO OBRIGATÓRIA. Equipe Quero Armas vai validar."
+        : "CRAF cadastrado.");
       onSaved();
       onClose();
     } catch (e: any) {
@@ -214,6 +248,7 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => !v && phase !== "uploading" && phase !== "extracting" && phase !== "saving" && onClose()}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
