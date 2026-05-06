@@ -938,6 +938,16 @@ export function ArsenalView({
     ].filter((s): s is StatusUnificado => !!s);
     itens.push(...incluir);
 
+    // GTE/CRAF ausente, vencido ou sem vínculo confiável é alerta da ARMA,
+    // não apenas detalhe interno do breakdown.
+    weapons.forEach((w) => {
+      const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      if (!link) return;
+      if (!link.gteValida) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "GTE AUSENTE", cor: "vermelho", prioridade: 3, sub: "Regularizar vínculo/documento da arma" });
+      if (!link.crafValido) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "CRAF AUSENTE", cor: "vermelho", prioridade: 3, sub: "Revisar vínculo/documento da arma" });
+      if (link.hasWeakCrafDoc || link.hasWeakGteDoc || link.semVinculo) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "REVISAR VÍNCULO", cor: "laranja", prioridade: 4, sub: "Documento sem vínculo confiável com arma" });
+    });
+
     // Filtra: só conta como ALERTA o que exige atenção real.
     // Estados "ok", "deferido", "documento_aprovado", "vencendo_180" (verde
     // "EM DIA"), "em_analise_orgao", "hub_reaproveitado" e "sem_dado" NÃO
@@ -975,6 +985,7 @@ export function ArsenalView({
     expDocs, processos,
     crUnified, crafUnified, gteUnified,
     documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+    weapons, weaponLinkState,
   ]);
 
   // BLOCO 4 — Lista detalhada de alertas (drill-down do KPI Alertas).
@@ -1073,11 +1084,42 @@ export function ArsenalView({
       });
     });
 
+    weapons.forEach((w) => {
+      const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      if (!link) return;
+      const nome = (w.nome_arma || "ARMA").toUpperCase();
+      if (!link.gteValida) out.push({
+        id: `arma-gte-${w.source}-${w.id}`,
+        titulo: `${nome} — GTE AUSENTE`,
+        tipo: "ARMA/GTE",
+        status: { dimensao: "alerta", codigo: "documentos_incompletos", label: "CRÍTICO", cor: "vermelho", prioridade: 3, sub: "Regularizar vínculo/documento da arma" },
+        dataVencimento: null,
+        diasRestantes: null,
+      });
+      if (!link.crafValido) out.push({
+        id: `arma-craf-${w.source}-${w.id}`,
+        titulo: `${nome} — CRAF AUSENTE/VÍNCULO`,
+        tipo: "ARMA/CRAF",
+        status: { dimensao: "alerta", codigo: "documentos_incompletos", label: "CRÍTICO", cor: "vermelho", prioridade: 3, sub: "Revisar vínculo/documento da arma" },
+        dataVencimento: null,
+        diasRestantes: null,
+      });
+      if (link.hasWeakCrafDoc || link.hasWeakGteDoc || link.semVinculo) out.push({
+        id: `arma-vinculo-${w.source}-${w.id}`,
+        titulo: `${nome} — DOCUMENTO SEM VÍNCULO COM ARMA`,
+        tipo: "VÍNCULO",
+        status: { dimensao: "alerta", codigo: "documentos_incompletos", label: "REVISAR", cor: "laranja", prioridade: 4, sub: "Revisar vínculo do documento" },
+        dataVencimento: null,
+        diasRestantes: null,
+      });
+    });
+
     return out;
   }, [
     expDocs, processos, exames,
     crUnified, crafUnified, gteUnified,
     documentosUnified, processosUnified, autorizacoesUnified, examesUnified,
+    weapons, weaponLinkState,
   ]);
 
   // ── BLOCO CANÔNICO — useClienteStatusAgregado ─────────────────────────────
