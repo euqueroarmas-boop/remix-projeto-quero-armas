@@ -148,6 +148,7 @@ export default function QAClientePortalPage() {
   const avatarUrl = avatarOficial?.url || null;
   const hasTacticalAvatar = avatarOficial?.source === "avatar_tatico_path";
   const hasAnyPhoto = avatarOficial?.hasPhoto || Boolean((cliente as any)?.imagem || (cliente as any)?.avatar_tatico_path);
+  const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
 
   useEffect(() => {
     const load = async () => {
@@ -539,13 +540,17 @@ export default function QAClientePortalPage() {
               title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
               className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
             >
-              {hasAnyPhoto && avatarUrl ? (
+              {avatarUrl ? (
                 <div className="h-12 w-12 sm:h-[52px] sm:w-[52px] overflow-hidden rounded-full ring-1 ring-slate-200 shadow-sm bg-white">
                   <img
                     src={avatarUrl}
                     alt={userName || "Foto do cliente"}
                     className="h-full w-full object-cover"
                   />
+                </div>
+              ) : avatarResolving ? (
+                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-slate-100 ring-1 ring-slate-200 shadow-sm">
+                  <div className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-[#7A1F2B] animate-spin" />
                 </div>
               ) : (
                 <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
