@@ -958,7 +958,8 @@ export function ArsenalView({
     weapons.forEach((w) => {
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
       if (!link) return;
-      if (!link.gteValida) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "GTE AUSENTE", cor: "vermelho", prioridade: 3, sub: "Regularizar vínculo/documento da arma" });
+      const gteExigivel = isGteExigivelParaArma(w as any);
+      if (gteExigivel && !link.gteValida) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "GTE AUSENTE", cor: "vermelho", prioridade: 3, sub: "Regularizar vínculo/documento da arma" });
       if (!link.crafValido) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "CRAF AUSENTE", cor: "vermelho", prioridade: 3, sub: "Revisar vínculo/documento da arma" });
       if (link.hasWeakCrafDoc || link.hasWeakGteDoc || link.semVinculo) itens.push({ dimensao: "alerta", codigo: "documentos_incompletos", label: "REVISAR VÍNCULO", cor: "laranja", prioridade: 4, sub: "Documento sem vínculo confiável com arma" });
     });
@@ -1103,7 +1104,8 @@ export function ArsenalView({
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
       if (!link) return;
       const nome = (w.nome_arma || "ARMA").toUpperCase();
-      if (!link.gteValida) out.push({
+      const gteExigivel = isGteExigivelParaArma(w as any);
+      if (gteExigivel && !link.gteValida) out.push({
         id: `arma-gte-${w.source}-${w.id}`,
         titulo: `${nome} — GTE AUSENTE`,
         tipo: "ARMA/GTE",
