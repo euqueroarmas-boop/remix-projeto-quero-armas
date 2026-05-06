@@ -854,10 +854,59 @@ export function ArsenalView({
   const relatedDocs = useMemo(() => {
     if (!selected) return [];
     const link = weaponLinkState.get(`${selected.source}-${selected.id}`);
-    const out: { category: string; title: string; date: string | null }[] = [];
-    (link?.crafMatches || []).forEach((c) => out.push({ category: "CRAF", title: c.nome_arma || c.nome_craf || "CRAF vinculado", date: c.data_validade }));
-    (link?.gteMatches || []).forEach((g) => out.push({ category: "GTE", title: g.nome_arma || g.nome_gte || "GTE vinculada", date: g.data_validade }));
-    (link?.gtMatches || []).forEach((g: any) => out.push({ category: "GT", title: g.arquivo_nome || "GT enviada (retirada/transporte inicial)", date: g.data_emissao || null }));
+    const out: { category: string; title: string; date: string | null; bucket?: string; path?: string | null; fileName?: string | null }[] = [];
+    // Resolver arquivo original do CRAF: prioriza qa_crafs.arquivo_storage_path,
+    // depois cai em qa_documentos_cliente vinculado (mesma série/SIGMA/número CRAF).
+    const findDocFile = (matches: any[], match: any, kind: "craf" | "gte"): { path: string | null; fileName: string | null } => {
+      const direct = match?.arquivo_storage_path || match?.storage_path;
+      if (direct) return { path: direct, fileName: match?.arquivo_nome || match?.nome_original || null };
+      const sib = (matches || []).find((m) => m?.__doc && m?.arquivo_storage_path);
+      if (sib) return { path: sib.arquivo_storage_path, fileName: sib.arquivo_nome };
+      // fallback: procurar em meusDocs por número de série / SIGMA / número CRAF
+      const tipos = kind === "craf" ? ["craf", "sinarm"] : ["gte"];
+      const serie = String(match?.numero_arma || "").replace(/\s+/g, "").toUpperCase();
+      const sigma = String(match?.numero_sigma || "").replace(/\s+/g, "").toUpperCase();
+      const numero = String(match?.nome_craf || match?.numero_gte || "").replace(/\s+/g, "").toUpperCase();
+      const hit = (meusDocs || []).find((d: any) => {
+        if (!tipos.includes(String(d?.tipo_documento || "").toLowerCase())) return false;
+        if (!d?.arquivo_storage_path) return false;
+        const ds = String(d?.arma_numero_serie || "").replace(/\s+/g, "").toUpperCase();
+        const dn = String(d?.numero_documento || "").replace(/\s+/g, "").toUpperCase();
+        return (serie && ds === serie) || (sigma && dn === sigma) || (numero && dn === numero);
+      });
+      if (hit) return { path: hit.arquivo_storage_path, fileName: hit.arquivo_nome };
+      return { path: null, fileName: null };
+    };
+    (link?.crafMatches || []).forEach((c) => {
+      const f = findDocFile(link?.crafMatches || [], c, "craf");
+      out.push({
+        category: "CRAF",
+        title: c.nome_arma || c.nome_craf || "CRAF vinculado",
+        date: c.data_validade,
+        bucket: "qa-documentos",
+        path: f.path,
+        fileName: f.fileName,
+      });
+    });
+    (link?.gteMatches || []).forEach((g) => {
+      const f = findDocFile(link?.gteMatches || [], g, "gte");
+      out.push({
+        category: "GTE",
+        title: g.nome_arma || g.nome_gte || "GTE vinculada",
+        date: g.data_validade,
+        bucket: "qa-documentos",
+        path: f.path,
+        fileName: f.fileName,
+      });
+    });
+    (link?.gtMatches || []).forEach((g: any) => out.push({
+      category: "GT",
+      title: g.arquivo_nome || "GT enviada (retirada/transporte inicial)",
+      date: g.data_emissao || null,
+      bucket: "qa-documentos",
+      path: g.arquivo_storage_path || null,
+      fileName: g.arquivo_nome || null,
+    }));
     if (!link?.crafValido) out.push({ category: "CRAF", title: link?.hasWeakCrafDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "CRAF ausente — regularizar documento da arma.", date: null });
     // GT — sempre informativa
     if (link?.gtDeclaradaNaoPossui) {
