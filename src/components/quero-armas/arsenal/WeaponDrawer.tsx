@@ -1,4 +1,4 @@
-import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2 } from "lucide-react";
+import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2, Eye } from "lucide-react";
 import { WeaponSilhouette } from "./WeaponSilhouette";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
 import {
@@ -17,11 +17,15 @@ import { toast } from "sonner";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { useEffect, useMemo, useState } from "react";
+import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 
 interface RelatedDoc {
   category: string;
   title: string;
   date: string | null;
+  bucket?: string;
+  path?: string | null;
+  fileName?: string | null;
 }
 
 interface Props {
@@ -49,6 +53,7 @@ const formatDate = (d: string | null) => {
 
 export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClose, onDelete, clienteId, onGtDeclaracaoChange }: Props) {
   const { items, match } = useArmamentoCatalogo();
+  const viewer = useDocumentoViewer();
   const [confirmDel, setConfirmDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [gtConfirm, setGtConfirm] = useState(false);
