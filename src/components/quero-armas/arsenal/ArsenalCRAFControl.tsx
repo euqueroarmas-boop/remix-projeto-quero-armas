@@ -23,6 +23,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalCRAFEditModal, { isModeloCRAFInvalido } from "./ArsenalCRAFEditModal";
+import {
+  ArsenalCardSizeToggle,
+  SIZE_CLASSES,
+  TONE_BORDER,
+  TONE_ROW_BG,
+  useArsenalCardSize,
+} from "./useArsenalCardSize";
 
 interface Props {
   clienteId: number;
@@ -113,6 +120,8 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState<CrafDocumento | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  const sz = SIZE_CLASSES[cardSize];
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -282,6 +291,7 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" className="hidden" accept="application/pdf,image/*" onChange={onFileSelected} />
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           <button
             onClick={onCadastroManual}
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
@@ -323,21 +333,25 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
           {canonicos.map((c) => {
             const sv = statusVisual(c.data_validade);
             return (
-              <li key={`craf-${c.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
-                <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+              <li
+                key={`craf-${c.id}`}
+                className={`flex flex-wrap items-center gap-3 border-l-[3px] ${sz.row}`}
+                style={{ borderLeftColor: TONE_BORDER[sv.tone], background: TONE_ROW_BG[sv.tone] }}
+              >
+                <FileText className={`${sz.iconBox} shrink-0 text-slate-400`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold uppercase tracking-wide text-slate-800">
+                    <span className={`font-bold uppercase tracking-wide text-slate-800 ${sz.title}`}>
                       {c.nome_craf || (c.numero_sigma ? `SIGMA ${c.numero_sigma}` : "CRAF SEM IDENTIFICAÇÃO")}
                     </span>
                     <span
-                      className="rounded-full px-2 py-[1px] text-[9px] font-bold uppercase tracking-wider"
+                      className={`rounded-full font-bold uppercase tracking-wider ${sz.badge}`}
                       style={{ background: TONE_BG[sv.tone], color: TONE_FG[sv.tone] }}
                     >
                       {sv.label}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                  <div className={`mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 ${sz.meta}`}>
                     <span>Validade: <b className="text-slate-700">{fmtDate(c.data_validade)}</b></span>
                     {c.nome_arma && <span>Arma: <b className="text-slate-700">{c.nome_arma}</b></span>}
                     {c.numero_arma && <span>Nº arma: <b className="text-slate-700">{c.numero_arma}</b></span>}
@@ -362,15 +376,19 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
               const erroIA = ia === "erro";
               const pendenteRevisao = !validadoPelaEquipe || modeloInv || ia === "pendente_revisao";
               return (
-                <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
-                  <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                <li
+                  key={`doc-${d.id}`}
+                  className={`flex flex-wrap items-center gap-3 border-l-[3px] ${sz.row}`}
+                  style={{ borderLeftColor: TONE_BORDER[sv.tone], background: TONE_ROW_BG[sv.tone] }}
+                >
+                  <FileText className={`${sz.iconBox} shrink-0 text-slate-400`} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold uppercase tracking-wide text-slate-800">
+                      <span className={`font-bold uppercase tracking-wide text-slate-800 ${sz.title}`}>
                         {d.numero_documento ? `CRAF Nº ${d.numero_documento}` : (d.arquivo_nome || "CRAF EM ANÁLISE")}
                       </span>
                       <span
-                        className="rounded-full px-2 py-[1px] text-[9px] font-bold uppercase tracking-wider"
+                        className={`rounded-full font-bold uppercase tracking-wider ${sz.badge}`}
                         style={{ background: TONE_BG[sv.tone], color: TONE_FG[sv.tone] }}
                       >
                         {sv.label}
@@ -400,7 +418,7 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                    <div className={`mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 ${sz.meta}`}>
                       <span>Validade: <b className="text-slate-700">{fmtDate(d.data_validade)}</b></span>
                       {d.orgao_emissor && <span>Órgão: <b className="text-slate-700">{d.orgao_emissor}</b></span>}
                       {d.arma_modelo && <span>Modelo: <b className="text-slate-700">{d.arma_modelo}</b></span>}
