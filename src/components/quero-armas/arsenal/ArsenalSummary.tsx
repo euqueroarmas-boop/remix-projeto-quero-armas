@@ -353,6 +353,7 @@ function KpiCard({
             {def.label}
           </div>
           <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+          {extraSlot}
         </>
       )}
       </button>
