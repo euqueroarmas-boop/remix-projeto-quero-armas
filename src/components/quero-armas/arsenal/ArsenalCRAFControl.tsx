@@ -23,6 +23,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalCRAFEditModal, { isModeloCRAFInvalido } from "./ArsenalCRAFEditModal";
+import {
+  ArsenalCardSizeToggle,
+  SIZE_CLASSES,
+  TONE_BORDER,
+  TONE_ROW_BG,
+  useArsenalCardSize,
+} from "./useArsenalCardSize";
 
 interface Props {
   clienteId: number;
