@@ -1412,6 +1412,13 @@ export function ArsenalView({
 
     for (const w of weapons) {
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      const hasGteVinculada = !!(link?.gteMatches && link.gteMatches.length > 0);
+      const hasGtVinculada = !!(link?.gtMatches && link.gtMatches.length > 0);
+      const regime = getWeaponRegime(w as any, {
+        hasGteVinculada,
+        hasGtVinculada,
+        numeroSigma: w.numero_sigma,
+      });
       if (link?.crafValido) comCrafValido++;
       if (link?.gteValida) comGteAtiva++;
 
@@ -1421,15 +1428,14 @@ export function ArsenalView({
       const vencendo = dias != null && dias >= 0 && dias <= 60;
       if (vencendo) comVencimento++;
 
-      // Irregularidade: vencido OU sem vínculo confiável (sem nº de série e
-      // SIGMA) OU sem CRAF válido vinculado OU sem GTE ativa vinculada.
+      // Irregularidade: vencido OU sem vínculo confiável OU sem CRAF válido
+      // OU (regime SIGMA sem GTE ativa) OU regime REVISAR.
       const semVinculo = !!link?.semVinculo;
       const semCrafValido = !link?.crafValido;
-      // GTE só conta como irregularidade quando é exigível para o regime da arma.
-      // Arma SINARM/Defesa Pessoal: GTE não é documento permanente.
-      const gteExigivel = isGteExigivelParaArma(w as any);
+      const gteExigivel = regime === "SIGMA";
       const semGteAtiva = gteExigivel && !link?.gteValida;
-      if (vencido || semVinculo || semCrafValido || semGteAtiva) comIrregularidade++;
+      const regimeRevisar = regime === "REVISAR";
+      if (vencido || semVinculo || semCrafValido || semGteAtiva || regimeRevisar) comIrregularidade++;
     }
 
     const piorStatus: "ok" | "warn" | "danger" | "muted" =
