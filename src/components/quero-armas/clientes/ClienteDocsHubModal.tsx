@@ -62,6 +62,34 @@ type IAClass = {
   revisao_obrigatoria?: boolean;
 };
 
+type AutoResult =
+  | { safe: true; documento_id: string | null; tipo_documento: string }
+  | {
+      safe: false;
+      motivo:
+        | "documento_nao_identificado"
+        | "confianca_insuficiente"
+        | "campos_ilegiveis"
+        | "duplicado"
+        | "erro_insercao"
+        | "erro_upload";
+      campos_faltando?: string[];
+      confianca?: number;
+      mensagem?: string;
+    };
+
+const MOTIVOS: Record<string, string> = {
+  documento_nao_identificado:
+    "Não conseguimos identificar este documento com segurança. Envie uma foto/PDF mais nítido.",
+  confianca_insuficiente:
+    "A leitura do documento não está nítida o suficiente. Reenvie em melhor qualidade.",
+  campos_ilegiveis:
+    "Alguns campos obrigatórios ficaram ilegíveis. Reenvie a foto/PDF com melhor nitidez.",
+  duplicado: "Este documento já está cadastrado no seu Arsenal.",
+  erro_insercao: "Não foi possível cadastrar automaticamente. Tente novamente.",
+  erro_upload: "Falha ao enviar o arquivo. Verifique sua conexão e tente novamente.",
+};
+
 function dataIsoFromBr(v?: string | null): string {
   if (!v) return "";
   const m = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -183,6 +211,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   const [dragOver, setDragOver] = useState(false);
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
   const [showTipoOverride, setShowTipoOverride] = useState(false);
+  const [autoResult, setAutoResult] = useState<AutoResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -194,6 +223,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       setForm((prev) => ({ ...prev, tipo_documento: defaultTipo || prev.tipo_documento }));
       setClassificacao(null);
       setShowTipoOverride(false);
+      setAutoResult(null);
     }
   }, [open, defaultTipo]);
 
@@ -217,6 +247,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     }
 
     setExtracting(true);
+    setAutoResult(null);
     try {
       const dataUrl = await fileToDataUrl(target);
 
@@ -270,16 +301,84 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         console.warn("[extract complementar] ignorado:", eExt);
       }
 
-      if (ia.revisao_obrigatoria || ia.tipoDetectado === "DESCONHECIDO") {
-        toast.warning("Documento ilegível ou não identificado. Revise manualmente antes de salvar.");
-      } else {
-        toast.success(`Documento identificado como ${ia.tipoDetectado}. Revise os dados antes de salvar.`);
-      }
+      // 3) Se a IA estiver segura (>=0.85, identificou tipo e campos legíveis),
+      //    o backend faz upload + auto-cadastro. Caso contrário devolve motivo.
+      await tryAutoInsert(target, ia);
     } catch (e: any) {
       console.error("[classify+extract] error:", e);
       toast.error(e?.message || "Falha ao processar o documento.");
     } finally {
       setExtracting(false);
+    }
+  }
+
+  async function tryAutoInsert(target: File, ia: IAClass) {
+    // Pré-checagem rápida client-side (evita upload desnecessário)
+    if (
+      !ia ||
+      ia.tipoDetectado === "DESCONHECIDO" ||
+      (ia.confianca || 0) < 0.85 ||
+      ia.revisao_obrigatoria
+    ) {
+      const motivo: AutoResult = {
+        safe: false,
+        motivo: ia?.tipoDetectado === "DESCONHECIDO" ? "documento_nao_identificado" : "confianca_insuficiente",
+        confianca: ia?.confianca,
+      };
+      setAutoResult(motivo);
+      return;
+    }
+
+    try {
+      // Upload para storage (sob a pasta do tipo identificado)
+      const tipoDb = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      const safe = sanitize(target.name);
+      const ownerKey = customerId ?? `qa-${qaClienteId}`;
+      const path = `cliente-docs/${ownerKey}/${tipoDb}/${Date.now()}_${safe}`;
+      const { error: upErr } = await supabase.storage
+        .from("qa-documentos")
+        .upload(path, target, { upsert: false, contentType: target.type });
+      if (upErr) {
+        console.error("[auto upload] error:", upErr);
+        setAutoResult({ safe: false, motivo: "erro_upload" });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("qa-arsenal-doc-autoinsert", {
+        body: {
+          customer_id: customerId ?? null,
+          qa_cliente_id: qaClienteId ?? null,
+          arquivo_storage_path: path,
+          arquivo_nome: target.name,
+          arquivo_mime: target.type || null,
+          classificacao: ia,
+        },
+      });
+
+      if (error) {
+        console.error("[autoinsert] edge error:", error);
+        setAutoResult({ safe: false, motivo: "erro_insercao", mensagem: error.message });
+        return;
+      }
+
+      const r = (data || {}) as any;
+      if (r?.safe) {
+        setAutoResult({ safe: true, documento_id: r.documento_id, tipo_documento: r.tipo_documento });
+        toast.success("Documento cadastrado automaticamente no seu Arsenal.");
+        onSaved();
+        // pequeno delay para o cliente ver o resultado antes de fechar
+        setTimeout(() => onClose(), 900);
+      } else {
+        setAutoResult({
+          safe: false,
+          motivo: r?.motivo || "campos_ilegiveis",
+          campos_faltando: r?.campos_faltando,
+          confianca: r?.confianca,
+        });
+      }
+    } catch (e: any) {
+      console.error("[autoinsert] error:", e);
+      setAutoResult({ safe: false, motivo: "erro_insercao", mensagem: e?.message });
     }
   }
 
@@ -561,20 +660,26 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 <div
                   className={cn(
                     "mt-3 rounded-2xl border p-3",
-                    classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO"
+                    autoResult?.safe === false
                       ? "border-amber-300 bg-amber-50"
-                      : "border-emerald-300 bg-emerald-50",
+                      : autoResult?.safe
+                        ? "border-emerald-400 bg-emerald-50"
+                        : "border-emerald-300 bg-emerald-50",
                   )}
                 >
                   <div className="flex items-start gap-2">
-                    {classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO" ? (
+                    {autoResult?.safe === false ? (
                       <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-700" />
                     ) : (
-                      <ScanLine className="mt-0.5 h-4 w-4 text-emerald-700" />
+                      autoResult?.safe ? (
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-700" />
+                      ) : (
+                        <ScanLine className="mt-0.5 h-4 w-4 text-emerald-700" />
+                      )
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        Tipo identificado pela IA
+                        {autoResult?.safe ? "Cadastrado automaticamente no Arsenal" : "Tipo identificado pela IA"}
                       </div>
                       <div className="mt-0.5 text-sm font-bold uppercase text-foreground">
                         {tipoAtual?.label || form.tipo_documento.toUpperCase()}{" "}
@@ -587,20 +692,46 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                           {classificacao.justificativa}
                         </p>
                       )}
-                      {(classificacao.revisao_obrigatoria || classificacao.tipoDetectado === "DESCONHECIDO") && (
-                        <p className="mt-1 text-xs font-semibold text-amber-800">
-                          Documento ilegível ou não identificado. Revise os campos antes de salvar.
+                      {autoResult?.safe === false && (
+                        <div className="mt-2 rounded-lg bg-amber-100/70 p-2">
+                          <p className="text-xs font-semibold text-amber-900">
+                            {MOTIVOS[autoResult.motivo] || "Não foi possível cadastrar automaticamente."}
+                          </p>
+                          {autoResult.campos_faltando?.length ? (
+                            <p className="mt-1 text-[11px] text-amber-900">
+                              Campos ilegíveis: {autoResult.campos_faltando.join(", ")}
+                            </p>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFile(null);
+                              setClassificacao(null);
+                              setAutoResult(null);
+                              fileInputRef.current?.click();
+                            }}
+                            className="mt-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-amber-700 px-3 text-xs font-semibold uppercase tracking-wide text-white hover:bg-amber-800"
+                          >
+                            <Upload className="h-3.5 w-3.5" /> Enviar novamente
+                          </button>
+                        </div>
+                      )}
+                      {autoResult?.safe && (
+                        <p className="mt-1 text-xs font-semibold text-emerald-800">
+                          Tudo certo! O documento já está vinculado ao seu Arsenal.
                         </p>
                       )}
-                      <button
+                      {!autoResult?.safe && (
+                        <button
                         type="button"
                         onClick={() => setShowTipoOverride((v) => !v)}
                         className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-foreground underline-offset-2 hover:underline"
                       >
                         <Pencil className="h-3 w-3" />
                         {showTipoOverride ? "Manter tipo identificado" : "Não é esse tipo? Alterar manualmente"}
-                      </button>
-                      {showTipoOverride && (
+                        </button>
+                      )}
+                      {showTipoOverride && !autoResult?.safe && (
                         <div className="mt-2">
                           <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
                             <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
@@ -738,6 +869,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         </div>
 
         <div className="shrink-0 border-t border-border bg-background px-4 py-4 sm:px-6">
+          {autoResult?.safe ? (
+            <div className="flex">
+              <Button
+                onClick={onClose}
+                className="h-11 flex-1 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
+              </Button>
+            </div>
+          ) : (
           <div className="flex gap-2.5">
             <Button
               variant="outline"
@@ -748,13 +889,23 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
             </Button>
             <Button
               onClick={handleSave}
-              disabled={saving}
+              disabled={
+                saving ||
+                extracting ||
+                // Bloqueia cadastro manual quando a IA já bloqueou por insegurança.
+                // Cliente é orientado a reenviar o documento mais nítido.
+                (autoResult?.safe === false &&
+                  (autoResult.motivo === "documento_nao_identificado" ||
+                    autoResult.motivo === "confianca_insuficiente" ||
+                    autoResult.motivo === "campos_ilegiveis"))
+              }
               className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
               {saving ? "Salvando..." : "Salvar documento"}
             </Button>
           </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
