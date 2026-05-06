@@ -658,15 +658,19 @@ export function ArsenalSummary({
         icon: <Stethoscope className="h-4 w-4" />,
         label: "Exames/Laudos",
         value: examesCount,
-        hint: examesUnified
-          ? examesUnified.sub ?? examesUnified.label
-          : examesCount === 0 ? "Sem exames" : "Cadastrados",
-        tone: examesUnified ? corToTone(examesUnified.cor) : (examesCount > 0 ? "ok" : "steel"),
+        hint: examesAnalytics.total > 0
+          ? examesHint
+          : examesUnified
+            ? examesUnified.sub ?? examesUnified.label
+            : "Sem exames",
+        tone: examesAnalytics.total > 0
+          ? examesAnalytics.tone
+          : (examesUnified ? corToTone(examesUnified.cor) : "steel"),
         target: "exames",
       },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown, examesCount],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown, examesCount, examesUnified, examesAnalytics, examesHint],
   );
 
   // Ordem efetiva:
