@@ -6047,13 +6047,18 @@ export type Database = {
           data_movimentacao: string
           data_validade: string | null
           documento_nome: string | null
+          documento_revisado_em: string | null
+          documento_revisado_por: string | null
           documento_url: string | null
+          ia_dados_extraidos: Json | null
+          ia_status: string
           id: string
           lote: string | null
           marca: string | null
           motivo: string | null
           observacao: string | null
           quantidade: number
+          revisao_obrigatoria: boolean
           tipo: string
           updated_at: string
         }
@@ -6066,13 +6071,18 @@ export type Database = {
           data_movimentacao?: string
           data_validade?: string | null
           documento_nome?: string | null
+          documento_revisado_em?: string | null
+          documento_revisado_por?: string | null
           documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string
           id?: string
           lote?: string | null
           marca?: string | null
           motivo?: string | null
           observacao?: string | null
           quantidade: number
+          revisao_obrigatoria?: boolean
           tipo: string
           updated_at?: string
         }
@@ -6085,13 +6095,18 @@ export type Database = {
           data_movimentacao?: string
           data_validade?: string | null
           documento_nome?: string | null
+          documento_revisado_em?: string | null
+          documento_revisado_por?: string | null
           documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string
           id?: string
           lote?: string | null
           marca?: string | null
           motivo?: string | null
           observacao?: string | null
           quantidade?: number
+          revisao_obrigatoria?: boolean
           tipo?: string
           updated_at?: string
         }
@@ -8134,6 +8149,19 @@ export type Database = {
       }
     }
     Views: {
+      qa_arsenal_fila_revisao: {
+        Row: {
+          arquivo_nome: string | null
+          cliente_id: number | null
+          created_at: string | null
+          documento_id: string | null
+          ia_dados: Json | null
+          origem_tabela: string | null
+          status: string | null
+          storage_path: string | null
+        }
+        Relationships: []
+      }
       qa_cliente_armas: {
         Row: {
           arma_uid: string | null

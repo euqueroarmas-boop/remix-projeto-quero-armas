@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
 import { getStatusValidade, type CorStatus } from "@/lib/quero-armas/statusUnificado";
+import DocClassReviewModal, { type ClassificacaoIA } from "./DocClassReviewModal";
+import { classifyArsenalDoc } from "./classifyDoc";
 
 type MotivoSaida =
   | "treino"
@@ -138,6 +140,14 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
   });
   const [fileSaida, setFileSaida] = useState<File | null>(null);
 
+  // Estado da revisão IA (sempre exibida quando um anexo é enviado)
+  const [iaReview, setIaReview] = useState<{
+    contexto: "entrada" | "saida";
+    file: File;
+    classificacao: ClassificacaoIA;
+  } | null>(null);
+  const [iaLoading, setIaLoading] = useState(false);
+
   const reload = async () => {
     setLoading(true);
     const [sResp, mResp] = await Promise.all([
@@ -202,6 +212,40 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
         return;
       }
     }
+    // Se houver anexo, sempre passar pela revisão IA antes de salvar.
+    if (fileEntrada) {
+      setIaLoading(true);
+      try {
+        const classificacao = await classifyArsenalDoc({
+          file: fileEntrada,
+          tipoSelecionado: "NOTA_FISCAL",
+        });
+        setIaLoading(false);
+        if (!classificacao) {
+          // IA indisponível → tratar como revisão obrigatória (não contamina KPI)
+          setIaReview({
+            contexto: "entrada",
+            file: fileEntrada,
+            classificacao: {
+              tipoDetectado: "DESCONHECIDO",
+              confianca: 0,
+              justificativa: "Classificação automática indisponível no momento.",
+              camposExtraidos: {},
+              divergenciaComSelecaoManual: false,
+              recomendacao: "revisao_obrigatoria",
+              revisao_obrigatoria: true,
+            },
+          });
+        } else {
+          setIaReview({ contexto: "entrada", file: fileEntrada, classificacao });
+        }
+        return; // Aguarda decisão do cliente para realmente persistir.
+      } catch (e) {
+        setIaLoading(false);
+        toast.error("Falha ao classificar anexo. Tente novamente.");
+        return;
+      }
+    }
     setSaving(true);
     let documento_url: string | null = null;
     let documento_nome: string | null = null;
@@ -257,6 +301,38 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
       toast.error("Para motivo OUTRO, observação é obrigatória.");
       return;
     }
+    if (fileSaida) {
+      setIaLoading(true);
+      try {
+        const classificacao = await classifyArsenalDoc({
+          file: fileSaida,
+          tipoSelecionado: "NOTA_FISCAL",
+        });
+        setIaLoading(false);
+        if (!classificacao) {
+          setIaReview({
+            contexto: "saida",
+            file: fileSaida,
+            classificacao: {
+              tipoDetectado: "DESCONHECIDO",
+              confianca: 0,
+              justificativa: "Classificação automática indisponível no momento.",
+              camposExtraidos: {},
+              divergenciaComSelecaoManual: false,
+              recomendacao: "revisao_obrigatoria",
+              revisao_obrigatoria: true,
+            },
+          });
+        } else {
+          setIaReview({ contexto: "saida", file: fileSaida, classificacao });
+        }
+        return;
+      } catch (e) {
+        setIaLoading(false);
+        toast.error("Falha ao classificar anexo. Tente novamente.");
+        return;
+      }
+    }
     setSaving(true);
     let documento_url: string | null = null;
     let documento_nome: string | null = null;
@@ -308,6 +384,118 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
     }
     return byKey;
   }, [movs]);
+
+  // Persiste a movimentação após decisão do cliente na tela de revisão IA.
+  const persistAfterReview = async (
+    decision: "corrigir" | "manter_revisao" | "cancelar",
+    revisaoObrigatoria: boolean,
+  ) => {
+    if (!iaReview) return;
+    const { contexto, file, classificacao } = iaReview;
+    if (decision === "cancelar") {
+      setIaReview(null);
+      return;
+    }
+    setSaving(true);
+    try {
+      // Upload do anexo
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+      const path = `clientes/${clienteId}/municoes/${Date.now()}-${safeName}`;
+      const up = await supabase.storage.from("qa-documentos").upload(path, file, {
+        cacheControl: "3600", upsert: false, contentType: file.type || undefined,
+      });
+      if (up.error) throw new Error(up.error.message);
+
+      const auditoria = {
+        origem: "arsenal_bancada_tatica",
+        contexto: contexto === "entrada" ? "municao_entrada" : "municao_saida",
+        tipoSelecionado: "NOTA_FISCAL",
+        tipoDetectado: classificacao.tipoDetectado,
+        confianca: classificacao.confianca,
+        justificativa: classificacao.justificativa,
+        camposExtraidos: classificacao.camposExtraidos ?? {},
+        divergenciaComSelecaoManual: classificacao.divergenciaComSelecaoManual,
+        recomendacao: classificacao.recomendacao,
+        revisao_obrigatoria: revisaoObrigatoria,
+        decisao_cliente: decision,
+        decidido_em: new Date().toISOString(),
+        classificacao_arsenal: classificacao.tipoDetectado,
+      };
+
+      const ia_status = revisaoObrigatoria
+        ? "revisao_obrigatoria"
+        : classificacao.divergenciaComSelecaoManual
+          ? "pendente_revisao"
+          : "processado";
+
+      if (contexto === "entrada") {
+        const qtd = parseInt(formEntrada.quantidade, 10);
+        const isoFab = formEntrada.data_fabricacao.trim()
+          ? brToIso(formEntrada.data_fabricacao.trim())
+          : null;
+        const isoVal = formEntrada.data_validade.trim()
+          ? brToIso(formEntrada.data_validade.trim())
+          : null;
+        const { error } = await supabase.from("qa_municoes_movimentacoes" as any).insert({
+          cliente_id: clienteId,
+          tipo: "ENTRADA",
+          calibre: formEntrada.calibre.trim().toUpperCase(),
+          marca: formEntrada.marca.trim().toUpperCase() || null,
+          lote: formEntrada.lote.trim().toUpperCase() || null,
+          quantidade: qtd,
+          data_fabricacao: isoFab,
+          data_validade: isoVal,
+          observacao: formEntrada.observacao.trim() || null,
+          documento_url: path,
+          documento_nome: file.name,
+          ia_status,
+          ia_dados_extraidos: auditoria,
+          revisao_obrigatoria: revisaoObrigatoria,
+        } as any);
+        if (error) throw new Error(error.message);
+        if (revisaoObrigatoria) {
+          toast.success("Anexo enviado para revisão da Equipe Quero Armas. O lote ficará aguardando validação.");
+        } else {
+          toast.success("Entrada registrada com NF validada.");
+        }
+        setFormEntrada({
+          calibre: "9MM", marca: "", lote: "", quantidade: "",
+          data_fabricacao: "", data_validade: "", observacao: "",
+        });
+        setFileEntrada(null);
+      } else {
+        const qtd = parseInt(formSaida.quantidade, 10);
+        const { error } = await supabase.from("qa_municoes_movimentacoes" as any).insert({
+          cliente_id: clienteId,
+          tipo: "SAIDA",
+          calibre: showSaida!.calibre,
+          marca: showSaida!.marca || null,
+          lote: showSaida!.lote || null,
+          quantidade: qtd,
+          motivo: formSaida.motivo,
+          observacao: formSaida.observacao.trim() || null,
+          documento_url: path,
+          documento_nome: file.name,
+          ia_status,
+          ia_dados_extraidos: auditoria,
+          revisao_obrigatoria: revisaoObrigatoria,
+        } as any);
+        if (error) throw new Error(error.message);
+        toast.success(revisaoObrigatoria
+          ? "Saída registrada. Anexo aguardando revisão da Equipe."
+          : "Saída registrada.");
+        setShowSaida(null);
+        setFormSaida({ quantidade: "", motivo: "treino", observacao: "" });
+        setFileSaida(null);
+      }
+      setIaReview(null);
+      reload();
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao salvar movimentação.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
@@ -581,6 +769,25 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
             </div>
           </div>
         </div>
+      )}
+
+      {iaLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="rounded-xl bg-white px-4 py-3 text-[12px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-xl flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Analisando anexo com IA…
+          </div>
+        </div>
+      )}
+      {iaReview && (
+        <DocClassReviewModal
+          open
+          tipoSelecionado="NOTA_FISCAL"
+          classificacao={iaReview.classificacao}
+          onResolve={({ decision, revisaoObrigatoria }) =>
+            persistAfterReview(decision, revisaoObrigatoria)
+          }
+        />
       )}
     </div>
   );
