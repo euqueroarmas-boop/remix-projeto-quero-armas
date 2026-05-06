@@ -154,14 +154,12 @@ function WeaponCard({
       </div>
 
       <div
-        className="relative p-4 origin-top-left"
+        className="relative p-4"
         style={{
-          // Encolhe TODO o conteúdo do card de uma vez (texto, imagem, stats, badges,
-          // padding) de forma proporcional. Compatível com Safari/iOS.
-          transform:
-            size === "sm" ? "scale(0.7)" : size === "md" ? "scale(0.85)" : "none",
-          width:
-            size === "sm" ? "142.857%" : size === "md" ? "117.647%" : "100%",
+          // Encolhe TUDO de forma proporcional (texto, imagem, stats, padding)
+          // usando font-size como base — todas as classes text-[Npx] herdam.
+          // Como a maioria dos tamanhos é fixa em px, replicamos via CSS variable.
+          fontSize: size === "sm" ? "10px" : size === "md" ? "12px" : "14px",
         }}
       >
         <div className="flex items-start justify-between gap-3">
