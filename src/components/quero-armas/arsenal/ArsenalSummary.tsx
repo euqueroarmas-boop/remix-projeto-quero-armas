@@ -1117,6 +1117,54 @@ export function ArsenalSummary({
             return cardEl;
           })}
         </div>
+
+      {/* ── Painel explicativo: AO ABRIR UMA ARMA NA BANCADA ─────────────
+          Permanente e sempre visível: comunica que CRAF/GTE/munições/validade/
+          nº de série/SIGMA estão dentro de cada arma na Bancada Tática.
+          Substitui visualmente os antigos KPIs independentes de CRAF e GTE. */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <div
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg"
+            style={{ background: "#7A1F2B14", color: "#7A1F2B" }}
+          >
+            <Crosshair className="h-3.5 w-3.5" />
+          </div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "#7A1F2B" }}>
+            Ao abrir uma arma na Bancada
+          </h3>
+        </div>
+        <p className="text-[12px] text-slate-600 mb-3">
+          Você visualiza todas as informações vinculadas àquela arma.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 lg:gap-4 lg:divide-x lg:divide-slate-100">
+          {[
+            { icon: <FileBadge className="h-4 w-4" />, color: "hsl(142 70% 38%)", title: "CRAF da arma", desc: "Situação e validade do CRAF vinculado" },
+            { icon: <ClipboardList className="h-4 w-4" />, color: "hsl(142 70% 38%)", title: "GTE da arma", desc: "Situação e validade da GTE vinculada" },
+            { icon: <Boxes className="h-4 w-4" />, color: "hsl(38 92% 50%)", title: "Munições por calibre", desc: "Estoque disponível para o calibre da arma" },
+            { icon: <CalendarClock className="h-4 w-4" />, color: "hsl(220 13% 50%)", title: "Validade e status", desc: "Alertas de vencimentos e pendências" },
+            { icon: <Hash className="h-4 w-4" />, color: "hsl(220 13% 50%)", title: "Nº de série", desc: "Número de série da arma" },
+            { icon: <Fingerprint className="h-4 w-4" />, color: "#7A1F2B", title: "SIGMA / SINARM", desc: "ID SIGMA/SINARM e situação no sistema" },
+          ].map((b, i) => (
+            <div key={i} className="flex items-start gap-2.5 lg:px-3 first:lg:pl-0">
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{ background: `${b.color}14`, color: b.color }}
+              >
+                {b.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-700">
+                  {b.title}
+                </div>
+                <div className="text-[10.5px] text-slate-500 leading-snug mt-0.5">
+                  {b.desc}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
