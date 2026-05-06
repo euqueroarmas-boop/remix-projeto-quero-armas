@@ -137,7 +137,6 @@ export default function QAClientePortalPage() {
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
-  const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
   const [mustChangePassword, setMustChangePassword] = useState(false);
@@ -348,31 +347,6 @@ export default function QAClientePortalPage() {
           setMeusDocs((docsData as any[]) ?? []);
         }
 
-        // Selfie do cadastro público (para avatar) — tenta CPF e cai para email
-        let cadPubData: any = null;
-        if (cpfDigits) {
-          const { data } = await supabase
-            .from("qa_cadastro_publico" as any)
-            .select("selfie_path")
-            .eq("cpf", cpfDigits)
-            .not("selfie_path", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          cadPubData = data;
-        }
-        if (!cadPubData?.selfie_path && lookupEmail) {
-          const { data } = await supabase
-            .from("qa_cadastro_publico" as any)
-            .select("selfie_path")
-            .ilike("email", lookupEmail)
-            .not("selfie_path", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          cadPubData = data;
-        }
-        setCadastroPub((cadPubData as any) || null);
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
