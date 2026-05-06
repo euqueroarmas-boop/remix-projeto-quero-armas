@@ -685,38 +685,25 @@ export function ArsenalView({
   // Drawer: documentos relacionados à arma selecionada
   const relatedDocs = useMemo(() => {
     if (!selected) return [];
-    const key = (selected.numero_arma || "").toString().trim().toLowerCase();
-    const sigma = (selected.numero_sigma || "").toString().trim().toLowerCase();
+    const link = weaponLinkState.get(`${selected.source}-${selected.id}`);
     const out: { category: string; title: string; date: string | null }[] = [];
-    out.push({ category: selected.source, title: selected.nome_arma || "—", date: selected.data_validade });
-    gtes.forEach((g: any) => {
-      const gk = (g.numero_arma || "").toString().trim().toLowerCase();
-      const gs = (g.numero_sigma || "").toString().trim().toLowerCase();
-      if ((key && gk === key) || (sigma && gs === sigma)) {
-        out.push({ category: "GTE", title: g.nome_arma || "Guia de Tráfego", date: g.data_validade });
-      }
-    });
-    meusDocs.forEach((d: any) => {
-      const dk = (d.arma_serie || d.numero_documento || "").toString().trim().toLowerCase();
-      if (dk && (dk === key || dk === sigma)) {
-        out.push({
-          category: (d.tipo_documento || "DOC").toUpperCase(),
-          title: d.numero_documento || [d.arma_marca, d.arma_modelo].filter(Boolean).join(" "),
-          date: d.data_validade,
-        });
-      }
-    });
+    (link?.crafMatches || []).forEach((c) => out.push({ category: "CRAF", title: c.nome_arma || c.nome_craf || "CRAF vinculado", date: c.data_validade }));
+    (link?.gteMatches || []).forEach((g) => out.push({ category: "GTE", title: g.nome_arma || g.nome_gte || "GTE vinculada", date: g.data_validade }));
+    if (!link?.crafValido) out.push({ category: "CRAF", title: link?.hasWeakCrafDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "CRAF ausente — regularizar documento da arma.", date: null });
+    if (!link?.gteValida) out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
     return out;
-  }, [selected, gtes, meusDocs]);
+  }, [selected, weaponLinkState]);
 
   const ammoSameCalibre = useMemo(() => {
     if (!selected) return 0;
+    const cat = selected.catalogo_id ? catalogoById(selected.catalogo_id) : null;
     const info = buildWeaponInfo(selected.nome_arma, selected.numero_arma);
-    if (!info.calibre) return 0;
+    const target = normalizeCalibre(cat?.calibre || info.calibre);
+    if (!target) return 0;
     return ammo.byCalibre
-      .filter((a) => a.calibre.replace(/\s/g, "") === info.calibre!.replace(/\s/g, ""))
+      .filter((a) => normalizeCalibre(a.calibre) === target)
       .reduce((s, a) => s + a.quantidade, 0);
-  }, [selected, ammo]);
+  }, [selected, ammo, catalogoById]);
 
   // Documentos enviados pelo cliente via Hub aguardando aprovação da equipe.
   // Quando existem, refletimos no KPI como "EM ANÁLISE" (âmbar) — em vez de
