@@ -417,6 +417,11 @@ export default function QAClientePortalPage() {
         { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` },
         () => setDocsReloadKey((k) => k + 1),
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "qa_clientes", filter: `id=eq.${clienteIdReal}` },
+        () => setDocsReloadKey((k) => k + 1),
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [cliente?.id, customerId]);
@@ -527,7 +532,7 @@ export default function QAClientePortalPage() {
             {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
             <button
               type="button"
-              onClick={() => navigate("/cadastro/foto")}
+              onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
               title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
               className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
             >
@@ -777,7 +782,7 @@ export default function QAClientePortalPage() {
                   {!hasAnyPhoto ? (
                     <Button
                       size="sm"
-                      onClick={() => navigate("/cadastro/foto")}
+                      onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
                       className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-[#7A1F2B] to-[#641722] text-white hover:from-[#641722] hover:to-[#4F121C] shadow-sm"
                     >
                       <Camera className="h-3.5 w-3.5 mr-1.5" /> Enviar minha foto
@@ -817,7 +822,7 @@ export default function QAClientePortalPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigate("/cadastro/foto")}
+                      onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
                       className="h-8 px-3 text-[11px] font-semibold rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50"
                     >
                       <Camera className="h-3.5 w-3.5 mr-1.5" /> Trocar foto

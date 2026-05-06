@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle } from "lucide-react";
+import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle, Trash2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import { BackButton } from "@/shared/components/BackButton";
 
@@ -20,8 +21,12 @@ interface FoundData {
 }
 
 export default function QAEnviarFotoPage() {
+  const location = useLocation() as any;
+  const navigate = useNavigate();
+  const presetCpf: string = location?.state?.cpf || "";
+  const returnTo: string | null = location?.state?.returnTo || null;
   const [step, setStep] = useState<Step>("cpf");
-  const [cpf, setCpf] = useState("");
+  const [cpf, setCpf] = useState(presetCpf ? maskCpf(presetCpf) : "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [found, setFound] = useState<FoundData | null>(null);
@@ -33,6 +38,14 @@ export default function QAEnviarFotoPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => () => { stream?.getTracks().forEach(t => t.stop()); }, [stream]);
+
+  // Auto-lookup quando vem da Área do Cliente com CPF pré-preenchido
+  useEffect(() => {
+    if (presetCpf && presetCpf.replace(/\D/g, "").length === 11 && step === "cpf") {
+      lookup();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const lookup = async () => {
     setError(null);
@@ -120,7 +133,25 @@ export default function QAEnviarFotoPage() {
     }
   };
 
+  const remove = async () => {
+    if (!confirm("Remover sua foto atual? Você voltará a ver as iniciais.")) return;
+    setLoading(true); setError(null);
+    try {
+      const cpfDigits = cpf.replace(/\D/g, "");
+      const { data, error } = await supabase.functions.invoke("qa-atualizar-foto", {
+        body: { action: "remove", cpf: cpfDigits },
+      });
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "Erro ao remover");
+      setStep("ok");
+    } catch (e: any) {
+      setError(e?.message || "Erro ao remover foto");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const nome = found?.cadastro?.nome_completo || found?.cliente?.nome_completo || "";
+  const hasCurrentPhoto = !!(found?.cadastro?.selfie_path || found?.cliente?.imagem);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
@@ -183,6 +214,12 @@ export default function QAEnviarFotoPage() {
                     <Upload className="w-4 h-4" /> ENVIAR DO DISPOSITIVO
                   </button>
                   <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={onFile} />
+                  {hasCurrentPhoto && (
+                    <button onClick={remove} disabled={loading} className="w-full h-11 rounded-lg font-semibold border flex items-center justify-center gap-2 disabled:opacity-50" style={{ borderColor: "hsl(0 70% 70%)", color: "hsl(0 70% 40%)" }}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                      REMOVER FOTO ATUAL
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -228,7 +265,16 @@ export default function QAEnviarFotoPage() {
                 <CheckCircle className="w-8 h-8" style={{ color: "hsl(152 60% 42%)" }} />
               </div>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>FOTO ATUALIZADA</h1>
-              <p className="text-sm" style={{ color: "hsl(220 10% 46%)" }}>Sua foto foi recebida com sucesso e já está disponível para nossa equipe.</p>
+              <p className="text-sm" style={{ color: "hsl(220 10% 46%)" }}>Sua foto foi atualizada com sucesso.</p>
+              {returnTo && (
+                <button
+                  onClick={() => navigate(returnTo, { replace: true })}
+                  className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2"
+                  style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
+                >
+                  VOLTAR PARA ÁREA DO CLIENTE
+                </button>
+              )}
             </div>
           )}
         </div>
