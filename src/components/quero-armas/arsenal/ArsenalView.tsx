@@ -162,6 +162,8 @@ export function ArsenalView({
 }: Props) {
   // RLS garante o que pode ser feito; flag identifica origem visual (cliente vs equipe).
   const [selected, setSelected] = useState<WorkbenchWeapon | null>(null);
+  // Bump quando o usuário declara/reverte "Não possuo mais a GT" (leitura local).
+  const [gtDeclaracaoTick, setGtDeclaracaoTick] = useState(0);
   const [ammo, setAmmo] = useState<{ total: number; byCalibre: { calibre: string; quantidade: number }[] }>({
     total: 0,
     byCalibre: [],
