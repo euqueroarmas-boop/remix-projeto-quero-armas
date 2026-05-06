@@ -482,6 +482,15 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
     [weapons, match, byId],
   );
 
+  // Total de munições por calibre (normaliza espaços p/ casar com card)
+  const ammoCountFor = (calibre: string | null | undefined): number => {
+    const target = String(calibre || "").replace(/\s/g, "");
+    if (!target) return 0;
+    return ammoByCalibre
+      .filter((a) => a.calibre.replace(/\s/g, "") === target)
+      .reduce((s, a) => s + a.quantidade, 0);
+  };
+
   // Para CRAFs/GTEs ainda não vinculados ao catálogo: dispara resolução IA (1× por arma).
   useEffect(() => {
     if (catLoading) return;
