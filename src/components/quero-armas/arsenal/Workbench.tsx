@@ -10,6 +10,7 @@ import {
 } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
+import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 
 export interface WorkbenchWeapon {
   id: number | string;
@@ -21,6 +22,17 @@ export interface WorkbenchWeapon {
   daysToExpire: number | null;
   hasGte?: boolean;
   catalogo_id?: string | null;
+  /**
+   * Quando o card representa um documento enviado pelo próprio cliente
+   * (GTE/CRAF/AC em qa_documentos_cliente), exibimos um thumbnail do
+   * documento no lugar da silhueta do catálogo, para deixar claro que
+   * é um documento e não outra arma cadastrada.
+   */
+  documentPreview?: {
+    bucket: string;
+    storagePath: string;
+    mime?: string | null;
+  } | null;
 }
 
 interface DocCard {
@@ -91,6 +103,13 @@ function WeaponCard({
   const calibre = catalog?.calibre || info.calibre || "—";
   const bg = backgroundForKind(info.kind);
   const render = catalog?.imagem || renderForKind(info.kind);
+  const docPreviewUrl = usePrivateStorageUrl(
+    w.documentPreview?.bucket || "qa-documentos",
+    w.documentPreview?.storagePath || null,
+    3600,
+  );
+  const isDocCard = !!w.documentPreview;
+  const isDocImage = (w.documentPreview?.mime || "").startsWith("image/");
 
   return (
     <button
@@ -174,7 +193,42 @@ function WeaponCard({
           className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
-          {(() => {
+          {isDocCard ? (
+            <div className="relative h-full w-full">
+              {/* Folha de papel sutil para indicar documento */}
+              <div className="absolute inset-2 rounded-md border border-slate-200 bg-white shadow-[0_6px_18px_-8px_rgba(15,23,42,0.25)] overflow-hidden">
+                {docPreviewUrl && isDocImage ? (
+                  <img
+                    src={docPreviewUrl}
+                    alt={`Documento ${w.source} enviado`}
+                    loading="lazy"
+                    className="h-full w-full object-contain"
+                  />
+                ) : docPreviewUrl ? (
+                  <object
+                    data={`${docPreviewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                    type={w.documentPreview?.mime || "application/pdf"}
+                    className="h-full w-full pointer-events-none"
+                    aria-label={`Pré-visualização do ${w.source}`}
+                  >
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-slate-400">
+                      <FileText className="h-8 w-8" />
+                      <span className="text-[9px] font-bold uppercase tracking-wider">{w.source} ENVIADO</span>
+                    </div>
+                  </object>
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-slate-300">
+                    <FileText className="h-10 w-10" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">{w.source} ENVIADO</span>
+                  </div>
+                )}
+              </div>
+              {/* Selo "DOC" sobreposto */}
+              <span className="absolute right-3 top-3 rounded-sm border border-slate-300 bg-white/95 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.18em] text-slate-700 shadow-sm">
+                DOC · {w.source}
+              </span>
+            </div>
+          ) : (() => {
             const isLonga = ["espingarda", "fuzil", "carabina", "submetralhadora"].includes(info.kind);
             const longaScale = info.kind === "espingarda"
               ? "scale-125 md:scale-[1.75]"

@@ -387,6 +387,13 @@ export function ArsenalView({
           data_validade: d.data_validade,
           daysToExpire: daysUntil(d.data_validade),
           hasGte: false,
+          documentPreview: d.arquivo_storage_path
+            ? {
+                bucket: "qa-documentos",
+                storagePath: d.arquivo_storage_path,
+                mime: d.arquivo_mime || null,
+              }
+            : null,
         };
       })
       .filter((w: WorkbenchWeapon) => {
