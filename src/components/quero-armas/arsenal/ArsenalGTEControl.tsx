@@ -17,6 +17,13 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  ArsenalCardSizeToggle,
+  SIZE_CLASSES,
+  TONE_BORDER,
+  TONE_ROW_BG,
+  useArsenalCardSize,
+} from "./useArsenalCardSize";
 
 interface Props {
   clienteId: number;
@@ -93,6 +100,8 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
   const [docs, setDocs] = useState<GteDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  const sz = SIZE_CLASSES[cardSize];
   const [openDetail, setOpenDetail] = useState<GteDoc | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
