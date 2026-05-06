@@ -382,6 +382,29 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
   const [showAll, setShowAll] = useState(false);
   const { match, byId, resolveCraf, loading: catLoading } = useArmamentoCatalogo();
   const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  // Ordem manual dos cards (drag & drop) — persistida por cliente em localStorage.
+  // Chave única usa qualquer cliente_id disponível na lista de armas (todas as
+  // armas exibidas pertencem ao mesmo cliente neste contexto).
+  const orderStorageKey = "qa_arsenal_workbench_order";
+  const [manualOrder, setManualOrder] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const raw = window.localStorage.getItem(orderStorageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  });
+  const persistOrder = (next: string[]) => {
+    setManualOrder(next);
+    try {
+      window.localStorage.setItem(orderStorageKey, JSON.stringify(next));
+    } catch {
+      // ignora
+    }
+  };
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   // Mapeia o tamanho global do Arsenal (lg/md/sm) para o tamanho do card da bancada.
   // Cards "longos" usam lg por padrão; quando o cliente escolhe md/sm, reduzimos.
   const longaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : cardSize === "md" ? "md" : "lg";
@@ -432,9 +455,41 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
   const outras = enriched.filter((e) => e.info.kind === "outra");
 
   const grupoCurtas = [...curtas, ...outras];
-  const visibleLongas = showAll ? longas : longas.slice(0, 2);
-  const visibleCurtas = showAll ? grupoCurtas : grupoCurtas.slice(0, 4);
+  // Aplica a ordem manual salva (qualquer item não listado fica no final, na ordem original).
+  const applyManualOrder = <T extends { w: { source: string; id: number | string } }>(items: T[]): T[] => {
+    if (!manualOrder.length) return items;
+    const keyOf = (e: T) => `${e.w.source}-${e.w.id}`;
+    const idx = new Map(manualOrder.map((k, i) => [k, i]));
+    return [...items].sort((a, b) => {
+      const ia = idx.has(keyOf(a)) ? (idx.get(keyOf(a)) as number) : Number.MAX_SAFE_INTEGER;
+      const ib = idx.has(keyOf(b)) ? (idx.get(keyOf(b)) as number) : Number.MAX_SAFE_INTEGER;
+      return ia - ib;
+    });
+  };
+  const longasOrdered = applyManualOrder(longas);
+  const curtasOrdered = applyManualOrder(grupoCurtas);
+  const visibleLongas = showAll ? longasOrdered : longasOrdered.slice(0, 2);
+  const visibleCurtas = showAll ? curtasOrdered : curtasOrdered.slice(0, 4);
   const overflow = longas.length + grupoCurtas.length - (visibleLongas.length + visibleCurtas.length);
+
+  const handleDragEnd =
+    (items: typeof longas) =>
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const ids = items.map((e) => `${e.w.source}-${e.w.id}`);
+      const oldIndex = ids.indexOf(String(active.id));
+      const newIndex = ids.indexOf(String(over.id));
+      if (oldIndex < 0 || newIndex < 0) return;
+      const reorderedIds = arrayMove(ids, oldIndex, newIndex);
+      // Mescla com a ordem global mantendo demais grupos intactos.
+      const allKeys = enriched.map((e) => `${e.w.source}-${e.w.id}`);
+      const fullOrder = [
+        ...reorderedIds,
+        ...allKeys.filter((k) => !reorderedIds.includes(k)),
+      ];
+      persistOrder(fullOrder);
+    };
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -459,10 +514,30 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
           <div className="text-[10px] font-mono text-slate-400">
             {enriched.length.toString().padStart(2, "0")} ITEM(S)
           </div>
+          {manualOrder.length > 0 && (
+            <button
+              type="button"
+              onClick={() => persistOrder([])}
+              title="Restaurar ordem padrão"
+              className="text-[9px] font-bold uppercase tracking-wider text-slate-500 underline hover:text-[#7A1F2B]"
+            >
+              Restaurar ordem
+            </button>
+          )}
           <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           {headerAction}
         </div>
         <div className="flex items-center gap-2 md:hidden">
+          {manualOrder.length > 0 && (
+            <button
+              type="button"
+              onClick={() => persistOrder([])}
+              title="Restaurar ordem padrão"
+              className="text-[9px] font-bold uppercase tracking-wider text-slate-500 underline"
+            >
+              Restaurar
+            </button>
+          )}
           <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           {headerAction}
         </div>
@@ -491,33 +566,43 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         ) : (
           <div className="relative space-y-4">
             {visibleLongas.length > 0 && (
-              <div className={`grid gap-3 ${longaCols}`}>
-                {visibleLongas.map(({ w, info, catalog }) => (
-                  <WeaponCard
-                    key={`${w.source}-${w.id}`}
-                    w={w}
-                    info={info}
-                    catalog={catalog}
-                    onClick={() => onSelectWeapon(w, info)}
-                    size={longaSize}
-                  />
-                ))}
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd(longasOrdered)}>
+                <SortableContext items={visibleLongas.map((e) => `${e.w.source}-${e.w.id}`)} strategy={rectSortingStrategy}>
+                  <div className={`grid gap-3 ${longaCols}`}>
+                    {visibleLongas.map(({ w, info, catalog }) => (
+                      <SortableWeaponCard
+                        key={`${w.source}-${w.id}`}
+                        id={`${w.source}-${w.id}`}
+                        w={w}
+                        info={info}
+                        catalog={catalog}
+                        onClick={() => onSelectWeapon(w, info)}
+                        size={longaSize}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
 
             {visibleCurtas.length > 0 && (
-              <div className={`grid gap-3 ${curtaCols}`}>
-                {visibleCurtas.map(({ w, info, catalog }) => (
-                  <WeaponCard
-                    key={`${w.source}-${w.id}`}
-                    w={w}
-                    info={info}
-                    catalog={catalog}
-                    onClick={() => onSelectWeapon(w, info)}
-                    size={curtaSize}
-                  />
-                ))}
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd(curtasOrdered)}>
+                <SortableContext items={visibleCurtas.map((e) => `${e.w.source}-${e.w.id}`)} strategy={rectSortingStrategy}>
+                  <div className={`grid gap-3 ${curtaCols}`}>
+                    {visibleCurtas.map(({ w, info, catalog }) => (
+                      <SortableWeaponCard
+                        key={`${w.source}-${w.id}`}
+                        id={`${w.source}-${w.id}`}
+                        w={w}
+                        info={info}
+                        catalog={catalog}
+                        onClick={() => onSelectWeapon(w, info)}
+                        size={curtaSize}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
 
             {overflow > 0 && !showAll && (
