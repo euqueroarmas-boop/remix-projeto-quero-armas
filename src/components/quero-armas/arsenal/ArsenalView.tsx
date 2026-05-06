@@ -549,6 +549,7 @@ export function ArsenalView({
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
       const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      const gteExigivel = isGteExigivelParaArma(w as any);
       return {
         ...w,
         hasCraf: !!link?.crafValido,
@@ -556,7 +557,8 @@ export function ArsenalView({
         crafStatus: link?.crafStatus,
         gteStatus: link?.gteStatus,
         crafLabel: link?.crafLabel,
-        gteLabel: link?.gteLabel,
+        gteLabel: !gteExigivel && !link?.gteValida ? "NÃO EXIGÍVEL" : link?.gteLabel,
+        gteExigivel,
         linkReview: !!(link?.hasWeakCrafDoc || link?.hasWeakGteDoc || link?.semVinculo),
       };
     }),
