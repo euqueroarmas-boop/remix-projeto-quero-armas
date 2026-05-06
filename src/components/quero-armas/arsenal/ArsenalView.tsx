@@ -1058,8 +1058,16 @@ export function ArsenalView({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Indexa CRAFs e GTEs por chaves físicas (série e SIGMA).
+    // Ordem oficial de vínculo (CRAF/GTE → ARMA):
+    //   1) arma_id explícito (não existe ainda no schema; reservado p/ futuro)
+    //   2) vínculo manual confirmado (catalogo_id pareado entre arma e doc)
+    //   3) número de série
+    //   4) SIGMA/SINARM
+    //   5) CRAF vinculado à arma (transitivo — usado p/ GTE)
+    //   6) marca + modelo + calibre (fallback fraco — exige revisão)
+    // Indexa por chave física (série e SIGMA) e por catálogo.
     const crafByKey = new Map<string, any[]>();
+    const crafByCatalogo = new Map<string, any[]>();
     (crafs || []).forEach((c: any) => {
       [norm(c.numero_arma), norm(c.numero_sigma)].forEach((k) => {
         if (!k) return;
@@ -1067,8 +1075,14 @@ export function ArsenalView({
         arr.push(c);
         crafByKey.set(k, arr);
       });
+      if (c.catalogo_id) {
+        const arr = crafByCatalogo.get(String(c.catalogo_id)) || [];
+        arr.push(c);
+        crafByCatalogo.set(String(c.catalogo_id), arr);
+      }
     });
     const gteByKey = new Map<string, any[]>();
+    const gteByCatalogo = new Map<string, any[]>();
     (gtes || []).forEach((g: any) => {
       [norm(g.numero_arma), norm(g.numero_sigma)].forEach((k) => {
         if (!k) return;
@@ -1076,6 +1090,11 @@ export function ArsenalView({
         arr.push(g);
         gteByKey.set(k, arr);
       });
+      if (g.catalogo_id) {
+        const arr = gteByCatalogo.get(String(g.catalogo_id)) || [];
+        arr.push(g);
+        gteByCatalogo.set(String(g.catalogo_id), arr);
+      }
     });
 
     let comCrafValido = 0;
@@ -1087,27 +1106,34 @@ export function ArsenalView({
       const serial = norm(w.numero_arma);
       const sigma = norm(w.numero_sigma);
       const keys = [serial, sigma].filter(Boolean);
+      const wCatalogo = (w as any).catalogo_id ? String((w as any).catalogo_id) : null;
 
-      // CRAF vinculado fisicamente
+      // Vínculo CRAF (precedência: catalogo_id → série → SIGMA)
       let crafMatches: any[] = [];
-      keys.forEach((k) => {
-        (crafByKey.get(k) || []).forEach((c) => {
-          if (!crafMatches.includes(c)) crafMatches.push(c);
+      if (wCatalogo) (crafByCatalogo.get(wCatalogo) || []).forEach((c) => crafMatches.push(c));
+      if (crafMatches.length === 0) {
+        keys.forEach((k) => {
+          (crafByKey.get(k) || []).forEach((c) => {
+            if (!crafMatches.includes(c)) crafMatches.push(c);
+          });
         });
-      });
+      }
       const crafValido = crafMatches.some((c) => {
         const v = c?.data_validade ? new Date(c.data_validade) : null;
         return v && !isNaN(v.getTime()) && v.getTime() >= today.getTime();
       });
       if (crafValido) comCrafValido++;
 
-      // GTE vinculada fisicamente
+      // Vínculo GTE (mesma precedência; GTE NUNCA torna a arma irregular)
       let gteMatches: any[] = [];
-      keys.forEach((k) => {
-        (gteByKey.get(k) || []).forEach((g) => {
-          if (!gteMatches.includes(g)) gteMatches.push(g);
+      if (wCatalogo) (gteByCatalogo.get(wCatalogo) || []).forEach((g) => gteMatches.push(g));
+      if (gteMatches.length === 0) {
+        keys.forEach((k) => {
+          (gteByKey.get(k) || []).forEach((g) => {
+            if (!gteMatches.includes(g)) gteMatches.push(g);
+          });
         });
-      });
+      }
       const gteValida = gteMatches.some((g) => {
         const v = g?.data_validade ? new Date(g.data_validade) : null;
         return v && !isNaN(v.getTime()) && v.getTime() >= today.getTime();
