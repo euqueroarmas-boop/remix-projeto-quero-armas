@@ -23,6 +23,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ArsenalCRAFEditModal, { isModeloCRAFInvalido } from "./ArsenalCRAFEditModal";
+import DocClassReviewModal, { type ClassificacaoIA } from "./DocClassReviewModal";
+import { classifyArsenalDoc } from "./classifyDoc";
 import {
   ArsenalCardSizeToggle,
   SIZE_CLASSES,
@@ -122,6 +124,9 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
   const fileRef = useRef<HTMLInputElement | null>(null);
   const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
   const sz = SIZE_CLASSES[cardSize];
+  const [classif, setClassif] = useState<ClassificacaoIA | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [showReview, setShowReview] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,6 +171,26 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
       toast.error("Arquivo muito grande (limite 20 MB).");
       return;
     }
+    // REGRA: SEMPRE abrir tela de revisão antes de salvar.
+    setUploading(true);
+    const c = await classifyArsenalDoc({ file, tipoSelecionado: "CRAF" });
+    setUploading(false);
+    setPendingFile(file);
+    setClassif(
+      c || ({
+        tipoDetectado: "DESCONHECIDO",
+        confianca: 0,
+        justificativa: "Não foi possível classificar automaticamente.",
+        camposExtraidos: null,
+        divergenciaComSelecaoManual: false,
+        recomendacao: "revisao_obrigatoria",
+        revisao_obrigatoria: true,
+      } as any),
+    );
+    setShowReview(true);
+  };
+
+  const proceedUpload = async (file: File, revisaoObrigatoria: boolean, classificacao: ClassificacaoIA | null) => {
     setUploading(true);
     try {
       const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -185,19 +210,26 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
           arquivo_storage_path: path,
           arquivo_nome: file.name,
           arquivo_mime: file.type || "application/pdf",
-          ia_status: "pendente",
-          status: "EM_ANALISE",
+          ia_status: revisaoObrigatoria ? "pendente_revisao" : "pendente",
+          status: "pendente_aprovacao",
           origem: _origem === "equipe" ? "equipe" : "portal_cliente",
+          ia_dados_extraidos: classificacao
+            ? { classificacao_arsenal: classificacao, revisao_obrigatoria: revisaoObrigatoria, origem_revisao: "arsenal_bancada_tatica", decidido_em: new Date().toISOString() }
+            : null,
         })
         .select("id")
         .single();
       if (insErr) throw insErr;
 
-      toast.success("CRAF enviado. Extraindo dados…");
-      supabase.functions
-        .invoke("qa-craf-extrair", { body: { documento_id: (inserted as any).id } })
-        .then(({ error }) => { if (error) toast.error(`Falha na leitura: ${error.message}`); })
-        .catch((err) => toast.error(err?.message || "Falha na leitura"));
+      if (revisaoObrigatoria) {
+        toast.success("CRAF salvo em REVISÃO OBRIGATÓRIA. Não alimenta KPIs até a Equipe Quero Armas confirmar.");
+      } else {
+        toast.success("CRAF enviado. Extraindo dados…");
+        supabase.functions
+          .invoke("qa-craf-extrair", { body: { documento_id: (inserted as any).id } })
+          .then(({ error }) => { if (error) toast.error(`Falha na leitura: ${error.message}`); })
+          .catch((err) => toast.error(err?.message || "Falha na leitura"));
+      }
       await load();
     } catch (err: any) {
       toast.error(err?.message || "Falha no upload");
