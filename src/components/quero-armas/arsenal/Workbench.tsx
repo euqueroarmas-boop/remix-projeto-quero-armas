@@ -264,7 +264,7 @@ function WeaponCard({
         </div>
 
         {/* Mini stats armory */}
-        {catalog && !isSm && !isMd && (
+        {catalog && !isSm && (
           <div className="grid grid-cols-3 gap-2 border-t border-slate-200 pt-2">
             <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
             <MiniStat label="PRC" value={catalog.stat_precisao} color="#0ea5e9" />
