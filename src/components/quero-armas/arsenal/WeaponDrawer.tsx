@@ -502,12 +502,39 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     </span>
                     <span className="text-[11px] font-semibold text-slate-800">{d.title}</span>
                   </div>
-                  <span className="font-mono text-[10px] text-slate-500">{formatDate(d.date)}</span>
+                  <div className="flex items-center gap-2">
+                    {d.path ? (
+                      <button
+                        type="button"
+                        onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: d.fileName || undefined, title: `${d.category} · ${d.fileName || d.title}` })}
+                        className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                        title="Visualizar arquivo original"
+                      >
+                        <Eye className="h-3 w-3" /> Ver
+                      </button>
+                    ) : (["CRAF", "GTE"].includes(d.category) && d.date) ? (
+                      <span
+                        className="text-[9px] uppercase tracking-wider text-amber-700"
+                        title="Documento cadastrado, mas o arquivo original não foi localizado."
+                      >
+                        sem arquivo
+                      </span>
+                    ) : null}
+                    <span className="font-mono text-[10px] text-slate-500">{formatDate(d.date)}</span>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Viewer interno (blob) — nunca expõe URL do storage */}
+        <DocumentoViewerModal
+          open={viewer.open}
+          onClose={viewer.fechar}
+          source={viewer.source}
+          title={viewer.title}
+        />
 
         {/* Zona de risco — Excluir armamento */}
         {onDelete && (
