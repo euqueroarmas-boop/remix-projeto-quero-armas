@@ -9,9 +9,10 @@ import {
   WEAPON_KIND_LABEL,
   GT_STATUS_LABEL,
   gtChipTone,
-  gtDeclaracaoKey,
   type GtDocStatus,
 } from "./utils";
+import { declararNaoPossuoGt, reverterDeclaracaoGt } from "./gtDeclaracoes";
+import { toast } from "sonner";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { useEffect, useMemo, useState } from "react";
@@ -50,6 +51,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
   const [confirmDel, setConfirmDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [gtConfirm, setGtConfirm] = useState(false);
+  const [gtSaving, setGtSaving] = useState(false);
   useEffect(() => { setConfirmDel(false); setDeleting(false); }, [weapon?.id, open]);
   const info = weapon ? buildWeaponInfo(weapon.nome_arma, weapon.numero_arma) : null;
   const catalog: ArmamentoCatalogo | null = useMemo(
@@ -321,23 +323,40 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 ? "bg-amber-50 text-amber-700 border-amber-200"
                 : "bg-slate-100 text-slate-600 border-slate-200";
             const podeDeclarar = gtStatus === "nao_enviada";
-            const declarar = () => {
+            const cidNum =
+              typeof clienteId === "number" ? clienteId : Number(clienteId);
+            const cidValid = Number.isFinite(cidNum);
+            const declarar = async () => {
+              if (!cidValid) {
+                toast.error("Cliente inválido para registrar a declaração.");
+                return;
+              }
+              setGtSaving(true);
               try {
-                const key = gtDeclaracaoKey(clienteId ?? "anon", `${weapon.source}-${weapon.id}`);
-                window.localStorage.setItem(key, "1");
-                window.localStorage.setItem(`${key}.at`, new Date().toISOString());
-              } catch { /* noop */ }
-              setGtConfirm(false);
-              onGtDeclaracaoChange?.();
+                await declararNaoPossuoGt({ clienteId: cidNum as number, weapon });
+                setGtConfirm(false);
+                toast.success("Declaração registrada para a Equipe Quero Armas.");
+                onGtDeclaracaoChange?.();
+              } catch (e: any) {
+                toast.error(e?.message || "Não foi possível registrar a declaração.");
+              } finally {
+                setGtSaving(false);
+              }
             };
-            const reverter = () => {
+            const reverter = async () => {
+              if (!cidValid) return;
+              setGtSaving(true);
               try {
-                const key = gtDeclaracaoKey(clienteId ?? "anon", `${weapon.source}-${weapon.id}`);
-                window.localStorage.removeItem(key);
-                window.localStorage.removeItem(`${key}.at`);
-              } catch { /* noop */ }
-              onGtDeclaracaoChange?.();
+                await reverterDeclaracaoGt({ clienteId: cidNum as number, weapon });
+                toast.success("Declaração revertida.");
+                onGtDeclaracaoChange?.();
+              } catch (e: any) {
+                toast.error(e?.message || "Não foi possível reverter a declaração.");
+              } finally {
+                setGtSaving(false);
+              }
             };
+            const declaradaEm = (weapon as any).gtDeclaradaEm as string | null | undefined;
             return (
               <div className="mb-3 rounded-md border border-slate-200 bg-white p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-2">
@@ -351,6 +370,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                     <button
                       type="button"
                       onClick={reverter}
+                      disabled={gtSaving}
                       className="text-[10px] font-bold uppercase tracking-wider text-slate-500 underline hover:text-[#7A1F2B]"
                     >
                       Reverter declaração
@@ -365,7 +385,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 {gtStatus === "nao_possuo" && (
                   <p className="mt-1 text-[10px] italic text-slate-500">
                     Cliente declarou que não possui mais este documento. Registrado para
-                    análise documental da Equipe Quero Armas.
+                    análise documental da Equipe Quero Armas{declaradaEm ? ` · ${formatDate(declaradaEm)}` : ""}.
                   </p>
                 )}
                 {podeDeclarar && (
@@ -388,13 +408,15 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                         <button
                           type="button"
                           onClick={declarar}
+                          disabled={gtSaving}
                           className="rounded bg-amber-600 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-amber-700"
                         >
-                          Confirmar declaração
+                          {gtSaving ? "Registrando…" : "Confirmar declaração"}
                         </button>
                         <button
                           type="button"
                           onClick={() => setGtConfirm(false)}
+                          disabled={gtSaving}
                           className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
                         >
                           Cancelar

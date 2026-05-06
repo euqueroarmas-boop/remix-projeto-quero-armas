@@ -2224,6 +2224,87 @@ export type Database = {
           },
         ]
       }
+      qa_arma_gt_declaracoes: {
+        Row: {
+          arma_manual_id: number | null
+          calibre: string | null
+          created_at: string
+          declarado_em: string
+          declarado_por: string | null
+          id: number
+          marca: string | null
+          metadados_json: Json
+          modelo: string | null
+          numero_serie: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          origem: string
+          qa_cliente_id: number
+          revertido_em: string | null
+          revertido_por: string | null
+          status: string
+          updated_at: string
+          weapon_key: string
+        }
+        Insert: {
+          arma_manual_id?: number | null
+          calibre?: string | null
+          created_at?: string
+          declarado_em?: string
+          declarado_por?: string | null
+          id?: number
+          marca?: string | null
+          metadados_json?: Json
+          modelo?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id: number
+          revertido_em?: string | null
+          revertido_por?: string | null
+          status?: string
+          updated_at?: string
+          weapon_key: string
+        }
+        Update: {
+          arma_manual_id?: number | null
+          calibre?: string | null
+          created_at?: string
+          declarado_em?: string
+          declarado_por?: string | null
+          id?: number
+          marca?: string | null
+          metadados_json?: Json
+          modelo?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id?: number
+          revertido_em?: string | null
+          revertido_por?: string | null
+          status?: string
+          updated_at?: string
+          weapon_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_arma_gt_declaracoes_arma_manual_id_fkey"
+            columns: ["arma_manual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cliente_armas_manual"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_arma_gt_declaracoes_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_armamentos_catalogo: {
         Row: {
           alcance_efetivo_m: number | null
