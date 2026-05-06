@@ -377,6 +377,10 @@ export function ArsenalView({
         daysToExpire: daysUntil(c.data_validade),
         hasGte: !!gte,
         catalogo_id: c.catalogo_id || null,
+        // Arma documentada por CRAF/SINARM = registro civil para defesa pessoal.
+        // GTE não é documento permanente exigível.
+        sistema: "SINARM",
+        finalidade: "DEFESA PESSOAL",
       };
     });
     // Chave única por arma física = número de série (numero_arma) OU número SIGMA.
