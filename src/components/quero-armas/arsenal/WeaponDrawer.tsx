@@ -7,6 +7,10 @@ import {
   TACTICAL,
   urgencyTone,
   WEAPON_KIND_LABEL,
+  GT_STATUS_LABEL,
+  gtChipTone,
+  gtDeclaracaoKey,
+  type GtDocStatus,
 } from "./utils";
 import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
@@ -25,6 +29,10 @@ interface Props {
   ammoSameCalibre: number;
   onClose: () => void;
   onDelete?: (weapon: WorkbenchWeapon) => Promise<void> | void;
+  /** Cliente atual — usado para persistir a declaração "não possuo mais a GT". */
+  clienteId?: number | string;
+  /** Notifica o pai para recarregar dados após declaração. */
+  onGtDeclaracaoChange?: () => void;
 }
 
 const formatDate = (d: string | null) => {
@@ -37,10 +45,11 @@ const formatDate = (d: string | null) => {
   }
 };
 
-export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClose, onDelete }: Props) {
+export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClose, onDelete, clienteId, onGtDeclaracaoChange }: Props) {
   const { items, match } = useArmamentoCatalogo();
   const [confirmDel, setConfirmDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [gtConfirm, setGtConfirm] = useState(false);
   useEffect(() => { setConfirmDel(false); setDeleting(false); }, [weapon?.id, open]);
   const info = weapon ? buildWeaponInfo(weapon.nome_arma, weapon.numero_arma) : null;
   const catalog: ArmamentoCatalogo | null = useMemo(
