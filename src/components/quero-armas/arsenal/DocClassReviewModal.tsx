@@ -1,20 +1,19 @@
 /**
  * DocClassReviewModal
  *
- * Modal de revisão exibido após upload de documento do Arsenal,
- * comparando o tipo selecionado pelo cliente com o tipo detectado pela IA.
+ * Modal de revisão SEMPRE exibido após classificação automática de qualquer
+ * documento do Arsenal (CRAF/GT/GTE/Guia de Trânsito/Nota Fiscal/Exame).
  *
- * Fluxo (regra de negócio definida pelo usuário):
- *  - Confiança ≥ 80% e SEM divergência → modal pode ser pulado pelo caller
- *    (ou aberto só para confirmação rápida).
- *  - Confiança 50–79% OU divergência → exige confirmação explícita.
- *  - Confiança < 50% / DESCONHECIDO → marcar como REVISÃO OBRIGATÓRIA.
+ * REGRA DE NEGÓCIO (escolha do cliente):
+ *   "Sempre mostrar tela de revisão" — mesmo com confiança >= 95% o cliente
+ *   precisa confirmar visualmente antes do documento alimentar KPIs/Bancada
+ *   Tática. A recomendação da IA só altera o TOM da tela.
  *
- * Saída: chama onResolve com:
- *   { decision: "corrigir" | "manter_revisao" | "cancelar",
- *     tipoFinal, revisaoObrigatoria }
- *
- * NÃO altera estilo dark/light fora do escopo: usa a paleta Arsenal (preto/bordo).
+ * Tons:
+ *  - alta confiança (>=80%) e SEM divergência: "A IA identificou com alta confiança"
+ *  - média confiança (50–79%):                  "Confirmar classificação"
+ *  - divergência:                                "Tipo divergente detectado"
+ *  - baixa confiança (<50%) ou DESCONHECIDO:    "Revisão obrigatória recomendada"
  */
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,11 +69,14 @@ export default function DocClassReviewModal({
     classificacao;
   const pct = Math.round((confianca || 0) * 100);
 
+  const altaConfianca = (classificacao.confianca || 0) >= 0.8;
   const titulo = revisao_obrigatoria
-    ? "Documento exige revisão"
+    ? "Revisão obrigatória recomendada"
     : divergenciaComSelecaoManual
     ? "Tipo divergente detectado"
-    : "Confirme o tipo do documento";
+    : altaConfianca
+    ? "A IA identificou com alta confiança"
+    : "Confirmar classificação";
 
   const cor = revisao_obrigatoria
     ? "#7A1F2B"
@@ -100,7 +102,8 @@ export default function DocClassReviewModal({
             {titulo}
           </DialogTitle>
           <p className="text-[11px] text-slate-500 mt-1">
-            A IA leu seu documento e fez uma classificação automática. Confira antes de salvar.
+            Todo documento do Arsenal passa por revisão visual antes de salvar — mesmo
+            quando a IA tem alta confiança. Confirme, corrija o tipo ou envie para a Equipe.
           </p>
         </DialogHeader>
 
@@ -164,32 +167,27 @@ export default function DocClassReviewModal({
         </div>
 
         <div className="border-t border-slate-200/80 px-5 py-3 flex flex-col gap-2 bg-slate-50/60">
-          {divergenciaComSelecaoManual && (
+          {/* Confirmar como o tipo escolhido pelo cliente (default seguro) */}
+          {!revisao_obrigatoria && (
             <Button
               size="sm"
               onClick={() =>
-                onResolve({ decision: "corrigir", tipoFinal: tipoDetectado, revisaoObrigatoria: false })
+                onResolve({
+                  decision: "corrigir",
+                  tipoFinal: divergenciaComSelecaoManual ? tipoDetectado : tipoSelecionado,
+                  revisaoObrigatoria: false,
+                })
               }
               className="w-full text-white"
               style={{ background: "#0A0A0A" }}
             >
               <CheckCircle2 className="h-4 w-4 mr-1" />
-              Corrigir para {TIPO_LABEL[tipoDetectado]}
+              {divergenciaComSelecaoManual
+                ? `Corrigir para ${TIPO_LABEL[tipoDetectado]} e salvar`
+                : "Confirmar e salvar"}
             </Button>
           )}
-          {!divergenciaComSelecaoManual && !revisao_obrigatoria && (
-            <Button
-              size="sm"
-              onClick={() =>
-                onResolve({ decision: "corrigir", tipoFinal: tipoDetectado, revisaoObrigatoria: false })
-              }
-              className="w-full text-white"
-              style={{ background: "#0A0A0A" }}
-            >
-              <CheckCircle2 className="h-4 w-4 mr-1" />
-              Confirmar e salvar
-            </Button>
-          )}
+          {/* Sempre disponível: enviar para revisão da Equipe */}
           <Button
             size="sm"
             variant="outline"
@@ -199,7 +197,7 @@ export default function DocClassReviewModal({
             className="w-full"
             style={{ borderColor: "#7A1F2B", color: "#7A1F2B" }}
           >
-            Manter “{TIPO_LABEL[tipoSelecionado]}” e enviar para revisão da Equipe
+            Enviar para revisão da Equipe Quero Armas
           </Button>
           <Button
             size="sm"
