@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
-import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
@@ -41,6 +40,14 @@ const urgencyLabel = (d: number | null) => d === null ? "SEM DATA" : d < 0 ? `VE
 
 
 interface ExpiringDoc { label: string; date: string | null; days: number | null; category: string; }
+
+interface ClienteAvatarOficial {
+  url: string | null;
+  path: string | null;
+  bucket: string | null;
+  source: "qa_clientes.imagem" | "qa_cadastro_publico.selfie_path" | "avatar_tatico_path" | null;
+  hasPhoto: boolean;
+}
 
 function SectionCard({ icon: Icon, title, color, children }: { icon: any; title: string; color: string; children: React.ReactNode }) {
   return (
@@ -130,26 +137,18 @@ export default function QAClientePortalPage() {
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
-  const [cadastroPub, setCadastroPub] = useState<{ selfie_path: string | null } | null>(null);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
-  // Fonte única da foto — espelha exatamente a lógica de /clientes
-  // (ClienteSelfieAvatar): prioriza foto manual (cliente.imagem em qa-documentos),
-  // depois selfie do cadastro público, e por último o avatar tático gerado por IA.
-  const imagemManual: string | null = (cliente as any)?.imagem || null;
-  const tacticalPath: string | null = (cliente as any)?.avatar_tatico_path || null;
-  const selfiePath: string | null = cadastroPub?.selfie_path || null;
-  const avatarPath: string | null = imagemManual || selfiePath || tacticalPath;
-  const avatarBucket = imagemManual
-    ? "qa-documentos"
-    : selfiePath
-    ? "qa-cadastro-selfies"
-    : "qa-cadastro-selfies"; // tactical path também vive em qa-cadastro-selfies
-  const avatarUrl = usePrivateStorageUrl(avatarBucket, avatarPath);
-  const hasTacticalAvatar = !!tacticalPath && !imagemManual && !selfiePath;
-  const hasAnyPhoto = !!avatarPath;
+  // Fonte oficial do header: função autenticada resolve e assina, em ordem:
+  // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
+  const avatarUrl = avatarOficial?.url || null;
+  const hasTacticalAvatar = avatarOficial?.source === "avatar_tatico_path";
+  const hasAnyPhoto = avatarOficial?.hasPhoto || Boolean((cliente as any)?.imagem || (cliente as any)?.avatar_tatico_path);
+  const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
 
   useEffect(() => {
     const load = async () => {
@@ -349,31 +348,6 @@ export default function QAClientePortalPage() {
           setMeusDocs((docsData as any[]) ?? []);
         }
 
-        // Selfie do cadastro público (para avatar) — tenta CPF e cai para email
-        let cadPubData: any = null;
-        if (cpfDigits) {
-          const { data } = await supabase
-            .from("qa_cadastro_publico" as any)
-            .select("selfie_path")
-            .eq("cpf", cpfDigits)
-            .not("selfie_path", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          cadPubData = data;
-        }
-        if (!cadPubData?.selfie_path && lookupEmail) {
-          const { data } = await supabase
-            .from("qa_cadastro_publico" as any)
-            .select("selfie_path")
-            .ilike("email", lookupEmail)
-            .not("selfie_path", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          cadPubData = data;
-        }
-        setCadastroPub((cadPubData as any) || null);
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
@@ -383,6 +357,36 @@ export default function QAClientePortalPage() {
     };
     load();
   }, [navigate, docsReloadKey]);
+
+  useEffect(() => {
+    const clienteId = Number((cliente as any)?.id);
+    if (!Number.isFinite(clienteId)) {
+      setAvatarOficial(null);
+      setAvatarLoading(false);
+      return;
+    }
+
+    let active = true;
+    setAvatarLoading(true);
+    void supabase.functions
+      .invoke("qa-cliente-avatar", { body: { cliente_id: clienteId } })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.error("[Portal] avatar oficial não resolvido:", error.message);
+          setAvatarOficial({ url: null, path: null, bucket: null, source: null, hasPhoto: false });
+          return;
+        }
+        setAvatarOficial((data as ClienteAvatarOficial) || { url: null, path: null, bucket: null, source: null, hasPhoto: false });
+      })
+      .finally(() => {
+        if (active) setAvatarLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -536,13 +540,17 @@ export default function QAClientePortalPage() {
               title={hasAnyPhoto ? "Alterar minha foto" : "Enviar minha foto"}
               className="relative shrink-0 group rounded-full focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
             >
-              {hasAnyPhoto && avatarUrl ? (
+              {avatarUrl ? (
                 <div className="h-12 w-12 sm:h-[52px] sm:w-[52px] overflow-hidden rounded-full ring-1 ring-slate-200 shadow-sm bg-white">
                   <img
                     src={avatarUrl}
                     alt={userName || "Foto do cliente"}
                     className="h-full w-full object-cover"
                   />
+                </div>
+              ) : avatarResolving ? (
+                <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-slate-100 ring-1 ring-slate-200 shadow-sm">
+                  <div className="h-4 w-4 rounded-full border-2 border-slate-300 border-t-[#7A1F2B] animate-spin" />
                 </div>
               ) : (
                 <div className="flex h-12 w-12 sm:h-[52px] sm:w-[52px] items-center justify-center rounded-full bg-[#7A1F2B] ring-1 ring-slate-200 shadow-sm">
