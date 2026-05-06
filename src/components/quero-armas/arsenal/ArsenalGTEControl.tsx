@@ -234,6 +234,9 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           </h3>
           <span className="text-[10px] text-slate-500">Guia de Tráfego Especial</span>
         </div>
+        <div className="flex items-center gap-2">
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
+        </div>
       </header>
 
       {/* KPIs */}
