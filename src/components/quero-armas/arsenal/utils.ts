@@ -308,6 +308,69 @@ export function gteExigibilidadeLabel(exigivel: boolean): string {
 }
 
 /**
+ * Regime canônico da arma para exibição no card e drawer.
+ * Tri-state explícito — "REVISAR" indica falta de informação confiável.
+ *
+ * Critérios:
+ *  - SIGMA: campo `sistema` contém SIGMA/EXÉRCITO; finalidade CAC/Tiro/Caça/
+ *    Colecionamento; ou existe vínculo com GT/GTE/SIGMA (passado como flag).
+ *  - SINARM: campo `sistema` contém SINARM e finalidade DEFESA PESSOAL
+ *    explícita. SINARM sem finalidade clara também é tratado como SINARM
+ *    (registro PF padrão), mas sem mascarar SIGMA com CRAF.
+ *  - REVISAR: nenhum indício confiável.
+ */
+export type WeaponRegime = "SIGMA" | "SINARM" | "REVISAR";
+
+export interface WeaponRegimeHints {
+  hasGteVinculada?: boolean;
+  hasGtVinculada?: boolean;
+  numeroSigma?: string | null;
+}
+
+export function getWeaponRegime(
+  arma: WeaponRegimeInput | null | undefined,
+  hints?: WeaponRegimeHints,
+): WeaponRegime {
+  if (!arma) return "REVISAR";
+  const sistema = _norm([arma.sistema, arma.origem_registro, arma.origem, arma.tipo_acervo].filter(Boolean).join(" "));
+  const finalidade = _norm([arma.finalidade, arma.categoria, arma.tipo_uso].filter(Boolean).join(" "));
+
+  // Indícios fortes de SIGMA/CAC.
+  if (
+    sistema.includes("SIGMA") ||
+    sistema.includes("EXERCITO") ||
+    finalidade.includes("CAC") ||
+    finalidade.includes("TIRO") ||
+    finalidade.includes("CACA") ||
+    finalidade.includes("COLECIONAMENTO") ||
+    hints?.hasGteVinculada ||
+    hints?.hasGtVinculada ||
+    !!hints?.numeroSigma
+  ) {
+    return "SIGMA";
+  }
+
+  // SINARM explícito (com ou sem defesa pessoal — registro PF padrão).
+  if (sistema.includes("SINARM") || finalidade.includes("DEFESA")) {
+    return "SINARM";
+  }
+
+  return "REVISAR";
+}
+
+export const WEAPON_REGIME_LABEL: Record<WeaponRegime, string> = {
+  SIGMA: "SISTEMA · SIGMA",
+  SINARM: "SISTEMA · SINARM",
+  REVISAR: "SISTEMA · REVISAR",
+};
+
+export function regimeChipTone(regime: WeaponRegime): "ok" | "warn" | "muted" {
+  if (regime === "SIGMA") return "ok";
+  if (regime === "SINARM") return "ok";
+  return "warn";
+}
+
+/**
  * GT (Guia de Tráfego de retirada/transporte inicial da loja) NÃO é o mesmo
  * que GTE (Guia de Tráfego Especial — SIGMA/CAC). A GT é informativa /
  * histórica e sua ausência NUNCA pode pintar a KPI ARMAS de vermelho nem
