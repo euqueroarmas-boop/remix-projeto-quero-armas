@@ -203,7 +203,7 @@ function WeaponCard({
 
         {/* Weapon render with glow — transparent, large, detailed */}
         <div
-          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : size === "sm" ? "h-32 md:h-36" : "h-60 md:h-64"} w-full`}
+          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
           {isDocCard ? (
