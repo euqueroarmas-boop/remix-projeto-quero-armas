@@ -478,6 +478,7 @@ export function ArsenalView({
           data_validade: d.data_validade,
           daysToExpire: daysUntil(d.data_validade),
           hasGte: false,
+          catalogo_id: null as string | null,
           sistema: sistemaInferido,
           finalidade: finalidadeInferida,
           documentPreview: tipoUpper === "GTE" && d.arquivo_storage_path
