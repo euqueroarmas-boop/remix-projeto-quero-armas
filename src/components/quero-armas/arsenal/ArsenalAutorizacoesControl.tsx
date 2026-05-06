@@ -291,6 +291,7 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" className="hidden" accept="application/pdf,image/*" onChange={onFileSelected} />
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           <button
             onClick={onCadastroManual}
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
@@ -342,15 +343,19 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
             const cancelada = (d.status || "").toUpperCase() === "CANCELADA";
             const finalizada = baixada || cancelada;
             return (
-              <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
-                <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+              <li
+                key={`doc-${d.id}`}
+                className={`flex flex-wrap items-center gap-3 border-l-[3px] ${sz.row}`}
+                style={{ borderLeftColor: TONE_BORDER[sv.tone], background: TONE_ROW_BG[sv.tone] }}
+              >
+                <FileText className={`${sz.iconBox} shrink-0 text-slate-400`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold uppercase tracking-wide text-slate-800">
+                    <span className={`font-bold uppercase tracking-wide text-slate-800 ${sz.title}`}>
                       {d.numero_documento ? `AUT. Nº ${d.numero_documento}` : (d.arquivo_nome || "AUTORIZAÇÃO EM ANÁLISE")}
                     </span>
                     <span
-                      className="rounded-full px-2 py-[1px] text-[9px] font-bold uppercase tracking-wider"
+                      className={`rounded-full font-bold uppercase tracking-wider ${sz.badge}`}
                       style={{ background: TONE_BG[sv.tone], color: TONE_FG[sv.tone] }}
                     >
                       {sv.label}
