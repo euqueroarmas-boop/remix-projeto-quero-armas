@@ -403,12 +403,13 @@ export function ArsenalView({
       .map((d: any) => {
         const nome = normalizeDocWeaponName(d);
         const tipoUpper = String(d.tipo_documento || "DOC").toUpperCase();
+        const tipoLower = String(d.tipo_documento || "").toLowerCase();
         return {
           id: `doc-${d.id}`,
           source: (tipoUpper === "GTE" ? "GTE" : "CRAF") as "CRAF" | "GTE",
           nome_arma: nome,
-          numero_arma: d.arma_numero_serie || d.numero_documento || null,
-          numero_sigma: d.numero_documento || null,
+          numero_arma: d.arma_numero_serie || null,
+          numero_sigma: ["craf", "sinarm"].includes(tipoLower) ? d.numero_documento || null : null,
           data_validade: d.data_validade,
           daysToExpire: daysUntil(d.data_validade),
           hasGte: false,
@@ -435,6 +436,119 @@ export function ArsenalView({
       });
     return [...fromCrafs, ...fromDocs];
   }, [crafs, gtes, meusDocs]);
+
+  const weaponLinkState = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const docApproved = (d: any) => !["excluido", "excluido_lgpd", "reprovado", "invalidado"].includes(String(d?.status || "").toLowerCase());
+    const byKey = (items: any[]) => {
+      const map = new Map<string, any[]>();
+      items.forEach((item) => {
+        [normWeaponKey(item?.numero_arma), normWeaponKey(item?.numero_sigma)].forEach((k) => {
+          if (!k) return;
+          const arr = map.get(k) || [];
+          arr.push(item);
+          map.set(k, arr);
+        });
+      });
+      return map;
+    };
+    const byCatalogo = (items: any[]) => {
+      const map = new Map<string, any[]>();
+      items.forEach((item) => {
+        if (!item?.catalogo_id) return;
+        const k = String(item.catalogo_id);
+        const arr = map.get(k) || [];
+        arr.push(item);
+        map.set(k, arr);
+      });
+      return map;
+    };
+    const typedDocs = (tipo: "craf" | "gte") => (meusDocs || [])
+      .filter((d: any) => {
+        const t = String(d?.tipo_documento || "").toLowerCase();
+        return docApproved(d) && (tipo === "craf" ? ["craf", "sinarm"].includes(t) : ["gte", "gt"].includes(t));
+      });
+    const crafSources = [...(crafs || []), ...typedDocs("craf").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: d.numero_documento, __doc: true }))];
+    const gteSources = [...(gtes || []), ...typedDocs("gte").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: null, __doc: true }))];
+    const crafByKey = byKey(crafSources);
+    const gteByKey = byKey(gteSources);
+    const crafByCatalogo = byCatalogo(crafSources);
+    const gteByCatalogo = byCatalogo(gteSources);
+    const weakDocs = (tipo: "craf" | "gte", w: WorkbenchWeapon) => {
+      const wCat = w.catalogo_id ? catalogoById(w.catalogo_id) : null;
+      const wInfo = buildWeaponInfo(w.nome_arma, w.numero_arma);
+      const wMarcaModelo = `${wCat?.marca || wInfo.marca || ""} ${wCat?.modelo || wInfo.modelo || ""}`.replace(/\s+/g, " ").trim().toUpperCase();
+      const wCal = normalizeCalibre(wCat?.calibre || wInfo.calibre);
+      return typedDocs(tipo).filter((d: any) => {
+        if (normWeaponKey(d.arma_numero_serie) || (tipo === "craf" && normWeaponKey(d.numero_documento))) return false;
+        const modeloSeguro = isInvalidWeaponModel(d.arma_modelo) ? "" : String(d.arma_modelo || "").trim();
+        const dMarcaModelo = `${d.arma_marca || ""} ${modeloSeguro}`.replace(/\s+/g, " ").trim().toUpperCase();
+        const dCal = normalizeCalibre(d.arma_calibre);
+        return !!wMarcaModelo && !!dMarcaModelo && wMarcaModelo === dMarcaModelo && (!wCal || !dCal || wCal === dCal);
+      });
+    };
+    const statusFor = (matches: any[], valid: boolean, weak: boolean, activeLabel: "VÁLIDO" | "ATIVA"): { status: LinkedDocStatus; label: string } => {
+      if (valid) return { status: activeLabel === "ATIVA" ? "ativo" : "valido", label: activeLabel };
+      if (matches.length > 0) {
+        const hasExpired = matches.some((m) => m?.data_validade && !isValidDateFromToday(m.data_validade, today));
+        return hasExpired ? { status: "vencido", label: "VENCIDO" } : { status: "revisar", label: "REVISAR VÍNCULO" };
+      }
+      if (weak) return { status: "revisar", label: "REVISAR VÍNCULO" };
+      return { status: "ausente", label: "AUSENTE" };
+    };
+    const out = new Map<string, WeaponLinkState>();
+    weapons.forEach((w) => {
+      const key = `${w.source}-${w.id}`;
+      const keys = [normWeaponKey(w.numero_arma), normWeaponKey(w.numero_sigma)].filter(Boolean);
+      const cat = w.catalogo_id ? String(w.catalogo_id) : null;
+      const collect = (catalogMap: Map<string, any[]>, keyMap: Map<string, any[]>) => {
+        const matches: any[] = [];
+        if (cat) (catalogMap.get(cat) || []).forEach((x) => matches.push(x));
+        keys.forEach((k) => (keyMap.get(k) || []).forEach((x) => { if (!matches.includes(x)) matches.push(x); }));
+        return matches;
+      };
+      const crafMatches = collect(crafByCatalogo, crafByKey);
+      const gteMatches = collect(gteByCatalogo, gteByKey);
+      const hasWeakCrafDoc = weakDocs("craf", w).length > 0;
+      const hasWeakGteDoc = weakDocs("gte", w).length > 0;
+      const crafValido = crafMatches.some((c) => isValidDateFromToday(c?.data_validade, today));
+      const gteValida = gteMatches.some((g) => isValidDateFromToday(g?.data_validade, today));
+      const craf = statusFor(crafMatches, crafValido, hasWeakCrafDoc, "VÁLIDO");
+      const gte = statusFor(gteMatches, gteValida, hasWeakGteDoc, "ATIVA");
+      out.set(key, {
+        crafMatches,
+        gteMatches,
+        crafStatus: craf.status,
+        gteStatus: gte.status,
+        crafLabel: craf.label,
+        gteLabel: gte.label,
+        crafValido,
+        gteValida,
+        semVinculo: keys.length === 0 && !cat,
+        hasWeakCrafDoc,
+        hasWeakGteDoc,
+      });
+    });
+    return out;
+  }, [weapons, crafs, gtes, meusDocs, catalogoById]);
+
+  const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
+    () => weapons.map((w) => {
+      const link = weaponLinkState.get(`${w.source}-${w.id}`);
+      return {
+        ...w,
+        hasCraf: !!link?.crafValido,
+        hasGte: !!link?.gteValida,
+        crafStatus: link?.crafStatus,
+        gteStatus: link?.gteStatus,
+        crafLabel: link?.crafLabel,
+        gteLabel: link?.gteLabel,
+        linkReview: !!(link?.hasWeakCrafDoc || link?.hasWeakGteDoc || link?.semVinculo),
+      };
+    }),
+    [weapons, weaponLinkState],
+  );
 
   // Documentos a exibir como "tags" sobre a bancada
   const benchDocs = useMemo(() => {
