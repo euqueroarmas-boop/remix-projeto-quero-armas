@@ -1256,7 +1256,10 @@ export function ArsenalView({
       // SIGMA) OU sem CRAF válido vinculado OU sem GTE ativa vinculada.
       const semVinculo = !!link?.semVinculo;
       const semCrafValido = !link?.crafValido;
-      const semGteAtiva = !link?.gteValida;
+      // GTE só conta como irregularidade quando é exigível para o regime da arma.
+      // Arma SINARM/Defesa Pessoal: GTE não é documento permanente.
+      const gteExigivel = isGteExigivelParaArma(w as any);
+      const semGteAtiva = gteExigivel && !link?.gteValida;
       if (vencido || semVinculo || semCrafValido || semGteAtiva) comIrregularidade++;
     }
 
