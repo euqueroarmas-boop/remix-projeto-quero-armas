@@ -11,6 +11,7 @@ import {
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
+import { useArsenalCardSize, ArsenalCardSizeToggle } from "./useArsenalCardSize";
 
 export interface WorkbenchWeapon {
   id: number | string;
@@ -54,10 +55,10 @@ interface Props {
 }
 
 const toneClasses = {
-  ok: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.18)]", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  warn: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.18)]", chip: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" },
-  danger: { glow: "shadow-[0_8px_24px_-12px_rgba(239,68,68,0.35)]", chip: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500" },
-  muted: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]", chip: "bg-slate-100 text-slate-500 border-slate-200", dot: "bg-slate-400" },
+  ok: { glow: "shadow-[0_8px_24px_-12px_rgba(16,185,129,0.30)]", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", ring: "ring-1 ring-emerald-300/60" },
+  warn: { glow: "shadow-[0_10px_28px_-10px_rgba(245,158,11,0.45)]", chip: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500", ring: "ring-1 ring-amber-300/70" },
+  danger: { glow: "shadow-[0_12px_30px_-8px_rgba(239,68,68,0.55)]", chip: "bg-red-50 text-red-700 border-red-300", dot: "bg-red-500", ring: "ring-2 ring-red-400/80" },
+  muted: { glow: "shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)]", chip: "bg-slate-100 text-slate-500 border-slate-200", dot: "bg-slate-400", ring: "" },
 };
 
 function urgencyText(days: number | null): string {
@@ -79,7 +80,7 @@ function WeaponCard({
   info: WeaponInfo;
   catalog: ArmamentoCatalogo | null;
   onClick: () => void;
-  size?: "lg" | "md";
+  size?: "lg" | "md" | "sm";
 }) {
   const tone = urgencyTone(w.daysToExpire);
   const c = toneClasses[tone];
@@ -110,12 +111,17 @@ function WeaponCard({
   );
   const isDocCard = !!w.documentPreview;
   const isDocImage = (w.documentPreview?.mime || "").startsWith("image/");
+  const borderColor =
+    tone === "danger" ? "border-red-400"
+    : tone === "warn" ? "border-amber-300"
+    : tone === "ok" ? "border-emerald-200"
+    : "border-slate-200";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-2xl border border-slate-200 bg-white text-left transition-all hover:-translate-y-[2px] hover:border-slate-300 ${c.glow}`}
+      className={`group relative w-full overflow-hidden rounded-2xl border-2 ${borderColor} bg-white text-left transition-all hover:-translate-y-[2px] ${c.glow} ${c.ring}`}
     >
       {/* Cinematic background */}
       <div
@@ -190,7 +196,7 @@ function WeaponCard({
 
         {/* Weapon render with glow — transparent, large, detailed */}
         <div
-          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
+          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : size === "sm" ? "h-32 md:h-36" : "h-60 md:h-64"} w-full`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
           {isDocCard ? (
@@ -343,6 +349,18 @@ function DocumentTag({ d }: { d: DocCard }) {
 export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, headerAction }: Props) {
   const [showAll, setShowAll] = useState(false);
   const { match, byId, resolveCraf, loading: catLoading } = useArmamentoCatalogo();
+  const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  // Mapeia o tamanho global do Arsenal (lg/md/sm) para o tamanho do card da bancada.
+  // Cards "longos" usam lg por padrão; quando o cliente escolhe md/sm, reduzimos.
+  const longaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : cardSize === "md" ? "md" : "lg";
+  const curtaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : "md";
+  const curtaCols =
+    cardSize === "sm"
+      ? "sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
+      : cardSize === "md"
+      ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  const longaCols = cardSize === "sm" ? "md:grid-cols-3" : "md:grid-cols-2";
 
   const enriched = useMemo(
     () => weapons.map((w) => ({
@@ -402,11 +420,13 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
           <div className="text-[10px] font-mono text-slate-400">
             {enriched.length.toString().padStart(2, "0")} ITEM(S)
           </div>
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           {headerAction}
         </div>
-        {headerAction && (
-          <div className="flex md:hidden">{headerAction}</div>
-        )}
+        <div className="flex items-center gap-2 md:hidden">
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
+          {headerAction}
+        </div>
       </div>
 
       {/* Bench body */}
@@ -432,7 +452,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         ) : (
           <div className="relative space-y-4">
             {visibleLongas.length > 0 && (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className={`grid gap-3 ${longaCols}`}>
                 {visibleLongas.map(({ w, info, catalog }) => (
                   <WeaponCard
                     key={`${w.source}-${w.id}`}
@@ -440,14 +460,14 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                     info={info}
                     catalog={catalog}
                     onClick={() => onSelectWeapon(w, info)}
-                    size="lg"
+                    size={longaSize}
                   />
                 ))}
               </div>
             )}
 
             {visibleCurtas.length > 0 && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className={`grid gap-3 ${curtaCols}`}>
                 {visibleCurtas.map(({ w, info, catalog }) => (
                   <WeaponCard
                     key={`${w.source}-${w.id}`}
@@ -455,6 +475,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                     info={info}
                     catalog={catalog}
                     onClick={() => onSelectWeapon(w, info)}
+                    size={curtaSize}
                   />
                 ))}
               </div>
