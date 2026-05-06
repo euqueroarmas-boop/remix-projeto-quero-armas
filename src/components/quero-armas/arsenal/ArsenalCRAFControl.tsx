@@ -498,6 +498,18 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
           onSaved={() => load()}
         />
       )}
+      {classif && (
+        <DocClassReviewModal
+          open={showReview}
+          tipoSelecionado="CRAF"
+          classificacao={classif}
+          onResolve={(r) => {
+            setShowReview(false);
+            if (r.decision === "cancelar") { setPendingFile(null); return; }
+            if (pendingFile) proceedUpload(pendingFile, r.revisaoObrigatoria, classif);
+          }}
+        />
+      )}
     </section>
   );
 }
