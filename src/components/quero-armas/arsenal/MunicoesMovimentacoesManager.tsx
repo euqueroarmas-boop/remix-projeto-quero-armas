@@ -52,6 +52,8 @@ interface Movimentacao {
   documento_url: string | null;
   documento_nome: string | null;
   created_at: string;
+  ia_status?: string | null;
+  revisao_obrigatoria?: boolean | null;
 }
 
 interface Saldo {
