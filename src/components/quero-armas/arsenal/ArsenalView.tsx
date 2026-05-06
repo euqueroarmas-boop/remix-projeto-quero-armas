@@ -1627,6 +1627,11 @@ export function ArsenalView({
         relatedDocs={relatedDocs}
         ammoSameCalibre={ammoSameCalibre}
         onClose={() => setSelected(null)}
+        clienteId={clienteId}
+        onGtDeclaracaoChange={() => {
+          // Bumpa um state local mínimo para reavaliar leitura do localStorage.
+          setGtDeclaracaoTick((n) => n + 1);
+        }}
         onDelete={async (w) => {
           // ref_id: para fontes "doc-..." manda o id real do documento
           const isDoc = typeof w.id === "string" && w.id.startsWith("doc-");
