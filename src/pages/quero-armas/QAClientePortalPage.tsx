@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
 import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDocsHubModal";
-import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
@@ -41,6 +40,14 @@ const urgencyLabel = (d: number | null) => d === null ? "SEM DATA" : d < 0 ? `VE
 
 
 interface ExpiringDoc { label: string; date: string | null; days: number | null; category: string; }
+
+interface ClienteAvatarOficial {
+  url: string | null;
+  path: string | null;
+  bucket: string | null;
+  source: "qa_clientes.imagem" | "qa_cadastro_publico.selfie_path" | "avatar_tatico_path" | null;
+  hasPhoto: boolean;
+}
 
 function SectionCard({ icon: Icon, title, color, children }: { icon: any; title: string; color: string; children: React.ReactNode }) {
   return (
@@ -134,22 +141,14 @@ export default function QAClientePortalPage() {
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
 
-  // Fonte única da foto — espelha exatamente a lógica de /clientes
-  // (ClienteSelfieAvatar): prioriza foto manual (cliente.imagem em qa-documentos),
-  // depois selfie do cadastro público, e por último o avatar tático gerado por IA.
-  const imagemManual: string | null = (cliente as any)?.imagem || null;
-  const tacticalPath: string | null = (cliente as any)?.avatar_tatico_path || null;
-  const selfiePath: string | null = cadastroPub?.selfie_path || null;
-  const avatarPath: string | null = imagemManual || selfiePath || tacticalPath;
-  const avatarBucket = imagemManual
-    ? "qa-documentos"
-    : selfiePath
-    ? "qa-cadastro-selfies"
-    : "qa-cadastro-selfies"; // tactical path também vive em qa-cadastro-selfies
-  const avatarUrl = usePrivateStorageUrl(avatarBucket, avatarPath);
-  const hasTacticalAvatar = !!tacticalPath && !imagemManual && !selfiePath;
-  const hasAnyPhoto = !!avatarPath;
+  // Fonte oficial do header: função autenticada resolve e assina, em ordem:
+  // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
+  const avatarUrl = avatarOficial?.url || null;
+  const hasTacticalAvatar = avatarOficial?.source === "avatar_tatico_path";
+  const hasAnyPhoto = avatarOficial?.hasPhoto || Boolean((cliente as any)?.imagem || (cliente as any)?.avatar_tatico_path);
 
   useEffect(() => {
     const load = async () => {
