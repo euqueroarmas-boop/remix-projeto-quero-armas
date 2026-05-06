@@ -1332,6 +1332,7 @@ export function ArsenalView({
         gteHint={gteKpi.labelSecundaria}
         crafPending={pendingDocs.craf}
         gtePending={pendingDocs.gte}
+        armasBreakdown={armasBreakdown}
         crUnified={crUnifiedFinal}
         crafUnified={crafUnifiedFinal}
         gteUnified={gteUnifiedFinal}
