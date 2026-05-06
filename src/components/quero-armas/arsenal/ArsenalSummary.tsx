@@ -21,6 +21,11 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  FileText,
+  Hash,
+  Fingerprint,
+  CalendarClock,
+  Info,
 } from "lucide-react";
 import {
   DndContext,
@@ -63,13 +68,19 @@ export type ArsenalSummaryTarget =
   | "autorizacoes"
   | "exames";
 
-// Identificadores fixos exigidos
-type KpiId = "armas" | "municoes" | "craf" | "status_cr" | "calibres" | "alertas" | "gte";
+// Identificadores fixos exigidos.
+// REGRA DE DOMÍNIO: a ARMA é a entidade principal. CRAF e GTE são vínculos
+// da arma — não aparecem como KPIs independentes no topo. Eles continuam
+// existindo em todo o resto do sistema (uploads, OCR, controles), apenas
+// não competem mais com ARMAS no painel de KPIs.
+type KpiId = "armas" | "municoes" | "status_cr" | "calibres" | "alertas";
 // KPIs da Linha 2 (recolhível). Não entram no DEFAULT_ORDER persistido para
 // manter Zero Regression do layout existente — são renderizados separadamente.
 type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
 
-const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calibres", "alertas", "gte"];
+// Ordem padrão: CR | ARMAS | CALIBRES | MUNIÇÕES | ALERTAS
+// (CRAF e GTE foram removidos como KPIs — as informações ficam dentro da arma).
+const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "alertas"];
 // F1A — Reorganização do Arsenal:
 // Os KPIs "Documentos", "Processos" e "Autorizações" foram REMOVIDOS do grid
 // principal. Agora existem grupos operacionais próprios (Controle de CRAF,
@@ -79,14 +90,17 @@ const DEFAULT_ORDER: KpiId[] = ["armas", "municoes", "craf", "status_cr", "calib
 // existentes — apenas não são renderizadas.
 const SECONDARY_ORDER: KpiSecondaryId[] = ["exames"];
 
+// Ids legados que podem existir em layouts persistidos antigos. Devem ser
+// silenciosamente ignorados na renderização (Zero Regression para usuários
+// que já tinham a ordem salva com CRAF/GTE como KPIs).
+const LEGACY_REMOVED_IDS = new Set<string>(["craf", "gte"]);
+
 const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   armas: "armas",
   municoes: "municoes",
-  craf: "crafs",
   status_cr: "cr",
   calibres: "calibres",
   alertas: "alertas",
-  gte: "gte",
 };
 
 interface Props {
@@ -97,6 +111,19 @@ interface Props {
   crLabel: string;
   totalCrafs: number;
   alerts: number;
+  /**
+   * Breakdown das armas por vínculo físico (nº de série / SIGMA / arma_id).
+   * Quando ausente, o card ARMAS exibe apenas o total (compatibilidade).
+   */
+  armasBreakdown?: {
+    total: number;
+    comCrafValido: number;
+    comGteAtiva: number;
+    comVencimento: number;
+    comIrregularidade: number;
+    /** "ok" | "warn" | "danger" — pior status consolidado entre as armas. */
+    piorStatus: "ok" | "warn" | "danger" | "muted";
+  };
   /** Breakdown opcional do total de alertas para subtítulo coerente. */
   alertasCriticos?: number;
   alertasPreventivos?: number;
@@ -196,10 +223,18 @@ function KpiCard({
   def,
   editing,
   onClick,
+  featured,
+  extraSlot,
+  badge,
+  footerNote,
 }: {
   def: KpiDefinition;
   editing: boolean;
   onClick?: () => void;
+  featured?: boolean;
+  extraSlot?: React.ReactNode;
+  badge?: { tone: "ok" | "warn" | "danger"; label: string } | null;
+  footerNote?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: def.id });
@@ -208,7 +243,7 @@ function KpiCard({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    boxShadow: `inset 0 0 0 1px ${color}10`,
+    boxShadow: featured ? `inset 0 0 0 2px #7A1F2B22` : `inset 0 0 0 1px ${color}10`,
     opacity: isDragging ? 0.6 : 1,
     zIndex: isDragging ? 20 : "auto",
   };
@@ -263,18 +298,57 @@ function KpiCard({
           KPI <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-      <div
-        className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
-          typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
-        }`}
-        title={String(def.value)}
-      >
-        {def.value}
-      </div>
-      <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-        {def.label}
-      </div>
-      <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+      {featured ? (
+        <>
+          <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            {def.label}
+          </div>
+          <div
+            className="mt-1 font-bold text-slate-900 leading-none font-mono text-4xl"
+            title={String(def.value)}
+          >
+            {def.value}
+          </div>
+          {def.hint && (
+            <div className="mt-1 text-[11px] font-medium text-slate-500">{def.hint}</div>
+          )}
+          {extraSlot}
+          {badge && (
+            <div
+              className={`mt-3 inline-flex items-center gap-1.5 self-start rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                badge.tone === "danger"
+                  ? "bg-red-50 text-red-700 border border-red-200"
+                  : badge.tone === "warn"
+                    ? "bg-amber-50 text-amber-800 border border-amber-200"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              }`}
+            >
+              <AlertTriangle className="h-3 w-3" /> {badge.label}
+            </div>
+          )}
+          {footerNote && (
+            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-slate-50 px-2 py-1.5 text-[10px] text-slate-500 leading-snug">
+              <Info className="h-3 w-3 mt-0.5 shrink-0 text-slate-400" />
+              <span>{footerNote}</span>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div
+            className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
+              typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
+            }`}
+            title={String(def.value)}
+          >
+            {def.value}
+          </div>
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+            {def.label}
+          </div>
+          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+        </>
+      )}
       </button>
     </div>
   );
@@ -282,9 +356,11 @@ function KpiCard({
 
 function sanitizeOrder(value: unknown): KpiId[] {
   if (!Array.isArray(value)) return DEFAULT_ORDER;
-  const filtered = value.filter((id): id is KpiId =>
-    DEFAULT_ORDER.includes(id as KpiId),
-  );
+  // Filtra ids legados removidos (craf/gte) e ids desconhecidos.
+  const filtered = value.filter((id): id is KpiId => {
+    if (LEGACY_REMOVED_IDS.has(String(id))) return false;
+    return DEFAULT_ORDER.includes(id as KpiId);
+  });
   // garante que todos os ids estejam presentes (mesmo que faltem novos)
   for (const id of DEFAULT_ORDER) {
     if (!filtered.includes(id)) filtered.push(id);
@@ -307,6 +383,7 @@ export function ArsenalSummary({
   gteHint = "Sem GTE cadastrada",
   crafPending = 0,
   gtePending = 0,
+  armasBreakdown,
   crUnified = null,
   crafUnified = null,
   gteUnified = null,
@@ -495,8 +572,26 @@ export function ArsenalSummary({
         icon: <Crosshair className="h-4 w-4" />,
         label: "Armas",
         value: totalArmas,
-        hint: totalArmas === 0 ? "Sem armas cadastradas" : "Cadastradas",
-        tone: totalArmas === 0 ? "steel" : "cyan",
+        hint: totalArmas === 0
+          ? "Sem armas cadastradas"
+          : armasBreakdown
+            ? armasBreakdown.comIrregularidade > 0
+              ? `${armasBreakdown.comIrregularidade} com irregularidade`
+              : armasBreakdown.comVencimento > 0
+                ? `${armasBreakdown.comVencimento} com vencimento próximo`
+                : "Todas regulares"
+            : "Cadastradas",
+        tone: totalArmas === 0
+          ? "steel"
+          : armasBreakdown
+            ? (armasBreakdown.piorStatus === "danger"
+                ? "danger"
+                : armasBreakdown.piorStatus === "warn"
+                  ? "warn"
+                  : armasBreakdown.piorStatus === "ok"
+                    ? "ok"
+                    : "cyan")
+            : "cyan",
         target: "armas",
       },
       municoes: {
@@ -506,34 +601,11 @@ export function ArsenalSummary({
         value: totalMunicoes.toLocaleString("pt-BR"),
         hint: municoesUnified
           ? municoesUnified.sub ?? municoesUnified.label
-          : totalCalibres > 0 ? `${totalCalibres} calibres` : "Sem estoque",
+          : totalCalibres > 0
+            ? `Estoque distribuído em ${totalCalibres} calibre${totalCalibres > 1 ? "s" : ""}`
+            : "Sem estoque",
         tone: municoesUnified ? corToTone(municoesUnified.cor) : "steel",
         target: "municoes",
-      },
-      craf: {
-        id: "craf",
-        icon: <FileBadge className="h-4 w-4" />,
-        label: "CRAFs",
-        value: totalCrafs,
-        hint: crafUnified
-          ? crafUnified.sub ?? crafUnified.label
-          :
-          totalCrafs === 0 && crafPending > 0
-            ? crafPending === 1
-              ? "1 em análise"
-              : `${crafPending} em análise`
-            : totalCrafs === 0
-              ? "Sem CRAFs cadastrados"
-              : "Vinculados ao acervo",
-        tone: crafUnified
-          ? corToTone(crafUnified.cor)
-          :
-          totalCrafs === 0 && crafPending > 0
-            ? "warn"
-            : totalCrafs === 0
-              ? "steel"
-              : "cyan",
-        target: "crafs",
       },
       status_cr: {
         id: "status_cr",
@@ -579,34 +651,9 @@ export function ArsenalSummary({
               : (alertasUnified ? corToTone(alertasUnified.cor) : "warn"),
         target: "alertas",
       },
-      gte: {
-        id: "gte",
-        icon: <ClipboardList className="h-4 w-4" />,
-        label: "GTEs",
-        value: totalGtes,
-        hint: gteUnified
-          ? gteUnified.sub ?? gteUnified.label
-          :
-          totalGtes === 0 && gtePending > 0
-            ? gtePending === 1
-              ? "1 em análise"
-              : `${gtePending} em análise`
-            : gteHint,
-        // Sem GTE cadastrada → cinza, mesmo se status vier como "ok".
-        // Exceção: há GTE/GT enviada pelo cliente aguardando aprovação → âmbar.
-        tone: gteUnified
-          ? corToTone(gteUnified.cor)
-          :
-          totalGtes === 0 && gtePending > 0
-            ? "warn"
-            : totalGtes === 0 || gteStatus === "muted"
-              ? "steel"
-              : gteStatus,
-        target: "gte",
-      },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, totalCrafs, alerts, alertasCriticos, alertasPreventivos, totalGtes, gteStatus, gteHint, crafPending, gtePending, crUnified, crafUnified, gteUnified, alertasUnified, municoesUnified],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown],
   );
 
   // Ordem efetiva:
@@ -854,39 +901,75 @@ export function ArsenalSummary({
               para que os cards reduzam de largura proporcionalmente conforme
               entram novas KPIs (ex.: GTE), sem nunca quebrar para a próxima linha.
           */}
-          <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:hidden">
-            {effectiveOrder.map((id) => {
+          {(() => {
+            const armasExtraSlot = armasBreakdown && armasBreakdown.total > 0 ? (
+              <ul className="mt-3 space-y-1 text-[11px] text-slate-700">
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span><strong className="font-semibold">{armasBreakdown.comCrafValido}</strong> com CRAF válido</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <span><strong className="font-semibold">{armasBreakdown.comGteAtiva}</strong> com GTE ativa</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full ${armasBreakdown.comVencimento > 0 ? "bg-amber-500" : "bg-slate-300"}`} />
+                  <span><strong className="font-semibold">{armasBreakdown.comVencimento}</strong> com vencimento</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full ${armasBreakdown.comIrregularidade > 0 ? "bg-red-500" : "bg-slate-300"}`} />
+                  <span><strong className="font-semibold">{armasBreakdown.comIrregularidade}</strong> com irregularidade</span>
+                </li>
+              </ul>
+            ) : null;
+            const armasBadge = armasBreakdown
+              ? armasBreakdown.comIrregularidade > 0
+                ? { tone: "danger" as const, label: `${armasBreakdown.comIrregularidade} arma${armasBreakdown.comIrregularidade > 1 ? "s" : ""} com irregularidade` }
+                : armasBreakdown.comVencimento > 0
+                  ? { tone: "warn" as const, label: `Atenção — ${armasBreakdown.comVencimento} arma${armasBreakdown.comVencimento > 1 ? "s" : ""} com vencimento` }
+                  : null
+              : null;
+            const armasFooter = "CRAF e GTE são visualizados dentro de cada arma na Bancada Tática.";
+            const renderCard = (id: KpiId, klass: string) => {
               const def = definitions[id];
               if (!def) return null;
+              const isArmas = id === "armas";
               return (
-                <KpiCard
-                  key={id}
-                  def={def}
-                  editing={editing}
-                  onClick={() => onNavigate?.(def.target)}
-                />
-              );
-            })}
-          </div>
-          <div className="hidden lg:flex lg:flex-nowrap lg:gap-3 lg:items-stretch">
-            {effectiveOrder.map((id) => {
-              const def = definitions[id];
-              if (!def) return null;
-              return (
-                <div
-                  key={id}
-                  className="flex-1 min-w-0 basis-0"
-                  style={{ minWidth: 0 }}
-                >
+                <div key={id} className={klass} style={{ minWidth: 0 }}>
                   <KpiCard
                     def={def}
                     editing={editing}
                     onClick={() => onNavigate?.(def.target)}
+                    featured={isArmas}
+                    extraSlot={isArmas ? armasExtraSlot : undefined}
+                    badge={isArmas ? armasBadge : null}
+                    footerNote={isArmas ? armasFooter : undefined}
                   />
                 </div>
               );
-            })}
-          </div>
+            };
+            return (
+              <>
+                {/* Mobile / tablet: ARMAS ocupa as 2 colunas */}
+                <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:hidden">
+                  {effectiveOrder.map((id) =>
+                    renderCard(id, id === "armas" ? "col-span-2" : ""),
+                  )}
+                </div>
+                {/* Desktop: ARMAS ganha o dobro do espaço */}
+                <div className="hidden lg:flex lg:flex-nowrap lg:gap-3 lg:items-stretch">
+                  {effectiveOrder.map((id) =>
+                    renderCard(
+                      id,
+                      id === "armas"
+                        ? "min-w-0 basis-0 flex-[2.2]"
+                        : "flex-1 min-w-0 basis-0",
+                    ),
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </SortableContext>
       </DndContext>
 
@@ -1034,6 +1117,54 @@ export function ArsenalSummary({
             return cardEl;
           })}
         </div>
+
+      {/* ── Painel explicativo: AO ABRIR UMA ARMA NA BANCADA ─────────────
+          Permanente e sempre visível: comunica que CRAF/GTE/munições/validade/
+          nº de série/SIGMA estão dentro de cada arma na Bancada Tática.
+          Substitui visualmente os antigos KPIs independentes de CRAF e GTE. */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-1">
+          <div
+            className="inline-flex h-7 w-7 items-center justify-center rounded-lg"
+            style={{ background: "#7A1F2B14", color: "#7A1F2B" }}
+          >
+            <Crosshair className="h-3.5 w-3.5" />
+          </div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "#7A1F2B" }}>
+            Ao abrir uma arma na Bancada
+          </h3>
+        </div>
+        <p className="text-[12px] text-slate-600 mb-3">
+          Você visualiza todas as informações vinculadas àquela arma.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 lg:gap-4 lg:divide-x lg:divide-slate-100">
+          {[
+            { icon: <FileBadge className="h-4 w-4" />, color: "hsl(142 70% 38%)", title: "CRAF da arma", desc: "Situação e validade do CRAF vinculado" },
+            { icon: <ClipboardList className="h-4 w-4" />, color: "hsl(142 70% 38%)", title: "GTE da arma", desc: "Situação e validade da GTE vinculada" },
+            { icon: <Boxes className="h-4 w-4" />, color: "hsl(38 92% 50%)", title: "Munições por calibre", desc: "Estoque disponível para o calibre da arma" },
+            { icon: <CalendarClock className="h-4 w-4" />, color: "hsl(220 13% 50%)", title: "Validade e status", desc: "Alertas de vencimentos e pendências" },
+            { icon: <Hash className="h-4 w-4" />, color: "hsl(220 13% 50%)", title: "Nº de série", desc: "Número de série da arma" },
+            { icon: <Fingerprint className="h-4 w-4" />, color: "#7A1F2B", title: "SIGMA / SINARM", desc: "ID SIGMA/SINARM e situação no sistema" },
+          ].map((b, i) => (
+            <div key={i} className="flex items-start gap-2.5 lg:px-3 first:lg:pl-0">
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                style={{ background: `${b.color}14`, color: b.color }}
+              >
+                {b.icon}
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-700">
+                  {b.title}
+                </div>
+                <div className="text-[10.5px] text-slate-500 leading-snug mt-0.5">
+                  {b.desc}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

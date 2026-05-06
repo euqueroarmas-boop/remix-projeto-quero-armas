@@ -1046,6 +1046,105 @@ export function ArsenalView({
   // ── F1B-1: Ordem manual dos grupos do Arsenal ─────────────────────────────
   const grupos = useArsenalGruposLayout(clienteId);
   const [organizandoGrupos, setOrganizandoGrupos] = useState(false);
+
+  // ── Breakdown da KPI ARMAS — vínculo físico (nº de série / SIGMA) ────────
+  // Regra de domínio: a ARMA é a entidade principal. Um CRAF só conta para
+  // uma arma se houver MATCH FÍSICO (mesmo numero_arma OU numero_sigma) e
+  // validade >= hoje. Idem para GTE. Documentos sem vínculo confiável não
+  // tornam a arma "regular" — ficam como pendência (irregularidade).
+  const armasBreakdown = useMemo(() => {
+    const norm = (s: string | null | undefined) =>
+      String(s || "").replace(/\s+/g, "").toUpperCase().trim();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Indexa CRAFs e GTEs por chaves físicas (série e SIGMA).
+    const crafByKey = new Map<string, any[]>();
+    (crafs || []).forEach((c: any) => {
+      [norm(c.numero_arma), norm(c.numero_sigma)].forEach((k) => {
+        if (!k) return;
+        const arr = crafByKey.get(k) || [];
+        arr.push(c);
+        crafByKey.set(k, arr);
+      });
+    });
+    const gteByKey = new Map<string, any[]>();
+    (gtes || []).forEach((g: any) => {
+      [norm(g.numero_arma), norm(g.numero_sigma)].forEach((k) => {
+        if (!k) return;
+        const arr = gteByKey.get(k) || [];
+        arr.push(g);
+        gteByKey.set(k, arr);
+      });
+    });
+
+    let comCrafValido = 0;
+    let comGteAtiva = 0;
+    let comVencimento = 0;
+    let comIrregularidade = 0;
+
+    for (const w of weapons) {
+      const serial = norm(w.numero_arma);
+      const sigma = norm(w.numero_sigma);
+      const keys = [serial, sigma].filter(Boolean);
+
+      // CRAF vinculado fisicamente
+      let crafMatches: any[] = [];
+      keys.forEach((k) => {
+        (crafByKey.get(k) || []).forEach((c) => {
+          if (!crafMatches.includes(c)) crafMatches.push(c);
+        });
+      });
+      const crafValido = crafMatches.some((c) => {
+        const v = c?.data_validade ? new Date(c.data_validade) : null;
+        return v && !isNaN(v.getTime()) && v.getTime() >= today.getTime();
+      });
+      if (crafValido) comCrafValido++;
+
+      // GTE vinculada fisicamente
+      let gteMatches: any[] = [];
+      keys.forEach((k) => {
+        (gteByKey.get(k) || []).forEach((g) => {
+          if (!gteMatches.includes(g)) gteMatches.push(g);
+        });
+      });
+      const gteValida = gteMatches.some((g) => {
+        const v = g?.data_validade ? new Date(g.data_validade) : null;
+        return v && !isNaN(v.getTime()) && v.getTime() >= today.getTime();
+      });
+      if (gteValida) comGteAtiva++;
+
+      // Vencimento próximo (<= 60d) ou vencido
+      const dias = w.daysToExpire;
+      const vencido = dias != null && dias < 0;
+      const vencendo = dias != null && dias >= 0 && dias <= 60;
+      if (vencendo) comVencimento++;
+
+      // Irregularidade: vencido OU sem vínculo confiável (sem nº de série e SIGMA)
+      // OU sem CRAF válido vinculado (CRAF é obrigatório por arma).
+      const semVinculo = !serial && !sigma;
+      const semCrafValido = !crafValido;
+      if (vencido || semVinculo || semCrafValido) comIrregularidade++;
+    }
+
+    const piorStatus: "ok" | "warn" | "danger" | "muted" =
+      weapons.length === 0
+        ? "muted"
+        : comIrregularidade > 0
+          ? "danger"
+          : comVencimento > 0
+            ? "warn"
+            : "ok";
+
+    return {
+      total: weapons.length,
+      comCrafValido,
+      comGteAtiva,
+      comVencimento,
+      comIrregularidade,
+      piorStatus,
+    };
+  }, [weapons, crafs, gtes]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -1233,6 +1332,7 @@ export function ArsenalView({
         gteHint={gteKpi.labelSecundaria}
         crafPending={pendingDocs.craf}
         gtePending={pendingDocs.gte}
+        armasBreakdown={armasBreakdown}
         crUnified={crUnifiedFinal}
         crafUnified={crafUnifiedFinal}
         gteUnified={gteUnifiedFinal}
