@@ -416,9 +416,9 @@ export function ArsenalView({
     const fromDocs = meusDocs
       .filter((d: any) => {
         const tipo = String(d.tipo_documento || "").toLowerCase();
-        // Documentos vinculados a arma (CRAF, SINARM, GT, GTE, autorização) entram no arsenal
-        // desde que tenham marca/modelo válidos extraídos.
-        const ehDocDeArma = ["craf", "sinarm", "gt", "gte", "autorizacao_compra", "outro"].includes(tipo);
+        // GT (guia de retirada/transporte inicial da loja) é histórica/informativa
+        // e NÃO cria arma sozinha — fica vinculada à arma existente.
+        const ehDocDeArma = ["craf", "sinarm", "gte", "autorizacao_compra", "outro"].includes(tipo);
         return ehDocDeArma && normalizeDocWeaponName(d);
       })
       .map((d: any) => {
