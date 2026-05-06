@@ -705,7 +705,14 @@ export function ArsenalView({
     (link?.crafMatches || []).forEach((c) => out.push({ category: "CRAF", title: c.nome_arma || c.nome_craf || "CRAF vinculado", date: c.data_validade }));
     (link?.gteMatches || []).forEach((g) => out.push({ category: "GTE", title: g.nome_arma || g.nome_gte || "GTE vinculada", date: g.data_validade }));
     if (!link?.crafValido) out.push({ category: "CRAF", title: link?.hasWeakCrafDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "CRAF ausente — regularizar documento da arma.", date: null });
-    if (!link?.gteValida) out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
+    if (!link?.gteValida) {
+      const gteExigivel = isGteExigivelParaArma(selected as any);
+      if (!gteExigivel) {
+        out.push({ category: "GTE", title: "GTE não exigível para arma SINARM registrada para defesa pessoal.", date: null });
+      } else {
+        out.push({ category: "GTE", title: link?.hasWeakGteDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "GTE ausente — regularizar vínculo/documento da arma.", date: null });
+      }
+    }
     return out;
   }, [selected, weaponLinkState]);
 
