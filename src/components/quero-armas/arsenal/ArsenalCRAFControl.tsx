@@ -418,7 +418,7 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                    <div className={`mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 ${sz.meta}`}>
                       <span>Validade: <b className="text-slate-700">{fmtDate(d.data_validade)}</b></span>
                       {d.orgao_emissor && <span>Órgão: <b className="text-slate-700">{d.orgao_emissor}</b></span>}
                       {d.arma_modelo && <span>Modelo: <b className="text-slate-700">{d.arma_modelo}</b></span>}
