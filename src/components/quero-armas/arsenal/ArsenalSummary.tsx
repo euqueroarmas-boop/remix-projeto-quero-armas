@@ -607,11 +607,9 @@ export function ArsenalSummary({
         icon: <Boxes className="h-4 w-4" />,
         label: "Munições",
         value: totalMunicoes.toLocaleString("pt-BR"),
-        hint: municoesUnified
-          ? municoesUnified.sub ?? municoesUnified.label
-          : totalCalibres > 0
-            ? `Estoque distribuído em ${totalCalibres} calibre${totalCalibres > 1 ? "s" : ""}`
-            : "Sem estoque",
+        hint: totalMunicoes === 0
+          ? "Sem estoque"
+          : `${totalCalibres} calibre${totalCalibres > 1 ? "s" : ""} em estoque`,
         tone: municoesUnified ? corToTone(municoesUnified.cor) : "steel",
         target: "municoes",
       },
