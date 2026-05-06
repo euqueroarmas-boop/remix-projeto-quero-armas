@@ -512,10 +512,14 @@ export function ArsenalView({
     const keyOf = (w: any): string => {
       const serial = norm(w.numero_arma);
       const sigma = norm(w.numero_sigma);
+      // arma_id explícito tem prioridade máxima como identidade física.
+      if (w.arma_id) return `A:${w.arma_id}`;
       if (serial) return `S:${serial}`;
       if (sigma) return `G:${sigma}`;
-      if (w.catalogo_id) return `C:${w.catalogo_id}`;
-      // Sem identificador físico → mantém único por origem (não funde).
+      // Combinação forte: catálogo + série/SIGMA já é coberta acima por serial/sigma.
+      // catalogo_id SOZINHO NÃO identifica unidade física (mesmo modelo pode ter
+      // várias séries). Nunca fundir só por catálogo — manter como item separado
+      // (revisão de vínculo físico).
       return `U:${w.source}-${w.id}`;
     };
     const score = (w: any) => {
