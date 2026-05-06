@@ -8241,6 +8241,57 @@ export type Database = {
           },
         ]
       }
+      qa_municoes_em_revisao: {
+        Row: {
+          calibre: string | null
+          cliente_id: number | null
+          created_at: string | null
+          data_movimentacao: string | null
+          documento_nome: string | null
+          documento_url: string | null
+          ia_dados_extraidos: Json | null
+          ia_status: string | null
+          id: string | null
+          lote: string | null
+          marca: string | null
+          quantidade: number | null
+          revisao_obrigatoria: boolean | null
+          tipo: string | null
+        }
+        Insert: {
+          calibre?: string | null
+          cliente_id?: number | null
+          created_at?: string | null
+          data_movimentacao?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string | null
+          id?: string | null
+          lote?: string | null
+          marca?: string | null
+          quantidade?: number | null
+          revisao_obrigatoria?: boolean | null
+          tipo?: string | null
+        }
+        Update: {
+          calibre?: string | null
+          cliente_id?: number | null
+          created_at?: string | null
+          data_movimentacao?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string | null
+          id?: string | null
+          lote?: string | null
+          marca?: string | null
+          quantidade?: number | null
+          revisao_obrigatoria?: boolean | null
+          tipo?: string | null
+        }
+        Relationships: []
+      }
       qa_municoes_saldos: {
         Row: {
           calibre: string | null
