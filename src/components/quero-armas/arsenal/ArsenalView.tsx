@@ -494,17 +494,24 @@ export function ArsenalView({
       });
       return map;
     };
-    const typedDocs = (tipo: "craf" | "gte") => (meusDocs || [])
+    const typedDocs = (tipo: "craf" | "gte" | "gt") => (meusDocs || [])
       .filter((d: any) => {
         const t = String(d?.tipo_documento || "").toLowerCase();
-        return docApproved(d) && (tipo === "craf" ? ["craf", "sinarm"].includes(t) : ["gte", "gt"].includes(t));
+        if (!docApproved(d)) return false;
+        if (tipo === "craf") return ["craf", "sinarm"].includes(t);
+        if (tipo === "gte") return t === "gte";
+        // GT (Guia de Tráfego de retirada/transporte inicial — informativa).
+        return t === "gt";
       });
     const crafSources = [...(crafs || []), ...typedDocs("craf").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: d.numero_documento, __doc: true }))];
     const gteSources = [...(gtes || []), ...typedDocs("gte").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: null, __doc: true }))];
+    const gtSources = [...typedDocs("gt").map((d: any) => ({ ...d, numero_arma: d.arma_numero_serie, numero_sigma: null, __doc: true }))];
     const crafByKey = byKey(crafSources);
     const gteByKey = byKey(gteSources);
+    const gtByKey = byKey(gtSources);
     const crafByCatalogo = byCatalogo(crafSources);
     const gteByCatalogo = byCatalogo(gteSources);
+    const gtByCatalogo = byCatalogo(gtSources);
     const weakDocs = (tipo: "craf" | "gte", w: WorkbenchWeapon) => {
       const wCat = w.catalogo_id ? catalogoById(w.catalogo_id) : null;
       const wInfo = buildWeaponInfo(w.nome_arma, w.numero_arma);
@@ -540,28 +547,54 @@ export function ArsenalView({
       };
       const crafMatches = collect(crafByCatalogo, crafByKey);
       const gteMatches = collect(gteByCatalogo, gteByKey);
+      const gtMatches = collect(gtByCatalogo, gtByKey);
       const hasWeakCrafDoc = weakDocs("craf", w).length > 0;
       const hasWeakGteDoc = weakDocs("gte", w).length > 0;
       const crafValido = crafMatches.some((c) => isValidDateFromToday(c?.data_validade, today));
       const gteValida = gteMatches.some((g) => isValidDateFromToday(g?.data_validade, today));
       const craf = statusFor(crafMatches, crafValido, hasWeakCrafDoc, "VÁLIDO");
       const gte = statusFor(gteMatches, gteValida, hasWeakGteDoc, "ATIVA");
+      // Declaração local "não possuo mais a GT" (persistida em localStorage até
+      // existir backend/auditoria dedicada).
+      const declKey = gtDeclaracaoKey(clienteId, `${w.source}-${w.id}`);
+      let gtDeclaradaNaoPossui = false;
+      try {
+        if (typeof window !== "undefined") {
+          gtDeclaradaNaoPossui = window.localStorage.getItem(declKey) === "1";
+        }
+      } catch { /* noop */ }
+      // Status da GT — sempre informativo, nunca crítico.
+      let gtStatus: GtDocStatus;
+      if (gtDeclaradaNaoPossui) gtStatus = "nao_possuo";
+      else if (gtMatches.some((g) => {
+        const s = String(g?.status || "").toLowerCase();
+        return s === "aprovado" || s === "validado" || s === "concluido";
+      })) gtStatus = "aprovada";
+      else if (gtMatches.some((g) => {
+        const s = String(g?.status || "").toLowerCase();
+        return s === "pendente_aprovacao" || s === "em_analise" || s === "pendente";
+      })) gtStatus = "em_analise";
+      else if (gtMatches.length > 0) gtStatus = "enviada";
+      else gtStatus = "nao_enviada";
       out.set(key, {
         crafMatches,
         gteMatches,
+        gtMatches,
         crafStatus: craf.status,
         gteStatus: gte.status,
         crafLabel: craf.label,
         gteLabel: gte.label,
         crafValido,
         gteValida,
+        gtStatus,
+        gtDeclaradaNaoPossui,
         semVinculo: keys.length === 0 && !cat,
         hasWeakCrafDoc,
         hasWeakGteDoc,
       });
     });
     return out;
-  }, [weapons, crafs, gtes, meusDocs, catalogoById]);
+  }, [weapons, crafs, gtes, meusDocs, catalogoById, clienteId]);
 
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
