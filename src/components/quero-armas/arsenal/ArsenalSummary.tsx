@@ -948,10 +948,33 @@ export function ArsenalSummary({
                   : null
               : null;
             const armasFooter = "CRAF e GTE são visualizados dentro de cada arma na Bancada Tática.";
+            // Slot extra para MUNIÇÕES — lista resumida de calibres + alerta de lotes sem data.
+            const municoesExtraSlot = totalMunicoes > 0 && (municoesPorCalibre.length > 0 || municoesLotesSemData > 0) ? (
+              <div className="mt-2 space-y-1">
+                {municoesPorCalibre.slice(0, 2).map((c) => (
+                  <div key={c.calibre} className="flex items-center justify-between gap-2 text-[10.5px] text-slate-700">
+                    <span className="font-mono font-semibold truncate">{c.calibre}</span>
+                    <span className="font-mono tabular-nums text-slate-500">{c.quantidade.toLocaleString("pt-BR")}</span>
+                  </div>
+                ))}
+                {municoesPorCalibre.length > 2 && (
+                  <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                    + {municoesPorCalibre.length - 2} calibre{municoesPorCalibre.length - 2 > 1 ? "s" : ""}
+                  </div>
+                )}
+                {municoesLotesSemData > 0 && (
+                  <div className="mt-1 inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.1em] text-amber-700">
+                    <AlertTriangle className="h-2.5 w-2.5" />
+                    {municoesLotesSemData} lote{municoesLotesSemData > 1 ? "s" : ""} sem data
+                  </div>
+                )}
+              </div>
+            ) : null;
             const renderCard = (id: KpiId, klass: string) => {
               const def = definitions[id];
               if (!def) return null;
               const isArmas = id === "armas";
+              const isMunicoes = id === "municoes";
               return (
                 <div key={id} className={klass} style={{ minWidth: 0 }}>
                   <KpiCard
@@ -959,7 +982,7 @@ export function ArsenalSummary({
                     editing={editing}
                     onClick={() => onNavigate?.(def.target)}
                     featured={isArmas}
-                    extraSlot={isArmas ? armasExtraSlot : undefined}
+                    extraSlot={isArmas ? armasExtraSlot : isMunicoes ? municoesExtraSlot : undefined}
                     badge={isArmas ? armasBadge : null}
                     footerNote={isArmas ? armasFooter : undefined}
                   />
