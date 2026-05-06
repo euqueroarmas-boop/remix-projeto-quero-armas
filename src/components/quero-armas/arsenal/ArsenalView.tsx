@@ -1360,7 +1360,7 @@ export function ArsenalView({
       <ArsenalSummary
         totalArmas={weapons.length}
         totalMunicoes={ammo.total}
-        totalCalibres={ammo.byCalibre.length}
+        totalCalibres={totalCalibresNormalizados}
         crStatus={crStatus.tone}
         crLabel={crStatus.label}
         totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
