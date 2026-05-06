@@ -1438,42 +1438,49 @@ export function ArsenalView({
     };
   }, [weapons, weaponLinkState]);
 
-  // ── Calibres distintos NORMALIZADOS (armas + munições + crafs/gtes) ──────
-  // Evita contagem inflada por variações como "12", "CAL .12", "12 GA",
-  // "9mm", "9 MM", "9x19", ".40", ".380 ACP", etc.
+  // ── Calibres distintos NORMALIZADOS ──────────────────────────────────────
+  // REGRA: contar SOMENTE calibres das armas físicas consolidadas e válidas.
+  // Documentos órfãos (CRAF/GTE/GT/OCR) e munições sem arma vinculada NÃO
+  // entram na KPI — evitam "calibre fantasma" (ex.: .40 que não existe).
   const totalCalibresNormalizados = useMemo(() => {
-    const set = new Set<string>();
-    // 1) Campo estruturado quando disponível (catálogo > parsing de nome)
+    const calibresDasArmasConsolidadas = new Set<string>();
     for (const w of weapons) {
       const cat = (w as any).catalogo_id ? catalogoById((w as any).catalogo_id) : null;
       const fromCatalog = normalizeCalibre(cat?.calibre);
-      if (fromCatalog) { set.add(fromCatalog); continue; }
+      if (fromCatalog) { calibresDasArmasConsolidadas.add(fromCatalog); continue; }
       const info = buildWeaponInfo(w.nome_arma, w.numero_arma);
       const c = normalizeCalibre(info.calibre);
-      if (c) set.add(c);
+      if (c) calibresDasArmasConsolidadas.add(c);
     }
-    // 2) Munições (campo estruturado real)
-    for (const a of ammo.byCalibre) {
-      const c = normalizeCalibre(a.calibre);
-      if (c) set.add(c);
+
+    if (import.meta.env.DEV) {
+      const calibresDosCrafsVinculados = new Set<string>();
+      for (const c of crafs as any[]) {
+        const cat = c?.catalogo_id ? catalogoById(c.catalogo_id) : null;
+        const k = normalizeCalibre(cat?.calibre || c?.calibre);
+        if (k) calibresDosCrafsVinculados.add(k);
+      }
+      const calibresDasMunicoesVinculadas = new Set<string>();
+      for (const a of ammo.byCalibre) {
+        const k = normalizeCalibre(a.calibre);
+        if (k) calibresDasMunicoesVinculadas.add(k);
+      }
+      const calibresDosDocumentosOrfaos = new Set<string>();
+      for (const d of meusDocs as any[]) {
+        const k = normalizeCalibre(d?.arma_calibre);
+        if (k) calibresDosDocumentosOrfaos.add(k);
+      }
+      // eslint-disable-next-line no-console
+      console.table({
+        calibresDasArmasConsolidadas: Array.from(calibresDasArmasConsolidadas).join(", "),
+        calibresDosCrafsVinculados: Array.from(calibresDosCrafsVinculados).join(", "),
+        calibresDasMunicoesVinculadas: Array.from(calibresDasMunicoesVinculadas).join(", "),
+        calibresDosDocumentosOrfaos: Array.from(calibresDosDocumentosOrfaos).join(", "),
+        calibresContadosNaKpi: Array.from(calibresDasArmasConsolidadas).join(", "),
+      });
     }
-    // 3) CRAFs/GTEs — preferir catálogo vinculado; fallback para campo legado
-    for (const c of crafs as any[]) {
-      const cat = c?.catalogo_id ? catalogoById(c.catalogo_id) : null;
-      const k = normalizeCalibre(cat?.calibre || c?.calibre);
-      if (k) set.add(k);
-    }
-    for (const g of gtes as any[]) {
-      const cat = g?.catalogo_id ? catalogoById(g.catalogo_id) : null;
-      const k = normalizeCalibre(cat?.calibre || g?.calibre);
-      if (k) set.add(k);
-    }
-    // 4) Documentos do cliente (arma_calibre extraído por OCR/IA)
-    for (const d of meusDocs as any[]) {
-      const k = normalizeCalibre(d?.arma_calibre);
-      if (k) set.add(k);
-    }
-    return set.size;
+
+    return calibresDasArmasConsolidadas.size;
   }, [weapons, ammo.byCalibre, crafs, gtes, meusDocs, catalogoById]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
