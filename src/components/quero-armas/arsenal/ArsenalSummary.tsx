@@ -1013,7 +1013,7 @@ export function ArsenalSummary({
                     >
                       {def.icon}
                     </div>
-                    {sid === "exames" && examesAnalytics.total > 0 ? (
+                    {(sid as string) === "exames" && examesAnalytics.total > 0 ? (
                       <div
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
                         style={{ background: `${color}10`, color }}
@@ -1051,14 +1051,14 @@ export function ArsenalSummary({
                   </div>
                   <div
                     className="mt-2 min-h-[14px] text-[10px] font-medium leading-tight"
-                    style={{ color: sid === "exames" && examesAnalytics.total > 0 ? color : "rgb(148 163 184)" }}
+                    style={{ color: (sid as string) === "exames" && examesAnalytics.total > 0 ? color : "rgb(148 163 184)" }}
                   >
                     {def.hint || ""}
                   </div>
                 </button>
               </div>
             );
-            if (sid === "exames" && examesAnalytics.total > 0) {
+            if ((sid as string) === "exames" && examesAnalytics.total > 0) {
               return (
                 <Popover key={sid}>
                   <PopoverTrigger asChild>
