@@ -667,15 +667,39 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         />
 
         {enriched.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+          <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
             <ShieldAlert className="h-10 w-10 text-slate-300" />
-            <div>
+            <div className="max-w-xl">
               <div className="text-[12px] font-bold uppercase tracking-wider text-slate-700">
-                NENHUMA ARMA NO ACERVO
+                CADASTRE SEU PRIMEIRO ARMAMENTO
               </div>
-              <p className="mt-1 max-w-sm text-[11px] text-slate-400">
-                Cadastre seus CRAFs para que o sistema monte automaticamente sua bancada.
+              <p className="mt-1 text-[11px] text-slate-500">
+                Para organizar seu Arsenal, envie os documentos principais da arma.
+                Você poderá cadastrar CRAF, GT e GTE quando aplicável.
               </p>
+              <div className="mt-3 grid gap-2 text-left sm:grid-cols-3">
+                <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">CRAF</div>
+                  <p className="mt-1 text-[10px] leading-snug text-slate-600">
+                    Certificado de Registro de Arma de Fogo. Identifica a arma, titular,
+                    nº de série, calibre e validade. <b>Documento principal.</b>
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-700">GT</div>
+                  <p className="mt-1 text-[10px] leading-snug text-slate-600">
+                    Guia usada para retirar a arma da loja e transportar até o destino
+                    autorizado. Documento histórico — se não tiver mais, é possível declarar.
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-200 bg-white p-2.5">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">GTE</div>
+                  <p className="mt-1 text-[10px] leading-snug text-slate-600">
+                    Guia de Tráfego Especial. Pode ser exigida em acervos vinculados ao
+                    SIGMA/CAC, conforme o regime do acervo.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
