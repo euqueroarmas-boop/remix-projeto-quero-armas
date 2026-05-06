@@ -501,7 +501,45 @@ export function ArsenalView({
         if (sigma && crafSerials.has(sigma)) return false;
         return true;
       });
-    return [...fromCrafs, ...fromDocs];
+    const merged = [...fromCrafs, ...fromDocs];
+
+    // ── Consolidação por ARMA FÍSICA ÚNICA ───────────────────────────────
+    // Regra de domínio: KPI ARMAS conta arma física, NÃO documentos/origens.
+    // Várias entradas (CRAF + doc OCR + GTE etc.) com mesma série/SIGMA/catálogo
+    // colapsam em uma única arma. Preferimos a entrada com source "CRAF" e
+    // mais campos preenchidos como representante.
+    const keyOf = (w: any): string => {
+      const serial = norm(w.numero_arma);
+      const sigma = norm(w.numero_sigma);
+      if (serial) return `S:${serial}`;
+      if (sigma) return `G:${sigma}`;
+      if (w.catalogo_id) return `C:${w.catalogo_id}`;
+      // Sem identificador físico → mantém único por origem (não funde).
+      return `U:${w.source}-${w.id}`;
+    };
+    const score = (w: any) => {
+      let s = 0;
+      if (w.source === "CRAF") s += 4;
+      if (w.numero_arma) s += 3;
+      if (w.numero_sigma) s += 2;
+      if (w.catalogo_id) s += 1;
+      if (w.data_validade) s += 1;
+      return s;
+    };
+    const consolidated = new Map<string, any>();
+    for (const w of merged) {
+      const k = keyOf(w);
+      const prev = consolidated.get(k);
+      if (!prev) { consolidated.set(k, w); continue; }
+      // Mantém o representante de maior score; preserva campos não-nulos do outro.
+      const winner = score(w) > score(prev) ? { ...prev, ...w } : { ...w, ...prev };
+      // Reaproveita identificadores faltantes vindos do outro registro.
+      winner.numero_arma = winner.numero_arma || prev.numero_arma || w.numero_arma;
+      winner.numero_sigma = winner.numero_sigma || prev.numero_sigma || w.numero_sigma;
+      winner.catalogo_id = winner.catalogo_id || prev.catalogo_id || w.catalogo_id;
+      consolidated.set(k, winner);
+    }
+    return Array.from(consolidated.values());
   }, [crafs, gtes, meusDocs]);
 
   const weaponLinkState = useMemo(() => {
