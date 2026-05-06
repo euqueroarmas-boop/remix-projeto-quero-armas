@@ -417,6 +417,11 @@ export default function QAClientePortalPage() {
         { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` },
         () => setDocsReloadKey((k) => k + 1),
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "qa_clientes", filter: `id=eq.${clienteIdReal}` },
+        () => setDocsReloadKey((k) => k + 1),
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [cliente?.id, customerId]);
