@@ -262,15 +262,19 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           {docs.map((d) => {
             const sv = statusVisual(d.data_validade, d.status_processamento);
             return (
-              <li key={d.id} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
-                <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+              <li
+                key={d.id}
+                className={`flex flex-wrap items-center gap-3 border-l-[3px] ${sz.row}`}
+                style={{ borderLeftColor: TONE_BORDER[sv.tone], background: TONE_ROW_BG[sv.tone] }}
+              >
+                <FileText className={`${sz.iconBox} shrink-0 text-slate-400`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold uppercase tracking-wide text-slate-800">
+                    <span className={`font-bold uppercase tracking-wide text-slate-800 ${sz.title}`}>
                       {d.numero_gte ? `GTE Nº ${d.numero_gte}` : (d.nome_original || "GTE sem identificação")}
                     </span>
                     <span
-                      className="rounded-full px-2 py-[1px] text-[9px] font-bold uppercase tracking-wider"
+                      className={`rounded-full font-bold uppercase tracking-wider ${sz.badge}`}
                       style={{ background: TONE_BG[sv.tone], color: TONE_FG[sv.tone] }}
                     >
                       {sv.label}
@@ -280,7 +284,7 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
                       {d.origem_envio === "cliente" ? "ENVIO CLIENTE" : "ENVIO EQUIPE"}
                     </span>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                  <div className={`mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 ${sz.meta}`}>
                     <span>Validade: <b className="text-slate-700">{fmtDate(d.data_validade)}</b></span>
                     <span>Armas: <b className="text-slate-700">{d.armas_total}</b></span>
                     <span>Endereços: <b className="text-slate-700">{d.enderecos_total}</b></span>
