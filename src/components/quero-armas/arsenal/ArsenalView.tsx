@@ -596,7 +596,7 @@ export function ArsenalView({
       });
     });
     return out;
-  }, [weapons, crafs, gtes, meusDocs, catalogoById, clienteId]);
+  }, [weapons, crafs, gtes, meusDocs, catalogoById, clienteId, gtDeclaracaoTick]);
 
   const weaponsWithLinkedStatus: WorkbenchWeapon[] = useMemo(
     () => weapons.map((w) => {
