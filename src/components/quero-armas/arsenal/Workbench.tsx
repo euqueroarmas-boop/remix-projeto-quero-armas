@@ -349,6 +349,18 @@ function DocumentTag({ d }: { d: DocCard }) {
 export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, headerAction }: Props) {
   const [showAll, setShowAll] = useState(false);
   const { match, byId, resolveCraf, loading: catLoading } = useArmamentoCatalogo();
+  const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  // Mapeia o tamanho global do Arsenal (lg/md/sm) para o tamanho do card da bancada.
+  // Cards "longos" usam lg por padrão; quando o cliente escolhe md/sm, reduzimos.
+  const longaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : cardSize === "md" ? "md" : "lg";
+  const curtaSize: "lg" | "md" | "sm" = cardSize === "sm" ? "sm" : "md";
+  const curtaCols =
+    cardSize === "sm"
+      ? "sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5"
+      : cardSize === "md"
+      ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+  const longaCols = cardSize === "sm" ? "md:grid-cols-3" : "md:grid-cols-2";
 
   const enriched = useMemo(
     () => weapons.map((w) => ({
@@ -408,11 +420,13 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
           <div className="text-[10px] font-mono text-slate-400">
             {enriched.length.toString().padStart(2, "0")} ITEM(S)
           </div>
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
           {headerAction}
         </div>
-        {headerAction && (
-          <div className="flex md:hidden">{headerAction}</div>
-        )}
+        <div className="flex items-center gap-2 md:hidden">
+          <ArsenalCardSizeToggle size={cardSize} onChange={setCardSize} />
+          {headerAction}
+        </div>
       </div>
 
       {/* Bench body */}
@@ -438,7 +452,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         ) : (
           <div className="relative space-y-4">
             {visibleLongas.length > 0 && (
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className={`grid gap-3 ${longaCols}`}>
                 {visibleLongas.map(({ w, info, catalog }) => (
                   <WeaponCard
                     key={`${w.source}-${w.id}`}
@@ -446,14 +460,14 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                     info={info}
                     catalog={catalog}
                     onClick={() => onSelectWeapon(w, info)}
-                    size="lg"
+                    size={longaSize}
                   />
                 ))}
               </div>
             )}
 
             {visibleCurtas.length > 0 && (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className={`grid gap-3 ${curtaCols}`}>
                 {visibleCurtas.map(({ w, info, catalog }) => (
                   <WeaponCard
                     key={`${w.source}-${w.id}`}
@@ -461,6 +475,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                     info={info}
                     catalog={catalog}
                     onClick={() => onSelectWeapon(w, info)}
+                    size={curtaSize}
                   />
                 ))}
               </div>
