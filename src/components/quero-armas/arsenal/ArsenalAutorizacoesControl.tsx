@@ -379,7 +379,7 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
                       </span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-slate-500">
+                  <div className={`mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-slate-500 ${sz.meta}`}>
                     <span>Validade: <b className="text-slate-700">{fmtDate(d.data_validade)}</b></span>
                     {d.orgao_emissor && <span>Órgão: <b className="text-slate-700">{d.orgao_emissor}</b></span>}
                     {d.arma_especie && <span>Espécie: <b className="text-slate-700">{d.arma_especie}</b></span>}
