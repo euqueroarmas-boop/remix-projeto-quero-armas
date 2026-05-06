@@ -120,6 +120,8 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState<CrafDocumento | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const { size: cardSize, setSize: setCardSize } = useArsenalCardSize();
+  const sz = SIZE_CLASSES[cardSize];
 
   const load = useCallback(async () => {
     setLoading(true);
