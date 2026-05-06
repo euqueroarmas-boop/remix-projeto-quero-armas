@@ -116,6 +116,8 @@ function WeaponCard({
     : tone === "warn" ? "border-amber-300"
     : tone === "ok" ? "border-emerald-200"
     : "border-slate-200";
+  const isSm = size === "sm";
+  const isMd = size === "md";
 
   return (
     <button
@@ -153,50 +155,60 @@ function WeaponCard({
         <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-slate-300" />
       </div>
 
-      <div className="relative p-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className={`relative ${isSm ? "p-2" : isMd ? "p-3" : "p-4"}`}>
+        <div className={`flex items-start justify-between ${isSm ? "gap-1.5" : "gap-3"}`}>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className={`flex flex-wrap items-center ${isSm ? "gap-1" : "gap-1.5"}`}>
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${c.dot} animate-pulse`} />
-              <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                {WEAPON_KIND_LABEL[info.kind]}
-              </span>
-              {catalog && (
+              {!isSm && (
+                <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-slate-500">
+                  {WEAPON_KIND_LABEL[info.kind]}
+                </span>
+              )}
+              {catalog && !isSm && (
                 <span className="inline-flex items-center gap-0.5 rounded-sm border border-emerald-200 bg-emerald-50 px-1 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-700">
                   <Star className="h-2 w-2 fill-emerald-500 text-emerald-500" /> ID
                 </span>
               )}
             </div>
-            <div className="mt-1 truncate text-[15px] font-black uppercase tracking-tight text-slate-900 leading-tight">
+            <div className={`mt-1 truncate font-black uppercase tracking-tight text-slate-900 leading-tight ${isSm ? "text-[10px]" : isMd ? "text-[12px]" : "text-[15px]"}`}>
               {marca}
             </div>
-            <div className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
-              {modelo}
-            </div>
-            <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-              CAL · {calibre}
-            </div>
+            {!isSm && (
+              <div className={`truncate font-semibold uppercase tracking-[0.18em] text-[#7A1F2B] ${isMd ? "text-[10px]" : "text-[11px]"}`}>
+                {modelo}
+              </div>
+            )}
+            {!isSm && (
+              <div className={`mt-1 font-bold uppercase tracking-[0.18em] text-slate-500 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
+                CAL · {calibre}
+              </div>
+            )}
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-1 max-w-[40%]">
+          <div className={`flex shrink-0 flex-col items-end gap-1 ${isSm ? "max-w-[55%]" : "max-w-[40%]"}`}>
             <span
-              className={`rounded-sm border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] leading-tight text-right ${c.chip}`}
+              className={`rounded-sm border px-1 py-0.5 ${isSm ? "text-[7px]" : "text-[8px]"} font-black uppercase tracking-[0.04em] leading-tight text-right ${c.chip}`}
             >
               {urgencyText(w.daysToExpire)}
             </span>
-            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
-              {w.source}
-              {w.hasGte && (
-                <span className="rounded bg-[#FBF3F4] px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-[#7A1F2B]">
-                  + GTE
-                </span>
-              )}
-            </span>
+            {!isSm && (
+              <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
+                {w.source}
+                {w.hasGte && (
+                  <span className="rounded bg-[#FBF3F4] px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                    + GTE
+                  </span>
+                )}
+              </span>
+            )}
           </div>
         </div>
 
         {/* Weapon render with glow — transparent, large, detailed */}
         <div
-          className={`relative mx-auto my-4 overflow-hidden rounded-xl ${size === "lg" ? "h-52 md:h-56" : "h-60 md:h-64"} w-full`}
+          className={`relative mx-auto overflow-hidden rounded-xl w-full ${
+            isSm ? "my-1.5 h-20" : isMd ? "my-3 h-40 md:h-44" : size === "lg" ? "my-4 h-52 md:h-56" : "my-4 h-60 md:h-64"
+          }`}
           style={{ background: "transparent", backgroundImage: "none" }}
         >
           {isDocCard ? (
@@ -252,7 +264,7 @@ function WeaponCard({
         </div>
 
         {/* Mini stats armory */}
-        {catalog && (
+        {catalog && !isSm && !isMd && (
           <div className="grid grid-cols-3 gap-2 border-t border-slate-200 pt-2">
             <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
             <MiniStat label="PRC" value={catalog.stat_precisao} color="#0ea5e9" />
@@ -260,26 +272,30 @@ function WeaponCard({
           </div>
         )}
 
-        <div className="mt-2 grid grid-cols-3 gap-2 border-t border-slate-200 pt-2 text-[10px]">
-          <div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
-            <div className="font-bold text-slate-800">{calibre}</div>
+        {!isSm && (
+          <div className={`mt-2 grid grid-cols-3 gap-2 border-t border-slate-200 pt-2 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
+              <div className="font-bold text-slate-800">{calibre}</div>
+            </div>
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
+              <div className="truncate font-mono text-slate-700">{w.numero_sigma || "—"}</div>
+            </div>
+            <div>
+              <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">N° SÉRIE</div>
+              <div className="truncate font-mono text-slate-700">{w.numero_arma || "—"}</div>
+            </div>
           </div>
-          <div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
-            <div className="truncate font-mono text-slate-700">{w.numero_sigma || "—"}</div>
-          </div>
-          <div>
-            <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">N° SÉRIE</div>
-            <div className="truncate font-mono text-slate-700">{w.numero_arma || "—"}</div>
-          </div>
-        </div>
+        )}
 
-        <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
-          <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#7A1F2B] ml-auto">
-            INSPECIONAR <ChevronRight className="h-3 w-3" />
-          </span>
-        </div>
+        {!isSm && (
+          <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+            <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#7A1F2B] ml-auto">
+              INSPECIONAR <ChevronRight className="h-3 w-3" />
+            </span>
+          </div>
+        )}
       </div>
     </button>
   );
