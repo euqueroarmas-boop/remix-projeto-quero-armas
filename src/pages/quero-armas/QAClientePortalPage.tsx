@@ -135,10 +135,20 @@ export default function QAClientePortalPage() {
   const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
-  const avatarPath: string | null =
-    (cliente as any)?.avatar_tatico_path || cadastroPub?.selfie_path || null;
-  const avatarUrl = usePrivateStorageUrl("qa-cadastro-selfies", avatarPath);
-  const hasTacticalAvatar = !!(cliente as any)?.avatar_tatico_path;
+  // Fonte única da foto — espelha exatamente a lógica de /clientes
+  // (ClienteSelfieAvatar): prioriza foto manual (cliente.imagem em qa-documentos),
+  // depois selfie do cadastro público, e por último o avatar tático gerado por IA.
+  const imagemManual: string | null = (cliente as any)?.imagem || null;
+  const tacticalPath: string | null = (cliente as any)?.avatar_tatico_path || null;
+  const selfiePath: string | null = cadastroPub?.selfie_path || null;
+  const avatarPath: string | null = imagemManual || selfiePath || tacticalPath;
+  const avatarBucket = imagemManual
+    ? "qa-documentos"
+    : selfiePath
+    ? "qa-cadastro-selfies"
+    : "qa-cadastro-selfies"; // tactical path também vive em qa-cadastro-selfies
+  const avatarUrl = usePrivateStorageUrl(avatarBucket, avatarPath);
+  const hasTacticalAvatar = !!tacticalPath && !imagemManual && !selfiePath;
   const hasAnyPhoto = !!avatarPath;
 
   useEffect(() => {
