@@ -509,6 +509,18 @@ export default function ArsenalAutorizacoesControl({ clienteId, origem: _origem 
           onSaved={() => { load(); }}
         />
       )}
+      {classif && (
+        <DocClassReviewModal
+          open={showReview}
+          tipoSelecionado="GUIA_TRANSITO"
+          classificacao={classif}
+          onResolve={(r) => {
+            setShowReview(false);
+            if (r.decision === "cancelar") { setPendingFile(null); return; }
+            if (pendingFile) proceedUpload(pendingFile, r.revisaoObrigatoria, classif);
+          }}
+        />
+      )}
     </section>
   );
 }
