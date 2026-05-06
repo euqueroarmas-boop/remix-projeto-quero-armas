@@ -456,7 +456,17 @@ export function ArsenalView({
         // GT (guia de retirada/transporte inicial da loja) é histórica/informativa
         // e NÃO cria arma sozinha — fica vinculada à arma existente.
         const ehDocDeArma = ["craf", "sinarm", "gte", "autorizacao_compra", "outro"].includes(tipo);
-        return ehDocDeArma && normalizeDocWeaponName(d);
+        if (!ehDocDeArma || !normalizeDocWeaponName(d)) return false;
+        // Regra de domínio: documento sem identificador físico (sem nº de
+        // série e sem nº SIGMA/SINARM) NÃO cria arma automaticamente —
+        // marca+modelo+calibre são insuficientes para uma unidade física.
+        // Esses documentos aparecem na bancada como "sem vínculo" / revisão.
+        const serial = String(d.arma_numero_serie || "").trim();
+        const sigmaLike = ["craf", "sinarm"].includes(tipo)
+          ? String(d.numero_documento || "").trim()
+          : "";
+        if (!serial && !sigmaLike) return false;
+        return true;
       })
       .map((d: any) => {
         const nome = normalizeDocWeaponName(d);
