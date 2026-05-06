@@ -380,6 +380,23 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
         </div>
       </DialogContent>
     </Dialog>
+    {classificacao && (
+      <DocClassReviewModal
+        open={showReview}
+        tipoSelecionado="CRAF"
+        classificacao={classificacao}
+        onResolve={(r) => {
+          setShowReview(false);
+          if (r.decision === "cancelar") {
+            setPendingFile(null);
+            return;
+          }
+          setRevisaoObrigatoria(r.revisaoObrigatoria);
+          if (pendingFile) proceedUpload(pendingFile);
+        }}
+      />
+    )}
+    </>
   );
 }
 
