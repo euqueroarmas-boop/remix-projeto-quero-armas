@@ -376,15 +376,19 @@ export default function ArsenalCRAFControl({ clienteId, origem: _origem }: Props
               const erroIA = ia === "erro";
               const pendenteRevisao = !validadoPelaEquipe || modeloInv || ia === "pendente_revisao";
               return (
-                <li key={`doc-${d.id}`} className="flex flex-wrap items-center gap-3 px-3 py-2 text-[12px]">
-                  <FileText className="h-4 w-4 shrink-0 text-slate-400" />
+                <li
+                  key={`doc-${d.id}`}
+                  className={`flex flex-wrap items-center gap-3 border-l-[3px] ${sz.row}`}
+                  style={{ borderLeftColor: TONE_BORDER[sv.tone], background: TONE_ROW_BG[sv.tone] }}
+                >
+                  <FileText className={`${sz.iconBox} shrink-0 text-slate-400`} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold uppercase tracking-wide text-slate-800">
+                      <span className={`font-bold uppercase tracking-wide text-slate-800 ${sz.title}`}>
                         {d.numero_documento ? `CRAF Nº ${d.numero_documento}` : (d.arquivo_nome || "CRAF EM ANÁLISE")}
                       </span>
                       <span
-                        className="rounded-full px-2 py-[1px] text-[9px] font-bold uppercase tracking-wider"
+                        className={`rounded-full font-bold uppercase tracking-wider ${sz.badge}`}
                         style={{ background: TONE_BG[sv.tone], color: TONE_FG[sv.tone] }}
                       >
                         {sv.label}
