@@ -378,6 +378,37 @@ function DocumentTag({ d }: { d: DocCard }) {
   );
 }
 
+/**
+ * Wrapper sortable em volta do WeaponCard. O drag dispara apenas após
+ * mover ~6px (PointerSensor activationConstraint), então o clique normal
+ * para abrir o drawer continua funcionando.
+ */
+function SortableWeaponCard({
+  id,
+  ...rest
+}: {
+  id: string;
+  w: WorkbenchWeapon;
+  info: WeaponInfo;
+  catalog: ArmamentoCatalogo | null;
+  onClick: () => void;
+  size?: "lg" | "md" | "sm";
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    cursor: isDragging ? "grabbing" : "grab",
+    touchAction: "none",
+  };
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <WeaponCard {...rest} />
+    </div>
+  );
+}
+
 export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, headerAction }: Props) {
   const [showAll, setShowAll] = useState(false);
   const { match, byId, resolveCraf, loading: catLoading } = useArmamentoCatalogo();
