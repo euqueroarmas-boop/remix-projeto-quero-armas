@@ -166,6 +166,10 @@ interface Props {
   examesUnified?: StatusUnificado | null;
   /** Validade de munições (fab + 60m). Quando preenchido, dirige cor/hint do KPI. */
   municoesUnified?: StatusUnificado | null;
+  /** Lista de munições por calibre (ordem decrescente por quantidade). */
+  municoesPorCalibre?: { calibre: string; quantidade: number }[];
+  /** Quantidade de lotes/registros sem data de fabricação. */
+  municoesLotesSemData?: number;
   documentosCount?: number;
   processosCount?: number;
   autorizacoesCount?: number;
@@ -345,10 +349,11 @@ function KpiCard({
           >
             {def.value}
           </div>
-          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight break-words">
             {def.label}
           </div>
-          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400 leading-snug">{def.hint || ""}</div>
+          {extraSlot}
         </>
       )}
       </button>
@@ -395,6 +400,8 @@ export function ArsenalSummary({
   autorizacoesUnified = null,
   examesUnified = null,
   municoesUnified = null,
+  municoesPorCalibre = [],
+  municoesLotesSemData = 0,
   documentosCount = 0,
   processosCount = 0,
   autorizacoesCount = 0,
@@ -601,11 +608,9 @@ export function ArsenalSummary({
         icon: <Boxes className="h-4 w-4" />,
         label: "Munições",
         value: totalMunicoes.toLocaleString("pt-BR"),
-        hint: municoesUnified
-          ? municoesUnified.sub ?? municoesUnified.label
-          : totalCalibres > 0
-            ? `Estoque distribuído em ${totalCalibres} calibre${totalCalibres > 1 ? "s" : ""}`
-            : "Sem estoque",
+        hint: totalMunicoes === 0
+          ? "Sem estoque"
+          : `${totalCalibres} calibre${totalCalibres > 1 ? "s" : ""} em estoque`,
         tone: municoesUnified ? corToTone(municoesUnified.cor) : "steel",
         target: "municoes",
       },
@@ -656,7 +661,7 @@ export function ArsenalSummary({
       exames: {
         id: "exames",
         icon: <Stethoscope className="h-4 w-4" />,
-        label: "Exames/Laudos",
+        label: "Exames / Laudos",
         value: examesCount,
         hint: examesUnified
           ? examesUnified.sub ?? examesUnified.label
@@ -943,10 +948,36 @@ export function ArsenalSummary({
                   : null
               : null;
             const armasFooter = "CRAF e GTE são visualizados dentro de cada arma na Bancada Tática.";
+            // Slot extra para MUNIÇÕES — lista resumida de calibres + alerta de lotes sem data.
+            const calibresOrdenados = [...municoesPorCalibre]
+              .filter((c) => c && c.quantidade > 0)
+              .sort((a, b) => b.quantidade - a.quantidade);
+            const municoesExtraSlot = totalMunicoes > 0 && (calibresOrdenados.length > 0 || municoesLotesSemData > 0) ? (
+              <div className="mt-2 space-y-1">
+                {calibresOrdenados.slice(0, 2).map((c) => (
+                  <div key={c.calibre} className="flex items-center justify-between gap-2 text-[10.5px] text-slate-700">
+                    <span className="font-mono font-semibold truncate">{c.calibre}</span>
+                    <span className="font-mono tabular-nums text-slate-500">{c.quantidade.toLocaleString("pt-BR")}</span>
+                  </div>
+                ))}
+                {calibresOrdenados.length > 2 && (
+                  <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                    + {calibresOrdenados.length - 2} calibre{calibresOrdenados.length - 2 > 1 ? "s" : ""}
+                  </div>
+                )}
+                {municoesLotesSemData > 0 && (
+                  <div className="mt-1 inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.1em] text-amber-700">
+                    <AlertTriangle className="h-2.5 w-2.5" />
+                    {municoesLotesSemData} lote{municoesLotesSemData > 1 ? "s" : ""} sem data
+                  </div>
+                )}
+              </div>
+            ) : null;
             const renderCard = (id: KpiId, klass: string) => {
               const def = definitions[id];
               if (!def) return null;
               const isArmas = id === "armas";
+              const isMunicoes = id === "municoes";
               return (
                 <div key={id} className={klass} style={{ minWidth: 0 }}>
                   <KpiCard
@@ -954,7 +985,7 @@ export function ArsenalSummary({
                     editing={editing}
                     onClick={() => onNavigate?.(def.target)}
                     featured={isArmas}
-                    extraSlot={isArmas ? armasExtraSlot : undefined}
+                    extraSlot={isArmas ? armasExtraSlot : isMunicoes ? municoesExtraSlot : undefined}
                     badge={isArmas ? armasBadge : null}
                     footerNote={isArmas ? armasFooter : undefined}
                   />

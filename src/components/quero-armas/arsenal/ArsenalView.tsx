@@ -1781,6 +1781,8 @@ export function ArsenalView({
         autorizacoesUnified={autorizacoesUnifiedFinal}
         examesUnified={examesUnifiedFinal}
         municoesUnified={municoesUnifiedFinal}
+        municoesPorCalibre={ammo.byCalibre}
+        municoesLotesSemData={agregado?.kpis.municoes?.sem_data ?? 0}
         documentosCount={docsGenericos.length}
         processosCount={processos.length + solicitacoesProcessos.length}
         autorizacoesCount={autorizacoes.length}
