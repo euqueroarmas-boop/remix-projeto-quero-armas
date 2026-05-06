@@ -609,6 +609,9 @@ export function ArsenalView({
         crafLabel: link?.crafLabel,
         gteLabel: !gteExigivel && !link?.gteValida ? "NÃO EXIGÍVEL" : link?.gteLabel,
         gteExigivel,
+        gtStatus: link?.gtStatus,
+        hasGt: !!(link?.gtMatches && link.gtMatches.length > 0),
+        gtDeclaradaNaoPossui: !!link?.gtDeclaradaNaoPossui,
         linkReview: !!(link?.hasWeakCrafDoc || link?.hasWeakGteDoc || link?.semVinculo),
       };
     }),
