@@ -349,10 +349,10 @@ function KpiCard({
           >
             {def.value}
           </div>
-          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 leading-tight break-words">
             {def.label}
           </div>
-          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400 leading-snug">{def.hint || ""}</div>
           {extraSlot}
         </>
       )}
