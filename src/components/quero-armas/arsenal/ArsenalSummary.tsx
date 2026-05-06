@@ -223,10 +223,18 @@ function KpiCard({
   def,
   editing,
   onClick,
+  featured,
+  extraSlot,
+  badge,
+  footerNote,
 }: {
   def: KpiDefinition;
   editing: boolean;
   onClick?: () => void;
+  featured?: boolean;
+  extraSlot?: React.ReactNode;
+  badge?: { tone: "ok" | "warn" | "danger"; label: string } | null;
+  footerNote?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: def.id });
@@ -235,7 +243,7 @@ function KpiCard({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    boxShadow: `inset 0 0 0 1px ${color}10`,
+    boxShadow: featured ? `inset 0 0 0 2px #7A1F2B22` : `inset 0 0 0 1px ${color}10`,
     opacity: isDragging ? 0.6 : 1,
     zIndex: isDragging ? 20 : "auto",
   };
@@ -290,18 +298,57 @@ function KpiCard({
           KPI <ChevronRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-      <div
-        className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
-          typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
-        }`}
-        title={String(def.value)}
-      >
-        {def.value}
-      </div>
-      <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-        {def.label}
-      </div>
-      <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+      {featured ? (
+        <>
+          <div className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            {def.label}
+          </div>
+          <div
+            className="mt-1 font-bold text-slate-900 leading-none font-mono text-4xl"
+            title={String(def.value)}
+          >
+            {def.value}
+          </div>
+          {def.hint && (
+            <div className="mt-1 text-[11px] font-medium text-slate-500">{def.hint}</div>
+          )}
+          {extraSlot}
+          {badge && (
+            <div
+              className={`mt-3 inline-flex items-center gap-1.5 self-start rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                badge.tone === "danger"
+                  ? "bg-red-50 text-red-700 border border-red-200"
+                  : badge.tone === "warn"
+                    ? "bg-amber-50 text-amber-800 border border-amber-200"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              }`}
+            >
+              <AlertTriangle className="h-3 w-3" /> {badge.label}
+            </div>
+          )}
+          {footerNote && (
+            <div className="mt-2 flex items-start gap-1.5 rounded-md bg-slate-50 px-2 py-1.5 text-[10px] text-slate-500 leading-snug">
+              <Info className="h-3 w-3 mt-0.5 shrink-0 text-slate-400" />
+              <span>{footerNote}</span>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div
+            className={`mt-3 flex h-7 items-end font-bold text-slate-800 leading-none font-mono w-full truncate whitespace-nowrap ${
+              typeof def.value === "string" && def.value.length > 3 ? "text-lg" : "text-2xl"
+            }`}
+            title={String(def.value)}
+          >
+            {def.value}
+          </div>
+          <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+            {def.label}
+          </div>
+          <div className="mt-2 min-h-[14px] text-[10px] text-slate-400">{def.hint || ""}</div>
+        </>
+      )}
       </button>
     </div>
   );
