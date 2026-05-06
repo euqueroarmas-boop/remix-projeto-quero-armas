@@ -661,7 +661,7 @@ export function ArsenalSummary({
       exames: {
         id: "exames",
         icon: <Stethoscope className="h-4 w-4" />,
-        label: "Exames/Laudos",
+        label: "Exames / Laudos",
         value: examesCount,
         hint: examesUnified
           ? examesUnified.sub ?? examesUnified.label
