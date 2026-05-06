@@ -73,14 +73,14 @@ export type ArsenalSummaryTarget =
 // da arma — não aparecem como KPIs independentes no topo. Eles continuam
 // existindo em todo o resto do sistema (uploads, OCR, controles), apenas
 // não competem mais com ARMAS no painel de KPIs.
-type KpiId = "armas" | "municoes" | "status_cr" | "calibres" | "alertas";
+type KpiId = "armas" | "municoes" | "status_cr" | "calibres" | "alertas" | "exames";
 // KPIs da Linha 2 (recolhível). Não entram no DEFAULT_ORDER persistido para
 // manter Zero Regression do layout existente — são renderizados separadamente.
-type KpiSecondaryId = "documentos" | "processos" | "autorizacoes" | "exames";
+type KpiSecondaryId = "documentos" | "processos" | "autorizacoes";
 
-// Ordem padrão: CR | ARMAS | CALIBRES | MUNIÇÕES | ALERTAS
+// Ordem padrão: CR | ARMAS | CALIBRES | MUNIÇÕES | ALERTAS | EXAMES/LAUDOS
 // (CRAF e GTE foram removidos como KPIs — as informações ficam dentro da arma).
-const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "alertas"];
+const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "alertas", "exames"];
 // F1A — Reorganização do Arsenal:
 // Os KPIs "Documentos", "Processos" e "Autorizações" foram REMOVIDOS do grid
 // principal. Agora existem grupos operacionais próprios (Controle de CRAF,
@@ -88,7 +88,8 @@ const DEFAULT_ORDER: KpiId[] = ["status_cr", "armas", "calibres", "municoes", "a
 // como KPI resumido na Linha 2. As props (documentosUnified/Count, etc.)
 // continuam sendo aceitas para preservar compatibilidade dos consumidores
 // existentes — apenas não são renderizadas.
-const SECONDARY_ORDER: KpiSecondaryId[] = ["exames"];
+// Linha 2 (recolhível) — vazia por padrão; EXAMES/LAUDOS voltou para a Linha 1.
+const SECONDARY_ORDER: KpiSecondaryId[] = [];
 
 // Ids legados que podem existir em layouts persistidos antigos. Devem ser
 // silenciosamente ignorados na renderização (Zero Regression para usuários
@@ -101,6 +102,7 @@ const TARGET_MAP: Record<KpiId, ArsenalSummaryTarget> = {
   status_cr: "cr",
   calibres: "calibres",
   alertas: "alertas",
+  exames: "exames",
 };
 
 interface Props {
@@ -651,9 +653,20 @@ export function ArsenalSummary({
               : (alertasUnified ? corToTone(alertasUnified.cor) : "warn"),
         target: "alertas",
       },
+      exames: {
+        id: "exames",
+        icon: <Stethoscope className="h-4 w-4" />,
+        label: "Exames/Laudos",
+        value: examesCount,
+        hint: examesUnified
+          ? examesUnified.sub ?? examesUnified.label
+          : examesCount === 0 ? "Sem exames" : "Cadastrados",
+        tone: examesUnified ? corToTone(examesUnified.cor) : (examesCount > 0 ? "ok" : "steel"),
+        target: "exames",
+      },
       });
     },
-    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown],
+    [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown, examesCount, examesUnified],
   );
 
   // Ordem efetiva:
@@ -1000,7 +1013,7 @@ export function ArsenalSummary({
                     >
                       {def.icon}
                     </div>
-                    {sid === "exames" && examesAnalytics.total > 0 ? (
+                    {(sid as string) === "exames" && examesAnalytics.total > 0 ? (
                       <div
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
                         style={{ background: `${color}10`, color }}
@@ -1038,14 +1051,14 @@ export function ArsenalSummary({
                   </div>
                   <div
                     className="mt-2 min-h-[14px] text-[10px] font-medium leading-tight"
-                    style={{ color: sid === "exames" && examesAnalytics.total > 0 ? color : "rgb(148 163 184)" }}
+                    style={{ color: (sid as string) === "exames" && examesAnalytics.total > 0 ? color : "rgb(148 163 184)" }}
                   >
                     {def.hint || ""}
                   </div>
                 </button>
               </div>
             );
-            if (sid === "exames" && examesAnalytics.total > 0) {
+            if ((sid as string) === "exames" && examesAnalytics.total > 0) {
               return (
                 <Popover key={sid}>
                   <PopoverTrigger asChild>

@@ -1145,6 +1145,46 @@ export function ArsenalView({
       piorStatus,
     };
   }, [weapons, crafs, gtes]);
+
+  // ── Calibres distintos NORMALIZADOS (armas + munições + crafs/gtes) ──────
+  // Evita contagem inflada por variações como "12", "CAL .12", "12 GA",
+  // "9mm", "9 MM", "9x19", ".40", ".380 ACP", etc.
+  const totalCalibresNormalizados = useMemo(() => {
+    const norm = (raw: string | null | undefined): string | null => {
+      if (!raw) return null;
+      let s = String(raw).toUpperCase();
+      s = s.replace(/CAL\.?|CALIBRE/g, "");
+      s = s.replace(/[^0-9A-Z.]/g, "");
+      // canônicos
+      if (/^\.?12(GA)?$/.test(s)) return "12";
+      if (/^\.?20(GA)?$/.test(s)) return "20";
+      if (/^\.?9(MM|X19|LUGER|PARA)?$/.test(s)) return "9MM";
+      if (/^\.?40(SW|S\.?W\.?)?$/.test(s)) return ".40";
+      if (/^\.?380(ACP)?$/.test(s)) return ".380";
+      if (/^\.?45(ACP|AUTO)?$/.test(s)) return ".45";
+      if (/^\.?38(SPL|SPECIAL)?$/.test(s)) return ".38";
+      if (/^\.?357(MAGNUM|MAG)?$/.test(s)) return ".357";
+      if (/^\.?22(LR)?$/.test(s)) return ".22";
+      if (/^\.?44(MAGNUM|MAG)?$/.test(s)) return ".44";
+      if (/^\.?32$/.test(s)) return ".32";
+      // fallback: remove ACP/MAG/SW/GA spurious
+      s = s.replace(/(ACP|AUTO|MAGNUM|MAG|SW|GA|SPL|SPECIAL|LR|LUGER|PARA)/g, "");
+      return s || null;
+    };
+    const set = new Set<string>();
+    for (const w of weapons) {
+      const info = buildWeaponInfo(w.nome_arma, w.numero_arma);
+      const c = norm(info.calibre);
+      if (c) set.add(c);
+    }
+    for (const a of ammo.byCalibre) {
+      const c = norm(a.calibre);
+      if (c) set.add(c);
+    }
+    for (const c of crafs as any[]) { const k = norm(c?.calibre); if (k) set.add(k); }
+    for (const g of gtes as any[]) { const k = norm(g?.calibre); if (k) set.add(k); }
+    return set.size;
+  }, [weapons, ammo.byCalibre, crafs, gtes]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -1320,7 +1360,7 @@ export function ArsenalView({
       <ArsenalSummary
         totalArmas={weapons.length}
         totalMunicoes={ammo.total}
-        totalCalibres={ammo.byCalibre.length}
+        totalCalibres={totalCalibresNormalizados}
         crStatus={crStatus.tone}
         crLabel={crStatus.label}
         totalCrafs={weapons.filter((w) => w.source === "CRAF").length}
