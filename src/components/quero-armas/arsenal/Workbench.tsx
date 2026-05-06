@@ -91,12 +91,14 @@ function WeaponCard({
   catalog,
   onClick,
   size = "md",
+  ammoCount,
 }: {
   w: WorkbenchWeapon;
   info: WeaponInfo;
   catalog: ArmamentoCatalogo | null;
   onClick: () => void;
   size?: "lg" | "md" | "sm";
+  ammoCount?: number;
 }) {
   const tone = urgencyTone(w.daysToExpire);
   const c = toneClasses[tone];
@@ -306,6 +308,20 @@ function WeaponCard({
         )}
 
         {!isSm && (
+          <div className={`mt-2 flex items-center justify-between gap-2 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-bold uppercase tracking-wider text-slate-700">
+              CRAF · {w.source === "CRAF" ? urgencyText(w.daysToExpire) : "—"}
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-[#FBF3F4] text-[#7A1F2B]" : "bg-slate-50 text-slate-400"}`}>
+              GTE · {w.hasGte ? "ATIVA" : "S/ VÍNCULO"}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-700">
+              MUN · {(ammoCount ?? 0).toLocaleString("pt-BR")}
+            </span>
+          </div>
+        )}
+
+        {!isSm && (
           <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
             <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#7A1F2B] ml-auto">
               INSPECIONAR <ChevronRight className="h-3 w-3" />
@@ -393,6 +409,7 @@ function SortableWeaponCard({
   catalog: ArmamentoCatalogo | null;
   onClick: () => void;
   size?: "lg" | "md" | "sm";
+  ammoCount?: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style: React.CSSProperties = {
@@ -464,6 +481,15 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
     })),
     [weapons, match, byId],
   );
+
+  // Total de munições por calibre (normaliza espaços p/ casar com card)
+  const ammoCountFor = (calibre: string | null | undefined): number => {
+    const target = String(calibre || "").replace(/\s/g, "");
+    if (!target) return 0;
+    return ammoByCalibre
+      .filter((a) => a.calibre.replace(/\s/g, "") === target)
+      .reduce((s, a) => s + a.quantidade, 0);
+  };
 
   // Para CRAFs/GTEs ainda não vinculados ao catálogo: dispara resolução IA (1× por arma).
   useEffect(() => {
@@ -609,6 +635,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                         catalog={catalog}
                         onClick={() => onSelectWeapon(w, info)}
                         size={longaSize}
+                        ammoCount={ammoCountFor(catalog?.calibre || info.calibre)}
                       />
                     ))}
                   </div>
@@ -629,6 +656,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                         catalog={catalog}
                         onClick={() => onSelectWeapon(w, info)}
                         size={curtaSize}
+                        ammoCount={ammoCountFor(catalog?.calibre || info.calibre)}
                       />
                     ))}
                   </div>
