@@ -158,18 +158,24 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
     setPendingFile(f);
     setPhase("extracting");
 
-    // Classificação prévia
+    // REGRA: SEMPRE abrir tela de revisão antes de salvar/extrair.
     const classif = await classifyArsenalDoc({ file: f, tipoSelecionado: "CRAF" });
-    if (classif && (classif.divergenciaComSelecaoManual || classif.recomendacao !== "aceitar")) {
+    setPhase("pick");
+    if (!classif) {
+      // Falha de classificação — segue direto para revisão manual sem IA.
+      setClassificacao({
+        tipoDetectado: "DESCONHECIDO",
+        confianca: 0,
+        justificativa: "Não foi possível classificar automaticamente.",
+        camposExtraidos: null,
+        divergenciaComSelecaoManual: false,
+        recomendacao: "revisao_obrigatoria",
+        revisao_obrigatoria: true,
+      } as any);
+    } else {
       setClassificacao(classif);
-      setShowReview(true);
-      setPhase("pick");
-      return;
     }
-    // alta confiança e tipo bate → segue direto
-    setClassificacao(classif);
-    setRevisaoObrigatoria(false);
-    await proceedUpload(f);
+    setShowReview(true);
   };
 
   const proceedUpload = async (f: File) => {
