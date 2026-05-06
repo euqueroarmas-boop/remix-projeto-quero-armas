@@ -147,17 +147,23 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
       toast.error("Arquivo muito grande (limite 20 MB).");
       return;
     }
-    // Classificação prévia
+    // REGRA: SEMPRE abrir revisão antes de salvar.
     setUploading(true);
     const c = await classifyArsenalDoc({ file, tipoSelecionado: "GTE" });
     setUploading(false);
-    if (c && (c.divergenciaComSelecaoManual || c.recomendacao !== "aceitar")) {
-      setClassif(c);
-      setPendingFile(file);
-      setShowReview(true);
-      return;
-    }
-    await proceedUpload(file, false, c);
+    setPendingFile(file);
+    setClassif(
+      c || ({
+        tipoDetectado: "DESCONHECIDO",
+        confianca: 0,
+        justificativa: "Não foi possível classificar automaticamente.",
+        camposExtraidos: null,
+        divergenciaComSelecaoManual: false,
+        recomendacao: "revisao_obrigatoria",
+        revisao_obrigatoria: true,
+      } as any),
+    );
+    setShowReview(true);
   };
 
   const proceedUpload = async (file: File, revisaoObrigatoria: boolean, classificacao: ClassificacaoIA | null) => {
@@ -181,18 +187,26 @@ export default function ArsenalGTEControl({ clienteId, origem }: Props) {
           mime_type: file.type || "application/pdf",
           tamanho_bytes: file.size,
           origem_envio: origem,
-          status_processamento: revisaoObrigatoria ? "erro" : "pendente",
+          // Status dedicado para revisão documental (NÃO é "erro" técnico).
+          status_processamento: revisaoObrigatoria ? "revisao_obrigatoria" : "pendente",
           erro_mensagem: revisaoObrigatoria
-            ? `REVISÃO OBRIGATÓRIA — IA classificou como ${classificacao?.tipoDetectado || "DESCONHECIDO"} (${Math.round((classificacao?.confianca || 0) * 100)}%). Cliente manteve GTE.`
+            ? `REVISÃO OBRIGATÓRIA — IA classificou como ${classificacao?.tipoDetectado || "DESCONHECIDO"} (${Math.round((classificacao?.confianca || 0) * 100)}%). Aguarda confirmação da Equipe Quero Armas.`
             : null,
-          dados_extraidos_json: classificacao ? { classificacao_arsenal: classificacao, revisao_obrigatoria: revisaoObrigatoria } : null,
+          dados_extraidos_json: classificacao
+            ? {
+                classificacao_arsenal: classificacao,
+                revisao_obrigatoria: revisaoObrigatoria,
+                origem_revisao: "arsenal_bancada_tatica",
+                decidido_em: new Date().toISOString(),
+              }
+            : null,
         })
         .select("id")
         .single();
       if (insErr) throw insErr;
 
       if (revisaoObrigatoria) {
-        toast.success("Documento salvo em REVISÃO OBRIGATÓRIA. Não alimentará KPIs até a Equipe revisar.");
+        toast.success("Documento salvo em REVISÃO OBRIGATÓRIA. Não alimenta KPIs até a Equipe Quero Armas confirmar.");
       } else {
         toast.success("GTE enviada. Extraindo dados…");
         supabase.functions
