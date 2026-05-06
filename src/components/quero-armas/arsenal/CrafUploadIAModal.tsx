@@ -221,20 +221,36 @@ export function CrafUploadIAModal({ open, onClose, onSaved, clienteId }: Props) 
     }
     setPhase("saving");
     try {
-      const payload: Record<string, any> = {
-        cliente_id: clienteId,
-        nome_arma: nomeArma.trim().toUpperCase(),
-        nome_craf: nomeCraf.trim() ? nomeCraf.trim().toUpperCase() : null,
-        numero_arma: numeroArma.trim() ? numeroArma.trim().toUpperCase() : null,
-        numero_sigma: numeroSigma.trim() ? numeroSigma.trim().toUpperCase() : null,
-        data_validade: brToIso(dataValidadeBr) || null,
-        // Marcador de revisão para que KPIs e regularidade não considerem este CRAF
-        // até a Equipe Quero Armas confirmar.
-        ia_revisao_obrigatoria: revisaoObrigatoria || null,
-        ia_classificacao_json: classificacao || null,
-      };
-      const { error } = await supabase.from("qa_crafs" as any).insert(payload);
-      if (error) throw error;
+      if (revisaoObrigatoria) {
+        // NÃO entra direto em qa_crafs (que alimenta Bancada Tática).
+        // Salva em qa_documentos_cliente para a Equipe revisar antes.
+        const { error } = await supabase.from("qa_documentos_cliente" as any).insert({
+          qa_cliente_id: clienteId,
+          tipo_documento: "CRAF",
+          numero_documento: nomeCraf.trim() ? nomeCraf.trim().toUpperCase() : null,
+          arma_numero_serie: numeroArma.trim() ? numeroArma.trim().toUpperCase() : null,
+          data_validade: brToIso(dataValidadeBr) || null,
+          arquivo_storage_path: storagePath,
+          arquivo_nome: file?.name || null,
+          arquivo_mime: file?.type || null,
+          ia_status: "pendente_revisao",
+          status: "REVISAO_OBRIGATORIA",
+          ia_dados_extraidos: { classificacao_arsenal: classificacao, revisao_obrigatoria: true },
+          origem: "portal_cliente",
+        });
+        if (error) throw error;
+      } else {
+        const payload: Record<string, any> = {
+          cliente_id: clienteId,
+          nome_arma: nomeArma.trim().toUpperCase(),
+          nome_craf: nomeCraf.trim() ? nomeCraf.trim().toUpperCase() : null,
+          numero_arma: numeroArma.trim() ? numeroArma.trim().toUpperCase() : null,
+          numero_sigma: numeroSigma.trim() ? numeroSigma.trim().toUpperCase() : null,
+          data_validade: brToIso(dataValidadeBr) || null,
+        };
+        const { error } = await supabase.from("qa_crafs" as any).insert(payload);
+        if (error) throw error;
+      }
       toast.success(revisaoObrigatoria
         ? "CRAF salvo em REVISÃO OBRIGATÓRIA. Equipe Quero Armas vai validar."
         : "CRAF cadastrado.");
