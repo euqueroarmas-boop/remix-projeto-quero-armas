@@ -91,12 +91,14 @@ function WeaponCard({
   catalog,
   onClick,
   size = "md",
+  ammoCount,
 }: {
   w: WorkbenchWeapon;
   info: WeaponInfo;
   catalog: ArmamentoCatalogo | null;
   onClick: () => void;
   size?: "lg" | "md" | "sm";
+  ammoCount?: number;
 }) {
   const tone = urgencyTone(w.daysToExpire);
   const c = toneClasses[tone];
@@ -302,6 +304,20 @@ function WeaponCard({
               <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">N° SÉRIE</div>
               <div className="truncate font-mono text-slate-700">{w.numero_arma || "—"}</div>
             </div>
+          </div>
+        )}
+
+        {!isSm && (
+          <div className={`mt-2 flex items-center justify-between gap-2 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-bold uppercase tracking-wider text-slate-700">
+              CRAF · {w.source === "CRAF" ? urgencyText(w.daysToExpire) : "—"}
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasGte ? "bg-[#FBF3F4] text-[#7A1F2B]" : "bg-slate-50 text-slate-400"}`}>
+              GTE · {w.hasGte ? "ATIVA" : "S/ VÍNCULO"}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-700">
+              MUN · {(ammoCount ?? 0).toLocaleString("pt-BR")}
+            </span>
           </div>
         )}
 
