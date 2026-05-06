@@ -757,7 +757,14 @@ export function ArsenalView({
     const out: { category: string; title: string; date: string | null }[] = [];
     (link?.crafMatches || []).forEach((c) => out.push({ category: "CRAF", title: c.nome_arma || c.nome_craf || "CRAF vinculado", date: c.data_validade }));
     (link?.gteMatches || []).forEach((g) => out.push({ category: "GTE", title: g.nome_arma || g.nome_gte || "GTE vinculada", date: g.data_validade }));
+    (link?.gtMatches || []).forEach((g: any) => out.push({ category: "GT", title: g.arquivo_nome || "GT enviada (retirada/transporte inicial)", date: g.data_emissao || null }));
     if (!link?.crafValido) out.push({ category: "CRAF", title: link?.hasWeakCrafDoc ? "Documento sem vínculo com arma — revisar vínculo do documento." : "CRAF ausente — regularizar documento da arma.", date: null });
+    // GT — sempre informativa
+    if (link?.gtDeclaradaNaoPossui) {
+      out.push({ category: "GT", title: "Cliente declarou que não possui mais este documento.", date: null });
+    } else if (!link?.gtMatches || link.gtMatches.length === 0) {
+      out.push({ category: "GT", title: "GT não enviada — documento histórico de retirada/transporte (não bloqueia o cadastro).", date: null });
+    }
     if (!link?.gteValida) {
       const gteExigivel = isGteExigivelParaArma(selected as any);
       if (!gteExigivel) {
