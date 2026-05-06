@@ -653,6 +653,17 @@ export function ArsenalSummary({
               : (alertasUnified ? corToTone(alertasUnified.cor) : "warn"),
         target: "alertas",
       },
+      exames: {
+        id: "exames",
+        icon: <Stethoscope className="h-4 w-4" />,
+        label: "Exames/Laudos",
+        value: examesCount,
+        hint: examesUnified
+          ? examesUnified.sub ?? examesUnified.label
+          : examesCount === 0 ? "Sem exames" : "Cadastrados",
+        tone: examesUnified ? corToTone(examesUnified.cor) : (examesCount > 0 ? "ok" : "steel"),
+        target: "exames",
+      },
       });
     },
     [totalArmas, totalMunicoes, totalCalibres, crStatus, crLabel, alerts, alertasCriticos, alertasPreventivos, crUnified, alertasUnified, municoesUnified, armasBreakdown, examesCount],
