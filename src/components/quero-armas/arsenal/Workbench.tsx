@@ -11,6 +11,7 @@ import {
   GT_STATUS_LABEL,
   gtChipTone,
   type GtDocStatus,
+  type WeaponRegime,
 } from "./utils";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
@@ -53,6 +54,8 @@ export interface WorkbenchWeapon {
   finalidade?: string | null;
   /** Indica se a GTE é documento permanente exigível para esta arma. */
   gteExigivel?: boolean;
+  /** Regime canônico inferido (SIGMA / SINARM / REVISAR). */
+  regime?: WeaponRegime;
   /**
    * GT (Guia de Tráfego de retirada/transporte inicial da loja).
    * Documento histórico/informativo — NÃO é GTE e sua ausência NÃO pinta
