@@ -45,9 +45,14 @@ import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/Client
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
 import ConferenciaHeader from "@/components/quero-armas/cadastro-publico/ConferenciaHeader";
 import ProximaAcaoPanel from "@/components/quero-armas/cadastro-publico/ProximaAcaoPanel";
+import SolicitarCorrecaoModal, {
+  type SolicitarCorrecaoPayload,
+} from "@/components/quero-armas/cadastro-publico/SolicitarCorrecaoModal";
+import HistoricoEventosPanel from "@/components/quero-armas/cadastro-publico/HistoricoEventosPanel";
 import {
   computeConferenciaStatus,
   decidirProximaAcao,
+  listarPendenciasCadastro,
 } from "@/components/quero-armas/cadastro-publico/conferenciaStatus";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import ClienteSearchRow from "@/components/quero-armas/clientes/ClienteSearchRow";
