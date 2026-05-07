@@ -3,7 +3,7 @@ import {
   AlertTriangle, ShoppingBag, Crosshair, Shield, Calendar,
   DollarSign, Clock, CheckCircle, XCircle, TrendingUp, FileText,
   ArrowRight, Eye, Activity, Zap, Target, Bell, CreditCard,
-  ChevronRight, MapPin, Phone, Mail,
+  ChevronRight, MapPin, Phone, Mail, Users, ShieldCheck, Info, ListChecks,
 } from "lucide-react";
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
