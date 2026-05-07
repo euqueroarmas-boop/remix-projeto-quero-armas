@@ -3377,13 +3377,16 @@ export type Database = {
           modelo: string | null
           needs_review: boolean
           numero_autorizacao_compra: string | null
+          numero_cad_sinarm: string | null
           numero_craf: string | null
+          numero_registro_sigma: string | null
           numero_serie: string | null
           numero_sigma: string | null
           numero_sinarm: string | null
           origem: string
           qa_cliente_id: number
           sistema: string | null
+          sistema_registro: string | null
           status_documental: string | null
           tipo_arma: string | null
           updated_at: string
@@ -3398,13 +3401,16 @@ export type Database = {
           modelo?: string | null
           needs_review?: boolean
           numero_autorizacao_compra?: string | null
+          numero_cad_sinarm?: string | null
           numero_craf?: string | null
+          numero_registro_sigma?: string | null
           numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
           origem?: string
           qa_cliente_id: number
           sistema?: string | null
+          sistema_registro?: string | null
           status_documental?: string | null
           tipo_arma?: string | null
           updated_at?: string
@@ -3419,13 +3425,16 @@ export type Database = {
           modelo?: string | null
           needs_review?: boolean
           numero_autorizacao_compra?: string | null
+          numero_cad_sinarm?: string | null
           numero_craf?: string | null
+          numero_registro_sigma?: string | null
           numero_serie?: string | null
           numero_sigma?: string | null
           numero_sinarm?: string | null
           origem?: string
           qa_cliente_id?: number
           sistema?: string | null
+          sistema_registro?: string | null
           status_documental?: string | null
           tipo_arma?: string | null
           updated_at?: string
@@ -4038,7 +4047,10 @@ export type Database = {
           nome_arma: string | null
           nome_craf: string | null
           numero_arma: string | null
+          numero_cad_sinarm: string | null
+          numero_registro_sigma: string | null
           numero_sigma: string | null
+          sistema_registro: string | null
         }
         Insert: {
           arquivo_mime?: string | null
@@ -4053,7 +4065,10 @@ export type Database = {
           nome_arma?: string | null
           nome_craf?: string | null
           numero_arma?: string | null
+          numero_cad_sinarm?: string | null
+          numero_registro_sigma?: string | null
           numero_sigma?: string | null
+          sistema_registro?: string | null
         }
         Update: {
           arquivo_mime?: string | null
@@ -4068,7 +4083,10 @@ export type Database = {
           nome_arma?: string | null
           nome_craf?: string | null
           numero_arma?: string | null
+          numero_cad_sinarm?: string | null
+          numero_registro_sigma?: string | null
           numero_sigma?: string | null
+          sistema_registro?: string | null
         }
         Relationships: [
           {
@@ -4291,13 +4309,16 @@ export type Database = {
           id: string
           metadados_documento_json: Json | null
           motivo_reprovacao: string | null
+          numero_cad_sinarm: string | null
           numero_documento: string | null
+          numero_registro_sigma: string | null
           observacoes: string | null
           orgao_emissor: string | null
           origem: string
           qa_cliente_id: number | null
           reprovado_em: string | null
           reprovado_por: string | null
+          sistema_registro: string | null
           status: string
           tipo_documento: string
           titular_comprovante_documento: string | null
@@ -4331,13 +4352,16 @@ export type Database = {
           id?: string
           metadados_documento_json?: Json | null
           motivo_reprovacao?: string | null
+          numero_cad_sinarm?: string | null
           numero_documento?: string | null
+          numero_registro_sigma?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
           origem?: string
           qa_cliente_id?: number | null
           reprovado_em?: string | null
           reprovado_por?: string | null
+          sistema_registro?: string | null
           status?: string
           tipo_documento: string
           titular_comprovante_documento?: string | null
@@ -4371,13 +4395,16 @@ export type Database = {
           id?: string
           metadados_documento_json?: Json | null
           motivo_reprovacao?: string | null
+          numero_cad_sinarm?: string | null
           numero_documento?: string | null
+          numero_registro_sigma?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
           origem?: string
           qa_cliente_id?: number | null
           reprovado_em?: string | null
           reprovado_por?: string | null
+          sistema_registro?: string | null
           status?: string
           tipo_documento?: string
           titular_comprovante_documento?: string | null
