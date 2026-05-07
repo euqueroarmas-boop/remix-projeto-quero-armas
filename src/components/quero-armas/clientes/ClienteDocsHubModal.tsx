@@ -253,6 +253,10 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
   const [showTipoOverride, setShowTipoOverride] = useState(false);
   const [autoResult, setAutoResult] = useState<AutoResult | null>(null);
+  /** Valor original extraído pela IA por campo sensível (snapshot imutável). */
+  const [iaExtraido, setIaExtraido] = useState<Partial<Record<SensitiveKey, string>>>({});
+  /** Campos sensíveis que o humano confirmou explicitamente. */
+  const [confirmados, setConfirmados] = useState<Partial<Record<SensitiveKey, boolean>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -265,6 +269,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       setClassificacao(null);
       setShowTipoOverride(false);
       setAutoResult(null);
+      setIaExtraido({});
+      setConfirmados({});
     }
   }, [open, defaultTipo]);
 
