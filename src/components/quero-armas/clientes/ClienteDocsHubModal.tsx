@@ -553,6 +553,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       return;
     }
 
+    // Trava de segurança: nenhum campo sensível pode ser gravado sem
+    // confirmação humana explícita (clique em Confirmar OU edição manual).
+    const pendentes = pendingSensitiveKeys();
+    if (pendentes.length) {
+      toast.error(
+        `Confirme os campos antes de salvar: ${pendentes.join(", ").replace(/_/g, " ")}.`,
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       // Bloqueio de duplicidade
@@ -636,7 +646,29 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         arquivo_storage_path: storagePath,
         arquivo_nome: fileName,
         arquivo_mime: mime,
-        ia_status: storagePath ? "sugerido" : "nao_processado",
+        ia_status: classificacao ? "confirmado_humano" : (storagePath ? "sugerido" : "nao_processado"),
+        ia_dados_extraidos: classificacao
+          ? {
+              tipoDetectado: classificacao.tipoDetectado,
+              confianca: classificacao.confianca,
+              camposExtraidos: classificacao.camposExtraidos || {},
+              avaliado_em: new Date().toISOString(),
+              origem_fluxo: "arsenal_hub_documental",
+              auto_cadastro: false,
+              revisao_humana: true,
+              campos_sensiveis: {
+                numero_documento: buildFieldAudit("numero_documento", form.numero_documento || null),
+                numero_cad_sinarm: buildFieldAudit("numero_cad_sinarm", form.numero_cad_sinarm || null),
+                numero_registro_sigma: buildFieldAudit("numero_registro_sigma", form.numero_registro_sigma || null),
+                arma_numero_serie: buildFieldAudit("arma_numero_serie", form.arma_numero_serie || null),
+                arma_marca: buildFieldAudit("arma_marca", form.arma_marca || null),
+                arma_modelo: buildFieldAudit("arma_modelo", form.arma_modelo || null),
+                arma_calibre: buildFieldAudit("arma_calibre", form.arma_calibre || null),
+                data_validade: buildFieldAudit("data_validade", form.data_validade || null),
+                sistema_registro: buildFieldAudit("sistema_registro", form.sistema_registro || null),
+              },
+            }
+          : null,
       };
 
       // Fluxo de aprovação: admin lança como aprovado; cliente envia como pendente.
