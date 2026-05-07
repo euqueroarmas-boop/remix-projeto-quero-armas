@@ -95,6 +95,10 @@ const tool = {
               type: "string",
               description: "Modelo comercial somente se estiver escrito explicitamente no documento. NÃO preencher com TIPO/espécie (PISTOLA, REVÓLVER, CARABINA etc.), NÃO deduzir por número de série, calibre, marca ou catálogo. Se não houver modelo explícito, devolver vazio.",
             },
+            arma_especie: {
+              type: "string",
+              description: "Tipo/espécie da arma quando existir no documento (ex.: PISTOLA, REVÓLVER, CARABINA). Este campo é separado de arma_modelo.",
+            },
             arma_calibre: { type: "string" },
             arma_numero_serie: { type: "string" },
             sigma_ou_sinarm: { type: "string" },
