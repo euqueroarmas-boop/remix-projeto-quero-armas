@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, FileInput, Loader2 } from "lucide-react";
+import { ArrowRight, FileInput, Loader2, Database } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  QAOperationalSection,
+  QAActionCard,
+  QAStatusChip,
+  QAEmptyState,
+} from "@/components/quero-armas/qa-operational";
 
 interface Props {
   cliente: any;
@@ -55,9 +61,11 @@ export default function OrigemClienteCadastroPublico({ cliente, onAbrirCadastroP
 
   if (loading) {
     return (
-      <div className="qa-card p-3 flex items-center gap-2 text-[11px] text-slate-500">
-        <Loader2 className="h-3 w-3 animate-spin" /> Carregando origem do cliente…
-      </div>
+      <QAOperationalSection icon={Database} title="Origem do Cliente" status="Carregando" statusTone="info">
+        <div className="rounded-xl border bg-white px-3 py-2 flex items-center gap-2 text-[11px] text-slate-500">
+          <Loader2 className="h-3 w-3 animate-spin" /> Carregando origem do cliente…
+        </div>
+      </QAOperationalSection>
     );
   }
 
@@ -71,67 +79,59 @@ export default function OrigemClienteCadastroPublico({ cliente, onAbrirCadastroP
     } catch { return "—"; }
   };
 
-  return (
-    <div className="qa-card p-3 md:p-4 border-slate-200">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: "hsl(220 20% 92%)" }}>
-          <FileInput className="h-3 w-3 text-slate-600" />
-        </div>
-        <h3 className="text-[10px] uppercase tracking-[0.16em] font-bold text-slate-600">
-          Origem do cliente — Auditoria
-        </h3>
-      </div>
+  const verBtn = (id: any, label = "Ver cadastro") => (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); onAbrirCadastroPublico(id); }}
+      className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[#E5C2C6] bg-white text-[#7A1F2B] hover:bg-[#FBF3F4] text-[10px] font-bold uppercase tracking-wider"
+    >
+      {label} <ArrowRight className="h-3 w-3" />
+    </button>
+  );
 
+  return (
+    <QAOperationalSection
+      icon={FileInput}
+      title="Origem do Cliente"
+      status="Auditoria"
+      statusTone="info"
+    >
       {origem && (
-        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-2.5 py-2 mb-2">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="min-w-0">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500">Cadastro público de origem</div>
-              <div className="text-[12px] font-semibold text-slate-800 truncate">
-                {origem.servico_solicitado_nome || "Serviço não informado"}
-              </div>
-              <div className="text-[10px] text-slate-500 mt-0.5">
-                Recebido em {fmtDate(origem.created_at)} · Status: <span className="font-bold uppercase">{String(origem.status || "—")}</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => onAbrirCadastroPublico(origem.id)}
-              className="text-[10px] inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[#E5C2C6] bg-white text-[#7A1F2B] hover:bg-[#FBF3F4] font-bold uppercase tracking-wider"
-            >
-              Ver cadastro público <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
+        <QAActionCard
+          icon={Database}
+          title={origem.servico_solicitado_nome || "Serviço não informado"}
+          description={<>Cadastro público de origem · Recebido em <strong>{fmtDate(origem.created_at)}</strong></>}
+          status={String(origem.status || "—").toUpperCase()}
+          statusTone={origem.status === "aprovado" ? "ok" : origem.status === "pendente_correcao" ? "warn" : "info"}
+          actions={verBtn(origem.id)}
+        />
       )}
 
       {outros.length > 0 && (
-        <div>
-          <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">
-            Outros cadastros públicos do mesmo CPF ({outros.length})
+        <div className="space-y-2">
+          <div className="px-1 flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-600">
+              Outros cadastros do mesmo CPF
+            </span>
+            <QAStatusChip label={`${outros.length}`} tone="neutral" />
           </div>
-          <div className="space-y-1">
-            {outros.map((o: any) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => onAbrirCadastroPublico(o.id)}
-                className="w-full flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1.5 hover:border-[#E5C2C6] hover:bg-[#FBF3F4] text-left"
-              >
-                <div className="min-w-0">
-                  <div className="text-[11px] font-semibold text-slate-700 truncate">
-                    {o.servico_solicitado_nome || "Serviço não informado"}
-                  </div>
-                  <div className="text-[9px] text-slate-500">
-                    {fmtDate(o.created_at)} · {String(o.status || "—").toUpperCase()}
-                  </div>
-                </div>
-                <ArrowRight className="h-3 w-3 text-slate-400 shrink-0" />
-              </button>
-            ))}
-          </div>
+          {outros.map((o: any) => (
+            <QAActionCard
+              key={o.id}
+              icon={Database}
+              title={o.servico_solicitado_nome || "Serviço não informado"}
+              description={fmtDate(o.created_at)}
+              status={String(o.status || "—").toUpperCase()}
+              statusTone={o.status === "aprovado" ? "ok" : o.status === "pendente_correcao" ? "warn" : "neutral"}
+              actions={verBtn(o.id, "Abrir")}
+            />
+          ))}
         </div>
       )}
-    </div>
+
+      {!origem && outros.length === 0 && (
+        <QAEmptyState icon={Database} title="Sem cadastro público vinculado" description="Este cliente não possui registro recebido pelo formulário público." />
+      )}
+    </QAOperationalSection>
   );
 }

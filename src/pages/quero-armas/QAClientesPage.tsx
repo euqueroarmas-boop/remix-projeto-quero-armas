@@ -2533,17 +2533,14 @@ export default function QAClientesPage() {
 
               {/* VISÃO GERAL */}
               <TabsContent value="resumo" className="mt-3 space-y-3">
-                <BlocoSecao icon={Database} titulo="Origem do Cliente" statusTone="info" statusLabel="Auditoria">
-                  <OrigemClienteCadastroPublico
-                    cliente={c}
-                    onAbrirCadastroPublico={(id) => {
-                      setSelected(null);
-                      openCadastroPublico(String(id));
-                    }}
-                  />
-                </BlocoSecao>
-                <BlocoSecao icon={TrendingUp} titulo="Painel Operacional" statusTone="neutral" statusLabel="Visão 360°">
-                  <ClienteOverview
+                <OrigemClienteCadastroPublico
+                  cliente={c}
+                  onAbrirCadastroPublico={(id) => {
+                    setSelected(null);
+                    openCadastroPublico(String(id));
+                  }}
+                />
+                <ClienteOverview
                     cliente={c}
                     vendas={vendas}
                     itens={itens}
@@ -2554,21 +2551,18 @@ export default function QAClientesPage() {
                     examesAtuais={examesAtuais}
                     armasManual={armasManual}
                     onNavigate={setTab}
-                  />
-                </BlocoSecao>
+                />
               </TabsContent>
 
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
-                <BlocoSecao icon={Database} titulo="Sincronização do Cadastro Público" statusTone="info">
-                  <DadosFormularioPublicoSection
+                <DadosFormularioPublicoSection
                     cliente={c as any}
                     onApplied={async () => {
                       await loadSubData(c);
                       await loadCadastrosPublicos();
                     }}
-                  />
-                </BlocoSecao>
+                />
                 <BlocoSecao icon={User} titulo="Identificação">
                 <Section title="Identificação">
                   <Field label="Nome" value={c.nome_completo} />
