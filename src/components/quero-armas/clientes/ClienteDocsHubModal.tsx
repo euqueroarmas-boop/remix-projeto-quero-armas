@@ -72,7 +72,8 @@ type AutoResult =
         | "campos_ilegiveis"
         | "duplicado"
         | "erro_insercao"
-        | "erro_upload";
+        | "erro_upload"
+        | "revisao_humana_obrigatoria";
       campos_faltando?: string[];
       confianca?: number;
       mensagem?: string;
@@ -88,6 +89,8 @@ const MOTIVOS: Record<string, string> = {
   duplicado: "Este documento já está cadastrado no seu Arsenal.",
   erro_insercao: "Não foi possível cadastrar automaticamente. Tente novamente.",
   erro_upload: "Falha ao enviar o arquivo. Verifique sua conexão e tente novamente.",
+  revisao_humana_obrigatoria:
+    "A IA leu o documento e sugeriu os campos abaixo. Confira CAMPO A CAMPO e corrija o que estiver errado antes de salvar — nada é cadastrado automaticamente.",
 };
 
 function dataIsoFromBr(v?: string | null): string {
