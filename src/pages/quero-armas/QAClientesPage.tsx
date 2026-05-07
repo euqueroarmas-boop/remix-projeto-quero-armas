@@ -2530,8 +2530,15 @@ export default function QAClientesPage() {
                 />
               </TabsContent>
 
-              {/* RESUMO */}
-              <TabsContent value="resumo" className="mt-3">
+              {/* VISÃO GERAL */}
+              <TabsContent value="resumo" className="mt-3 space-y-3">
+                <OrigemClienteCadastroPublico
+                  cliente={c}
+                  onAbrirCadastroPublico={(id) => {
+                    setSelected(null);
+                    openCadastroPublico(String(id));
+                  }}
+                />
                 <ClienteOverview
                   cliente={c}
                   vendas={vendas}
