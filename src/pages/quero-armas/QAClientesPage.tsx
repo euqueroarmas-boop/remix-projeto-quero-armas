@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
+import OrigemClienteCadastroPublico from "@/components/quero-armas/clientes/OrigemClienteCadastroPublico";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 // SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
@@ -2477,8 +2478,8 @@ export default function QAClientesPage() {
           <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
             <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
               {[
+                { value: "resumo", icon: TrendingUp, label: "Visão geral" },
                 { value: "arsenal", icon: Crosshair, label: "Arsenal" },
-                { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
                 { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
@@ -2530,8 +2531,15 @@ export default function QAClientesPage() {
                 />
               </TabsContent>
 
-              {/* RESUMO */}
-              <TabsContent value="resumo" className="mt-3">
+              {/* VISÃO GERAL */}
+              <TabsContent value="resumo" className="mt-3 space-y-3">
+                <OrigemClienteCadastroPublico
+                  cliente={c}
+                  onAbrirCadastroPublico={(id) => {
+                    setSelected(null);
+                    openCadastroPublico(String(id));
+                  }}
+                />
                 <ClienteOverview
                   cliente={c}
                   vendas={vendas}
@@ -4459,6 +4467,11 @@ function ClienteHeaderCard({
           <div className="mt-0.5 text-[11px] font-mono tracking-wider text-slate-400">
             CPF {formatCpf(c.cpf)}
           </div>
+          {c.email && (
+            <div className="mt-0.5 text-[11px] text-slate-500 truncate">
+              {c.email}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
