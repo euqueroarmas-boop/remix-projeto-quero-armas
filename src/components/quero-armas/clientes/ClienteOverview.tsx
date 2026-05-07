@@ -340,11 +340,31 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
   /* ─── helpers de status do cliente ─── */
   const statusCliente = String((cliente as any)?.status_cliente || "ativo").toLowerCase();
   const isAtivo = !["inativo", "cancelado", "excluido_lgpd", "suspenso"].includes(statusCliente);
+  // Status operacional consolidado: considera TODOS os itens já agregados em expDocs
+  // (CR, CRAF, GTE, filiações, exames, serviços, prazos processuais administrativos).
+  // CRÍTICO: vencido ou prazo proc ≤ 0; ATENÇÃO: ≤30d ou prazo proc; EM DIA: > 30d.
   const piorDias = analysis.expDocs
     .map((d) => d.days)
     .filter((d): d is number => d !== null)
     .sort((a, b) => a - b)[0];
-  const emDia = piorDias === undefined ? true : piorDias > 30;
+  const temPrazoUrgente = analysis.prazosProc.some(
+    (p: any) => typeof p.diasRestantes === "number" && p.diasRestantes <= 10,
+  );
+  const temPendenciaBloqueante = itens.some((i: any) => {
+    const s = String(i?.status || "").toUpperCase();
+    return ["INDEFERIDO", "NOTIFICADO", "RESTITUÍDO", "AGUARDANDO_DOCUMENTACAO"].includes(s);
+  });
+  const statusOperacional: "CRITICO" | "ATENCAO" | "EM_DIA" =
+    piorDias !== undefined && piorDias < 0
+      ? "CRITICO"
+      : temPrazoUrgente
+        ? "CRITICO"
+        : piorDias !== undefined && piorDias <= 30
+          ? "ATENCAO"
+          : temPendenciaBloqueante
+            ? "ATENCAO"
+            : "EM_DIA";
+  const emDia = statusOperacional === "EM_DIA";
   const totalArmasReais = crafs.length + gtes.length;
   const armasReview = (armasManual || []).filter((a: any) => a?.needs_review).length;
 
@@ -356,31 +376,53 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     { id: "investido", icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "#047857", bg: "#D1FAE5", tab: "servicos" },
   ];
 
-  /* ─── Próximos passos por status do serviço ─── */
-  const STEPS_BY_STATUS: Record<string, string[]> = {
-    "AGUARDANDO_DOCUMENTACAO": [
-      "Aguardar envio de documentos",
-      "Análise de documentos",
-      "Emissão do Certificado de Registro (CR)",
-    ],
-    "EM_ANALISE": [
-      "Análise de documentos",
-      "Emissão de protocolo",
-      "Acompanhamento junto à PF",
-    ],
-    "PROTOCOLADO": [
-      "Acompanhamento junto à PF",
-      "Decisão (deferimento)",
-      "Emissão do documento final",
-    ],
-  };
   const itemAtivo = itens.find((i: any) => !["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(String(i.status || "").toUpperCase())) || itens[0];
-  const statusItem = String(itemAtivo?.status || "AGUARDANDO_DOCUMENTACAO").toUpperCase();
-  const proximosPassos = STEPS_BY_STATUS[statusItem.replace(/\s+/g, "_")] || [
-    "Aguardar envio de documentos",
-    "Análise de documentos",
-    "Conclusão do serviço",
-  ];
+
+  /* ─── Próximos passos REAIS — prioriza pendências concretas ───
+   * Ordem de prioridade:
+   * 1) Prazos processuais administrativos (recurso, MS, restituição)
+   * 2) Documentos / exames vencidos (days < 0)
+   * 3) Documentos a vencer ≤ 30d
+   * 4) Status do serviço ativo (aguardando doc, em análise, protocolado)
+   */
+  const proximosPassos: string[] = (() => {
+    const out: string[] = [];
+    // 1) Prazos processuais
+    for (const p of analysis.prazosProc.slice(0, 2)) {
+      const sufixo =
+        p.evento === "MANDADO DE SEGURANÇA"
+          ? "Impetrar Mandado de Segurança"
+          : p.evento === "RESTITUIÇÃO"
+            ? "Manifestar sobre restituição"
+            : "Protocolar recurso administrativo";
+      out.push(`${sufixo} (${p.servicoNome || "serviço"}) — ${typeof p.diasRestantes === "number" ? `${p.diasRestantes}d` : "sem prazo"}`);
+    }
+    // 2) Vencidos
+    for (const d of analysis.vencidos.slice(0, 2)) {
+      out.push(`Renovar ${d.label.toLowerCase()} (vencido)`);
+    }
+    // 3) A vencer
+    for (const d of analysis.expDocs.filter((x) => x.days !== null && x.days >= 0 && x.days <= 30).slice(0, 2)) {
+      out.push(`Atualizar ${d.label.toLowerCase()} (vence em ${d.days}d)`);
+    }
+    // 4) Status do serviço ativo
+    const statusItem = String(itemAtivo?.status || "").toUpperCase().replace(/\s+/g, "_");
+    const statusSteps: Record<string, string[]> = {
+      AGUARDANDO_DOCUMENTACAO: ["Aguardar envio de documentos", "Conferência interna", "Protocolar na PF"],
+      EM_ANALISE: ["Conferência de documentos", "Protocolar na PF", "Acompanhar análise"],
+      PROTOCOLADO: ["Acompanhar análise junto à PF", "Aguardar decisão", "Emitir documento final"],
+      INDEFERIDO: ["Protocolar recurso administrativo", "Acompanhar recurso", "Avaliar Mandado de Segurança"],
+      NOTIFICADO: ["Cumprir notificação no prazo", "Anexar documentos solicitados", "Reenviar à PF"],
+    };
+    for (const s of statusSteps[statusItem] || []) {
+      if (out.length >= 3) break;
+      if (!out.includes(s)) out.push(s);
+    }
+    if (out.length === 0) {
+      out.push("Nenhuma pendência identificada", "Manter documentos em dia", "Acompanhar validades");
+    }
+    return out.slice(0, 3);
+  })();
 
   return (
     <div className="space-y-3">
@@ -395,9 +437,20 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: isAtivo ? "#D1FAE5" : "#FEE2E2", borderColor: isAtivo ? "#A7F3D0" : "#FCA5A5", color: isAtivo ? "#065F46" : "#7F1D1D" }}>
           <CheckCircle className="h-3 w-3" /> Cliente {isAtivo ? "Ativo" : "Inativo"}
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: emDia ? "#D1FAE5" : "#FEF3C7", borderColor: emDia ? "#A7F3D0" : "#FDE68A", color: emDia ? "#065F46" : "#7C2D12" }}>
-          <CheckCircle className="h-3 w-3" /> {emDia ? "Em Dia" : "Atenção"}
-        </span>
+        {(() => {
+          const tone =
+            statusOperacional === "CRITICO"
+              ? { bg: "#FEE2E2", bd: "#FCA5A5", fg: "#7F1D1D", icon: AlertTriangle, label: "Crítico" }
+              : statusOperacional === "ATENCAO"
+                ? { bg: "#FEF3C7", bd: "#FDE68A", fg: "#7C2D12", icon: Bell, label: "Atenção" }
+                : { bg: "#D1FAE5", bd: "#A7F3D0", fg: "#065F46", icon: CheckCircle, label: "Em Dia" };
+          const I = tone.icon;
+          return (
+            <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: tone.bg, borderColor: tone.bd, color: tone.fg }}>
+              <I className="h-3 w-3" /> {tone.label}
+            </span>
+          );
+        })()}
       </div>
 
       {/* LINHA 1 — KPIs */}
@@ -623,13 +676,24 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
             <div className="text-[11px] text-slate-500">Sem eventos registrados.</div>
           ) : (
             <ol className="space-y-3">
-              {timeline.slice(-3).reverse().map((ev, i) => {
+              {(() => {
+                // Prioriza eventos críticos (indeferimento, recurso, restituição), depois mais recentes.
+                const isCritico = (t: string) => ["indeferimento", "recurso", "restituicao", "restituição"].includes(t);
+                const criticos = timeline.filter((e) => isCritico(e.type));
+                const recentes = [...timeline].reverse();
+                const out: typeof timeline = [];
+                for (const e of [...criticos.reverse(), ...recentes]) {
+                  if (out.length >= 3) break;
+                  if (!out.includes(e)) out.push(e);
+                }
+                return out;
+              })().map((ev, i) => {
                 const Icon = ev.icon;
                 return (
                   <li key={i} className="flex items-start gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ background: "#B91C1C" }} />
+                    <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ background: ev.color || "#B91C1C" }} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#B91C1C" }}>
+                      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: ev.color || "#B91C1C" }}>
                         {formatDate(ev.date)}
                       </div>
                       <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>{ev.label}</div>
@@ -688,7 +752,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
 
       {/* LINHA 5 — Resumo operacional inferior (3 cards compactos) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button onClick={() => onNavigate("arsenal")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
+        <button onClick={() => onNavigate("hub")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#EDE9FE", color: "#6D28D9" }}>
               <Shield className="h-4 w-4" />
