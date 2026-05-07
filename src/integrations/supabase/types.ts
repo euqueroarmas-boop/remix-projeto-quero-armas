@@ -4035,6 +4035,7 @@ export type Database = {
       }
       qa_crafs: {
         Row: {
+          arma_especie: string | null
           arquivo_mime: string | null
           arquivo_nome: string | null
           arquivo_storage_path: string | null
@@ -4053,6 +4054,7 @@ export type Database = {
           sistema_registro: string | null
         }
         Insert: {
+          arma_especie?: string | null
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
@@ -4071,6 +4073,7 @@ export type Database = {
           sistema_registro?: string | null
         }
         Update: {
+          arma_especie?: string | null
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
