@@ -3440,7 +3440,10 @@ export default function QAClientesPage() {
           >
             <DocumentosOperacionaisGrid
               cadastro={c}
-              onSolicitarCorrecao={() => setCorrecaoModalOpen(true)}
+              onSolicitarCorrecao={(item?: string) => {
+                setCorrecaoPreSelecionada(item ? [item] : []);
+                setCorrecaoModalOpen(true);
+              }}
             />
             {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
               <DetailCard title="Scanner & OCR (ferramentas)">
