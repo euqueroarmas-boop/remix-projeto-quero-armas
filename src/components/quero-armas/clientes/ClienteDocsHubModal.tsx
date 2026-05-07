@@ -497,7 +497,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
           data_validade: prev.data_validade || sugestao.data_validade || "",
           observacoes: prev.observacoes || sugestao.observacoes || "",
           arma_marca: prev.arma_marca || sugestao.arma_marca || "",
-          arma_modelo: prev.arma_modelo || sugestao.arma_modelo || "",
+          arma_modelo: prev.arma_modelo || safeExtractedModel(sugestao.arma_modelo) || "",
           arma_calibre: prev.arma_calibre || sugestao.arma_calibre || "",
           arma_numero_serie: prev.arma_numero_serie || sugestao.arma_numero_serie || "",
           arma_especie: prev.arma_especie || sugestao.arma_especie || "",
