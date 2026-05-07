@@ -2033,6 +2033,79 @@ export default function QAClientesPage() {
     }
   };
 
+  // ── Solicitar correção: registra evento, atualiza status, abre WA opcional ──
+  const handleSolicitarCorrecao = async (payload: SolicitarCorrecaoPayload) => {
+    if (!selectedCadastroPublico) return;
+    setSavingCorrecao(true);
+    try {
+      const cadastroId = selectedCadastroPublico.id;
+      const statusAnterior = selectedCadastroPublico.status ?? null;
+      const novoStatus = "pendente_correcao";
+      const today = new Date().toISOString().split("T")[0];
+      const resumo = payload.itensSelecionados.slice(0, 6).join(" | ");
+
+      const { error: upErr } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({
+          status: novoStatus,
+          aguardando_cliente_desde: today,
+          ultima_solicitacao_cliente: resumo.slice(0, 500).toUpperCase(),
+        })
+        .eq("id", cadastroId);
+      if (upErr) throw upErr;
+
+      const updated = {
+        ...selectedCadastroPublico,
+        status: novoStatus,
+        aguardando_cliente_desde: today,
+        ultima_solicitacao_cliente: resumo,
+      } as CadastroPublico;
+      setSelectedCadastroPublico(updated);
+      setCadastrosPublicos((prev) =>
+        prev.map((i) => (i.id === cadastroId ? { ...i, ...updated } : i)),
+      );
+
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        void registrarStatusEvento({
+          origem: "equipe",
+          entidade: "cadastro_publico",
+          entidade_id: cadastroId,
+          cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
+          campo_status: "correcao_solicitada",
+          status_anterior: statusAnterior,
+          status_novo: novoStatus,
+          usuario_id: userRes?.user?.id ?? null,
+          motivo: payload.observacao || null,
+          detalhes: {
+            itens: payload.itensSelecionados,
+            mensagem: payload.mensagemFinal,
+            canal: payload.abrirWhatsapp ? "whatsapp" : "registro",
+          },
+        });
+      } catch (auditErr) {
+        console.warn("[handleSolicitarCorrecao] auditoria falhou:", auditErr);
+      }
+
+      setCorrecaoModalOpen(false);
+      setHistoricoRefresh((n) => n + 1);
+
+      if (payload.abrirWhatsapp) {
+        const tel = (selectedCadastroPublico.telefone_principal || "").replace(/\D/g, "");
+        if (tel.length >= 10) {
+          const num = tel.length <= 11 ? `55${tel}` : tel;
+          const url = `https://wa.me/${num}?text=${encodeURIComponent(payload.mensagemFinal)}`;
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      }
+      toast.success("Correção solicitada e registrada no histórico.");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao registrar solicitação de correção.");
+    } finally {
+      setSavingCorrecao(false);
+    }
+  };
+
   const startEditCadastro = () => {
     if (!selectedCadastroPublico) return;
     const c = selectedCadastroPublico;
