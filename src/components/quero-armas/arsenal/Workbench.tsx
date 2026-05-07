@@ -145,8 +145,10 @@ function WeaponCard({
     tone === "danger" ? "#ef4444"
     : tone === "ok" ? "#10b981"
     : "#94a3b8";
-  const marca = catalog?.marca || info.marca || info.label;
-  const modeloRaw = (catalog?.modelo || info.modelo || "").toString();
+  // Prioridade crítica: valor confirmado/manual no documento prevalece.
+  // Catálogo nunca substitui marca/modelo/calibre do card; serve só para imagem/stats.
+  const marca = info.marca || catalog?.marca || info.label;
+  const modeloRaw = (info.modelo || "").toString();
   // Espingardas com espaços; demais armas compactadas (TS9, RT838, T4).
   const isEspingarda = info.kind === "espingarda";
   const modelo = isEspingarda
@@ -156,7 +158,7 @@ function WeaponCard({
         .replace(/\s+/g, " ")
         .trim()
     : modeloRaw.replace(/\s+/g, "").trim();
-  const calibre = catalog?.calibre || info.calibre || "—";
+  const calibre = info.calibre || catalog?.calibre || "—";
   const bg = backgroundForKind(info.kind);
   const render = catalog?.imagem || renderForKind(info.kind);
   const docPreviewUrl = usePrivateStorageUrl(
@@ -567,7 +569,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
     () => weapons.map((w) => ({
       w,
       info: buildWeaponInfo(w.nome_arma, w.numero_arma),
-      // Prioriza vínculo direto (catalogo_id na CRAF/GTE) → senão tenta match fuzzy
+      // Catálogo é enriquecimento visual, nunca fonte de verdade para marca/modelo.
       catalog: byId(w.catalogo_id || null) || match(w.nome_arma),
     })),
     [weapons, match, byId],
