@@ -137,6 +137,35 @@ const EMPTY: FormState = {
   sistema_registro: "",
 };
 
+/**
+ * Campos sensíveis que a IA pode sugerir, mas que EXIGEM confirmação
+ * humana antes do save. Usados para travar o botão "Salvar" e exibir
+ * o badge "Confirmar" / "Corrigir" campo a campo.
+ */
+const SENSITIVE_KEYS = [
+  "numero_documento",
+  "numero_cad_sinarm",
+  "numero_registro_sigma",
+  "arma_numero_serie",
+  "arma_marca",
+  "arma_modelo",
+  "arma_calibre",
+  "data_validade",
+  "sistema_registro",
+] as const;
+type SensitiveKey = typeof SENSITIVE_KEYS[number];
+
+/** Auditoria por campo: valor extraído pela IA × valor confirmado pelo humano. */
+type FieldAudit = {
+  valor_extraido_ia: string | null;
+  valor_confirmado: string | null;
+  corrigido_pelo_usuario: boolean;
+  confianca: number;
+  legivel: boolean;
+  fonte: "vision" | "ocr" | "manual";
+  confirmado_em: string | null;
+};
+
 const modalTheme = {
   "--background": "0 0% 100%",
   "--foreground": "222 47% 11%",
