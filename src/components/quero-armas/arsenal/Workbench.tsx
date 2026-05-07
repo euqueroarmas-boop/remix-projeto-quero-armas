@@ -45,6 +45,8 @@ export interface WorkbenchWeapon {
   numero_registro_sigma?: string | null;
   /** Regime canônico já decidido pela IA / equipe (SINARM/SIGMA/REVISAR). */
   sistema_registro?: "SINARM" | "SIGMA" | "REVISAR" | string | null;
+  /** Espécie/tipo do documento (ESPINGARDA, REVÓLVER, PISTOLA, etc.). */
+  arma_especie?: string | null;
   data_validade: string | null;
   daysToExpire: number | null;
   hasGte?: boolean;
