@@ -109,6 +109,12 @@ type FormState = {
   arma_calibre: string;
   arma_numero_serie: string;
   arma_especie: string;
+  /** "Nº Cad. SINARM" — só quando regime SINARM. Ex.: 2022/905178870-50. */
+  numero_cad_sinarm: string;
+  /** Número de registro SIGMA — só quando regime SIGMA explícito. */
+  numero_registro_sigma: string;
+  /** Regime canônico inferido pela IA: SINARM | SIGMA | REVISAR. */
+  sistema_registro: "" | "SINARM" | "SIGMA" | "REVISAR";
 };
 
 const EMPTY: FormState = {
@@ -123,6 +129,9 @@ const EMPTY: FormState = {
   arma_calibre: "",
   arma_numero_serie: "",
   arma_especie: "",
+  numero_cad_sinarm: "",
+  numero_registro_sigma: "",
+  sistema_registro: "",
 };
 
 const modalTheme = {
@@ -229,6 +238,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
   const showArmaFields = form.tipo_documento !== "cr";
   const tipoAtual = TIPOS.find((tipo) => tipo.value === form.tipo_documento);
+  // Mostra campos SINARM quando: regime detectado SINARM, ou tipo = sinarm,
+  // ou já existe um Nº Cad. SINARM preenchido (manual).
+  const showSinarmFields =
+    showArmaFields &&
+    (form.sistema_registro === "SINARM" ||
+      form.tipo_documento === "sinarm" ||
+      !!form.numero_cad_sinarm);
+  const showSigmaFields =
+    showArmaFields &&
+    (form.sistema_registro === "SIGMA" ||
+      (form.tipo_documento === "craf" && !form.numero_cad_sinarm));
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -264,6 +284,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       const tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
       const campos = ia.camposExtraidos || {};
 
+      // Regime canônico (espelha lógica do backend qa-arsenal-doc-autoinsert).
+      const cadSinarmRaw = String((campos as any).numero_cad_sinarm || "").trim();
+      const sigmaExplicitoRaw = String((campos as any).numero_registro_sigma || "").trim();
+      const sistemaIARaw = String((campos as any).sistema_registro || "").toUpperCase().trim();
+      const sistemaFinal: "SINARM" | "SIGMA" | "REVISAR" =
+        cadSinarmRaw ? "SINARM" :
+        (sistemaIARaw === "SIGMA" && sigmaExplicitoRaw) ? "SIGMA" :
+        sistemaIARaw === "SINARM" ? "SINARM" :
+        sistemaIARaw === "SIGMA" ? "SIGMA" :
+        "REVISAR";
+
       setForm((prev) => ({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
@@ -276,6 +307,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         arma_modelo: campos.arma_modelo || prev.arma_modelo,
         arma_calibre: campos.arma_calibre || prev.arma_calibre,
         arma_numero_serie: campos.arma_numero_serie || prev.arma_numero_serie,
+        numero_cad_sinarm: cadSinarmRaw || prev.numero_cad_sinarm,
+        numero_registro_sigma:
+          sistemaFinal === "SIGMA"
+            ? sigmaExplicitoRaw || prev.numero_registro_sigma
+            : "", // SINARM/REVISAR nunca preenche SIGMA
+        sistema_registro: sistemaFinal,
       }));
 
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
@@ -479,6 +516,9 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         arma_calibre: showArmaFields ? form.arma_calibre || null : null,
         arma_numero_serie: showArmaFields ? form.arma_numero_serie || null : null,
         arma_especie: showArmaFields ? form.arma_especie || null : null,
+        numero_cad_sinarm: showArmaFields ? (form.numero_cad_sinarm.trim() || null) : null,
+        numero_registro_sigma: showArmaFields ? (form.numero_registro_sigma.trim() || null) : null,
+        sistema_registro: showArmaFields ? (form.sistema_registro || null) : null,
         arquivo_storage_path: storagePath,
         arquivo_nome: fileName,
         arquivo_mime: mime,
@@ -850,6 +890,59 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                       className={inputClassName}
                     />
                   </Field>
+
+                  <Field label="Sistema do registro" className="col-span-2">
+                    <Select
+                      value={form.sistema_registro || ""}
+                      onValueChange={(v) => {
+                        update("sistema_registro", v as FormState["sistema_registro"]);
+                        // Limpa o campo do regime oposto para evitar contaminação.
+                        if (v === "SINARM") update("numero_registro_sigma", "");
+                        if (v === "SIGMA") update("numero_cad_sinarm", "");
+                      }}
+                    >
+                      <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                        <SelectValue placeholder="Selecione o regime" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-popover text-popover-foreground">
+                        <SelectItem value="SINARM">SINARM (Polícia Federal)</SelectItem>
+                        <SelectItem value="SIGMA">SIGMA (Exército / CAC)</SelectItem>
+                        <SelectItem value="REVISAR">A revisar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+
+                  {showSinarmFields ? (
+                    <>
+                      <Field label="Nº Cad. SINARM" className="col-span-2">
+                        <Input
+                          value={form.numero_cad_sinarm}
+                          onChange={(event) => update("numero_cad_sinarm", event.target.value)}
+                          placeholder="Ex.: 2022/905178870-50"
+                          className={inputClassName}
+                        />
+                      </Field>
+                      <Field label="Nº do Registro" className="col-span-2">
+                        <Input
+                          value={form.numero_documento}
+                          onChange={(event) => update("numero_documento", event.target.value)}
+                          placeholder="Ex.: 906786939"
+                          className={inputClassName}
+                        />
+                      </Field>
+                    </>
+                  ) : null}
+
+                  {showSigmaFields ? (
+                    <Field label="Nº de Registro SIGMA" className="col-span-2">
+                      <Input
+                        value={form.numero_registro_sigma}
+                        onChange={(event) => update("numero_registro_sigma", event.target.value)}
+                        placeholder="Número SIGMA / Exército"
+                        className={inputClassName}
+                      />
+                    </Field>
+                  ) : null}
                 </div>
               </div>
             ) : null}
