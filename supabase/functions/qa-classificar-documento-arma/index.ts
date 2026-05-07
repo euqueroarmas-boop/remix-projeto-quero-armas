@@ -97,7 +97,7 @@ const tool = {
             sigma_ou_sinarm: { type: "string" },
             numero_cad_sinarm: {
               type: "string",
-              description: "Conteúdo EXATO do campo rotulado 'Nº Cad. SINARM' (ex.: 2022/905178870-50). Vazio se o rótulo não aparecer no documento.",
+              description: "OBRIGATÓRIO quando o documento contiver o rótulo 'Nº Cad. SINARM' (ou variações 'Nº Cadastro SINARM', 'No. Cad. SINARM', 'Nº CAD SINARM', 'Cadastro SINARM nº'). Copie o conteúdo EXATO ao lado do rótulo, preservando a barra e o hífen (ex.: 2022/905178870-50). NUNCA confunda com 'Nº do Registro', 'Nº da Arma' ou 'Nº de Série'. Vazio APENAS se o rótulo realmente não existir no documento.",
             },
             numero_registro_sigma: {
               type: "string",
