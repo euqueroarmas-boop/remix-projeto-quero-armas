@@ -1435,6 +1435,7 @@ export default function QAClientesPage() {
   const [savingCadastroEdit, setSavingCadastroEdit] = useState(false);
   const [correcaoModalOpen, setCorrecaoModalOpen] = useState(false);
   const [savingCorrecao, setSavingCorrecao] = useState(false);
+  const [correcaoPreSelecionada, setCorrecaoPreSelecionada] = useState<string[]>([]);
   const [historicoRefresh, setHistoricoRefresh] = useState(0);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
