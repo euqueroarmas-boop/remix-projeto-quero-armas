@@ -273,6 +273,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       const tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
       const campos = ia.camposExtraidos || {};
 
+      // Regime canônico (espelha lógica do backend qa-arsenal-doc-autoinsert).
+      const cadSinarmRaw = String((campos as any).numero_cad_sinarm || "").trim();
+      const sigmaExplicitoRaw = String((campos as any).numero_registro_sigma || "").trim();
+      const sistemaIARaw = String((campos as any).sistema_registro || "").toUpperCase().trim();
+      const sistemaFinal: "SINARM" | "SIGMA" | "REVISAR" =
+        cadSinarmRaw ? "SINARM" :
+        (sistemaIARaw === "SIGMA" && sigmaExplicitoRaw) ? "SIGMA" :
+        sistemaIARaw === "SINARM" ? "SINARM" :
+        sistemaIARaw === "SIGMA" ? "SIGMA" :
+        "REVISAR";
+
       setForm((prev) => ({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
@@ -285,6 +296,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         arma_modelo: campos.arma_modelo || prev.arma_modelo,
         arma_calibre: campos.arma_calibre || prev.arma_calibre,
         arma_numero_serie: campos.arma_numero_serie || prev.arma_numero_serie,
+        numero_cad_sinarm: cadSinarmRaw || prev.numero_cad_sinarm,
+        numero_registro_sigma:
+          sistemaFinal === "SIGMA"
+            ? sigmaExplicitoRaw || prev.numero_registro_sigma
+            : "", // SINARM/REVISAR nunca preenche SIGMA
+        sistema_registro: sistemaFinal,
       }));
 
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
