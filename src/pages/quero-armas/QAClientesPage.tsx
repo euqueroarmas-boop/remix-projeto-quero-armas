@@ -2533,36 +2533,43 @@ export default function QAClientesPage() {
 
               {/* VISÃO GERAL */}
               <TabsContent value="resumo" className="mt-3 space-y-3">
-                <OrigemClienteCadastroPublico
-                  cliente={c}
-                  onAbrirCadastroPublico={(id) => {
-                    setSelected(null);
-                    openCadastroPublico(String(id));
-                  }}
-                />
-                <ClienteOverview
-                  cliente={c}
-                  vendas={vendas}
-                  itens={itens}
-                  crafs={crafs}
-                  gtes={gtes}
-                  filiacoes={filiacoes}
-                  cadastro={cadastro}
-                  examesAtuais={examesAtuais}
-                  armasManual={armasManual}
-                  onNavigate={setTab}
-                />
+                <BlocoSecao icon={Database} titulo="Origem do Cliente" statusTone="info" statusLabel="Auditoria">
+                  <OrigemClienteCadastroPublico
+                    cliente={c}
+                    onAbrirCadastroPublico={(id) => {
+                      setSelected(null);
+                      openCadastroPublico(String(id));
+                    }}
+                  />
+                </BlocoSecao>
+                <BlocoSecao icon={TrendingUp} titulo="Painel Operacional" statusTone="neutral" statusLabel="Visão 360°">
+                  <ClienteOverview
+                    cliente={c}
+                    vendas={vendas}
+                    itens={itens}
+                    crafs={crafs}
+                    gtes={gtes}
+                    filiacoes={filiacoes}
+                    cadastro={cadastro}
+                    examesAtuais={examesAtuais}
+                    armasManual={armasManual}
+                    onNavigate={setTab}
+                  />
+                </BlocoSecao>
               </TabsContent>
 
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
-                <DadosFormularioPublicoSection
-                  cliente={c as any}
-                  onApplied={async () => {
-                    await loadSubData(c);
-                    await loadCadastrosPublicos();
-                  }}
-                />
+                <BlocoSecao icon={Database} titulo="Sincronização do Cadastro Público" statusTone="info">
+                  <DadosFormularioPublicoSection
+                    cliente={c as any}
+                    onApplied={async () => {
+                      await loadSubData(c);
+                      await loadCadastrosPublicos();
+                    }}
+                  />
+                </BlocoSecao>
+                <BlocoSecao icon={User} titulo="Identificação">
                 <Section title="Identificação">
                   <Field label="Nome" value={c.nome_completo} />
                   <Field label="CPF" value={formatCpf(c.cpf)} copyable />
@@ -2586,14 +2593,20 @@ export default function QAClientesPage() {
                     copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
                   />
                 </Section>
+                </BlocoSecao>
+                <BlocoSecao icon={User} titulo="Filiação">
                 <Section title="Filiação">
                   <Field label="Mãe" value={c.nome_mae} />
                   <Field label="Pai" value={c.nome_pai} />
                 </Section>
+                </BlocoSecao>
+                <BlocoSecao icon={Phone} titulo="Contato">
                 <Section title="Contato">
                   <Field label="Celular" value={c.celular} icon={Phone} />
                   <Field label="Email" value={c.email} icon={Mail} />
                 </Section>
+                </BlocoSecao>
+                <BlocoSecao icon={MapPin} titulo="Endereço Principal">
                 <Section title="Endereço Principal">
                   <Field label="Logradouro" value={`${c.endereco || ""}, ${c.numero || ""}`} icon={MapPin} />
                   <Field label="Bairro" value={c.bairro} />
@@ -2601,23 +2614,22 @@ export default function QAClientesPage() {
                   <Field label="Cidade/UF" value={`${c.cidade || ""} / ${c.estado || ""}`} />
                   {c.complemento && <Field label="Complemento" value={c.complemento} />}
                 </Section>
+                </BlocoSecao>
                 {(c.endereco2 || c.cidade2) && (
+                  <BlocoSecao icon={MapPin} titulo="Endereço Secundário" statusTone="neutral">
                   <Section title="Endereço Secundário">
                     <Field label="Logradouro" value={`${c.endereco2 || ""}, ${c.numero2 || ""}`} icon={MapPin} />
                     <Field label="Bairro" value={c.bairro2} />
                     <Field label="Cidade/UF" value={`${c.cidade2 || ""} / ${c.estado2 || ""}`} />
                   </Section>
+                  </BlocoSecao>
                 )}
                 {c.observacao && (
-                  <div className="qa-card p-4 md:p-5">
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(38 92% 50% / 0.12)" }}>
-                        <FileText className="h-3.5 w-3.5" style={{ color: "hsl(38 92% 50%)" }} />
-                      </div>
-                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(38 92% 50%)" }}>Observações</h3>
+                  <BlocoSecao icon={FileText} titulo="Observações" statusTone="warn">
+                    <div className="qa-card p-4 md:p-5">
+                      <div className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">{c.observacao}</div>
                     </div>
-                    <div className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">{c.observacao}</div>
-                  </div>
+                  </BlocoSecao>
                 )}
               </TabsContent>
 
@@ -3079,8 +3091,17 @@ export default function QAClientesPage() {
                 <ClienteDocsEnviados cliente={c} />
               </TabsContent>
               {/* ACESSO AO PORTAL */}
-              <TabsContent value="historico" className="mt-3">
-                <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
+              <TabsContent value="historico" className="mt-3 space-y-3">
+                <BlocoSecao
+                  icon={Clock}
+                  titulo="Linha do Tempo / Auditoria"
+                  statusTone="info"
+                  statusLabel="Histórico"
+                >
+                  <div className="qa-card p-4 md:p-5">
+                    <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
+                  </div>
+                </BlocoSecao>
               </TabsContent>
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
