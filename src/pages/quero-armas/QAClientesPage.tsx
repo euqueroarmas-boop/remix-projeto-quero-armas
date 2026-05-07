@@ -3628,15 +3628,27 @@ export default function QAClientesPage() {
               if (proxima.ctaAction === "validar") void updateCadastroPublicoStatus("aprovado");
               else if (proxima.ctaAction === "gerar_cobranca") void togglePagoCadastroPublico();
               else if (proxima.ctaAction === "solicitar_correcao") {
-                toast.info("Use os canais existentes (WhatsApp/E-mail) para solicitar a correção ao cliente.");
+                setCorrecaoModalOpen(true);
               } else if (proxima.ctaAction === "abrir_cliente" && (c as any).cliente_id_vinculado) {
                 const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
                 if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
               }
             }}
           />
+          <div className="mt-3">
+            <HistoricoEventosPanel cadastroId={c.id} refreshKey={historicoRefresh} />
+          </div>
         </div>
       </div>
+      <SolicitarCorrecaoModal
+        open={correcaoModalOpen}
+        onOpenChange={setCorrecaoModalOpen}
+        pendenciasAuto={listarPendenciasCadastro(c as any)}
+        nomeCliente={c.nome_completo}
+        telefoneWhatsapp={c.telefone_principal}
+        saving={savingCorrecao}
+        onConfirm={handleSolicitarCorrecao}
+      />
     );
   }
 
