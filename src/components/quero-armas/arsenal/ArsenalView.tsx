@@ -426,6 +426,9 @@ export function ArsenalView({
         nome_arma: c.nome_arma,
         numero_arma: c.numero_arma,
         numero_sigma: c.numero_sigma,
+        numero_cad_sinarm: c.numero_cad_sinarm || null,
+        numero_registro_sigma: c.numero_registro_sigma || null,
+        sistema_registro: c.sistema_registro || null,
         data_validade: c.data_validade,
         daysToExpire: daysUntil(c.data_validade),
         hasGte: !!gte,
@@ -486,6 +489,9 @@ export function ArsenalView({
           nome_arma: nome,
           numero_arma: d.arma_numero_serie || null,
           numero_sigma: ["craf", "sinarm"].includes(tipoLower) ? d.numero_documento || null : null,
+        numero_cad_sinarm: (d as any).numero_cad_sinarm || null,
+        numero_registro_sigma: (d as any).numero_registro_sigma || null,
+        sistema_registro: (d as any).sistema_registro || null,
           data_validade: d.data_validade,
           daysToExpire: daysUntil(d.data_validade),
           hasGte: false,
@@ -691,7 +697,8 @@ export function ArsenalView({
       const regime = getWeaponRegime(w as any, {
         hasGteVinculada,
         hasGtVinculada,
-        numeroSigma: w.numero_sigma,
+        numeroCadSinarm: (w as any).numero_cad_sinarm,
+        numeroRegistroSigma: (w as any).numero_registro_sigma,
       });
       const gteExigivel = regime === "SIGMA";
       return {
@@ -1474,7 +1481,8 @@ export function ArsenalView({
       const regime = getWeaponRegime(w as any, {
         hasGteVinculada,
         hasGtVinculada,
-        numeroSigma: w.numero_sigma,
+        numeroCadSinarm: (w as any).numero_cad_sinarm,
+        numeroRegistroSigma: (w as any).numero_registro_sigma,
       });
       if (link?.crafValido) comCrafValido++;
       if (link?.gteValida) comGteAtiva++;
