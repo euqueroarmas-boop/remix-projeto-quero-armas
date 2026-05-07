@@ -38,6 +38,12 @@ export function isCadastroAprovado(status?: string | null) {
   );
 }
 
+export function isCadastroPendenteCorrecao(status?: string | null) {
+  return ["pendente_correcao", "aguardando_correcao", "aguardando_cliente"].includes(
+    String(status || "").toLowerCase(),
+  );
+}
+
 export function listarPendenciasCadastro(c: CadastroPublicoLite): string[] {
   const p: string[] = [];
   if (!filled(c.nome_completo)) p.push("Nome do cliente ausente.");
@@ -62,11 +68,13 @@ function chip(label: string, kind: StatusKind) {
 export function computeConferenciaStatus(c: CadastroPublicoLite): ConferenciaStatus {
   const aprovado = isCadastroAprovado(c.status);
   const rejeitado = String(c.status || "").toLowerCase() === "rejeitado";
+  const correcao = isCadastroPendenteCorrecao(c.status);
   const pendencias = listarPendenciasCadastro(c);
 
   // Cadastro
   let cadastro = chip("PENDENTE", "warn");
   if (rejeitado) cadastro = chip("REJEITADO", "danger");
+  else if (correcao) cadastro = chip("AGUARDANDO CORREÇÃO", "warn");
   else if (aprovado && pendencias.length === 0) cadastro = chip("VALIDADO", "ok");
   else if (aprovado && pendencias.length > 0) cadastro = chip("VALIDADO C/ PENDÊNCIAS", "warn");
   else if (pendencias.length > 0) cadastro = chip("EM CONFERÊNCIA", "warn");
@@ -109,6 +117,7 @@ export interface ProximaAcaoDecisao {
 export function decidirProximaAcao(c: CadastroPublicoLite): ProximaAcaoDecisao {
   const aprovado = isCadastroAprovado(c.status);
   const rejeitado = String(c.status || "").toLowerCase() === "rejeitado";
+  const correcao = isCadastroPendenteCorrecao(c.status);
   const pendencias = listarPendenciasCadastro(c);
 
   if (rejeitado) {
@@ -117,6 +126,18 @@ export function decidirProximaAcao(c: CadastroPublicoLite): ProximaAcaoDecisao {
       descricao: "Reverter para pendente caso seja necessário reabrir.",
       tone: "danger",
       pendencias: [],
+    };
+  }
+
+  if (correcao) {
+    return {
+      titulo: "Aguardando correção do cliente.",
+      descricao:
+        "Solicitação enviada. Reabra a janela de correção para reenviar ou marcar como respondida.",
+      tone: "warn",
+      ctaLabel: "Reenviar correção",
+      ctaAction: "solicitar_correcao",
+      pendencias: pendencias.map((p) => ({ label: p, tone: "warn" as const })),
     };
   }
 

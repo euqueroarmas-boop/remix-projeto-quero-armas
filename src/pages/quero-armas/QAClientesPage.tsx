@@ -45,9 +45,14 @@ import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/Client
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
 import ConferenciaHeader from "@/components/quero-armas/cadastro-publico/ConferenciaHeader";
 import ProximaAcaoPanel from "@/components/quero-armas/cadastro-publico/ProximaAcaoPanel";
+import SolicitarCorrecaoModal, {
+  type SolicitarCorrecaoPayload,
+} from "@/components/quero-armas/cadastro-publico/SolicitarCorrecaoModal";
+import HistoricoEventosPanel from "@/components/quero-armas/cadastro-publico/HistoricoEventosPanel";
 import {
   computeConferenciaStatus,
   decidirProximaAcao,
+  listarPendenciasCadastro,
 } from "@/components/quero-armas/cadastro-publico/conferenciaStatus";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import ClienteSearchRow from "@/components/quero-armas/clientes/ClienteSearchRow";
@@ -1424,6 +1429,9 @@ export default function QAClientesPage() {
   const [editingCadastroPublico, setEditingCadastroPublico] = useState(false);
   const [cadastroEditForm, setCadastroEditForm] = useState<Record<string, any>>({});
   const [savingCadastroEdit, setSavingCadastroEdit] = useState(false);
+  const [correcaoModalOpen, setCorrecaoModalOpen] = useState(false);
+  const [savingCorrecao, setSavingCorrecao] = useState(false);
+  const [historicoRefresh, setHistoricoRefresh] = useState(0);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
   const dataLoadedRef = useRef(false);
@@ -2022,6 +2030,79 @@ export default function QAClientesPage() {
       toast.error(e.message || "Erro ao atualizar cadastro público");
     } finally {
       setSavingCadastroPublicoStatus(null);
+    }
+  };
+
+  // ── Solicitar correção: registra evento, atualiza status, abre WA opcional ──
+  const handleSolicitarCorrecao = async (payload: SolicitarCorrecaoPayload) => {
+    if (!selectedCadastroPublico) return;
+    setSavingCorrecao(true);
+    try {
+      const cadastroId = selectedCadastroPublico.id;
+      const statusAnterior = selectedCadastroPublico.status ?? null;
+      const novoStatus = "pendente_correcao";
+      const today = new Date().toISOString().split("T")[0];
+      const resumo = payload.itensSelecionados.slice(0, 6).join(" | ");
+
+      const { error: upErr } = await supabase
+        .from("qa_cadastro_publico" as any)
+        .update({
+          status: novoStatus,
+          aguardando_cliente_desde: today,
+          ultima_solicitacao_cliente: resumo.slice(0, 500).toUpperCase(),
+        })
+        .eq("id", cadastroId);
+      if (upErr) throw upErr;
+
+      const updated = {
+        ...selectedCadastroPublico,
+        status: novoStatus,
+        aguardando_cliente_desde: today,
+        ultima_solicitacao_cliente: resumo,
+      } as CadastroPublico;
+      setSelectedCadastroPublico(updated);
+      setCadastrosPublicos((prev) =>
+        prev.map((i) => (i.id === cadastroId ? { ...i, ...updated } : i)),
+      );
+
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        void registrarStatusEvento({
+          origem: "equipe",
+          entidade: "cadastro_publico",
+          entidade_id: cadastroId,
+          cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
+          campo_status: "correcao_solicitada",
+          status_anterior: statusAnterior,
+          status_novo: novoStatus,
+          usuario_id: userRes?.user?.id ?? null,
+          motivo: payload.observacao || null,
+          detalhes: {
+            itens: payload.itensSelecionados,
+            mensagem: payload.mensagemFinal,
+            canal: payload.abrirWhatsapp ? "whatsapp" : "registro",
+          },
+        });
+      } catch (auditErr) {
+        console.warn("[handleSolicitarCorrecao] auditoria falhou:", auditErr);
+      }
+
+      setCorrecaoModalOpen(false);
+      setHistoricoRefresh((n) => n + 1);
+
+      if (payload.abrirWhatsapp) {
+        const tel = (selectedCadastroPublico.telefone_principal || "").replace(/\D/g, "");
+        if (tel.length >= 10) {
+          const num = tel.length <= 11 ? `55${tel}` : tel;
+          const url = `https://wa.me/${num}?text=${encodeURIComponent(payload.mensagemFinal)}`;
+          window.open(url, "_blank", "noopener,noreferrer");
+        }
+      }
+      toast.success("Correção solicitada e registrada no histórico.");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao registrar solicitação de correção.");
+    } finally {
+      setSavingCorrecao(false);
     }
   };
 
@@ -3189,6 +3270,7 @@ export default function QAClientesPage() {
     ) : null;
 
     return (
+      <>
       <div className="max-w-7xl mx-auto space-y-4">
         <ConferenciaHeader
           backSlot={backBtn}
@@ -3547,15 +3629,28 @@ export default function QAClientesPage() {
               if (proxima.ctaAction === "validar") void updateCadastroPublicoStatus("aprovado");
               else if (proxima.ctaAction === "gerar_cobranca") void togglePagoCadastroPublico();
               else if (proxima.ctaAction === "solicitar_correcao") {
-                toast.info("Use os canais existentes (WhatsApp/E-mail) para solicitar a correção ao cliente.");
+                setCorrecaoModalOpen(true);
               } else if (proxima.ctaAction === "abrir_cliente" && (c as any).cliente_id_vinculado) {
                 const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
                 if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
               }
             }}
           />
+          <div className="mt-3">
+            <HistoricoEventosPanel cadastroId={c.id} refreshKey={historicoRefresh} />
+          </div>
         </div>
       </div>
+      <SolicitarCorrecaoModal
+        open={correcaoModalOpen}
+        onOpenChange={setCorrecaoModalOpen}
+        pendenciasAuto={listarPendenciasCadastro(c as any)}
+        nomeCliente={c.nome_completo}
+        telefoneWhatsapp={c.telefone_principal}
+        saving={savingCorrecao}
+        onConfirm={handleSolicitarCorrecao}
+      />
+      </>
     );
   }
 
