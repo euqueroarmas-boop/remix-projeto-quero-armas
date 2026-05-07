@@ -12,6 +12,7 @@ import {
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
   ShoppingCart, RefreshCw, Landmark,
+  Database, Briefcase,
 } from "lucide-react";
 import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
