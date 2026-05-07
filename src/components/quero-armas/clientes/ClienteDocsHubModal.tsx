@@ -109,6 +109,12 @@ type FormState = {
   arma_calibre: string;
   arma_numero_serie: string;
   arma_especie: string;
+  /** "Nº Cad. SINARM" — só quando regime SINARM. Ex.: 2022/905178870-50. */
+  numero_cad_sinarm: string;
+  /** Número de registro SIGMA — só quando regime SIGMA explícito. */
+  numero_registro_sigma: string;
+  /** Regime canônico inferido pela IA: SINARM | SIGMA | REVISAR. */
+  sistema_registro: "" | "SINARM" | "SIGMA" | "REVISAR";
 };
 
 const EMPTY: FormState = {
@@ -123,6 +129,9 @@ const EMPTY: FormState = {
   arma_calibre: "",
   arma_numero_serie: "",
   arma_especie: "",
+  numero_cad_sinarm: "",
+  numero_registro_sigma: "",
+  sistema_registro: "",
 };
 
 const modalTheme = {
