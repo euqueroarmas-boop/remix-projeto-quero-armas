@@ -3650,6 +3650,7 @@ export default function QAClientesPage() {
         saving={savingCorrecao}
         onConfirm={handleSolicitarCorrecao}
       />
+      </>
     );
   }
 
