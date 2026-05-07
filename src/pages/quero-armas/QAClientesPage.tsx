@@ -3363,6 +3363,13 @@ export default function QAClientesPage() {
         {/* Content cards + Próxima Ação */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
           <div className="space-y-4 min-w-0">
+          {/* ── BLOCO: SERVIÇO SOLICITADO ── */}
+          <BlocoSecao
+            icon={Briefcase}
+            titulo="Serviço Solicitado"
+            statusLabel={statusChips.servico.label}
+            statusTone={statusChips.servico.kind === "ok" ? "ok" : statusChips.servico.kind === "warn" ? "warn" : statusChips.servico.kind === "danger" ? "danger" : statusChips.servico.kind === "info" ? "info" : "neutral"}
+          >
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
               <DetailField label="Recebido em" value={formatDateTime(c.created_at)} />
@@ -3421,9 +3428,21 @@ export default function QAClientesPage() {
               </div>
             )}
           </DetailCard>
+          </BlocoSecao>
 
-          {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
-            <DetailCard title="Documentos enviados pelo cliente">
+          {/* ── BLOCO: DOCUMENTOS ENVIADOS ── */}
+          <BlocoSecao
+            icon={FileText}
+            titulo="Documentos Enviados"
+            statusLabel={statusChips.documentos.label}
+            statusTone={statusChips.documentos.kind === "ok" ? "ok" : statusChips.documentos.kind === "warn" ? "warn" : statusChips.documentos.kind === "danger" ? "danger" : "neutral"}
+          >
+            <DocumentosOperacionaisGrid
+              cadastro={c}
+              onSolicitarCorrecao={() => setCorrecaoModalOpen(true)}
+            />
+            {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
+              <DetailCard title="Scanner & OCR (ferramentas)">
               <CadastroDocumentosCard
                 cadastro={c}
                 onUpdated={(updated) => {
@@ -3431,8 +3450,85 @@ export default function QAClientesPage() {
                   setCadastrosPublicos(prev => prev.map(it => it.id === updated.id ? { ...it, ...updated } : it));
                 }}
               />
+              </DetailCard>
+            )}
+          </BlocoSecao>
+
+          {/* ── BLOCO: FINANCEIRO ── */}
+          <BlocoSecao
+            icon={Landmark}
+            titulo="Financeiro"
+            statusLabel={statusChips.financeiro.label}
+            statusTone={statusChips.financeiro.kind === "ok" ? "ok" : statusChips.financeiro.kind === "warn" ? "warn" : "neutral"}
+            acoes={
+              !isEditing ? (
+                <button
+                  type="button"
+                  disabled={!!savingCadastroPublicoStatus}
+                  onClick={() => togglePagoCadastroPublico()}
+                  className={`h-7 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider border transition-all disabled:opacity-40 inline-flex items-center gap-1 ${
+                    c.pago
+                      ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  {c.pago ? "Marcar não pago" : "Marcar pago"}
+                </button>
+              ) : null
+            }
+          >
+            <DetailCard title="Status financeiro">
+              <DetailGrid>
+                <DetailField label="Pago" value={c.pago ? "Sim" : "Não"} highlight={!!c.pago} />
+                <DetailField label="Pago em" value={formatDateTime((c as any).pago_em)} />
+                <DetailField label="Venda vinculada" value={(c as any).venda_id ? `#${(c as any).venda_id}` : "—"} />
+                <DetailField label="Cobrança" value={(c as any).asaas_cobranca_id || "—"} copyable={!!(c as any).asaas_cobranca_id} />
+              </DetailGrid>
+              {!c.pago && (
+                <p className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">
+                  Cobrança ainda não gerada. Cobrança automática segue regra do checkout principal.
+                </p>
+              )}
             </DetailCard>
-          )}
+          </BlocoSecao>
+
+          {/* ── BLOCO: PROCESSO / CLIENTE VINCULADO ── */}
+          <BlocoSecao
+            icon={Shield}
+            titulo="Processo / Cliente Vinculado"
+            statusLabel={(c as any).cliente_id_vinculado ? "VINCULADO" : "NÃO VINCULADO"}
+            statusTone={(c as any).cliente_id_vinculado ? "ok" : "warn"}
+            acoes={
+              (c as any).cliente_id_vinculado ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
+                    if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
+                  }}
+                  className="h-7 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-white hover:bg-slate-50 transition-colors"
+                  style={{ color: "#7A1F2B", borderColor: "#E5C2C6" }}
+                >
+                  Abrir cliente
+                </button>
+              ) : null
+            }
+          >
+            <DetailCard title="Vínculo">
+              {(c as any).cliente_id_vinculado ? (
+                <DetailGrid>
+                  <DetailField label="Cliente canônico" value={`#${(c as any).cliente_id_vinculado}`} />
+                  <DetailField label="Vínculo aplicado em" value={formatDateTime((c as any).cadastro_publico_aplicado_em)} />
+                </DetailGrid>
+              ) : (
+                <p className="text-[12px] text-slate-600">
+                  Cliente canônico ainda não vinculado. Valide o cadastro para gerar/vincular o cliente.
+                </p>
+              )}
+            </DetailCard>
+          </BlocoSecao>
+
+          {/* ── BLOCO: AUDITORIA TÉCNICA (LGPD) ── */}
           {(() => {
             const ua = (c as any).consentimento_user_agent as string | null | undefined;
             const ip = (c as any).consentimento_ip as string | null | undefined;
@@ -3451,6 +3547,8 @@ export default function QAClientesPage() {
             );
           })()}
 
+          {/* ── BLOCO: DADOS PESSOAIS ── */}
+          <BlocoSecao icon={User} titulo="Dados Pessoais">
           <DetailCard title="Identificação">
             <DetailGrid>
               {renderField("Nome", "nome_completo", c.nome_completo)}
@@ -3503,7 +3601,10 @@ export default function QAClientesPage() {
               {renderField("Email", "email", c.email, { copyable: true })}
             </DetailGrid>
           </DetailCard>
+          </BlocoSecao>
 
+          {/* ── BLOCO: ENDEREÇO ── */}
+          <BlocoSecao icon={MapPin} titulo="Endereço">
           <DetailCard title="Endereço Principal">
             <DetailGrid>
               {isEditing ? (
@@ -3554,7 +3655,11 @@ export default function QAClientesPage() {
               </DetailGrid>
             </DetailCard>
           )}
+          </BlocoSecao>
 
+          {/* ── BLOCO: VÍNCULOS PROFISSIONAIS ── */}
+          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia || c.trab_cnpj_empresa || c.trab_nome_empresa || c.aut_atividade || c.aut_nome_profissional) && (
+            <BlocoSecao icon={Briefcase} titulo="Vínculos Profissionais">
           {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia) && (() => {
             const cepMatch = c.emp_endereco?.match(/(\d{5}-?\d{3})/);
             const empCep = cepMatch ? cepMatch[1] : null;
@@ -3602,6 +3707,8 @@ export default function QAClientesPage() {
               </DetailGrid>
             </DetailCard>
           )}
+            </BlocoSecao>
+          )}
 
           {(c.observacoes || isEditing) && (
             <DetailCard title="Observações">
@@ -3621,6 +3728,11 @@ export default function QAClientesPage() {
               )}
             </DetailCard>
           )}
+
+          {/* ── BLOCO: ORIGEM DO CADASTRO PÚBLICO ── */}
+          <BlocoSecao icon={Database} titulo="Origem do Cadastro Público">
+            <OrigemCadastroBloco cadastro={c} />
+          </BlocoSecao>
         </div>
           <ProximaAcaoPanel
             titulo={proxima.titulo}
