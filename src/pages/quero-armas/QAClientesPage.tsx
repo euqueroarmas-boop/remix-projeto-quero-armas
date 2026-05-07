@@ -4467,6 +4467,11 @@ function ClienteHeaderCard({
           <div className="mt-0.5 text-[11px] font-mono tracking-wider text-slate-400">
             CPF {formatCpf(c.cpf)}
           </div>
+          {c.email && (
+            <div className="mt-0.5 text-[11px] text-slate-500 truncate">
+              {c.email}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Button
