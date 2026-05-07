@@ -796,14 +796,81 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
             <SectionTitle title="Dados do documento" />
 
             <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-              <Field label="Número do documento" icon={Hash}>
-                <Input
-                  value={form.numero_documento}
-                  onChange={(event) => update("numero_documento", event.target.value)}
-                  placeholder="Ex.: 1234567"
-                  className={inputClassName}
-                />
-              </Field>
+              {showArmaFields ? (
+                <>
+                  <Field label="Sistema do registro" icon={Hash}>
+                    <Select
+                      value={form.sistema_registro || "REVISAR"}
+                      onValueChange={(v) => {
+                        update("sistema_registro", v as FormState["sistema_registro"]);
+                        if (v === "SINARM") update("numero_registro_sigma", "");
+                        if (v === "SIGMA") update("numero_cad_sinarm", "");
+                      }}
+                    >
+                      <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                        <SelectValue placeholder="Selecione o regime" />
+                      </SelectTrigger>
+                      <SelectContent className="border-border bg-popover text-popover-foreground">
+                        <SelectItem value="SINARM">SINARM (Polícia Federal)</SelectItem>
+                        <SelectItem value="SIGMA">SIGMA (Exército / CAC)</SelectItem>
+                        <SelectItem value="REVISAR">A revisar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  {(!form.sistema_registro || form.sistema_registro === "REVISAR") ? (
+                    <p className="text-xs text-amber-700">
+                      Regime não identificado com segurança — confirme manualmente.
+                    </p>
+                  ) : null}
+                  {showSinarmFields ? (
+                    <>
+                      <Field label="Nº Cad. SINARM" icon={Hash}>
+                        <Input
+                          value={form.numero_cad_sinarm}
+                          onChange={(event) => update("numero_cad_sinarm", event.target.value)}
+                          placeholder="Ex.: 2022/905178870-50"
+                          className={inputClassName}
+                        />
+                      </Field>
+                      <Field label="Nº do Registro" icon={Hash}>
+                        <Input
+                          value={form.numero_documento}
+                          onChange={(event) => update("numero_documento", event.target.value)}
+                          placeholder="Ex.: 906786939"
+                          className={inputClassName}
+                        />
+                      </Field>
+                    </>
+                  ) : showSigmaFields ? (
+                    <Field label="Nº de Registro SIGMA" icon={Hash}>
+                      <Input
+                        value={form.numero_registro_sigma}
+                        onChange={(event) => update("numero_registro_sigma", event.target.value)}
+                        placeholder="Número SIGMA / Exército"
+                        className={inputClassName}
+                      />
+                    </Field>
+                  ) : (
+                    <Field label="Número do documento" icon={Hash}>
+                      <Input
+                        value={form.numero_documento}
+                        onChange={(event) => update("numero_documento", event.target.value)}
+                        placeholder="Ex.: 1234567"
+                        className={inputClassName}
+                      />
+                    </Field>
+                  )}
+                </>
+              ) : (
+                <Field label="Número do documento" icon={Hash}>
+                  <Input
+                    value={form.numero_documento}
+                    onChange={(event) => update("numero_documento", event.target.value)}
+                    placeholder="Ex.: 1234567"
+                    className={inputClassName}
+                  />
+                </Field>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Órgão emissor">
@@ -890,59 +957,6 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                       className={inputClassName}
                     />
                   </Field>
-
-                  <Field label="Sistema do registro" className="col-span-2">
-                    <Select
-                      value={form.sistema_registro || ""}
-                      onValueChange={(v) => {
-                        update("sistema_registro", v as FormState["sistema_registro"]);
-                        // Limpa o campo do regime oposto para evitar contaminação.
-                        if (v === "SINARM") update("numero_registro_sigma", "");
-                        if (v === "SIGMA") update("numero_cad_sinarm", "");
-                      }}
-                    >
-                      <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
-                        <SelectValue placeholder="Selecione o regime" />
-                      </SelectTrigger>
-                      <SelectContent className="border-border bg-popover text-popover-foreground">
-                        <SelectItem value="SINARM">SINARM (Polícia Federal)</SelectItem>
-                        <SelectItem value="SIGMA">SIGMA (Exército / CAC)</SelectItem>
-                        <SelectItem value="REVISAR">A revisar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-
-                  {showSinarmFields ? (
-                    <>
-                      <Field label="Nº Cad. SINARM" className="col-span-2">
-                        <Input
-                          value={form.numero_cad_sinarm}
-                          onChange={(event) => update("numero_cad_sinarm", event.target.value)}
-                          placeholder="Ex.: 2022/905178870-50"
-                          className={inputClassName}
-                        />
-                      </Field>
-                      <Field label="Nº do Registro" className="col-span-2">
-                        <Input
-                          value={form.numero_documento}
-                          onChange={(event) => update("numero_documento", event.target.value)}
-                          placeholder="Ex.: 906786939"
-                          className={inputClassName}
-                        />
-                      </Field>
-                    </>
-                  ) : null}
-
-                  {showSigmaFields ? (
-                    <Field label="Nº de Registro SIGMA" className="col-span-2">
-                      <Input
-                        value={form.numero_registro_sigma}
-                        onChange={(event) => update("numero_registro_sigma", event.target.value)}
-                        placeholder="Número SIGMA / Exército"
-                        className={inputClassName}
-                      />
-                    </Field>
-                  ) : null}
                 </div>
               </div>
             ) : null}
