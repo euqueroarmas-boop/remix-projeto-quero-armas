@@ -36,6 +36,7 @@ export interface SolicitarCorrecaoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pendenciasAuto: string[];
+  pendenciasIniciais?: string[];
   nomeCliente?: string | null;
   telefoneWhatsapp?: string | null;
   saving?: boolean;
@@ -78,6 +79,7 @@ export default function SolicitarCorrecaoModal({
   open,
   onOpenChange,
   pendenciasAuto,
+  pendenciasIniciais,
   nomeCliente,
   telefoneWhatsapp,
   saving,
@@ -86,9 +88,10 @@ export default function SolicitarCorrecaoModal({
   const sugestoes = useMemo(() => {
     const set = new Set<string>();
     pendenciasAuto.forEach((p) => set.add(p));
+    (pendenciasIniciais || []).forEach((p) => set.add(p));
     PENDENCIAS_PADRAO.forEach((p) => set.add(p));
     return Array.from(set);
-  }, [pendenciasAuto]);
+  }, [pendenciasAuto, pendenciasIniciais]);
 
   const [selecionadas, setSelecionadas] = useState<Record<string, boolean>>({});
   const [observacao, setObservacao] = useState("");
@@ -97,14 +100,17 @@ export default function SolicitarCorrecaoModal({
   useEffect(() => {
     if (open) {
       const inicial: Record<string, boolean> = {};
-      pendenciasAuto.forEach((p) => {
+      const base = pendenciasIniciais && pendenciasIniciais.length
+        ? pendenciasIniciais
+        : pendenciasAuto;
+      base.forEach((p) => {
         inicial[p] = true;
       });
       setSelecionadas(inicial);
       setObservacao("");
       setLivre("");
     }
-  }, [open, pendenciasAuto]);
+  }, [open, pendenciasAuto, pendenciasIniciais]);
 
   const itensFinal = useMemo(() => {
     const arr = sugestoes.filter((p) => selecionadas[p]);
