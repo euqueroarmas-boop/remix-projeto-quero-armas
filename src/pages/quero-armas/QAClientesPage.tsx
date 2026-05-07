@@ -55,6 +55,12 @@ import DocumentosOperacionaisGrid from "@/components/quero-armas/cadastro-public
 import OrigemCadastroBloco from "@/components/quero-armas/cadastro-publico/OrigemCadastroBloco";
 import BlocoSecao from "@/components/quero-armas/cadastro-publico/BlocoSecao";
 import {
+  QAOperationalSection,
+  QAInfoCard,
+  QAFieldRow,
+  QAFieldGrid,
+} from "@/components/quero-armas/qa-operational";
+import {
   computeConferenciaStatus,
   decidirProximaAcao,
   listarPendenciasCadastro,
@@ -2563,67 +2569,96 @@ export default function QAClientesPage() {
                       await loadCadastrosPublicos();
                     }}
                 />
-                <BlocoSecao icon={User} titulo="Identificação">
-                <Section title="Identificação">
-                  <Field label="Nome" value={c.nome_completo} />
-                  <Field label="CPF" value={formatCpf(c.cpf)} copyable />
-                  <SenhaGovField
-                    cadastroCrId={cadastro?.id}
-                    clienteId={c.id}
-                    variant="exposed"
-                    contexto="aba Dados"
-                  />
-                  <Field label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
-                  <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
-                  <Field label="Naturalidade" value={c.naturalidade} />
-                  <Field label="Nacionalidade" value={c.nacionalidade} />
-                  <Field label="Estado Civil" value={c.estado_civil} />
-                  <Field label="Profissão" value={c.profissao} />
-                  <Field label="Escolaridade" value={c.escolaridade} />
-                  <Field
-                    label="Título Eleitor"
-                    value={c.titulo_eleitor}
-                    copyable
-                    copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
-                  />
-                </Section>
-                </BlocoSecao>
-                <BlocoSecao icon={User} titulo="Filiação">
-                <Section title="Filiação">
-                  <Field label="Mãe" value={c.nome_mae} />
-                  <Field label="Pai" value={c.nome_pai} />
-                </Section>
-                </BlocoSecao>
-                <BlocoSecao icon={Phone} titulo="Contato">
-                <Section title="Contato">
-                  <Field label="Celular" value={c.celular} icon={Phone} />
-                  <Field label="Email" value={c.email} icon={Mail} />
-                </Section>
-                </BlocoSecao>
-                <BlocoSecao icon={MapPin} titulo="Endereço Principal">
-                <Section title="Endereço Principal">
-                  <Field label="Logradouro" value={`${c.endereco || ""}, ${c.numero || ""}`} icon={MapPin} />
-                  <Field label="Bairro" value={c.bairro} />
-                  <Field label="CEP" value={c.cep} />
-                  <Field label="Cidade/UF" value={`${c.cidade || ""} / ${c.estado || ""}`} />
-                  {c.complemento && <Field label="Complemento" value={c.complemento} />}
-                </Section>
-                </BlocoSecao>
+
+                {/* IDENTIFICAÇÃO */}
+                <QAOperationalSection icon={User} title="Identificação">
+                  <QAInfoCard padding="md">
+                    <QAFieldGrid cols={2}>
+                      <QAFieldRow label="Nome" value={c.nome_completo} />
+                      <QAFieldRow label="CPF" value={formatCpf(c.cpf)} copyable copyValue={(c.cpf || "").replace(/\D/g, "")} />
+                      <div className="py-1">
+                        <SenhaGovField
+                          cadastroCrId={cadastro?.id}
+                          clienteId={c.id}
+                          variant="exposed"
+                          contexto="aba Dados"
+                        />
+                      </div>
+                      <QAFieldRow
+                        label="RG / CIN"
+                        value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"}
+                      />
+                      <QAFieldRow label="Nascimento" value={formatDate(c.data_nascimento)} />
+                      <QAFieldRow label="Naturalidade" value={c.naturalidade} />
+                      <QAFieldRow label="Nacionalidade" value={c.nacionalidade} />
+                      <QAFieldRow label="Estado Civil" value={c.estado_civil} />
+                      <QAFieldRow label="Profissão" value={c.profissao} />
+                      <QAFieldRow label="Escolaridade" value={c.escolaridade} />
+                      <QAFieldRow
+                        label="Título Eleitor"
+                        value={c.titulo_eleitor}
+                        copyable
+                        copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
+                      />
+                    </QAFieldGrid>
+                  </QAInfoCard>
+                </QAOperationalSection>
+
+                {/* FILIAÇÃO */}
+                <QAOperationalSection icon={User} title="Filiação">
+                  <QAInfoCard padding="md">
+                    <QAFieldGrid cols={2}>
+                      <QAFieldRow label="Mãe" value={c.nome_mae} />
+                      <QAFieldRow label="Pai" value={c.nome_pai} />
+                    </QAFieldGrid>
+                  </QAInfoCard>
+                </QAOperationalSection>
+
+                {/* CONTATO */}
+                <QAOperationalSection icon={Phone} title="Contato">
+                  <QAInfoCard padding="md">
+                    <QAFieldGrid cols={2}>
+                      <QAFieldRow label="Celular" value={c.celular} icon={Phone} copyable copyValue={(c.celular || "").replace(/\D/g, "")} />
+                      <QAFieldRow label="E-mail" value={c.email} icon={Mail} copyable copyValue={c.email || ""} />
+                    </QAFieldGrid>
+                  </QAInfoCard>
+                </QAOperationalSection>
+
+                {/* ENDEREÇO PRINCIPAL */}
+                <QAOperationalSection icon={MapPin} title="Endereço Principal">
+                  <QAInfoCard padding="md">
+                    <QAFieldGrid cols={3}>
+                      <QAFieldRow label="Logradouro" value={c.endereco} icon={MapPin} />
+                      <QAFieldRow label="Número" value={c.numero} />
+                      <QAFieldRow label="Complemento" value={c.complemento} />
+                      <QAFieldRow label="Bairro" value={c.bairro} />
+                      <QAFieldRow label="CEP" value={c.cep} copyable copyValue={(c.cep || "").replace(/\D/g, "")} />
+                      <QAFieldRow label="Cidade/UF" value={`${c.cidade || "—"} / ${c.estado || "—"}`} />
+                    </QAFieldGrid>
+                  </QAInfoCard>
+                </QAOperationalSection>
+
                 {(c.endereco2 || c.cidade2) && (
-                  <BlocoSecao icon={MapPin} titulo="Endereço Secundário" statusTone="neutral">
-                  <Section title="Endereço Secundário">
-                    <Field label="Logradouro" value={`${c.endereco2 || ""}, ${c.numero2 || ""}`} icon={MapPin} />
-                    <Field label="Bairro" value={c.bairro2} />
-                    <Field label="Cidade/UF" value={`${c.cidade2 || ""} / ${c.estado2 || ""}`} />
-                  </Section>
-                  </BlocoSecao>
+                  <QAOperationalSection icon={MapPin} title="Endereço Secundário">
+                    <QAInfoCard padding="md">
+                      <QAFieldGrid cols={3}>
+                        <QAFieldRow label="Logradouro" value={c.endereco2} icon={MapPin} />
+                        <QAFieldRow label="Número" value={c.numero2} />
+                        <QAFieldRow label="Bairro" value={c.bairro2} />
+                        <QAFieldRow label="Cidade/UF" value={`${c.cidade2 || "—"} / ${c.estado2 || "—"}`} />
+                      </QAFieldGrid>
+                    </QAInfoCard>
+                  </QAOperationalSection>
                 )}
+
                 {c.observacao && (
-                  <BlocoSecao icon={FileText} titulo="Observações" statusTone="warn">
-                    <div className="qa-card p-4 md:p-5">
-                      <div className="text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">{c.observacao}</div>
-                    </div>
-                  </BlocoSecao>
+                  <QAOperationalSection icon={FileText} title="Observações">
+                    <QAInfoCard padding="md">
+                      <div className="text-[12px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">
+                        {c.observacao}
+                      </div>
+                    </QAInfoCard>
+                  </QAOperationalSection>
                 )}
               </TabsContent>
 
