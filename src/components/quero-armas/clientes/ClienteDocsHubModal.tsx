@@ -1194,7 +1194,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Marca">
+                  <Field
+                    label="Marca"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_marca}
+                        confirmado={confirmados.arma_marca}
+                        onConfirm={() => confirmField("arma_marca")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_marca}
                       onChange={(event) => update("arma_marca", event.target.value)}
@@ -1203,7 +1212,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Modelo">
+                  <Field
+                    label="Modelo"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_modelo}
+                        confirmado={confirmados.arma_modelo}
+                        onConfirm={() => confirmField("arma_modelo")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_modelo}
                       onChange={(event) => update("arma_modelo", event.target.value)}
@@ -1211,7 +1229,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Calibre">
+                  <Field
+                    label="Calibre"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_calibre}
+                        confirmado={confirmados.arma_calibre}
+                        onConfirm={() => confirmField("arma_calibre")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_calibre}
                       onChange={(event) => update("arma_calibre", event.target.value)}
@@ -1220,7 +1247,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Nº de série" className="col-span-2">
+                  <Field
+                    label="Nº de série"
+                    className="col-span-2"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_numero_serie}
+                        confirmado={confirmados.arma_numero_serie}
+                        onConfirm={() => confirmField("arma_numero_serie")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_numero_serie}
                       onChange={(event) => update("arma_numero_serie", event.target.value)}
