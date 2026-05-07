@@ -89,24 +89,53 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
   const tone = urgencyTone(weapon.daysToExpire);
 
   const sanitizeFs = (s: string) =>
-    s
+    (s || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^A-Za-z0-9]+/g, "_")
+      .replace(/_+/g, "_")
       .replace(/^_+|_+$/g, "")
       .toUpperCase();
 
-  const friendlyName = (category: string, originalName?: string | null) => {
+  const friendlyName = (category: string, originalName?: string | null, doc?: RelatedDoc) => {
+    // Extensão: preserva original se houver, senão tenta inferir, fallback .pdf
     const ext = (() => {
       const m = (originalName || "").match(/\.([A-Za-z0-9]{2,5})$/);
-      return m ? `.${m[1].toLowerCase()}` : ".pdf";
+      if (m) return `.${m[1].toLowerCase()}`;
+      const lower = (originalName || "").toLowerCase();
+      if (lower.includes("png")) return ".png";
+      if (lower.includes("jpg") || lower.includes("jpeg")) return ".jpg";
+      return ".pdf";
     })();
-    const marca = (catalog?.marca || info?.marca || "").trim();
-    const modelo = (catalog?.modelo || info?.modelo || weapon!.nome_arma || "").trim();
-    const serie = (weapon!.numero_arma || weapon!.numero_sigma || "").trim();
-    const parts = [category.toUpperCase(), marca, modelo].filter(Boolean).map(sanitizeFs).filter(Boolean);
-    if (serie) parts.push(`SERIE_${sanitizeFs(serie)}`);
-    return `${parts.join("_") || "DOCUMENTO"}${ext}`;
+
+    const cat = sanitizeFs(category || "DOCUMENTO");
+    const marca = sanitizeFs(catalog?.marca || info?.marca || "");
+    const modeloRaw = catalog?.modelo || info?.modelo || "";
+    const modelo = sanitizeFs(modeloRaw);
+    const calibreRaw = catalog?.calibre || info?.calibre || "";
+    const calibre = sanitizeFs(calibreRaw);
+    const serie = sanitizeFs(weapon!.numero_arma || "");
+    const sigma = sanitizeFs(weapon!.numero_sigma || "");
+
+    const armParts: string[] = [];
+    if (marca) armParts.push(marca);
+    if (modelo && modelo !== marca) armParts.push(modelo);
+    if (calibre) armParts.push(`CAL_${calibre}`);
+    if (serie) armParts.push(`SERIE_${serie}`);
+    else if (sigma) armParts.push(`SIGMA_${sigma}`);
+
+    let body = armParts.join("_");
+    if (!body) {
+      // Sem dados da arma — tentar título / fileName / fallback
+      const titleSan = sanitizeFs(doc?.title || "");
+      const origSan = sanitizeFs((originalName || "").replace(/\.[A-Za-z0-9]{2,5}$/, ""));
+      body = titleSan || origSan || "DOCUMENTO_ARMA";
+    }
+
+    const finalName = `${cat}_${body}`
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    return `${finalName || "DOCUMENTO_ARMA"}${ext}`;
   };
 
   const handleDownload = async (d: RelatedDoc) => {
@@ -119,7 +148,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");
       a.href = url;
-      a.download = friendlyName(d.category, d.fileName);
+      a.download = friendlyName(d.category, d.fileName, d);
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
