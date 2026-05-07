@@ -26,33 +26,22 @@ export default function OrigemClienteCadastroPublico({ cliente, onAbrirCadastroP
         const cpfDigits = String(cliente?.cpf || "").replace(/\D/g, "");
         const origemId = (cliente as any)?.cadastro_publico_id ?? null;
 
-        const queries: Promise<any>[] = [];
-        if (origemId) {
-          queries.push(
-            supabase
+        const origemPromise = origemId
+          ? (supabase
               .from("qa_cadastro_publico" as any)
               .select("id, status, created_at, servico_solicitado_id, servico_solicitado_nome, origem")
               .eq("id", origemId)
-              .maybeSingle()
-          );
-        } else {
-          queries.push(Promise.resolve({ data: null }));
-        }
-
-        if (cpfDigits) {
-          queries.push(
-            supabase
+              .maybeSingle() as any).then((r: any) => r)
+          : Promise.resolve({ data: null });
+        const outrosPromise = cpfDigits
+          ? (supabase
               .from("qa_cadastro_publico" as any)
               .select("id, status, created_at, servico_solicitado_nome")
               .eq("cpf", cpfDigits)
               .order("created_at", { ascending: false })
-              .limit(10)
-          );
-        } else {
-          queries.push(Promise.resolve({ data: [] }));
-        }
-
-        const [origemRes, outrosRes] = await Promise.all(queries);
+              .limit(10) as any).then((r: any) => r)
+          : Promise.resolve({ data: [] });
+        const [origemRes, outrosRes] = await Promise.all([origemPromise, outrosPromise]);
         if (cancel) return;
         setOrigem(origemRes?.data ?? null);
         const lista = (outrosRes?.data ?? []).filter((c: any) => c.id !== (origemRes?.data?.id ?? origemId));
