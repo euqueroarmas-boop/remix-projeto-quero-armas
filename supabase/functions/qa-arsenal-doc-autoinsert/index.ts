@@ -252,12 +252,26 @@ Deno.serve(async (req) => {
       arma_calibre:     packCampo(campos.arma_calibre, "vision", conf),
       arma_numero_serie:packCampo(campos.arma_numero_serie, "vision", conf),
       sigma_ou_sinarm:  packCampo(campos.sigma_ou_sinarm, "vision", conf),
+      numero_cad_sinarm:    packCampo((campos as any).numero_cad_sinarm, "vision", conf),
+      numero_registro_sigma:packCampo((campos as any).numero_registro_sigma, "vision", conf),
       nf_chave_acesso:  packCampo(campos.nf_chave_acesso, "vision", conf),
       nf_produto:       packCampo(campos.nf_produto, "vision", conf),
       nf_calibre:       packCampo(campos.nf_calibre, "vision", conf),
       nf_quantidade:    packCampo(campos.nf_quantidade, "vision", conf),
       emitente:         packCampo(campos.emitente, "vision", conf),
     };
+
+    // Regime canônico (SINARM × SIGMA × REVISAR)
+    // Regra de ouro: "Nº Cad. SINARM" presente => SINARM. SIGMA só com indicação explícita.
+    const cadSinarmRaw = String((campos as any).numero_cad_sinarm || "").trim();
+    const sigmaExplicitoRaw = String((campos as any).numero_registro_sigma || "").trim();
+    const sistemaIARaw = String((campos as any).sistema_registro || "").toUpperCase().trim();
+    const sistema_registro_final: "SINARM" | "SIGMA" | "REVISAR" =
+      cadSinarmRaw ? "SINARM" :
+      (sistemaIARaw === "SIGMA" && sigmaExplicitoRaw) ? "SIGMA" :
+      sistemaIARaw === "SINARM" ? "SINARM" :
+      sistemaIARaw === "SIGMA" ? "SIGMA" :
+      "REVISAR";
 
     const payload: Record<string, unknown> = {
       customer_id,
@@ -271,6 +285,9 @@ Deno.serve(async (req) => {
       arma_modelo: showArma ? campos.arma_modelo || null : null,
       arma_calibre: showArma ? campos.arma_calibre || null : null,
       arma_numero_serie: showArma ? campos.arma_numero_serie || null : null,
+      numero_cad_sinarm: showArma ? (cadSinarmRaw || null) : null,
+      numero_registro_sigma: showArma ? (sigmaExplicitoRaw || null) : null,
+      sistema_registro: showArma ? sistema_registro_final : null,
       arquivo_storage_path,
       arquivo_nome,
       arquivo_mime,
@@ -310,7 +327,12 @@ Deno.serve(async (req) => {
         promocao.motivo = "sem_qa_cliente_id";
       } else if (tipoIA === "CRAF") {
         const numeroSerie = normSerie(campos.arma_numero_serie);
-        const numeroSigma = normSerie(campos.sigma_ou_sinarm) || normSerie(campos.numero_documento);
+        // numero_documento é "Nº do Registro" — campo genérico, NÃO é SIGMA por si só.
+        // Só consideramos numero_sigma quando há indicação SIGMA explícita.
+        const numeroSigma = sistema_registro_final === "SIGMA"
+          ? (normSerie(sigmaExplicitoRaw) || normSerie(campos.sigma_ou_sinarm) || normSerie(campos.numero_documento))
+          : null;
+        const numeroCadSinarm = sistema_registro_final === "SINARM" ? normSerie(cadSinarmRaw) : null;
         if (!numeroSerie && !numeroSigma) {
           promocao.motivo = "sem_identificador_fisico";
         } else {
@@ -339,6 +361,10 @@ Deno.serve(async (req) => {
             if (full && !full.nome_craf && campos.numero_documento) patch.nome_craf = up(campos.numero_documento);
             if (full && !full.numero_arma && numeroSerie) patch.numero_arma = numeroSerie;
             if (full && !full.numero_sigma && numeroSigma) patch.numero_sigma = numeroSigma;
+            // Regime + cad SINARM: sempre persistir quando vierem do documento.
+            if (numeroCadSinarm) patch.numero_cad_sinarm = numeroCadSinarm;
+            if (numeroSigma && sistema_registro_final === "SIGMA") patch.numero_registro_sigma = numeroSigma;
+            patch.sistema_registro = sistema_registro_final;
             // Sempre garante o vínculo do arquivo original (mesmo em update)
             if (arquivo_storage_path) {
               patch.arquivo_storage_path = arquivo_storage_path;
@@ -364,6 +390,9 @@ Deno.serve(async (req) => {
                 nome_craf: up(campos.numero_documento),
                 numero_arma: numeroSerie,
                 numero_sigma: numeroSigma,
+                numero_cad_sinarm: numeroCadSinarm,
+                numero_registro_sigma: sistema_registro_final === "SIGMA" ? numeroSigma : null,
+                sistema_registro: sistema_registro_final,
                 data_validade: dataIsoFromBr(campos.data_validade),
                 arquivo_storage_path: arquivo_storage_path,
                 arquivo_nome: arquivo_nome,

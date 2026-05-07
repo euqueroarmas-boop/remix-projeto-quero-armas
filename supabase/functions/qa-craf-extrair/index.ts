@@ -50,6 +50,19 @@ const tool = {
         orgao_emissor: { type: "string", description: "Órgão emissor (PF, Exército, etc)." },
         numero_serie: { type: "string", description: "Número de série da arma." },
         sigma_ou_sinarm: { type: "string", description: "Número SIGMA ou SINARM se constar." },
+        numero_cad_sinarm: {
+          type: "string",
+          description: "Conteúdo EXATO do campo rotulado 'Nº Cad. SINARM' (ex.: 2022/905178870-50). Vazio se o rótulo não aparecer.",
+        },
+        numero_registro_sigma: {
+          type: "string",
+          description: "Número de registro SIGMA APENAS quando houver indicação explícita de Exército/SIGMA/CAC. Vazio se for SINARM ou houver dúvida.",
+        },
+        sistema_registro: {
+          type: "string",
+          enum: ["SINARM", "SIGMA", "REVISAR"],
+          description: "Regime canônico: SINARM se houver 'Nº Cad. SINARM' ou indicação explícita de PF/SINARM; SIGMA somente com indicação explícita de Exército/SIGMA/CAC; senão REVISAR.",
+        },
         marca: { type: "string", description: "Marca da arma (ex: Taurus, Glock, CBC)." },
         modelo: {
           type: "string",
@@ -68,7 +81,11 @@ const SYSTEM_PROMPT =
   "dados estruturados de um CRAF (Certificado de Registro de Arma de Fogo). Datas no formato DD/MM/AAAA. " +
   "Use vazio para campos não localizados. Responda exclusivamente chamando a função extrair_craf. " +
   "REGRA CRÍTICA: o campo modelo deve ser o modelo comercial específico (ex: G2C, TS9, 838); NUNCA " +
-  "termos genéricos como 'arma', 'pistola', 'revólver', 'N/A'. Se não identificar com certeza, deixe vazio.";
+  "termos genéricos como 'arma', 'pistola', 'revólver', 'N/A'. Se não identificar com certeza, deixe vazio. " +
+  "REGRA SINARM × SIGMA: se houver o campo 'Nº Cad. SINARM', copie o valor EXATO em numero_cad_sinarm e marque " +
+  "sistema_registro='SINARM'. 'Nº do Registro' é GENÉRICO e não classifica regime sozinho — preencha apenas em " +
+  "numero_craf. Só preencha numero_registro_sigma quando o documento mencionar EXPLICITAMENTE Exército/SIGMA/CAC. " +
+  "Sem indícios fortes, sistema_registro='REVISAR'.";
 
 const MODELO_INVALIDOS = new Set([
   "", "arma", "pistola", "revolver", "revólver", "n/a", "na",
@@ -200,11 +217,25 @@ Deno.serve(async (req) => {
       orgao_emissor: raw?.orgao_emissor || null,
       numero_serie: raw?.numero_serie || null,
       sigma_ou_sinarm: raw?.sigma_ou_sinarm || null,
+      numero_cad_sinarm: raw?.numero_cad_sinarm || null,
+      numero_registro_sigma: raw?.numero_registro_sigma || null,
+      sistema_registro: raw?.sistema_registro || null,
       marca: raw?.marca || null,
       modelo: raw?.modelo || null,
       calibre: raw?.calibre || null,
       modelo_invalido: modeloInvalido,
     };
+
+    // Regime canônico — "Nº Cad. SINARM" tem prioridade absoluta.
+    const cadSinarm = (raw?.numero_cad_sinarm || "").toString().trim();
+    const sigmaExplicito = (raw?.numero_registro_sigma || "").toString().trim();
+    const sistemaIA = (raw?.sistema_registro || "").toString().toUpperCase().trim();
+    const sistema_registro_final =
+      cadSinarm ? "SINARM" :
+      (sistemaIA === "SIGMA" && sigmaExplicito) ? "SIGMA" :
+      sistemaIA === "SINARM" ? "SINARM" :
+      sistemaIA === "SIGMA" ? "SIGMA" :
+      "REVISAR";
 
     const updates = {
       numero_documento: raw?.numero_craf || null,
@@ -215,6 +246,9 @@ Deno.serve(async (req) => {
       arma_modelo: modeloInvalido ? null : raw?.modelo,
       arma_calibre: raw?.calibre || null,
       arma_numero_serie: raw?.numero_serie || null,
+      numero_cad_sinarm: cadSinarm || null,
+      numero_registro_sigma: sigmaExplicito || null,
+      sistema_registro: sistema_registro_final,
       ia_dados_extraidos: ia_dados,
       ia_status: modeloInvalido ? "pendente_revisao" : "concluido",
       ia_processado_em: new Date().toISOString(),
