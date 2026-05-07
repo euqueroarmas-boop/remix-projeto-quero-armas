@@ -290,6 +290,66 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Edição manual implica confirmação (corrigido pelo usuário).
+    if ((SENSITIVE_KEYS as readonly string[]).includes(key as string)) {
+      setConfirmados((prev) => ({ ...prev, [key as SensitiveKey]: true }));
+    }
+  }
+
+  /** Marca um campo sensível como confirmado pelo humano (botão Confirmar). */
+  function confirmField(key: SensitiveKey) {
+    setConfirmados((prev) => ({ ...prev, [key]: true }));
+  }
+
+  /** Quais campos sensíveis são exigidos para o tipo atual. */
+  function requiredSensitiveKeys(): SensitiveKey[] {
+    const t = form.tipo_documento;
+    if (t === "cr" || t === "autorizacao_compra") {
+      return ["numero_documento", "data_validade"];
+    }
+    if (t === "craf") {
+      const base: SensitiveKey[] = [
+        "sistema_registro",
+        "arma_numero_serie",
+        "arma_marca",
+        "arma_modelo",
+        "arma_calibre",
+        "data_validade",
+      ];
+      if (form.sistema_registro === "SINARM") {
+        return [...base, "numero_cad_sinarm", "numero_documento"];
+      }
+      if (form.sistema_registro === "SIGMA") {
+        return [...base, "numero_registro_sigma"];
+      }
+      return [...base, "numero_documento"];
+    }
+    if (t === "sinarm") {
+      return ["numero_cad_sinarm", "numero_documento", "data_validade"];
+    }
+    if (t === "gte" || t === "gt") {
+      return ["numero_documento", "arma_numero_serie", "data_validade"];
+    }
+    return ["numero_documento"];
+  }
+
+  function pendingSensitiveKeys(): SensitiveKey[] {
+    return requiredSensitiveKeys().filter((k) => !confirmados[k]);
+  }
+
+  function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
+    const extraido = (iaExtraido[key] ?? "") || null;
+    const final = (valorFinal ?? "") || null;
+    const corrigido = !!extraido && !!final && extraido.trim().toUpperCase() !== final.trim().toUpperCase();
+    return {
+      valor_extraido_ia: extraido,
+      valor_confirmado: final,
+      corrigido_pelo_usuario: corrigido || (!extraido && !!final),
+      confianca: extraido ? Number(classificacao?.confianca || 0) : 0,
+      legivel: !!extraido,
+      fonte: extraido ? "vision" : "manual",
+      confirmado_em: confirmados[key] ? new Date().toISOString() : null,
+    };
   }
 
   async function classifyAndExtract(target: File | null) {
