@@ -238,6 +238,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
   const showArmaFields = form.tipo_documento !== "cr";
   const tipoAtual = TIPOS.find((tipo) => tipo.value === form.tipo_documento);
+  // Mostra campos SINARM quando: regime detectado SINARM, ou tipo = sinarm,
+  // ou já existe um Nº Cad. SINARM preenchido (manual).
+  const showSinarmFields =
+    showArmaFields &&
+    (form.sistema_registro === "SINARM" ||
+      form.tipo_documento === "sinarm" ||
+      !!form.numero_cad_sinarm);
+  const showSigmaFields =
+    showArmaFields &&
+    (form.sistema_registro === "SIGMA" ||
+      (form.tipo_documento === "craf" && !form.numero_cad_sinarm));
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
