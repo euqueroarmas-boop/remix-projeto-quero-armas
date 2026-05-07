@@ -43,6 +43,12 @@ import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
+import ConferenciaHeader from "@/components/quero-armas/cadastro-publico/ConferenciaHeader";
+import ProximaAcaoPanel from "@/components/quero-armas/cadastro-publico/ProximaAcaoPanel";
+import {
+  computeConferenciaStatus,
+  decidirProximaAcao,
+} from "@/components/quero-armas/cadastro-publico/conferenciaStatus";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import ClienteSearchRow from "@/components/quero-armas/clientes/ClienteSearchRow";
 import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
@@ -3054,152 +3060,157 @@ export default function QAClientesPage() {
       return <DetailField label={label} value={value} copyable={opts?.copyable} />;
     };
 
-    return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
-              className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100 shrink-0"
-              style={{ border: "1px solid hsl(220 13% 90%)" }}
-            >
-              <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-xl font-bold tracking-tight break-words" style={{ color: "hsl(220 20% 14%)" }}>
-                {c.nome_completo}
-              </h1>
-              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${cadastroStatusColor(c.status)}`}>
-                  {String(c.status || "").toUpperCase()}
-                </span>
-                <span
-                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
-                    c.pago
-                      ? "bg-emerald-500 text-white border-emerald-500"
-                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                  }`}
-                >
-                  {c.pago ? "PAGO" : "NÃO PAGO"}
-                </span>
-                <span className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
-              </div>
-            </div>
-            <SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />
-          </div>
+    const statusChips = computeConferenciaStatus(c as any);
+    const proxima = decidirProximaAcao(c as any);
+    const cidadeUf = [c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ") || null;
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:flex-nowrap md:justify-end gap-1.5 md:gap-2">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={() => setEditingCadastroPublico(false)}
-                  className="h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-medium border transition-all hover:bg-slate-50 flex items-center justify-center gap-1"
-                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-                >
-                  <X className="h-3.5 w-3.5" /> Cancelar
-                </button>
-                <button
-                  onClick={saveCadastroEdit}
-                  disabled={savingCadastroEdit}
-                  className="h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
-                  style={{ background: "hsl(152 60% 40%)" }}
-                >
-                  {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  Salvar
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={startEditCadastro}
-                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all hover:bg-slate-50 flex items-center justify-center gap-1"
-                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-                >
-                  <Edit className="h-3.5 w-3.5" /> Editar
-                </button>
-                {c.status === "rejeitado" && !(c as any).cliente_id_vinculado && (
-                  <button
-                    disabled={!!savingCadastroPublicoStatus}
-                    onClick={() => excluirDefinitivamenteCadastroPublico()}
-                    className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                    title="Excluir cadastro definitivamente (libera o CPF)"
-                  >
-                    {savingCadastroPublicoStatus === "excluindo" ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                    Excluir
-                  </button>
-                )}
-                <button
-                  disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
-                  onClick={() => updateCadastroPublicoStatus("rejeitado")}
-                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50 flex items-center justify-center gap-1"
-                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-                >
-                  {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-                  Rejeitar
-                </button>
-                {(() => {
-                  const isConferido = ["aprovado", "conferido", "validado", "formulario_conferido"]
-                    .includes(String(c.status || "").toLowerCase());
-                  return (
-                    <button
-                      disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
-                      onClick={() => updateCadastroPublicoStatus("pendente")}
-                      className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
-                        isConferido
-                          ? "col-span-2 sm:col-span-1 bg-[#F1D9DC] text-[#3D0E16] border-[#B43543] hover:bg-[#E5C2C6]"
-                          : "font-medium hover:bg-slate-50"
-                      }`}
-                      style={isConferido ? undefined : { borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-                      title={isConferido ? "Voltar para pendente (remove a conferência)" : "Marcar como pendente"}
-                    >
-                      {savingCadastroPublicoStatus === "pendente" ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : isConferido ? (
-                        <RefreshCw className="h-3.5 w-3.5" />
-                      ) : null}
-                      {isConferido ? "Remover conferência" : "Pendente"}
-                    </button>
-                  );
-                })()}
+    const backBtn = (
+      <button
+        onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
+        className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100 shrink-0"
+        style={{ border: "1px solid hsl(220 13% 90%)" }}
+        title="Voltar"
+      >
+        <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
+      </button>
+    );
+
+    const actionsPrimary = (
+      <>
+        {isEditing ? (
+          <>
+            <button
+              onClick={() => setEditingCadastroPublico(false)}
+              className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all hover:bg-slate-50 inline-flex items-center gap-1"
+              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+            >
+              <X className="h-3.5 w-3.5" /> Cancelar
+            </button>
+            <button
+              onClick={saveCadastroEdit}
+              disabled={savingCadastroEdit}
+              className="h-8 px-3 rounded-lg text-[11px] font-semibold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1"
+              style={{ background: "hsl(152 60% 40%)" }}
+            >
+              {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Salvar
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
+              onClick={() => updateCadastroPublicoStatus("aprovado")}
+              className="h-8 px-3 rounded-lg text-[11px] font-bold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1.5"
+              style={{ background: "#7A1F2B" }}
+            >
+              {savingCadastroPublicoStatus === "aprovado" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="h-3.5 w-3.5" />
+              )}
+              Validar cadastro
+            </button>
+            <button
+              disabled={!!savingCadastroPublicoStatus}
+              onClick={() => togglePagoCadastroPublico()}
+              className={`h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 ${
+                c.pago
+                  ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              }`}
+              title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
+            >
+              {savingCadastroPublicoStatus?.startsWith("pago") ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
+              )}
+              {c.pago ? "Não pago" : "Marcar pago"}
+            </button>
+            <button
+              onClick={startEditCadastro}
+              className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all hover:bg-slate-50 inline-flex items-center gap-1.5"
+              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+            >
+              <Edit className="h-3.5 w-3.5" /> Editar
+            </button>
+            {(() => {
+              const isConferido = ["aprovado", "conferido", "validado", "formulario_conferido"]
+                .includes(String(c.status || "").toLowerCase());
+              if (!isConferido) return null;
+              return (
                 <button
                   disabled={!!savingCadastroPublicoStatus}
-                  onClick={() => togglePagoCadastroPublico()}
-                  className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
-                    c.pago
-                      ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
-                      : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
-                  }`}
-                  title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
+                  onClick={() => updateCadastroPublicoStatus("pendente")}
+                  className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-[#FBF3F4] text-[#3D0E16] border-[#E5C2C6] hover:bg-[#F1D9DC]"
+                  title="Voltar para pendente (remove a conferência)"
                 >
-                  {savingCadastroPublicoStatus?.startsWith("pago") ? (
+                  {savingCadastroPublicoStatus === "pendente" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                   )}
-                  {c.pago ? "Não pagou" : "Pago"}
+                  Remover conferência
                 </button>
-                <button
-                  disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
-                  onClick={() => updateCadastroPublicoStatus("aprovado")}
-                  className="col-span-2 sm:col-span-1 h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
-                  style={{ background: "hsl(352 60% 30%)" }}
-                >
-                  {savingCadastroPublicoStatus === "aprovado" ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <CheckCircle className="h-3.5 w-3.5" />
-                  )}
-                  Validar
-                </button>
-              </>
+              );
+            })()}
+          </>
+        )}
+      </>
+    );
+
+    const actionsDestructive = !isEditing ? (
+      <>
+        <button
+          disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
+          onClick={() => updateCadastroPublicoStatus("rejeitado")}
+          className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all disabled:opacity-40 hover:bg-red-50 inline-flex items-center gap-1.5 text-red-700 border-red-200"
+        >
+          {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+          Rejeitar
+        </button>
+        {c.status === "rejeitado" && !(c as any).cliente_id_vinculado && (
+          <button
+            disabled={!!savingCadastroPublicoStatus}
+            onClick={() => excluirDefinitivamenteCadastroPublico()}
+            className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+            title="Excluir cadastro definitivamente (libera o CPF)"
+          >
+            {savingCadastroPublicoStatus === "excluindo" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
             )}
-          </div>
-        </div>
+            Excluir
+          </button>
+        )}
+      </>
+    ) : null;
+
+    return (
+      <div className="max-w-7xl mx-auto space-y-4">
+        <ConferenciaHeader
+          backSlot={backBtn}
+          selfieSlot={<SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />}
+          nome={c.nome_completo}
+          cpfFormatado={formatCpf(c.cpf)}
+          email={c.email}
+          telefone={c.telefone_principal}
+          cidadeUf={cidadeUf}
+          servicoInteresse={c.servico_interesse}
+          recebidoEm={formatDateTime(c.created_at)}
+          status={statusChips}
+          actionsPrimary={actionsPrimary}
+          actionsDestructive={actionsDestructive}
+          badges={
+            (c as any).cliente_id_vinculado ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+                <CheckCircle className="h-3 w-3" /> Cliente vinculado #{(c as any).cliente_id_vinculado}
+              </span>
+            ) : null
+          }
+        />
 
         {/* Painel SLA — só aparece quando pago */}
         {c.pago && (() => {
@@ -3263,8 +3274,9 @@ export default function QAClientesPage() {
           );
         })()}
 
-        {/* Content cards */}
-        <div className="space-y-4">
+        {/* Content cards + Próxima Ação */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
+          <div className="space-y-4 min-w-0">
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
               <DetailField label="Recebido em" value={formatDateTime(c.created_at)} />
@@ -3523,6 +3535,25 @@ export default function QAClientesPage() {
               )}
             </DetailCard>
           )}
+        </div>
+          <ProximaAcaoPanel
+            titulo={proxima.titulo}
+            descricao={proxima.descricao}
+            tone={proxima.tone}
+            pendencias={proxima.pendencias}
+            ctaLabel={proxima.ctaLabel}
+            ctaDisabled={!!savingCadastroPublicoStatus}
+            onCta={() => {
+              if (proxima.ctaAction === "validar") void updateCadastroPublicoStatus("aprovado");
+              else if (proxima.ctaAction === "gerar_cobranca") void togglePagoCadastroPublico();
+              else if (proxima.ctaAction === "solicitar_correcao") {
+                toast.info("Use os canais existentes (WhatsApp/E-mail) para solicitar a correção ao cliente.");
+              } else if (proxima.ctaAction === "abrir_cliente" && (c as any).cliente_id_vinculado) {
+                const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
+                if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
+              }
+            }}
+          />
         </div>
       </div>
     );
