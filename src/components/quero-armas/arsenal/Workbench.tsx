@@ -39,6 +39,12 @@ export interface WorkbenchWeapon {
   nome_arma: string | null;
   numero_arma: string | null;
   numero_sigma: string | null;
+  /** Nº Cad. SINARM extraído do CRAF — prova canônica de SINARM. */
+  numero_cad_sinarm?: string | null;
+  /** Nº de registro SIGMA explícito (Exército/CAC). */
+  numero_registro_sigma?: string | null;
+  /** Regime canônico já decidido pela IA / equipe (SINARM/SIGMA/REVISAR). */
+  sistema_registro?: "SINARM" | "SIGMA" | "REVISAR" | string | null;
   data_validade: string | null;
   daysToExpire: number | null;
   hasGte?: boolean;
