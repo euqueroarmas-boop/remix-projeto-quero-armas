@@ -109,10 +109,10 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
     })();
 
     const cat = sanitizeFs(category || "DOCUMENTO");
-    const marca = sanitizeFs(catalog?.marca || info?.marca || "");
-    const modeloRaw = catalog?.modelo || info?.modelo || "";
+    const marca = sanitizeFs(info?.marca || catalog?.marca || "");
+    const modeloRaw = info?.modelo || "";
     const modelo = sanitizeFs(modeloRaw);
-    const calibreRaw = catalog?.calibre || info?.calibre || "";
+    const calibreRaw = info?.calibre || catalog?.calibre || "";
     const calibre = sanitizeFs(calibreRaw);
     const serie = sanitizeFs(weapon!.numero_arma || "");
     const sigma = sanitizeFs(weapon!.numero_sigma || "");
@@ -167,9 +167,9 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
       ? TACTICAL.danger
       : TACTICAL.cyan;
 
-  const displayMarca = catalog?.marca || info.marca || info.label;
-  const displayModelo = catalog?.modelo || info.modelo || "";
-  const displayCalibre = catalog?.calibre || info.calibre || "—";
+  const displayMarca = info.marca || catalog?.marca || info.label;
+  const displayModelo = info.modelo || "";
+  const displayCalibre = info.calibre || catalog?.calibre || "—";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-stretch justify-center">
