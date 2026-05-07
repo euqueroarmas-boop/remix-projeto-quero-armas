@@ -345,10 +345,35 @@ function WeaponCard({
               <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
               <div className="font-bold text-slate-800">{calibre}</div>
             </div>
-            <div>
-              <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
-              <div className="truncate font-mono text-slate-700">{w.numero_sigma || "—"}</div>
-            </div>
+            {(() => {
+              // Regra: "Nº do Registro" do CRAF SINARM NÃO é SIGMA.
+              // Só rotulamos como SIGMA quando o regime é SIGMA explícito
+              // (numero_registro_sigma presente). Caso contrário, exibimos
+              // o Nº Cad. SINARM (quando houver) ou o Nº do Registro neutro.
+              const regime = w.regime || (w.sistema_registro as any) || "REVISAR";
+              if (regime === "SIGMA" && w.numero_registro_sigma) {
+                return (
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">SIGMA</div>
+                    <div className="truncate font-mono text-slate-700">{w.numero_registro_sigma}</div>
+                  </div>
+                );
+              }
+              if (w.numero_cad_sinarm) {
+                return (
+                  <div>
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">Nº CAD. SINARM</div>
+                    <div className="truncate font-mono text-slate-700">{w.numero_cad_sinarm}</div>
+                  </div>
+                );
+              }
+              return (
+                <div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">Nº REGISTRO</div>
+                  <div className="truncate font-mono text-slate-700">{w.numero_sigma || "—"}</div>
+                </div>
+              );
+            })()}
             <div>
               <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">N° SÉRIE</div>
               <div className="truncate font-mono text-slate-700">{w.numero_arma || "—"}</div>
