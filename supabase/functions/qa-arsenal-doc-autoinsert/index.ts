@@ -177,6 +177,29 @@ Deno.serve(async (req) => {
       avaliado_em: new Date().toISOString(),
     };
 
+    // -------------------------------------------------------------------
+    // POLÍTICA DE SEGURANÇA — AUTOAPROVAÇÃO OPERACIONAL SUSPENSA
+    // -------------------------------------------------------------------
+    // A IA pode IDENTIFICAR e SUGERIR campos, mas não pode mais cadastrar
+    // automaticamente CRAF/GTE/NF/etc. nas tabelas canônicas. Risco crítico:
+    // OCR pode trocar 0/O, 1/I, completar números, ou misturar campos.
+    // O cadastro só acontece após confirmação humana campo a campo no modal.
+    //
+    // Esta edge agora apenas devolve a auditoria da extração para o frontend
+    // pré-preencher os campos como SUGESTÃO, marcados como NÃO-CONFIRMADOS.
+    // -------------------------------------------------------------------
+    const faltandoPreCheck = tipoIA === "DESCONHECIDO"
+      ? ["tipo_desconhecido"]
+      : camposFaltando(tipoIA, campos as Record<string, unknown>);
+    return json({
+      safe: false,
+      motivo: "revisao_humana_obrigatoria",
+      confianca: conf,
+      campos_faltando: faltandoPreCheck,
+      auditoria,
+    });
+
+    // eslint-disable-next-line no-unreachable
     if (tipoIA === "DESCONHECIDO") {
       return json({
         safe: false,
