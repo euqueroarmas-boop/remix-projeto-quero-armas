@@ -3270,6 +3270,7 @@ export default function QAClientesPage() {
     ) : null;
 
     return (
+      <>
       <div className="max-w-7xl mx-auto space-y-4">
         <ConferenciaHeader
           backSlot={backBtn}
