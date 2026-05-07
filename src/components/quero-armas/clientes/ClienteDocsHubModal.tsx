@@ -214,17 +214,22 @@ function Field({
   icon: Icon,
   children,
   className,
+  action,
 }: {
   label: string;
   icon?: typeof Hash;
   children: ReactNode;
   className?: string;
+  action?: ReactNode;
 }) {
   return (
     <label className={cn("block space-y-1.5", className)}>
-      <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-        {label}
+      <span className="flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+          {label}
+        </span>
+        {action}
       </span>
       {children}
     </label>
