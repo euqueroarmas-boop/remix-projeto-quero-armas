@@ -282,6 +282,12 @@ export interface WeaponRegimeInput {
   categoria?: string | null;
   tipo_uso?: string | null;
   source?: string | null;
+  /** Regime canônico já decidido (SINARM/SIGMA/REVISAR) — prevalece sobre heurística. */
+  sistema_registro?: string | null;
+  /** Nº Cad. SINARM extraído do CRAF. Presença => SINARM. */
+  numero_cad_sinarm?: string | null;
+  /** Nº de registro SIGMA explícito (Exército/CAC). */
+  numero_registro_sigma?: string | null;
 }
 
 const _norm = (s: string | null | undefined) =>
@@ -333,7 +339,16 @@ export type WeaponRegime = "SIGMA" | "SINARM" | "REVISAR";
 export interface WeaponRegimeHints {
   hasGteVinculada?: boolean;
   hasGtVinculada?: boolean;
+  /**
+   * @deprecated `numero_sigma` é um campo genérico de registro e NÃO classifica
+   * regime sozinho (no CRAF SINARM, "Nº do Registro" também aparece). Mantido
+   * apenas para compatibilidade — não é usado para inferir SIGMA.
+   */
   numeroSigma?: string | null;
+  /** Indicador explícito SINARM (presença de "Nº Cad. SINARM"). */
+  numeroCadSinarm?: string | null;
+  /** Indicador explícito SIGMA (Exército/CAC). */
+  numeroRegistroSigma?: string | null;
 }
 
 export function getWeaponRegime(
@@ -341,10 +356,22 @@ export function getWeaponRegime(
   hints?: WeaponRegimeHints,
 ): WeaponRegime {
   if (!arma) return "REVISAR";
+
+  // 1) Regime canônico já persistido tem prioridade absoluta.
+  const persistido = String(arma.sistema_registro || "").toUpperCase().trim();
+  if (persistido === "SINARM" || persistido === "SIGMA") return persistido as WeaponRegime;
+
+  // 2) "Nº Cad. SINARM" é a única prova autossuficiente de SINARM.
+  if (arma.numero_cad_sinarm || hints?.numeroCadSinarm) return "SINARM";
+
+  // 3) Indicador SIGMA explícito (Exército/CAC) — número SIGMA dedicado.
+  if (arma.numero_registro_sigma || hints?.numeroRegistroSigma) return "SIGMA";
+
   const sistema = _norm([arma.sistema, arma.origem_registro, arma.origem, arma.tipo_acervo].filter(Boolean).join(" "));
   const finalidade = _norm([arma.finalidade, arma.categoria, arma.tipo_uso].filter(Boolean).join(" "));
 
-  // Indícios fortes de SIGMA/CAC.
+  // 4) Indícios fortes de SIGMA/CAC (texto + vínculo com GT/GTE).
+  // ATENÇÃO: `numeroSigma` (Nº do Registro genérico) NÃO é mais usado para inferir SIGMA.
   if (
     sistema.includes("SIGMA") ||
     sistema.includes("EXERCITO") ||
@@ -353,13 +380,12 @@ export function getWeaponRegime(
     finalidade.includes("CACA") ||
     finalidade.includes("COLECIONAMENTO") ||
     hints?.hasGteVinculada ||
-    hints?.hasGtVinculada ||
-    !!hints?.numeroSigma
+    hints?.hasGtVinculada
   ) {
     return "SIGMA";
   }
 
-  // SINARM explícito (com ou sem defesa pessoal — registro PF padrão).
+  // 5) SINARM explícito por texto (sem cad SINARM, mas com indicação PF/SINARM).
   if (sistema.includes("SINARM") || finalidade.includes("DEFESA")) {
     return "SINARM";
   }
