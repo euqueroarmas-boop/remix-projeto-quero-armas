@@ -43,6 +43,12 @@ import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
 import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
 import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
+import ConferenciaHeader from "@/components/quero-armas/cadastro-publico/ConferenciaHeader";
+import ProximaAcaoPanel from "@/components/quero-armas/cadastro-publico/ProximaAcaoPanel";
+import {
+  computeConferenciaStatus,
+  decidirProximaAcao,
+} from "@/components/quero-armas/cadastro-publico/conferenciaStatus";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import ClienteSearchRow from "@/components/quero-armas/clientes/ClienteSearchRow";
 import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
