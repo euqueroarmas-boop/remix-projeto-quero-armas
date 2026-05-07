@@ -140,6 +140,23 @@ const KIND_HINTS: { kind: WeaponKind; tokens: string[] }[] = [
   { kind: "submetralhadora", tokens: ["SUB", "SMG", "MP5", "UZI"] },
 ];
 
+/**
+ * Mapeia uma "espécie/tipo" textual extraída de documento (CRAF/SINARM/SIGMA)
+ * para o `WeaponKind` canônico. Retorna `null` quando não reconhecida.
+ * Espécie do documento é PROVA — sempre prevalece sobre inferência por nome.
+ */
+export function kindFromEspecie(especie: string | null | undefined): WeaponKind | null {
+  const s = NORM(especie || "");
+  if (!s) return null;
+  if (s.includes("ESPINGARDA")) return "espingarda";
+  if (s.includes("REVOLVER") || s.includes("REVÓLVER")) return "revolver";
+  if (s.includes("PISTOLA")) return "pistola";
+  if (s.includes("CARABINA")) return "carabina";
+  if (s.includes("FUZIL") || s.includes("RIFLE")) return "fuzil";
+  if (s.includes("SUBMETRALHADORA") || s === "SMG") return "submetralhadora";
+  return null;
+}
+
 export function inferWeaponKind(...inputs: (string | null | undefined)[]): WeaponKind {
   const blob = NORM(inputs.filter(Boolean).join(" "));
   for (const h of KIND_HINTS) {
@@ -195,10 +212,20 @@ export function extractMarcaModelo(nome: string | null | undefined): { marca: st
   return { marca: parts[0], modelo: parts.slice(1).join(" ") };
 }
 
-export function buildWeaponInfo(nomeArma: string | null | undefined, hint?: string | null): WeaponInfo {
+export function buildWeaponInfo(
+  nomeArma: string | null | undefined,
+  hint?: string | null,
+  /**
+   * Espécie/tipo extraído do documento (CRAF/SINARM/SIGMA). Quando informada
+   * e reconhecível (ESPINGARDA, REVÓLVER, PISTOLA, CARABINA, FUZIL,
+   * SUBMETRALHADORA), prevalece sobre qualquer inferência feita pelo nome.
+   */
+  especie?: string | null,
+): WeaponInfo {
   const calibre = extractCalibre(nomeArma, hint);
   const { marca, modelo } = extractMarcaModelo(nomeArma);
-  const kind = inferWeaponKind(nomeArma, hint);
+  const kindFromDoc = kindFromEspecie(especie);
+  const kind = kindFromDoc || inferWeaponKind(nomeArma, hint);
   return {
     kind,
     label: nomeArma?.trim() || "Arma sem identificação",
