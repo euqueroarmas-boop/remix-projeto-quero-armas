@@ -2,8 +2,16 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X, ShieldCheck } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X, ShieldCheck, Database } from "lucide-react";
 import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
+import {
+  QAOperationalSection,
+  QAInfoCard,
+  QAFieldRow,
+  QAFieldGrid,
+  QAAlertBlock,
+  QAStatusChip,
+} from "@/components/quero-armas/qa-operational";
 
 /**
  * Seção "Dados recebidos pelo formulário público" (item 6 da Fase 22).
