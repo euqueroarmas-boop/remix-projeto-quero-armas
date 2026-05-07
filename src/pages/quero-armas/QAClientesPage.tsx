@@ -3536,6 +3536,25 @@ export default function QAClientesPage() {
             </DetailCard>
           )}
         </div>
+          <ProximaAcaoPanel
+            titulo={proxima.titulo}
+            descricao={proxima.descricao}
+            tone={proxima.tone}
+            pendencias={proxima.pendencias}
+            ctaLabel={proxima.ctaLabel}
+            ctaDisabled={!!savingCadastroPublicoStatus}
+            onCta={() => {
+              if (proxima.ctaAction === "validar") void updateCadastroPublicoStatus("aprovado");
+              else if (proxima.ctaAction === "gerar_cobranca") void togglePagoCadastroPublico();
+              else if (proxima.ctaAction === "solicitar_correcao") {
+                toast.info("Use os canais existentes (WhatsApp/E-mail) para solicitar a correção ao cliente.");
+              } else if (proxima.ctaAction === "abrir_cliente" && (c as any).cliente_id_vinculado) {
+                const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
+                if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
+              }
+            }}
+          />
+        </div>
       </div>
     );
   }
