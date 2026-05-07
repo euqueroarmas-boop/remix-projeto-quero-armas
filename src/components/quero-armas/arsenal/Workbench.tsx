@@ -578,7 +578,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
   const enriched = useMemo(
     () => weapons.map((w) => ({
       w,
-      info: buildWeaponInfo(w.nome_arma, w.numero_arma),
+      info: buildWeaponInfo(w.nome_arma, w.numero_arma, w.arma_especie || null),
       // Catálogo é enriquecimento visual, nunca fonte de verdade para marca/modelo.
       catalog: byId(w.catalogo_id || null) || match(w.nome_arma),
     })),
