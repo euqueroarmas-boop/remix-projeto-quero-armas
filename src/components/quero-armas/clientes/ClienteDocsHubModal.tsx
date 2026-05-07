@@ -72,7 +72,8 @@ type AutoResult =
         | "campos_ilegiveis"
         | "duplicado"
         | "erro_insercao"
-        | "erro_upload";
+        | "erro_upload"
+        | "revisao_humana_obrigatoria";
       campos_faltando?: string[];
       confianca?: number;
       mensagem?: string;
@@ -88,6 +89,8 @@ const MOTIVOS: Record<string, string> = {
   duplicado: "Este documento já está cadastrado no seu Arsenal.",
   erro_insercao: "Não foi possível cadastrar automaticamente. Tente novamente.",
   erro_upload: "Falha ao enviar o arquivo. Verifique sua conexão e tente novamente.",
+  revisao_humana_obrigatoria:
+    "A IA leu o documento e sugeriu os campos abaixo. Confira CAMPO A CAMPO e corrija o que estiver errado antes de salvar — nada é cadastrado automaticamente.",
 };
 
 function dataIsoFromBr(v?: string | null): string {
@@ -132,6 +135,35 @@ const EMPTY: FormState = {
   numero_cad_sinarm: "",
   numero_registro_sigma: "",
   sistema_registro: "",
+};
+
+/**
+ * Campos sensíveis que a IA pode sugerir, mas que EXIGEM confirmação
+ * humana antes do save. Usados para travar o botão "Salvar" e exibir
+ * o badge "Confirmar" / "Corrigir" campo a campo.
+ */
+const SENSITIVE_KEYS = [
+  "numero_documento",
+  "numero_cad_sinarm",
+  "numero_registro_sigma",
+  "arma_numero_serie",
+  "arma_marca",
+  "arma_modelo",
+  "arma_calibre",
+  "data_validade",
+  "sistema_registro",
+] as const;
+type SensitiveKey = typeof SENSITIVE_KEYS[number];
+
+/** Auditoria por campo: valor extraído pela IA × valor confirmado pelo humano. */
+type FieldAudit = {
+  valor_extraido_ia: string | null;
+  valor_confirmado: string | null;
+  corrigido_pelo_usuario: boolean;
+  confianca: number;
+  legivel: boolean;
+  fonte: "vision" | "ocr" | "manual";
+  confirmado_em: string | null;
 };
 
 const modalTheme = {
@@ -182,17 +214,22 @@ function Field({
   icon: Icon,
   children,
   className,
+  action,
 }: {
   label: string;
   icon?: typeof Hash;
   children: ReactNode;
   className?: string;
+  action?: ReactNode;
 }) {
   return (
     <label className={cn("block space-y-1.5", className)}>
-      <span className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-        {label}
+      <span className="flex items-center justify-between gap-2 text-[11px] font-medium text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+          {label}
+        </span>
+        {action}
       </span>
       {children}
     </label>
@@ -201,6 +238,36 @@ function Field({
 
 const inputClassName =
   "h-11 rounded-xl border border-input bg-background text-foreground shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-foreground/15 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0";
+
+/** Badge inline de confirmação humana de um campo sensível extraído pela IA. */
+function ConfirmBadge({
+  extraido,
+  confirmado,
+  onConfirm,
+}: {
+  extraido: string | undefined | null;
+  confirmado: boolean | undefined;
+  onConfirm: () => void;
+}) {
+  if (!extraido) return null;
+  if (confirmado) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+        <CheckCircle2 className="h-3 w-3" /> Confirmado
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onConfirm}
+      className="inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 hover:bg-amber-300"
+      title={`Valor extraído pela IA: ${extraido}`}
+    >
+      <AlertTriangle className="h-3 w-3" /> Confirmar
+    </button>
+  );
+}
 
 interface Props {
   open: boolean;
@@ -221,6 +288,10 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
   const [showTipoOverride, setShowTipoOverride] = useState(false);
   const [autoResult, setAutoResult] = useState<AutoResult | null>(null);
+  /** Valor original extraído pela IA por campo sensível (snapshot imutável). */
+  const [iaExtraido, setIaExtraido] = useState<Partial<Record<SensitiveKey, string>>>({});
+  /** Campos sensíveis que o humano confirmou explicitamente. */
+  const [confirmados, setConfirmados] = useState<Partial<Record<SensitiveKey, boolean>>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -233,6 +304,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       setClassificacao(null);
       setShowTipoOverride(false);
       setAutoResult(null);
+      setIaExtraido({});
+      setConfirmados({});
     }
   }, [open, defaultTipo]);
 
@@ -252,6 +325,66 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Edição manual implica confirmação (corrigido pelo usuário).
+    if ((SENSITIVE_KEYS as readonly string[]).includes(key as string)) {
+      setConfirmados((prev) => ({ ...prev, [key as SensitiveKey]: true }));
+    }
+  }
+
+  /** Marca um campo sensível como confirmado pelo humano (botão Confirmar). */
+  function confirmField(key: SensitiveKey) {
+    setConfirmados((prev) => ({ ...prev, [key]: true }));
+  }
+
+  /** Quais campos sensíveis são exigidos para o tipo atual. */
+  function requiredSensitiveKeys(): SensitiveKey[] {
+    const t = form.tipo_documento;
+    if (t === "cr" || t === "autorizacao_compra") {
+      return ["numero_documento", "data_validade"];
+    }
+    if (t === "craf") {
+      const base: SensitiveKey[] = [
+        "sistema_registro",
+        "arma_numero_serie",
+        "arma_marca",
+        "arma_modelo",
+        "arma_calibre",
+        "data_validade",
+      ];
+      if (form.sistema_registro === "SINARM") {
+        return [...base, "numero_cad_sinarm", "numero_documento"];
+      }
+      if (form.sistema_registro === "SIGMA") {
+        return [...base, "numero_registro_sigma"];
+      }
+      return [...base, "numero_documento"];
+    }
+    if (t === "sinarm") {
+      return ["numero_cad_sinarm", "numero_documento", "data_validade"];
+    }
+    if (t === "gte" || t === "gt") {
+      return ["numero_documento", "arma_numero_serie", "data_validade"];
+    }
+    return ["numero_documento"];
+  }
+
+  function pendingSensitiveKeys(): SensitiveKey[] {
+    return requiredSensitiveKeys().filter((k) => !confirmados[k]);
+  }
+
+  function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
+    const extraido = (iaExtraido[key] ?? "") || null;
+    const final = (valorFinal ?? "") || null;
+    const corrigido = !!extraido && !!final && extraido.trim().toUpperCase() !== final.trim().toUpperCase();
+    return {
+      valor_extraido_ia: extraido,
+      valor_confirmado: final,
+      corrigido_pelo_usuario: corrigido || (!extraido && !!final),
+      confianca: extraido ? Number(classificacao?.confianca || 0) : 0,
+      legivel: !!extraido,
+      fonte: extraido ? "vision" : "manual",
+      confirmado_em: confirmados[key] ? new Date().toISOString() : null,
+    };
   }
 
   async function classifyAndExtract(target: File | null) {
@@ -314,6 +447,22 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
             : "", // SINARM/REVISAR nunca preenche SIGMA
         sistema_registro: sistemaFinal,
       }));
+
+      // Snapshot IMUTÁVEL do que a IA extraiu, para auditoria e
+      // bloqueio do salvar até confirmação humana campo a campo.
+      setIaExtraido({
+        numero_documento: campos.numero_documento || "",
+        numero_cad_sinarm: cadSinarmRaw,
+        numero_registro_sigma: sigmaExplicitoRaw,
+        arma_numero_serie: campos.arma_numero_serie || "",
+        arma_marca: campos.arma_marca || "",
+        arma_modelo: campos.arma_modelo || "",
+        arma_calibre: campos.arma_calibre || "",
+        data_validade: dataIsoFromBr(campos.data_validade) || "",
+        sistema_registro: sistemaFinal,
+      });
+      // Tudo começa como NÃO confirmado — exige clique do humano.
+      setConfirmados({});
 
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
       try {
@@ -439,6 +588,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       return;
     }
 
+    // Trava de segurança: nenhum campo sensível pode ser gravado sem
+    // confirmação humana explícita (clique em Confirmar OU edição manual).
+    const pendentes = pendingSensitiveKeys();
+    if (pendentes.length) {
+      toast.error(
+        `Confirme os campos antes de salvar: ${pendentes.join(", ").replace(/_/g, " ")}.`,
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       // Bloqueio de duplicidade
@@ -522,7 +681,29 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         arquivo_storage_path: storagePath,
         arquivo_nome: fileName,
         arquivo_mime: mime,
-        ia_status: storagePath ? "sugerido" : "nao_processado",
+        ia_status: classificacao ? "confirmado_humano" : (storagePath ? "sugerido" : "nao_processado"),
+        ia_dados_extraidos: classificacao
+          ? {
+              tipoDetectado: classificacao.tipoDetectado,
+              confianca: classificacao.confianca,
+              camposExtraidos: classificacao.camposExtraidos || {},
+              avaliado_em: new Date().toISOString(),
+              origem_fluxo: "arsenal_hub_documental",
+              auto_cadastro: false,
+              revisao_humana: true,
+              campos_sensiveis: {
+                numero_documento: buildFieldAudit("numero_documento", form.numero_documento || null),
+                numero_cad_sinarm: buildFieldAudit("numero_cad_sinarm", form.numero_cad_sinarm || null),
+                numero_registro_sigma: buildFieldAudit("numero_registro_sigma", form.numero_registro_sigma || null),
+                arma_numero_serie: buildFieldAudit("arma_numero_serie", form.arma_numero_serie || null),
+                arma_marca: buildFieldAudit("arma_marca", form.arma_marca || null),
+                arma_modelo: buildFieldAudit("arma_modelo", form.arma_modelo || null),
+                arma_calibre: buildFieldAudit("arma_calibre", form.arma_calibre || null),
+                data_validade: buildFieldAudit("data_validade", form.data_validade || null),
+                sistema_registro: buildFieldAudit("sistema_registro", form.sistema_registro || null),
+              },
+            }
+          : null,
       };
 
       // Fluxo de aprovação: admin lança como aprovado; cliente envia como pendente.
@@ -795,10 +976,39 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
             <SectionTitle title="Dados do documento" />
 
+            {classificacao && (
+              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs leading-snug text-amber-900">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] font-bold uppercase tracking-wide">
+                      Revise CAMPO A CAMPO antes de salvar
+                    </div>
+                    <p className="mt-1">
+                      A IA leu o documento e sugeriu os valores abaixo. Nenhum dado é cadastrado
+                      automaticamente. Clique em <b>Confirmar</b> em cada campo OU corrija manualmente.
+                      Pendentes:{" "}
+                      <b>{pendingSensitiveKeys().length === 0 ? "—" : pendingSensitiveKeys().join(", ").replace(/_/g, " ")}</b>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               {showArmaFields ? (
                 <>
-                  <Field label="Sistema do registro" icon={Hash}>
+                  <Field
+                    label="Sistema do registro"
+                    icon={Hash}
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.sistema_registro}
+                        confirmado={confirmados.sistema_registro}
+                        onConfirm={() => confirmField("sistema_registro")}
+                      />
+                    }
+                  >
                     <Select
                       value={form.sistema_registro || "REVISAR"}
                       onValueChange={(v) => {
@@ -824,7 +1034,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                   ) : null}
                   {showSinarmFields ? (
                     <>
-                      <Field label="Nº Cad. SINARM" icon={Hash}>
+                      <Field
+                        label="Nº Cad. SINARM"
+                        icon={Hash}
+                        action={
+                          <ConfirmBadge
+                            extraido={iaExtraido.numero_cad_sinarm}
+                            confirmado={confirmados.numero_cad_sinarm}
+                            onConfirm={() => confirmField("numero_cad_sinarm")}
+                          />
+                        }
+                      >
                         <Input
                           value={form.numero_cad_sinarm}
                           onChange={(event) => update("numero_cad_sinarm", event.target.value)}
@@ -832,7 +1052,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                           className={inputClassName}
                         />
                       </Field>
-                      <Field label="Nº do Registro" icon={Hash}>
+                      <Field
+                        label="Nº do Registro"
+                        icon={Hash}
+                        action={
+                          <ConfirmBadge
+                            extraido={iaExtraido.numero_documento}
+                            confirmado={confirmados.numero_documento}
+                            onConfirm={() => confirmField("numero_documento")}
+                          />
+                        }
+                      >
                         <Input
                           value={form.numero_documento}
                           onChange={(event) => update("numero_documento", event.target.value)}
@@ -842,7 +1072,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                       </Field>
                     </>
                   ) : showSigmaFields ? (
-                    <Field label="Nº de Registro SIGMA" icon={Hash}>
+                    <Field
+                      label="Nº de Registro SIGMA"
+                      icon={Hash}
+                      action={
+                        <ConfirmBadge
+                          extraido={iaExtraido.numero_registro_sigma}
+                          confirmado={confirmados.numero_registro_sigma}
+                          onConfirm={() => confirmField("numero_registro_sigma")}
+                        />
+                      }
+                    >
                       <Input
                         value={form.numero_registro_sigma}
                         onChange={(event) => update("numero_registro_sigma", event.target.value)}
@@ -851,7 +1091,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                       />
                     </Field>
                   ) : (
-                    <Field label="Número do documento" icon={Hash}>
+                    <Field
+                      label="Número do documento"
+                      icon={Hash}
+                      action={
+                        <ConfirmBadge
+                          extraido={iaExtraido.numero_documento}
+                          confirmado={confirmados.numero_documento}
+                          onConfirm={() => confirmField("numero_documento")}
+                        />
+                      }
+                    >
                       <Input
                         value={form.numero_documento}
                         onChange={(event) => update("numero_documento", event.target.value)}
@@ -862,7 +1112,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                   )}
                 </>
               ) : (
-                <Field label="Número do documento" icon={Hash}>
+                <Field
+                  label="Número do documento"
+                  icon={Hash}
+                  action={
+                    <ConfirmBadge
+                      extraido={iaExtraido.numero_documento}
+                      confirmado={confirmados.numero_documento}
+                      onConfirm={() => confirmField("numero_documento")}
+                    />
+                  }
+                >
                   <Input
                     value={form.numero_documento}
                     onChange={(event) => update("numero_documento", event.target.value)}
@@ -892,7 +1152,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 </Field>
               </div>
 
-              <Field label="Validade" icon={Calendar}>
+              <Field
+                label="Validade"
+                icon={Calendar}
+                action={
+                  <ConfirmBadge
+                    extraido={iaExtraido.data_validade}
+                    confirmado={confirmados.data_validade}
+                    onConfirm={() => confirmField("data_validade")}
+                  />
+                }
+              >
                 <Input
                   type="date"
                   value={form.data_validade}
@@ -924,7 +1194,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Marca">
+                  <Field
+                    label="Marca"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_marca}
+                        confirmado={confirmados.arma_marca}
+                        onConfirm={() => confirmField("arma_marca")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_marca}
                       onChange={(event) => update("arma_marca", event.target.value)}
@@ -933,7 +1212,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Modelo">
+                  <Field
+                    label="Modelo"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_modelo}
+                        confirmado={confirmados.arma_modelo}
+                        onConfirm={() => confirmField("arma_modelo")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_modelo}
                       onChange={(event) => update("arma_modelo", event.target.value)}
@@ -941,7 +1229,16 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Calibre">
+                  <Field
+                    label="Calibre"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_calibre}
+                        confirmado={confirmados.arma_calibre}
+                        onConfirm={() => confirmField("arma_calibre")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_calibre}
                       onChange={(event) => update("arma_calibre", event.target.value)}
@@ -950,7 +1247,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                     />
                   </Field>
 
-                  <Field label="Nº de série" className="col-span-2">
+                  <Field
+                    label="Nº de série"
+                    className="col-span-2"
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.arma_numero_serie}
+                        confirmado={confirmados.arma_numero_serie}
+                        onConfirm={() => confirmField("arma_numero_serie")}
+                      />
+                    }
+                  >
                     <Input
                       value={form.arma_numero_serie}
                       onChange={(event) => update("arma_numero_serie", event.target.value)}
@@ -999,17 +1306,18 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
               disabled={
                 saving ||
                 extracting ||
-                // Bloqueia cadastro manual quando a IA já bloqueou por insegurança.
-                // Cliente é orientado a reenviar o documento mais nítido.
-                (autoResult?.safe === false &&
-                  (autoResult.motivo === "documento_nao_identificado" ||
-                    autoResult.motivo === "confianca_insuficiente" ||
-                    autoResult.motivo === "campos_ilegiveis"))
+                // Bloqueia o save até que TODOS os campos sensíveis aplicáveis
+                // estejam confirmados (clique em Confirmar OU edição manual).
+                (!!classificacao && pendingSensitiveKeys().length > 0)
               }
               className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-              {saving ? "Salvando..." : "Salvar documento"}
+              {saving
+                ? "Salvando..."
+                : classificacao && pendingSensitiveKeys().length > 0
+                  ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
+                  : "Salvar documento"}
             </Button>
           </div>
           )}
