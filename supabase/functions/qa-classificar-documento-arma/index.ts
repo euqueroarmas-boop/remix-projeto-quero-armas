@@ -95,6 +95,19 @@ const tool = {
             arma_calibre: { type: "string" },
             arma_numero_serie: { type: "string" },
             sigma_ou_sinarm: { type: "string" },
+            numero_cad_sinarm: {
+              type: "string",
+              description: "Conteúdo EXATO do campo rotulado 'Nº Cad. SINARM' (ex.: 2022/905178870-50). Vazio se o rótulo não aparecer no documento.",
+            },
+            numero_registro_sigma: {
+              type: "string",
+              description: "Número de registro SIGMA APENAS quando o documento for do Exército/SIGMA/CAC com indicação explícita. Vazio se for SINARM ou se houver dúvida.",
+            },
+            sistema_registro: {
+              type: "string",
+              enum: ["SINARM", "SIGMA", "REVISAR"],
+              description: "Regime canônico. SINARM se houver 'Nº Cad. SINARM' ou indicação explícita de Polícia Federal/SINARM. SIGMA somente com indicação explícita de Exército/SIGMA/CAC. REVISAR caso contrário.",
+            },
             origem: { type: "string" },
             destino: { type: "string" },
             emitente: { type: "string" },
@@ -136,6 +149,11 @@ const SYSTEM_PROMPT = [
   "• Se um caractere estiver ilegível, deixe o campo INTEIRO vazio (não substitua por '?', '_' ou aproximação).",
   "• Datas em DD/MM/AAAA exatamente como aparecem (se faltar dia, mês ou ano, deixe vazio).",
   "• Em caso de dúvida, prefira deixar vazio a inventar.",
+  "REGRA SINARM × SIGMA (CRÍTICA):",
+  "• Se o documento contiver o campo rotulado 'Nº Cad. SINARM', preencha numero_cad_sinarm com o valor EXATO (ex.: 2022/905178870-50) e marque sistema_registro = 'SINARM'. NUNCA copie esse valor para numero_registro_sigma.",
+  "• 'Nº do Registro' é um campo GENÉRICO e existe tanto em CRAFs SINARM quanto SIGMA — sozinho NÃO classifica regime. Coloque seu valor em numero_documento.",
+  "• Só preencha numero_registro_sigma quando o documento mencionar EXPLICITAMENTE Exército/SIGMA/CAC. Caso contrário deixe vazio.",
+  "• Se não houver 'Nº Cad. SINARM' nem indício explícito de SIGMA/Exército, marque sistema_registro = 'REVISAR'.",
   "Responda EXCLUSIVAMENTE chamando a função classificar_documento_arma.",
 ].join("\n");
 
