@@ -388,6 +388,9 @@ Deno.serve(async (req) => {
             if (numeroCadSinarm) patch.numero_cad_sinarm = numeroCadSinarm;
             if (numeroSigma && sistema_registro_final === "SIGMA") patch.numero_registro_sigma = numeroSigma;
             patch.sistema_registro = sistema_registro_final;
+            // Espécie/tipo do documento (ESPINGARDA, REVÓLVER, PISTOLA, etc.)
+            // — prova canônica para classificação do card.
+            if (campos.arma_especie) patch.arma_especie = up(campos.arma_especie);
             // Sempre garante o vínculo do arquivo original (mesmo em update)
             if (arquivo_storage_path) {
               patch.arquivo_storage_path = arquivo_storage_path;
@@ -416,6 +419,7 @@ Deno.serve(async (req) => {
                 numero_cad_sinarm: numeroCadSinarm,
                 numero_registro_sigma: sistema_registro_final === "SIGMA" ? numeroSigma : null,
                 sistema_registro: sistema_registro_final,
+                arma_especie: campos.arma_especie ? up(campos.arma_especie) : null,
                 data_validade: dataIsoFromBr(campos.data_validade),
                 arquivo_storage_path: arquivo_storage_path,
                 arquivo_nome: arquivo_nome,

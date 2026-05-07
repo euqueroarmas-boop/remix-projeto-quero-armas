@@ -60,7 +60,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
   const [gtConfirm, setGtConfirm] = useState(false);
   const [gtSaving, setGtSaving] = useState(false);
   useEffect(() => { setConfirmDel(false); setDeleting(false); }, [weapon?.id, open]);
-  const info = weapon ? buildWeaponInfo(weapon.nome_arma, weapon.numero_arma) : null;
+  const info = weapon ? buildWeaponInfo(weapon.nome_arma, weapon.numero_arma, (weapon as any).arma_especie || null) : null;
   const catalog: ArmamentoCatalogo | null = useMemo(
     () => (weapon ? match(weapon.nome_arma) : null),
     [weapon, match],
