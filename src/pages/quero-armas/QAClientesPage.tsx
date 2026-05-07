@@ -2655,7 +2655,7 @@ export default function QAClientesPage() {
                 <QAOperationalSection icon={Database} title="Dados Complementares">
                   <QAInfoCard padding="md">
                     <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Origem do cadastro" value={c.origem_cadastro || "—"} />
+                      <QAFieldRow label="Origem do cadastro" value={(c as any).origem_cadastro || "—"} />
                       <QAFieldRow label="Recebido em" value={formatDateTime(c.created_at)} />
                       <QAFieldRow label="Vínculo aplicado em" value={formatDateTime((c as any).cadastro_publico_aplicado_em)} />
                       <QAFieldRow label="Última atualização" value={formatDateTime((c as any).updated_at)} />
