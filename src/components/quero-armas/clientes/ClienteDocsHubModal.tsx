@@ -976,10 +976,39 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
             <SectionTitle title="Dados do documento" />
 
+            {classificacao && (
+              <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs leading-snug text-amber-900">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] font-bold uppercase tracking-wide">
+                      Revise CAMPO A CAMPO antes de salvar
+                    </div>
+                    <p className="mt-1">
+                      A IA leu o documento e sugeriu os valores abaixo. Nenhum dado é cadastrado
+                      automaticamente. Clique em <b>Confirmar</b> em cada campo OU corrija manualmente.
+                      Pendentes:{" "}
+                      <b>{pendingSensitiveKeys().length === 0 ? "—" : pendingSensitiveKeys().join(", ").replace(/_/g, " ")}</b>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
               {showArmaFields ? (
                 <>
-                  <Field label="Sistema do registro" icon={Hash}>
+                  <Field
+                    label="Sistema do registro"
+                    icon={Hash}
+                    action={
+                      <ConfirmBadge
+                        extraido={iaExtraido.sistema_registro}
+                        confirmado={confirmados.sistema_registro}
+                        onConfirm={() => confirmField("sistema_registro")}
+                      />
+                    }
+                  >
                     <Select
                       value={form.sistema_registro || "REVISAR"}
                       onValueChange={(v) => {
@@ -1005,7 +1034,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                   ) : null}
                   {showSinarmFields ? (
                     <>
-                      <Field label="Nº Cad. SINARM" icon={Hash}>
+                      <Field
+                        label="Nº Cad. SINARM"
+                        icon={Hash}
+                        action={
+                          <ConfirmBadge
+                            extraido={iaExtraido.numero_cad_sinarm}
+                            confirmado={confirmados.numero_cad_sinarm}
+                            onConfirm={() => confirmField("numero_cad_sinarm")}
+                          />
+                        }
+                      >
                         <Input
                           value={form.numero_cad_sinarm}
                           onChange={(event) => update("numero_cad_sinarm", event.target.value)}
@@ -1013,7 +1052,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                           className={inputClassName}
                         />
                       </Field>
-                      <Field label="Nº do Registro" icon={Hash}>
+                      <Field
+                        label="Nº do Registro"
+                        icon={Hash}
+                        action={
+                          <ConfirmBadge
+                            extraido={iaExtraido.numero_documento}
+                            confirmado={confirmados.numero_documento}
+                            onConfirm={() => confirmField("numero_documento")}
+                          />
+                        }
+                      >
                         <Input
                           value={form.numero_documento}
                           onChange={(event) => update("numero_documento", event.target.value)}
@@ -1023,7 +1072,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                       </Field>
                     </>
                   ) : showSigmaFields ? (
-                    <Field label="Nº de Registro SIGMA" icon={Hash}>
+                    <Field
+                      label="Nº de Registro SIGMA"
+                      icon={Hash}
+                      action={
+                        <ConfirmBadge
+                          extraido={iaExtraido.numero_registro_sigma}
+                          confirmado={confirmados.numero_registro_sigma}
+                          onConfirm={() => confirmField("numero_registro_sigma")}
+                        />
+                      }
+                    >
                       <Input
                         value={form.numero_registro_sigma}
                         onChange={(event) => update("numero_registro_sigma", event.target.value)}
@@ -1032,7 +1091,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                       />
                     </Field>
                   ) : (
-                    <Field label="Número do documento" icon={Hash}>
+                    <Field
+                      label="Número do documento"
+                      icon={Hash}
+                      action={
+                        <ConfirmBadge
+                          extraido={iaExtraido.numero_documento}
+                          confirmado={confirmados.numero_documento}
+                          onConfirm={() => confirmField("numero_documento")}
+                        />
+                      }
+                    >
                       <Input
                         value={form.numero_documento}
                         onChange={(event) => update("numero_documento", event.target.value)}
@@ -1043,7 +1112,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                   )}
                 </>
               ) : (
-                <Field label="Número do documento" icon={Hash}>
+                <Field
+                  label="Número do documento"
+                  icon={Hash}
+                  action={
+                    <ConfirmBadge
+                      extraido={iaExtraido.numero_documento}
+                      confirmado={confirmados.numero_documento}
+                      onConfirm={() => confirmField("numero_documento")}
+                    />
+                  }
+                >
                   <Input
                     value={form.numero_documento}
                     onChange={(event) => update("numero_documento", event.target.value)}
@@ -1073,7 +1152,17 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                 </Field>
               </div>
 
-              <Field label="Validade" icon={Calendar}>
+              <Field
+                label="Validade"
+                icon={Calendar}
+                action={
+                  <ConfirmBadge
+                    extraido={iaExtraido.data_validade}
+                    confirmado={confirmados.data_validade}
+                    onConfirm={() => confirmField("data_validade")}
+                  />
+                }
+              >
                 <Input
                   type="date"
                   value={form.data_validade}
