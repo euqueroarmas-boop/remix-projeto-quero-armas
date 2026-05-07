@@ -3274,8 +3274,9 @@ export default function QAClientesPage() {
           );
         })()}
 
-        {/* Content cards */}
-        <div className="space-y-4">
+        {/* Content cards + Próxima Ação */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
+          <div className="space-y-4 min-w-0">
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
               <DetailField label="Recebido em" value={formatDateTime(c.created_at)} />
