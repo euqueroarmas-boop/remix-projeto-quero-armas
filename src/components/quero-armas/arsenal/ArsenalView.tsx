@@ -88,8 +88,10 @@ const formatArmaTitulo = (
   catalog?: ArmamentoCatalogo | null,
 ): string => {
   const info = buildWeaponInfo(nomeArma || null, null);
-  const marca = (catalog?.marca || info.marca || "").trim();
-  const modeloRaw = (catalog?.modelo || info.modelo || "").trim();
+  // O catálogo é apenas sugestão visual: nunca pode substituir marca/modelo
+  // digitados ou confirmados no documento/CRAF.
+  const marca = (info.marca || catalog?.marca || "").trim();
+  const modeloRaw = (info.modelo || "").trim();
   // Espingardas levam espaços ("Pump Military 3.0").
   // Pistolas, revólveres e fuzis ficam compactados ("TS9", "RT838", "T4").
   const isEspingarda = info.kind === "espingarda";
@@ -100,7 +102,7 @@ const formatArmaTitulo = (
         .replace(/\s+/g, " ")
         .trim()
     : modeloRaw.replace(/\s+/g, "").trim();
-  const calibre = (catalog?.calibre || info.calibre || calibreHint || "").trim();
+  const calibre = (info.calibre || calibreHint || catalog?.calibre || "").trim();
   const partes: string[] = [];
   if (marca) partes.push(marca);
   if (modelo) partes.push(modelo);
