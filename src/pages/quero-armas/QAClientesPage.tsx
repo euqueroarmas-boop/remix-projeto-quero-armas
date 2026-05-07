@@ -3749,6 +3749,7 @@ export default function QAClientesPage() {
               if (proxima.ctaAction === "validar") void updateCadastroPublicoStatus("aprovado");
               else if (proxima.ctaAction === "gerar_cobranca") void togglePagoCadastroPublico();
               else if (proxima.ctaAction === "solicitar_correcao") {
+                setCorrecaoPreSelecionada([]);
                 setCorrecaoModalOpen(true);
               } else if (proxima.ctaAction === "abrir_cliente" && (c as any).cliente_id_vinculado) {
                 const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
@@ -3763,8 +3764,9 @@ export default function QAClientesPage() {
       </div>
       <SolicitarCorrecaoModal
         open={correcaoModalOpen}
-        onOpenChange={setCorrecaoModalOpen}
+        onOpenChange={(o) => { setCorrecaoModalOpen(o); if (!o) setCorrecaoPreSelecionada([]); }}
         pendenciasAuto={listarPendenciasCadastro(c as any)}
+        pendenciasIniciais={correcaoPreSelecionada}
         nomeCliente={c.nome_completo}
         telefoneWhatsapp={c.telefone_principal}
         saving={savingCorrecao}
