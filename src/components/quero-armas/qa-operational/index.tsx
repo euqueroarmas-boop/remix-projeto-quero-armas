@@ -401,7 +401,7 @@ export function QAFieldRow({
   const copyContent = copyValue ?? (typeof value === "string" ? value : "");
   return (
     <div className="flex items-start gap-2 group py-1">
-      {Icon && <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "hsl(220 10% 55%)" }} />}
+      {Icon && <Icon className="h-3.5 w-3.5 mt-0.5 shrink-0 text-slate-400" />}
       <div className="min-w-0 flex-1">
         <div className="text-[9px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(220 10% 50%)" }}>
           {label}
