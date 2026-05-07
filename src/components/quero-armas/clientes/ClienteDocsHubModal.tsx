@@ -155,6 +155,23 @@ const SENSITIVE_KEYS = [
 ] as const;
 type SensitiveKey = typeof SENSITIVE_KEYS[number];
 
+const GENERIC_WEAPON_MODEL_VALUES = new Set([
+  "PISTOLA",
+  "REVOLVER",
+  "REVÓLVER",
+  "CARABINA",
+  "ESPINGARDA",
+  "FUZIL",
+  "ARMA",
+  "ARMAMENTO",
+]);
+
+function safeExtractedModel(raw: unknown): string {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  return GENERIC_WEAPON_MODEL_VALUES.has(value.toUpperCase()) ? "" : value;
+}
+
 /** Auditoria por campo: valor extraído pela IA × valor confirmado pelo humano. */
 type FieldAudit = {
   valor_extraido_ia: string | null;
@@ -428,6 +445,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         sistemaIARaw === "SIGMA" ? "SIGMA" :
         "REVISAR";
 
+      const modeloExtraidoSeguro = safeExtractedModel(campos.arma_modelo);
+
       setForm((prev) => ({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
@@ -437,7 +456,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         data_emissao: dataIsoFromBr(campos.data_emissao) || prev.data_emissao,
         data_validade: dataIsoFromBr(campos.data_validade) || prev.data_validade,
         arma_marca: campos.arma_marca || prev.arma_marca,
-        arma_modelo: campos.arma_modelo || prev.arma_modelo,
+        arma_modelo: modeloExtraidoSeguro || prev.arma_modelo,
         arma_calibre: campos.arma_calibre || prev.arma_calibre,
         arma_numero_serie: campos.arma_numero_serie || prev.arma_numero_serie,
         numero_cad_sinarm: cadSinarmRaw || prev.numero_cad_sinarm,
@@ -456,7 +475,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         numero_registro_sigma: sigmaExplicitoRaw,
         arma_numero_serie: campos.arma_numero_serie || "",
         arma_marca: campos.arma_marca || "",
-        arma_modelo: campos.arma_modelo || "",
+        arma_modelo: modeloExtraidoSeguro,
         arma_calibre: campos.arma_calibre || "",
         data_validade: dataIsoFromBr(campos.data_validade) || "",
         sistema_registro: sistemaFinal,
