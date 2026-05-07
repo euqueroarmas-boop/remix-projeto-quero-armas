@@ -3091,8 +3091,17 @@ export default function QAClientesPage() {
                 <ClienteDocsEnviados cliente={c} />
               </TabsContent>
               {/* ACESSO AO PORTAL */}
-              <TabsContent value="historico" className="mt-3">
-                <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
+              <TabsContent value="historico" className="mt-3 space-y-3">
+                <BlocoSecao
+                  icon={Clock}
+                  titulo="Linha do Tempo / Auditoria"
+                  statusTone="info"
+                  statusLabel="Histórico"
+                >
+                  <div className="qa-card p-4 md:p-5">
+                    <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
+                  </div>
+                </BlocoSecao>
               </TabsContent>
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
