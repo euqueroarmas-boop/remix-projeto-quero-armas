@@ -3060,42 +3060,160 @@ export default function QAClientesPage() {
       return <DetailField label={label} value={value} copyable={opts?.copyable} />;
     };
 
-    return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
-              className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100 shrink-0"
-              style={{ border: "1px solid hsl(220 13% 90%)" }}
-            >
-              <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-xl font-bold tracking-tight break-words" style={{ color: "hsl(220 20% 14%)" }}>
-                {c.nome_completo}
-              </h1>
-              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${cadastroStatusColor(c.status)}`}>
-                  {String(c.status || "").toUpperCase()}
-                </span>
-                <span
-                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
-                    c.pago
-                      ? "bg-emerald-500 text-white border-emerald-500"
-                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
-                  }`}
-                >
-                  {c.pago ? "PAGO" : "NÃO PAGO"}
-                </span>
-                <span className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
-              </div>
-            </div>
-            <SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />
-          </div>
+    const statusChips = computeConferenciaStatus(c as any);
+    const proxima = decidirProximaAcao(c as any);
+    const cidadeUf = [c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ") || null;
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:flex-nowrap md:justify-end gap-1.5 md:gap-2">
+    const backBtn = (
+      <button
+        onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
+        className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100 shrink-0"
+        style={{ border: "1px solid hsl(220 13% 90%)" }}
+        title="Voltar"
+      >
+        <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
+      </button>
+    );
+
+    const actionsPrimary = (
+      <>
+        {isEditing ? (
+          <>
+            <button
+              onClick={() => setEditingCadastroPublico(false)}
+              className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all hover:bg-slate-50 inline-flex items-center gap-1"
+              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+            >
+              <X className="h-3.5 w-3.5" /> Cancelar
+            </button>
+            <button
+              onClick={saveCadastroEdit}
+              disabled={savingCadastroEdit}
+              className="h-8 px-3 rounded-lg text-[11px] font-semibold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1"
+              style={{ background: "hsl(152 60% 40%)" }}
+            >
+              {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Salvar
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
+              onClick={() => updateCadastroPublicoStatus("aprovado")}
+              className="h-8 px-3 rounded-lg text-[11px] font-bold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1.5"
+              style={{ background: "#7A1F2B" }}
+            >
+              {savingCadastroPublicoStatus === "aprovado" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle className="h-3.5 w-3.5" />
+              )}
+              Validar cadastro
+            </button>
+            <button
+              disabled={!!savingCadastroPublicoStatus}
+              onClick={() => togglePagoCadastroPublico()}
+              className={`h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 ${
+                c.pago
+                  ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              }`}
+              title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
+            >
+              {savingCadastroPublicoStatus?.startsWith("pago") ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
+              )}
+              {c.pago ? "Não pago" : "Marcar pago"}
+            </button>
+            <button
+              onClick={startEditCadastro}
+              className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all hover:bg-slate-50 inline-flex items-center gap-1.5"
+              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+            >
+              <Edit className="h-3.5 w-3.5" /> Editar
+            </button>
+            {(() => {
+              const isConferido = ["aprovado", "conferido", "validado", "formulario_conferido"]
+                .includes(String(c.status || "").toLowerCase());
+              if (!isConferido) return null;
+              return (
+                <button
+                  disabled={!!savingCadastroPublicoStatus}
+                  onClick={() => updateCadastroPublicoStatus("pendente")}
+                  className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-[#FBF3F4] text-[#3D0E16] border-[#E5C2C6] hover:bg-[#F1D9DC]"
+                  title="Voltar para pendente (remove a conferência)"
+                >
+                  {savingCadastroPublicoStatus === "pendente" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  )}
+                  Remover conferência
+                </button>
+              );
+            })()}
+          </>
+        )}
+      </>
+    );
+
+    const actionsDestructive = !isEditing ? (
+      <>
+        <button
+          disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
+          onClick={() => updateCadastroPublicoStatus("rejeitado")}
+          className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all disabled:opacity-40 hover:bg-red-50 inline-flex items-center gap-1.5 text-red-700 border-red-200"
+        >
+          {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+          Rejeitar
+        </button>
+        {c.status === "rejeitado" && !(c as any).cliente_id_vinculado && (
+          <button
+            disabled={!!savingCadastroPublicoStatus}
+            onClick={() => excluirDefinitivamenteCadastroPublico()}
+            className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+            title="Excluir cadastro definitivamente (libera o CPF)"
+          >
+            {savingCadastroPublicoStatus === "excluindo" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+            Excluir
+          </button>
+        )}
+      </>
+    ) : null;
+
+    return (
+      <div className="max-w-7xl mx-auto space-y-4">
+        <ConferenciaHeader
+          backSlot={backBtn}
+          selfieSlot={<SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />}
+          nome={c.nome_completo}
+          cpfFormatado={formatCpf(c.cpf)}
+          email={c.email}
+          telefone={c.telefone_principal}
+          cidadeUf={cidadeUf}
+          servicoInteresse={c.servico_interesse}
+          recebidoEm={formatDateTime(c.created_at)}
+          status={statusChips}
+          actionsPrimary={actionsPrimary}
+          actionsDestructive={actionsDestructive}
+          badges={
+            (c as any).cliente_id_vinculado ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
+                <CheckCircle className="h-3 w-3" /> Cliente vinculado #{(c as any).cliente_id_vinculado}
+              </span>
+            ) : null
+          }
+        />
+
+        {/* Espaço reservado para preservar layout antigo de ações extras (vazio agora) */}
+        <div className="hidden">
             {isEditing ? (
               <>
                 <button
