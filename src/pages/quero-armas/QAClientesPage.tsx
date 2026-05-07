@@ -2651,6 +2651,18 @@ export default function QAClientesPage() {
                   </QAOperationalSection>
                 )}
 
+                {/* DADOS COMPLEMENTARES */}
+                <QAOperationalSection icon={Database} title="Dados Complementares">
+                  <QAInfoCard padding="md">
+                    <QAFieldGrid cols={2}>
+                      <QAFieldRow label="Origem do cadastro" value={(c as any).origem_cadastro || "—"} />
+                      <QAFieldRow label="Recebido em" value={formatDateTime(c.created_at)} />
+                      <QAFieldRow label="Vínculo aplicado em" value={formatDateTime((c as any).cadastro_publico_aplicado_em)} />
+                      <QAFieldRow label="Última atualização" value={formatDateTime((c as any).updated_at)} />
+                    </QAFieldGrid>
+                  </QAInfoCard>
+                </QAOperationalSection>
+
                 {c.observacao && (
                   <QAOperationalSection icon={FileText} title="Observações">
                     <QAInfoCard padding="md">
