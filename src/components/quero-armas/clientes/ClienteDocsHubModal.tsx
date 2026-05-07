@@ -1306,17 +1306,18 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
               disabled={
                 saving ||
                 extracting ||
-                // Bloqueia cadastro manual quando a IA já bloqueou por insegurança.
-                // Cliente é orientado a reenviar o documento mais nítido.
-                (autoResult?.safe === false &&
-                  (autoResult.motivo === "documento_nao_identificado" ||
-                    autoResult.motivo === "confianca_insuficiente" ||
-                    autoResult.motivo === "campos_ilegiveis"))
+                // Bloqueia o save até que TODOS os campos sensíveis aplicáveis
+                // estejam confirmados (clique em Confirmar OU edição manual).
+                (!!classificacao && pendingSensitiveKeys().length > 0)
               }
               className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-              {saving ? "Salvando..." : "Salvar documento"}
+              {saving
+                ? "Salvando..."
+                : classificacao && pendingSensitiveKeys().length > 0
+                  ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
+                  : "Salvar documento"}
             </Button>
           </div>
           )}
