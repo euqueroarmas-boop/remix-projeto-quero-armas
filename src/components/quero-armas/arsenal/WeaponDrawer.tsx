@@ -547,14 +547,24 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                   </div>
                   <div className="flex items-center gap-2">
                     {d.path ? (
-                      <button
-                        type="button"
-                        onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: d.fileName || undefined, title: `${d.category} · ${d.fileName || d.title}` })}
-                        className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                        title="Visualizar arquivo original"
-                      >
-                        <Eye className="h-3 w-3" /> Ver
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: friendlyName(d.category, d.fileName), title: `${d.category} · ${d.title}` })}
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                          title="Visualizar arquivo original"
+                        >
+                          <Eye className="h-3 w-3" /> Ver
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(d)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                          title={`Baixar ${friendlyName(d.category, d.fileName)}`}
+                        >
+                          <Download className="h-3 w-3" /> Baixar
+                        </button>
+                      </>
                     ) : (["CRAF", "GTE"].includes(d.category) && d.date) ? (
                       <span
                         className="text-[9px] uppercase tracking-wider text-amber-700"
