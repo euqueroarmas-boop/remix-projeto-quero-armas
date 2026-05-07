@@ -353,6 +353,22 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
         sistema_registro: sistemaFinal,
       }));
 
+      // Snapshot IMUTÁVEL do que a IA extraiu, para auditoria e
+      // bloqueio do salvar até confirmação humana campo a campo.
+      setIaExtraido({
+        numero_documento: campos.numero_documento || "",
+        numero_cad_sinarm: cadSinarmRaw,
+        numero_registro_sigma: sigmaExplicitoRaw,
+        arma_numero_serie: campos.arma_numero_serie || "",
+        arma_marca: campos.arma_marca || "",
+        arma_modelo: campos.arma_modelo || "",
+        arma_calibre: campos.arma_calibre || "",
+        data_validade: dataIsoFromBr(campos.data_validade) || "",
+        sistema_registro: sistemaFinal,
+      });
+      // Tudo começa como NÃO confirmado — exige clique do humano.
+      setConfirmados({});
+
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
       try {
         const { data: extra } = await supabase.functions.invoke("qa-extract-cliente-doc", {
