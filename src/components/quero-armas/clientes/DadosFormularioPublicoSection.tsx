@@ -143,9 +143,11 @@ export default function DadosFormularioPublicoSection({
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] text-slate-500">
-        Verificando vínculo com formulário público...
-      </div>
+      <QAOperationalSection icon={Database} title="Sincronização do Cadastro Público" status="Verificando" statusTone="info">
+        <QAInfoCard padding="sm">
+          <div className="text-[11px] text-slate-500">Verificando vínculo com formulário público…</div>
+        </QAInfoCard>
+      </QAOperationalSection>
     );
   }
   if (!cad) return null;
@@ -363,132 +365,136 @@ export default function DadosFormularioPublicoSection({
     }
   };
 
+  const statusTone = isConferido ? "ok" : total > 0 ? "warn" : "info";
+  const statusLabel = isConferido ? "Conferido" : total > 0 ? `${total} pendência(s)` : "Pendente";
+
   return (
-    <div className="rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] p-3 mb-3">
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <FileText className="h-4 w-4 text-[#7A1F2B] shrink-0" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7A1F2B]">
-            Dados recebidos pelo formulário público
-          </span>
-        </div>
+    <QAOperationalSection
+      icon={Database}
+      title="Sincronização do Cadastro Público"
+      status={<QAStatusChip label={statusLabel} tone={statusTone as any} />}
+      actions={
         <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px]" onClick={() => void load()}>
           <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
         </Button>
-      </div>
+      }
+    >
+      <QAInfoCard padding="md">
+        <QAFieldGrid cols={2}>
+          <QAFieldRow
+            label="Enviado em"
+            value={cad.created_at ? new Date(cad.created_at).toLocaleString("pt-BR") : "—"}
+          />
+          <QAFieldRow label="Origem" value="Formulário público" />
+          <QAFieldRow label="Serviço solicitado" value={cad.servico_interesse || "—"} />
+          <QAFieldRow label="Status do formulário" value={String(cad.status || "—").toUpperCase()} />
+        </QAFieldGrid>
+      </QAInfoCard>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] mb-2">
-        <div>
-          <div className="text-slate-500">Enviado em</div>
-          <div className="font-mono text-slate-800">
-            {cad.created_at ? new Date(cad.created_at).toLocaleString("pt-BR") : "—"}
-          </div>
-        </div>
-        <div>
-          <div className="text-slate-500">Origem</div>
-          <div className="font-semibold text-slate-800">Formulário público</div>
-        </div>
-        <div>
-          <div className="text-slate-500">Serviço solicitado</div>
-          <div className="font-semibold text-slate-800 uppercase">{cad.servico_interesse || "—"}</div>
-        </div>
-        <div>
-          <div className="text-slate-500">Status formulário</div>
-          <div className="font-semibold text-slate-800 uppercase">{cad.status || "—"}</div>
-        </div>
-      </div>
-
-      {total === 0 ? (
-        <div className="flex items-center gap-2 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-1.5">
-          <CheckCircle2 className="h-3.5 w-3.5" />
+      {total === 0 && (
+        <QAAlertBlock tone="ok" icon={CheckCircle2} title="Sincronia completa">
           Todos os dados do formulário já estão refletidos na ficha do cliente.
-        </div>
-      ) : (
-        <>
-          {aplicaveis.length > 0 && (
-            <div className="rounded border border-amber-200 bg-amber-50 p-2 mb-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold text-amber-800">
-                  Dados pendentes de aplicação ({aplicaveis.length})
-                </span>
-                <Button
-                  size="sm"
-                  className="h-7 text-[10px]"
-                  disabled={busy}
-                  onClick={() => void aplicarPendentes()}
-                >
-                  Aplicar todos
-                </Button>
-              </div>
-              <ul className="space-y-0.5">
-                {aplicaveis.map((d) => (
-                  <li key={d.campo} className="text-[11px] text-slate-700">
-                    <span className="font-semibold uppercase">{d.label}:</span>{" "}
-                    <span className="font-mono">{d.valorForm}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        </QAAlertBlock>
+      )}
 
-          {divergentes.length > 0 && (
-            <div className="rounded border border-red-200 bg-red-50 p-2 mb-2">
-              <div className="flex items-center gap-1.5 mb-1.5 text-red-800">
-                <AlertTriangle className="h-3.5 w-3.5" />
-                <span className="text-[11px] font-semibold">
-                  Divergência entre formulário público e cadastro interno ({divergentes.length})
-                </span>
-              </div>
-              <ul className="space-y-1">
-                {divergentes.map((d) => (
-                  <li key={d.campo} className="text-[11px]">
-                    <div className="font-semibold uppercase text-slate-800">{d.label}</div>
-                    <div className="grid grid-cols-2 gap-2 mt-0.5">
-                      <div>
-                        <span className="text-slate-500">Formulário: </span>
-                        <span className="font-mono">{d.valorForm}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">Cadastro oficial: </span>
-                        <span className="font-mono">{d.valorCli}</span>
-                      </div>
-                    </div>
-                    <div className="mt-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-[10px] text-slate-600"
-                        disabled={busy}
-                        onClick={() => void ignorarDivergencia(d)}
-                      >
-                        <X className="h-3 w-3 mr-1" /> Ignorar divergência
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
+      {aplicaveis.length > 0 && (
+        <QAAlertBlock
+          tone="warn"
+          icon={AlertTriangle}
+          title={`Dados pendentes de aplicação (${aplicaveis.length})`}
+          actions={
+            <Button
+              size="sm"
+              className="h-7 text-[10px] bg-[#7A1F2B] hover:bg-[#601521]"
+              disabled={busy}
+              onClick={() => void aplicarPendentes()}
+            >
+              Aplicar todos
+            </Button>
+          }
+        >
+          <ul className="space-y-0.5 mt-1">
+            {aplicaveis.map((d) => (
+              <li key={d.campo} className="text-[11px]">
+                <span className="font-bold uppercase">{d.label}:</span>{" "}
+                <span className="font-mono">{d.valorForm}</span>
+              </li>
+            ))}
+          </ul>
+        </QAAlertBlock>
+      )}
+
+      {divergentes.length > 0 && (
+        <QAAlertBlock
+          tone="danger"
+          icon={AlertTriangle}
+          title={`Divergência com cadastro interno (${divergentes.length})`}
+        >
+          <ul className="space-y-2 mt-1">
+            {divergentes.map((d) => (
+              <li key={d.campo} className="rounded-md border border-red-200 bg-white px-2 py-1.5">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-red-800">{d.label}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1 text-[11px]">
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-slate-500 block">Formulário</span>
+                    <span className="font-mono text-slate-700">{d.valorForm}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-slate-500 block">Cadastro oficial</span>
+                    <span className="font-mono text-slate-700">{d.valorCli}</span>
+                  </div>
+                </div>
+                <div className="mt-1.5">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-[10px] text-slate-600"
+                    disabled={busy}
+                    onClick={() => void ignorarDivergencia(d)}
+                  >
+                    <X className="h-3 w-3 mr-1" /> Ignorar divergência
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </QAAlertBlock>
       )}
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-1">
         {isConferido && (
           <>
-            <Button size="sm" variant="outline" className="h-8 text-[10px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100" disabled={busy} onClick={() => void removerConferencia()}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-[10px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+              disabled={busy}
+              onClick={() => void removerConferencia()}
+            >
               <RefreshCw className="h-3 w-3 mr-1" /> Remover conferência
             </Button>
-            <Button size="sm" className="h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700" disabled={busy} onClick={() => void aprovarCadastro()}>
+            <Button
+              size="sm"
+              className="h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700"
+              disabled={busy}
+              onClick={() => void aprovarCadastro()}
+            >
               <ShieldCheck className="h-3 w-3 mr-1" /> Aprovar e sincronizar tudo
             </Button>
           </>
         )}
         {!isConferido && (
-          <Button size="sm" variant="outline" className="h-8 text-[10px]" disabled={busy} onClick={() => void marcarConferido()}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-[10px]"
+            disabled={busy}
+            onClick={() => void marcarConferido()}
+          >
             <CheckCircle2 className="h-3 w-3 mr-1" /> Marcar formulário como conferido
           </Button>
         )}
       </div>
-    </div>
+    </QAOperationalSection>
   );
 }
