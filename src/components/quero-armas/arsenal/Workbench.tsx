@@ -180,7 +180,9 @@ function WeaponCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group relative w-full overflow-hidden rounded-2xl border-2 ${borderColor} bg-white text-left transition-all hover:-translate-y-[2px] ${c.glow} ${c.ring}`}
+      className={`group relative flex w-full flex-col overflow-hidden rounded-2xl border-2 ${borderColor} bg-white text-left transition-all hover:-translate-y-[2px] ${c.glow} ${c.ring} ${
+        isSm ? "min-h-[260px]" : isMd ? "min-h-[440px]" : "min-h-[520px]"
+      }`}
     >
       {/* Cinematic background */}
       <div
@@ -212,8 +214,8 @@ function WeaponCard({
         <div className="absolute bottom-2 right-2 h-3 w-6 border-b border-r border-slate-300" />
       </div>
 
-      <div className={`relative ${isSm ? "p-2" : isMd ? "p-3" : "p-4"}`}>
-        <div className={`flex items-start justify-between ${isSm ? "gap-1.5" : "gap-3"}`}>
+      <div className={`relative flex h-full flex-1 flex-col ${isSm ? "p-2" : isMd ? "p-3" : "p-4"}`}>
+        <div className={`flex items-start justify-between ${isSm ? "gap-1.5" : "gap-3"} ${isSm ? "" : isMd ? "min-h-[64px]" : "min-h-[72px]"}`}>
           <div className="min-w-0 flex-1">
             <div className={`flex flex-wrap items-center ${isSm ? "gap-1" : "gap-1.5"}`}>
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${c.dot} animate-pulse`} />
@@ -321,16 +323,22 @@ function WeaponCard({
         </div>
 
         {/* Mini stats armory */}
-        {catalog && !isSm && (
-          <div className="grid grid-cols-3 gap-2 border-t border-slate-200 pt-2">
-            <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
-            <MiniStat label="PRC" value={catalog.stat_precisao} color="#0ea5e9" />
-            <MiniStat label="MOB" value={catalog.stat_mobilidade} color="#10b981" />
+        {!isSm && (
+          <div className="grid min-h-[44px] grid-cols-3 gap-2 border-t border-slate-200 pt-2">
+            {catalog ? (
+              <>
+                <MiniStat label="DMG" value={catalog.stat_dano} color="#ef4444" />
+                <MiniStat label="PRC" value={catalog.stat_precisao} color="#0ea5e9" />
+                <MiniStat label="MOB" value={catalog.stat_mobilidade} color="#10b981" />
+              </>
+            ) : (
+              <div className="col-span-3" />
+            )}
           </div>
         )}
 
         {!isSm && (
-          <div className={`mt-2 grid grid-cols-3 gap-2 border-t border-slate-200 pt-2 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
+          <div className={`mt-2 grid min-h-[44px] grid-cols-3 gap-2 border-t border-slate-200 pt-2 ${isMd ? "text-[9px]" : "text-[10px]"}`}>
             <div>
               <div className="font-mono text-[9px] uppercase tracking-wider text-slate-400">CAL</div>
               <div className="font-bold text-slate-800">{calibre}</div>
@@ -346,7 +354,7 @@ function WeaponCard({
           </div>
         )}
 
-        <div className={`mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-200 pt-2 ${isSm ? "text-[7px]" : isMd ? "text-[9px]" : "text-[10px]"}`}>
+        <div className={`mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-200 pt-2 ${isSm ? "text-[7px]" : isMd ? "text-[9px] min-h-[56px] content-start" : "text-[10px] min-h-[60px] content-start"}`}>
           <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-bold uppercase tracking-wider ${w.hasCraf ? "bg-emerald-50 text-emerald-700" : w.crafStatus === "revisar" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-red-700"}`}>
             CRAF · {w.crafLabel || (w.hasCraf ? "VÁLIDO" : "AUSENTE")}
           </span>
@@ -415,7 +423,7 @@ function WeaponCard({
         </div>
 
         {!isSm && (
-          <div className="mt-3 flex items-center justify-between text-[10px] text-slate-400">
+          <div className="mt-auto flex items-center justify-between pt-3 text-[10px] text-slate-400">
             <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#7A1F2B] ml-auto">
               INSPECIONAR <ChevronRight className="h-3 w-3" />
             </span>
