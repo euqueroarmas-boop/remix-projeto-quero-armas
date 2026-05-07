@@ -49,6 +49,9 @@ import SolicitarCorrecaoModal, {
   type SolicitarCorrecaoPayload,
 } from "@/components/quero-armas/cadastro-publico/SolicitarCorrecaoModal";
 import HistoricoEventosPanel from "@/components/quero-armas/cadastro-publico/HistoricoEventosPanel";
+import DocumentosOperacionaisGrid from "@/components/quero-armas/cadastro-publico/DocumentosOperacionaisGrid";
+import OrigemCadastroBloco from "@/components/quero-armas/cadastro-publico/OrigemCadastroBloco";
+import BlocoSecao from "@/components/quero-armas/cadastro-publico/BlocoSecao";
 import {
   computeConferenciaStatus,
   decidirProximaAcao,
