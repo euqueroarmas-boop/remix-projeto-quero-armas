@@ -91,7 +91,10 @@ const tool = {
             data_emissao: { type: "string", description: "DD/MM/AAAA" },
             data_validade: { type: "string", description: "DD/MM/AAAA" },
             arma_marca: { type: "string" },
-            arma_modelo: { type: "string" },
+            arma_modelo: {
+              type: "string",
+              description: "Modelo comercial somente se estiver escrito explicitamente no documento. NÃO preencher com TIPO/espécie (PISTOLA, REVÓLVER, CARABINA etc.), NÃO deduzir por número de série, calibre, marca ou catálogo. Se não houver modelo explícito, devolver vazio.",
+            },
             arma_calibre: { type: "string" },
             arma_numero_serie: { type: "string" },
             sigma_ou_sinarm: { type: "string" },
@@ -146,6 +149,7 @@ const SYSTEM_PROMPT = [
   "• Extraia EXATAMENTE como está escrito no documento. NÃO troque letras por números nem números por letras.",
   "• NÃO transforme 'O' em '0', 'I' em '1', 'S' em '5', 'B' em '8' sem ter certeza visual absoluta.",
   "• NÃO invente, NÃO complete por dedução, NÃO normalize números de série/SIGMA/SINARM/CPF/CNPJ/calibre/validade.",
+  "• CAMPO MODELO: só preencha arma_modelo quando o modelo comercial estiver escrito explicitamente no documento. Nunca deduza por nº de série, marca, calibre, catálogo ou parser. TIPO/espécie ('PISTOLA', 'REVÓLVER', 'CARABINA', etc.) NÃO é modelo; nesses casos deixe arma_modelo vazio e use arma_especie se aplicável.",
   "• Se um caractere estiver ilegível, deixe o campo INTEIRO vazio (não substitua por '?', '_' ou aproximação).",
   "• Datas em DD/MM/AAAA exatamente como aparecem (se faltar dia, mês ou ano, deixe vazio).",
   "• Em caso de dúvida, prefira deixar vazio a inventar.",
@@ -166,7 +170,7 @@ const SYSTEM_PROMPT = [
   "• A parte inferior do CRAF SIGMA é uma TABELA. Os cabeçalhos típicos são, em duas linhas: ['REGISTRO','TIPO','MARCA'] e ['CALIBRE','Nº SÉRIE','Nº SIGMA'], seguidos por 'DATA DE EXPEDIÇÃO'. É OBRIGATÓRIO mapear cada célula da tabela ao campo correspondente, alinhando por coluna (mesma posição horizontal do cabeçalho), não por ordem de leitura linear.",
   "• Mapeamento OBRIGATÓRIO da tabela CRAF SIGMA:",
   "  - Coluna REGISTRO → numero_documento (ex.: 'ADT ELET SISFPC NR 219 DE 19/09/2022, CMDO 12ª BDA INF L (AMV)'). Copie o texto INTEIRO da célula, incluindo vírgulas e siglas.",
-  "  - Coluna TIPO → arma_modelo SE não houver outro modelo claro; caso contrário deixe arma_modelo vazio. Sempre que possível, registre o tipo (ex.: 'PISTOLA') no campo arma_modelo apenas quando for o único descritor.",
+  "  - Coluna TIPO → arma_especie (ex.: 'PISTOLA'). NUNCA preencher arma_modelo com TIPO. Se não houver coluna/campo MODELO explícito, deixe arma_modelo vazio.",
   "  - Coluna MARCA → arma_marca (ex.: 'FORJAS TAURUS').",
   "  - Coluna CALIBRE → arma_calibre (ex.: '22 Long Rifle', '.40', '9mm'). Preserve grafia original.",
   "  - Coluna Nº SÉRIE → arma_numero_serie (ex.: '1PT397656'). Letras maiúsculas e dígitos exatos.",
@@ -176,7 +180,7 @@ const SYSTEM_PROMPT = [
   "• Proprietário/CPF/SFPC: 'SFPC de vinculação' (ex.: 'Cmdo 2ª RM') vai em orgao_emissor. Não invente modelos de arma — se a tabela só trouxer TIPO (ex.: 'PISTOLA') e não houver coluna MODELO, deixe arma_modelo vazio.",
   "EXEMPLO CONCRETO de CRAF SIGMA:",
   "  Documento mostra: 'Ministério da Defesa — Exército Brasileiro — Certificado de Registro de Arma de Fogo', 'Validade: 19/09/2032', 'Proprietário: Willian Rodrigues da Silva', 'CPF: 37799538899', 'SFPC de vinculação: Cmdo 2ª RM', tabela com 'REGISTRO=ADT ELET SISFPC NR 219 DE 19/09/2022, CMDO 12ª BDA INF L (AMV)', 'TIPO=PISTOLA', 'MARCA=FORJAS TAURUS', 'CALIBRE=22 Long Rifle', 'Nº SÉRIE=1PT397656', 'Nº SIGMA=2093581', 'DATA DE EXPEDIÇÃO=19/09/2022'.",
-  "  Resposta correta: tipoDetectado='CRAF', sistema_registro='SIGMA', numero_cad_sinarm='', numero_registro_sigma='2093581', numero_documento='ADT ELET SISFPC NR 219 DE 19/09/2022, CMDO 12ª BDA INF L (AMV)', arma_marca='FORJAS TAURUS', arma_modelo='PISTOLA', arma_calibre='22 Long Rifle', arma_numero_serie='1PT397656', data_emissao='19/09/2022', data_validade='19/09/2032', orgao_emissor='Cmdo 2ª RM'.",
+  "  Resposta correta: tipoDetectado='CRAF', sistema_registro='SIGMA', numero_cad_sinarm='', numero_registro_sigma='2093581', numero_documento='ADT ELET SISFPC NR 219 DE 19/09/2022, CMDO 12ª BDA INF L (AMV)', arma_especie='PISTOLA', arma_marca='FORJAS TAURUS', arma_modelo='', arma_calibre='22 Long Rifle', arma_numero_serie='1PT397656', data_emissao='19/09/2022', data_validade='19/09/2032', orgao_emissor='Cmdo 2ª RM'.",
   "Responda EXCLUSIVAMENTE chamando a função classificar_documento_arma.",
 ].join("\n");
 
