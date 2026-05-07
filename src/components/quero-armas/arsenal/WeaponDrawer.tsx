@@ -1,4 +1,4 @@
-import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2, Eye } from "lucide-react";
+import { X, ShieldCheck, Calendar, Hash, FileBadge, Crosshair, Layers, AlertTriangle, Gauge, Weight, Ruler, Zap, MapPin, BadgeCheck, Trash2, Loader2, Eye, Download } from "lucide-react";
 import { WeaponSilhouette } from "./WeaponSilhouette";
 import { backgroundForKind, renderForKind } from "./weaponAssets";
 import {
@@ -18,6 +18,7 @@ import type { WorkbenchWeapon } from "./Workbench";
 import { useArmamentoCatalogo, type ArmamentoCatalogo } from "./useArmamentoCatalogo";
 import { useEffect, useMemo, useState } from "react";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RelatedDoc {
   category: string;
@@ -86,6 +87,48 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
 
   if (!open || !weapon || !info) return null;
   const tone = urgencyTone(weapon.daysToExpire);
+
+  const sanitizeFs = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^A-Za-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .toUpperCase();
+
+  const friendlyName = (category: string, originalName?: string | null) => {
+    const ext = (() => {
+      const m = (originalName || "").match(/\.([A-Za-z0-9]{2,5})$/);
+      return m ? `.${m[1].toLowerCase()}` : ".pdf";
+    })();
+    const marca = (catalog?.marca || info?.marca || "").trim();
+    const modelo = (catalog?.modelo || info?.modelo || weapon!.nome_arma || "").trim();
+    const serie = (weapon!.numero_arma || weapon!.numero_sigma || "").trim();
+    const parts = [category.toUpperCase(), marca, modelo].filter(Boolean).map(sanitizeFs).filter(Boolean);
+    if (serie) parts.push(`SERIE_${sanitizeFs(serie)}`);
+    return `${parts.join("_") || "DOCUMENTO"}${ext}`;
+  };
+
+  const handleDownload = async (d: RelatedDoc) => {
+    if (!d.path) return;
+    try {
+      const { data, error } = await supabase.storage
+        .from(d.bucket || "qa-documentos")
+        .download(d.path);
+      if (error || !data) throw error || new Error("download_failed");
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = friendlyName(d.category, d.fileName);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao baixar arquivo.");
+    }
+  };
+
   const accent =
     tone === "ok"
       ? TACTICAL.ok
@@ -504,14 +547,24 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                   </div>
                   <div className="flex items-center gap-2">
                     {d.path ? (
-                      <button
-                        type="button"
-                        onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: d.fileName || undefined, title: `${d.category} · ${d.fileName || d.title}` })}
-                        className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                        title="Visualizar arquivo original"
-                      >
-                        <Eye className="h-3 w-3" /> Ver
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: friendlyName(d.category, d.fileName), title: `${d.category} · ${d.title}` })}
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                          title="Visualizar arquivo original"
+                        >
+                          <Eye className="h-3 w-3" /> Ver
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDownload(d)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                          title={`Baixar ${friendlyName(d.category, d.fileName)}`}
+                        >
+                          <Download className="h-3 w-3" /> Baixar
+                        </button>
+                      </>
                     ) : (["CRAF", "GTE"].includes(d.category) && d.date) ? (
                       <span
                         className="text-[9px] uppercase tracking-wider text-amber-700"

@@ -879,9 +879,13 @@ export function ArsenalView({
     };
     (link?.crafMatches || []).forEach((c) => {
       const f = findDocFile(link?.crafMatches || [], c, "craf");
+      const titulo = c.nome_arma
+        || [c.arma_marca, c.arma_modelo].filter(Boolean).join(" ").trim()
+        || c.nome_craf
+        || (c.numero_documento ? `CRAF ${c.numero_documento}` : "CRAF vinculado");
       out.push({
         category: "CRAF",
-        title: c.nome_arma || c.nome_craf || "CRAF vinculado",
+        title: titulo,
         date: c.data_validade,
         bucket: "qa-documentos",
         path: f.path,
@@ -890,9 +894,13 @@ export function ArsenalView({
     });
     (link?.gteMatches || []).forEach((g) => {
       const f = findDocFile(link?.gteMatches || [], g, "gte");
+      const titulo = g.nome_arma
+        || [g.arma_marca, g.arma_modelo].filter(Boolean).join(" ").trim()
+        || g.nome_gte
+        || (g.numero_documento ? `GTE ${g.numero_documento}` : "GTE vinculada");
       out.push({
         category: "GTE",
-        title: g.nome_arma || g.nome_gte || "GTE vinculada",
+        title: titulo,
         date: g.data_validade,
         bucket: "qa-documentos",
         path: f.path,
