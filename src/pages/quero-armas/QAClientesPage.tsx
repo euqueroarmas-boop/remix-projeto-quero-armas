@@ -55,6 +55,12 @@ import DocumentosOperacionaisGrid from "@/components/quero-armas/cadastro-public
 import OrigemCadastroBloco from "@/components/quero-armas/cadastro-publico/OrigemCadastroBloco";
 import BlocoSecao from "@/components/quero-armas/cadastro-publico/BlocoSecao";
 import {
+  QAOperationalSection,
+  QAInfoCard,
+  QAFieldRow,
+  QAFieldGrid,
+} from "@/components/quero-armas/qa-operational";
+import {
   computeConferenciaStatus,
   decidirProximaAcao,
   listarPendenciasCadastro,
