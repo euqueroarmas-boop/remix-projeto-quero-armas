@@ -234,6 +234,36 @@ function Field({
 const inputClassName =
   "h-11 rounded-xl border border-input bg-background text-foreground shadow-sm transition-all placeholder:text-muted-foreground/55 hover:border-foreground/15 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/25 focus-visible:ring-offset-0";
 
+/** Badge inline de confirmação humana de um campo sensível extraído pela IA. */
+function ConfirmBadge({
+  extraido,
+  confirmado,
+  onConfirm,
+}: {
+  extraido: string | undefined | null;
+  confirmado: boolean | undefined;
+  onConfirm: () => void;
+}) {
+  if (!extraido) return null;
+  if (confirmado) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+        <CheckCircle2 className="h-3 w-3" /> Confirmado
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onConfirm}
+      className="inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 hover:bg-amber-300"
+      title={`Valor extraído pela IA: ${extraido}`}
+    >
+      <AlertTriangle className="h-3 w-3" /> Confirmar
+    </button>
+  );
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
