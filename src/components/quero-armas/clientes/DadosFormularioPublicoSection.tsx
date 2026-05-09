@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X, ShieldCheck, Database } from "lucide-react";
+import { CheckCircle2, AlertTriangle, FileText, RefreshCw, X, ShieldCheck, Database, ListChecks } from "lucide-react";
 import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import {
   QAOperationalSection,
@@ -113,9 +113,15 @@ function diff(form: Cad, cli: Cli): { aplicaveis: Diferenca[]; divergentes: Dife
 export default function DadosFormularioPublicoSection({
   cliente,
   onApplied,
+  cadastroInterno,
+  onVerPendencias,
 }: {
   cliente: { id: number; cadastro_publico_id?: string | null; customer_id?: string | null; user_id?: string | null } & Cli;
   onApplied?: () => void;
+  /** Completude do cadastro interno (separado da sincronização do formulário). */
+  cadastroInterno?: { preenchidos: number; total: number };
+  /** Callback p/ rolar/abrir pendências quando aprovado mas incompleto. */
+  onVerPendencias?: () => void;
 }) {
   const [cad, setCad] = useState<Cad | null>(null);
   const [loading, setLoading] = useState(true);
@@ -154,9 +160,12 @@ export default function DadosFormularioPublicoSection({
 
   const { aplicaveis, divergentes } = diff(cad, cliente);
   const total = aplicaveis.length + divergentes.length;
-  const isConferido = ["conferido", "formulario_conferido", "aprovado"].includes(
-    String(cad.status || "").toLowerCase(),
-  );
+  const statusCad = String(cad.status || "").toLowerCase();
+  const isAprovado = statusCad === "aprovado";
+  const isConferido = ["conferido", "formulario_conferido", "aprovado"].includes(statusCad);
+  // Sincronização efetivamente concluída: aprovado e sem divergência pendente.
+  const sincronizacaoConcluida = isAprovado && divergentes.length === 0 && aplicaveis.length === 0;
+  const cadastroIncompleto = !!cadastroInterno && cadastroInterno.preenchidos < cadastroInterno.total;
 
   const audit = async (acao: string, extra: Partial<Record<string, any>> = {}) => {
     try {
@@ -372,7 +381,23 @@ export default function DadosFormularioPublicoSection({
     <QAOperationalSection
       icon={Database}
       title="Sincronização do Cadastro Público"
-      status={<QAStatusChip label={statusLabel} tone={statusTone as any} />}
+      status={
+        <span className="inline-flex items-center gap-1.5 flex-wrap">
+          <QAStatusChip label={statusLabel} tone={statusTone as any} />
+          {cadastroInterno && (
+            <>
+              <QAStatusChip
+                label={cadastroIncompleto ? "Incompleto" : "Completo"}
+                tone={cadastroIncompleto ? "warn" : "ok"}
+              />
+              <QAStatusChip
+                label={`${cadastroInterno.preenchidos}/${cadastroInterno.total} preenchidos`}
+                tone="neutral"
+              />
+            </>
+          )}
+        </span>
+      }
       actions={
         <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px]" onClick={() => void load()}>
           <RefreshCw className="h-3 w-3 mr-1" /> Atualizar
@@ -392,8 +417,14 @@ export default function DadosFormularioPublicoSection({
       </QAInfoCard>
 
       {total === 0 && (
-        <QAAlertBlock tone="ok" icon={CheckCircle2} title="Sincronia completa">
-          Todos os dados do formulário já estão refletidos na ficha do cliente.
+        <QAAlertBlock
+          tone="ok"
+          icon={CheckCircle2}
+          title={cadastroIncompleto ? "Sincronização concluída" : "Sincronia completa"}
+        >
+          {cadastroIncompleto
+            ? "Os dados do formulário foram sincronizados com a ficha do cliente, porém ainda existem campos obrigatórios pendentes no cadastro."
+            : "Todos os dados do formulário já estão refletidos na ficha do cliente."}
         </QAAlertBlock>
       )}
 
@@ -463,25 +494,45 @@ export default function DadosFormularioPublicoSection({
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-1">
         {isConferido && (
-          <>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-[10px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
-              disabled={busy}
-              onClick={() => void removerConferencia()}
-            >
-              <RefreshCw className="h-3 w-3 mr-1" /> Remover conferência
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700"
-              disabled={busy}
-              onClick={() => void aprovarCadastro()}
-            >
-              <ShieldCheck className="h-3 w-3 mr-1" /> Aprovar e sincronizar tudo
-            </Button>
-          </>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-[10px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+            disabled={busy}
+            onClick={() => void removerConferencia()}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" /> Remover conferência
+          </Button>
+        )}
+        {/* Aprovar e sincronizar tudo: só quando ainda há algo a sincronizar/aprovar */}
+        {isConferido && !isAprovado && (
+          <Button
+            size="sm"
+            className="h-8 text-[10px] bg-emerald-600 hover:bg-emerald-700"
+            disabled={busy}
+            onClick={() => void aprovarCadastro()}
+          >
+            <ShieldCheck className="h-3 w-3 mr-1" /> Aprovar e sincronizar tudo
+          </Button>
+        )}
+        {/* Aprovado + cadastro interno incompleto -> CTA específico de pendências */}
+        {sincronizacaoConcluida && cadastroIncompleto && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-[10px] border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+            onClick={() => onVerPendencias?.()}
+          >
+            <ListChecks className="h-3 w-3 mr-1" /> Ver pendências
+          </Button>
+        )}
+        {/* Aprovado + completo -> apenas chip de status, sem ação */}
+        {sincronizacaoConcluida && !cadastroIncompleto && (
+          <QAStatusChip label="Cadastro completo" tone="ok" icon={CheckCircle2} />
+        )}
+        {/* Divergência pendente após aprovação -> ação específica */}
+        {isAprovado && divergentes.length > 0 && (
+          <QAStatusChip label="Revisar divergências" tone="danger" icon={AlertTriangle} />
         )}
         {!isConferido && (
           <Button
