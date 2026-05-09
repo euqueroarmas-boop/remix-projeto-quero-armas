@@ -1777,6 +1777,60 @@ function Step3Review({
         </div>
       </ReviewBlock>
 
+      {/* ─── Bloco 5b — Comprovante de endereço (titular ou terceiro) ─── */}
+      <ReviewBlock title="Comprovante de endereço" icon={MapPin}>
+        <div className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color: "hsl(220 20% 22%)" }}>
+          O comprovante de endereço está no seu nome?
+        </div>
+        <div className="flex gap-2">
+          {(["sim", "nao"] as const).map((v) => {
+            const active = (data as any).comprovante_endereco_em_nome_proprio === v;
+            return (
+              <button
+                key={v}
+                type="button"
+                onClick={() => set("comprovante_endereco_em_nome_proprio" as any, v)}
+                className={`flex-1 h-10 rounded-md border text-[12px] font-bold uppercase tracking-wider transition-colors ${active ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-slate-700 border-slate-300 hover:border-[#7A1F2B]"}`}
+              >
+                {v === "sim" ? "Sim" : "Não"}
+              </button>
+            );
+          })}
+        </div>
+        {(data as any).comprovante_endereco_em_nome_proprio === "nao" && (
+          <div className="mt-2 space-y-2 rounded-md border border-amber-200 bg-amber-50/40 p-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900">
+              Responsável pelo comprovante (terceiro)
+            </div>
+            <ReviewField label="Nome completo do responsável"
+              value={(data as any).responsavel_endereco_nome || ""}
+              onChange={(v) => set("responsavel_endereco_nome" as any, v)} required />
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="CPF do responsável"
+                value={(data as any).responsavel_endereco_cpf || ""}
+                onChange={(v) => set("responsavel_endereco_cpf" as any, v)} required />
+              <ReviewField label="RG / CIN"
+                value={(data as any).responsavel_endereco_rg_cin || ""}
+                onChange={(v) => set("responsavel_endereco_rg_cin" as any, v)} required />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="Telefone"
+                value={(data as any).responsavel_endereco_telefone || ""}
+                onChange={(v) => set("responsavel_endereco_telefone" as any, maskTel(v))} required />
+              <ReviewField label="E-mail (opcional)"
+                value={(data as any).responsavel_endereco_email || ""}
+                onChange={(v) => set("responsavel_endereco_email" as any, v)} />
+            </div>
+            <ReviewField label="Vínculo com você (pai, mãe, cônjuge, locador…)"
+              value={(data as any).responsavel_endereco_vinculo || ""}
+              onChange={(v) => set("responsavel_endereco_vinculo" as any, v)} required />
+            <p className="text-[10px] leading-snug text-amber-900/80">
+              Anexe a <strong>declaração de residência</strong> e o <strong>comprovante em nome do responsável</strong> nos uploads de documentos.
+            </p>
+          </div>
+        )}
+      </ReviewBlock>
+
       {/* ─── Bloco 6 — Dados profissionais ─── */}
       <ReviewBlock title="Dados profissionais" icon={Briefcase}>
         <ReviewSelect
