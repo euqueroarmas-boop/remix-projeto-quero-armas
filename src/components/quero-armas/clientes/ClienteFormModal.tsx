@@ -1154,6 +1154,65 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 </div>
             </section>
 
+            {/* ── Bloco: Comprovante de Endereço (titular ou terceiro) ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={FileBadge} label="Comprovante de Endereço" />
+              <div>
+                <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide">
+                  O comprovante de endereço está no nome do cliente?
+                </label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {([
+                    { v: "sim", label: "Sim, está no nome do cliente" },
+                    { v: "nao", label: "Não, está no nome de terceiro" },
+                  ] as const).map(({ v, label }) => {
+                    const active = f.comprovante_endereco_em_nome_proprio === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => set("comprovante_endereco_em_nome_proprio", v)}
+                        className={cn(
+                          "h-10 rounded-md border text-[12px] font-bold uppercase tracking-wider transition-colors",
+                          active
+                            ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
+                            : "bg-white text-zinc-700 border-zinc-200 hover:border-[#7A1F2B]"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {f.comprovante_endereco_em_nome_proprio === "nao" && (
+                <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50/40 p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-amber-900">
+                    Responsável pelo comprovante (terceiro)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Nome do Responsável *" value={f.responsavel_endereco_nome} onChange={v => set("responsavel_endereco_nome", v)} span />
+                    <FInput label="Vínculo *" value={f.responsavel_endereco_vinculo} onChange={v => set("responsavel_endereco_vinculo", v)} placeholder="Pai, mãe, cônjuge, locador…" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="CPF do Responsável *" value={f.responsavel_endereco_cpf} onChange={v => set("responsavel_endereco_cpf", v)} inputMode="numeric" />
+                    <FInput label="RG / CIN *" value={f.responsavel_endereco_rg_cin} onChange={v => set("responsavel_endereco_rg_cin", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Telefone *" value={f.responsavel_endereco_telefone} onChange={v => set("responsavel_endereco_telefone", v)} placeholder="(00) 00000-0000" />
+                    <FInput label="E-mail" value={f.responsavel_endereco_email} onChange={v => set("responsavel_endereco_email", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Caminho da Declaração de Residência" value={f.responsavel_endereco_declaracao_path} onChange={v => set("responsavel_endereco_declaracao_path", v)} placeholder="Ex.: clientes/declaracoes/123.pdf" />
+                    <FInput label="Caminho do Comprovante (em nome do responsável)" value={f.responsavel_endereco_comprovante_path} onChange={v => set("responsavel_endereco_comprovante_path", v)} placeholder="Ex.: clientes/comprovantes/123.pdf" />
+                  </div>
+                  <p className="text-[10px] leading-snug text-amber-900/80 uppercase">
+                    Os arquivos devem ser enviados pelo módulo de Documentos do cliente. Os caminhos acima vinculam os arquivos enviados ao bloco do responsável.
+                  </p>
+                </div>
+              )}
+            </section>
+
             {/* ── Bloco: Endereço Secundário ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
@@ -1172,6 +1231,34 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
                   <FSelect label="UF" value={f.estado2} onChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FSelect
+                    label="Tipo do 2º Endereço"
+                    value={f.end2_tipo}
+                    onChange={v => set("end2_tipo", v)}
+                    options={[
+                      { value: "RURAL", label: "Rural" },
+                      { value: "URBANO", label: "Urbano" },
+                      { value: "COMERCIAL", label: "Comercial" },
+                      { value: "TRABALHO", label: "Trabalho" },
+                      { value: "TEMPORADA", label: "Temporada" },
+                      { value: "LAZER", label: "Lazer" },
+                      { value: "OUTRO", label: "Outro" },
+                    ]}
+                    placeholder="Selecionar..."
+                  />
+                  <div className="sm:col-span-2">
+                    <Field label="Observação do 2º Endereço">
+                      <textarea
+                        value={f.end2_observacao}
+                        onChange={e => set("end2_observacao", e.target.value)}
+                        rows={2}
+                        className={cn(inputClass, "h-auto py-2 resize-y")}
+                        placeholder="Detalhes do imóvel, referência, finalidade…"
+                      />
+                    </Field>
+                  </div>
                 </div>
                 <div>
                   <FInput
