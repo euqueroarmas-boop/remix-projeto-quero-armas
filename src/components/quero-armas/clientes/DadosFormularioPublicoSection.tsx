@@ -58,6 +58,26 @@ const MAPA: Array<{ campoForm: string; colunaCli: string; label: string }> = [
   { campoForm: "nome_pai", colunaCli: "nome_pai", label: "Nome do pai" },
   { campoForm: "rg", colunaCli: "rg", label: "RG" },
   { campoForm: "emissor_rg", colunaCli: "emissor_rg", label: "Órgão emissor RG" },
+  // Comprovante / responsável terceiro
+  { campoForm: "comprovante_endereco_em_nome_proprio", colunaCli: "comprovante_endereco_em_nome_proprio", label: "Comprovante em nome próprio" },
+  { campoForm: "responsavel_endereco_nome", colunaCli: "responsavel_endereco_nome", label: "Responsável pelo comprovante" },
+  { campoForm: "responsavel_endereco_cpf", colunaCli: "responsavel_endereco_cpf", label: "CPF do responsável" },
+  { campoForm: "responsavel_endereco_rg_cin", colunaCli: "responsavel_endereco_rg_cin", label: "RG/CIN do responsável" },
+  { campoForm: "responsavel_endereco_telefone", colunaCli: "responsavel_endereco_telefone", label: "Telefone do responsável" },
+  { campoForm: "responsavel_endereco_email", colunaCli: "responsavel_endereco_email", label: "E-mail do responsável" },
+  { campoForm: "responsavel_endereco_vinculo", colunaCli: "responsavel_endereco_vinculo", label: "Vínculo do responsável" },
+  { campoForm: "responsavel_endereco_declaracao_path", colunaCli: "responsavel_endereco_declaracao_path", label: "Declaração de residência" },
+  { campoForm: "responsavel_endereco_comprovante_path", colunaCli: "responsavel_endereco_comprovante_path", label: "Comprovante (responsável)" },
+  // Segundo endereço
+  { campoForm: "end2_cep", colunaCli: "cep2", label: "CEP (2º endereço)" },
+  { campoForm: "end2_logradouro", colunaCli: "endereco2", label: "Logradouro (2º)" },
+  { campoForm: "end2_numero", colunaCli: "numero2", label: "Número (2º)" },
+  { campoForm: "end2_complemento", colunaCli: "complemento2", label: "Complemento (2º)" },
+  { campoForm: "end2_bairro", colunaCli: "bairro2", label: "Bairro (2º)" },
+  { campoForm: "end2_cidade", colunaCli: "cidade2", label: "Cidade (2º)" },
+  { campoForm: "end2_estado", colunaCli: "estado2", label: "UF (2º)" },
+  { campoForm: "end2_tipo", colunaCli: "end2_tipo", label: "Tipo do 2º endereço" },
+  { campoForm: "end2_observacao", colunaCli: "end2_observacao", label: "Observação 2º endereço" },
 ];
 
 function diff(form: Cad, cli: Cli): { aplicaveis: Diferenca[]; divergentes: Diferenca[] } {

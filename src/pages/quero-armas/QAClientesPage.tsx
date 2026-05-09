@@ -2484,6 +2484,14 @@ export default function QAClientesPage() {
   // ── Detail View ──
   if (selected) {
     const c = selected;
+    const cadastroCompleteness = computeCadastroCompleteness(c as any);
+    const exigeResponsavelTerceiro =
+      String((c as any).comprovante_endereco_em_nome_proprio || "").toLowerCase() === "nao";
+    const temResponsavelTerceiroDado = [
+      "responsavel_endereco_nome", "responsavel_endereco_cpf", "responsavel_endereco_rg_cin",
+      "responsavel_endereco_telefone", "responsavel_endereco_email", "responsavel_endereco_vinculo",
+      "responsavel_endereco_declaracao_path", "responsavel_endereco_comprovante_path",
+    ].some((k) => (c as any)?.[k]);
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
         {/* Header — padrão ARSENAL (Premium KPI cluster) */}
@@ -2580,19 +2588,11 @@ export default function QAClientesPage() {
 
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
-                {(() => null)()}
-                {/* completude do cadastro interno */}
-                {/* eslint-disable-next-line react-hooks/rules-of-hooks */}
-                {(() => {
-                  const _comp = computeCadastroCompleteness(c as any);
-                  (c as any).__completeness = _comp;
-                  return null;
-                })()}
                 <DadosFormularioPublicoSection
                     cliente={c as any}
                     cadastroInterno={{
-                      preenchidos: (c as any).__completeness.preenchidos,
-                      total: (c as any).__completeness.total,
+                      preenchidos: cadastroCompleteness.preenchidos,
+                      total: cadastroCompleteness.total,
                     }}
                     onVerPendencias={() => {
                       const el = document.querySelector('[data-pendente="true"]') as HTMLElement | null;
@@ -2604,14 +2604,12 @@ export default function QAClientesPage() {
                     }}
                 />
 
-                {/* helper: chip de completude por seção */}
-                {(() => null)()}
                 {/* IDENTIFICAÇÃO */}
                 <QAOperationalSection
                   icon={User}
                   title="Identificação"
                   status={(() => {
-                    const s = (c as any).__completeness.secoes.identificacao;
+                    const s = cadastroCompleteness.secoes.identificacao;
                     return (
                       <QAStatusChip
                         label={`${s.preenchidos}/${s.total} preenchidos`}
@@ -2660,7 +2658,7 @@ export default function QAClientesPage() {
                   icon={User}
                   title="Filiação"
                   status={(() => {
-                    const s = (c as any).__completeness.secoes.filiacao;
+                    const s = cadastroCompleteness.secoes.filiacao;
                     return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
                   })()}
                 >
@@ -2677,7 +2675,7 @@ export default function QAClientesPage() {
                   icon={Phone}
                   title="Contato"
                   status={(() => {
-                    const s = (c as any).__completeness.secoes.contato;
+                    const s = cadastroCompleteness.secoes.contato;
                     return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
                   })()}
                 >
@@ -2694,7 +2692,7 @@ export default function QAClientesPage() {
                   icon={MapPin}
                   title="Endereço Principal"
                   status={(() => {
-                    const s = (c as any).__completeness.secoes.endereco;
+                    const s = cadastroCompleteness.secoes.endereco;
                     return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
                   })()}
                 >
@@ -2710,14 +2708,52 @@ export default function QAClientesPage() {
                   </QAInfoCard>
                 </QAOperationalSection>
 
-                {(c.endereco2 || c.cidade2) && (
-                  <QAOperationalSection icon={MapPin} title="Endereço Secundário">
+                {/* RESPONSÁVEL PELO COMPROVANTE — condicional */}
+                {(exigeResponsavelTerceiro || temResponsavelTerceiroDado) && (
+                  <QAOperationalSection
+                    icon={User}
+                    title="Responsável pelo comprovante de endereço"
+                    status={(() => {
+                      const s = cadastroCompleteness.secoes.responsavelEndereco;
+                      if (!s) return <QAStatusChip label="Informativo" tone="neutral" />;
+                      return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
+                    })()}
+                  >
+                    <QAInfoCard padding="md">
+                      <QAFieldGrid cols={2}>
+                        <QAFieldRow label="Nome" value={renderObrig((c as any).responsavel_endereco_nome, !((c as any).responsavel_endereco_nome) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="CPF" value={renderObrig((c as any).responsavel_endereco_cpf, !((c as any).responsavel_endereco_cpf) && exigeResponsavelTerceiro)} copyable copyValue={String((c as any).responsavel_endereco_cpf || "").replace(/\D/g, "")} />
+                        <QAFieldRow label="RG / CIN" value={renderObrig((c as any).responsavel_endereco_rg_cin, !((c as any).responsavel_endereco_rg_cin) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Telefone" value={renderObrig((c as any).responsavel_endereco_telefone, !((c as any).responsavel_endereco_telefone) && exigeResponsavelTerceiro)} icon={Phone} />
+                        <QAFieldRow label="E-mail" value={(c as any).responsavel_endereco_email || "—"} icon={Mail} />
+                        <QAFieldRow label="Vínculo" value={renderObrig((c as any).responsavel_endereco_vinculo, !((c as any).responsavel_endereco_vinculo) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Declaração de residência" value={renderObrig((c as any).responsavel_endereco_declaracao_path ? "Anexada" : null, !((c as any).responsavel_endereco_declaracao_path) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Comprovante" value={renderObrig((c as any).responsavel_endereco_comprovante_path ? "Anexado" : null, !((c as any).responsavel_endereco_comprovante_path) && exigeResponsavelTerceiro)} />
+                      </QAFieldGrid>
+                    </QAInfoCard>
+                  </QAOperationalSection>
+                )}
+
+                {(c.endereco2 || c.cidade2 || (c as any).end2_tipo) && (
+                  <QAOperationalSection
+                    icon={MapPin}
+                    title="Segundo Endereço do Imóvel"
+                    status={(() => {
+                      const s = cadastroCompleteness.secoes.segundoEndereco;
+                      return s
+                        ? <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />
+                        : <QAStatusChip label="Informativo" tone="neutral" />;
+                    })()}
+                  >
                     <QAInfoCard padding="md">
                       <QAFieldGrid cols={3}>
                         <QAFieldRow label="Logradouro" value={c.endereco2} icon={MapPin} />
                         <QAFieldRow label="Número" value={c.numero2} />
                         <QAFieldRow label="Bairro" value={c.bairro2} />
+                        <QAFieldRow label="CEP" value={(c as any).cep2 || "—"} />
                         <QAFieldRow label="Cidade/UF" value={`${c.cidade2 || "—"} / ${c.estado2 || "—"}`} />
+                        <QAFieldRow label="Tipo" value={(c as any).end2_tipo || "—"} />
+                        <QAFieldRow label="Observação" value={(c as any).end2_observacao || "—"} />
                       </QAFieldGrid>
                     </QAInfoCard>
                   </QAOperationalSection>
@@ -2728,7 +2764,7 @@ export default function QAClientesPage() {
                   icon={Database}
                   title="Dados Complementares"
                   status={(() => {
-                    const s = (c as any).__completeness.secoes.complementares;
+                    const s = cadastroCompleteness.secoes.complementares;
                     return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
                   })()}
                 >

@@ -2680,6 +2680,7 @@ export type Database = {
           categoria_titular: string | null
           cliente_id_vinculado: number | null
           cnh: string | null
+          comprovante_endereco_em_nome_proprio: string | null
           comprovante_endereco_path: string | null
           consentimento_dados_verdadeiros: boolean
           consentimento_ip: string | null
@@ -2728,6 +2729,7 @@ export type Database = {
           end2_logradouro: string | null
           end2_longitude: string | null
           end2_numero: string | null
+          end2_observacao: string | null
           end2_tipo: string | null
           estado_civil: string | null
           id: string
@@ -2750,6 +2752,14 @@ export type Database = {
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
+          responsavel_endereco_comprovante_path: string | null
+          responsavel_endereco_cpf: string | null
+          responsavel_endereco_declaracao_path: string | null
+          responsavel_endereco_email: string | null
+          responsavel_endereco_nome: string | null
+          responsavel_endereco_rg_cin: string | null
+          responsavel_endereco_telefone: string | null
+          responsavel_endereco_vinculo: string | null
           rg: string | null
           selfie_path: string | null
           servico_fechado_final: string | null
@@ -2788,6 +2798,7 @@ export type Database = {
           categoria_titular?: string | null
           cliente_id_vinculado?: number | null
           cnh?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
@@ -2836,6 +2847,7 @@ export type Database = {
           end2_logradouro?: string | null
           end2_longitude?: string | null
           end2_numero?: string | null
+          end2_observacao?: string | null
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
@@ -2858,6 +2870,14 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
           selfie_path?: string | null
           servico_fechado_final?: string | null
@@ -2896,6 +2916,7 @@ export type Database = {
           categoria_titular?: string | null
           cliente_id_vinculado?: number | null
           cnh?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
@@ -2944,6 +2965,7 @@ export type Database = {
           end2_logradouro?: string | null
           end2_longitude?: string | null
           end2_numero?: string | null
+          end2_observacao?: string | null
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
@@ -2966,6 +2988,14 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
           selfie_path?: string | null
           servico_fechado_final?: string | null
@@ -3675,6 +3705,7 @@ export type Database = {
           cnh: string | null
           complemento: string | null
           complemento2: string | null
+          comprovante_endereco_em_nome_proprio: string | null
           cpf: string | null
           created_at: string
           ctps: string | null
@@ -3682,6 +3713,8 @@ export type Database = {
           data_nascimento: string | null
           email: string | null
           emissor_rg: string | null
+          end2_observacao: string | null
+          end2_tipo: string | null
           endereco: string | null
           endereco_em_nome_de_terceiro: boolean
           endereco_titular_documento: string | null
@@ -3729,6 +3762,14 @@ export type Database = {
           recadastramento_iniciado_em: string | null
           recadastramento_obrigatorio: boolean
           recadastramento_status: string | null
+          responsavel_endereco_comprovante_path: string | null
+          responsavel_endereco_cpf: string | null
+          responsavel_endereco_declaracao_path: string | null
+          responsavel_endereco_email: string | null
+          responsavel_endereco_nome: string | null
+          responsavel_endereco_rg_cin: string | null
+          responsavel_endereco_telefone: string | null
+          responsavel_endereco_vinculo: string | null
           rg: string | null
           sexo: string | null
           status: string | null
@@ -3761,6 +3802,7 @@ export type Database = {
           cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           cpf?: string | null
           created_at?: string
           ctps?: string | null
@@ -3768,6 +3810,8 @@ export type Database = {
           data_nascimento?: string | null
           email?: string | null
           emissor_rg?: string | null
+          end2_observacao?: string | null
+          end2_tipo?: string | null
           endereco?: string | null
           endereco_em_nome_de_terceiro?: boolean
           endereco_titular_documento?: string | null
@@ -3815,6 +3859,14 @@ export type Database = {
           recadastramento_iniciado_em?: string | null
           recadastramento_obrigatorio?: boolean
           recadastramento_status?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
           sexo?: string | null
           status?: string | null
@@ -3847,6 +3899,7 @@ export type Database = {
           cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           cpf?: string | null
           created_at?: string
           ctps?: string | null
@@ -3854,6 +3907,8 @@ export type Database = {
           data_nascimento?: string | null
           email?: string | null
           emissor_rg?: string | null
+          end2_observacao?: string | null
+          end2_tipo?: string | null
           endereco?: string | null
           endereco_em_nome_de_terceiro?: boolean
           endereco_titular_documento?: string | null
@@ -3901,6 +3956,14 @@ export type Database = {
           recadastramento_iniciado_em?: string | null
           recadastramento_obrigatorio?: boolean
           recadastramento_status?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
           sexo?: string | null
           status?: string | null
