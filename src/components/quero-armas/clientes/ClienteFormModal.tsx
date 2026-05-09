@@ -391,6 +391,21 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         responsavel_endereco_vinculo: cliente.responsavel_endereco_vinculo || "",
         responsavel_endereco_declaracao_path: cliente.responsavel_endereco_declaracao_path || "",
         responsavel_endereco_comprovante_path: cliente.responsavel_endereco_comprovante_path || "",
+        responsavel_endereco_data_nascimento: (cliente as any).responsavel_endereco_data_nascimento || "",
+        responsavel_endereco_naturalidade: (cliente as any).responsavel_endereco_naturalidade || "",
+        responsavel_endereco_nacionalidade: (cliente as any).responsavel_endereco_nacionalidade || "Brasileira",
+        responsavel_endereco_estado_civil: (cliente as any).responsavel_endereco_estado_civil || "",
+        responsavel_endereco_profissao: (cliente as any).responsavel_endereco_profissao || "",
+        responsavel_endereco_cep: formatCepMask((cliente as any).responsavel_endereco_cep || ""),
+        responsavel_endereco_logradouro: (cliente as any).responsavel_endereco_logradouro || "",
+        responsavel_endereco_numero: (cliente as any).responsavel_endereco_numero || "",
+        responsavel_endereco_complemento: (cliente as any).responsavel_endereco_complemento || "",
+        responsavel_endereco_bairro: (cliente as any).responsavel_endereco_bairro || "",
+        responsavel_endereco_cidade: (cliente as any).responsavel_endereco_cidade || "",
+        responsavel_endereco_estado: (cliente as any).responsavel_endereco_estado || "",
+        responsavel_endereco_geolocalizacao: (cliente as any).responsavel_endereco_geolocalizacao || "",
+        responsavel_endereco_reside_desde: (cliente as any).responsavel_endereco_reside_desde || "",
+        responsavel_endereco_residiu_ate: (cliente as any).responsavel_endereco_residiu_ate || "",
       });
       setAiSenhaGovFromAI(false);
       setAiSenhaGovNeedsReview(false);
