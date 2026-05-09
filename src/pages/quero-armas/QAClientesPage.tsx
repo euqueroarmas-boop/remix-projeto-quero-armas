@@ -2491,6 +2491,14 @@ export default function QAClientesPage() {
       "responsavel_endereco_nome", "responsavel_endereco_cpf", "responsavel_endereco_rg_cin",
       "responsavel_endereco_telefone", "responsavel_endereco_email", "responsavel_endereco_vinculo",
       "responsavel_endereco_declaracao_path", "responsavel_endereco_comprovante_path",
+      "responsavel_endereco_data_nascimento", "responsavel_endereco_naturalidade",
+      "responsavel_endereco_nacionalidade", "responsavel_endereco_estado_civil",
+      "responsavel_endereco_profissao", "responsavel_endereco_cep",
+      "responsavel_endereco_logradouro", "responsavel_endereco_numero",
+      "responsavel_endereco_complemento", "responsavel_endereco_bairro",
+      "responsavel_endereco_cidade", "responsavel_endereco_estado",
+      "responsavel_endereco_geolocalizacao", "responsavel_endereco_reside_desde",
+      "responsavel_endereco_residiu_ate",
     ].some((k) => (c as any)?.[k]);
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
@@ -2723,10 +2731,24 @@ export default function QAClientesPage() {
                       <QAFieldGrid cols={2}>
                         <QAFieldRow label="Nome" value={renderObrig((c as any).responsavel_endereco_nome, !((c as any).responsavel_endereco_nome) && exigeResponsavelTerceiro)} />
                         <QAFieldRow label="CPF" value={renderObrig((c as any).responsavel_endereco_cpf, !((c as any).responsavel_endereco_cpf) && exigeResponsavelTerceiro)} copyable copyValue={String((c as any).responsavel_endereco_cpf || "").replace(/\D/g, "")} />
+                        <QAFieldRow label="Nascimento" value={renderObrig(formatDate((c as any).responsavel_endereco_data_nascimento), !((c as any).responsavel_endereco_data_nascimento) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Naturalidade" value={renderObrig((c as any).responsavel_endereco_naturalidade, !((c as any).responsavel_endereco_naturalidade) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Nacionalidade" value={renderObrig((c as any).responsavel_endereco_nacionalidade, !((c as any).responsavel_endereco_nacionalidade) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Estado Civil" value={renderObrig((c as any).responsavel_endereco_estado_civil, !((c as any).responsavel_endereco_estado_civil) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Profissão" value={renderObrig((c as any).responsavel_endereco_profissao, !((c as any).responsavel_endereco_profissao) && exigeResponsavelTerceiro)} />
                         <QAFieldRow label="RG / CIN" value={renderObrig((c as any).responsavel_endereco_rg_cin, !((c as any).responsavel_endereco_rg_cin) && exigeResponsavelTerceiro)} />
                         <QAFieldRow label="Telefone" value={renderObrig((c as any).responsavel_endereco_telefone, !((c as any).responsavel_endereco_telefone) && exigeResponsavelTerceiro)} icon={Phone} />
                         <QAFieldRow label="E-mail" value={(c as any).responsavel_endereco_email || "—"} icon={Mail} />
                         <QAFieldRow label="Vínculo" value={renderObrig((c as any).responsavel_endereco_vinculo, !((c as any).responsavel_endereco_vinculo) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="CEP" value={renderObrig((c as any).responsavel_endereco_cep, !((c as any).responsavel_endereco_cep) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Logradouro" value={renderObrig((c as any).responsavel_endereco_logradouro, !((c as any).responsavel_endereco_logradouro) && exigeResponsavelTerceiro)} icon={MapPin} />
+                        <QAFieldRow label="Número" value={renderObrig((c as any).responsavel_endereco_numero, !((c as any).responsavel_endereco_numero) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Complemento" value={(c as any).responsavel_endereco_complemento || "—"} />
+                        <QAFieldRow label="Bairro" value={renderObrig((c as any).responsavel_endereco_bairro, !((c as any).responsavel_endereco_bairro) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Cidade/UF" value={renderObrig(`${(c as any).responsavel_endereco_cidade || "—"} / ${(c as any).responsavel_endereco_estado || "—"}`, !((c as any).responsavel_endereco_cidade) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Geolocalização" value={(c as any).responsavel_endereco_geolocalizacao || "—"} />
+                        <QAFieldRow label="Reside desde" value={renderObrig(formatDate((c as any).responsavel_endereco_reside_desde), !((c as any).responsavel_endereco_reside_desde) && exigeResponsavelTerceiro)} />
+                        <QAFieldRow label="Residiu até" value={formatDate((c as any).responsavel_endereco_residiu_ate) || "—"} />
                         <QAFieldRow label="Declaração de residência" value={renderObrig((c as any).responsavel_endereco_declaracao_path ? "Anexada" : null, !((c as any).responsavel_endereco_declaracao_path) && exigeResponsavelTerceiro)} />
                         <QAFieldRow label="Comprovante" value={renderObrig((c as any).responsavel_endereco_comprovante_path ? "Anexado" : null, !((c as any).responsavel_endereco_comprovante_path) && exigeResponsavelTerceiro)} />
                       </QAFieldGrid>
