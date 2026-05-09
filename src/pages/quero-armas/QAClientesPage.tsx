@@ -59,7 +59,9 @@ import {
   QAInfoCard,
   QAFieldRow,
   QAFieldGrid,
+  QAStatusChip,
 } from "@/components/quero-armas/qa-operational";
+import { computeCadastroCompleteness } from "@/lib/quero-armas/cadastroCompleteness";
 import {
   computeConferenciaStatus,
   decidirProximaAcao,
@@ -2562,20 +2564,50 @@ export default function QAClientesPage() {
 
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
+                {(() => null)()}
+                {/* completude do cadastro interno */}
+                {/* eslint-disable-next-line react-hooks/rules-of-hooks */}
+                {(() => {
+                  const _comp = computeCadastroCompleteness(c as any);
+                  (c as any).__completeness = _comp;
+                  return null;
+                })()}
                 <DadosFormularioPublicoSection
                     cliente={c as any}
+                    cadastroInterno={{
+                      preenchidos: (c as any).__completeness.preenchidos,
+                      total: (c as any).__completeness.total,
+                    }}
+                    onVerPendencias={() => {
+                      const el = document.querySelector('[data-pendente="true"]') as HTMLElement | null;
+                      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }}
                     onApplied={async () => {
                       await loadSubData(c);
                       await loadCadastrosPublicos();
                     }}
                 />
 
+                {/* helper: chip de completude por seção */}
+                {(() => null)()}
                 {/* IDENTIFICAÇÃO */}
-                <QAOperationalSection icon={User} title="Identificação">
+                <QAOperationalSection
+                  icon={User}
+                  title="Identificação"
+                  status={(() => {
+                    const s = (c as any).__completeness.secoes.identificacao;
+                    return (
+                      <QAStatusChip
+                        label={`${s.preenchidos}/${s.total} preenchidos`}
+                        tone={s.preenchidos >= s.total ? "ok" : "warn"}
+                      />
+                    );
+                  })()}
+                >
                   <QAInfoCard padding="md">
                     <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Nome" value={c.nome_completo} />
-                      <QAFieldRow label="CPF" value={formatCpf(c.cpf)} copyable copyValue={(c.cpf || "").replace(/\D/g, "")} />
+                      <QAFieldRow label="Nome" value={renderObrig(c.nome_completo, !c.nome_completo)} />
+                      <QAFieldRow label="CPF" value={renderObrig(formatCpf(c.cpf), !c.cpf)} copyable copyValue={(c.cpf || "").replace(/\D/g, "")} />
                       <div className="py-1">
                         <SenhaGovField
                           cadastroCrId={cadastro?.id}
@@ -2586,17 +2618,20 @@ export default function QAClientesPage() {
                       </div>
                       <QAFieldRow
                         label="RG / CIN"
-                        value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"}
+                        value={renderObrig(
+                          c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null,
+                          !c.rg
+                        )}
                       />
-                      <QAFieldRow label="Nascimento" value={formatDate(c.data_nascimento)} />
-                      <QAFieldRow label="Naturalidade" value={c.naturalidade} />
-                      <QAFieldRow label="Nacionalidade" value={c.nacionalidade} />
-                      <QAFieldRow label="Estado Civil" value={c.estado_civil} />
-                      <QAFieldRow label="Profissão" value={c.profissao} />
-                      <QAFieldRow label="Escolaridade" value={c.escolaridade} />
+                      <QAFieldRow label="Nascimento" value={renderObrig(formatDate(c.data_nascimento), !c.data_nascimento)} />
+                      <QAFieldRow label="Naturalidade" value={renderObrig(c.naturalidade, !c.naturalidade)} />
+                      <QAFieldRow label="Nacionalidade" value={renderObrig(c.nacionalidade, !c.nacionalidade)} />
+                      <QAFieldRow label="Estado Civil" value={renderObrig(c.estado_civil, !c.estado_civil)} />
+                      <QAFieldRow label="Profissão" value={renderObrig(c.profissao, !c.profissao)} />
+                      <QAFieldRow label="Escolaridade" value={renderObrig(c.escolaridade, !c.escolaridade)} />
                       <QAFieldRow
                         label="Título Eleitor"
-                        value={c.titulo_eleitor}
+                        value={renderObrig(c.titulo_eleitor, !c.titulo_eleitor)}
                         copyable
                         copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
                       />
@@ -2605,35 +2640,56 @@ export default function QAClientesPage() {
                 </QAOperationalSection>
 
                 {/* FILIAÇÃO */}
-                <QAOperationalSection icon={User} title="Filiação">
+                <QAOperationalSection
+                  icon={User}
+                  title="Filiação"
+                  status={(() => {
+                    const s = (c as any).__completeness.secoes.filiacao;
+                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
+                  })()}
+                >
                   <QAInfoCard padding="md">
                     <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Mãe" value={c.nome_mae} />
-                      <QAFieldRow label="Pai" value={c.nome_pai} />
+                      <QAFieldRow label="Mãe" value={renderObrig(c.nome_mae, !c.nome_mae)} />
+                      <QAFieldRow label="Pai" value={renderObrig(c.nome_pai, !c.nome_pai)} />
                     </QAFieldGrid>
                   </QAInfoCard>
                 </QAOperationalSection>
 
                 {/* CONTATO */}
-                <QAOperationalSection icon={Phone} title="Contato">
+                <QAOperationalSection
+                  icon={Phone}
+                  title="Contato"
+                  status={(() => {
+                    const s = (c as any).__completeness.secoes.contato;
+                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
+                  })()}
+                >
                   <QAInfoCard padding="md">
                     <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Celular" value={c.celular} icon={Phone} copyable copyValue={(c.celular || "").replace(/\D/g, "")} />
-                      <QAFieldRow label="E-mail" value={c.email} icon={Mail} copyable copyValue={c.email || ""} />
+                      <QAFieldRow label="Celular" value={renderObrig(c.celular, !c.celular)} icon={Phone} copyable copyValue={(c.celular || "").replace(/\D/g, "")} />
+                      <QAFieldRow label="E-mail" value={renderObrig(c.email, !c.email)} icon={Mail} copyable copyValue={c.email || ""} />
                     </QAFieldGrid>
                   </QAInfoCard>
                 </QAOperationalSection>
 
                 {/* ENDEREÇO PRINCIPAL */}
-                <QAOperationalSection icon={MapPin} title="Endereço Principal">
+                <QAOperationalSection
+                  icon={MapPin}
+                  title="Endereço Principal"
+                  status={(() => {
+                    const s = (c as any).__completeness.secoes.endereco;
+                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
+                  })()}
+                >
                   <QAInfoCard padding="md">
                     <QAFieldGrid cols={3}>
-                      <QAFieldRow label="Logradouro" value={c.endereco} icon={MapPin} />
-                      <QAFieldRow label="Número" value={c.numero} />
-                      <QAFieldRow label="Complemento" value={c.complemento} />
-                      <QAFieldRow label="Bairro" value={c.bairro} />
-                      <QAFieldRow label="CEP" value={c.cep} copyable copyValue={(c.cep || "").replace(/\D/g, "")} />
-                      <QAFieldRow label="Cidade/UF" value={`${c.cidade || "—"} / ${c.estado || "—"}`} />
+                      <QAFieldRow label="Logradouro" value={renderObrig(c.endereco, !c.endereco)} icon={MapPin} />
+                      <QAFieldRow label="Número" value={renderObrig(c.numero, !c.numero)} />
+                      <QAFieldRow label="Complemento" value={renderObrig(c.complemento, !c.complemento)} />
+                      <QAFieldRow label="Bairro" value={renderObrig(c.bairro, !c.bairro)} />
+                      <QAFieldRow label="CEP" value={renderObrig(c.cep, !c.cep)} copyable copyValue={(c.cep || "").replace(/\D/g, "")} />
+                      <QAFieldRow label="Cidade/UF" value={renderObrig(`${c.cidade || "—"} / ${c.estado || "—"}`, !c.cidade)} />
                     </QAFieldGrid>
                   </QAInfoCard>
                 </QAOperationalSection>
@@ -2652,13 +2708,20 @@ export default function QAClientesPage() {
                 )}
 
                 {/* DADOS COMPLEMENTARES */}
-                <QAOperationalSection icon={Database} title="Dados Complementares">
+                <QAOperationalSection
+                  icon={Database}
+                  title="Dados Complementares"
+                  status={(() => {
+                    const s = (c as any).__completeness.secoes.complementares;
+                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
+                  })()}
+                >
                   <QAInfoCard padding="md">
                     <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Origem do cadastro" value={(c as any).origem_cadastro || "—"} />
-                      <QAFieldRow label="Recebido em" value={formatDateTime(c.created_at)} />
-                      <QAFieldRow label="Vínculo aplicado em" value={formatDateTime((c as any).cadastro_publico_aplicado_em)} />
-                      <QAFieldRow label="Última atualização" value={formatDateTime((c as any).updated_at)} />
+                      <QAFieldRow label="Origem do cadastro" value={renderObrig((c as any).origem_cadastro, !(c as any).origem_cadastro)} />
+                      <QAFieldRow label="Recebido em" value={renderObrig(formatDateTime(c.created_at), !c.created_at)} />
+                      <QAFieldRow label="Vínculo aplicado em" value={renderObrig(formatDateTime((c as any).cadastro_publico_aplicado_em), !(c as any).cadastro_publico_aplicado_em)} />
+                      <QAFieldRow label="Última atualização" value={renderObrig(formatDateTime((c as any).updated_at), !(c as any).updated_at)} />
                     </QAFieldGrid>
                   </QAInfoCard>
                 </QAOperationalSection>
