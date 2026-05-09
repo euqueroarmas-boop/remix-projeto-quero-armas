@@ -72,6 +72,18 @@ const CadastroSchema = z.object({
   end2_estado: z.string().max(2).optional().nullable(),
   end2_latitude: z.string().max(30).optional().nullable(),
   end2_longitude: z.string().max(30).optional().nullable(),
+  end2_observacao: z.string().max(500).optional().nullable(),
+
+  // ── Comprovante de endereço — em nome do titular OU de terceiro ──
+  comprovante_endereco_em_nome_proprio: z.enum(["sim", "nao"]).optional().nullable(),
+  responsavel_endereco_nome: z.string().max(200).optional().nullable(),
+  responsavel_endereco_cpf: z.string().max(20).optional().nullable(),
+  responsavel_endereco_rg_cin: z.string().max(30).optional().nullable(),
+  responsavel_endereco_telefone: z.string().max(20).optional().nullable(),
+  responsavel_endereco_email: z.string().max(255).optional().nullable(),
+  responsavel_endereco_vinculo: z.string().max(60).optional().nullable(),
+  responsavel_endereco_declaracao_path: z.string().max(500).optional().nullable(),
+  responsavel_endereco_comprovante_path: z.string().max(500).optional().nullable(),
 
   // Vínculo empresarial
   vinculo_tipo: z.string().max(30).optional().nullable(),
