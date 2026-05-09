@@ -1248,9 +1248,41 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     <FInput label="CPF do Responsável *" value={f.responsavel_endereco_cpf} onChange={v => set("responsavel_endereco_cpf", v)} inputMode="numeric" />
                     <FInput label="RG / CIN *" value={f.responsavel_endereco_rg_cin} onChange={v => set("responsavel_endereco_rg_cin", v)} />
                   </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FInput label="Data de Nascimento *" value={f.responsavel_endereco_data_nascimento} onChange={v => set("responsavel_endereco_data_nascimento", v)} placeholder="DD/MM/AAAA" inputMode="numeric" />
+                    <FInput label="Naturalidade *" value={f.responsavel_endereco_naturalidade} onChange={v => set("responsavel_endereco_naturalidade", v)} placeholder="Cidade/UF" />
+                    <FInput label="Nacionalidade *" value={f.responsavel_endereco_nacionalidade} onChange={v => set("responsavel_endereco_nacionalidade", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FSelect label="Estado Civil *" value={f.responsavel_endereco_estado_civil} onChange={v => set("responsavel_endereco_estado_civil", v)} options={estadoCivilOptions} />
+                    <FInput label="Profissão *" value={f.responsavel_endereco_profissao} onChange={v => set("responsavel_endereco_profissao", v)} />
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FInput label="Telefone *" value={f.responsavel_endereco_telefone} onChange={v => set("responsavel_endereco_telefone", v)} placeholder="(00) 00000-0000" />
                     <FInput label="E-mail" value={f.responsavel_endereco_email} onChange={v => set("responsavel_endereco_email", v)} />
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-amber-900/90 pt-2">
+                    Endereço do imóvel comprovado pelo responsável
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <FInput label="CEP *" value={f.responsavel_endereco_cep} onChange={v => set("responsavel_endereco_cep", formatCepMask(v))} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
+                    <div className="col-span-2 sm:col-span-3">
+                      <FInput label="Logradouro *" value={f.responsavel_endereco_logradouro} onChange={v => set("responsavel_endereco_logradouro", v)} span />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FInput label="Número *" value={f.responsavel_endereco_numero} onChange={v => set("responsavel_endereco_numero", v)} />
+                    <FInput label="Complemento" value={f.responsavel_endereco_complemento} onChange={v => set("responsavel_endereco_complemento", v)} />
+                    <FInput label="Bairro *" value={f.responsavel_endereco_bairro} onChange={v => set("responsavel_endereco_bairro", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FInput label="Cidade *" value={f.responsavel_endereco_cidade} onChange={v => set("responsavel_endereco_cidade", v)} />
+                    <FSelect label="UF *" value={f.responsavel_endereco_estado} onChange={v => set("responsavel_endereco_estado", v)} options={ufOptions} placeholder="UF" />
+                    <FInput label="Geolocalização (lat,long)" value={f.responsavel_endereco_geolocalizacao} onChange={v => set("responsavel_endereco_geolocalizacao", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Reside Desde *" value={f.responsavel_endereco_reside_desde} onChange={v => set("responsavel_endereco_reside_desde", v)} placeholder="DD/MM/AAAA" inputMode="numeric" />
+                    <FInput label="Residiu Até (opcional)" value={f.responsavel_endereco_residiu_ate} onChange={v => set("responsavel_endereco_residiu_ate", v)} placeholder="DD/MM/AAAA" inputMode="numeric" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FInput label="Caminho da Declaração de Residência" value={f.responsavel_endereco_declaracao_path} onChange={v => set("responsavel_endereco_declaracao_path", v)} placeholder="Ex.: clientes/declaracoes/123.pdf" />
