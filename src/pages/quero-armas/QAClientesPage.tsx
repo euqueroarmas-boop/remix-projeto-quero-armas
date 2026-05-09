@@ -62,6 +62,22 @@ import {
   QAStatusChip,
 } from "@/components/quero-armas/qa-operational";
 import { computeCadastroCompleteness } from "@/lib/quero-armas/cadastroCompleteness";
+
+/** Renderiza valor com badge âmbar "Obrigatório" quando vazio. */
+function renderObrig(value: any, isEmpty: boolean) {
+  if (!isEmpty) return value;
+  return (
+    <span className="inline-flex items-center gap-1.5 flex-wrap" data-pendente="true">
+      <span>—</span>
+      <span
+        className="inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider"
+        style={{ background: "#FEF3C7", borderColor: "#FDE68A", color: "#7C2D12" }}
+      >
+        Obrigatório
+      </span>
+    </span>
+  );
+}
 import {
   computeConferenciaStatus,
   decidirProximaAcao,
