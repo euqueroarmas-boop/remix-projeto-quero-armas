@@ -93,6 +93,7 @@ const EMPTY_FORM = {
   email: "", celular: "", titulo_eleitor: "",
   endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
   endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+  end2_tipo: "", end2_observacao: "",
   geolocalizacao: "", geolocalizacao2: "",
   observacao: "", status: "ATIVO",
   categoria_titular: "" as CategoriaTitular | "",
@@ -109,6 +110,16 @@ const EMPTY_FORM = {
   validade_laudo_psicologico: "",
   validade_exame_tiro: "",
   senha_gov: "",
+  // Comprovante de endereço (em nome do titular ou de terceiro)
+  comprovante_endereco_em_nome_proprio: "" as "" | "sim" | "nao",
+  responsavel_endereco_nome: "",
+  responsavel_endereco_cpf: "",
+  responsavel_endereco_rg_cin: "",
+  responsavel_endereco_telefone: "",
+  responsavel_endereco_email: "",
+  responsavel_endereco_vinculo: "",
+  responsavel_endereco_declaracao_path: "",
+  responsavel_endereco_comprovante_path: "",
 };
 
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
@@ -337,6 +348,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
         cep2: formatCepMask(cliente.cep2 || ""), cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
         pais2: cliente.pais2 || "",
+        end2_tipo: cliente.end2_tipo || "",
+        end2_observacao: cliente.end2_observacao || "",
         geolocalizacao: cliente.geolocalizacao || "",
         geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
@@ -354,6 +367,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         validade_laudo_psicologico: "",
         validade_exame_tiro: "",
         senha_gov: "",
+        comprovante_endereco_em_nome_proprio: ((cliente.comprovante_endereco_em_nome_proprio as "sim" | "nao") || "") as "" | "sim" | "nao",
+        responsavel_endereco_nome: cliente.responsavel_endereco_nome || "",
+        responsavel_endereco_cpf: cliente.responsavel_endereco_cpf || "",
+        responsavel_endereco_rg_cin: cliente.responsavel_endereco_rg_cin || "",
+        responsavel_endereco_telefone: cliente.responsavel_endereco_telefone || "",
+        responsavel_endereco_email: cliente.responsavel_endereco_email || "",
+        responsavel_endereco_vinculo: cliente.responsavel_endereco_vinculo || "",
+        responsavel_endereco_declaracao_path: cliente.responsavel_endereco_declaracao_path || "",
+        responsavel_endereco_comprovante_path: cliente.responsavel_endereco_comprovante_path || "",
       });
       setAiSenhaGovFromAI(false);
       setAiSenhaGovNeedsReview(false);
@@ -674,6 +696,18 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      // Limpa pendências condicionais do responsável terceiro quando o titular
+      // declara que o comprovante está em seu próprio nome.
+      if (payload.comprovante_endereco_em_nome_proprio === "sim") {
+        payload.responsavel_endereco_nome = null;
+        payload.responsavel_endereco_cpf = null;
+        payload.responsavel_endereco_rg_cin = null;
+        payload.responsavel_endereco_telefone = null;
+        payload.responsavel_endereco_email = null;
+        payload.responsavel_endereco_vinculo = null;
+        payload.responsavel_endereco_declaracao_path = null;
+        payload.responsavel_endereco_comprovante_path = null;
+      }
       // Normaliza telefone para o formato (XX) XXXXX-XXXX
       if (payload.celular) {
         const d = String(payload.celular).replace(/\D/g, "").slice(-11);
@@ -1120,6 +1154,65 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 </div>
             </section>
 
+            {/* ── Bloco: Comprovante de Endereço (titular ou terceiro) ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={FileBadge} label="Comprovante de Endereço" />
+              <div>
+                <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide">
+                  O comprovante de endereço está no nome do cliente?
+                </label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {([
+                    { v: "sim", label: "Sim, está no nome do cliente" },
+                    { v: "nao", label: "Não, está no nome de terceiro" },
+                  ] as const).map(({ v, label }) => {
+                    const active = f.comprovante_endereco_em_nome_proprio === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => set("comprovante_endereco_em_nome_proprio", v)}
+                        className={cn(
+                          "h-10 rounded-md border text-[12px] font-bold uppercase tracking-wider transition-colors",
+                          active
+                            ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
+                            : "bg-white text-zinc-700 border-zinc-200 hover:border-[#7A1F2B]"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {f.comprovante_endereco_em_nome_proprio === "nao" && (
+                <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50/40 p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-amber-900">
+                    Responsável pelo comprovante (terceiro)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Nome do Responsável *" value={f.responsavel_endereco_nome} onChange={v => set("responsavel_endereco_nome", v)} span />
+                    <FInput label="Vínculo *" value={f.responsavel_endereco_vinculo} onChange={v => set("responsavel_endereco_vinculo", v)} placeholder="Pai, mãe, cônjuge, locador…" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="CPF do Responsável *" value={f.responsavel_endereco_cpf} onChange={v => set("responsavel_endereco_cpf", v)} inputMode="numeric" />
+                    <FInput label="RG / CIN *" value={f.responsavel_endereco_rg_cin} onChange={v => set("responsavel_endereco_rg_cin", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Telefone *" value={f.responsavel_endereco_telefone} onChange={v => set("responsavel_endereco_telefone", v)} placeholder="(00) 00000-0000" />
+                    <FInput label="E-mail" value={f.responsavel_endereco_email} onChange={v => set("responsavel_endereco_email", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Caminho da Declaração de Residência" value={f.responsavel_endereco_declaracao_path} onChange={v => set("responsavel_endereco_declaracao_path", v)} placeholder="Ex.: clientes/declaracoes/123.pdf" />
+                    <FInput label="Caminho do Comprovante (em nome do responsável)" value={f.responsavel_endereco_comprovante_path} onChange={v => set("responsavel_endereco_comprovante_path", v)} placeholder="Ex.: clientes/comprovantes/123.pdf" />
+                  </div>
+                  <p className="text-[10px] leading-snug text-amber-900/80 uppercase">
+                    Os arquivos devem ser enviados pelo módulo de Documentos do cliente. Os caminhos acima vinculam os arquivos enviados ao bloco do responsável.
+                  </p>
+                </div>
+              )}
+            </section>
+
             {/* ── Bloco: Endereço Secundário ── */}
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
               <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
@@ -1138,6 +1231,34 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FInput label="Cidade" value={f.cidade2} onChange={v => set("cidade2", v)} />
                   <FSelect label="UF" value={f.estado2} onChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FSelect
+                    label="Tipo do 2º Endereço"
+                    value={f.end2_tipo}
+                    onChange={v => set("end2_tipo", v)}
+                    options={[
+                      { value: "RURAL", label: "Rural" },
+                      { value: "URBANO", label: "Urbano" },
+                      { value: "COMERCIAL", label: "Comercial" },
+                      { value: "TRABALHO", label: "Trabalho" },
+                      { value: "TEMPORADA", label: "Temporada" },
+                      { value: "LAZER", label: "Lazer" },
+                      { value: "OUTRO", label: "Outro" },
+                    ]}
+                    placeholder="Selecionar..."
+                  />
+                  <div className="sm:col-span-2">
+                    <Field label="Observação do 2º Endereço">
+                      <textarea
+                        value={f.end2_observacao}
+                        onChange={e => set("end2_observacao", e.target.value)}
+                        rows={2}
+                        className={cn(inputClass, "h-auto py-2 resize-y")}
+                        placeholder="Detalhes do imóvel, referência, finalidade…"
+                      />
+                    </Field>
+                  </div>
                 </div>
                 <div>
                   <FInput
