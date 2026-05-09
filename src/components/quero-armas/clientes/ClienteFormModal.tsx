@@ -93,6 +93,7 @@ const EMPTY_FORM = {
   email: "", celular: "", titulo_eleitor: "",
   endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
   endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+  end2_tipo: "", end2_observacao: "",
   geolocalizacao: "", geolocalizacao2: "",
   observacao: "", status: "ATIVO",
   categoria_titular: "" as CategoriaTitular | "",
@@ -109,6 +110,16 @@ const EMPTY_FORM = {
   validade_laudo_psicologico: "",
   validade_exame_tiro: "",
   senha_gov: "",
+  // Comprovante de endereço (em nome do titular ou de terceiro)
+  comprovante_endereco_em_nome_proprio: "" as "" | "sim" | "nao",
+  responsavel_endereco_nome: "",
+  responsavel_endereco_cpf: "",
+  responsavel_endereco_rg_cin: "",
+  responsavel_endereco_telefone: "",
+  responsavel_endereco_email: "",
+  responsavel_endereco_vinculo: "",
+  responsavel_endereco_declaracao_path: "",
+  responsavel_endereco_comprovante_path: "",
 };
 
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
@@ -337,6 +348,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
         cep2: formatCepMask(cliente.cep2 || ""), cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
         pais2: cliente.pais2 || "",
+        end2_tipo: cliente.end2_tipo || "",
+        end2_observacao: cliente.end2_observacao || "",
         geolocalizacao: cliente.geolocalizacao || "",
         geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
@@ -354,6 +367,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         validade_laudo_psicologico: "",
         validade_exame_tiro: "",
         senha_gov: "",
+        comprovante_endereco_em_nome_proprio: ((cliente.comprovante_endereco_em_nome_proprio as "sim" | "nao") || "") as "" | "sim" | "nao",
+        responsavel_endereco_nome: cliente.responsavel_endereco_nome || "",
+        responsavel_endereco_cpf: cliente.responsavel_endereco_cpf || "",
+        responsavel_endereco_rg_cin: cliente.responsavel_endereco_rg_cin || "",
+        responsavel_endereco_telefone: cliente.responsavel_endereco_telefone || "",
+        responsavel_endereco_email: cliente.responsavel_endereco_email || "",
+        responsavel_endereco_vinculo: cliente.responsavel_endereco_vinculo || "",
+        responsavel_endereco_declaracao_path: cliente.responsavel_endereco_declaracao_path || "",
+        responsavel_endereco_comprovante_path: cliente.responsavel_endereco_comprovante_path || "",
       });
       setAiSenhaGovFromAI(false);
       setAiSenhaGovNeedsReview(false);
