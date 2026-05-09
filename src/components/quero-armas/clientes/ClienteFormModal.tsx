@@ -696,6 +696,18 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      // Limpa pendências condicionais do responsável terceiro quando o titular
+      // declara que o comprovante está em seu próprio nome.
+      if (payload.comprovante_endereco_em_nome_proprio === "sim") {
+        payload.responsavel_endereco_nome = null;
+        payload.responsavel_endereco_cpf = null;
+        payload.responsavel_endereco_rg_cin = null;
+        payload.responsavel_endereco_telefone = null;
+        payload.responsavel_endereco_email = null;
+        payload.responsavel_endereco_vinculo = null;
+        payload.responsavel_endereco_declaracao_path = null;
+        payload.responsavel_endereco_comprovante_path = null;
+      }
       // Normaliza telefone para o formato (XX) XXXXX-XXXX
       if (payload.celular) {
         const d = String(payload.celular).replace(/\D/g, "").slice(-11);
