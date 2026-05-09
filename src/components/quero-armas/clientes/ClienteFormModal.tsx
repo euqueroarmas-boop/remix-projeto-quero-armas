@@ -120,6 +120,21 @@ const EMPTY_FORM = {
   responsavel_endereco_vinculo: "",
   responsavel_endereco_declaracao_path: "",
   responsavel_endereco_comprovante_path: "",
+  responsavel_endereco_data_nascimento: "",
+  responsavel_endereco_naturalidade: "",
+  responsavel_endereco_nacionalidade: "Brasileira",
+  responsavel_endereco_estado_civil: "",
+  responsavel_endereco_profissao: "",
+  responsavel_endereco_cep: "",
+  responsavel_endereco_logradouro: "",
+  responsavel_endereco_numero: "",
+  responsavel_endereco_complemento: "",
+  responsavel_endereco_bairro: "",
+  responsavel_endereco_cidade: "",
+  responsavel_endereco_estado: "",
+  responsavel_endereco_geolocalizacao: "",
+  responsavel_endereco_reside_desde: "",
+  responsavel_endereco_residiu_ate: "",
 };
 
 function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
