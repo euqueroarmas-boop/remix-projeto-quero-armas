@@ -737,6 +737,26 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         payload.responsavel_endereco_vinculo = null;
         payload.responsavel_endereco_declaracao_path = null;
         payload.responsavel_endereco_comprovante_path = null;
+        payload.responsavel_endereco_data_nascimento = null;
+        payload.responsavel_endereco_naturalidade = null;
+        payload.responsavel_endereco_nacionalidade = null;
+        payload.responsavel_endereco_estado_civil = null;
+        payload.responsavel_endereco_profissao = null;
+        payload.responsavel_endereco_cep = null;
+        payload.responsavel_endereco_logradouro = null;
+        payload.responsavel_endereco_numero = null;
+        payload.responsavel_endereco_complemento = null;
+        payload.responsavel_endereco_bairro = null;
+        payload.responsavel_endereco_cidade = null;
+        payload.responsavel_endereco_estado = null;
+        payload.responsavel_endereco_geolocalizacao = null;
+        payload.responsavel_endereco_reside_desde = null;
+        payload.responsavel_endereco_residiu_ate = null;
+      } else if (payload.comprovante_endereco_em_nome_proprio === "nao") {
+        // Normaliza datas do responsável (date columns rejeitam string vazia).
+        payload.responsavel_endereco_data_nascimento = formatDateForDatabase(payload.responsavel_endereco_data_nascimento);
+        payload.responsavel_endereco_reside_desde = formatDateForDatabase(payload.responsavel_endereco_reside_desde);
+        payload.responsavel_endereco_residiu_ate = formatDateForDatabase(payload.responsavel_endereco_residiu_ate);
       }
       // Normaliza telefone para o formato (XX) XXXXX-XXXX
       if (payload.celular) {
