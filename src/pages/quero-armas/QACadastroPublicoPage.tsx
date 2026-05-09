@@ -1831,6 +1831,73 @@ function Step3Review({
             <ReviewField label="Vínculo com você (pai, mãe, cônjuge, locador…)"
               value={(data as any).responsavel_endereco_vinculo || ""}
               onChange={(v) => set("responsavel_endereco_vinculo" as any, v)} required />
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="Data de nascimento"
+                value={(data as any).responsavel_endereco_data_nascimento || ""}
+                onChange={(v) => set("responsavel_endereco_data_nascimento" as any, v)}
+                placeholder="DD/MM/AAAA" required />
+              <ReviewField label="Profissão"
+                value={(data as any).responsavel_endereco_profissao || ""}
+                onChange={(v) => set("responsavel_endereco_profissao" as any, v)} required />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="Naturalidade"
+                value={(data as any).responsavel_endereco_naturalidade || ""}
+                onChange={(v) => set("responsavel_endereco_naturalidade" as any, v)}
+                placeholder="Cidade/UF" required />
+              <ReviewField label="Nacionalidade"
+                value={(data as any).responsavel_endereco_nacionalidade || ""}
+                onChange={(v) => set("responsavel_endereco_nacionalidade" as any, v)}
+                placeholder="Brasileira" required />
+            </div>
+            <ReviewField label="Estado civil"
+              value={(data as any).responsavel_endereco_estado_civil || ""}
+              onChange={(v) => set("responsavel_endereco_estado_civil" as any, v)} required />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900 pt-1">
+              Endereço do imóvel comprovado pelo responsável
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="CEP"
+                value={(data as any).responsavel_endereco_cep || ""}
+                onChange={(v) => set("responsavel_endereco_cep" as any, v)}
+                placeholder="00000-000" required />
+              <ReviewField label="Logradouro"
+                value={(data as any).responsavel_endereco_logradouro || ""}
+                onChange={(v) => set("responsavel_endereco_logradouro" as any, v)} required />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <ReviewField label="Número"
+                value={(data as any).responsavel_endereco_numero || ""}
+                onChange={(v) => set("responsavel_endereco_numero" as any, v)} required />
+              <ReviewField label="Complemento"
+                value={(data as any).responsavel_endereco_complemento || ""}
+                onChange={(v) => set("responsavel_endereco_complemento" as any, v)} />
+              <ReviewField label="Bairro"
+                value={(data as any).responsavel_endereco_bairro || ""}
+                onChange={(v) => set("responsavel_endereco_bairro" as any, v)} required />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <ReviewField label="Cidade"
+                value={(data as any).responsavel_endereco_cidade || ""}
+                onChange={(v) => set("responsavel_endereco_cidade" as any, v)} required />
+              <ReviewField label="UF"
+                value={(data as any).responsavel_endereco_estado || ""}
+                onChange={(v) => set("responsavel_endereco_estado" as any, v.toUpperCase().slice(0, 2))}
+                placeholder="SP" required />
+              <ReviewField label="Geolocalização"
+                value={(data as any).responsavel_endereco_geolocalizacao || ""}
+                onChange={(v) => set("responsavel_endereco_geolocalizacao" as any, v)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="Reside desde"
+                value={(data as any).responsavel_endereco_reside_desde || ""}
+                onChange={(v) => set("responsavel_endereco_reside_desde" as any, v)}
+                placeholder="DD/MM/AAAA" required />
+              <ReviewField label="Residiu até (opcional)"
+                value={(data as any).responsavel_endereco_residiu_ate || ""}
+                onChange={(v) => set("responsavel_endereco_residiu_ate" as any, v)}
+                placeholder="DD/MM/AAAA" />
+            </div>
             <p className="text-[10px] leading-snug text-amber-900/80">
               Anexe a <strong>declaração de residência</strong> e o <strong>comprovante em nome do responsável</strong> nos uploads de documentos.
             </p>
