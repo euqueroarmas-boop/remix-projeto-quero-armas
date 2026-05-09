@@ -2752,11 +2752,26 @@ export type Database = {
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
+          responsavel_endereco_bairro: string | null
+          responsavel_endereco_cep: string | null
+          responsavel_endereco_cidade: string | null
+          responsavel_endereco_complemento: string | null
           responsavel_endereco_comprovante_path: string | null
           responsavel_endereco_cpf: string | null
+          responsavel_endereco_data_nascimento: string | null
           responsavel_endereco_declaracao_path: string | null
           responsavel_endereco_email: string | null
+          responsavel_endereco_estado: string | null
+          responsavel_endereco_estado_civil: string | null
+          responsavel_endereco_geolocalizacao: string | null
+          responsavel_endereco_logradouro: string | null
+          responsavel_endereco_nacionalidade: string | null
+          responsavel_endereco_naturalidade: string | null
           responsavel_endereco_nome: string | null
+          responsavel_endereco_numero: string | null
+          responsavel_endereco_profissao: string | null
+          responsavel_endereco_reside_desde: string | null
+          responsavel_endereco_residiu_ate: string | null
           responsavel_endereco_rg_cin: string | null
           responsavel_endereco_telefone: string | null
           responsavel_endereco_vinculo: string | null
@@ -2870,11 +2885,26 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
           responsavel_endereco_comprovante_path?: string | null
           responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
           responsavel_endereco_declaracao_path?: string | null
           responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
           responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
           responsavel_endereco_rg_cin?: string | null
           responsavel_endereco_telefone?: string | null
           responsavel_endereco_vinculo?: string | null
@@ -2988,11 +3018,26 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
           responsavel_endereco_comprovante_path?: string | null
           responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
           responsavel_endereco_declaracao_path?: string | null
           responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
           responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
           responsavel_endereco_rg_cin?: string | null
           responsavel_endereco_telefone?: string | null
           responsavel_endereco_vinculo?: string | null
@@ -3762,11 +3807,26 @@ export type Database = {
           recadastramento_iniciado_em: string | null
           recadastramento_obrigatorio: boolean
           recadastramento_status: string | null
+          responsavel_endereco_bairro: string | null
+          responsavel_endereco_cep: string | null
+          responsavel_endereco_cidade: string | null
+          responsavel_endereco_complemento: string | null
           responsavel_endereco_comprovante_path: string | null
           responsavel_endereco_cpf: string | null
+          responsavel_endereco_data_nascimento: string | null
           responsavel_endereco_declaracao_path: string | null
           responsavel_endereco_email: string | null
+          responsavel_endereco_estado: string | null
+          responsavel_endereco_estado_civil: string | null
+          responsavel_endereco_geolocalizacao: string | null
+          responsavel_endereco_logradouro: string | null
+          responsavel_endereco_nacionalidade: string | null
+          responsavel_endereco_naturalidade: string | null
           responsavel_endereco_nome: string | null
+          responsavel_endereco_numero: string | null
+          responsavel_endereco_profissao: string | null
+          responsavel_endereco_reside_desde: string | null
+          responsavel_endereco_residiu_ate: string | null
           responsavel_endereco_rg_cin: string | null
           responsavel_endereco_telefone: string | null
           responsavel_endereco_vinculo: string | null
@@ -3859,11 +3919,26 @@ export type Database = {
           recadastramento_iniciado_em?: string | null
           recadastramento_obrigatorio?: boolean
           recadastramento_status?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
           responsavel_endereco_comprovante_path?: string | null
           responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
           responsavel_endereco_declaracao_path?: string | null
           responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
           responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
           responsavel_endereco_rg_cin?: string | null
           responsavel_endereco_telefone?: string | null
           responsavel_endereco_vinculo?: string | null
@@ -3956,11 +4031,26 @@ export type Database = {
           recadastramento_iniciado_em?: string | null
           recadastramento_obrigatorio?: boolean
           recadastramento_status?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
           responsavel_endereco_comprovante_path?: string | null
           responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
           responsavel_endereco_declaracao_path?: string | null
           responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
           responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
           responsavel_endereco_rg_cin?: string | null
           responsavel_endereco_telefone?: string | null
           responsavel_endereco_vinculo?: string | null
