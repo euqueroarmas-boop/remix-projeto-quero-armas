@@ -1758,6 +1758,44 @@ export default function QAClientePortalPage() {
         </div>
         </div>
         )}
+
+        {activeSection === "contratacoes" && (
+          <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
+            <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
+            {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
+          </SectionCard>
+        )}
+
+        {activeSection === "documentos" && analysis && (
+          <SectionCard icon={FileText} title="Documentos" color="hsl(262 60% 55%)">
+            <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
+            {analysis.expDocs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nenhum documento com validade cadastrado.</p> : (
+              <div className="grid gap-2">{analysis.expDocs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
+            )}
+          </SectionCard>
+        )}
+
+        {activeSection === "mensagens" && (
+          <SectionCard icon={MessageCircle} title="Mensagens" color="hsl(35 92% 48%)">
+            <CentralAjudaCliente />
+          </SectionCard>
+        )}
+
+        {activeSection === "financeiro" && analysis && (
+          <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
+            <div className="space-y-2">{vendas.map((v: any) => <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"><div><div className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</div><div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div></div><div className="font-mono text-sm font-bold text-slate-900">{formatCurrency(Number(v.valor_a_pagar || 0))}</div></div>)}</div>
+            <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">Total investido</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(analysis.totalVendas)}</span></div>
+          </SectionCard>
+        )}
+
+        {activeSection === "configuracoes" && (
+          <SectionCard icon={Settings} title="Configurações" color="hsl(220 65% 48%)">
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
+              <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
+            </div>
+          </SectionCard>
+        )}
       </main>
 
       {(customerId || cliente?.id) && (
