@@ -142,6 +142,8 @@ export default function QAClientePortalPage() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [processos, setProcessos] = useState<any[]>([]);
+  const [processoDocs, setProcessoDocs] = useState<any[]>([]);
 
   // Fonte oficial do header: função autenticada resolve e assina, em ordem:
   // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
