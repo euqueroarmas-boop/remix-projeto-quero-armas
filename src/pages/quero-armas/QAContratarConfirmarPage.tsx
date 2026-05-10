@@ -302,7 +302,7 @@ export default function QAContratarConfirmarPage() {
     <a href="${portalUrl}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Acessar portal</a>
   </p>
 </td></tr>
-<tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Quero Armas — equipe operacional.</td></tr>
+<tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Quero Armas. Todos os Direitos Reservados.</td></tr>
 </table></td></tr></table></body></html>`;
         supabase.functions
           .invoke("send-smtp-email", {
