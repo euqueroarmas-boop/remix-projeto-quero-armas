@@ -670,17 +670,23 @@ export default function QAClientePortalPage() {
     { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes" },
   ], []);
 
+  // Sincroniza seção a partir da URL apenas no primeiro mount / quando a rota base muda.
+  // Navegação interna do portal NÃO altera URL — apenas estado.
   useEffect(() => {
     const match = navItems.find((item) => item.path !== "/area-do-cliente" && location.pathname.startsWith(item.path));
-    setActiveSection(match?.key ?? "resumo");
-  }, [location.pathname, navItems]);
+    if (match) setActiveSection(match.key);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const goSection = (key: typeof navItems[number]["key"]) => {
-    const item = navItems.find((n) => n.key === key);
-    if (!item) return;
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("[PortalNav] section click", key);
+    }
     setActiveSection(key);
     setMobileNavOpen(false);
-    navigate(item.path);
+    // Não usar navigate(): rotas internas como /area-do-cliente/arsenal não existem
+    // e o catch-all do router devolveria para "/". Mantemos a URL em /area-do-cliente.
   };
 
   const resumoState = useMemo(() => {
