@@ -42,6 +42,7 @@ const QAContratarServicoPage = lazyRetry(() => import("./QAContratarServicoPage"
 const QAContratarConfirmarPage = lazyRetry(() => import("./QAContratarConfirmarPage"), "QAContratarConfirmarPage");
 const QAContratarIdentificarPage = lazyRetry(() => import("./QAContratarIdentificarPage"), "QAContratarIdentificarPage");
 const QAContratarPublicoPage = lazyRetry(() => import("./QAContratarPublicoPage"), "QAContratarPublicoPage");
+const QAContratarSucessoPage = lazyRetry(() => import("./QAContratarSucessoPage"), "QAContratarSucessoPage");
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
 const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
 const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"), "QAContratacoesTabsPage");
@@ -103,6 +104,7 @@ export default function QARoutes() {
         <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAScope><QAContratarIdentificarPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
         <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/sucesso" element={<QAScope><QAContratarSucessoPage /></QAScope>} />
         <Route path="ativar-acesso" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         <Route path="portal/acessar" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         {/* Legacy redirects */}
