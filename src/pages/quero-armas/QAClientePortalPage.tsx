@@ -1024,6 +1024,33 @@ export default function QAClientePortalPage() {
           </>
         )}
 
+        {/* Fallback diagnóstico: aba Arsenal selecionada mas faltou cliente ou analysis. */}
+        {activeSection === "arsenal" && (!cliente || !analysis) && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-700">
+            <div className="text-[14px] font-bold uppercase tracking-wide text-slate-900">
+              Arsenal indisponível no momento
+            </div>
+            <p className="mt-2 text-[13px] text-slate-600">
+              Não foi possível carregar o Arsenal agora. Tente recarregar a página em instantes.
+            </p>
+            {import.meta.env.DEV && (
+              <pre className="mt-3 rounded-md bg-slate-50 border border-slate-200 p-3 text-[11px] text-slate-700 overflow-x-auto">
+{JSON.stringify({
+  hasCliente: !!cliente,
+  clienteIdReal: (cliente as any)?.id ?? null,
+  clienteIdLegado: (cliente as any)?.id_legado ?? null,
+  hasAnalysis: !!analysis,
+  crafs: crafs.length,
+  gtes: gtes.length,
+  meusDocs: meusDocs.length,
+  cadastro: !!cadastro,
+  processos: processos.length,
+}, null, 2)}
+              </pre>
+            )}
+          </div>
+        )}
+
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
         {/* ═══ HERO — Saudação + Próxima Ação (sem duplicar foto do cliente) ═══ */}
