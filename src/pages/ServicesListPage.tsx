@@ -198,13 +198,13 @@ const ServicesListPage = () => {
     autoplayRef.current?.stop();
   };
 
-  // Stop autoplay when user clicks prev/next arrows
+  // Stop autoplay also on drag interactions
   useEffect(() => {
     if (!api) return;
-    const onPointerDown = () => stopAutoplay();
-    api.on('pointerDown', onPointerDown);
+    const handler = () => stopAutoplay();
+    api.on('pointerDown', handler);
     return () => {
-      api.off('pointerDown', onPointerDown);
+      api.off('pointerDown', handler);
     };
   }, [api]);
 
