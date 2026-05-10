@@ -889,6 +889,7 @@ export default function QAClientePortalPage() {
 
         {activeTab === "arsenal" && cliente && analysis && (
           <>
+          {/* bloco arsenal carregado normalmente */}
           {import.meta.env.DEV && (() => {
             // [DIAG ARSENAL] log na renderização
             // eslint-disable-next-line no-console
