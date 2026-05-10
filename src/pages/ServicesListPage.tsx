@@ -12,11 +12,10 @@ import {
   CarouselApi,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from '@/components/ui/carousel';
 import {
   ArrowRight,
+  ArrowLeft,
   Loader2,
   Shield,
   Award,
@@ -387,11 +386,12 @@ const ServicesListPage = () => {
               {visibleServices.length === 0 ? (
                 <p className="text-muted-foreground">Nenhum serviço encontrado neste grupo.</p>
               ) : (
+                <div className="relative">
                 <Carousel
                   setApi={setApi}
                   opts={{ align: 'start', loop: true }}
                   plugins={[autoplayRef.current]}
-                  className="relative px-0 sm:px-12"
+                  className="px-0"
                 >
                   <CarouselContent className="-ml-4">
                     {visibleServices.map((s) => (
@@ -437,33 +437,26 @@ const ServicesListPage = () => {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious className="hidden sm:flex -left-2 lg:-left-4" />
-                  <CarouselNext className="hidden sm:flex -right-2 lg:-right-4" />
-                  <div className="mt-6 flex justify-center gap-3 sm:hidden">
-                    <button
-                      type="button"
-                      aria-label="Anterior"
-                      onClick={() => {
-                        stopAutoplay();
-                        api?.scrollPrev();
-                      }}
-                      className="flex size-10 items-center justify-center rounded-full border border-border bg-background hover:border-accent"
-                    >
-                      <ArrowRight className="size-4 rotate-180" />
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Próximo"
-                      onClick={() => {
-                        stopAutoplay();
-                        api?.scrollNext();
-                      }}
-                      className="flex size-10 items-center justify-center rounded-full border border-border bg-background hover:border-accent"
-                    >
-                      <ArrowRight className="size-4" />
-                    </button>
-                  </div>
                 </Carousel>
+                <div className="mt-6 flex justify-center gap-3">
+                  <button
+                    type="button"
+                    aria-label="Anterior"
+                    onClick={() => { stopAutoplay(); api?.scrollPrev(); }}
+                    className="flex size-11 items-center justify-center rounded-full border border-border bg-background transition-colors hover:border-accent hover:text-accent"
+                  >
+                    <ArrowLeft className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Próximo"
+                    onClick={() => { stopAutoplay(); api?.scrollNext(); }}
+                    className="flex size-11 items-center justify-center rounded-full border border-border bg-background transition-colors hover:border-accent hover:text-accent"
+                  >
+                    <ArrowRight className="size-4" />
+                  </button>
+                </div>
+                </div>
               )}
             </>
           )}
