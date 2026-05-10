@@ -300,6 +300,31 @@ export default function QAClientePortalPage() {
             .order("data_realizacao", { ascending: false }),
         ]);
 
+        // [DIAG ARSENAL] Surface de erros — antes eram silenciosamente convertidos em [].
+        const arsenalErrors: Record<string, string> = {};
+        if (vRes.error) arsenalErrors.qa_vendas = vRes.error.message;
+        if (crRes.error) arsenalErrors.qa_cadastro_cr = crRes.error.message;
+        if (cfRes.error) arsenalErrors.qa_crafs = cfRes.error.message;
+        if (gtRes.error) arsenalErrors.qa_gtes = gtRes.error.message;
+        if (flRes.error) arsenalErrors.qa_filiacoes = flRes.error.message;
+        if (exRes.error) arsenalErrors.qa_exames_cliente = exRes.error.message;
+        if (Object.keys(arsenalErrors).length > 0) {
+          console.warn("[ArsenalDiag] queries com erro:", arsenalErrors);
+        }
+        if (import.meta.env.DEV) {
+          console.table({
+            clienteIdReal,
+            clienteIdLegado: (clienteData as any)?.id_legado ?? null,
+            clienteIdVendas,
+            vendas: (vRes.data as any[] | null)?.length ?? 0,
+            cadastro_cr: (crRes.data as any[] | null)?.length ?? 0,
+            crafs: (cfRes.data as any[] | null)?.length ?? 0,
+            gtes: (gtRes.data as any[] | null)?.length ?? 0,
+            filiacoes: (flRes.data as any[] | null)?.length ?? 0,
+            exames: (exRes.data as any[] | null)?.length ?? 0,
+          });
+        }
+
         const vendasData = (vRes.data as any[]) ?? [];
         setVendas(vendasData);
 
@@ -429,8 +454,9 @@ export default function QAClientePortalPage() {
     const clienteIdReal = cliente?.id ?? null;
     if (!clienteIdReal && !customerId) return;
     const channel = supabase
-      .channel(`portal-cliente-${clienteIdReal ?? customerId}`)
-      .on(
+      .channel(`portal-cliente-${clienteIdReal ?? customerId}`);
+
+    channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table: "qa_documentos_cliente" },
         (payload: any) => {
@@ -440,23 +466,18 @@ export default function QAClientePortalPage() {
             setDocsReloadKey((k) => k + 1);
           }
         },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "qa_crafs", filter: `cliente_id=eq.${clienteIdReal}` },
-        () => setDocsReloadKey((k) => k + 1),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` },
-        () => setDocsReloadKey((k) => k + 1),
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "qa_clientes", filter: `id=eq.${clienteIdReal}` },
-        () => setDocsReloadKey((k) => k + 1),
-      )
-      .subscribe();
+      );
+
+    // Filtros que dependem de clienteIdReal só são registrados se ele existir,
+    // evitando assinatura com `cliente_id=eq.null` (que vinha do Pass anterior).
+    if (clienteIdReal) {
+      channel
+        .on("postgres_changes", { event: "*", schema: "public", table: "qa_crafs", filter: `cliente_id=eq.${clienteIdReal}` }, () => setDocsReloadKey((k) => k + 1))
+        .on("postgres_changes", { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` }, () => setDocsReloadKey((k) => k + 1))
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "qa_clientes", filter: `id=eq.${clienteIdReal}` }, () => setDocsReloadKey((k) => k + 1));
+    }
+
+    channel.subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [cliente?.id, customerId]);
 
@@ -868,6 +889,26 @@ export default function QAClientePortalPage() {
 
         {activeTab === "arsenal" && cliente && analysis && (
           <>
+          {/* bloco arsenal carregado normalmente */}
+          {import.meta.env.DEV && (() => {
+            // [DIAG ARSENAL] log na renderização
+            // eslint-disable-next-line no-console
+            console.table({
+              activeSection,
+              activeTab,
+              hasCliente: !!cliente,
+              clienteIdReal: (cliente as any)?.id,
+              clienteIdLegado: (cliente as any)?.id_legado,
+              hasAnalysis: !!analysis,
+              crafs: crafs.length,
+              gtes: gtes.length,
+              meusDocs: meusDocs.length,
+              cadastro: !!cadastro,
+              processos: processos.length,
+              processoDocs: processoDocs.length,
+            });
+            return null;
+          })()}
           {(() => {
             const isFree = cliente?.tipo_cliente === "cliente_app";
             const isEmpty =
@@ -981,6 +1022,33 @@ export default function QAClientePortalPage() {
             onSaved={() => { /* dados aparecerão na ficha do admin via view qa_cliente_armas */ }}
           />
           </>
+        )}
+
+        {/* Fallback diagnóstico: aba Arsenal selecionada mas faltou cliente ou analysis. */}
+        {activeSection === "arsenal" && (!cliente || !analysis) && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-700">
+            <div className="text-[14px] font-bold uppercase tracking-wide text-slate-900">
+              Arsenal indisponível no momento
+            </div>
+            <p className="mt-2 text-[13px] text-slate-600">
+              Não foi possível carregar o Arsenal agora. Tente recarregar a página em instantes.
+            </p>
+            {import.meta.env.DEV && (
+              <pre className="mt-3 rounded-md bg-slate-50 border border-slate-200 p-3 text-[11px] text-slate-700 overflow-x-auto">
+{JSON.stringify({
+  hasCliente: !!cliente,
+  clienteIdReal: (cliente as any)?.id ?? null,
+  clienteIdLegado: (cliente as any)?.id_legado ?? null,
+  hasAnalysis: !!analysis,
+  crafs: crafs.length,
+  gtes: gtes.length,
+  meusDocs: meusDocs.length,
+  cadastro: !!cadastro,
+  processos: processos.length,
+}, null, 2)}
+              </pre>
+            )}
+          </div>
         )}
 
         {activeTab === "resumo" && (
