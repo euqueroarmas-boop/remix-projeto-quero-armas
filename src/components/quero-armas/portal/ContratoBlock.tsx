@@ -315,3 +315,11 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
     </div>
   );
 }
+
+export default function ContratoBlock(props: { clienteId: number | null }) {
+  return (
+    <ContratoBlockErrorBoundary>
+      <ContratoBlockInner {...props} />
+    </ContratoBlockErrorBoundary>
+  );
+}
