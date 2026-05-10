@@ -300,6 +300,31 @@ export default function QAClientePortalPage() {
             .order("data_realizacao", { ascending: false }),
         ]);
 
+        // [DIAG ARSENAL] Surface de erros — antes eram silenciosamente convertidos em [].
+        const arsenalErrors: Record<string, string> = {};
+        if (vRes.error) arsenalErrors.qa_vendas = vRes.error.message;
+        if (crRes.error) arsenalErrors.qa_cadastro_cr = crRes.error.message;
+        if (cfRes.error) arsenalErrors.qa_crafs = cfRes.error.message;
+        if (gtRes.error) arsenalErrors.qa_gtes = gtRes.error.message;
+        if (flRes.error) arsenalErrors.qa_filiacoes = flRes.error.message;
+        if (exRes.error) arsenalErrors.qa_exames_cliente = exRes.error.message;
+        if (Object.keys(arsenalErrors).length > 0) {
+          console.warn("[ArsenalDiag] queries com erro:", arsenalErrors);
+        }
+        if (import.meta.env.DEV) {
+          console.table({
+            clienteIdReal,
+            clienteIdLegado: (clienteData as any)?.id_legado ?? null,
+            clienteIdVendas,
+            vendas: (vRes.data as any[] | null)?.length ?? 0,
+            cadastro_cr: (crRes.data as any[] | null)?.length ?? 0,
+            crafs: (cfRes.data as any[] | null)?.length ?? 0,
+            gtes: (gtRes.data as any[] | null)?.length ?? 0,
+            filiacoes: (flRes.data as any[] | null)?.length ?? 0,
+            exames: (exRes.data as any[] | null)?.length ?? 0,
+          });
+        }
+
         const vendasData = (vRes.data as any[]) ?? [];
         setVendas(vendasData);
 
