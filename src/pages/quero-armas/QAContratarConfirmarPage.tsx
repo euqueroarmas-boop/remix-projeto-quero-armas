@@ -268,7 +268,13 @@ export default function QAContratarConfirmarPage() {
           .catch((e) => console.warn("[notif admin]", e));
       }
 
-      navigate("/area-do-cliente");
+      // BLOCO 9 — tela premium de sucesso pós-contratação
+      navigate(
+        `/area-do-cliente/contratar/${catalogo.slug}/sucesso${
+          vendaId ? `?venda=${vendaId}` : ""
+        }`,
+        { replace: true },
+      );
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
       toast.error(e?.message || "Não foi possível concluir a contratação.");
