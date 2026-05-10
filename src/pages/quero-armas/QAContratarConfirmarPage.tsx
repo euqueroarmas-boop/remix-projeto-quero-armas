@@ -53,11 +53,6 @@ interface ClienteData {
   estado: string | null;
 }
 
-function formatBRL(v: number | null) {
-  if (v == null) return null;
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
-}
-
 const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)", "UNIÃO ESTÁVEL"];
 
 export default function QAContratarConfirmarPage() {
