@@ -155,7 +155,7 @@ export default function QAContratarPublicoPage() {
               </h1>
               <p className="text-sm text-slate-600 mt-2 leading-relaxed">
                 Sua solicitação para <strong className="uppercase">{servicoNome}</strong> foi
-                registrada. A Equipe Quero Armas da Quero Armas irá <strong>validar o valor</strong>
+                registrada. A Equipe Quero Armas irá <strong>validar o valor</strong>
                 {" "}e entrar em contato com você nas próximas horas.
               </p>
               <p className="text-[11px] text-slate-500 mt-3">
