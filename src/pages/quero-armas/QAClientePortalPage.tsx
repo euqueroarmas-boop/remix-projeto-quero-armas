@@ -350,6 +350,25 @@ export default function QAClientePortalPage() {
           setMeusDocs((docsData as any[]) ?? []);
         }
 
+        // Processos canônicos do cliente (fonte real de progresso/etapa/checklist)
+        const { data: procsData } = await supabase
+          .from("qa_processos" as any)
+          .select("id, servico_nome, servico_slug, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, primeiro_doc_aprovado_em")
+          .eq("cliente_id", clienteIdReal)
+          .order("data_criacao", { ascending: false });
+        const procsList = (procsData as any[]) ?? [];
+        setProcessos(procsList);
+        if (procsList.length > 0) {
+          const procIds = procsList.map((p) => p.id);
+          const { data: procDocsData } = await supabase
+            .from("qa_processo_documentos" as any)
+            .select("id, processo_id, status, obrigatorio, tipo_documento, etapa")
+            .in("processo_id", procIds);
+          setProcessoDocs((procDocsData as any[]) ?? []);
+        } else {
+          setProcessoDocs([]);
+        }
+
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
