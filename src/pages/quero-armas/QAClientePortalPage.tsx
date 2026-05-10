@@ -721,15 +721,48 @@ export default function QAClientePortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
       />
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center justify-between h-20">
+          <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
+          <button type="button" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center"><ChevronRight className="h-4 w-4 rotate-180" /></button>
+        </div>
+        <nav className="mt-6 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key;
+            return (
+              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
+                <Icon className="h-5 w-5" /> {item.label}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="mt-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900"><HelpCircle className="h-4 w-4" /> Precisa de ajuda?</div>
+          <p className="mt-2 text-[12px] text-slate-500">Fale com nosso time</p>
+          <button type="button" onClick={() => goSection("mensagens")} className="mt-3 h-10 w-full rounded-lg border border-[#7A1F2B] text-[12px] font-bold text-[#7A1F2B]">Abrir chat</button>
+        </div>
+      </aside>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-950/35 lg:hidden" onClick={() => setMobileNavOpen(false)}>
+          <div className="absolute left-0 top-0 h-full w-[82vw] max-w-xs bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
+            <nav className="mt-6 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold ${activeSection === item.key ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav>
+          </div>
+        </div>
+      )}
+
       {/* ═══ TOP BAR — Premium Light ═══ */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <button type="button" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center"><Menu className="h-4 w-4" /></button>
             {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
             <button
               type="button"
@@ -811,40 +844,23 @@ export default function QAClientePortalPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-        {/* ═══ TABS NAVIGATION ═══ */}
-        <div className="sticky top-[60px] z-30 -mx-4 mb-1 border-b border-slate-200/70 bg-gradient-to-b from-white/95 to-white/85 px-4 py-2 backdrop-blur-md">
-          <div className="flex items-center justify-between gap-2">
-            <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setActiveTab("arsenal")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                  activeTab === "arsenal"
-                    ? "bg-[#7A1F2B] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                <CrosshairIcon className="h-3.5 w-3.5" /> Arsenal
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("resumo")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                  activeTab === "resumo"
-                    ? "bg-[#7A1F2B] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                <LayoutDashboard className="h-3.5 w-3.5" /> Resumo
-              </button>
+      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5">
+        <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-6 overflow-x-auto">
+              {navItems.slice(0, 4).map((item) => {
+                const Icon = item.icon;
+                const active = activeSection === item.key;
+                return (
+                  <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`relative inline-flex items-center gap-2 px-1 py-2 text-[13px] font-bold ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}>
+                    <Icon className="h-4 w-4" /> {item.label}
+                    {active && <span className="absolute inset-x-0 -bottom-3 h-1 rounded-full bg-[#7A1F2B]" />}
+                  </button>
+                );
+              })}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddDoc(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-sm hover:bg-[#FBF3F4]"
-            >
-              <Upload className="h-3.5 w-3.5" /> Enviar documento
+            <button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2.5 text-[12px] font-bold text-white shadow-sm hover:bg-[#641722]">
+              <Upload className="h-4 w-4" /> Enviar documento
             </button>
           </div>
         </div>
