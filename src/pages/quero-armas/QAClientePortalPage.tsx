@@ -882,25 +882,44 @@ export default function QAClientePortalPage() {
         <div className="qa-resumo-light space-y-4">
         {/* ═══ HERO — Saudação + Próxima Ação (sem duplicar foto do cliente) ═══ */}
         {(() => {
-          const docsPendentes = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
-          const docsReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
-          const totalPendencias = (analysis?.alerts.length || 0) + docsPendentes + docsReprovados;
           const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+          const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
+          const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
+          // Pendências reais = checklist canônico + reprovados do hub + alertas de validade críticos
+          const totalPendencias =
+            processoSnap.aguardandoAcaoCliente +
+            docsHubReprovados +
+            (analysis?.alerts.filter((a) => a.days !== null && (a.days as number) <= 30).length || 0);
+          const aguardandoDocsReal =
+            processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0;
 
-          // Próxima ação real: prioriza vencidos > docs reprovados > docs em análise > alerta mais urgente > cadastro
+          // Prioridade canônica:
+          // 1) prazo processual crítico / documento vencido
+          // 2) reprovado do hub que exige reenvio
+          // 3) checklist obrigatório não enviado
+          // 4) cadastro incompleto
+          // 5) documento em análise (informativo)
           let proximaAcao: { titulo: string; descricao: string; onClick: () => void } | null = null;
           const vencido = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
-          const proxVenc = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) >= 0 && (d.days as number) <= 30);
-          if (docsReprovados > 0) {
-            proximaAcao = { titulo: "Reenviar documento reprovado", descricao: "Há documento que precisa ser corrigido e reenviado.", onClick: () => setShowAddDoc(true) };
-          } else if (vencido) {
+          const venceHoje = analysis?.expDocs.find((d) => d.days === 0);
+          const checklistPend = processoDocs.find((d) => d.obrigatorio && ["pendente"].includes(String(d.status || "").toLowerCase()));
+          const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
+          if (vencido) {
             proximaAcao = { titulo: `Renovar ${vencido.label}`, descricao: `Vencido há ${Math.abs(vencido.days as number)} dia(s) — regularize com urgência.`, onClick: () => setShowAddDoc(true) };
+          } else if (venceHoje) {
+            proximaAcao = { titulo: `Renovar ${venceHoje.label}`, descricao: "Vence hoje — providencie a renovação imediatamente.", onClick: () => setShowAddDoc(true) };
+          } else if (checklistReproc) {
+            const tipo = String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase();
+            proximaAcao = { titulo: `Reenviar ${tipo}`, descricao: "Documento do processo precisa ser corrigido e reenviado.", onClick: () => setShowAddDoc(true) };
+          } else if (docsHubReprovados > 0) {
+            proximaAcao = { titulo: "Reenviar documento reprovado", descricao: `${docsHubReprovados} documento(s) do hub precisam ser corrigidos.`, onClick: () => setShowAddDoc(true) };
+          } else if (checklistPend) {
+            const tipo = String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase();
+            proximaAcao = { titulo: `Enviar ${tipo}`, descricao: "Documento obrigatório do checklist ainda não enviado.", onClick: () => setShowAddDoc(true) };
           } else if (cadastroIncompleto) {
             proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
-          } else if (proxVenc) {
-            proximaAcao = { titulo: `Renovar ${proxVenc.label}`, descricao: `Vence em ${proxVenc.days} dia(s) — providencie a renovação.`, onClick: () => setShowAddDoc(true) };
-          } else if (docsPendentes > 0) {
-            proximaAcao = { titulo: "Aguardando análise", descricao: `${docsPendentes} documento(s) em análise pela equipe.`, onClick: () => setActiveTab("arsenal") };
+          } else if (docsHubEmAnalise > 0) {
+            proximaAcao = { titulo: "Aguardando análise", descricao: `${docsHubEmAnalise} documento(s) em análise pela equipe.`, onClick: () => setActiveTab("arsenal") };
           }
 
           return (
@@ -921,12 +940,12 @@ export default function QAClientePortalPage() {
                         <AlertTriangle className="h-3 w-3" /> Cadastro incompleto
                       </span>
                     )}
-                    {(docsPendentes > 0 || (analysis?.expDocs.length ?? 0) > 0) && (
+                    {aguardandoDocsReal && (
                       <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-sky-300 bg-sky-50 text-[11px] font-semibold text-sky-800">
                         <Clock className="h-3 w-3" /> Aguardando documentos
                       </span>
                     )}
-                    {!cadastroIncompleto && docsPendentes === 0 && (analysis?.alerts.length ?? 0) === 0 && (
+                    {!cadastroIncompleto && !aguardandoDocsReal && totalPendencias === 0 && (
                       <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-emerald-300 bg-emerald-50 text-[11px] font-semibold text-emerald-800">
                         <CheckCircle className="h-3 w-3" /> Em dia
                       </span>
