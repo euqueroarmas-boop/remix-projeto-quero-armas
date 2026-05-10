@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -43,7 +43,33 @@ const TONE_CLS: Record<string, string> = {
   err: "bg-rose-50 text-rose-800 border-rose-200",
 };
 
-export default function ContratoBlock({ clienteId }: { clienteId: number | null }) {
+/**
+ * Local error boundary: garante que falha em qa_contracts/RLS/edge functions
+ * NUNCA derrube o portal (Arsenal, Documentos, etc.).
+ */
+class ContratoBlockErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err: unknown) {
+    // eslint-disable-next-line no-console
+    console.warn("[ContratoBlock] erro isolado:", err);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-xl border border-neutral-200 bg-white p-5 text-[12px] text-neutral-500">
+          Não foi possível carregar o contrato agora. Tente novamente em instantes.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
   const [loading, setLoading] = useState(true);
   const [contract, setContract] = useState<Contract | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -56,16 +82,29 @@ export default function ContratoBlock({ clienteId }: { clienteId: number | null 
     let cancel = false;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from("qa_contracts" as any)
-        .select("id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details, customer_signed_pdf_path")
-        .eq("cliente_id", clienteId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!cancel) {
-        setContract((data as any) || null);
-        setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from("qa_contracts" as any)
+          .select("id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details, customer_signed_pdf_path")
+          .eq("cliente_id", clienteId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) {
+          // eslint-disable-next-line no-console
+          console.warn("[ContratoBlock] qa_contracts query falhou (ignorando):", error.message);
+        }
+        if (!cancel) {
+          setContract((data as any) || null);
+          setLoading(false);
+        }
+      } catch (e) {
+        if (!cancel) {
+          // eslint-disable-next-line no-console
+          console.warn("[ContratoBlock] exceção na carga (ignorando):", e);
+          setContract(null);
+          setLoading(false);
+        }
       }
     })();
     return () => { cancel = true; };
