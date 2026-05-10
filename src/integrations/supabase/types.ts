@@ -4186,6 +4186,234 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_contract_events: {
+        Row: {
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          event_payload: Json
+          event_type: string
+          id: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          event_payload?: Json
+          event_type: string
+          id?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          event_payload?: Json
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contract_items: {
+        Row: {
+          contract_id: string
+          created_at: string
+          id: string
+          item_venda_id: number | null
+          metadata: Json
+          quantity: number
+          service_description_snapshot: string | null
+          service_id_snapshot: number | null
+          service_name_snapshot: string
+          service_slug_snapshot: string | null
+          total_price_cents: number
+          unit_price_cents: number
+          venda_id: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          metadata?: Json
+          quantity?: number
+          service_description_snapshot?: string | null
+          service_id_snapshot?: number | null
+          service_name_snapshot: string
+          service_slug_snapshot?: string | null
+          total_price_cents?: number
+          unit_price_cents?: number
+          venda_id: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          metadata?: Json
+          quantity?: number
+          service_description_snapshot?: string | null
+          service_id_snapshot?: number | null
+          service_name_snapshot?: string
+          service_slug_snapshot?: string | null
+          total_price_cents?: number
+          unit_price_cents?: number
+          venda_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contract_signatures: {
+        Row: {
+          contract_id: string
+          created_at: string
+          id: string
+          signature_type: string | null
+          signed_at: string | null
+          signed_pdf_path: string | null
+          signed_pdf_sha256: string | null
+          signer_document: string | null
+          signer_name: string | null
+          signer_role: string
+          validation_details: Json
+          validation_status: string | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          id?: string
+          signature_type?: string | null
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          signed_pdf_sha256?: string | null
+          signer_document?: string | null
+          signer_name?: string | null
+          signer_role: string
+          validation_details?: Json
+          validation_status?: string | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          id?: string
+          signature_type?: string | null
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          signed_pdf_sha256?: string | null
+          signer_document?: string | null
+          signer_name?: string | null
+          signer_role?: string
+          validation_details?: Json
+          validation_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contracts: {
+        Row: {
+          cliente_id: number
+          company_signed_at: string | null
+          company_signed_pdf_path: string | null
+          company_signed_sha256: string | null
+          contract_number: string
+          created_at: string
+          customer_signature_validated_at: string | null
+          customer_signed_pdf_path: string | null
+          customer_signed_sha256: string | null
+          customer_uploaded_at: string | null
+          id: string
+          issued_at: string | null
+          original_pdf_path: string | null
+          original_sha256: string | null
+          signature_mode_company: string | null
+          status: string
+          updated_at: string
+          validation_details: Json
+          validation_status: string | null
+          venda_id: number
+        }
+        Insert: {
+          cliente_id: number
+          company_signed_at?: string | null
+          company_signed_pdf_path?: string | null
+          company_signed_sha256?: string | null
+          contract_number: string
+          created_at?: string
+          customer_signature_validated_at?: string | null
+          customer_signed_pdf_path?: string | null
+          customer_signed_sha256?: string | null
+          customer_uploaded_at?: string | null
+          id?: string
+          issued_at?: string | null
+          original_pdf_path?: string | null
+          original_sha256?: string | null
+          signature_mode_company?: string | null
+          status?: string
+          updated_at?: string
+          validation_details?: Json
+          validation_status?: string | null
+          venda_id: number
+        }
+        Update: {
+          cliente_id?: number
+          company_signed_at?: string | null
+          company_signed_pdf_path?: string | null
+          company_signed_sha256?: string | null
+          contract_number?: string
+          created_at?: string
+          customer_signature_validated_at?: string | null
+          customer_signed_pdf_path?: string | null
+          customer_signed_sha256?: string | null
+          customer_uploaded_at?: string | null
+          id?: string
+          issued_at?: string | null
+          original_pdf_path?: string | null
+          original_sha256?: string | null
+          signature_mode_company?: string | null
+          status?: string
+          updated_at?: string
+          validation_details?: Json
+          validation_status?: string | null
+          venda_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_contracts_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "fk_qa_contracts_venda"
+            columns: ["venda_id"]
+            isOneToOne: true
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id_legado"]
+          },
+        ]
+      }
       qa_crafs: {
         Row: {
           arma_especie: string | null
