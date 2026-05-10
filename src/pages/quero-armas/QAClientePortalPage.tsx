@@ -124,6 +124,7 @@ function ClientAvatar({
 
 export default function QAClientePortalPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { map: SERVICO_MAP } = useQAServicosMap();
   const [loading, setLoading] = useState(true);
   const [cliente, setCliente] = useState<any>(null);
@@ -142,7 +143,8 @@ export default function QAClientePortalPage() {
   const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
-  const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
+  const [activeSection, setActiveSection] = useState<"resumo" | "contratacoes" | "documentos" | "arsenal" | "mensagens" | "financeiro" | "configuracoes">("resumo");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
