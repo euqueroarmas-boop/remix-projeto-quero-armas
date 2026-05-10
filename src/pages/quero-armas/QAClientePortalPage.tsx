@@ -510,6 +510,94 @@ export default function QAClientePortalPage() {
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
   }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs, catalogoByServicoId, SERVICO_MAP]);
 
+  // ─── Snapshot canônico de processos/checklist do cliente ───────────────────
+  // Tudo derivado de qa_processos + qa_processo_documentos (fontes oficiais).
+  // Sem hardcode de progresso/etapa.
+  const processoSnap = useMemo(() => {
+    const STATUS_CONCLUIDO = new Set(["concluido", "deferido", "finalizado"]);
+    const STATUS_ENCERRADO = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "desistiu", "restituido"]);
+    const ETAPA_LABELS: Record<number, string> = {
+      1: "Endereço",
+      2: "Condição profissional",
+      3: "Antecedentes",
+      4: "Declarações",
+      5: "Exames técnicos",
+    };
+    const STATUS_LABELS: Record<string, string> = {
+      aguardando_pagamento: "Aguardando pagamento",
+      aguardando_documentos: "Aguardando documentação",
+      aguardando_documentacao: "Aguardando documentação",
+      em_validacao_ia: "Validando documentos",
+      em_revisao_humana: "Em revisão pela equipe",
+      aprovado: "Documentação aprovada",
+      enviado_ao_orgao: "Protocolado no órgão",
+      protocolado: "Protocolado no órgão",
+      em_analise_orgao: "Em análise pelo órgão",
+      deferido: "Deferido",
+      indeferido: "Indeferido",
+      concluido: "Concluído",
+      finalizado: "Concluído",
+    };
+
+    const ativos = processos.filter((p) => !STATUS_ENCERRADO.has(String(p.status || "").toLowerCase()));
+    const concluidos = processos.filter((p) => STATUS_CONCLUIDO.has(String(p.status || "").toLowerCase())).length;
+    const emAndamento = ativos.length; // ativos = em andamento (qualquer fase ativa)
+
+    // Pendências reais do checklist (qualquer obrigatório não aprovado/dispensado)
+    const APROVADOS_SET = new Set(["aprovado", "validado", "dispensado_grupo"]);
+    const pendentesChecklist = processoDocs.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+    const reprovadosChecklist = processoDocs.filter((d) => ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
+    const aguardandoAcaoCliente = processoDocs.filter((d) => d.obrigatorio && ["pendente", "invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
+
+    // Processo principal = primeiro ativo (mais recente já vem ordenado por data_criacao desc)
+    const principal = ativos[0] || null;
+    let principalView: {
+      processo: any;
+      nome: string;
+      statusLabel: string;
+      statusBadge: string;
+      etapaLabel: string;
+      progresso: number;
+      total: number;
+      aprovados: number;
+      pendentes: number;
+      prazoCritico: string | null;
+    } | null = null;
+    if (principal) {
+      const meus = processoDocs.filter((d) => d.processo_id === principal.id);
+      const total = meus.length;
+      const aprovados = meus.filter((d) => APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+      const pendentes = meus.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+      const progresso = total > 0 ? Math.round((aprovados / total) * 100) : 0;
+      const statusKey = String(principal.status || "").toLowerCase();
+      const statusLabel = STATUS_LABELS[statusKey] || statusKey.replace(/_/g, " ").toUpperCase();
+      const etapa = principal.etapa_liberada_ate ? ETAPA_LABELS[principal.etapa_liberada_ate] : null;
+      principalView = {
+        processo: principal,
+        nome: principal.servico_nome || "Serviço",
+        statusLabel,
+        statusBadge: statusKey,
+        etapaLabel: etapa || statusLabel,
+        progresso,
+        total,
+        aprovados,
+        pendentes,
+        prazoCritico: principal.prazo_critico_data || null,
+      };
+    }
+
+    return {
+      processos,
+      ativos,
+      concluidos,
+      emAndamento,
+      pendentesChecklist,
+      reprovadosChecklist,
+      aguardandoAcaoCliente,
+      principal: principalView,
+    };
+  }, [processos, processoDocs]);
+
   // Timeline
   const timeline = useMemo(() => {
     const events: { date: string; label: string; icon: any; color: string }[] = [];
