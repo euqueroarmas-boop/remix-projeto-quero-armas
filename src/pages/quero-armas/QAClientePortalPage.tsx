@@ -19,6 +19,7 @@ import { ClienteDocsHubModal } from "@/components/quero-armas/clientes/ClienteDo
 import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
+import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -1762,6 +1763,11 @@ export default function QAClientePortalPage() {
         {activeSection === "contratacoes" && (
           <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
             <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
+            {cliente?.id ? (
+              <div className="mb-4">
+                <ContratoBlock clienteId={cliente.id} />
+              </div>
+            ) : null}
             {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
           </SectionCard>
         )}
