@@ -647,7 +647,7 @@ export default function QAClientePortalPage() {
               onClick={() => setShowAddDoc(true)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-sm hover:bg-[#FBF3F4]"
             >
-              <Upload className="h-3.5 w-3.5" /> Enviar
+              <Upload className="h-3.5 w-3.5" /> Enviar documento
             </button>
           </div>
         </div>
