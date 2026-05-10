@@ -1140,7 +1140,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   AGUARDANDO CONFIRMAÇÃO DE PAGAMENTO
                 </div>
                 <p className="mt-2 text-sm text-[#7A1F2B] leading-relaxed">
-                  Cadastro recebido. Nossa Equipe Operacional validará os dados e confirmará o pagamento manualmente.
+                  Cadastro recebido. Nossa Equipe Quero Armas validará os dados e confirmará o pagamento manualmente.
                   Após a confirmação, o checklist documental será liberado.
                 </p>
                 {equipeMode && (
@@ -1154,7 +1154,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       {confirmandoPagto ? "Confirmando..." : "Confirmar pagamento manualmente"}
                     </button>
                     <span className="text-[10px] uppercase tracking-wider text-[#7A1F2B] self-center">
-                      Ação restrita à Equipe Operacional
+                      Ação restrita à Equipe Quero Armas
                     </span>
                   </div>
                 )}
