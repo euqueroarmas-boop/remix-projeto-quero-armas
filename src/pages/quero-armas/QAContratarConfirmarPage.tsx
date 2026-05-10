@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  ArrowLeft,
   Loader2,
   Sparkles,
   CheckCircle2,
@@ -14,6 +13,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
+import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 
 /**
  * QAContratarConfirmarPage — Cliente logado.
@@ -351,30 +351,17 @@ export default function QAContratarConfirmarPage() {
   }
 
   return (
-    <div data-tactical-portal className="min-h-screen">
-      <div className="qa-resumo-light">
-        {/* Header */}
-        <div className="px-4 pt-4 pb-3 border-b border-slate-200/70 bg-white sticky top-0 z-10">
-          <div className="max-w-2xl mx-auto flex items-center gap-3">
-            <button
-              onClick={() => navigate("/area-do-cliente/contratar")}
-              className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-              aria-label="Voltar"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base md:text-lg font-bold text-slate-900 uppercase tracking-tight">
-                Confirmar contratação
-              </h1>
-              <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 truncate">
-                {catalogo.nome} {preco ? `· ${preco}${catalogo.recorrente ? "/mês" : ""}` : ""}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+    <CheckoutShell
+      step={3}
+      slug={slug}
+      backTo="/area-do-cliente/contratar"
+      summary={{
+        nome: catalogo.nome,
+        descricao_curta: catalogo.descricao_curta,
+        preco: catalogo.preco,
+        recorrente: catalogo.recorrente,
+      }}
+    >
           {/* Resumo do cliente */}
           <div className="rounded-xl bg-white border border-slate-200 p-4">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
@@ -589,6 +576,10 @@ export default function QAContratarConfirmarPage() {
           </div>
 
           {/* CTA */}
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Seu processo começa após a confirmação do pagamento. Você receberá acesso
+            ao portal para acompanhar documentos, etapas e próximos passos.
+          </p>
           <button
             disabled={!podeConfirmar}
             onClick={handleConfirmar}
@@ -603,11 +594,9 @@ export default function QAContratarConfirmarPage() {
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            Confirmar contratação
+            Finalizar e ir para pagamento
             <ChevronRight className="h-4 w-4" />
           </button>
-        </div>
-      </div>
-    </div>
+    </CheckoutShell>
   );
 }
