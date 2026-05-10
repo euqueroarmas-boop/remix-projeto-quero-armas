@@ -13,7 +13,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 
-import SiteShell from '@/shared/components/layout/SiteShell';
+import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/shared/cart/CartProvider';
