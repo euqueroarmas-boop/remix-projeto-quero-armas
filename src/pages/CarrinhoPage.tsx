@@ -134,9 +134,14 @@ export default function CarrinhoPage() {
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 flex-1">
-                        <p className="font-heading text-[11px] font-bold uppercase tracking-[0.25em] text-muted-foreground">
-                          {item.service_slug}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="border-accent/40 bg-accent/10 text-accent">
+                            <Sparkles className="mr-1 size-3" /> Catálogo oficial
+                          </Badge>
+                          <p className="font-heading text-[11px] font-bold uppercase tracking-[0.25em] text-muted-foreground">
+                            {item.service_slug}
+                          </p>
+                        </div>
                         <h3 className="mt-1 font-heading text-lg font-bold uppercase leading-tight tracking-tight sm:text-xl">
                           {item.service_name}
                         </h3>
