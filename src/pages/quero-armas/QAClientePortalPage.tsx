@@ -1197,14 +1197,21 @@ export default function QAClientePortalPage() {
               {(() => {
                 const passos: { icon: any; titulo: string; sub: string; onClick: () => void }[] = [];
                 const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
-                if (cadastroIncompleto) passos.push({ icon: User, titulo: "Completar cadastro", sub: "Obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
-                if (!hasAnyPhoto) passos.push({ icon: ImageIcon, titulo: "Enviar foto 3x4", sub: "Documento obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
-                meusDocs.filter((d: any) => d.status === "reprovado").slice(0, 3).forEach((d: any) => {
+                // Prioridade: vencidos/críticos > checklist reprovado > checklist pendente > hub reprovado > cadastro > foto
+                analysis?.alerts.filter((a) => a.days !== null && (a.days as number) <= 30).slice(0, 2).forEach((a) => {
+                  passos.push({ icon: AlertTriangle, titulo: a.label, sub: urgencyLabel(a.days), onClick: () => setActiveTab("arsenal") });
+                });
+                processoDocs.filter((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).slice(0, 3).forEach((d) => {
+                  passos.push({ icon: AlertTriangle, titulo: `Reenviar ${String(d.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, sub: "Reprovado no checklist", onClick: () => setShowAddDoc(true) });
+                });
+                processoDocs.filter((d) => d.obrigatorio && String(d.status || "").toLowerCase() === "pendente").slice(0, 3).forEach((d) => {
+                  passos.push({ icon: FileText, titulo: `Enviar ${String(d.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, sub: "Obrigatório", onClick: () => setShowAddDoc(true) });
+                });
+                meusDocs.filter((d: any) => d.status === "reprovado").slice(0, 2).forEach((d: any) => {
                   passos.push({ icon: AlertTriangle, titulo: `Reenviar ${(d.tipo_documento || "documento").toUpperCase()}`, sub: "Reprovado — corrigir", onClick: () => setShowAddDoc(true) });
                 });
-                analysis?.alerts.slice(0, 3).forEach((a) => {
-                  passos.push({ icon: Calendar, titulo: a.label, sub: urgencyLabel(a.days), onClick: () => setActiveTab("arsenal") });
-                });
+                if (cadastroIncompleto) passos.push({ icon: User, titulo: "Completar cadastro", sub: "Obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
+                if (!hasAnyPhoto) passos.push({ icon: ImageIcon, titulo: "Enviar foto 3x4", sub: "Documento obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
                 if (passos.length === 0) {
                   return (
                     <div className="text-center py-8">
