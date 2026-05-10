@@ -1020,9 +1020,9 @@ export default function QAClientePortalPage() {
         {analysis && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {[
-              { label: "Serviços ativos", sub: "Contratação em andamento", value: analysis.emAndamento || analysis.totalServicos, color: "hsl(352 60% 30%)", icon: Target },
-              { label: "Em andamento", sub: "Aguardando próximas etapas", value: analysis.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
-              { label: "Documentos pendentes", sub: "Precisam da sua ação", value: meusDocs.filter((d: any) => d.status === "pendente_aprovacao" || d.status === "reprovado").length, color: "hsl(262 60% 55%)", icon: FileText },
+              { label: "Serviços ativos", sub: "Contratação em andamento", value: processoSnap.ativos.length, color: "hsl(352 60% 30%)", icon: Target },
+              { label: "Em andamento", sub: "Aguardando próximas etapas", value: processoSnap.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
+              { label: "Documentos pendentes", sub: "Precisam da sua ação", value: processoSnap.aguardandoAcaoCliente, color: "hsl(262 60% 55%)", icon: FileText },
               { label: "Investido", sub: "Total investido até o momento", value: formatCurrency(analysis.totalVendas), color: "hsl(152 60% 42%)", icon: DollarSign },
             ].map((s) => {
               const Icon = s.icon;
