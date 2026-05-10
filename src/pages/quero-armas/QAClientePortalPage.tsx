@@ -142,6 +142,8 @@ export default function QAClientePortalPage() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [processos, setProcessos] = useState<any[]>([]);
+  const [processoDocs, setProcessoDocs] = useState<any[]>([]);
 
   // Fonte oficial do header: função autenticada resolve e assina, em ordem:
   // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
@@ -348,6 +350,25 @@ export default function QAClientePortalPage() {
           setMeusDocs((docsData as any[]) ?? []);
         }
 
+        // Processos canônicos do cliente (fonte real de progresso/etapa/checklist)
+        const { data: procsData } = await supabase
+          .from("qa_processos" as any)
+          .select("id, servico_nome, servico_slug, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, primeiro_doc_aprovado_em")
+          .eq("cliente_id", clienteIdReal)
+          .order("data_criacao", { ascending: false });
+        const procsList = (procsData as any[]) ?? [];
+        setProcessos(procsList);
+        if (procsList.length > 0) {
+          const procIds = procsList.map((p) => p.id);
+          const { data: procDocsData } = await supabase
+            .from("qa_processo_documentos" as any)
+            .select("id, processo_id, status, obrigatorio, tipo_documento, etapa")
+            .in("processo_id", procIds);
+          setProcessoDocs((procDocsData as any[]) ?? []);
+        } else {
+          setProcessoDocs([]);
+        }
+
       } catch (e: any) {
         console.error("[Portal] load error:", e);
         toast.error("Erro ao carregar dados");
@@ -488,6 +509,94 @@ export default function QAClientePortalPage() {
 
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
   }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs, catalogoByServicoId, SERVICO_MAP]);
+
+  // ─── Snapshot canônico de processos/checklist do cliente ───────────────────
+  // Tudo derivado de qa_processos + qa_processo_documentos (fontes oficiais).
+  // Sem hardcode de progresso/etapa.
+  const processoSnap = useMemo(() => {
+    const STATUS_CONCLUIDO = new Set(["concluido", "deferido", "finalizado"]);
+    const STATUS_ENCERRADO = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "desistiu", "restituido"]);
+    const ETAPA_LABELS: Record<number, string> = {
+      1: "Endereço",
+      2: "Condição profissional",
+      3: "Antecedentes",
+      4: "Declarações",
+      5: "Exames técnicos",
+    };
+    const STATUS_LABELS: Record<string, string> = {
+      aguardando_pagamento: "Aguardando pagamento",
+      aguardando_documentos: "Aguardando documentação",
+      aguardando_documentacao: "Aguardando documentação",
+      em_validacao_ia: "Validando documentos",
+      em_revisao_humana: "Em revisão pela equipe",
+      aprovado: "Documentação aprovada",
+      enviado_ao_orgao: "Protocolado no órgão",
+      protocolado: "Protocolado no órgão",
+      em_analise_orgao: "Em análise pelo órgão",
+      deferido: "Deferido",
+      indeferido: "Indeferido",
+      concluido: "Concluído",
+      finalizado: "Concluído",
+    };
+
+    const ativos = processos.filter((p) => !STATUS_ENCERRADO.has(String(p.status || "").toLowerCase()));
+    const concluidos = processos.filter((p) => STATUS_CONCLUIDO.has(String(p.status || "").toLowerCase())).length;
+    const emAndamento = ativos.length; // ativos = em andamento (qualquer fase ativa)
+
+    // Pendências reais do checklist (qualquer obrigatório não aprovado/dispensado)
+    const APROVADOS_SET = new Set(["aprovado", "validado", "dispensado_grupo"]);
+    const pendentesChecklist = processoDocs.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+    const reprovadosChecklist = processoDocs.filter((d) => ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
+    const aguardandoAcaoCliente = processoDocs.filter((d) => d.obrigatorio && ["pendente", "invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
+
+    // Processo principal = primeiro ativo (mais recente já vem ordenado por data_criacao desc)
+    const principal = ativos[0] || null;
+    let principalView: {
+      processo: any;
+      nome: string;
+      statusLabel: string;
+      statusBadge: string;
+      etapaLabel: string;
+      progresso: number;
+      total: number;
+      aprovados: number;
+      pendentes: number;
+      prazoCritico: string | null;
+    } | null = null;
+    if (principal) {
+      const meus = processoDocs.filter((d) => d.processo_id === principal.id);
+      const total = meus.length;
+      const aprovados = meus.filter((d) => APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+      const pendentes = meus.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+      const progresso = total > 0 ? Math.round((aprovados / total) * 100) : 0;
+      const statusKey = String(principal.status || "").toLowerCase();
+      const statusLabel = STATUS_LABELS[statusKey] || statusKey.replace(/_/g, " ").toUpperCase();
+      const etapa = principal.etapa_liberada_ate ? ETAPA_LABELS[principal.etapa_liberada_ate] : null;
+      principalView = {
+        processo: principal,
+        nome: principal.servico_nome || "Serviço",
+        statusLabel,
+        statusBadge: statusKey,
+        etapaLabel: etapa || statusLabel,
+        progresso,
+        total,
+        aprovados,
+        pendentes,
+        prazoCritico: principal.prazo_critico_data || null,
+      };
+    }
+
+    return {
+      processos,
+      ativos,
+      concluidos,
+      emAndamento,
+      pendentesChecklist,
+      reprovadosChecklist,
+      aguardandoAcaoCliente,
+      principal: principalView,
+    };
+  }, [processos, processoDocs]);
 
   // Timeline
   const timeline = useMemo(() => {
@@ -773,25 +882,44 @@ export default function QAClientePortalPage() {
         <div className="qa-resumo-light space-y-4">
         {/* ═══ HERO — Saudação + Próxima Ação (sem duplicar foto do cliente) ═══ */}
         {(() => {
-          const docsPendentes = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
-          const docsReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
-          const totalPendencias = (analysis?.alerts.length || 0) + docsPendentes + docsReprovados;
           const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+          const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
+          const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
+          // Pendências reais = checklist canônico + reprovados do hub + alertas de validade críticos
+          const totalPendencias =
+            processoSnap.aguardandoAcaoCliente +
+            docsHubReprovados +
+            (analysis?.alerts.filter((a) => a.days !== null && (a.days as number) <= 30).length || 0);
+          const aguardandoDocsReal =
+            processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0;
 
-          // Próxima ação real: prioriza vencidos > docs reprovados > docs em análise > alerta mais urgente > cadastro
+          // Prioridade canônica:
+          // 1) prazo processual crítico / documento vencido
+          // 2) reprovado do hub que exige reenvio
+          // 3) checklist obrigatório não enviado
+          // 4) cadastro incompleto
+          // 5) documento em análise (informativo)
           let proximaAcao: { titulo: string; descricao: string; onClick: () => void } | null = null;
           const vencido = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
-          const proxVenc = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) >= 0 && (d.days as number) <= 30);
-          if (docsReprovados > 0) {
-            proximaAcao = { titulo: "Reenviar documento reprovado", descricao: "Há documento que precisa ser corrigido e reenviado.", onClick: () => setShowAddDoc(true) };
-          } else if (vencido) {
+          const venceHoje = analysis?.expDocs.find((d) => d.days === 0);
+          const checklistPend = processoDocs.find((d) => d.obrigatorio && ["pendente"].includes(String(d.status || "").toLowerCase()));
+          const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
+          if (vencido) {
             proximaAcao = { titulo: `Renovar ${vencido.label}`, descricao: `Vencido há ${Math.abs(vencido.days as number)} dia(s) — regularize com urgência.`, onClick: () => setShowAddDoc(true) };
+          } else if (venceHoje) {
+            proximaAcao = { titulo: `Renovar ${venceHoje.label}`, descricao: "Vence hoje — providencie a renovação imediatamente.", onClick: () => setShowAddDoc(true) };
+          } else if (checklistReproc) {
+            const tipo = String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase();
+            proximaAcao = { titulo: `Reenviar ${tipo}`, descricao: "Documento do processo precisa ser corrigido e reenviado.", onClick: () => setShowAddDoc(true) };
+          } else if (docsHubReprovados > 0) {
+            proximaAcao = { titulo: "Reenviar documento reprovado", descricao: `${docsHubReprovados} documento(s) do hub precisam ser corrigidos.`, onClick: () => setShowAddDoc(true) };
+          } else if (checklistPend) {
+            const tipo = String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase();
+            proximaAcao = { titulo: `Enviar ${tipo}`, descricao: "Documento obrigatório do checklist ainda não enviado.", onClick: () => setShowAddDoc(true) };
           } else if (cadastroIncompleto) {
             proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
-          } else if (proxVenc) {
-            proximaAcao = { titulo: `Renovar ${proxVenc.label}`, descricao: `Vence em ${proxVenc.days} dia(s) — providencie a renovação.`, onClick: () => setShowAddDoc(true) };
-          } else if (docsPendentes > 0) {
-            proximaAcao = { titulo: "Aguardando análise", descricao: `${docsPendentes} documento(s) em análise pela equipe.`, onClick: () => setActiveTab("arsenal") };
+          } else if (docsHubEmAnalise > 0) {
+            proximaAcao = { titulo: "Aguardando análise", descricao: `${docsHubEmAnalise} documento(s) em análise pela equipe.`, onClick: () => setActiveTab("arsenal") };
           }
 
           return (
@@ -812,12 +940,12 @@ export default function QAClientePortalPage() {
                         <AlertTriangle className="h-3 w-3" /> Cadastro incompleto
                       </span>
                     )}
-                    {(docsPendentes > 0 || (analysis?.expDocs.length ?? 0) > 0) && (
+                    {aguardandoDocsReal && (
                       <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-sky-300 bg-sky-50 text-[11px] font-semibold text-sky-800">
                         <Clock className="h-3 w-3" /> Aguardando documentos
                       </span>
                     )}
-                    {!cadastroIncompleto && docsPendentes === 0 && (analysis?.alerts.length ?? 0) === 0 && (
+                    {!cadastroIncompleto && !aguardandoDocsReal && totalPendencias === 0 && (
                       <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-emerald-300 bg-emerald-50 text-[11px] font-semibold text-emerald-800">
                         <CheckCircle className="h-3 w-3" /> Em dia
                       </span>
@@ -892,9 +1020,9 @@ export default function QAClientePortalPage() {
         {analysis && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {[
-              { label: "Serviços ativos", sub: "Contratação em andamento", value: analysis.emAndamento || analysis.totalServicos, color: "hsl(352 60% 30%)", icon: Target },
-              { label: "Em andamento", sub: "Aguardando próximas etapas", value: analysis.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
-              { label: "Documentos pendentes", sub: "Precisam da sua ação", value: meusDocs.filter((d: any) => d.status === "pendente_aprovacao" || d.status === "reprovado").length, color: "hsl(262 60% 55%)", icon: FileText },
+              { label: "Serviços ativos", sub: "Contratação em andamento", value: processoSnap.ativos.length, color: "hsl(352 60% 30%)", icon: Target },
+              { label: "Em andamento", sub: "Aguardando próximas etapas", value: processoSnap.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
+              { label: "Documentos pendentes", sub: "Precisam da sua ação", value: processoSnap.aguardandoAcaoCliente, color: "hsl(262 60% 55%)", icon: FileText },
               { label: "Investido", sub: "Total investido até o momento", value: formatCurrency(analysis.totalVendas), color: "hsl(152 60% 42%)", icon: DollarSign },
             ].map((s) => {
               const Icon = s.icon;
@@ -989,8 +1117,8 @@ export default function QAClientePortalPage() {
             </div>
             <div className="p-5 flex-1">
               {(() => {
-                const ativo = itens.find((i: any) => !["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)) || itens[0];
-                if (!ativo) {
+                const view = processoSnap.principal;
+                if (!view) {
                   return (
                     <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
                       <ShoppingBag className="h-8 w-8 text-slate-300 mx-auto mb-2" />
@@ -1005,39 +1133,41 @@ export default function QAClientePortalPage() {
                     </div>
                   );
                 }
-                const nome = getQAServiceDisplayName({ ...catalogoByServicoId[Number(ativo.servico_id)], servico_id: ativo.servico_id, servico_nome: SERVICO_MAP[ativo.servico_id] }) || `Serviço #${ativo.servico_id}`;
-                const done = ativo.status === "CONCLUÍDO" || ativo.status === "DEFERIDO";
-                const bad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(ativo.status);
-                const progress = done ? 100 : bad ? 0 : 40;
-                const venda = vendas.find((v: any) => (v.id_legado ?? v.id) === ativo.venda_id);
+                const sKey = String(view.processo.status || "").toLowerCase();
+                const done = ["concluido", "deferido", "finalizado"].includes(sKey);
+                const bad = ["indeferido", "cancelado"].includes(sKey);
+                const progress = view.progresso;
                 return (
                   <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="text-[13px] font-bold text-slate-900">{nome}</div>
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase tracking-wider shrink-0">
-                        {ativo.status}
+                      <div className="text-[13px] font-bold text-slate-900">{view.nome}</div>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                        {view.statusLabel}
                       </span>
                     </div>
                     <div className="mt-3 text-[11px] text-slate-500">Etapa atual</div>
-                    <div className="text-[12px] font-semibold text-slate-800">Aguardando documentação</div>
+                    <div className="text-[12px] font-semibold text-slate-800">{view.etapaLabel}</div>
                     <div className="mt-3">
                       <div className="w-full h-2 rounded-full bg-slate-200">
                         <div className="h-full rounded-full" style={{ width: `${progress}%`, background: done ? "hsl(152 60% 42%)" : bad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }} />
                       </div>
-                      <div className="text-right text-[11px] font-bold text-slate-700 mt-1">{progress}%</div>
+                      <div className="flex items-center justify-between text-[10px] mt-1">
+                        <span className="text-slate-500">{view.aprovados} de {view.total} documentos aprovados</span>
+                        <span className="font-bold text-slate-700">{progress}%</span>
+                      </div>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
                       <div>
                         <div className="text-slate-400 uppercase tracking-wider">Início</div>
-                        <div className="text-slate-700 font-semibold">{formatDate(venda?.data_cadastro)}</div>
+                        <div className="text-slate-700 font-semibold">{formatDate(view.processo.data_criacao)}</div>
                       </div>
                       <div>
-                        <div className="text-slate-400 uppercase tracking-wider">Previsão</div>
-                        <div className="text-slate-700 font-semibold">{ativo.data_vencimento ? formatDate(ativo.data_vencimento) : "—"}</div>
+                        <div className="text-slate-400 uppercase tracking-wider">Prazo crítico</div>
+                        <div className="text-slate-700 font-semibold">{view.prazoCritico ? formatDate(view.prazoCritico) : "—"}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-slate-400 uppercase tracking-wider">Valor</div>
-                        <div className="text-slate-900 font-bold">{formatCurrency(Number(venda?.valor_a_pagar || 0))}</div>
+                        <div className="text-slate-400 uppercase tracking-wider">Pendentes</div>
+                        <div className="text-slate-900 font-bold">{view.pendentes}</div>
                       </div>
                     </div>
                   </div>
@@ -1067,14 +1197,21 @@ export default function QAClientePortalPage() {
               {(() => {
                 const passos: { icon: any; titulo: string; sub: string; onClick: () => void }[] = [];
                 const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
-                if (cadastroIncompleto) passos.push({ icon: User, titulo: "Completar cadastro", sub: "Obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
-                if (!hasAnyPhoto) passos.push({ icon: ImageIcon, titulo: "Enviar foto 3x4", sub: "Documento obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
-                meusDocs.filter((d: any) => d.status === "reprovado").slice(0, 3).forEach((d: any) => {
+                // Prioridade: vencidos/críticos > checklist reprovado > checklist pendente > hub reprovado > cadastro > foto
+                analysis?.alerts.filter((a) => a.days !== null && (a.days as number) <= 30).slice(0, 2).forEach((a) => {
+                  passos.push({ icon: AlertTriangle, titulo: a.label, sub: urgencyLabel(a.days), onClick: () => setActiveTab("arsenal") });
+                });
+                processoDocs.filter((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).slice(0, 3).forEach((d) => {
+                  passos.push({ icon: AlertTriangle, titulo: `Reenviar ${String(d.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, sub: "Reprovado no checklist", onClick: () => setShowAddDoc(true) });
+                });
+                processoDocs.filter((d) => d.obrigatorio && String(d.status || "").toLowerCase() === "pendente").slice(0, 3).forEach((d) => {
+                  passos.push({ icon: FileText, titulo: `Enviar ${String(d.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, sub: "Obrigatório", onClick: () => setShowAddDoc(true) });
+                });
+                meusDocs.filter((d: any) => d.status === "reprovado").slice(0, 2).forEach((d: any) => {
                   passos.push({ icon: AlertTriangle, titulo: `Reenviar ${(d.tipo_documento || "documento").toUpperCase()}`, sub: "Reprovado — corrigir", onClick: () => setShowAddDoc(true) });
                 });
-                analysis?.alerts.slice(0, 3).forEach((a) => {
-                  passos.push({ icon: Calendar, titulo: a.label, sub: urgencyLabel(a.days), onClick: () => setActiveTab("arsenal") });
-                });
+                if (cadastroIncompleto) passos.push({ icon: User, titulo: "Completar cadastro", sub: "Obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
+                if (!hasAnyPhoto) passos.push({ icon: ImageIcon, titulo: "Enviar foto 3x4", sub: "Documento obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
                 if (passos.length === 0) {
                   return (
                     <div className="text-center py-8">
