@@ -157,6 +157,8 @@ export default function QAClientePortalPage() {
   const hasTacticalAvatar = avatarOficial?.source === "avatar_tatico_path";
   const hasAnyPhoto = avatarOficial?.hasPhoto || Boolean((cliente as any)?.imagem || (cliente as any)?.avatar_tatico_path);
   const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
+  const activeTab = activeSection === "arsenal" ? "arsenal" : "resumo";
+  const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
 
   useEffect(() => {
     const load = async () => {
