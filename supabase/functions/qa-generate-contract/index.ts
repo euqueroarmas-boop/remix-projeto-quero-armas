@@ -222,8 +222,15 @@ async function buildPdf(opts: {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const guard = await requireAdminOrInternal(req);
-  if (!guard.ok) return guard.response;
+  // Auth: aceita admin/internal OU bearer service-role (usado pelo trigger pg_net).
+  const authHeader = req.headers.get("Authorization") || "";
+  const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const isServiceRole =
+    authHeader.startsWith("Bearer ") && authHeader.slice(7).trim() === serviceRole;
+  if (!isServiceRole) {
+    const guard = await requireAdminOrInternal(req);
+    if (!guard.ok) return guard.response;
+  }
 
   let body: { venda_id?: number };
   try {
