@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -7,7 +7,8 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
-  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck,
+  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
+  MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
@@ -24,6 +25,9 @@ import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAu
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
+import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
+import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
