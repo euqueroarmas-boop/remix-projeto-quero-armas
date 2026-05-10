@@ -1,7 +1,7 @@
 /**
  * FASE 16-D — Painel Operacional de Contratações (vendas).
  *
- * Tela central para a Equipe Operacional acompanhar todas as vendas:
+ * Tela central para a Equipe Quero Armas acompanhar todas as vendas:
  *   - aguardando validação de valor;
  *   - corrigidas;
  *   - aprovadas (com ou sem processo);

@@ -114,7 +114,7 @@ const ArsenalDigitalGratuito = () => (
           Seu <span className="text-accent">Arsenal Digital</span><br />em um só lugar.
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-base text-muted-foreground sm:text-lg">
-          Organize <strong className="text-foreground">suas armas</strong>, <strong className="text-foreground">CR, CRAF, GTE, autorizações</strong>, exames e vencimentos do acervo. <strong className="text-foreground">Você cadastra e envia tudo por conta própria</strong> — a Equipe Operacional da Quero Armas só entra em ação quando você contratar um serviço. O painel é gratuito; serviços são pagos somente quando você solicitar.
+          Organize <strong className="text-foreground">suas armas</strong>, <strong className="text-foreground">CR, CRAF, GTE, autorizações</strong>, exames e vencimentos do acervo. <strong className="text-foreground">Você cadastra e envia tudo por conta própria</strong> — a Equipe Quero Armas da Quero Armas só entra em ação quando você contratar um serviço. O painel é gratuito; serviços são pagos somente quando você solicitar.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -259,7 +259,7 @@ const ArsenalDigitalGratuito = () => (
             </div>
             <h3 className="mt-3 font-heading text-xl font-bold uppercase">Contrate serviço só se precisar</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Quando precisar de <strong className="text-foreground">posse, porte, CRAF, GTE, CR ou apostilamento</strong>, você solicita pelo próprio portal. A Equipe Operacional valida, gera contrato e cobrança — só depois da sua aprovação.
+              Quando precisar de <strong className="text-foreground">posse, porte, CRAF, GTE, CR ou apostilamento</strong>, você solicita pelo próprio portal. A Equipe Quero Armas valida, gera contrato e cobrança — só depois da sua aprovação.
             </p>
           </div>
         </div>
@@ -277,7 +277,7 @@ const ArsenalDigitalGratuito = () => (
             <div>
               <h2 className="font-heading text-xl font-bold uppercase tracking-tight sm:text-2xl">Seus dados, sua privacidade</h2>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                Cada conta enxerga apenas os próprios documentos e armas. As informações ficam visíveis somente para <strong className="text-foreground">você</strong> e para a <strong className="text-foreground">Equipe Operacional da Quero Armas</strong> — sob controle de acesso técnico (RLS) e em conformidade com a <strong className="text-foreground">LGPD</strong>. Nenhum outro cliente, vendedor externo ou terceiro tem acesso ao seu acervo.
+                Cada conta enxerga apenas os próprios documentos e armas. As informações ficam visíveis somente para <strong className="text-foreground">você</strong> e para a <strong className="text-foreground">Equipe Quero Armas da Quero Armas</strong> — sob controle de acesso técnico (RLS) e em conformidade com a <strong className="text-foreground">LGPD</strong>. Nenhum outro cliente, vendedor externo ou terceiro tem acesso ao seu acervo.
               </p>
               <ul className="mt-4 grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
                 <li className="flex items-start gap-2"><ShieldCheck className="mt-0.5 size-4 text-accent shrink-0" /> Acesso isolado por cliente</li>

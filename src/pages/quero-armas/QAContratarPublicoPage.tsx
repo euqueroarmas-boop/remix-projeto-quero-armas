@@ -155,7 +155,7 @@ export default function QAContratarPublicoPage() {
               </h1>
               <p className="text-sm text-slate-600 mt-2 leading-relaxed">
                 Sua solicitação para <strong className="uppercase">{servicoNome}</strong> foi
-                registrada. A Equipe Operacional da Quero Armas irá <strong>validar o valor</strong>
+                registrada. A Equipe Quero Armas da Quero Armas irá <strong>validar o valor</strong>
                 {" "}e entrar em contato com você nas próximas horas.
               </p>
               <p className="text-[11px] text-slate-500 mt-3">
@@ -221,7 +221,7 @@ export default function QAContratarPublicoPage() {
             </div>
             <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
               Informe o valor combinado com a Quero Armas. Será <strong>validado pela
-              Equipe Operacional</strong> antes de virar processo.
+              Equipe Quero Armas</strong> antes de virar processo.
             </p>
             <div className="flex items-center gap-2">
               <span className="text-[12px] font-bold text-slate-700">R$</span>
@@ -246,7 +246,7 @@ export default function QAContratarPublicoPage() {
             <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <p>
               Sem cobrança automática. Sua contratação ficará <strong>aguardando validação</strong>
-              {" "}da Equipe Operacional. Após validar o valor, geraremos seu processo.
+              {" "}da Equipe Quero Armas. Após validar o valor, geraremos seu processo.
             </p>
       </div>
 

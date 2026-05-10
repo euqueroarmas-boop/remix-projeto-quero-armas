@@ -256,7 +256,7 @@ export default function QAContratarConfirmarPage() {
       toast.success(
         jaExistia
           ? "Contratação já estava em fila — vamos validar o valor com você."
-          : "Contratação registrada! O valor informado será validado pela Equipe Operacional.",
+          : "Contratação registrada! O valor informado será validado pela Equipe Quero Armas.",
       );
 
       // 3) Notificação ao admin (não bloqueia o fluxo se falhar)
@@ -540,7 +540,7 @@ export default function QAContratarConfirmarPage() {
             </div>
             <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
               Informe o valor combinado com a Quero Armas para este serviço. Esse valor
-              será <strong>validado pela Equipe Operacional</strong>. Após a aprovação, sua
+              será <strong>validado pela Equipe Quero Armas</strong>. Após a aprovação, sua
               contratação seguirá para a geração do processo.
             </p>
             <div className="flex items-center gap-2">
@@ -564,7 +564,7 @@ export default function QAContratarConfirmarPage() {
               <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               <p>
                 Sua contratação ficará <strong>aguardando validação</strong>. Não há cobrança
-                automática — a Equipe Operacional confirma o valor antes da geração do processo.
+                automática — a Equipe Quero Armas confirma o valor antes da geração do processo.
               </p>
             </div>
           </div>
@@ -588,7 +588,7 @@ export default function QAContratarConfirmarPage() {
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            Finalizar e ir para pagamento
+            Enviar contratação para validação
             <ChevronRight className="h-4 w-4" />
           </button>
     </CheckoutShell>
