@@ -1117,8 +1117,8 @@ export default function QAClientePortalPage() {
             </div>
             <div className="p-5 flex-1">
               {(() => {
-                const ativo = itens.find((i: any) => !["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)) || itens[0];
-                if (!ativo) {
+                const view = processoSnap.principal;
+                if (!view) {
                   return (
                     <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
                       <ShoppingBag className="h-8 w-8 text-slate-300 mx-auto mb-2" />
@@ -1133,39 +1133,41 @@ export default function QAClientePortalPage() {
                     </div>
                   );
                 }
-                const nome = getQAServiceDisplayName({ ...catalogoByServicoId[Number(ativo.servico_id)], servico_id: ativo.servico_id, servico_nome: SERVICO_MAP[ativo.servico_id] }) || `Serviço #${ativo.servico_id}`;
-                const done = ativo.status === "CONCLUÍDO" || ativo.status === "DEFERIDO";
-                const bad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(ativo.status);
-                const progress = done ? 100 : bad ? 0 : 40;
-                const venda = vendas.find((v: any) => (v.id_legado ?? v.id) === ativo.venda_id);
+                const sKey = String(view.processo.status || "").toLowerCase();
+                const done = ["concluido", "deferido", "finalizado"].includes(sKey);
+                const bad = ["indeferido", "cancelado"].includes(sKey);
+                const progress = view.progresso;
                 return (
                   <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="text-[13px] font-bold text-slate-900">{nome}</div>
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase tracking-wider shrink-0">
-                        {ativo.status}
+                      <div className="text-[13px] font-bold text-slate-900">{view.nome}</div>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                        {view.statusLabel}
                       </span>
                     </div>
                     <div className="mt-3 text-[11px] text-slate-500">Etapa atual</div>
-                    <div className="text-[12px] font-semibold text-slate-800">Aguardando documentação</div>
+                    <div className="text-[12px] font-semibold text-slate-800">{view.etapaLabel}</div>
                     <div className="mt-3">
                       <div className="w-full h-2 rounded-full bg-slate-200">
                         <div className="h-full rounded-full" style={{ width: `${progress}%`, background: done ? "hsl(152 60% 42%)" : bad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }} />
                       </div>
-                      <div className="text-right text-[11px] font-bold text-slate-700 mt-1">{progress}%</div>
+                      <div className="flex items-center justify-between text-[10px] mt-1">
+                        <span className="text-slate-500">{view.aprovados} de {view.total} documentos aprovados</span>
+                        <span className="font-bold text-slate-700">{progress}%</span>
+                      </div>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
                       <div>
                         <div className="text-slate-400 uppercase tracking-wider">Início</div>
-                        <div className="text-slate-700 font-semibold">{formatDate(venda?.data_cadastro)}</div>
+                        <div className="text-slate-700 font-semibold">{formatDate(view.processo.data_criacao)}</div>
                       </div>
                       <div>
-                        <div className="text-slate-400 uppercase tracking-wider">Previsão</div>
-                        <div className="text-slate-700 font-semibold">{ativo.data_vencimento ? formatDate(ativo.data_vencimento) : "—"}</div>
+                        <div className="text-slate-400 uppercase tracking-wider">Prazo crítico</div>
+                        <div className="text-slate-700 font-semibold">{view.prazoCritico ? formatDate(view.prazoCritico) : "—"}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-slate-400 uppercase tracking-wider">Valor</div>
-                        <div className="text-slate-900 font-bold">{formatCurrency(Number(venda?.valor_a_pagar || 0))}</div>
+                        <div className="text-slate-400 uppercase tracking-wider">Pendentes</div>
+                        <div className="text-slate-900 font-bold">{view.pendentes}</div>
                       </div>
                     </div>
                   </div>
