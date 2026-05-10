@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
-  ShoppingBag, FileStack,
+  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
@@ -647,7 +647,7 @@ export default function QAClientePortalPage() {
               onClick={() => setShowAddDoc(true)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-sm hover:bg-[#FBF3F4]"
             >
-              <Upload className="h-3.5 w-3.5" /> Enviar
+              <Upload className="h-3.5 w-3.5" /> Enviar documento
             </button>
           </div>
         </div>
@@ -771,98 +771,347 @@ export default function QAClientePortalPage() {
 
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
-        {/* ═══ WELCOME HEADER ═══ */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(352 60% 30%), hsl(262 60% 55%))" }} />
-          <div className="p-5 md:p-6">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <ClientAvatar
-                url={avatarUrl}
-                name={cliente.nome_completo}
-                hasPhoto={hasAnyPhoto}
-                isTactical={hasTacticalAvatar}
-              />
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-bold" style={{ color: "hsl(220 20% 18%)" }}>Olá, {cliente.nome_completo.split(" ")[0]}!</h1>
-                <p className="text-[12px] mt-1" style={{ color: "hsl(220 10% 55%)" }}>Aqui está o resumo completo do seu atendimento conosco.</p>
-                <div className="mt-2">
-                  <ClienteHealthBadge clienteId={cliente.id} variant="full" />
+        {/* ═══ HERO — Saudação + Próxima Ação (sem duplicar foto do cliente) ═══ */}
+        {(() => {
+          const docsPendentes = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
+          const docsReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
+          const totalPendencias = (analysis?.alerts.length || 0) + docsPendentes + docsReprovados;
+          const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+
+          // Próxima ação real: prioriza vencidos > docs reprovados > docs em análise > alerta mais urgente > cadastro
+          let proximaAcao: { titulo: string; descricao: string; onClick: () => void } | null = null;
+          const vencido = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
+          const proxVenc = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) >= 0 && (d.days as number) <= 30);
+          if (docsReprovados > 0) {
+            proximaAcao = { titulo: "Reenviar documento reprovado", descricao: "Há documento que precisa ser corrigido e reenviado.", onClick: () => setShowAddDoc(true) };
+          } else if (vencido) {
+            proximaAcao = { titulo: `Renovar ${vencido.label}`, descricao: `Vencido há ${Math.abs(vencido.days as number)} dia(s) — regularize com urgência.`, onClick: () => setShowAddDoc(true) };
+          } else if (cadastroIncompleto) {
+            proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
+          } else if (proxVenc) {
+            proximaAcao = { titulo: `Renovar ${proxVenc.label}`, descricao: `Vence em ${proxVenc.days} dia(s) — providencie a renovação.`, onClick: () => setShowAddDoc(true) };
+          } else if (docsPendentes > 0) {
+            proximaAcao = { titulo: "Aguardando análise", descricao: `${docsPendentes} documento(s) em análise pela equipe.`, onClick: () => setActiveTab("arsenal") };
+          }
+
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* COL ESQUERDA — Saudação */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+                <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(352 60% 30%), hsl(262 60% 55%))" }} />
+                <div className="p-5 md:p-6">
+                  <h1 className="text-xl md:text-2xl font-bold" style={{ color: "hsl(220 20% 18%)" }}>
+                    Olá, {cliente.nome_completo.split(" ")[0]}!
+                  </h1>
+                  <p className="text-[13px] mt-1" style={{ color: "hsl(220 10% 55%)" }}>
+                    Aqui está um resumo do seu atendimento.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {cadastroIncompleto && (
+                      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-amber-300 bg-amber-50 text-[11px] font-semibold text-amber-800">
+                        <AlertTriangle className="h-3 w-3" /> Cadastro incompleto
+                      </span>
+                    )}
+                    {(docsPendentes > 0 || (analysis?.expDocs.length ?? 0) > 0) && (
+                      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-sky-300 bg-sky-50 text-[11px] font-semibold text-sky-800">
+                        <Clock className="h-3 w-3" /> Aguardando documentos
+                      </span>
+                    )}
+                    {!cadastroIncompleto && docsPendentes === 0 && (analysis?.alerts.length ?? 0) === 0 && (
+                      <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border border-emerald-300 bg-emerald-50 text-[11px] font-semibold text-emerald-800">
+                        <CheckCircle className="h-3 w-3" /> Em dia
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-4 flex items-start gap-2 text-[12px]" style={{ color: "hsl(220 10% 45%)" }}>
+                    <Shield className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "hsl(352 60% 30%)" }} />
+                    <p>A Quero Armas cuida de todo o processo para você. Acompanhe suas contratações, documentos e próximas etapas.</p>
+                  </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {!hasAnyPhoto ? (
-                    <Button
-                      size="sm"
-                      onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
-                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-gradient-to-r from-[#7A1F2B] to-[#641722] text-white hover:from-[#641722] hover:to-[#4F121C] shadow-sm"
+              </div>
+
+              {/* COL DIREITA — O que você precisa fazer agora */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+                <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(38 92% 50%), hsl(28 92% 55%))" }} />
+                <div className="p-5 md:p-6 flex-1 flex flex-col">
+                  <h2 className="text-base md:text-lg font-bold" style={{ color: "hsl(220 20% 18%)" }}>
+                    O que você precisa fazer agora
+                  </h2>
+                  {proximaAcao ? (
+                    <button
+                      type="button"
+                      onClick={proximaAcao.onClick}
+                      className="mt-3 group flex items-center gap-3 w-full text-left rounded-xl border border-slate-200 bg-slate-50/80 hover:bg-slate-100 transition px-4 py-3"
                     >
-                      <Camera className="h-3.5 w-3.5 mr-1.5" /> Enviar minha foto
-                    </Button>
-                  ) : !hasTacticalAvatar ? (
-                    <Button
-                      size="sm"
-                      disabled={generatingAvatar}
-                      onClick={async () => {
-                        if (!cliente?.cpf) return;
-                        setGeneratingAvatar(true);
-                        try {
-                          const { data, error } = await supabase.functions.invoke("qa-gerar-avatar-tatico", {
-                            body: { cpf: cliente.cpf },
-                          });
-                          if (error) throw error;
-                          if ((data as any)?.error) throw new Error((data as any).error);
-                          toast.success("Avatar tático criado!");
-                          setCliente({ ...cliente, avatar_tatico_path: (data as any).avatar_path });
-                        } catch (e: any) {
-                          toast.error(e?.message || "Falha ao gerar avatar.");
-                        } finally {
-                          setGeneratingAvatar(false);
-                        }
-                      }}
-                      className="h-8 px-3 text-[11px] font-semibold rounded-lg bg-[#7A1F2B] text-white hover:bg-[#641722] shadow-sm"
-                    >
-                      <Wand2 className="h-3.5 w-3.5 mr-1.5" />
-                      {generatingAvatar ? "Criando avatar..." : "Gerar avatar tático com IA"}
-                    </Button>
+                      <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center shrink-0">
+                        <FileText className="h-5 w-5 text-[#7A1F2B]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-bold text-slate-900">{proximaAcao.titulo}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">{proximaAcao.descricao}</div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition" />
+                    </button>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full bg-[#FBF3F4] text-[10px] font-semibold uppercase tracking-wider text-slate-700">
-                      <BadgeCheck className="h-3 w-3 text-emerald-600" /> Avatar tático ativo
-                    </span>
+                    <div className="mt-3 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3">
+                      <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0" />
+                      <div className="text-[12px] text-emerald-800 font-semibold">Sem pendências no momento.</div>
+                    </div>
                   )}
-                  {hasAnyPhoto && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate("/cadastro/foto", { state: { cpf: (cliente as any)?.cpf || "", returnTo: "/area-do-cliente" } })}
-                      className="h-8 px-3 text-[11px] font-semibold rounded-lg border-slate-300 text-slate-700 hover:bg-slate-50"
+                  <div className="mt-auto pt-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[12px] text-slate-500">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#FBF3F4] text-[#7A1F2B] text-[11px] font-bold">
+                        {totalPendencias}
+                      </span>
+                      pendências restantes
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("arsenal")}
+                      className="text-[11px] font-semibold text-slate-600 underline hover:text-slate-900"
                     >
-                      <Camera className="h-3.5 w-3.5 mr-1.5" /> Trocar foto
-                    </Button>
+                      Ver todas
+                    </button>
+                  </div>
+                  {proximaAcao && (
+                    <button
+                      type="button"
+                      onClick={proximaAcao.onClick}
+                      className="mt-3 inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[12px] font-bold uppercase tracking-wider transition shadow-sm"
+                    >
+                      Resolver agora <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
                   )}
                 </div>
               </div>
             </div>
-            {/* Quick stats */}
-            {analysis && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5 pt-4 border-t border-slate-100">
-                {[
-                  { label: "SERVIÇOS", value: analysis.totalServicos, color: "hsl(352 60% 30%)", icon: Target },
-                  { label: "EM ANDAMENTO", value: analysis.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
-                  { label: "CONCLUÍDOS", value: analysis.concluidos, color: "hsl(152 60% 42%)", icon: CheckCircle },
-                  { label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), color: "hsl(220 20% 25%)", icon: DollarSign },
-                ].map(s => {
-                  const Icon = s.icon;
+          );
+        })()}
+
+        {/* ═══ KPIs REAIS ═══ */}
+        {analysis && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            {[
+              { label: "Serviços ativos", sub: "Contratação em andamento", value: analysis.emAndamento || analysis.totalServicos, color: "hsl(352 60% 30%)", icon: Target },
+              { label: "Em andamento", sub: "Aguardando próximas etapas", value: analysis.emAndamento, color: "hsl(38 92% 50%)", icon: Activity },
+              { label: "Documentos pendentes", sub: "Precisam da sua ação", value: meusDocs.filter((d: any) => d.status === "pendente_aprovacao" || d.status === "reprovado").length, color: "hsl(262 60% 55%)", icon: FileText },
+              { label: "Investido", sub: "Total investido até o momento", value: formatCurrency(analysis.totalVendas), color: "hsl(152 60% 42%)", icon: DollarSign },
+            ].map((s) => {
+              const Icon = s.icon;
+              return (
+                <div key={s.label} className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 md:p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${s.color}12` }}>
+                      <Icon className="h-5 w-5" style={{ color: s.color }} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-semibold" style={{ color: "hsl(220 10% 55%)" }}>{s.label}</div>
+                      <div className="text-xl md:text-2xl font-bold mt-0.5" style={{ color: "hsl(220 20% 14%)" }}>{s.value}</div>
+                      <div className="text-[10px] mt-0.5 truncate" style={{ color: "hsl(220 10% 60%)" }}>{s.sub}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ═══ 3 COLUNAS — Central de documentos | Meu atendimento | Próximos passos ═══ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Central de documentos */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-[14px] font-bold inline-flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+                    <FileText className="h-4 w-4 text-[#7A1F2B]" /> Central de documentos
+                  </h3>
+                  <p className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                    Acompanhe seus documentos e mantenha tudo em dia.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddDoc(true)}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[10px] font-bold uppercase tracking-wider shrink-0"
+                >
+                  <Upload className="h-3 w-3" /> Enviar
+                </button>
+              </div>
+            </div>
+            <div className="p-5 grid grid-cols-2 gap-3 flex-1">
+              {(() => {
+                const pendentes = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
+                const enviados = meusDocs.length;
+                const aprovados = meusDocs.filter((d: any) => d.status === "aprovado").length;
+                const rejeitados = meusDocs.filter((d: any) => d.status === "reprovado").length;
+                const cards = [
+                  { label: "Pendentes", value: pendentes, color: "hsl(352 60% 30%)", icon: FileText, dot: true },
+                  { label: "Enviados", value: enviados, color: "hsl(220 65% 48%)", icon: Upload },
+                  { label: "Aprovados", value: aprovados, color: "hsl(152 60% 42%)", icon: CheckCircle },
+                  { label: "Rejeitados", value: rejeitados, color: "hsl(0 72% 55%)", icon: XCircle },
+                ];
+                return cards.map((c) => {
+                  const Icon = c.icon;
                   return (
-                    <div key={s.label} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl" style={{ background: `${s.color}06` }}>
-                      <Icon className="h-4 w-4 shrink-0" style={{ color: s.color }} />
-                      <div>
-                        <div className="text-sm font-bold" style={{ color: "hsl(220 20% 18%)" }}>{s.value}</div>
-                        <div className="text-[9px] font-bold tracking-wider" style={{ color: s.color }}>{s.label}</div>
+                    <div key={c.label} className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: `${c.color}14` }}>
+                        <Icon className="h-4 w-4" style={{ color: c.color }} />
+                      </div>
+                      <div className="text-xl font-bold" style={{ color: "hsl(220 20% 14%)" }}>{c.value}</div>
+                      <div className="text-[10px] font-semibold mt-0.5 inline-flex items-center gap-1" style={{ color: c.color }}>
+                        {c.dot && <span className="w-1.5 h-1.5 rounded-full" style={{ background: c.color }} />}
+                        {c.label}
                       </div>
                     </div>
                   );
-                })}
-              </div>
-            )}
+                });
+              })()}
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("arsenal")}
+              className="border-t border-slate-100 py-3 px-5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-between"
+            >
+              Ver todos os documentos <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Meu atendimento */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100">
+              <h3 className="text-[14px] font-bold inline-flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+                <Activity className="h-4 w-4 text-[#7A1F2B]" /> Meu atendimento
+              </h3>
+              <p className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                Acompanhe seu serviço contratado.
+              </p>
+            </div>
+            <div className="p-5 flex-1">
+              {(() => {
+                const ativo = itens.find((i: any) => !["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)) || itens[0];
+                if (!ativo) {
+                  return (
+                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                      <ShoppingBag className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-[12px] text-slate-500 mb-3">Nenhum serviço contratado ainda.</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/area-do-cliente/contratar")}
+                        className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold uppercase tracking-wider"
+                      >
+                        Contratar serviço
+                      </button>
+                    </div>
+                  );
+                }
+                const nome = getQAServiceDisplayName({ ...catalogoByServicoId[Number(ativo.servico_id)], servico_id: ativo.servico_id, servico_nome: SERVICO_MAP[ativo.servico_id] }) || `Serviço #${ativo.servico_id}`;
+                const done = ativo.status === "CONCLUÍDO" || ativo.status === "DEFERIDO";
+                const bad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(ativo.status);
+                const progress = done ? 100 : bad ? 0 : 40;
+                const venda = vendas.find((v: any) => (v.id_legado ?? v.id) === ativo.venda_id);
+                return (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-[13px] font-bold text-slate-900">{nome}</div>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 uppercase tracking-wider shrink-0">
+                        {ativo.status}
+                      </span>
+                    </div>
+                    <div className="mt-3 text-[11px] text-slate-500">Etapa atual</div>
+                    <div className="text-[12px] font-semibold text-slate-800">Aguardando documentação</div>
+                    <div className="mt-3">
+                      <div className="w-full h-2 rounded-full bg-slate-200">
+                        <div className="h-full rounded-full" style={{ width: `${progress}%`, background: done ? "hsl(152 60% 42%)" : bad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }} />
+                      </div>
+                      <div className="text-right text-[11px] font-bold text-slate-700 mt-1">{progress}%</div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-[10px]">
+                      <div>
+                        <div className="text-slate-400 uppercase tracking-wider">Início</div>
+                        <div className="text-slate-700 font-semibold">{formatDate(venda?.data_cadastro)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 uppercase tracking-wider">Previsão</div>
+                        <div className="text-slate-700 font-semibold">{ativo.data_vencimento ? formatDate(ativo.data_vencimento) : "—"}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-slate-400 uppercase tracking-wider">Valor</div>
+                        <div className="text-slate-900 font-bold">{formatCurrency(Number(venda?.valor_a_pagar || 0))}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/area-do-cliente/contratacoes")}
+              className="border-t border-slate-100 py-3 px-5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-between"
+            >
+              Ver detalhes da contratação <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Próximos passos */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100">
+              <h3 className="text-[14px] font-bold inline-flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
+                <ClipboardCheck className="h-4 w-4 text-[#7A1F2B]" /> Próximos passos
+              </h3>
+              <p className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                Foque no que precisa ser feito agora.
+              </p>
+            </div>
+            <div className="p-3 flex-1 space-y-1.5">
+              {(() => {
+                const passos: { icon: any; titulo: string; sub: string; onClick: () => void }[] = [];
+                const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+                if (cadastroIncompleto) passos.push({ icon: User, titulo: "Completar cadastro", sub: "Obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
+                if (!hasAnyPhoto) passos.push({ icon: ImageIcon, titulo: "Enviar foto 3x4", sub: "Documento obrigatório", onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) });
+                meusDocs.filter((d: any) => d.status === "reprovado").slice(0, 3).forEach((d: any) => {
+                  passos.push({ icon: AlertTriangle, titulo: `Reenviar ${(d.tipo_documento || "documento").toUpperCase()}`, sub: "Reprovado — corrigir", onClick: () => setShowAddDoc(true) });
+                });
+                analysis?.alerts.slice(0, 3).forEach((a) => {
+                  passos.push({ icon: Calendar, titulo: a.label, sub: urgencyLabel(a.days), onClick: () => setActiveTab("arsenal") });
+                });
+                if (passos.length === 0) {
+                  return (
+                    <div className="text-center py-8">
+                      <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                      <p className="text-[12px] text-slate-500">Nada pendente. Tudo em dia!</p>
+                    </div>
+                  );
+                }
+                return passos.slice(0, 4).map((p, i) => {
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={p.onClick}
+                      className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-slate-50 transition group text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-[#FBF3F4] flex items-center justify-center shrink-0">
+                        <Icon className="h-4 w-4 text-[#7A1F2B]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-bold text-slate-900 truncate">{p.titulo}</div>
+                        <div className="text-[10px] text-slate-500 truncate">{p.sub}</div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-0.5 transition shrink-0" />
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("arsenal")}
+              className="border-t border-slate-100 py-3 px-5 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-between"
+            >
+              Ver todas as pendências <ChevronRight className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
 
@@ -962,15 +1211,6 @@ export default function QAClientePortalPage() {
         {/* ═══ SERVICES ═══ */}
         {cliente?.id && (
           <SectionCard icon={FolderArchive} title="Central de Documentos" color="hsl(262 70% 55%)">
-            <button
-              onClick={() => navigate("/area-do-cliente/contratacoes")}
-              className="w-full mb-3 inline-flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] uppercase tracking-wider font-bold transition"
-            >
-              <span className="inline-flex items-center gap-2">
-                <FileStack className="h-3.5 w-3.5" /> Ver todas as minhas contratações
-              </span>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
             <ClienteProcessosSection clienteId={cliente.id} />
           </SectionCard>
         )}
