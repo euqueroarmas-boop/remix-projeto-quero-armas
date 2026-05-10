@@ -437,14 +437,8 @@ const ServicesListPage = () => {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious
-                    onClick={stopAutoplay}
-                    className="hidden sm:flex -left-2 lg:-left-4"
-                  />
-                  <CarouselNext
-                    onClick={stopAutoplay}
-                    className="hidden sm:flex -right-2 lg:-right-4"
-                  />
+                  <CarouselPrevious className="hidden sm:flex -left-2 lg:-left-4" />
+                  <CarouselNext className="hidden sm:flex -right-2 lg:-right-4" />
                   <div className="mt-6 flex justify-center gap-3 sm:hidden">
                     <button
                       type="button"
