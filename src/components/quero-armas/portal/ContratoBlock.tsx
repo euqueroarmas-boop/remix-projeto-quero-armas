@@ -22,6 +22,7 @@ interface Contract {
   customer_uploaded_at: string | null;
   customer_signature_validated_at?: string | null;
   validation_details?: any;
+  customer_signed_pdf_path?: string | null;
 }
 
 const STATUS_MAP: Record<string, { label: string; tone: "muted" | "info" | "warn" | "ok" | "err" }> = {
@@ -57,7 +58,7 @@ export default function ContratoBlock({ clienteId }: { clienteId: number | null 
       setLoading(true);
       const { data } = await supabase
         .from("qa_contracts" as any)
-        .select("id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details")
+        .select("id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details, customer_signed_pdf_path")
         .eq("cliente_id", clienteId)
         .order("created_at", { ascending: false })
         .limit(1)
