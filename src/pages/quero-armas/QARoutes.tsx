@@ -52,6 +52,7 @@ const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPag
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
+const CarrinhoPage = lazyRetry(() => import("@/pages/CarrinhoPage"), "CarrinhoPage");
 const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
 const LpDefesaPessoalPosse = lazyRetry(() => import("@/pages/LpDefesaPessoalPosse"), "LpDefesaPessoalPosse");
 const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
@@ -78,6 +79,7 @@ export default function QARoutes() {
 
         {/* Public routes (no auth required) */}
         <Route path="servicos" element={<ServicesListPage />} />
+        <Route path="carrinho" element={<CarrinhoPage />} />
         <Route path="descobrir-meu-caminho" element={<QuizPage />} />
         <Route path="lp/defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
         <Route path="lp/cac-cr" element={<LpCacCr />} />
