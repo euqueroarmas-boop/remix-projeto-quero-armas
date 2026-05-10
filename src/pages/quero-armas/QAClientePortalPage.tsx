@@ -454,8 +454,9 @@ export default function QAClientePortalPage() {
     const clienteIdReal = cliente?.id ?? null;
     if (!clienteIdReal && !customerId) return;
     const channel = supabase
-      .channel(`portal-cliente-${clienteIdReal ?? customerId}`)
-      .on(
+      .channel(`portal-cliente-${clienteIdReal ?? customerId}`);
+
+    channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table: "qa_documentos_cliente" },
         (payload: any) => {
@@ -465,23 +466,18 @@ export default function QAClientePortalPage() {
             setDocsReloadKey((k) => k + 1);
           }
         },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "qa_crafs", filter: `cliente_id=eq.${clienteIdReal}` },
-        () => setDocsReloadKey((k) => k + 1),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` },
-        () => setDocsReloadKey((k) => k + 1),
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "qa_clientes", filter: `id=eq.${clienteIdReal}` },
-        () => setDocsReloadKey((k) => k + 1),
-      )
-      .subscribe();
+      );
+
+    // Filtros que dependem de clienteIdReal só são registrados se ele existir,
+    // evitando assinatura com `cliente_id=eq.null` (que vinha do Pass anterior).
+    if (clienteIdReal) {
+      channel
+        .on("postgres_changes", { event: "*", schema: "public", table: "qa_crafs", filter: `cliente_id=eq.${clienteIdReal}` }, () => setDocsReloadKey((k) => k + 1))
+        .on("postgres_changes", { event: "*", schema: "public", table: "qa_cadastro_cr", filter: `cliente_id=eq.${clienteIdReal}` }, () => setDocsReloadKey((k) => k + 1))
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "qa_clientes", filter: `id=eq.${clienteIdReal}` }, () => setDocsReloadKey((k) => k + 1));
+    }
+
+    channel.subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [cliente?.id, customerId]);
 
