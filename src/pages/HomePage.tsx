@@ -104,13 +104,13 @@ const HomePage = () => {
       {/* 1 · HERO */}
       <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.18),transparent_60%)]" />
-        <div className={`${containerCls} relative flex flex-col items-stretch gap-10 py-14 sm:py-20 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-28`}>
+        <div className={`${containerCls} relative flex flex-col items-stretch gap-8 py-8 sm:py-10 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-12`}>
           <div className="col-span-12 flex min-w-0 flex-col gap-6 sm:gap-8 lg:col-span-8">
             <div className="inline-flex w-fit items-center gap-2.5 rounded-sm border border-primary/50 bg-primary/10 px-3 py-1.5 sm:px-4">
               <Flame className="size-3.5 text-primary sm:size-4" />
               <span className="font-heading text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground/90 sm:tracking-[0.2em]">Sua arma · Sua casa · Seu direito</span>
             </div>
-            <h1 className="max-w-full text-pretty break-words font-heading text-[2rem] font-bold uppercase leading-[1.02] tracking-tight sm:text-balance sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-[5.25rem]">
+            <h1 className="max-w-full text-pretty break-words font-heading text-[2rem] font-bold uppercase leading-[1.02] tracking-tight sm:text-balance sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
               Quando o bandido arrombar sua porta às 3 da manhã, <span className="text-tactical-gradient">você reza ou saca a sua arma?</span>
             </h1>
             <p className="w-full max-w-full text-base leading-relaxed text-muted-foreground text-pretty sm:max-w-[60ch] sm:text-lg">

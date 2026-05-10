@@ -18,7 +18,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { QALogo } from "@/components/quero-armas/QALogo";
-import { BackButton } from "@/shared/components/BackButton";
 import {
   OBJETIVOS_PRINCIPAIS,
   CATEGORIAS_SERVICO,

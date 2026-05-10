@@ -236,19 +236,19 @@ const ServicesListPage = () => {
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,hsl(var(--accent)/0.18),transparent_55%),radial-gradient(circle_at_80%_70%,hsl(var(--accent)/0.08),transparent_60%)]"
         />
-        <div className="container relative grid grid-cols-1 items-center gap-10 py-14 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
+        <div className="container relative grid grid-cols-1 items-center gap-8 py-8 sm:py-10 lg:grid-cols-[1.1fr_0.9fr] lg:py-12">
           <div>
             <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
               Serviços
             </p>
-            <h1 className="mt-4 font-heading text-3xl font-bold uppercase leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 font-heading text-3xl font-bold uppercase leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
               Você não precisa enfrentar a burocracia sozinho.
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
               Da posse ao porte, do CR ao Arsenal Digital — a Quero Armas organiza o caminho legal,
               técnico e documental para você agir com segurança e dentro da lei.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" onClick={scrollToCatalogo} className="font-heading uppercase tracking-wide">
                 Ver catálogo de serviços <ChevronDown className="ml-2 size-4" />
               </Button>
@@ -260,13 +260,16 @@ const ServicesListPage = () => {
             </div>
           </div>
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="absolute inset-0 -z-10 rounded-sm bg-gradient-to-tr from-accent/20 via-transparent to-transparent blur-2xl" aria-hidden />
-            <img
-              src={heroWill}
-              alt="Especialista da Quero Armas pronto para atender"
-              loading="eager"
-              className="mx-auto h-auto w-full max-h-[640px] object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.55)]"
-            />
+            <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-tr from-accent/20 via-transparent to-transparent blur-2xl" aria-hidden />
+            <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]">
+              <img
+                src={heroWill}
+                alt="Especialista da Quero Armas pronto para atender"
+                loading="eager"
+                className="mx-auto h-auto w-full max-h-[520px] object-cover"
+              />
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background/40 to-transparent" aria-hidden />
+            </div>
           </div>
         </div>
       </section>

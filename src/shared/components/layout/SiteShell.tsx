@@ -31,7 +31,6 @@ import {
   Smartphone,
 } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
-import { BackButton } from '@/shared/components/BackButton';
 import { coursesCatalog, courseCategories } from '@/shared/data/coursesCatalog';
 
 interface SiteShellProps {
@@ -64,7 +63,7 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   },
 ];
 
-export const SiteShell = ({ children, hideBackButton = false }: SiteShellProps) => {
+export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }: SiteShellProps) => {
   const { user, isAdmin } = useAuth();
   const { itemCount } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -378,11 +377,6 @@ export const SiteShell = ({ children, hideBackButton = false }: SiteShellProps) 
       </header>
 
       <main className="relative z-10 w-full max-w-full flex-1 overflow-x-clip pt-16 sm:pt-20">
-        {!hideBackButton && (
-          <div className="container pt-3">
-            <BackButton />
-          </div>
-        )}
         {children}
       </main>
 
