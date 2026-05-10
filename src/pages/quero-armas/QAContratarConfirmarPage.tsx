@@ -291,7 +291,6 @@ export default function QAContratarConfirmarPage() {
   }
 
   if (!catalogo || !cliente) return null;
-  const preco = formatBRL(catalogo.preco);
 
   if (legadoBlock) {
     const waLink =
