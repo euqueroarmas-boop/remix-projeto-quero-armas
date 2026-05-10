@@ -518,18 +518,21 @@ export default function QAClientePortalPage() {
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
   }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs, catalogoByServicoId, SERVICO_MAP]);
 
-  // ─── Snapshot canônico de processos/checklist do cliente ───────────────────
-  // Tudo derivado de qa_processos + qa_processo_documentos (fontes oficiais).
-  // Sem hardcode de progresso/etapa.
+  // ─── Snapshot canônico de processos/checklist/prazos do cliente ─────────────
+  // Tudo derivado das fontes oficiais: qa_processos, qa_processo_documentos e
+  // qa_itens_venda via helper canônico de prazos processuais.
   const processoSnap = useMemo(() => {
     const STATUS_CONCLUIDO = new Set(["concluido", "deferido", "finalizado"]);
     const STATUS_ENCERRADO = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "desistiu", "restituido"]);
-    const ETAPA_LABELS: Record<number, string> = {
-      1: "Endereço",
-      2: "Condição profissional",
-      3: "Antecedentes",
-      4: "Declarações",
-      5: "Exames técnicos",
+    const ETAPA_LABELS: Record<string, string> = {
+      endereco: "Comprovação de endereço",
+      base: "Documentação básica",
+      complementar: "Documentação complementar",
+      tecnico: "Exames técnicos",
+      final: "Revisão final",
+      antecedentes: "Antecedentes criminais",
+      declaracoes: "Declarações e compromissos",
+      renda: "Condição profissional",
     };
     const STATUS_LABELS: Record<string, string> = {
       aguardando_pagamento: "Aguardando pagamento",
@@ -549,13 +552,25 @@ export default function QAClientePortalPage() {
 
     const ativos = processos.filter((p) => !STATUS_ENCERRADO.has(String(p.status || "").toLowerCase()));
     const concluidos = processos.filter((p) => STATUS_CONCLUIDO.has(String(p.status || "").toLowerCase())).length;
-    const emAndamento = ativos.length; // ativos = em andamento (qualquer fase ativa)
+    const STATUS_ANDAMENTO = new Set(["em_validacao_ia", "em_revisao_humana", "aprovado", "enviado_ao_orgao", "protocolado", "em_analise_orgao"]);
+    const emAndamento = ativos.filter((p) => STATUS_ANDAMENTO.has(String(p.status || "").toLowerCase())).length;
 
-    // Pendências reais do checklist (qualquer obrigatório não aprovado/dispensado)
-    const APROVADOS_SET = new Set(["aprovado", "validado", "dispensado_grupo"]);
-    const pendentesChecklist = processoDocs.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+    // Pendências reais do checklist usando helpers canônicos.
+    const pendentesChecklist = processoDocs.filter((d) => d.obrigatorio && isChecklistPendente(d.status)).length;
     const reprovadosChecklist = processoDocs.filter((d) => ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
-    const aguardandoAcaoCliente = processoDocs.filter((d) => d.obrigatorio && ["pendente", "invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
+    const aguardandoAcaoCliente = processoDocs.filter((d) => d.obrigatorio && isChecklistPendente(d.status)).length;
+    const prazosProcessuais = calcularPrazosProcessuais(itens.map((it: any) => ({
+      id: it.id,
+      servico_id: it.servico_id ?? null,
+      servico_nome: getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || null,
+      status: it.status ?? null,
+      numero_processo: it.numero_processo ?? null,
+      data_notificacao: it.data_notificacao ?? null,
+      data_indeferimento: it.data_indeferimento ?? null,
+      data_restituicao: it.data_restituicao ?? null,
+      data_recurso_administrativo: it.data_recurso_administrativo ?? null,
+      data_indeferimento_recurso: it.data_indeferimento_recurso ?? null,
+    })));
 
     // Processo principal = primeiro ativo (mais recente já vem ordenado por data_criacao desc)
     const principal = ativos[0] || null;
@@ -573,23 +588,26 @@ export default function QAClientePortalPage() {
     } | null = null;
     if (principal) {
       const meus = processoDocs.filter((d) => d.processo_id === principal.id);
-      const total = meus.length;
-      const aprovados = meus.filter((d) => APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
-      const pendentes = meus.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
-      const progresso = total > 0 ? Math.round((aprovados / total) * 100) : 0;
+      const metrics = computeChecklistMetrics(meus);
+      const pendenteAtual = meus
+        .filter((d) => d.obrigatorio && isChecklistPendente(d.status))
+        .sort((a, b) => Number(a.ordem ?? 999) - Number(b.ordem ?? 999))[0] || null;
       const statusKey = String(principal.status || "").toLowerCase();
       const statusLabel = STATUS_LABELS[statusKey] || statusKey.replace(/_/g, " ").toUpperCase();
-      const etapa = principal.etapa_liberada_ate ? ETAPA_LABELS[principal.etapa_liberada_ate] : null;
+      const etapaKey = String(pendenteAtual?.etapa || "").toLowerCase();
+      const etapa = pendenteAtual
+        ? ETAPA_LABELS[etapaKey] || String(pendenteAtual.tipo_documento || "Documento pendente").replace(/_/g, " ").toUpperCase()
+        : statusLabel;
       principalView = {
         processo: principal,
         nome: principal.servico_nome || "Serviço",
         statusLabel,
         statusBadge: statusKey,
-        etapaLabel: etapa || statusLabel,
-        progresso,
-        total,
-        aprovados,
-        pendentes,
+        etapaLabel: etapa,
+        progresso: metrics.progresso,
+        total: metrics.total,
+        aprovados: metrics.cumpridos,
+        pendentes: metrics.pendentes,
         prazoCritico: principal.prazo_critico_data || null,
       };
     }
@@ -602,9 +620,10 @@ export default function QAClientePortalPage() {
       pendentesChecklist,
       reprovadosChecklist,
       aguardandoAcaoCliente,
+      prazosProcessuais,
       principal: principalView,
     };
-  }, [processos, processoDocs]);
+  }, [processos, processoDocs, itens, catalogoByServicoId, SERVICO_MAP]);
 
   // Timeline
   const timeline = useMemo(() => {
