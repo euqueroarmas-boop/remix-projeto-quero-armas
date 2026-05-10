@@ -46,6 +46,7 @@ interface Catalogo {
 interface Venda {
   id: number;
   status: string | null;
+  status_validacao_valor: string | null;
   valor_aprovado: number | null;
   data_cadastro: string | null;
 }
@@ -65,22 +66,44 @@ const TIMELINE = [
   { Icon: Rocket, label: "Início do processo" },
 ];
 
-function statusToStep(status: string | null | undefined): number {
-  const s = (status || "").toUpperCase();
-  if (s.includes("PAGO") || s.includes("CONFIRMADO")) return 4;
-  if (s.includes("COBR") || s.includes("PENDENTE_PAGAMENTO")) return 3;
-  if (s.includes("VALIDA") || s.includes("ANALISE")) return 2;
+/**
+ * Mapeia (qa_vendas.status + status_validacao_valor) — valores reais do
+ * banco — para a etapa visual da timeline (1..7).
+ *  - INSERT inicial: status="À INICIAR", validacao="aguardando_validacao"  → 1
+ *  - Admin valida valor:                  validacao="aprovado"             → 3 (cobrança liberada)
+ *  - Pagamento confirmado: status="PAGO"                                   → 4
+ *  - Pasta em montagem: "MONTANDO PASTA" / "AGUARDANDO DOCUMENTAÇÃO"      → 6
+ *  - Concluído                                                             → 7
+ */
+function statusToStep(s: string | null | undefined, v: string | null | undefined): number {
+  const st = (s || "").toUpperCase().trim();
+  const vv = (v || "").toLowerCase().trim();
+  if (st === "CONCLUÍDO" || st === "CONCLUIDO" || st === "DEFERIDO") return 7;
+  if (
+    st === "MONTANDO PASTA" ||
+    st.startsWith("AGUARDANDO DOCUMENTA") ||
+    st === "EM ANÁLISE" ||
+    st === "EM ANALISE" ||
+    st.startsWith("PRONTO PARA AN") ||
+    st === "RECURSO ADMINISTRATIVO"
+  ) return 6;
+  if (st === "PAGO") return 4;
+  if (vv === "aprovado") return 3;
+  if (vv === "corrigido" || vv === "reprovado") return 2;
   return 1;
 }
 
-function statusBadge(status: string | null | undefined) {
-  const s = (status || "").toUpperCase();
-  if (s.includes("PAGO") || s.includes("CONFIRMADO"))
+function statusBadge(s: string | null | undefined, v: string | null | undefined) {
+  const st = (s || "").toUpperCase().trim();
+  const vv = (v || "").toLowerCase().trim();
+  if (st === "PAGO")
     return { label: "PAGAMENTO CONFIRMADO", cls: "bg-emerald-50 border-emerald-200 text-emerald-800" };
-  if (s.includes("COBR") || s.includes("PENDENTE_PAGAMENTO"))
+  if (vv === "aprovado")
     return { label: "PENDENTE DE PAGAMENTO", cls: "bg-amber-50 border-amber-200 text-amber-800" };
-  if (s.includes("ANALISE") || s.includes("EM_VALIDA"))
-    return { label: "VALIDAÇÃO EM ANDAMENTO", cls: "bg-sky-50 border-sky-200 text-sky-800" };
+  if (vv === "reprovado")
+    return { label: "VALOR REPROVADO — REVISÃO", cls: "bg-rose-50 border-rose-200 text-rose-800" };
+  if (vv === "corrigido")
+    return { label: "VALOR EM REVISÃO", cls: "bg-sky-50 border-sky-200 text-sky-800" };
   return { label: "AGUARDANDO VALIDAÇÃO", cls: "bg-slate-100 border-slate-200 text-slate-700" };
 }
 
@@ -116,7 +139,7 @@ export default function QAContratarSucessoPage() {
         if (vendaId) {
           const { data: v } = await supabase
             .from("qa_vendas" as any)
-            .select("id, status, valor_aprovado, data_cadastro")
+            .select("id, status, status_validacao_valor, valor_aprovado, data_cadastro")
             .eq("id", Number(vendaId))
             .maybeSingle();
           if (!cancel && v) setVenda(v as any);
@@ -133,8 +156,14 @@ export default function QAContratarSucessoPage() {
     };
   }, [slug, vendaId]);
 
-  const currentStep = useMemo(() => statusToStep(venda?.status), [venda?.status]);
-  const badge = useMemo(() => statusBadge(venda?.status), [venda?.status]);
+  const currentStep = useMemo(
+    () => statusToStep(venda?.status, venda?.status_validacao_valor),
+    [venda?.status, venda?.status_validacao_valor],
+  );
+  const badge = useMemo(
+    () => statusBadge(venda?.status, venda?.status_validacao_valor),
+    [venda?.status, venda?.status_validacao_valor],
+  );
   const preco = formatBRL(venda?.valor_aprovado ?? catalogo?.preco ?? null);
 
   return (
