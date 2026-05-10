@@ -889,6 +889,25 @@ export default function QAClientePortalPage() {
 
         {activeTab === "arsenal" && cliente && analysis && (
           <>
+          {import.meta.env.DEV && (() => {
+            // [DIAG ARSENAL] log na renderização
+            // eslint-disable-next-line no-console
+            console.table({
+              activeSection,
+              activeTab,
+              hasCliente: !!cliente,
+              clienteIdReal: (cliente as any)?.id,
+              clienteIdLegado: (cliente as any)?.id_legado,
+              hasAnalysis: !!analysis,
+              crafs: crafs.length,
+              gtes: gtes.length,
+              meusDocs: meusDocs.length,
+              cadastro: !!cadastro,
+              processos: processos.length,
+              processoDocs: processoDocs.length,
+            });
+            return null;
+          })()}
           {(() => {
             const isFree = cliente?.tipo_cliente === "cliente_app";
             const isEmpty =
