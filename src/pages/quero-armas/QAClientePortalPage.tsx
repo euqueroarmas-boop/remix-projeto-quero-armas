@@ -638,6 +638,67 @@ export default function QAClientePortalPage() {
     return events.slice(0, 12);
   }, [vendas, itens, catalogoByServicoId, SERVICO_MAP]);
 
+  const navItems = useMemo(() => [
+    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente" },
+    { key: "contratacoes" as const, label: "Contratações", icon: BriefcaseBusiness, path: "/area-do-cliente/contratacoes" },
+    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos" },
+    { key: "arsenal" as const, label: "Arsenal", icon: Shield, path: "/area-do-cliente/arsenal" },
+    { key: "mensagens" as const, label: "Mensagens", icon: MessageCircle, path: "/area-do-cliente/mensagens" },
+    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro" },
+    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes" },
+  ], []);
+
+  useEffect(() => {
+    const match = navItems.find((item) => item.path !== "/area-do-cliente" && location.pathname.startsWith(item.path));
+    setActiveSection(match?.key ?? "resumo");
+  }, [location.pathname, navItems]);
+
+  const goSection = (key: typeof navItems[number]["key"]) => {
+    const item = navItems.find((n) => n.key === key);
+    if (!item) return;
+    setActiveSection(key);
+    setMobileNavOpen(false);
+    navigate(item.path);
+  };
+
+  const resumoState = useMemo(() => {
+    const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+    const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
+    const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
+    const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
+    const checklistPend = processoDocs.find((d) => d.obrigatorio && isChecklistPendente(d.status));
+    const prazoCritico = processoSnap.prazosProcessuais[0] || null;
+    const docVencidoHoje = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) <= 0) || null;
+    const totalPendencias = processoSnap.aguardandoAcaoCliente + docsHubReprovados + (prazoCritico ? 1 : 0) + (docVencidoHoje ? 1 : 0);
+    let proximaAcao: { titulo: string; descricao: string; icon: any; onClick: () => void } | null = null;
+    if (prazoCritico && prazoCritico.diasRestantes <= 10) {
+      proximaAcao = {
+        titulo: `${prazoCritico.evento}: manifestar-se até ${formatDate(prazoCritico.dataLimite)}`,
+        descricao: `${prazoCritico.servicoNome || "Processo"} · ${prazoCritico.statusLabel}`,
+        icon: AlertTriangle,
+        onClick: () => goSection("contratacoes"),
+      };
+    } else if (docVencidoHoje) {
+      proximaAcao = {
+        titulo: `Renovar ${docVencidoHoje.label}`,
+        descricao: docVencidoHoje.days === 0 ? "Vence hoje — regularize imediatamente." : `Vencido há ${Math.abs(docVencidoHoje.days as number)} dia(s).`,
+        icon: AlertTriangle,
+        onClick: () => goSection("documentos"),
+      };
+    } else if (checklistReproc) {
+      proximaAcao = { titulo: `Reenviar ${String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório reprovado precisa ser corrigido.", icon: FileText, onClick: () => setShowAddDoc(true) };
+    } else if (docsHubReprovados > 0) {
+      proximaAcao = { titulo: "Reenviar documento reprovado", descricao: `${docsHubReprovados} documento(s) do hub precisam de correção.`, icon: FileText, onClick: () => setShowAddDoc(true) };
+    } else if (checklistPend) {
+      proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => setShowAddDoc(true) };
+    } else if (cadastroIncompleto) {
+      proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", icon: User, onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
+    } else if (docsHubEmAnalise > 0) {
+      proximaAcao = { titulo: "Aguardar análise da equipe", descricao: `${docsHubEmAnalise} documento(s) em validação operacional.`, icon: Clock, onClick: () => goSection("documentos") };
+    }
+    return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
+  }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
