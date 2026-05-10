@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -7,7 +7,8 @@ import {
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
   Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
-  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck,
+  ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
+  MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
 } from "lucide-react";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
@@ -24,6 +25,9 @@ import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAu
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
+import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
+import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -120,6 +124,7 @@ function ClientAvatar({
 
 export default function QAClientePortalPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { map: SERVICO_MAP } = useQAServicosMap();
   const [loading, setLoading] = useState(true);
   const [cliente, setCliente] = useState<any>(null);
@@ -138,7 +143,8 @@ export default function QAClientePortalPage() {
   const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
-  const [activeTab, setActiveTab] = useState<"arsenal" | "resumo">("arsenal");
+  const [activeSection, setActiveSection] = useState<"resumo" | "contratacoes" | "documentos" | "arsenal" | "mensagens" | "financeiro" | "configuracoes">("resumo");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -151,6 +157,8 @@ export default function QAClientePortalPage() {
   const hasTacticalAvatar = avatarOficial?.source === "avatar_tatico_path";
   const hasAnyPhoto = avatarOficial?.hasPhoto || Boolean((cliente as any)?.imagem || (cliente as any)?.avatar_tatico_path);
   const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
+  const activeTab: "arsenal" | "resumo" | null = activeSection === "arsenal" ? "arsenal" : activeSection === "resumo" ? "resumo" : null;
+  const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
 
   useEffect(() => {
     const load = async () => {
@@ -353,7 +361,7 @@ export default function QAClientePortalPage() {
         // Processos canônicos do cliente (fonte real de progresso/etapa/checklist)
         const { data: procsData } = await supabase
           .from("qa_processos" as any)
-          .select("id, servico_nome, servico_slug, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, primeiro_doc_aprovado_em")
+          .select("id, cliente_id, venda_id, servico_id, servico_nome, servico_slug, status, pagamento_status, data_criacao, prazo_critico_data, primeiro_doc_aprovado_em")
           .eq("cliente_id", clienteIdReal)
           .order("data_criacao", { ascending: false });
         const procsList = (procsData as any[]) ?? [];
@@ -362,7 +370,7 @@ export default function QAClientePortalPage() {
           const procIds = procsList.map((p) => p.id);
           const { data: procDocsData } = await supabase
             .from("qa_processo_documentos" as any)
-            .select("id, processo_id, status, obrigatorio, tipo_documento, etapa")
+            .select("id, processo_id, status, obrigatorio, tipo_documento, etapa, ordem")
             .in("processo_id", procIds);
           setProcessoDocs((procDocsData as any[]) ?? []);
         } else {
@@ -510,18 +518,21 @@ export default function QAClientePortalPage() {
     return { totalServicos, concluidos, emAndamento, totalVendas, expDocs, alerts };
   }, [cliente, vendas, itens, crafs, gtes, cadastro, examesCliente, meusDocs, catalogoByServicoId, SERVICO_MAP]);
 
-  // ─── Snapshot canônico de processos/checklist do cliente ───────────────────
-  // Tudo derivado de qa_processos + qa_processo_documentos (fontes oficiais).
-  // Sem hardcode de progresso/etapa.
+  // ─── Snapshot canônico de processos/checklist/prazos do cliente ─────────────
+  // Tudo derivado das fontes oficiais: qa_processos, qa_processo_documentos e
+  // qa_itens_venda via helper canônico de prazos processuais.
   const processoSnap = useMemo(() => {
     const STATUS_CONCLUIDO = new Set(["concluido", "deferido", "finalizado"]);
     const STATUS_ENCERRADO = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "desistiu", "restituido"]);
-    const ETAPA_LABELS: Record<number, string> = {
-      1: "Endereço",
-      2: "Condição profissional",
-      3: "Antecedentes",
-      4: "Declarações",
-      5: "Exames técnicos",
+    const ETAPA_LABELS: Record<string, string> = {
+      endereco: "Comprovação de endereço",
+      base: "Documentação básica",
+      complementar: "Documentação complementar",
+      tecnico: "Exames técnicos",
+      final: "Revisão final",
+      antecedentes: "Antecedentes criminais",
+      declaracoes: "Declarações e compromissos",
+      renda: "Condição profissional",
     };
     const STATUS_LABELS: Record<string, string> = {
       aguardando_pagamento: "Aguardando pagamento",
@@ -541,13 +552,25 @@ export default function QAClientePortalPage() {
 
     const ativos = processos.filter((p) => !STATUS_ENCERRADO.has(String(p.status || "").toLowerCase()));
     const concluidos = processos.filter((p) => STATUS_CONCLUIDO.has(String(p.status || "").toLowerCase())).length;
-    const emAndamento = ativos.length; // ativos = em andamento (qualquer fase ativa)
+    const STATUS_ANDAMENTO = new Set(["em_validacao_ia", "em_revisao_humana", "aprovado", "enviado_ao_orgao", "protocolado", "em_analise_orgao"]);
+    const emAndamento = ativos.filter((p) => STATUS_ANDAMENTO.has(String(p.status || "").toLowerCase())).length;
 
-    // Pendências reais do checklist (qualquer obrigatório não aprovado/dispensado)
-    const APROVADOS_SET = new Set(["aprovado", "validado", "dispensado_grupo"]);
-    const pendentesChecklist = processoDocs.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
+    // Pendências reais do checklist usando helpers canônicos.
+    const pendentesChecklist = processoDocs.filter((d) => d.obrigatorio && isChecklistPendente(d.status)).length;
     const reprovadosChecklist = processoDocs.filter((d) => ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
-    const aguardandoAcaoCliente = processoDocs.filter((d) => d.obrigatorio && ["pendente", "invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())).length;
+    const aguardandoAcaoCliente = processoDocs.filter((d) => d.obrigatorio && isChecklistPendente(d.status)).length;
+    const prazosProcessuais = calcularPrazosProcessuais(itens.map((it: any) => ({
+      id: it.id,
+      servico_id: it.servico_id ?? null,
+      servico_nome: getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || null,
+      status: it.status ?? null,
+      numero_processo: it.numero_processo ?? null,
+      data_notificacao: it.data_notificacao ?? null,
+      data_indeferimento: it.data_indeferimento ?? null,
+      data_restituicao: it.data_restituicao ?? null,
+      data_recurso_administrativo: it.data_recurso_administrativo ?? null,
+      data_indeferimento_recurso: it.data_indeferimento_recurso ?? null,
+    })));
 
     // Processo principal = primeiro ativo (mais recente já vem ordenado por data_criacao desc)
     const principal = ativos[0] || null;
@@ -565,23 +588,26 @@ export default function QAClientePortalPage() {
     } | null = null;
     if (principal) {
       const meus = processoDocs.filter((d) => d.processo_id === principal.id);
-      const total = meus.length;
-      const aprovados = meus.filter((d) => APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
-      const pendentes = meus.filter((d) => d.obrigatorio && !APROVADOS_SET.has(String(d.status || "").toLowerCase())).length;
-      const progresso = total > 0 ? Math.round((aprovados / total) * 100) : 0;
+      const metrics = computeChecklistMetrics(meus);
+      const pendenteAtual = meus
+        .filter((d) => d.obrigatorio && isChecklistPendente(d.status))
+        .sort((a, b) => Number(a.ordem ?? 999) - Number(b.ordem ?? 999))[0] || null;
       const statusKey = String(principal.status || "").toLowerCase();
       const statusLabel = STATUS_LABELS[statusKey] || statusKey.replace(/_/g, " ").toUpperCase();
-      const etapa = principal.etapa_liberada_ate ? ETAPA_LABELS[principal.etapa_liberada_ate] : null;
+      const etapaKey = String(pendenteAtual?.etapa || "").toLowerCase();
+      const etapa = pendenteAtual
+        ? ETAPA_LABELS[etapaKey] || String(pendenteAtual.tipo_documento || "Documento pendente").replace(/_/g, " ").toUpperCase()
+        : statusLabel;
       principalView = {
         processo: principal,
         nome: principal.servico_nome || "Serviço",
         statusLabel,
         statusBadge: statusKey,
-        etapaLabel: etapa || statusLabel,
-        progresso,
-        total,
-        aprovados,
-        pendentes,
+        etapaLabel: etapa,
+        progresso: metrics.progresso,
+        total: metrics.total,
+        aprovados: metrics.cumpridos,
+        pendentes: metrics.pendentes,
         prazoCritico: principal.prazo_critico_data || null,
       };
     }
@@ -594,9 +620,10 @@ export default function QAClientePortalPage() {
       pendentesChecklist,
       reprovadosChecklist,
       aguardandoAcaoCliente,
+      prazosProcessuais,
       principal: principalView,
     };
-  }, [processos, processoDocs]);
+  }, [processos, processoDocs, itens, catalogoByServicoId, SERVICO_MAP]);
 
   // Timeline
   const timeline = useMemo(() => {
@@ -610,6 +637,67 @@ export default function QAClientePortalPage() {
     events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return events.slice(0, 12);
   }, [vendas, itens, catalogoByServicoId, SERVICO_MAP]);
+
+  const navItems = useMemo(() => [
+    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente" },
+    { key: "contratacoes" as const, label: "Contratações", icon: BriefcaseBusiness, path: "/area-do-cliente/contratacoes" },
+    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos" },
+    { key: "arsenal" as const, label: "Arsenal", icon: Shield, path: "/area-do-cliente/arsenal" },
+    { key: "mensagens" as const, label: "Mensagens", icon: MessageCircle, path: "/area-do-cliente/mensagens" },
+    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro" },
+    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes" },
+  ], []);
+
+  useEffect(() => {
+    const match = navItems.find((item) => item.path !== "/area-do-cliente" && location.pathname.startsWith(item.path));
+    setActiveSection(match?.key ?? "resumo");
+  }, [location.pathname, navItems]);
+
+  const goSection = (key: typeof navItems[number]["key"]) => {
+    const item = navItems.find((n) => n.key === key);
+    if (!item) return;
+    setActiveSection(key);
+    setMobileNavOpen(false);
+    navigate(item.path);
+  };
+
+  const resumoState = useMemo(() => {
+    const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+    const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
+    const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
+    const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
+    const checklistPend = processoDocs.find((d) => d.obrigatorio && isChecklistPendente(d.status));
+    const prazoCritico = processoSnap.prazosProcessuais[0] || null;
+    const docVencidoHoje = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) <= 0) || null;
+    const totalPendencias = processoSnap.aguardandoAcaoCliente + docsHubReprovados + (prazoCritico ? 1 : 0) + (docVencidoHoje ? 1 : 0);
+    let proximaAcao: { titulo: string; descricao: string; icon: any; onClick: () => void } | null = null;
+    if (prazoCritico && prazoCritico.diasRestantes <= 10) {
+      proximaAcao = {
+        titulo: `${prazoCritico.evento}: manifestar-se até ${formatDate(prazoCritico.dataLimite)}`,
+        descricao: `${prazoCritico.servicoNome || "Processo"} · ${prazoCritico.statusLabel}`,
+        icon: AlertTriangle,
+        onClick: () => goSection("contratacoes"),
+      };
+    } else if (docVencidoHoje) {
+      proximaAcao = {
+        titulo: `Renovar ${docVencidoHoje.label}`,
+        descricao: docVencidoHoje.days === 0 ? "Vence hoje — regularize imediatamente." : `Vencido há ${Math.abs(docVencidoHoje.days as number)} dia(s).`,
+        icon: AlertTriangle,
+        onClick: () => goSection("documentos"),
+      };
+    } else if (checklistReproc) {
+      proximaAcao = { titulo: `Reenviar ${String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório reprovado precisa ser corrigido.", icon: FileText, onClick: () => setShowAddDoc(true) };
+    } else if (docsHubReprovados > 0) {
+      proximaAcao = { titulo: "Reenviar documento reprovado", descricao: `${docsHubReprovados} documento(s) do hub precisam de correção.`, icon: FileText, onClick: () => setShowAddDoc(true) };
+    } else if (checklistPend) {
+      proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => setShowAddDoc(true) };
+    } else if (cadastroIncompleto) {
+      proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", icon: User, onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
+    } else if (docsHubEmAnalise > 0) {
+      proximaAcao = { titulo: "Aguardar análise da equipe", descricao: `${docsHubEmAnalise} documento(s) em validação operacional.`, icon: Clock, onClick: () => goSection("documentos") };
+    }
+    return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
+  }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
 
   if (loading) {
     return (
@@ -633,15 +721,48 @@ export default function QAClientePortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
       />
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center justify-between h-20">
+          <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
+          <button type="button" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center"><ChevronRight className="h-4 w-4 rotate-180" /></button>
+        </div>
+        <nav className="mt-6 space-y-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key;
+            return (
+              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
+                <Icon className="h-5 w-5" /> {item.label}
+              </button>
+            );
+          })}
+        </nav>
+        <div className="mt-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900"><HelpCircle className="h-4 w-4" /> Precisa de ajuda?</div>
+          <p className="mt-2 text-[12px] text-slate-500">Fale com nosso time</p>
+          <button type="button" onClick={() => goSection("mensagens")} className="mt-3 h-10 w-full rounded-lg border border-[#7A1F2B] text-[12px] font-bold text-[#7A1F2B]">Abrir chat</button>
+        </div>
+      </aside>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-950/35 lg:hidden" onClick={() => setMobileNavOpen(false)}>
+          <div className="absolute left-0 top-0 h-full w-[82vw] max-w-xs bg-white p-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
+            <nav className="mt-6 space-y-2">{navItems.map((item) => { const Icon = item.icon; return <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold ${activeSection === item.key ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700"}`}><Icon className="h-5 w-5" />{item.label}</button>; })}</nav>
+          </div>
+        </div>
+      )}
+
       {/* ═══ TOP BAR — Premium Light ═══ */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+        <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <button type="button" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center"><Menu className="h-4 w-4" /></button>
             {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
             <button
               type="button"
@@ -723,40 +844,23 @@ export default function QAClientePortalPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
-        {/* ═══ TABS NAVIGATION ═══ */}
-        <div className="sticky top-[60px] z-30 -mx-4 mb-1 border-b border-slate-200/70 bg-gradient-to-b from-white/95 to-white/85 px-4 py-2 backdrop-blur-md">
-          <div className="flex items-center justify-between gap-2">
-            <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm">
-              <button
-                type="button"
-                onClick={() => setActiveTab("arsenal")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                  activeTab === "arsenal"
-                    ? "bg-[#7A1F2B] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                <CrosshairIcon className="h-3.5 w-3.5" /> Arsenal
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("resumo")}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
-                  activeTab === "resumo"
-                    ? "bg-[#7A1F2B] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                <LayoutDashboard className="h-3.5 w-3.5" /> Resumo
-              </button>
+      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5">
+        <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-6 overflow-x-auto">
+              {navItems.slice(0, 4).map((item) => {
+                const Icon = item.icon;
+                const active = activeSection === item.key;
+                return (
+                  <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`relative inline-flex items-center gap-2 px-1 py-2 text-[13px] font-bold ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}>
+                    <Icon className="h-4 w-4" /> {item.label}
+                    {active && <span className="absolute inset-x-0 -bottom-3 h-1 rounded-full bg-[#7A1F2B]" />}
+                  </button>
+                );
+              })}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowAddDoc(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-sm hover:bg-[#FBF3F4]"
-            >
-              <Upload className="h-3.5 w-3.5" /> Enviar documento
+            <button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2.5 text-[12px] font-bold text-white shadow-sm hover:bg-[#641722]">
+              <Upload className="h-4 w-4" /> Enviar documento
             </button>
           </div>
         </div>
@@ -1653,6 +1757,44 @@ export default function QAClientePortalPage() {
           <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
         </div>
         </div>
+        )}
+
+        {activeSection === "contratacoes" && (
+          <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
+            <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
+            {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
+          </SectionCard>
+        )}
+
+        {activeSection === "documentos" && analysis && (
+          <SectionCard icon={FileText} title="Documentos" color="hsl(262 60% 55%)">
+            <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
+            {analysis.expDocs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nenhum documento com validade cadastrado.</p> : (
+              <div className="grid gap-2">{analysis.expDocs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
+            )}
+          </SectionCard>
+        )}
+
+        {activeSection === "mensagens" && (
+          <SectionCard icon={MessageCircle} title="Mensagens" color="hsl(35 92% 48%)">
+            <CentralAjudaCliente />
+          </SectionCard>
+        )}
+
+        {activeSection === "financeiro" && analysis && (
+          <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
+            <div className="space-y-2">{vendas.map((v: any) => <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"><div><div className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</div><div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div></div><div className="font-mono text-sm font-bold text-slate-900">{formatCurrency(Number(v.valor_a_pagar || 0))}</div></div>)}</div>
+            <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">Total investido</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(analysis.totalVendas)}</span></div>
+          </SectionCard>
+        )}
+
+        {activeSection === "configuracoes" && (
+          <SectionCard icon={Settings} title="Configurações" color="hsl(220 65% 48%)">
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-xl border border-slate-200 p-4"><div className="text-[12px] font-bold text-slate-900">Dados de acesso</div><p className="mt-1 text-[11px] text-slate-500">Seu acesso está vinculado ao cadastro ativo da Área do Cliente.</p></div>
+              <button type="button" onClick={handleLogout} className="rounded-xl border border-slate-200 p-4 text-left hover:bg-slate-50"><div className="text-[12px] font-bold text-slate-900">Sair com segurança</div><p className="mt-1 text-[11px] text-slate-500">Encerra a sessão neste dispositivo.</p></button>
+            </div>
+          </SectionCard>
         )}
       </main>
 
