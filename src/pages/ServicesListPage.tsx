@@ -279,7 +279,7 @@ const ServicesListPage = () => {
           />
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 lg:py-14 2xl:max-w-[1760px] 3xl:max-w-[1920px]">
+        <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 lg:py-14 2xl:max-w-[1760px]">
           <div className="max-w-[620px] 2xl:max-w-[680px]">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
               Serviços
