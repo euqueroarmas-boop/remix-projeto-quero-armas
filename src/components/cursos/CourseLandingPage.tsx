@@ -56,7 +56,7 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
 
       {/* Stats strip — credibilidade & ritmo visual */}
       <section className="border-b border-border/60 bg-surface-overlay/40">
-        <div className="container mx-auto max-w-6xl px-4 py-8 sm:py-10">
+        <div className="container mx-auto max-w-7xl px-4 py-8 sm:py-10">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { icon: Clock, label: 'Carga horária', value: '8h' },
