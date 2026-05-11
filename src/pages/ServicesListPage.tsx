@@ -255,7 +255,7 @@ const ServicesListPage = () => {
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
         {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-0 hidden lg:block">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[84vw] lg:block">
           <img
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
