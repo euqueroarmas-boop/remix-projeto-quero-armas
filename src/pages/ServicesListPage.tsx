@@ -45,6 +45,9 @@ import heroArsenal from '@/assets/hero-servicos-arsenal.png';
 
 const WHATSAPP_URL = 'https://wa.me/5511978481919?text=' + encodeURIComponent('Olá! Quero falar com um especialista da Quero Armas sobre os serviços.');
 
+const publicSectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden';
+const publicInnerCls = 'mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8';
+
 type GroupKey = 'sinarm' | 'sigma' | 'sigma-sinarm' | 'cursos' | 'equipamento' | 'consultoria' | 'outros';
 
 interface GroupDef {
@@ -247,7 +250,7 @@ const ServicesListPage = () => {
     <SiteShell>
       {/* HERO */}
       <section
-        className="relative min-h-[720px] w-full overflow-hidden border-b border-border bg-background lg:min-h-[760px] xl:min-h-[800px]"
+        className={`${publicSectionCls} min-h-[720px] border-b border-border bg-background lg:min-h-[760px] xl:min-h-[800px]`}
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
@@ -276,7 +279,7 @@ const ServicesListPage = () => {
           />
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+        <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
           <div className="max-w-[620px]">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
               Serviços
@@ -358,8 +361,8 @@ const ServicesListPage = () => {
       </section>
 
       {/* BENEFÍCIOS */}
-      <section className="border-b border-border bg-surface-elevated/30">
-        <div className="container py-10">
+      <section className={`${publicSectionCls} border-b border-border bg-surface-elevated/30`}>
+        <div className={`${publicInnerCls} py-10`}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {BENEFICIOS.map(({ icon: Icon, label }) => (
               <li
@@ -379,8 +382,8 @@ const ServicesListPage = () => {
       </section>
 
       {/* COMO FUNCIONA */}
-      <section className="border-b border-border">
-        <div className="container py-14 sm:py-20">
+      <section className={`${publicSectionCls} border-b border-border`}>
+        <div className={`${publicInnerCls} py-14 sm:py-20`}>
           <div className="mb-10 max-w-2xl">
             <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
               Como funciona
@@ -406,8 +409,8 @@ const ServicesListPage = () => {
       </section>
 
       {/* CTA */}
-      <section className="border-b border-border bg-gradient-to-br from-accent/15 via-background to-background">
-        <div className="container flex flex-col items-start gap-6 py-12 sm:flex-row sm:items-center sm:justify-between sm:py-16">
+      <section className={`${publicSectionCls} border-b border-border bg-gradient-to-br from-accent/15 via-background to-background`}>
+        <div className={`${publicInnerCls} flex flex-col items-start gap-6 py-12 sm:flex-row sm:items-center sm:justify-between sm:py-16`}>
           <div className="max-w-xl">
             <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">
               Pronto para dar o próximo passo?
@@ -427,8 +430,8 @@ const ServicesListPage = () => {
       </section>
 
       {/* CATÁLOGO EM CARROSSEL */}
-      <section id="catalogo-servicos" className="scroll-mt-24 border-b border-border">
-        <div className="container py-14 sm:py-20">
+      <section id="catalogo-servicos" className={`${publicSectionCls} scroll-mt-24 border-b border-border`}>
+        <div className={`${publicInnerCls} py-14 sm:py-20`}>
           <div className="mb-8 max-w-3xl">
             <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
               Catálogo
@@ -549,8 +552,8 @@ const ServicesListPage = () => {
       </section>
 
       {/* SEGURANÇA */}
-      <section className="bg-surface-elevated/30">
-        <div className="container py-10">
+      <section className={`${publicSectionCls} bg-surface-elevated/30`}>
+        <div className={`${publicInnerCls} py-10`}>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {SEGURANCA.map(({ icon: Icon, label }) => (
               <li

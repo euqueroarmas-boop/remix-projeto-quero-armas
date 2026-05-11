@@ -20,8 +20,8 @@ const LpAtividadesAvulsas = () => (
         description: 'Atire como visitante, faça curso avulso e treine sem precisar ser CAC ou ter posse.',
       }}
     />
-    <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
-      <div className="container max-w-5xl text-center">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20 sm:py-28">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">
           <Target className="size-3.5 text-accent" />
           <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent">Experiência · Cursos Avulsos · Estande</span>
@@ -39,8 +39,8 @@ const LpAtividadesAvulsas = () => (
       </div>
     </section>
 
-    <section className="w-full border-b border-border bg-surface-elevated py-20">
-      <div className="container max-w-5xl">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">O que você pode fazer</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Estande aberto. <span className="text-accent">Munição pesada.</span> Instrutores reais.</h2>
@@ -68,8 +68,8 @@ const LpAtividadesAvulsas = () => (
     </section>
 
     {/* Pra quem é */}
-    <section className="w-full border-b border-border bg-background py-20">
-      <div className="container max-w-5xl">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Pra quem é</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Você <span className="text-accent">não precisa</span> de processo, CR ou posse</h2>
@@ -90,8 +90,8 @@ const LpAtividadesAvulsas = () => (
     </section>
 
     {/* Como funciona */}
-    <section className="w-full border-b border-border bg-surface-elevated py-20">
-      <div className="container max-w-5xl">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Como funciona</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Do <span className="text-accent">WhatsApp</span> ao <span className="text-accent">primeiro disparo</span> em 48h</h2>
@@ -118,8 +118,8 @@ const LpAtividadesAvulsas = () => (
     </section>
 
     {/* Depoimentos */}
-    <section className="w-full border-b border-border bg-background py-20">
-      <div className="container max-w-5xl">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Quem já passou pelo estande</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">A <span className="text-accent">primeira vez</span> não se esquece</h2>
@@ -141,8 +141,8 @@ const LpAtividadesAvulsas = () => (
     </section>
 
     {/* FAQ */}
-    <section className="w-full border-b border-border bg-surface-elevated py-20">
-      <div className="container max-w-4xl">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
+      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Perguntas frequentes</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Tudo que <span className="text-accent">você precisa saber</span></h2>
@@ -169,8 +169,8 @@ const LpAtividadesAvulsas = () => (
     </section>
 
     {/* Garantias */}
-    <section className="w-full border-b border-border bg-background py-16">
-      <div className="container max-w-5xl">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-16">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-4 sm:grid-cols-3">
           {[
             { i: Shield, t: 'Estande credenciado', d: 'Habilitado pela PF e Exército, com vistoria de cofres e instrutores reconhecidos.' },
@@ -189,8 +189,8 @@ const LpAtividadesAvulsas = () => (
       </div>
     </section>
 
-    <section className="w-full bg-background py-20">
-      <div className="container max-w-3xl text-center">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background py-20">
+      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
         <Target className="mx-auto mb-4 size-10 text-accent" />
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Próximo passo. <span className="text-accent">Resolve sua agenda.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Estandes regularizados e instrutores credenciados. Direto pelo WhatsApp ou monte seu pacote.</p>

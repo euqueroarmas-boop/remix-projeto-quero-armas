@@ -10,7 +10,7 @@ interface CourseHeroProps {
 export const CourseHero = ({ course }: CourseHeroProps) => {
   const wa = buildWhatsAppLink(course.whatsappNumber, course.whatsappMessage);
   return (
-    <section className="relative overflow-hidden border-b border-border/60 bg-background">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 bg-background">
       {/* Background image */}
       <div className="absolute inset-0">
         <img
@@ -27,7 +27,7 @@ export const CourseHero = ({ course }: CourseHeroProps) => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.18),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 
-      <div className="container relative z-10 mx-auto max-w-6xl px-4 pb-16 pt-10 sm:py-24 lg:py-28">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 pb-16 pt-10 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
         <div className="animate-fade-in">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/5 px-4 py-1.5 backdrop-blur-sm">
             <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_hsl(var(--accent))]" />

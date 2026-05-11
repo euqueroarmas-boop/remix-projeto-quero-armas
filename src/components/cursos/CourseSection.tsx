@@ -20,9 +20,9 @@ export const CourseSection = ({
   return (
     <section
       id={id}
-      className={`relative border-b border-border/60 ${tone === 'muted' ? 'bg-surface-overlay/40' : 'bg-background'}`}
+      className={`relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 ${tone === 'muted' ? 'bg-surface-overlay/40' : 'bg-background'}`}
     >
-      <div className="container mx-auto max-w-7xl px-4 py-16 sm:py-24">
+      <div className="mx-auto w-full max-w-[1400px] px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
         {eyebrow && (
           <div className="mb-4 flex items-center gap-3">
             <span className="h-px w-8 bg-accent/60" />

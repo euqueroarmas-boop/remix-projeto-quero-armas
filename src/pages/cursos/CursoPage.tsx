@@ -18,7 +18,7 @@ export default function CursoPage() {
           description="Este curso não está disponível."
           canonical={`/cursos/${slug}`}
         />
-        <div className="container mx-auto max-w-3xl px-4 py-24 text-center">
+        <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background"><div className="mx-auto w-full max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
           <h1 className="mb-4 font-heading text-3xl uppercase">Curso não encontrado</h1>
           <p className="mb-8 text-muted-foreground">
             O curso que você procura não existe ou foi movido.
@@ -28,7 +28,7 @@ export default function CursoPage() {
               <ArrowLeft className="mr-2 size-4" /> Voltar para a home
             </Link>
           </Button>
-        </div>
+        </div></section>
       </SiteShell>
     );
   }
@@ -42,7 +42,7 @@ export default function CursoPage() {
           description={course.seoDescription}
           canonical={`/cursos/${course.slug}`}
         />
-        <div className="container mx-auto max-w-3xl px-4 py-24 text-center">
+        <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background"><div className="mx-auto w-full max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 font-heading text-xs uppercase tracking-[0.2em] text-accent">
             <Clock className="size-3.5" /> Em breve
           </span>
@@ -65,7 +65,7 @@ export default function CursoPage() {
               </Link>
             </Button>
           </div>
-        </div>
+        </div></section>
       </SiteShell>
     );
   }
