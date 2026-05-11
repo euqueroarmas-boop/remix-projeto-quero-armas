@@ -266,7 +266,11 @@ const ServicesListPage = () => {
           {/* Fade horizontal — esquerda sólida, fundindo suavemente sob o personagem */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/85 via-25% to-transparent to-65%"
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.95) 20%, hsl(var(--background) / 0.6) 45%, hsl(var(--background) / 0.2) 70%, transparent 100%)',
+            }}
           />
           {/* Fades verticais sutis — profundidade editorial */}
           <div
