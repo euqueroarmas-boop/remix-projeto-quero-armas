@@ -55,8 +55,8 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
       <CourseHero course={course} />
 
       {/* Stats strip — credibilidade & ritmo visual */}
-      <section className="border-b border-border/60 bg-surface-overlay/40">
-        <div className="container mx-auto max-w-7xl px-4 py-8 sm:py-10">
+      <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 bg-surface-overlay/40">
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { icon: Clock, label: 'Carga horária', value: '8h' },
@@ -176,8 +176,8 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
         <CourseLocationCard course={course} />
       </CourseSection>
 
-      <section className="border-b border-border/60 bg-background">
-        <div className="container mx-auto max-w-5xl px-4 py-14 sm:py-20">
+      <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 bg-background">
+        <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
           <div className="rounded-lg border border-accent/40 bg-accent/5 p-6 sm:p-8">
             <div className="mb-3 flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-sm border border-accent/40 bg-accent/10 text-accent">
