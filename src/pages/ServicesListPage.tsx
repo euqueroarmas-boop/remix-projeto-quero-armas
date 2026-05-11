@@ -255,7 +255,7 @@ const ServicesListPage = () => {
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
         {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[72vw] lg:block xl:w-[70vw] 2xl:w-[68vw]">
+        <div className="pointer-events-none absolute inset-0 hidden lg:block">
           <img
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
@@ -269,7 +269,7 @@ const ServicesListPage = () => {
             className="absolute inset-0"
             style={{
               backgroundImage:
-                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.7) 18%, hsl(var(--background) / 0.3) 42%, hsl(var(--background) / 0.08) 75%, transparent 100%)',
+                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background)) 24%, hsl(var(--background) / 0.82) 38%, hsl(var(--background) / 0.42) 58%, hsl(var(--background) / 0.1) 82%, transparent 100%)',
             }}
           />
           {/* Fades verticais sutis — profundidade editorial */}
