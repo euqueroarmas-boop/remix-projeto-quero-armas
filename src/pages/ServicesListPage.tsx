@@ -252,12 +252,12 @@ const ServicesListPage = () => {
         />
 
         {/* Imagem direita, full height, edge-to-edge */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block lg:w-[58%]">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block lg:w-[58%] xl:w-[55%] 2xl:w-[52%]">
           <img
             src={heroWill}
             alt="Especialista da Quero Armas"
             loading="eager"
-            className="h-full w-full object-cover object-[center_center]"
+            className="h-full w-full object-cover object-[80%_20%] xl:object-[75%_20%] 2xl:object-[70%_25%]"
           />
           {/* Fade da imagem para o lado esquerdo */}
           <div
