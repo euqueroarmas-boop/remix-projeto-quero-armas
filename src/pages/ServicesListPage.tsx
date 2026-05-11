@@ -268,10 +268,10 @@ const ServicesListPage = () => {
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
               Serviços
             </p>
-            <h1 className="mt-5 font-heading font-extrabold uppercase tracking-tight text-white text-[2.5rem] leading-[1.02] sm:text-5xl lg:text-[5.25rem] lg:leading-[0.98]">
+            <h1 className="mt-5 font-heading font-extrabold uppercase tracking-tight text-white text-[2.5rem] leading-[1.02] sm:text-5xl lg:text-[4.25rem] lg:leading-[0.96] xl:text-[4.7rem] 2xl:text-[5.25rem] 2xl:leading-[0.98]">
               Você não precisa enfrentar a burocracia sozinho.
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg lg:mt-4 2xl:mt-6">
               A Quero Armas usa tecnologia, inteligência artificial e análise documental guiada
               para acelerar sua contratação, revisar seus documentos e montar seu processo com
               máxima agilidade.
@@ -281,7 +281,7 @@ const ServicesListPage = () => {
               pendências e a Equipe Quero Armas corrige o que for necessário para deixar tudo
               pronto o quanto antes.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row 2xl:mt-8">
               <Button
                 size="lg"
                 onClick={scrollToCatalogo}
