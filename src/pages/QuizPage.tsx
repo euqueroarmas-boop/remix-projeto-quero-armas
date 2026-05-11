@@ -75,8 +75,8 @@ const QuizPage = () => {
         description="Em 2 perguntas você descobre o caminho certo: posse domiciliar, CR no Exército ou atividades avulsas no estande. Diagnóstico rápido e direto."
         canonical="/descobrir-meu-caminho"
       />
-      <section className="container max-w-4xl py-16 sm:py-24">
-        <div className="mb-8 text-center">
+      <section className="w-full px-4 py-16 sm:px-6 sm:py-24 lg:px-10 2xl:px-16">
+        <div className="mx-auto mb-8 max-w-4xl text-center">
           <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">
             Diagnóstico Tático · Etapa {step + 1} de {questions.length}
           </div>
@@ -87,10 +87,10 @@ const QuizPage = () => {
             Três perguntas. Resposta direta. Zero enrolação.
           </p>
         </div>
-        <div className="mb-10 h-1 w-full overflow-hidden rounded-full bg-surface-elevated">
+        <div className="mx-auto mb-10 h-1 w-full max-w-4xl overflow-hidden rounded-full bg-surface-elevated">
           <div className="h-full bg-accent transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
-        <div key={q.id} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div key={q.id} className="mx-auto max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="mb-8 text-center">
             <h2 className="font-heading text-2xl font-bold uppercase sm:text-3xl">{q.title}</h2>
             {q.subtitle && <p className="mt-2 text-sm text-muted-foreground sm:text-base">{q.subtitle}</p>}
