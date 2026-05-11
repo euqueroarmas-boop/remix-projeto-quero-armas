@@ -255,18 +255,18 @@ const ServicesListPage = () => {
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
         {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[70vw] lg:block xl:w-[68vw] 2xl:w-[64vw]">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[72vw] lg:block xl:w-[70vw] 2xl:w-[68vw]">
           <img
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
-            className="absolute inset-0 h-full w-full object-contain object-right-bottom"
+            className="absolute inset-0 h-full w-full object-cover object-right"
             style={{ filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
           />
           {/* Fade horizontal — esquerda sólida, fundindo suavemente sob o personagem */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/70 via-18% to-transparent to-55%"
+            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/85 via-25% to-transparent to-65%"
           />
           {/* Fades verticais sutis — profundidade editorial */}
           <div
