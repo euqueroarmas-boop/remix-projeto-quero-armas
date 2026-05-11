@@ -251,21 +251,31 @@ const ServicesListPage = () => {
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
-        {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[78vw] lg:block xl:w-[75vw] 2xl:w-[72vw]">
-          <img
-            src={heroArsenal}
-            alt="Especialista da Quero Armas no estande de tiro"
-            loading="eager"
-            className="absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-70 xl:object-[65%_center] 2xl:object-[62%_center]"
-            style={{ filter: 'brightness(0.75) saturate(0.85) contrast(1.02)' }}
-          />
-          {/* Overlay escuro global para fundir a foto com o fundo preto */}
-          <div aria-hidden className="absolute inset-0 bg-background/40" />
-          {/* Fade forte da esquerda para a direita: lado do texto totalmente preto, lado do homem visível */}
+        {/* Imagem cinematográfica do arsenal — desktop
+            Composição: foto ocupa só a metade direita, surge do preto via máscara horizontal
+            e o homem aparece deslocado à direita, menor que o quadro original. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58vw] lg:block xl:w-[55vw] 2xl:w-[52vw]">
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/85 via-30% to-background/10 to-95%"
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${heroArsenal})`,
+              backgroundSize: 'cover',
+              backgroundPosition: '78% center',
+              backgroundRepeat: 'no-repeat',
+              filter: 'brightness(0.78) saturate(0.9) contrast(1.02)',
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.9) 55%, #000 75%)',
+              maskImage:
+                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 18%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0.9) 55%, #000 75%)',
+            }}
+          />
+          {/* Overlay escuro suave para fundir a foto com o fundo preto */}
+          <div aria-hidden className="absolute inset-0 bg-background/30" />
+          {/* Reforço de fade horizontal sobre o lado do texto */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/60 via-25% to-transparent to-60%"
           />
           {/* Suaviza topo/base mantendo profundidade cinematográfica */}
           <div aria-hidden className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
