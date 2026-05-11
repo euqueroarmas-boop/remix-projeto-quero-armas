@@ -255,21 +255,21 @@ const ServicesListPage = () => {
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
         {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[84vw] lg:block">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[80vw] lg:block xl:w-[78vw] 2xl:w-[75vw]">
           <img
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
-            className="absolute inset-0 h-full w-full object-cover object-right"
-            style={{ filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ objectPosition: '85% 20%', filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
           />
-          {/* Fade horizontal — esquerda sólida, fundindo suavemente sob o personagem */}
+          {/* Fade horizontal — mais leve, deixa a imagem respirar */}
           <div
             aria-hidden
             className="absolute inset-0"
             style={{
               backgroundImage:
-                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background)) 24%, hsl(var(--background) / 0.82) 38%, hsl(var(--background) / 0.42) 58%, hsl(var(--background) / 0.1) 82%, transparent 100%)',
+                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 14%, hsl(var(--background) / 0.55) 32%, hsl(var(--background) / 0.18) 55%, transparent 78%)',
             }}
           />
           {/* Fades verticais sutis — profundidade editorial */}
