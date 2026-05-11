@@ -269,7 +269,7 @@ const ServicesListPage = () => {
             className="absolute inset-0"
             style={{
               backgroundImage:
-                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.7) 15%, hsl(var(--background) / 0.25) 35%, transparent 60%)',
+                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.7) 18%, hsl(var(--background) / 0.3) 42%, hsl(var(--background) / 0.08) 75%, transparent 100%)',
             }}
           />
           {/* Fades verticais sutis — profundidade editorial */}
