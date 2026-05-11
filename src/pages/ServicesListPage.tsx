@@ -246,53 +246,25 @@ const ServicesListPage = () => {
     <SiteShell>
       {/* HERO */}
       <section
-        className="relative w-full overflow-hidden border-b border-border"
-        style={{
-          background:
-            'linear-gradient(90deg, #050505 0%, #0a0a0a 55%, #111111 100%)',
-          minHeight: 'clamp(620px, 82vh, 880px)',
-        }}
+        className="relative min-h-[720px] w-full overflow-hidden border-b border-border bg-background lg:min-h-[760px] xl:min-h-[800px]"
       >
-        {/* Glow âmbar muito sutil */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(60% 50% at 15% 40%, rgba(120,70,10,0.12), transparent 70%)',
-          }}
-        />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
-        {/* Imagem direita, full height, edge-to-edge */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block lg:w-[58%] xl:w-[55%] 2xl:w-[52%]">
+        {/* Imagem direita preservada proporcionalmente, sem crop agressivo */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58vw] lg:block">
           <img
             src={heroWill}
             alt="Especialista da Quero Armas"
             loading="eager"
-            className="h-full w-full object-cover object-[center_78%] xl:object-[center_80%] 2xl:object-[center_82%]"
+            className="absolute bottom-0 right-0 h-[92%] max-h-[760px] w-auto max-w-none object-contain object-right-bottom xl:h-[95%]"
           />
-          {/* Fade da imagem para o lado esquerdo */}
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(90deg, #050505 0%, rgba(8,8,8,0.85) 18%, rgba(10,10,10,0.35) 38%, rgba(0,0,0,0) 60%)',
-            }}
-          />
-          {/* Vinheta inferior */}
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-24"
-            style={{
-              background:
-                'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
-            }}
-          />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-background via-background/65 to-transparent" />
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
+          <div aria-hidden className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background/70 to-transparent" />
         </div>
 
-        <div className="relative mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
-          <div className="lg:max-w-[52%]">
+        <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+          <div className="max-w-[620px]">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
               Serviços
             </p>
@@ -352,13 +324,15 @@ const ServicesListPage = () => {
           </div>
 
           {/* Imagem mobile/tablet */}
-          <div className="mt-10 lg:hidden">
+          <div className="relative mt-10 overflow-hidden lg:hidden">
             <img
               src={heroWill}
               alt="Especialista da Quero Armas"
               loading="eager"
-              className="w-full rounded-sm object-cover"
+              className="mx-auto max-h-[520px] w-auto max-w-full object-contain object-bottom"
             />
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
+            <div aria-hidden className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-background/60 to-transparent" />
           </div>
         </div>
       </section>
