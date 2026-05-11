@@ -256,7 +256,7 @@ const ServicesListPage = () => {
             src={heroWill}
             alt="Especialista da Quero Armas"
             loading="eager"
-            className="absolute bottom-0 right-0 h-[92%] max-h-[760px] w-auto max-w-none object-contain object-right-bottom xl:h-[95%]"
+            className="absolute bottom-0 right-0 h-full w-auto max-w-none object-contain object-right-bottom"
           />
           <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-background via-background/65 to-transparent" />
           <div aria-hidden className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
