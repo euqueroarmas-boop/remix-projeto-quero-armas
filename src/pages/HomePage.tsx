@@ -103,7 +103,7 @@ const HomePage = () => {
         ]}
       />
       {/* 1 · HERO */}
-      <section className={`${sectionCls} border-b border-border/60">
+      <section className={`${sectionCls} border-b border-border/60`}>
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.18),transparent_60%)]" />
         <div className={`${containerCls} relative flex flex-col items-stretch gap-8 py-8 sm:py-10 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-12`}>
           <div className="col-span-12 flex min-w-0 flex-col gap-6 sm:gap-8 lg:col-span-8">
@@ -155,7 +155,7 @@ const HomePage = () => {
       </section>
 
       {/* 2 · DOR */}
-      <section id="dor" className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section id="dor" className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">Diagnóstico tático</div>
@@ -197,7 +197,7 @@ const HomePage = () => {
       </section>
 
       {/* 3 · MANCHETES */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-8 max-w-3xl sm:mb-12">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -227,7 +227,7 @@ const HomePage = () => {
       </section>
 
       {/* 4 · COLAPSO */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -266,7 +266,7 @@ const HomePage = () => {
       </section>
 
       {/* 5 · PILARES */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A tríade não-negociável</div>
@@ -300,7 +300,7 @@ const HomePage = () => {
       </section>
 
       {/* 6 · LEI */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -372,7 +372,7 @@ const HomePage = () => {
       </section>
 
       {/* 7 · ARSENAL */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -399,7 +399,7 @@ const HomePage = () => {
       </section>
 
       {/* 8 · COLETE */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -440,7 +440,7 @@ const HomePage = () => {
       </section>
 
       {/* 9 · MUNIÇÃO */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -471,7 +471,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.5 · CAC + RECARGA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -507,7 +507,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.6 · FAMÍLIA / CÔNJUGE */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -544,7 +544,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.8 · PROTOCOLO PÓS-DISPARO */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -582,7 +582,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.9 · MULHER ARMADA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="relative order-2 lg:order-1">
@@ -619,7 +619,7 @@ const HomePage = () => {
       </section>
 
       {/* 10 · LOJA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -655,7 +655,7 @@ const HomePage = () => {
       <GoogleReviewsCarousel />
 
       {/* 11 · JORNADA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-2xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A jornada operacional · 6 etapas</div>
@@ -682,7 +682,7 @@ const HomePage = () => {
       </section>
 
       {/* 11.5 · CURSO OPERADOR DE PISTOLA I */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -766,7 +766,7 @@ const HomePage = () => {
       </section>
 
       {/* 11.6 · LEGISLAÇÃO COMPLETA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -793,7 +793,7 @@ const HomePage = () => {
       </section>
 
       {/* 11.7 · PORTAL DO CLIENTE */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -835,7 +835,7 @@ const HomePage = () => {
       </section>
 
       {/* 12 · CTA FINAL */}
-      <section className={`${sectionCls} py-16 sm:py-24">
+      <section className={`${sectionCls} py-16 sm:py-24`}>
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.18),transparent_70%)]" />
         <div className={containerCls}>
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center sm:gap-8">
