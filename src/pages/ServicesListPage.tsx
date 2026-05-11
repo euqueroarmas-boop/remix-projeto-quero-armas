@@ -261,7 +261,14 @@ const ServicesListPage = () => {
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: '85% 20%', filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
+            style={{
+              objectPosition: '85% 20%',
+              filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)',
+              WebkitMaskImage:
+                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 18%, #000 42%, #000 78%, rgba(0,0,0,0.6) 92%, transparent 100%)',
+              maskImage:
+                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 18%, #000 42%, #000 78%, rgba(0,0,0,0.6) 92%, transparent 100%)',
+            }}
           />
           {/* Fade horizontal — mais leve, deixa a imagem respirar */}
           <div
