@@ -41,6 +41,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import heroWill from '@/assets/servicos-hero-will.png';
+import heroArsenal from '@/assets/hero-servicos-arsenal.png';
 
 const WHATSAPP_URL = 'https://wa.me/5511978481919?text=' + encodeURIComponent('Olá! Quero falar com um especialista da Quero Armas sobre os serviços.');
 
@@ -250,17 +251,22 @@ const ServicesListPage = () => {
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
-        {/* Imagem direita preservada proporcionalmente, sem crop agressivo */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[58vw] lg:block">
+        {/* Imagem cinematográfica do arsenal — desktop */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[78vw] lg:block xl:w-[75vw] 2xl:w-[72vw]">
           <img
-            src={heroWill}
-            alt="Especialista da Quero Armas"
+            src={heroArsenal}
+            alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
-            className="absolute bottom-0 right-0 h-full w-auto max-w-none object-contain object-right-bottom"
+            className="absolute inset-0 h-full w-full object-cover object-[68%_center] xl:object-[65%_center] 2xl:object-[62%_center]"
           />
-          <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-background via-background/65 to-transparent" />
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
-          <div aria-hidden className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background/70 to-transparent" />
+          {/* Fade da esquerda para a direita para fundir com o fundo do texto */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-r from-background via-background/80 via-25% to-transparent to-65%"
+          />
+          {/* Suaviza topo/base mantendo profundidade cinematográfica */}
+          <div aria-hidden className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background/70 to-transparent" />
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/80 to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
@@ -324,12 +330,12 @@ const ServicesListPage = () => {
           </div>
 
           {/* Imagem mobile/tablet */}
-          <div className="relative mt-10 overflow-hidden lg:hidden">
+          <div className="relative mt-10 overflow-hidden rounded-sm lg:hidden">
             <img
-              src={heroWill}
-              alt="Especialista da Quero Armas"
+              src={heroArsenal}
+              alt="Especialista da Quero Armas no estande de tiro"
               loading="eager"
-              className="mx-auto max-h-[520px] w-auto max-w-full object-contain object-bottom"
+              className="h-[360px] w-full object-cover object-[60%_center] sm:h-[440px]"
             />
             <div aria-hidden className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
             <div aria-hidden className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-background/60 to-transparent" />
