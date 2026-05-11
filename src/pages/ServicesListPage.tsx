@@ -251,18 +251,29 @@ const ServicesListPage = () => {
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
-        {/* Imagem cinematográfica do arsenal — desktop (sem esmaecimento) */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[78vw] lg:block xl:w-[75vw] 2xl:w-[72vw]">
+        {/* Imagem cinematográfica do arsenal — desktop */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[70vw] lg:block xl:w-[68vw] 2xl:w-[64vw]">
           <img
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
-            className="absolute inset-0 h-full w-full object-cover object-[68%_center] xl:object-[65%_center] 2xl:object-[62%_center]"
+            className="absolute inset-0 h-full w-full object-contain object-right-bottom"
+            style={{ filter: 'saturate(0.82) brightness(0.96) contrast(1.05) hue-rotate(-6deg)' }}
           />
-          {/* Fade horizontal apenas para legibilidade do texto à esquerda */}
+          {/* Fade horizontal — esquerda sólida, fundindo suavemente sob o personagem */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/70 via-22% to-transparent to-55%"
+            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/85 via-18% via-background/45 via-38% to-transparent to-65%"
+          />
+          {/* Fade vertical superior — profundidade editorial */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background/80 to-transparent"
+          />
+          {/* Fade vertical inferior — profundidade editorial */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/80 to-transparent"
           />
         </div>
 
@@ -326,13 +337,22 @@ const ServicesListPage = () => {
             </ul>
           </div>
 
-          {/* Imagem mobile/tablet (sem esmaecimento) */}
+          {/* Imagem mobile/tablet */}
           <div className="relative mt-10 overflow-hidden rounded-sm lg:hidden">
             <img
               src={heroArsenal}
               alt="Especialista da Quero Armas no estande de tiro"
               loading="eager"
-              className="h-[360px] w-full object-cover object-[60%_center] sm:h-[440px]"
+              className="h-[380px] w-full object-cover object-[center_top] sm:h-[460px]"
+              style={{ filter: 'saturate(0.82) brightness(0.96) contrast(1.05) hue-rotate(-6deg)' }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-background to-transparent"
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background to-transparent"
             />
           </div>
         </div>
