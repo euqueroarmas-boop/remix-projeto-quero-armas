@@ -257,16 +257,19 @@ const ServicesListPage = () => {
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
-            className="absolute inset-0 h-full w-full object-cover object-[68%_center] xl:object-[65%_center] 2xl:object-[62%_center]"
+            className="absolute inset-0 h-full w-full object-cover object-[68%_center] opacity-70 xl:object-[65%_center] 2xl:object-[62%_center]"
+            style={{ filter: 'brightness(0.75) saturate(0.85) contrast(1.02)' }}
           />
-          {/* Fade da esquerda para a direita para fundir com o fundo do texto */}
+          {/* Overlay escuro global para fundir a foto com o fundo preto */}
+          <div aria-hidden className="absolute inset-0 bg-background/40" />
+          {/* Fade forte da esquerda para a direita: lado do texto totalmente preto, lado do homem visível */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background via-background/80 via-25% to-transparent to-65%"
+            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/85 via-30% to-background/10 to-95%"
           />
           {/* Suaviza topo/base mantendo profundidade cinematográfica */}
-          <div aria-hidden className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background/70 to-transparent" />
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/80 to-transparent" />
+          <div aria-hidden className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background to-transparent" />
+          <div aria-hidden className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-background to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
@@ -335,10 +338,12 @@ const ServicesListPage = () => {
               src={heroArsenal}
               alt="Especialista da Quero Armas no estande de tiro"
               loading="eager"
-              className="h-[360px] w-full object-cover object-[60%_center] sm:h-[440px]"
+              className="h-[360px] w-full object-cover object-[60%_center] opacity-80 sm:h-[440px]"
+              style={{ filter: 'brightness(0.78) saturate(0.88) contrast(1.02)' }}
             />
-            <div aria-hidden className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background to-transparent" />
-            <div aria-hidden className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-background/60 to-transparent" />
+            <div aria-hidden className="absolute inset-0 bg-background/30" />
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent" />
+            <div aria-hidden className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background/80 to-transparent" />
           </div>
         </div>
       </section>
