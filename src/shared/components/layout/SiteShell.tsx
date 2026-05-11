@@ -73,7 +73,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
       <div className="pointer-events-none fixed inset-0 z-0 bg-knurled opacity-60" />
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85">
-        <div className="mx-auto flex h-16 w-full max-w-[1400px] 2xl:max-w-[1760px] items-center justify-between gap-3 px-4 sm:h-20 sm:px-6 lg:px-8">
+        <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:h-20 sm:px-6 lg:px-10 2xl:px-16">
           <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Eu Quero Armas — Início">
             <img src={logoWhite} alt="Eu Quero Armas" className="h-8 w-auto sm:h-10" loading="eager" decoding="async" />
           </Link>
@@ -381,7 +381,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
       </main>
 
       <footer className="relative z-10 w-full max-w-none border-t border-border/60 bg-surface-overlay">
-        <div className="mx-auto grid w-full max-w-[1400px] 2xl:max-w-[1760px] gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 sm:py-12 md:grid-cols-3 lg:px-8">
+        <div className="grid w-full gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 sm:py-12 md:grid-cols-3 lg:px-10 2xl:px-16">
           <div className="sm:col-span-2 md:col-span-1">
             <div className="mb-4 flex items-center">
               <img src={logoWhite} alt="Eu Quero Armas" className="h-9 w-auto" loading="lazy" decoding="async" />
@@ -407,7 +407,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
           </div>
         </div>
         <div className="border-t border-border/60">
-          <div className="mx-auto w-full max-w-[1400px] 2xl:max-w-[1760px] px-4 py-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-8">
+          <div className="w-full px-4 py-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-10 2xl:px-16">
             © {new Date().getFullYear()} Eu Quero Armas. Todos os direitos reservados.
           </div>
         </div>

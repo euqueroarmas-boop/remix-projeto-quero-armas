@@ -103,7 +103,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* HERO */}
     <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
-      <div className="container max-w-5xl text-center">
+      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">
           <Sparkles className="size-3.5 text-accent" />
           <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -136,7 +136,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* O QUE É */}
     <section className="border-b border-border bg-card/30 py-16 sm:py-20">
-      <div className="container max-w-5xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">
           O que é o Arsenal Digital
         </h2>
@@ -156,7 +156,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* COMO FUNCIONA */}
     <section className="border-b border-border bg-background py-16 sm:py-20">
-      <div className="container max-w-5xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">Como funciona</h2>
         <p className="mt-3 max-w-2xl text-muted-foreground">
           Quatro passos para ter seu acervo 100% organizado. Você no controle, sem intermediário, sem cobrança. A equipe só atua quando houver contratação.
@@ -189,7 +189,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* PARA QUEM É */}
     <section className="border-b border-border bg-card/30 py-16 sm:py-20">
-      <div className="container max-w-5xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="flex items-center gap-3">
           <Users className="size-5 text-accent" />
           <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">Para quem é</h2>
@@ -213,7 +213,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* O QUE A CONTA GRATUITA NÃO FAZ */}
     <section className="border-b border-border bg-background py-16 sm:py-20">
-      <div className="container max-w-4xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="rounded-sm border border-destructive/30 bg-destructive/5 p-6 sm:p-8">
           <div className="flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-sm border border-destructive/40 bg-destructive/10">
@@ -240,7 +240,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* GRATUITO E SEM COMPRA */}
     <section className="border-b border-border bg-card/30 py-16 sm:py-20">
-      <div className="container max-w-5xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/5 p-6">
             <div className="inline-flex items-center gap-2 rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-2 py-1">
@@ -268,7 +268,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* SEGURANÇA */}
     <section className="border-b border-border bg-background py-16 sm:py-20">
-      <div className="container max-w-4xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="rounded-sm border border-border bg-card p-6 sm:p-8">
           <div className="flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10">
@@ -293,7 +293,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* FAQ */}
     <section className="border-b border-border bg-card/30 py-16 sm:py-20">
-      <div className="container max-w-4xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">Perguntas frequentes</h2>
         <div className="mt-8 space-y-3">
           {FAQ.map((item) => (
@@ -311,7 +311,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* BLOCO DE CONFIANÇA */}
     <section className="border-b border-border bg-background py-12">
-      <div className="container max-w-4xl">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="rounded-sm border border-border bg-card p-6 text-center">
           <div className="mx-auto mb-3 inline-flex size-10 items-center justify-center rounded-sm border border-accent/40 bg-accent/10">
             <Building2 className="size-4 text-accent" />
@@ -328,7 +328,7 @@ const ArsenalDigitalGratuito = () => (
 
     {/* CTA FINAL */}
     <section className="bg-background py-16 sm:py-20">
-      <div className="container max-w-4xl text-center">
+      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
         <h2 className="font-heading text-3xl font-bold uppercase tracking-tight sm:text-4xl">
           Comece agora — leva menos de 1 minuto.
         </h2>

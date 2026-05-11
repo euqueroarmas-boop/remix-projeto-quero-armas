@@ -46,7 +46,7 @@ import heroArsenal from '@/assets/hero-servicos-arsenal.png';
 const WHATSAPP_URL = 'https://wa.me/5511978481919?text=' + encodeURIComponent('Olá! Quero falar com um especialista da Quero Armas sobre os serviços.');
 
 const publicSectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden';
-const publicInnerCls = 'mx-auto w-full max-w-[1400px] 2xl:max-w-[1760px] px-4 sm:px-6 lg:px-8';
+const publicInnerCls = 'w-full px-4 sm:px-6 lg:px-10 2xl:px-16';
 
 type GroupKey = 'sinarm' | 'sigma' | 'sigma-sinarm' | 'cursos' | 'equipamento' | 'consultoria' | 'outros';
 
@@ -279,7 +279,7 @@ const ServicesListPage = () => {
           />
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 lg:py-14 2xl:max-w-[1760px]">
+        <div className="relative z-10 flex min-h-[inherit] w-full flex-col justify-center px-4 py-10 sm:px-6 lg:px-10 lg:py-14 2xl:px-16">
           <div className="max-w-[620px] 2xl:max-w-[680px]">
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
               Serviços

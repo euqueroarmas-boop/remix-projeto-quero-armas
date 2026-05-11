@@ -18,7 +18,7 @@ export default function CursoPage() {
           description="Este curso não está disponível."
           canonical={`/cursos/${slug}`}
         />
-        <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background"><div className="mx-auto w-full max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background"><div className="w-full px-4 py-24 text-center sm:px-6 lg:px-10 2xl:px-16">
           <h1 className="mb-4 font-heading text-3xl uppercase">Curso não encontrado</h1>
           <p className="mb-8 text-muted-foreground">
             O curso que você procura não existe ou foi movido.
@@ -42,7 +42,7 @@ export default function CursoPage() {
           description={course.seoDescription}
           canonical={`/cursos/${course.slug}`}
         />
-        <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background"><div className="mx-auto w-full max-w-3xl px-4 py-24 text-center sm:px-6 lg:px-8">
+        <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background"><div className="w-full px-4 py-24 text-center sm:px-6 lg:px-10 2xl:px-16">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-1.5 font-heading text-xs uppercase tracking-[0.2em] text-accent">
             <Clock className="size-3.5" /> Em breve
           </span>
