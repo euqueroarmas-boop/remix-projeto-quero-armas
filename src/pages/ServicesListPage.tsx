@@ -36,6 +36,8 @@ import {
   Phone,
   ChevronDown,
   ShoppingCart,
+  BadgeCheck,
+  Timer,
 } from 'lucide-react';
 import heroWill from '@/assets/servicos-hero-will.png';
 
@@ -231,45 +233,114 @@ const ServicesListPage = () => {
   return (
     <SiteShell>
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-border bg-background">
+      <section
+        className="relative w-full overflow-hidden border-b border-border"
+        style={{
+          background:
+            'linear-gradient(90deg, #050505 0%, #0a0a0a 55%, #111111 100%)',
+          minHeight: 'clamp(560px, 78vh, 760px)',
+        }}
+      >
+        {/* Glow âmbar muito sutil */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,hsl(var(--accent)/0.18),transparent_55%),radial-gradient(circle_at_80%_70%,hsl(var(--accent)/0.08),transparent_60%)]"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(60% 50% at 15% 40%, rgba(120,70,10,0.12), transparent 70%)',
+          }}
         />
-        <div className="container relative grid grid-cols-1 items-center gap-8 py-8 sm:py-10 lg:grid-cols-[1.1fr_0.9fr] lg:py-12">
-          <div>
-            <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
+
+        {/* Imagem direita, full height, edge-to-edge */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden lg:block lg:w-[58%]">
+          <img
+            src={heroWill}
+            alt="Especialista da Quero Armas"
+            loading="eager"
+            className="h-full w-full object-cover object-[center_center]"
+          />
+          {/* Fade da imagem para o lado esquerdo */}
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(90deg, #050505 0%, rgba(8,8,8,0.85) 18%, rgba(10,10,10,0.35) 38%, rgba(0,0,0,0) 60%)',
+            }}
+          />
+          {/* Vinheta inferior */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 bottom-0 h-24"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)',
+            }}
+          />
+        </div>
+
+        <div className="relative mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-6 py-10 sm:px-10 lg:px-14 lg:py-14">
+          <div className="lg:max-w-[52%]">
+            <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
               Serviços
             </p>
-            <h1 className="mt-4 font-heading text-3xl font-bold uppercase leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="mt-5 font-heading font-extrabold uppercase tracking-tight text-white text-[2.5rem] leading-[1.02] sm:text-5xl lg:text-[5.25rem] lg:leading-[0.98]">
               Você não precisa enfrentar a burocracia sozinho.
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">
               Da posse ao porte, do CR ao Arsenal Digital — a Quero Armas organiza o caminho legal,
               técnico e documental para você agir com segurança e dentro da lei.
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" onClick={scrollToCatalogo} className="font-heading uppercase tracking-wide">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Button
+                size="lg"
+                onClick={scrollToCatalogo}
+                className="h-12 px-6 font-heading uppercase tracking-wide text-white shadow-lg shadow-black/40"
+                style={{ backgroundColor: '#5a6b3b' }}
+              >
                 Ver catálogo de serviços <ChevronDown className="ml-2 size-4" />
               </Button>
-              <Button asChild size="lg" variant="outline" className="font-heading uppercase tracking-wide">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 border-white/20 bg-transparent px-6 font-heading uppercase tracking-wide text-white hover:bg-white/5 hover:text-white"
+              >
                 <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
                   <Phone className="mr-2 size-4" /> Falar com especialista
                 </a>
               </Button>
             </div>
+
+            {/* Trust strip */}
+            <ul className="mt-12 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
+              {[
+                { icon: ShieldCheck, title: '100% Legal', desc: 'Processos 100% dentro da lei' },
+                { icon: BadgeCheck, title: 'Especialistas', desc: 'Equipe técnica com experiência real' },
+                { icon: Lock, title: 'Segurança', desc: 'Seus dados e documentos protegidos' },
+                { icon: Timer, title: 'Agilidade', desc: 'Processos otimizados e sem enrolação' },
+              ].map(({ icon: Icon, title, desc }) => (
+                <li key={title} className="flex items-start gap-3">
+                  <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
+                  <div>
+                    <p className="font-heading text-[11px] font-bold uppercase tracking-[0.18em] text-white">
+                      {title}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-snug text-zinc-400">{desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-tr from-accent/20 via-transparent to-transparent blur-2xl" aria-hidden />
-            <div className="relative overflow-hidden rounded-xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)]">
-              <img
-                src={heroWill}
-                alt="Especialista da Quero Armas pronto para atender"
-                loading="eager"
-                className="mx-auto h-auto w-full max-h-[520px] object-cover"
-              />
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background/40 to-transparent" aria-hidden />
-            </div>
+
+          {/* Imagem mobile/tablet */}
+          <div className="mt-10 lg:hidden">
+            <img
+              src={heroWill}
+              alt="Especialista da Quero Armas"
+              loading="eager"
+              className="w-full rounded-sm object-cover"
+            />
           </div>
         </div>
       </section>
