@@ -119,6 +119,17 @@ const FALLBACK_GROUP: GroupDef = {
   match: () => true,
 };
 
+const compactDescription = (text?: string | null) => {
+  const value = String(text || '').trim();
+  if (!value) return 'Detalhes disponíveis na próxima etapa.';
+  return value.length > 150 ? `${value.slice(0, 147).trim()}...` : value;
+};
+
+const servicePriceLabel = (cents: number) => {
+  if (!cents || cents <= 0) return 'Valor sob consulta';
+  return formatBRL(cents);
+};
+
 const BENEFICIOS = [
   { icon: MapPin, label: 'Atendimento nacional' },
   { icon: FileCheck2, label: 'Processo legal e organizado' },
@@ -219,8 +230,8 @@ const ServicesListPage = () => {
       quantity: 1,
     });
     toast({
-      title: 'Adicionado ao carrinho',
-      description: `${s.name} foi adicionado.`,
+      title: 'Serviço selecionado para contratação.',
+      description: s.name,
     });
     navigate('/carrinho');
   };
@@ -473,27 +484,25 @@ const ServicesListPage = () => {
                         key={s.id}
                         className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                       >
-                        <article className="flex h-full flex-col rounded-sm border border-border bg-surface-elevated/40 p-5 transition-colors hover:border-accent/60">
+                        <article className="flex h-full min-h-[390px] flex-col rounded-sm border border-border bg-surface-elevated/40 p-5 transition-colors hover:border-accent/60">
                           <p className="font-heading text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
                             {groupLabelOf(s)}
                           </p>
-                          <h3 className="mt-3 font-heading text-lg font-bold uppercase leading-tight tracking-tight">
+                          <h3 className="mt-3 line-clamp-2 min-h-[3.25rem] font-heading text-lg font-bold uppercase leading-tight tracking-tight">
                             {s.name}
                           </h3>
-                          {s.short_description && (
-                            <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-                              {s.short_description}
-                            </p>
-                          )}
-                          <div className="mt-4">
+                          <p className="mt-3 line-clamp-3 min-h-[4.05rem] text-sm leading-relaxed text-muted-foreground">
+                            {compactDescription(s.short_description)}
+                          </p>
+                          <div className="mt-4 min-h-[3.25rem]">
                             <span className="block font-heading text-[10px] uppercase tracking-widest text-muted-foreground">
-                              A partir de
+                              {s.base_price_cents > 0 ? 'A partir de' : 'Investimento'}
                             </span>
                             <span className="font-heading text-2xl font-bold text-accent">
-                              {formatBRL(s.base_price_cents)}
+                              {servicePriceLabel(s.base_price_cents)}
                             </span>
                           </div>
-                          <div className="mt-5 flex flex-col gap-2 pt-4 border-t border-border/60">
+                          <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-border/60">
                             <Button asChild variant="outline" size="sm" className="w-full">
                               <Link to={`/servicos/${s.slug}`}>
                                 Ver detalhes <ArrowRight className="ml-1 size-4" />
@@ -501,10 +510,11 @@ const ServicesListPage = () => {
                             </Button>
                             <Button
                               size="sm"
-                              className="w-full"
+                              className="w-full font-heading uppercase tracking-wide text-white"
+                              style={{ backgroundColor: '#5a6b3b' }}
                               onClick={() => handleAddToCart(s)}
                             >
-                              <ShoppingCart className="mr-2 size-4" /> Adicionar ao carrinho
+                              <ShoppingCart className="mr-2 size-4" /> Contratar este serviço
                             </Button>
                           </div>
                         </article>
