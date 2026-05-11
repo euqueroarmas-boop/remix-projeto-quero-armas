@@ -90,7 +90,7 @@ export const GoogleReviewsCarousel = () => {
   return (
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom,hsl(var(--accent)/0.12),transparent_60%)]" />
-      <div className="mx-auto w-full max-w-[1400px] box-border px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1400px] 2xl:max-w-[1760px] box-border px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
