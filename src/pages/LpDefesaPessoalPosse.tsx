@@ -21,7 +21,7 @@ const LpDefesaPessoalPosse = () => (
       }}
     />
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20 sm:py-28">
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
+      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">
           <Home className="size-3.5 text-accent" />
           <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent">Defesa Pessoal · Posse Domiciliar · Lei 10.826/03</span>
@@ -52,7 +52,7 @@ const LpDefesaPessoalPosse = () => (
     </section>
 
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">O cenário real</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Você tem <span className="text-accent">três opções</span>. Só uma te mantém vivo.</h2>
@@ -78,7 +78,7 @@ const LpDefesaPessoalPosse = () => (
     </section>
 
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Sem nós × Com nós</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">A diferença entre <span className="text-accent">tentar sozinho</span> e <span className="text-accent">ser conduzido</span></h2>
@@ -105,7 +105,7 @@ const LpDefesaPessoalPosse = () => (
     </section>
 
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
-      <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">O que você leva</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Pacote <span className="text-accent">Posse Domiciliar</span> completo</h2>
@@ -132,7 +132,7 @@ const LpDefesaPessoalPosse = () => (
     </section>
 
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background py-20">
-      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Sua família. Sua casa. <span className="text-accent">Sua decisão.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Lei 10.826/03 te ampara. Decreto 11.615/23 te garante. A gente te conduz.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

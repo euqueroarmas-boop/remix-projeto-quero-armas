@@ -10,7 +10,7 @@ export const CourseFinalCta = ({ course }: CourseFinalCtaProps) => {
   const wa = buildWhatsAppLink(course.whatsappNumber, course.whatsappMessage);
   return (
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 bg-gradient-to-b from-background to-surface-overlay/60">
-      <div className="mx-auto w-full max-w-4xl px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8">
+      <div className="w-full px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-10 2xl:px-16">
         <h2 className="mb-4 font-heading text-3xl uppercase leading-tight tracking-tight text-foreground sm:text-4xl">
           Comece do jeito certo. Com segurança, responsabilidade e orientação.
         </h2>
