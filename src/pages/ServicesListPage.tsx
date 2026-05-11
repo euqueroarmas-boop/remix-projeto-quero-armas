@@ -255,29 +255,28 @@ const ServicesListPage = () => {
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
 
         {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-0 hidden lg:block">
+        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[70vw] lg:block xl:w-[68vw] 2xl:w-[64vw]">
           <img
             src={heroArsenal}
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
-            className="absolute inset-0 h-full w-full object-cover object-[68%_center] xl:object-[72%_center] 2xl:object-[76%_center]"
-            style={{ filter: 'saturate(0.88) brightness(1.08) contrast(1.02) hue-rotate(-4deg)' }}
+            className="absolute inset-0 h-full w-full object-contain object-right-bottom"
+            style={{ filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
           />
-          {/* Fade horizontal — texto legível sem criar corte/coluna preta */}
+          {/* Fade horizontal — esquerda sólida, fundindo suavemente sob o personagem */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/95 via-28% via-background/58 via-48% to-transparent to-76%"
+            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/70 via-18% to-transparent to-55%"
           />
           {/* Fades verticais sutis — profundidade editorial */}
           <div
             aria-hidden
-            className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background/55 to-transparent"
+            className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background/50 to-transparent"
           />
           <div
             aria-hidden
-            className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-background/60 to-transparent"
+            className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/50 to-transparent"
           />
-          <div aria-hidden className="absolute inset-0 bg-background/10" />
         </div>
 
         <div className="relative z-10 mx-auto flex min-h-[inherit] w-full max-w-[1400px] flex-col justify-center px-4 py-10 sm:px-6 lg:px-8 lg:py-14 2xl:max-w-[1760px]">
