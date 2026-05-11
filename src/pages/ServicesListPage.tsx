@@ -46,7 +46,7 @@ import heroArsenal from '@/assets/hero-servicos-arsenal.png';
 const WHATSAPP_URL = 'https://wa.me/5511978481919?text=' + encodeURIComponent('Olá! Quero falar com um especialista da Quero Armas sobre os serviços.');
 
 const publicSectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden';
-const publicInnerCls = 'mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8';
+const publicInnerCls = 'mx-auto w-full max-w-[1400px] 2xl:max-w-[1760px] px-4 sm:px-6 lg:px-8';
 
 type GroupKey = 'sinarm' | 'sigma' | 'sigma-sinarm' | 'cursos' | 'equipamento' | 'consultoria' | 'outros';
 
