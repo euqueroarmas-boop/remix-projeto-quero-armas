@@ -177,7 +177,7 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
       </CourseSection>
 
       <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 bg-background">
-        <div className="mx-auto w-full max-w-5xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
+        <div className="w-full px-4 py-14 sm:px-6 sm:py-20 lg:px-10 2xl:px-16">
           <div className="rounded-lg border border-accent/40 bg-accent/5 p-6 sm:p-8">
             <div className="mb-3 flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-sm border border-accent/40 bg-accent/10 text-accent">
