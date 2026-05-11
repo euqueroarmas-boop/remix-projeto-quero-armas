@@ -250,7 +250,7 @@ const ServicesListPage = () => {
         style={{
           background:
             'linear-gradient(90deg, #050505 0%, #0a0a0a 55%, #111111 100%)',
-          minHeight: 'clamp(560px, 78vh, 760px)',
+          minHeight: 'clamp(620px, 82vh, 880px)',
         }}
       >
         {/* Glow âmbar muito sutil */}
@@ -269,7 +269,7 @@ const ServicesListPage = () => {
             src={heroWill}
             alt="Especialista da Quero Armas"
             loading="eager"
-            className="h-full w-full object-cover object-[80%_20%] xl:object-[75%_20%] 2xl:object-[70%_25%]"
+            className="h-full w-full object-cover object-[center_78%] xl:object-[center_80%] 2xl:object-[center_82%]"
           />
           {/* Fade da imagem para o lado esquerdo */}
           <div
