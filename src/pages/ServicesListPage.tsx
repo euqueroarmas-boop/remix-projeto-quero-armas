@@ -38,6 +38,7 @@ import {
   ShoppingCart,
   BadgeCheck,
   Timer,
+  Sparkles,
 } from 'lucide-react';
 import heroWill from '@/assets/servicos-hero-will.png';
 
@@ -299,8 +300,14 @@ const ServicesListPage = () => {
               Você não precisa enfrentar a burocracia sozinho.
             </h1>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">
-              Da posse ao porte, do CR ao Arsenal Digital — a Quero Armas organiza o caminho legal,
-              técnico e documental para você agir com segurança e dentro da lei.
+              A Quero Armas usa tecnologia, inteligência artificial e análise documental guiada
+              para acelerar sua contratação, revisar seus documentos e montar seu processo com
+              máxima agilidade.
+            </p>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">
+              Sem enrolação: você envia, nossa plataforma organiza, a IA ajuda a identificar
+              pendências e a Equipe Quero Armas corrige o que for necessário para deixar tudo
+              pronto o quanto antes.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button
@@ -326,10 +333,10 @@ const ServicesListPage = () => {
             {/* Trust strip */}
             <ul className="mt-12 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
               {[
-                { icon: ShieldCheck, title: '100% Legal', desc: 'Processos 100% dentro da lei' },
-                { icon: BadgeCheck, title: 'Especialistas', desc: 'Equipe técnica com experiência real' },
-                { icon: Lock, title: 'Segurança', desc: 'Seus dados e documentos protegidos' },
-                { icon: Timer, title: 'Agilidade', desc: 'Processos otimizados e sem enrolação' },
+                { icon: Sparkles, title: 'IA Documental', desc: 'Análise inteligente dos documentos' },
+                { icon: Timer, title: 'Sem enrolação', desc: 'Processo organizado em poucos dias' },
+                { icon: BadgeCheck, title: 'Equipe especialista', desc: 'Correção técnica antes do envio' },
+                { icon: Lock, title: 'Segurança', desc: 'Dados e documentos protegidos' },
               ].map(({ icon: Icon, title, desc }) => (
                 <li key={title} className="flex items-start gap-3">
                   <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
