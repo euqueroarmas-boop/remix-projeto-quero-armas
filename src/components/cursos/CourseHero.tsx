@@ -27,7 +27,7 @@ export const CourseHero = ({ course }: CourseHeroProps) => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--accent)/0.18),transparent_55%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] px-4 pb-16 pt-10 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] 2xl:max-w-[1760px] px-4 pb-16 pt-10 sm:px-6 sm:py-24 lg:px-8 lg:py-28">
         <div className="animate-fade-in">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/5 px-4 py-1.5 backdrop-blur-sm">
             <span className="size-1.5 rounded-full bg-accent shadow-[0_0_8px_hsl(var(--accent))]" />

@@ -65,7 +65,7 @@ const journey = [
 
 const HomePage = () => {
   const sectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-x-clip';
-  const containerCls = 'mx-auto w-full max-w-[1400px] box-border px-4 sm:px-6 lg:px-8';
+  const containerCls = 'mx-auto w-full max-w-[1400px] 2xl:max-w-[1760px] box-border px-4 sm:px-6 lg:px-8';
   return (
     <SiteShell>
       <SEO
