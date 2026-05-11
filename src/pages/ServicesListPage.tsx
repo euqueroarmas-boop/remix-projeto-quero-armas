@@ -258,22 +258,21 @@ const ServicesListPage = () => {
             alt="Especialista da Quero Armas no estande de tiro"
             loading="eager"
             className="absolute inset-0 h-full w-full object-contain object-right-bottom"
-            style={{ filter: 'saturate(0.82) brightness(0.96) contrast(1.05) hue-rotate(-6deg)' }}
+            style={{ filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
           />
           {/* Fade horizontal — esquerda sólida, fundindo suavemente sob o personagem */}
           <div
             aria-hidden
-            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/85 via-18% via-background/45 via-38% to-transparent to-65%"
+            className="absolute inset-0 bg-gradient-to-r from-background from-0% via-background/70 via-18% to-transparent to-55%"
           />
-          {/* Fade vertical superior — profundidade editorial */}
+          {/* Fades verticais sutis — profundidade editorial */}
           <div
             aria-hidden
-            className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-background/80 to-transparent"
+            className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background/50 to-transparent"
           />
-          {/* Fade vertical inferior — profundidade editorial */}
           <div
             aria-hidden
-            className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/80 to-transparent"
+            className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/50 to-transparent"
           />
         </div>
 
@@ -344,7 +343,7 @@ const ServicesListPage = () => {
               alt="Especialista da Quero Armas no estande de tiro"
               loading="eager"
               className="h-[380px] w-full object-cover object-[center_top] sm:h-[460px]"
-              style={{ filter: 'saturate(0.82) brightness(0.96) contrast(1.05) hue-rotate(-6deg)' }}
+              style={{ filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
             />
             <div
               aria-hidden
