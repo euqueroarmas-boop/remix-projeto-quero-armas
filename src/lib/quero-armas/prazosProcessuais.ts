@@ -175,3 +175,13 @@ export function corPrazo(status: PrazoProcessual["status"]): {
       return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" };
   }
 }
+
+/**
+ * Marcos discretos de notificação usados pelo cron qa-processo-prazo-alertas.
+ * Mantido em paridade com supabase/functions/_shared/prazosProcessuais.ts.
+ */
+export const MARCOS_PRAZO = [30, 15, 7, 3, 0] as const;
+export function pickMarcoExato(dias: number): number | null {
+  if (dias < 0) return -1;
+  return (MARCOS_PRAZO as readonly number[]).includes(dias) ? dias : null;
+}
