@@ -362,7 +362,21 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       }
 
       // ─── Prazos processuais (motor único) ────────────────────────────────
-      const prazosProcessuais: PrazoProcessual[] = calcularPrazosProcessuais(procs);
+      const prazosInput = procs.map((p) => {
+        const it = itemMap.get(itemKey(p.venda_id, p.servico_id));
+        return {
+          id: p.id,
+          servico_id: p.servico_id,
+          servico_nome: p.servico_nome,
+          status: p.status,
+          numero_processo: it?.numero_processo ?? null,
+          data_notificacao: it?.data_notificacao ?? null,
+          data_indeferimento: it?.data_indeferimento ?? null,
+          data_recurso_administrativo: it?.data_recurso_administrativo ?? null,
+          data_indeferimento_recurso: it?.data_indeferimento_recurso ?? null,
+        };
+      });
+      const prazosProcessuais: PrazoProcessual[] = calcularPrazosProcessuais(prazosInput);
       let prazosVencidos = 0,
         prazosCriticos = 0,
         prazosAtencao = 0;
