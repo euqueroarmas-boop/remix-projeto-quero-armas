@@ -32,6 +32,7 @@ import {
 } from "@/lib/quero-armas/statusUnificado";
 import { getStatusTone, piorTone } from "@/lib/quero-armas/statusColors";
 import { calcularValidadeMunicao } from "@/lib/quero-armas/municaoValidade";
+import { calcularPrazosProcessuais, type PrazoProcessual } from "@/lib/quero-armas/prazosProcessuais";
 
 // ─────────── Tipos públicos ────────────────────────────────────────────────
 
@@ -72,6 +73,10 @@ export interface KpiProcessos {
   indeferidos: number;
   em_recurso: number;
   tone: CorStatus;
+  prazos_ativos: number;
+  prazos_vencidos: number;
+  prazos_criticos: number;
+  prazos_atencao: number;
 }
 
 export interface KpiMunicoes {
@@ -199,7 +204,12 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         sb.from("qa_exames_cliente").select("data_vencimento, tipo").eq("cliente_id", clienteId),
         sb.from("qa_documentos_cliente").select("status, data_validade, tipo_documento, origem").eq("qa_cliente_id", clienteId).neq("status", "excluido"),
         sb.from("qa_processo_documentos").select("status, data_validade_efetiva, processo_id").eq("cliente_id", clienteId),
-        sb.from("qa_processos").select("status, pagamento_status").eq("cliente_id", clienteId),
+        sb
+          .from("qa_processos")
+          .select(
+            "id, servico_id, servico_nome, status, pagamento_status, numero_processo, data_notificacao, data_indeferimento, data_restituicao, data_recurso_administrativo, data_indeferimento_recurso",
+          )
+          .eq("cliente_id", clienteId),
         sb
           .from("qa_municoes_saldos" as any)
           .select("calibre,marca,lote,data_fabricacao,data_validade,saldo")
@@ -334,6 +344,23 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         else if (s === "recurso_administrativo" || s === "recurso") emRecurso++;
         tonesProc.push(getStatusTone(s));
       }
+
+      // ─── Prazos processuais (motor único) ────────────────────────────────
+      const prazosProcessuais: PrazoProcessual[] = calcularPrazosProcessuais(procs);
+      let prazosVencidos = 0,
+        prazosCriticos = 0,
+        prazosAtencao = 0;
+      for (const pp of prazosProcessuais) {
+        if (pp.status === "vencido") prazosVencidos++;
+        if (pp.status === "vencido" || pp.status === "vence_hoje" || pp.status === "critico") {
+          prazosCriticos++;
+          tonesProc.push("vermelho");
+        } else if (pp.status === "atencao") {
+          prazosAtencao++;
+          tonesProc.push("laranja");
+        }
+      }
+
       const kpiProc: KpiProcessos = {
         total: procs.length,
         aguardando_documentos: aguardandoDocs,
@@ -342,6 +369,10 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         indeferidos,
         em_recurso: emRecurso,
         tone: piorTone(tonesProc.length ? tonesProc : ["cinza"]),
+        prazos_ativos: prazosProcessuais.length,
+        prazos_vencidos: prazosVencidos,
+        prazos_criticos: prazosCriticos,
+        prazos_atencao: prazosAtencao,
       };
 
       // ─── KPI: Munições (validade = data_fabricacao + 60 meses) ───────────
@@ -417,6 +448,28 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         empurra("MUNICAO", titulo, dv, "MUNICAO");
       });
 
+      // ─── Alertas: PRAZOS PROCESSUAIS (motor único) ───────────────────────
+      for (const pp of prazosProcessuais) {
+        let tone: CorStatus | null = null;
+        if (pp.status === "vencido" || pp.status === "vence_hoje" || pp.status === "critico") tone = "vermelho";
+        else if (pp.status === "atencao") tone = "laranja";
+        if (!tone) continue; // em_prazo não vira alerta
+        alertas.push({
+          fonte: "PROCESSO",
+          titulo: `${pp.evento} — ${pp.servicoNome || "PROCESSO"}`,
+          data_validade: pp.dataLimite,
+          dias_restantes: pp.diasRestantes,
+          tone,
+          status: {
+            dimensao: "protocolo",
+            codigo: `prazo_${pp.status}`,
+            label: pp.statusLabel,
+            cor: tone,
+            prioridade: tone === "vermelho" ? 1 : 3,
+          },
+        });
+      }
+
       const kpiAlertas: KpiAlertas = {
         total: alertas.length,
         criticos: alertas.filter((a) => a.tone === "vermelho").length,
@@ -426,6 +479,15 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       };
 
       // ─── Status geral / contagem por cor ─────────────────────────────────
+      // Tom derivado dos alertas agregados (inclui prazos PROCESSO e munições)
+      const toneAlertas: CorStatus =
+        alertas.some((a) => a.tone === "vermelho")
+          ? "vermelho"
+          : alertas.some((a) => a.tone === "laranja")
+          ? "laranja"
+          : alertas.some((a) => a.tone === "amarelo")
+          ? "amarelo"
+          : "verde";
       const tonesGerais: CorStatus[] = [
         kpiCr.tone,
         kpiCrafs.tone,
@@ -434,6 +496,8 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         kpiDocs.tone,
         kpiAuth.tone,
         kpiProc.tone,
+        kpiMunicoes.tone,
+        toneAlertas,
       ];
       const contagem: Record<CorStatus, number> = {
         verde: 0,
