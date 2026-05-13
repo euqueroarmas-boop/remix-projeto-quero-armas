@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extrairPrazoDoItem, calcularPrazosProcessuais } from "../prazosProcessuais";
+import { extrairPrazoDoItem, calcularPrazosProcessuais, pickMarcoExato } from "../prazosProcessuais";
 
 function isoToday(offsetDays = 0): string {
   const d = new Date();
@@ -77,5 +77,29 @@ describe("prazosProcessuais (motor único)", () => {
       { id: "c", status: "EM ANÁLISE", data_restituicao: isoToday(-9) }, // +1
     ]);
     expect(list.map((p) => p.itemId)).toEqual(["b", "c", "a"]);
+  });
+
+  it("marcos exatos: dispara só em 30/15/7/3/0; demais positivos = null; vencido = -1", () => {
+    expect(pickMarcoExato(30)).toBe(30);
+    expect(pickMarcoExato(15)).toBe(15);
+    expect(pickMarcoExato(7)).toBe(7);
+    expect(pickMarcoExato(3)).toBe(3);
+    expect(pickMarcoExato(0)).toBe(0);
+    expect(pickMarcoExato(5)).toBeNull();
+    expect(pickMarcoExato(14)).toBeNull();
+    expect(pickMarcoExato(31)).toBeNull();
+    expect(pickMarcoExato(-1)).toBe(-1);
+    expect(pickMarcoExato(-99)).toBe(-1);
+  });
+
+  it("dedupe key inclui evento + data_limite (mudança abre novo ciclo)", () => {
+    const k = (pid: string, ev: string, m: number, c: string, pd: string) =>
+      `${pid}|${ev}|${m}|${c}|${pd}`;
+    expect(k("X", "NOTIFICAÇÃO", 7, "email", "2026-05-20")).not.toBe(
+      k("X", "NOTIFICAÇÃO", 7, "email", "2026-05-22"),
+    );
+    expect(k("X", "NOTIFICAÇÃO", 7, "email", "2026-05-20")).not.toBe(
+      k("X", "INDEFERIMENTO", 7, "email", "2026-05-20"),
+    );
   });
 });
