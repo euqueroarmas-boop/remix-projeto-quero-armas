@@ -1,18 +1,10 @@
 /**
- * Engine única de prazos processuais administrativos (Lei 9.784/99 art. 59 +
- * Decreto 9.847/19 art. 10). Toda tela que exibe prazo de 10 dias DEVE usar
- * estes helpers para evitar divergência entre Dashboard, KPIs do cliente,
- * Arsenal, "Próximos vencimentos" e a aba Serviços.
+ * Motor único de prazos processuais — versão Deno-compatível para Edge Functions.
  *
- * Eventos que abrem prazo administrativo:
- *   - data_notificacao             → NOTIFICAÇÃO da PF       (10 dias · Lei 9.784/99)
- *   - data_indeferimento           → INDEFERIMENTO           (10 dias · Lei 9.784/99)
- *   - data_restituicao             → RESTITUIÇÃO             (10 dias · Lei 9.784/99)
- *   - data_indeferimento_recurso   → MANDADO DE SEGURANÇA    (120 dias · art. 23 Lei 12.016/09)
- *
- * Regra de prioridade: se houver `data_indeferimento_recurso`, ela SOBREPÕE
- * qualquer outro evento (já se esgotou a via administrativa, agora corre o
- * prazo decadencial do MS). Caso contrário, vence a data MAIS RECENTE.
+ * IMPORTANTE: este arquivo DEVE permanecer em paridade lógica com
+ * src/lib/quero-armas/prazosProcessuais.ts (mesma regra, mesmos thresholds,
+ * mesma prioridade MS=120d > demais=10d). Cobertura por testes em ambos os lados.
+ * Se mudar um, mude o outro.
  */
 
 export type EventoPrazo =
@@ -26,14 +18,13 @@ export interface PrazoProcessual {
   servicoId: number | null;
   servicoNome: string | null;
   evento: EventoPrazo;
-  dataEvento: string;          // ISO YYYY-MM-DD
-  dataLimite: string;          // ISO YYYY-MM-DD
-  diasRestantes: number;       // negativo = vencido
+  dataEvento: string;
+  dataLimite: string;
+  diasRestantes: number;
   status: "vencido" | "vence_hoje" | "critico" | "atencao" | "em_prazo";
   statusLabel: string;
   numeroProcesso: string | null;
   itemStatus: string | null;
-  /** Quantos dias o prazo total tem (10 ou 120). Útil para UI/labels. */
   prazoTotalDias: number;
 }
 
@@ -59,7 +50,6 @@ function addDaysISO(iso: string, days: number): string {
   return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, "0")}-${String(dt.getUTCDate()).padStart(2, "0")}`;
 }
 
-/** Converte DD/MM/YYYY ou ISO para ISO YYYY-MM-DD. Retorna null se inválido. */
 export function normalizeDateISO(input: string | null | undefined): string | null {
   if (!input) return null;
   const s = String(input).trim();
@@ -87,32 +77,21 @@ export interface ItemComPrazo {
   numero_processo?: string | null;
   data_notificacao?: string | null;
   data_indeferimento?: string | null;
-  /** Opcional: alguns serviços usam restituição como evento de 10 dias. */
   data_restituicao?: string | null;
-  /** Opcional — se preenchida e for posterior à notificação/indeferimento,
-   * o recurso já foi protocolado e o prazo de 10 dias não corre mais. */
   data_recurso_administrativo?: string | null;
-  /** Indeferimento do recurso administrativo. Inicia IMEDIATAMENTE o prazo
-   *  decadencial de 120 dias para impetração de Mandado de Segurança. */
   data_indeferimento_recurso?: string | null;
 }
 
-/** Extrai (no máximo) UM prazo ativo por item, baseado na data de evento mais recente. */
 export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dNotif = normalizeDateISO(item.data_notificacao);
   const dIndef = normalizeDateISO(item.data_indeferimento);
   const dRest = normalizeDateISO(item.data_restituicao);
   const dIndefRec = normalizeDateISO(item.data_indeferimento_recurso);
 
-  // Status finais cancelam o prazo (já não corre): deferido, concluído,
-  // cancelado, desistiu. Indeferido/notificado/em análise mantêm o prazo
-  // visível conforme regra de negócio.
   const statusUpper = (item.status || "").toString().toUpperCase();
   const FINALIZADOS = ["DEFERIDO", "CONCLUÍDO", "CONCLUIDO", "CANCELADO", "DESISTIU"];
   if (FINALIZADOS.includes(statusUpper)) return null;
 
-  // PRIORIDADE 1: Indeferimento do recurso administrativo → MS 120 dias.
-  // Sobrepõe qualquer prazo de 10 dias da PF (esgotada a via administrativa).
   let ativo: { data: string; evento: EventoPrazo } | null = null;
   let prazoTotal = PRAZO_DIAS_PADRAO;
   if (dIndefRec) {
@@ -148,7 +127,6 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   };
 }
 
-/** Aplica `extrairPrazoDoItem` em vários itens e ordena do mais urgente ao menos. */
 export function calcularPrazosProcessuais(itens: ItemComPrazo[]): PrazoProcessual[] {
   const out: PrazoProcessual[] = [];
   for (const it of itens) {
@@ -159,27 +137,7 @@ export function calcularPrazosProcessuais(itens: ItemComPrazo[]): PrazoProcessua
   return out;
 }
 
-export function corPrazo(status: PrazoProcessual["status"]): {
-  bg: string; text: string; border: string; dot: string;
-} {
-  switch (status) {
-    case "vencido":
-      return { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-300", dot: "bg-rose-600" };
-    case "vence_hoje":
-      return { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-300", dot: "bg-rose-600" };
-    case "critico":
-      return { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200", dot: "bg-rose-600" };
-    case "atencao":
-      return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500" };
-    default:
-      return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" };
-  }
-}
-
-/**
- * Marcos discretos de notificação usados pelo cron qa-processo-prazo-alertas.
- * Mantido em paridade com supabase/functions/_shared/prazosProcessuais.ts.
- */
+/** Marcos discretos de notificação. Vencido (<0) → -1. */
 export const MARCOS_PRAZO = [30, 15, 7, 3, 0] as const;
 export function pickMarcoExato(dias: number): number | null {
   if (dias < 0) return -1;

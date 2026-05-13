@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.qa-bootstrap-normativas]
 verify_jwt = false
+
+[functions.qa-processo-prazo-alertas]
+verify_jwt = false

@@ -207,7 +207,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         sb
           .from("qa_processos")
           .select(
-            "id, servico_id, servico_nome, status, pagamento_status, numero_processo, data_notificacao, data_indeferimento, data_restituicao, data_recurso_administrativo, data_indeferimento_recurso",
+            "id, venda_id, servico_id, servico_nome, status, pagamento_status",
           )
           .eq("cliente_id", clienteId),
         sb
@@ -225,6 +225,22 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       const procDocs: any[] = procDocResp?.data ?? [];
       const procs: any[] = procResp?.data ?? [];
       const municoes: any[] = municoesResp?.data ?? [];
+
+      // Carrega itens de venda (datas de evento processual moram aqui, NÃO em qa_processos)
+      const vendaIds = Array.from(new Set(procs.map((p) => p.venda_id).filter(Boolean)));
+      let itensVenda: any[] = [];
+      if (vendaIds.length > 0) {
+        const { data: itensData } = await sb
+          .from("qa_itens_venda")
+          .select(
+            "id, venda_id, servico_id, status, numero_processo, data_notificacao, data_indeferimento, data_recurso_administrativo, data_indeferimento_recurso",
+          )
+          .in("venda_id", vendaIds);
+        itensVenda = itensData ?? [];
+      }
+      const itemKey = (v: any, s: any) => `${v ?? "x"}_${s ?? "x"}`;
+      const itemMap = new Map<string, any>();
+      for (const it of itensVenda) itemMap.set(itemKey(it.venda_id, it.servico_id), it);
 
       // ─── KPI: CR ──────────────────────────────────────────────────────────
       const crStatusU: StatusUnificado = cr?.validade_cr
@@ -346,7 +362,21 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
       }
 
       // ─── Prazos processuais (motor único) ────────────────────────────────
-      const prazosProcessuais: PrazoProcessual[] = calcularPrazosProcessuais(procs);
+      const prazosInput = procs.map((p) => {
+        const it = itemMap.get(itemKey(p.venda_id, p.servico_id));
+        return {
+          id: p.id,
+          servico_id: p.servico_id,
+          servico_nome: p.servico_nome,
+          status: p.status,
+          numero_processo: it?.numero_processo ?? null,
+          data_notificacao: it?.data_notificacao ?? null,
+          data_indeferimento: it?.data_indeferimento ?? null,
+          data_recurso_administrativo: it?.data_recurso_administrativo ?? null,
+          data_indeferimento_recurso: it?.data_indeferimento_recurso ?? null,
+        };
+      });
+      const prazosProcessuais: PrazoProcessual[] = calcularPrazosProcessuais(prazosInput);
       let prazosVencidos = 0,
         prazosCriticos = 0,
         prazosAtencao = 0;

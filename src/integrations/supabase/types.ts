@@ -6985,6 +6985,7 @@ export type Database = {
           canal: string
           cliente_id: number | null
           created_at: string
+          evento: string
           id: string
           marco_dias: number
           prazo_data: string | null
@@ -6994,6 +6995,7 @@ export type Database = {
           canal: string
           cliente_id?: number | null
           created_at?: string
+          evento?: string
           id?: string
           marco_dias: number
           prazo_data?: string | null
@@ -7003,6 +7005,7 @@ export type Database = {
           canal?: string
           cliente_id?: number | null
           created_at?: string
+          evento?: string
           id?: string
           marco_dias?: number
           prazo_data?: string | null
