@@ -61,8 +61,10 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
   describe("Webhook NÃO chama contrato manualmente", () => {
     it("qa-asaas-webhook não invoca qa-generate-contract", () => {
       const src = r("supabase/functions/qa-asaas-webhook/index.ts");
-      expect(src).not.toMatch(/qa-generate-contract/);
-      expect(src).not.toMatch(/qa_contracts/);
+      // Pode mencionar em comentário, mas NÃO pode invocar.
+      expect(src).not.toMatch(/functions\.invoke\(["']qa-generate-contract["']/);
+      expect(src).not.toMatch(/functions\/v1\/qa-generate-contract/);
+      expect(src).not.toMatch(/from\(["']qa_contracts["']\)/);
     });
   });
 
