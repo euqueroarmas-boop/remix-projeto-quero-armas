@@ -37,11 +37,29 @@ describe("FASE 2C-7 — qa-liberar-servicos-contrato", () => {
     expect(src).toMatch(/qa_contracts/);
   });
 
-  it("autoriza apenas via x-trigger-source qa_contract_validated ou x-internal-token", () => {
+  it("FASE 2C-7.2 — x-trigger-source NÃO autoriza sozinho; exige x-internal-token (release/internal) ou JWT QA", () => {
     const src = r(FN);
-    expect(src).toMatch(/qa_contract_validated/);
-    expect(src).toMatch(/x-internal-token/);
+    // x-internal-token validado em tempo constante contra QA_CONTRACT_RELEASE_TOKEN
+    // (preferencial) ou INTERNAL_FUNCTION_TOKEN (fallback admin/manual).
+    expect(src).toMatch(/QA_CONTRACT_RELEASE_TOKEN/);
+    expect(src).toMatch(/INTERNAL_FUNCTION_TOKEN/);
     expect(src).toMatch(/timingSafeEqual/);
+    // Chamada manual exige staff QA.
+    expect(src).toMatch(/requireQAStaff/);
+    // x-trigger-source aparece apenas como metadado — NÃO no caminho de autorização.
+    const authBlock = src.split("async function authorize")[1]?.split("\n}")[0] ?? "";
+    expect(authBlock).not.toMatch(/x-trigger-source/);
+    expect(authBlock).not.toMatch(/qa_contract_validated/);
+    // Comentário explícito de que trigger-source é metadado.
+    expect(src).toMatch(/metadado de auditoria|apenas metadado|NUNCA autoriza/i);
+  });
+
+  it("FASE 2C-7.2 — trigger envia x-internal-token vindo do Vault", () => {
+    const sql = latestMigrationContaining("qa_contracts_after_validated_release");
+    expect(sql).toMatch(/vault\.decrypted_secrets/);
+    expect(sql).toMatch(/QA_CONTRACT_RELEASE_TOKEN/);
+    expect(sql).toMatch(/'x-internal-token'/);
+    expect(sql).toMatch(/qa_contract_release_token_ausente_no_vault/);
   });
 
   it("recusa contrato que não está validated", () => {
