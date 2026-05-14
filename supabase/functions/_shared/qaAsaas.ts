@@ -6,7 +6,7 @@
  * Trabalha exclusivamente com qa_clientes / qa_vendas.
  */
 
-export const ASAAS_USER_AGENT = "WMTi-Integration/1.0";
+export const ASAAS_USER_AGENT = "QueroArmas-Integration/1.0";
 
 export function getAsaasEnv(): { key: string; baseUrl: string } | { error: string } {
   const key = Deno.env.get("ASAAS_API_KEY");
