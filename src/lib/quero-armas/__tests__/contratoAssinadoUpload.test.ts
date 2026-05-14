@@ -65,7 +65,9 @@ describe("FASE 2C-6 — Validação criptográfica", () => {
     const src = r("supabase/functions/qa-validate-customer-signature/index.ts");
     expect(src).toMatch(/qaPdfSignatureValidate/);
     expect(src).toMatch(/validatePdfSignature/);
-    expect(src).not.toMatch(/tesseract|ocr/i);
+    // Não importa libs de OCR/transcrição como prova de assinatura.
+    expect(src).not.toMatch(/tesseract|pdf2image|pytesseract|gemini.*vision/i);
+    expect(src).not.toMatch(/import .*ocr/i);
   });
 
   it("CPF divergente sem ICP-Brasil → revisao_manual (indeterminate)", () => {
