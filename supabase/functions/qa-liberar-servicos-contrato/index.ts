@@ -186,32 +186,87 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const geraProcesso = catalogo?.gera_processo !== false; // default true
 
-    // 4a) Upsert solicitação (idempotente por uq_qa_solicitacoes_cli_slug_manual)
+    // 4a) Resolve solicitação operacional respeitando idempotência por venda/item.
+    //     Lookup primário: item_venda_id (uq_qa_solicitacoes_item_venda).
+    //     Fallback:        (venda_id, servico_id) c/ cadastro_publico_id IS NULL
+    //                      (uq_qa_solicitacoes_venda_servico).
+    //     NUNCA reaproveita por (cliente_id, service_slug) quando há venda nova:
+    //     uma solicitação manual antiga (venda_id NULL) ou de OUTRA venda fica
+    //     intocada — recompra cria nova solicitação.
     let solicitacaoId: string | null = null;
     {
-      const { data: existSol } = await admin
-        .from("qa_solicitacoes_servico")
-        .select("id, status_servico")
-        .eq("cliente_id", contract.cliente_id)
-        .eq("service_slug", slug)
-        .is("cadastro_publico_id", null)
-        .maybeSingle();
+      let existSol: { id: string; status_servico: string | null; venda_id: string | null; item_venda_id: string | null } | null = null;
+      let matchOrigin: "item_venda" | "venda_servico" | null = null;
+
+      if (it.item_venda_id) {
+        const { data } = await admin
+          .from("qa_solicitacoes_servico")
+          .select("id, status_servico, venda_id, item_venda_id")
+          .eq("item_venda_id", it.item_venda_id)
+          .maybeSingle();
+        if (data) { existSol = data as any; matchOrigin = "item_venda"; }
+      }
+      if (!existSol) {
+        const { data } = await admin
+          .from("qa_solicitacoes_servico")
+          .select("id, status_servico, venda_id, item_venda_id")
+          .eq("venda_id", venda.id)
+          .eq("servico_id", servicoId)
+          .is("cadastro_publico_id", null)
+          .maybeSingle();
+        if (data) { existSol = data as any; matchOrigin = "venda_servico"; }
+      }
+
       if (existSol) {
         solicitacaoId = existSol.id;
-        // Avança status mínimo se ainda em aguardando_contratacao
-        if (existSol.status_servico === "aguardando_contratacao" || existSol.status_servico === "montando_pasta") {
-          await admin.from("qa_solicitacoes_servico")
+        // Reuso seguro: NÃO sobrescreve venda_id/item_venda_id/servico_id/service_name
+        // de uma solicitação de outra venda. Apenas avança status mínimo se ainda
+        // está em estágio inicial e a solicitação pertence a esta venda.
+        const mesmaVenda = existSol.venda_id === venda.id;
+        if (
+          mesmaVenda &&
+          (existSol.status_servico === "aguardando_contratacao" ||
+            existSol.status_servico === "montando_pasta")
+        ) {
+          await admin
+            .from("qa_solicitacoes_servico")
             .update({
               status_servico: "aguardando_documentacao",
               status_financeiro: "pago",
-              venda_id: venda.id,
-              item_venda_id: it.item_venda_id,
-              servico_id: servicoId,
-              service_name: nome,
             })
             .eq("id", existSol.id);
         }
+        await recordContractEvent(
+          admin,
+          contractId,
+          matchOrigin === "item_venda"
+            ? "solicitacao_servico_reutilizada_por_item_venda"
+            : "solicitacao_servico_reutilizada_por_venda_servico",
+          { solicitacao_id: solicitacaoId, servico_id: servicoId, slug, contract_item_id: it.id },
+        );
       } else {
+        // Detecta recompra: solicitação anterior do mesmo cliente+slug em outra venda
+        // (ou manual sem venda). Apenas auditoria — não bloqueia, não sobrescreve.
+        const { data: anterior } = await admin
+          .from("qa_solicitacoes_servico")
+          .select("id, venda_id")
+          .eq("cliente_id", contract.cliente_id)
+          .eq("service_slug", slug)
+          .is("cadastro_publico_id", null)
+          .limit(1)
+          .maybeSingle();
+        if (anterior) {
+          await recordContractEvent(admin, contractId, "liberacao_recompra_mesmo_servico_detectada", {
+            slug, servico_id: servicoId, solicitacao_anterior_id: anterior.id,
+            venda_anterior_id: anterior.venda_id, venda_atual_id: venda.id,
+          });
+          if (!anterior.venda_id) {
+            await recordContractEvent(admin, contractId, "solicitacao_manual_slug_cliente_ignorada_por_venda_diferente", {
+              slug, solicitacao_anterior_id: anterior.id,
+            });
+          }
+        }
+
         const { data: novaSol, error: nsErr } = await admin
           .from("qa_solicitacoes_servico")
           .insert({
@@ -222,7 +277,7 @@ Deno.serve(async (req) => {
             origem: "contrato_validado",
             status_servico: "aguardando_documentacao",
             status_financeiro: "pago",
-            status_processo: geraProcesso ? "processo_nao_aberto" : "processo_nao_aberto",
+            status_processo: "processo_nao_aberto",
             venda_id: venda.id,
             item_venda_id: it.item_venda_id,
           })
@@ -235,7 +290,13 @@ Deno.serve(async (req) => {
         solicitacaoId = novaSol.id;
         await recordContractEvent(admin, contractId, "solicitacao_servico_criada", {
           solicitacao_id: solicitacaoId, servico_id: servicoId, slug,
+          item_venda_id: it.item_venda_id, venda_id: venda.id,
         });
+        if (it.item_venda_id) {
+          await recordContractEvent(admin, contractId, "solicitacao_servico_criada_por_item_venda", {
+            solicitacao_id: solicitacaoId, item_venda_id: it.item_venda_id,
+          });
+        }
       }
       result.solicitacoes.push({ id: solicitacaoId, servico_id: servicoId, slug });
     }
