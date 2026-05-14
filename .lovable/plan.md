@@ -1,138 +1,249 @@
-# BLOCO 10 — Contrato pós-pagamento Quero Armas
+# FASE 2C-0 REVISADA — Auditoria + redesenho do fluxo e-commerce Quero Armas
 
-## FASE 10.1 — AUDITORIA (resultado)
-
-### Já existe no projeto
-- **Edge functions**:
-  - `asaas-webhook` — recebe confirmação de pagamento (já roda para o lado WMTi).
-  - `generate-paid-contract-pdf` — gera PDF de contrato pós-pagamento usando `pdf-lib` + `_shared/post-purchase.ts` (hoje opera sobre `customers` / `quotes` / `contracts` do **WMTi**, não sobre `qa_vendas`).
-  - `sign-contract-pdf` — assina PDF com A1 ICP-Brasil (PAdES, `_shared/pdfSign.ts`, AES-256-GCM).
-  - `serve-contract-pdf` — proxy seguro de download (bucket `paid-contracts`).
-  - `qa-validate-govbr-signature` — **valida criptograficamente** PAdES/ICP-Brasil/Gov.br (forge, sem OCR). **Reutilizável diretamente.**
-- **Storage**: bucket `paid-contracts` ativo + bucket `certificates` (A1 cifrado).
-- **Vendas/itens**: `qa_vendas` (status check inclui `PAGO`) + `qa_itens_venda` (snapshot já parcialmente possível: `valor`, `servico_id`, `tipo_venda`).
-- **Catálogo**: `qa_servicos_catalogo` (origem dos serviços).
-- **Webhook Asaas** já dispara `ensureClientAccess`.
-
-### O que NÃO existe (gap)
-- Nenhuma tabela `qa_contracts*`. As tabelas `contracts/contract_signatures/...` são **WMTi only** (FK para `customers`/`quotes`) — **não dá para reaproveitar sem regressão**.
-- Nenhum gatilho de geração de contrato a partir de `qa_vendas` no webhook Asaas.
-- Nenhum bloco "Contrato" no portal Quero Armas.
-- Nenhum snapshot imutável (nome/descrição/preço) congelado no momento da venda.
-- Nenhum fluxo de upload/validação de PDF assinado pelo cliente para vendas QA.
-- Nenhuma liberação de processo/checklist condicionada à assinatura válida.
-
-### Decisão arquitetural
-Criar família **`qa_contracts*`** isolada (sem tocar em `contracts` WMTi). Reutilizar 100% as edge functions existentes de **assinatura da contratada** (`sign-contract-pdf`) e **validação cliente** (`qa-validate-govbr-signature`), criando apenas wrappers QA-específicos que operam sobre `qa_vendas`.
+> **Sem código nesta fase.** Apenas relatório do estado atual e plano em fases pequenas para o fluxo correto:
+> `carrinho → pagamento → contrato → portal liberado / Arsenal bloqueado → contrato assinado e validado → Arsenal liberado`.
 
 ---
 
-## FASE 10.2 — MIGRATION (mínima, RLS-safe)
+## 1. O que JÁ existe hoje (carrinho → portal)
 
-Tabelas novas, todas com RLS:
+### 1.1 Carrinho (frontend)
+- `src/shared/cart/CartProvider.tsx` — carrinho client-side, persistido em `localStorage` (`eqa.cart.v1`). **Apenas 1 item por pedido** (`addItem` substitui o conteúdo). Não há tabela `qa_carrinhos` no banco.
+- `src/pages/CarrinhoPage.tsx` — UI do carrinho. Botão **Finalizar contratação** redireciona para `/area-do-cliente/contratar/<slug>/identificar` (fluxo público de contratação).
 
-- `qa_contracts` — 1:1 com `qa_vendas` (`venda_id` UNIQUE), número de contrato, status, paths de PDF (original/assinado pela empresa/assinado pelo cliente), SHA-256 de cada versão, timestamps, `validation_status`, `validation_details jsonb`.
-- `qa_contract_items` — snapshot **imutável** dos itens (`service_slug_snapshot`, `service_name_snapshot`, `service_description_snapshot`, `unit_price_cents`, `quantity`, `metadata`). FK opcional para `qa_itens_venda.id`.
-- `qa_contract_signatures` — uma linha por assinatura (`signer_role`: `company`/`customer`, `signature_type`: `representative_govbr`/`representative_icp`/`company_icp`, `validation_status`, `validation_details`, `signed_pdf_path`, `signed_pdf_sha256`).
-- `qa_contract_events` — auditoria (`generated`, `company_signed`, `customer_uploaded`, `validation_started`, `validation_passed`, `validation_failed`, `validation_indeterminate`, `manual_review_required`, `released_to_checklist`).
+### 1.2 Checkout / criação da venda
+- Página `QAContratarPublicoPage.tsx` chama edge `qa-contratar-publico`.
+- Edge `qa-contratar-publico` chama RPC `qa_cliente_criar_contratacao_publico`, que cria/encontra o `qa_clientes` (status `cadastro_em_preenchimento`) e insere `qa_vendas` + `qa_itens_venda` + evento.
+- **Não cria cobrança Asaas.** A venda nasce pendente; o pagamento depende de a equipe aprovar o valor e clicar em "Gerar cobrança" em `QAVendasPendentesPage` → edge `qa-venda-gerar-cobranca` (FASE 2B-2).
 
-**RLS** (alinhada com padrão `qa_*` já presente):
-- Staff (`qa_is_active_staff`) → SELECT/INSERT/UPDATE em tudo.
-- Cliente (`qa_current_cliente_id(auth.uid())`) → SELECT apenas em contratos da própria `cliente_id` (via JOIN com `qa_vendas`); INSERT em `qa_contract_signatures` apenas no próprio contrato e apenas com `signer_role='customer'`.
-- Service role → bypass total (edge functions).
+### 1.3 Pagamento
+- Edge `qa-venda-gerar-cobranca` cria customer/charge no Asaas e grava `asaas_payment_id`/`cobranca_status='aguardando_pagamento'` em `qa_vendas`.
+- Webhook `qa-asaas-webhook` (FASE 2C-1) marca `status='PAGO'` + `cobranca_status='confirmada'` quando recebe `PAYMENT_CONFIRMED/RECEIVED`.
+- Trigger `qa_vendas_after_pago_generate_contract` já existe e dispara `qa-generate-contract`.
 
-**Bucket de storage**: reutilizar `paid-contracts` com prefixo `qa/<venda_id>/...` (já tem RLS service-role-only — acesso ao cliente vai ser via novo proxy `qa-serve-contract-pdf`).
+### 1.4 Contrato
+- Tabelas isoladas QA: `qa_contracts`, `qa_contract_items`, `qa_contract_signatures`, `qa_contract_events` (BLOCO 10 já implementado).
+- Edges existentes:
+  - `qa-generate-contract` — gera PDF, snapshot dos itens, hash SHA-256.
+  - `qa-sign-contract-company` — assinatura A1 ICP-Brasil pela contratada (reusa `sign-contract-pdf`).
+  - `qa-serve-contract-pdf` — proxy autenticado para download.
+  - `qa-upload-signed-contract` — recebe PDF assinado pelo cliente.
+  - `qa-validate-customer-signature` + `qa-validate-govbr-signature` — validação criptográfica PAdES/ICP-Brasil/Gov.br (forge, sem OCR).
 
----
+### 1.5 Portal do cliente
+- `QAClientePortalPage.tsx` (1.898 linhas) já existe e renderiza dashboard, processos, documentos, etc. **Sem gate de Arsenal hoje.**
+- Acesso ao portal é criado por `qa-cliente-criar-conta-publica` e pelo trigger pós-pagamento.
 
-## FASE 10.3 — Geração pós-pagamento (`qa-generate-contract`)
-
-Nova edge function `qa-generate-contract`:
-- **Trigger**: chamada por `asaas-webhook` quando `qa_vendas.status` transiciona para `PAGO`.
-- **Idempotente** (UNIQUE em `qa_contracts.venda_id`).
-- Lê `qa_vendas` + `qa_itens_venda` + `qa_servicos_catalogo` (apenas para snapshot inicial).
-- **Congela snapshot** em `qa_contract_items` — depois disso o catálogo nunca mais é consultado.
-- Renderiza PDF com `pdf-lib` (cabeçalho Quero Armas, dados do cliente, lista de serviços contratados com nome/descrição/qtd/valor unitário/total).
-- Calcula SHA-256, faz upload para `paid-contracts/qa/<venda_id>/original.pdf`.
-- Insere `qa_contract_events('generated', ...)`.
-- `status = 'generated_pending_company_signature'`. **Não libera nada.**
-
-Patch em `asaas-webhook`: ao confirmar pagamento, se a venda existe em `qa_vendas`, invocar `qa-generate-contract` (best-effort, log em `qa_pagamento_auditoria`).
-
----
-
-## FASE 10.4 — Assinatura da contratada
-
-- Reutilizar `sign-contract-pdf` (PAdES + A1 ICP-Brasil já funcional).
-- Modos suportados (campo `signature_mode_company`):
-  - `representative_govbr` (representante legal via Gov.br)
-  - `representative_icp` (representante com A1 próprio)
-  - `company_icp` (PJ — preparado, mas não obriga uso agora)
-- Endpoint admin novo `qa-sign-contract-company` que recebe `contract_id`, baixa `original.pdf`, chama `sign-contract-pdf`, salva resultado em `paid-contracts/qa/<venda_id>/company-signed.pdf`, atualiza `qa_contracts.company_signed_pdf_path/sha256/at`, insere `qa_contract_signatures(signer_role='company', ...)`, status → `pending_customer_signature`.
+### 1.6 Legado WMTi (NÃO usar)
+- `asaas-webhook` (raiz), `_shared/post-purchase.ts`, `ensureClientAccess`, `customers`, `quotes`, `contracts`, `payments`, `create-asaas-payment`, `create-asaas-subscription`, `generate-paid-contract-pdf`. Tudo permanece intocado.
 
 ---
 
-## FASE 10.5 — Bloco no portal do cliente
+## 2. O que precisa ser DESPRIORIZADO da lógica anterior
 
-Componente `<ContratoBlock />` em `QAClientePortalPage`:
-- Lê `qa_contracts` da venda mais recente paga.
-- Estados visuais (mapeados de `status` + `validation_status`):
-  - Em preparação · Aguardando assinatura da Quero Armas · Disponível para assinatura · Aguardando envio do PDF assinado · Assinatura em validação · Contrato validado · Contrato rejeitado / reenviar · Em revisão manual.
-- Ações:
-  - **Baixar contrato** → novo proxy `qa-serve-contract-pdf` (autenticado, valida `cliente_id`).
-  - **Enviar contrato assinado** → upload direto para `paid-contracts/qa/<venda_id>/customer-uploaded.pdf` via edge function `qa-upload-signed-contract` que dispara validação.
-  - **Ver status da validação** → mostra `validation_details`.
-- Mobile-first, padrão Arsenal UI claro.
+| Item | Razão | Ação |
+|---|---|---|
+| "Equipe aprova valor antes da cobrança" como **caminho principal** | Fluxo correto é e-commerce direto. | Manter código existente, mas mover para **rota de exceção** (venda assistida). Marcar `qa_vendas.cobranca_origem='venda_assistida'` quando vier desse caminho. |
+| Botão "Gerar cobrança" como ÚNICO disparador de pagamento | Bloqueia o fluxo do site. | Manter para casos manuais. Adicionar disparador automático no checkout público. |
+| `QAContratarPublicoPage` terminar em "venda criada, aguarde a equipe" | Quebra o fluxo de e-commerce. | Após criar venda, redirecionar para link de pagamento Asaas (gerado na hora). |
+| `qa-contratar-publico` exigir `valor_informado` do frontend | Risco de adulteração. | Já é confiável no backend (a edge `qa-venda-gerar-cobranca` ignora o valor do front e usa `valor_aprovado` do DB). Reforçar: checkout público deve usar **preço do catálogo** (`qa_servicos_catalogo.preco_base_centavos`) como `valor_aprovado` e `valor_informado`, sem campo editável. |
 
 ---
 
-## FASE 10.6 — Validação criptográfica
+## 3. Arquivos seguindo lógica errada / a ajustar
 
-Nova edge function `qa-validate-customer-signature`:
-- Roda automaticamente após upload (`qa-upload-signed-contract` invoca).
-- Calcula SHA-256 do PDF enviado.
-- **Confere integridade do documento base**: extrai os bytes assinados e verifica que correspondem ao `original_sha256` (ou `company_signed_sha256` se já assinado pela contratada).
-- Chama `qa-validate-govbr-signature` (já existente, sem OCR) → retorna `valida/invalida/sem_assinatura/erro`, signatário, CPF, autoridade.
-- **Cruza CPF** do signatário com `qa_clientes.cpf` quando disponível.
-- Mapeia para `validation_status`:
-  - `valid` → válido + integridade OK + (CPF bate ou cliente sem CPF cadastrado).
-  - `invalid` → assinatura criptográfica inválida ou hash do documento divergente.
-  - `indeterminate` → válido mas CPF diverge / autoridade não-ICP-Brasil reconhecida → `pending_manual_review`.
-- Persiste em `qa_contracts.validation_status/validation_details`, `qa_contract_signatures(signer_role='customer', ...)`, `qa_contract_events`.
+| Arquivo | Problema | Tratamento esperado (em fases futuras) |
+|---|---|---|
+| `src/pages/CarrinhoPage.tsx` | Redireciona para fluxo "identificar → aguardar equipe". | Mudar destino para `/checkout/qa/<slug>` (novo) que cria venda + cobrança Asaas direto. |
+| `src/pages/quero-armas/QAContratarPublicoPage.tsx` | Mostra "valor informado" e termina em pendência. | Virar fluxo de **identificação leve** (CPF/email/telefone) que conclui criando venda PAGÁVEL imediatamente. |
+| `src/pages/quero-armas/QAContratarSucessoPage.tsx` | Estado final é "aguarde equipe". | Mostrar status real (cobrança gerada → link Asaas → pagamento confirmado → contrato disponível). |
+| `supabase/functions/qa-contratar-publico/index.ts` | Não dispara cobrança. | Após RPC criar venda, invocar **internamente** `qa-venda-gerar-cobranca` (modo sistema, sem `requireQAStaff`) usando preço de catálogo. Marcar `cobranca_origem='checkout_publico'`. |
+| `src/pages/quero-armas/QAClientePortalPage.tsx` | Não tem gate de Arsenal. | Adicionar consulta a `qa_arsenal_access_gate` e wrapper `<ArsenalGate>` em todos os blocos operacionais. |
+| `src/pages/quero-armas/QAVendasPendentesPage.tsx` | Posicionado como fluxo principal. | Renomear semanticamente para "Vendas assistidas / exceções". |
 
 ---
 
-## FASE 10.7 — Liberação do processo/checklist
+## 4. Tabelas `qa_*` que são fonte de verdade
 
-- Trigger SQL ou patch na edge: ao `validation_status='valid'` em `qa_contracts`, criar (se não existir) `qa_solicitacoes_servico` + `qa_processos` por **item snapshotado** em `qa_contract_items`, gerando estrutura operacional **por item** (nunca genérica).
-- Bloqueio explícito: se contrato não estiver `valid`, qualquer tentativa de abrir checklist via UI é negada (guard no `QAClientePortalPage` + RLS check em `qa_processos` futura, mas mínimo agora é gating na UI + flag em `qa_solicitacoes_servico`).
-
----
-
-## Validação final
-1. Forçar `qa_vendas.status='PAGO'` em ambiente de teste.
-2. Confirmar `qa_contracts` criado, snapshot íntegro, PDF original gerado.
-3. Assinar pela contratada (admin) → arquivo `company-signed.pdf` aparece, status muda.
-4. Logar como cliente, baixar, fazer upload de PDF assinado.
-5. Validação corre, `valid` libera processo; `invalid` bloqueia; `indeterminate` vai para revisão.
-6. `npm run typecheck` + `npm run build`.
-
----
-
-## Observações importantes
-
-- **Zero regressão**: nada nas tabelas `contracts/contract_*` (WMTi) ou nos fluxos existentes é alterado. Tudo novo vive em `qa_contracts*` + edge functions com prefixo `qa-`.
-- **Sem OCR**: validação 100% criptográfica via `node-forge` (já no projeto).
-- **Snapshot imutável**: nenhuma leitura de `qa_servicos_catalogo` após `generated`.
-- **Reuso máximo**: `sign-contract-pdf` + `qa-validate-govbr-signature` + bucket `paid-contracts` reaproveitados sem fork.
+| Domínio | Tabela | Papel |
+|---|---|---|
+| Catálogo | `qa_servicos_catalogo` | Preço, descrição, slug. Lido **apenas no momento do checkout**. |
+| Venda | `qa_vendas` | Pedido. Status: `aguardando_pagamento` → `PAGO`. |
+| Itens | `qa_itens_venda` | Snapshot de cada serviço comprado (já é snapshot). |
+| Cobrança | `qa_vendas.asaas_*` + `qa_pagamento_auditoria` | Vínculo Asaas, idempotência. |
+| Webhook | `qa_asaas_webhook_events` | Auditoria/idempotência do webhook QA. |
+| Contrato | `qa_contracts` + `qa_contract_items` + `qa_contract_signatures` + `qa_contract_events` | Snapshot imutável + assinaturas + auditoria. |
+| Acesso ao portal | `qa_clientes` + `qa_cliente_credenciais` | Conta criada após pagamento confirmado. |
+| **Gate Arsenal (NOVO)** | `qa_arsenal_access_gate` | Estado canônico de liberação operacional por cliente. |
+| Operação | `qa_solicitacoes_servico`, `qa_processos`, `qa_processo_documentos` | **Só nascem após** `qa_arsenal_access_gate.estado='liberado'`. |
 
 ---
 
-## Escopo desta primeira PR (proposto)
+## 5. Precisa criar `qa_carrinhos` / `qa_carrinho_itens`?
 
-Por ser um bloco **muito grande** (4 tabelas + ~5 edge functions + UI portal + integração webhook + RLS + storage), recomendo entregar em **dois passes**:
+**Não nesta fase.** Justificativa:
 
-- **Pass A (esta entrega)**: FASES 10.2 + 10.3 + 10.4 + hook em `asaas-webhook` + endpoint admin de assinatura + skeleton do bloco do portal mostrando status (sem upload ainda).
-- **Pass B (próxima)**: FASES 10.5 (upload) + 10.6 (validação) + 10.7 (liberação do checklist).
+- O carrinho atual é `localStorage` + 1 item por pedido (regra explícita do produto: 1 serviço = 1 venda).
+- A "persistência server-side" do carrinho seria custosa e sem ROI imediato.
+- A transição "carrinho → venda" pode ser **direta**: ao finalizar, criar `qa_vendas` + `qa_itens_venda` + cobrança Asaas em uma única chamada.
+- Caso futuramente o produto suporte multi-serviço/recuperação de carrinho abandonado, criar `qa_carrinhos` aí.
 
-Confirma que posso seguir com **Pass A** agora?
+**Decisão:** manter `localStorage` como buffer e usar `qa_vendas`/`qa_itens_venda` como fonte de verdade a partir do checkout.
+
+---
+
+## 6. Como `qa_vendas`/`qa_itens_venda` nascem do carrinho
+
+Fluxo proposto (na FASE 2C-2):
+
+```text
+CarrinhoPage (Finalizar)
+        │
+        ▼
+/checkout/qa/<slug>  (página leve: CPF, nome, email, telefone)
+        │  POST
+        ▼
+edge qa-checkout-publico (NOVA, substitui qa-contratar-publico no fluxo principal)
+   1. Resolve qa_clientes (CPF) ou cria status='cadastro_em_preenchimento'
+   2. Lê qa_servicos_catalogo pelo slug → snapshot de preço
+   3. Cria qa_vendas (status='aguardando_pagamento', cobranca_origem='checkout_publico',
+      valor_aprovado=preço catálogo, status_validacao_valor='aprovado_automatico')
+   4. Cria qa_itens_venda (snapshot)
+   5. Invoca qa-venda-gerar-cobranca (modo sistema, billingType=PIX por padrão)
+   6. Devolve { venda_id, asaas_invoice_url, asaas_pix_payload }
+        │
+        ▼
+QAContratarSucessoPage exibe link de pagamento Asaas
+```
+
+`qa-contratar-publico` antigo permanece como rota de exceção para "venda assistida".
+
+---
+
+## 7. Como o pagamento gera contrato
+
+Já está pronto:
+- `qa-asaas-webhook` recebe `PAYMENT_CONFIRMED/RECEIVED` → grava `status='PAGO'`.
+- Trigger `qa_vendas_after_pago_generate_contract` invoca `qa-generate-contract` → cria `qa_contracts` + snapshot + PDF original.
+- Edge admin `qa-sign-contract-company` assina pela contratada.
+- Status final do contrato: `pending_customer_signature`.
+
+Nenhuma mudança necessária aqui.
+
+---
+
+## 8. Como o acesso ao portal é criado
+
+- Hoje: `qa-cliente-criar-conta-publica` cria conta de auth.
+- Plano: adicionar passo automático no webhook (já no ramo QA do `qa-asaas-webhook`):
+  - Se `qa_clientes.user_id IS NULL` quando `PAGO` → invocar `qa-cliente-criar-conta-publica` e enviar e-mail de boas-vindas com link mágico.
+  - Inserir registro em `qa_arsenal_access_gate` com `estado='bloqueado_aguardando_assinatura'`.
+- Cliente loga e vê o portal **com Arsenal bloqueado**.
+
+---
+
+## 9. Como o Arsenal fica bloqueado
+
+**Tabela canônica nova `qa_arsenal_access_gate`** (PROPOSTA — não implementar ainda):
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `cliente_id` | `int` PK | FK `qa_clientes.id` |
+| `estado` | `text` CHECK | `bloqueado_pagamento_pendente`, `bloqueado_contrato_nao_gerado`, `bloqueado_aguardando_assinatura`, `bloqueado_assinatura_invalida`, `bloqueado_revisao_manual`, `liberado` |
+| `motivo` | `text` | Mensagem amigável para o cliente |
+| `contract_id` | `uuid` | FK `qa_contracts.id` que governa o gate atual |
+| `liberado_em` | `timestamptz` | Quando entrou em `liberado` |
+| `bloqueado_em` | `timestamptz` | Última transição para qualquer estado bloqueado |
+| `updated_at` / `created_at` | `timestamptz` | |
+
+RLS: cliente lê o próprio (`qa_current_cliente_id(auth.uid())`); staff lê tudo; service_role escreve.
+
+**Hook UI:** `useArsenalGate(clienteId)` → bloqueia componentes operacionais e mostra `<ArsenalBlockedPanel motivo={...} />` com call-to-action correto (pagar / baixar contrato / enviar assinado / aguardar revisão).
+
+**Componentes afetados** dentro de `QAClientePortalPage`: blocos de Processos, Solicitações, Documentos operacionais, Munições, Armamentos. **Tudo o que NÃO depende de gate (perfil, contrato, suporte, financeiro)** continua acessível.
+
+---
+
+## 10. Como o contrato assinado é validado
+
+Já existe (`qa-validate-customer-signature` + `qa-validate-govbr-signature`):
+1. Cliente faz upload via `qa-upload-signed-contract`.
+2. Edge calcula SHA-256 e confere com `qa_contracts.company_signed_sha256`/`original_sha256` (integridade do documento base).
+3. Extrai PKCS#7 (PAdES) com `node-forge`, valida cadeia ICP-Brasil/Gov.br.
+4. Cruza CPF do signatário com `qa_clientes.cpf`.
+5. Define `validation_status`:
+   - `valid` → libera Arsenal (passo 11).
+   - `invalid` → `qa_arsenal_access_gate.estado='bloqueado_assinatura_invalida'` + UI pede reenvio.
+   - `indeterminate` → `bloqueado_revisao_manual` + alerta para equipe.
+
+**Não usar OCR como prova.** Já está implementado assim.
+
+Complementar (próxima fase): adicionar link para validador oficial ITI (`https://validar.iti.gov.br/`) no painel do cliente, para auto-conferência.
+
+---
+
+## 11. Como o Arsenal é liberado após validação
+
+Trigger ou patch na edge `qa-validate-customer-signature` (FASE 2C-5):
+
+1. Quando `qa_contracts.validation_status='valid'`:
+   - `UPDATE qa_arsenal_access_gate SET estado='liberado', liberado_em=now(), contract_id=...`
+   - Inserir `qa_contract_events('released_to_arsenal', ...)`.
+2. Para cada `qa_contract_items`:
+   - Criar (se não existir) `qa_solicitacoes_servico` + `qa_processos`.
+   - Materializar `qa_processo_documentos` conforme `qa_servicos_documentos` (checklist por serviço).
+   - Reaproveitar documentos já aprovados do cliente (`qa_documentos_cliente` com `status='aprovado'` e tipo compatível).
+3. Notificação push/email "Seu Arsenal está liberado".
+
+**Bloqueio defensivo:** mesmo que algum bug crie `qa_processos` antes, o gate de UI nega acesso, e RLS adicional em `qa_processos` (próxima fase) pode exigir `qa_arsenal_access_gate.estado='liberado'` via função `qa_arsenal_liberado(cliente_id)`.
+
+---
+
+## 12. Plano de implementação em fases pequenas
+
+> Cada fase é independente, com migration mínima, sem mexer em fluxo legado.
+
+### FASE 2C-2 — Checkout público direto (carrinho → cobrança)
+- Nova edge `qa-checkout-publico` que combina `qa_cliente_criar_contratacao_publico` + `qa-venda-gerar-cobranca` (modo sistema, billingType=PIX).
+- `CarrinhoPage` redireciona para nova rota `/checkout/qa/<slug>`.
+- Nova página `QACheckoutPublicoPage` (CPF/email/telefone → "Finalizar e pagar").
+- `QAContratarSucessoPage` adapta para mostrar link Asaas/PIX.
+- Migration: adicionar `cobranca_origem='checkout_publico'` no enum/CHECK existente; default `status_validacao_valor='aprovado_automatico'` quando origem é checkout público.
+- Nada removido. Fluxo "vendas assistidas" continua para exceções.
+
+### FASE 2C-3 — Provisionamento de portal automático no webhook
+- Patch `qa-asaas-webhook`: ao confirmar pagamento, se `qa_clientes.user_id IS NULL`, invocar `qa-cliente-criar-conta-publica` e enviar boas-vindas.
+- Idempotente, registrar em `qa_pagamento_auditoria`.
+
+### FASE 2C-4 — Tabela `qa_arsenal_access_gate` + bloqueio de UI
+- Migration: criar tabela + RLS + função `qa_arsenal_liberado(cliente_id)`.
+- Trigger pós-`PAGO`: insere/atualiza gate com `estado='bloqueado_aguardando_assinatura'`.
+- Trigger pós-`qa_contracts.validation_status` muda: atualiza gate.
+- Hook `useArsenalGate` + componente `<ArsenalBlockedPanel>` em `QAClientePortalPage`.
+- Bloqueio em blocos operacionais (Processos, Munições, Armamentos, Solicitações).
+
+### FASE 2C-5 — Liberação operacional pós-assinatura
+- Patch `qa-validate-customer-signature`: ao status `valid`, materializar `qa_solicitacoes_servico`/`qa_processos`/`qa_processo_documentos` por item snapshotado.
+- Reaproveitamento de documentos aprovados.
+- Notificação ao cliente.
+
+### FASE 2C-6 — Endurecimento RLS
+- RLS em `qa_processos`/`qa_solicitacoes_servico` exigindo `qa_arsenal_liberado(cliente_id)` para SELECT/UPDATE pelo cliente.
+- Mantém staff e service_role sem restrição.
+
+### FASE 2C-7 — Polimento UX
+- Link para validador ITI no portal.
+- Estados visuais detalhados do gate.
+- Telemetria do funil (carrinho → pagamento → contrato → assinatura → liberação).
+
+---
+
+## Garantias preservadas
+
+- ✅ Fluxo WMTi intocado: zero alteração em `payments/contracts/quotes/customers/post-purchase.ts/ensureClientAccess`.
+- ✅ Fluxo de "venda assistida" preservado para exceções.
+- ✅ Arsenal liberado **somente** com contrato validado criptograficamente.
+- ✅ Snapshot imutável em `qa_contract_items` continua sendo a fonte para o operacional.
+- ✅ Nenhuma migration destrutiva.
+
+> Aguardando autorização para iniciar pela **FASE 2C-2**.
