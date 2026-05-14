@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import {
   Inbox, RefreshCw, Loader2, Search, User, Mail, Phone, Calendar,
   CheckCircle2, XCircle, Edit3, History, ExternalLink, Filter, AlertTriangle,
+  CreditCard, Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,6 +349,101 @@ function HistoricoModal({ open, onClose, vendaId, eventos }: {
   );
 }
 
+/* ─── Modal: Gerar cobrança Asaas (FASE 2B-2) ─── */
+interface GerarCobrancaModalProps {
+  open: boolean; onClose: () => void; venda: VendaRow | null; onDone: () => void;
+}
+function GerarCobrancaModal({ open, onClose, venda, onDone }: GerarCobrancaModalProps) {
+  const [submitting, setSubmitting] = useState(false);
+  const [billingType, setBillingType] = useState<"PIX" | "BOLETO" | "CREDIT_CARD">("PIX");
+  const [dueDate, setDueDate] = useState("");
+
+  useEffect(() => {
+    if (open) { setBillingType("PIX"); setDueDate(""); }
+  }, [open]);
+
+  if (!venda) return null;
+  const valor = Number(venda.valor_aprovado || 0);
+
+  const handle = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const payload: Record<string, unknown> = {
+        venda_id: venda.id,
+        billing_type: billingType,
+        dry_run: false,
+      };
+      if (dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)) payload.due_date = dueDate;
+      const { data, error } = await supabase.functions.invoke("qa-venda-gerar-cobranca", { body: payload });
+      if (error) throw error;
+      const d = data as any;
+      if (d?.success) {
+        toast.success(d?.reused ? "Cobrança já existente reaproveitada" : `Cobrança gerada: ${d?.asaas_payment_id ?? "—"}`);
+        onDone();
+        onClose();
+      } else {
+        toast.error(d?.error || "Falha ao gerar cobrança");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao gerar cobrança");
+    } finally { setSubmitting(false); }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !submitting && !o && onClose()}>
+      <DialogContent className="max-w-md bg-white max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-slate-800 text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-[#7A1F2B]" /> Gerar cobrança
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 mt-2 text-[12px]">
+          <p className="text-slate-700">
+            Venda <b>#{venda.id_legado ?? venda.id}</b> — valor aprovado{" "}
+            <b className="text-emerald-700 font-mono">{fmtBRL(valor)}</b>.
+          </p>
+          <div>
+            <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-1 block">Forma de cobrança *</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(["PIX", "BOLETO", "CREDIT_CARD"] as const).map((opt) => (
+                <button key={opt} type="button"
+                  onClick={() => setBillingType(opt)}
+                  disabled={submitting}
+                  className={`h-9 rounded-md text-[10px] uppercase tracking-wider font-bold border transition ${
+                    billingType === opt
+                      ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}>
+                  {opt === "CREDIT_CARD" ? "Cartão" : opt}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-1 block">Vencimento (opcional)</label>
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
+              className="h-9 text-sm bg-slate-50 border-slate-200 text-slate-800 rounded-md" disabled={submitting} />
+            <p className="text-[10px] text-slate-400 mt-1">Vazio = D+3 dias.</p>
+          </div>
+          <p className="text-[10px] text-slate-500 italic">
+            Esta ação cria a cobrança Asaas mas <b>não</b> marca a venda como paga. O contrato e o processo só são gerados após confirmação do pagamento.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={submitting}
+              className="h-10 text-xs rounded-md text-slate-600 hover:text-slate-800">Cancelar</Button>
+            <Button type="button" onClick={handle} disabled={submitting}
+              className="h-10 text-xs rounded-md bg-[#7A1F2B] hover:bg-[#5e1820] text-white shadow-sm disabled:opacity-60">
+              {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <CreditCard className="h-3.5 w-3.5 mr-1.5" />}
+              Gerar cobrança
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ─── Página principal ─── */
 export default function QAVendasPendentesPage() {
   const [loading, setLoading] = useState(true);
@@ -363,6 +459,7 @@ export default function QAVendasPendentesPage() {
   const [corrigirVenda, setCorrigirVenda] = useState<VendaRow | null>(null);
   const [reprovarVenda, setReprovarVenda] = useState<VendaRow | null>(null);
   const [historicoVenda, setHistoricoVenda] = useState<VendaRow | null>(null);
+  const [cobrancaVenda, setCobrancaVenda] = useState<VendaRow | null>(null);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -687,6 +784,12 @@ export default function QAVendasPendentesPage() {
                           <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700 uppercase">
                             {v.cobranca_status || "—"}
                           </span>
+                          {(v as any).asaas_invoice_url && (
+                            <a href={(v as any).asaas_invoice_url} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-slate-200 bg-white text-slate-600 hover:text-[#7A1F2B] hover:border-[#E5C2C6]">
+                              <Link2 className="h-2.5 w-2.5" /> Fatura
+                            </a>
+                          )}
                         </>
                       ) : (
                         <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 italic">
@@ -727,6 +830,17 @@ export default function QAVendasPendentesPage() {
                       </div>
                     )}
 
+                    {/* FASE 2B-2: gerar cobrança — só aparece quando aprovada e ainda sem vínculo */}
+                    {status === "aprovado"
+                      && Number(v.valor_aprovado || 0) > 0
+                      && !v.asaas_payment_id
+                      && (!v.cobranca_status || v.cobranca_status === "nao_gerada") && (
+                      <Button onClick={() => setCobrancaVenda(v)}
+                        className="h-8 text-[10px] rounded-md bg-[#7A1F2B] hover:bg-[#5e1820] text-white shadow-sm">
+                        <CreditCard className="h-3 w-3 mr-1" /> Gerar cobrança
+                      </Button>
+                    )}
+
                     {status === "reprovado" && v.motivo_correcao && (
                       <div className="text-[10px] text-red-700 bg-red-50 border border-red-200 rounded p-1.5">
                         <b>Motivo:</b> {v.motivo_correcao}
@@ -754,6 +868,7 @@ export default function QAVendasPendentesPage() {
       <AprovarModal open={!!aprovarVenda} venda={aprovarVenda} onClose={() => setAprovarVenda(null)} onDone={carregar} />
       <CorrigirModal open={!!corrigirVenda} venda={corrigirVenda} onClose={() => setCorrigirVenda(null)} onDone={carregar} />
       <ReprovarModal open={!!reprovarVenda} venda={reprovarVenda} onClose={() => setReprovarVenda(null)} onDone={carregar} />
+      <GerarCobrancaModal open={!!cobrancaVenda} venda={cobrancaVenda} onClose={() => setCobrancaVenda(null)} onDone={carregar} />
       <HistoricoModal open={!!historicoVenda}
         vendaId={historicoVenda?.id_legado ?? historicoVenda?.id ?? null}
         eventos={historicoVenda ? (eventosByVenda.get(historicoVenda.id) || []) : []}
