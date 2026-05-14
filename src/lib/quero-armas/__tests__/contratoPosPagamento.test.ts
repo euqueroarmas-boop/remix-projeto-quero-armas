@@ -47,9 +47,10 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       const files = readdirSync(join(ROOT, dir));
       const target = files
         .map((f) => r(join(dir, f)))
-        .find((c) =>
-          c.includes("qa_vendas_after_pago_invoke_contract") &&
-          c.includes("qa-generate-contract"),
+        .find(
+          (c) =>
+            c.includes("qa_vendas_after_pago_invoke_contract") &&
+            c.includes("FASE 2C-4"),
         );
       expect(target, "migration 2C-4 não encontrada").toBeTruthy();
       expect(target!).toMatch(/v_new_status\s*<>\s*'PAGO'\s*OR\s*v_old_status\s*=\s*'PAGO'/);
@@ -95,7 +96,11 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       const files = readdirSync(join(ROOT, dir));
       const target = files
         .map((f) => r(join(dir, f)))
-        .find((c) => c.includes("qa_vendas_after_pago_invoke_contract") && c.includes("qa-generate-contract"));
+        .find(
+          (c) =>
+            c.includes("qa_vendas_after_pago_invoke_contract") &&
+            c.includes("FASE 2C-4"),
+        );
       expect(target!).toMatch(/DROP TRIGGER IF EXISTS trg_qa_vendas_arsenal_upgrade/);
       expect(target!).toMatch(/DROP TRIGGER IF EXISTS trg_qa_vendas_arsenal_upgrade_insert/);
     });
