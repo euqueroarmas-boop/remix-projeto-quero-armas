@@ -1,112 +1,77 @@
+## FASE 2C-5 — Acesso gratuito pós-pagamento (QA puro)
 
-# FASE 2C-4 — Contrato pós-pagamento, Arsenal sempre gratuito
+### Auditoria — estado atual
 
-## Regra de negócio canônica (Arsenal Inteligente)
+**O que já funciona (não tocar):**
+- `qa_vendas` → status `PAGO` dispara duas triggers:
+  1. `qa_vendas_after_pago_invoke_contract` → `qa-generate-contract` (gera contrato). OK.
+  2. `qa_vendas_after_pago_provisionar_portal` → `create-client-user` (provisiona acesso).
+- Login do cliente: `QAClienteLoginPage` + `cliente-portal-request-otp` / `cliente-portal-verify-otp` (OTP, sem senha em texto puro). OK, é fluxo QA puro.
+- Ativação manual: `QAAtivarAcessoPage` usa o mesmo OTP. OK.
+- Reenvio boas-vindas: `qa-cliente-reenviar-boas-vindas` usa só `qa_clientes` + `send-smtp-email`. OK.
+- Portal: `QAClientePortalPage` já renderiza `ContratosPosPagamentoCard` com badge "AGUARDANDO CONTRATO ASSINADO" e botão de download. OK.
+- Arsenal: rota livre, sem `ArsenalGate` / `ArsenalBlockedPanel` / `qa_arsenal_access_gate` em uso (verificado por grep). OK.
 
-> **O Arsenal Inteligente é gratuito e permanece acessível. O contrato assinado e validado libera apenas o serviço contratado, processo, checklist e execução operacional.**
+**Gap único encontrado:**
+- `create-client-user` lê e escreve em `public.customers` (tabela WMTi) — viola a regra "não usar customers". É chamado pela trigger `qa_vendas_provisionar_portal_on_pago` toda vez que uma venda QA vira `PAGO`.
 
-Não existe — e não deve voltar a existir — `qa_arsenal_access_gate`, `<ArsenalBlockedPanel>`, "Arsenal bloqueado", "Arsenal liberado por contrato", `arsenal_plano='premium'` automático ou qualquer condicional que negue ao cliente: visão do Arsenal, cadastro básico de acervo, consulta de documentos, alertas/vencimentos, recomendações ou contratação de novos serviços.
+### Decisão
 
-O bloqueio se aplica **somente** à execução operacional do serviço contratado (processo, checklist, protocolo, análise documental operacional daquele serviço) enquanto o contrato pago não estiver assinado e validado.
+Criar **uma** Edge Function QA-pura mínima e redirecionar a trigger. Sem arquitetura paralela: reaproveita `auth.admin`, `qa_clientes`, `send-smtp-email`, e os mesmos templates `qaArsenalWelcomeHtml/Text`. Sem novas tabelas, sem `cliente_auth_links`, sem alterar UI do portal/Arsenal.
 
-## Diagnóstico (auditoria já realizada)
+### Implementação
 
-Auditei o estado atual via `psql` e encontrei **dois problemas críticos** antes de tocar em qualquer outra coisa:
+**1) Nova Edge Function `qa-provisionar-acesso-portal`** (`supabase/functions/qa-provisionar-acesso-portal/index.ts`):
+- Auth: aceita `x-trigger-source: qa_vendas_pago` (anon key) **ou** `x-internal-token`.
+- Input: `{ qa_client_id, venda_id, origem_trigger }`.
+- Lógica idempotente:
+  1. `SELECT qa_clientes WHERE id = qa_client_id` (single source of truth).
+  2. Se `status = 'excluido_lgpd'` → `{ ok: true, skipped: 'lgpd' }`.
+  3. Se `email` vazio → registra `falha_envio_email` em `qa_processo_eventos`, retorna `{ ok: false, reason: 'no_email' }`.
+  4. `auth.admin.listUsers` por email; se existe → reusa (`existing_user`), atualiza `qa_clientes.user_id` se faltar, registra `acesso_portal_reutilizado`, **não envia novo convite** (a menos que `portal_provisionado_em` ainda esteja NULL — neste caso envia o e-mail informativo "seu serviço foi pago, contrato gerado, acesse o portal"). 
+  5. Se não existe → `auth.admin.createUser({ email, email_confirm: true, password: random32 })`, vincula em `qa_clientes` (set `user_id`, `portal_provisionado_em = now()`), envia e-mail QA com **link de ativação** (rota existente `/area-do-cliente/ativar` → fluxo OTP). Sem senha em texto puro.
+  6. Registra eventos: `acesso_portal_preparado_pos_pagamento`, `convite_acesso_enviado` ou `convite_acesso_reutilizado`.
+- **Não toca**: `customers`, `payments`, `contracts`, `quotes`, `post-purchase.ts`, `ensureClientAccess`.
 
-### Problema 1 — Trigger não gera contrato
+**2) Migração SQL** (`supabase/migrations/<timestamp>_qa_provisionar_acesso_portal.sql`):
+- Substitui o corpo de `qa_vendas_provisionar_portal_on_pago()` para invocar `qa-provisionar-acesso-portal` (mesmo padrão `pg_net.http_post` já usado).
+- Mantém todas as guardas: `OLD.status = 'PAGO'` early return, `excluido_lgpd` early return, `portal_provisionado_em IS NOT NULL` early return.
+- Mantém trigger `AFTER INSERT OR UPDATE OF status` — não alterar atributos da trigger.
 
-A trigger `qa_vendas_after_pago_generate_contract` **tem o nome certo, mas faz a coisa errada**: chama `qa_arsenal_processar_pagamento_venda(NEW.id)`, que faz upgrade do Arsenal para "premium" — **não** gera contrato. Por isso a venda 999901 está `PAGO` há horas e **não existe nenhum registro em `qa_contracts` / `qa_contract_items` / `qa_contract_events`**.
+**3) Não alterar:**
+- `create-client-user` permanece para uso WMTi legado (não removido).
+- `ensure-client-access` permanece para uso WMTi legado.
+- UI do portal, Arsenal, login, ativação, redefinir-senha.
+- Webhook Asaas.
+- `qa-generate-contract`.
 
-A edge `qa-generate-contract` existe e está pronta (snapshot dos itens, PDF, SHA-256, status `generated_pending_company_signature`, idempotente por `UNIQUE(venda_id)`), mas **ninguém a chama no fluxo automático**.
+**4) Testes** (`src/lib/quero-armas/__tests__/acessoPortalPosPagamento.test.ts`):
+1. Função `qa-provisionar-acesso-portal` source NÃO contém: `from("customers")`, `payments`, `quotes`, `post-purchase`, `ensureClientAccess`.
+2. Trigger SQL na nova migração chama `qa-provisionar-acesso-portal`, não `create-client-user`.
+3. `QAClientePortalPage` importa `ContratosPosPagamentoCard` e não importa `ArsenalGate/ArsenalBlockedPanel`.
+4. `QAArsenalDigitalGratuitoPage` não tem gate (`ArsenalGate|ArsenalBlockedPanel|qa_arsenal_access_gate`).
+5. `ContratosPosPagamentoCard` exibe badge "AGUARDANDO CONTRATO ASSINADO" + botão download (já existe — manter regressão).
+6. `qa-cliente-reenviar-boas-vindas` continua usando `qa_clientes` + `send-smtp-email`.
 
-### Problema 2 — Arsenal hoje é tratado como premium pago
+**5) Validação:**
+- `npm run typecheck`, `npm run test`, `npm run build`.
+- Deploy `qa-provisionar-acesso-portal`.
 
-O schema/triggers atuais assumem o modelo antigo:
-- `qa_clientes.arsenal_plano` ('free' / 'premium'), `arsenal_status`
-- Trigger `trg_qa_vendas_arsenal_upgrade*` faz `arsenal_plano='premium'` no PAGO
-- Notificação "Seu Arsenal Premium foi liberado!"
-- `.lovable/plan.md` inteiro descreve `qa_arsenal_access_gate`, `<ArsenalBlockedPanel>`, RLS bloqueando Arsenal
+### Fora do escopo (FASE 2C-6)
+- Upload do contrato assinado.
+- Validação ICP-Brasil/GOV.BR do PDF assinado.
+- Liberação de processo/checklist/execução operacional.
+- Bloqueio "tentativa_acesso_servico_bloqueado_por_contrato_pendente" (depende do gate operacional, que ainda não existe).
 
-Isso **viola a nova regra**: "Arsenal Inteligente é gratuito e nunca deve ser bloqueado".
+### Resumo das proibições respeitadas
+- Sem WMTi (`customers/payments/contracts/quotes`).
+- Sem `post-purchase.ts`, sem `ensureClientAccess`.
+- Sem `ArsenalGate`, sem `ArsenalBlockedPanel`, sem `qa_arsenal_access_gate`.
+- Sem criação de processo/checklist.
+- Sem senha em texto puro no e-mail (link de ativação OTP).
+- Sem duplicação de cliente/usuário (idempotente por `email` + `portal_provisionado_em`).
+- Sem alteração do webhook ou do contrato.
 
-A venda 999901 também não tem `qa_itens_venda` (zero linhas), então preciso criar uma segunda venda de teste com itens para validar o snapshot real.
+## Regra canônica Arsenal
 
-## Escopo
-
-### TAREFA 1 — `.lovable/plan.md`
-Reescrever as seções 4, 9, 11 e a Fase 2C-4 do plano. Remover toda menção a `qa_arsenal_access_gate`, `<ArsenalBlockedPanel>`, "Arsenal bloqueado/liberado por contrato". Substituir pela regra: "Arsenal é gratuito e permanece acessível. O contrato assinado libera apenas o serviço contratado, processo, checklist e execução operacional."
-
-### TAREFA 2 — Corrigir trigger pós-pagamento (migration mínima)
-Substituir o corpo da função `qa_vendas_after_pago_invoke_contract()` para realmente invocar `qa-generate-contract` via `pg_net.http_post` (mesmo padrão de `qa_vendas_provisionar_portal_on_pago`):
-- Dispara só na transição `OLD.status <> 'PAGO' AND NEW.status = 'PAGO'`
-- Idempotente (a edge já garante via `UNIQUE(venda_id)`)
-- **Não** chama Arsenal, processo, checklist, WMTi
-
-Desativar `trg_qa_vendas_arsenal_upgrade` e `trg_qa_vendas_arsenal_upgrade_insert` (Arsenal é gratuito para todos). **Não** removo as colunas `arsenal_plano`/`arsenal_status` (zero regression).
-
-Webhook `qa-asaas-webhook` continua só mudando `qa_vendas` para PAGO — não chama contrato manualmente.
-
-### TAREFA 3 — Status do contrato
-Mantenho o existente: `status='generated_pending_company_signature'` na criação. Schema já cobre `venda_id`, `cliente_id`, `status`, `original_sha256`, `original_pdf_path`, `issued_at`, `created_at`, `updated_at` + tabela de eventos. Nada novo precisa.
-
-### TAREFA 4 — Portal (`QAClientePortalPage.tsx`)
-Adicionar **um card "Contratos pós-pagamento"** que lista, por venda PAGA do cliente:
-- Número da venda + valor + data
-- Status do contrato (gerado / aguardando assinatura)
-- Botão "Baixar contrato" (chama `qa-serve-contract-pdf` existente)
-- Texto: "Assine digitalmente pelo GOV.BR/ICP-Brasil e envie o PDF assinado."
-- Lista de itens contratados, cada um com badge **"Aguardando contrato assinado"**
-
-**Não** adicionar gate, wrapper, ou bloqueio em nada do Arsenal. Cadastro acervo, documentos, alertas, recomendações, contratação continuam livres.
-
-### TAREFA 5 — Serviço aguardando contrato
-Apenas representação **visual** no card acima. **Não** crio `qa_solicitacoes_servico` agora (risco de misturar arquitetura, conforme orientação da fase). Os itens vivem em `qa_contract_items` com status derivado do contrato pai.
-
-### TAREFA 6 — Acesso ao portal
-A trigger `qa_vendas_provisionar_portal_on_pago` **já existe** e provisiona acesso no PAGO. Não mexo. Documento o fluxo no resumo final.
-
-### TAREFA 7 — Auditoria
-Eventos novos em `qa_contract_events`:
-- `contrato_gerado_pos_pagamento` (registrado pela edge logo após `generated`)
-- `contrato_disponibilizado_portal` (registrado no primeiro fetch do portal)
-
-`servico_aguardando_contrato_assinado` é estado derivado — sem evento próprio. **Nunca** registro "arsenal bloqueado".
-
-### TAREFA 8 — Testes
-Novo arquivo `src/lib/quero-armas/__tests__/contratoPosPagamento.test.ts` validando:
-1. Snapshot — alteração no catálogo não muda `qa_contract_items`
-2. Status PAGO → contrato esperado; outros status → não
-3. Webhook não chama `qa-generate-contract` (grep no source da edge)
-4. Arsenal não é bloqueado por contrato pendente (UI helper)
-5. Sem referências a `payments/contracts/quotes/customers/post-purchase/ensureClientAccess`
-6. Trigger não cria processo/checklist
-
-Itens "contrato aparece no portal" e "venda PAGO real gera contrato" são validados manualmente com `psql` + venda de teste 999902 (com itens). Resultado entregue no resumo.
-
-### TAREFA 9 — Limpeza de teste
-Marcar 999901 e 999902 com `observacoes_internas='[TESTE 2C-4 SANDBOX]'` para não contaminar painel operacional.
-
-## Arquivos alterados
-
-| Arquivo | Mudança |
-|---|---|
-| `.lovable/plan.md` | Reescrita das seções de Arsenal |
-| `supabase/migrations/<novo>.sql` | `qa_vendas_after_pago_invoke_contract` chama qa-generate-contract via pg_net; desativa triggers de Arsenal upgrade |
-| `supabase/functions/qa-generate-contract/index.ts` | Adicionar evento `contrato_gerado_pos_pagamento` |
-| `src/pages/quero-armas/QAClientePortalPage.tsx` | Card "Contratos pós-pagamento" + itens aguardando |
-| `src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx` | Novo componente (manter portal page legível) |
-| `src/lib/quero-armas/__tests__/contratoPosPagamento.test.ts` | Novo arquivo de testes |
-| `mem://index.md` | Core: "Arsenal sempre gratuito; contrato libera só o serviço" |
-
-## O que **não** vou fazer
-- Não criar processo, checklist, protocolo, `qa_solicitacoes_servico`
-- Não validar assinatura digital ainda
-- Não chamar `qa-generate-contract` pelo webhook
-- Não tocar `asaas-webhook` legado, WMTi, `payments/contracts/quotes/customers`, `post-purchase.ts`, `ensureClientAccess`
-- Não bloquear nada do Arsenal
-- Não remover colunas `arsenal_plano/arsenal_status` (apenas desativo trigger)
-
-## Validação final
-`npm run typecheck` + testes unitários + `npm run build` + curl manual da edge na venda 999902. Resumo nos 10 itens pedidos.
-
-Aprova para eu executar?
+**Arsenal Inteligente é gratuito** e permanece acessível para todo cliente. Contrato assinado libera apenas execução do serviço contratado.
