@@ -20,6 +20,7 @@ import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
+import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
