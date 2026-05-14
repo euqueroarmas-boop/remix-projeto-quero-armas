@@ -75,11 +75,29 @@ describe("FASE 2C-7 — qa-liberar-servicos-contrato", () => {
     expect(src).toMatch(/gera_processo/);
   });
 
-  it("upsert de qa_solicitacoes_servico por cliente_id+service_slug (idempotente)", () => {
+  it("lookup primário por item_venda_id, fallback por (venda_id, servico_id)", () => {
     const src = r(FN);
     expect(src).toMatch(/qa_solicitacoes_servico/);
-    expect(src).toMatch(/service_slug/);
+    expect(src).toMatch(/\.eq\("item_venda_id",\s*it\.item_venda_id\)/);
+    expect(src).toMatch(/\.eq\("venda_id",\s*venda\.id\)[\s\S]*?\.eq\("servico_id",\s*servicoId\)[\s\S]*?\.is\("cadastro_publico_id",\s*null\)/);
     expect(src).toMatch(/origem:\s*"contrato_validado"/);
+  });
+
+  it("não sobrescreve solicitação de outra venda; recompra cria nova", () => {
+    const src = r(FN);
+    // O reuso só atualiza status quando mesmaVenda; e nunca altera venda_id/item_venda_id/servico_id/service_name no UPDATE.
+    expect(src).toMatch(/mesmaVenda\s*=\s*existSol\.venda_id\s*===\s*venda\.id/);
+    expect(src).toMatch(/liberacao_recompra_mesmo_servico_detectada/);
+    expect(src).toMatch(/solicitacao_manual_slug_cliente_ignorada_por_venda_diferente/);
+    // Não pode existir UPDATE setando venda_id/item_venda_id de uma solicitação encontrada
+    expect(src).not.toMatch(/\.update\(\{[^}]*venda_id:\s*venda\.id[^}]*\}\)\s*\.eq\("id",\s*existSol\.id\)/);
+  });
+
+  it("registra eventos de reuso por item_venda e venda_servico", () => {
+    const src = r(FN);
+    expect(src).toMatch(/solicitacao_servico_reutilizada_por_item_venda/);
+    expect(src).toMatch(/solicitacao_servico_reutilizada_por_venda_servico/);
+    expect(src).toMatch(/solicitacao_servico_criada_por_item_venda/);
   });
 
   it("idempotência de qa_processos por (venda_id, servico_id)", () => {
@@ -142,6 +160,16 @@ describe("FASE 2C-7 — migração de banco", () => {
     // Pré-condição financeira no trigger
     expect(sql).toMatch(/upper\(btrim\(v_venda\.status\)\)\s*<>\s*'PAGO'/);
     expect(sql).toMatch(/cobranca_status IS DISTINCT FROM 'confirmada'/);
+  });
+});
+
+describe("FASE 2C-7.1 — migração de idempotência de solicitações", () => {
+  it("cria índices únicos por item_venda_id e (venda_id, servico_id) e restringe legado", () => {
+    const sql = latestMigrationContaining("uq_qa_solicitacoes_item_venda");
+    expect(sql).toMatch(/CREATE UNIQUE INDEX IF NOT EXISTS uq_qa_solicitacoes_item_venda[\s\S]*item_venda_id[\s\S]*WHERE item_venda_id IS NOT NULL/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX IF NOT EXISTS uq_qa_solicitacoes_venda_servico[\s\S]*\(venda_id, servico_id\)[\s\S]*cadastro_publico_id IS NULL/);
+    expect(sql).toMatch(/DROP INDEX IF EXISTS public\.uq_qa_solicitacoes_cli_slug_manual/);
+    expect(sql).toMatch(/CREATE UNIQUE INDEX uq_qa_solicitacoes_cli_slug_manual[\s\S]*venda_id IS NULL/);
   });
 });
 
