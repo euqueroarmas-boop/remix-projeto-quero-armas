@@ -20,6 +20,7 @@ import { Camera, Wand2 } from "lucide-react";
 import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
+import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -1680,6 +1681,13 @@ export default function QAClientePortalPage() {
                 </div>
               )}
             </div>
+          </SectionCard>
+        )}
+
+        {/* ═══ CONTRATOS PÓS-PAGAMENTO (FASE 2C-4) ═══ */}
+        {vendas.length > 0 && (
+          <SectionCard icon={FileText} title="Contratos pós-pagamento" color="hsl(352 60% 30%)">
+            <ContratosPosPagamentoCard clienteIdLegado={getClienteFK(cliente)} />
           </SectionCard>
         )}
 

@@ -227,7 +227,12 @@ Deno.serve(async (req) => {
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   const isServiceRole =
     authHeader.startsWith("Bearer ") && authHeader.slice(7).trim() === serviceRole;
-  if (!isServiceRole) {
+  // FASE 2C-4: aceita também invocação da trigger Postgres `qa_vendas_after_pago_invoke_contract`
+  // (anon key + header `x-trigger-source: qa_vendas_pago_contract`). É seguro porque a função
+  // só age sobre vendas com status='PAGO' já gravado em DB e é idempotente (UNIQUE venda_id).
+  const triggerSource = req.headers.get("x-trigger-source") || "";
+  const isTriggerCall = triggerSource === "qa_vendas_pago_contract";
+  if (!isServiceRole && !isTriggerCall) {
     const guard = await requireAdminOrInternal(req);
     if (!guard.ok) return guard.response;
   }
@@ -382,6 +387,18 @@ Deno.serve(async (req) => {
     contract_id: contract.id,
     event_type: "generated",
     event_payload: { contract_number: contractNumber, sha256: originalSha, items: snapshot.length },
+  });
+
+  // FASE 2C-4: evento de auditoria semântico do fluxo pós-pagamento
+  await sb.from("qa_contract_events").insert({
+    contract_id: contract.id,
+    event_type: "contrato_gerado_pos_pagamento",
+    event_payload: {
+      venda_id: vendaId,
+      cliente_id: venda.cliente_id,
+      contract_number: contractNumber,
+      trigger_source: isTriggerCall ? triggerSource : (isServiceRole ? "service_role" : "admin"),
+    },
   });
 
   return jsonResp({
