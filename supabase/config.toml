@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.qa-checkout-criar-venda]
 verify_jwt = false
+
+[functions.qa-checkout-iniciar-pagamento]
+verify_jwt = false

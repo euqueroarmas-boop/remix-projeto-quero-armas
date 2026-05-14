@@ -3,6 +3,7 @@
 // Isolado: NÃO usa payments/contracts/quotes/customers/post-purchase/ensureClientAccess.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { generateCheckoutToken } from "../_shared/qaAsaas.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -238,6 +239,8 @@ Deno.serve(async (req) => {
   });
 
   // Cria qa_vendas.
+  const token = await generateCheckoutToken();
+  const tokenExpiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
   const { data: vendaIns, error: errVenda } = await admin
     .from("qa_vendas")
     .insert({
@@ -249,6 +252,8 @@ Deno.serve(async (req) => {
       cobranca_status: "nao_gerada",
       cobranca_origem: "checkout_site",
       origem_proposta: "checkout_site",
+      checkout_token_hash: token.hash,
+      checkout_token_expires_at: tokenExpiresAt,
     })
     .select("id, id_legado")
     .single();
@@ -301,9 +306,14 @@ Deno.serve(async (req) => {
     JSON.stringify({
       ok: true,
       venda_id: vendaId,
+      id_legado: vendaIdLegado,
       qa_cliente_id: qaClienteId,
       total: totalCents / 100,
       itens: itensSnapshot.length,
+      status: "À INICIAR",
+      cobranca_status: "nao_gerada",
+      checkout_token: token.token,
+      checkout_token_expires_at: tokenExpiresAt,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
