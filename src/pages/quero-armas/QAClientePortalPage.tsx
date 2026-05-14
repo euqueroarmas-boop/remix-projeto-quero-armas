@@ -1684,6 +1684,13 @@ export default function QAClientePortalPage() {
           </SectionCard>
         )}
 
+        {/* ═══ CONTRATOS PÓS-PAGAMENTO (FASE 2C-4) ═══ */}
+        {vendas.length > 0 && (
+          <SectionCard icon={FileText} title="Contratos pós-pagamento" color="hsl(352 60% 30%)">
+            <ContratosPosPagamentoCard clienteIdLegado={getClienteFK(cliente)} />
+          </SectionCard>
+        )}
+
         {/* ═══ TIMELINE ═══ */}
         {timeline.length > 0 && (
           <SectionCard icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)">
