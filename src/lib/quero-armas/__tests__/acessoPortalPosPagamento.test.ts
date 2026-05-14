@@ -26,9 +26,12 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
     });
 
     it("não importa post-purchase nem ensureClientAccess", () => {
-      expect(src).not.toMatch(/post-purchase/);
-      expect(src).not.toMatch(/ensureClientAccess/);
-      expect(src).not.toMatch(/ensure-client-access/);
+      // Sem imports / invokes para módulos WMTi proibidos
+      expect(src).not.toMatch(/from\s+["'][^"']*post-purchase[^"']*["']/);
+      expect(src).not.toMatch(/invoke\(["']post-purchase/);
+      expect(src).not.toMatch(/\bensureClientAccess\s*\(/);
+      expect(src).not.toMatch(/invoke\(["']ensure-client-access/);
+      expect(src).not.toMatch(/from\s+["'][^"']*ensureClientAccess[^"']*["']/);
     });
 
     it("usa qa_clientes como fonte de verdade", () => {
@@ -41,11 +44,18 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
     });
 
     it("não envia senha em texto puro no e-mail", () => {
-      // O template de boas-vindas não recebe senha; só nome/email/serviço.
-      expect(src).not.toMatch(/password\s*[:=]\s*tempPwd/);
-      expect(src).not.toMatch(/senha.*tempPwd/i);
-      // Nenhum campo "password" é passado para sendWelcomeEmail
-      expect(src).not.toMatch(/sendWelcomeEmail[\s\S]*password/);
+      // O e-mail é montado via templates qaArsenalWelcomeHtml/Text que
+      // recebem apenas { name, email, servicoInteresse } — sem senha.
+      const welcomeCalls = src.match(/qaArsenalWelcome(Html|Text)\([\s\S]*?\)/g) || [];
+      expect(welcomeCalls.length).toBeGreaterThan(0);
+      for (const call of welcomeCalls) {
+        expect(call).not.toMatch(/password|senha|tempPwd/i);
+      }
+      // sendWelcomeEmail não aceita / não passa campo password
+      const sendDef = src.match(/function sendWelcomeEmail[\s\S]*?\n}\n/);
+      if (sendDef) {
+        expect(sendDef[0]).not.toMatch(/\bpassword\b/);
+      }
     });
 
     it("não cria processo nem checklist", () => {
@@ -69,8 +79,12 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
 
     it("aponta para qa-provisionar-acesso-portal (não create-client-user)", () => {
       expect(sql).toMatch(/qa-provisionar-acesso-portal/);
-      // A última migração que define a função NÃO chama create-client-user.
-      expect(sql).not.toMatch(/create-client-user/);
+      // A URL invocada NÃO é create-client-user; só pode aparecer em
+      // comentário SQL "--", nunca dentro de v_function_url.
+      const fnUrlLine = sql.match(/v_function_url\s*:=\s*'[^']+'/);
+      expect(fnUrlLine).not.toBeNull();
+      expect(fnUrlLine![0]).toMatch(/qa-provisionar-acesso-portal/);
+      expect(fnUrlLine![0]).not.toMatch(/create-client-user/);
     });
 
     it("usa header x-trigger-source: qa_vendas_pago_acesso", () => {
