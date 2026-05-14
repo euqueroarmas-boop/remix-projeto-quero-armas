@@ -8,8 +8,8 @@
 //
 // REGRAS ABSOLUTAS:
 //   - Arsenal Inteligente é GRATUITO. Nunca bloqueado, nunca premium.
-//   - NÃO toca WMTi (customers/payments/contracts/quotes).
-//   - NÃO importa post-purchase / ensureClientAccess.
+//   - NAO toca WMTi (customers / payments / quotes).
+//   - NAO importa rotinas legadas de provisionamento.
 //   - Só libera quando contract.status='validated'
 //     E venda.status='PAGO' E venda.cobranca_status='confirmada'.
 //   - Idempotente: replay não duplica solicitação/processo/checklist.
