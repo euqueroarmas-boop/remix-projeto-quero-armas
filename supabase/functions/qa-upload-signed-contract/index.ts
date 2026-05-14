@@ -52,14 +52,25 @@ Deno.serve(async (req) => {
 
   const sb = svc();
 
-  // Resolve cliente
+  // Resolve cliente — primeiro tenta cliente_auth_links (legado), depois qa_clientes.user_id
+  // (fluxo QA-puro provisionado pela FASE 2C-5).
+  let clienteId: number | null = null;
   const { data: link } = await sb
     .from("cliente_auth_links")
     .select("qa_cliente_id, status")
     .eq("user_id", userId)
     .eq("status", "active")
     .maybeSingle();
-  const clienteId = (link as any)?.qa_cliente_id ?? null;
+  if ((link as any)?.qa_cliente_id) {
+    clienteId = (link as any).qa_cliente_id as number;
+  } else {
+    const { data: cli } = await sb
+      .from("qa_clientes")
+      .select("id_legado")
+      .eq("user_id", userId)
+      .maybeSingle();
+    clienteId = (cli as any)?.id_legado ?? null;
+  }
   if (!clienteId) return jsonResp({ error: "Cliente não vinculado" }, 403);
 
   // Body: multipart (file) OU base64 JSON
@@ -128,7 +139,7 @@ Deno.serve(async (req) => {
 
   await sb.from("qa_contract_events").insert({
     contract_id: contractId,
-    event_type: "customer_uploaded",
+    event_type: "contrato_assinado_enviado",
     event_payload: { sha256: sig, size: pdfBytes.byteLength },
   });
 
