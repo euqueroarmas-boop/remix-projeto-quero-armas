@@ -124,7 +124,11 @@ describe("FASE 2C-6 — Trigger de liberação operacional NÃO cria processo", 
   function latestMigration(): string {
     const dir = join(ROOT, "supabase/migrations");
     const files = readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
-    return readFileSync(join(dir, files[files.length - 1]), "utf8");
+    for (let i = files.length - 1; i >= 0; i--) {
+      const txt = readFileSync(join(dir, files[i]), "utf8");
+      if (txt.includes("qa_contracts_after_validated_release")) return txt;
+    }
+    throw new Error("migração com qa_contracts_after_validated_release não encontrada");
   }
 
   it("migration mais recente substitui qa_contracts_after_validated_release sem inserir qa_solicitacoes_servico", () => {
