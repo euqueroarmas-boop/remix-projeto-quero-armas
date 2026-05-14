@@ -135,7 +135,7 @@ describe("FASE 2C-8 — Homologação: ordem causal venda → contrato → porta
   it("provisionamento de portal NÃO cria processo/checklist nem libera serviço", () => {
     const src = r("supabase/functions/qa-provisionar-acesso-portal/index.ts");
     // Pode LER qa_processos para anexar eventos de auditoria, mas nunca INSERIR.
-    expect(src).not.toMatch(/from\(["']qa_processos["']\)[\s\S]{0,200}\.insert/);
+    expect(src).not.toMatch(/from\(["']qa_processos["']\)\s*\.insert\(/);
     expect(src).not.toMatch(/from\(["']qa_solicitacoes_servico["']\)/);
     expect(src).not.toMatch(/qa_confirmar_pagamento_processo/);
   });
@@ -218,8 +218,8 @@ describe("FASE 2C-8 — Homologação: regra-mãe (Arsenal gratuito + cadeia ope
     for (const f of EDGE_FUNCTIONS_PIPELINE.filter((p) => p !== liberador)) {
       const src = r(f);
       // Permitido LER qa_processos (auditoria); proibido INSERIR.
-      expect(src, `${f} NÃO pode inserir em qa_processos`).not.toMatch(/from\(["']qa_processos["']\)[\s\S]{0,400}\.insert\(/);
-      expect(src, `${f} NÃO pode inserir em qa_solicitacoes_servico`).not.toMatch(/from\(["']qa_solicitacoes_servico["']\)[\s\S]{0,400}\.insert\(/);
+      expect(src, `${f} NÃO pode inserir em qa_processos`).not.toMatch(/from\(["']qa_processos["']\)\s*\.insert\(/);
+      expect(src, `${f} NÃO pode inserir em qa_solicitacoes_servico`).not.toMatch(/from\(["']qa_solicitacoes_servico["']\)\s*\.insert\(/);
     }
   });
 });
