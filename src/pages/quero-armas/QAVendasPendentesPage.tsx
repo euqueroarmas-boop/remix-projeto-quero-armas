@@ -675,6 +675,25 @@ export default function QAVendasPendentesPage() {
                         <b>Motivo correção:</b> {v.motivo_correcao}
                       </div>
                     )}
+
+                    {/* FASE 2B-1: diagnóstico de cobrança (read-only, sem botão de geração) */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <span className="uppercase tracking-wider text-slate-400 font-bold">Cobrança:</span>
+                      {v.asaas_payment_id ? (
+                        <>
+                          <span className="px-1.5 py-0.5 rounded border border-[#E5C2C6] bg-[#FBF3F4] text-[#7A1F2B] font-mono">
+                            {v.asaas_payment_id}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700 uppercase">
+                            {v.cobranca_status || "—"}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 italic">
+                          Cobrança não gerada
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Ações */}
