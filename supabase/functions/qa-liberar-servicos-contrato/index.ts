@@ -17,12 +17,18 @@
 //   - Catálogo (qa_servicos_catalogo.gera_processo) decide se cria
 //     qa_processos. Curso/serviço sem processo só recebe solicitação.
 //
-// Auth aceita:
-//   - x-trigger-source: qa_contract_validated (anon, pg_net da trigger), OU
-//   - x-internal-token: INTERNAL_FUNCTION_TOKEN (admin/manual).
+// Auth aceita APENAS:
+//   - x-internal-token = QA_CONTRACT_RELEASE_TOKEN (preferencial, usado pela
+//     trigger qa_contracts_after_validated_release via pg_net + vault), OU
+//   - x-internal-token = INTERNAL_FUNCTION_TOKEN (fallback admin/manual), OU
+//   - JWT válido de membro ativo da Equipe Quero Armas (qa_usuarios_perfis.ativo).
+//
+// O header `x-trigger-source` é APENAS metadado de auditoria — sozinho NUNCA
+// autoriza a chamada (FASE 2C-7.2 — endurecimento de segurança).
 // =====================================================================
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+import { requireQAStaff } from "../_shared/qaAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,15 +53,42 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function authorize(req: Request): { ok: true } | { ok: false; reason: string } {
-  const triggerSource = req.headers.get("x-trigger-source") || "";
-  if (triggerSource === TRIGGER_SOURCE) return { ok: true };
+/**
+ * Autorização endurecida (FASE 2C-7.2):
+ *  - x-internal-token deve casar QA_CONTRACT_RELEASE_TOKEN OU
+ *    INTERNAL_FUNCTION_TOKEN (constant-time compare); OU
+ *  - JWT válido de staff QA ativo.
+ * O header x-trigger-source é apenas metadado e NUNCA autoriza sozinho.
+ */
+async function authorize(
+  req: Request,
+): Promise<
+  | { ok: true; via: "release_token" | "internal_token" | "qa_staff"; userId?: string }
+  | { ok: false; reason: string; status: number }
+> {
   const internalToken = req.headers.get("x-internal-token") || "";
-  const expected = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
-  if (internalToken && expected && timingSafeEqual(internalToken, expected)) {
-    return { ok: true };
+  const releaseExpected = Deno.env.get("QA_CONTRACT_RELEASE_TOKEN") || "";
+  if (
+    internalToken && releaseExpected &&
+    timingSafeEqual(internalToken, releaseExpected)
+  ) {
+    return { ok: true, via: "release_token" };
   }
-  return { ok: false, reason: "unauthorized" };
+  const fallbackExpected = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
+  if (
+    internalToken && fallbackExpected &&
+    timingSafeEqual(internalToken, fallbackExpected)
+  ) {
+    return { ok: true, via: "internal_token" };
+  }
+
+  // Permitir chamada manual SOMENTE com JWT de staff QA ativo.
+  if ((req.headers.get("Authorization") || "").startsWith("Bearer ")) {
+    const guard = await requireQAStaff(req);
+    if (guard.ok) return { ok: true, via: "qa_staff", userId: guard.userId };
+  }
+
+  return { ok: false, reason: "unauthorized", status: 401 };
 }
 
 async function recordContractEvent(
@@ -79,8 +112,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  const auth = authorize(req);
-  if (!auth.ok) return json({ error: auth.reason }, 401);
+  const auth = await authorize(req);
+  if (!auth.ok) return json({ error: auth.reason }, auth.status);
+  const triggerSourceMeta = req.headers.get("x-trigger-source") || null;
 
   let body: any = {};
   try { body = await req.json(); } catch { /* ignore */ }
@@ -89,6 +123,8 @@ Deno.serve(async (req) => {
   if (!contractId || typeof contractId !== "string") {
     return json({ error: "contract_id_required" }, 400);
   }
+  // Apenas auditoria — não influencia decisão.
+  void triggerSourceMeta; void TRIGGER_SOURCE;
 
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
