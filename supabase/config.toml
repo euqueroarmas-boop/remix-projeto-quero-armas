@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.qa-processo-prazo-alertas]
 verify_jwt = false
+
+[functions.qa-asaas-webhook]
+verify_jwt = false

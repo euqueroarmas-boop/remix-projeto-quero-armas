@@ -2564,6 +2564,48 @@ export type Database = {
           },
         ]
       }
+      qa_asaas_webhook_events: {
+        Row: {
+          asaas_payment_id: string | null
+          created_at: string
+          error_message: string | null
+          event: string
+          event_key: string
+          external_reference: string | null
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          status: string
+          venda_id: number | null
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event: string
+          event_key: string
+          external_reference?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          status?: string
+          venda_id?: number | null
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event?: string
+          event_key?: string
+          external_reference?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          status?: string
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
       qa_cadastro_cr: {
         Row: {
           check_exame_tiro: boolean | null
