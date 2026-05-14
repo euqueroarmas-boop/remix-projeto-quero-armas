@@ -45,6 +45,9 @@ interface VendaRow {
   motivo_correcao: string | null;
   data_cadastro: string | null;
   forma_pagamento: string | null;
+  // FASE 2B-1: vínculo de cobrança (somente leitura — geração ocorre na 2B-2)
+  asaas_payment_id?: string | null;
+  cobranca_status?: string | null;
 }
 
 interface ClienteLite {
@@ -367,7 +370,7 @@ export default function QAVendasPendentesPage() {
       // 1) Vendas — últimos 90 dias OU sem aprovação ainda. Limitamos a 300 p/ performance.
       const { data: vRes, error: vErr } = await supabase
         .from("qa_vendas" as any)
-        .select("id, id_legado, cliente_id, status, status_validacao_valor, valor_a_pagar, valor_informado_cliente, valor_aprovado, origem_proposta, motivo_correcao, data_cadastro, forma_pagamento")
+        .select("id, id_legado, cliente_id, status, status_validacao_valor, valor_a_pagar, valor_informado_cliente, valor_aprovado, origem_proposta, motivo_correcao, data_cadastro, forma_pagamento, asaas_payment_id, cobranca_status")
         .order("data_cadastro", { ascending: false, nullsFirst: false })
         .limit(300);
       if (vErr) throw vErr;
