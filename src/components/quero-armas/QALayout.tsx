@@ -1,5 +1,5 @@
 import { QASidebar } from "./QASidebar";
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet, Navigate, useLocation } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
@@ -7,8 +7,26 @@ import { lazy, Suspense } from "react";
 
 const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal"));
 
+/**
+ * Guarda de rota por perfil — espelha as regras do QASidebar.canAccess
+ * para impedir acesso direto via URL (não confiar só no menu lateral).
+ * Mantém compatibilidade com perfil legado "administrador" (acesso total).
+ */
+function canAccessRoute(perfil: string, pathname: string): boolean {
+  const blockedForLeitura = ["/gerar-peca", "/modelos-docx", "/correcoes-ia", "/correcoes-ia/"];
+  const blockedForAssistente = ["/configuracoes"];
+  if (perfil === "leitura_auditoria") {
+    return !blockedForLeitura.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  }
+  if (perfil === "assistente_juridico") {
+    return !blockedForAssistente.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  }
+  return true;
+}
+
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -23,6 +41,11 @@ function QALayoutInner() {
 
   if (!user || !profile) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Per-route permission check by perfil. Rejeita acesso direto via URL.
+  if (!canAccessRoute(profile.perfil, location.pathname)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
