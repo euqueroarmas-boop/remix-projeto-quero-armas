@@ -1,6 +1,14 @@
 
 # FASE 2C-4 — Contrato pós-pagamento, Arsenal sempre gratuito
 
+## Regra de negócio canônica (Arsenal Inteligente)
+
+> **O Arsenal Inteligente é gratuito e permanece acessível. O contrato assinado e validado libera apenas o serviço contratado, processo, checklist e execução operacional.**
+
+Não existe — e não deve voltar a existir — `qa_arsenal_access_gate`, `<ArsenalBlockedPanel>`, "Arsenal bloqueado", "Arsenal liberado por contrato", `arsenal_plano='premium'` automático ou qualquer condicional que negue ao cliente: visão do Arsenal, cadastro básico de acervo, consulta de documentos, alertas/vencimentos, recomendações ou contratação de novos serviços.
+
+O bloqueio se aplica **somente** à execução operacional do serviço contratado (processo, checklist, protocolo, análise documental operacional daquele serviço) enquanto o contrato pago não estiver assinado e validado.
+
 ## Diagnóstico (auditoria já realizada)
 
 Auditei o estado atual via `psql` e encontrei **dois problemas críticos** antes de tocar em qualquer outra coisa:
