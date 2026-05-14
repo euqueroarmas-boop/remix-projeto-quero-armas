@@ -7943,7 +7943,18 @@ export type Database = {
         Row: {
           aprovado_em: string | null
           aprovado_por: string | null
+          asaas_bank_slip_url: string | null
+          asaas_customer_id: string | null
+          asaas_due_date: string | null
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
+          asaas_pix_payload: string | null
+          asaas_subscription_id: string | null
           cliente_id: number
+          cobranca_confirmada_em: string | null
+          cobranca_gerada_em: string | null
+          cobranca_origem: string | null
+          cobranca_status: string | null
           created_at: string
           data_cadastro: string | null
           data_deferimento: string | null
@@ -7968,7 +7979,18 @@ export type Database = {
         Insert: {
           aprovado_em?: string | null
           aprovado_por?: string | null
+          asaas_bank_slip_url?: string | null
+          asaas_customer_id?: string | null
+          asaas_due_date?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          asaas_pix_payload?: string | null
+          asaas_subscription_id?: string | null
           cliente_id: number
+          cobranca_confirmada_em?: string | null
+          cobranca_gerada_em?: string | null
+          cobranca_origem?: string | null
+          cobranca_status?: string | null
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null
@@ -7993,7 +8015,18 @@ export type Database = {
         Update: {
           aprovado_em?: string | null
           aprovado_por?: string | null
+          asaas_bank_slip_url?: string | null
+          asaas_customer_id?: string | null
+          asaas_due_date?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          asaas_pix_payload?: string | null
+          asaas_subscription_id?: string | null
           cliente_id?: number
+          cobranca_confirmada_em?: string | null
+          cobranca_gerada_em?: string | null
+          cobranca_origem?: string | null
+          cobranca_status?: string | null
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null

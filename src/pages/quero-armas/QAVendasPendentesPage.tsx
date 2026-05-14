@@ -45,6 +45,9 @@ interface VendaRow {
   motivo_correcao: string | null;
   data_cadastro: string | null;
   forma_pagamento: string | null;
+  // FASE 2B-1: vínculo de cobrança (somente leitura — geração ocorre na 2B-2)
+  asaas_payment_id?: string | null;
+  cobranca_status?: string | null;
 }
 
 interface ClienteLite {
@@ -367,7 +370,7 @@ export default function QAVendasPendentesPage() {
       // 1) Vendas — últimos 90 dias OU sem aprovação ainda. Limitamos a 300 p/ performance.
       const { data: vRes, error: vErr } = await supabase
         .from("qa_vendas" as any)
-        .select("id, id_legado, cliente_id, status, status_validacao_valor, valor_a_pagar, valor_informado_cliente, valor_aprovado, origem_proposta, motivo_correcao, data_cadastro, forma_pagamento")
+        .select("id, id_legado, cliente_id, status, status_validacao_valor, valor_a_pagar, valor_informado_cliente, valor_aprovado, origem_proposta, motivo_correcao, data_cadastro, forma_pagamento, asaas_payment_id, cobranca_status")
         .order("data_cadastro", { ascending: false, nullsFirst: false })
         .limit(300);
       if (vErr) throw vErr;
@@ -672,6 +675,25 @@ export default function QAVendasPendentesPage() {
                         <b>Motivo correção:</b> {v.motivo_correcao}
                       </div>
                     )}
+
+                    {/* FASE 2B-1: diagnóstico de cobrança (read-only, sem botão de geração) */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <span className="uppercase tracking-wider text-slate-400 font-bold">Cobrança:</span>
+                      {v.asaas_payment_id ? (
+                        <>
+                          <span className="px-1.5 py-0.5 rounded border border-[#E5C2C6] bg-[#FBF3F4] text-[#7A1F2B] font-mono">
+                            {v.asaas_payment_id}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-700 uppercase">
+                            {v.cobranca_status || "—"}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-500 italic">
+                          Cobrança não gerada
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Ações */}
