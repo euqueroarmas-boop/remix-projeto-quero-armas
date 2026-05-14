@@ -53,7 +53,7 @@ export default function CarrinhoPage() {
 
   const handleCheckout = () => {
     if (!checkoutSlug) return;
-    navigate(`/area-do-cliente/contratar/${checkoutSlug}/identificar`);
+    navigate(`/checkout/finalizar`);
   };
 
   if (itemCount === 0) {
