@@ -1,0 +1,329 @@
+// =====================================================================
+// qa-liberar-servicos-contrato — FASE 2C-7 (QA puro)
+// ---------------------------------------------------------------------
+// Libera operacionalmente os serviços contratados após o contrato do
+// cliente ser VALIDATED. Cria/ativa qa_solicitacoes_servico, qa_processos
+// e checklist específico por serviço (via RPC canônica
+// qa_confirmar_pagamento_processo → qa_explodir_checklist_processo).
+//
+// REGRAS ABSOLUTAS:
+//   - Arsenal Inteligente é GRATUITO. Nunca bloqueado, nunca premium.
+//   - NÃO toca WMTi (customers/payments/contracts/quotes).
+//   - NÃO importa post-purchase / ensureClientAccess.
+//   - Só libera quando contract.status='validated'
+//     E venda.status='PAGO' E venda.cobranca_status='confirmada'.
+//   - Idempotente: replay não duplica solicitação/processo/checklist.
+//   - Item sem servico_id NÃO cria processo (registra evento).
+//   - Catálogo (qa_servicos_catalogo.gera_processo) decide se cria
+//     qa_processos. Curso/serviço sem processo só recebe solicitação.
+//
+// Auth aceita:
+//   - x-trigger-source: qa_contract_validated (anon, pg_net da trigger), OU
+//   - x-internal-token: INTERNAL_FUNCTION_TOKEN (admin/manual).
+// =====================================================================
+
+import { createClient } from "npm:@supabase/supabase-js@2.45.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-internal-token, x-trigger-source",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const TRIGGER_SOURCE = "qa_contract_validated";
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function authorize(req: Request): { ok: true } | { ok: false; reason: string } {
+  const triggerSource = req.headers.get("x-trigger-source") || "";
+  if (triggerSource === TRIGGER_SOURCE) return { ok: true };
+  const internalToken = req.headers.get("x-internal-token") || "";
+  const expected = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
+  if (internalToken && expected && timingSafeEqual(internalToken, expected)) {
+    return { ok: true };
+  }
+  return { ok: false, reason: "unauthorized" };
+}
+
+async function recordContractEvent(
+  admin: any,
+  contractId: string,
+  eventType: string,
+  payload: Record<string, unknown>,
+) {
+  try {
+    await admin.from("qa_contract_events").insert({
+      contract_id: contractId,
+      event_type: eventType,
+      event_payload: payload,
+    });
+  } catch (e) {
+    console.warn("[liberar] falha ao registrar evento", eventType, e);
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+
+  const auth = authorize(req);
+  if (!auth.ok) return json({ error: auth.reason }, 401);
+
+  let body: any = {};
+  try { body = await req.json(); } catch { /* ignore */ }
+  const contractId: string | undefined = body?.contract_id;
+  const origem: string = body?.origem_trigger || "manual";
+  if (!contractId || typeof contractId !== "string") {
+    return json({ error: "contract_id_required" }, 400);
+  }
+
+  const admin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } },
+  );
+
+  // 1) Carrega contrato
+  const { data: contract, error: cErr } = await admin
+    .from("qa_contracts")
+    .select("id, status, venda_id, cliente_id")
+    .eq("id", contractId)
+    .maybeSingle();
+  if (cErr) return json({ error: "contract_lookup_failed", detail: cErr.message }, 500);
+  if (!contract) return json({ error: "contract_not_found" }, 404);
+
+  if (contract.status !== "validated") {
+    await recordContractEvent(admin, contractId, "liberacao_recusada_status_invalido", {
+      contract_status: contract.status, origem,
+    });
+    return json({ ok: false, skipped: "contract_not_validated", status: contract.status }, 200);
+  }
+
+  // 2) Carrega venda e checa pagamento
+  const { data: venda, error: vErr } = await admin
+    .from("qa_vendas")
+    .select("id, status, cobranca_status, cliente_id")
+    .eq("id", contract.venda_id)
+    .maybeSingle();
+  if (vErr) return json({ error: "venda_lookup_failed", detail: vErr.message }, 500);
+  if (!venda) {
+    await recordContractEvent(admin, contractId, "liberacao_falhou", { motivo: "venda_inexistente" });
+    return json({ ok: false, error: "venda_not_found" }, 404);
+  }
+  if (String(venda.status).toUpperCase() !== "PAGO" || venda.cobranca_status !== "confirmada") {
+    await recordContractEvent(admin, contractId, "liberacao_recusada_pagamento_invalido", {
+      venda_status: venda.status, cobranca_status: venda.cobranca_status,
+    });
+    return json({ ok: false, skipped: "payment_not_confirmed" }, 200);
+  }
+
+  // 3) Idempotência: já liberado?
+  const { data: prevEvents } = await admin
+    .from("qa_contract_events")
+    .select("id")
+    .eq("contract_id", contractId)
+    .eq("event_type", "contrato_validado_liberacao_concluida")
+    .limit(1);
+  if (prevEvents && prevEvents.length > 0) {
+    await recordContractEvent(admin, contractId, "liberacao_idempotente_ignorada", { origem });
+    return json({ ok: true, skipped: "already_released" }, 200);
+  }
+
+  await recordContractEvent(admin, contractId, "contrato_validado_liberacao_iniciada", { origem });
+
+  // 4) Itens do contrato
+  const { data: items, error: iErr } = await admin
+    .from("qa_contract_items")
+    .select("id, contract_id, venda_id, item_venda_id, service_id_snapshot, service_slug_snapshot, service_name_snapshot")
+    .eq("contract_id", contractId);
+  if (iErr) return json({ error: "items_lookup_failed", detail: iErr.message }, 500);
+  if (!items || items.length === 0) {
+    await recordContractEvent(admin, contractId, "liberacao_falhou", { motivo: "sem_itens" });
+    return json({ ok: false, error: "no_items" }, 422);
+  }
+
+  const result: any = {
+    contract_id: contractId,
+    venda_id: venda.id,
+    cliente_id: contract.cliente_id,
+    items_processados: 0,
+    solicitacoes: [] as any[],
+    processos: [] as any[],
+    erros: [] as any[],
+  };
+
+  for (const it of items) {
+    const servicoId = it.service_id_snapshot;
+    const slug = it.service_slug_snapshot;
+    const nome = it.service_name_snapshot;
+
+    if (!servicoId || !slug) {
+      await recordContractEvent(admin, contractId, "liberacao_falhou", {
+        motivo: "item_sem_servico_id", contract_item_id: it.id,
+      });
+      result.erros.push({ contract_item_id: it.id, motivo: "item_sem_servico_id" });
+      continue;
+    }
+
+    // Catálogo: gera processo?
+    const { data: catalogo } = await admin
+      .from("qa_servicos_catalogo")
+      .select("slug, gera_processo, tipo")
+      .eq("servico_id", servicoId)
+      .maybeSingle();
+    const geraProcesso = catalogo?.gera_processo !== false; // default true
+
+    // 4a) Upsert solicitação (idempotente por uq_qa_solicitacoes_cli_slug_manual)
+    let solicitacaoId: string | null = null;
+    {
+      const { data: existSol } = await admin
+        .from("qa_solicitacoes_servico")
+        .select("id, status_servico")
+        .eq("cliente_id", contract.cliente_id)
+        .eq("service_slug", slug)
+        .is("cadastro_publico_id", null)
+        .maybeSingle();
+      if (existSol) {
+        solicitacaoId = existSol.id;
+        // Avança status mínimo se ainda em aguardando_contratacao
+        if (existSol.status_servico === "aguardando_contratacao" || existSol.status_servico === "montando_pasta") {
+          await admin.from("qa_solicitacoes_servico")
+            .update({
+              status_servico: "aguardando_documentacao",
+              status_financeiro: "pago",
+              venda_id: venda.id,
+              item_venda_id: it.item_venda_id,
+              servico_id: servicoId,
+              service_name: nome,
+            })
+            .eq("id", existSol.id);
+        }
+      } else {
+        const { data: novaSol, error: nsErr } = await admin
+          .from("qa_solicitacoes_servico")
+          .insert({
+            cliente_id: contract.cliente_id,
+            servico_id: servicoId,
+            service_slug: slug,
+            service_name: nome,
+            origem: "contrato_validado",
+            status_servico: "aguardando_documentacao",
+            status_financeiro: "pago",
+            status_processo: geraProcesso ? "processo_nao_aberto" : "processo_nao_aberto",
+            venda_id: venda.id,
+            item_venda_id: it.item_venda_id,
+          })
+          .select("id")
+          .single();
+        if (nsErr) {
+          result.erros.push({ contract_item_id: it.id, etapa: "solicitacao", erro: nsErr.message });
+          continue;
+        }
+        solicitacaoId = novaSol.id;
+        await recordContractEvent(admin, contractId, "solicitacao_servico_criada", {
+          solicitacao_id: solicitacaoId, servico_id: servicoId, slug,
+        });
+      }
+      result.solicitacoes.push({ id: solicitacaoId, servico_id: servicoId, slug });
+    }
+
+    // 4b) Processo (apenas se catálogo exigir)
+    if (!geraProcesso) {
+      await recordContractEvent(admin, contractId, "servico_liberado_por_contrato_validado", {
+        servico_id: servicoId, slug, gera_processo: false,
+      });
+      result.items_processados++;
+      continue;
+    }
+
+    // Idempotência por (venda_id, servico_id)
+    const { data: existProc } = await admin
+      .from("qa_processos")
+      .select("id, pagamento_status, status")
+      .eq("venda_id", venda.id)
+      .eq("servico_id", servicoId)
+      .maybeSingle();
+
+    let processoId: string | null = existProc?.id ?? null;
+    if (!processoId) {
+      const { data: novoProc, error: npErr } = await admin
+        .from("qa_processos")
+        .insert({
+          cliente_id: contract.cliente_id,
+          servico_id: servicoId,
+          servico_nome: nome,
+          venda_id: venda.id,
+          status: "aguardando_pagamento",
+          pagamento_status: "aguardando",
+          solicitacao_id: solicitacaoId,
+        })
+        .select("id")
+        .single();
+      if (npErr) {
+        result.erros.push({ contract_item_id: it.id, etapa: "processo", erro: npErr.message });
+        continue;
+      }
+      processoId = novoProc.id;
+      await recordContractEvent(admin, contractId, "processo_criado_por_contrato_validado", {
+        processo_id: processoId, servico_id: servicoId, slug, contract_item_id: it.id,
+      });
+    }
+
+    // 4c) Confirma pagamento + explode checklist (RPC canônica, idempotente)
+    try {
+      const { data: rpc, error: rpcErr } = await admin.rpc("qa_confirmar_pagamento_processo", {
+        p_processo_id: processoId,
+        p_origem: "contrato_validado",
+      });
+      if (rpcErr) {
+        result.erros.push({ processo_id: processoId, etapa: "checklist", erro: rpcErr.message });
+      } else {
+        const inseridos = Number((rpc as any)?.checklist_inseridos ?? 0);
+        if (inseridos > 0) {
+          await recordContractEvent(admin, contractId, "checklist_criado_por_contrato_validado", {
+            processo_id: processoId, servico_id: servicoId, inseridos,
+            ja_existentes: Number((rpc as any)?.checklist_ja_existentes ?? 0),
+          });
+        }
+      }
+    } catch (e) {
+      result.erros.push({ processo_id: processoId, etapa: "checklist", erro: String(e) });
+    }
+
+    // Vincula processo na solicitação se faltar
+    if (solicitacaoId && processoId) {
+      await admin.from("qa_solicitacoes_servico")
+        .update({ processo_id: processoId, status_processo: "processo_aberto" })
+        .eq("id", solicitacaoId)
+        .is("processo_id", null);
+    }
+
+    await recordContractEvent(admin, contractId, "servico_liberado_por_contrato_validado", {
+      servico_id: servicoId, slug, processo_id: processoId, contract_item_id: it.id,
+    });
+    result.processos.push({ id: processoId, servico_id: servicoId, slug });
+    result.items_processados++;
+  }
+
+  await recordContractEvent(admin, contractId, "contrato_validado_liberacao_concluida", {
+    items: result.items_processados,
+    processos: result.processos.length,
+    solicitacoes: result.solicitacoes.length,
+    erros: result.erros.length,
+  });
+
+  return json({ ok: true, ...result }, 200);
+});
