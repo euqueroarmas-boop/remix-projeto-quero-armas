@@ -675,8 +675,14 @@ export default function QAClientePortalPage() {
   useEffect(() => {
     const match = navItems.find((item) => item.path !== "/area-do-cliente" && location.pathname.startsWith(item.path));
     if (match) setActiveSection(match.key);
+    // Suporte a deep link via query string: /area-do-cliente?secao=arsenal
+    const params = new URLSearchParams(location.search);
+    const secao = params.get("secao");
+    if (secao && navItems.some((item) => item.key === secao)) {
+      setActiveSection(secao as typeof activeSection);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const goSection = (key: typeof navItems[number]["key"]) => {
     if (import.meta.env.DEV) {

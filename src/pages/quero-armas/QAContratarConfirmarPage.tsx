@@ -371,7 +371,7 @@ export default function QAContratarConfirmarPage() {
               </div>
               <div className="mt-6 flex flex-col gap-2">
                 <button
-                  onClick={() => navigate("/area-do-cliente/arsenal")}
+                  onClick={() => navigate("/area-do-cliente?secao=arsenal")}
                   className="w-full px-4 py-2.5 rounded-lg bg-amber-500 text-white text-[12px] font-bold uppercase tracking-wider hover:bg-amber-600"
                 >
                   Enviar documentos agora

@@ -621,7 +621,7 @@ export default function QAConfiguracoesPage() {
             </div>
           ))}
         </div>
-        {!isAdmin && <p className="text-xs mt-3" style={{ color: "hsl(220 10% 62%)" }}>Apenas administradores podem editar.</p>}
+        {!isAdmin && <p className="text-xs mt-3" style={{ color: "hsl(220 10% 62%)" }}>Apenas a gestão da Equipe Quero Armas pode editar.</p>}
       </div>
 
       {/* Profile */}
