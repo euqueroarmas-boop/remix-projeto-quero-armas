@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Clock, ShieldCheck } from "lucide-react";
+import { FileText, Download, Clock, ShieldCheck, Upload, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 type Contract = {
@@ -12,6 +12,8 @@ type Contract = {
   status: string;
   original_pdf_path: string | null;
   original_sha256: string | null;
+  validation_status: string | null;
+  validation_details: any;
   issued_at: string | null;
   created_at: string;
 };
@@ -39,11 +41,41 @@ const formatDate = (d: string | null) => {
   }
 };
 
-const STATUS_LABELS: Record<string, { label: string; tone: "warn" | "ok" }> = {
-  generated_pending_company_signature: { label: "AGUARDANDO ASSINATURA", tone: "warn" },
-  awaiting_customer_signature: { label: "AGUARDANDO SUA ASSINATURA", tone: "warn" },
+type Tone = "warn" | "ok" | "info" | "danger";
+const STATUS_LABELS: Record<string, { label: string; tone: Tone }> = {
+  generated_pending_company_signature: { label: "AGUARDANDO ASSINATURA QUERO ARMAS", tone: "warn" },
+  pending_customer_signature: { label: "AGUARDANDO SUA ASSINATURA", tone: "warn" },
+  customer_signature_uploaded: { label: "CONTRATO ENVIADO — EM VALIDAÇÃO", tone: "info" },
+  validating: { label: "VALIDANDO ASSINATURA", tone: "info" },
   validated: { label: "ASSINADO E VALIDADO", tone: "ok" },
+  rejected: { label: "CONTRATO INVÁLIDO — REENVIE", tone: "danger" },
+  pending_manual_review: { label: "EM REVISÃO MANUAL", tone: "info" },
 };
+
+const TONE_CLASS: Record<Tone, string> = {
+  warn: "bg-amber-100 text-amber-800",
+  ok: "bg-emerald-100 text-emerald-800",
+  info: "bg-sky-100 text-sky-800",
+  danger: "bg-rose-100 text-rose-800",
+};
+
+const ITEM_LABEL: Record<string, { label: string; tone: Tone; icon: any }> = {
+  validated: { label: "CONTRATO VALIDADO — APTO PARA LIBERAÇÃO", tone: "ok", icon: CheckCircle2 },
+  customer_signature_uploaded: { label: "AGUARDANDO VALIDAÇÃO", tone: "info", icon: Loader2 },
+  validating: { label: "VALIDANDO", tone: "info", icon: Loader2 },
+  rejected: { label: "CONTRATO INVÁLIDO", tone: "danger", icon: XCircle },
+  pending_manual_review: { label: "REVISÃO MANUAL", tone: "info", icon: AlertTriangle },
+};
+
+function isUploadable(status: string): boolean {
+  return [
+    "generated_pending_company_signature",
+    "pending_customer_signature",
+    "rejected",
+    "pending_manual_review",
+    "customer_signature_uploaded",
+  ].includes(status);
+}
 
 interface Props {
   /** id_legado do cliente (FK usada por qa_contracts.cliente_id e qa_vendas.cliente_id) */
@@ -66,6 +98,20 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
   const [items, setItems] = useState<ContractItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  async function reload() {
+    if (!clienteIdLegado) return;
+    const { data: cs } = await supabase
+      .from("qa_contracts" as any)
+      .select(
+        "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, validation_status, validation_details, issued_at, created_at",
+      )
+      .eq("cliente_id", clienteIdLegado)
+      .order("created_at", { ascending: false });
+    setContracts(((cs as any[]) || []) as Contract[]);
+  }
 
   useEffect(() => {
     let alive = true;
@@ -78,7 +124,7 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
         const { data: cs } = await supabase
           .from("qa_contracts" as any)
           .select(
-            "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, issued_at, created_at",
+            "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, validation_status, validation_details, issued_at, created_at",
           )
           .eq("cliente_id", clienteIdLegado)
           .order("created_at", { ascending: false });
@@ -144,6 +190,37 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
     }
   }
 
+  async function handleUpload(c: Contract, file: File) {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+      toast.error("Apenas PDF assinado é aceito.");
+      return;
+    }
+    const MAX = 25 * 1024 * 1024;
+    if (file.size > MAX) {
+      toast.error("Arquivo maior que 25MB.");
+      return;
+    }
+    setUploadingId(c.id);
+    try {
+      const fd = new FormData();
+      fd.append("contract_id", c.id);
+      fd.append("file", file);
+      const { data, error } = await supabase.functions.invoke("qa-upload-signed-contract", {
+        body: fd,
+      });
+      if (error) throw error;
+      toast.success("Contrato assinado enviado. Validando assinatura…");
+      // valida automaticamente no backend; recarrega após pequeno delay
+      setTimeout(reload, 1500);
+      setTimeout(reload, 5000);
+      void data;
+    } catch (e: any) {
+      toast.error(`Falha no upload: ${e?.message ?? "erro"}`);
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
   if (loading) {
     return <div className="text-[11px] text-slate-500">Carregando contratos…</div>;
   }
@@ -172,6 +249,12 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
         const its = items.filter((i) => i.contract_id === c.id);
         const total = its.reduce((s, i) => s + (i.total_price_cents ?? 0), 0);
         const st = STATUS_LABELS[c.status] ?? { label: c.status.toUpperCase(), tone: "warn" as const };
+        const itemMeta = ITEM_LABEL[c.status] ?? { label: "AGUARDANDO CONTRATO ASSINADO", tone: "warn" as const, icon: Clock };
+        const ItemIcon = itemMeta.icon;
+        const canUpload = isUploadable(c.status);
+        const rejectionReason = c.status === "rejected"
+          ? (c.validation_details?.motivo_falha || c.validation_details?.motivo || "Assinatura digital não pôde ser validada.")
+          : null;
         return (
           <div
             key={c.id}
@@ -190,15 +273,17 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
                 </div>
               </div>
               <span
-                className={`text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider whitespace-nowrap ${
-                  st.tone === "ok"
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
+                className={`text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider whitespace-nowrap ${TONE_CLASS[st.tone]}`}
               >
                 {st.label}
               </span>
             </div>
+
+            {rejectionReason && (
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[10px] text-rose-800">
+                <strong className="uppercase tracking-wide">Motivo: </strong>{rejectionReason}
+              </div>
+            )}
 
             {its.length > 0 && (
               <div className="space-y-1.5 pt-1 border-t border-slate-100">
@@ -215,9 +300,9 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
                         {brl(i.total_price_cents)}
                       </div>
                     </div>
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider bg-slate-100 text-slate-700 whitespace-nowrap inline-flex items-center gap-1">
-                      <Clock className="h-2.5 w-2.5" />
-                      AGUARDANDO CONTRATO ASSINADO
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider whitespace-nowrap inline-flex items-center gap-1 ${TONE_CLASS[itemMeta.tone]}`}>
+                      <ItemIcon className="h-2.5 w-2.5" />
+                      {itemMeta.label}
                     </span>
                   </div>
                 ))}
@@ -232,7 +317,18 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
               </div>
             )}
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2 flex-wrap">
+              <input
+                ref={(el) => (fileInputs.current[c.id] = el)}
+                type="file"
+                accept="application/pdf,.pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleUpload(c, f);
+                  e.target.value = "";
+                }}
+              />
               <Button
                 size="sm"
                 variant="outline"
@@ -243,6 +339,21 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
                 <Download className="h-3 w-3 mr-1.5" />
                 {downloadingId === c.id ? "Baixando…" : "BAIXAR CONTRATO"}
               </Button>
+              {canUpload && (
+                <Button
+                  size="sm"
+                  onClick={() => fileInputs.current[c.id]?.click()}
+                  disabled={uploadingId === c.id}
+                  className="h-8 text-[11px] bg-[#7A1F2B] hover:bg-[#5e1721] text-white"
+                >
+                  {uploadingId === c.id ? (
+                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                  ) : (
+                    <Upload className="h-3 w-3 mr-1.5" />
+                  )}
+                  {uploadingId === c.id ? "ENVIANDO…" : "ENVIAR CONTRATO ASSINADO"}
+                </Button>
+              )}
             </div>
           </div>
         );
