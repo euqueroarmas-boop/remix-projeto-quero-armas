@@ -180,7 +180,7 @@ export default function QAAtivarAcessoPage() {
               <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
               <div>
                 Olá{clienteNome ? `, ${clienteNome}` : ""}! Cadastro localizado, mas sem e-mail registrado.
-                Informe um e-mail válido. <strong>A liberação passa por aprovação do administrador.</strong>
+                Informe um e-mail válido. <strong>A liberação passa por aprovação da Equipe Quero Armas.</strong>
               </div>
             </div>
             <div className="flex flex-col gap-2">
@@ -315,7 +315,7 @@ export default function QAAtivarAcessoPage() {
             <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
               <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
               <div>
-                E-mail validado. Sua solicitação foi enviada para aprovação do administrador.
+                E-mail validado. Sua solicitação foi enviada para aprovação da Equipe Quero Armas.
                 Você receberá uma confirmação assim que o acesso for liberado.
               </div>
             </div>

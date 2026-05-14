@@ -1183,8 +1183,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function StatusBadge({ s }: { s: Status }) {
   const map: Record<Status, { cls: string; label: string; hint: string }> = {
     rascunho:         { cls: "border-zinc-300 text-zinc-600 bg-zinc-100",                  label: "RASCUNHO",   hint: "Cadastro em rascunho — ainda não submetido para revisão." },
-    pendente_revisao: { cls: "border-amber-500/50 text-amber-700 bg-amber-500/10",         label: "PENDENTE",   hint: "Pendente de revisão — dados gerados/importados aguardando validação manual de um administrador." },
-    verificado:       { cls: "border-emerald-500/50 text-emerald-700 bg-emerald-500/10",   label: "VERIFICADO", hint: "Verificado — dados conferidos e aprovados por um administrador." },
+    pendente_revisao: { cls: "border-amber-500/50 text-amber-700 bg-amber-500/10",         label: "PENDENTE",   hint: "Pendente de revisão — dados gerados/importados aguardando validação manual da Equipe Quero Armas." },
+    verificado:       { cls: "border-emerald-500/50 text-emerald-700 bg-emerald-500/10",   label: "VERIFICADO", hint: "Verificado — dados conferidos e aprovados pela Equipe Quero Armas." },
     rejeitado:        { cls: "border-red-500/50 text-red-700 bg-red-500/10",               label: "REJEITADO",  hint: "Rejeitado — dados inconsistentes ou imagem incorreta." },
   };
   const c = map[s];
