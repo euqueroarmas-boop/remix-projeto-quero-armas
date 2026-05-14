@@ -71,3 +71,7 @@ Criar **uma** Edge Function QA-pura mínima e redirecionar a trigger. Sem arquit
 - Sem senha em texto puro no e-mail (link de ativação OTP).
 - Sem duplicação de cliente/usuário (idempotente por `email` + `portal_provisionado_em`).
 - Sem alteração do webhook ou do contrato.
+
+## Regra canônica Arsenal
+
+**Arsenal Inteligente é gratuito** e permanece acessível para todo cliente. Contrato assinado libera apenas execução do serviço contratado.
