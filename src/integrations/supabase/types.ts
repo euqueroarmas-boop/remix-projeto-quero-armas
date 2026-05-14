@@ -7992,6 +7992,8 @@ export type Database = {
           asaas_payment_id: string | null
           asaas_pix_payload: string | null
           asaas_subscription_id: string | null
+          checkout_token_expires_at: string | null
+          checkout_token_hash: string | null
           cliente_id: number
           cobranca_confirmada_em: string | null
           cobranca_gerada_em: string | null
@@ -8028,6 +8030,8 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_pix_payload?: string | null
           asaas_subscription_id?: string | null
+          checkout_token_expires_at?: string | null
+          checkout_token_hash?: string | null
           cliente_id: number
           cobranca_confirmada_em?: string | null
           cobranca_gerada_em?: string | null
@@ -8064,6 +8068,8 @@ export type Database = {
           asaas_payment_id?: string | null
           asaas_pix_payload?: string | null
           asaas_subscription_id?: string | null
+          checkout_token_expires_at?: string | null
+          checkout_token_hash?: string | null
           cliente_id?: number
           cobranca_confirmada_em?: string | null
           cobranca_gerada_em?: string | null
