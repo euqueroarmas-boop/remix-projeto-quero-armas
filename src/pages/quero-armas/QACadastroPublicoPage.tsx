@@ -243,14 +243,14 @@ export default function QACadastroPublicoPage() {
         preco: (data as any).preco != null ? Number((data as any).preco) : null,
         recorrente: !!(data as any).recorrente,
       });
-      if (obj && cat && svc) {
-        setQualif((q) => ({
-          ...q,
-          objetivo_principal: obj,
-          categoria_servico: cat,
-          servico_principal: svc,
-        }));
-      }
+      // Correção defensiva: pré-preenche o que houver (slug do catálogo já é
+      // capturado em servicoPreSelecionado e enviado ao backend como fallback).
+      setQualif((q) => ({
+        ...q,
+        objetivo_principal: obj || q.objetivo_principal,
+        categoria_servico: cat || q.categoria_servico,
+        servico_principal: svc || q.servico_principal,
+      }));
     })();
     return () => { cancel = true; };
   }, [searchParams]);
