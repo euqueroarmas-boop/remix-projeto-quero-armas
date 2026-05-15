@@ -8906,6 +8906,7 @@ export type Database = {
       }
     }
     Functions: {
+      _qa_diag_release_token: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["lp_app_role"]
