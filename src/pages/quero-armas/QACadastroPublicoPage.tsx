@@ -243,14 +243,14 @@ export default function QACadastroPublicoPage() {
         preco: (data as any).preco != null ? Number((data as any).preco) : null,
         recorrente: !!(data as any).recorrente,
       });
-      if (obj && cat && svc) {
-        setQualif((q) => ({
-          ...q,
-          objetivo_principal: obj,
-          categoria_servico: cat,
-          servico_principal: svc,
-        }));
-      }
+      // Correção defensiva: pré-preenche o que houver (slug do catálogo já é
+      // capturado em servicoPreSelecionado e enviado ao backend como fallback).
+      setQualif((q) => ({
+        ...q,
+        objetivo_principal: obj || q.objetivo_principal,
+        categoria_servico: cat || q.categoria_servico,
+        servico_principal: svc || q.servico_principal,
+      }));
     })();
     return () => { cancel = true; };
   }, [searchParams]);
@@ -679,7 +679,18 @@ export default function QACadastroPublicoPage() {
       if (body?.error) throw new Error(body.message || body.error);
 
       setSavedId(body?.id || null);
-      setStep(4);
+      // BUG 1 fix: se já existe conta para este CPF/e-mail, pula a Etapa 4
+      // (criação de senha) e direciona ao step 5 com CTAs de login/recuperação.
+      if (existingCheck.cpf_existe || existingCheck.email_existe) {
+        setArsenalCriado({
+          user_id: null,
+          email: extracted.email.trim().toLowerCase(),
+          cliente_existente: true,
+        });
+        setStep(5);
+      } else {
+        setStep(4);
+      }
     } catch (e: any) {
       setError(e?.message || "Erro ao concluir cadastro");
     } finally {
@@ -2427,6 +2438,15 @@ function Step5Done({ firstName, email, clienteExistente }: { firstName: string; 
       >
         Acessar Arsenal agora
       </a>
+
+      {clienteExistente && (
+        <a
+          href="/area-do-cliente/recuperar-senha"
+          className="block mt-2 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-700 hover:text-zinc-900 underline underline-offset-4"
+        >
+          Esqueci minha senha
+        </a>
+      )}
 
       <a href="https://wa.me/5511963166915" target="_blank" rel="noreferrer"
         className="block mt-2 text-xs font-medium underline-offset-2 hover:underline text-zinc-500">

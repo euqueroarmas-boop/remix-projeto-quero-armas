@@ -530,3 +530,54 @@ export const qaArsenalWelcomeText = (o: { name: string; email: string; servicoIn
   const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
   return `QUERO ARMAS — ARSENAL DIGITAL ATIVADO\n\n${firstName},\n\nIDENTIFICADOR: ${o.email}\nPLANO: GRATUITO · VITALÍCIO\nENDPOINT: ${o.arsenalUrl || ARSENAL_URL}\n\nPROTOCOLO:\n01 — Faça o primeiro login\n02 — Cadastre armas, CRAFs, GTEs, documentos\n03 — Receba alertas de vencimento automaticamente\n04 — ${o.servicoInteresse ? `Avance com ${o.servicoInteresse}` : "Contrate serviços quando precisar"}\n\nNão compartilhe a senha. Acervo digital criptografado.`;
 };
+
+// ════════════════════════════════════════════════════════════════════
+// 12. CADASTRO EXISTENTE — TENTATIVA DE NOVO REGISTRO COM CPF/E-MAIL JÁ CADASTRADO
+//     Identidade: Arsenal UI (papel + âmbar + header escuro)
+// ════════════════════════════════════════════════════════════════════
+export function qaCadastroExistenteHtml(opts: {
+  name?: string;
+  email: string;
+  motivo?: "cpf_ja_possui_login" | "email_ja_cadastrado" | string;
+  loginUrl?: string;
+  recuperarUrl?: string;
+}) {
+  const firstName = (opts.name || "").trim().split(/\s+/)[0] || "Cliente";
+  const loginUrl = opts.loginUrl || "https://www.euqueroarmas.com.br/area-do-cliente/login";
+  const recuperarUrl = opts.recuperarUrl || "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha";
+  const motivoTxt = opts.motivo === "email_ja_cadastrado"
+    ? "Já existe um Arsenal vinculado a este e-mail."
+    : "Já existe um Arsenal vinculado a este CPF.";
+  return qaWrap({
+    preheader: "Você já tem Arsenal · faça login para entrar.",
+    opTag: "ARSENAL · ACESSO JÁ EXISTENTE",
+    title: "Você já tem Arsenal armado.",
+    subtitle: motivoTxt,
+    body: `
+      ${greeting(firstName)}
+      ${para("Identificamos uma <strong>tentativa de novo cadastro</strong> com dados que já estão vinculados a um Arsenal ativo. Por segurança, não criamos uma segunda conta — todo o seu acervo (armas, CRAFs, documentos, processos) continua acessível exatamente onde estava.")}
+      ${diagBlock([
+        { k: "Identificador", v: opts.email, mono: true },
+        { k: "Status", v: "ACESSO ATIVO", mono: true, tone: "success" },
+        { k: "Ação", v: "FAÇA LOGIN COM SUA SENHA", mono: true, tone: "warn" },
+      ], AMBER)}
+      ${btn(loginUrl, "Acessar meu Arsenal")}
+      ${hr}
+      ${notice("info", "ESQUECEU A SENHA?", `Use a recuperação de senha para gerar um novo acesso seguro: <a href="${recuperarUrl}" style="color:${AMBER_DARK};font-weight:700;">${recuperarUrl}</a>`)}
+      ${notice("warn", "NÃO FOI VOCÊ?", "Se você não tentou se cadastrar agora, ignore este e-mail. Nenhuma alteração foi feita no seu Arsenal.")}
+    `,
+  });
+}
+
+export const qaCadastroExistenteText = (o: {
+  name?: string;
+  email: string;
+  motivo?: string;
+  loginUrl?: string;
+  recuperarUrl?: string;
+}) => {
+  const firstName = (o.name || "").trim().split(/\s+/)[0] || "Cliente";
+  const loginUrl = o.loginUrl || "https://www.euqueroarmas.com.br/area-do-cliente/login";
+  const recuperarUrl = o.recuperarUrl || "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha";
+  return `QUERO ARMAS — VOCÊ JÁ TEM ARSENAL\n\n${firstName},\n\nIdentificamos uma tentativa de novo cadastro com dados (${o.email}) já vinculados a um Arsenal ativo.\n\nPor segurança, não criamos uma segunda conta. Use seu acesso atual:\n\nLOGIN: ${loginUrl}\nRECUPERAR SENHA: ${recuperarUrl}\n\nSe não foi você, ignore este e-mail.`;
+};
