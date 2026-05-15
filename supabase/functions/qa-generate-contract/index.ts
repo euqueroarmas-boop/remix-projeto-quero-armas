@@ -290,10 +290,10 @@ Deno.serve(async (req) => {
   if (servicoIds.length) {
     const { data: catalog } = await sb
       .from("qa_servicos_catalogo")
-      .select("id, slug, nome, descricao_curta")
-      .in("id", servicoIds);
+      .select("servico_id, slug, nome, descricao_curta")
+      .in("servico_id", servicoIds);
     (catalog || []).forEach((c: any) => {
-      catalogMap[c.id] = { slug: c.slug, nome: c.nome, descricao: c.descricao_curta };
+      catalogMap[c.servico_id] = { slug: c.slug, nome: c.nome, descricao: c.descricao_curta };
     });
   }
 
