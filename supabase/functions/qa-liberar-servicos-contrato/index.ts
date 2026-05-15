@@ -424,6 +424,7 @@ Deno.serve(async (req) => {
     processos: result.processos.length,
     solicitacoes: result.solicitacoes.length,
     erros: result.erros.length,
+    erros_detalhe: result.erros,
   });
 
   return json({ ok: true, ...result }, 200);
