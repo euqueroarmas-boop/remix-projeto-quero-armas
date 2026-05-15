@@ -1,75 +1,100 @@
-## FASE 2C-9 — Homologação real em sandbox
+# Plano — /cadastro refinado (Jeito 3) atrás de feature flag
 
-### Premissa importante (ler antes de aprovar)
+## Contexto crítico descoberto
 
-Você pediu **Asaas sandbox real + webhook real**. Há uma limitação de ambiente que precisa ficar explícita:
+`QACadastroPublicoPage.tsx` tem **3.137 linhas**. Refatorar esse arquivo para extrair hooks compartilhados (`useCadastroDocumentos`, `useCadastroPagamento`, `useCadastroCliente`) é uma operação de altíssimo risco de regressão — exatamente o que a regra inegociável proíbe. A página acumula state local entrelaçado com efeitos, validações, chamadas a edge functions, lógica de Asaas, contrato, IA e os 3 bug fixes recentes.
 
-- A **cobrança no Asaas sandbox** sim, é possível: `qa-checkout-iniciar-pagamento` chama o Asaas com `ASAAS_API_KEY` e `ASAAS_BASE_URL` já configurados.
-- Já o **webhook de retorno** do Asaas é entregue **de forma assíncrona** (Asaas decide quando), e em sandbox **só dispara `PAYMENT_CONFIRMED` quando alguém marca o pagamento como recebido manualmente** no painel sandbox do Asaas. Não dá para esperar isso de forma determinística dentro desta sessão.
-- Para manter "real ponta a ponta", o que farei é: **criar a cobrança real no Asaas sandbox** (charge_id real) e depois **chamar a edge `qa-asaas-webhook`** enviando um payload `PAYMENT_CONFIRMED` apontando para esse `payment_id` real, com o header `asaas-access-token` válido (`QA_ASAAS_WEBHOOK_TOKEN`). Isso exercita o mesmo caminho de código que a entrega real do Asaas exercitaria — só estou "antecipando" o webhook.
-- Se você quiser **esperar o Asaas mandar de verdade**, precisa marcar o pagamento como recebido no painel sandbox e me avisar; aí eu só verifico o efeito no banco.
+**Decisão recomendada (precisa do seu OK):** NÃO refatorar `QACadastroPublicoPage.tsx`. Em vez disso, criar a nova página refinada como implementação **independente paralela**, reaproveitando diretamente as **edge functions** e **utils puros já existentes** (`qaServiceCatalog`, `cadastroCompleteness`, `qaSlaCadastro`, `serviceDisplay`, `ensureClienteFromAuthUser`, `customerResolver`, `qaDocxDownload`, edge functions `qa-cliente-criar-conta-publica`, `qa-upload-documento`, `qa-extract-doc`, `qa-gerar-cobranca`, etc.). Isso garante zero risco para o fluxo legado e mantém os 3 bug fixes intactos no caminho antigo.
 
-Confirme se posso proceder antecipando o webhook (recomendo) ou se quer pausar entre os passos para marcar manualmente no Asaas.
+A alternativa (extrair hooks da página de 3137 linhas) violaria "Zero Regressão" — paro e pergunto antes de prosseguir.
 
-### Marker e isolamento
+## Arquivos a criar
 
-Todos os registros criados levam:
-- `HOMOLOG_2C9_` no nome / e-mail / `motivo_correcao` / metadados;
-- e-mail `homolog_2c9_<timestamp>@example.com` (não real);
-- CPF fictício válido por dígito verificador (gerado, não real);
-- nada toca WMTi (`customers`, `payments`, `contracts`, `quotes`), `post-purchase.ts` ou `ensureClientAccess`.
-
-### Execução proposta (sequencial)
-
-1. **Discovery** — ler schema das tabelas envolvidas e escolher 1 serviço de catálogo com `gera_processo=true` para acionar o caminho de processo+checklist.
-2. **Cliente HOMOLOG_2C9** — `INSERT` em `qa_clientes` via tool de migration (estrutura) ou insert (dados); marcado com `nome_completo='HOMOLOG_2C9 CLIENTE TESTE'`, `observacao='[HOMOLOG_2C9]'`.
-3. **Venda + itens** — chamar **`qa-checkout-criar-venda`** real (edge), passando o cliente HOMOLOG_2C9 e 1 item do catálogo escolhido. Marcar `motivo_correcao='[HOMOLOG_2C9]'` se a edge aceitar.
-4. **Pagamento sandbox** — chamar **`qa-checkout-iniciar-pagamento`** real → cobrança real no Asaas sandbox; capturar `asaas_payment_id`.
-5. **Webhook** — chamar **`qa-asaas-webhook`** com `PAYMENT_CONFIRMED` apontando para o `asaas_payment_id` real (header `asaas-access-token=QA_ASAAS_WEBHOOK_TOKEN`).
-6. **Verificação financeira** — `SELECT` confirmando `qa_vendas.status='PAGO'` e `cobranca_status='confirmada'`, e `qa_asaas_webhook_events` com success.
-7. **Trigger pós-PAGO** — verificar `qa_contracts`, `qa_contract_items`, `qa_contract_events` (`generated`, `contrato_gerado_pos_pagamento`) e provisão do portal (`qa_clientes.portal_provisionado_em`, `user_id` linkado, sem WMTi).
-8. **Upload do contrato assinado (placeholder)** — chamar `qa-upload-signed-contract` com PDF placeholder marcado `HOMOLOG_2C9_signed.pdf`. Esperado: `qa-validate-customer-signature` rejeita ou marca `pending_manual_review` (não libera serviço). Confirmar via `SELECT` que `qa_solicitacoes_servico` ainda **não existe**.
-9. **Validação controlada** — `UPDATE qa_contracts SET status='validated', validation_status='valid', validation_details = jsonb_set(... ,'{homolog_2c9}','true')` (marca explícita de teste). Isso dispara o trigger `qa_contracts_after_validated_release` que chama `qa-liberar-servicos-contrato` com `x-internal-token` do Vault.
-10. **Verificação operacional** — `SELECT` confirmando `qa_solicitacoes_servico` (por `item_venda_id`, com `origem='contrato_validado'`), `qa_processos` (se `gera_processo=true`), checklist criado pela RPC canônica, e eventos `contrato_validado_liberacao_concluida`.
-11. **Replay/idempotência** — `UPDATE` redundante reaplicando o mesmo `validated`/disparando a edge novamente; confirmar zero duplicação (mesmos IDs).
-12. **Arsenal e WMTi** — verificar:
-    - `qa_clientes.arsenal_plano` permanece `gratuito`;
-    - sem evento `arsenal_bloqueado`;
-    - `SELECT count(*) FROM customers/payments/contracts/quotes WHERE ... HOMOLOG_2C9` = 0.
-13. **Validações locais** — `npm run typecheck`, `npm run test`, `npm run build`.
-14. **Entrega** — relatório com IDs criados, prints SQL, confirmações exigidas e **SQL de cleanup sugerido** (não executado).
-
-### Cleanup (entregue, não executado)
-
-```sql
--- Conferir antes de rodar:
-SELECT id FROM qa_clientes WHERE nome_completo LIKE 'HOMOLOG_2C9%';
-
--- Deleção em cascata em ordem segura (a executar apenas com autorização):
-DELETE FROM qa_solicitacoes_servico WHERE venda_id IN (SELECT id FROM qa_vendas WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_processos WHERE venda_id IN (SELECT id FROM qa_vendas WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_contract_events WHERE contract_id IN (SELECT id FROM qa_contracts WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_contract_items   WHERE contract_id IN (SELECT id FROM qa_contracts WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_contract_signatures WHERE contract_id IN (SELECT id FROM qa_contracts WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_contracts WHERE motivo_correcao LIKE '%HOMOLOG_2C9%';
-DELETE FROM qa_asaas_webhook_events WHERE payment_id IN (SELECT asaas_payment_id FROM qa_vendas WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_itens_venda WHERE venda_id IN (SELECT id FROM qa_vendas WHERE motivo_correcao LIKE '%HOMOLOG_2C9%');
-DELETE FROM qa_vendas WHERE motivo_correcao LIKE '%HOMOLOG_2C9%';
-DELETE FROM qa_clientes WHERE nome_completo LIKE 'HOMOLOG_2C9%';
+```
+src/pages/quero-armas/cadastro-refinado/
+  QACadastroRefinadoPage.tsx              (orquestrador, estado das 5 etapas)
+  components/
+    QACadastroRefinadoHeader.tsx          (logo + tag + voltar)
+    QACadastroRefinadoFooter.tsx          (selos LGPD + ICP-Brasil)
+    QACadastroRefinadoStepIndicator.tsx   ("01 / 05" + 5 traços)
+    QACadastroRefinadoCard.tsx            (card editorial reutilizável)
+    QACadastroRefinadoShell.tsx           (layout comum a todas as etapas)
+  steps/
+    Etapa01Servico.tsx
+    Etapa02Documentos.tsx
+    Etapa03Revisao.tsx
+    Etapa04Pagamento.tsx
+    Etapa05Conclusao.tsx
+  hooks/
+    useCadastroRefinadoState.ts           (state machine local da nova página)
+    useCadastroRefinadoUploads.ts         (wrapper sobre edge function de upload)
+    useCadastroRefinadoExtracao.ts        (wrapper sobre edge function de IA)
+    useCadastroRefinadoPagamento.ts       (wrapper sobre edge function Asaas + contrato)
+  styles/
+    cadastroRefinado.css                  (tokens editoriais locais ao escopo)
+src/lib/quero-armas/
+  cadastroRefinadoFlag.ts                 (leitura runtime da feature flag)
 ```
 
-### O que NÃO farei
+## Arquivos modificados (mínimo absoluto)
 
-- Não tocarei WMTi (`customers/payments/contracts/quotes`).
-- Não importarei `post-purchase.ts` nem chamarei `ensureClientAccess`.
-- Não bloquearei o Arsenal nem mudarei `arsenal_plano` para `premium`.
-- Não chamarei `qa-generate-contract` manualmente (só via trigger pós-PAGO).
-- Não executarei o SQL de cleanup.
-- Não usarei nenhum cliente, venda, CPF, e-mail ou telefone real.
+- **`src/pages/quero-armas/QARoutes.tsx`** — substituir o elemento da rota `cadastro` por um wrapper `<CadastroRouteSwitch />` que lê `VITE_QA_CADASTRO_V2_ENABLED` em runtime e renderiza `QACadastroRefinadoPage` ou `QACadastroPublicoPage`. Nenhuma outra rota é tocada.
+- **`.env.example`** — documentar `VITE_QA_CADASTRO_V2_ENABLED=true`.
 
-### Ponto que precisa do seu OK antes de eu rodar
+## Arquivos NÃO tocados (checklist de não-regressão)
 
-1. Aprovar antecipar o webhook chamando `qa-asaas-webhook` direto com o `payment_id` real do Asaas sandbox (em vez de esperar Asaas entregar de verdade).
-2. Aprovar criar uma cobrança real no Asaas sandbox em nome do cliente HOMOLOG_2C9 (gera registro permanente no painel sandbox do Asaas, mas sem custo financeiro).
+- `QACadastroPublicoPage.tsx` ✋
+- `qaServiceCatalog.ts`, `qaCadastroV2Catalog.ts`
+- Todas as `cadastro-v2/*Page.tsx` e `QACadastroV2GuidedStep.tsx`
+- Edge functions (`qa-cliente-criar-conta-publica`, uploads, IA, Asaas)
+- Schema, RLS, triggers, `qa_servicos_catalogo`, `qa_clientes`, `qa_vendas`, `qa_solicitacoes_servico`, `qa_processos`, `cliente_auth_links`, `qa_contracts`
+- `_shared/qaEmailTemplates.ts` (templates do Bug 2 preservados)
 
-Confirme com "ok pode rodar" e sigo a execução de A a Z em uma única passada.
+## Feature flag
+
+`src/lib/quero-armas/cadastroRefinadoFlag.ts`:
+```ts
+export const isCadastroRefinadoEnabled = () =>
+  import.meta.env.VITE_QA_CADASTRO_V2_ENABLED === "true";
+```
+Leitura em runtime no `CadastroRouteSwitch` dentro do `QARoutes.tsx`. Default dev = `true` (via `.env`), produção começa sem a env (= `false` → fallback antigo).
+
+## Padrão visual
+
+- Tipografia editorial usa `font-serif` do Tailwind (já no design system) para títulos e valores monetários; mono para números de processo; CAPS+tracking para labels.
+- Cores e bordas via tokens CSS já existentes do `qa-scope` (Premium Light) — sem paleta nova.
+- Layout: header sticky, indicador "01 / 05" + 5 traços, card central, footer com 2 selos.
+- Botão primário: preto, full-width, label informativo dinâmico.
+- Mobile-first: padding lateral colapsa de 48px para 20px abaixo de `md:`.
+
+## Etapas — comportamento
+
+| # | Tela | Reaproveita |
+|---|------|-------------|
+| 01 | Confirmar serviço (card + preço serif + bullets) | `qaServiceCatalog`, query `qa_servicos_catalogo` |
+| 02 | Upload documentos (lista por slug, 3 estados, IA banner) | edge `qa-upload-documento`, `qa-extract-doc` |
+| 03 | Revisão dados extraídos (cards-seção editáveis, detecção CPF/email existente) | edge `qa-cliente-checar-existente`, validação local |
+| 04 | Pagamento + contrato (PIX/Cartão/Boleto + checkbox LGPD) | edge `qa-gerar-cobranca`, geração contrato + `cliente_auth_links` |
+| 05 | Conclusão (check + ficha + CTAs) | dados retornados da etapa 04 |
+
+Bug fixes preservados nativamente:
+- **Bug 1** (cliente existente pula etapa 4 / mostra "Esqueci senha"): tratado na Etapa 03 com desvio para tela de "Você já tem cadastro" + CTAs login/recuperar senha na Etapa 05.
+- **Bug 2** (notificação cadastro existente): a edge function `qa-cliente-criar-conta-publica` já dispara as notificações — basta chamá-la.
+- **Bug 3** (slugs de catálogo): `qaServiceCatalog.ts` já contém os slugs corretos — apenas consumir.
+
+## Migração de homologação
+
+Migration aditiva fazendo apenas o `UPDATE` solicitado em `qa_homologacao_sessoes` para `HOMOLOG_CATALOGO_COMPLETO_2026_05_15`.
+
+## Critérios de aceite
+
+- Flag ON → `/cadastro` abre nova UI editorial 5 etapas.
+- Flag OFF/ausente → `/cadastro` abre `QACadastroPublicoPage` byte-idêntico ao atual.
+- `/cadastro-v2*` intactos.
+- `?servico=X` e `?origem=v2` funcionam em ambos os modos.
+- Mobile responsivo nas 5 etapas.
+- Zero alteração em schema, RLS, triggers, edge functions, catálogo.
+
+## Pergunta antes de prosseguir
+
+Confirma a estratégia de **implementação paralela sem extrair hooks de `QACadastroPublicoPage.tsx`** (única forma de garantir zero regressão dado o tamanho do arquivo)? Se sim, sigo direto com a criação dos 14 arquivos novos + `QARoutes.tsx` + migration.
