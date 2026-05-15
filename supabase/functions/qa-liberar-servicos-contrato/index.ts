@@ -152,11 +152,15 @@ Deno.serve(async (req) => {
   const { data: venda, error: vErr } = await admin
     .from("qa_vendas")
     .select("id, status, cobranca_status, cliente_id")
-    .eq("id", contract.venda_id)
+    .or(`id_legado.eq.${contract.venda_id},id.eq.${contract.venda_id}`)
+    .limit(1)
     .maybeSingle();
   if (vErr) return json({ error: "venda_lookup_failed", detail: vErr.message }, 500);
   if (!venda) {
-    await recordContractEvent(admin, contractId, "liberacao_falhou", { motivo: "venda_inexistente" });
+    await recordContractEvent(admin, contractId, "liberacao_falhou", {
+      motivo: "venda_inexistente",
+      contract_venda_id: contract.venda_id,
+    });
     return json({ ok: false, error: "venda_not_found" }, 404);
   }
   if (String(venda.status).toUpperCase() !== "PAGO" || venda.cobranca_status !== "confirmada") {
