@@ -2439,6 +2439,15 @@ function Step5Done({ firstName, email, clienteExistente }: { firstName: string; 
         Acessar Arsenal agora
       </a>
 
+      {clienteExistente && (
+        <a
+          href="/area-do-cliente/recuperar-senha"
+          className="block mt-2 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-700 hover:text-zinc-900 underline underline-offset-4"
+        >
+          Esqueci minha senha
+        </a>
+      )}
+
       <a href="https://wa.me/5511963166915" target="_blank" rel="noreferrer"
         className="block mt-2 text-xs font-medium underline-offset-2 hover:underline text-zinc-500">
         Quero tirar dúvidas
