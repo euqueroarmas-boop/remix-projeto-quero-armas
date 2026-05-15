@@ -5605,6 +5605,42 @@ export type Database = {
           },
         ]
       }
+      qa_homologacao_sessoes: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          etapa: string
+          id: string
+          observacoes: string | null
+          payload: Json
+          servico_slug: string | null
+          sessao_codigo: string
+          venda_id: number | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          etapa: string
+          id?: string
+          observacoes?: string | null
+          payload?: Json
+          servico_slug?: string | null
+          sessao_codigo: string
+          venda_id?: number | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          etapa?: string
+          id?: string
+          observacoes?: string | null
+          payload?: Json
+          servico_slug?: string | null
+          sessao_codigo?: string
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
       qa_ia_correcoes_juridicas: {
         Row: {
           aplicar_globalmente: boolean
