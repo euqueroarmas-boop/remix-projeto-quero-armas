@@ -3,7 +3,12 @@
 // NÃO cria venda, processo, pagamento, checklist ou Asaas.
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 import { z } from "https://esm.sh/zod@3.23.8";
-import { qaArsenalWelcomeHtml, qaArsenalWelcomeText } from "../_shared/qaEmailTemplates.ts";
+import {
+  qaArsenalWelcomeHtml,
+  qaArsenalWelcomeText,
+  qaCadastroExistenteHtml,
+  qaCadastroExistenteText,
+} from "../_shared/qaEmailTemplates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,6 +76,65 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (linkExistente) {
+    // BUG 2 fix — disparos best-effort (não bloqueantes) antes do early-return:
+    // 1) e-mail "você já tem Arsenal" para o cliente
+    // 2) notificação interna ao admin para visibilidade da tentativa
+    // 3) registro em qa_arsenal_notificacoes (best-effort, ignorado se schema não existir)
+    try {
+      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
+      if (internalToken) {
+        admin.functions.invoke("send-smtp-email", {
+          headers: { "x-internal-token": internalToken },
+          body: {
+            to: emailNorm,
+            subject: "Você já tem Arsenal — faça login",
+            html: qaCadastroExistenteHtml({ name: nome, email: emailNorm, motivo: "cpf_ja_possui_login" }),
+            text: qaCadastroExistenteText({ name: nome, email: emailNorm, motivo: "cpf_ja_possui_login" }),
+            from_name: "Quero Armas",
+          },
+        }).catch((e) => console.warn("[cadastro_existente] e-mail falhou:", (e as Error)?.message));
+      } else {
+        console.warn("[cadastro_existente] INTERNAL_FUNCTION_TOKEN ausente — e-mail não enviado");
+      }
+    } catch (e) {
+      console.warn("[cadastro_existente] e-mail threw:", (e as Error)?.message);
+    }
+    try {
+      admin.functions
+        .invoke("qa-notificar-admin-contratacao", {
+          body: {
+            motivo: "tentativa_novo_cadastro_cliente_existente",
+            cpf: cpfNorm,
+            email: emailNorm,
+            nome,
+            telefone: telefone ?? null,
+            servico_interesse: servico_interesse ?? null,
+            servico_principal: servico_principal ?? null,
+            catalogo_slug: catalogo_slug ?? null,
+          },
+        })
+        .catch((e) => console.warn("[cadastro_existente] notif admin falhou:", (e as Error)?.message));
+    } catch (e) {
+      console.warn("[cadastro_existente] notif threw:", (e as Error)?.message);
+    }
+    try {
+      await admin.from("qa_arsenal_notificacoes" as any).insert({
+        tipo: "tentativa_recadastro",
+        email: emailNorm,
+        cpf: cpfNorm,
+        payload: {
+          motivo: "cpf_ja_possui_login",
+          nome,
+          telefone: telefone ?? null,
+          servico_interesse: servico_interesse ?? null,
+          servico_principal: servico_principal ?? null,
+          catalogo_slug: catalogo_slug ?? null,
+        },
+      } as any);
+    } catch (e) {
+      console.warn("[cadastro_existente] insert notif falhou:", (e as Error)?.message);
+    }
+
     return json(
       {
         ok: false,
