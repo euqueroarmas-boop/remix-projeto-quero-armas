@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
+import { isCadastroRefinadoEnabled } from "@/lib/quero-armas/cadastroRefinadoFlag";
 
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
@@ -86,9 +87,6 @@ function QAScope({ children }: { children: React.ReactNode }) {
  * Override por querystring: ?cadastro_v2=1 / ?cadastro_v2=0
  */
 function CadastroRouteSwitch() {
-  // Import síncrono — função pura, sem custo
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { isCadastroRefinadoEnabled } = require("@/lib/quero-armas/cadastroRefinadoFlag");
   return isCadastroRefinadoEnabled()
     ? <QAScope><QACadastroRefinadoPage /></QAScope>
     : <QAScope><QACadastroPublicoPage /></QAScope>;
