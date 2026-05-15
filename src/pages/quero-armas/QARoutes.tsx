@@ -31,6 +31,7 @@ const QAArmamentosAdminPage = lazyRetry(() => import("./QAArmamentosAdminPage"),
 const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcessosPage");
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
+const QACadastroV2EtapaUmPage = lazyRetry(() => import("./QACadastroV2EtapaUmPage"), "QACadastroV2EtapaUmPage");
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
@@ -94,6 +95,7 @@ export default function QARoutes() {
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="cadastro" element={<QAScope><QACadastroPublicoPage /></QAScope>} />
+        <Route path="cadastro-v2" element={<QAScope><QACadastroV2EtapaUmPage /></QAScope>} />
         <Route path="cadastro/foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         <Route path="enviar-foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         
