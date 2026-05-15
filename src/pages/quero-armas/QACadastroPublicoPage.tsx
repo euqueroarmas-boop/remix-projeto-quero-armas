@@ -679,7 +679,18 @@ export default function QACadastroPublicoPage() {
       if (body?.error) throw new Error(body.message || body.error);
 
       setSavedId(body?.id || null);
-      setStep(4);
+      // BUG 1 fix: se já existe conta para este CPF/e-mail, pula a Etapa 4
+      // (criação de senha) e direciona ao step 5 com CTAs de login/recuperação.
+      if (existingCheck.cpf_existe || existingCheck.email_existe) {
+        setArsenalCriado({
+          user_id: null,
+          email: extracted.email.trim().toLowerCase(),
+          cliente_existente: true,
+        });
+        setStep(5);
+      } else {
+        setStep(4);
+      }
     } catch (e: any) {
       setError(e?.message || "Erro ao concluir cadastro");
     } finally {
