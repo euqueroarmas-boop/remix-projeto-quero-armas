@@ -32,7 +32,10 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const slug = params.get("servico") || state.servicoSlug;
+  // Safety-net: alguns redirects legados podem chegar com underscore.
+  // O catálogo qa_servicos_catalogo SEMPRE usa hífen → normalizamos defensivamente.
+  const rawSlug = params.get("servico") || state.servicoSlug;
+  const slug = rawSlug ? rawSlug.replace(/_/g, "-") : rawSlug;
 
   useEffect(() => {
     if (!slug) {
