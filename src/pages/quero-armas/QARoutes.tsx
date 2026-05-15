@@ -32,6 +32,11 @@ const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcesso
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QACadastroV2EtapaUmPage = lazyRetry(() => import("./QACadastroV2EtapaUmPage"), "QACadastroV2EtapaUmPage");
+const QACadastroV2DefesaPessoalPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2DefesaPessoalPage"), "QACadastroV2DefesaPessoalPage");
+const QACadastroV2CacPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2CacPage"), "QACadastroV2CacPage");
+const QACadastroV2ProfissaoAtivaPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2ProfissaoAtivaPage"), "QACadastroV2ProfissaoAtivaPage");
+const QACadastroV2AposentadoPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2AposentadoPage"), "QACadastroV2AposentadoPage");
+const QACadastroV2CursosPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2CursosPage"), "QACadastroV2CursosPage");
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
@@ -96,6 +101,11 @@ export default function QARoutes() {
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="cadastro" element={<QAScope><QACadastroPublicoPage /></QAScope>} />
         <Route path="cadastro-v2" element={<QAScope><QACadastroV2EtapaUmPage /></QAScope>} />
+        <Route path="cadastro-v2/defesa-pessoal" element={<QAScope><QACadastroV2DefesaPessoalPage /></QAScope>} />
+        <Route path="cadastro-v2/cac" element={<QAScope><QACadastroV2CacPage /></QAScope>} />
+        <Route path="cadastro-v2/profissao-ativa" element={<QAScope><QACadastroV2ProfissaoAtivaPage /></QAScope>} />
+        <Route path="cadastro-v2/aposentado" element={<QAScope><QACadastroV2AposentadoPage /></QAScope>} />
+        <Route path="cadastro-v2/cursos" element={<QAScope><QACadastroV2CursosPage /></QAScope>} />
         <Route path="cadastro/foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         <Route path="enviar-foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         
