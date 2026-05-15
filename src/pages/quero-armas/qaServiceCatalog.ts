@@ -15,6 +15,7 @@ export const OBJETIVOS_PRINCIPAIS: { value: string; label: string }[] = [
   { value: "caca", label: "Caça" },
   { value: "clube_tiro", label: "Clube de tiro" },
   { value: "colecionamento", label: "Colecionamento" },
+  { value: "cursos", label: "Cursos e capacitação" },
   { value: "defesa_pessoal", label: "Defesa pessoal" },
   { value: "loja_armas", label: "Loja de armas" },
   { value: "orientacao", label: "Preciso de orientação" },
@@ -49,6 +50,14 @@ const SUBTIPOS_CAC = [
 const SUBTIPOS_ACERVO = ["Atirador desportivo", "Caçador", "Colecionador"];
 
 export const CATEGORIAS_SERVICO: CategoriaOpcao[] = [
+  {
+    value: "cursos_pratica",
+    label: "Cursos práticos",
+    servicos: [
+      { value: "curso_operador_pistola_n1", label: "Operador de Pistola — Nível I" },
+      { value: "curso_vip_operador_pistola_n1", label: "VIP — Operador de Pistola Nível I" },
+    ],
+  },
   {
     value: "sinarm_pf",
     label: "SINARM / Polícia Federal",
@@ -195,6 +204,7 @@ export const OBJETIVO_CATEGORIAS: Record<string, ObjetivoCategoriaRule[]> = {
   tiro_esportivo: [{ categoria: "sinarm_cac_cr" }],
   caca: [{ categoria: "sinarm_cac_cr" }],
   colecionamento: [{ categoria: "sinarm_cac_cr" }],
+  cursos: [{ categoria: "cursos_pratica" }],
   loja_armas: [{ categoria: "empresarial", servicos: ["assessoria_loja"] }],
   clube_tiro: [{ categoria: "empresarial", servicos: ["assessoria_clube"] }],
   atividade_profissional: [
