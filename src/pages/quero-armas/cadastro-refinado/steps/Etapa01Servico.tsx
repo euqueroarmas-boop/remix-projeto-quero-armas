@@ -8,10 +8,9 @@ import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 interface ServicoCatalogo {
   slug: string;
   nome: string;
-  descricao: string | null;
+  descricao_curta: string | null;
+  descricao_full: string | null;
   preco: number | null;
-  modalidade?: string | null;
-  inclui?: string[] | null;
 }
 
 interface Props {
@@ -51,13 +50,13 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
       setLoading(true);
       const { data, error } = await supabase
         .from("qa_servicos_catalogo")
-        .select("slug,nome,descricao,preco")
+        .select("slug,nome,descricao_curta,descricao_full,preco")
         .eq("slug", slug)
         .eq("ativo", true)
         .maybeSingle();
       if (cancelled) return;
       if (error) setError(error.message);
-      else setServico(data as ServicoCatalogo | null);
+      else setServico((data as unknown) as ServicoCatalogo | null);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -108,7 +107,9 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
               <div className="qa-ref-service-info">
                 <span className="qa-ref-caps">Serviço selecionado</span>
                 <h2 className="qa-ref-service-name">{servico.nome}</h2>
-                {servico.descricao && <p className="qa-ref-service-desc">{servico.descricao}</p>}
+                {(servico.descricao_curta || servico.descricao_full) && (
+                  <p className="qa-ref-service-desc">{servico.descricao_curta || servico.descricao_full}</p>
+                )}
               </div>
               <div className="qa-ref-price">
                 <small>R$</small>
@@ -116,7 +117,7 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
               </div>
             </div>
             <ul className="qa-ref-bullets">
-              {(servico.inclui && servico.inclui.length > 0 ? servico.inclui : FALLBACK_BULLETS).map((b) => (
+              {FALLBACK_BULLETS.map((b) => (
                 <li key={b}>{b}</li>
               ))}
             </ul>
