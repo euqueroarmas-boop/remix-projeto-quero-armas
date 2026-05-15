@@ -51,6 +51,19 @@ export default function QACadastroV2EtapaUmPage() {
         navigate("/descobrir-meu-caminho");
         return;
       }
+      // Etapa 2 — sub-rotas guiadas dedicadas (aditivo).
+      const subRotaPorPerfil: Record<string, string> = {
+        defesa_pessoal: "/cadastro-v2/defesa-pessoal",
+        cac: "/cadastro-v2/cac",
+        profissional_ativo: "/cadastro-v2/profissao-ativa",
+        aposentado_inativo: "/cadastro-v2/aposentado",
+      };
+      const destino = subRotaPorPerfil[perfil.id];
+      if (destino) {
+        navigate(destino);
+        return;
+      }
+      // Fallback defensivo: mantém o comportamento anterior.
       navigate(`/cadastro?perfil_v2=${encodeURIComponent(perfil.id)}&origem=v2`);
     },
     [navigate, persistir],
@@ -63,6 +76,11 @@ export default function QACadastroV2EtapaUmPage() {
     },
     [navigate, persistir],
   );
+
+  const handleAtalhoCursos = useCallback(() => {
+    // Sub-tela dedicada substitui o estado local de cursos (mantém retrocompat por fallback abaixo).
+    navigate("/cadastro-v2/cursos");
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -87,7 +105,7 @@ export default function QACadastroV2EtapaUmPage() {
         {subTela === "perfis" ? (
           <PerfisView
             onSelect={handleSelecionarPerfil}
-            onAtalhoCursos={() => setSubTela("cursos")}
+            onAtalhoCursos={handleAtalhoCursos}
             selecionado={selecionado}
           />
         ) : (
