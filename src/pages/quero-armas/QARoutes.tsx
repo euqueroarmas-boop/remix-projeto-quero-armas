@@ -81,10 +81,11 @@ function QAScope({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Feature flag VITE_QA_CADASTRO_V2_ENABLED:
- *  true  → renderiza QACadastroRefinadoPage (UI editorial 5 etapas)
- *  false/ausente → mantém QACadastroPublicoPage (fluxo legado intacto)
- * Override por querystring: ?cadastro_v2=1 / ?cadastro_v2=0
+ * /cadastro (refinado é o PADRÃO):
+ *  - default → QACadastroRefinadoPage (UI editorial 5 etapas)
+ *  - VITE_QA_CADASTRO_V2_ENABLED="false" → kill-switch reverso, força o legado
+ *  - ?cadastro_legado=1 ou ?cadastro_v2=0 → força o legado em runtime (canal de emergência)
+ *  - ?cadastro_v2=1 → força o refinado (idempotente com o default)
  */
 function CadastroRouteSwitch() {
   return isCadastroRefinadoEnabled()
