@@ -31,6 +31,7 @@ const QAArmamentosAdminPage = lazyRetry(() => import("./QAArmamentosAdminPage"),
 const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcessosPage");
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
+const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACadastroRefinadoPage"), "QACadastroRefinadoPage");
 const QACadastroV2EtapaUmPage = lazyRetry(() => import("./QACadastroV2EtapaUmPage"), "QACadastroV2EtapaUmPage");
 const QACadastroV2DefesaPessoalPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2DefesaPessoalPage"), "QACadastroV2DefesaPessoalPage");
 const QACadastroV2CacPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2CacPage"), "QACadastroV2CacPage");
@@ -78,6 +79,21 @@ function QAScope({ children }: { children: React.ReactNode }) {
   return <div className="qa-scope">{children}</div>;
 }
 
+/**
+ * Feature flag VITE_QA_CADASTRO_V2_ENABLED:
+ *  true  → renderiza QACadastroRefinadoPage (UI editorial 5 etapas)
+ *  false/ausente → mantém QACadastroPublicoPage (fluxo legado intacto)
+ * Override por querystring: ?cadastro_v2=1 / ?cadastro_v2=0
+ */
+function CadastroRouteSwitch() {
+  // Import síncrono — função pura, sem custo
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { isCadastroRefinadoEnabled } = require("@/lib/quero-armas/cadastroRefinadoFlag");
+  return isCadastroRefinadoEnabled()
+    ? <QAScope><QACadastroRefinadoPage /></QAScope>
+    : <QAScope><QACadastroPublicoPage /></QAScope>;
+}
+
 export default function QARoutes() {
   return (
     <Suspense fallback={<QATacticalLoader />}>
@@ -99,7 +115,7 @@ export default function QARoutes() {
         <Route path="login" element={<QAScope><QALoginPage /></QAScope>} />
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
-        <Route path="cadastro" element={<QAScope><QACadastroPublicoPage /></QAScope>} />
+        <Route path="cadastro" element={<CadastroRouteSwitch />} />
         <Route path="cadastro-v2" element={<QAScope><QACadastroV2EtapaUmPage /></QAScope>} />
         <Route path="cadastro-v2/defesa-pessoal" element={<QAScope><QACadastroV2DefesaPessoalPage /></QAScope>} />
         <Route path="cadastro-v2/cac" element={<QAScope><QACadastroV2CacPage /></QAScope>} />
