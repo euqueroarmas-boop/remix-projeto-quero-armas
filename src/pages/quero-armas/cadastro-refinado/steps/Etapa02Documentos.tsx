@@ -245,7 +245,11 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
           </div>
           <div className="qa-ref-upload-hint">
             {status === "enviado"
-              ? item?.fileName
+              ? (extractingKey === d.key
+                  ? <><Loader2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "-1px" }} className="qa-ref-spin" /> Analisando com IA…</>
+                  : extractedFlags[d.key]
+                    ? <span style={{ color: "var(--qa-ref-success)" }}>✓ {item?.fileName} — dados extraídos</span>
+                    : item?.fileName)
               : status === "erro"
               ? item?.errorMsg || "Erro ao enviar"
               : "PDF, JPG ou PNG — até 10MB"}
