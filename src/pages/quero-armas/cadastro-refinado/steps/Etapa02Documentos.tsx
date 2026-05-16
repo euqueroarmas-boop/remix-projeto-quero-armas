@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Upload, Check, X as XIcon, Sparkles, Info, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
@@ -75,6 +75,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [extractingKey, setExtractingKey] = useState<string | null>(null);
   const [extractedFlags, setExtractedFlags] = useState<Record<string, boolean>>({});
+  const [extractFailedFlags, setExtractFailedFlags] = useState<Record<string, string>>({});
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
@@ -116,6 +117,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         } catch (extractErr) {
           // Falha de extração NÃO bloqueia o fluxo — usuário preenche manualmente na Etapa 03.
           console.warn("[cadastro-refinado] extração IA falhou:", extractErr);
+          setExtractFailedFlags((f) => ({ ...f, [key]: String((extractErr as any)?.message || "Falha") }));
         }
       }
     } catch (e: any) {
@@ -132,6 +134,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
 
   async function runExtraction(key: "doc_identidade" | "doc_endereco", dataUrl: string) {
     setExtractingKey(key);
+    setExtractFailedFlags((f) => { const n = { ...f }; delete n[key]; return n; });
     try {
       const body = key === "doc_identidade"
         ? { identity_image: dataUrl }
@@ -164,11 +167,51 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       if (Object.keys(patch).length > 0) {
         updateDados(patch);
         setExtractedFlags((f) => ({ ...f, [key]: true }));
+      } else {
+        setExtractFailedFlags((f) => ({ ...f, [key]: "Não conseguimos ler — tente outra foto" }));
       }
     } finally {
       setExtractingKey((k) => (k === key ? null : k));
     }
   }
+
+  /** Extrai a partir do storage (re-extração ou docs enviados antes desta versão). */
+  async function reExtractFromStorage(key: "doc_identidade" | "doc_endereco") {
+    const item = state.documentos[key];
+    if (!item?.storagePath) return;
+    setExtractingKey(key);
+    try {
+      const { data: blob, error } = await supabase.storage
+        .from("qa-cadastro-selfies")
+        .download(item.storagePath);
+      if (error || !blob) throw error || new Error("download_failed");
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result || ""));
+        fr.onerror = () => reject(fr.error || new Error("read_error"));
+        fr.readAsDataURL(blob);
+      });
+      await runExtraction(key, dataUrl);
+    } catch (e) {
+      console.warn("[cadastro-refinado] re-extração falhou:", e);
+      setExtractFailedFlags((f) => ({ ...f, [key]: "Falha ao reprocessar" }));
+      setExtractingKey(null);
+    }
+  }
+
+  // Auto-extração on-mount: se identidade/comprovante já estão enviados mas
+  // ainda não foram extraídos nesta sessão, reprocessa silenciosamente a partir
+  // do storage. Cobre o caso de uploads feitos antes desta funcionalidade.
+  useEffect(() => {
+    const candidatos: Array<"doc_identidade" | "doc_endereco"> = ["doc_identidade", "doc_endereco"];
+    candidatos.forEach((k) => {
+      const item = state.documentos[k];
+      if (item?.status === "enviado" && item.storagePath && !extractedFlags[k] && !extractFailedFlags[k]) {
+        reExtractFromStorage(k);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleRemove(key: string) {
     const next = { ...state.documentos };
@@ -249,14 +292,27 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
                   ? <><Loader2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "-1px" }} className="qa-ref-spin" /> Analisando com IA…</>
                   : extractedFlags[d.key]
                     ? <span style={{ color: "var(--qa-ref-success)" }}>✓ {item?.fileName} — dados extraídos</span>
-                    : item?.fileName)
+                    : extractFailedFlags[d.key]
+                      ? <span style={{ color: "var(--qa-ref-bordo)" }}>{item?.fileName} — {extractFailedFlags[d.key]}</span>
+                      : item?.fileName)
               : status === "erro"
               ? item?.errorMsg || "Erro ao enviar"
               : "PDF, JPG ou PNG — até 10MB"}
           </div>
         </div>
         {status === "enviado" ? (
-          <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {(d.key === "doc_identidade" || d.key === "doc_endereco") && extractingKey !== d.key && (
+              <button
+                className="qa-ref-upload-action"
+                title="Reprocessar com IA"
+                onClick={() => reExtractFromStorage(d.key as "doc_identidade" | "doc_endereco")}
+              >
+                {extractedFlags[d.key] ? "Re-extrair" : "Extrair com IA"}
+              </button>
+            )}
+            <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
+          </div>
         ) : (
           <>
             <button
