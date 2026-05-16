@@ -329,3 +329,71 @@
 /* Stack utilities */
 .qa-ref-stack-sm > * + * { margin-top: 12px; }
 .qa-ref-stack-md > * + * { margin-top: 22px; }
+/* ========== Contract preview card (Etapa 04) ========== */
+.qa-ref-contract-card {
+  border: 0.5px solid var(--qa-ref-border);
+  border-radius: var(--qa-ref-radius);
+  background: var(--qa-ref-paper);
+  overflow: hidden;
+}
+.qa-ref-contract-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--qa-ref-ink);
+}
+.qa-ref-contract-toggle:hover { background: rgba(0,0,0,0.02); }
+.qa-ref-contract-body {
+  display: none;
+  border-top: 0.5px solid var(--qa-ref-border-soft);
+}
+.qa-ref-contract-body.is-open {
+  display: block;
+  padding: 20px 22px 22px;
+}
+.qa-ref-contract-prose {
+  max-width: 68ch;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--qa-ref-ink);
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.qa-ref-contract-prose h1,
+.qa-ref-contract-prose h2,
+.qa-ref-contract-prose h3,
+.qa-ref-contract-prose h4 {
+  font-family: var(--font-serif, Georgia, 'Times New Roman', serif);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 22px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.qa-ref-contract-prose h1 { font-size: 16px; text-align: center; }
+.qa-ref-contract-prose p { margin: 10px 0; text-align: justify; }
+.qa-ref-contract-prose ul,
+.qa-ref-contract-prose ol { padding-left: 22px; margin: 8px 0; }
+.qa-ref-contract-prose li { margin: 6px 0; }
+.qa-ref-contract-prose strong { font-weight: 600; }
+.qa-ref-contract-anexo {
+  background: var(--qa-ref-bordo-soft);
+  border-left: 3px solid var(--qa-ref-bordo);
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+.qa-ref-aceite-fineprint {
+  font-size: 11.5px;
+  color: var(--qa-ref-ink-soft);
+  line-height: 1.55;
+  margin: 8px 0 0;
+  padding-left: 28px;
+}
