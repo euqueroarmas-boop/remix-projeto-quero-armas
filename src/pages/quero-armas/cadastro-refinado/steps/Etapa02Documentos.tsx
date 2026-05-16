@@ -52,9 +52,9 @@ export default function Etapa02Documentos({ state, update, onNext, onBack }: Pro
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
       const safe = `${key}_${Date.now()}.${ext}`;
-      const path = `cadastro-refinado/${safe}`;
+      const path = `cadastro-publico/refinado/${safe}`;
       const { error } = await supabase.storage
-        .from("qa-cliente-docs")
+        .from("qa-cadastro-selfies")
         .upload(path, file, { upsert: true, contentType: file.type });
       if (error) throw error;
       update({
