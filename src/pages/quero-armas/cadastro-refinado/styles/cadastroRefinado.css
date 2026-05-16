@@ -306,6 +306,10 @@
   .qa-ref-opt-badge { display: block; margin: 4px 0 0; }
 }
 
+/* spinner */
+.qa-ref-spin { animation: qaRefSpin 0.9s linear infinite; }
+@keyframes qaRefSpin { to { transform: rotate(360deg); } }
+
 /* Pay options */
 .qa-ref-pay-list { display: grid; gap: 12px; margin-top: 16px; }
 .qa-ref-pay-opt {
