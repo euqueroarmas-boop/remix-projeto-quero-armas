@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
+import ContractPreviewCard from "../components/ContractPreviewCard";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
@@ -20,6 +21,7 @@ const PAY_OPTIONS: { id: CadastroRefinadoState["formaPagamento"]; nome: string; 
 export default function Etapa04Pagamento({ state, update, onNext, onBack }: Props) {
   const navigate = useNavigate();
   const [preco, setPreco] = useState<number>(0);
+  const [nomeServico, setNomeServico] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +30,11 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
     (async () => {
       const { data } = await supabase
         .from("qa_servicos_catalogo")
-        .select("preco")
+        .select("preco, nome")
         .eq("slug", state.servicoSlug)
         .maybeSingle();
       setPreco(Number(data?.preco) || 0);
+      setNomeServico((data as any)?.nome ?? null);
     })();
   }, [state.servicoSlug]);
 
@@ -84,6 +87,38 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         resultado: { cliente_id, venda_id, solicitacao_id, numero_processo },
         clienteExistente: !!data?.cpf_ja_possui_login || state.clienteExistente,
       });
+
+      // Registro probatório do aceite eletrônico (não bloqueia o checkout)
+      try {
+        const { error: aceiteErr } = await supabase.functions.invoke("qa-contract-aceite-registrar", {
+          body: {
+            cliente_id,
+            venda_id,
+            solicitacao_id,
+            servico_slug: state.servicoSlug,
+            servico_preco: preco,
+            dados_pessoais: state.dadosPessoais,
+            user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            template_codigo: "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS",
+          },
+        });
+        if (aceiteErr) throw aceiteErr;
+      } catch (aceiteFail: any) {
+        console.warn("[Etapa04] qa-contract-aceite-registrar falhou:", aceiteFail);
+        try {
+          await supabase.functions.invoke("qa-notificar-admin-contratacao", {
+            body: {
+              motivo: "aceite_registro_falhou",
+              cliente_id,
+              venda_id,
+              servico_slug: state.servicoSlug,
+              erro: aceiteFail?.message || String(aceiteFail),
+            },
+          });
+        } catch (notifyErr) {
+          console.warn("[Etapa04] notificação de falha de aceite também falhou:", notifyErr);
+        }
+      }
 
       // Encaminha ao pipeline de pagamento existente (Asaas + contrato)
       // — reaproveita 100% do fluxo /area-do-cliente/contratar/{slug}/confirmar
@@ -139,6 +174,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         ))}
       </div>
 
+      <div style={{ marginTop: 24 }}>
+        <ContractPreviewCard state={state} precoServico={preco} nomeServico={nomeServico} />
+      </div>
+
       <label className="qa-ref-checkbox-row">
         <input
           type="checkbox"
@@ -146,10 +185,15 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           onChange={(e) => update({ aceiteContrato: e.target.checked })}
         />
         <span>
-          Li e concordo com o <a href="/termos" target="_blank" rel="noreferrer">contrato de prestação de serviços</a>
+          Li e aceito o <a href="/termos" target="_blank" rel="noreferrer">contrato de prestação de serviços</a>
           {" "}e a <a href="/privacidade" target="_blank" rel="noreferrer">política de privacidade</a> (LGPD).
         </span>
       </label>
+      <p className="qa-ref-aceite-fineprint">
+        Ao prosseguir, o aceite eletrônico será registrado com data, hora, IP e identificação do dispositivo,
+        na forma da MP 2.200-2/2001 e Lei 14.063/2020. Para os atos perante PF/Exército/órgãos competentes,
+        será solicitada assinatura digital ICP-Brasil em momento posterior.
+      </p>
 
       {error && <div className="qa-ref-error-text">{error}</div>}
 
