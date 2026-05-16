@@ -21,14 +21,17 @@ export default function Etapa05Conclusao({ state, onReset }: Props) {
     setErroBaixar(null);
     setBaixando(true);
     try {
-      let query = supabase
+      const baseQuery: any = supabase
         .from("qa_contracts")
         .select("conteudo_renderizado, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash, status, created_at")
         .order("created_at", { ascending: false })
         .limit(1);
-      if (r.venda_id) query = query.eq("venda_id" as any, r.venda_id as any);
-      else if (r.cliente_id) query = query.eq("cliente_id" as any, r.cliente_id as any);
-      const { data, error } = await query.maybeSingle();
+      const filtered = r.venda_id
+        ? baseQuery.eq("venda_id", r.venda_id)
+        : r.cliente_id
+          ? baseQuery.eq("cliente_id", r.cliente_id)
+          : baseQuery;
+      const { data, error } = await filtered.maybeSingle();
       if (error) throw error;
       if (!data?.conteudo_renderizado) {
         setErroBaixar("Contrato ainda não disponível para download. Tente novamente em instantes.");
