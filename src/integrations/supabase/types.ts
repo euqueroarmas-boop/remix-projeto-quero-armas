@@ -4228,6 +4228,59 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_contract_aceites_log: {
+        Row: {
+          aceite_data: string
+          aceite_dispositivo: Json | null
+          aceite_inicio_imediato: boolean | null
+          aceite_ip: string | null
+          aceite_user_agent: string | null
+          cliente_id: number | null
+          conteudo_hash: string
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          template_codigo: string | null
+          template_versao: number | null
+        }
+        Insert: {
+          aceite_data?: string
+          aceite_dispositivo?: Json | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
+          cliente_id?: number | null
+          conteudo_hash: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          template_codigo?: string | null
+          template_versao?: number | null
+        }
+        Update: {
+          aceite_data?: string
+          aceite_dispositivo?: Json | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
+          cliente_id?: number | null
+          conteudo_hash?: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          template_codigo?: string | null
+          template_versao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_aceites_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_contract_events: {
         Row: {
           contract_id: string
@@ -4372,12 +4425,63 @@ export type Database = {
           },
         ]
       }
+      qa_contract_templates: {
+        Row: {
+          codigo: string
+          corpo_html: string
+          corpo_markdown: string | null
+          created_at: string | null
+          data_publicacao: string | null
+          id: string
+          observacoes: string | null
+          titulo: string
+          updated_at: string | null
+          variaveis: Json | null
+          versao: number
+          vigente: boolean | null
+        }
+        Insert: {
+          codigo: string
+          corpo_html: string
+          corpo_markdown?: string | null
+          created_at?: string | null
+          data_publicacao?: string | null
+          id?: string
+          observacoes?: string | null
+          titulo: string
+          updated_at?: string | null
+          variaveis?: Json | null
+          versao: number
+          vigente?: boolean | null
+        }
+        Update: {
+          codigo?: string
+          corpo_html?: string
+          corpo_markdown?: string | null
+          created_at?: string | null
+          data_publicacao?: string | null
+          id?: string
+          observacoes?: string | null
+          titulo?: string
+          updated_at?: string | null
+          variaveis?: Json | null
+          versao?: number
+          vigente?: boolean | null
+        }
+        Relationships: []
+      }
       qa_contracts: {
         Row: {
+          aceite_eletronico_data: string | null
+          aceite_hash: string | null
+          aceite_inicio_imediato: boolean | null
+          aceite_ip: string | null
+          aceite_user_agent: string | null
           cliente_id: number
           company_signed_at: string | null
           company_signed_pdf_path: string | null
           company_signed_sha256: string | null
+          conteudo_renderizado: string | null
           contract_number: string
           created_at: string
           customer_signature_validated_at: string | null
@@ -4388,18 +4492,29 @@ export type Database = {
           issued_at: string | null
           original_pdf_path: string | null
           original_sha256: string | null
+          servico_slug: string | null
           signature_mode_company: string | null
           status: string
+          template_codigo: string | null
+          template_id: string | null
+          template_versao: number | null
           updated_at: string
           validation_details: Json
           validation_status: string | null
+          valor: number | null
           venda_id: number
         }
         Insert: {
+          aceite_eletronico_data?: string | null
+          aceite_hash?: string | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
           cliente_id: number
           company_signed_at?: string | null
           company_signed_pdf_path?: string | null
           company_signed_sha256?: string | null
+          conteudo_renderizado?: string | null
           contract_number: string
           created_at?: string
           customer_signature_validated_at?: string | null
@@ -4410,18 +4525,29 @@ export type Database = {
           issued_at?: string | null
           original_pdf_path?: string | null
           original_sha256?: string | null
+          servico_slug?: string | null
           signature_mode_company?: string | null
           status?: string
+          template_codigo?: string | null
+          template_id?: string | null
+          template_versao?: number | null
           updated_at?: string
           validation_details?: Json
           validation_status?: string | null
+          valor?: number | null
           venda_id: number
         }
         Update: {
+          aceite_eletronico_data?: string | null
+          aceite_hash?: string | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
           cliente_id?: number
           company_signed_at?: string | null
           company_signed_pdf_path?: string | null
           company_signed_sha256?: string | null
+          conteudo_renderizado?: string | null
           contract_number?: string
           created_at?: string
           customer_signature_validated_at?: string | null
@@ -4432,11 +4558,16 @@ export type Database = {
           issued_at?: string | null
           original_pdf_path?: string | null
           original_sha256?: string | null
+          servico_slug?: string | null
           signature_mode_company?: string | null
           status?: string
+          template_codigo?: string | null
+          template_id?: string | null
+          template_versao?: number | null
           updated_at?: string
           validation_details?: Json
           validation_status?: string | null
+          valor?: number | null
           venda_id?: number
         }
         Relationships: [
@@ -4453,6 +4584,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "qa_vendas"
             referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "qa_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contract_templates"
+            referencedColumns: ["id"]
           },
         ]
       }
