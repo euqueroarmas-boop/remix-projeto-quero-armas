@@ -12,10 +12,10 @@ interface Props {
 function renderVariables(html: string, vars: Record<string, string>) {
   let out = html;
   for (const [k, v] of Object.entries(vars)) {
-    out = out.replaceAll(`{{${k}}}`, v ?? "");
+    out = out.split(`{{${k}}}`).join(v ?? "");
   }
   // Limpa variáveis ainda não resolvidas (mantém placeholder visual)
-  out = out.replaceAll(/\{\{[a-z_]+\}\}/gi, "—");
+  out = out.replace(/\{\{[a-z_]+\}\}/gi, "—");
   return out;
 }
 
