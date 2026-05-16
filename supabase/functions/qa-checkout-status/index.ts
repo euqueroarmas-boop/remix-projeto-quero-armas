@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
   const { data: venda, error } = await supabase
     .from("qa_vendas")
     .select(
-      "id, status, valor_a_pagar, asaas_payment_id, asaas_invoice_url, asaas_bank_slip_url, asaas_pix_payload, asaas_due_date, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, updated_at, cobranca_gerada_em",
+      "id, status, valor_a_pagar, asaas_payment_id, asaas_invoice_url, asaas_bank_slip_url, asaas_pix_payload, asaas_due_date, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, cobranca_gerada_em",
     )
     .eq("id", venda_id)
     .maybeSingle();
@@ -77,6 +77,6 @@ Deno.serve(async (req) => {
     asaas_pix_payload: venda.asaas_pix_payload,
     asaas_due_date: venda.asaas_due_date,
     valor: venda.valor_a_pagar,
-    atualizado_em: venda.updated_at || venda.cobranca_gerada_em || null,
+    atualizado_em: venda.cobranca_gerada_em || null,
   });
 });
