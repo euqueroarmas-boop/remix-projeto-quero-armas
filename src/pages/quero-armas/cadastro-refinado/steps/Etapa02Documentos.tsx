@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Upload, Check, X as XIcon, Sparkles, Info } from "lucide-react";
+import { Upload, Check, X as XIcon, Sparkles, Info, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
@@ -7,6 +7,7 @@ import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 interface Props {
   state: CadastroRefinadoState;
   update: (patch: Partial<CadastroRefinadoState>) => void;
+  updateDados: (patch: Partial<CadastroRefinadoState["dadosPessoais"]>) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -51,9 +52,29 @@ function docsForSlug(slug: string | null): DocItem[] {
   return [...DOCS_OBRIGATORIOS_UNIVERSAIS, ...DOCS_OPCIONAIS_BASE, ...extras];
 }
 
-export default function Etapa02Documentos({ state, update, onNext, onBack }: Props) {
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result || ""));
+    fr.onerror = () => reject(fr.error || new Error("read_error"));
+    fr.readAsDataURL(file);
+  });
+}
+
+function maskCpf(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*/, "$1.$2.$3-$4").replace(/-$/, "");
+}
+function maskCep(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 8);
+  return d.replace(/^(\d{5})(\d{0,3}).*/, "$1-$2").replace(/-$/, "");
+}
+
+export default function Etapa02Documentos({ state, update, updateDados, onNext, onBack }: Props) {
   const docs = useMemo(() => docsForSlug(state.servicoSlug), [state.servicoSlug]);
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
+  const [extractingKey, setExtractingKey] = useState<string | null>(null);
+  const [extractedFlags, setExtractedFlags] = useState<Record<string, boolean>>({});
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
@@ -86,6 +107,17 @@ export default function Etapa02Documentos({ state, update, onNext, onBack }: Pro
           [key]: { storagePath: path, fileName: file.name, status: "enviado" },
         },
       });
+      // Disparo da extração por IA para identidade e comprovante de residência.
+      // Demais documentos NÃO são extraídos nesta etapa (o Arsenal cobra/extrai depois).
+      if (key === "doc_identidade" || key === "doc_endereco") {
+        try {
+          const dataUrl = await fileToDataUrl(file);
+          await runExtraction(key, dataUrl);
+        } catch (extractErr) {
+          // Falha de extração NÃO bloqueia o fluxo — usuário preenche manualmente na Etapa 03.
+          console.warn("[cadastro-refinado] extração IA falhou:", extractErr);
+        }
+      }
     } catch (e: any) {
       update({
         documentos: {
@@ -95,6 +127,46 @@ export default function Etapa02Documentos({ state, update, onNext, onBack }: Pro
       });
     } finally {
       setUploadingKey(null);
+    }
+  }
+
+  async function runExtraction(key: "doc_identidade" | "doc_endereco", dataUrl: string) {
+    setExtractingKey(key);
+    try {
+      const body = key === "doc_identidade"
+        ? { identity_image: dataUrl }
+        : { address_image: dataUrl };
+      const { data, error } = await supabase.functions.invoke("qa-extract-documents", { body });
+      if (error) throw error;
+      const id = (data as any)?.identity || {};
+      const ad = (data as any)?.address || {};
+      const patch: Partial<CadastroRefinadoState["dadosPessoais"]> = {};
+      // Identidade — só preenche campos ainda vazios para não sobrescrever digitação do usuário.
+      if (key === "doc_identidade") {
+        const d = state.dadosPessoais;
+        if (!d.nome_completo && id.nome_completo) patch.nome_completo = String(id.nome_completo).trim();
+        if (!d.cpf && id.cpf) patch.cpf = maskCpf(String(id.cpf));
+        if (!d.data_nascimento && id.data_nascimento) patch.data_nascimento = String(id.data_nascimento);
+      }
+      // Endereço
+      if (key === "doc_endereco") {
+        const d = state.dadosPessoais;
+        if (!d.endereco_cep && ad.cep) patch.endereco_cep = maskCep(String(ad.cep));
+        if (!d.endereco_logradouro && ad.logradouro) patch.endereco_logradouro = String(ad.logradouro);
+        if (!d.endereco_numero && ad.numero) patch.endereco_numero = String(ad.numero);
+        if (!d.endereco_complemento && ad.complemento) patch.endereco_complemento = String(ad.complemento);
+        if (!d.endereco_bairro && ad.bairro) patch.endereco_bairro = String(ad.bairro);
+        if (!d.endereco_cidade && ad.cidade) patch.endereco_cidade = String(ad.cidade);
+        if (!d.endereco_estado && ad.estado) {
+          patch.endereco_estado = String(ad.estado).toUpperCase().slice(0, 2);
+        }
+      }
+      if (Object.keys(patch).length > 0) {
+        updateDados(patch);
+        setExtractedFlags((f) => ({ ...f, [key]: true }));
+      }
+    } finally {
+      setExtractingKey((k) => (k === key ? null : k));
     }
   }
 
@@ -173,7 +245,11 @@ export default function Etapa02Documentos({ state, update, onNext, onBack }: Pro
           </div>
           <div className="qa-ref-upload-hint">
             {status === "enviado"
-              ? item?.fileName
+              ? (extractingKey === d.key
+                  ? <><Loader2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "-1px" }} className="qa-ref-spin" /> Analisando com IA…</>
+                  : extractedFlags[d.key]
+                    ? <span style={{ color: "var(--qa-ref-success)" }}>✓ {item?.fileName} — dados extraídos</span>
+                    : item?.fileName)
               : status === "erro"
               ? item?.errorMsg || "Erro ao enviar"
               : "PDF, JPG ou PNG — até 10MB"}

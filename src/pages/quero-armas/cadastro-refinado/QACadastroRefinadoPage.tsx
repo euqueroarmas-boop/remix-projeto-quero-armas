@@ -18,7 +18,7 @@ export default function QACadastroRefinadoPage() {
     case 1:
       return <Etapa01Servico state={state} update={update} onNext={next} />;
     case 2:
-      return <Etapa02Documentos state={state} update={update} onNext={next} onBack={back} />;
+      return <Etapa02Documentos state={state} update={update} updateDados={updateDados} onNext={next} onBack={back} />;
     case 3:
       return <Etapa03Revisao state={state} update={update} updateDados={updateDados} onNext={next} onBack={back} />;
     case 4:
