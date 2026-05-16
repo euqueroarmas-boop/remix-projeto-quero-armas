@@ -292,14 +292,27 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
                   ? <><Loader2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "-1px" }} className="qa-ref-spin" /> Analisando com IA…</>
                   : extractedFlags[d.key]
                     ? <span style={{ color: "var(--qa-ref-success)" }}>✓ {item?.fileName} — dados extraídos</span>
-                    : item?.fileName)
+                    : extractFailedFlags[d.key]
+                      ? <span style={{ color: "var(--qa-ref-bordo)" }}>{item?.fileName} — {extractFailedFlags[d.key]}</span>
+                      : item?.fileName)
               : status === "erro"
               ? item?.errorMsg || "Erro ao enviar"
               : "PDF, JPG ou PNG — até 10MB"}
           </div>
         </div>
         {status === "enviado" ? (
-          <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {(d.key === "doc_identidade" || d.key === "doc_endereco") && extractingKey !== d.key && (
+              <button
+                className="qa-ref-upload-action"
+                title="Reprocessar com IA"
+                onClick={() => reExtractFromStorage(d.key as "doc_identidade" | "doc_endereco")}
+              >
+                {extractedFlags[d.key] ? "Re-extrair" : "Extrair com IA"}
+              </button>
+            )}
+            <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
+          </div>
         ) : (
           <>
             <button
