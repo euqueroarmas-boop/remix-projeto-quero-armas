@@ -4,7 +4,7 @@
  * Página de PREVIEW — não substitui /cadastro. Backend permanece intacto.
  * Tema dark/brass "Tudo Pronto" oficial (mem://style/quero-armas/cadastro-refinado-dark-brass).
  */
-import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode, type ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft, ArrowRight, ChevronRight, Shield, Crosshair, Briefcase, Award,
@@ -379,21 +379,32 @@ function T7({ flow }: { flow: Flow }) {
   const allDone = docs.identity && docs.address && docs.selfie;
   const toggle = (k: keyof FlowData["docs"]) => flow.patch({ docs: { ...docs, [k]: !docs[k] } });
   const missing = 3 - Object.values(docs).filter(Boolean).length;
+  const order: Array<keyof FlowData["docs"]> = ["identity", "address", "selfie"];
+  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) { alert("Arquivo maior que 20MB."); return; }
+    if (!/^(image\/|application\/pdf)/.test(f.type) && !/\.pdf$/i.test(f.name)) { alert("Use foto ou PDF."); return; }
+    const next = order.find((k) => !docs[k]);
+    if (next) flow.patch({ docs: { ...docs, [next]: true } });
+  };
   return (
     <CPhone>
       <CTopBar onBack={flow.back} breadcrumb={["Cadastro", perfilLabel(flow.data.perfil), "Documentos"]} progress={66} />
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px 16px" }}>
         <CChip>Etapa · Documentos</CChip>
         <CPrompt sub="Eu leio e preencho seu cadastro automaticamente. Você só revisa no final.">Pode me mostrar seus documentos?</CPrompt>
-        <div style={{ marginTop: 22, borderRadius: radP, background: QA.card, border: `1.5px dashed ${QA.borderHi}`, padding: "22px 20px", textAlign: "center" }}>
+        <label htmlFor="mira-doc-upload" style={{ display: "block", marginTop: 22, borderRadius: radP, background: QA.card, border: `1.5px dashed ${QA.borderHi}`, padding: "22px 20px", textAlign: "center", cursor: "pointer" }}>
           <div style={{ width: 48, height: 48, borderRadius: 24, margin: "0 auto", background: `${QA.brass}15`, border: `1px solid ${QA.brass}40`, display: "flex", alignItems: "center", justifyContent: "center", color: QA.brass }}>
             <Upload size={20} strokeWidth={1.7} />
           </div>
           <div style={{ marginTop: 12, fontFamily: F.heading, fontSize: 16, fontWeight: 600, color: QA.textHi, letterSpacing: "0.02em", textTransform: "uppercase", lineHeight: 1.2 }}>Arraste, fotografe<br/>ou selecione</div>
           <div style={{ marginTop: 6, fontSize: 11, color: QA.textMute }}>Foto · PDF · até 20MB</div>
-        </div>
+          <input id="mira-doc-upload" type="file" accept="image/*,application/pdf,.pdf" onChange={onPick} style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} />
+        </label>
         <div style={{ marginTop: 18 }}>
-          <div style={{ fontFamily: F.tactical, fontSize: 10, color: QA.textMute, letterSpacing: "0.14em", marginBottom: 10, textTransform: "uppercase" }}>Clique nos itens para simular o envio</div>
+          <div style={{ fontFamily: F.tactical, fontSize: 10, color: QA.textMute, letterSpacing: "0.14em", marginBottom: 10, textTransform: "uppercase" }}>Toque no card acima ou nos itens abaixo</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {([
               { key: "identity" as const, Icon: IdCard, label: "Documento com CPF", sub: "RG, CNH ou CIN" },
