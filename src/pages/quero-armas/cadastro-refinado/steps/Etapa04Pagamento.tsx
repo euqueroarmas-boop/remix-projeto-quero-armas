@@ -162,12 +162,21 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
     try {
       const d = state.dadosPessoais;
       // 1) Cria conta pública (preserva Bug 2 — notificações e venda_pendente já existentes).
+      // A senha é gerada aleatória; o cliente recebe e-mail de boas-vindas e usa "Esqueci minha senha"
+      // para definir sua senha no primeiro acesso ao portal.
+      const senhaAuto =
+        "QA-" +
+        crypto.getRandomValues(new Uint32Array(2)).reduce((s, n) => s + n.toString(36), "") +
+        "!a1";
       const { data: contaData, error: contaErr } = await supabase.functions.invoke("qa-cliente-criar-conta-publica", {
         body: {
+          nome: d.nome_completo,
           nome_completo: d.nome_completo,
           cpf: d.cpf.replace(/\D/g, ""),
           email: d.email.trim().toLowerCase(),
           telefone: d.telefone,
+          senha: senhaAuto,
+          catalogo_slug: state.servicoSlug,
           data_nascimento: d.data_nascimento,
           endereco: {
             cep: d.endereco_cep,
