@@ -884,3 +884,10 @@
 .qa-ref-arsenal-doc-actions { display: flex; gap: 8px; margin-top: 4px; position: relative; }
 .qa-ref-arsenal-doc-success { font-size: 11px; color: #6fcf97; }
 .qa-ref-arsenal-doc-error { font-size: 11px; color: #e26a5a; }
+
+/* Atalho discreto "Já tenho conta no Arsenal" no topo da escolha guiada */
+.qa-ref-id-shortcut-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
