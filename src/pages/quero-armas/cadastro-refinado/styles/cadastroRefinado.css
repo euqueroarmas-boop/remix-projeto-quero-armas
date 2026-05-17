@@ -62,9 +62,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  max-width: 720px;
+  max-width: 480px;
   margin: 0 auto;
-  padding: 14px 20px;
+  padding: 14px 22px;
 }
 .qa-ref-logo {
   display: flex; align-items: center; gap: 10px;
@@ -111,12 +111,12 @@
 
 /* Shell */
 .qa-ref-shell {
-  max-width: 720px;
+  max-width: 480px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 18px 22px 80px;
 }
 @media (min-width: 768px) {
-  .qa-ref-shell { padding: 56px 48px 96px; }
+  .qa-ref-shell { padding: 28px 24px 96px; max-width: 480px; }
 }
 
 /* Step indicator */
@@ -125,7 +125,7 @@
 }
 .qa-ref-step-num {
   font-family: "Oswald", "Barlow Condensed", var(--font-sans, "Inter"), system-ui;
-  font-size: 44px; line-height: 1; font-weight: 700;
+  font-size: 30px; line-height: 1; font-weight: 700;
   color: var(--qa-ref-accent); letter-spacing: 0;
 }
 .qa-ref-step-total { font-size: 13px; color: var(--qa-ref-ink-soft); }
@@ -162,17 +162,17 @@
 }
 .qa-ref-title {
   font-family: "Oswald", "Barlow Condensed", var(--font-sans, "Inter"), system-ui;
-  font-size: 30px; font-weight: 700; line-height: 1.08; letter-spacing: 0.01em;
+  font-size: clamp(28px, 8.5vw, 36px); font-weight: 600; line-height: 1.04; letter-spacing: 0.01em;
   text-transform: uppercase; font-stretch: condensed;
   color: var(--qa-ref-ink); margin: 0;
 }
 @media (min-width: 768px) { .qa-ref-title { font-size: 36px; } }
 .qa-ref-subtitle {
-  font-size: 14px; line-height: 1.6; color: var(--qa-ref-ink-soft);
-  max-width: 480px; margin: 12px 0 0;
+  font-size: 13.5px; line-height: 1.55; color: var(--qa-ref-ink-soft);
+  max-width: 460px; margin: 10px 0 0;
 }
 
-.qa-ref-section { margin-top: 28px; }
+.qa-ref-section { margin-top: 20px; }
 
 /* ========== Etapa 00 — option cards + breadcrumb ========== */
 .qa-ref-breadcrumb {
@@ -197,13 +197,13 @@
 .qa-ref-opt-card {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   width: 100%;
   text-align: left;
-  padding: 22px 24px;
+  padding: 14px 16px;
   background: var(--qa-ref-paper);
   border: 0.5px solid var(--qa-ref-border);
-  border-radius: var(--qa-ref-radius);
+  border-radius: 12px;
   cursor: pointer;
   color: var(--qa-ref-ink);
   position: relative;
@@ -214,7 +214,7 @@
   background: rgba(255, 255, 255, 0.02);
 }
 @media (min-width: 768px) {
-  .qa-ref-opt-card { padding: 26px 28px; }
+  .qa-ref-opt-card { padding: 16px 18px; }
 }
 .qa-ref-opt-icon {
   width: 36px; height: 36px;
@@ -248,17 +248,17 @@
 .qa-ref-opt-body { flex: 1; min-width: 0; }
 .qa-ref-opt-title {
   font-family: "Oswald", "Barlow Condensed", var(--font-sans, "Inter"), system-ui;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  line-height: 1.2;
+  line-height: 1.15;
   color: var(--qa-ref-ink);
   margin: 0;
 }
 .qa-ref-opt-desc {
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--qa-ref-ink-soft);
   margin-top: 4px;
 }
