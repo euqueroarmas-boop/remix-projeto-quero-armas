@@ -151,4 +151,53 @@ describe("cadastro-refinado · constraints", () => {
     expect(src).toContain("getClaims");
     expect(src).toMatch(/Unauthorized.*401|401.*Unauthorized/s);
   });
+
+  it("Etapa02Documentos expõe CTAs de substituição (Substituir / Enviar novo / Enviar outro)", () => {
+    const src = readFileSync(join(ROOT, "steps/Etapa02Documentos.tsx"), "utf8");
+    expect(src).toContain("qa-cadastro-substituir-documento");
+    expect(src).toContain("Substituir");
+    expect(src).toContain("Enviar novo");
+    expect(src).toContain("Enviar outro");
+    // Não pode deletar doc do servidor a partir da substituição
+    expect(src).not.toMatch(/\.from\(["']qa_documentos_cliente["']\)\.delete\(\)/);
+    // 20MB hard cap
+    expect(src).toContain("20 * 1024 * 1024");
+  });
+
+  it("Edge function qa-cadastro-substituir-documento é não-destrutiva e auditada", () => {
+    const src = readFileSync(
+      "supabase/functions/qa-cadastro-substituir-documento/index.ts",
+      "utf8",
+    );
+    // Auth obrigatória
+    expect(src).toContain("unauthorized");
+    expect(src).toContain("Authorization");
+    // Recusa ramificação
+    expect(src).toContain("ja_substituido");
+    // Insere novo com referência ao anterior + nova versão
+    expect(src).toContain("substitui_documento_id");
+    expect(src).toContain("versao");
+    expect(src).toContain('status: "pendente_aprovacao"');
+    expect(src).toContain('origem: "cliente"');
+    // Anterior é apenas marcado, nunca deletado
+    expect(src).toContain("substituido_por_documento_id");
+    expect(src).toContain("substituido_em");
+    expect(src).not.toMatch(/\.from\(["']qa_documentos_cliente["']\)\s*\.delete\(\)\s*\.eq\(["']id["'],\s*anterior/);
+    // Auditoria
+    expect(src).toContain("qa_status_eventos");
+    expect(src).toContain("qa_logs_auditoria");
+    expect(src).toContain("cadastro_mira");
+    // Não toca checkout / contrato / processo / WMTi
+    for (const forbidden of [
+      "post-purchase",
+      "ensureClientAccess",
+      "qa-checkout-",
+      "qa-generate-contract",
+      "qa-provisionar-acesso-portal",
+      "qa-liberar-servicos-contrato",
+      "qa_arsenal_access_gate",
+    ]) {
+      expect(src).not.toContain(forbidden);
+    }
+  });
 });
