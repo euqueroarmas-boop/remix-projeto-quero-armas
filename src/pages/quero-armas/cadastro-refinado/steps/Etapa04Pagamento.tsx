@@ -252,6 +252,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           ...(state.resultado || {}),
           cliente_id: qaClienteId,
           venda_id: String(vendaId),
+          checkout_token: checkoutToken,
+          asaas_invoice_url: payData.asaas_invoice_url ?? undefined,
+          asaas_payment_id: payData.asaas_payment_id ?? undefined,
+          billing_type: billing,
+          /* Cobrança apenas criada — webhook Asaas ainda não confirmou.
+           * Etapa05 lê este status para renderizar o estado correto. */
+          pagamento_status: "aguardando_pagamento",
           pagamento_url: payData.asaas_invoice_url ?? undefined,
         },
       });
