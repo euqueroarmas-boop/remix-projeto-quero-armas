@@ -16,14 +16,27 @@ export default function QACadastroRefinadoPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
+  // Regra de primeira tela:
+  // /cadastro e /cadastro-mira SEMPRE abrem em Etapa00Identificacao, exceto se:
+  //  1) `?retomar=1` (continuação explícita do fluxo);
+  //  2) usuário já está autenticado e dados do Arsenal já carregados nesta sessão;
+  //  3) usuário já confirmou identificação nesta sessão (escolheu "começar agora"
+  //     ou autenticou via OTP) — flag `identificacao_confirmada`.
+  // `?servico=...` por si só NÃO pula a identificação.
+  const retomar = params.get("retomar") === "1";
+  const jaAutenticado =
+    state.modo_cliente === "autenticado" && state.dados_carregados_do_arsenal;
+  const podePularIdentificacao =
+    retomar || jaAutenticado || state.identificacao_confirmada;
+
   // Step inicial conforme query params (executa só na montagem)
   const [step, setStep] = useState<number>(() => {
-    if (params.get("servico")) return 1;
+    if (params.get("servico") && (retomar || jaAutenticado || state.identificacao_confirmada)) return 1;
     return 0;
   });
   // Tela de "já tenho conta no Arsenal" — antecede o step 0 quando indefinido
   const [showIdent, setShowIdent] = useState<boolean>(
-    () => state.modo_cliente === "indefinido" && !params.get("servico"),
+    () => !podePularIdentificacao,
   );
   // Após autenticação bem-sucedida, mostra resumo "encontrei seu cadastro"
   const [showEncontrado, setShowEncontrado] = useState<boolean>(false);
