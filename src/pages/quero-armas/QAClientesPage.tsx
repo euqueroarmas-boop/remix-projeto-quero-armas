@@ -2428,13 +2428,12 @@ export default function QAClientesPage() {
   const isRejeitado = (s: string | null | undefined) => String(s || "").toLowerCase() === "rejeitado";
   const cadastrosNaoRejeitados = cadastrosPublicos.filter(c => !isRejeitado(c.status));
   const cadastrosRejeitados = cadastrosPublicos.filter(c => isRejeitado(c.status));
-  const APROVADO_STATUSES = new Set(["aprovado", "conferido", "validado", "formulario_conferido"]);
   const isAprovadoStatus = (s: string | null | undefined) =>
-    APROVADO_STATUSES.has(String(s || "").toLowerCase());
+    CADASTRO_PUBLICO_APROVADO_STATUSES.has(String(s || "").toLowerCase());
   const filteredCadastros = cadastrosNaoRejeitados.filter(c => {
     if (!matchSearch(c)) return false;
     if (cadastroFilter === "aprovado") return isAprovadoStatus(c.status);
-    return !isAprovadoStatus(c.status); // pendente / em análise / etc.
+    return CADASTRO_MIRA_PENDENTE_STATUSES.has(String(c.status || "").toLowerCase()) || !isAprovadoStatus(c.status); // pendente / em análise / status Mira
   });
   const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
@@ -3332,9 +3331,10 @@ export default function QAClientesPage() {
   }
 
   const cadastroStatusColor = (s: string) => {
-    if (s === "aprovado") return "text-emerald-600 bg-emerald-50";
-    if (s === "pendente") return "text-[#641722] bg-[#FBF3F4]";
-    if (s === "rejeitado") return "text-red-600 bg-red-50";
+    const normalized = String(s || "").toLowerCase();
+    if (CADASTRO_PUBLICO_APROVADO_STATUSES.has(normalized)) return "text-emerald-600 bg-emerald-50";
+    if (CADASTRO_MIRA_PENDENTE_STATUSES.has(normalized)) return "text-[#641722] bg-[#FBF3F4]";
+    if (normalized === "rejeitado" || normalized === "abandonado") return "text-red-600 bg-red-50";
     return "text-slate-500 bg-slate-100";
   };
 
