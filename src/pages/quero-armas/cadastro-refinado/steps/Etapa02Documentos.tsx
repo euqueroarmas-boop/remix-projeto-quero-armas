@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Check, X as XIcon, Sparkles, Info, Loader2 } from "lucide-react";
+import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
@@ -76,7 +76,23 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const [extractingKey, setExtractingKey] = useState<string | null>(null);
   const [extractedFlags, setExtractedFlags] = useState<Record<string, boolean>>({});
   const [extractFailedFlags, setExtractFailedFlags] = useState<Record<string, string>>({});
+  const cameraInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [sizeErrors, setSizeErrors] = useState<Record<string, string>>({});
+
+  if (typeof window !== "undefined" && !(window as any).__qaCamHint) {
+    (window as any).__qaCamHint = true;
+    // eslint-disable-next-line no-console
+    console.log("Camera capture may require opening the preview in a new tab or deployed URL on iOS.");
+  }
+
+  const MAX_BYTES = 20 * 1024 * 1024;
+  function validate(file: File): string | null {
+    if (file.size > MAX_BYTES) return "Arquivo maior que 20MB";
+    const okType = /^image\//.test(file.type) || file.type === "application/pdf" || /\.(pdf|jpe?g|png|webp|heic|heif)$/i.test(file.name);
+    if (!okType) return "Tipo inválido — use foto ou PDF";
+    return null;
+  }
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
   const opcionais = docs.filter((d) => !d.obrigatorio_etapa02);
@@ -93,6 +109,12 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   }
 
   async function handleUpload(key: string, file: File) {
+    const err = validate(file);
+    if (err) {
+      setSizeErrors((s) => ({ ...s, [key]: err }));
+      return;
+    }
+    setSizeErrors((s) => { const n = { ...s }; delete n[key]; return n; });
     setUploadingKey(key);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
