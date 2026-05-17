@@ -112,6 +112,15 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         if (data?.pago) {
           if (pollRef.current) window.clearInterval(pollRef.current);
           setStage("confirmed");
+          /* Webhook Asaas confirmou — agora sim podemos declarar pagamento confirmado.
+           * Etapas pós-pagamento (contrato_gerado, acesso_enviado, servico_liberado)
+           * são derivadas separadamente pela Etapa05 via polling do mesmo endpoint. */
+          update({
+            resultado: {
+              ...(state.resultado || {}),
+              pagamento_status: "pagamento_confirmado",
+            },
+          });
           // Redireciona para Etapa 05 após 4s — botão "Assinar contrato" continua disponível.
           window.setTimeout(() => onNext(), 4000);
         }
