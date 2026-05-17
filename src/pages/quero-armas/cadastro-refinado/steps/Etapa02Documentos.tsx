@@ -263,6 +263,42 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         </span>
       </div>
 
+      {state.modo_cliente === "autenticado" && (
+        <>
+          {state.documentos_reaproveitados && state.documentos_reaproveitados.length > 0 && (
+            <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+              <span className="qa-ref-found-title">DOCUMENTOS QUE JÁ TEMOS</span>
+              {state.documentos_reaproveitados.slice(0, 8).map((d) => (
+                <span key={d.id} className="qa-ref-found-meta">
+                  ✓ {d.tipo_documento}
+                  {d.data_validade ? ` · válido até ${d.data_validade}` : ""}
+                </span>
+              ))}
+            </div>
+          )}
+          {state.documentos_vencidos && state.documentos_vencidos.length > 0 && (
+            <div className="qa-ref-found-card qa-ref-found-warn" style={{ marginBottom: 12 }}>
+              <span className="qa-ref-found-title">DOCUMENTOS QUE PRECISAM ATUALIZAR</span>
+              {state.documentos_vencidos.slice(0, 8).map((d) => (
+                <span key={d.id} className="qa-ref-found-meta">
+                  ⚠ {d.tipo_documento} — vencido, envie novamente
+                </span>
+              ))}
+            </div>
+          )}
+          {state.documentos_pendentes_revisao && state.documentos_pendentes_revisao.length > 0 && (
+            <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+              <span className="qa-ref-found-title">EM ANÁLISE PELA EQUIPE QUERO ARMAS</span>
+              {state.documentos_pendentes_revisao.slice(0, 8).map((d) => (
+                <span key={d.id} className="qa-ref-found-meta">
+                  {d.tipo_documento}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
       <div className="qa-ref-upload-list">
         {obrigatorios.map((d) => renderDoc(d))}
       </div>
