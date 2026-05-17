@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import type { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
@@ -209,11 +210,12 @@ export default function Etapa00Identificacao({
               className="qa-ref-opt-card"
               onClick={() => escolher(opt.key as Choice)}
             >
-              <div className="qa-ref-opt-meta">
-                <span className="qa-ref-opt-title">{opt.titulo}</span>
-                <span className="qa-ref-opt-desc">{opt.desc}</span>
+              <div className="qa-ref-opt-icon" aria-hidden />
+              <div className="qa-ref-opt-body">
+                <div className="qa-ref-opt-title">{opt.titulo}</div>
+                <div className="qa-ref-opt-desc">{opt.desc}</div>
               </div>
-              <span className="qa-ref-opt-arrow" aria-hidden="true">›</span>
+              <ChevronRight size={18} className="qa-ref-opt-chevron" />
             </button>
           ))}
         </div>
