@@ -29,21 +29,9 @@ const F = {
 const radP = 10;
 
 /* ──────────────────────────────────────────────────────────── primitives */
-function StatusBar() {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px 0", fontFamily: F.mono, fontSize: 13, fontWeight: 600, color: QA.text, flexShrink: 0 }}>
-      <span>9:41</span>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><rect x="0" y="6" width="2.5" height="5" rx=".5"/><rect x="3.5" y="4" width="2.5" height="7" rx=".5"/><rect x="7" y="2" width="2.5" height="9" rx=".5"/><rect x="10.5" y="0" width="2.5" height="11" rx=".5"/></svg>
-        <svg width="22" height="11" viewBox="0 0 22 11" fill="none" stroke="currentColor" strokeWidth="1"><rect x=".5" y=".5" width="18" height="10" rx="2"/><rect x="2.5" y="2.5" width="14" height="6" rx="1" fill="currentColor"/><rect x="19.5" y="3.5" width="1.5" height="4" rx=".5" fill="currentColor"/></svg>
-      </div>
-    </div>
-  );
-}
-
 function CPhone({ children }: { children: ReactNode }) {
   return (
-    <div className="mira-phone" style={{ width: "100%", maxWidth: 420, height: "100%", maxHeight: 900, background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", borderRadius: 32, border: `1px solid ${QA.border}`, boxShadow: "0 30px 60px -20px rgba(0,0,0,0.8), 0 0 0 12px #18181a, 0 0 0 13px #2a2a2d" }}>
+    <div className="mira-phone" style={{ width: "100%", maxWidth: 480, margin: "0 auto", minHeight: "100dvh", background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", overflow: "auto", borderRadius: 0, border: "none", boxShadow: "none" }}>
       <style>{`
         .mira-phone ::-webkit-scrollbar { width: 4px; height: 4px; }
         .mira-phone ::-webkit-scrollbar-track { background: transparent; }
@@ -51,7 +39,6 @@ function CPhone({ children }: { children: ReactNode }) {
         .mira-phone ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
         .mira-phone * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
       `}</style>
-      <StatusBar />
       {children}
     </div>
   );
@@ -920,14 +907,9 @@ export default function MiraPrototypePage() {
   const flow = useFlow();
   const Step = STEPS[flow.step];
   return (
-    <div style={{ minHeight: "100vh", background: "#1a1a1c", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px", fontFamily: F.sans }}>
-      <div style={{ position: "fixed", top: 24, left: 24, zIndex: 10, fontFamily: F.tactical, fontSize: 11, color: QA.textMute, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-        Quero Armas · Protótipo · {flow.step.toUpperCase()}
-      </div>
-      <div style={{ height: 900, width: "100%", maxWidth: 420 }}>
-        <Step flow={flow} />
-      </div>
-      <button onClick={flow.reset} style={{ position: "fixed", top: 22, right: 22, zIndex: 10, padding: "8px 14px", borderRadius: 999, background: QA.card, border: `1px solid ${QA.border}`, color: QA.textDim, cursor: "pointer", fontSize: 11, fontWeight: 500, letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, fontFamily: F.sans }}>
+    <div style={{ minHeight: "100dvh", background: QA.bgDeep, fontFamily: F.sans }}>
+      <Step flow={flow} />
+      <button onClick={flow.reset} style={{ position: "fixed", top: 12, right: 12, zIndex: 10, padding: "6px 12px", borderRadius: 999, background: QA.card, border: `1px solid ${QA.border}`, color: QA.textDim, cursor: "pointer", fontSize: 11, fontWeight: 500, letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, fontFamily: F.sans }}>
         <ArrowLeft size={11} strokeWidth={1.7} /> Reiniciar
       </button>
     </div>
