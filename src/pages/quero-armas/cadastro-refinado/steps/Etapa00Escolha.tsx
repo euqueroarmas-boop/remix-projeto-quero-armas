@@ -148,11 +148,13 @@ export default function Etapa00Escolha({ onSelectService, onBackToHome, initialP
         </button>
 
         <div className="qa-ref-opt-list">
-          {QA_V2_PERFIS.map((p) => (
+          {QA_V2_PERFIS.map((p) => {
+            const isPopular = p.id === "defesa_pessoal";
+            return (
             <button
               key={p.id}
               type="button"
-              className="qa-ref-opt-card"
+              className={`qa-ref-opt-card${isPopular ? " is-popular" : ""}`}
               onClick={() => {
                 if (p.acao === "redirecionar_quiz") {
                   navigate("/descobrir-meu-caminho");
@@ -166,9 +168,11 @@ export default function Etapa00Escolha({ onSelectService, onBackToHome, initialP
                 <div className="qa-ref-opt-title">{p.titulo}</div>
                 <div className="qa-ref-opt-desc">{p.descricao}</div>
               </div>
+              {isPopular && <span className="qa-ref-opt-tag-popular">POPULAR</span>}
               <ChevronRight size={18} className="qa-ref-opt-chevron" />
             </button>
-          ))}
+            );
+          })}
         </div>
       </QACadastroRefinadoShell>
     );
