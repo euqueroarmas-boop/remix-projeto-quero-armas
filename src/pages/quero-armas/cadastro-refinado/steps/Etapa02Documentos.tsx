@@ -470,4 +470,66 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       </div>
     );
   }
+
+  /** Render de cards de documentos do Arsenal já existentes — com CTA de substituição. */
+  function renderArsenalDoc(d: DocumentoArsenal, hint?: "vencido" | "em_analise") {
+    const cls = classify(d as DocumentoArsenal & { substituido_em?: string | null });
+    const busy = substituindoId === d.id;
+    const success = subSucesso[d.id];
+    const erro = subErros[d.id];
+
+    let badge = "JÁ RECEBIDO";
+    let ctaLabel = "Substituir";
+    let ctaClass = "qa-ref-upload-cta is-secondary";
+    if (cls === "vencido" || hint === "vencido") { badge = "VENCIDO"; ctaLabel = "Enviar novo"; ctaClass = "qa-ref-upload-cta"; }
+    else if (cls === "em_analise" || hint === "em_analise") { badge = "EM ANÁLISE"; ctaLabel = "Enviar outro"; ctaClass = "qa-ref-upload-cta is-secondary"; }
+    else if (cls === "reprovado") { badge = "REPROVADO"; ctaLabel = "Enviar novo"; ctaClass = "qa-ref-upload-cta"; }
+    else if (cls === "substituido") { badge = "SUBSTITUÍDO"; }
+    else if (cls === "revisar") { badge = "REVISAR"; }
+
+    return (
+      <div key={d.id} className="qa-ref-arsenal-doc">
+        <div className="qa-ref-arsenal-doc-head">
+          <span className="qa-ref-arsenal-doc-tipo">{(d.tipo_documento || "DOCUMENTO").toUpperCase()}</span>
+          <span className={`qa-ref-arsenal-doc-badge is-${cls}`}>{badge}</span>
+        </div>
+        <div className="qa-ref-arsenal-doc-meta">
+          {d.arquivo_nome ? <span>{d.arquivo_nome}</span> : null}
+          {d.data_validade ? <span> · validade {d.data_validade}</span> : null}
+        </div>
+        {success && (
+          <div className="qa-ref-arsenal-doc-success">
+            ✓ Novo documento enviado e em análise pela equipe.
+          </div>
+        )}
+        {erro && (
+          <div className="qa-ref-arsenal-doc-error">{erro}</div>
+        )}
+        {cls !== "substituido" && !success && (
+          <div className="qa-ref-arsenal-doc-actions">
+            <button
+              type="button"
+              className={ctaClass}
+              disabled={busy}
+              onClick={() => subInputs.current[d.id]?.click()}
+            >
+              {busy ? <Loader2 size={14} className="qa-ref-spin" /> : <RefreshCw size={14} />}
+              {busy ? "Enviando…" : ctaLabel}
+            </button>
+            <input
+              ref={(el) => (subInputs.current[d.id] = el)}
+              type="file"
+              accept="image/*,application/pdf,.pdf"
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleSubstituir(d, f);
+                e.target.value = "";
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
 }
