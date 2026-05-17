@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
 import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
+import {
+  buscarReaproveitamento,
+  requisitoCumpridoPorReaproveitamento,
+  type RequisitoDoc,
+} from "@/lib/quero-armas/documentosReaproveitamento";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -157,9 +162,24 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
   const opcionais = docs.filter((d) => !d.obrigatorio_etapa02);
-  const obrigatoriosPendentes = obrigatorios.filter(
-    (d) => state.documentos[d.key]?.status !== "enviado",
-  );
+  /**
+   * REGRA CRÍTICA — cliente logado/autenticado com documento pessoal válido
+   * NÃO precisa reenviar. Um requisito é considerado cumprido quando:
+   *   (a) há upload válido na sessão atual; OU
+   *   (b) há documento reaproveitado do Arsenal/cadastro que satisfaz
+   *       o requisito (regra em documentosReaproveitamento.ts).
+   */
+  function requisitoCumprido(key: string): boolean {
+    if (state.documentos[key]?.status === "enviado") return true;
+    if (key === "doc_identidade" || key === "doc_endereco" || key === "doc_selfie") {
+      return requisitoCumpridoPorReaproveitamento(
+        key as RequisitoDoc,
+        state.documentos_reaproveitados,
+      );
+    }
+    return false;
+  }
+  const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
   const podeAvancar = obrigatoriosPendentes.length === 0;
 
   let ctaLabel = "Continuar para revisão dos dados →";
