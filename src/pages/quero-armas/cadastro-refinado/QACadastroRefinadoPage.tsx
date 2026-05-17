@@ -76,7 +76,7 @@ export default function QACadastroRefinadoPage() {
     case 4:
       return <Etapa04Pagamento state={state} update={update} onNext={next} onBack={back} />;
     case 5:
-      return <Etapa05Conclusao state={state} onReset={reset} />;
+      return <Etapa05Conclusao state={state} update={update} onReset={reset} />;
     default:
       return null;
   }
