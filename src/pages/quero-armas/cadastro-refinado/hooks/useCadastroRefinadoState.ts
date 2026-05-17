@@ -2,6 +2,25 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "qa_cadastro_refinado_state";
 
+export type ModoCliente = "indefinido" | "novo" | "existente" | "verificando" | "autenticado";
+
+export interface DocumentoArsenal {
+  id: string;
+  tipo_documento: string;
+  arquivo_nome?: string | null;
+  data_validade?: string | null;
+  status: string;
+  validado_admin?: boolean;
+}
+
+export interface ServicoAnterior {
+  id: string | number;
+  servico_slug?: string | null;
+  servico_nome?: string | null;
+  status?: string | null;
+  data?: string | null;
+}
+
 export interface CadastroRefinadoState {
   servicoSlug: string | null;
   origem: string | null;
@@ -24,6 +43,17 @@ export interface CadastroRefinadoState {
   formaPagamento: "pix" | "cartao" | "boleto";
   aceiteContrato: boolean;
   clienteExistente: boolean;
+  /** Resultado do fluxo "já tenho conta no Arsenal". */
+  modo_cliente: ModoCliente;
+  cliente_existente_id: string | null;
+  dados_carregados_do_arsenal: boolean;
+  documentos_reaproveitados: DocumentoArsenal[];
+  documentos_vencidos: DocumentoArsenal[];
+  documentos_pendentes_revisao: DocumentoArsenal[];
+  servicos_anteriores: ServicoAnterior[];
+  processos_ativos: Array<Record<string, unknown>>;
+  contratos_existentes: Array<Record<string, unknown>>;
+  arsenal_resumo: { cr?: string | null; craf?: string | null; armas?: number; laudos?: unknown[] } | null;
   resultado: {
     cliente_id?: string;
     venda_id?: string;
@@ -73,6 +103,16 @@ const initial: CadastroRefinadoState = {
   formaPagamento: "pix",
   aceiteContrato: false,
   clienteExistente: false,
+  modo_cliente: "indefinido",
+  cliente_existente_id: null,
+  dados_carregados_do_arsenal: false,
+  documentos_reaproveitados: [],
+  documentos_vencidos: [],
+  documentos_pendentes_revisao: [],
+  servicos_anteriores: [],
+  processos_ativos: [],
+  contratos_existentes: [],
+  arsenal_resumo: null,
   resultado: null,
 };
 
