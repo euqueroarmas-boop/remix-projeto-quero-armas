@@ -47,7 +47,7 @@ export default function QACadastroRefinadoPage() {
   // Sanidade: se mudou query depois (improvável), respeitar
   useEffect(() => {
     const servico = params.get("servico");
-    if (servico && step === 0) setStep(1);
+    if (servico && step === 0 && !showIdent) setStep(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
@@ -70,6 +70,18 @@ export default function QACadastroRefinadoPage() {
   };
 
   const handleBackToHome = () => navigate("/");
+
+  // Atalho na escolha guiada: "Já tenho conta no Arsenal"
+  const handleAbrirIdentificacao = () => {
+    update({
+      modo_cliente: "indefinido",
+      identificacao_confirmada: false,
+      cliente_existente_id: null,
+      dados_carregados_do_arsenal: false,
+    });
+    setShowEncontrado(false);
+    setShowIdent(true);
+  };
 
   const handleEtapa01Back = () => {
     if (enteredDirect) handleBackToHome();
