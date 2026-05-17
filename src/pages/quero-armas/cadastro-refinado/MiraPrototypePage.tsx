@@ -43,7 +43,14 @@ function StatusBar() {
 
 function CPhone({ children }: { children: ReactNode }) {
   return (
-    <div style={{ width: "100%", maxWidth: 420, height: "100%", maxHeight: 900, background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", borderRadius: 32, border: `1px solid ${QA.border}`, boxShadow: "0 30px 60px -20px rgba(0,0,0,0.8), 0 0 0 12px #18181a, 0 0 0 13px #2a2a2d" }}>
+    <div className="mira-phone" style={{ width: "100%", maxWidth: 420, height: "100%", maxHeight: 900, background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", borderRadius: 32, border: `1px solid ${QA.border}`, boxShadow: "0 30px 60px -20px rgba(0,0,0,0.8), 0 0 0 12px #18181a, 0 0 0 13px #2a2a2d" }}>
+      <style>{`
+        .mira-phone ::-webkit-scrollbar { width: 4px; height: 4px; }
+        .mira-phone ::-webkit-scrollbar-track { background: transparent; }
+        .mira-phone ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .mira-phone ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.16); }
+        .mira-phone * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+      `}</style>
       <StatusBar />
       {children}
     </div>
