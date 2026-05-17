@@ -112,6 +112,7 @@ export default function QARoutes() {
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="cadastro" element={<CadastroRouteSwitch />} />
+        <Route path="cadastro-mira" element={<MiraPrototypePage />} />
         <Route path="cadastro-v2" element={<Navigate to="/cadastro" replace />} />
         <Route path="cadastro-v2/defesa-pessoal" element={<Navigate to="/cadastro?perfil_v2=defesa_pessoal" replace />} />
         <Route path="cadastro-v2/cac" element={<Navigate to="/cadastro?perfil_v2=cac" replace />} />
