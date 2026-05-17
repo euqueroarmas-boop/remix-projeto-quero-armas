@@ -47,7 +47,9 @@ Deno.serve(async (req) => {
 
     const subject = `⚠️ Cobrança vencida — WMTi`;
 
+    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
     const smtpRes = await supabase.functions.invoke("send-smtp-email", {
+      headers: internalToken ? { "x-internal-token": internalToken } : undefined,
       body: {
         to: customer_email,
         subject,

@@ -206,7 +206,9 @@ Deno.serve(async (req) => {
     const servicoNome = body.servico_nome ?? (sol as any).service_name ?? "seu serviço";
     const { subject, html } = buildBody(body, { nome }, servicoNome);
 
+    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
     const { error: mailErr } = await supabase.functions.invoke("send-smtp-email", {
+      headers: internalToken ? { "x-internal-token": internalToken } : undefined,
       body: {
         to: email,
         subject,
