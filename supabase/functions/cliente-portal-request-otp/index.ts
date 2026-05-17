@@ -162,13 +162,23 @@ Deno.serve(async (req) => {
     const nome = lookup.qa_cliente?.nome_completo || lookup.customer?.razao_social || "";
 
     try {
-      await supabase.functions.invoke("send-smtp-email", {
-        body: {
-          to: emailDestino,
-          subject: `Código de acesso ao Portal: ${code}`,
-          html: emailHtml(code, magicLink, nome),
-        },
-      });
+      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
+      if (!internalToken) {
+        console.error("[cliente-portal-request-otp] INTERNAL_FUNCTION_TOKEN ausente — e-mail não será enviado");
+      } else {
+        const { error: smtpErr } = await supabase.functions.invoke("send-smtp-email", {
+          headers: { "x-internal-token": internalToken },
+          body: {
+            to: emailDestino,
+            subject: `Código de acesso ao Portal: ${code}`,
+            html: emailHtml(code, magicLink, nome),
+            from_name: "Quero Armas",
+          },
+        });
+        if (smtpErr) {
+          console.error("[cliente-portal-request-otp] send-smtp-email error:", smtpErr.message);
+        }
+      }
     } catch (e) {
       console.error("[cliente-portal-request-otp] email error", e);
     }
