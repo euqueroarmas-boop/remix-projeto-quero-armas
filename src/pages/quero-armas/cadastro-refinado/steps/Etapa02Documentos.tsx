@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
 import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
+import {
+  buscarReaproveitamento,
+  requisitoCumpridoPorReaproveitamento,
+  type RequisitoDoc,
+} from "@/lib/quero-armas/documentosReaproveitamento";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -157,9 +162,24 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
   const opcionais = docs.filter((d) => !d.obrigatorio_etapa02);
-  const obrigatoriosPendentes = obrigatorios.filter(
-    (d) => state.documentos[d.key]?.status !== "enviado",
-  );
+  /**
+   * REGRA CRÍTICA — cliente logado/autenticado com documento pessoal válido
+   * NÃO precisa reenviar. Um requisito é considerado cumprido quando:
+   *   (a) há upload válido na sessão atual; OU
+   *   (b) há documento reaproveitado do Arsenal/cadastro que satisfaz
+   *       o requisito (regra em documentosReaproveitamento.ts).
+   */
+  function requisitoCumprido(key: string): boolean {
+    if (state.documentos[key]?.status === "enviado") return true;
+    if (key === "doc_identidade" || key === "doc_endereco" || key === "doc_selfie") {
+      return requisitoCumpridoPorReaproveitamento(
+        key as RequisitoDoc,
+        state.documentos_reaproveitados,
+      );
+    }
+    return false;
+  }
+  const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
   const podeAvancar = obrigatoriosPendentes.length === 0;
 
   let ctaLabel = "Continuar para revisão dos dados →";
@@ -387,6 +407,33 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     const item = state.documentos[d.key];
     const status = item?.status ?? "pendente";
     const isOptional = !d.obrigatorio_etapa02;
+    /* Reaproveitamento — só consultamos para os 3 requisitos pessoais. */
+    const isPessoal = d.key === "doc_identidade" || d.key === "doc_endereco" || d.key === "doc_selfie";
+    const reuso = isPessoal && status !== "enviado"
+      ? buscarReaproveitamento(d.key as RequisitoDoc, state.documentos_reaproveitados)
+      : null;
+    const cumpridoPorReuso = !!(reuso && reuso.status === "valido" && reuso.documento);
+    if (cumpridoPorReuso && reuso?.documento) {
+      return (
+        <div key={d.key} className="qa-ref-upload-item is-done" data-reuso="1">
+          <div className="qa-ref-upload-icon"><Check size={18} /></div>
+          <div className="qa-ref-upload-meta">
+            <div className="qa-ref-upload-name">
+              {d.label}
+              <span className="qa-ref-opt-badge" style={{ background: "#0f2f1a", color: "#86efac" }}>
+                JÁ RECEBIDO — não precisa reenviar
+              </span>
+            </div>
+            <div className="qa-ref-upload-hint">
+              <span style={{ color: "var(--qa-ref-success)" }}>
+                ✓ {reuso.documento.arquivo_nome || (reuso.documento.tipo_documento || "Documento").toUpperCase()}
+                {reuso.documento.data_validade ? ` · validade ${reuso.documento.data_validade}` : " · sem validade informada"}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         key={d.key}
