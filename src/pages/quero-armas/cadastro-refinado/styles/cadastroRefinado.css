@@ -422,6 +422,27 @@
 .qa-ref-upload-action { background: none; border: 0; cursor: pointer; color: var(--qa-ref-ink-soft); font-size: 12px; padding: 4px 8px; border-radius: 6px; }
 .qa-ref-upload-action:hover { background: rgba(255, 255, 255, 0.04); color: var(--qa-ref-ink); }
 
+.qa-ref-upload-actions {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.qa-ref-upload-cta {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--qa-ref-brass, #D6A64B); color: #0a0a0a;
+  border: 0; border-radius: 8px;
+  font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em;
+  padding: 9px 14px; min-height: 38px;
+  cursor: pointer; transition: filter 0.15s ease;
+}
+.qa-ref-upload-cta:hover:not(:disabled) { filter: brightness(1.08); }
+.qa-ref-upload-cta:disabled { opacity: 0.5; cursor: wait; }
+.qa-ref-upload-cta.is-secondary {
+  background: transparent; color: var(--qa-ref-ink, #f5f3ee);
+  border: 1px solid var(--qa-ref-border);
+}
+.qa-ref-upload-cta.is-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04); filter: none;
+}
+
 .qa-ref-banner {
   display: flex; gap: 12px; align-items: flex-start;
   padding: 14px 16px;
