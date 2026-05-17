@@ -336,26 +336,56 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
             <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
           </div>
         ) : (
-          <>
+          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <button
+              type="button"
+              className="qa-ref-upload-action"
+              disabled={uploadingKey === d.key}
+              onClick={() => cameraInputs.current[d.key]?.click()}
+              title="Abrir câmera"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <Camera size={13} />
+              {uploadingKey === d.key ? "Enviando…" : "Câmera"}
+            </button>
+            <button
+              type="button"
               className="qa-ref-upload-action"
               disabled={uploadingKey === d.key}
               onClick={() => fileInputs.current[d.key]?.click()}
+              title="Selecionar arquivo ou PDF"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
             >
-              {uploadingKey === d.key ? "Enviando…" : status === "erro" ? "Tentar novamente" : "Enviar"}
+              <Paperclip size={13} />
+              {status === "erro" ? "Tentar novamente" : "Arquivo"}
             </button>
             <input
-              ref={(el) => (fileInputs.current[d.key] = el)}
+              ref={(el) => (cameraInputs.current[d.key] = el)}
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              style={{ display: "none" }}
+              accept="image/*"
+              capture="environment"
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleUpload(d.key, f);
                 e.target.value = "";
               }}
             />
-          </>
+            <input
+              ref={(el) => (fileInputs.current[d.key] = el)}
+              type="file"
+              accept="image/*,application/pdf,.pdf"
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(d.key, f);
+                e.target.value = "";
+              }}
+            />
+            {sizeErrors[d.key] && (
+              <span style={{ fontSize: 11, color: "var(--qa-ref-bordo, #c52727)", marginLeft: 6 }}>{sizeErrors[d.key]}</span>
+            )}
+          </div>
         )}
       </div>
     );
