@@ -226,8 +226,9 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
 
       // Fallback: se conta-publica não retornou cliente_id (ex.: cpf_ja_possui_login),
       // usa o qa_cliente_id resolvido pelo checkout.
-      const clienteIdFinal: number | string | null =
-        qaClienteId ?? vendaResp?.qa_cliente_id ?? vendaResp?.cliente_id ?? null;
+      const clienteIdFinalRaw = qaClienteId ?? vendaResp?.qa_cliente_id ?? vendaResp?.cliente_id ?? null;
+      const clienteIdFinal: string | null =
+        clienteIdFinalRaw == null ? null : String(clienteIdFinalRaw);
       if (clienteIdFinal && clienteIdFinal !== qaClienteId) {
         update({
           resultado: {
