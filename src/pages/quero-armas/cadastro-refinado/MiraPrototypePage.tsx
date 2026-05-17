@@ -29,18 +29,6 @@ const F = {
 const radP = 10;
 
 /* ──────────────────────────────────────────────────────────── primitives */
-function StatusBar() {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 24px 0", fontFamily: F.mono, fontSize: 13, fontWeight: 600, color: QA.text, flexShrink: 0 }}>
-      <span>9:41</span>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><rect x="0" y="6" width="2.5" height="5" rx=".5"/><rect x="3.5" y="4" width="2.5" height="7" rx=".5"/><rect x="7" y="2" width="2.5" height="9" rx=".5"/><rect x="10.5" y="0" width="2.5" height="11" rx=".5"/></svg>
-        <svg width="22" height="11" viewBox="0 0 22 11" fill="none" stroke="currentColor" strokeWidth="1"><rect x=".5" y=".5" width="18" height="10" rx="2"/><rect x="2.5" y="2.5" width="14" height="6" rx="1" fill="currentColor"/><rect x="19.5" y="3.5" width="1.5" height="4" rx=".5" fill="currentColor"/></svg>
-      </div>
-    </div>
-  );
-}
-
 function CPhone({ children }: { children: ReactNode }) {
   return (
     <div className="mira-phone" style={{ width: "100%", maxWidth: 480, margin: "0 auto", minHeight: "100dvh", background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", overflow: "auto", borderRadius: 0, border: "none", boxShadow: "none" }}>
