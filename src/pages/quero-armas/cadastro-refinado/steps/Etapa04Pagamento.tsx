@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import ContractPreviewCard from "../components/ContractPreviewCard";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
+import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -237,6 +238,19 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           },
         });
       }
+
+      // Snapshot operacional p/ Equipe Quero Armas (origem_cadastro='cadastro_mira').
+      // Não bloqueia o checkout. Vincula cliente_id quando já houver.
+      try {
+        const r = await enviarSnapshotCadastroMira(state, "aguardando_pagamento", {
+          snapshot_id: state.cadastro_mira_snapshot_id,
+          cliente_id_vinculado: clienteIdFinal,
+          venda_id: vendaId,
+        });
+        if (r?.snapshot_id && r.snapshot_id !== state.cadastro_mira_snapshot_id) {
+          update({ cadastro_mira_snapshot_id: r.snapshot_id });
+        }
+      } catch { /* silencioso — checkout não é afetado */ }
 
       // 3) Registro probatório do aceite (não bloqueia)
       try {

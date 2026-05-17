@@ -59,6 +59,10 @@ export interface CadastroRefinadoState {
    *  abertura nova de /cadastro ou /cadastro-mira deve reabrir a
    *  identificação — mesmo que exista state antigo no sessionStorage. */
   identificacao_confirmada: boolean;
+  /** ID da linha em qa_cadastro_publico criada pelo snapshot operacional
+   *  do /cadastro Mira (origem_cadastro='cadastro_mira'). Persiste entre
+   *  etapas para garantir UPDATE idempotente, sem duplicar snapshot. */
+  cadastro_mira_snapshot_id: string | null;
   resultado: {
     cliente_id?: string;
     venda_id?: string;
@@ -119,6 +123,7 @@ const initial: CadastroRefinadoState = {
   contratos_existentes: [],
   arsenal_resumo: null,
   identificacao_confirmada: false,
+  cadastro_mira_snapshot_id: null,
   resultado: null,
 };
 

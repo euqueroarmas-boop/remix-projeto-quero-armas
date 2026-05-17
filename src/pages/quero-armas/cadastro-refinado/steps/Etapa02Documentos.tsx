@@ -3,6 +3,7 @@ import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip, 
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
+import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -360,7 +361,22 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       )}
 
       <div style={{ marginTop: 28 }}>
-        <button className="qa-ref-btn qa-ref-btn-primary" disabled={!podeAvancar} onClick={onNext}>
+        <button
+          className="qa-ref-btn qa-ref-btn-primary"
+          disabled={!podeAvancar}
+          onClick={async () => {
+            // Snapshot operacional para a Equipe Quero Armas — não bloqueia o fluxo.
+            try {
+              const r = await enviarSnapshotCadastroMira(state, "documentos_enviados", {
+                snapshot_id: state.cadastro_mira_snapshot_id,
+              });
+              if (r?.snapshot_id && r.snapshot_id !== state.cadastro_mira_snapshot_id) {
+                update({ cadastro_mira_snapshot_id: r.snapshot_id });
+              }
+            } catch { /* silencioso — não interrompe o cadastro */ }
+            onNext();
+          }}
+        >
           {ctaLabel}
         </button>
       </div>

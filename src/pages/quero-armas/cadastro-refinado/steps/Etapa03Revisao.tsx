@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
+import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -46,6 +47,15 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
       if (error) throw error;
       const exists = !!(data?.cpf_existe || data?.email_existe);
       update({ clienteExistente: exists });
+      // Snapshot operacional p/ Equipe Quero Armas — não bloqueia.
+      try {
+        const r = await enviarSnapshotCadastroMira(state, "revisao_cliente", {
+          snapshot_id: state.cadastro_mira_snapshot_id,
+        });
+        if (r?.snapshot_id && r.snapshot_id !== state.cadastro_mira_snapshot_id) {
+          update({ cadastro_mira_snapshot_id: r.snapshot_id });
+        }
+      } catch { /* silencioso */ }
       onNext();
     } catch (e: any) {
       // Mesmo se a checagem falhar, prossegue — backend revalida
