@@ -69,10 +69,34 @@ describe("cadastro-refinado · constraints", () => {
     expect(src).not.toMatch(/<strong>Acesso enviado<\/strong>\s*—\s*verifique/);
   });
 
-  it("MiraPrototypePage permanece sandbox visual (sem chamadas reais ao backend)", () => {
-    const src = readFileSync(join(ROOT, "MiraPrototypePage.tsx"), "utf8");
-    expect(src).not.toContain("supabase.functions.invoke");
-    expect(src).not.toContain("qa-checkout-criar-venda");
+  it("/cadastro-mira renderiza o mesmo componente real de /cadastro (sem dados fake)", () => {
+    const routes = readFileSync("src/pages/quero-armas/QARoutes.tsx", "utf8");
+    // Não importa nem monta MiraPrototypePage
+    expect(routes).not.toMatch(/import\([^)]*MiraPrototypePage[^)]*\)/);
+    expect(routes).not.toMatch(/<MiraPrototypePage\s*\/>/);
+    // /cadastro-mira usa CadastroRouteSwitch (fluxo real)
+    expect(routes).toMatch(/path="cadastro-mira"\s+element=\{<CadastroRouteSwitch\s*\/>\}/);
+  });
+
+  it("nenhum arquivo do cadastro-refinado contém dados fake do protótipo Mira", () => {
+    const FAKE = [
+      "João Carlos da Silva",
+      "123.456.789-00",
+      "12.345.678-9",
+      "Maria Aparecida Silva",
+      "Antônio Pedro Silva",
+      "Av. Paulista, 1578",
+      "01310-100",
+      "QA-2026-04891",
+    ];
+    const offenders: string[] = [];
+    for (const f of files) {
+      const src = readFileSync(f, "utf8");
+      for (const needle of FAKE) {
+        if (src.includes(needle)) offenders.push(`${f} :: ${needle}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   it("State persiste campos de checkout (venda_id, checkout_token, asaas_invoice_url, billing_type, pagamento_status)", () => {
