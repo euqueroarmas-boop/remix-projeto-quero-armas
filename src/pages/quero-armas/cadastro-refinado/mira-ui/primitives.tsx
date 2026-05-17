@@ -23,10 +23,10 @@ export function MiraDot({ size = 24 }: { size?: number }) {
   );
 }
 
-/* CPhone — moldura "phone" usada apenas no sandbox /cadastro-mira. */
+/* CPhone — container vertical full-screen (sem moldura de aparelho). */
 export function CPhone({ children }: { children: ReactNode }) {
   return (
-    <div className="mira-phone" style={{ width: "100%", maxWidth: 420, height: "100%", maxHeight: 900, background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden", borderRadius: 32, border: `1px solid ${QA.border}`, boxShadow: "0 30px 60px -20px rgba(0,0,0,0.8), 0 0 0 12px #18181a, 0 0 0 13px #2a2a2d" }}>
+    <div className="mira-phone" style={{ width: "100%", maxWidth: 480, margin: "0 auto", minHeight: "100dvh", background: QA.bgDeep, color: QA.text, fontFamily: F.sans, display: "flex", flexDirection: "column", position: "relative", border: "none", borderRadius: 0, boxShadow: "none", overflow: "auto" }}>
       <style>{`
         .mira-phone ::-webkit-scrollbar { width: 4px; height: 4px; }
         .mira-phone ::-webkit-scrollbar-track { background: transparent; }
