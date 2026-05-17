@@ -851,3 +851,36 @@
 .qa-ref-encontrado-actions {
   display: flex; flex-direction: column; gap: 10px; margin-top: 16px;
 }
+
+/* === Arsenal docs (Etapa02) — cards de substituição por estado === */
+.qa-ref-arsenal-doc {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px; margin-top: 8px;
+  border: 1px solid rgba(214, 166, 75, 0.18);
+  border-radius: 10px; background: rgba(255,255,255,0.02);
+  max-width: 100%; box-sizing: border-box;
+}
+.qa-ref-arsenal-doc-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  flex-wrap: wrap; min-width: 0;
+}
+.qa-ref-arsenal-doc-tipo {
+  font-family: var(--qa-ref-display, "Oswald", sans-serif);
+  font-size: 12px; letter-spacing: 0.06em; color: var(--qa-ref-brass, #D6A64B);
+  text-transform: uppercase; min-width: 0; overflow-wrap: anywhere;
+}
+.qa-ref-arsenal-doc-badge {
+  font-size: 10px; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid rgba(214, 166, 75, 0.35); color: var(--qa-ref-brass, #D6A64B);
+  white-space: nowrap;
+}
+.qa-ref-arsenal-doc-badge.is-vencido { color: #e0a23c; border-color: rgba(224,162,60,0.55); }
+.qa-ref-arsenal-doc-badge.is-reprovado { color: #e26a5a; border-color: rgba(226,106,90,0.55); }
+.qa-ref-arsenal-doc-badge.is-em_analise { color: #9ec5ff; border-color: rgba(158,197,255,0.45); }
+.qa-ref-arsenal-doc-badge.is-substituido { color: #888; border-color: rgba(255,255,255,0.18); }
+.qa-ref-arsenal-doc-meta {
+  font-size: 11px; color: rgba(255,255,255,0.6); overflow-wrap: anywhere;
+}
+.qa-ref-arsenal-doc-actions { display: flex; gap: 8px; margin-top: 4px; position: relative; }
+.qa-ref-arsenal-doc-success { font-size: 11px; color: #6fcf97; }
+.qa-ref-arsenal-doc-error { font-size: 11px; color: #e26a5a; }

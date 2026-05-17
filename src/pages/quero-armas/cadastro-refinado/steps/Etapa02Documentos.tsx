@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip } from "lucide-react";
+import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
-import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
+import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -79,6 +79,11 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const cameraInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const [sizeErrors, setSizeErrors] = useState<Record<string, string>>({});
+  /** Substituição de documentos do Arsenal (cliente autenticado). */
+  const subInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [substituindoId, setSubstituindoId] = useState<string | null>(null);
+  const [subErros, setSubErros] = useState<Record<string, string>>({});
+  const [subSucesso, setSubSucesso] = useState<Record<string, string>>({});
 
   if (typeof window !== "undefined" && !(window as any).__qaCamHint) {
     (window as any).__qaCamHint = true;
@@ -92,6 +97,61 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     const okType = /^image\//.test(file.type) || file.type === "application/pdf" || /\.(pdf|jpe?g|png|webp|heic|heif)$/i.test(file.name);
     if (!okType) return "Tipo inválido — use foto ou PDF";
     return null;
+  }
+
+  type DocClass = "substituido" | "em_analise" | "reprovado" | "vencido" | "valido" | "revisar";
+  function classify(d: DocumentoArsenal & { substituido_em?: string | null }): DocClass {
+    if (d.substituido_em) return "substituido";
+    const st = (d.status ?? "").toLowerCase();
+    if (st === "pendente_aprovacao") return "em_analise";
+    if (st === "reprovado") return "reprovado";
+    if (d.data_validade) {
+      const venc = new Date(d.data_validade);
+      if (!isNaN(venc.getTime()) && venc.getTime() < Date.now()) return "vencido";
+    }
+    if (st === "aprovado" || d.validado_admin) return "valido";
+    return "revisar";
+  }
+
+  async function handleSubstituir(doc: DocumentoArsenal, file: File) {
+    const err = validate(file);
+    if (err) { setSubErros((s) => ({ ...s, [doc.id]: err })); return; }
+    setSubErros((s) => { const n = { ...s }; delete n[doc.id]; return n; });
+    setSubstituindoId(doc.id);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
+      const safe = `sub_${doc.id}_${Date.now()}.${ext}`;
+      const path = `cadastro-publico/refinado/sub/${doc.id}/${safe}`;
+      const up = await supabase.storage
+        .from("qa-cadastro-selfies")
+        .upload(path, file, { upsert: false, contentType: file.type });
+      if (up.error) throw up.error;
+      const { data, error } = await supabase.functions.invoke("qa-cadastro-substituir-documento", {
+        body: {
+          documento_anterior_id: doc.id,
+          storage_path: path,
+          arquivo_nome: file.name,
+          arquivo_mime: file.type || "application/octet-stream",
+        },
+      });
+      if (error) throw error;
+      const novoId = (data as any)?.documento_id ?? "";
+      setSubSucesso((s) => ({ ...s, [doc.id]: novoId }));
+      // Move o doc anterior para "substituídos" (não destrutivo no servidor; aqui só reorganiza UI).
+      const removeFrom = (arr?: DocumentoArsenal[]) => (arr ?? []).filter((x) => x.id !== doc.id);
+      update({
+        documentos_reaproveitados: removeFrom(state.documentos_reaproveitados),
+        documentos_vencidos: removeFrom(state.documentos_vencidos),
+        documentos_pendentes_revisao: [
+          ...(state.documentos_pendentes_revisao ?? []),
+          { ...doc, id: novoId || `${doc.id}-v2`, status: "pendente_aprovacao" },
+        ],
+      });
+    } catch (e: any) {
+      setSubErros((s) => ({ ...s, [doc.id]: e?.message || "Falha ao substituir" }));
+    } finally {
+      setSubstituindoId(null);
+    }
   }
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
@@ -268,32 +328,19 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
           {state.documentos_reaproveitados && state.documentos_reaproveitados.length > 0 && (
             <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
               <span className="qa-ref-found-title">DOCUMENTOS QUE JÁ TEMOS</span>
-              {state.documentos_reaproveitados.slice(0, 8).map((d) => (
-                <span key={d.id} className="qa-ref-found-meta">
-                  ✓ {d.tipo_documento}
-                  {d.data_validade ? ` · válido até ${d.data_validade}` : ""}
-                </span>
-              ))}
+              {state.documentos_reaproveitados.slice(0, 8).map((d) => renderArsenalDoc(d))}
             </div>
           )}
           {state.documentos_vencidos && state.documentos_vencidos.length > 0 && (
             <div className="qa-ref-found-card qa-ref-found-warn" style={{ marginBottom: 12 }}>
               <span className="qa-ref-found-title">DOCUMENTOS QUE PRECISAM ATUALIZAR</span>
-              {state.documentos_vencidos.slice(0, 8).map((d) => (
-                <span key={d.id} className="qa-ref-found-meta">
-                  ⚠ {d.tipo_documento} — vencido, envie novamente
-                </span>
-              ))}
+              {state.documentos_vencidos.slice(0, 8).map((d) => renderArsenalDoc(d, "vencido"))}
             </div>
           )}
           {state.documentos_pendentes_revisao && state.documentos_pendentes_revisao.length > 0 && (
             <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
               <span className="qa-ref-found-title">EM ANÁLISE PELA EQUIPE QUERO ARMAS</span>
-              {state.documentos_pendentes_revisao.slice(0, 8).map((d) => (
-                <span key={d.id} className="qa-ref-found-meta">
-                  {d.tipo_documento}
-                </span>
-              ))}
+              {state.documentos_pendentes_revisao.slice(0, 8).map((d) => renderArsenalDoc(d, "em_analise"))}
             </div>
           )}
         </>
@@ -418,6 +465,68 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
               </button>
             )}
             <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /** Render de cards de documentos do Arsenal já existentes — com CTA de substituição. */
+  function renderArsenalDoc(d: DocumentoArsenal, hint?: "vencido" | "em_analise") {
+    const cls = classify(d as DocumentoArsenal & { substituido_em?: string | null });
+    const busy = substituindoId === d.id;
+    const success = subSucesso[d.id];
+    const erro = subErros[d.id];
+
+    let badge = "JÁ RECEBIDO";
+    let ctaLabel = "Substituir";
+    let ctaClass = "qa-ref-upload-cta is-secondary";
+    if (cls === "vencido" || hint === "vencido") { badge = "VENCIDO"; ctaLabel = "Enviar novo"; ctaClass = "qa-ref-upload-cta"; }
+    else if (cls === "em_analise" || hint === "em_analise") { badge = "EM ANÁLISE"; ctaLabel = "Enviar outro"; ctaClass = "qa-ref-upload-cta is-secondary"; }
+    else if (cls === "reprovado") { badge = "REPROVADO"; ctaLabel = "Enviar novo"; ctaClass = "qa-ref-upload-cta"; }
+    else if (cls === "substituido") { badge = "SUBSTITUÍDO"; }
+    else if (cls === "revisar") { badge = "REVISAR"; }
+
+    return (
+      <div key={d.id} className="qa-ref-arsenal-doc">
+        <div className="qa-ref-arsenal-doc-head">
+          <span className="qa-ref-arsenal-doc-tipo">{(d.tipo_documento || "DOCUMENTO").toUpperCase()}</span>
+          <span className={`qa-ref-arsenal-doc-badge is-${cls}`}>{badge}</span>
+        </div>
+        <div className="qa-ref-arsenal-doc-meta">
+          {d.arquivo_nome ? <span>{d.arquivo_nome}</span> : null}
+          {d.data_validade ? <span> · validade {d.data_validade}</span> : null}
+        </div>
+        {success && (
+          <div className="qa-ref-arsenal-doc-success">
+            ✓ Novo documento enviado e em análise pela equipe.
+          </div>
+        )}
+        {erro && (
+          <div className="qa-ref-arsenal-doc-error">{erro}</div>
+        )}
+        {cls !== "substituido" && !success && (
+          <div className="qa-ref-arsenal-doc-actions">
+            <button
+              type="button"
+              className={ctaClass}
+              disabled={busy}
+              onClick={() => subInputs.current[d.id]?.click()}
+            >
+              {busy ? <Loader2 size={14} className="qa-ref-spin" /> : <RefreshCw size={14} />}
+              {busy ? "Enviando…" : ctaLabel}
+            </button>
+            <input
+              ref={(el) => (subInputs.current[d.id] = el)}
+              type="file"
+              accept="image/*,application/pdf,.pdf"
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleSubstituir(d, f);
+                e.target.value = "";
+              }}
+            />
           </div>
         )}
       </div>
