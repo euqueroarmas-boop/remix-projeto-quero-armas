@@ -112,7 +112,11 @@ export default function QARoutes() {
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="cadastro" element={<CadastroRouteSwitch />} />
-        <Route path="cadastro-mira" element={<MiraPrototypePage />} />
+        {/* /cadastro-mira reutiliza o MESMO fluxo real do /cadastro (visual Mira já está
+            embutido via mira-ui nas etapas reais). Sem dados mockados, sem fluxo paralelo. */}
+        <Route path="cadastro-mira" element={<CadastroRouteSwitch />} />
+        {/* Sandbox visual isolado — não é o /cadastro-mira público. */}
+        <Route path="cadastro-mira-preview" element={<MiraPrototypePage />} />
         <Route path="cadastro-v2" element={<Navigate to="/cadastro" replace />} />
         <Route path="cadastro-v2/defesa-pessoal" element={<Navigate to="/cadastro?perfil_v2=defesa_pessoal" replace />} />
         <Route path="cadastro-v2/cac" element={<Navigate to="/cadastro?perfil_v2=cac" replace />} />
