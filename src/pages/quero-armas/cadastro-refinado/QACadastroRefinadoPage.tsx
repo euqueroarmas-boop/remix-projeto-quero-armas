@@ -143,6 +143,7 @@ export default function QACadastroRefinadoPage() {
           onSelectService={handleSelectService}
           onBackToHome={handleBackToHome}
           initialPerfil={initialPerfil}
+          onAbrirIdentificacao={handleAbrirIdentificacao}
         />
       );
     case 1:
