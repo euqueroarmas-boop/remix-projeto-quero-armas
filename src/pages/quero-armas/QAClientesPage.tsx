@@ -900,7 +900,26 @@ interface CadastroPublico {
   selfie_path?: string | null;
   documento_identidade_path?: string | null;
   comprovante_endereco_path?: string | null;
+  cliente_id_vinculado?: number | null;
   created_at: string;
+}
+
+const CADASTRO_MIRA_PENDENTE_STATUSES = new Set([
+  "pendente",
+  "em_preenchimento",
+  "documentos_enviados",
+  "revisao_cliente",
+  "aguardando_pagamento",
+]);
+const CADASTRO_PUBLICO_APROVADO_STATUSES = new Set(["aprovado", "conferido", "validado", "formulario_conferido", "concluido"]);
+
+function cadastroPublicoStatusLabel(status: string | null | undefined): string {
+  const s = String(status || "").toLowerCase();
+  if (s === "em_preenchimento" || s === "documentos_enviados" || s === "revisao_cliente") return "PENDENTE";
+  if (s === "aguardando_pagamento") return "PENDENTE / AGUARDANDO PAGAMENTO";
+  if (s === "concluido") return "CONCLUÍDO";
+  if (s === "abandonado") return "ABANDONADO";
+  return String(status || "pendente").toUpperCase();
 }
 
 const normalizeDigits = (value: string | null | undefined) => (value ?? "").replace(/\D/g, "");
@@ -1666,7 +1685,7 @@ export default function QAClientesPage() {
 
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
-      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro")
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro, documento_identidade_path, comprovante_endereco_path, selfie_path, cliente_id_vinculado")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
@@ -2409,13 +2428,12 @@ export default function QAClientesPage() {
   const isRejeitado = (s: string | null | undefined) => String(s || "").toLowerCase() === "rejeitado";
   const cadastrosNaoRejeitados = cadastrosPublicos.filter(c => !isRejeitado(c.status));
   const cadastrosRejeitados = cadastrosPublicos.filter(c => isRejeitado(c.status));
-  const APROVADO_STATUSES = new Set(["aprovado", "conferido", "validado", "formulario_conferido"]);
   const isAprovadoStatus = (s: string | null | undefined) =>
-    APROVADO_STATUSES.has(String(s || "").toLowerCase());
+    CADASTRO_PUBLICO_APROVADO_STATUSES.has(String(s || "").toLowerCase());
   const filteredCadastros = cadastrosNaoRejeitados.filter(c => {
     if (!matchSearch(c)) return false;
     if (cadastroFilter === "aprovado") return isAprovadoStatus(c.status);
-    return !isAprovadoStatus(c.status); // pendente / em análise / etc.
+    return CADASTRO_MIRA_PENDENTE_STATUSES.has(String(c.status || "").toLowerCase()) || !isAprovadoStatus(c.status); // pendente / em análise / status Mira
   });
   const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
@@ -3313,9 +3331,10 @@ export default function QAClientesPage() {
   }
 
   const cadastroStatusColor = (s: string) => {
-    if (s === "aprovado") return "text-emerald-600 bg-emerald-50";
-    if (s === "pendente") return "text-[#641722] bg-[#FBF3F4]";
-    if (s === "rejeitado") return "text-red-600 bg-red-50";
+    const normalized = String(s || "").toLowerCase();
+    if (CADASTRO_PUBLICO_APROVADO_STATUSES.has(normalized)) return "text-emerald-600 bg-emerald-50";
+    if (CADASTRO_MIRA_PENDENTE_STATUSES.has(normalized)) return "text-[#641722] bg-[#FBF3F4]";
+    if (normalized === "rejeitado" || normalized === "abandonado") return "text-red-600 bg-red-50";
     return "text-slate-500 bg-slate-100";
   };
 
