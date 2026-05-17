@@ -98,8 +98,12 @@ export default function QACadastroRefinadoPage() {
         state={state}
         update={update}
         updateDados={updateDados}
-        onNovo={() => setShowIdent(false)}
+        onNovo={() => {
+          update({ modo_cliente: "novo", identificacao_confirmada: true });
+          setShowIdent(false);
+        }}
         onAutenticado={() => {
+          update({ identificacao_confirmada: true });
           setShowIdent(false);
           setShowEncontrado(true);
         }}
