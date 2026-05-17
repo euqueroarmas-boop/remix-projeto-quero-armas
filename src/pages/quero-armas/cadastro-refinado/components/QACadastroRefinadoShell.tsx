@@ -26,7 +26,7 @@ export default function QACadastroRefinadoShell({
 }: Props) {
   return (
     <div className="qa-refinado">
-      <QACadastroRefinadoHeader onBack={onBack} showBack={showBack} />
+      <QACadastroRefinadoHeader onBack={onBack} showBack={showBack} step={step} total={total} />
       <main className="qa-ref-shell">
         <QACadastroRefinadoStepIndicator current={step} total={total} />
         {eyebrow && <span className="qa-ref-caps qa-ref-eyebrow">{eyebrow}</span>}
