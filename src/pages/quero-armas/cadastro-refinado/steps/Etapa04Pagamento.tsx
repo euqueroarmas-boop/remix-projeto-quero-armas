@@ -224,11 +224,25 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       const vendaId: number = vendaResp.venda_id;
       const checkoutToken: string = vendaResp.checkout_token;
 
+      // Fallback: se conta-publica não retornou cliente_id (ex.: cpf_ja_possui_login),
+      // usa o qa_cliente_id resolvido pelo checkout.
+      const clienteIdFinalRaw = qaClienteId ?? vendaResp?.qa_cliente_id ?? vendaResp?.cliente_id ?? null;
+      const clienteIdFinal: string | null =
+        clienteIdFinalRaw == null ? null : String(clienteIdFinalRaw);
+      if (clienteIdFinal && clienteIdFinal !== qaClienteId) {
+        update({
+          resultado: {
+            ...(state.resultado || {}),
+            cliente_id: clienteIdFinal,
+          },
+        });
+      }
+
       // 3) Registro probatório do aceite (não bloqueia)
       try {
         await supabase.functions.invoke("qa-contract-aceite-registrar", {
           body: {
-            cliente_id: qaClienteId,
+            cliente_id: clienteIdFinal,
             venda_id: vendaId,
             solicitacao_id: null,
             servico_slug: state.servicoSlug,
