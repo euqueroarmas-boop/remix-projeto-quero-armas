@@ -33,12 +33,8 @@ const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcesso
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACadastroRefinadoPage"), "QACadastroRefinadoPage");
-const QACadastroV2EtapaUmPage = lazyRetry(() => import("./QACadastroV2EtapaUmPage"), "QACadastroV2EtapaUmPage");
-const QACadastroV2DefesaPessoalPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2DefesaPessoalPage"), "QACadastroV2DefesaPessoalPage");
-const QACadastroV2CacPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2CacPage"), "QACadastroV2CacPage");
-const QACadastroV2ProfissaoAtivaPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2ProfissaoAtivaPage"), "QACadastroV2ProfissaoAtivaPage");
-const QACadastroV2AposentadoPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2AposentadoPage"), "QACadastroV2AposentadoPage");
-const QACadastroV2CursosPage = lazyRetry(() => import("./cadastro-v2/QACadastroV2CursosPage"), "QACadastroV2CursosPage");
+// /cadastro-v2 e sub-rotas agora redirecionam para /cadastro (Etapa 00 refinada).
+// Componentes legados permanecem no projeto para histórico, mas não são mais montados.
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
 const QAClienteLoginPage = lazyRetry(() => import("./QAClienteLoginPage"), "QAClienteLoginPage");
 const QACriarContaPage = lazyRetry(() => import("./QACriarContaPage"), "QACriarContaPage");
@@ -115,12 +111,12 @@ export default function QARoutes() {
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="cadastro" element={<CadastroRouteSwitch />} />
-        <Route path="cadastro-v2" element={<QAScope><QACadastroV2EtapaUmPage /></QAScope>} />
-        <Route path="cadastro-v2/defesa-pessoal" element={<QAScope><QACadastroV2DefesaPessoalPage /></QAScope>} />
-        <Route path="cadastro-v2/cac" element={<QAScope><QACadastroV2CacPage /></QAScope>} />
-        <Route path="cadastro-v2/profissao-ativa" element={<QAScope><QACadastroV2ProfissaoAtivaPage /></QAScope>} />
-        <Route path="cadastro-v2/aposentado" element={<QAScope><QACadastroV2AposentadoPage /></QAScope>} />
-        <Route path="cadastro-v2/cursos" element={<QAScope><QACadastroV2CursosPage /></QAScope>} />
+        <Route path="cadastro-v2" element={<Navigate to="/cadastro" replace />} />
+        <Route path="cadastro-v2/defesa-pessoal" element={<Navigate to="/cadastro?perfil_v2=defesa_pessoal" replace />} />
+        <Route path="cadastro-v2/cac" element={<Navigate to="/cadastro?perfil_v2=cac" replace />} />
+        <Route path="cadastro-v2/profissao-ativa" element={<Navigate to="/cadastro?perfil_v2=profissional_ativo" replace />} />
+        <Route path="cadastro-v2/aposentado" element={<Navigate to="/cadastro?perfil_v2=aposentado_inativo" replace />} />
+        <Route path="cadastro-v2/cursos" element={<Navigate to="/cadastro?perfil_v2=cursos" replace />} />
         <Route path="cadastro/foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         <Route path="enviar-foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         
