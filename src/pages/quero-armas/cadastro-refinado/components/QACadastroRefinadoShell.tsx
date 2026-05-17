@@ -16,7 +16,7 @@ interface Props {
 
 export default function QACadastroRefinadoShell({
   step,
-  total = 5,
+  total = 6,
   eyebrow,
   title,
   subtitle,
