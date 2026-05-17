@@ -919,14 +919,9 @@ export default function MiraPrototypePage() {
   const flow = useFlow();
   const Step = STEPS[flow.step];
   return (
-    <div style={{ minHeight: "100vh", background: "#1a1a1c", display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px", fontFamily: F.sans }}>
-      <div style={{ position: "fixed", top: 24, left: 24, zIndex: 10, fontFamily: F.tactical, fontSize: 11, color: QA.textMute, letterSpacing: "0.14em", textTransform: "uppercase" }}>
-        Quero Armas · Protótipo · {flow.step.toUpperCase()}
-      </div>
-      <div style={{ height: 900, width: "100%", maxWidth: 420 }}>
-        <Step flow={flow} />
-      </div>
-      <button onClick={flow.reset} style={{ position: "fixed", top: 22, right: 22, zIndex: 10, padding: "8px 14px", borderRadius: 999, background: QA.card, border: `1px solid ${QA.border}`, color: QA.textDim, cursor: "pointer", fontSize: 11, fontWeight: 500, letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, fontFamily: F.sans }}>
+    <div style={{ minHeight: "100dvh", background: QA.bgDeep, fontFamily: F.sans }}>
+      <Step flow={flow} />
+      <button onClick={flow.reset} style={{ position: "fixed", top: 12, right: 12, zIndex: 10, padding: "6px 12px", borderRadius: 999, background: QA.card, border: `1px solid ${QA.border}`, color: QA.textDim, cursor: "pointer", fontSize: 11, fontWeight: 500, letterSpacing: "0.04em", display: "flex", alignItems: "center", gap: 6, fontFamily: F.sans }}>
         <ArrowLeft size={11} strokeWidth={1.7} /> Reiniciar
       </button>
     </div>
