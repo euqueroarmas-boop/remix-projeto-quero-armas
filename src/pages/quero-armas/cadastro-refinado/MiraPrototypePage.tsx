@@ -377,17 +377,23 @@ function T6({ flow }: { flow: Flow }) {
 function T7({ flow }: { flow: Flow }) {
   const docs = flow.data.docs;
   const allDone = docs.identity && docs.address && docs.selfie;
-  const toggle = (k: keyof FlowData["docs"]) => flow.patch({ docs: { ...docs, [k]: !docs[k] } });
   const missing = 3 - Object.values(docs).filter(Boolean).length;
   const order: Array<keyof FlowData["docs"]> = ["identity", "address", "selfie"];
-  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    e.target.value = "";
+  const validate = (f: File) => {
+    if (f.size > 20 * 1024 * 1024) return "Arquivo maior que 20MB.";
+    if (!/^image\//.test(f.type) && f.type !== "application/pdf" && !/\.(pdf|jpe?g|png|webp|heic|heif)$/i.test(f.name)) return "Use foto ou PDF.";
+    return null;
+  };
+  const accept = (k: keyof FlowData["docs"], f?: File) => {
     if (!f) return;
-    if (f.size > 20 * 1024 * 1024) { alert("Arquivo maior que 20MB."); return; }
-    if (!/^(image\/|application\/pdf)/.test(f.type) && !/\.pdf$/i.test(f.name)) { alert("Use foto ou PDF."); return; }
+    const err = validate(f);
+    if (err) { alert(err); return; }
+    flow.patch({ docs: { ...docs, [k]: true } });
+  };
+  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; e.target.value = "";
     const next = order.find((k) => !docs[k]);
-    if (next) flow.patch({ docs: { ...docs, [next]: true } });
+    if (next) accept(next, f);
   };
   return (
     <CPhone>
