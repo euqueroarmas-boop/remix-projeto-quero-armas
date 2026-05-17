@@ -1,11 +1,7 @@
 /**
- * Primitivas visuais Mira reutilizáveis.
- * Origem: protótipo /cadastro-mira (MiraPrototypePage). Extraídas para uso
- * compartilhado entre o sandbox visual e as etapas reais do /cadastro.
- *
- * IMPORTANTE: estas primitivas são puramente visuais. NÃO contêm nenhum
- * dado de demonstração (João Carlos, CPF fake, R$ 1.890 etc) — quem renderiza
- * com dados reais é o consumidor.
+ * Primitivas visuais Mira reutilizáveis (dark/brass).
+ * São puramente visuais — nenhum dado de demonstração aqui. O consumidor
+ * renderiza com dados reais vindos do state do cadastro refinado.
  */
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
