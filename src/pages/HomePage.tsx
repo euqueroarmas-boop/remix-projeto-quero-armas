@@ -153,10 +153,13 @@ const HomePage = () => {
             </p>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to="/servicos">Quero estar armado e legal <ArrowRight className="ml-2 size-5" /></Link>
+                <Link to={CADASTRO_HERO}>Descobrir meu caminho <ArrowRight className="ml-2 size-5" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to="/descobrir-meu-caminho">Descobrir meu caminho</Link>
+                <Link to={PORTAL_PATH}><LogIn className="mr-2 size-5" />Acessar Arsenal</Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
+                <Link to="/servicos">Ver serviços</Link>
               </Button>
               <Button asChild size="lg" variant="ghost" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
