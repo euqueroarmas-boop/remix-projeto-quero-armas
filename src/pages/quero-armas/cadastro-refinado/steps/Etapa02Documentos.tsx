@@ -230,7 +230,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       <div className="qa-ref-banner" style={{ marginBottom: 14 }}>
         <Sparkles size={16} style={{ flexShrink: 0, marginTop: 2 }} />
         <div>
-          <strong>Análise por IA</strong> — assim que você enviar, extraímos seus dados e preenchemos o cadastro automaticamente. Nada é enviado ao SINARM/PF sem sua revisão.
+          <strong>Preparando seus dados</strong> — assim que você enviar, organizamos seus documentos e adiantamos o preenchimento. Você revisa tudo antes de seguir. Nada é enviado ao SINARM/PF sem sua confirmação.
         </div>
       </div>
 
