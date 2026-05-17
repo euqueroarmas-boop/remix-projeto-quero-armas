@@ -125,7 +125,26 @@ describe("cadastro-refinado · constraints", () => {
     const src = readFileSync(join(ROOT, "QACadastroRefinadoPage.tsx"), "utf8");
     expect(src).toContain("Etapa00Identificacao");
     expect(src).toContain("Etapa00bClienteEncontrado");
-    expect(src).toMatch(/modo_cliente\s*===\s*"indefinido"/);
+    // Nova regra: identificação só é pulada com flag explícita na sessão,
+    // autenticação carregada ou ?retomar=1.
+    expect(src).toContain("identificacao_confirmada");
+    expect(src).toContain('params.get("retomar")');
+    expect(src).toMatch(/modo_cliente\s*===\s*"autenticado"/);
+    expect(src).toContain("dados_carregados_do_arsenal");
+    // Não pode mais pular identificação só porque há ?servico= na URL.
+    expect(src).not.toMatch(/if\s*\(\s*params\.get\(["']servico["']\)\s*\)\s*return\s+1\s*;/);
+  });
+
+  it("Estado expõe flag identificacao_confirmada e ela começa em false", () => {
+    const src = readFileSync(join(ROOT, "hooks/useCadastroRefinadoState.ts"), "utf8");
+    expect(src).toContain("identificacao_confirmada");
+    expect(src).toMatch(/identificacao_confirmada:\s*false/);
+  });
+
+  it("Etapa00Escolha aceita atalho onAbrirIdentificacao e renderiza 'Já tenho conta no Arsenal'", () => {
+    const src = readFileSync(join(ROOT, "steps/Etapa00Escolha.tsx"), "utf8");
+    expect(src).toContain("onAbrirIdentificacao");
+    expect(src).toContain("Já tenho conta no Arsenal");
   });
 
   it("Etapa00Identificacao usa OTP do portal existente e não consulta CPF/e-mail diretamente", () => {

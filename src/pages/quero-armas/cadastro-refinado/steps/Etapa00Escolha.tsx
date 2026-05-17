@@ -20,6 +20,9 @@ interface Props {
   onSelectService: (slug: string, perfilV2?: string, subperfilV2?: string) => void;
   onBackToHome: () => void;
   initialPerfil?: string | null;
+  /** Atalho discreto: usuário caiu direto na escolha guiada mas quer fazer
+   *  login no Arsenal. Reabre Etapa00Identificacao. */
+  onAbrirIdentificacao?: () => void;
 }
 
 const PATH_MAP: Record<string, QAV2PathDefinition> = {
@@ -31,7 +34,7 @@ const PATH_MAP: Record<string, QAV2PathDefinition> = {
 
 const ROOT_STACK: string[] = [];
 
-export default function Etapa00Escolha({ onSelectService, onBackToHome, initialPerfil }: Props) {
+export default function Etapa00Escolha({ onSelectService, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
   const navigate = useNavigate();
   const [stack, setStack] = useState<string[]>(() => {
     if (initialPerfil && (PATH_MAP[initialPerfil] || initialPerfil === "cursos")) {
@@ -130,6 +133,17 @@ export default function Etapa00Escolha({ onSelectService, onBackToHome, initialP
         subtitle="Em 30 segundos identificamos o serviço certo para o seu caso. Você pode mudar a qualquer momento."
         onBack={onBackToHome}
       >
+        {onAbrirIdentificacao && (
+          <div className="qa-ref-id-shortcut-row">
+            <button
+              type="button"
+              className="qa-ref-link-btn"
+              onClick={onAbrirIdentificacao}
+            >
+              Já tenho conta no Arsenal
+            </button>
+          </div>
+        )}
         {/* Atalho cursos — destaque sutil */}
         <button
           type="button"

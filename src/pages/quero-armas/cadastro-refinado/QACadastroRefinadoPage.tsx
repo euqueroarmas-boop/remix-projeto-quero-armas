@@ -16,14 +16,27 @@ export default function QACadastroRefinadoPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
 
+  // Regra de primeira tela:
+  // /cadastro e /cadastro-mira SEMPRE abrem em Etapa00Identificacao, exceto se:
+  //  1) `?retomar=1` (continuação explícita do fluxo);
+  //  2) usuário já está autenticado e dados do Arsenal já carregados nesta sessão;
+  //  3) usuário já confirmou identificação nesta sessão (escolheu "começar agora"
+  //     ou autenticou via OTP) — flag `identificacao_confirmada`.
+  // `?servico=...` por si só NÃO pula a identificação.
+  const retomar = params.get("retomar") === "1";
+  const jaAutenticado =
+    state.modo_cliente === "autenticado" && state.dados_carregados_do_arsenal;
+  const podePularIdentificacao =
+    retomar || jaAutenticado || state.identificacao_confirmada;
+
   // Step inicial conforme query params (executa só na montagem)
   const [step, setStep] = useState<number>(() => {
-    if (params.get("servico")) return 1;
+    if (params.get("servico") && (retomar || jaAutenticado || state.identificacao_confirmada)) return 1;
     return 0;
   });
   // Tela de "já tenho conta no Arsenal" — antecede o step 0 quando indefinido
   const [showIdent, setShowIdent] = useState<boolean>(
-    () => state.modo_cliente === "indefinido" && !params.get("servico"),
+    () => !podePularIdentificacao,
   );
   // Após autenticação bem-sucedida, mostra resumo "encontrei seu cadastro"
   const [showEncontrado, setShowEncontrado] = useState<boolean>(false);
@@ -34,7 +47,7 @@ export default function QACadastroRefinadoPage() {
   // Sanidade: se mudou query depois (improvável), respeitar
   useEffect(() => {
     const servico = params.get("servico");
-    if (servico && step === 0) setStep(1);
+    if (servico && step === 0 && !showIdent) setStep(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
@@ -58,6 +71,18 @@ export default function QACadastroRefinadoPage() {
 
   const handleBackToHome = () => navigate("/");
 
+  // Atalho na escolha guiada: "Já tenho conta no Arsenal"
+  const handleAbrirIdentificacao = () => {
+    update({
+      modo_cliente: "indefinido",
+      identificacao_confirmada: false,
+      cliente_existente_id: null,
+      dados_carregados_do_arsenal: false,
+    });
+    setShowEncontrado(false);
+    setShowIdent(true);
+  };
+
   const handleEtapa01Back = () => {
     if (enteredDirect) handleBackToHome();
     else {
@@ -73,8 +98,12 @@ export default function QACadastroRefinadoPage() {
         state={state}
         update={update}
         updateDados={updateDados}
-        onNovo={() => setShowIdent(false)}
+        onNovo={() => {
+          update({ modo_cliente: "novo", identificacao_confirmada: true });
+          setShowIdent(false);
+        }}
         onAutenticado={() => {
+          update({ identificacao_confirmada: true });
           setShowIdent(false);
           setShowEncontrado(true);
         }}
@@ -114,6 +143,7 @@ export default function QACadastroRefinadoPage() {
           onSelectService={handleSelectService}
           onBackToHome={handleBackToHome}
           initialPerfil={initialPerfil}
+          onAbrirIdentificacao={handleAbrirIdentificacao}
         />
       );
     case 1:

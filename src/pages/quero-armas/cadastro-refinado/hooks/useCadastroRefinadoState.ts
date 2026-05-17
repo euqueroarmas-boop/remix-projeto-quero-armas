@@ -54,6 +54,11 @@ export interface CadastroRefinadoState {
   processos_ativos: Array<Record<string, unknown>>;
   contratos_existentes: Array<Record<string, unknown>>;
   arsenal_resumo: { cr?: string | null; craf?: string | null; armas?: number; laudos?: unknown[] } | null;
+  /** Marca que o usuário, NESTA sessão, já passou pela tela
+   *  "Você já tem conta no Arsenal Inteligente?". Sem isso, qualquer
+   *  abertura nova de /cadastro ou /cadastro-mira deve reabrir a
+   *  identificação — mesmo que exista state antigo no sessionStorage. */
+  identificacao_confirmada: boolean;
   resultado: {
     cliente_id?: string;
     venda_id?: string;
@@ -113,6 +118,7 @@ const initial: CadastroRefinadoState = {
   processos_ativos: [],
   contratos_existentes: [],
   arsenal_resumo: null,
+  identificacao_confirmada: false,
   resultado: null,
 };
 
