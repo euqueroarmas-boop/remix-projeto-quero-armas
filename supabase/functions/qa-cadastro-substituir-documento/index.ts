@@ -53,13 +53,8 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE);
 
   // Resolve qa_cliente_id do usuário autenticado via função SECURITY DEFINER já existente.
-  const { data: clienteId, error: clienteErr } = await admin.rpc("qa_current_cliente_id", { _user_id: userId } as never);
-  let myClienteId: number | null = (typeof clienteId === "number" ? clienteId : null);
-  if (clienteErr || myClienteId == null) {
-    // Fallback: tenta sem argumento (assinatura legada).
-    const fb = await admin.rpc("qa_current_cliente_id" as never);
-    if (!fb.error && typeof fb.data === "number") myClienteId = fb.data as number;
-  }
+  const { data: clienteId } = await admin.rpc("qa_current_cliente_id", { _uid: userId } as never);
+  const myClienteId: number | null = (typeof clienteId === "number" ? clienteId : null);
   if (myClienteId == null) return json({ error: "cliente_nao_encontrado" }, 403);
 
   // Busca doc anterior — confere posse e estado.
