@@ -33,6 +33,7 @@ const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcesso
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACadastroRefinadoPage"), "QACadastroRefinadoPage");
+const MiraPrototypePage = lazyRetry(() => import("./cadastro-refinado/MiraPrototypePage"), "MiraPrototypePage");
 // /cadastro-v2 e sub-rotas agora redirecionam para /cadastro (Etapa 00 refinada).
 // Componentes legados permanecem no projeto para histórico, mas não são mais montados.
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
