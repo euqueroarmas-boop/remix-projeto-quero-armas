@@ -4,7 +4,7 @@
  * Página de PREVIEW — não substitui /cadastro. Backend permanece intacto.
  * Tema dark/brass "Tudo Pronto" oficial (mem://style/quero-armas/cadastro-refinado-dark-brass).
  */
-import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode, type ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft, ArrowRight, ChevronRight, Shield, Crosshair, Briefcase, Award,
@@ -380,7 +380,7 @@ function T7({ flow }: { flow: Flow }) {
   const toggle = (k: keyof FlowData["docs"]) => flow.patch({ docs: { ...docs, [k]: !docs[k] } });
   const missing = 3 - Object.values(docs).filter(Boolean).length;
   const order: Array<keyof FlowData["docs"]> = ["identity", "address", "selfie"];
-  const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
