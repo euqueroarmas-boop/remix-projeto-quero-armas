@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import "./styles/cadastroRefinado.css";
 import { useCadastroRefinadoState } from "./hooks/useCadastroRefinadoState";
 import Etapa00Escolha from "./steps/Etapa00Escolha";
+import Etapa00Identificacao from "./steps/Etapa00Identificacao";
+import Etapa00bClienteEncontrado from "./steps/Etapa00bClienteEncontrado";
 import Etapa01Servico from "./steps/Etapa01Servico";
 import Etapa02Documentos from "./steps/Etapa02Documentos";
 import Etapa03Revisao from "./steps/Etapa03Revisao";
@@ -19,6 +21,12 @@ export default function QACadastroRefinadoPage() {
     if (params.get("servico")) return 1;
     return 0;
   });
+  // Tela de "já tenho conta no Arsenal" — antecede o step 0 quando indefinido
+  const [showIdent, setShowIdent] = useState<boolean>(
+    () => state.modo_cliente === "indefinido" && !params.get("servico"),
+  );
+  // Após autenticação bem-sucedida, mostra resumo "encontrei seu cadastro"
+  const [showEncontrado, setShowEncontrado] = useState<boolean>(false);
   // Se cliente entrou direto via ?servico=, lembramos disso p/ Voltar levar para "/"
   const [enteredDirect] = useState<boolean>(() => Boolean(params.get("servico")));
   const [initialPerfil, setInitialPerfil] = useState<string | null>(() => params.get("perfil_v2"));
@@ -57,6 +65,47 @@ export default function QACadastroRefinadoPage() {
       setStep(0);
     }
   };
+
+  // Renderização da etapa de Identificação (antes de tudo)
+  if (showIdent) {
+    return (
+      <Etapa00Identificacao
+        state={state}
+        update={update}
+        updateDados={updateDados}
+        onNovo={() => setShowIdent(false)}
+        onAutenticado={() => {
+          setShowIdent(false);
+          setShowEncontrado(true);
+        }}
+        onBack={handleBackToHome}
+      />
+    );
+  }
+
+  if (showEncontrado) {
+    return (
+      <Etapa00bClienteEncontrado
+        state={state}
+        onContinuar={() => {
+          setShowEncontrado(false);
+          setStep(0);
+        }}
+        onAtualizar={() => {
+          setShowEncontrado(false);
+          setStep(3);
+        }}
+        onEnviarNovoDocumento={() => {
+          setShowEncontrado(false);
+          setStep(2);
+        }}
+        onBack={() => {
+          setShowEncontrado(false);
+          setShowIdent(true);
+        }}
+      />
+    );
+  }
 
   switch (step) {
     case 0:

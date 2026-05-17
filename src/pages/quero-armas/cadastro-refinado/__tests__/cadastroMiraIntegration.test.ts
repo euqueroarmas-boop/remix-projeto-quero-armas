@@ -105,4 +105,50 @@ describe("cadastro-refinado · constraints", () => {
       expect(src).toContain(key);
     }
   });
+
+  it("State expõe campos do fluxo 'já tenho conta no Arsenal'", () => {
+    const src = readFileSync(join(ROOT, "hooks/useCadastroRefinadoState.ts"), "utf8");
+    for (const key of [
+      "modo_cliente",
+      "cliente_existente_id",
+      "dados_carregados_do_arsenal",
+      "documentos_reaproveitados",
+      "documentos_vencidos",
+      "servicos_anteriores",
+      "arsenal_resumo",
+    ]) {
+      expect(src).toContain(key);
+    }
+  });
+
+  it("QACadastroRefinadoPage monta Etapa00Identificacao antes do wizard quando modo é indefinido", () => {
+    const src = readFileSync(join(ROOT, "QACadastroRefinadoPage.tsx"), "utf8");
+    expect(src).toContain("Etapa00Identificacao");
+    expect(src).toContain("Etapa00bClienteEncontrado");
+    expect(src).toMatch(/modo_cliente\s*===\s*"indefinido"/);
+  });
+
+  it("Etapa00Identificacao usa OTP do portal existente e não consulta CPF/e-mail diretamente", () => {
+    const src = readFileSync(
+      join(ROOT, "steps/Etapa00Identificacao.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("cliente-portal-request-otp");
+    expect(src).toContain("cliente-portal-verify-otp");
+    expect(src).toContain("qa-cadastro-carregar-cliente");
+    // anti-enumeração: mensagem genérica
+    expect(src).toMatch(/Se encontrarmos uma conta/);
+    // não chama tabelas diretas por CPF/email
+    expect(src).not.toMatch(/\.from\(["']qa_clientes["']\)/);
+  });
+
+  it("Edge function qa-cadastro-carregar-cliente exige Authorization Bearer", () => {
+    const src = readFileSync(
+      "supabase/functions/qa-cadastro-carregar-cliente/index.ts",
+      "utf8",
+    );
+    expect(src).toContain("Authorization");
+    expect(src).toContain("getClaims");
+    expect(src).toMatch(/Unauthorized.*401|401.*Unauthorized/s);
+  });
 });

@@ -127,6 +127,37 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
             </ul>
           </QACadastroRefinadoCard>
 
+          {state.servicos_anteriores && state.servicos_anteriores.length > 0 && (
+            (() => {
+              const dup = state.servicos_anteriores.find(
+                (s) =>
+                  (s.servico_slug && s.servico_slug === state.servicoSlug) ||
+                  (s.servico_nome &&
+                    servico?.nome &&
+                    String(s.servico_nome).toLowerCase() ===
+                      String(servico.nome).toLowerCase()),
+              );
+              if (!dup) return null;
+              return (
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: "12px 14px",
+                    border: "1px solid rgba(214,166,75,0.45)",
+                    borderRadius: 10,
+                    background: "rgba(214,166,75,0.08)",
+                    color: "var(--qa-ref-ink)",
+                    fontSize: 13,
+                    lineHeight: 1.45,
+                  }}
+                >
+                  <strong>Existe um serviço parecido no seu histórico.</strong>{" "}
+                  Deseja continuar mesmo assim?
+                </div>
+              );
+            })()
+          )}
+
           <div style={{ marginTop: 24, display: "grid", gap: 14 }}>
             <button className="qa-ref-btn qa-ref-btn-primary" onClick={onNext}>
               Continuar para documentos

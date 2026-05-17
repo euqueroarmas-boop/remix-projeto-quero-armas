@@ -1,100 +1,101 @@
-# Plano — /cadastro refinado (Jeito 3) atrás de feature flag
+# Plano — Etapa inicial "Já tenho conta no Arsenal" em /cadastro e /cadastro-mira
 
-## Contexto crítico descoberto
+## Resumo
+Adicionar uma nova primeira tela ao fluxo de cadastro refinado que pergunta se o usuário já é cliente do Arsenal Inteligente. Se sim (ou "não sei"), autentica via OTP por e-mail/WhatsApp reutilizando `cliente-portal-request-otp` / `cliente-portal-verify-otp` (já existentes), carrega dados de `qa_clientes`, documentos, serviços e Arsenal, e pré-preenche o restante do fluxo. Visual dark/brass Mira preservado. Fluxo 2C, WMTi, Arsenal gratuito, contratos e webhooks **não são tocados**.
 
-`QACadastroPublicoPage.tsx` tem **3.137 linhas**. Refatorar esse arquivo para extrair hooks compartilhados (`useCadastroDocumentos`, `useCadastroPagamento`, `useCadastroCliente`) é uma operação de altíssimo risco de regressão — exatamente o que a regra inegociável proíbe. A página acumula state local entrelaçado com efeitos, validações, chamadas a edge functions, lógica de Asaas, contrato, IA e os 3 bug fixes recentes.
+## Mudanças
 
-**Decisão recomendada (precisa do seu OK):** NÃO refatorar `QACadastroPublicoPage.tsx`. Em vez disso, criar a nova página refinada como implementação **independente paralela**, reaproveitando diretamente as **edge functions** e **utils puros já existentes** (`qaServiceCatalog`, `cadastroCompleteness`, `qaSlaCadastro`, `serviceDisplay`, `ensureClienteFromAuthUser`, `customerResolver`, `qaDocxDownload`, edge functions `qa-cliente-criar-conta-publica`, `qa-upload-documento`, `qa-extract-doc`, `qa-gerar-cobranca`, etc.). Isso garante zero risco para o fluxo legado e mantém os 3 bug fixes intactos no caminho antigo.
+### 1. Estado (`useCadastroRefinadoState.ts`)
+Adicionar campos:
+- `modo_cliente: "indefinido" | "novo" | "existente" | "verificando" | "autenticado"`
+- `cliente_existente_id: string | null`
+- `dados_carregados_do_arsenal: boolean`
+- `documentos_reaproveitados: Array<{ key; tipo; fileName; validade?; status }>`
+- `documentos_vencidos: Array<{...}>`
+- `documentos_pendentes_revisao: Array<{...}>`
+- `servicos_anteriores: Array<{ id; servico_slug; status; data }>`
+- `processos_ativos: Array<{...}>`
+- `contratos_existentes: Array<{...}>`
+- `arsenal_resumo: { cr?; craf?; armas?: number; laudos?: any[] } | null`
 
-A alternativa (extrair hooks da página de 3137 linhas) violaria "Zero Regressão" — paro e pergunto antes de prosseguir.
+Default: `modo_cliente: "indefinido"`. Persistência sessionStorage já existente cobre.
 
-## Arquivos a criar
+### 2. Nova etapa `Etapa00Identificacao.tsx`
+Tela com 3 opções (visual Mira dark/brass, mesmos tokens `qa-ref-opt-card`):
+1. **Sim, já tenho conta** → fluxo OTP
+2. **Não, quero começar agora** → seta `modo_cliente: "novo"` e avança para `Etapa00Escolha`
+3. **Não sei** → fluxo OTP com mensagem genérica
 
-```
-src/pages/quero-armas/cadastro-refinado/
-  QACadastroRefinadoPage.tsx              (orquestrador, estado das 5 etapas)
-  components/
-    QACadastroRefinadoHeader.tsx          (logo + tag + voltar)
-    QACadastroRefinadoFooter.tsx          (selos LGPD + ICP-Brasil)
-    QACadastroRefinadoStepIndicator.tsx   ("01 / 05" + 5 traços)
-    QACadastroRefinadoCard.tsx            (card editorial reutilizável)
-    QACadastroRefinadoShell.tsx           (layout comum a todas as etapas)
-  steps/
-    Etapa01Servico.tsx
-    Etapa02Documentos.tsx
-    Etapa03Revisao.tsx
-    Etapa04Pagamento.tsx
-    Etapa05Conclusao.tsx
-  hooks/
-    useCadastroRefinadoState.ts           (state machine local da nova página)
-    useCadastroRefinadoUploads.ts         (wrapper sobre edge function de upload)
-    useCadastroRefinadoExtracao.ts        (wrapper sobre edge function de IA)
-    useCadastroRefinadoPagamento.ts       (wrapper sobre edge function Asaas + contrato)
-  styles/
-    cadastroRefinado.css                  (tokens editoriais locais ao escopo)
-src/lib/quero-armas/
-  cadastroRefinadoFlag.ts                 (leitura runtime da feature flag)
-```
+Sub-componente `IdentificacaoOTPPanel`:
+- Input e-mail OU WhatsApp (toggle).
+- Botão "Enviar código" → `supabase.functions.invoke("cliente-portal-request-otp", { body: { identificador } })`.
+- Resposta **sempre genérica**: "Se encontrarmos uma conta, enviaremos um código." (não confirma existência).
+- Após envio, exibe `<InputOTP>` (6 dígitos) + botão "Validar".
+- Validar → `cliente-portal-verify-otp` → recebe JWT/cliente_id.
+- Em sucesso: chama nova edge function `qa-cadastro-carregar-cliente` (autenticada) e salva no state.
 
-## Arquivos modificados (mínimo absoluto)
+### 3. Nova edge function `qa-cadastro-carregar-cliente`
+- Requer JWT do `cliente-portal-verify-otp`.
+- Valida token; resolve `cliente_id`.
+- Retorna: `qa_clientes` (campos pessoais/endereço), lista `qa_documentos_cliente` agrupada por `status` (válido/vencido/pendente_revisao), `qa_vendas` + `qa_itens_venda`, `qa_solicitacoes_servico`, `qa_processos`, `qa_contracts` (sem URLs públicas — só metadata), resumo Arsenal (CR/CRAF/armas). Sem `service_role` para leitura de outros dados — confiar em RLS já existente do portal.
+- CORS + Zod.
 
-- **`src/pages/quero-armas/QARoutes.tsx`** — substituir o elemento da rota `cadastro` por um wrapper `<CadastroRouteSwitch />` que lê `VITE_QA_CADASTRO_V2_ENABLED` em runtime e renderiza `QACadastroRefinadoPage` ou `QACadastroPublicoPage`. Nenhuma outra rota é tocada.
-- **`.env.example`** — documentar `VITE_QA_CADASTRO_V2_ENABLED=true`.
+### 4. Nova tela `Etapa00bClienteEncontrado.tsx`
+Após autenticação. Mostra cards resumo (Dados, Docs válidos, Docs vencidos, Serviços em andamento, Arsenal). CTAs:
+- "Continuar com meus dados" → pré-preenche `dadosPessoais` + marca `documentos_reaproveitados` e avança para `Etapa01Servico`.
+- "Atualizar meus dados" → vai para `Etapa03Revisao` em modo edição.
+- "Enviar novo documento" → vai para `Etapa02Documentos`.
 
-## Arquivos NÃO tocados (checklist de não-regressão)
+### 5. Ajustes em etapas existentes
+- **`Etapa01Servico`**: se `servicos_anteriores` contém serviço igual/relacionado ao escolhido → mostrar alerta inline (não bloqueia): "Existe um serviço parecido no seu histórico. Deseja continuar?"
+- **`Etapa02Documentos`**: para `modo_cliente === "autenticado"`, renderizar três seções:
+  - "Documentos que já temos" (cards verdes, status "Já recebido", botão "Substituir" opcional).
+  - "Documentos que precisam atualizar" (vencidos, força reenvio).
+  - "Documentos faltantes" (mesmo fluxo de upload atual).
+  Substituição mantém histórico (não delete físico — só novo registro).
+- **`Etapa03Revisao`**: badge "dados já existentes no Arsenal" nos campos pré-preenchidos. Edição marca campo como `pendente_confirmacao` (apenas flag local).
 
-- `QACadastroPublicoPage.tsx` ✋
-- `qaServiceCatalog.ts`, `qaCadastroV2Catalog.ts`
-- Todas as `cadastro-v2/*Page.tsx` e `QACadastroV2GuidedStep.tsx`
-- Edge functions (`qa-cliente-criar-conta-publica`, uploads, IA, Asaas)
-- Schema, RLS, triggers, `qa_servicos_catalogo`, `qa_clientes`, `qa_vendas`, `qa_solicitacoes_servico`, `qa_processos`, `cliente_auth_links`, `qa_contracts`
-- `_shared/qaEmailTemplates.ts` (templates do Bug 2 preservados)
+### 6. Roteamento da etapa
+`QACadastroRefinadoPage` (orquestrador) renderiza `Etapa00Identificacao` quando `modo_cliente === "indefinido"`. Demais transições inalteradas.
 
-## Feature flag
+### 7. Segurança
+- Nenhuma consulta por CPF/e-mail sem OTP.
+- `cliente-portal-request-otp` já normaliza identificador e retorna 200 mesmo sem match (anti-enumeração) — confirmar no código.
+- `qa-cadastro-carregar-cliente` valida JWT obrigatoriamente; retorna 401 sem ele.
+- URLs de documentos: apenas signed URLs curtas (5 min) via `storage.createSignedUrl` quando necessário; nunca expor `storagePath` cru.
 
-`src/lib/quero-armas/cadastroRefinadoFlag.ts`:
-```ts
-export const isCadastroRefinadoEnabled = () =>
-  import.meta.env.VITE_QA_CADASTRO_V2_ENABLED === "true";
-```
-Leitura em runtime no `CadastroRouteSwitch` dentro do `QARoutes.tsx`. Default dev = `true` (via `.env`), produção começa sem a env (= `false` → fallback antigo).
+### 8. Testes (`__tests__/cadastroMiraIntegration.test.ts`)
+Adicionar guards:
+- Existe `Etapa00Identificacao` montada antes de `Etapa00Escolha` quando `modo_cliente === "indefinido"`.
+- Fluxo "novo" pula direto para `Etapa00Escolha`.
+- Não há import de `WMTi`, `post-purchase`, `ensureClientAccess`, `customers`, `payments`, `contracts`, `quotes` em arquivos do `cadastro-refinado/`.
+- Edge function `qa-cadastro-carregar-cliente` retorna 401 sem JWT (teste Deno).
+- Resposta do request-otp não vaza existência.
 
-## Padrão visual
+## Arquivos
+**Criar**:
+- `src/pages/quero-armas/cadastro-refinado/steps/Etapa00Identificacao.tsx`
+- `src/pages/quero-armas/cadastro-refinado/steps/Etapa00bClienteEncontrado.tsx`
+- `src/pages/quero-armas/cadastro-refinado/components/IdentificacaoOTPPanel.tsx`
+- `supabase/functions/qa-cadastro-carregar-cliente/index.ts`
+- `supabase/functions/qa-cadastro-carregar-cliente/index_test.ts`
 
-- Tipografia editorial usa `font-serif` do Tailwind (já no design system) para títulos e valores monetários; mono para números de processo; CAPS+tracking para labels.
-- Cores e bordas via tokens CSS já existentes do `qa-scope` (Premium Light) — sem paleta nova.
-- Layout: header sticky, indicador "01 / 05" + 5 traços, card central, footer com 2 selos.
-- Botão primário: preto, full-width, label informativo dinâmico.
-- Mobile-first: padding lateral colapsa de 48px para 20px abaixo de `md:`.
+**Alterar**:
+- `src/pages/quero-armas/cadastro-refinado/hooks/useCadastroRefinadoState.ts` (novos campos)
+- `src/pages/quero-armas/cadastro-refinado/QACadastroRefinadoPage.tsx` (roteamento de etapa)
+- `src/pages/quero-armas/cadastro-refinado/steps/Etapa01Servico.tsx` (alerta de duplicidade)
+- `src/pages/quero-armas/cadastro-refinado/steps/Etapa02Documentos.tsx` (seções de reaproveitamento)
+- `src/pages/quero-armas/cadastro-refinado/steps/Etapa03Revisao.tsx` (badge origem)
+- `src/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css` (estilos das novas seções)
+- `src/pages/quero-armas/cadastro-refinado/__tests__/cadastroMiraIntegration.test.ts` (guards)
 
-## Etapas — comportamento
+## Não toca
+WMTi, `qa-checkout-*`, `qa-asaas-webhook`, `qa-generate-contract`, `qa-provisionar-acesso-portal`, `qa-upload-signed-contract`, `qa-liberar-servicos-contrato`, `post-purchase.ts`, `ensureClientAccess`, Arsenal gating (continua gratuito), fluxo 2C de pagamento.
 
-| # | Tela | Reaproveita |
-|---|------|-------------|
-| 01 | Confirmar serviço (card + preço serif + bullets) | `qaServiceCatalog`, query `qa_servicos_catalogo` |
-| 02 | Upload documentos (lista por slug, 3 estados, IA banner) | edge `qa-upload-documento`, `qa-extract-doc` |
-| 03 | Revisão dados extraídos (cards-seção editáveis, detecção CPF/email existente) | edge `qa-cliente-checar-existente`, validação local |
-| 04 | Pagamento + contrato (PIX/Cartão/Boleto + checkbox LGPD) | edge `qa-gerar-cobranca`, geração contrato + `cliente_auth_links` |
-| 05 | Conclusão (check + ficha + CTAs) | dados retornados da etapa 04 |
+## Validação
+`npm run typecheck`, `npm run test`, `npm run build` ao final.
 
-Bug fixes preservados nativamente:
-- **Bug 1** (cliente existente pula etapa 4 / mostra "Esqueci senha"): tratado na Etapa 03 com desvio para tela de "Você já tem cadastro" + CTAs login/recuperar senha na Etapa 05.
-- **Bug 2** (notificação cadastro existente): a edge function `qa-cliente-criar-conta-publica` já dispara as notificações — basta chamá-la.
-- **Bug 3** (slugs de catálogo): `qaServiceCatalog.ts` já contém os slugs corretos — apenas consumir.
-
-## Migração de homologação
-
-Migration aditiva fazendo apenas o `UPDATE` solicitado em `qa_homologacao_sessoes` para `HOMOLOG_CATALOGO_COMPLETO_2026_05_15`.
-
-## Critérios de aceite
-
-- Flag ON → `/cadastro` abre nova UI editorial 5 etapas.
-- Flag OFF/ausente → `/cadastro` abre `QACadastroPublicoPage` byte-idêntico ao atual.
-- `/cadastro-v2*` intactos.
-- `?servico=X` e `?origem=v2` funcionam em ambos os modos.
-- Mobile responsivo nas 5 etapas.
-- Zero alteração em schema, RLS, triggers, edge functions, catálogo.
-
-## Pergunta antes de prosseguir
-
-Confirma a estratégia de **implementação paralela sem extrair hooks de `QACadastroPublicoPage.tsx`** (única forma de garantir zero regressão dado o tamanho do arquivo)? Se sim, sigo direto com a criação dos 14 arquivos novos + `QARoutes.tsx` + migration.
+## Pontos a confirmar
+1. **OTP por WhatsApp**: hoje `cliente-portal-request-otp` aceita só e-mail, ou também telefone? Se só e-mail, mantenho input e-mail e adiciono WhatsApp em fase 2.
+2. **Estrutura real de `qa_documentos_cliente`**: confirma colunas de validade/status que devo usar para classificar válido/vencido/pendente.
+3. **Quer que eu já implemente substituição de documento com histórico (não-destrutiva) nesta entrega, ou ficamos só com leitura+marcação nesta fase**?
