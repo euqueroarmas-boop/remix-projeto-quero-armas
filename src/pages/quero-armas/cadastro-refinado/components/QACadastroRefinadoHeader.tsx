@@ -1,4 +1,5 @@
 import { ArrowLeft, X } from "lucide-react";
+import { MiraDot } from "../mira-ui";
 
 interface Props {
   onBack?: () => void;
@@ -38,7 +39,7 @@ export default function QACadastroRefinadoHeader({
             </button>
           )}
           <div className="qa-ref-logo">
-            <span className="qa-ref-logo-mark">Q</span>
+            <MiraDot size={22} />
             <div className="qa-ref-header-eyebrow">
               <span className="qa-ref-header-eyebrow-top">ANÁLISE CONCLUÍDA</span>
               <span className="qa-ref-header-eyebrow-main">{contextTag}</span>
