@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { filterAnexoBySlug } from "@/lib/quero-armas/contractAnexoFilter";
 import type { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
@@ -17,39 +18,6 @@ function renderVariables(html: string, vars: Record<string, string>) {
   // Limpa variáveis ainda não resolvidas (mantém placeholder visual)
   out = out.replace(/\{\{[a-z_]+\}\}/gi, "—");
   return out;
-}
-
-/**
- * Destaca o item do Anexo I correspondente ao servico_slug, colapsando os demais
- * dentro de um <details>. Heurística: encontra qualquer bloco (li/h3/p) cujo
- * texto contenha o slug ou nome do serviço e aplica .qa-ref-contract-anexo.
- */
-function highlightAnexo(html: string, slug: string | null, nome?: string | null) {
-  if (!slug && !nome) return html;
-  try {
-    const doc = new DOMParser().parseFromString(`<div id="root">${html}</div>`, "text/html");
-    const root = doc.getElementById("root");
-    if (!root) return html;
-
-    const needle = (slug || "").toLowerCase();
-    const needleNome = (nome || "").toLowerCase();
-
-    const candidates = Array.from(root.querySelectorAll("li, h3, h4, p"));
-    let matched: Element | null = null;
-    for (const el of candidates) {
-      const t = (el.textContent || "").toLowerCase();
-      if ((needle && t.includes(needle)) || (needleNome && t.includes(needleNome))) {
-        matched = el;
-        break;
-      }
-    }
-    if (matched) {
-      matched.classList.add("qa-ref-contract-anexo");
-    }
-    return root.innerHTML;
-  } catch {
-    return html;
-  }
 }
 
 export default function ContractPreviewCard({ state, precoServico, nomeServico }: Props) {
@@ -110,7 +78,9 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
     };
 
     const filled = renderVariables(template.corpo_html, vars);
-    return highlightAnexo(filled, state.servicoSlug, nomeServico);
+    // Filtra para manter apenas o <section data-anexo-slug> correspondente
+    // ao serviço contratado. Sem match → fail-open (retorna integral).
+    return filterAnexoBySlug(filled, state.servicoSlug);
   }, [template, state.dadosPessoais, state.servicoSlug, nomeServico, precoServico]);
 
   function handleDownload() {
