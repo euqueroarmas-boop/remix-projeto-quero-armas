@@ -54,6 +54,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   const pollRef = useRef<number | null>(null);
   const pollStartRef = useRef<number>(0);
   const barcodeRef = useRef<SVGSVGElement | null>(null);
+  /* Mantém referência sempre fresca de state.resultado para o closure do polling
+   * — evita sobrescrever checkout_token/asaas_invoice_url/etc com versão stale
+   * no momento em que o webhook confirma o pagamento. */
+  const resultadoRef = useRef(state.resultado);
+  useEffect(() => {
+    resultadoRef.current = state.resultado;
+  }, [state.resultado]);
 
   useEffect(() => {
     if (!state.servicoSlug) return;
@@ -112,6 +119,15 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         if (data?.pago) {
           if (pollRef.current) window.clearInterval(pollRef.current);
           setStage("confirmed");
+          /* Webhook Asaas confirmou — agora sim podemos declarar pagamento confirmado.
+           * Etapas pós-pagamento (contrato_gerado, acesso_enviado, servico_liberado)
+           * são derivadas separadamente pela Etapa05 via polling do mesmo endpoint. */
+          update({
+            resultado: {
+              ...(resultadoRef.current || {}),
+              pagamento_status: "pagamento_confirmado",
+            },
+          });
           // Redireciona para Etapa 05 após 4s — botão "Assinar contrato" continua disponível.
           window.setTimeout(() => onNext(), 4000);
         }
@@ -252,6 +268,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           ...(state.resultado || {}),
           cliente_id: qaClienteId,
           venda_id: String(vendaId),
+          checkout_token: checkoutToken,
+          asaas_invoice_url: payData.asaas_invoice_url ?? undefined,
+          asaas_payment_id: payData.asaas_payment_id ?? undefined,
+          billing_type: billing,
+          /* Cobrança apenas criada — webhook Asaas ainda não confirmou.
+           * Etapa05 lê este status para renderizar o estado correto. */
+          pagamento_status: "aguardando_pagamento",
           pagamento_url: payData.asaas_invoice_url ?? undefined,
         },
       });

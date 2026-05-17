@@ -1,5 +1,5 @@
-import { Check } from "lucide-react";
-import { useState } from "react";
+import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
@@ -7,15 +7,95 @@ import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
   state: CadastroRefinadoState;
+  /** Permite atualizar o resultado conforme o status real avança (webhook → DB). */
+  update?: (patch: Partial<CadastroRefinadoState>) => void;
   onReset: () => void;
 }
 
-export default function Etapa05Conclusao({ state, onReset }: Props) {
+/* Catálogo de estados reais — derivados de qa-checkout-status (Pipeline 2C).
+ * NUNCA declarar "pagamento confirmado" antes do webhook. */
+const STATUS_META: Record<
+  NonNullable<NonNullable<CadastroRefinadoState["resultado"]>["pagamento_status"]>,
+  { label: string; tone: "wait" | "ok" | "info"; icon: typeof Clock; desc: string }
+> = {
+  aguardando_pagamento: {
+    label: "Cobrança criada — aguardando pagamento",
+    tone: "wait",
+    icon: Clock,
+    desc: "Assim que seu banco confirmar o pagamento, liberamos os próximos passos por e-mail e WhatsApp.",
+  },
+  pagamento_confirmado: {
+    label: "Pagamento confirmado",
+    tone: "ok",
+    icon: ShieldCheck,
+    desc: "Recebemos a confirmação do banco. Estamos gerando o contrato oficial.",
+  },
+  contrato_gerado: {
+    label: "Contrato gerado para assinatura",
+    tone: "info",
+    icon: FileSignature,
+    desc: "O contrato definitivo já está pronto. Você receberá o link para assinatura ICP-Brasil.",
+  },
+  acesso_enviado: {
+    label: "Acesso ao Arsenal enviado",
+    tone: "ok",
+    icon: MailCheck,
+    desc: "Verifique seu e-mail e WhatsApp. O Arsenal Inteligente é gratuito e já está liberado.",
+  },
+  servico_aguardando_contrato: {
+    label: "Serviço aguardando contrato assinado",
+    tone: "wait",
+    icon: FileSignature,
+    desc: "Assine o contrato definitivo para iniciarmos a execução do serviço.",
+  },
+  servico_liberado: {
+    label: "Serviço liberado para execução",
+    tone: "ok",
+    icon: PackageOpen,
+    desc: "Tudo pronto. Nossa equipe iniciou seu processo.",
+  },
+};
+
+export default function Etapa05Conclusao({ state, update, onReset }: Props) {
   const navigate = useNavigate();
   const r = state.resultado || {};
   const primeiroNome = (state.dadosPessoais.nome_completo || "").split(" ")[0] || "tudo certo";
   const [baixando, setBaixando] = useState(false);
   const [erroBaixar, setErroBaixar] = useState<string | null>(null);
+
+  /* Status real derivado de qa-checkout-status. Default seguro: aguardando_pagamento. */
+  const statusAtual = r.pagamento_status ?? "aguardando_pagamento";
+  const meta = STATUS_META[statusAtual];
+  const IconNow = meta.icon;
+  /* Acesso ao Arsenal só é "enviado" quando o status real reflete isso ou serviço liberado.
+   * Arsenal Inteligente continua GRATUITO e nunca bloqueado — apenas o aviso de envio
+   * é condicional ao webhook ter disparado o e-mail. */
+  const acessoEnviado = statusAtual === "acesso_enviado" || statusAtual === "servico_liberado";
+
+  /* Polling leve enquanto não atingimos um estado terminal — atualiza status real
+   * sem criar processo/checklist (isso só acontece após contrato validado). */
+  const pollRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!update) return;
+    if (!r.venda_id || !r.checkout_token) return;
+    if (statusAtual === "servico_liberado") return;
+    const tick = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("qa-checkout-status", {
+          body: { venda_id: Number(r.venda_id), checkout_token: r.checkout_token },
+        });
+        if (error || !data) return;
+        if (data.pago && statusAtual === "aguardando_pagamento") {
+          update({ resultado: { ...r, pagamento_status: "pagamento_confirmado" } });
+        }
+      } catch { /* silencioso */ }
+    };
+    pollRef.current = window.setInterval(tick, 8000);
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.venda_id, r.checkout_token, statusAtual]);
 
   async function handleBaixarContrato() {
     setErroBaixar(null);
@@ -64,11 +144,13 @@ export default function Etapa05Conclusao({ state, onReset }: Props) {
       step={5}
       eyebrow="ETAPA 05 · CONCLUSÃO"
       title={`Tudo certo, ${primeiroNome}`}
-      subtitle="Sua contratação foi registrada. Em instantes você receberá os próximos passos por e-mail e WhatsApp."
+      subtitle="Sua contratação foi registrada. Acompanhe o status real abaixo — os próximos passos chegam por e-mail e WhatsApp conforme o banco confirma o pagamento."
       showBack={false}
     >
       <div style={{ textAlign: "center" }}>
-        <div className="qa-ref-check"><Check size={28} /></div>
+        <div className="qa-ref-check" aria-hidden>
+          {statusAtual === "aguardando_pagamento" ? <Clock size={28} /> : <Check size={28} />}
+        </div>
       </div>
 
       <dl className="qa-ref-ficha">
@@ -88,15 +170,24 @@ export default function Etapa05Conclusao({ state, onReset }: Props) {
         </div>
         <div className="qa-ref-ficha-row">
           <dt>Status</dt>
-          <dd>Aguardando confirmação</dd>
+          <dd>{meta.label}</dd>
         </div>
       </dl>
 
       <div className="qa-ref-banner" style={{ marginTop: 20 }}>
+        <IconNow size={18} style={{ flexShrink: 0, marginTop: 2 }} />
         <div>
-          <strong>Acesso enviado</strong> — verifique seu e-mail e WhatsApp para entrar no Arsenal Inteligente e acompanhar tudo em tempo real.
+          <strong>{acessoEnviado ? "Acesso ao Arsenal enviado" : "Próximo passo"}</strong>
+          {" "}— {meta.desc}
         </div>
       </div>
+      {!acessoEnviado && (
+        <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
+          O Arsenal Inteligente é gratuito e nunca bloqueado. Após a confirmação do
+          pagamento e da assinatura do contrato definitivo, liberamos a execução do
+          serviço contratado.
+        </p>
+      )}
 
       <div style={{ marginTop: 28, display: "grid", gap: 12 }}>
         <button
