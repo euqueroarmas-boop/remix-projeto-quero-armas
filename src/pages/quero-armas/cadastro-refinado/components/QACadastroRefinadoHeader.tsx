@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 interface Props {
   onBack?: () => void;
@@ -7,6 +7,8 @@ interface Props {
   /** Step atual (0..total) — usado para a progress bar fina no topo. */
   step?: number;
   total?: number;
+  /** Callback do botão X (close). Se ausente, oculta. */
+  onClose?: () => void;
 }
 
 export default function QACadastroRefinadoHeader({
@@ -15,6 +17,7 @@ export default function QACadastroRefinadoHeader({
   contextTag = "TUDO PRONTO",
   step,
   total = 6,
+  onClose,
 }: Props) {
   const pct =
     typeof step === "number" && total > 0
@@ -23,18 +26,33 @@ export default function QACadastroRefinadoHeader({
   return (
     <header className="qa-ref-header">
       <div className="qa-ref-header-inner">
-        <div className="qa-ref-logo">
-          <span className="qa-ref-logo-mark">Q</span>
-          <div className="qa-ref-header-eyebrow">
-            <span className="qa-ref-header-eyebrow-top">ANÁLISE CONCLUÍDA</span>
-            <span className="qa-ref-header-eyebrow-main">{contextTag}</span>
+        <div className="qa-ref-header-left">
+          {showBack && (
+            <button
+              type="button"
+              className="qa-ref-round-btn"
+              onClick={onBack}
+              aria-label="Voltar"
+            >
+              <ArrowLeft size={16} />
+            </button>
+          )}
+          <div className="qa-ref-logo">
+            <span className="qa-ref-logo-mark">Q</span>
+            <div className="qa-ref-header-eyebrow">
+              <span className="qa-ref-header-eyebrow-top">ANÁLISE CONCLUÍDA</span>
+              <span className="qa-ref-header-eyebrow-main">{contextTag}</span>
+            </div>
           </div>
         </div>
-        {showBack && (
-          <button type="button" className="qa-ref-back" onClick={onBack}>
-            <ChevronLeft size={14} /> Voltar
-          </button>
-        )}
+        <button
+          type="button"
+          className="qa-ref-round-btn"
+          onClick={onClose ?? onBack}
+          aria-label="Fechar"
+        >
+          <X size={16} />
+        </button>
       </div>
       {typeof step === "number" && (
         <div className="qa-ref-progress-top" aria-hidden>
