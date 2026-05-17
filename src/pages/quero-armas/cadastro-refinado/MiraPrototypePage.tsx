@@ -5,6 +5,7 @@
  * Tema dark/brass "Tudo Pronto" oficial (mem://style/quero-armas/cadastro-refinado-dark-brass).
  */
 import { useEffect, useRef, useState, type ReactNode, type ComponentType } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft, ArrowRight, ChevronRight, Shield, Crosshair, Briefcase, Award,
   HelpCircle, Target, FileText, AlertTriangle, CheckCircle2, Check, User, Home,
@@ -117,7 +118,7 @@ function CPrompt({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   );
 }
 
-type IconCmp = ComponentType<{ size?: number; strokeWidth?: number; color?: string }>;
+type IconCmp = LucideIcon;
 
 function COption({ title, desc, selected, isStep, badge, Icon, onClick }: { title: string; desc: string; selected?: boolean; isStep?: boolean; badge?: string; Icon?: IconCmp; onClick: () => void }) {
   return (
