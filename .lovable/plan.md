@@ -1,5 +1,11 @@
 # Plano — Etapa inicial "Já tenho conta no Arsenal" em /cadastro e /cadastro-mira
 
+## Regra canônica permanente — Arsenal Inteligente
+- Arsenal Inteligente é gratuito.
+- Arsenal Inteligente permanece acessível independentemente de pagamento, contrato ou serviço contratado.
+- Arsenal não pode ser bloqueado por pagamento, contrato ou serviço.
+- O Arsenal é hub gratuito de relacionamento e organização documental.
+
 ## Resumo
 Adicionar uma nova primeira tela ao fluxo de cadastro refinado que pergunta se o usuário já é cliente do Arsenal Inteligente. Se sim (ou "não sei"), autentica via OTP por e-mail/WhatsApp reutilizando `cliente-portal-request-otp` / `cliente-portal-verify-otp` (já existentes), carrega dados de `qa_clientes`, documentos, serviços e Arsenal, e pré-preenche o restante do fluxo. Visual dark/brass Mira preservado. Fluxo 2C, WMTi, Arsenal gratuito, contratos e webhooks **não são tocados**.
 
