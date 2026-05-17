@@ -407,6 +407,33 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     const item = state.documentos[d.key];
     const status = item?.status ?? "pendente";
     const isOptional = !d.obrigatorio_etapa02;
+    /* Reaproveitamento — só consultamos para os 3 requisitos pessoais. */
+    const isPessoal = d.key === "doc_identidade" || d.key === "doc_endereco" || d.key === "doc_selfie";
+    const reuso = isPessoal && status !== "enviado"
+      ? buscarReaproveitamento(d.key as RequisitoDoc, state.documentos_reaproveitados)
+      : null;
+    const cumpridoPorReuso = !!(reuso && reuso.status === "valido" && reuso.documento);
+    if (cumpridoPorReuso && reuso?.documento) {
+      return (
+        <div key={d.key} className="qa-ref-upload-item is-done" data-reuso="1">
+          <div className="qa-ref-upload-icon"><Check size={18} /></div>
+          <div className="qa-ref-upload-meta">
+            <div className="qa-ref-upload-name">
+              {d.label}
+              <span className="qa-ref-opt-badge" style={{ background: "#0f2f1a", color: "#86efac" }}>
+                JÁ RECEBIDO — não precisa reenviar
+              </span>
+            </div>
+            <div className="qa-ref-upload-hint">
+              <span style={{ color: "var(--qa-ref-success)" }}>
+                ✓ {reuso.documento.arquivo_nome || (reuso.documento.tipo_documento || "Documento").toUpperCase()}
+                {reuso.documento.data_validade ? ` · validade ${reuso.documento.data_validade}` : " · sem validade informada"}
+              </span>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div
         key={d.key}
