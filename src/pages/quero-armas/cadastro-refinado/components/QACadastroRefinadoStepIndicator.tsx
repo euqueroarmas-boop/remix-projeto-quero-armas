@@ -1,9 +1,9 @@
 interface Props {
-  current: number; // 1..5
+  current: number; // 0..total
   total?: number;
 }
 
-export default function QACadastroRefinadoStepIndicator({ current, total = 5 }: Props) {
+export default function QACadastroRefinadoStepIndicator({ current, total = 6 }: Props) {
   const num = String(current).padStart(2, "0");
   const tot = String(total).padStart(2, "0");
   return (

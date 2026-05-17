@@ -128,6 +128,108 @@
 
 .qa-ref-section { margin-top: 28px; }
 
+/* ========== Etapa 00 — option cards + breadcrumb ========== */
+.qa-ref-breadcrumb {
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--qa-ref-ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 18px;
+}
+.qa-ref-breadcrumb-sep {
+  margin: 0 6px;
+  color: rgba(10,10,10,0.25);
+}
+.qa-ref-opt-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+.qa-ref-opt-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  text-align: left;
+  padding: 22px 24px;
+  background: var(--qa-ref-paper);
+  border: 0.5px solid var(--qa-ref-border);
+  border-radius: var(--qa-ref-radius);
+  cursor: pointer;
+  color: var(--qa-ref-ink);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.qa-ref-opt-card:hover {
+  border-color: var(--qa-ref-ink);
+  background: rgba(10,10,10,0.015);
+}
+@media (min-width: 768px) {
+  .qa-ref-opt-card { padding: 26px 28px; }
+}
+.qa-ref-opt-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  border: 0.5px solid var(--qa-ref-border);
+  background: rgba(10,10,10,0.02);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--qa-ref-ink-soft);
+  flex-shrink: 0;
+}
+.qa-ref-opt-body { flex: 1; min-width: 0; }
+.qa-ref-opt-title {
+  font-family: var(--font-serif, "Instrument Serif", Georgia, serif);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+  color: var(--qa-ref-ink);
+  margin: 0;
+}
+.qa-ref-opt-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--qa-ref-ink-soft);
+  margin-top: 4px;
+}
+.qa-ref-opt-eyebrow {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--qa-ref-bordo);
+}
+.qa-ref-opt-chevron {
+  color: var(--qa-ref-ink-soft);
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.qa-ref-opt-card:hover .qa-ref-opt-chevron {
+  color: var(--qa-ref-ink);
+  transform: translateX(2px);
+}
+.qa-ref-opt-shortcut {
+  border-style: dashed;
+  border-color: rgba(122,31,43,0.35);
+  background: linear-gradient(180deg, rgba(122,31,43,0.04), transparent 60%);
+  margin-bottom: 18px;
+}
+.qa-ref-opt-shortcut:hover {
+  border-color: var(--qa-ref-bordo);
+  background: var(--qa-ref-bordo-soft);
+}
+.qa-ref-opt-shortcut .qa-ref-opt-icon {
+  color: var(--qa-ref-bordo);
+  border-color: rgba(122,31,43,0.25);
+  background: #fff;
+}
+.qa-ref-opt-price {
+  font-family: var(--font-serif, "Instrument Serif", Georgia, serif);
+  font-size: 16px;
+  color: var(--qa-ref-ink);
+  white-space: nowrap;
+}
+
 /* Card */
 .qa-ref-card {
   background: var(--qa-ref-paper);
