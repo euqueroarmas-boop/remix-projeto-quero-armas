@@ -30,6 +30,16 @@ function latestMigrationContaining(token: string): string {
   throw new Error(`migração com token ${token} não encontrada`);
 }
 
+function anyMigrationMatches(re: RegExp): boolean {
+  const dir = "supabase/migrations";
+  const files = readdirSync(join(ROOT, dir)).filter((f) => f.endsWith(".sql")).sort();
+  for (const f of files) {
+    const txt = readFileSync(join(ROOT, dir, f), "utf8");
+    if (re.test(txt)) return true;
+  }
+  return false;
+}
+
 describe("FASE 2C-7 — qa-liberar-servicos-contrato", () => {
   it("edge function existe e exige contract_id", () => {
     const src = r(FN);
@@ -171,13 +181,22 @@ describe("FASE 2C-7 — migração de banco", () => {
   });
 
   it("trigger qa_contracts_after_validated chama qa-liberar-servicos-contrato via pg_net", () => {
-    const sql = latestMigrationContaining("qa-liberar-servicos-contrato");
-    expect(sql).toMatch(/CREATE TRIGGER qa_contracts_after_validated/);
-    expect(sql).toMatch(/qa-liberar-servicos-contrato/);
-    expect(sql).toMatch(/x-trigger-source['"\s,:]+qa_contract_validated/);
+    // CREATE TRIGGER e CREATE OR REPLACE FUNCTION podem estar em migrations diferentes
+    // (a função é recriada em migration mais recente; o trigger permanece da migration original).
+    expect(
+      anyMigrationMatches(/CREATE OR REPLACE FUNCTION\s+public\.qa_contracts_after_validated_release/),
+    ).toBe(true);
+    expect(anyMigrationMatches(/CREATE TRIGGER\s+qa_contracts_after_validated/)).toBe(true);
+
+    const fnSql = latestMigrationContaining("qa-liberar-servicos-contrato");
+    expect(fnSql).toMatch(/qa-liberar-servicos-contrato/);
+    expect(fnSql).toMatch(/pg_net\.http_post|net\.http_post/);
+    expect(fnSql).toMatch(/x-internal-token/);
+    expect(fnSql).toMatch(/x-trigger-source['"\s,:]+qa_contract_validated/);
+    // x-trigger-source é metadado, não autorização (autorização real = x-internal-token)
     // Pré-condição financeira no trigger
-    expect(sql).toMatch(/upper\(btrim\(v_venda\.status\)\)\s*<>\s*'PAGO'/);
-    expect(sql).toMatch(/cobranca_status IS DISTINCT FROM 'confirmada'/);
+    expect(fnSql).toMatch(/upper\(btrim\(v_venda\.status\)\)\s*<>\s*'PAGO'/);
+    expect(fnSql).toMatch(/cobranca_status IS DISTINCT FROM 'confirmada'/);
   });
 });
 
