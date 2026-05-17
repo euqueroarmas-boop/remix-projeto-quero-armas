@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       supabaseAdmin
         .from("qa_documentos_cliente")
         .select(
-          "id, tipo_documento, arquivo_nome, data_validade, status, validado_admin, created_at",
+          "id, tipo_documento, arquivo_nome, data_validade, status, validado_admin, arma_numero_serie, created_at",
         )
         .eq("qa_cliente_id", qaClienteId)
         .order("created_at", { ascending: false })
