@@ -33,7 +33,8 @@ const QAProcessosPage = lazyRetry(() => import("./QAProcessosPage"), "QAProcesso
 const QACorrecoesIAPage = lazyRetry(() => import("./QACorrecoesIAPage"), "QACorrecoesIAPage");
 const QACadastroPublicoPage = lazyRetry(() => import("./QACadastroPublicoPage"), "QACadastroPublicoPage");
 const QACadastroRefinadoPage = lazyRetry(() => import("./cadastro-refinado/QACadastroRefinadoPage"), "QACadastroRefinadoPage");
-const MiraPrototypePage = lazyRetry(() => import("./cadastro-refinado/MiraPrototypePage"), "MiraPrototypePage");
+// MiraPrototypePage (sandbox visual com dados fake) NÃO é mais montado em nenhuma
+// rota pública. /cadastro-mira passa a renderizar o mesmo fluxo real de /cadastro.
 // /cadastro-v2 e sub-rotas agora redirecionam para /cadastro (Etapa 00 refinada).
 // Componentes legados permanecem no projeto para histórico, mas não são mais montados.
 const QAEnviarFotoPage = lazyRetry(() => import("./QAEnviarFotoPage"), "QAEnviarFotoPage");
@@ -112,7 +113,9 @@ export default function QARoutes() {
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="cadastro" element={<CadastroRouteSwitch />} />
-        <Route path="cadastro-mira" element={<MiraPrototypePage />} />
+        {/* /cadastro-mira agora usa o MESMO componente real de /cadastro
+            (upload, extração, revisão, checkout 2C). Visual Mira já é o padrão. */}
+        <Route path="cadastro-mira" element={<CadastroRouteSwitch />} />
         <Route path="cadastro-v2" element={<Navigate to="/cadastro" replace />} />
         <Route path="cadastro-v2/defesa-pessoal" element={<Navigate to="/cadastro?perfil_v2=defesa_pessoal" replace />} />
         <Route path="cadastro-v2/cac" element={<Navigate to="/cadastro?perfil_v2=cac" replace />} />

@@ -1,7 +1,7 @@
 /**
  * Tokens visuais do fluxo dark/brass "ANÁLISE CONCLUÍDA — TUDO PRONTO".
  * Exceção visual oficial do /cadastro e /cadastro-v2 (mem://style/quero-armas/cadastro-refinado-dark-brass).
- * Reaproveitados pelo MiraPrototypePage (sandbox /cadastro-mira) e pelas etapas reais.
+ * Reaproveitados pelas etapas reais do cadastro refinado (/cadastro e /cadastro-mira).
  */
 export const QA = {
   bgDeep: "#050505",
