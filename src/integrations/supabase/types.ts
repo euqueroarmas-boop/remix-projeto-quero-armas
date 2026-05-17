@@ -4884,6 +4884,9 @@ export type Database = {
           reprovado_por: string | null
           sistema_registro: string | null
           status: string
+          substitui_documento_id: string | null
+          substituido_em: string | null
+          substituido_por_documento_id: string | null
           tipo_documento: string
           titular_comprovante_documento: string | null
           titular_comprovante_nome: string | null
@@ -4891,6 +4894,7 @@ export type Database = {
           validado_admin: boolean
           validado_em: string | null
           validado_por: string | null
+          versao: number
         }
         Insert: {
           aprovado_em?: string | null
@@ -4927,6 +4931,9 @@ export type Database = {
           reprovado_por?: string | null
           sistema_registro?: string | null
           status?: string
+          substitui_documento_id?: string | null
+          substituido_em?: string | null
+          substituido_por_documento_id?: string | null
           tipo_documento: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
@@ -4934,6 +4941,7 @@ export type Database = {
           validado_admin?: boolean
           validado_em?: string | null
           validado_por?: string | null
+          versao?: number
         }
         Update: {
           aprovado_em?: string | null
@@ -4970,6 +4978,9 @@ export type Database = {
           reprovado_por?: string | null
           sistema_registro?: string | null
           status?: string
+          substitui_documento_id?: string | null
+          substituido_em?: string | null
+          substituido_por_documento_id?: string | null
           tipo_documento?: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
@@ -4977,6 +4988,7 @@ export type Database = {
           validado_admin?: boolean
           validado_em?: string | null
           validado_por?: string | null
+          versao?: number
         }
         Relationships: [
           {
@@ -4998,6 +5010,20 @@ export type Database = {
             columns: ["qa_cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_substitui_documento_id_fkey"
+            columns: ["substitui_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_substituido_por_documento_id_fkey"
+            columns: ["substituido_por_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_cliente"
             referencedColumns: ["id"]
           },
         ]
