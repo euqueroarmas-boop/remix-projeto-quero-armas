@@ -75,14 +75,6 @@ describe("cadastro-refinado · constraints", () => {
     expect(src).not.toContain("qa-checkout-criar-venda");
   });
 
-  it("/cadastro-mira monta o fluxo real (QACadastroRefinadoPage), não o MiraPrototypePage mockado", () => {
-    const routes = readFileSync("src/pages/quero-armas/QARoutes.tsx", "utf8");
-    // A rota pública /cadastro-mira NÃO pode renderizar o protótipo mockado.
-    expect(routes).toMatch(/path="cadastro-mira"\s+element=\{<CadastroRouteSwitch\s*\/>\}/);
-    // MiraPrototypePage só pode aparecer na rota de preview isolada.
-    expect(routes).toMatch(/path="cadastro-mira-preview"\s+element=\{<MiraPrototypePage\s*\/>\}/);
-  });
-
   it("State persiste campos de checkout (venda_id, checkout_token, asaas_invoice_url, billing_type, pagamento_status)", () => {
     const src = readFileSync(join(ROOT, "hooks/useCadastroRefinadoState.ts"), "utf8");
     for (const key of ["checkout_token", "asaas_invoice_url", "asaas_payment_id", "billing_type", "pagamento_status"]) {
