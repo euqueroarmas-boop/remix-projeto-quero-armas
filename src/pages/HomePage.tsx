@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel';
@@ -23,9 +24,42 @@ import {
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
   Store, PackageX, Wrench, Boxes, Factory, Heart, KeyRound, Phone, UserCheck,
   GraduationCap, BookOpen, Coffee, Users, MapPin, Calendar, Award,
+  ClipboardList, FileSearch, FolderCheck, MonitorSmartphone, LogIn, Sparkles,
 } from 'lucide-react';
 
 const PORTAL_PATH = '/area-do-cliente/login';
+const CADASTRO_HERO = '/cadastro?origem=home_hero';
+const CADASTRO_COMO_FUNCIONA = '/cadastro?origem=home_como_funciona';
+const CADASTRO_CLIENTE_EXISTENTE = '/cadastro?origem=home_cliente_existente';
+const CADASTRO_STICKY = '/cadastro?origem=home_sticky';
+
+const HomeStickyCTA = () => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return (
+    <div
+      className={`fixed inset-x-0 bottom-0 z-40 border-t border-primary/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:hidden transition-transform duration-300 ${
+        visible ? 'translate-y-0' : 'translate-y-full'
+      }`}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      aria-hidden={!visible}
+    >
+      <div className="flex items-stretch gap-2 px-3 py-2">
+        <Button asChild size="sm" className="flex-1 font-heading uppercase tracking-[0.08em]">
+          <Link to={CADASTRO_STICKY}>Começar análise</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline" className="flex-1 font-heading uppercase tracking-[0.08em]">
+          <Link to={PORTAL_PATH}>Acessar Arsenal</Link>
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 const pillars = [
   { icon: Swords, kicker: 'Pilar 01 · Armamento', title: 'Arma curta ou longa. A que vai salvar a sua família.', desc: 'Pistola pra andar com você. Espingarda pra dormir tranquilo. Revólver que nunca falha. Não é coleção. Não é hobby. É a ferramenta que decide se sua mulher vai dormir viúva ou se seus filhos vão crescer com pai. Te orientamos na escolha certa pro seu perfil, sua casa e a ameaça real do seu CEP.' },
