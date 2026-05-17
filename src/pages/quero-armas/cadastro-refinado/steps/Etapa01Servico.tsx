@@ -17,6 +17,7 @@ interface Props {
   state: CadastroRefinadoState;
   update: (patch: Partial<CadastroRefinadoState>) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
 const FALLBACK_BULLETS = [
@@ -25,7 +26,7 @@ const FALLBACK_BULLETS = [
   "Suporte jurídico durante todo o processo",
 ];
 
-export default function Etapa01Servico({ state, update, onNext }: Props) {
+export default function Etapa01Servico({ state, update, onNext, onBack }: Props) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [servico, setServico] = useState<ServicoCatalogo | null>(null);
@@ -66,7 +67,7 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  // Sem serviço selecionado
+  // Sem serviço selecionado — volta para Etapa 00 (escolha guiada)
   if (!slug) {
     return (
       <QACadastroRefinadoShell
@@ -74,9 +75,9 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
         eyebrow="CADASTRO · ESCOLHA O SERVIÇO"
         title="Volte e selecione um serviço"
         subtitle="Para continuar, escolha o serviço desejado no nosso assistente guiado."
-        onBack={() => navigate(-1)}
+        onBack={onBack}
       >
-        <button className="qa-ref-btn qa-ref-btn-primary" onClick={() => navigate("/cadastro-v2")}>
+        <button className="qa-ref-btn qa-ref-btn-primary" onClick={onBack}>
           Ir para o assistente
         </button>
       </QACadastroRefinadoShell>
@@ -92,7 +93,7 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
       eyebrow={eyebrow}
       title="Confirme seu serviço"
       subtitle="Revise os detalhes do serviço escolhido. Você pode trocar a qualquer momento."
-      onBack={() => navigate("/cadastro-v2")}
+      onBack={onBack}
     >
       {loading ? (
         <QACadastroRefinadoCard><div className="qa-ref-empty">Carregando serviço…</div></QACadastroRefinadoCard>
@@ -134,7 +135,7 @@ export default function Etapa01Servico({ state, update, onNext }: Props) {
               className="qa-ref-btn-link"
               type="button"
               style={{ display: "block", textAlign: "center" }}
-              onClick={() => navigate("/cadastro-v2")}
+              onClick={onBack}
             >
               Não é esse serviço? Voltar e escolher outro
             </button>
