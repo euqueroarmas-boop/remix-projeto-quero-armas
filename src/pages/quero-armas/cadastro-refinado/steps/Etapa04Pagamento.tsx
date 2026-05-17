@@ -54,6 +54,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   const pollRef = useRef<number | null>(null);
   const pollStartRef = useRef<number>(0);
   const barcodeRef = useRef<SVGSVGElement | null>(null);
+  /* Mantém referência sempre fresca de state.resultado para o closure do polling
+   * — evita sobrescrever checkout_token/asaas_invoice_url/etc com versão stale
+   * no momento em que o webhook confirma o pagamento. */
+  const resultadoRef = useRef(state.resultado);
+  useEffect(() => {
+    resultadoRef.current = state.resultado;
+  }, [state.resultado]);
 
   useEffect(() => {
     if (!state.servicoSlug) return;
@@ -117,7 +124,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
            * são derivadas separadamente pela Etapa05 via polling do mesmo endpoint. */
           update({
             resultado: {
-              ...(state.resultado || {}),
+              ...(resultadoRef.current || {}),
               pagamento_status: "pagamento_confirmado",
             },
           });
