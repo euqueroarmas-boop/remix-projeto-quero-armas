@@ -871,6 +871,61 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* 11.5 · COMO FUNCIONA + JÁ É CLIENTE */}
+      <section id="como-funciona-mira" className={`${sectionCls} border-t border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+        <div className={containerCls}>
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary/10 px-3 py-1.5">
+              <Sparkles className="size-3.5 text-primary" />
+              <span className="font-heading text-xs font-semibold uppercase tracking-[0.2em] text-primary">Como funciona</span>
+            </div>
+            <h2 className="mt-4 font-heading text-3xl font-bold uppercase leading-tight tracking-tight sm:text-4xl">Cadastro guiado em 4 passos</h2>
+            <p className="mt-3 text-base text-muted-foreground sm:text-lg">Rápido, sem burocracia e com seus dados protegidos no Arsenal Inteligente.</p>
+          </div>
+          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: ClipboardList, n: '01', title: 'Responda algumas perguntas', desc: 'Conta pra gente seu perfil e objetivo: defesa, CAC, profissional ou curso.' },
+              { icon: FileSearch, n: '02', title: 'Envie ou reaproveite documentos', desc: 'Se já tem conta no Arsenal, reaproveitamos o que já foi enviado.' },
+              { icon: FolderCheck, n: '03', title: 'Revise os dados organizados', desc: 'Conferimos junto com você antes de seguir para qualquer protocolo.' },
+              { icon: MonitorSmartphone, n: '04', title: 'Acompanhe pelo Arsenal Inteligente', desc: 'Tudo num só lugar — gratuito, sempre acessível.' },
+            ].map(({ icon: Icon, n, title, desc }) => (
+              <article key={n} className="relative flex flex-col gap-3 rounded-sm border border-border bg-card p-5 sm:p-6">
+                <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-tactical" />
+                <div className="flex items-center justify-between">
+                  <span className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Passo {n}</span>
+                  <Icon className="size-5 text-primary" />
+                </div>
+                <h3 className="font-heading text-base font-bold uppercase leading-tight">{title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
+            <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
+              <Link to={CADASTRO_COMO_FUNCIONA}>Iniciar cadastro guiado <ArrowRight className="ml-2 size-5" /></Link>
+            </Button>
+          </div>
+
+          <div className="mx-auto mt-14 max-w-4xl rounded-sm border border-primary/40 bg-card p-6 shadow-deep sm:p-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Já é cliente?</div>
+                <h3 className="mt-2 font-heading text-xl font-bold uppercase leading-tight sm:text-2xl">Já tem conta no Arsenal Inteligente?</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">Entre para reaproveitar seus dados e documentos já enviados.</p>
+              </div>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:gap-3">
+                <Button asChild size="lg" variant="outline" className="font-heading uppercase tracking-[0.08em]">
+                  <Link to={PORTAL_PATH}><LogIn className="mr-2 size-4" />Acessar Arsenal</Link>
+                </Button>
+                <Button asChild size="lg" className="font-heading uppercase tracking-[0.08em]">
+                  <Link to={CADASTRO_CLIENTE_EXISTENTE}>Reaproveitar meus dados</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 12 · CTA FINAL */}
       <section className={`${sectionCls} py-16 sm:py-24`}>
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.18),transparent_70%)]" />
@@ -904,6 +959,7 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      <HomeStickyCTA />
     </SiteShell>
   );
 };
