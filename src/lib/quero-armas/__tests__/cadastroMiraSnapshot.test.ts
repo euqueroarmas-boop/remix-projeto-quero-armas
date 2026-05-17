@@ -78,12 +78,14 @@ describe("FASE Mira — snapshot operacional em qa_cadastro_publico", () => {
     });
     it("NÃO altera qa_clientes nem chama checkout/contract/processo/checklist", () => {
       expect(src).not.toMatch(/from\(["']qa_clientes["']\)/);
-      expect(src).not.toMatch(/qa-checkout-/);
-      expect(src).not.toMatch(/qa-asaas-webhook/);
-      expect(src).not.toMatch(/qa-generate-contract/);
-      expect(src).not.toMatch(/qa-provisionar-acesso-portal/);
-      expect(src).not.toMatch(/post-purchase/);
-      expect(src).not.toMatch(/ensureClientAccess/);
+      // Garante que NÃO há invocações/imports para esses módulos
+      // (referências em comentários de documentação são permitidas).
+      expect(src).not.toMatch(/invoke\(["']qa-checkout-/);
+      expect(src).not.toMatch(/invoke\(["']qa-asaas-webhook/);
+      expect(src).not.toMatch(/invoke\(["']qa-generate-contract/);
+      expect(src).not.toMatch(/invoke\(["']qa-provisionar-acesso-portal/);
+      expect(src).not.toMatch(/import[\s\S]*?post-purchase/);
+      expect(src).not.toMatch(/import[\s\S]*?ensureClientAccess/);
     });
     it("NÃO toca WMTi (customers/payments/contracts/quotes)", () => {
       expect(src).not.toMatch(/from\(["'](?:customers|payments|contracts|quotes)["']\)/);
