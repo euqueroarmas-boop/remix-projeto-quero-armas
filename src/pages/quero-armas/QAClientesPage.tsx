@@ -900,7 +900,26 @@ interface CadastroPublico {
   selfie_path?: string | null;
   documento_identidade_path?: string | null;
   comprovante_endereco_path?: string | null;
+  cliente_id_vinculado?: number | null;
   created_at: string;
+}
+
+const CADASTRO_MIRA_PENDENTE_STATUSES = new Set([
+  "pendente",
+  "em_preenchimento",
+  "documentos_enviados",
+  "revisao_cliente",
+  "aguardando_pagamento",
+]);
+const CADASTRO_PUBLICO_APROVADO_STATUSES = new Set(["aprovado", "conferido", "validado", "formulario_conferido", "concluido"]);
+
+function cadastroPublicoStatusLabel(status: string | null | undefined): string {
+  const s = String(status || "").toLowerCase();
+  if (s === "em_preenchimento" || s === "documentos_enviados" || s === "revisao_cliente") return "PENDENTE";
+  if (s === "aguardando_pagamento") return "PENDENTE / AGUARDANDO PAGAMENTO";
+  if (s === "concluido") return "CONCLUÍDO";
+  if (s === "abandonado") return "ABANDONADO";
+  return String(status || "pendente").toUpperCase();
 }
 
 const normalizeDigits = (value: string | null | undefined) => (value ?? "").replace(/\D/g, "");
@@ -1666,7 +1685,7 @@ export default function QAClientesPage() {
 
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
-      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro")
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro, documento_identidade_path, comprovante_endereco_path, selfie_path, cliente_id_vinculado")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
