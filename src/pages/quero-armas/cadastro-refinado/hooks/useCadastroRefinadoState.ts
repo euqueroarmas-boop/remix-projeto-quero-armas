@@ -30,6 +30,24 @@ export interface CadastroRefinadoState {
     solicitacao_id?: string;
     numero_processo?: string;
     pagamento_url?: string;
+    /* Campos de checkout 2C — persistidos pela Etapa04 para a Etapa05 derivar status real. */
+    checkout_token?: string;
+    asaas_invoice_url?: string;
+    asaas_payment_id?: string;
+    billing_type?: "PIX" | "BOLETO" | "CREDIT_CARD";
+    /* Status real derivado de qa-checkout-status (webhook Asaas).
+     * - "aguardando_pagamento": cobrança criada, sem confirmação do webhook
+     * - "pagamento_confirmado": webhook Asaas confirmou
+     * - "contrato_gerado" | "acesso_enviado" | "servico_aguardando_contrato" | "servico_liberado"
+     *   são atualizados conforme jobs pós-pagamento informam.
+     * NUNCA gravar "pagamento_confirmado" sem retorno real de qa-checkout-status. */
+    pagamento_status?:
+      | "aguardando_pagamento"
+      | "pagamento_confirmado"
+      | "contrato_gerado"
+      | "acesso_enviado"
+      | "servico_aguardando_contrato"
+      | "servico_liberado";
   } | null;
 }
 
