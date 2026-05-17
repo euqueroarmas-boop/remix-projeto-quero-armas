@@ -26,6 +26,25 @@ export interface MiraSnapshotExtras {
   contexto?: Record<string, unknown> | null;
 }
 
+async function registrarFalhaSnapshot(
+  status: MiraSnapshotStatus,
+  motivo: string,
+  detalhe: Record<string, unknown> = {},
+) {
+  try {
+    await supabase.functions.invoke("register-log", {
+      body: {
+        tipo: "cadastro_mira_snapshot",
+        status: "erro",
+        mensagem: `[cadastro-mira-snapshot] ${motivo}`,
+        payload: { etapa_status: status, ...detalhe },
+      },
+    });
+  } catch (logErr) {
+    console.warn("[cadastro-mira-snapshot] falha ao registrar auditoria:", (logErr as Error)?.message || logErr);
+  }
+}
+
 function pathOrNull(state: CadastroRefinadoState, key: string): string | null {
   const it = state.documentos?.[key];
   if (!it) return null;
@@ -44,7 +63,18 @@ export async function enviarSnapshotCadastroMira(
 ): Promise<{ ok: boolean; snapshot_id?: string | null }> {
   const d = state.dadosPessoais;
   if (!d?.nome_completo || !d?.cpf || !d?.email || !d?.telefone) {
-    // Sem dados mínimos não há snapshot útil — não enviar.
+    const missing = [
+      !d?.nome_completo ? "nome_completo" : null,
+      !d?.cpf ? "cpf" : null,
+      !d?.email ? "email" : null,
+      !d?.telefone ? "telefone" : null,
+    ].filter(Boolean);
+    console.warn("[cadastro-mira-snapshot] não enviado: dados mínimos ausentes", { status, missing });
+    void registrarFalhaSnapshot(status, "dados_minimos_ausentes", {
+      missing,
+      origem_ui: state.origem || null,
+      servico_slug: state.servicoSlug || null,
+    });
     return { ok: false };
   }
   const payload = {
@@ -81,11 +111,21 @@ export async function enviarSnapshotCadastroMira(
     );
     if (error) {
       console.warn("[cadastro-mira-snapshot] falhou (ignorado):", error?.message || error);
+      void registrarFalhaSnapshot(status, "edge_error", {
+        error: error?.message || String(error),
+        origem_ui: state.origem || null,
+        servico_slug: state.servicoSlug || null,
+      });
       return { ok: false };
     }
     return { ok: true, snapshot_id: (data as any)?.snapshot_id ?? null };
   } catch (e: any) {
     console.warn("[cadastro-mira-snapshot] exceção (ignorado):", e?.message || e);
+    void registrarFalhaSnapshot(status, "client_exception", {
+      error: e?.message || String(e),
+      origem_ui: state.origem || null,
+      servico_slug: state.servicoSlug || null,
+    });
     return { ok: false };
   }
 }
