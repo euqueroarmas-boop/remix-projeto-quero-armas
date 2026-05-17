@@ -413,13 +413,14 @@ function T7({ flow }: { flow: Flow }) {
           <div style={{ fontFamily: F.tactical, fontSize: 10, color: QA.textMute, letterSpacing: "0.14em", marginBottom: 10, textTransform: "uppercase" }}>Toque no card acima ou nos itens abaixo</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {([
-              { key: "identity" as const, Icon: IdCard, label: "Documento com CPF", sub: "RG, CNH ou CIN" },
-              { key: "address" as const, Icon: Home, label: "Comprovante de endereço", sub: "Luz, água ou internet" },
-              { key: "selfie" as const, Icon: Camera, label: "Selfie com o documento", sub: "Foto sua com o doc" },
+              { key: "identity" as const, Icon: IdCard, label: "Documento com CPF", sub: "RG, CNH ou CIN", cap: "environment" as const, acc: "image/*,application/pdf,.pdf" },
+              { key: "address" as const, Icon: Home, label: "Comprovante de endereço", sub: "Luz, água ou internet", cap: "environment" as const, acc: "image/*,application/pdf,.pdf" },
+              { key: "selfie" as const, Icon: Camera, label: "Selfie com o documento", sub: "Foto sua com o doc", cap: "user" as const, acc: "image/*" },
             ]).map((c) => {
               const done = docs[c.key];
+              const inputId = `mira-doc-${c.key}`;
               return (
-                <button key={c.key} onClick={() => toggle(c.key)} style={{ width: "100%", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, padding: "10px 10px", borderRadius: 8, marginLeft: -10, background: "transparent", border: "none", color: QA.text, fontFamily: F.sans }}>
+                <label key={c.key} htmlFor={inputId} style={{ width: "100%", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, padding: "10px 10px", borderRadius: 8, marginLeft: -10, background: "transparent", color: QA.text, fontFamily: F.sans, position: "relative" }}>
                   <div style={{ width: 22, height: 22, borderRadius: 11, background: done ? QA.brass : "transparent", border: done ? "none" : `1.5px solid ${QA.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
                     {done && <Check size={12} strokeWidth={3} color={QA.bgDeep} />}
                   </div>
@@ -429,7 +430,8 @@ function T7({ flow }: { flow: Flow }) {
                     <div style={{ fontSize: 11, color: QA.textMute, marginTop: 2 }}>{c.sub}</div>
                   </div>
                   {done && <div style={{ fontFamily: F.tactical, fontSize: 9, color: QA.brass, letterSpacing: "0.1em", textTransform: "uppercase" }}>Recebido</div>}
-                </button>
+                  <input id={inputId} type="file" accept={c.acc} capture={c.cap} style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; accept(c.key, f); }} />
+                </label>
               );
             })}
           </div>
