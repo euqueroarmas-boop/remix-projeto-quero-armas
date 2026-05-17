@@ -185,7 +185,7 @@ export default function Etapa00Identificacao({
       showBack={Boolean(onBack)}
     >
       {phase === "escolha" && (
-        <div className="qa-ref-opt-stack">
+        <div className="qa-ref-opt-list">
           {[
             {
               key: "ja_tem",
