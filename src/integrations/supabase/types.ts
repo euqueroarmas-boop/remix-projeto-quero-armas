@@ -8205,12 +8205,15 @@ export type Database = {
           data_protocolo: string | null
           data_ultima_atualizacao: string | null
           desconto: number | null
+          encargos_fracao: number | null
+          encargos_reais: number | null
           forma_pagamento: string | null
           id: number
           id_legado: number
           motivo_correcao: string | null
           numero_processo: string | null
           origem_proposta: string | null
+          parcelas_cobranca: number | null
           solicitacao_id: string | null
           status: string
           status_validacao_valor: string | null
@@ -8218,6 +8221,7 @@ export type Database = {
           valor_a_pagar: number | null
           valor_aberto: number
           valor_aprovado: number | null
+          valor_cobrado: number | null
           valor_informado_cliente: number | null
         }
         Insert: {
@@ -8243,12 +8247,15 @@ export type Database = {
           data_protocolo?: string | null
           data_ultima_atualizacao?: string | null
           desconto?: number | null
+          encargos_fracao?: number | null
+          encargos_reais?: number | null
           forma_pagamento?: string | null
           id?: number
           id_legado?: number
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
+          parcelas_cobranca?: number | null
           solicitacao_id?: string | null
           status?: string
           status_validacao_valor?: string | null
@@ -8256,6 +8263,7 @@ export type Database = {
           valor_a_pagar?: number | null
           valor_aberto?: number
           valor_aprovado?: number | null
+          valor_cobrado?: number | null
           valor_informado_cliente?: number | null
         }
         Update: {
@@ -8281,12 +8289,15 @@ export type Database = {
           data_protocolo?: string | null
           data_ultima_atualizacao?: string | null
           desconto?: number | null
+          encargos_fracao?: number | null
+          encargos_reais?: number | null
           forma_pagamento?: string | null
           id?: number
           id_legado?: number
           motivo_correcao?: string | null
           numero_processo?: string | null
           origem_proposta?: string | null
+          parcelas_cobranca?: number | null
           solicitacao_id?: string | null
           status?: string
           status_validacao_valor?: string | null
@@ -8294,6 +8305,7 @@ export type Database = {
           valor_a_pagar?: number | null
           valor_aberto?: number
           valor_aprovado?: number | null
+          valor_cobrado?: number | null
           valor_informado_cliente?: number | null
         }
         Relationships: [
