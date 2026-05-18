@@ -11,6 +11,38 @@ import {
 } from "@/lib/quero-armas/documentosReaproveitamento";
 import { computeDocCardState } from "@/lib/quero-armas/docCardState";
 
+/**
+ * Mapa: docKey da Etapa02 → conjunto de `tipo_documento` do Arsenal que
+ * satisfazem aquele requisito. Tipos não mapeados aqui (CRAF, SINARM, GTE,
+ * GT, AC, etc.) NÃO aparecem na Etapa02 porque são documentos históricos
+ * gerados por processos anteriores — ficam visíveis no Arsenal do cliente.
+ */
+const DOC_TIPOS_RELEVANTES_ETAPA02: Record<string, string[]> = {
+  doc_identidade: ["RG", "CNH", "CIN", "IDENTIDADE", "DOC_IDENTIDADE", "DOCUMENTO_IDENTIDADE"],
+  doc_endereco: ["COMPROVANTE_RESIDENCIA", "COMP_RESIDENCIA", "COMP_RES", "ENDERECO", "DOC_ENDERECO"],
+  doc_cpf: ["CPF"],
+  doc_cr: ["CR", "CERTIFICADO_REGISTRO"],
+  doc_clube: ["FILIACAO_CLUBE", "COMPROVANTE_CLUBE", "CLUBE"],
+  doc_psicologico: ["LAUDO_PSICOLOGICO", "PSICOLOGICO"],
+  doc_capacitacao: ["CERTIFICADO_CAPACITACAO", "CAPACITACAO_TECNICA", "CAPACITACAO"],
+};
+
+const TIPOS_RELEVANTES_FLAT = new Set(
+  Object.values(DOC_TIPOS_RELEVANTES_ETAPA02).flat().map((s) => s.toUpperCase()),
+);
+
+function arsenalDocMatchesKey(d: { tipo_documento: string }, key: string): boolean {
+  const tipos = DOC_TIPOS_RELEVANTES_ETAPA02[key];
+  if (!tipos) return false;
+  return tipos.includes(String(d.tipo_documento || "").toUpperCase());
+}
+
+function filtrarRelevantesEtapa02<T extends { tipo_documento: string }>(docs: T[] | undefined | null): T[] {
+  return (docs || []).filter((d) =>
+    TIPOS_RELEVANTES_FLAT.has(String(d.tipo_documento || "").toUpperCase()),
+  );
+}
+
 interface Props {
   state: CadastroRefinadoState;
   update: (patch: Partial<CadastroRefinadoState>) => void;
