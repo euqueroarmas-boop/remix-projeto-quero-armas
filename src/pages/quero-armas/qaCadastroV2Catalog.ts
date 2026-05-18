@@ -122,9 +122,23 @@ export const QA_V2_PATH_DEFESA_PESSOAL: QAV2PathDefinition = {
       {
         kind: "service",
         titulo: "Quero minha primeira arma",
-        descricao: "Nunca tive registro de arma",
-        servicoSlug: "posse-de-arma-de-fogo",
+        descricao: "Aquisição + posse + registro SINARM. GT de brinde para retirar da loja",
+        servicoSlug: "aquisicao-registro-posse-de-arma-de-fogo",
         subperfilV2: "primeira_aquisicao",
+      },
+      {
+        kind: "service",
+        titulo: "Quero minha segunda arma",
+        descricao: "Defesa pessoal permite até 2 armas. GT de brinde para retirar da loja",
+        servicoSlug: "aquisicao-registro-posse-de-arma-de-fogo",
+        subperfilV2: "segunda_aquisicao",
+      },
+      {
+        kind: "service",
+        titulo: "Já tenho autorização — quero registrar e retirar",
+        descricao: "Registro SINARM + GT para sair da loja com a arma",
+        servicoSlug: "registro-de-arma-de-fogo",
+        subperfilV2: "registro_pos_autorizacao",
       },
       {
         kind: "service",
