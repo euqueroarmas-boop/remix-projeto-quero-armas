@@ -11,6 +11,38 @@ import {
 } from "@/lib/quero-armas/documentosReaproveitamento";
 import { computeDocCardState } from "@/lib/quero-armas/docCardState";
 
+/**
+ * Mapa: docKey da Etapa02 → conjunto de `tipo_documento` do Arsenal que
+ * satisfazem aquele requisito. Tipos não mapeados aqui (CRAF, SINARM, GTE,
+ * GT, AC, etc.) NÃO aparecem na Etapa02 porque são documentos históricos
+ * gerados por processos anteriores — ficam visíveis no Arsenal do cliente.
+ */
+const DOC_TIPOS_RELEVANTES_ETAPA02: Record<string, string[]> = {
+  doc_identidade: ["RG", "CNH", "CIN", "IDENTIDADE", "DOC_IDENTIDADE", "DOCUMENTO_IDENTIDADE"],
+  doc_endereco: ["COMPROVANTE_RESIDENCIA", "COMP_RESIDENCIA", "COMP_RES", "ENDERECO", "DOC_ENDERECO"],
+  doc_cpf: ["CPF"],
+  doc_cr: ["CR", "CERTIFICADO_REGISTRO"],
+  doc_clube: ["FILIACAO_CLUBE", "COMPROVANTE_CLUBE", "CLUBE"],
+  doc_psicologico: ["LAUDO_PSICOLOGICO", "PSICOLOGICO"],
+  doc_capacitacao: ["CERTIFICADO_CAPACITACAO", "CAPACITACAO_TECNICA", "CAPACITACAO"],
+};
+
+const TIPOS_RELEVANTES_FLAT = new Set(
+  Object.values(DOC_TIPOS_RELEVANTES_ETAPA02).flat().map((s) => s.toUpperCase()),
+);
+
+function arsenalDocMatchesKey(d: { tipo_documento: string }, key: string): boolean {
+  const tipos = DOC_TIPOS_RELEVANTES_ETAPA02[key];
+  if (!tipos) return false;
+  return tipos.includes(String(d.tipo_documento || "").toUpperCase());
+}
+
+function filtrarRelevantesEtapa02<T extends { tipo_documento: string }>(docs: T[] | undefined | null): T[] {
+  return (docs || []).filter((d) =>
+    TIPOS_RELEVANTES_FLAT.has(String(d.tipo_documento || "").toUpperCase()),
+  );
+}
+
 interface Props {
   state: CadastroRefinadoState;
   update: (patch: Partial<CadastroRefinadoState>) => void;
@@ -163,6 +195,12 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
   const opcionais = docs.filter((d) => !d.obrigatorio_etapa02);
+  /** Docs do Arsenal já reaproveitados que cobrem requisitos desta etapa
+   *  por tipo_documento — usado para esconder o card de upload correspondente. */
+  const reapRelevantesObrig = filtrarRelevantesEtapa02(state.documentos_reaproveitados);
+  function coberturaPorReaproveitamento(key: string): boolean {
+    return reapRelevantesObrig.some((arsenal) => arsenalDocMatchesKey(arsenal, key));
+  }
   /**
    * REGRA CRÍTICA — cliente logado/autenticado com documento pessoal válido
    * NÃO precisa reenviar. Um requisito é considerado cumprido quando:
@@ -172,6 +210,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
    */
   function requisitoCumprido(key: string): boolean {
     if (state.documentos[key]?.status === "enviado") return true;
+    if (coberturaPorReaproveitamento(key)) return true;
     if (key === "doc_identidade" || key === "doc_endereco" || key === "doc_selfie") {
       return requisitoCumpridoPorReaproveitamento(
         key as RequisitoDoc,
@@ -180,6 +219,10 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     }
     return false;
   }
+  /** Lista de obrigatórios efetivamente renderizados como upload — exclui
+   *  os que já estão cobertos por documento válido reaproveitado. */
+  const obrigatoriosVisiveis = obrigatorios.filter((d) => !coberturaPorReaproveitamento(d.key));
+  const opcionaisVisiveis = opcionais.filter((d) => !coberturaPorReaproveitamento(d.key));
   const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
   const podeAvancar = obrigatoriosPendentes.length === 0;
 
@@ -346,37 +389,44 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       </div>
 
       {state.modo_cliente === "autenticado" && (
-        <>
-          {state.documentos_reaproveitados && state.documentos_reaproveitados.length > 0 && (
-            <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
-              <span className="qa-ref-found-title">DOCUMENTOS QUE JÁ TEMOS</span>
-              {state.documentos_reaproveitados.slice(0, 8).map((d) => renderArsenalDoc(d))}
-            </div>
-          )}
-          {state.documentos_vencidos && state.documentos_vencidos.length > 0 && (
-            <div className="qa-ref-found-card qa-ref-found-warn" style={{ marginBottom: 12 }}>
-              <span className="qa-ref-found-title">DOCUMENTOS QUE PRECISAM ATUALIZAR</span>
-              {state.documentos_vencidos.slice(0, 8).map((d) => renderArsenalDoc(d, "vencido"))}
-            </div>
-          )}
-          {state.documentos_pendentes_revisao && state.documentos_pendentes_revisao.length > 0 && (
-            <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
-              <span className="qa-ref-found-title">EM ANÁLISE PELA EQUIPE QUERO ARMAS</span>
-              {state.documentos_pendentes_revisao.slice(0, 8).map((d) => renderArsenalDoc(d, "em_analise"))}
-            </div>
-          )}
-        </>
+        (() => {
+          const reapRel = filtrarRelevantesEtapa02(state.documentos_reaproveitados);
+          const vencRel = filtrarRelevantesEtapa02(state.documentos_vencidos);
+          const revRel = filtrarRelevantesEtapa02(state.documentos_pendentes_revisao);
+          return (
+            <>
+              {reapRel.length > 0 && (
+                <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+                  <span className="qa-ref-found-title">DOCUMENTOS QUE JÁ TEMOS</span>
+                  {reapRel.slice(0, 8).map((d) => renderArsenalDoc(d))}
+                </div>
+              )}
+              {vencRel.length > 0 && (
+                <div className="qa-ref-found-card qa-ref-found-warn" style={{ marginBottom: 12 }}>
+                  <span className="qa-ref-found-title">DOCUMENTOS QUE PRECISAM ATUALIZAR</span>
+                  {vencRel.slice(0, 8).map((d) => renderArsenalDoc(d, "vencido"))}
+                </div>
+              )}
+              {revRel.length > 0 && (
+                <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+                  <span className="qa-ref-found-title">EM ANÁLISE PELA EQUIPE QUERO ARMAS</span>
+                  {revRel.slice(0, 8).map((d) => renderArsenalDoc(d, "em_analise"))}
+                </div>
+              )}
+            </>
+          );
+        })()
       )}
 
       <div className="qa-ref-upload-list">
-        {obrigatorios.map((d) => renderDoc(d))}
+        {obrigatoriosVisiveis.map((d) => renderDoc(d))}
       </div>
 
-      {opcionais.length > 0 && (
+      {opcionaisVisiveis.length > 0 && (
         <>
           <div className="qa-ref-docs-sep">Outros documentos <span>(opcional agora)</span></div>
           <div className="qa-ref-upload-list">
-            {opcionais.map((d) => renderDoc(d))}
+            {opcionaisVisiveis.map((d) => renderDoc(d))}
           </div>
         </>
       )}
@@ -423,6 +473,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     const item = state.documentos[d.key];
     const status = item?.status ?? "pendente";
     const isOptional = !d.obrigatorio_etapa02;
+    const vencidoMatch = (state.documentos_vencidos || []).find((v) => arsenalDocMatchesKey(v, d.key));
     /* Reaproveitamento — só consultamos para os 3 requisitos pessoais. */
     const isPessoal = d.key === "doc_identidade" || d.key === "doc_endereco" || d.key === "doc_selfie";
     const reuso = isPessoal && status !== "enviado"
@@ -491,6 +542,11 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
             : <Upload size={16} />}
         </div>
         <div className="qa-ref-upload-meta">
+          {vencidoMatch && status !== "enviado" && (
+            <div className="qa-ref-upload-warn" style={{ fontSize: 12, color: "var(--qa-ref-accent, #d97706)", marginBottom: 6 }}>
+              ⚠ Seu {d.shortName || d.label} venceu{vencidoMatch.data_validade ? ` em ${vencidoMatch.data_validade}` : ""}. Envie um novo.
+            </div>
+          )}
           <div className="qa-ref-upload-name">
             {d.label}
             {status === "enviado" && card.badge && (
