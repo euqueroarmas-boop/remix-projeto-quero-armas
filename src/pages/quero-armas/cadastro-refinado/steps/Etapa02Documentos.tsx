@@ -389,37 +389,44 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       </div>
 
       {state.modo_cliente === "autenticado" && (
-        <>
-          {state.documentos_reaproveitados && state.documentos_reaproveitados.length > 0 && (
-            <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
-              <span className="qa-ref-found-title">DOCUMENTOS QUE JÁ TEMOS</span>
-              {state.documentos_reaproveitados.slice(0, 8).map((d) => renderArsenalDoc(d))}
-            </div>
-          )}
-          {state.documentos_vencidos && state.documentos_vencidos.length > 0 && (
-            <div className="qa-ref-found-card qa-ref-found-warn" style={{ marginBottom: 12 }}>
-              <span className="qa-ref-found-title">DOCUMENTOS QUE PRECISAM ATUALIZAR</span>
-              {state.documentos_vencidos.slice(0, 8).map((d) => renderArsenalDoc(d, "vencido"))}
-            </div>
-          )}
-          {state.documentos_pendentes_revisao && state.documentos_pendentes_revisao.length > 0 && (
-            <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
-              <span className="qa-ref-found-title">EM ANÁLISE PELA EQUIPE QUERO ARMAS</span>
-              {state.documentos_pendentes_revisao.slice(0, 8).map((d) => renderArsenalDoc(d, "em_analise"))}
-            </div>
-          )}
-        </>
+        (() => {
+          const reapRel = filtrarRelevantesEtapa02(state.documentos_reaproveitados);
+          const vencRel = filtrarRelevantesEtapa02(state.documentos_vencidos);
+          const revRel = filtrarRelevantesEtapa02(state.documentos_pendentes_revisao);
+          return (
+            <>
+              {reapRel.length > 0 && (
+                <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+                  <span className="qa-ref-found-title">DOCUMENTOS QUE JÁ TEMOS</span>
+                  {reapRel.slice(0, 8).map((d) => renderArsenalDoc(d))}
+                </div>
+              )}
+              {vencRel.length > 0 && (
+                <div className="qa-ref-found-card qa-ref-found-warn" style={{ marginBottom: 12 }}>
+                  <span className="qa-ref-found-title">DOCUMENTOS QUE PRECISAM ATUALIZAR</span>
+                  {vencRel.slice(0, 8).map((d) => renderArsenalDoc(d, "vencido"))}
+                </div>
+              )}
+              {revRel.length > 0 && (
+                <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+                  <span className="qa-ref-found-title">EM ANÁLISE PELA EQUIPE QUERO ARMAS</span>
+                  {revRel.slice(0, 8).map((d) => renderArsenalDoc(d, "em_analise"))}
+                </div>
+              )}
+            </>
+          );
+        })()
       )}
 
       <div className="qa-ref-upload-list">
-        {obrigatorios.map((d) => renderDoc(d))}
+        {obrigatoriosVisiveis.map((d) => renderDoc(d))}
       </div>
 
-      {opcionais.length > 0 && (
+      {opcionaisVisiveis.length > 0 && (
         <>
           <div className="qa-ref-docs-sep">Outros documentos <span>(opcional agora)</span></div>
           <div className="qa-ref-upload-list">
-            {opcionais.map((d) => renderDoc(d))}
+            {opcionaisVisiveis.map((d) => renderDoc(d))}
           </div>
         </>
       )}
