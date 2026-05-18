@@ -388,8 +388,23 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
           onClick={async () => {
             // Snapshot operacional para a Equipe Quero Armas — não bloqueia o fluxo.
             try {
+              const extracaoInfo: Record<string, unknown> = {};
+              (["doc_identidade", "doc_endereco"] as const).forEach((k) => {
+                if (state.documentos[k]?.status === "enviado") {
+                  extracaoInfo[k] = extractedFlags[k]
+                    ? "extraido"
+                    : extractFailedFlags[k]
+                      ? "revisao_manual"
+                      : "pendente";
+                }
+              });
               const r = await enviarSnapshotCadastroMira(state, "documentos_enviados", {
                 snapshot_id: state.cadastro_mira_snapshot_id,
+                contexto: {
+                  origem_ui: state.origem || null,
+                  etapa: "documentos",
+                  extracao: extracaoInfo,
+                },
               });
               if (r?.snapshot_id && r.snapshot_id !== state.cadastro_mira_snapshot_id) {
                 update({ cadastro_mira_snapshot_id: r.snapshot_id });
