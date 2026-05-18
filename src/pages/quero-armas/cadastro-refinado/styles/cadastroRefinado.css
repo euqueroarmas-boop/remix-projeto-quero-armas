@@ -66,6 +66,8 @@
   margin: 0 auto;
   padding: 14px 22px;
 }
+@media (min-width: 768px) { .qa-ref-header-inner { max-width: 640px; } }
+@media (min-width: 1024px) { .qa-ref-header-inner { max-width: 720px; } }
 .qa-ref-logo {
   display: flex; align-items: center; gap: 10px;
 }
@@ -119,7 +121,10 @@
   overflow-x: hidden;
 }
 @media (min-width: 768px) {
-  .qa-ref-shell { padding: 28px 24px 96px; max-width: 480px; }
+  .qa-ref-shell { padding: 28px 24px 96px; max-width: 640px; }
+}
+@media (min-width: 1024px) {
+  .qa-ref-shell { padding: 36px 32px 112px; max-width: 720px; }
 }
 
 /* Step indicator */
@@ -174,6 +179,8 @@
   font-size: 13.5px; line-height: 1.55; color: var(--qa-ref-ink-soft);
   max-width: 460px; margin: 10px 0 0;
 }
+@media (min-width: 768px) { .qa-ref-subtitle { max-width: 560px; } }
+@media (min-width: 1024px) { .qa-ref-subtitle { max-width: 620px; } }
 
 .qa-ref-section { margin-top: 20px; }
 
