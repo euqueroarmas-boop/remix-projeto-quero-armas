@@ -1,6 +1,10 @@
 /**
  * Helpers compartilhados de Asaas para o domínio Quero Armas.
  *
+ * 🆕 ATUALIZADO (2026-05) — createQaVendaPayment agora aceita
+ * installmentCount e installmentValue opcionais, para suportar
+ * parcelamento com juros embutidos no cartão de crédito.
+ *
  * REGRA: este módulo NÃO pode importar nada do legado WMTi
  * (post-purchase, ensureClientAccess, payments/contracts/quotes/customers).
  * Trabalha exclusivamente com qa_clientes / qa_vendas.
@@ -29,7 +33,6 @@ export function digitsOnly(v: unknown): string {
 }
 
 export function safeAsaasErr(payload: unknown): Record<string, unknown> {
-  // Nunca propaga payload bruto. Reduz a códigos/descrições do Asaas.
   try {
     const p = payload as any;
     if (p && Array.isArray(p.errors)) {
@@ -54,10 +57,6 @@ export interface QaClienteAsaas {
   celular?: string | null;
 }
 
-/**
- * Busca customer Asaas por CPF. Se não existir, cria com
- * externalReference="qa_cliente:<id>". Retorna o id do customer.
- */
 export async function createOrReuseQaAsaasCustomer(
   cliente: QaClienteAsaas,
   env: { key: string; baseUrl: string },
@@ -108,6 +107,16 @@ export interface QaVendaPaymentInput {
   value: number;
   dueDate: string; // YYYY-MM-DD
   description: string;
+  /**
+   * 🆕 Número de parcelas. Só faz sentido para CREDIT_CARD.
+   * Default = 1 (cobrança única).
+   */
+  installmentCount?: number;
+  /**
+   * 🆕 Valor de cada parcela. Obrigatório quando installmentCount >= 2.
+   * Para 1x, ignorado (Asaas usa `value`).
+   */
+  installmentValue?: number;
 }
 
 export interface QaVendaPaymentResult {
@@ -117,12 +126,25 @@ export interface QaVendaPaymentResult {
   pixPayload: string | null;
 }
 
+/**
+ * Cria a cobrança Asaas. Para CREDIT_CARD com installmentCount >= 2,
+ * envia installmentCount + installmentValue (conforme docs Asaas).
+ * Para PIX/BOLETO/CREDIT_CARD 1x, envia apenas `value`.
+ */
 export async function createQaVendaPayment(
   input: QaVendaPaymentInput,
   env: { key: string; baseUrl: string },
 ): Promise<{ ok: true; data: QaVendaPaymentResult } | { ok: false; status: number; body: Record<string, unknown> }> {
   let paymentData: any;
   try {
+    const installments =
+      input.billingType === "CREDIT_CARD" && (input.installmentCount ?? 1) >= 2
+        ? {
+            installmentCount: input.installmentCount,
+            installmentValue: input.installmentValue,
+          }
+        : {};
+
     const payRes = await fetch(`${env.baseUrl}/payments`, {
       method: "POST",
       headers: asaasHeaders(env.key),
@@ -133,6 +155,7 @@ export async function createQaVendaPayment(
         dueDate: input.dueDate,
         description: input.description,
         externalReference: `qa_venda:${input.vendaId}`,
+        ...installments,
       }),
     });
     paymentData = await payRes.json().catch(() => ({}));
@@ -172,10 +195,6 @@ export async function createQaVendaPayment(
   };
 }
 
-/**
- * Token público de checkout — gera token aleatório (base64url, 32 bytes)
- * e devolve {token, hash}. Apenas o hash é persistido em qa_vendas.
- */
 export async function generateCheckoutToken(): Promise<{ token: string; hash: string }> {
   const buf = new Uint8Array(32);
   crypto.getRandomValues(buf);
