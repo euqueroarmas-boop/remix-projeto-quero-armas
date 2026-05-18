@@ -195,6 +195,12 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
 
   const obrigatorios = docs.filter((d) => d.obrigatorio_etapa02);
   const opcionais = docs.filter((d) => !d.obrigatorio_etapa02);
+  /** Docs do Arsenal já reaproveitados que cobrem requisitos desta etapa
+   *  por tipo_documento — usado para esconder o card de upload correspondente. */
+  const reapRelevantesObrig = filtrarRelevantesEtapa02(state.documentos_reaproveitados);
+  function coberturaPorReaproveitamento(key: string): boolean {
+    return reapRelevantesObrig.some((arsenal) => arsenalDocMatchesKey(arsenal, key));
+  }
   /**
    * REGRA CRÍTICA — cliente logado/autenticado com documento pessoal válido
    * NÃO precisa reenviar. Um requisito é considerado cumprido quando:
@@ -204,6 +210,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
    */
   function requisitoCumprido(key: string): boolean {
     if (state.documentos[key]?.status === "enviado") return true;
+    if (coberturaPorReaproveitamento(key)) return true;
     if (key === "doc_identidade" || key === "doc_endereco" || key === "doc_selfie") {
       return requisitoCumpridoPorReaproveitamento(
         key as RequisitoDoc,
@@ -212,6 +219,10 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     }
     return false;
   }
+  /** Lista de obrigatórios efetivamente renderizados como upload — exclui
+   *  os que já estão cobertos por documento válido reaproveitado. */
+  const obrigatoriosVisiveis = obrigatorios.filter((d) => !coberturaPorReaproveitamento(d.key));
+  const opcionaisVisiveis = opcionais.filter((d) => !coberturaPorReaproveitamento(d.key));
   const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
   const podeAvancar = obrigatoriosPendentes.length === 0;
 
