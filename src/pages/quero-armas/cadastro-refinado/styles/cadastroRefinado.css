@@ -179,6 +179,8 @@
   font-size: 13.5px; line-height: 1.55; color: var(--qa-ref-ink-soft);
   max-width: 460px; margin: 10px 0 0;
 }
+@media (min-width: 768px) { .qa-ref-subtitle { max-width: 560px; } }
+@media (min-width: 1024px) { .qa-ref-subtitle { max-width: 620px; } }
 
 .qa-ref-section { margin-top: 20px; }
 
