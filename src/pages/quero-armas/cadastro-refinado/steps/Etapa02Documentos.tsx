@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip, RefreshCw } from "lucide-react";
+import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip, RefreshCw, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
@@ -9,6 +9,7 @@ import {
   requisitoCumpridoPorReaproveitamento,
   type RequisitoDoc,
 } from "@/lib/quero-armas/documentosReaproveitamento";
+import { computeDocCardState } from "@/lib/quero-armas/docCardState";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -434,38 +435,85 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         </div>
       );
     }
+    const exigeExtracaoIA = d.key === "doc_identidade" || d.key === "doc_endereco";
+    const isExtracting = extractingKey === d.key;
+    const extractionStatus = !exigeExtracaoIA
+      ? "pendente"
+      : isExtracting
+        ? "extraindo"
+        : extractedFlags[d.key]
+          ? "extraido"
+          : extractFailedFlags[d.key]
+            ? "falhou"
+            : "pendente";
+    const card = computeDocCardState({
+      uploadStatus: status,
+      extractionStatus,
+      fileName: item?.fileName,
+      errorMsg: item?.errorMsg,
+      extractionError: extractFailedFlags[d.key],
+      exigeExtracaoIA,
+    });
+    const toneClass =
+      card.tone === "success" ? "is-done"
+      : card.tone === "warn" ? "is-warn"
+      : card.tone === "error" ? "is-error"
+      : "";
     return (
       <div
         key={d.key}
         className={[
           "qa-ref-upload-item",
-          status === "enviado" ? "is-done" : "",
-          status === "erro" ? "is-error" : "",
+          toneClass,
           isOptional && status !== "enviado" ? "is-optional" : "",
         ].filter(Boolean).join(" ")}
       >
         <div className="qa-ref-upload-icon">
-          {status === "enviado" ? <Check size={18} /> : status === "erro" ? <XIcon size={18} /> : <Upload size={16} />}
+          {card.tone === "success" ? <Check size={18} />
+            : card.tone === "warn" ? <AlertTriangle size={18} />
+            : card.tone === "error" ? <XIcon size={18} />
+            : isExtracting ? <Loader2 size={16} className="qa-ref-spin" />
+            : <Upload size={16} />}
         </div>
         <div className="qa-ref-upload-meta">
           <div className="qa-ref-upload-name">
             {d.label}
+            {status === "enviado" && card.badge && (
+              <span
+                className="qa-ref-opt-badge"
+                style={
+                  card.tone === "success"
+                    ? { background: "#0f2f1a", color: "#86efac" }
+                    : card.tone === "warn"
+                      ? { background: "var(--qa-ref-bordo-soft)", color: "var(--qa-ref-bordo)" }
+                      : undefined
+                }
+              >
+                {card.badge}
+              </span>
+            )}
             {isOptional && status !== "enviado" && (
               <span className="qa-ref-opt-badge">Opcional agora — pode enviar depois no Arsenal</span>
             )}
           </div>
           <div className="qa-ref-upload-hint">
-            {status === "enviado"
-              ? (extractingKey === d.key
-                  ? <><Loader2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "-1px" }} className="qa-ref-spin" /> Analisando com IA…</>
-                  : extractedFlags[d.key]
-                    ? <span style={{ color: "var(--qa-ref-success)" }}>✓ {item?.fileName} — dados extraídos</span>
-                    : extractFailedFlags[d.key]
-                      ? <span style={{ color: "var(--qa-ref-bordo)" }}>{item?.fileName} — {extractFailedFlags[d.key]}</span>
-                      : item?.fileName)
-              : status === "erro"
-              ? item?.errorMsg || "Erro ao enviar"
-              : "PDF, JPG ou PNG — até 20MB"}
+            {isExtracting ? (
+              <>
+                <Loader2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: "-1px" }} className="qa-ref-spin" />
+                Analisando com IA…
+              </>
+            ) : (
+              <span
+                style={
+                  card.tone === "success" ? { color: "var(--qa-ref-success)" }
+                  : card.tone === "warn" ? { color: "var(--qa-ref-bordo)" }
+                  : undefined
+                }
+              >
+                {card.tone === "success" && status === "enviado" ? "✓ " : ""}
+                {card.hint}
+              </span>
+            )}
           </div>
           {status !== "enviado" && (
             <div className="qa-ref-upload-actions">
@@ -517,17 +565,37 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
           )}
         </div>
         {status === "enviado" && (
-          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 4, alignItems: "center", flexWrap: "wrap" }}>
             {(d.key === "doc_identidade" || d.key === "doc_endereco") && extractingKey !== d.key && (
               <button
                 className="qa-ref-upload-action"
                 title="Reprocessar com IA"
                 onClick={() => reExtractFromStorage(d.key as "doc_identidade" | "doc_endereco")}
               >
-                {extractedFlags[d.key] ? "Re-extrair" : "Extrair com IA"}
+                {extractedFlags[d.key] ? "Re-extrair" : "Tentar extrair novamente"}
+              </button>
+            )}
+            {card.tone === "warn" && (
+              <button
+                className="qa-ref-upload-action"
+                title="Enviar outro arquivo"
+                onClick={() => fileInputs.current[d.key]?.click()}
+              >
+                Enviar outro
               </button>
             )}
             <button className="qa-ref-upload-action" onClick={() => handleRemove(d.key)}>Remover</button>
+            <input
+              ref={(el) => (fileInputs.current[d.key] = el)}
+              type="file"
+              accept="image/*,application/pdf,.pdf"
+              style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(d.key, f);
+                e.target.value = "";
+              }}
+            />
           </div>
         )}
       </div>
