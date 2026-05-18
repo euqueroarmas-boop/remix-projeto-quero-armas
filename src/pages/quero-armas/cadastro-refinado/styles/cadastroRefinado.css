@@ -121,7 +121,10 @@
   overflow-x: hidden;
 }
 @media (min-width: 768px) {
-  .qa-ref-shell { padding: 28px 24px 96px; max-width: 480px; }
+  .qa-ref-shell { padding: 28px 24px 96px; max-width: 640px; }
+}
+@media (min-width: 1024px) {
+  .qa-ref-shell { padding: 36px 32px 112px; max-width: 720px; }
 }
 
 /* Step indicator */
