@@ -66,6 +66,8 @@
   margin: 0 auto;
   padding: 14px 22px;
 }
+@media (min-width: 768px) { .qa-ref-header-inner { max-width: 640px; } }
+@media (min-width: 1024px) { .qa-ref-header-inner { max-width: 720px; } }
 .qa-ref-logo {
   display: flex; align-items: center; gap: 10px;
 }
