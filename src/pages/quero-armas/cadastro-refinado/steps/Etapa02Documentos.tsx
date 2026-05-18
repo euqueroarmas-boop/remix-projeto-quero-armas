@@ -473,6 +473,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     const item = state.documentos[d.key];
     const status = item?.status ?? "pendente";
     const isOptional = !d.obrigatorio_etapa02;
+    const vencidoMatch = (state.documentos_vencidos || []).find((v) => arsenalDocMatchesKey(v, d.key));
     /* Reaproveitamento — só consultamos para os 3 requisitos pessoais. */
     const isPessoal = d.key === "doc_identidade" || d.key === "doc_endereco" || d.key === "doc_selfie";
     const reuso = isPessoal && status !== "enviado"
@@ -541,6 +542,11 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
             : <Upload size={16} />}
         </div>
         <div className="qa-ref-upload-meta">
+          {vencidoMatch && status !== "enviado" && (
+            <div className="qa-ref-upload-warn" style={{ fontSize: 12, color: "var(--qa-ref-accent, #d97706)", marginBottom: 6 }}>
+              ⚠ Seu {d.shortName || d.label} venceu{vencidoMatch.data_validade ? ` em ${vencidoMatch.data_validade}` : ""}. Envie um novo.
+            </div>
+          )}
           <div className="qa-ref-upload-name">
             {d.label}
             {status === "enviado" && card.badge && (
