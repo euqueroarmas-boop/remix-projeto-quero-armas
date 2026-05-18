@@ -1,6 +1,12 @@
 /**
  * FASE 2C-2 — qa-checkout-iniciar-pagamento (PÚBLICA, anon)
  *
+ * 🆕 ATUALIZADO (2026-05) — suporte a parcelamento com juros embutidos
+ * (Tabela Price) calculados no SERVIDOR a partir do preço base (PIX) da
+ * venda. O frontend pode SUGERIR billing_type e installment_count, mas
+ * o valor cobrado é sempre recomputado aqui — o cliente não consegue
+ * manipular preço via DevTools.
+ *
  * Permite que o cliente que acabou de criar uma venda no checkout público
  * gere a cobrança Asaas correspondente, autorizado pelo checkout_token
  * recebido na resposta de qa-checkout-criar-venda.
@@ -22,6 +28,11 @@ import {
   isValidDueDate,
   sha256Hex,
 } from "../_shared/qaAsaas.ts";
+import {
+  DEFAULT_PRICING_CONFIG,
+  calcularPrecoFinal,
+  type BillingType,
+} from "../_shared/checkoutPricing.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,6 +92,8 @@ Deno.serve(async (req) => {
   const checkout_token = String(body?.checkout_token || "");
   const billing_type = String(body?.billing_type || "").toUpperCase();
   const due_date_in = typeof body?.due_date === "string" ? body.due_date : null;
+  /* 🆕 número de parcelas — só faz sentido para CREDIT_CARD; demais ignoram. */
+  const installment_count_in = Number(body?.installment_count ?? 1);
 
   if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
   if (!checkout_token || checkout_token.length < 16 || checkout_token.length > 256) {
@@ -89,6 +102,16 @@ Deno.serve(async (req) => {
   if (!ALLOWED_BILLING.has(billing_type)) {
     return json({ error: "invalid_billing_type", allowed: [...ALLOWED_BILLING] }, 400);
   }
+
+  /* 🆕 Sanitiza installment_count: 1..maxParcelas, tudo fora vira 1. */
+  const installmentCount = Math.max(
+    1,
+    Math.min(
+      Math.trunc(Number.isFinite(installment_count_in) ? installment_count_in : 1),
+      DEFAULT_PRICING_CONFIG.maxParcelas,
+    ),
+  );
+
   const due_date = due_date_in && isValidDueDate(due_date_in) ? due_date_in : defaultDueDate(3);
 
   const supabase = createClient(
@@ -132,10 +155,26 @@ Deno.serve(async (req) => {
   const cobStatus = String(venda.cobranca_status || "").toLowerCase();
   if (cobStatus === "confirmada") return json({ error: "cobranca_ja_confirmada" }, 409);
 
-  // valor canônico vem da venda — frontend NÃO pode enviar valor.
-  const valor = Number(venda.valor_a_pagar);
-  if (!Number.isFinite(valor) || valor <= 0) {
+  /* 🆕 valor_a_pagar é o PREÇO BASE (tabela / PIX à vista).
+   * O servidor recalcula valor real conforme billing_type + installment_count.
+   * Esta é a FONTE DA VERDADE — frontend não pode burlar. */
+  const precoBase = Number(venda.valor_a_pagar);
+  if (!Number.isFinite(precoBase) || precoBase <= 0) {
     return json({ error: "valor_invalido", valor_a_pagar: venda.valor_a_pagar }, 409);
+  }
+
+  let pricing;
+  try {
+    pricing = calcularPrecoFinal(
+      precoBase,
+      billing_type as BillingType,
+      installmentCount,
+    );
+  } catch (e) {
+    return json({
+      error: "pricing_calc_failed",
+      detail: e instanceof Error ? e.message : "unknown",
+    }, 500);
   }
 
   // 5) Idempotência inicial
@@ -181,10 +220,16 @@ Deno.serve(async (req) => {
 
   await logEvent(supabase, venda.id, null, venda.cliente_id ?? null,
     "checkout_pagamento_iniciado", "Cliente público iniciou pagamento", {
-      billing_type, valor, due_date,
+      billing_type,
+      parcelas: pricing.parcelas,
+      preco_base: precoBase,
+      valor_cobrado: pricing.valorTotal,
+      encargos_reais: pricing.encargosReais,
+      encargos_fracao: pricing.encargosFracao,
+      due_date,
     });
 
-  // 8) Customer Asaas (qa_cliente:<id>)
+  // 8) Customer Asaas
   let asaasCustomerId = venda.asaas_customer_id || null;
   if (!asaasCustomerId) {
     const cust = await createOrReuseQaAsaasCustomer(
@@ -233,14 +278,20 @@ Deno.serve(async (req) => {
     });
   }
 
-  // 10) Cria payment
+  // 10) Cria payment — agora respeitando parcelamento
   const description = `Quero Armas — Venda #${venda.id_legado ?? venda.id}`;
   const pay = await createQaVendaPayment(
     {
       vendaId: venda.id,
       customerId: asaasCustomerId!,
       billingType: billing_type as any,
-      value: valor,
+      /* PIX/BOLETO → value = preço cheio.
+       * CREDIT_CARD com 1x → value = pricing.valorTotal (com juros 1x).
+       * CREDIT_CARD com N>1 → installmentCount + installmentValue.
+       * O qaAsaas.ts trata os 3 casos a partir de installmentCount. */
+      value: pricing.valorTotal,
+      installmentCount: pricing.parcelas,
+      installmentValue: pricing.valorParcela,
       dueDate: due_date,
       description,
     },
@@ -270,6 +321,13 @@ Deno.serve(async (req) => {
       cobranca_status: "aguardando_pagamento",
       cobranca_gerada_em: new Date().toISOString(),
       cobranca_origem: "checkout_site",
+      /* 🆕 Auditoria de encargos — colunas adicionadas pela migration
+       * 20260518_qa_vendas_parcelamento.sql. Se você ainda não rodou
+       * a migration, comente esses 4 campos. */
+      parcelas_cobranca: pricing.parcelas,
+      valor_cobrado: pricing.valorTotal,
+      encargos_reais: pricing.encargosReais,
+      encargos_fracao: pricing.encargosFracao,
     })
     .eq("id", venda.id)
     .is("asaas_payment_id", null)
@@ -315,7 +373,11 @@ Deno.serve(async (req) => {
   await logEvent(supabase, venda.id, null, venda.cliente_id ?? null,
     "checkout_cobranca_criada", "Cobrança Asaas criada via checkout público", {
       asaas_payment_id: pay.data.paymentId,
-      billing_type, valor, due_date,
+      billing_type,
+      parcelas: pricing.parcelas,
+      preco_base: precoBase,
+      valor_cobrado: pricing.valorTotal,
+      due_date,
     });
 
   return json({
@@ -329,5 +391,11 @@ Deno.serve(async (req) => {
     asaas_due_date: due_date,
     cobranca_status: "aguardando_pagamento",
     billing_type,
+    /* 🆕 Frontend usa esses campos para mostrar o resumo final. */
+    parcelas: pricing.parcelas,
+    valor_cobrado: pricing.valorTotal,
+    valor_parcela: pricing.valorParcela,
+    preco_base: precoBase,
+    encargos_reais: pricing.encargosReais,
   });
 });

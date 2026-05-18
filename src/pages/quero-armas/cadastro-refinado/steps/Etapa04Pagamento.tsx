@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
@@ -6,7 +6,14 @@ import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import ContractPreviewCard from "../components/ContractPreviewCard";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
-import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
+import {
+  DEFAULT_PRICING_CONFIG,
+  calcularPrecoFinal,
+  formatarReais,
+  listarOpcoesParcelamento,
+  uiPagamentoToBillingType,
+  type PricingResult,
+} from "@/lib/checkoutPricing";
 
 interface Props {
   state: CadastroRefinadoState;
@@ -25,20 +32,12 @@ interface PaymentData {
   asaas_bank_slip_url: string | null;
   asaas_pix_payload: string | null;
   billing_type: "PIX" | "BOLETO" | "CREDIT_CARD";
+  parcelas: number;
+  valor_cobrado: number;
 }
 
-const PAY_OPTIONS: { id: CadastroRefinadoState["formaPagamento"]; nome: string; hint: string }[] = [
-  { id: "pix", nome: "PIX", hint: "Aprovação imediata. Recomendado." },
-  { id: "cartao", nome: "Cartão de crédito", hint: "Em até 12x. Aprovação imediata." },
-  { id: "boleto", nome: "Boleto bancário", hint: "Compensação em até 2 dias úteis." },
-];
-
-const BILLING_MAP: Record<CadastroRefinadoState["formaPagamento"], "PIX" | "BOLETO" | "CREDIT_CARD"> = {
-  pix: "PIX", boleto: "BOLETO", cartao: "CREDIT_CARD",
-};
-
 const POLL_INTERVAL_MS = 4000;
-const POLL_TIMEOUT_MS = 30 * 60 * 1000; // 30min
+const POLL_TIMEOUT_MS = 30 * 60 * 1000;
 
 export default function Etapa04Pagamento({ state, update, onNext, onBack }: Props) {
   const navigate = useNavigate();
@@ -52,12 +51,14 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   const [copied, setCopied] = useState<"pix" | "boleto" | null>(null);
   const [pollTimedOut, setPollTimedOut] = useState(false);
 
+  /** Número de parcelas escolhidas para CREDIT_CARD. Default 1. */
+  const [parcelas, setParcelas] = useState<number>(1);
+  /** Toggle de exibição do seletor 1x..12x. */
+  const [openParcelaPicker, setOpenParcelaPicker] = useState(false);
+
   const pollRef = useRef<number | null>(null);
   const pollStartRef = useRef<number>(0);
   const barcodeRef = useRef<SVGSVGElement | null>(null);
-  /* Mantém referência sempre fresca de state.resultado para o closure do polling
-   * — evita sobrescrever checkout_token/asaas_invoice_url/etc com versão stale
-   * no momento em que o webhook confirma o pagamento. */
   const resultadoRef = useRef(state.resultado);
   useEffect(() => {
     resultadoRef.current = state.resultado;
@@ -71,83 +72,124 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         .select("id, preco, nome")
         .eq("slug", state.servicoSlug)
         .maybeSingle();
-      setPreco(Number(data?.preco) || 0);
+      setPreco(Number((data as any)?.preco) || 0);
       setServicoId((data as any)?.id ?? null);
       setNomeServico((data as any)?.nome ?? null);
     })();
   }, [state.servicoSlug]);
 
-  // Render QR code when PIX payload chega
+  /* ---- Cálculo de preview (frontend exibe, backend recalcula a verdade) ---- */
+  const pricingPix = useMemo(
+    () => (preco > 0 ? calcularPrecoFinal(preco, "PIX") : null),
+    [preco],
+  );
+  const pricingBoleto = useMemo(
+    () => (preco > 0 ? calcularPrecoFinal(preco, "BOLETO") : null),
+    [preco],
+  );
+  const pricingCartao = useMemo(
+    () => (preco > 0 ? calcularPrecoFinal(preco, "CREDIT_CARD", parcelas) : null),
+    [preco, parcelas],
+  );
+  const opcoesParcelas = useMemo(
+    () => (preco > 0 ? listarOpcoesParcelamento(preco) : []),
+    [preco],
+  );
+
+  /** Pricing efetivo conforme o modo de pagamento selecionado. */
+  const pricingSelecionado: PricingResult | null = useMemo(() => {
+    if (preco <= 0) return null;
+    if (state.formaPagamento === "pix") return pricingPix;
+    if (state.formaPagamento === "boleto") return pricingBoleto;
+    return pricingCartao;
+  }, [preco, state.formaPagamento, pricingPix, pricingBoleto, pricingCartao]);
+
+  // Render QR code quando PIX payload chega
   useEffect(() => {
-    if (!pay || pay.billing_type !== "PIX" || !pay.asaas_pix_payload) { setQrDataUrl(null); return; }
-    QRCode.toDataURL(pay.asaas_pix_payload, { margin: 1, width: 440, errorCorrectionLevel: "M" })
+    if (!pay || pay.billing_type !== "PIX" || !pay.asaas_pix_payload) {
+      setQrDataUrl(null);
+      return;
+    }
+    QRCode.toDataURL(pay.asaas_pix_payload, {
+      margin: 1,
+      width: 440,
+      errorCorrectionLevel: "M",
+    })
       .then(setQrDataUrl)
       .catch((e) => console.warn("[Etapa04] QR gen failed:", e));
   }, [pay]);
 
-  // Render barcode when boleto chega
+  // Render barcode quando boleto chega
   useEffect(() => {
     if (!pay || pay.billing_type !== "BOLETO" || !pay.asaas_bank_slip_url || !barcodeRef.current) return;
-    // Asaas devolve só a invoice URL — usamos asaas_payment_id como código visual.
     const code = pay.asaas_payment_id || "";
     if (!code) return;
     try {
       JsBarcode(barcodeRef.current, code, {
-        format: "CODE128", height: 60, displayValue: false, margin: 0,
+        format: "CODE128",
+        height: 60,
+        displayValue: false,
+        margin: 0,
       });
-    } catch (e) { console.warn("[Etapa04] barcode gen failed:", e); }
+    } catch (e) {
+      console.warn("[Etapa04] barcode gen failed:", e);
+    }
   }, [pay]);
 
-  // Cleanup polling
   useEffect(() => () => { if (pollRef.current) window.clearInterval(pollRef.current); }, []);
 
-  const startPolling = useCallback((venda_id: number, checkout_token: string) => {
-    if (pollRef.current) window.clearInterval(pollRef.current);
-    pollStartRef.current = Date.now();
-    setPollTimedOut(false);
+  const startPolling = useCallback(
+    (venda_id: number, checkout_token: string) => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      pollStartRef.current = Date.now();
+      setPollTimedOut(false);
 
-    const tick = async () => {
-      if (Date.now() - pollStartRef.current > POLL_TIMEOUT_MS) {
-        if (pollRef.current) window.clearInterval(pollRef.current);
-        setPollTimedOut(true);
-        return;
-      }
-      try {
-        const { data, error } = await supabase.functions.invoke("qa-checkout-status", {
-          body: { venda_id, checkout_token },
-        });
-        if (error) { console.warn("[Etapa04] status err:", error); return; }
-        if (data?.pago) {
+      const tick = async () => {
+        if (Date.now() - pollStartRef.current > POLL_TIMEOUT_MS) {
           if (pollRef.current) window.clearInterval(pollRef.current);
-          setStage("confirmed");
-          /* Webhook Asaas confirmou — agora sim podemos declarar pagamento confirmado.
-           * Etapas pós-pagamento (contrato_gerado, acesso_enviado, servico_liberado)
-           * são derivadas separadamente pela Etapa05 via polling do mesmo endpoint. */
-          update({
-            resultado: {
-              ...(resultadoRef.current || {}),
-              pagamento_status: "pagamento_confirmado",
-            },
-          });
-          // Redireciona para Etapa 05 após 4s — botão "Assinar contrato" continua disponível.
-          window.setTimeout(() => onNext(), 4000);
+          setPollTimedOut(true);
+          return;
         }
-      } catch (e) {
-        console.warn("[Etapa04] poll exception:", e);
-      }
-    };
+        try {
+          const { data, error } = await supabase.functions.invoke("qa-checkout-status", {
+            body: { venda_id, checkout_token },
+          });
+          if (error) {
+            console.warn("[Etapa04] status err:", error);
+            return;
+          }
+          if (data?.pago) {
+            if (pollRef.current) window.clearInterval(pollRef.current);
+            setStage("confirmed");
+            update({
+              resultado: {
+                ...(resultadoRef.current || {}),
+                pagamento_status: "pagamento_confirmado",
+              },
+            });
+            window.setTimeout(() => onNext(), 4000);
+          }
+        } catch (e) {
+          console.warn("[Etapa04] poll exception:", e);
+        }
+      };
 
-    pollRef.current = window.setInterval(tick, POLL_INTERVAL_MS);
-    // primeira tentativa imediata após 1s
-    window.setTimeout(tick, 1000);
-  }, [onNext]);
+      pollRef.current = window.setInterval(tick, POLL_INTERVAL_MS);
+      window.setTimeout(tick, 1000);
+    },
+    [onNext, update],
+  );
 
-  const labelBtn = (() => {
-    const v = `R$ ${preco.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    if (state.formaPagamento === "pix") return `Gerar PIX e assinar contrato — ${v}`;
-    if (state.formaPagamento === "cartao") return `Pagar com cartão e assinar contrato — ${v}`;
-    return `Gerar boleto e assinar contrato — ${v}`;
-  })();
+  const labelBtn = useMemo(() => {
+    if (!pricingSelecionado) return "Continuar";
+    const total = formatarReais(pricingSelecionado.valorTotal);
+    if (state.formaPagamento === "pix") return `Gerar PIX e assinar contrato — ${total}`;
+    if (state.formaPagamento === "cartao") {
+      const n = pricingSelecionado.parcelas;
+      return `Pagar ${n}x e assinar contrato — ${total}`;
+    }
+    return `Gerar boleto e assinar contrato — ${total}`;
+  }, [pricingSelecionado, state.formaPagamento]);
 
   async function handleSubmit() {
     setError(null);
@@ -159,40 +201,45 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       setError("Catálogo de serviço indisponível. Recarregue a página.");
       return;
     }
+    if (!pricingSelecionado) {
+      setError("Não foi possível calcular o valor. Recarregue a página.");
+      return;
+    }
     setStage("preparing");
     try {
       const d = state.dadosPessoais;
-      // 1) Cria conta pública (preserva Bug 2 — notificações e venda_pendente já existentes).
-      // A senha é gerada aleatória; o cliente recebe e-mail de boas-vindas e usa "Esqueci minha senha"
-      // para definir sua senha no primeiro acesso ao portal.
+      // 1) Cria conta pública
       const senhaAuto =
         "QA-" +
         crypto.getRandomValues(new Uint32Array(2)).reduce((s, n) => s + n.toString(36), "") +
         "!a1";
-      const { data: contaData, error: contaErr } = await supabase.functions.invoke("qa-cliente-criar-conta-publica", {
-        body: {
-          nome: d.nome_completo,
-          nome_completo: d.nome_completo,
-          cpf: d.cpf.replace(/\D/g, ""),
-          email: d.email.trim().toLowerCase(),
-          telefone: d.telefone,
-          senha: senhaAuto,
-          catalogo_slug: state.servicoSlug,
-          data_nascimento: d.data_nascimento,
-          endereco: {
-            cep: d.endereco_cep,
-            logradouro: d.endereco_logradouro,
-            numero: d.endereco_numero,
-            complemento: d.endereco_complemento,
-            bairro: d.endereco_bairro,
-            cidade: d.endereco_cidade,
-            estado: d.endereco_estado,
+      const { data: contaData, error: contaErr } = await supabase.functions.invoke(
+        "qa-cliente-criar-conta-publica",
+        {
+          body: {
+            nome: d.nome_completo,
+            nome_completo: d.nome_completo,
+            cpf: d.cpf.replace(/\D/g, ""),
+            email: d.email.trim().toLowerCase(),
+            telefone: d.telefone,
+            senha: senhaAuto,
+            catalogo_slug: state.servicoSlug,
+            data_nascimento: d.data_nascimento,
+            endereco: {
+              cep: d.endereco_cep,
+              logradouro: d.endereco_logradouro,
+              numero: d.endereco_numero,
+              complemento: d.endereco_complemento,
+              bairro: d.endereco_bairro,
+              cidade: d.endereco_cidade,
+              estado: d.endereco_estado,
+            },
+            servico_slug: state.servicoSlug,
+            origem: state.origem || "cadastro_refinado",
+            documentos: state.documentos,
           },
-          servico_slug: state.servicoSlug,
-          origem: state.origem || "cadastro_refinado",
-          documentos: state.documentos,
         },
-      });
+      );
       if (contaErr) throw contaErr;
 
       const qaClienteId = contaData?.qa_cliente_id ?? contaData?.cliente_id ?? null;
@@ -204,20 +251,23 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         clienteExistente: !!contaData?.cpf_ja_possui_login || state.clienteExistente,
       });
 
-      // 2) Pipeline B — cria venda no checkout_site
+      // 2) Cria venda
       const cpfDigits = d.cpf.replace(/\D/g, "");
       const celular = (d.telefone || "").replace(/\D/g, "");
-      const { data: vendaResp, error: vendaErr } = await supabase.functions.invoke("qa-checkout-criar-venda", {
-        body: {
-          cart: [{ servico_id: servicoId, slug: state.servicoSlug, quantidade: 1 }],
-          identificacao: {
-            nome_completo: d.nome_completo,
-            cpf: cpfDigits,
-            email: d.email.trim().toLowerCase(),
-            celular,
+      const { data: vendaResp, error: vendaErr } = await supabase.functions.invoke(
+        "qa-checkout-criar-venda",
+        {
+          body: {
+            cart: [{ servico_id: servicoId, slug: state.servicoSlug, quantidade: 1 }],
+            identificacao: {
+              nome_completo: d.nome_completo,
+              cpf: cpfDigits,
+              email: d.email.trim().toLowerCase(),
+              celular,
+            },
           },
         },
-      });
+      );
       if (vendaErr) throw vendaErr;
       if (!vendaResp?.venda_id || !vendaResp?.checkout_token) {
         throw new Error(vendaResp?.error || "Falha ao criar venda no checkout.");
@@ -225,9 +275,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       const vendaId: number = vendaResp.venda_id;
       const checkoutToken: string = vendaResp.checkout_token;
 
-      // Fallback: se conta-publica não retornou cliente_id (ex.: cpf_ja_possui_login),
-      // usa o qa_cliente_id resolvido pelo checkout.
-      const clienteIdFinalRaw = qaClienteId ?? vendaResp?.qa_cliente_id ?? vendaResp?.cliente_id ?? null;
+      const clienteIdFinalRaw =
+        qaClienteId ?? vendaResp?.qa_cliente_id ?? vendaResp?.cliente_id ?? null;
       const clienteIdFinal: string | null =
         clienteIdFinalRaw == null ? null : String(clienteIdFinalRaw);
       if (clienteIdFinal && clienteIdFinal !== qaClienteId) {
@@ -239,20 +288,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         });
       }
 
-      // Snapshot operacional p/ Equipe Quero Armas (origem_cadastro='cadastro_mira').
-      // Não bloqueia o checkout. Vincula cliente_id quando já houver.
-      try {
-        const r = await enviarSnapshotCadastroMira(state, "aguardando_pagamento", {
-          snapshot_id: state.cadastro_mira_snapshot_id,
-          cliente_id_vinculado: clienteIdFinal,
-          venda_id: vendaId,
-        });
-        if (r?.snapshot_id && r.snapshot_id !== state.cadastro_mira_snapshot_id) {
-          update({ cadastro_mira_snapshot_id: r.snapshot_id });
-        }
-      } catch { /* silencioso — checkout não é afetado */ }
-
-      // 3) Registro probatório do aceite (não bloqueia)
+      // 3) Aceite (não bloqueia)
       try {
         await supabase.functions.invoke("qa-contract-aceite-registrar", {
           body: {
@@ -270,21 +306,32 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         console.warn("[Etapa04] aceite-registrar falhou:", aceiteFail);
         supabase.functions.invoke("qa-notificar-admin-contratacao", {
           body: {
-            motivo: "aceite_registro_falhou", cliente_id: qaClienteId, venda_id: vendaId,
-            servico_slug: state.servicoSlug, erro: aceiteFail?.message || String(aceiteFail),
+            motivo: "aceite_registro_falhou",
+            cliente_id: qaClienteId,
+            venda_id: vendaId,
+            servico_slug: state.servicoSlug,
+            erro: aceiteFail?.message || String(aceiteFail),
           },
-        }).catch(() => { /* silencioso */ });
+        }).catch(() => {});
       }
 
-      // 4) Pipeline B — gera cobrança Asaas
-      const billing = BILLING_MAP[state.formaPagamento];
-      const { data: payResp, error: payErr } = await supabase.functions.invoke("qa-checkout-iniciar-pagamento", {
-        body: {
-          venda_id: vendaId,
-          checkout_token: checkoutToken,
-          billing_type: billing,
+      // 4) Gera cobrança Asaas — envia billing_type + installment_count.
+      //    O backend recalcula o valor via mesma função calcularPrecoFinal
+      //    (NÃO confiamos no frontend para preço final).
+      const billing = uiPagamentoToBillingType(state.formaPagamento);
+      const installmentCount = billing === "CREDIT_CARD" ? pricingSelecionado.parcelas : 1;
+
+      const { data: payResp, error: payErr } = await supabase.functions.invoke(
+        "qa-checkout-iniciar-pagamento",
+        {
+          body: {
+            venda_id: vendaId,
+            checkout_token: checkoutToken,
+            billing_type: billing,
+            installment_count: installmentCount,
+          },
         },
-      });
+      );
       if (payErr) throw payErr;
       if (!payResp?.success) {
         throw new Error(payResp?.error || "Não foi possível gerar a cobrança.");
@@ -298,6 +345,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         asaas_bank_slip_url: payResp.asaas_bank_slip_url ?? null,
         asaas_pix_payload: payResp.asaas_pix_payload ?? null,
         billing_type: billing,
+        parcelas: payResp.parcelas ?? installmentCount,
+        valor_cobrado: payResp.valor_cobrado ?? pricingSelecionado.valorTotal,
       };
       setPay(payData);
       update({
@@ -309,8 +358,6 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           asaas_invoice_url: payData.asaas_invoice_url ?? undefined,
           asaas_payment_id: payData.asaas_payment_id ?? undefined,
           billing_type: billing,
-          /* Cobrança apenas criada — webhook Asaas ainda não confirmou.
-           * Etapa05 lê este status para renderizar o estado correto. */
           pagamento_status: "aguardando_pagamento",
           pagamento_url: payData.asaas_invoice_url ?? undefined,
         },
@@ -325,10 +372,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
 
   function handleCopy(value: string, which: "pix" | "boleto") {
     if (!value) return;
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(which);
-      window.setTimeout(() => setCopied((c) => (c === which ? null : c)), 2000);
-    }).catch(() => {/* ignore */});
+    navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        setCopied(which);
+        window.setTimeout(() => setCopied((c) => (c === which ? null : c)), 2000);
+      })
+      .catch(() => {});
   }
 
   function handleRetry() {
@@ -350,38 +400,221 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       }
       onBack={stage === "form" ? onBack : undefined}
     >
+      {/* Bloco de preço destacado — espelho do estilo Mercado Livre */}
       <div className="qa-ref-total">
         <div>
           <div className="qa-ref-total-label">Total a pagar</div>
           <div className="qa-ref-caps" style={{ marginTop: 4 }}>1 serviço selecionado</div>
         </div>
         <div className="qa-ref-total-value">
-          R$ {preco.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          {pricingSelecionado ? formatarReais(pricingSelecionado.valorTotal) : "—"}
         </div>
       </div>
 
+      {/* Linha auxiliar: à vista no PIX (sempre visível, igual ao ML) */}
+      {pricingPix && pricingSelecionado && state.formaPagamento !== "pix" && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            fontSize: 13,
+            color: "var(--qa-ref-ink-soft)",
+            marginTop: -8,
+            marginBottom: 8,
+          }}
+        >
+          ou {formatarReais(pricingPix.valorTotal)} à vista no PIX
+        </div>
+      )}
+
       {stage === "form" && (
         <>
+          {/* Cards de forma de pagamento — cada um mostra o valor próprio */}
           <div className="qa-ref-pay-list">
-            {PAY_OPTIONS.map((opt) => (
-              <label key={opt.id} className={`qa-ref-pay-opt ${state.formaPagamento === opt.id ? "is-selected" : ""}`}>
-                <input
-                  type="radio"
-                  name="forma_pagamento"
-                  value={opt.id}
-                  checked={state.formaPagamento === opt.id}
-                  onChange={() => update({ formaPagamento: opt.id })}
-                />
-                <div>
-                  <div className="qa-ref-pay-name">{opt.nome}</div>
-                  <div className="qa-ref-pay-hint">{opt.hint}</div>
+            {/* PIX */}
+            <label
+              className={`qa-ref-pay-opt ${
+                state.formaPagamento === "pix" ? "is-selected" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="forma_pagamento"
+                value="pix"
+                checked={state.formaPagamento === "pix"}
+                onChange={() => {
+                  update({ formaPagamento: "pix" });
+                  setOpenParcelaPicker(false);
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <div className="qa-ref-pay-name">PIX</div>
+                <div className="qa-ref-pay-hint">
+                  Aprovação imediata · Recomendado
                 </div>
-              </label>
-            ))}
+                {pricingPix && (
+                  <div
+                    style={{
+                      fontSize: 13,
+                      marginTop: 4,
+                      fontWeight: 600,
+                      color: "var(--qa-ref-accent, #0a7d2c)",
+                    }}
+                  >
+                    {formatarReais(pricingPix.valorTotal)} à vista
+                  </div>
+                )}
+              </div>
+            </label>
+
+            {/* CARTÃO */}
+            <label
+              className={`qa-ref-pay-opt ${
+                state.formaPagamento === "cartao" ? "is-selected" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="forma_pagamento"
+                value="cartao"
+                checked={state.formaPagamento === "cartao"}
+                onChange={() => update({ formaPagamento: "cartao" })}
+              />
+              <div style={{ flex: 1 }}>
+                <div className="qa-ref-pay-name">Cartão de crédito</div>
+                <div className="qa-ref-pay-hint">
+                  Em até {DEFAULT_PRICING_CONFIG.maxParcelas}x · Aprovação imediata
+                </div>
+                {pricingCartao && (
+                  <div style={{ fontSize: 13, marginTop: 4 }}>
+                    <strong>
+                      {pricingCartao.parcelas}x de{" "}
+                      {formatarReais(pricingCartao.valorParcela)}
+                    </strong>{" "}
+                    <span style={{ color: "var(--qa-ref-ink-soft)" }}>
+                      ({formatarReais(pricingCartao.valorTotal)} total
+                      {pricingCartao.encargosReais > 0
+                        ? ` · +${Math.round(pricingCartao.encargosFracao * 100)}%`
+                        : ""}
+                      )
+                    </span>
+                  </div>
+                )}
+                {state.formaPagamento === "cartao" && (
+                  <button
+                    type="button"
+                    onClick={(ev) => {
+                      ev.preventDefault();
+                      setOpenParcelaPicker((v) => !v);
+                    }}
+                    style={{
+                      marginTop: 8,
+                      background: "transparent",
+                      border: "1px solid var(--qa-ref-line, #d4d4d4)",
+                      borderRadius: 6,
+                      padding: "4px 10px",
+                      fontSize: 12,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {openParcelaPicker
+                      ? "Fechar opções de parcelamento"
+                      : "Ver todas as opções de parcelamento"}
+                  </button>
+                )}
+              </div>
+            </label>
+
+            {/* Seletor de parcelas — só aparece quando cartão está selecionado */}
+            {state.formaPagamento === "cartao" && openParcelaPicker && (
+              <div
+                style={{
+                  border: "1px solid var(--qa-ref-line, #e5e5e5)",
+                  borderRadius: 8,
+                  padding: 8,
+                  marginTop: -8,
+                  marginBottom: 8,
+                  background: "var(--qa-ref-bg-soft, #fafafa)",
+                  maxHeight: 280,
+                  overflowY: "auto",
+                }}
+              >
+                {opcoesParcelas.map((opt) => (
+                  <button
+                    key={opt.parcelas}
+                    type="button"
+                    onClick={() => {
+                      setParcelas(opt.parcelas);
+                      setOpenParcelaPicker(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "8px 10px",
+                      border: "none",
+                      borderRadius: 6,
+                      background:
+                        parcelas === opt.parcelas
+                          ? "var(--qa-ref-bg-strong, #eaeaea)"
+                          : "transparent",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                    }}
+                  >
+                    <span>
+                      <strong>{opt.parcelas}x</strong> de{" "}
+                      {formatarReais(opt.valorParcela)}
+                    </span>
+                    <span style={{ color: "var(--qa-ref-ink-soft)" }}>
+                      {formatarReais(opt.valorTotal)}
+                      {opt.encargosReais > 0
+                        ? ` · +${Math.round(opt.encargosFracao * 100)}%`
+                        : " · sem juros"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* BOLETO */}
+            <label
+              className={`qa-ref-pay-opt ${
+                state.formaPagamento === "boleto" ? "is-selected" : ""
+              }`}
+            >
+              <input
+                type="radio"
+                name="forma_pagamento"
+                value="boleto"
+                checked={state.formaPagamento === "boleto"}
+                onChange={() => {
+                  update({ formaPagamento: "boleto" });
+                  setOpenParcelaPicker(false);
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <div className="qa-ref-pay-name">Boleto bancário</div>
+                <div className="qa-ref-pay-hint">
+                  Compensação em até 2 dias úteis
+                </div>
+                {pricingBoleto && (
+                  <div style={{ fontSize: 13, marginTop: 4, fontWeight: 600 }}>
+                    {formatarReais(pricingBoleto.valorTotal)} à vista
+                  </div>
+                )}
+              </div>
+            </label>
           </div>
 
           <div style={{ marginTop: 24 }}>
-            <ContractPreviewCard state={state} precoServico={preco} nomeServico={nomeServico} />
+            <ContractPreviewCard
+              state={state}
+              precoServico={preco}
+              nomeServico={nomeServico}
+            />
           </div>
 
           <label className="qa-ref-checkbox-row">
@@ -391,14 +624,22 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
               onChange={(e) => update({ aceiteContrato: e.target.checked })}
             />
             <span>
-              Li e aceito o <a href="/termos" target="_blank" rel="noreferrer">contrato de prestação de serviços</a>
-              {" "}e a <a href="/privacidade" target="_blank" rel="noreferrer">política de privacidade</a> (LGPD).
+              Li e aceito o{" "}
+              <a href="/termos" target="_blank" rel="noreferrer">
+                contrato de prestação de serviços
+              </a>{" "}
+              e a{" "}
+              <a href="/privacidade" target="_blank" rel="noreferrer">
+                política de privacidade
+              </a>{" "}
+              (LGPD).
             </span>
           </label>
           <p className="qa-ref-aceite-fineprint">
-            Ao prosseguir, o aceite eletrônico será registrado com data, hora, IP e identificação do dispositivo,
-            na forma da MP 2.200-2/2001 e Lei 14.063/2020. Para os atos perante PF/Exército/órgãos competentes,
-            será solicitada assinatura digital ICP-Brasil em momento posterior.
+            Ao prosseguir, o aceite eletrônico será registrado com data, hora, IP e
+            identificação do dispositivo, na forma da MP 2.200-2/2001 e Lei
+            14.063/2020. Para os atos perante PF/Exército/órgãos competentes, será
+            solicitada assinatura digital ICP-Brasil em momento posterior.
           </p>
 
           {error && <div className="qa-ref-error-text">{error}</div>}
@@ -430,18 +671,54 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             {pollTimedOut ? "Pagamento ainda não detectado" : "Aguardando pagamento"}
           </div>
 
+          {pay.billing_type === "CREDIT_CARD" && pay.parcelas > 1 && (
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--qa-ref-ink-soft)",
+                marginTop: 4,
+                marginBottom: 14,
+              }}
+            >
+              Parcelado em {pay.parcelas}x · total {formatarReais(pay.valor_cobrado)}
+            </p>
+          )}
+
           {pay.billing_type === "PIX" && (
             <>
               <div className="qa-ref-qr-wrap">
-                {qrDataUrl
-                  ? <img src={qrDataUrl} alt="QR Code PIX" className="qa-ref-qr-img" />
-                  : <div className="qa-ref-qr-img" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--qa-ref-ink-soft)", fontSize: 12 }}>Gerando QR…</div>}
-                <div style={{ fontSize: 12, color: "var(--qa-ref-ink-soft)", textAlign: "center" }}>
+                {qrDataUrl ? (
+                  <img src={qrDataUrl} alt="QR Code PIX" className="qa-ref-qr-img" />
+                ) : (
+                  <div
+                    className="qa-ref-qr-img"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--qa-ref-ink-soft)",
+                      fontSize: 12,
+                    }}
+                  >
+                    Gerando QR…
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--qa-ref-ink-soft)",
+                    textAlign: "center",
+                  }}
+                >
                   Aponte a câmera do seu app do banco ou copie o código abaixo.
                 </div>
               </div>
               <div className="qa-ref-copia-cola">
-                <input readOnly value={pay.asaas_pix_payload || ""} onFocus={(e) => e.currentTarget.select()} />
+                <input
+                  readOnly
+                  value={pay.asaas_pix_payload || ""}
+                  onFocus={(e) => e.currentTarget.select()}
+                />
                 <button
                   type="button"
                   className={`qa-ref-copy-btn ${copied === "pix" ? "is-copied" : ""}`}
@@ -451,7 +728,12 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
                 </button>
               </div>
               {pay.asaas_invoice_url && (
-                <a href={pay.asaas_invoice_url} target="_blank" rel="noreferrer" className="qa-ref-pay-invoice-link">
+                <a
+                  href={pay.asaas_invoice_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="qa-ref-pay-invoice-link"
+                >
                   Abrir fatura completa em nova aba
                 </a>
               )}
@@ -464,7 +746,11 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
                 <svg ref={barcodeRef} />
               </div>
               <div className="qa-ref-copia-cola">
-                <input readOnly value={pay.asaas_payment_id || ""} onFocus={(e) => e.currentTarget.select()} />
+                <input
+                  readOnly
+                  value={pay.asaas_payment_id || ""}
+                  onFocus={(e) => e.currentTarget.select()}
+                />
                 <button
                   type="button"
                   className={`qa-ref-copy-btn ${copied === "boleto" ? "is-copied" : ""}`}
@@ -474,13 +760,15 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
                 </button>
               </div>
               <div className="qa-ref-pay-warn">
-                Compensação em até 3 dias úteis. Não feche esta página antes de confirmar o pagamento.
-                Para imprimir o boleto, baixe o PDF na fatura completa.
+                Compensação em até 3 dias úteis. Não feche esta página antes de
+                confirmar o pagamento. Para imprimir o boleto, baixe o PDF na fatura
+                completa.
               </div>
               {(pay.asaas_bank_slip_url || pay.asaas_invoice_url) && (
                 <a
                   href={pay.asaas_bank_slip_url || pay.asaas_invoice_url || "#"}
-                  target="_blank" rel="noreferrer"
+                  target="_blank"
+                  rel="noreferrer"
                   className="qa-ref-pay-invoice-link"
                 >
                   Baixar PDF do boleto
@@ -492,16 +780,23 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           {pay.billing_type === "CREDIT_CARD" && (
             <>
               <div className="qa-ref-iframe-wrap">
-                {pay.asaas_invoice_url
-                  ? <iframe
-                      src={pay.asaas_invoice_url}
-                      title="Pagamento com cartão"
-                      sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
-                    />
-                  : <div className="qa-ref-empty">Carregando ambiente seguro…</div>}
+                {pay.asaas_invoice_url ? (
+                  <iframe
+                    src={pay.asaas_invoice_url}
+                    title="Pagamento com cartão"
+                    sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
+                  />
+                ) : (
+                  <div className="qa-ref-empty">Carregando ambiente seguro…</div>
+                )}
               </div>
               {pay.asaas_invoice_url && (
-                <a href={pay.asaas_invoice_url} target="_blank" rel="noreferrer" className="qa-ref-pay-invoice-link">
+                <a
+                  href={pay.asaas_invoice_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="qa-ref-pay-invoice-link"
+                >
                   Não carregou? Abrir checkout em nova aba
                 </a>
               )}
@@ -510,15 +805,31 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
 
           {pollTimedOut && (
             <div className="qa-ref-pay-warn" style={{ marginTop: 14 }}>
-              Pagamento ainda não detectado. Verifique seu app bancário e atualize esta página para retomar a verificação.
+              Pagamento ainda não detectado. Verifique seu app bancário e atualize
+              esta página para retomar a verificação.
             </div>
           )}
 
-          <div style={{ marginTop: 22, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button type="button" className="qa-ref-btn qa-ref-btn-ghost" onClick={handleRetry}>
+          <div
+            style={{
+              marginTop: 22,
+              display: "flex",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              type="button"
+              className="qa-ref-btn qa-ref-btn-ghost"
+              onClick={handleRetry}
+            >
               Trocar forma de pagamento
             </button>
-            <a href="mailto:eu@queroarmas.com.br" className="qa-ref-btn-link" style={{ alignSelf: "center", fontSize: 12 }}>
+            <a
+              href="mailto:eu@queroarmas.com.br"
+              className="qa-ref-btn-link"
+              style={{ alignSelf: "center", fontSize: 12 }}
+            >
               Falar com suporte
             </a>
           </div>
@@ -537,7 +848,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           >
             Assinar contrato →
           </button>
-          <p style={{ fontSize: 11.5, color: "var(--qa-ref-ink-soft)", marginTop: 14 }}>
+          <p
+            style={{
+              fontSize: 11.5,
+              color: "var(--qa-ref-ink-soft)",
+              marginTop: 14,
+            }}
+          >
             Redirecionando para a próxima etapa em alguns segundos…
           </p>
         </div>
