@@ -154,11 +154,12 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
           {servicos.map((srv, idx) => {
             const podeRemover = isBundle && servicos.length > 1;
             const bundleDescricoes: Record<number, string> = {
+              0: "Serviço de autorização de compra de arma de fogo para atiradores desportivo.",
               1: "Registrar a arma no seu nome.",
               2: "Liberar você para poder ir treinar ou caçar.",
             };
             const descricaoBundle = isBundle
-              ? (srv.descricao_curta || srv.descricao_full || bundleDescricoes[idx] || `Serviço ${idx + 1} de ${servicos.length}`)
+              ? (bundleDescricoes[idx] || srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`)
               : (srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`);
             if (isBundle) {
               return (
