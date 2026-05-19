@@ -406,26 +406,23 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           <div className="qa-ref-total-label">Total a pagar</div>
           <div className="qa-ref-caps" style={{ marginTop: 4 }}>1 serviço selecionado</div>
         </div>
-        <div className="qa-ref-total-value">
-          {pricingSelecionado ? formatarReais(pricingSelecionado.valorTotal) : "—"}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+          <div className="qa-ref-total-value">
+            {pricingSelecionado ? formatarReais(pricingSelecionado.valorTotal) : "—"}
+          </div>
+          {pricingPix && pricingSelecionado && state.formaPagamento !== "pix" && (
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--qa-ref-ink-soft)",
+                marginTop: 4,
+              }}
+            >
+              ou {formatarReais(pricingPix.valorTotal)} à vista no PIX
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Linha auxiliar: à vista no PIX (sempre visível, igual ao ML) */}
-      {pricingPix && pricingSelecionado && state.formaPagamento !== "pix" && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            fontSize: 13,
-            color: "var(--qa-ref-ink-soft)",
-            marginTop: -8,
-            marginBottom: 8,
-          }}
-        >
-          ou {formatarReais(pricingPix.valorTotal)} à vista no PIX
-        </div>
-      )}
 
       {stage === "form" && (
         <>
