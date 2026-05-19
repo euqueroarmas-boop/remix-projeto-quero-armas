@@ -29,14 +29,18 @@ export default function QACadastroRefinadoPage() {
   const podePularIdentificacao =
     retomar || jaAutenticado || state.identificacao_confirmada;
 
-  // Step inicial conforme query params (executa só na montagem)
+  // Step inicial conforme query params (executa só na montagem).
+  // Wave 4A: `?servico=` SEMPRE pula para confirmação (step 1), seja qual
+  // for a família (Defesa Pessoal, CAC, Profissional). O Etapa01Servico
+  // resolve o slug no catálogo e cai para Etapa00 se for inválido.
   const [step, setStep] = useState<number>(() => {
-    if (params.get("servico") && (retomar || jaAutenticado || state.identificacao_confirmada)) return 1;
+    if (params.get("servico")) return 1;
     return 0;
   });
-  // Tela de "já tenho conta no Arsenal" — antecede o step 0 quando indefinido
+  // Tela de "já tenho conta no Arsenal" — antecede o step 0 quando indefinido.
+  // Se veio com `?servico=` direto da landing/CTA, também pula a identificação.
   const [showIdent, setShowIdent] = useState<boolean>(
-    () => !podePularIdentificacao,
+    () => !podePularIdentificacao && !params.get("servico"),
   );
   // Após autenticação bem-sucedida, mostra resumo "encontrei seu cadastro"
   const [showEncontrado, setShowEncontrado] = useState<boolean>(false);
