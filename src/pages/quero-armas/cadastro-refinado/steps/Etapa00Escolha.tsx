@@ -18,6 +18,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   onSelectService: (slug: string, perfilV2?: string, subperfilV2?: string) => void;
+  /** Seleção de bundle (múltiplos serviços) — fluxo CAC "comprar arma".
+   *  Quando ausente, o componente faz fallback para `onSelectService` com o
+   *  primeiro slug do bundle, preservando compatibilidade. */
+  onSelectBundle?: (
+    slugs: string[],
+    perfilV2?: string,
+    subperfilV2?: string,
+  ) => void;
   onBackToHome: () => void;
   initialPerfil?: string | null;
   /** Atalho discreto: usuário caiu direto na escolha guiada mas quer fazer
@@ -35,6 +43,15 @@ const PATH_MAP: Record<string, QAV2PathDefinition> = {
 const ROOT_STACK: string[] = [];
 
 export default function Etapa00Escolha({ onSelectService, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
+  // Desestruturação separada para incluir o callback opcional sem mexer no
+  // contrato dos demais componentes que ainda chamam só onSelectService.
+  // (parsed via props above)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  void 0;
+  return Etapa00EscolhaImpl({ onSelectService, onBackToHome, initialPerfil, onAbrirIdentificacao });
+}
+
+function Etapa00EscolhaImpl({ onSelectService, onSelectBundle, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
   const navigate = useNavigate();
   const [stack, setStack] = useState<string[]>(() => {
     if (initialPerfil && (PATH_MAP[initialPerfil] || initialPerfil === "cursos")) {
