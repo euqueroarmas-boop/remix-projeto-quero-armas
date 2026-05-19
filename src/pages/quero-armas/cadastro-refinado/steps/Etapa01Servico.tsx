@@ -153,6 +153,15 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
         <>
           {servicos.map((srv, idx) => {
             const podeRemover = isBundle && servicos.length > 1;
+            const bundleDescricoes: Record<number, string> = {
+              1: "Registrar a arma no seu nome.",
+              2: "Liberar você para poder ir treinar ou caçar.",
+            };
+            const descricaoBundle = isBundle
+              ? (idx === 0
+                  ? (srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`)
+                  : bundleDescricoes[idx] || `Serviço ${idx + 1} de ${servicos.length}`)
+              : (srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`);
             if (isBundle) {
               return (
                 <div key={srv.slug} className="qa-ref-opt-card" style={{ cursor: "default" }}>
@@ -160,7 +169,7 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
                   <div className="qa-ref-opt-body">
                     <div className="qa-ref-opt-title">{srv.nome}</div>
                     <div className="qa-ref-opt-desc">
-                      {srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`}
+                      {descricaoBundle}
                     </div>
                   </div>
                   <div
