@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
 import { isCadastroRefinadoEnabled } from "@/lib/quero-armas/cadastroRefinadoFlag";
@@ -79,6 +79,23 @@ function QAScope({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * Redirect /cadastro-v2[/...] → /cadastro preservando ?search.
+ * Sem isso o `<Navigate to="/cadastro">` apaga `?servico=`, `?perfil_v2=`,
+ * `?retomar=`, quebrando deep-links vindos da landing/CTAs.
+ */
+function CadastroV2Redirect({ extraParams }: { extraParams?: Record<string, string> }) {
+  const location = useLocation();
+  const sp = new URLSearchParams(location.search);
+  if (extraParams) {
+    Object.entries(extraParams).forEach(([k, v]) => {
+      if (!sp.has(k)) sp.set(k, v);
+    });
+  }
+  const qs = sp.toString();
+  return <Navigate to={`/cadastro${qs ? `?${qs}` : ""}`} replace />;
+}
+
+/**
  * /cadastro (refinado é o PADRÃO):
  *  - default → QACadastroRefinadoPage (UI editorial 5 etapas)
  *  - VITE_QA_CADASTRO_V2_ENABLED="false" → kill-switch reverso, força o legado
@@ -116,12 +133,12 @@ export default function QARoutes() {
         {/* /cadastro-mira agora usa o MESMO componente real de /cadastro
             (upload, extração, revisão, checkout 2C). Visual Mira já é o padrão. */}
         <Route path="cadastro-mira" element={<CadastroRouteSwitch />} />
-        <Route path="cadastro-v2" element={<Navigate to="/cadastro" replace />} />
-        <Route path="cadastro-v2/defesa-pessoal" element={<Navigate to="/cadastro?perfil_v2=defesa_pessoal" replace />} />
-        <Route path="cadastro-v2/cac" element={<Navigate to="/cadastro?perfil_v2=cac" replace />} />
-        <Route path="cadastro-v2/profissao-ativa" element={<Navigate to="/cadastro?perfil_v2=profissional_ativo" replace />} />
-        <Route path="cadastro-v2/aposentado" element={<Navigate to="/cadastro?perfil_v2=aposentado_inativo" replace />} />
-        <Route path="cadastro-v2/cursos" element={<Navigate to="/cadastro?perfil_v2=cursos" replace />} />
+        <Route path="cadastro-v2" element={<CadastroV2Redirect />} />
+        <Route path="cadastro-v2/defesa-pessoal" element={<CadastroV2Redirect extraParams={{ perfil_v2: "defesa_pessoal" }} />} />
+        <Route path="cadastro-v2/cac" element={<CadastroV2Redirect extraParams={{ perfil_v2: "cac" }} />} />
+        <Route path="cadastro-v2/profissao-ativa" element={<CadastroV2Redirect extraParams={{ perfil_v2: "profissional_ativo" }} />} />
+        <Route path="cadastro-v2/aposentado" element={<CadastroV2Redirect extraParams={{ perfil_v2: "aposentado_inativo" }} />} />
+        <Route path="cadastro-v2/cursos" element={<CadastroV2Redirect extraParams={{ perfil_v2: "cursos" }} />} />
         <Route path="cadastro/foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         <Route path="enviar-foto" element={<QAScope><QAEnviarFotoPage /></QAScope>} />
         

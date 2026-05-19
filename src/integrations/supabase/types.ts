@@ -7685,6 +7685,7 @@ export type Database = {
           modelo_url: string | null
           nome_documento: string
           obrigatorio: boolean
+          obrigatorio_etapa02: boolean
           observacoes_cliente: string | null
           ordem: number
           orgao_emissor: string | null
@@ -7709,6 +7710,7 @@ export type Database = {
           modelo_url?: string | null
           nome_documento: string
           obrigatorio?: boolean
+          obrigatorio_etapa02?: boolean
           observacoes_cliente?: string | null
           ordem?: number
           orgao_emissor?: string | null
@@ -7733,6 +7735,7 @@ export type Database = {
           modelo_url?: string | null
           nome_documento?: string
           obrigatorio?: boolean
+          obrigatorio_etapa02?: boolean
           observacoes_cliente?: string | null
           ordem?: number
           orgao_emissor?: string | null
