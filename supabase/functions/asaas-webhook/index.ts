@@ -759,6 +759,20 @@ Deno.serve(async (req) => {
                 request_payload: { processo_id: proc.id, payment_id: payment.id, event, result: confirmRes },
                 status: "success",
               });
+              // Wave 3D — Pós-pagamento: gera protocolo + status de produção (best-effort)
+              try {
+                const { data: posRes, error: posErr } = await supabase.rpc(
+                  "qa_pos_pagamento_protocolar",
+                  { p_processo_id: proc.id },
+                );
+                if (posErr) {
+                  console.error("[asaas-webhook] qa_pos_pagamento_protocolar falhou:", posErr.message);
+                } else {
+                  console.log("[asaas-webhook] protocolo:", posRes);
+                }
+              } catch (e) {
+                console.warn("[asaas-webhook] qa_pos_pagamento_protocolar exception:", e);
+              }
               // Auditoria universal de status (não bloqueante)
               try {
                 await supabase.from("qa_status_eventos").insert([
