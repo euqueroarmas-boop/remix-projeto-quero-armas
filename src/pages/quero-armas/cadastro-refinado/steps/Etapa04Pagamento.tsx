@@ -248,7 +248,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             email: d.email.trim().toLowerCase(),
             telefone: d.telefone,
             senha: senhaAuto,
-            catalogo_slug: state.servicoSlug,
+            catalogo_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             data_nascimento: d.data_nascimento,
             endereco: {
               cep: d.endereco_cep,
@@ -259,7 +262,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
               cidade: d.endereco_cidade,
               estado: d.endereco_estado,
             },
-            servico_slug: state.servicoSlug,
+            servico_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             origem: state.origem || "cadastro_refinado",
             documentos: state.documentos,
           },
@@ -324,7 +330,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             cliente_id: clienteIdFinal,
             venda_id: vendaId,
             solicitacao_id: null,
-            servico_slug: state.servicoSlug,
+            servico_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             servico_preco: preco,
             dados_pessoais: state.dadosPessoais,
             user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
@@ -338,7 +347,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             motivo: "aceite_registro_falhou",
             cliente_id: qaClienteId,
             venda_id: vendaId,
-            servico_slug: state.servicoSlug,
+            servico_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             erro: aceiteFail?.message || String(aceiteFail),
           },
         }).catch(() => {});
@@ -433,7 +445,11 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       <div className="qa-ref-total">
         <div>
           <div className="qa-ref-total-label">Total a pagar</div>
-          <div className="qa-ref-caps" style={{ marginTop: 4 }}>1 serviço selecionado</div>
+          <div className="qa-ref-caps" style={{ marginTop: 4 }}>
+            {servicos.length > 1
+              ? `${servicos.length} serviços selecionados`
+              : "1 serviço selecionado"}
+          </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <div className="qa-ref-total-value">
