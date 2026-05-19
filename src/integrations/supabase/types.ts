@@ -4848,6 +4848,45 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documento_status_producao: {
+        Row: {
+          bloqueio_motivo: string | null
+          created_at: string
+          entregue_em: string | null
+          id: string
+          iniciado_em: string | null
+          processo_documento_id: string
+          pronto_em: string | null
+          responsavel_admin_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bloqueio_motivo?: string | null
+          created_at?: string
+          entregue_em?: string | null
+          id?: string
+          iniciado_em?: string | null
+          processo_documento_id: string
+          pronto_em?: string | null
+          responsavel_admin_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bloqueio_motivo?: string | null
+          created_at?: string
+          entregue_em?: string | null
+          id?: string
+          iniciado_em?: string | null
+          processo_documento_id?: string
+          pronto_em?: string | null
+          responsavel_admin_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_documentos_cliente: {
         Row: {
           aprovado_em: string | null
@@ -7263,6 +7302,72 @@ export type Database = {
           },
         ]
       }
+      qa_protocolo_sequencias: {
+        Row: {
+          ano: number
+          sigla: string
+          ultimo_numero: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          sigla: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          sigla?: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_protocolos: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          numero: string
+          observacoes: string | null
+          qa_cliente_id: number | null
+          sequencia_ano: number
+          servico_id: number
+          sigla_protocolo: string
+          status: string
+          updated_at: string
+          venda_id: number
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          numero: string
+          observacoes?: string | null
+          qa_cliente_id?: number | null
+          sequencia_ano: number
+          servico_id: number
+          sigla_protocolo: string
+          status?: string
+          updated_at?: string
+          venda_id: number
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          qa_cliente_id?: number | null
+          sequencia_ano?: number
+          servico_id?: number
+          sigla_protocolo?: string
+          status?: string
+          updated_at?: string
+          venda_id?: number
+        }
+        Relationships: []
+      }
       qa_referencias_preferenciais: {
         Row: {
           ativo: boolean | null
@@ -7461,6 +7566,7 @@ export type Database = {
           recorrente: boolean
           servico_id: number | null
           servico_principal_slug: string | null
+          sigla_protocolo: string | null
           slug: string
           tipo: string
           tipo_processo: string | null
@@ -7486,6 +7592,7 @@ export type Database = {
           recorrente?: boolean
           servico_id?: number | null
           servico_principal_slug?: string | null
+          sigla_protocolo?: string | null
           slug: string
           tipo?: string
           tipo_processo?: string | null
@@ -7511,6 +7618,7 @@ export type Database = {
           recorrente?: boolean
           servico_id?: number | null
           servico_principal_slug?: string | null
+          sigla_protocolo?: string | null
           slug?: string
           tipo?: string
           tipo_processo?: string | null
@@ -7567,6 +7675,7 @@ export type Database = {
           ativo: boolean
           condicao_profissional: string | null
           created_at: string
+          emissor: string
           etapa: string
           exemplo_url: string | null
           formato_aceito: string[]
@@ -7590,6 +7699,7 @@ export type Database = {
           ativo?: boolean
           condicao_profissional?: string | null
           created_at?: string
+          emissor?: string
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
@@ -7613,6 +7723,7 @@ export type Database = {
           ativo?: boolean
           condicao_profissional?: string | null
           created_at?: string
+          emissor?: string
           etapa?: string
           exemplo_url?: string | null
           formato_aceito?: string[]
@@ -9309,6 +9420,7 @@ export type Database = {
         }[]
       }
       qa_gen_temp_password: { Args: never; Returns: string }
+      qa_gerar_protocolo: { Args: { p_venda_id: number }; Returns: string }
       qa_get_senha_gov_source: {
         Args: { p_cadastro_cr_id?: number; p_cliente_id: number }
         Returns: {
@@ -9413,6 +9525,10 @@ export type Database = {
           p_processo_id: string
         }
         Returns: Json
+      }
+      qa_proximo_protocolo: {
+        Args: { p_ano: number; p_sigla: string }
+        Returns: number
       }
       qa_recalcular_prazos_processo: {
         Args: { p_processo_id: string }
