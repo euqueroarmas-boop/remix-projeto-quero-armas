@@ -60,7 +60,7 @@ export default function QACadastroRefinadoPage() {
 
   const handleSelectService = (slug: string, perfilV2?: string, subperfilV2?: string) => {
     update({
-      servicoSlug: slug,
+      servicosSlugs: [slug],
       perfilV2: perfilV2 ?? state.perfilV2,
       origem: state.origem ?? "etapa00",
     });
@@ -69,6 +69,26 @@ export default function QACadastroRefinadoPage() {
       try {
         sessionStorage.setItem("qa_cadastro_subperfil_v2", subperfilV2);
       } catch { /* ignore */ }
+    }
+    setStep(1);
+  };
+
+  const handleSelectBundle = (
+    slugs: string[],
+    perfilV2?: string,
+    subperfilV2?: string,
+  ) => {
+    update({
+      servicosSlugs: slugs,
+      perfilV2: perfilV2 ?? state.perfilV2,
+      origem: state.origem ?? "etapa00",
+    });
+    if (subperfilV2) {
+      try {
+        sessionStorage.setItem("qa_cadastro_subperfil_v2", subperfilV2);
+      } catch {
+        /* ignore */
+      }
     }
     setStep(1);
   };
@@ -145,6 +165,7 @@ export default function QACadastroRefinadoPage() {
       return (
         <Etapa00Escolha
           onSelectService={handleSelectService}
+          onSelectBundle={handleSelectBundle}
           onBackToHome={handleBackToHome}
           initialPerfil={initialPerfil}
           onAbrirIdentificacao={handleAbrirIdentificacao}
