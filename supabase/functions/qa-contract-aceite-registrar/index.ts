@@ -127,6 +127,29 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
+    // Resolve cliente_id para id_legado (FK fk_qa_contracts_cliente referencia qa_clientes.id_legado).
+    // Aceita id real OU id_legado vindos do front; sempre persiste id_legado.
+    let clienteIdLegado: number | null = null;
+    {
+      const cidNum = Number(cliente_id);
+      if (Number.isFinite(cidNum)) {
+        const { data: cliRow } = await sb
+          .from("qa_clientes")
+          .select("id, id_legado")
+          .or(`id.eq.${cidNum},id_legado.eq.${cidNum}`)
+          .maybeSingle();
+        if (cliRow) {
+          clienteIdLegado = (cliRow as any).id_legado ?? (cliRow as any).id;
+        }
+      }
+      if (clienteIdLegado == null) {
+        return new Response(
+          JSON.stringify({ error: "cliente_id não encontrado em qa_clientes", detail: String(cliente_id) }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // 1) Carrega template vigente
     const { data: tpl, error: tplErr } = await sb
       .from("qa_contract_templates")
@@ -185,7 +208,7 @@ Deno.serve(async (req) => {
       .from("qa_contracts")
       .insert({
         venda_id,
-        cliente_id,
+        cliente_id: clienteIdLegado,
         contract_number,
         // status canônico fica no default da tabela ('generated_pending_company_signature')
         template_id: tpl.id,
