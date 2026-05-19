@@ -325,6 +325,9 @@
   background: rgba(255, 255, 255, 0.025);
   border: 0.5px solid var(--qa-ref-border-soft);
 }
+.qa-ref-card + .qa-ref-card {
+  margin-top: 16px;
+}
 
 /* Service card */
 .qa-ref-service-head {
