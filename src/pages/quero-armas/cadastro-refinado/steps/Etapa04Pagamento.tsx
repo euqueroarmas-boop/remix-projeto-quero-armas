@@ -537,6 +537,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
                   background: "var(--qa-ref-bg-soft, #fafafa)",
                   maxHeight: 280,
                   overflowY: "auto",
+                  color: "var(--qa-ref-ink, #f5f5f5)",
                 }}
               >
                 {opcoesParcelas.map((opt) => (
@@ -562,6 +563,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
                       display: "flex",
                       justifyContent: "space-between",
                       gap: 12,
+                      color: "var(--qa-ref-ink, #f5f5f5)",
                     }}
                   >
                     <span>
