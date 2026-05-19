@@ -304,26 +304,7 @@ export default function Etapa00Escolha({ onSelectService, onSelectBundle, onBack
             >
               <div className="qa-ref-opt-icon" aria-hidden />
               <div className="qa-ref-opt-body">
-                <div className="qa-ref-opt-title">
-                  {opt.titulo}
-                  {opt.kind === "bundle" && (
-                    <span
-                      style={{
-                        marginLeft: 8,
-                        fontSize: 10.5,
-                        letterSpacing: ".05em",
-                        padding: "2px 6px",
-                        borderRadius: 4,
-                        background: "rgba(214,166,75,0.18)",
-                        color: "#D6A64B",
-                        textTransform: "uppercase",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {opt.servicoSlugs.length} serviços
-                    </span>
-                  )}
-                </div>
+                <div className="qa-ref-opt-title">{opt.titulo}</div>
                 <div className="qa-ref-opt-desc">{opt.descricao}</div>
               </div>
               <ChevronRight size={18} className="qa-ref-opt-chevron" />
