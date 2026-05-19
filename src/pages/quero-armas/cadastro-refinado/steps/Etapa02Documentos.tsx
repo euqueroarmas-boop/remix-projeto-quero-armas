@@ -370,7 +370,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       <div className="qa-ref-info-note" style={{ marginBottom: 18 }}>
         <Info size={14} style={{ flexShrink: 0, marginTop: 2 }} />
         <span>
-          Para avançar, precisamos do seu <strong>documento de identidade</strong> e do <strong>comprovante de residência</strong>. Os demais documentos podem ser enviados agora ou diretamente no seu Arsenal após o pagamento.
+          Para avançar, precisamos do seu <strong>documento de identidade</strong> e do <strong>comprovante de residência</strong>.
         </span>
       </div>
 
@@ -408,14 +408,6 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         {obrigatoriosVisiveis.map((d) => renderDoc(d))}
       </div>
 
-      {opcionaisVisiveis.length > 0 && (
-        <>
-          <div className="qa-ref-docs-sep">Outros documentos <span>(opcional agora)</span></div>
-          <div className="qa-ref-upload-list">
-            {opcionaisVisiveis.map((d) => renderDoc(d))}
-          </div>
-        </>
-      )}
 
       <div style={{ marginTop: 28 }}>
         <button
