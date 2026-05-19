@@ -10,6 +10,7 @@ import {
   type RequisitoDoc,
 } from "@/lib/quero-armas/documentosReaproveitamento";
 import { computeDocCardState } from "@/lib/quero-armas/docCardState";
+import { fetchChecklistEtapa02, type ChecklistDocItem } from "@/lib/quero-armas/etapa02Checklist";
 
 /**
  * Mapa: docKey da Etapa02 → conjunto de `tipo_documento` do Arsenal que
@@ -57,39 +58,9 @@ interface Props {
  * Demais documentos permanecem visíveis (opt-in) e podem ser enviados aqui
  * ou depois no Arsenal pós-pagamento (checklist cobra os pendentes).
  */
-interface DocItem {
-  key: string;
-  label: string;
-  obrigatorio_etapa02: boolean;
-  shortName?: string; // usado no label dinâmico do botão
-}
-
-const DOCS_OBRIGATORIOS_UNIVERSAIS: DocItem[] = [
-  { key: "doc_identidade", label: "Documento de identidade — CIN, RG ou CNH (frente e verso)", obrigatorio_etapa02: true, shortName: "identidade" },
-  { key: "doc_endereco", label: "Comprovante de residência (últimos 90 dias)", obrigatorio_etapa02: true, shortName: "comprovante de residência" },
-];
-
-const DOCS_OPCIONAIS_BASE: DocItem[] = [
-  { key: "doc_cpf", label: "CPF (se não constar no documento de identidade)", obrigatorio_etapa02: false },
-];
-
-function docsForSlug(slug: string | null): DocItem[] {
-  const extras: DocItem[] = [];
-  if (slug && /cr|cac|acervo/.test(slug)) {
-    extras.push(
-      { key: "doc_cr", label: "Certificado de Registro (CR) — se já tiver", obrigatorio_etapa02: false },
-      { key: "doc_clube", label: "Comprovante de filiação ao clube de tiro", obrigatorio_etapa02: false },
-    );
-  }
-  if (slug && /porte|posse/.test(slug)) {
-    extras.push(
-      { key: "doc_psicologico", label: "Laudo psicológico (DPF)", obrigatorio_etapa02: false },
-      { key: "doc_capacitacao", label: "Certificado de capacitação técnica", obrigatorio_etapa02: false },
-    );
-  }
-  // Sempre garante identidade + comprovante no topo, demais embaixo.
-  return [...DOCS_OBRIGATORIOS_UNIVERSAIS, ...DOCS_OPCIONAIS_BASE, ...extras];
-}
+/** DocItem da UI — agora gerado pelo loader que consulta qa_servicos_documentos.
+ *  Mantém o mesmo shape do fluxo legado para preservar Zero Regression. */
+type DocItem = ChecklistDocItem;
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -110,7 +81,20 @@ function maskCep(v: string): string {
 }
 
 export default function Etapa02Documentos({ state, update, updateDados, onNext, onBack }: Props) {
-  const docs = useMemo(() => docsForSlug(state.servicoSlug), [state.servicoSlug]);
+  const [docs, setDocs] = useState<DocItem[]>([]);
+  const [docsLoading, setDocsLoading] = useState<boolean>(true);
+
+  // Carrega o checklist dinâmico do banco (qa_servicos_documentos) para o slug
+  // do serviço selecionado. Sempre cai no fallback hardcoded em caso de erro.
+  useEffect(() => {
+    let cancelado = false;
+    setDocsLoading(true);
+    fetchChecklistEtapa02(state.servicoSlug)
+      .then((items) => { if (!cancelado) setDocs(items); })
+      .finally(() => { if (!cancelado) setDocsLoading(false); });
+    return () => { cancelado = true; };
+  }, [state.servicoSlug]);
+
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [extractingKey, setExtractingKey] = useState<string | null>(null);
   const [extractedFlags, setExtractedFlags] = useState<Record<string, boolean>>({});
