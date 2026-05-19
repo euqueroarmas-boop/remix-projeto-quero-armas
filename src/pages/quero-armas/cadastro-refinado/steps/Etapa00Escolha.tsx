@@ -42,16 +42,7 @@ const PATH_MAP: Record<string, QAV2PathDefinition> = {
 
 const ROOT_STACK: string[] = [];
 
-export default function Etapa00Escolha({ onSelectService, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
-  // Desestruturação separada para incluir o callback opcional sem mexer no
-  // contrato dos demais componentes que ainda chamam só onSelectService.
-  // (parsed via props above)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  void 0;
-  return Etapa00EscolhaImpl({ onSelectService, onBackToHome, initialPerfil, onAbrirIdentificacao });
-}
-
-function Etapa00EscolhaImpl({ onSelectService, onSelectBundle, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
+export default function Etapa00Escolha({ onSelectService, onSelectBundle, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
   const navigate = useNavigate();
   const [stack, setStack] = useState<string[]>(() => {
     if (initialPerfil && (PATH_MAP[initialPerfil] || initialPerfil === "cursos")) {
