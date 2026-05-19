@@ -275,27 +275,61 @@ export default function Etapa00Escolha({ onSelectService, onSelectBundle, onBack
     >
       <Breadcrumb crumbs={crumbs} />
       <div className="qa-ref-opt-list">
-        {node.opcoes.map((opt, idx) => (
-          <button
-            key={opt.kind === "step" ? `s-${opt.key}` : `srv-${opt.servicoSlug}-${idx}`}
-            type="button"
-            className="qa-ref-opt-card"
-            onClick={() => {
-              if (opt.kind === "step") {
-                push(opt.key);
-              } else {
-                onSelectService(opt.servicoSlug, perfilId, opt.subperfilV2);
-              }
-            }}
-          >
-            <div className="qa-ref-opt-icon" aria-hidden />
-            <div className="qa-ref-opt-body">
-              <div className="qa-ref-opt-title">{opt.titulo}</div>
-              <div className="qa-ref-opt-desc">{opt.descricao}</div>
-            </div>
-            <ChevronRight size={18} className="qa-ref-opt-chevron" />
-          </button>
-        ))}
+        {node.opcoes.map((opt, idx) => {
+          const optKey =
+            opt.kind === "step"
+              ? `s-${opt.key}`
+              : opt.kind === "bundle"
+                ? `bnd-${opt.servicoSlugs.join("+")}-${idx}`
+                : `srv-${opt.servicoSlug}-${idx}`;
+          return (
+            <button
+              key={optKey}
+              type="button"
+              className="qa-ref-opt-card"
+              onClick={() => {
+                if (opt.kind === "step") {
+                  push(opt.key);
+                } else if (opt.kind === "bundle") {
+                  if (onSelectBundle) {
+                    onSelectBundle(opt.servicoSlugs, perfilId, opt.subperfilV2);
+                  } else {
+                    // Fallback (compat): chama onSelectService com 1º slug
+                    onSelectService(opt.servicoSlugs[0], perfilId, opt.subperfilV2);
+                  }
+                } else {
+                  onSelectService(opt.servicoSlug, perfilId, opt.subperfilV2);
+                }
+              }}
+            >
+              <div className="qa-ref-opt-icon" aria-hidden />
+              <div className="qa-ref-opt-body">
+                <div className="qa-ref-opt-title">
+                  {opt.titulo}
+                  {opt.kind === "bundle" && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 10.5,
+                        letterSpacing: ".05em",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        background: "rgba(214,166,75,0.18)",
+                        color: "#D6A64B",
+                        textTransform: "uppercase",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {opt.servicoSlugs.length} serviços
+                    </span>
+                  )}
+                </div>
+                <div className="qa-ref-opt-desc">{opt.descricao}</div>
+              </div>
+              <ChevronRight size={18} className="qa-ref-opt-chevron" />
+            </button>
+          );
+        })}
       </div>
     </QACadastroRefinadoShell>
   );
