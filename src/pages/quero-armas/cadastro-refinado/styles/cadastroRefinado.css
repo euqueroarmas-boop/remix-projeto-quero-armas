@@ -19,6 +19,9 @@
   --qa-ref-success-soft: rgba(127, 191, 106, 0.14);
   --qa-ref-error: #b94a48;
   --qa-ref-error-soft: rgba(185, 74, 72, 0.14);
+  --qa-ref-bg-soft: #1a1a1a;
+  --qa-ref-bg-strong: #252525;
+  --qa-ref-line: rgba(255, 255, 255, 0.12);
   --qa-ref-radius: 14px;
   font-family: var(--font-sans, "Inter", ui-sans-serif, system-ui);
   background: var(--qa-ref-bg);
