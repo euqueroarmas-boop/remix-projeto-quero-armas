@@ -92,11 +92,14 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
     };
 
     const filled = renderVariables(template.corpo_html, vars);
-    // Filtra para manter apenas o <section data-anexo-slug> correspondente
-    // ao serviço contratado. Sem match → fail-open (retorna integral).
-    // Bundle: filtramos pelo 1º slug (autorização) por hora; anexos dos demais
-    // serão acoplados no aceite final pela edge function.
-    return filterAnexoBySlug(filled, slugsBundle[0] || state.servicoSlug);
+    // Filtra para manter apenas as <section data-anexo-slug> dos serviços
+    // contratados (slug único ou bundle). Sem match → fail-open.
+    const slugsParaFiltrar = slugsBundle.length > 0
+      ? slugsBundle
+      : state.servicoSlug
+        ? [state.servicoSlug]
+        : [];
+    return filterAnexoBySlug(filled, slugsParaFiltrar);
   }, [template, state.dadosPessoais, state.servicoSlug, state.servicosSlugs, nomeServico, precoServico]);
 
   function handleDownload() {

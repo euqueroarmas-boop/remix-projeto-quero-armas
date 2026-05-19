@@ -43,14 +43,25 @@ function substitute(html: string, vars: Record<string, string>): string {
  * Filtra <section data-anexo-slug="..."> mantendo apenas o do serviço contratado.
  * Fail-open: se não houver match, devolve o HTML integral.
  */
-function filterAnexoBySlug(html: string, slug: string | null | undefined): string {
-  if (!html || !slug) return html;
+function filterAnexoBySlug(
+  html: string,
+  slug: string | string[] | null | undefined,
+): string {
+  if (!html) return html;
+  const raw = Array.isArray(slug) ? slug : [slug];
+  const slugs = raw
+    .filter((s): s is string => !!s && typeof s === "string")
+    .flatMap((s) => s.split(",")) // tolera "slug1,slug2" legado
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (slugs.length === 0) return html;
+  const slugSet = new Set(slugs);
   const sectionRegex = /<section\s+data-anexo-slug="([^"]+)">[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
   const filtered = html.replace(sectionRegex, (full, s) => {
     foundAny = true;
-    if (s === slug) { kept++; return full; }
+    if (slugSet.has(s)) { kept++; return full; }
     return "";
   });
   if (!foundAny || kept === 0) return html;
@@ -86,6 +97,7 @@ Deno.serve(async (req) => {
       venda_id,
       template_codigo = "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS",
       servico_slug,
+      servico_slugs,
       servico_nome,
       servico_preco,
       cliente_nome,
@@ -146,8 +158,15 @@ Deno.serve(async (req) => {
       aceite_user_agent: esc(aceite_user_agent || ""),
       aceite_hash: "", // hash não é embutido no corpo (autorreferente)
     };
-    // Filtra o Anexo I para conter APENAS o serviço contratado (snapshot imutável)
-    const corpoFiltrado = filterAnexoBySlug(tpl.corpo_html, servico_slug);
+    // Normaliza para array: prioriza servico_slugs[]; tolera servico_slug
+    // único OU "slug1,slug2" legado.
+    const slugsParaFiltrar: string[] = Array.isArray(servico_slugs)
+      ? servico_slugs
+      : typeof servico_slug === "string"
+        ? [servico_slug]
+        : [];
+    // Filtra o Anexo I para conter APENAS os serviços contratados (snapshot imutável)
+    const corpoFiltrado = filterAnexoBySlug(tpl.corpo_html, slugsParaFiltrar);
     const conteudo_renderizado = substitute(corpoFiltrado, vars);
 
     // 3) Hash probatório

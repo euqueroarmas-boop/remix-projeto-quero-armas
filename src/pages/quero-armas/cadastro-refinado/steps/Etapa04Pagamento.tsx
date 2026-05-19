@@ -331,10 +331,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             cliente_id: clienteIdFinal,
             venda_id: vendaIdLegado,
             solicitacao_id: null,
-            servico_slug:
+            servico_slug: state.servicoSlug || (state.servicosSlugs?.[0] ?? null),
+            servico_slugs:
               state.servicosSlugs && state.servicosSlugs.length > 0
-                ? state.servicosSlugs.join(",")
-                : state.servicoSlug,
+                ? state.servicosSlugs
+                : state.servicoSlug
+                  ? [state.servicoSlug]
+                  : [],
             servico_preco: preco,
             dados_pessoais: state.dadosPessoais,
             user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
