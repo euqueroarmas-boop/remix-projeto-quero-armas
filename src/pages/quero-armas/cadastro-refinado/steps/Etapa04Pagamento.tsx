@@ -42,8 +42,12 @@ const POLL_TIMEOUT_MS = 30 * 60 * 1000;
 export default function Etapa04Pagamento({ state, update, onNext, onBack }: Props) {
   const navigate = useNavigate();
   const [preco, setPreco] = useState<number>(0);
-  const [servicoId, setServicoId] = useState<string | null>(null);
-  const [nomeServico, setNomeServico] = useState<string | null>(null);
+  const [servicos, setServicos] = useState<
+    Array<{ id: string; slug: string; nome: string; preco: number }>
+  >([]);
+  // Mantém compat para chamadas antigas/edge function: 1º serviço como "principal".
+  const servicoIdPrincipal = servicos[0]?.id ?? null;
+  const nomeServicoPrincipal = servicos[0]?.nome ?? null;
   const [stage, setStage] = useState<Stage>("form");
   const [error, setError] = useState<string | null>(null);
   const [pay, setPay] = useState<PaymentData | null>(null);
@@ -65,18 +69,39 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   }, [state.resultado]);
 
   useEffect(() => {
-    if (!state.servicoSlug) return;
+    const slugs =
+      state.servicosSlugs && state.servicosSlugs.length > 0
+        ? state.servicosSlugs
+        : state.servicoSlug
+          ? [state.servicoSlug]
+          : [];
+    if (slugs.length === 0) return;
     (async () => {
       const { data } = await supabase
         .from("qa_servicos_catalogo")
-        .select("id, preco, nome")
-        .eq("slug", state.servicoSlug)
-        .maybeSingle();
-      setPreco(Number((data as any)?.preco) || 0);
-      setServicoId((data as any)?.id ?? null);
-      setNomeServico((data as any)?.nome ?? null);
+        .select("id, preco, nome, slug")
+        .in("slug", slugs);
+      const rows = (data || []) as Array<{
+        id: string;
+        slug: string;
+        nome: string;
+        preco: number | null;
+      }>;
+      // Reordena pela ordem do state
+      const map = new Map(rows.map((r) => [r.slug, r]));
+      const ordered = slugs
+        .map((s) => map.get(s))
+        .filter(Boolean) as typeof rows;
+      const normalized = ordered.map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        nome: r.nome,
+        preco: Number(r.preco) || 0,
+      }));
+      setServicos(normalized);
+      setPreco(normalized.reduce((acc, r) => acc + r.preco, 0));
     })();
-  }, [state.servicoSlug]);
+  }, [state.servicosSlugs?.join(","), state.servicoSlug]);
 
   /* ---- Cálculo de preview (frontend exibe, backend recalcula a verdade) ---- */
   const pricingPix = useMemo(
@@ -197,7 +222,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       setError("É necessário aceitar o contrato e a política de privacidade.");
       return;
     }
-    if (!servicoId) {
+    if (!servicoIdPrincipal || servicos.length === 0) {
       setError("Catálogo de serviço indisponível. Recarregue a página.");
       return;
     }
@@ -223,7 +248,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             email: d.email.trim().toLowerCase(),
             telefone: d.telefone,
             senha: senhaAuto,
-            catalogo_slug: state.servicoSlug,
+            catalogo_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             data_nascimento: d.data_nascimento,
             endereco: {
               cep: d.endereco_cep,
@@ -234,7 +262,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
               cidade: d.endereco_cidade,
               estado: d.endereco_estado,
             },
-            servico_slug: state.servicoSlug,
+            servico_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             origem: state.origem || "cadastro_refinado",
             documentos: state.documentos,
           },
@@ -258,7 +289,11 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         "qa-checkout-criar-venda",
         {
           body: {
-            cart: [{ servico_id: servicoId, slug: state.servicoSlug, quantidade: 1 }],
+            cart: servicos.map((s) => ({
+              servico_id: s.id,
+              slug: s.slug,
+              quantidade: 1,
+            })),
             identificacao: {
               nome_completo: d.nome_completo,
               cpf: cpfDigits,
@@ -295,7 +330,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             cliente_id: clienteIdFinal,
             venda_id: vendaId,
             solicitacao_id: null,
-            servico_slug: state.servicoSlug,
+            servico_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             servico_preco: preco,
             dados_pessoais: state.dadosPessoais,
             user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
@@ -309,7 +347,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             motivo: "aceite_registro_falhou",
             cliente_id: qaClienteId,
             venda_id: vendaId,
-            servico_slug: state.servicoSlug,
+            servico_slug:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs.join(",")
+                : state.servicoSlug,
             erro: aceiteFail?.message || String(aceiteFail),
           },
         }).catch(() => {});
@@ -404,7 +445,11 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       <div className="qa-ref-total">
         <div>
           <div className="qa-ref-total-label">Total a pagar</div>
-          <div className="qa-ref-caps" style={{ marginTop: 4 }}>1 serviço selecionado</div>
+          <div className="qa-ref-caps" style={{ marginTop: 4 }}>
+            {servicos.length > 1
+              ? `${servicos.length} serviços selecionados`
+              : "1 serviço selecionado"}
+          </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <div className="qa-ref-total-value">
@@ -613,7 +658,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             <ContractPreviewCard
               state={state}
               precoServico={preco}
-              nomeServico={nomeServico}
+              nomeServico={nomeServicoPrincipal}
             />
           </div>
 

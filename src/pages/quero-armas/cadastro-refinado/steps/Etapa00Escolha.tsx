@@ -18,6 +18,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   onSelectService: (slug: string, perfilV2?: string, subperfilV2?: string) => void;
+  /** Seleção de bundle (múltiplos serviços) — fluxo CAC "comprar arma".
+   *  Quando ausente, o componente faz fallback para `onSelectService` com o
+   *  primeiro slug do bundle, preservando compatibilidade. */
+  onSelectBundle?: (
+    slugs: string[],
+    perfilV2?: string,
+    subperfilV2?: string,
+  ) => void;
   onBackToHome: () => void;
   initialPerfil?: string | null;
   /** Atalho discreto: usuário caiu direto na escolha guiada mas quer fazer
@@ -34,7 +42,7 @@ const PATH_MAP: Record<string, QAV2PathDefinition> = {
 
 const ROOT_STACK: string[] = [];
 
-export default function Etapa00Escolha({ onSelectService, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
+export default function Etapa00Escolha({ onSelectService, onSelectBundle, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
   const navigate = useNavigate();
   const [stack, setStack] = useState<string[]>(() => {
     if (initialPerfil && (PATH_MAP[initialPerfil] || initialPerfil === "cursos")) {
@@ -267,27 +275,61 @@ export default function Etapa00Escolha({ onSelectService, onBackToHome, initialP
     >
       <Breadcrumb crumbs={crumbs} />
       <div className="qa-ref-opt-list">
-        {node.opcoes.map((opt, idx) => (
-          <button
-            key={opt.kind === "step" ? `s-${opt.key}` : `srv-${opt.servicoSlug}-${idx}`}
-            type="button"
-            className="qa-ref-opt-card"
-            onClick={() => {
-              if (opt.kind === "step") {
-                push(opt.key);
-              } else {
-                onSelectService(opt.servicoSlug, perfilId, opt.subperfilV2);
-              }
-            }}
-          >
-            <div className="qa-ref-opt-icon" aria-hidden />
-            <div className="qa-ref-opt-body">
-              <div className="qa-ref-opt-title">{opt.titulo}</div>
-              <div className="qa-ref-opt-desc">{opt.descricao}</div>
-            </div>
-            <ChevronRight size={18} className="qa-ref-opt-chevron" />
-          </button>
-        ))}
+        {node.opcoes.map((opt, idx) => {
+          const optKey =
+            opt.kind === "step"
+              ? `s-${opt.key}`
+              : opt.kind === "bundle"
+                ? `bnd-${opt.servicoSlugs.join("+")}-${idx}`
+                : `srv-${opt.servicoSlug}-${idx}`;
+          return (
+            <button
+              key={optKey}
+              type="button"
+              className="qa-ref-opt-card"
+              onClick={() => {
+                if (opt.kind === "step") {
+                  push(opt.key);
+                } else if (opt.kind === "bundle") {
+                  if (onSelectBundle) {
+                    onSelectBundle(opt.servicoSlugs, perfilId, opt.subperfilV2);
+                  } else {
+                    // Fallback (compat): chama onSelectService com 1º slug
+                    onSelectService(opt.servicoSlugs[0], perfilId, opt.subperfilV2);
+                  }
+                } else {
+                  onSelectService(opt.servicoSlug, perfilId, opt.subperfilV2);
+                }
+              }}
+            >
+              <div className="qa-ref-opt-icon" aria-hidden />
+              <div className="qa-ref-opt-body">
+                <div className="qa-ref-opt-title">
+                  {opt.titulo}
+                  {opt.kind === "bundle" && (
+                    <span
+                      style={{
+                        marginLeft: 8,
+                        fontSize: 10.5,
+                        letterSpacing: ".05em",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        background: "rgba(214,166,75,0.18)",
+                        color: "#D6A64B",
+                        textTransform: "uppercase",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {opt.servicoSlugs.length} serviços
+                    </span>
+                  )}
+                </div>
+                <div className="qa-ref-opt-desc">{opt.descricao}</div>
+              </div>
+              <ChevronRight size={18} className="qa-ref-opt-chevron" />
+            </button>
+          );
+        })}
       </div>
     </QACadastroRefinadoShell>
   );

@@ -23,6 +23,10 @@ export interface ServicoAnterior {
 
 export interface CadastroRefinadoState {
   servicoSlug: string | null;
+  /** Lista completa de slugs de serviços selecionados (bundle).
+   *  Quando o fluxo é single-service, contém apenas 1 elemento.
+   *  `servicoSlug` é mantido como o primeiro deste array (compat). */
+  servicosSlugs: string[];
   origem: string | null;
   perfilV2: string | null;
   documentos: Record<string, { storagePath?: string; fileName?: string; status: "pendente" | "enviado" | "erro"; errorMsg?: string }>;
@@ -92,6 +96,7 @@ export interface CadastroRefinadoState {
 
 const initial: CadastroRefinadoState = {
   servicoSlug: null,
+  servicosSlugs: [],
   origem: null,
   perfilV2: null,
   documentos: {},
@@ -147,7 +152,21 @@ export function useCadastroRefinadoState() {
 
   const update = useCallback(
     (patch: Partial<CadastroRefinadoState>) =>
-      setState((s) => ({ ...s, ...patch })),
+      setState((s) => {
+        const merged = { ...s, ...patch };
+        // Sincroniza servicoSlug ↔ servicosSlugs para evitar drift entre
+        // chamadas legadas (servicoSlug) e novas (servicosSlugs).
+        if ("servicosSlugs" in patch) {
+          const arr = (patch.servicosSlugs ?? []).filter(Boolean) as string[];
+          merged.servicosSlugs = arr;
+          merged.servicoSlug = arr[0] ?? null;
+        } else if ("servicoSlug" in patch) {
+          const slug = patch.servicoSlug ?? null;
+          merged.servicoSlug = slug;
+          merged.servicosSlugs = slug ? [slug] : [];
+        }
+        return merged;
+      }),
     []
   );
 

@@ -93,6 +93,13 @@ export type QAV2NodeOption =
       descricao: string;
       servicoSlug: string;
       subperfilV2: string;
+    }
+  | {
+      kind: "bundle";
+      titulo: string;
+      descricao: string;
+      servicoSlugs: string[];
+      subperfilV2: string;
     };
 
 export interface QAV2Node {
@@ -273,20 +280,28 @@ export const QA_V2_PATH_CAC: QAV2PathDefinition = {
     },
     comprar_arma: {
       pergunta: "Em qual condição você vai comprar?",
-      subtitulo: "A modalidade muda os documentos exigidos",
+      subtitulo: "A modalidade muda os documentos exigidos. Comprar arma como CAC envolve autorização, registro e GT — você pode ajustar na próxima etapa.",
       opcoes: [
         {
-          kind: "service",
+          kind: "bundle",
           titulo: "Como atirador esportivo",
-          descricao: "Compra com habitualidade comprovada (atirador)",
-          servicoSlug: "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac",
+          descricao: "Autorização de compra + registro no acervo + Guia de Tráfego. Você pode remover algum na próxima etapa.",
+          servicoSlugs: [
+            "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac",
+            "registro-e-apostilamento-de-arma-de-fogo-cac",
+            "guia-de-trafego-especial-cac",
+          ],
           subperfilV2: "compra_atirador",
         },
         {
-          kind: "service",
+          kind: "bundle",
           titulo: "Como caçador",
-          descricao: "Compra de arma para atividade venatória",
-          servicoSlug: "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac",
+          descricao: "Autorização de compra + registro no acervo + Guia de Tráfego. Você pode remover algum na próxima etapa.",
+          servicoSlugs: [
+            "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac",
+            "registro-e-apostilamento-de-arma-de-fogo-cac",
+            "guia-de-trafego-especial-cac",
+          ],
           subperfilV2: "compra_cacador",
         },
       ],

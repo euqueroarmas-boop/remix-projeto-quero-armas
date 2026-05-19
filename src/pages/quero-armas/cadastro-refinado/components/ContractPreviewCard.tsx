@@ -61,14 +61,28 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
 
     const preco = `R$ ${(precoServico || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+    // Bundle: serviço resumo mostra a lista completa dos slugs.
+    const slugsBundle =
+      state.servicosSlugs && state.servicosSlugs.length > 0
+        ? state.servicosSlugs
+        : state.servicoSlug
+          ? [state.servicoSlug]
+          : [];
+    const servicoNomeFinal =
+      slugsBundle.length > 1
+        ? `${slugsBundle.length} serviços contratados em conjunto: ${slugsBundle.join("; ")}`
+        : nomeServico || state.servicoSlug || "—";
+    const servicoSlugFinal =
+      slugsBundle.length > 0 ? slugsBundle.join(",") : (state.servicoSlug || "—");
+
     const vars: Record<string, string> = {
       cliente_nome: d.nome_completo || "—",
       cliente_cpf_cnpj: d.cpf || "—",
       cliente_endereco: endereco || "—",
       cliente_email: d.email || "—",
       cliente_telefone: d.telefone || "—",
-      servico_slug: state.servicoSlug || "—",
-      servico_nome: nomeServico || state.servicoSlug || "—",
+      servico_slug: servicoSlugFinal,
+      servico_nome: servicoNomeFinal,
       servico_preco: preco,
       // Campos só preenchidos no momento do aceite (edge function)
       aceite_data: "",
@@ -80,8 +94,10 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
     const filled = renderVariables(template.corpo_html, vars);
     // Filtra para manter apenas o <section data-anexo-slug> correspondente
     // ao serviço contratado. Sem match → fail-open (retorna integral).
-    return filterAnexoBySlug(filled, state.servicoSlug);
-  }, [template, state.dadosPessoais, state.servicoSlug, nomeServico, precoServico]);
+    // Bundle: filtramos pelo 1º slug (autorização) por hora; anexos dos demais
+    // serão acoplados no aceite final pela edge function.
+    return filterAnexoBySlug(filled, slugsBundle[0] || state.servicoSlug);
+  }, [template, state.dadosPessoais, state.servicoSlug, state.servicosSlugs, nomeServico, precoServico]);
 
   function handleDownload() {
     if (!template) return;
