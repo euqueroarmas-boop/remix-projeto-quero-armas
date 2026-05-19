@@ -208,16 +208,13 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const obrigatoriosVisiveis = obrigatorios.filter((d) => !coberturaPorReaproveitamento(d.key));
   const opcionaisVisiveis = opcionais.filter((d) => !coberturaPorReaproveitamento(d.key));
   const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
-  const podeAvancar = !docsLoading && obrigatorios.length > 0 && obrigatoriosPendentes.length === 0;
-
-  let ctaLabel = "Continuar para revisão dos dados →";
-  if (docsLoading) {
-    ctaLabel = "Carregando checklist…";
-  } else if (obrigatoriosPendentes.length === obrigatorios.length) {
-    ctaLabel = "Continuar — envie identidade e comprovante";
-  } else if (obrigatoriosPendentes.length === 1) {
-    ctaLabel = `Continuar — falta ${obrigatoriosPendentes[0].shortName ?? obrigatoriosPendentes[0].label}`;
-  }
+  // Etapa de documentos é OPCIONAL: o cliente pode avançar sem enviar nada
+  // e preencher os dados manualmente na próxima etapa. Aplica-se a todos os
+  // serviços (atuais e novos). Não bloquear nunca o botão por falta de upload.
+  const podeAvancar = !docsLoading;
+  const ctaLabel = docsLoading
+    ? "Carregando checklist…"
+    : "Continuar para revisão dos dados →";
 
   async function handleUpload(key: string, file: File) {
     const err = validate(file);
