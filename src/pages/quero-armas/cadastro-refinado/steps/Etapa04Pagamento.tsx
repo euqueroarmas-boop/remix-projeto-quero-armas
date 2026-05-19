@@ -525,6 +525,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             {/* Seletor de parcelas — só aparece quando cartão está selecionado */}
             {state.formaPagamento === "cartao" && openParcelaPicker && (
               <div
+                className="qa-ref-parcela-list"
                 style={{
                   border: "1px solid var(--qa-ref-line, #e5e5e5)",
                   borderRadius: 8,

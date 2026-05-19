@@ -902,3 +902,23 @@
   justify-content: flex-end;
   margin: 0 0 12px;
 }
+
+/* Scrollbar premium para dropdown de parcelamento */
+.qa-ref-parcela-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+.qa-ref-parcela-list::-webkit-scrollbar {
+  width: 6px;
+}
+.qa-ref-parcela-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.qa-ref-parcela-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  transition: background 160ms ease;
+}
+.qa-ref-parcela-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
