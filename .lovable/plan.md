@@ -1,51 +1,52 @@
-# Wave 4A — Etapa 02 dinâmica (consumir `qa_servicos_documentos`) + roteamento `?servico=`
+# Bundle CAC — Comprar arma (3 serviços)
 
-## Objetivo
-Fazer a **Etapa 02 do `/cadastro-v2`** ler o checklist real do banco (`qa_servicos_documentos`) por serviço, em vez da lista hardcoded de 5 docs. E corrigir o roteamento `?servico=...` para reconhecer slugs CAC/Caçador/Esporte (hoje só funciona para Defesa Pessoal).
+Quando o CAC com CR ativo escolhe "Comprar arma" como atirador ou caçador, o sistema passa a selecionar automaticamente 3 serviços (autorização + registro + GTE), permitindo remover individualmente na Etapa 01, mantendo no mínimo 1.
 
-## Escopo (frontend + 1 ajuste de schema)
+## Bundles
 
-### 1. Schema — flag `obrigatorio_etapa02`
-Adicionar coluna em `qa_servicos_documentos`:
-- `obrigatorio_etapa02 BOOLEAN NOT NULL DEFAULT false`
-- Default `true` apenas para `tipo_documento IN ('doc_identidade','comprovante_residencia')` em todos os serviços já cadastrados.
+- **Atirador**: `autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac`, `registro-e-apostilamento-de-arma-de-fogo-cac`, `guia-de-trafego-especial-cac`
+- **Caçador**: `autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac`, `registro-e-apostilamento-de-arma-de-fogo-cac`, `guia-de-trafego-especial-cac`
 
-Critério: somente identidade + comprovante de residência **bloqueiam** o botão "CONTINUAR" na Etapa 02. Os demais ficam visíveis como "Opcional agora — pode enviar depois no Arsenal" (comportamento atual já preservado).
+## Arquivos & mudanças
 
-### 2. Loader dinâmico
-Novo helper `src/lib/quero-armas/etapa02Checklist.ts`:
-- `fetchChecklistEtapa02(servicoSlug)` → resolve `slug → servico_id` (via `qa_servicos_catalogo`) → consulta `qa_servicos_documentos` filtrando `etapa='02'` ordenado por `ordem`.
-- Retorna `DocItem[]` no mesmo shape que `Etapa02Documentos.tsx` já espera (`key`, `label`, `obrigatorio_etapa02`, `shortName`).
-- **Fallback Zero-Regression**: se a query falhar ou vier vazia, devolve a lista universal hardcoded atual (identidade + comprovante + CPF). Nunca quebra o wizard.
+**1. `useCadastroRefinadoState.ts`** — adicionar `servicosSlugs: string[]` (default `[]`). Manter `servicoSlug` como derivado (`servicosSlugs[0] ?? null`) via getter ou sincronia em `update()`. Persistir em localStorage como hoje.
 
-### 3. Refator de `Etapa02Documentos.tsx`
-- Trocar `useMemo(docsForSlug)` por `useEffect` que chama o loader e guarda em estado.
-- Loading state inline (skeleton dos 2 cards obrigatórios) enquanto carrega — não bloqueia visualmente o wizard.
-- Manter intacto: upload, extração IA, reaproveitamento Arsenal, validações de 20MB.
-- `DOC_TIPOS_RELEVANTES_ETAPA02` (mapa para casamento com Arsenal) passa a derivar dinamicamente do `tipo_documento` retornado pelo banco.
+**2. `qaCadastroV2Catalog.ts`** — novo tipo de opção:
+```ts
+type QAV2NodeOption =
+  | { kind: "service"; servicoSlug: string; ... }
+  | { kind: "bundle"; servicoSlugs: string[]; ... }
+  | { kind: "node"; nextNodeId: string; ... };
+```
+Trocar as 2 opções do node `comprar_arma` (atirador, caçador) para `kind: "bundle"` com os arrays acima.
 
-### 4. Roteamento `?servico=` para CAC / Esporte
-Em `QACadastroRefinadoPage.tsx`:
-- Hoje `?servico=` só pula para step 1 se for slug de Defesa Pessoal. Tornar agnóstico: resolver o slug em `qa_servicos_catalogo` na montagem e ir direto para Etapa 01 confirmação (step 1) seja qual for a família.
-- Se o slug não existir no catálogo: cair em Etapa 00 (escolha guiada) como hoje.
+**3. `Etapa00Escolha.tsx`** — quando `opt.kind === "bundle"`, chamar novo callback `onSelectBundle(slugs)` que faz `update({ servicosSlugs: slugs })` e avança para Etapa 01. Quando `service`, comportamento atual: `update({ servicosSlugs: [slug] })`.
 
-## Fora de escopo (não mexer)
-- Geração de protocolo (Wave 3D, já funcionando).
-- Lista de docs do **Arsenal pós-pagamento** (já lê de `qa_servicos_documentos` corretamente).
-- Banner "TUDO PRONTO · ANÁLISE CONCLUÍDA" no header (cosmético, vai em Wave separada).
-- Login com senha em `/cadastro-v2` (decisão de UX é OTP, manter).
+**4. `Etapa01Servico.tsx`** — refatorar para multi-serviço:
+- Buscar via `.in("slug", state.servicosSlugs)`.
+- Renderizar lista de cards (um por serviço) com nome, descrição, preço, e botão **Remover** (X) — desabilitado quando `servicosSlugs.length === 1`.
+- Rodapé com somatório (label "Total dos serviços").
+- Quando array tem 1 item, manter visual atual (card único sem X).
 
-## Detalhes técnicos
-- Migration via tool `supabase--migration` (única tabela: `qa_servicos_documentos`, adicionando coluna + UPDATE inicial).
-- Loader usa cliente Supabase normal (anon) — `qa_servicos_documentos` já é leitura pública (validar RLS na migration; se não for, adicionar policy `FOR SELECT USING (true)`).
-- Sem mudança em edge functions.
-- Sem mudança em `src/integrations/supabase/types.ts` manual — vai regenerar após migration.
+**5. `Etapa04Pagamento.tsx`** — buscar todos: `.select("id, preco, nome, slug").in("slug", state.servicosSlugs)`. `preco = Σ`. Popular `cart` com `servicos.map(s => ({ servico_id: s.id, slug: s.slug, quantidade: 1 }))`. Enviar `catalogo_slug` como `servicosSlugs.join(",")` para `qa-cliente-criar-conta-publica`.
+
+**6. `ContractPreviewCard.tsx`** — aceitar `servicos: Array<{nome, preco}>` (ou via slugs) e listar todos.
+
+## Fora de escopo (não tocar)
+
+- Edge functions de pagamento (já consomem `cart`).
+- `checkoutPricing.ts` (recebe valor total).
+- Fluxos não-CAC ou CAC fora de "comprar arma" continuam com 1 serviço (state aceita array de 1).
+- Banco de dados: não há migração.
+
+## Riscos & mitigação
+
+- **Zero Regression**: state continua expondo `servicoSlug` como compat (derivado), então qualquer leitura existente segue funcionando até migrar.
+- **Remover último**: botão remover gateado por `servicosSlugs.length > 1`.
+- **CAC simples** (registro avulso, GTE avulso) seguem como `kind: "service"` — não afetados.
 
 ## Validação pós-implementação
-Repetir o teste E2E dos 3 cenários:
-1. `/cadastro-v2?servico=posse-de-arma-de-fogo&retomar=1` → Etapa 02 deve mostrar 24 docs (2 obrigatórios + 22 opcionais).
-2. `/cadastro-v2?servico=porte-arma-fogo&retomar=1` → 29 docs, **incluindo `comprovante_efetiva_necessidade`**.
-3. `/cadastro-v2?servico=autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac&retomar=1` → vai direto para Etapa 01 CAC (não cai em Defesa Pessoal), Etapa 02 mostra `habilitacao_cacador_ibama`.
 
-## Risco
-**Baixo–médio**. Wizard de cadastro é fluxo estável → manter fallback hardcoded é mandatório (Zero Regression). Migration toca só 1 coluna nova com default seguro.
+1. CAC → Comprar arma → Atirador → Etapa 01 mostra 3 cards, total = soma. Remover 1 → 2 cards, total recalcula. Botão X some no último.
+2. Pagamento PIX → checkout cria venda com `cart` de N itens (N = serviços restantes).
+3. Fluxo Posse (não-CAC) continua com 1 serviço, sem regressão visual.
