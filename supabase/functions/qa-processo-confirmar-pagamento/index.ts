@@ -54,6 +54,22 @@ Deno.serve(async (req) => {
       return json({ error: rpcErr.message }, 400);
     }
 
+    // Wave 3D — Pós-pagamento: gera protocolo + status de produção (best-effort)
+    let protocoloRes: any = null;
+    try {
+      const { data: posRes, error: posErr } = await supabase.rpc(
+        "qa_pos_pagamento_protocolar",
+        { p_processo_id: processo_id },
+      );
+      if (posErr) {
+        console.error("[confirmar-pagamento] qa_pos_pagamento_protocolar falhou:", posErr.message);
+      } else {
+        protocoloRes = posRes;
+      }
+    } catch (e) {
+      console.warn("[confirmar-pagamento] qa_pos_pagamento_protocolar exception:", e);
+    }
+
     // Notifica cliente (mesmo evento do webhook). Não bloqueia retorno.
     if (!rpcRes?.ja_estava_confirmado) {
       supabase.functions
@@ -94,7 +110,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json({ success: true, ...rpcRes });
+    return json({ success: true, ...rpcRes, protocolo: protocoloRes });
   } catch (err: any) {
     console.error("qa-processo-confirmar-pagamento:", err);
     return json({ error: err?.message || "Erro interno" }, 500);
