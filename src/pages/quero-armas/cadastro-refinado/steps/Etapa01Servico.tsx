@@ -164,53 +164,63 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
               : (srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`);
             if (isBundle) {
               return (
-                <div key={srv.slug} className="qa-ref-opt-card" style={{ cursor: "default" }}>
-                  <div className="qa-ref-opt-icon" aria-hidden />
-                  <div className="qa-ref-opt-body">
-                    <div className="qa-ref-opt-title">{srv.nome}</div>
-                    <div className="qa-ref-opt-desc">
-                      {descricaoBundle}
+                <QACadastroRefinadoCard key={srv.slug}>
+                  <div className="qa-ref-service-head">
+                    <div className="qa-ref-service-info">
+                      <span className="qa-ref-caps">
+                        Serviço {idx + 1} de {servicos.length}
+                      </span>
+                      <h2 className="qa-ref-service-name">{srv.nome}</h2>
+                      <p className="qa-ref-service-desc">{descricaoBundle}</p>
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 8,
+                      }}
+                    >
+                      <div className="qa-ref-price">
+                        <small>R$</small>
+                        {(srv.preco ?? 0).toLocaleString("pt-BR", {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}
+                      </div>
+                      {podeRemover && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemover(srv.slug)}
+                          title="Remover este serviço"
+                          aria-label={`Remover ${srv.nome}`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            background: "transparent",
+                            border: "1px solid rgba(255,255,255,0.18)",
+                            color: "var(--qa-ref-ink-soft, #b8b8b8)",
+                            borderRadius: 6,
+                            padding: "3px 7px",
+                            fontSize: 10.5,
+                            letterSpacing: ".04em",
+                            textTransform: "uppercase",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <X size={11} />
+                          Remover
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-end",
-                      gap: 6,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <span className="qa-ref-opt-price">
-                      R$ {(srv.preco ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                    </span>
-                    {podeRemover && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemover(srv.slug)}
-                        title="Remover este serviço"
-                        aria-label={`Remover ${srv.nome}`}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                          background: "transparent",
-                          border: "1px solid rgba(255,255,255,0.18)",
-                          color: "var(--qa-ref-ink-soft, #b8b8b8)",
-                          borderRadius: 6,
-                          padding: "3px 7px",
-                          fontSize: 10.5,
-                          letterSpacing: ".04em",
-                          textTransform: "uppercase",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <X size={11} />
-                        Remover
-                      </button>
-                    )}
-                  </div>
-                </div>
+                  <ul className="qa-ref-bullets">
+                    {FALLBACK_BULLETS.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
+                  </ul>
+                </QACadastroRefinadoCard>
               );
             }
             return (
