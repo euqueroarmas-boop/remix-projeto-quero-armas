@@ -308,6 +308,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         throw new Error(vendaResp?.error || "Falha ao criar venda no checkout.");
       }
       const vendaId: number = vendaResp.venda_id;
+      const vendaIdLegado: number = vendaResp.id_legado ?? vendaResp.venda_id;
       const checkoutToken: string = vendaResp.checkout_token;
 
       const clienteIdFinalRaw =
@@ -328,7 +329,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         await supabase.functions.invoke("qa-contract-aceite-registrar", {
           body: {
             cliente_id: clienteIdFinal,
-            venda_id: vendaId,
+            venda_id: vendaIdLegado,
             solicitacao_id: null,
             servico_slug:
               state.servicosSlugs && state.servicosSlugs.length > 0
