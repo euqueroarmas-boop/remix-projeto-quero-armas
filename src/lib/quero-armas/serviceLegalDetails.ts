@@ -1,413 +1,823 @@
 /**
- * Detalhes legais/operacionais por slug de serviço.
+ * Conteúdo técnico-editorial por serviço (slug) da Quero Armas.
  *
- * Fonte: catálogo público (qa_servicos_catalogo) + base normativa abaixo.
- * Esta camada é APENAS apresentação institucional, sem promessa de deferimento.
- *
- * Base normativa de referência (não exaustiva):
- *  - Lei nº 10.826/2003 (Estatuto do Desarmamento)
- *  - Decreto nº 11.615/2023 e alterações posteriores
- *  - Normativos da Polícia Federal sobre SINARM (IN nº 201/2021-DG/PF e atualizações)
- *  - Normas do Exército/COLOG/DFPC sobre SIGMA (CAC, CR, CRAF, GTE, apostilamento, acervo)
+ * Regras:
+ *  - Nenhum texto genérico repetido como corpo principal.
+ *  - Cada slug tem conteúdo específico. Slug sem entrada => "em revisão".
+ *  - Base normativa mínima: Lei 10.826/2003, Decreto 11.615/2023,
+ *    normativos PF/SINARM e Exército/COLOG/DFPC/SIGMA.
+ *  - Não promete deferimento, prazo legal garantido ou resultado.
  */
 
-export type CategoriaOrgao =
-  | "PF_SINARM"
-  | "EXERCITO_SIGMA"
-  | "PF_SINARM_E_EXERCITO_SIGMA"
+export type SistemaAplicavel =
+  | "SINARM_PF"
+  | "SIGMA_EXERCITO"
   | "JUDICIAL"
-  | "TREINAMENTO"
+  | "CURSO_ESTANDE"
   | "INTERNO";
 
 export interface ServiceLegalDetails {
   titulo: string;
-  orgao: CategoriaOrgao;
-  orgaoLabel: string;
-  natureza: string;
-  fundamento: string[];
+  sistema: SistemaAplicavel;
+  orgaoCompetente: string;
+  baseLegal: string[];
+  oQueE: string;
+  quandoSeAplica: string;
+  quemPodeSolicitar: string[];
   requisitos: string[];
   documentos: string[];
   etapas: string[];
-  prazoEstimado: string;
-  observacoes: string[];
+  pontosAtencao: string[];
+  limitesQA: string;
 }
 
-const FUND_SINARM = [
-  "Lei nº 10.826/2003 — Estatuto do Desarmamento",
-  "Decreto nº 11.615/2023 e alterações posteriores",
-  "IN nº 201/2021-DG/PF e atos normativos da Polícia Federal sobre o SINARM",
-];
+const DEFERIMENTO_NOTE =
+  "O deferimento depende exclusivamente do órgão competente. A Quero Armas atua como assessoria técnica e documental e não influencia a decisão final.";
 
-const FUND_SIGMA = [
-  "Lei nº 10.826/2003 — Estatuto do Desarmamento",
-  "Decreto nº 11.615/2023 e alterações posteriores",
-  "Normas do Exército Brasileiro / COLOG / DFPC aplicáveis ao SIGMA (CAC, CR, CRAF, GTE, acervo)",
-];
+const ADV_NOTE =
+  "Atividade privativa de advocacia (Lei nº 8.906/1994). Quando aplicável, a atuação judicial é realizada por advogado(a) habilitado(a), com contrato e procuração apartados.";
 
-const FUND_AMBOS = [
-  "Lei nº 10.826/2003 — Estatuto do Desarmamento",
-  "Decreto nº 11.615/2023 e alterações posteriores",
-  "IN nº 201/2021-DG/PF (SINARM) e normas do Exército/COLOG/DFPC (SIGMA)",
-];
-
-const OBS_PADRAO = [
-  "Requisitos, documentos e prazos podem variar conforme o órgão competente, a categoria do interessado, o acervo declarado e a norma vigente na data do protocolo.",
-  "A Quero Armas atua como assessoria técnica e documental especializada e não substitui a decisão do órgão competente.",
-  "Não há qualquer promessa de deferimento; os prazos informados são estimativas operacionais com base em casos similares.",
-];
-
-const OBS_JUDICIAL = [
-  "A Quero Armas não exerce advocacia. Eventual atuação judicial (mandado de segurança, ação ordinária, recurso) depende de advogado parceiro, com contrato apartado e procuração específica.",
-  "Este serviço é informativo/preparatório e não constitui aconselhamento jurídico individual.",
-];
-
-/** Detalhes específicos por slug. Slugs ausentes recebem fallback por categoria. */
 const DETAILS: Record<string, ServiceLegalDetails> = {
-  // ============ PF / SINARM ============
+  // ───────────────────────── SINARM / PF ─────────────────────────
+
   "posse-de-arma-de-fogo": {
-    titulo: "Posse de Arma de Fogo",
-    orgao: "PF_SINARM",
-    orgaoLabel: "Polícia Federal — SINARM",
-    natureza:
-      "Autorização para manter arma de fogo de uso permitido no interior da residência ou local de trabalho, mediante registro no SINARM.",
-    fundamento: FUND_SINARM,
+    titulo: "Aquisição / Posse de Arma de Fogo",
+    sistema: "SINARM_PF",
+    orgaoCompetente: "Polícia Federal — SINARM",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 4º a 6º (requisitos e posse)",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Instrução Normativa nº 201/2021-DG/PF e atos PF correlatos",
+    ],
+    oQueE:
+      "Autorização da Polícia Federal para adquirir e manter arma de fogo de uso permitido no interior da residência ou em dependência dela, ou no local de trabalho de propriedade do interessado.",
+    quandoSeAplica:
+      "Quando o cidadão deseja, pela primeira vez ou após indeferimento anterior, adquirir e manter arma de fogo de uso permitido no seu domicílio ou local de trabalho.",
+    quemPodeSolicitar: [
+      "Pessoa física com idade mínima de 25 anos",
+      "Residente no território nacional",
+      "Sem antecedentes criminais que vedem a posse",
+    ],
     requisitos: [
-      "Idade mínima de 25 anos",
+      "Declaração de efetiva necessidade da posse",
       "Comprovação de ocupação lícita e residência fixa",
-      "Capacidade técnica e aptidão psicológica em vigor",
-      "Ausência de antecedentes criminais",
+      "Capacidade técnica para o manuseio de arma de fogo (instrutor credenciado)",
+      "Aptidão psicológica vigente (psicólogo credenciado PF)",
+      "Certidões negativas criminais (Justiça Estadual, Federal, Militar e Eleitoral)",
     ],
     documentos: [
-      "Documento de identidade (RG/CIN/CNH frente e verso)",
+      "Documento de identidade (RG/CIN/CNH) frente e verso",
       "CPF",
       "Comprovante de residência atualizado",
       "Comprovante de ocupação lícita",
-      "Laudo de aptidão psicológica (psicólogo credenciado PF)",
-      "Atestado de capacidade técnica (instrutor credenciado PF)",
-      "Certidões negativas (Justiça Estadual, Federal, Militar e Eleitoral)",
+      "Laudo de aptidão psicológica (modelo PF)",
+      "Atestado de capacidade técnica (modelo PF)",
+      "Certidões negativas criminais",
     ],
     etapas: [
-      "Cadastro e envio de documentos",
-      "Análise técnica e checklist pela equipe Quero Armas",
-      "Protocolo no SINARM/Polícia Federal",
-      "Acompanhamento até decisão da PF",
+      "Cadastro do interessado e checklist documental na Quero Armas",
+      "Conferência técnica dos laudos e certidões",
+      "Abertura do processo no SINARM/Polícia Federal",
+      "Acompanhamento da exigência/análise pela PF",
+      "Emissão do Certificado de Registro de Arma de Fogo (CRAF) após decisão favorável",
     ],
-    prazoEstimado: "Estimativa operacional: 30 a 120 dias após protocolo, conforme análise da PF.",
-    observacoes: OBS_PADRAO,
+    pontosAtencao: [
+      "A posse autoriza manter a arma apenas em residência ou local de trabalho, não autoriza o porte.",
+      "Validade do laudo psicológico e do atestado de capacidade técnica é limitada — protocolar dentro do prazo.",
+      "Limites de calibre e quantidade seguem o Decreto vigente na data do protocolo.",
+    ],
+    limitesQA:
+      "A Quero Armas organiza documentação, faz checklist técnico e protocola o pedido. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "aquisicao-registro-posse-de-arma-de-fogo": {
+    titulo: "Aquisição / Registro / Posse de Arma de Fogo",
+    sistema: "SINARM_PF",
+    orgaoCompetente: "Polícia Federal — SINARM",
+    baseLegal: [
+      "Lei nº 10.826/2003, arts. 4º, 5º e 12",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Instrução Normativa nº 201/2021-DG/PF",
+    ],
+    oQueE:
+      "Pacote completo que integra a autorização de posse, a autorização de aquisição da arma e o subsequente registro no SINARM, com emissão do CRAF.",
+    quandoSeAplica:
+      "Quando o cidadão ainda não possui posse vigente e quer, em um único fluxo, obter posse, comprar a arma e registrá-la no SINARM.",
+    quemPodeSolicitar: [
+      "Pessoa física com idade mínima de 25 anos",
+      "Sem antecedentes criminais que vedem a posse",
+      "Residente no território nacional",
+    ],
+    requisitos: [
+      "Mesmos requisitos da posse (efetiva necessidade, ocupação, capacidade técnica e psicológica, certidões)",
+      "Definição prévia do modelo/calibre dentro dos limites do uso permitido",
+    ],
+    documentos: [
+      "Documento de identidade e CPF",
+      "Comprovante de residência",
+      "Comprovante de ocupação lícita",
+      "Laudo psicológico e atestado de capacidade técnica vigentes",
+      "Certidões negativas",
+      "Dados completos da arma pretendida (modelo, calibre, fabricante)",
+      "Nota fiscal de aquisição (na fase de registro)",
+    ],
+    etapas: [
+      "Cadastro e checklist documental",
+      "Protocolo da posse no SINARM/PF",
+      "Após deferimento, emissão da Autorização de Aquisição (AA)",
+      "Compra da arma na loja credenciada",
+      "Protocolo do registro e emissão do CRAF",
+    ],
+    pontosAtencao: [
+      "A Autorização de Aquisição possui validade definida pela PF e precisa ser usada dentro do prazo.",
+      "Calibres restritos ao uso permitido para civis nesta modalidade.",
+      "O CRAF é vinculado ao titular e à arma específica.",
+    ],
+    limitesQA:
+      "A Quero Armas conduz o trâmite documental e o protocolo nas três fases (posse, aquisição e registro). " +
+      DEFERIMENTO_NOTE,
   },
 
   "porte-arma-fogo": {
     titulo: "Porte de Arma de Fogo",
-    orgao: "PF_SINARM",
-    orgaoLabel: "Polícia Federal — SINARM",
-    natureza:
-      "Autorização excepcional para portar arma de fogo fora da residência ou local de trabalho, condicionada a comprovação de efetiva necessidade.",
-    fundamento: FUND_SINARM,
+    sistema: "SINARM_PF",
+    orgaoCompetente: "Polícia Federal — SINARM",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 10 (porte e efetiva necessidade)",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Instrução Normativa nº 201/2021-DG/PF e atos PF sobre porte",
+    ],
+    oQueE:
+      "Autorização excepcional e discricionária da Polícia Federal para portar arma de fogo de uso permitido fora da residência ou do local de trabalho.",
+    quandoSeAplica:
+      "Quando o interessado demonstra, de forma documental e concreta, efetiva necessidade decorrente de risco à integridade física, exposição patrimonial relevante ou outra hipótese expressamente prevista.",
+    quemPodeSolicitar: [
+      "Pessoa física com idade mínima de 25 anos",
+      "Sem antecedentes criminais que vedem o porte",
+      "Capaz de demonstrar efetiva necessidade com prova documental concreta",
+    ],
     requisitos: [
-      "Idade mínima de 25 anos",
-      "Demonstração de efetiva necessidade (risco concreto à integridade física)",
+      "Fundamentação documental da efetiva necessidade",
       "Capacidade técnica e aptidão psicológica vigentes",
-      "Ausência de antecedentes criminais e ocupação lícita comprovada",
-    ],
-    documentos: [
-      "Documento de identidade e CPF",
-      "Comprovante de residência atualizado",
-      "Comprovação documental da necessidade alegada",
-      "Laudo psicológico e atestado de capacidade técnica vigentes",
-      "Certidões negativas criminais",
-    ],
-    etapas: [
-      "Cadastro e envio de documentos",
-      "Construção da fundamentação de efetiva necessidade",
-      "Protocolo junto à Polícia Federal",
-      "Acompanhamento até decisão final",
-    ],
-    prazoEstimado: "Estimativa operacional: 60 a 180 dias após protocolo, conforme análise da PF.",
-    observacoes: OBS_PADRAO,
-  },
-
-  "autorizacao-compra-arma-fogo": {
-    titulo: "Autorização de Compra de Arma de Fogo",
-    orgao: "PF_SINARM",
-    orgaoLabel: "Polícia Federal — SINARM",
-    natureza:
-      "Serviço de autorização de compra de arma de fogo para atiradores desportivos junto ao SINARM/Polícia Federal.",
-    fundamento: FUND_SINARM,
-    requisitos: [
-      "Posse ou CR vigente conforme o caso",
-      "Acervo dentro dos limites legais para a categoria",
-      "Documentação pessoal regular",
-    ],
-    documentos: [
-      "Documento de identidade e CPF",
-      "Comprovante de residência atualizado",
-      "CR/Posse vigente quando aplicável",
-      "Dados da arma pretendida (modelo, calibre, fabricante)",
-    ],
-    etapas: [
-      "Cadastro e envio de documentos",
-      "Conferência de acervo e elegibilidade",
-      "Protocolo da autorização junto à PF",
-      "Acompanhamento até emissão da autorização",
-    ],
-    prazoEstimado: "Estimativa operacional: 15 a 60 dias após protocolo.",
-    observacoes: OBS_PADRAO,
-  },
-
-  "registro-arma-sinarm": {
-    titulo: "Registro de Arma no SINARM",
-    orgao: "PF_SINARM",
-    orgaoLabel: "Polícia Federal — SINARM",
-    natureza: "Registro de arma de fogo de uso permitido junto ao SINARM/PF.",
-    fundamento: FUND_SINARM,
-    requisitos: ["Posse vigente", "Nota fiscal e dados completos da arma"],
-    documentos: [
-      "Documento de identidade e CPF",
-      "Comprovante de residência",
-      "Nota fiscal da arma",
-      "Posse vigente",
-    ],
-    etapas: [
-      "Cadastro e envio de documentos",
-      "Conferência técnica",
-      "Protocolo do registro na PF",
-      "Entrega do CRAF/SINARM",
-    ],
-    prazoEstimado: "Estimativa operacional: 30 a 90 dias após protocolo.",
-    observacoes: OBS_PADRAO,
-  },
-
-  // ============ EXÉRCITO / SIGMA ============
-  "concessao-cr": {
-    titulo: "Concessão de CR (Certificado de Registro)",
-    orgao: "EXERCITO_SIGMA",
-    orgaoLabel: "Exército Brasileiro — SIGMA",
-    natureza:
-      "Obtenção do Certificado de Registro (CR) junto ao Exército para atuar como Atirador, Caçador ou Colecionador (CAC).",
-    fundamento: FUND_SIGMA,
-    requisitos: [
-      "Idade mínima conforme categoria",
-      "Comprovação de habitualidade (quando aplicável)",
-      "Filiação a entidade de tiro reconhecida (atirador desportivo)",
-      "Aptidão psicológica e capacidade técnica vigentes",
+      "Ocupação lícita e residência comprovada",
       "Certidões negativas criminais",
     ],
     documentos: [
       "Documento de identidade e CPF",
-      "Comprovante de residência",
-      "Comprovante de filiação a clube/entidade (atirador)",
-      "Laudo psicológico e atestado de capacidade técnica",
-      "Certidões negativas (Justiça Estadual, Federal, Militar e Eleitoral)",
-    ],
-    etapas: [
-      "Cadastro e envio de documentos",
-      "Análise técnica e checklist",
-      "Protocolo no SIGMA / Serviço de Fiscalização do Exército",
-      "Acompanhamento até emissão do CR",
-    ],
-    prazoEstimado: "Estimativa operacional: 60 a 180 dias após protocolo.",
-    observacoes: OBS_PADRAO,
-  },
-
-  "renovacao-cr": {
-    titulo: "Renovação de CR",
-    orgao: "EXERCITO_SIGMA",
-    orgaoLabel: "Exército Brasileiro — SIGMA",
-    natureza: "Renovação do Certificado de Registro CAC junto ao Exército/SIGMA.",
-    fundamento: FUND_SIGMA,
-    requisitos: [
-      "CR ainda vigente ou dentro do prazo administrativo de renovação",
-      "Comprovação de habitualidade (atirador)",
-      "Aptidão psicológica e capacidade técnica vigentes",
-      "Certidões negativas criminais",
-    ],
-    documentos: [
-      "CR atual",
-      "Documento de identidade e CPF",
-      "Comprovante de residência",
-      "Comprovante de habitualidade no clube",
+      "Comprovante de residência e de ocupação",
+      "Provas documentais do risco/necessidade (boletins de ocorrência, contratos, registros)",
       "Laudo psicológico e atestado de capacidade técnica vigentes",
       "Certidões negativas",
     ],
     etapas: [
-      "Cadastro e envio de documentos",
-      "Conferência técnica do acervo e da habitualidade",
+      "Entrevista técnica e mapeamento da efetiva necessidade",
+      "Construção da fundamentação documental",
+      "Protocolo do pedido de porte na Polícia Federal",
+      "Cumprimento de exigências e acompanhamento",
+      "Decisão final da PF (deferimento, indeferimento ou diligência)",
+    ],
+    pontosAtencao: [
+      "O porte é decisão discricionária da PF — não basta atender requisitos formais, é preciso convencer da efetiva necessidade.",
+      "Categorias de porte funcional (ex.: profissões previstas em lei) seguem regramento próprio e não são equiparadas a porte civil comum.",
+      "Indeferimento pode ser combatido por recurso administrativo e, em hipóteses específicas, via judicial.",
+    ],
+    limitesQA:
+      "A Quero Armas estrutura tecnicamente o pedido, organiza prova documental e protocola o porte. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "renovacao-de-porte-de-arma-de-fogo": {
+    titulo: "Renovação de Porte de Arma de Fogo",
+    sistema: "SINARM_PF",
+    orgaoCompetente: "Polícia Federal — SINARM",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 10",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Atos da Polícia Federal sobre renovação de porte",
+    ],
+    oQueE:
+      "Procedimento para manter a validade da autorização de porte de arma de fogo já concedida, com reapresentação de requisitos e nova análise pela PF.",
+    quandoSeAplica:
+      "Próximo ao vencimento do porte vigente, ou dentro do prazo administrativo definido pela PF para renovação.",
+    quemPodeSolicitar: [
+      "Titular de porte vigente ou dentro da janela de renovação",
+      "Sem fato superveniente que comprometa os requisitos originais",
+    ],
+    requisitos: [
+      "Manutenção da efetiva necessidade que justificou a concessão original",
+      "Aptidão psicológica e capacidade técnica novamente vigentes",
+      "Certidões negativas atualizadas",
+    ],
+    documentos: [
+      "Porte atual",
+      "Documento de identidade, CPF e comprovante de residência",
+      "Atualização da prova de efetiva necessidade",
+      "Novo laudo psicológico e novo atestado de capacidade técnica",
+      "Certidões negativas atualizadas",
+    ],
+    etapas: [
+      "Diagnóstico do porte vigente e prazos",
+      "Atualização documental e dos laudos",
+      "Protocolo da renovação na PF",
+      "Acompanhamento da análise e exigências",
+    ],
+    pontosAtencao: [
+      "Renovação não é automática: a PF reavalia a efetiva necessidade.",
+      "Perder a janela de renovação pode obrigar a iniciar um novo pedido como se fosse o primeiro.",
+    ],
+    limitesQA:
+      "A Quero Armas organiza a renovação dentro do prazo e protocola junto à PF. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "renovacao-posse-de-arma-de-fogo": {
+    titulo: "Renovação de Posse de Arma de Fogo",
+    sistema: "SINARM_PF",
+    orgaoCompetente: "Polícia Federal — SINARM",
+    baseLegal: [
+      "Lei nº 10.826/2003, arts. 5º e 12",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Instrução Normativa nº 201/2021-DG/PF",
+    ],
+    oQueE:
+      "Renovação do Certificado de Registro de Arma de Fogo (CRAF) emitido pelo SINARM, mantendo a regularidade da posse já concedida.",
+    quandoSeAplica:
+      "Quando o CRAF da arma está próximo do vencimento ou já dentro da janela de renovação prevista em norma.",
+    quemPodeSolicitar: [
+      "Titular do CRAF",
+      "Sem fatos supervenientes que vedem a posse",
+    ],
+    requisitos: [
+      "Manutenção dos requisitos originais (ocupação, residência, sem antecedentes)",
+      "Aptidão psicológica e capacidade técnica novamente vigentes",
+      "Certidões negativas atualizadas",
+    ],
+    documentos: [
+      "CRAF atual",
+      "Documento de identidade, CPF e comprovante de residência",
+      "Novo laudo psicológico e atestado de capacidade técnica",
+      "Certidões negativas",
+    ],
+    etapas: [
+      "Conferência do CRAF e prazos",
+      "Atualização documental",
+      "Protocolo da renovação no SINARM/PF",
+      "Acompanhamento até emissão do novo CRAF",
+    ],
+    pontosAtencao: [
+      "O atraso na renovação pode caracterizar irregularidade da posse — manter a arma com CRAF vencido tem consequências.",
+      "A renovação trata da posse já concedida, não do porte.",
+    ],
+    limitesQA:
+      "A Quero Armas organiza e protocola a renovação do CRAF. " + DEFERIMENTO_NOTE,
+  },
+
+  "registro-arma-fogo": {
+    titulo: "Registro de Arma de Fogo (Defesa Pessoal)",
+    sistema: "SINARM_PF",
+    orgaoCompetente: "Polícia Federal — SINARM",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 5º",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Instrução Normativa nº 201/2021-DG/PF",
+    ],
+    oQueE:
+      "Registro no SINARM da arma de fogo de uso permitido adquirida para defesa pessoal, com emissão do CRAF em nome do titular.",
+    quandoSeAplica:
+      "Após a autorização de aquisição e a compra efetiva da arma em loja credenciada, para vincular o bem ao titular no SINARM.",
+    quemPodeSolicitar: [
+      "Titular de posse vigente ou de autorização de aquisição em curso",
+    ],
+    requisitos: [
+      "Posse vigente ou Autorização de Aquisição válida",
+      "Nota fiscal regular da arma",
+      "Dados completos do bem (marca, modelo, calibre, número de série)",
+    ],
+    documentos: [
+      "Documento de identidade, CPF e comprovante de residência",
+      "Posse/Autorização de Aquisição",
+      "Nota fiscal da arma",
+    ],
+    etapas: [
+      "Conferência da nota fiscal e do bem",
+      "Cadastro do registro junto à PF",
+      "Acompanhamento de exigências",
+      "Emissão do CRAF",
+    ],
+    pontosAtencao: [
+      "Registro de defesa pessoal não habilita transporte habitual nem porte.",
+      "O CRAF de defesa pessoal não se confunde com o CRAF SIGMA (CAC).",
+    ],
+    limitesQA:
+      "A Quero Armas executa o registro técnico e o protocolo. " + DEFERIMENTO_NOTE,
+  },
+
+  "recurso-administrativo": {
+    titulo: "Recurso Administrativo",
+    sistema: "SINARM_PF",
+    orgaoCompetente:
+      "Autoridade administrativa que proferiu a decisão (PF/SINARM ou Exército/SIGMA)",
+    baseLegal: [
+      "Lei nº 9.784/1999 (processo administrativo federal)",
+      "Lei nº 10.826/2003",
+      "Decreto nº 11.615/2023 e atos do órgão competente",
+    ],
+    oQueE:
+      "Peça administrativa de impugnação contra decisão de indeferimento, exigência ou ato administrativo proferido em processo de posse, porte, registro, CR, CRAF, GTE ou correlato.",
+    quandoSeAplica:
+      "Após ciência da decisão impugnável, dentro do prazo administrativo previsto em lei ou regulamento.",
+    quemPodeSolicitar: [
+      "Parte interessada do processo administrativo",
+      "Representante legal devidamente constituído",
+    ],
+    requisitos: [
+      "Existência de decisão administrativa impugnável",
+      "Tempestividade do recurso",
+      "Fundamentação técnica e jurídica adequada ao caso",
+    ],
+    documentos: [
+      "Cópia integral da decisão recorrida",
+      "Documentos do processo originário",
+      "Provas documentais que sustentem o recurso",
+      "Documentos pessoais do recorrente",
+    ],
+    etapas: [
+      "Análise técnica da decisão e do processo",
+      "Construção da peça recursal fundamentada",
+      "Protocolo do recurso junto à autoridade competente",
+      "Acompanhamento até decisão recursal",
+    ],
+    pontosAtencao: [
+      "Recurso administrativo não garante reforma da decisão.",
+      "Esfera administrativa é distinta da esfera judicial; a depender do caso, pode caber também ação judicial via advogado.",
+    ],
+    limitesQA:
+      "A Quero Armas atua na elaboração técnica e no protocolo do recurso administrativo. " +
+      ADV_NOTE +
+      " " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "mandado-de-seguranca": {
+    titulo: "Mandado de Segurança",
+    sistema: "JUDICIAL",
+    orgaoCompetente: "Poder Judiciário competente",
+    baseLegal: [
+      "Constituição Federal, art. 5º, LXIX e LXX",
+      "Lei nº 12.016/2009 (disciplina o mandado de segurança)",
+      "Lei nº 8.906/1994 (Estatuto da Advocacia)",
+    ],
+    oQueE:
+      "Ação constitucional judicial cabível para proteger direito líquido e certo lesado ou ameaçado por ato ilegal ou abusivo de autoridade pública.",
+    quandoSeAplica:
+      "Quando há ato concreto de autoridade (ex.: indeferimento, exigência abusiva, omissão) que viola direito líquido e certo do interessado e existe prova pré-constituída.",
+    quemPodeSolicitar: [
+      "Pessoa física ou jurídica titular do direito alegado",
+      "Sempre por meio de advogado(a) habilitado(a)",
+    ],
+    requisitos: [
+      "Direito líquido e certo demonstrável por prova documental pré-constituída",
+      "Ato coator identificado, com autoridade definida",
+      "Tempestividade (prazo decadencial de 120 dias)",
+    ],
+    documentos: [
+      "Cópia integral do processo administrativo",
+      "Decisão/ato coator e sua publicação/ciência",
+      "Documentos pessoais do impetrante",
+      "Demais provas pré-constituídas",
+    ],
+    etapas: [
+      "Análise técnica preliminar pela equipe Quero Armas",
+      "Encaminhamento a advogado(a) parceiro(a)",
+      "Contrato de honorários e procuração — apartados",
+      "Distribuição da ação e acompanhamento pelo(a) advogado(a)",
+    ],
+    pontosAtencao: [
+      "Mandado de segurança não é serviço jurídico prestado diretamente pela Quero Armas.",
+      "Não há promessa de êxito; concessão de liminar e procedência são decisões exclusivas do Judiciário.",
+    ],
+    limitesQA:
+      "A Quero Armas faz apenas a triagem técnica e o encaminhamento a advogado(a) habilitado(a). " +
+      ADV_NOTE,
+  },
+
+  // ───────────────────────── SIGMA / EXÉRCITO ─────────────────────────
+
+  "concessao-cr": {
+    titulo: "Concessão de CR (Certificado de Registro)",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 6º, § 1º (CAC)",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre Atirador, Caçador e Colecionador (SIGMA)",
+    ],
+    oQueE:
+      "Concessão do Certificado de Registro (CR) pelo Exército, habilitando a pessoa física como Atirador Desportivo, Caçador ou Colecionador (CAC) no SIGMA.",
+    quandoSeAplica:
+      "Quando o interessado deseja ingressar oficialmente em uma das categorias CAC para constituir acervo e praticar a atividade nos termos da norma do Exército.",
+    quemPodeSolicitar: [
+      "Pessoa física com idade mínima exigida pela categoria pretendida",
+      "Filiado a entidade de tiro reconhecida (Atirador) quando aplicável",
+      "Sem antecedentes criminais que vedem a categoria",
+    ],
+    requisitos: [
+      "Vinculação a clube/entidade reconhecida quando aplicável",
+      "Capacidade técnica para manuseio de arma de fogo",
+      "Aptidão psicológica vigente",
+      "Certidões negativas criminais",
+    ],
+    documentos: [
+      "Documento de identidade e CPF",
+      "Comprovante de residência",
+      "Comprovante de filiação a entidade de tiro (quando aplicável)",
+      "Laudo psicológico e atestado de capacidade técnica vigentes",
+      "Certidões negativas (Estadual, Federal, Militar e Eleitoral)",
+    ],
+    etapas: [
+      "Cadastro e checklist documental",
+      "Conferência técnica dos requisitos da categoria",
+      "Protocolo do CR no SIGMA/SFPC",
+      "Acompanhamento até deferimento e emissão do CR",
+    ],
+    pontosAtencao: [
+      "CR não autoriza porte. Para deslocamento do acervo é necessária Guia de Tráfego (GTE) específica.",
+      "Habitualidade é exigida para manutenção da categoria Atirador e da renovação do CR.",
+    ],
+    limitesQA:
+      "A Quero Armas estrutura o pedido e protocola junto ao Exército. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "renovacao-cr": {
+    titulo: "Renovação de CR",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 6º",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre renovação e habitualidade CAC",
+    ],
+    oQueE:
+      "Procedimento para manter a validade do CR já concedido, com atualização documental e demonstração da habitualidade quando exigida.",
+    quandoSeAplica:
+      "Próximo ao vencimento do CR ou dentro da janela de renovação prevista em norma.",
+    quemPodeSolicitar: [
+      "Titular do CR vigente ou dentro do prazo de renovação",
+    ],
+    requisitos: [
+      "CR vigente ou dentro do prazo de renovação",
+      "Habitualidade comprovada (Atirador) conforme norma",
+      "Aptidão psicológica e capacidade técnica novamente vigentes",
+      "Certidões negativas atualizadas",
+    ],
+    documentos: [
+      "CR atual",
+      "Documento de identidade, CPF e comprovante de residência",
+      "Comprovante de habitualidade emitido pelo clube (quando aplicável)",
+      "Novos laudos psicológico e técnico",
+      "Certidões negativas",
+    ],
+    etapas: [
+      "Conferência do CR e da habitualidade",
+      "Atualização documental",
       "Protocolo da renovação no SIGMA",
       "Acompanhamento até emissão do novo CR",
     ],
-    prazoEstimado: "Estimativa operacional: 60 a 180 dias após protocolo.",
-    observacoes: OBS_PADRAO,
+    pontosAtencao: [
+      "Habitualidade insuficiente é causa frequente de exigência ou indeferimento.",
+      "Perder a janela pode obrigar a iniciar nova concessão.",
+    ],
+    limitesQA:
+      "A Quero Armas conduz a renovação e o protocolo no SIGMA. " +
+      DEFERIMENTO_NOTE,
   },
 
-  "guia-de-trafego-especial-cac": {
-    titulo: "Guia de Tráfego Especial (GTE) — CAC",
-    orgao: "EXERCITO_SIGMA",
-    orgaoLabel: "Exército Brasileiro — SIGMA",
-    natureza:
-      "Autorização do Exército para transporte de arma de fogo registrada no SIGMA entre origem e destino determinados.",
-    fundamento: FUND_SIGMA,
+  "apostilamento-atualizacao": {
+    titulo: "Apostilamento — Atualização de Acervo",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre apostilamento e acervo CAC",
+    ],
+    oQueE:
+      "Procedimento de inclusão, alteração ou atualização de itens do acervo CAC no CR, com registro formal pelo Exército.",
+    quandoSeAplica:
+      "Sempre que houver entrada, baixa, transferência ou alteração de dados de item do acervo, e quando houver mudança de qualificação cadastral relevante.",
+    quemPodeSolicitar: ["Titular do CR vigente"],
     requisitos: [
       "CR vigente",
-      "Arma regularmente registrada no SIGMA (CRAF)",
-      "Justificativa de deslocamento (competição, treino, manutenção, mudança)",
+      "Documentação completa do item objeto do apostilamento",
     ],
-    documentos: [
-      "CR vigente",
-      "CRAF da(s) arma(s)",
-      "Documento de identidade e CPF",
-      "Comprovante do evento/destino (quando aplicável)",
-    ],
-    etapas: [
-      "Cadastro e envio de dados do trajeto",
-      "Emissão técnica da GTE",
-      "Protocolo no SIGMA",
-      "Entrega da GTE para o cliente",
-    ],
-    prazoEstimado: "Estimativa operacional: 5 a 30 dias.",
-    observacoes: OBS_PADRAO,
-  },
-
-  "apostilamento": {
-    titulo: "Apostilamento de CR / CRAF",
-    orgao: "EXERCITO_SIGMA",
-    orgaoLabel: "Exército Brasileiro — SIGMA",
-    natureza:
-      "Atualização de dados cadastrais (endereço, acervo, qualificação) no CR e/ou CRAF junto ao Exército.",
-    fundamento: FUND_SIGMA,
-    requisitos: ["CR vigente", "Documentação que comprove a alteração pretendida"],
     documentos: [
       "CR atual",
       "Documento de identidade e CPF",
-      "Comprovante atualizado do dado a ser apostilado",
+      "Documentos do item (nota fiscal, CRAF, autorização)",
     ],
     etapas: [
-      "Cadastro e envio de documentos",
-      "Conferência técnica",
-      "Protocolo do apostilamento no SIGMA",
-      "Entrega do CR/CRAF atualizado",
+      "Conferência do acervo e do item",
+      "Montagem do pedido de apostilamento",
+      "Protocolo no SIGMA",
+      "Atualização do CR/CRAF",
     ],
-    prazoEstimado: "Estimativa operacional: 15 a 60 dias.",
-    observacoes: OBS_PADRAO,
+    pontosAtencao: [
+      "Acervo desatualizado gera inconsistência e pode prejudicar GTE, renovação e novas aquisições.",
+    ],
+    limitesQA:
+      "A Quero Armas executa o apostilamento administrativamente. " +
+      DEFERIMENTO_NOTE,
   },
 
-  "registro-arma-sigma": {
-    titulo: "Registro de Arma no SIGMA (CRAF)",
-    orgao: "EXERCITO_SIGMA",
-    orgaoLabel: "Exército Brasileiro — SIGMA",
-    natureza:
-      "Emissão do Certificado de Registro de Arma de Fogo (CRAF) para CAC, vinculado ao CR no SIGMA.",
-    fundamento: FUND_SIGMA,
-    requisitos: ["CR vigente", "Autorização de compra/transferência válida"],
-    documentos: [
+  "registro-e-apostilamento-de-arma-de-fogo-cac": {
+    titulo: "Registro e Apostilamento de Arma de Fogo (CAC)",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 6º",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre CRAF e acervo CAC",
+    ],
+    oQueE:
+      "Emissão do CRAF SIGMA da arma adquirida pelo CAC e respectivo apostilamento do item no CR.",
+    quandoSeAplica:
+      "Após a aquisição da arma com Autorização de Compra emitida pelo Exército, para registrá-la formalmente no acervo CAC.",
+    quemPodeSolicitar: ["Titular de CR vigente com Autorização de Compra utilizada"],
+    requisitos: [
       "CR vigente",
+      "Autorização de Compra dentro do prazo",
+      "Nota fiscal da arma adquirida",
+    ],
+    documentos: [
+      "CR atual",
+      "Autorização de Compra utilizada",
       "Nota fiscal e dados completos da arma",
       "Documento de identidade e CPF",
     ],
     etapas: [
-      "Cadastro e envio de documentos",
-      "Conferência técnica",
-      "Protocolo do registro no SIGMA",
-      "Entrega do CRAF",
+      "Conferência da nota fiscal e do bem",
+      "Cadastro do registro no SIGMA",
+      "Apostilamento do item no CR",
+      "Emissão do CRAF SIGMA",
     ],
-    prazoEstimado: "Estimativa operacional: 30 a 90 dias.",
-    observacoes: OBS_PADRAO,
+    pontosAtencao: [
+      "CRAF SIGMA é distinto do CRAF SINARM — o item passa a integrar o acervo CAC, com regramento próprio.",
+      "Limites de acervo por categoria devem ser respeitados.",
+    ],
+    limitesQA:
+      "A Quero Armas executa o registro e o apostilamento no Exército. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": {
+    titulo: "Autorização de Compra de Arma de Fogo — Atirador Esportivo (CAC)",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 6º, § 1º",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre aquisição de arma e munição por Atirador Desportivo",
+    ],
+    oQueE:
+      "Serviço de autorização de compra de arma de fogo para atiradores desportivos, dentro dos limites de calibre, quantidade e habitualidade da categoria.",
+    quandoSeAplica:
+      "Quando o Atirador CAC pretende adquirir nova arma para uso na atividade desportiva, respeitando o limite do acervo.",
+    quemPodeSolicitar: [
+      "Titular de CR vigente na categoria Atirador",
+      "Com habitualidade compatível com a aquisição",
+    ],
+    requisitos: [
+      "CR Atirador vigente",
+      "Habitualidade comprovada",
+      "Acervo dentro do limite normativo da categoria",
+    ],
+    documentos: [
+      "CR atual",
+      "Comprovante de habitualidade",
+      "Dados completos da arma pretendida (modelo, calibre, fabricante)",
+      "Documento de identidade e CPF",
+    ],
+    etapas: [
+      "Conferência do CR, habitualidade e acervo",
+      "Montagem do pedido com fundamento da finalidade desportiva",
+      "Protocolo no SIGMA",
+      "Emissão da Autorização de Compra",
+    ],
+    pontosAtencao: [
+      "Validade da Autorização de Compra é limitada — usar dentro do prazo.",
+      "Calibre e quantidade devem respeitar as regras vigentes para Atirador.",
+    ],
+    limitesQA:
+      "A Quero Armas estrutura e protocola o pedido de compra no Exército. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": {
+    titulo: "Autorização de Compra de Arma de Fogo — Caçador (CAC)",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Lei nº 10.826/2003, art. 6º, § 1º",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre aquisição por Caçador",
+    ],
+    oQueE:
+      "Serviço de autorização de compra de arma de fogo para Caçadores CAC, respeitando finalidade, calibre e limites do acervo.",
+    quandoSeAplica:
+      "Quando o Caçador CAC pretende adquirir nova arma compatível com a atividade de caça nos termos da norma.",
+    quemPodeSolicitar: [
+      "Titular de CR vigente na categoria Caçador",
+    ],
+    requisitos: [
+      "CR Caçador vigente",
+      "Acervo dentro do limite normativo da categoria",
+      "Compatibilidade do calibre pretendido com a finalidade de caça",
+    ],
+    documentos: [
+      "CR atual",
+      "Dados completos da arma pretendida",
+      "Documento de identidade e CPF",
+    ],
+    etapas: [
+      "Conferência do CR e do acervo",
+      "Justificativa da finalidade de caça",
+      "Protocolo no SIGMA",
+      "Emissão da Autorização de Compra",
+    ],
+    pontosAtencao: [
+      "A categoria Caçador tem regramento próprio, distinto de Atirador.",
+      "Validade da autorização e calibres permitidos seguem a norma vigente.",
+    ],
+    limitesQA:
+      "A Quero Armas estrutura e protocola o pedido específico de Caçador. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "guia-de-trafego-especial-cac": {
+    titulo: "Guia de Tráfego Especial (GTE) — CAC",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    baseLegal: [
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Portarias COLOG/DFPC sobre GTE e transporte de acervo CAC",
+    ],
+    oQueE:
+      "Autorização do Exército para transporte de arma e munição do acervo CAC, entre origem e destino determinados, dentro de prazo específico.",
+    quandoSeAplica:
+      "Para deslocamento autorizado do acervo: treinos, competições, manutenção, caça, mudança de endereço ou eventos previstos em norma.",
+    quemPodeSolicitar: ["Titular de CR vigente com acervo registrado no SIGMA"],
+    requisitos: [
+      "CR vigente",
+      "Item(ns) do acervo regularmente registrado(s) (CRAF SIGMA)",
+      "Justificativa de deslocamento compatível com a norma",
+    ],
+    documentos: [
+      "CR vigente",
+      "CRAF SIGMA das armas a transportar",
+      "Dados de origem, destino e período do deslocamento",
+      "Comprovante do evento/finalidade quando aplicável",
+    ],
+    etapas: [
+      "Conferência do acervo a transportar",
+      "Montagem da GTE com origem, destino, calibres e quantidades",
+      "Protocolo no SIGMA",
+      "Entrega da GTE ao titular",
+    ],
+    pontosAtencao: [
+      "Transportar o acervo sem GTE válida configura irregularidade.",
+      "Munição e quantidade transportadas devem respeitar a GTE emitida.",
+    ],
+    limitesQA:
+      "A Quero Armas emite tecnicamente a GTE e a protocola no Exército. " +
+      DEFERIMENTO_NOTE,
+  },
+
+  "mudanca-servico": {
+    titulo: "Mudança de Serviço (Posse → CR)",
+    sistema: "SIGMA_EXERCITO",
+    orgaoCompetente:
+      "Polícia Federal (origem SINARM) e Exército Brasileiro (destino SIGMA)",
+    baseLegal: [
+      "Lei nº 10.826/2003",
+      "Decreto nº 11.615/2023 e alterações vigentes",
+      "Atos PF/SINARM e portarias COLOG/DFPC sobre transferência entre sistemas",
+    ],
+    oQueE:
+      "Procedimento de transferência de arma originalmente registrada no SINARM (posse/defesa pessoal) para o acervo CAC no SIGMA, ou mudança da modalidade de serviço do titular.",
+    quandoSeAplica:
+      "Quando o titular de arma SINARM deseja vinculá-la formalmente ao acervo CAC após obtenção do CR.",
+    quemPodeSolicitar: [
+      "Titular do CRAF SINARM da arma",
+      "Com CR CAC vigente compatível",
+    ],
+    requisitos: [
+      "CR CAC vigente",
+      "CRAF SINARM da arma a transferir",
+      "Compatibilidade do calibre/categoria com o acervo CAC pretendido",
+    ],
+    documentos: [
+      "CR CAC e CRAF SINARM",
+      "Documento de identidade e CPF",
+      "Comprovante de residência",
+    ],
+    etapas: [
+      "Diagnóstico da arma e da categoria CAC de destino",
+      "Protocolo de baixa/transferência junto à PF (SINARM)",
+      "Protocolo de inclusão no SIGMA com apostilamento",
+      "Emissão do CRAF SIGMA correspondente",
+    ],
+    pontosAtencao: [
+      "Procedimento envolve dois órgãos distintos (PF e Exército) e exige sincronização documental.",
+      "Calibres restritos podem inviabilizar a transferência.",
+    ],
+    limitesQA:
+      "A Quero Armas conduz tecnicamente as duas pontas (PF e Exército). " +
+      DEFERIMENTO_NOTE,
+  },
+
+  // ───────────────────────── CURSOS / ESTANDE ─────────────────────────
+
+  "operador-de-pistola-nivel-i": {
+    titulo: "Operador de Pistola — Nível I",
+    sistema: "CURSO_ESTANDE",
+    orgaoCompetente:
+      "Estande/instrutor credenciado (curso operacional, não é autorização estatal)",
+    baseLegal: [
+      "Conteúdo operacional alinhado a boas práticas de tiro defensivo e à legislação de armas vigente",
+      "Lei nº 10.826/2003 (referência ao manuseio responsável de arma de fogo)",
+    ],
+    oQueE:
+      "Curso operacional de manuseio e operação de pistola — fundamentos de segurança, saque, empunhadura, mira, gatilho, recargas e resolução de panes.",
+    quandoSeAplica:
+      "Quando o aluno deseja qualificação prática operacional com pistola, em ambiente controlado de estande.",
+    quemPodeSolicitar: [
+      "Maiores de idade dentro dos critérios do estande",
+      "Sem impedimento para frequentar estande de tiro",
+    ],
+    requisitos: [
+      "Aptidão para a atividade de tiro no estande",
+      "Equipamentos básicos de proteção (fornecidos ou exigidos conforme curso)",
+    ],
+    documentos: ["Documento de identidade e CPF"],
+    etapas: [
+      "Inscrição e confirmação de turma",
+      "Parte teórica (segurança, legislação aplicada, fundamentos)",
+      "Parte prática no estande",
+      "Emissão do certificado/atestado operacional",
+    ],
+    pontosAtencao: [
+      "Curso operacional não é, por si, autorização para posse, porte ou aquisição de arma — não substitui o atestado de capacidade técnica oficial quando ele for exigido.",
+      "Conteúdo prático segue normas internas do estande e dos instrutores.",
+    ],
+    limitesQA:
+      "A Quero Armas intermedia a contratação, organização da turma e logística. A execução técnica é do estande/instrutor credenciado.",
+  },
+
+  "vip-operador-de-pistola-nivel-i": {
+    titulo: "VIP — Operador de Pistola Nível I",
+    sistema: "CURSO_ESTANDE",
+    orgaoCompetente:
+      "Estande/instrutor credenciado em formato VIP (curso operacional, não é autorização estatal)",
+    baseLegal: [
+      "Conteúdo operacional alinhado a boas práticas de tiro defensivo e à legislação de armas vigente",
+      "Lei nº 10.826/2003 (referência ao manuseio responsável de arma de fogo)",
+    ],
+    oQueE:
+      "Versão VIP do Nível I, em formato reservado e personalizado, com atenção individual do instrutor, agenda flexível e maior aproveitamento por aluno.",
+    quandoSeAplica:
+      "Quando o aluno prefere atendimento personalizado, com discrição e ritmo próprio, em vez de turma aberta.",
+    quemPodeSolicitar: [
+      "Maiores de idade dentro dos critérios do estande",
+    ],
+    requisitos: [
+      "Aptidão para a atividade de tiro",
+      "Disponibilidade para agenda reservada",
+    ],
+    documentos: ["Documento de identidade e CPF"],
+    etapas: [
+      "Pré-atendimento e definição de objetivos",
+      "Agendamento reservado no estande",
+      "Execução teórica e prática personalizada",
+      "Emissão do certificado/atestado operacional",
+    ],
+    pontosAtencao: [
+      "Mesmo no formato VIP, o curso é operacional e não é autorização estatal.",
+      "Eventual emissão de atestado oficial depende dos requisitos previstos em norma.",
+    ],
+    limitesQA:
+      "A Quero Armas estrutura e contrata o formato VIP. A execução técnica é do instrutor credenciado.",
   },
 };
 
-/** Fallback genérico seguro por categoria — usado quando o slug não tem detalhe específico. */
-function fallbackByCategoria(
-  nome: string,
-  categoria: string | null | undefined,
-): ServiceLegalDetails {
-  const c = (categoria || "").toLowerCase();
-
-  if (c.includes("sinarm") || c.includes("polícia") || c.includes("policia") || c.includes("pf")) {
-    return {
-      titulo: nome,
-      orgao: "PF_SINARM",
-      orgaoLabel: "Polícia Federal — SINARM",
-      natureza: "Serviço regulado pela Polícia Federal junto ao SINARM.",
-      fundamento: FUND_SINARM,
-      requisitos: ["Documentação pessoal regular", "Demais requisitos conforme a categoria do interessado"],
-      documentos: ["Documento de identidade e CPF", "Comprovante de residência atualizado"],
-      etapas: ["Cadastro e envio de documentos", "Análise técnica", "Protocolo na PF", "Acompanhamento"],
-      prazoEstimado: "Prazo estimado operacionalmente conforme histórico da PF na sua unidade.",
-      observacoes: OBS_PADRAO,
-    };
-  }
-
-  if (c.includes("sigma") || c.includes("exército") || c.includes("exercito") || c.includes("eb")) {
-    return {
-      titulo: nome,
-      orgao: "EXERCITO_SIGMA",
-      orgaoLabel: "Exército Brasileiro — SIGMA",
-      natureza: "Serviço regulado pelo Exército Brasileiro junto ao SIGMA.",
-      fundamento: FUND_SIGMA,
-      requisitos: ["CR vigente quando aplicável", "Demais requisitos conforme a categoria CAC"],
-      documentos: ["Documento de identidade e CPF", "Comprovante de residência", "CR e CRAF quando aplicável"],
-      etapas: ["Cadastro e envio de documentos", "Conferência técnica", "Protocolo no SIGMA", "Acompanhamento"],
-      prazoEstimado: "Prazo estimado operacionalmente conforme histórico do SFPC/SIGMA.",
-      observacoes: OBS_PADRAO,
-    };
-  }
-
-  if (c.includes("curso") || c.includes("treinamento")) {
-    return {
-      titulo: nome,
-      orgao: "TREINAMENTO",
-      orgaoLabel: "Treinamento operacional / instrutor credenciado",
-      natureza: "Curso/treinamento de tiro com instrutor credenciado.",
-      fundamento: [
-        "Lei nº 10.826/2003",
-        "Normativos da PF/Exército sobre capacidade técnica e instrutores credenciados",
-      ],
-      requisitos: ["Idade mínima conforme curso", "Documentos pessoais regulares"],
-      documentos: ["Documento de identidade e CPF"],
-      etapas: ["Inscrição", "Aula teórica", "Aula prática no estande", "Emissão do atestado"],
-      prazoEstimado: "Conforme calendário do estande/instrutor.",
-      observacoes: OBS_PADRAO,
-    };
-  }
-
-  if (c.includes("judic") || c.includes("recurso") || c.includes("mandado")) {
-    return {
-      titulo: nome,
-      orgao: "JUDICIAL",
-      orgaoLabel: "Via judicial (advogado parceiro)",
-      natureza: "Serviço preparatório para atuação judicial via advogado parceiro.",
-      fundamento: ["Constituição Federal", "Lei nº 10.826/2003", "Decreto nº 11.615/2023"],
-      requisitos: ["Documentação da negativa/decisão impugnada", "Procuração específica para advogado parceiro"],
-      documentos: ["Documento de identidade e CPF", "Cópia do indeferimento ou ato a ser impugnado"],
-      etapas: [
-        "Cadastro e análise documental",
-        "Encaminhamento para advogado parceiro",
-        "Contrato apartado de honorários",
-        "Atuação processual pelo advogado",
-      ],
-      prazoEstimado: "Conforme o Judiciário; sem garantia de prazo legal.",
-      observacoes: [...OBS_JUDICIAL, ...OBS_PADRAO],
-    };
-  }
-
-  return {
-    titulo: nome,
-    orgao: "INTERNO",
-    orgaoLabel: "Serviço interno / consultoria Quero Armas",
-    natureza: "Serviço operacional/consultivo prestado pela Quero Armas.",
-    fundamento: ["Lei nº 10.826/2003", "Decreto nº 11.615/2023"],
-    requisitos: ["Documentação pessoal regular"],
-    documentos: ["Documento de identidade e CPF"],
-    etapas: ["Cadastro", "Atendimento técnico", "Entrega da consultoria"],
-    prazoEstimado: "Conforme escopo contratado.",
-    observacoes: OBS_PADRAO,
-  };
+export function getServiceLegalDetails(slug: string): ServiceLegalDetails | null {
+  return DETAILS[slug] ?? null;
 }
 
-export function getServiceLegalDetails(
-  slug: string,
-  fallback: { nome: string; categoria?: string | null },
-): ServiceLegalDetails {
-  const specific = DETAILS[slug];
-  if (specific) return specific;
-  return fallbackByCategoria(fallback.nome, fallback.categoria);
-}
+export const sistemaLabel: Record<SistemaAplicavel, string> = {
+  SINARM_PF: "SINARM / Polícia Federal",
+  SIGMA_EXERCITO: "SIGMA / Exército Brasileiro",
+  JUDICIAL: "Esfera Judicial",
+  CURSO_ESTANDE: "Curso operacional / estande",
+  INTERNO: "Atendimento interno",
+};

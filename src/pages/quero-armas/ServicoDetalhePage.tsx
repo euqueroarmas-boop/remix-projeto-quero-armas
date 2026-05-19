@@ -5,65 +5,66 @@ import { Button } from "@/components/ui/button";
 import { getServiceBySlug, type ServiceWithCategory } from "@/shared/data/catalog";
 import {
   getServiceLegalDetails,
+  sistemaLabel,
   type ServiceLegalDetails,
 } from "@/lib/quero-armas/serviceLegalDetails";
 import { formatBRL } from "@/shared/lib/formatters";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  FileText,
-  ListChecks,
-  Scale,
-  Clock,
-  AlertTriangle,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 
-const publicSectionCls =
+const sectionCls =
   "relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden";
-const publicInnerCls = "w-full px-4 sm:px-6 lg:px-10 2xl:px-16";
+const innerCls = "w-full px-4 sm:px-6 lg:px-10 2xl:px-16";
+const proseCls = "mx-auto max-w-3xl";
 
 type LoadState =
   | { status: "loading" }
   | { status: "not_found" }
   | { status: "error"; message: string }
-  | { status: "ok"; service: ServiceWithCategory; details: ServiceLegalDetails };
+  | { status: "ok"; service: ServiceWithCategory; details: ServiceLegalDetails | null };
 
-function Block({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: typeof Building2;
-  title: string;
-  children: React.ReactNode;
-}) {
+function H2({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-sm border border-border bg-surface-elevated/40 p-6">
-      <div className="mb-4 flex items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10 text-accent">
-          <Icon className="size-4" />
-        </span>
-        <h2 className="font-heading text-sm font-bold uppercase tracking-[0.18em]">
-          {title}
-        </h2>
-      </div>
-      <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
-    </section>
+    <h2 className="mt-12 font-heading text-base font-bold uppercase tracking-[0.22em] text-foreground">
+      {children}
+    </h2>
   );
 }
 
-function List({ items }: { items: string[] }) {
+function Divider() {
+  return <hr className="my-6 border-border" />;
+}
+
+function Bullets({ items }: { items: string[] }) {
   return (
-    <ul className="space-y-2">
+    <ul className="mt-4 space-y-2 text-[15px] leading-relaxed text-muted-foreground">
       {items.map((it, i) => (
-        <li key={i} className="flex gap-2">
+        <li key={i} className="flex gap-3">
           <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent" />
           <span>{it}</span>
         </li>
       ))}
     </ul>
+  );
+}
+
+function Steps({ items }: { items: string[] }) {
+  return (
+    <ol className="mt-4 space-y-3 text-[15px] leading-relaxed text-muted-foreground">
+      {items.map((it, i) => (
+        <li key={i} className="flex gap-3">
+          <span className="font-heading text-xs font-bold text-accent">
+            {String(i + 1).padStart(2, "0")}
+          </span>
+          <span>{it}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function Paragraph({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">{children}</p>
   );
 }
 
@@ -82,11 +83,11 @@ export default function ServicoDetalhePage() {
           setState({ status: "not_found" });
           return;
         }
-        const details = getServiceLegalDetails(slug, {
-          nome: res.service.name,
-          categoria: res.service.category?.name ?? null,
+        setState({
+          status: "ok",
+          service: res.service,
+          details: getServiceLegalDetails(slug),
         });
-        setState({ status: "ok", service: res.service, details });
       })
       .catch((e) =>
         active ? setState({ status: "error", message: e?.message ?? "Erro ao carregar serviço." }) : null,
@@ -98,7 +99,7 @@ export default function ServicoDetalhePage() {
 
   useEffect(() => {
     if (state.status === "ok") {
-      document.title = `${state.details.titulo} | Quero Armas`;
+      document.title = `${state.details?.titulo ?? state.service.name} | Quero Armas`;
     } else if (state.status === "not_found") {
       document.title = "Serviço não encontrado | Quero Armas";
     }
@@ -107,8 +108,8 @@ export default function ServicoDetalhePage() {
   if (state.status === "loading") {
     return (
       <SiteShell>
-        <section className={`${publicSectionCls} min-h-[60vh]`}>
-          <div className={`${publicInnerCls} flex min-h-[60vh] items-center justify-center py-20`}>
+        <section className={`${sectionCls} min-h-[60vh]`}>
+          <div className={`${innerCls} flex min-h-[60vh] items-center justify-center py-20`}>
             <Loader2 className="size-6 animate-spin text-accent" />
           </div>
         </section>
@@ -120,24 +121,28 @@ export default function ServicoDetalhePage() {
     const isError = state.status === "error";
     return (
       <SiteShell>
-        <section className={`${publicSectionCls} border-b border-border`}>
-          <div className={`${publicInnerCls} flex min-h-[60vh] flex-col items-start justify-center py-20`}>
-            <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
-              {isError ? "Erro" : "Serviço não encontrado"}
-            </p>
-            <h1 className="mt-3 font-heading text-3xl font-bold uppercase tracking-tight sm:text-4xl">
-              {isError ? "Não foi possível carregar o serviço." : "Este serviço não existe ou está inativo."}
-            </h1>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
-              {isError
-                ? state.message
-                : "O link pode estar desatualizado. Volte ao catálogo para escolher um serviço disponível."}
-            </p>
-            <Button asChild className="mt-6 font-heading uppercase tracking-wide">
-              <Link to="/servicos">
-                <ArrowLeft className="mr-2 size-4" /> Voltar ao catálogo
-              </Link>
-            </Button>
+        <section className={`${sectionCls} border-b border-border`}>
+          <div className={`${innerCls} py-20`}>
+            <div className={proseCls}>
+              <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
+                {isError ? "Erro" : "Serviço não encontrado"}
+              </p>
+              <h1 className="mt-4 font-heading text-3xl font-bold uppercase tracking-tight sm:text-4xl">
+                {isError
+                  ? "Não foi possível carregar o serviço."
+                  : "Este serviço não existe ou está inativo."}
+              </h1>
+              <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
+                {isError
+                  ? state.message
+                  : "O link pode estar desatualizado. Volte ao catálogo para escolher um serviço disponível."}
+              </p>
+              <Button asChild className="mt-8 font-heading uppercase tracking-wide">
+                <Link to="/servicos">
+                  <ArrowLeft className="mr-2 size-4" /> Voltar ao catálogo
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
       </SiteShell>
@@ -145,119 +150,136 @@ export default function ServicoDetalhePage() {
   }
 
   const { service, details } = state;
-  const preco = service.base_price_cents > 0 ? formatBRL(service.base_price_cents) : "Sob consulta";
+  const preco =
+    service.base_price_cents > 0 ? formatBRL(service.base_price_cents) : "Sob consulta";
+  const cadastroHref = `/cadastro?servico=${encodeURIComponent(service.slug)}`;
 
   return (
     <SiteShell>
-      {/* HERO */}
-      <section className={`${publicSectionCls} border-b border-border bg-background`}>
-        <div className={`${publicInnerCls} py-12 sm:py-16`}>
-          <button
-            type="button"
-            onClick={() => navigate("/servicos")}
-            className="mb-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" /> Voltar ao catálogo
-          </button>
-          <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
-            {details.orgaoLabel}
-          </p>
-          <h1 className="mt-4 font-heading text-3xl font-bold uppercase tracking-tight text-foreground sm:text-5xl">
-            {details.titulo}
-          </h1>
-          {service.short_description ? (
-            <p className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground">
-              {service.short_description}
-            </p>
-          ) : null}
+      {/* HERO EDITORIAL */}
+      <section className={`${sectionCls} border-b border-border bg-background`}>
+        <div className={`${innerCls} py-12 sm:py-16`}>
+          <div className={proseCls}>
+            <button
+              type="button"
+              onClick={() => navigate("/servicos")}
+              className="mb-6 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" /> Voltar ao catálogo
+            </button>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button
-              asChild
-              size="lg"
-              className="font-heading uppercase tracking-wide"
-            >
-              <Link to={`/cadastro?servico=${encodeURIComponent(service.slug)}`}>
-                Iniciar cadastro <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="font-heading uppercase tracking-wide"
-            >
-              <Link to="/servicos">Ver outros serviços</Link>
-            </Button>
-            <div className="sm:ml-auto">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-                A partir de
+            <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
+              {details ? sistemaLabel[details.sistema] : "Catálogo Quero Armas"}
+            </p>
+            <h1 className="mt-4 font-heading text-3xl font-bold uppercase tracking-tight text-foreground sm:text-[2.75rem] sm:leading-tight">
+              {details?.titulo ?? service.name}
+            </h1>
+            {service.short_description ? (
+              <p className="mt-5 text-[16px] leading-relaxed text-muted-foreground">
+                {service.short_description}
               </p>
-              <p className="font-heading text-2xl font-bold tracking-tight text-foreground">
-                {preco}
-              </p>
+            ) : null}
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="font-heading uppercase tracking-wide">
+                <Link to={cadastroHref}>
+                  Iniciar cadastro <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+              <div className="sm:ml-auto">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+                  A partir de
+                </p>
+                <p className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                  {preco}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* DETALHES */}
-      <section className={`${publicSectionCls} border-b border-border`}>
-        <div className={`${publicInnerCls} py-12 sm:py-16`}>
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <Block icon={Building2} title="Órgão competente">
-              <p>{details.orgaoLabel}</p>
-            </Block>
-            <Block icon={FileText} title="Natureza do serviço">
-              <p>{details.natureza}</p>
-            </Block>
-            <Block icon={Scale} title="Fundamento legal/regulatório">
-              <List items={details.fundamento} />
-            </Block>
-            <Block icon={ListChecks} title="Requisitos principais">
-              <List items={details.requisitos} />
-            </Block>
-            <Block icon={FileText} title="Documentos normalmente exigidos">
-              <List items={details.documentos} />
-            </Block>
-            <Block icon={ListChecks} title="Etapas do atendimento">
-              <ol className="space-y-2">
-                {details.etapas.map((e, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="font-heading text-xs font-bold text-accent">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span>{e}</span>
-                  </li>
-                ))}
-              </ol>
-            </Block>
-            <Block icon={Clock} title="Prazo estimado">
-              <p>{details.prazoEstimado}</p>
-            </Block>
-            <Block icon={AlertTriangle} title="Observações importantes">
-              <List items={details.observacoes} />
-            </Block>
-          </div>
-        </div>
-      </section>
+      {/* CORPO TÉCNICO EDITORIAL */}
+      <section className={`${sectionCls} border-b border-border`}>
+        <div className={`${innerCls} py-12 sm:py-16`}>
+          <article className={proseCls}>
+            {details ? (
+              <>
+                {/* Cabeçalho normativo */}
+                <p className="font-heading text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+                  Órgão competente
+                </p>
+                <p className="mt-2 text-[15px] text-foreground">{details.orgaoCompetente}</p>
+                <p className="mt-4 font-heading text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+                  Sistema aplicável
+                </p>
+                <p className="mt-2 text-[15px] text-foreground">
+                  {sistemaLabel[details.sistema]}
+                </p>
 
-      {/* CTA */}
-      <section className={`${publicSectionCls} border-b border-border bg-gradient-to-br from-accent/15 via-background to-background`}>
-        <div className={`${publicInnerCls} flex flex-col items-start gap-6 py-12 sm:flex-row sm:items-center sm:justify-between sm:py-16`}>
-          <div className="max-w-xl">
-            <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">
-              Pronto para iniciar o seu processo?
-            </h2>
-            <p className="mt-3 text-base text-muted-foreground">
-              Comece agora seu cadastro para este serviço com acompanhamento técnico da Quero Armas.
-            </p>
-          </div>
-          <Button asChild size="lg" className="font-heading uppercase tracking-wide">
-            <Link to={`/cadastro?servico=${encodeURIComponent(service.slug)}`}>
-              Iniciar cadastro <ArrowRight className="ml-2 size-4" />
-            </Link>
-          </Button>
+                <Divider />
+
+                <H2>Base legal e normativa</H2>
+                <Bullets items={details.baseLegal} />
+
+                <H2>O que é</H2>
+                <Paragraph>{details.oQueE}</Paragraph>
+
+                <H2>Quando se aplica</H2>
+                <Paragraph>{details.quandoSeAplica}</Paragraph>
+
+                <H2>Quem pode solicitar</H2>
+                <Bullets items={details.quemPodeSolicitar} />
+
+                <H2>Requisitos principais</H2>
+                <Bullets items={details.requisitos} />
+
+                <H2>Documentos normalmente exigidos</H2>
+                <Bullets items={details.documentos} />
+
+                <H2>Etapas práticas do processo</H2>
+                <Steps items={details.etapas} />
+
+                <H2>Pontos de atenção</H2>
+                <Bullets items={details.pontosAtencao} />
+
+                <H2>Limites do serviço da Quero Armas</H2>
+                <Paragraph>{details.limitesQA}</Paragraph>
+              </>
+            ) : (
+              <>
+                <H2>Conteúdo técnico em revisão</H2>
+                <Paragraph>
+                  O conteúdo técnico-jurídico específico deste serviço está em revisão pela
+                  equipe da Quero Armas e será publicado em breve. Para evitar informação
+                  imprecisa, optamos por não exibir texto genérico.
+                </Paragraph>
+                <Paragraph>
+                  Você pode iniciar seu cadastro normalmente: o atendimento técnico
+                  apresentará todos os requisitos, documentos e etapas aplicáveis ao seu caso
+                  concreto.
+                </Paragraph>
+              </>
+            )}
+
+            <Divider />
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="font-heading uppercase tracking-wide">
+                <Link to={cadastroHref}>
+                  Iniciar cadastro <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="font-heading uppercase tracking-wide"
+              >
+                <Link to="/servicos">Ver outros serviços</Link>
+              </Button>
+            </div>
+          </article>
         </div>
       </section>
     </SiteShell>
