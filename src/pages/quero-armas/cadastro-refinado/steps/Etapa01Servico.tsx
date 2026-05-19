@@ -213,11 +213,6 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
                       )}
                     </div>
                   </div>
-                  <ul className="qa-ref-bullets">
-                    {FALLBACK_BULLETS.map((b) => (
-                      <li key={b}>{b}</li>
-                    ))}
-                  </ul>
                 </QACadastroRefinadoCard>
               );
             }
@@ -252,11 +247,6 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
                     </div>
                   </div>
                 </div>
-                <ul className="qa-ref-bullets">
-                  {FALLBACK_BULLETS.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
               </QACadastroRefinadoCard>
             );
           })}
