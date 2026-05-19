@@ -399,6 +399,12 @@ Deno.serve(async (req) => {
             ja_existentes: Number((rpc as any)?.checklist_ja_existentes ?? 0),
           });
         }
+        // Wave 3D — Pós-pagamento: gera protocolo + status de produção (best-effort)
+        try {
+          await admin.rpc("qa_pos_pagamento_protocolar", { p_processo_id: processoId });
+        } catch (e) {
+          console.warn("[liberar-servicos-contrato] qa_pos_pagamento_protocolar exception:", e);
+        }
       }
     } catch (e) {
       result.erros.push({ processo_id: processoId, etapa: "checklist", erro: String(e) });
