@@ -151,6 +151,7 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
         </QACadastroRefinadoCard>
       ) : (
         <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {servicos.map((srv, idx) => {
             const podeRemover = isBundle && servicos.length > 1;
             const bundleDescricoes: Record<number, string> = {
@@ -251,6 +252,7 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
               </QACadastroRefinadoCard>
             );
           })}
+          </div>
 
           {isBundle && (
             <div
