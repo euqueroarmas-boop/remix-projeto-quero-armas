@@ -153,49 +153,28 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
         <>
           {servicos.map((srv, idx) => {
             const podeRemover = isBundle && servicos.length > 1;
-            return (
-              <QACadastroRefinadoCard key={srv.slug}>
-                <div className="qa-ref-service-head">
-                  <div className="qa-ref-service-info">
-                    <span className="qa-ref-caps">
-                      {isBundle
-                        ? `Serviço ${idx + 1} de ${servicos.length}`
-                        : "Serviço selecionado"}
-                    </span>
-                    <h2
-                      className="qa-ref-service-name"
-                      style={
-                        isBundle
-                          ? { fontSize: 16, fontWeight: 400, textTransform: "none", letterSpacing: 0 }
-                          : undefined
-                      }
-                    >
-                      {srv.nome}
-                    </h2>
-                    {(srv.descricao_curta || srv.descricao_full) && (
-                      <p className="qa-ref-service-desc">
-                        {srv.descricao_curta || srv.descricao_full}
-                      </p>
-                    )}
+            if (isBundle) {
+              return (
+                <div key={srv.slug} className="qa-ref-opt-card" style={{ cursor: "default" }}>
+                  <div className="qa-ref-opt-icon" aria-hidden />
+                  <div className="qa-ref-opt-body">
+                    <div className="qa-ref-opt-title">{srv.nome}</div>
+                    <div className="qa-ref-opt-desc">
+                      {srv.descricao_curta || srv.descricao_full || `Serviço ${idx + 1} de ${servicos.length}`}
+                    </div>
                   </div>
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "flex-end",
-                      gap: 8,
+                      gap: 6,
+                      flexShrink: 0,
                     }}
                   >
-                    <div
-                      className="qa-ref-price"
-                      style={isBundle ? { fontSize: 22 } : undefined}
-                    >
-                      <small style={isBundle ? { fontSize: 11 } : undefined}>R$</small>
-                      {(srv.preco ?? 0).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      })}
-                    </div>
+                    <span className="qa-ref-opt-price">
+                      R$ {(srv.preco ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
                     {podeRemover && (
                       <button
                         type="button"
@@ -210,26 +189,57 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
                           border: "1px solid rgba(255,255,255,0.18)",
                           color: "var(--qa-ref-ink-soft, #b8b8b8)",
                           borderRadius: 6,
-                          padding: "4px 8px",
-                          fontSize: 11,
+                          padding: "3px 7px",
+                          fontSize: 10.5,
                           letterSpacing: ".04em",
                           textTransform: "uppercase",
                           cursor: "pointer",
                         }}
                       >
-                        <X size={12} />
+                        <X size={11} />
                         Remover
                       </button>
                     )}
                   </div>
                 </div>
-                {!isBundle && (
-                  <ul className="qa-ref-bullets">
-                    {FALLBACK_BULLETS.map((b) => (
-                      <li key={b}>{b}</li>
-                    ))}
-                  </ul>
-                )}
+              );
+            }
+            return (
+              <QACadastroRefinadoCard key={srv.slug}>
+                <div className="qa-ref-service-head">
+                  <div className="qa-ref-service-info">
+                    <span className="qa-ref-caps">
+                      Serviço selecionado
+                    </span>
+                    <h2 className="qa-ref-service-name">{srv.nome}</h2>
+                    {(srv.descricao_curta || srv.descricao_full) && (
+                      <p className="qa-ref-service-desc">
+                        {srv.descricao_curta || srv.descricao_full}
+                      </p>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-end",
+                      gap: 8,
+                    }}
+                  >
+                    <div className="qa-ref-price">
+                      <small>R$</small>
+                      {(srv.preco ?? 0).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <ul className="qa-ref-bullets">
+                  {FALLBACK_BULLETS.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
               </QACadastroRefinadoCard>
             );
           })}
