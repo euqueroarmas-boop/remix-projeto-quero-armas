@@ -283,7 +283,11 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         "qa-checkout-criar-venda",
         {
           body: {
-            cart: [{ servico_id: servicoId, slug: state.servicoSlug, quantidade: 1 }],
+            cart: servicos.map((s) => ({
+              servico_id: s.id,
+              slug: s.slug,
+              quantidade: 1,
+            })),
             identificacao: {
               nome_completo: d.nome_completo,
               cpf: cpfDigits,
@@ -638,7 +642,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             <ContractPreviewCard
               state={state}
               precoServico={preco}
-              nomeServico={nomeServico}
+              nomeServico={nomeServicoPrincipal}
             />
           </div>
 
