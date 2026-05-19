@@ -208,10 +208,12 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const obrigatoriosVisiveis = obrigatorios.filter((d) => !coberturaPorReaproveitamento(d.key));
   const opcionaisVisiveis = opcionais.filter((d) => !coberturaPorReaproveitamento(d.key));
   const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
-  const podeAvancar = obrigatoriosPendentes.length === 0;
+  const podeAvancar = !docsLoading && obrigatorios.length > 0 && obrigatoriosPendentes.length === 0;
 
   let ctaLabel = "Continuar para revisão dos dados →";
-  if (obrigatoriosPendentes.length === obrigatorios.length) {
+  if (docsLoading) {
+    ctaLabel = "Carregando checklist…";
+  } else if (obrigatoriosPendentes.length === obrigatorios.length) {
     ctaLabel = "Continuar — envie identidade e comprovante";
   } else if (obrigatoriosPendentes.length === 1) {
     ctaLabel = `Continuar — falta ${obrigatoriosPendentes[0].shortName ?? obrigatoriosPendentes[0].label}`;
