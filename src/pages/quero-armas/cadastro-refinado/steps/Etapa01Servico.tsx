@@ -162,7 +162,16 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
                         ? `Serviço ${idx + 1} de ${servicos.length}`
                         : "Serviço selecionado"}
                     </span>
-                    <h2 className="qa-ref-service-name">{srv.nome}</h2>
+                    <h2
+                      className="qa-ref-service-name"
+                      style={
+                        isBundle
+                          ? { fontSize: 16, fontWeight: 400, textTransform: "none", letterSpacing: 0 }
+                          : undefined
+                      }
+                    >
+                      {srv.nome}
+                    </h2>
                     {(srv.descricao_curta || srv.descricao_full) && (
                       <p className="qa-ref-service-desc">
                         {srv.descricao_curta || srv.descricao_full}
@@ -177,8 +186,11 @@ export default function Etapa01Servico({ state, update, onNext, onBack }: Props)
                       gap: 8,
                     }}
                   >
-                    <div className="qa-ref-price">
-                      <small>R$</small>
+                    <div
+                      className="qa-ref-price"
+                      style={isBundle ? { fontSize: 22 } : undefined}
+                    >
+                      <small style={isBundle ? { fontSize: 11 } : undefined}>R$</small>
                       {(srv.preco ?? 0).toLocaleString("pt-BR", {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
