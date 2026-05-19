@@ -89,15 +89,19 @@ export default function QACadastroV2GuidedStep({
         setStack((s) => [...s, opcao.key]);
         return;
       }
+      const slugParam =
+        opcao.kind === "bundle"
+          ? opcao.servicoSlugs.join(",")
+          : opcao.servicoSlug;
       const params = new URLSearchParams({
-        servico: opcao.servicoSlug,
+        servico: slugParam,
         perfil_v2: definition.perfil,
         subperfil_v2: opcao.subperfilV2,
         origem: "v2",
       });
       persistirCaminho({
         acao: "redirecionar_servico",
-        servico: opcao.servicoSlug,
+        servico: slugParam,
         subperfil: opcao.subperfilV2,
       });
       navigate(`/cadastro?${params.toString()}`);
