@@ -6,11 +6,14 @@ import { Loader2, ChevronLeft, Sparkles, Eye, EyeOff, ShieldCheck } from "lucide
 import logoColor from "@/assets/logo-color.png";
 import { requestQAPasswordReset } from "@/shared/quero-armas/passwordReset";
 
+const RESET_COOLDOWN_MS = 60_000;
+
 export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [resetCooldownUntil, setResetCooldownUntil] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [diag, setDiag] = useState<{ reason: string; hint: string } | null>(null);
   const navigate = useNavigate();
@@ -33,6 +36,11 @@ export default function QAClienteLoginPage() {
   const handleForgotPassword = async () => {
     if (!email) { toast.error("Informe seu e-mail primeiro."); return; }
     if (resetLoading) return;
+    const now = Date.now();
+    if (resetCooldownUntil > now) {
+      toast.info("Aguarde alguns instantes antes de solicitar outro link. Use o e-mail mais recente recebido.");
+      return;
+    }
     const next = searchParams.get("next");
     if (next && next.startsWith("/")) {
       try { localStorage.setItem("qa_password_reset_next", next); } catch { /* storage indisponível */ }
@@ -41,6 +49,7 @@ export default function QAClienteLoginPage() {
     try {
       const result = await requestQAPasswordReset(email);
       if (result.success) {
+        setResetCooldownUntil(Date.now() + RESET_COOLDOWN_MS);
         toast.success("Se existir uma conta com este e-mail, enviaremos as instruções de redefinição.");
       } else {
         toast.error(result.errorMessage || "Não foi possível enviar o e-mail de redefinição. Tente novamente em instantes.");
