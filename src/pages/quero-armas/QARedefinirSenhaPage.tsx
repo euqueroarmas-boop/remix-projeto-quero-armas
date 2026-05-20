@@ -20,6 +20,8 @@ export default function QARedefinirSenhaPage() {
   const [verifying, setVerifying] = useState(true);
   const [ready, setReady] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [pendingTokenHash, setPendingTokenHash] = useState<string | null>(null);
+  const [pendingTokenType, setPendingTokenType] = useState("recovery");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
@@ -54,11 +56,11 @@ export default function QARedefinirSenhaPage() {
           });
           if (error) throw error;
         } else if (tokenHash) {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: (type as any) || "recovery",
-          });
-          if (error) throw error;
+          // Não consome o token ao abrir a tela. Ele só é validado no envio
+          // da nova senha, evitando link expirado quando o cliente abre o e-mail
+          // antes de escolher a senha ou quando há múltiplos cliques no reset.
+          setPendingTokenHash(tokenHash);
+          setPendingTokenType(type || "recovery");
         } else {
           // Talvez já exista sessão de recovery (fluxo antigo)
           const { data } = await supabase.auth.getSession();
@@ -85,6 +87,20 @@ export default function QARedefinirSenhaPage() {
     };
   }, []);
 
+  const getPasswordUpdateMessage = (err: any) => {
+    const raw = String(err?.message || "").toLowerCase();
+    if (raw.includes("same") || raw.includes("different") || raw.includes("igual") || raw.includes("diferente")) {
+      return "A nova senha precisa ser diferente da senha atual.";
+    }
+    if (raw.includes("weak") || raw.includes("breached") || raw.includes("pwned") || raw.includes("password")) {
+      return "A senha não foi aceita pelas regras de segurança. Use uma senha nova, com letras, números e símbolo.";
+    }
+    if (raw.includes("expired") || raw.includes("invalid") || raw.includes("token")) {
+      return "Link inválido ou expirado. Solicite um novo e-mail de redefinição.";
+    }
+    return err?.message || "Erro ao atualizar a senha.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 8) {
@@ -97,13 +113,28 @@ export default function QARedefinirSenhaPage() {
     }
     setSaving(true);
     try {
+      if (pendingTokenHash) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: pendingTokenHash,
+          type: (pendingTokenType as any) || "recovery",
+        });
+        if (verifyError) throw verifyError;
+        setPendingTokenHash(null);
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       toast.success("Senha redefinida com sucesso. Faça login novamente.");
       await supabase.auth.signOut();
-      navigate("/login", { replace: true });
+      let next = "";
+      try { next = localStorage.getItem("qa_password_reset_next") || ""; } catch { /* storage indisponível */ }
+      try { localStorage.removeItem("qa_password_reset_next"); } catch { /* storage indisponível */ }
+      const loginTarget = next && next.startsWith("/")
+        ? `/area-do-cliente/login?next=${encodeURIComponent(next)}`
+        : "/area-do-cliente/login";
+      navigate(loginTarget, { replace: true });
     } catch (err: any) {
-      toast.error(err?.message || "Erro ao atualizar a senha.");
+      toast.error(getPasswordUpdateMessage(err));
     } finally {
       setSaving(false);
     }
@@ -143,7 +174,7 @@ export default function QARedefinirSenhaPage() {
               <p className="text-sm text-red-600">{errorMsg}</p>
               <Button
                 type="button"
-                onClick={() => navigate("/login", { replace: true })}
+                onClick={() => navigate("/area-do-cliente/login", { replace: true })}
                 className="w-full bg-[#7A1F2B] hover:bg-[#641722] text-white h-10 text-sm"
               >
                 Voltar para o login
