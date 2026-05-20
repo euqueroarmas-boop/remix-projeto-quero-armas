@@ -28,6 +28,7 @@ export default function QACadastroRefinadoPage() {
   //     ou autenticou via OTP) — flag `identificacao_confirmada`.
   // `?servico=...` por si só NÃO pula a identificação.
   const retomar = params.get("retomar") === "1";
+  const servicoConfirmado = params.get("servico_confirmado") === "1";
   const jaAutenticado =
     state.modo_cliente === "autenticado" && state.dados_carregados_do_arsenal;
   const podePularIdentificacao =
@@ -38,23 +39,22 @@ export default function QACadastroRefinadoPage() {
   // for a família (Defesa Pessoal, CAC, Profissional). O Etapa01Servico
   // resolve o slug no catálogo e cai para Etapa00 se for inválido.
   const [step, setStep] = useState<number>(() => {
-    if (params.get("servico")) return 1;
-    return 0;
+    const servicoInicial = params.get("servico");
+    if (servicoInicial && servicoConfirmado) return 2;
+    return servicoInicial ? 1 : 0;
   });
   // Tela de "já tenho conta no Arsenal" — antecede o step 0 quando indefinido.
-  // Se veio com `?servico=` direto da landing/CTA, também pula a identificação.
-  const [showIdent, setShowIdent] = useState<boolean>(
-    () => !podePularIdentificacao && !params.get("servico"),
-  );
+  // `?servico=` mantém o serviço pré-selecionado, mas não pula identificação.
+  const [showIdent, setShowIdent] = useState<boolean>(() => !podePularIdentificacao);
   // Após autenticação bem-sucedida, mostra resumo "encontrei seu cadastro"
   const [showEncontrado, setShowEncontrado] = useState<boolean>(false);
   // Se cliente entrou direto via ?servico=, lembramos disso p/ Voltar levar para "/"
   const [enteredDirect] = useState<boolean>(() => Boolean(params.get("servico")));
   const [initialPerfil, setInitialPerfil] = useState<string | null>(() => params.get("perfil_v2"));
-
   // Sanidade: se mudou query depois (improvável), respeitar
   useEffect(() => {
     const servico = params.get("servico");
+    if (servico && servicoConfirmado && step < 2 && !showIdent) setStep(2);
     if (servico && step === 0 && !showIdent) setStep(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);

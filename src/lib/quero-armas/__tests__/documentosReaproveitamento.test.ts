@@ -57,6 +57,13 @@ describe("Reaproveitamento de documentos pessoais — /cadastro Mira", () => {
     expect(requisitoCumpridoPorReaproveitamento("doc_endereco", [d])).toBe(true);
   });
 
+  it("Documento vindo de qa_cadastro_publico satisfaz identidade e comprovante", () => {
+    const identidade = doc({ tipo_documento: "DOC_IDENTIDADE", arquivo_nome: "rg-frente-verso.pdf", status: "aprovado", validado_admin: true });
+    const endereco = doc({ tipo_documento: "COMPROVANTE_RESIDENCIA", arquivo_nome: "comprovante-endereco.pdf", status: "aprovado", validado_admin: true });
+    expect(requisitoCumpridoPorReaproveitamento("doc_identidade", [identidade])).toBe(true);
+    expect(requisitoCumpridoPorReaproveitamento("doc_endereco", [endereco])).toBe(true);
+  });
+
   it("Documento vencido NÃO satisfaz — usuário precisa enviar novo", () => {
     const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const d = doc({ tipo_documento: "RG", status: "aprovado", validado_admin: true, data_validade: ontem });

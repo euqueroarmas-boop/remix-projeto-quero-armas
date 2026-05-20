@@ -53,10 +53,10 @@ interface Props {
 }
 
 /** Documento exibido na Etapa 02.
- * `obrigatorio_etapa02`: bloqueia o botão "Continuar". Apenas identidade e
- * comprovante de residência são obrigatórios universais para os 18 serviços.
- * Demais documentos permanecem visíveis (opt-in) e podem ser enviados aqui
- * ou depois no Arsenal pós-pagamento (checklist cobra os pendentes).
+ * `obrigatorio_etapa02`: marca os documentos principais do cadastro
+ * (identidade e comprovante), mas NÃO bloqueia o avanço do checkout.
+ * O cliente pode enviar agora para adiantar o preenchimento ou seguir
+ * manualmente para revisão/pagamento; o checklist cobra pendências depois.
  */
 /** DocItem da UI — agora gerado pelo loader que consulta qa_servicos_documentos.
  *  Mantém o mesmo shape do fluxo legado para preservar Zero Regression. */
@@ -208,8 +208,6 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const obrigatoriosVisiveis = obrigatorios.filter((d) => !coberturaPorReaproveitamento(d.key));
   const opcionaisVisiveis = opcionais.filter((d) => !coberturaPorReaproveitamento(d.key));
   const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
-  const identidadeCoberta = requisitoCumprido("doc_identidade");
-  const enderecoCoberto = requisitoCumprido("doc_endereco");
   const ambosCobertosPorReuso =
     coberturaPorReaproveitamento("doc_identidade") &&
     coberturaPorReaproveitamento("doc_endereco");
@@ -226,9 +224,14 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   // e preencher os dados manualmente na próxima etapa. Aplica-se a todos os
   // serviços (atuais e novos). Não bloquear nunca o botão por falta de upload.
   const podeAvancar = !docsLoading;
-  const ctaLabel = docsLoading
-    ? "Carregando checklist…"
-    : "Continuar para revisão dos dados →";
+  let ctaLabel = "Continuar para revisão dos dados →";
+  if (docsLoading) {
+    ctaLabel = "Carregando checklist…";
+  } else if (obrigatoriosPendentes.length === obrigatorios.length) {
+    ctaLabel = "Continuar para preencher manualmente →";
+  } else if (obrigatoriosPendentes.length === 1) {
+    ctaLabel = `Continuar — ${obrigatoriosPendentes[0].shortName ?? obrigatoriosPendentes[0].label} pode ficar para depois`;
+  }
 
   async function handleUpload(key: string, file: File) {
     const err = validate(file);
@@ -381,7 +384,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       <div className="qa-ref-info-note" style={{ marginBottom: 18 }}>
         <Info size={14} style={{ flexShrink: 0, marginTop: 2 }} />
         <span>
-          Para avançar, precisamos do seu <strong>documento de identidade</strong> e do <strong>comprovante de residência</strong>.
+          Você pode enviar <strong>documento de identidade</strong> e <strong>comprovante de residência</strong> agora para adiantar o cadastro, ou continuar e preencher os dados manualmente.
         </span>
       </div>
 
@@ -440,6 +443,24 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       )}
 
       <div className="qa-ref-upload-list">
+        {!docsLoading && obrigatorios.length > 0 && obrigatoriosVisiveis.length === 0 && (
+          <div className="qa-ref-upload-item is-done" data-reuso="todos">
+            <div className="qa-ref-upload-icon"><Check size={18} /></div>
+            <div className="qa-ref-upload-meta">
+              <div className="qa-ref-upload-name">
+                Identidade e comprovante já recebidos
+                <span className="qa-ref-opt-badge" style={{ background: "#0f2f1a", color: "#86efac" }}>
+                  PUXADO DO CADASTRO
+                </span>
+              </div>
+              <div className="qa-ref-upload-hint">
+                <span style={{ color: "var(--qa-ref-success)" }}>
+                  Você pode continuar para revisar os dados antes do pagamento.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         {obrigatoriosVisiveis.map((d) => renderDoc(d))}
       </div>
 

@@ -17,7 +17,7 @@ interface Props {
 export default function QACadastroRefinadoHeader({
   onBack,
   showBack = true,
-  contextTag = "TUDO PRONTO",
+  contextTag = "EM ANDAMENTO",
   step,
   total = 6,
   onClose,
@@ -95,7 +95,7 @@ export default function QACadastroRefinadoHeader({
           <div className="qa-ref-logo">
             <MiraDot size={22} />
             <div className="qa-ref-header-eyebrow">
-              <span className="qa-ref-header-eyebrow-top">ANÁLISE CONCLUÍDA</span>
+              <span className="qa-ref-header-eyebrow-top">CHECKOUT GUIADO</span>
               <span className="qa-ref-header-eyebrow-main">{contextTag}</span>
             </div>
           </div>

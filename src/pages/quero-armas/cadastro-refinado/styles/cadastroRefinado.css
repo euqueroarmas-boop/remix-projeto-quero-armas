@@ -1,4 +1,4 @@
-/* Quero Armas — /cadastro DARK (Análise Concluída · Tudo Pronto)
+/* Quero Armas — /cadastro DARK (checkout guiado)
  * Paleta dark/brass mobile-first. Exceção visual ao Arsenal UI claro,
  * limitada ao escopo .qa-refinado (/cadastro e redirecionamentos /cadastro-v2). */
 
@@ -23,6 +23,7 @@
   --qa-ref-bg-strong: #252525;
   --qa-ref-line: rgba(255, 255, 255, 0.12);
   --qa-ref-radius: 14px;
+  --qa-ref-flow-max: 1080px;
   font-family: var(--font-sans, "Inter", ui-sans-serif, system-ui);
   background: var(--qa-ref-bg);
   color: var(--qa-ref-ink);
@@ -71,6 +72,13 @@
 }
 @media (min-width: 768px) { .qa-ref-header-inner { max-width: 640px; } }
 @media (min-width: 1024px) { .qa-ref-header-inner { max-width: 720px; } }
+@media (min-width: 1180px) {
+  .qa-ref-header-inner {
+    max-width: var(--qa-ref-flow-max);
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
 .qa-ref-logo {
   display: flex; align-items: center; gap: 10px;
 }
@@ -128,6 +136,108 @@
 }
 @media (min-width: 1024px) {
   .qa-ref-shell { padding: 36px 32px 112px; max-width: 720px; }
+}
+
+.qa-ref-integrated-grid {
+  display: grid;
+  gap: 26px;
+}
+.qa-ref-integrated-main {
+  min-width: 0;
+}
+@media (min-width: 1180px) {
+  .qa-ref-shell {
+    max-width: var(--qa-ref-flow-max);
+  }
+  .qa-ref-integrated-grid {
+    grid-template-columns: minmax(0, 680px) 320px;
+    align-items: start;
+    justify-content: center;
+    gap: 28px;
+  }
+}
+.qa-ref-journey {
+  border: 0.5px solid var(--qa-ref-border);
+  border-radius: var(--qa-ref-radius);
+  background: var(--qa-ref-paper);
+  padding: 18px;
+}
+@media (min-width: 1180px) {
+  .qa-ref-journey {
+    position: static;
+  }
+}
+.qa-ref-journey-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--qa-ref-accent);
+}
+.qa-ref-journey-title {
+  font-family: "Oswald", "Barlow Condensed", var(--font-sans, "Inter"), system-ui;
+  font-size: 22px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  margin: 8px 0 0;
+  color: var(--qa-ref-ink);
+}
+.qa-ref-journey-desc {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--qa-ref-ink-soft);
+}
+.qa-ref-journey-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 10px;
+}
+.qa-ref-journey-list li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 0.5px solid transparent;
+  color: var(--qa-ref-ink-soft);
+}
+.qa-ref-journey-list li.is-active {
+  border-color: rgba(214, 166, 75, 0.28);
+  background: var(--qa-ref-accent-soft);
+  color: var(--qa-ref-ink);
+}
+.qa-ref-journey-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--qa-ref-border);
+  color: var(--qa-ref-ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+.qa-ref-journey-list li.is-active .qa-ref-journey-num {
+  border-color: var(--qa-ref-accent);
+  color: var(--qa-ref-accent);
+}
+.qa-ref-journey-list strong {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+.qa-ref-journey-list small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--qa-ref-ink-soft);
 }
 
 /* Step indicator */
@@ -778,7 +888,7 @@
   transition: width 0.3s ease;
 }
 
-/* Eyebrow do header — ANÁLISE CONCLUÍDA · TUDO PRONTO */
+/* Eyebrow do header — CHECKOUT GUIADO · EM ANDAMENTO */
 .qa-ref-header-eyebrow {
   display: flex; flex-direction: column; gap: 2px; line-height: 1.1;
 }

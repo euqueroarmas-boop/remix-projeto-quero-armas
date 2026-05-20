@@ -123,6 +123,8 @@ describe("cadastro-refinado · constraints", () => {
 
   it("QACadastroRefinadoPage monta Etapa00Identificacao antes do wizard quando modo é indefinido", () => {
     const src = readFileSync(join(ROOT, "QACadastroRefinadoPage.tsx"), "utf8");
+    expect(src).toContain("supabase.auth.getSession");
+    expect(src).toContain("qa-cadastro-carregar-cliente");
     expect(src).toContain("Etapa00Identificacao");
     expect(src).toContain("Etapa00bClienteEncontrado");
     // Nova regra: identificação só é pulada com flag explícita na sessão,
@@ -131,6 +133,9 @@ describe("cadastro-refinado · constraints", () => {
     expect(src).toContain('params.get("retomar")');
     expect(src).toMatch(/modo_cliente\s*===\s*"autenticado"/);
     expect(src).toContain("dados_carregados_do_arsenal");
+    expect(src).toContain("documentos_reaproveitados");
+    expect(src).toContain("servico_confirmado");
+    expect(src).toMatch(/servicoInicial\s*&&\s*servicoConfirmado\)\s*return\s+2/);
     // Não pode mais pular identificação só porque há ?servico= na URL.
     expect(src).not.toMatch(/if\s*\(\s*params\.get\(["']servico["']\)\s*\)\s*return\s+1\s*;/);
   });
@@ -169,6 +174,20 @@ describe("cadastro-refinado · constraints", () => {
     expect(src).toContain("Authorization");
     expect(src).toContain("getClaims");
     expect(src).toMatch(/Unauthorized.*401|401.*Unauthorized/s);
+  });
+
+  it("Edge function qa-cadastro-carregar-cliente reaproveita documentos do cadastro publico", () => {
+    const src = readFileSync(
+      "supabase/functions/qa-cadastro-carregar-cliente/index.ts",
+      "utf8",
+    );
+    expect(src).toContain("qa_cadastro_publico");
+    expect(src).toContain("documento_identidade_path");
+    expect(src).toContain("comprovante_endereco_path");
+    expect(src).toContain("selfie_path");
+    expect(src).toContain("DOC_IDENTIDADE");
+    expect(src).toContain("COMPROVANTE_RESIDENCIA");
+    expect(src).toContain('origem: "qa_cadastro_publico"');
   });
 
   it("Etapa02Documentos expõe CTAs de substituição (Substituir / Enviar novo / Enviar outro)", () => {

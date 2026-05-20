@@ -52,8 +52,13 @@ export default function CarrinhoPage() {
   };
 
   const handleCheckout = () => {
-    if (!checkoutSlug) return;
-    navigate(`/checkout/finalizar`);
+    const slugs = items.map((item) => item.service_slug).filter(Boolean);
+    if (slugs.length === 0) return;
+    const params = new URLSearchParams({
+      servico: slugs.join(','),
+      origem: 'carrinho',
+    });
+    navigate(`/cadastro?${params.toString()}`);
   };
 
   if (itemCount === 0) {

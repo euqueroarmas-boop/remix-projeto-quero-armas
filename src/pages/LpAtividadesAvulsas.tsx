@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Target, Coffee, Users, CheckCircle2, Phone, Crosshair, GraduationCap, Calendar, Heart, Quote, HelpCircle, MapPin, Clock, Shield } from 'lucide-react';
 
+const CURSO_CHECKOUT = '/cadastro?servico=operador-de-pistola-nivel-i&origem=lp_atividades_avulsas&perfil_v2=orientacao_necessaria&subperfil_v2=curso_operador';
+
 const LpAtividadesAvulsas = () => (
   <SiteShell>
     <SEO
@@ -33,7 +35,7 @@ const LpAtividadesAvulsas = () => (
           Você não precisa ser CAC, ter posse ou entrar em processo nenhum pra sentir o coice de uma .40 na mão. Atire como visitante, faça curso avulso, traga amigos, descubra se esse universo é pra você <strong className="text-foreground">antes</strong> de assinar qualquer papel.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/servicos">Ver experiências <ArrowRight className="ml-2 size-4" /></Link></Button>
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CURSO_CHECKOUT}>Ver experiências <ArrowRight className="ml-2 size-4" /></Link></Button>
           <Button asChild size="lg" variant="outline"><a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Agendar visita</a></Button>
         </div>
       </div>
@@ -195,7 +197,7 @@ const LpAtividadesAvulsas = () => (
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Próximo passo. <span className="text-accent">Resolve sua agenda.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Estandes regularizados e instrutores credenciados. Direto pelo WhatsApp ou monte seu pacote.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/servicos">Ver pacotes <ArrowRight className="ml-2 size-4" /></Link></Button>
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CURSO_CHECKOUT}>Ver pacotes <ArrowRight className="ml-2 size-4" /></Link></Button>
           <Button asChild size="lg" variant="outline"><Link to="/descobrir-meu-caminho">Refazer diagnóstico</Link></Button>
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs uppercase tracking-widest text-muted-foreground">

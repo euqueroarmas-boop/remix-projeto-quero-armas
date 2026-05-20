@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Home, Shield, Skull, AlertTriangle, CheckCircle2, Lock, Scale, Target, Phone, X, FileCheck, Users } from 'lucide-react';
 
+const DEFESA_CHECKOUT = '/cadastro?servico=aquisicao-registro-posse-de-arma-de-fogo&origem=lp_defesa_pessoal&perfil_v2=defesa_pessoal&subperfil_v2=primeira_aquisicao';
+
 const LpDefesaPessoalPosse = () => (
   <SiteShell>
     <SEO
@@ -34,7 +36,7 @@ const LpDefesaPessoalPosse = () => (
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link to="/servicos">Quero minha posse legalizada <ArrowRight className="ml-2 size-4" /></Link>
+            <Link to={DEFESA_CHECKOUT}>Quero minha posse legalizada <ArrowRight className="ml-2 size-4" /></Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Falar com especialista</a>
@@ -136,7 +138,7 @@ const LpDefesaPessoalPosse = () => (
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Sua família. Sua casa. <span className="text-accent">Sua decisão.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Lei 10.826/03 te ampara. Decreto 11.615/23 te garante. A gente te conduz.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/servicos">Iniciar minha Posse <ArrowRight className="ml-2 size-4" /></Link></Button>
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={DEFESA_CHECKOUT}>Iniciar minha Posse <ArrowRight className="ml-2 size-4" /></Link></Button>
           <Button asChild size="lg" variant="outline"><Link to="/descobrir-meu-caminho">Descobrir meu caminho</Link></Button>
         </div>
       </div>
