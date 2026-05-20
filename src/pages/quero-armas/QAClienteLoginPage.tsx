@@ -308,6 +308,41 @@ export default function QAClienteLoginPage() {
               </div>
             </form>
 
+            {diag && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-left flex flex-col gap-3"
+              >
+                <span className="text-[10px] uppercase tracking-[0.2em] text-amber-700">
+                  Diagnóstico do acesso
+                </span>
+                <p className="text-sm text-slate-800 leading-relaxed">{diag.hint}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(diag.reason === "auth_user_nao_existe" ||
+                    diag.reason === "cliente_sem_acesso_ativado" ||
+                    diag.reason === "vinculo_cliente_auth_quebrado") && (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/ativar-acesso")}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold tracking-wide"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" /> Primeiro acesso
+                    </button>
+                  )}
+                  {(diag.reason === "senha_incorreta" ||
+                    diag.reason === "vinculo_cliente_auth_quebrado") && (
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold tracking-wide"
+                    >
+                      Redefinir senha
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="text-center text-xs text-slate-500">
               Não tem conta?{" "}
               <Link to="/area-do-cliente/criar-conta" className="text-slate-900 font-semibold hover:underline">
