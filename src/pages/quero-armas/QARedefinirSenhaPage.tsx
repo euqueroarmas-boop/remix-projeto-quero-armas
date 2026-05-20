@@ -126,7 +126,14 @@ export default function QARedefinirSenhaPage() {
         setPendingTokenHash(null);
       }
 
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: {
+          password_change_required: false,
+          temp_password: null,
+          password_changed_at: new Date().toISOString(),
+        },
+      });
       if (error) throw error;
       toast.success("Senha redefinida com sucesso. Faça login novamente.");
       await supabase.auth.signOut();
