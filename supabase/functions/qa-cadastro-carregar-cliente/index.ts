@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       supabaseAdmin
         .from("qa_clientes")
         .select(
-          "id, nome_completo, cpf, rg, email, celular, data_nascimento, endereco, numero, complemento, bairro, cidade, estado, cep",
+          "id, nome_completo, cpf, rg, email, celular, data_nascimento, endereco, numero, complemento, bairro, cidade, estado, cep, cadastro_publico_id",
         )
         .eq("id", qaClienteId)
         .maybeSingle(),
