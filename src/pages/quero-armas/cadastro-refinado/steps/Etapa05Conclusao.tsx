@@ -1,4 +1,4 @@
-import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen } from "lucide-react";
+import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen, Camera } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +71,34 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
    * Arsenal Inteligente continua GRATUITO e nunca bloqueado — apenas o aviso de envio
    * é condicional ao webhook ter disparado o e-mail. */
   const acessoEnviado = statusAtual === "acesso_enviado" || statusAtual === "servico_liberado";
+
+  /* PR4 — Selfie/foto pós-checkout.
+   * Reutiliza /cadastro/foto (QAEnviarFotoPage) já existente, com CPF pré-preenchido
+   * e returnTo para a Área do Cliente. Nunca bloqueia o fluxo. */
+  const cpfDigits = (state.dadosPessoais.cpf || "").replace(/\D/g, "");
+  const [jaTemFoto, setJaTemFoto] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (cpfDigits.length !== 11) return;
+    let cancel = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("qa-atualizar-foto", {
+          body: { action: "lookup", cpf: cpfDigits },
+        });
+        if (cancel) return;
+        const has =
+          !!(data?.cadastro?.selfie_path) || !!(data?.cliente?.imagem);
+        setJaTemFoto(has);
+      } catch { /* silencioso — CTA cai para "Enviar sua foto" */ }
+    })();
+    return () => { cancel = true; };
+  }, [cpfDigits]);
+
+  function irParaFoto() {
+    navigate("/cadastro/foto", {
+      state: { cpf: cpfDigits, returnTo: "/area-do-cliente" },
+    });
+  }
 
   /* Polling leve enquanto não atingimos um estado terminal — atualiza status real
    * sem criar processo/checklist (isso só acontece após contrato validado). */
@@ -196,6 +224,17 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
         >
           Acessar meu Arsenal
         </button>
+        {cpfDigits.length === 11 && (
+          <button
+            type="button"
+            className="qa-ref-btn qa-ref-btn-ghost"
+            onClick={irParaFoto}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+          >
+            <Camera size={16} />
+            {jaTemFoto ? "Atualizar minha foto" : "Enviar sua foto agora"}
+          </button>
+        )}
         {state.clienteExistente ? (
           <>
             <button className="qa-ref-btn qa-ref-btn-ghost" onClick={() => navigate("/area-do-cliente/login")}>
