@@ -340,6 +340,28 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         });
       }
 
+      // PR3 — Persistência dos 2 documentos (identidade + comprovante) no painel
+      // da equipe. Best-effort: falha NÃO bloqueia checkout/contrato/pagamento.
+      try {
+        const temDocs =
+          !!state.documentos?.doc_identidade?.storagePath ||
+          !!state.documentos?.doc_endereco?.storagePath;
+        if (temDocs) {
+          await supabase.functions.invoke("qa-cadastro-refinado-persistir-docs", {
+            body: {
+              qa_cliente_id: clienteIdFinal,
+              dados_pessoais: state.dadosPessoais,
+              documentos: state.documentos,
+              servico_slug:
+                state.servicoSlug || (state.servicosSlugs?.[0] ?? null),
+              origem: state.origem || "cadastro_refinado",
+            },
+          });
+        }
+      } catch (persistErr) {
+        console.warn("[cadastro-refinado] persistência de documentos falhou:", persistErr);
+      }
+
       // 3) Aceite (não bloqueia)
       try {
         await supabase.functions.invoke("qa-contract-aceite-registrar", {
