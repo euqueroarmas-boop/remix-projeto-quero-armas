@@ -438,17 +438,19 @@ const QuizPage = () => {
               </div>
             </div>
           )}
-          <aside className="rounded-sm border border-border bg-card p-5 lg:sticky lg:top-24 lg:self-start">
+          <aside className="rounded-sm border border-border bg-card p-5 lg:self-start">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10">
                 <Route className="size-5 text-accent" />
               </div>
               <div>
-                <div className="font-heading text-xs font-bold uppercase tracking-[0.18em] text-accent">Seu caminho</div>
-                <div className="text-xs text-muted-foreground">Atualizado a cada resposta</div>
+                <div className="font-heading text-xs font-bold uppercase tracking-[0.18em] text-accent">Jornada do cliente</div>
+                <div className="text-xs text-muted-foreground">Do diagnostico ao Arsenal</div>
               </div>
             </div>
-            <h3 className="font-heading text-lg font-bold uppercase leading-tight">{path.title}</h3>
+            <h3 className="font-heading text-lg font-bold uppercase leading-tight">
+              {isResultStep ? 'Caminho pronto para checkout' : path.title}
+            </h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{path.description}</p>
             {answeredTrail.length > 0 && (
               <div className="mt-5 space-y-2 border-t border-border pt-4">
@@ -467,6 +469,31 @@ const QuizPage = () => {
                   <li key={item} className="flex gap-3 text-sm">
                     <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-accent/50 text-xs font-bold text-accent">{index + 1}</span>
                     <span className="leading-snug text-foreground">{item}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <div className="mt-5 border-t border-border pt-4">
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Jornada completa</div>
+              <ol className="mt-3 space-y-2">
+                {[
+                  { n: 1, label: "Diagnostico guiado", detail: isResultStep ? "Caminho confirmado" : "Respondendo motivacao real", active: true },
+                  { n: 2, label: "Documentos e dados", detail: "Enviar ou preencher manualmente", active: false },
+                  { n: 3, label: "Revisao do cadastro", detail: "Dados reaproveitados ou digitados", active: false },
+                  { n: 4, label: "Contrato e pagamento", detail: "Aceite, cobranca e assinatura", active: false },
+                  { n: 5, label: "Arsenal Inteligente", detail: "Conta criada ou liberada ao concluir", active: false },
+                ].map((item) => (
+                  <li
+                    key={item.n}
+                    className={`flex gap-3 rounded-sm p-3 text-sm ${item.active ? 'border border-accent/35 bg-accent/10' : 'bg-background/70'}`}
+                  >
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-accent/50 text-xs font-bold text-accent">
+                      {item.n}
+                    </span>
+                    <span>
+                      <strong className="block leading-snug text-foreground">{item.label}</strong>
+                      <small className="text-xs leading-snug text-muted-foreground">{item.detail}</small>
+                    </span>
                   </li>
                 ))}
               </ol>
