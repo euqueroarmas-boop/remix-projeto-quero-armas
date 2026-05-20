@@ -68,7 +68,11 @@ export default function QACriarContaPage() {
           /* ignore */
         }
         const reason = payload?.reason;
-        if (reason === "cpf_ja_possui_login" || reason === "email_ja_cadastrado") {
+        if (
+          reason === "cpf_ja_possui_login" ||
+          reason === "email_ja_cadastrado" ||
+          reason === "cpf_ja_possui_cadastro_sem_login"
+        ) {
           toast.error(payload?.message || "Conta já existe. Faça login.");
           navigate("/area-do-cliente/login", {
             state: { prefillEmail: email.trim().toLowerCase() },
@@ -80,7 +84,11 @@ export default function QACriarContaPage() {
 
       if (!data?.ok) {
         const reason = data?.reason;
-        if (reason === "cpf_ja_possui_login" || reason === "email_ja_cadastrado") {
+        if (
+          reason === "cpf_ja_possui_login" ||
+          reason === "email_ja_cadastrado" ||
+          reason === "cpf_ja_possui_cadastro_sem_login"
+        ) {
           toast.error(data?.message || "Conta já existe. Faça login.");
           navigate("/area-do-cliente/login", {
             state: { prefillEmail: email.trim().toLowerCase() },
