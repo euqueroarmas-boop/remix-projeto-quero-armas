@@ -26,12 +26,12 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres.");
+    if (password.length < 12) {
+      toast.error("A senha deve ter pelo menos 12 caracteres.");
       return;
     }
-    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-      toast.error("Use letras e números na nova senha.");
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+      toast.error("Use maiúsculas, minúsculas, números e símbolo na nova senha.");
       return;
     }
     if (password !== confirm) {
@@ -93,8 +93,8 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">
             Por segurança, é necessário escolher uma senha pessoal antes de
-            acessar o seu arsenal. Use no mínimo <strong>8 caracteres</strong>,
-            combinando letras e números.
+            acessar o seu arsenal. Use no mínimo <strong>12 caracteres</strong>,
+            combinando maiúsculas, minúsculas, números e símbolo.
           </p>
 
           <div className="space-y-1.5">
