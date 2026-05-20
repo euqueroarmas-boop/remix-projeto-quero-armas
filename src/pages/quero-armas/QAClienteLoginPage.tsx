@@ -11,6 +11,7 @@ export default function QAClienteLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [diag, setDiag] = useState<{ reason: string; hint: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -41,11 +42,33 @@ export default function QAClienteLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setDiag(null);
     try {
       // Normalização defensiva — o input já força lowercase, mas garante trim e lower aqui.
       const emailNorm = (email || "").trim().toLowerCase();
       const { error } = await supabase.auth.signInWithPassword({ email: emailNorm, password });
-      if (error) throw error;
+      if (error) {
+        // Diagnóstico seguro server-side antes de mostrar a mensagem genérica.
+        const msg = String(error.message || "").toLowerCase();
+        const isInvalid = msg.includes("invalid login credentials") || msg.includes("invalid_credentials");
+        if (isInvalid) {
+          try {
+            const { data } = await supabase.functions.invoke("qa-login-diagnostico", {
+              body: { email: emailNorm },
+            });
+            const reason = (data as any)?.reason as string | undefined;
+            const hint = (data as any)?.hint as string | undefined;
+            if (reason && hint) {
+              setDiag({ reason, hint });
+              toast.error(hint);
+              return;
+            }
+          } catch { /* fallback genérico abaixo */ }
+          toast.error("Não foi possível autenticar. Verifique e-mail/senha ou use 'Primeiro acesso'.");
+          return;
+        }
+        throw error;
+      }
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
 
