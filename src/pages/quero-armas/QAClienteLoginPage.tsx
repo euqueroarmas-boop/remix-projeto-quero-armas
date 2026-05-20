@@ -11,6 +11,7 @@ export default function QAClienteLoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [diag, setDiag] = useState<{ reason: string; hint: string } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -41,11 +42,33 @@ export default function QAClienteLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setDiag(null);
     try {
       // Normalização defensiva — o input já força lowercase, mas garante trim e lower aqui.
       const emailNorm = (email || "").trim().toLowerCase();
       const { error } = await supabase.auth.signInWithPassword({ email: emailNorm, password });
-      if (error) throw error;
+      if (error) {
+        // Diagnóstico seguro server-side antes de mostrar a mensagem genérica.
+        const msg = String(error.message || "").toLowerCase();
+        const isInvalid = msg.includes("invalid login credentials") || msg.includes("invalid_credentials");
+        if (isInvalid) {
+          try {
+            const { data } = await supabase.functions.invoke("qa-login-diagnostico", {
+              body: { email: emailNorm },
+            });
+            const reason = (data as any)?.reason as string | undefined;
+            const hint = (data as any)?.hint as string | undefined;
+            if (reason && hint) {
+              setDiag({ reason, hint });
+              toast.error(hint);
+              return;
+            }
+          } catch { /* fallback genérico abaixo */ }
+          toast.error("Não foi possível autenticar. Verifique e-mail/senha ou use 'Primeiro acesso'.");
+          return;
+        }
+        throw error;
+      }
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
 
@@ -284,6 +307,41 @@ export default function QAClienteLoginPage() {
                 </button>
               </div>
             </form>
+
+            {diag && (
+              <div
+                role="alert"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-left flex flex-col gap-3"
+              >
+                <span className="text-[10px] uppercase tracking-[0.2em] text-amber-700">
+                  Diagnóstico do acesso
+                </span>
+                <p className="text-sm text-slate-800 leading-relaxed">{diag.hint}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(diag.reason === "auth_user_nao_existe" ||
+                    diag.reason === "cliente_sem_acesso_ativado" ||
+                    diag.reason === "vinculo_cliente_auth_quebrado") && (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/ativar-acesso")}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold tracking-wide"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" /> Primeiro acesso
+                    </button>
+                  )}
+                  {(diag.reason === "senha_incorreta" ||
+                    diag.reason === "vinculo_cliente_auth_quebrado") && (
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold tracking-wide"
+                    >
+                      Redefinir senha
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="text-center text-xs text-slate-500">
               Não tem conta?{" "}
