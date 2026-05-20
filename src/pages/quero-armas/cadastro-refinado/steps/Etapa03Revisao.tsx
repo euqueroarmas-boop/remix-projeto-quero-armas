@@ -139,7 +139,7 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
   function irParaLogin() {
     try {
       // Snapshot operacional silencioso para preservar o checkout antes do login.
-      enviarSnapshotCadastroMira(state, "pre_login_cpf_existente", {
+      enviarSnapshotCadastroMira(state, "revisao_cliente", {
         snapshot_id: state.cadastro_mira_snapshot_id,
       }).catch(() => {});
     } catch { /* silencioso */ }
