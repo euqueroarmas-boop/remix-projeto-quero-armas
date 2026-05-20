@@ -215,7 +215,7 @@ export default function QACriarContaPage() {
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                     autoComplete="new-password"
-                    minLength={8}
+                    minLength={6}
                     required
                   />
                   <button
@@ -227,7 +227,7 @@ export default function QACriarContaPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">Mínimo 8 caracteres.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Mínimo 6 caracteres.</p>
               </div>
 
               <label className="flex items-start gap-2 text-xs text-slate-700 mt-2">
