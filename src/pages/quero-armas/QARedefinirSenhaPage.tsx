@@ -126,7 +126,13 @@ export default function QARedefinirSenhaPage() {
       if (error) throw error;
       toast.success("Senha redefinida com sucesso. Faça login novamente.");
       await supabase.auth.signOut();
-      navigate("/area-do-cliente/login", { replace: true });
+      let next = "";
+      try { next = localStorage.getItem("qa_password_reset_next") || ""; } catch { /* storage indisponível */ }
+      try { localStorage.removeItem("qa_password_reset_next"); } catch { /* storage indisponível */ }
+      const loginTarget = next && next.startsWith("/")
+        ? `/area-do-cliente/login?next=${encodeURIComponent(next)}`
+        : "/area-do-cliente/login";
+      navigate(loginTarget, { replace: true });
     } catch (err: any) {
       toast.error(getPasswordUpdateMessage(err));
     } finally {
