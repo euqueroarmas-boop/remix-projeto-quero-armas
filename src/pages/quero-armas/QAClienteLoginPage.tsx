@@ -10,6 +10,7 @@ export default function QAClienteLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [diag, setDiag] = useState<{ reason: string; hint: string } | null>(null);
   const navigate = useNavigate();
@@ -31,11 +32,17 @@ export default function QAClienteLoginPage() {
 
   const handleForgotPassword = async () => {
     if (!email) { toast.error("Informe seu e-mail primeiro."); return; }
-    const result = await requestQAPasswordReset(email);
-    if (result.success) {
-      toast.success("Se existir uma conta com este e-mail, enviaremos as instruções de redefinição.");
-    } else {
-      toast.error(result.errorMessage || "Não foi possível enviar o e-mail de redefinição. Tente novamente em instantes.");
+    if (resetLoading) return;
+    setResetLoading(true);
+    try {
+      const result = await requestQAPasswordReset(email);
+      if (result.success) {
+        toast.success("Se existir uma conta com este e-mail, enviaremos as instruções de redefinição.");
+      } else {
+        toast.error(result.errorMessage || "Não foi possível enviar o e-mail de redefinição. Tente novamente em instantes.");
+      }
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -293,9 +300,10 @@ export default function QAClienteLoginPage() {
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-[11px] text-slate-500 hover:text-slate-900 underline-offset-2 hover:underline transition-colors"
+                  disabled={resetLoading}
+                  className="text-[11px] text-slate-500 hover:text-slate-900 underline-offset-2 hover:underline transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Esqueci minha senha
+                  {resetLoading ? "Enviando..." : "Esqueci minha senha"}
                 </button>
                 <button
                   type="submit"
@@ -334,9 +342,10 @@ export default function QAClienteLoginPage() {
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold tracking-wide"
+                      disabled={resetLoading}
+                      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Redefinir senha
+                      {resetLoading ? "Enviando..." : "Redefinir senha"}
                     </button>
                   )}
                 </div>
