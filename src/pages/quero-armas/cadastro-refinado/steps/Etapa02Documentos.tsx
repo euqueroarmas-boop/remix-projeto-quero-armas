@@ -208,6 +208,20 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const obrigatoriosVisiveis = obrigatorios.filter((d) => !coberturaPorReaproveitamento(d.key));
   const opcionaisVisiveis = opcionais.filter((d) => !coberturaPorReaproveitamento(d.key));
   const obrigatoriosPendentes = obrigatorios.filter((d) => !requisitoCumprido(d.key));
+  const identidadeCoberta = requisitoCumprido("doc_identidade");
+  const enderecoCoberto = requisitoCumprido("doc_endereco");
+  const ambosCobertosPorReuso =
+    coberturaPorReaproveitamento("doc_identidade") &&
+    coberturaPorReaproveitamento("doc_endereco");
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line no-console
+    console.log(
+      "[Etapa02] reaproveitados count",
+      (state.documentos_reaproveitados || []).length,
+      "obrigatoriosVisiveis keys",
+      obrigatoriosVisiveis.map((d) => d.key),
+    );
+  }
   // Etapa de documentos é OPCIONAL: o cliente pode avançar sem enviar nada
   // e preencher os dados manualmente na próxima etapa. Aplica-se a todos os
   // serviços (atuais e novos). Não bloquear nunca o botão por falta de upload.
@@ -370,6 +384,30 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
           Para avançar, precisamos do seu <strong>documento de identidade</strong> e do <strong>comprovante de residência</strong>.
         </span>
       </div>
+
+      {state.modo_cliente === "autenticado" && state.dados_carregados_do_arsenal && (
+        <div className="qa-ref-banner" style={{ marginBottom: 14, background: "#0f2f1a", borderColor: "#1f5a36" }}>
+          <Check size={16} style={{ flexShrink: 0, marginTop: 2, color: "#86efac" }} />
+          <div>
+            <strong>Entramos com sua conta</strong> e puxamos do cadastro do cliente as informações e documentos já existentes. Envie aqui apenas o que ainda faltar ou precisar atualizar.
+          </div>
+        </div>
+      )}
+
+      {state.modo_cliente === "autenticado" && ambosCobertosPorReuso && (
+        <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Check size={16} style={{ color: "#86efac" }} />
+            <span className="qa-ref-found-title">IDENTIDADE E COMPROVANTE JÁ RECEBIDOS</span>
+            <span
+              className="qa-ref-opt-badge"
+              style={{ background: "#0f2f1a", color: "#86efac" }}
+            >
+              PUXADO DO CADASTRO
+            </span>
+          </div>
+        </div>
+      )}
 
       {state.modo_cliente === "autenticado" && (
         (() => {
