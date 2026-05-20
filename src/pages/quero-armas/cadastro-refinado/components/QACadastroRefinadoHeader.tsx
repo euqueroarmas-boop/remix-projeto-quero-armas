@@ -1,4 +1,6 @@
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, UserCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { MiraDot } from "../mira-ui";
 
 interface Props {
@@ -24,6 +26,20 @@ export default function QACadastroRefinadoHeader({
     typeof step === "number" && total > 0
       ? Math.min(100, Math.max(0, Math.round((step / total) * 100)))
       : 0;
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setUserEmail(data.session?.user?.email ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
   return (
     <header className="qa-ref-header">
       <div className="qa-ref-header-inner">
@@ -46,14 +62,44 @@ export default function QACadastroRefinadoHeader({
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          className="qa-ref-round-btn"
-          onClick={onClose ?? onBack}
-          aria-label="Fechar"
-        >
-          <X size={16} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {userEmail && (
+            <span
+              title={`Logado como ${userEmail}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "5px 10px",
+                borderRadius: 999,
+                background: "rgba(214, 166, 75, 0.12)",
+                border: "1px solid rgba(214, 166, 75, 0.45)",
+                color: "#d6a64b",
+                fontSize: 10.5,
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                maxWidth: 180,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <UserCheck size={12} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                {userEmail}
+              </span>
+            </span>
+          )}
+          <button
+            type="button"
+            className="qa-ref-round-btn"
+            onClick={onClose ?? onBack}
+            aria-label="Fechar"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
       {typeof step === "number" && (
         <div className="qa-ref-progress-top" aria-hidden>
