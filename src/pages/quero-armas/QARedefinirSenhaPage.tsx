@@ -200,11 +200,11 @@ export default function QARedefinirSenhaPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
-                    minLength={12}
+                    minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"
-                    placeholder="12+ caracteres, número e símbolo"
+                    placeholder="Mínimo 6 caracteres"
                     autoComplete="new-password"
                   />
                   <button
@@ -230,7 +230,7 @@ export default function QARedefinirSenhaPage() {
                     id="confirm"
                     type={showConfirm ? "text" : "password"}
                     required
-                    minLength={12}
+                    minLength={6}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"
