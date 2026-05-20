@@ -33,6 +33,10 @@ export default function QAClienteLoginPage() {
   const handleForgotPassword = async () => {
     if (!email) { toast.error("Informe seu e-mail primeiro."); return; }
     if (resetLoading) return;
+    const next = searchParams.get("next");
+    if (next && next.startsWith("/")) {
+      try { localStorage.setItem("qa_password_reset_next", next); } catch { /* storage indisponível */ }
+    }
     setResetLoading(true);
     try {
       const result = await requestQAPasswordReset(email);
