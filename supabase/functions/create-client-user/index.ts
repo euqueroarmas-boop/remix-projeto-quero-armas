@@ -919,12 +919,16 @@ Deno.serve(async (req) => {
 });
 
 function generateTempPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let pwd = "";
-  const arr = new Uint8Array(10);
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#%*-_";
+  const chars = `${upper}${lower}${digits}${symbols}`;
+  let pwd = "QA!7";
+  const arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < arr.length; i++) {
     pwd += chars[arr[i] % chars.length];
   }
-  return pwd + "!1";
+  return pwd;
 }
