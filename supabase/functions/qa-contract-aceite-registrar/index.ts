@@ -40,23 +40,32 @@ function substitute(html: string, vars: Record<string, string>): string {
 }
 
 /**
- * Filtra <section data-anexo-slug="..."> mantendo apenas o do serviço contratado.
- * Fail-open: se não houver match, devolve o HTML integral.
+ * Filtra <section data-anexo-slug="..."> mantendo apenas os anexos dos
+ * serviços contratados. Aceita SOMENTE array de slugs (nunca string com
+ * vírgula). Sem fail-open: se não houver match, substitui por aviso
+ * controlado para nunca expor anexos não contratados ao cliente.
  */
-function filterAnexoBySlug(
+const AVISO_SEM_ANEXO_HTML =
+  '<section data-anexo-slug="__aviso__" class="qa-anexo-aviso" ' +
+  'style="border:1px solid #c9a84c;background:#fdf6e3;color:#5a4a1a;' +
+  'padding:12px 14px;margin:18px 0;font-size:12.5px;line-height:1.5;">' +
+  '<strong>Anexo específico do serviço não disponível neste contrato.</strong> ' +
+  "Os termos detalhados do serviço contratado serão entregues junto ao " +
+  "contrato final assinado." +
+  "</section>";
+
+function filterContractAnexosBySlugs(
   html: string,
-  slug: string | string[] | null | undefined,
+  slugsContratados: string[],
 ): string {
   if (!html) return html;
-  const raw = Array.isArray(slug) ? slug : [slug];
-  const slugs = raw
-    .filter((s): s is string => !!s && typeof s === "string")
-    .flatMap((s) => s.split(",")) // tolera "slug1,slug2" legado
+  const slugs = (slugsContratados || [])
+    .filter((s): s is string => typeof s === "string")
     .map((s) => s.trim())
     .filter(Boolean);
-  if (slugs.length === 0) return html;
   const slugSet = new Set(slugs);
-  const sectionRegex = /<section\s+data-anexo-slug="([^"]+)">[\s\S]*?<\/section>\s*/g;
+  const sectionRegex =
+    /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
   const filtered = html.replace(sectionRegex, (full, s) => {
@@ -64,7 +73,8 @@ function filterAnexoBySlug(
     if (slugSet.has(s)) { kept++; return full; }
     return "";
   });
-  if (!foundAny || kept === 0) return html;
+  if (!foundAny) return html; // template sem anexos
+  if (kept === 0) return filtered + AVISO_SEM_ANEXO_HTML;
   return filtered;
 }
 
@@ -181,15 +191,20 @@ Deno.serve(async (req) => {
       aceite_user_agent: esc(aceite_user_agent || ""),
       aceite_hash: "", // hash não é embutido no corpo (autorreferente)
     };
-    // Normaliza para array: prioriza servico_slugs[]; tolera servico_slug
-    // único OU "slug1,slug2" legado.
+    // Normaliza para array: prioriza servico_slugs[]; aceita servico_slug
+    // único como fallback. NUNCA usa string com vírgula.
     const slugsParaFiltrar: string[] = Array.isArray(servico_slugs)
-      ? servico_slugs
-      : typeof servico_slug === "string"
-        ? [servico_slug]
+      ? servico_slugs.filter((s: unknown): s is string => typeof s === "string" && !!s.trim())
+      : typeof servico_slug === "string" && servico_slug.trim()
+        ? [servico_slug.trim()]
         : [];
+    if (slugsParaFiltrar.length === 0) {
+      console.warn(
+        "[qa-contract-aceite-registrar] aceite sem servico_slug(s) — snapshot conterá aviso controlado",
+      );
+    }
     // Filtra o Anexo I para conter APENAS os serviços contratados (snapshot imutável)
-    const corpoFiltrado = filterAnexoBySlug(tpl.corpo_html, slugsParaFiltrar);
+    const corpoFiltrado = filterContractAnexosBySlugs(tpl.corpo_html, slugsParaFiltrar);
     const conteudo_renderizado = substitute(corpoFiltrado, vars);
 
     // 3) Hash probatório
