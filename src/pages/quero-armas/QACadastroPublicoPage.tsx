@@ -2519,7 +2519,7 @@ function Step4ArsenalAccess({
             type={showSenha ? "text" : "password"}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            placeholder="Mínimo 8 caracteres, com letra e número"
+            placeholder="Mínimo 6 caracteres"
             className="w-full h-11 pl-10 pr-10 rounded-md border border-zinc-300 bg-white text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
             autoComplete="new-password"
           />
