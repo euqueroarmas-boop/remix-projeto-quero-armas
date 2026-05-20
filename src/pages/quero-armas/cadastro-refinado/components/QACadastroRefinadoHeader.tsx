@@ -57,6 +57,7 @@ export default function QACadastroRefinadoHeader({
     const apply = async (session: any) => {
       const u = session?.user;
       if (!u) {
+        console.log("[QAHeader] sem sessão ativa");
         if (active) setUserLabel(null);
         return;
       }
@@ -66,6 +67,7 @@ export default function QACadastroRefinadoHeader({
         (u.user_metadata?.nome as string | undefined) ??
         null;
       const label = await resolveLabel(u.id, u.email ?? null, metaName);
+      console.log("[QAHeader] sessão ativa", { id: u.id, email: u.email, metaName, label });
       if (active) setUserLabel(label);
     };
 
