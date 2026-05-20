@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       supabaseAdmin
         .from("qa_clientes")
         .select(
-          "id, nome_completo, cpf, rg, email, celular, data_nascimento, endereco, numero, complemento, bairro, cidade, estado, cep",
+          "id, nome_completo, cpf, rg, email, celular, data_nascimento, endereco, numero, complemento, bairro, cidade, estado, cep, cadastro_publico_id",
         )
         .eq("id", qaClienteId)
         .maybeSingle(),
@@ -143,6 +143,54 @@ Deno.serve(async (req) => {
       if (cls === "vencido") vencidos.push(entry);
       else if (cls === "pendente") pendentes.push(entry);
       else validos.push(entry);
+    }
+
+    // --- Reaproveitamento a partir de qa_cadastro_publico ---
+    // Resolve a linha pública vinculada: prioriza qa_clientes.cadastro_publico_id;
+    // fallback por cliente_id_vinculado (mais recente).
+    try {
+      const cadastroPublicoId = (clienteRes.data as any)?.cadastro_publico_id ?? null;
+      let pub: any = null;
+      if (cadastroPublicoId) {
+        const { data } = await supabaseAdmin
+          .from("qa_cadastro_publico")
+          .select("id, documento_identidade_path, comprovante_endereco_path, selfie_path, created_at")
+          .eq("id", cadastroPublicoId)
+          .maybeSingle();
+        pub = data;
+      }
+      if (!pub) {
+        const { data } = await supabaseAdmin
+          .from("qa_cadastro_publico")
+          .select("id, documento_identidade_path, comprovante_endereco_path, selfie_path, created_at")
+          .eq("cliente_id_vinculado", qaClienteId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        pub = data;
+      }
+      if (pub) {
+        const fileNameFromPath = (p: string | null | undefined) =>
+          (p ? String(p).split("/").pop() || String(p) : "");
+        const pushPub = (tipo: string, path: string | null | undefined) => {
+          if (!path) return;
+          validos.push({
+            id: `pub_${pub.id}_${tipo.toLowerCase()}`,
+            tipo_documento: tipo,
+            arquivo_nome: fileNameFromPath(path),
+            data_validade: null,
+            status: "aprovado",
+            validado_admin: true,
+            origem: "qa_cadastro_publico",
+            storage_path: path,
+          });
+        };
+        pushPub("DOC_IDENTIDADE", pub.documento_identidade_path);
+        pushPub("COMPROVANTE_RESIDENCIA", pub.comprovante_endereco_path);
+        pushPub("SELFIE", pub.selfie_path);
+      }
+    } catch (pubErr) {
+      console.warn("[qa-cadastro-carregar-cliente] qa_cadastro_publico lookup falhou", pubErr);
     }
 
     const servicos_anteriores = (vendasRes.data || []).map((v) => ({

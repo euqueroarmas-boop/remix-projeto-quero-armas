@@ -68,6 +68,13 @@ export default function QACadastroRefinadoPage() {
   //  • Não cria cliente/Auth/venda — apenas leitura.
   useEffect(() => {
     if (authLoading) return;
+    (async () => {
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        // eslint-disable-next-line no-console
+        console.log("[CadastroRefinado] sessão ativa", !!sess?.session);
+      } catch { /* ignore */ }
+    })();
     if (!user) return;
     if (state.dados_carregados_do_arsenal) return;
     let cancelled = false;
@@ -134,6 +141,35 @@ export default function QACadastroRefinadoPage() {
           clienteExistente: !!qaCliente,
         });
         setShowIdent(false);
+        // Carrega documentos reaproveitáveis (qa_documentos_cliente + qa_cadastro_publico)
+        try {
+          const { data: payload, error: efErr } = await supabase.functions.invoke(
+            "qa-cadastro-carregar-cliente",
+            { body: {} },
+          );
+          // eslint-disable-next-line no-console
+          console.log(
+            "[CadastroRefinado] cliente carregado",
+            !!payload && !efErr,
+            "documentos_validos count",
+            Array.isArray((payload as any)?.documentos_validos)
+              ? (payload as any).documentos_validos.length
+              : 0,
+          );
+          if (!efErr && payload && !cancelled) {
+            update({
+              documentos_reaproveitados: (payload as any).documentos_validos || [],
+              documentos_vencidos: (payload as any).documentos_vencidos || [],
+              documentos_pendentes_revisao: (payload as any).documentos_pendentes || [],
+              servicos_anteriores: (payload as any).servicos_anteriores || [],
+              processos_ativos: (payload as any).processos_ativos || [],
+              contratos_existentes: (payload as any).contratos_existentes || [],
+              arsenal_resumo: (payload as any).arsenal_resumo || null,
+            });
+          }
+        } catch (e) {
+          console.warn("[CadastroRefinado] carregar-cliente falhou", e);
+        }
       } catch (e) {
         console.warn("[cadastro-refinado] hydrate pós-login falhou", e);
       }
