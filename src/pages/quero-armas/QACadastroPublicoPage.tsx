@@ -747,7 +747,11 @@ export default function QACadastroPublicoPage() {
       }
 
       // CPF/Email já tem login → vincula (não cria duplicado, só segue para conclusão)
-      if (body?.reason === "cpf_ja_possui_login" || body?.reason === "email_ja_cadastrado") {
+      if (
+        body?.reason === "cpf_ja_possui_login" ||
+        body?.reason === "email_ja_cadastrado" ||
+        body?.reason === "cpf_ja_possui_cadastro_sem_login"
+      ) {
         setArsenalCriado({ user_id: null, email: emailNorm, cliente_existente: true });
         setStep(5);
         return;

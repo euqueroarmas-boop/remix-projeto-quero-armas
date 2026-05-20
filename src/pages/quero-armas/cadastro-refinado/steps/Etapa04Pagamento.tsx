@@ -273,6 +273,22 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       );
       if (contaErr) throw contaErr;
 
+      // Idempotência por CPF: se a função retornou que o cliente já existe,
+      // bloquear criação de venda e mandar o cliente fazer login para retomar
+      // o checkout com o cadastro correto. Preserva o state via "next".
+      const reasonExistente = contaData?.reason as string | undefined;
+      if (
+        contaData?.ok === false &&
+        (reasonExistente === "cpf_ja_possui_login" ||
+          reasonExistente === "email_ja_cadastrado" ||
+          reasonExistente === "cpf_ja_possui_cadastro_sem_login")
+      ) {
+        update({ clienteExistente: true });
+        const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ""}`);
+        window.location.href = `/area-do-cliente/login?next=${next}`;
+        return;
+      }
+
       const qaClienteId = contaData?.qa_cliente_id ?? contaData?.cliente_id ?? null;
       update({
         resultado: {
