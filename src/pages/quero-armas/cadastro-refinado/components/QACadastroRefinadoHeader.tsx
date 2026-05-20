@@ -26,15 +26,51 @@ export default function QACadastroRefinadoHeader({
     typeof step === "number" && total > 0
       ? Math.min(100, Math.max(0, Math.round((step / total) * 100)))
       : 0;
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userLabel, setUserLabel] = useState<string | null>(null);
+
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) setUserEmail(data.session?.user?.email ?? null);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserEmail(session?.user?.email ?? null);
-    });
+
+    const formatName = (full?: string | null): string | null => {
+      if (!full) return null;
+      const parts = full.trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) return null;
+      if (parts.length === 1) return parts[0];
+      return `${parts[0]} ${parts[parts.length - 1]}`;
+    };
+
+    const resolveLabel = async (userId: string, email: string | null, metaName?: string | null) => {
+      const fromMeta = formatName(metaName);
+      if (fromMeta) return fromMeta;
+      try {
+        const { data } = await supabase
+          .from("qa_clientes" as any)
+          .select("nome")
+          .eq("user_id", userId)
+          .maybeSingle();
+        const nome = formatName((data as any)?.nome);
+        if (nome) return nome;
+      } catch {}
+      return email;
+    };
+
+    const apply = async (session: any) => {
+      const u = session?.user;
+      if (!u) {
+        if (active) setUserLabel(null);
+        return;
+      }
+      const metaName =
+        (u.user_metadata?.full_name as string | undefined) ??
+        (u.user_metadata?.name as string | undefined) ??
+        (u.user_metadata?.nome as string | undefined) ??
+        null;
+      const label = await resolveLabel(u.id, u.email ?? null, metaName);
+      if (active) setUserLabel(label);
+    };
+
+    supabase.auth.getSession().then(({ data }) => apply(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => apply(session));
     return () => {
       active = false;
       sub.subscription.unsubscribe();
@@ -63,9 +99,9 @@ export default function QACadastroRefinadoHeader({
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {userEmail && (
+          {userLabel && (
             <span
-              title={`Logado como ${userEmail}`}
+              title={`Logado como ${userLabel}`}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -87,7 +123,7 @@ export default function QACadastroRefinadoHeader({
             >
               <UserCheck size={12} />
               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                {userEmail}
+                {userLabel}
               </span>
             </span>
           )}
