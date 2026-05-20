@@ -182,7 +182,17 @@ export default function QACadastroRefinadoPage() {
     setStep(1);
   };
 
-  const handleBackToHome = () => navigate("/");
+  // Sair do wizard. Usa o histórico do navegador quando possível para
+  // preservar a origem (ex.: /servicos). Fallback explícito vai para
+  // /servicos — NUNCA para "/", pois a Home é um chunk pesado que dispara
+  // o loader global "Inicializando módulos" no meio do fluxo.
+  const handleBackToHome = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/servicos", { replace: true });
+    }
+  };
 
   // Atalho na escolha guiada: "Já tenho conta no Arsenal"
   const handleAbrirIdentificacao = () => {
@@ -197,8 +207,12 @@ export default function QACadastroRefinadoPage() {
   };
 
   const handleEtapa01Back = () => {
-    if (enteredDirect) handleBackToHome();
-    else {
+    // Se o usuário entrou direto via ?servico=, não há step anterior interno
+    // — saímos do wizard preservando a origem. Caso contrário, voltamos para
+    // a Etapa 0 (Escolha) sem deixar /cadastro.
+    if (enteredDirect) {
+      handleBackToHome();
+    } else {
       setInitialPerfil(null);
       setStep(0);
     }
