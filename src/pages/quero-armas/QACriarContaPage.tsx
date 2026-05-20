@@ -40,7 +40,7 @@ export default function QACriarContaPage() {
     if (nome.trim().length < 2) return toast.error("Informe seu nome completo.");
     if (cpfNorm.length !== 11) return toast.error("CPF inválido.");
     if (!/^\S+@\S+\.\S+$/.test(email.trim())) return toast.error("E-mail inválido.");
-    if (senha.length < 8) return toast.error("Senha deve ter no mínimo 8 caracteres.");
+    if (senha.length < 6) return toast.error("Senha deve ter no mínimo 6 caracteres.");
     if (!accept) return toast.error("Você precisa aceitar os termos.");
 
     setLoading(true);
