@@ -1,6 +1,7 @@
 -- Reaplica anexos data-anexo-slug no template canônico
--- Migração anterior (20260519181517) usava coluna inexistente 'atualizado_em' e não foi aplicada.
+-- Migração anterior (20260519181517) usava coluna inexistente 'atualizado_em' e falhou silenciosamente.
 
+UPDATE public.qa_contract_templates
 SET corpo_html = $qatpl$
 <h1>CONTRATO DE PRESTAÇÃO DE SERVIÇOS</h1>
 <h2>DE ASSESSORIA TÉCNICA E DESPACHO ADMINISTRATIVO</h2>
@@ -299,3 +300,7 @@ SET corpo_html = $qatpl$
 </section>
 <h2>FIM DO INSTRUMENTO</h2>
 <p><em>Documento gerado para aceite eletrônico na plataforma da CONTRATADA. A versão vigente no momento do aceite eletrônico será arquivada com a respectiva impressão técnica do consentimento (data, hora, IP, dispositivo e identificação do usuário) para fins probatórios.</em></p>
+$qatpl$,
+    versao = versao + 1,
+    updated_at = now()
+WHERE codigo = 'CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS' AND vigente = true;
