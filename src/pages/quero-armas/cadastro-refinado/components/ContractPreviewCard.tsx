@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { filterAnexoBySlug } from "@/lib/quero-armas/contractAnexoFilter";
+import { filterContractAnexosBySlugs } from "@/lib/quero-armas/contractAnexoFilter";
 import type { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
@@ -94,12 +94,14 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
     const filled = renderVariables(template.corpo_html, vars);
     // Filtra para manter apenas as <section data-anexo-slug> dos serviços
     // contratados (slug único ou bundle). Sem match → fail-open.
-    const slugsParaFiltrar = slugsBundle.length > 0
-      ? slugsBundle
-      : state.servicoSlug
-        ? [state.servicoSlug]
-        : [];
-    return filterAnexoBySlug(filled, slugsParaFiltrar);
+    // Array-only. NUNCA usar join(",") para filtrar anexos.
+    const slugsParaFiltrar: string[] =
+      state.servicosSlugs && state.servicosSlugs.length > 0
+        ? state.servicosSlugs
+        : state.servicoSlug
+          ? [state.servicoSlug]
+          : [];
+    return filterContractAnexosBySlugs(filled, slugsParaFiltrar);
   }, [template, state.dadosPessoais, state.servicoSlug, state.servicosSlugs, nomeServico, precoServico]);
 
   function handleDownload() {
