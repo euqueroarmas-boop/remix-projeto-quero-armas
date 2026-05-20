@@ -145,6 +145,34 @@ Deno.serve(async (req) => {
     );
   }
 
+  // 1.b) Hardening idempotência: CPF já existe em qa_clientes (cadastro legado,
+  // possivelmente sem link Arsenal ativo). Não criar Auth duplicado — orientar
+  // o cliente a recuperar acesso. A criação/vínculo definitivo só acontece via
+  // login autenticado + qa_ensure_cliente_from_auth.
+  try {
+    const cpfMasked = `${cpfNorm.slice(0, 3)}.${cpfNorm.slice(3, 6)}.${cpfNorm.slice(6, 9)}-${cpfNorm.slice(9)}`;
+    const { data: qaClienteLegado } = await admin
+      .from("qa_clientes")
+      .select("id, status_cliente, email")
+      .or(`cpf.eq.${cpfNorm},cpf.eq.${cpfMasked}`)
+      .limit(1)
+      .maybeSingle();
+    if (qaClienteLegado && qaClienteLegado.status_cliente !== "excluido_lgpd") {
+      return json(
+        {
+          ok: false,
+          reason: "cpf_ja_possui_cadastro_sem_login",
+          message:
+            "Este CPF já tem cadastro em nosso sistema. Faça login ou recupere sua senha para continuar.",
+        },
+        200,
+      );
+    }
+  } catch (e) {
+    // Falha de leitura não pode bloquear cadastro novo — apenas log.
+    console.warn("[cpf_legado_check] falhou:", (e as Error)?.message);
+  }
+
   // 2) Cria usuário em auth.users (email_confirm true autorizado nesta fase)
   const { data: created, error: createErr } = await admin.auth.admin.createUser({
     email: emailNorm,
