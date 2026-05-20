@@ -29,10 +29,8 @@ export default function QARedefinirSenhaPage() {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const validateStrongPassword = (value: string) => {
-    if (value.length < 12) return "Use pelo menos 12 caracteres.";
-    if (!/[a-z]/.test(value) || !/[A-Z]/.test(value)) return "Use letras maiúsculas e minúsculas.";
-    if (!/\d/.test(value)) return "Inclua pelo menos um número.";
-    if (!/[^A-Za-z0-9]/.test(value)) return "Inclua pelo menos um símbolo.";
+    if (!value) return "Informe a nova senha.";
+    if (value.length < 6) return "Use pelo menos 6 caracteres.";
     return null;
   };
 
@@ -97,11 +95,8 @@ export default function QARedefinirSenhaPage() {
 
   const getPasswordUpdateMessage = (err: any) => {
     const raw = String(err?.message || "").toLowerCase();
-    if (raw.includes("same") || raw.includes("different") || raw.includes("igual") || raw.includes("diferente")) {
-      return "A nova senha precisa ser diferente da senha atual.";
-    }
-    if (raw.includes("weak") || raw.includes("breached") || raw.includes("pwned") || raw.includes("known") || raw.includes("guess") || raw.includes("password")) {
-      return "Esta senha é conhecida/fraca e foi bloqueada por segurança. Crie uma senha única com 12+ caracteres, maiúsculas, minúsculas, números e símbolo.";
+    if (raw.includes("should be at least") || raw.includes("at least 6")) {
+      return "Use pelo menos 6 caracteres.";
     }
     if (raw.includes("expired") || raw.includes("invalid") || raw.includes("token")) {
       return "Link inválido ou expirado. Solicite um novo e-mail de redefinição.";
@@ -205,11 +200,11 @@ export default function QARedefinirSenhaPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
-                    minLength={12}
+                    minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"
-                    placeholder="12+ caracteres, número e símbolo"
+                    placeholder="Mínimo 6 caracteres"
                     autoComplete="new-password"
                   />
                   <button
@@ -235,7 +230,7 @@ export default function QARedefinirSenhaPage() {
                     id="confirm"
                     type={showConfirm ? "text" : "password"}
                     required
-                    minLength={12}
+                    minLength={6}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     className="bg-white border-slate-200 text-slate-700 focus:border-[#7A1F2B] focus:ring-[#7A1F2B] h-10 text-sm pr-10"

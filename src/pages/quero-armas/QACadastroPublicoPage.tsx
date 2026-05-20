@@ -703,12 +703,9 @@ export default function QACadastroPublicoPage() {
     setArsenalBusy(true);
     setArsenalError(null);
     try {
-      // Validação de senha forte (8+, 1 letra, 1 número)
-      if (arsenalSenha.length < 8) {
-        throw new Error("A senha deve ter no mínimo 8 caracteres.");
-      }
-      if (!/[A-Za-z]/.test(arsenalSenha) || !/[0-9]/.test(arsenalSenha)) {
-        throw new Error("A senha precisa conter pelo menos 1 letra e 1 número.");
+      // Política simplificada: mínimo de 6 caracteres
+      if (arsenalSenha.length < 6) {
+        throw new Error("A senha deve ter no mínimo 6 caracteres.");
       }
       if (arsenalSenha !== arsenalSenhaConfirma) {
         throw new Error("As senhas não conferem.");
@@ -2522,7 +2519,7 @@ function Step4ArsenalAccess({
             type={showSenha ? "text" : "password"}
             value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            placeholder="Mínimo 8 caracteres, com letra e número"
+            placeholder="Mínimo 6 caracteres"
             className="w-full h-11 pl-10 pr-10 rounded-md border border-zinc-300 bg-white text-[13px] font-mono focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
             autoComplete="new-password"
           />
