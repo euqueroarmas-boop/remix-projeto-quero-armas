@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
-import QATacticalLoader from "@/components/quero-armas/QATacticalLoader";
+import QARouteFallback from "@/components/quero-armas/QARouteFallback";
 import { isCadastroRefinadoEnabled } from "@/lib/quero-armas/cadastroRefinadoFlag";
 
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
@@ -111,7 +111,7 @@ function CadastroRouteSwitch() {
 
 export default function QARoutes() {
   return (
-    <Suspense fallback={<QATacticalLoader />}>
+    <Suspense fallback={<QARouteFallback />}>
       <Routes>
         {/* Raiz: landing page principal pública */}
         <Route path="/" element={<HomePage />} />
