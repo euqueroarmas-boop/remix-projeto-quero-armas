@@ -499,6 +499,9 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         >
           {ctaLabel}
         </button>
+        <div style={{ marginTop: 14, textAlign: "center" }}>
+          <QAReiniciarLink />
+        </div>
       </div>
     </QACadastroRefinadoShell>
   );
