@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
+import QAReiniciarLink from "../components/QAReiniciarLink";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
@@ -260,6 +261,9 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
           </button>
         )}
         {erroBaixar && <div className="qa-ref-error-text">{erroBaixar}</div>}
+        <div style={{ marginTop: 8, textAlign: "center" }}>
+          <QAReiniciarLink label="Começar um novo processo" preservarServico={false} />
+        </div>
       </div>
     </QACadastroRefinadoShell>
   );

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
+import QAReiniciarLink from "../components/QAReiniciarLink";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
@@ -287,6 +288,9 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
         >
           {checking ? "Validando…" : "Dados conferidos, continuar"}
         </button>
+        <div style={{ marginTop: 14, textAlign: "center" }}>
+          <QAReiniciarLink />
+        </div>
       </div>
     </QACadastroRefinadoShell>
   );

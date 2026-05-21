@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip, RefreshCw, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
+import QAReiniciarLink from "../components/QAReiniciarLink";
 import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
 import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
 import {
