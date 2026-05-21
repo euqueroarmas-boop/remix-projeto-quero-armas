@@ -31,7 +31,7 @@ export default function QACadastroRefinadoPage() {
     }
     return false;
   });
-  const { state, update, updateDados, reset, hardReset } = useCadastroRefinadoState();
+  const { state, update, updateDados, reset } = useCadastroRefinadoState();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
