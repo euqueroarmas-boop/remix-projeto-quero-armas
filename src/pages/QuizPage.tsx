@@ -37,8 +37,8 @@ const questions: Question[] = [
     title: 'Qual e a sua motivacao real?',
     subtitle: 'Sem rodeio. Por que voce esta aqui?',
     options: [
-      { id: 'defesa_casa', label: 'Defender minha familia dentro de casa', desc: 'Quero arma legalizada em casa. Dormir tranquilo. Proteger quem amo.', icon: Home, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 0, 'atividades-avulsas': 0 } },
-      { id: 'cac_objetivo', label: 'Colecionar, atirar e cacar (CAC)', desc: 'Quero CR no Exercito. Construir acervo. Treinar habitualidade.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 1 } },
+      { id: 'defesa_casa', label: 'Defesa pessoal: defender minha família em casa', desc: 'Quero arma legalizada em casa. Dormir tranquilo. Proteger quem amo.', icon: Home, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 0, 'atividades-avulsas': 0 } },
+      { id: 'cac_objetivo', label: 'CAC: colecionar, atirar e caçar', desc: 'Quero CR no Exército. Construir acervo. Treinar habitualidade.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 1 } },
       { id: 'atirar_eventual', label: 'So quero atirar de vez em quando', desc: 'Curiosidade, lazer, experiencia no estande. Sem compromisso.', icon: Target, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
       { id: 'profissao', label: 'Profissao exige (seguranca, escolta, VIP)', desc: 'Trabalho na area. Preciso de capacitacao tecnica.', icon: Briefcase, weight: { 'defesa-pessoal-posse': 1, 'cac-cr': 1, 'atividades-avulsas': 2 } },
     ],
@@ -47,8 +47,8 @@ const questions: Question[] = [
     id: 'documentacao',
     title: 'Onde voce esta hoje na documentacao?',
     options: [
-      { id: 'zero', label: 'Nao tenho nada. Comecando do zero.', desc: 'Nunca dei entrada em nada.', icon: Shield, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 2, 'atividades-avulsas': 1 } },
-      { id: 'posse_pf', label: 'Ja tenho posse na PF', desc: 'Arma registrada em casa. Quero treinar mais ou expandir acervo.', icon: CheckCircle2, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 1, 'atividades-avulsas': 0 } },
+      { id: 'zero', label: 'Começando do zero (não tenho nada)', desc: 'Nunca dei entrada em nada.', icon: Shield, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 2, 'atividades-avulsas': 1 } },
+      { id: 'posse_pf', label: 'Já tenho posse na PF', desc: 'Arma registrada em casa. Quero treinar mais ou expandir acervo.', icon: CheckCircle2, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 1, 'atividades-avulsas': 0 } },
       { id: 'cr_ativo', label: 'Ja sou CAC com CR ativo', desc: 'Tenho CR no Exercito. Preciso de habitualidade e suporte.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 0 } },
       { id: 'experimentar', label: 'So quero experimentar antes de decidir', desc: 'Quero atirar primeiro, depois decido.', icon: Target, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
     ],
@@ -58,7 +58,7 @@ const questions: Question[] = [
     title: 'Com que frequencia voce pretende atirar?',
     options: [
       { id: 'semanal_operador', label: 'Toda semana. Quero virar operador.', desc: 'Treino serio, evolucao tecnica.', icon: Crosshair, weight: { 'defesa-pessoal-posse': 1, 'cac-cr': 3, 'atividades-avulsas': 1 } },
-      { id: 'mensal', label: 'Mensal. Manter o que sei.', desc: 'Manutencao da tecnica.', icon: Target, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 1, 'atividades-avulsas': 1 } },
+      { id: 'mensal', label: 'Mensal — continuar mantendo a técnica', desc: 'Manutenção da técnica.', icon: Target, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 1, 'atividades-avulsas': 1 } },
       { id: 'esporadico', label: 'Esporadico. Quando der vontade.', desc: 'Hobby leve.', icon: Shield, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
     ],
   },
@@ -405,10 +405,24 @@ const QuizPage = () => {
                     <strong className="font-heading text-2xl text-foreground">{recommendation.total}</strong>
                   </div>
                 )}
-                <button className="group flex items-center justify-center gap-2 rounded-sm bg-accent px-5 py-4 font-heading text-sm font-bold uppercase tracking-[0.14em] text-background transition-opacity hover:opacity-90"
-                  onClick={() => navigate(recommendation.url)}>
-                  Continuar para cadastro
+                <button
+                  type="button"
+                  aria-label="Contratar serviço recomendado"
+                  data-testid="quiz-final-cta"
+                  className="group flex items-center justify-center gap-2 rounded-sm bg-accent px-5 py-4 font-heading text-sm font-bold uppercase tracking-[0.14em] text-background transition-opacity hover:opacity-90"
+                  onClick={() => navigate(recommendation.url)}
+                >
+                  Contratar serviço recomendado
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Voltar para serviços"
+                  data-testid="quiz-secondary-cta"
+                  className="flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-heading text-xs font-bold uppercase tracking-[0.14em] text-foreground transition-colors hover:border-accent hover:text-accent"
+                  onClick={() => navigate('/servicos')}
+                >
+                  Voltar para serviços
                 </button>
               </div>
             </div>
@@ -422,7 +436,12 @@ const QuizPage = () => {
                 {q.options.map((opt) => {
                   const Icon = opt.icon;
                   return (
-                    <button key={opt.id} onClick={() => handleAnswer(opt.id)}
+                    <button
+                      key={opt.id}
+                      type="button"
+                      aria-label={opt.label}
+                      data-testid={`quiz-option-${opt.id.replace(/_/g, '-')}`}
+                      onClick={() => handleAnswer(opt.id)}
                       className="group flex items-start gap-4 rounded-sm border border-border bg-card p-5 text-left transition-all hover:border-accent hover:bg-surface-elevated sm:p-6">
                       <div className="flex size-12 shrink-0 items-center justify-center rounded-sm border border-border bg-background transition-colors group-hover:border-accent group-hover:bg-accent/10">
                         <Icon className="size-5 text-accent" />
