@@ -405,10 +405,24 @@ const QuizPage = () => {
                     <strong className="font-heading text-2xl text-foreground">{recommendation.total}</strong>
                   </div>
                 )}
-                <button className="group flex items-center justify-center gap-2 rounded-sm bg-accent px-5 py-4 font-heading text-sm font-bold uppercase tracking-[0.14em] text-background transition-opacity hover:opacity-90"
-                  onClick={() => navigate(recommendation.url)}>
-                  Continuar para cadastro
+                <button
+                  type="button"
+                  aria-label="Contratar serviço recomendado"
+                  data-testid="quiz-final-cta"
+                  className="group flex items-center justify-center gap-2 rounded-sm bg-accent px-5 py-4 font-heading text-sm font-bold uppercase tracking-[0.14em] text-background transition-opacity hover:opacity-90"
+                  onClick={() => navigate(recommendation.url)}
+                >
+                  Contratar serviço recomendado
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Voltar para serviços"
+                  data-testid="quiz-secondary-cta"
+                  className="flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-heading text-xs font-bold uppercase tracking-[0.14em] text-foreground transition-colors hover:border-accent hover:text-accent"
+                  onClick={() => navigate('/servicos')}
+                >
+                  Voltar para serviços
                 </button>
               </div>
             </div>
