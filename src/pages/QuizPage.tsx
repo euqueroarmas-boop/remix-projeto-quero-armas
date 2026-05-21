@@ -422,7 +422,12 @@ const QuizPage = () => {
                 {q.options.map((opt) => {
                   const Icon = opt.icon;
                   return (
-                    <button key={opt.id} onClick={() => handleAnswer(opt.id)}
+                    <button
+                      key={opt.id}
+                      type="button"
+                      aria-label={opt.label}
+                      data-testid={`quiz-option-${opt.id.replace(/_/g, '-')}`}
+                      onClick={() => handleAnswer(opt.id)}
                       className="group flex items-start gap-4 rounded-sm border border-border bg-card p-5 text-left transition-all hover:border-accent hover:bg-surface-elevated sm:p-6">
                       <div className="flex size-12 shrink-0 items-center justify-center rounded-sm border border-border bg-background transition-colors group-hover:border-accent group-hover:bg-accent/10">
                         <Icon className="size-5 text-accent" />
