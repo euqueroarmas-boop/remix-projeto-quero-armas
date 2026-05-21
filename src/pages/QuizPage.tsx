@@ -354,186 +354,205 @@ const QuizPage = () => {
     }));
 
   return (
-    <SiteShell>
+  const journeyItems = [
+    { n: 1, label: 'Caminho escolhido', detail: isResultStep ? 'Caminho confirmado' : 'Diagnóstico em andamento', active: true },
+    { n: 2, label: 'Documentos e dados', detail: 'Enviar ou preencher manualmente', active: false },
+    { n: 3, label: 'Revisão do cadastro', detail: 'Dados reaproveitados ou digitados', active: false },
+    { n: 4, label: 'Contrato e pagamento', detail: 'Aceite, cobrança e assinatura', active: false },
+    { n: 5, label: 'Arsenal Inteligente', detail: 'Conta criada ou liberada ao concluir', active: false },
+  ];
+
+  return (
+    <div className="qa-refinado">
       <SEO
         title="Descobrir Meu Caminho - Diagnostico Tatico | Quero Armas"
         description="Em 3 perguntas voce descobre o caminho certo: posse domiciliar, CR no Exercito ou curso de tiro. Diagnostico rapido e direto."
         canonical="/descobrir-meu-caminho"
       />
-      <section className="w-full px-4 py-16 sm:px-6 sm:py-24 lg:px-10 2xl:px-16">
-        <div className="mx-auto mb-8 max-w-4xl text-center">
-          <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">
-            Diagnostico Tatico - Etapa {step + 1} de {TOTAL_STEPS}
-          </div>
-          <h1 className="font-heading text-3xl font-bold uppercase tracking-tight sm:text-5xl">
-            Descubra o caminho certo <span className="text-accent">pra voce</span>
-          </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            Tres perguntas, uma confirmacao final e o checkout do servico correto.
-          </p>
-        </div>
-        <div className="mx-auto mb-10 h-1 w-full max-w-4xl overflow-hidden rounded-full bg-surface-elevated">
-          <div className="h-full bg-accent transition-all duration-500" style={{ width: `${progress}%` }} />
-        </div>
-        <div key={isResultStep ? 'resultado' : q.id} className="mx-auto grid max-w-6xl gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 lg:grid-cols-[minmax(0,1fr)_360px]">
-          {isResultStep ? (
-            <div>
-              <div className="mb-8 text-center lg:text-left">
-                <h2 className="font-heading text-2xl font-bold uppercase sm:text-3xl">Confirme seu caminho</h2>
-                <p className="mt-2 text-sm text-muted-foreground sm:text-base">{recommendation.desc}</p>
-              </div>
-              <div className="grid gap-4">
-                {recommendation.services.map((service, index) => (
-                  <div key={service.name} className="rounded-sm border border-border bg-card p-5 sm:p-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="mb-2 font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-accent">
-                          Servico {index + 1} de {recommendation.services.length}
+      <QACadastroRefinadoHeader
+        contextTag="EM ANDAMENTO"
+        step={step + 1}
+        total={TOTAL_STEPS}
+        onBack={step > 0 ? handleBack : () => navigate(-1)}
+        showBack
+        onClose={() => navigate('/')}
+      />
+      <main className="qa-ref-shell">
+        <div className="qa-ref-integrated-grid">
+          <div className="qa-ref-integrated-main" key={isResultStep ? 'resultado' : q.id}>
+            {isResultStep ? (
+              <>
+                <span className="qa-ref-caps qa-ref-eyebrow">CAMINHO RECOMENDADO</span>
+                <h1 className="qa-ref-title">SEU PRÓXIMO PASSO ESTÁ DEFINIDO</h1>
+                <p className="qa-ref-subtitle">{recommendation.desc}</p>
+                <div className="qa-ref-section">
+                  <div className="qa-ref-opt-list">
+                    {recommendation.services.map((service, index) => (
+                      <div key={service.name} className="qa-ref-opt-card is-popular" style={{ cursor: 'default' }}>
+                        <div className="qa-ref-opt-icon" aria-hidden>
+                          <CheckCircle2 size={18} />
                         </div>
-                        <h3 className="font-heading text-xl font-bold uppercase leading-tight sm:text-2xl">{service.name}</h3>
-                        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{service.desc}</p>
+                        <div className="qa-ref-opt-body">
+                          <span className="qa-ref-caps qa-ref-opt-eyebrow">
+                            SERVIÇO {index + 1} DE {recommendation.services.length}
+                          </span>
+                          <div className="qa-ref-opt-title">{service.name}</div>
+                          <div className="qa-ref-opt-desc">{service.desc}</div>
+                        </div>
+                        {service.price && (
+                          <span className="qa-ref-opt-tag-popular" style={{ position: 'static', fontSize: 13 }}>
+                            {service.price}
+                          </span>
+                        )}
                       </div>
-                      {service.price && (
-                        <div className="shrink-0 text-right font-heading text-2xl font-bold text-accent sm:text-3xl">
-                          {service.price}
-                        </div>
-                      )}
+                    ))}
+                  </div>
+                  {recommendation.total && (
+                    <div
+                      className="qa-ref-opt-card"
+                      style={{ marginTop: 12, justifyContent: 'space-between', cursor: 'default' }}
+                    >
+                      <span className="qa-ref-caps" style={{ color: 'var(--qa-ref-ink-soft)' }}>
+                        TOTAL DOS SERVIÇOS
+                      </span>
+                      <strong style={{ color: 'var(--qa-ref-accent)', fontFamily: 'Oswald, system-ui', fontSize: 22 }}>
+                        {recommendation.total}
+                      </strong>
                     </div>
-                  </div>
-                ))}
-                {recommendation.total && (
-                  <div className="flex items-center justify-between rounded-sm border border-accent/35 bg-accent/10 p-4">
-                    <span className="font-heading text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground">Total dos servicos</span>
-                    <strong className="font-heading text-2xl text-foreground">{recommendation.total}</strong>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  aria-label="Contratar serviço recomendado"
-                  data-testid="quiz-final-cta"
-                  className="group flex items-center justify-center gap-2 rounded-sm bg-accent px-5 py-4 font-heading text-sm font-bold uppercase tracking-[0.14em] text-background transition-opacity hover:opacity-90"
-                  onClick={() => navigate(recommendation.url)}
-                >
-                  Contratar serviço recomendado
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Voltar para serviços"
-                  data-testid="quiz-secondary-cta"
-                  className="flex items-center justify-center gap-2 rounded-sm border border-border bg-background px-5 py-3 font-heading text-xs font-bold uppercase tracking-[0.14em] text-foreground transition-colors hover:border-accent hover:text-accent"
-                  onClick={() => navigate('/servicos')}
-                >
-                  Voltar para serviços
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="mb-8 text-center lg:text-left">
-                <h2 className="font-heading text-2xl font-bold uppercase sm:text-3xl">{q.title}</h2>
-                {q.subtitle && <p className="mt-2 text-sm text-muted-foreground sm:text-base">{q.subtitle}</p>}
-              </div>
-              <div className="grid gap-3 sm:gap-4">
-                {q.options.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
+                  )}
+                  <div style={{ display: 'grid', gap: 10, marginTop: 18 }}>
                     <button
-                      key={opt.id}
                       type="button"
-                      aria-label={opt.label}
-                      data-testid={`quiz-option-${opt.id.replace(/_/g, '-')}`}
-                      onClick={() => handleAnswer(opt.id)}
-                      className="group flex items-start gap-4 rounded-sm border border-border bg-card p-5 text-left transition-all hover:border-accent hover:bg-surface-elevated sm:p-6">
-                      <div className="flex size-12 shrink-0 items-center justify-center rounded-sm border border-border bg-background transition-colors group-hover:border-accent group-hover:bg-accent/10">
-                        <Icon className="size-5 text-accent" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-heading text-base font-bold uppercase tracking-wide sm:text-lg">{opt.label}</div>
-                        <div className="mt-1 text-sm text-muted-foreground">{opt.desc}</div>
-                      </div>
-                      <ArrowRight className="mt-2 size-5 shrink-0 text-muted-foreground transition-all group-hover:translate-x-1 group-hover:text-accent" />
+                      aria-label="Contratar serviço recomendado"
+                      data-testid="quiz-final-cta"
+                      className="qa-ref-btn-primary"
+                      style={{ padding: '14px 18px', borderRadius: 'var(--qa-ref-radius)', border: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                      onClick={() => navigate(recommendation.url)}
+                    >
+                      CONTRATAR SERVIÇO RECOMENDADO
+                      <ChevronRight size={16} />
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          <aside className="rounded-sm border border-border bg-card p-5 lg:self-start">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10">
-                <Route className="size-5 text-accent" />
-              </div>
-              <div>
-                <div className="font-heading text-xs font-bold uppercase tracking-[0.18em] text-accent">Jornada do cliente</div>
-                <div className="text-xs text-muted-foreground">Do diagnostico ao Arsenal</div>
-              </div>
-            </div>
-            <h3 className="font-heading text-lg font-bold uppercase leading-tight">
-              {isResultStep ? 'Caminho pronto para checkout' : path.title}
-            </h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{path.description}</p>
-            {answeredTrail.length > 0 && (
-              <div className="mt-5 space-y-2 border-t border-border pt-4">
-                {answeredTrail.map((item) => (
-                  <div key={item.label} className="rounded-sm bg-background p-3">
-                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{item.label}</div>
-                    <div className="mt-1 text-sm font-semibold text-foreground">{item.value}</div>
+                    <button
+                      type="button"
+                      aria-label="Voltar para serviços"
+                      data-testid="quiz-secondary-cta"
+                      onClick={() => navigate('/servicos')}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: 'var(--qa-ref-radius)',
+                        background: 'transparent',
+                        color: 'var(--qa-ref-ink)',
+                        border: '0.5px solid var(--qa-ref-border)',
+                        fontWeight: 600,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        fontSize: 12,
+                      }}
+                    >
+                      VOLTAR PARA SERVIÇOS
+                    </button>
                   </div>
-                ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <span className="qa-ref-caps qa-ref-eyebrow">DIAGNÓSTICO · ETAPA {step + 1} DE {TOTAL_STEPS}</span>
+                <h1 className="qa-ref-title">DESCUBRA O CAMINHO CERTO PRA VOCÊ</h1>
+                <p className="qa-ref-subtitle">
+                  Três perguntas, uma confirmação final e o checkout do serviço correto.
+                </p>
+                <div className="qa-ref-section">
+                  <h2
+                    className="qa-ref-caps"
+                    style={{ color: 'var(--qa-ref-ink)', fontSize: 14, marginBottom: 4 }}
+                  >
+                    {q.title}
+                  </h2>
+                  {q.subtitle && (
+                    <p style={{ color: 'var(--qa-ref-ink-soft)', fontSize: 13, marginBottom: 14 }}>
+                      {q.subtitle}
+                    </p>
+                  )}
+                  <div className="qa-ref-opt-list">
+                    {q.options.map((opt) => {
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          aria-label={opt.label}
+                          data-testid={`quiz-option-${opt.id.replace(/_/g, '-')}`}
+                          onClick={() => handleAnswer(opt.id)}
+                          className="qa-ref-opt-card"
+                        >
+                          <div className="qa-ref-opt-icon" aria-hidden>
+                            <Icon size={18} />
+                          </div>
+                          <div className="qa-ref-opt-body">
+                            <div className="qa-ref-opt-title">{opt.label}</div>
+                            <div className="qa-ref-opt-desc">{opt.desc}</div>
+                          </div>
+                          <ChevronRight size={18} className="qa-ref-opt-chevron" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {answeredTrail.length > 0 && (
+              <div className="qa-ref-section">
+                <div className="qa-ref-caps" style={{ color: 'var(--qa-ref-ink-soft)', fontSize: 11, marginBottom: 8 }}>
+                  SUAS RESPOSTAS
+                </div>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {answeredTrail.map((item) => (
+                    <div
+                      key={item.label}
+                      style={{
+                        padding: '10px 12px',
+                        border: '0.5px solid var(--qa-ref-border)',
+                        borderRadius: 'var(--qa-ref-radius)',
+                        background: 'var(--qa-ref-paper)',
+                      }}
+                    >
+                      <div className="qa-ref-caps" style={{ fontSize: 10, color: 'var(--qa-ref-ink-soft)' }}>
+                        {item.label}
+                      </div>
+                      <div style={{ marginTop: 2, color: 'var(--qa-ref-ink)', fontSize: 13, fontWeight: 600 }}>
+                        {item.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            <div className="mt-5 border-t border-border pt-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Rota provavel</div>
-              <ol className="mt-3 space-y-3">
-                {path.steps.map((item, index) => (
-                  <li key={item} className="flex gap-3 text-sm">
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-accent/50 text-xs font-bold text-accent">{index + 1}</span>
-                    <span className="leading-snug text-foreground">{item}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="mt-5 border-t border-border pt-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Jornada completa</div>
-              <ol className="mt-3 space-y-2">
-                {[
-                  { n: 1, label: "Diagnostico guiado", detail: isResultStep ? "Caminho confirmado" : "Respondendo motivacao real", active: true },
-                  { n: 2, label: "Documentos e dados", detail: "Enviar ou preencher manualmente", active: false },
-                  { n: 3, label: "Revisao do cadastro", detail: "Dados reaproveitados ou digitados", active: false },
-                  { n: 4, label: "Contrato e pagamento", detail: "Aceite, cobranca e assinatura", active: false },
-                  { n: 5, label: "Arsenal Inteligente", detail: "Conta criada ou liberada ao concluir", active: false },
-                ].map((item) => (
-                  <li
-                    key={item.n}
-                    className={`flex gap-3 rounded-sm p-3 text-sm ${item.active ? 'border border-accent/35 bg-accent/10' : 'bg-background/70'}`}
-                  >
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-accent/50 text-xs font-bold text-accent">
-                      {item.n}
-                    </span>
-                    <span>
-                      <strong className="block leading-snug text-foreground">{item.label}</strong>
-                      <small className="text-xs leading-snug text-muted-foreground">{item.detail}</small>
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-            <div className="mt-5 rounded-sm border border-accent/30 bg-accent/10 p-3">
-              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">Checkout indicado</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">{path.service}</div>
-            </div>
+          </div>
+
+          <aside className="qa-ref-journey" aria-label="Resumo do caminho do cliente">
+            <div className="qa-ref-journey-kicker">JORNADA DO CLIENTE</div>
+            <h2 className="qa-ref-journey-title">DO DIAGNÓSTICO AO ARSENAL</h2>
+            <p className="qa-ref-journey-desc">
+              O cliente segue no mesmo fluxo até a conclusão do checkout. Nada é perdido entre documentos, dados, contrato, pagamento e acesso.
+            </p>
+            <ol className="qa-ref-journey-list">
+              {journeyItems.map((item) => (
+                <li key={item.n} className={item.active ? 'is-active' : ''}>
+                  <span className="qa-ref-journey-num">{item.n}</span>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <small>{item.detail}</small>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </aside>
-          {step > 0 && (
-            <div className="mt-2 text-center lg:col-span-2">
-              <button onClick={handleBack} className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
-                {isResultStep ? 'Ajustar respostas' : 'Voltar'}
-              </button>
-            </div>
-          )}
         </div>
-      </section>
-    </SiteShell>
+      </main>
+      <QACadastroRefinadoFooter />
+    </div>
   );
 };
 
