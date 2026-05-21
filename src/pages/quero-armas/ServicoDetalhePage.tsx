@@ -3,13 +3,15 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { SiteShell } from "@/shared/components/layout/SiteShell";
 import { Button } from "@/components/ui/button";
 import { getServiceBySlug, type ServiceWithCategory } from "@/shared/data/catalog";
+import { useCart } from "@/shared/cart/CartProvider";
+import { useToast } from "@/hooks/use-toast";
 import {
   getServiceLegalDetails,
   sistemaLabel,
   type ServiceLegalDetails,
 } from "@/lib/quero-armas/serviceLegalDetails";
 import { formatBRL } from "@/shared/lib/formatters";
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, ShoppingCart } from "lucide-react";
 
 const sectionCls =
   "relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden";
@@ -72,6 +74,8 @@ export default function ServicoDetalhePage() {
   const { slug = "" } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const { addItem } = useCart();
+  const { toast } = useToast();
 
   useEffect(() => {
     let active = true;
@@ -163,6 +167,7 @@ export default function ServicoDetalhePage() {
             <button
               type="button"
               onClick={() => navigate("/servicos")}
+                data-testid="service-detail-back"
               className="mb-6 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="size-3.5" /> Voltar ao catálogo
@@ -181,10 +186,37 @@ export default function ServicoDetalhePage() {
             ) : null}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg" className="font-heading uppercase tracking-wide">
+              <Button
+                asChild
+                size="lg"
+                className="font-heading uppercase tracking-wide"
+                data-testid="service-detail-contract"
+              >
                 <Link to={cadastroHref}>
-                  Iniciar cadastro <ArrowRight className="ml-2 size-4" />
+                  Contratar este serviço <ArrowRight className="ml-2 size-4" />
                 </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="font-heading uppercase tracking-wide"
+                data-testid="service-detail-add-cart"
+                onClick={() => {
+                  addItem({
+                    service_id: service.id,
+                    service_slug: service.slug,
+                    service_name: service.name,
+                    unit_price_cents: service.base_price_cents,
+                    quantity: 1,
+                  });
+                  toast({
+                    title: "Serviço adicionado ao carrinho.",
+                    description: service.name,
+                  });
+                  navigate("/carrinho");
+                }}
+              >
+                <ShoppingCart className="mr-2 size-4" /> Adicionar ao carrinho
               </Button>
               <div className="sm:ml-auto">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -267,7 +299,7 @@ export default function ServicoDetalhePage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg" className="font-heading uppercase tracking-wide">
                 <Link to={cadastroHref}>
-                  Iniciar cadastro <ArrowRight className="ml-2 size-4" />
+                  Contratar este serviço <ArrowRight className="ml-2 size-4" />
                 </Link>
               </Button>
               <Button
