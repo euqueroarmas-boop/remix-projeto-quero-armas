@@ -19,7 +19,15 @@
     "test:watch": "vitest",
     "cy:open": "cypress open",
     "cy:run": "cypress run",
-    "cy:run:headed": "cypress run --headed"
+    "cy:run:headed": "cypress run --headed",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:trace": "playwright test --trace on",
+    "audit:journey": "playwright test tests/e2e/quero-armas-human-journey.spec.ts --trace on --screenshot on --video retain-on-failure",
+    "audit:routes": "playwright test tests/e2e/quero-armas-route-audit.spec.ts --trace on --screenshot on",
+    "audit:visual": "playwright test tests/e2e/quero-armas-visual-premium.spec.ts --trace on --screenshot on",
+    "audit:all": "playwright test tests/e2e --trace on --screenshot on --video retain-on-failure"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
