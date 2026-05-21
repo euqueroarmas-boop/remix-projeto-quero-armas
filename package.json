@@ -27,7 +27,8 @@
     "audit:journey": "playwright test tests/e2e/quero-armas-human-journey.spec.ts --trace on",
     "audit:routes": "playwright test tests/e2e/quero-armas-route-audit.spec.ts --trace on",
     "audit:visual": "playwright test tests/e2e/quero-armas-visual-premium.spec.ts --trace on",
-    "audit:all": "playwright test tests/e2e --trace on"
+    "audit:all": "playwright test tests/e2e --trace on",
+    "audit:docker": "bash scripts/run-playwright-audit-docker.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
