@@ -64,12 +64,10 @@ export default function QARouteFallback() {
           <div className="h-1 w-40 overflow-hidden rounded-full bg-white/10">
             <div className="h-full w-1/3 animate-pulse rounded-full bg-[#D6A64B]" />
           </div>
-          <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-white/60">
-            Preparando módulos
-          </span>
+          <span className="text-sm text-white/70">Carregando...</span>
           {stuck && (
             <p className="mt-2 max-w-xs text-center text-[11px] text-white/70">
-              Ainda carregando os módulos. Se continuar, atualize a página.
+              Ainda estamos carregando. Se continuar demorando, atualize a página.
             </p>
           )}
         </div>
@@ -87,12 +85,10 @@ export default function QARouteFallback() {
       <div className="h-1 w-32 overflow-hidden rounded-full bg-slate-200">
         <div className="h-full w-1/3 animate-pulse rounded-full bg-[#7A1F2B]" />
       </div>
-      <span className="font-mono text-[10px] uppercase tracking-[0.32em] text-slate-500">
-        Preparando módulos
-      </span>
+      <span className="text-sm text-slate-500">Carregando...</span>
       {stuck && (
         <p className="mt-2 max-w-xs text-center text-[11px] text-slate-500">
-          Ainda carregando os módulos. Se continuar, atualize a página.
+          Ainda estamos carregando. Se continuar demorando, atualize a página.
         </p>
       )}
     </div>
