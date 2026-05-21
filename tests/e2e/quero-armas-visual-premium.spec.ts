@@ -15,7 +15,7 @@ const VISUAL_ROUTES = [
 ];
 
 for (const route of VISUAL_ROUTES) {
-  test(`visual premium — ${route}`, async ({ page, browserName }, info) => {
+  test(`visual premium — ${route}`, async ({ page }, info) => {
     await page.goto(route);
     await waitForStable(page, 12_000);
     if (await isBlankPage(page)) {
@@ -99,19 +99,3 @@ for (const route of VISUAL_ROUTES) {
     });
   });
 }
-
-// referência para evitar warning de unused se algum dia for usado
-export {};
-void [test];
-void [Symbol.iterator];
-void [Symbol];
-void [Function];
-void [Object];
-void [String];
-void [Number];
-void [Array];
-void [Boolean];
-
-// Helper só para silenciar TS sobre browserName
-const _ignored: any = undefined;
-void _ignored;
