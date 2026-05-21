@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { SEO } from '@/shared/components/SEO';
-import { ArrowRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2, Route } from 'lucide-react';
+import { ChevronRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2 } from 'lucide-react';
+import QACadastroRefinadoHeader from './quero-armas/cadastro-refinado/components/QACadastroRefinadoHeader';
+import QACadastroRefinadoFooter from './quero-armas/cadastro-refinado/components/QACadastroRefinadoFooter';
+import './quero-armas/cadastro-refinado/styles/cadastroRefinado.css';
 
 type Profile = 'defesa-pessoal-posse' | 'cac-cr' | 'atividades-avulsas';
 type AnswerId =
