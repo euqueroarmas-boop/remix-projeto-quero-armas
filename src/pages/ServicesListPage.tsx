@@ -173,10 +173,30 @@ const ServicesListPage = () => {
 
   useEffect(() => {
     document.title = 'Serviços | Quero Armas';
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        setLoading(false);
+        setError('timeout');
+      }
+    }, 8000);
     listActiveServices()
-      .then(setServices)
-      .catch((e) => setError(e?.message ?? 'Erro ao carregar serviços.'))
-      .finally(() => setLoading(false));
+      .then((list) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        setServices(list);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        setError(e?.message ?? 'Erro ao carregar serviços.');
+        setLoading(false);
+      });
+    return () => window.clearTimeout(timeout);
   }, []);
 
   const grouped = useMemo(() => {
@@ -456,16 +476,54 @@ const ServicesListPage = () => {
           </div>
 
           {loading && (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div
+              data-testid="services-loading"
+              className="flex items-center gap-2 text-muted-foreground"
+            >
               <Loader2 className="size-4 animate-spin" /> Carregando catálogo...
             </div>
           )}
-          {error && <p className="text-destructive">{error}</p>}
 
-          {!loading && !error && (
+          {!loading && (error || services.length === 0) && (
+            <div
+              data-testid="services-empty-state"
+              className="rounded-sm border border-border bg-surface-elevated/40 p-8 text-center"
+            >
+              <h3 className="font-heading text-xl font-bold uppercase tracking-tight text-foreground">
+                Não foi possível carregar o catálogo agora.
+              </h3>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Tente novamente ou fale com um especialista.
+              </p>
+              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="font-heading uppercase tracking-wide"
+                  data-testid="services-retry"
+                >
+                  Tentar novamente
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="font-heading uppercase tracking-wide"
+                  data-testid="services-talk-specialist"
+                >
+                  <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                    <Phone className="mr-2 size-4" /> Falar com especialista
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {!loading && !error && services.length > 0 && (
             <>
               {/* Filtro por categoria/grupo */}
-              <nav className="mb-8 flex flex-wrap gap-2 border-b border-border pb-5">
+              <nav
+                data-testid="services-catalog"
+                className="mb-8 flex flex-wrap gap-2 border-b border-border pb-5"
+              >
                 <FilterChip active={activeGroup === 'all'} onClick={() => setActiveGroup('all')}>
                   Todos ({services.length})
                 </FilterChip>
@@ -499,7 +557,10 @@ const ServicesListPage = () => {
                         key={s.id}
                         className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
                       >
-                        <article className="flex h-full min-h-[390px] flex-col rounded-sm border border-border bg-surface-elevated/40 p-5 transition-colors hover:border-accent/60">
+                        <article
+                          data-testid={`service-card-${s.slug}`}
+                          className="flex h-full min-h-[390px] flex-col rounded-sm border border-border bg-surface-elevated/40 p-5 transition-colors hover:border-accent/60"
+                        >
                           <p className="font-heading text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
                             {groupLabelOf(s)}
                           </p>
@@ -518,7 +579,13 @@ const ServicesListPage = () => {
                             </span>
                           </div>
                           <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-border/60">
-                            <Button asChild variant="outline" size="sm" className="w-full">
+                            <Button
+                              asChild
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              data-testid={`service-details-${s.slug}`}
+                            >
                               <Link to={`/servicos/${s.slug}`}>
                                 Ver detalhes <ArrowRight className="ml-1 size-4" />
                               </Link>
@@ -528,6 +595,7 @@ const ServicesListPage = () => {
                               className="w-full font-heading uppercase tracking-wide text-white"
                               style={{ backgroundColor: '#5a6b3b' }}
                               onClick={() => handleAddToCart(s)}
+                              data-testid={`service-contract-${s.slug}`}
                             >
                               <ShoppingCart className="mr-2 size-4" /> Contratar este serviço
                             </Button>
