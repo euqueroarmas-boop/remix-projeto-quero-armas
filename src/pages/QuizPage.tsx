@@ -37,8 +37,8 @@ const questions: Question[] = [
     title: 'Qual e a sua motivacao real?',
     subtitle: 'Sem rodeio. Por que voce esta aqui?',
     options: [
-      { id: 'defesa_casa', label: 'Defender minha familia dentro de casa', desc: 'Quero arma legalizada em casa. Dormir tranquilo. Proteger quem amo.', icon: Home, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 0, 'atividades-avulsas': 0 } },
-      { id: 'cac_objetivo', label: 'Colecionar, atirar e cacar (CAC)', desc: 'Quero CR no Exercito. Construir acervo. Treinar habitualidade.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 1 } },
+      { id: 'defesa_casa', label: 'Defesa pessoal: defender minha família em casa', desc: 'Quero arma legalizada em casa. Dormir tranquilo. Proteger quem amo.', icon: Home, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 0, 'atividades-avulsas': 0 } },
+      { id: 'cac_objetivo', label: 'CAC: colecionar, atirar e caçar', desc: 'Quero CR no Exército. Construir acervo. Treinar habitualidade.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 1 } },
       { id: 'atirar_eventual', label: 'So quero atirar de vez em quando', desc: 'Curiosidade, lazer, experiencia no estande. Sem compromisso.', icon: Target, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
       { id: 'profissao', label: 'Profissao exige (seguranca, escolta, VIP)', desc: 'Trabalho na area. Preciso de capacitacao tecnica.', icon: Briefcase, weight: { 'defesa-pessoal-posse': 1, 'cac-cr': 1, 'atividades-avulsas': 2 } },
     ],
@@ -47,8 +47,8 @@ const questions: Question[] = [
     id: 'documentacao',
     title: 'Onde voce esta hoje na documentacao?',
     options: [
-      { id: 'zero', label: 'Nao tenho nada. Comecando do zero.', desc: 'Nunca dei entrada em nada.', icon: Shield, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 2, 'atividades-avulsas': 1 } },
-      { id: 'posse_pf', label: 'Ja tenho posse na PF', desc: 'Arma registrada em casa. Quero treinar mais ou expandir acervo.', icon: CheckCircle2, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 1, 'atividades-avulsas': 0 } },
+      { id: 'zero', label: 'Começando do zero (não tenho nada)', desc: 'Nunca dei entrada em nada.', icon: Shield, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 2, 'atividades-avulsas': 1 } },
+      { id: 'posse_pf', label: 'Já tenho posse na PF', desc: 'Arma registrada em casa. Quero treinar mais ou expandir acervo.', icon: CheckCircle2, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 1, 'atividades-avulsas': 0 } },
       { id: 'cr_ativo', label: 'Ja sou CAC com CR ativo', desc: 'Tenho CR no Exercito. Preciso de habitualidade e suporte.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 0 } },
       { id: 'experimentar', label: 'So quero experimentar antes de decidir', desc: 'Quero atirar primeiro, depois decido.', icon: Target, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
     ],
@@ -58,7 +58,7 @@ const questions: Question[] = [
     title: 'Com que frequencia voce pretende atirar?',
     options: [
       { id: 'semanal_operador', label: 'Toda semana. Quero virar operador.', desc: 'Treino serio, evolucao tecnica.', icon: Crosshair, weight: { 'defesa-pessoal-posse': 1, 'cac-cr': 3, 'atividades-avulsas': 1 } },
-      { id: 'mensal', label: 'Mensal. Manter o que sei.', desc: 'Manutencao da tecnica.', icon: Target, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 1, 'atividades-avulsas': 1 } },
+      { id: 'mensal', label: 'Mensal — continuar mantendo a técnica', desc: 'Manutenção da técnica.', icon: Target, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 1, 'atividades-avulsas': 1 } },
       { id: 'esporadico', label: 'Esporadico. Quando der vontade.', desc: 'Hobby leve.', icon: Shield, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
     ],
   },
