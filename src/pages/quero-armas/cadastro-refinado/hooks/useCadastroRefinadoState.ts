@@ -2,6 +2,41 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "qa_cadastro_refinado_state";
 
+/**
+ * Prefixos de chaves sessionStorage que pertencem EXCLUSIVAMENTE ao fluxo
+ * do cadastro refinado / checkout guiado. Tudo que começar com isto é
+ * apagado em um "hard reset". NÃO inclui auth do Supabase, carrinho global
+ * ou qualquer chave fora desse fluxo.
+ */
+const CADASTRO_STORAGE_PREFIXES = ["qa_cadastro_", "qa_checkout_"] as const;
+
+/**
+ * Limpa de forma síncrona todas as chaves de sessionStorage relacionadas
+ * ao cadastro refinado. Exportado para que a página possa chamar ANTES de
+ * o hook ler o estado inicial (caso `?novo=1` venha na URL).
+ */
+export function clearCadastroRefinadoStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+    const toRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (!k) continue;
+      if (CADASTRO_STORAGE_PREFIXES.some((p) => k.startsWith(p))) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach((k) => sessionStorage.removeItem(k));
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn("[CadastroRefinado] hard reset executado", { keys: toRemove });
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export type ModoCliente = "indefinido" | "novo" | "existente" | "verificando" | "autenticado";
 
 export interface DocumentoArsenal {
@@ -181,5 +216,15 @@ export function useCadastroRefinadoState() {
     setState(initial);
   }, []);
 
-  return { state, update, updateDados, reset, setState };
+  /**
+   * Reset forte: limpa TODAS as chaves sessionStorage do fluxo de cadastro
+   * refinado + checkout guiado e restaura o estado para o initial. Use ao
+   * acionar "Reiniciar processo" ou ao receber `?novo=1` na URL.
+   */
+  const hardReset = useCallback(() => {
+    clearCadastroRefinadoStorage();
+    setState(initial);
+  }, []);
+
+  return { state, update, updateDados, reset, hardReset, setState };
 }
