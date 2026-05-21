@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "./styles/cadastroRefinado.css";
-import { useCadastroRefinadoState } from "./hooks/useCadastroRefinadoState";
+import {
+  useCadastroRefinadoState,
+  clearCadastroRefinadoStorage,
+} from "./hooks/useCadastroRefinadoState";
 import { useAuth } from "@/shared/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCPF, formatPhone } from "@/shared/lib/formatters";
@@ -15,9 +18,22 @@ import Etapa04Pagamento from "./steps/Etapa04Pagamento";
 import Etapa05Conclusao from "./steps/Etapa05Conclusao";
 
 export default function QACadastroRefinadoPage() {
-  const { state, update, updateDados, reset } = useCadastroRefinadoState();
+  // Reinício explícito via URL (`?novo=1` ou `?reset=1`): limpamos o
+  // sessionStorage do fluxo ANTES do hook ler o estado inicial. Assim o
+  // hook já inicia com `initial` (documentos vazios, dados zerados, etc.).
+  // Atualizar a página sem essas flags continua preservando a sessão.
+  const [resetAppliedFromUrl] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("novo") === "1" || sp.get("reset") === "1") {
+      clearCadastroRefinadoStorage();
+      return true;
+    }
+    return false;
+  });
+  const { state, update, updateDados, reset, hardReset } = useCadastroRefinadoState();
   const navigate = useNavigate();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
   // Regra de primeira tela:
@@ -51,6 +67,19 @@ export default function QACadastroRefinadoPage() {
   // Se cliente entrou direto via ?servico=, lembramos disso p/ Voltar levar para "/"
   const [enteredDirect] = useState<boolean>(() => Boolean(params.get("servico")));
   const [initialPerfil, setInitialPerfil] = useState<string | null>(() => params.get("perfil_v2"));
+
+  // Após aplicar o hard reset via URL, removemos as flags `novo`/`reset`
+  // para não disparar reset em loop em re-renders. Preserva `servico=` e
+  // outros parâmetros (perfil_v2, etc.) que devem continuar válidos.
+  useEffect(() => {
+    if (!resetAppliedFromUrl) return;
+    const next = new URLSearchParams(params);
+    let changed = false;
+    if (next.has("novo")) { next.delete("novo"); changed = true; }
+    if (next.has("reset")) { next.delete("reset"); changed = true; }
+    if (changed) setParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetAppliedFromUrl]);
   // Sanidade: se mudou query depois (improvável), respeitar
   useEffect(() => {
     const servico = params.get("servico");
