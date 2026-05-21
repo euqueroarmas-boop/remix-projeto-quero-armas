@@ -353,7 +353,6 @@ const QuizPage = () => {
       value: answerLabels[answers[question.id] as AnswerId],
     }));
 
-  return (
   const journeyItems = [
     { n: 1, label: 'Caminho escolhido', detail: isResultStep ? 'Caminho confirmado' : 'Diagnóstico em andamento', active: true },
     { n: 2, label: 'Documentos e dados', detail: 'Enviar ou preencher manualmente', active: false },
