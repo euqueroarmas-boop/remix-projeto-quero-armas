@@ -54,6 +54,71 @@ const AVISO_SEM_ANEXO_HTML =
   "contrato final assinado." +
   "</section>";
 
+function normalizeContractSlug(value: string | null | undefined): string {
+  if (!value) return "";
+  let s = String(value);
+  s = s.replace(/<[^>]+>/g, " ");
+  s = s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  s = s.toLowerCase();
+  s = s.replace(/[_\s]+/g, "-");
+  s = s.replace(/[^a-z0-9-]+/g, "");
+  s = s.replace(/-+/g, "-");
+  s = s.replace(/^-+|-+$/g, "");
+  return s;
+}
+
+function extractSlugFromAnexoBlock(segment: string): string | null {
+  const rawRegexes: RegExp[] = [
+    /Identificador[\s\S]{0,40}?\(\s*slug\s*\)[^A-Za-z0-9<]{0,20}(?:<[^>]+>\s*)*([^<\n\r.;]+)/i,
+    /\(\s*slug\s*\)[\s\S]{0,20}?:[\s\S]{0,40}?([a-z0-9][\w\s\-]{1,80})/i,
+  ];
+  for (const r of rawRegexes) {
+    const m = segment.match(r);
+    if (m && m[1]) {
+      const slug = normalizeContractSlug(m[1]);
+      if (slug) return slug;
+    }
+  }
+  const text = segment
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ");
+  const tm = text.match(
+    /Identificador\s*\(\s*slug\s*\)\s*:?\s*([^.;<\n\r]+?)(?:\s|\.|;|<|$)/i,
+  );
+  if (tm && tm[1]) {
+    const slug = normalizeContractSlug(tm[1]);
+    if (slug) return slug;
+  }
+  return null;
+}
+
+function inferSlugFromAnexoTitle(titulo: string): string | null {
+  if (!titulo) return null;
+  const t = normalizeContractSlug(titulo);
+  const semPrefixo = t.replace(/^i-\d+-/, "");
+  const map: Array<{ test: RegExp; slug: string }> = [
+    { test: /concessao-de-cr|concessao-cr/, slug: "concessao-cr" },
+    { test: /renovacao-de-cr|renovacao-cr/, slug: "renovacao-cr" },
+    { test: /autorizacao-de-compra|autorizacao-compra/, slug: "autorizacao-compra" },
+    { test: /craf/, slug: "craf" },
+    { test: /gte|guia-de-trafego/, slug: "gte" },
+    { test: /porte/, slug: "porte" },
+    { test: /posse/, slug: "posse" },
+    { test: /apostilamento/, slug: "apostilamento" },
+    { test: /registro/, slug: "registro" },
+  ];
+  for (const m of map) {
+    if (m.test.test(semPrefixo) || m.test.test(t)) return m.slug;
+  }
+  return null;
+}
+
 function filterContractAnexosBySlugs(
   html: string,
   slugsContratados: string[],
