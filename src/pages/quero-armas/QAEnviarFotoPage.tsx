@@ -184,6 +184,13 @@ export default function QAEnviarFotoPage() {
         <div className="qa-card rounded-2xl p-6 md:p-8">
           {step === "cpf" && (
             <>
+              <button
+                onClick={handleVoltar}
+                className="text-xs uppercase tracking-wide mb-3"
+                style={{ color: "hsl(220 10% 50%)" }}
+              >
+                ← Voltar para Área do Cliente
+              </button>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>ENVIAR APENAS FOTO</h1>
               <p className="text-sm mb-6" style={{ color: "hsl(220 10% 46%)" }}>
                 Já fez seu cadastro? Atualize ou envie sua foto sem precisar refazer o formulário.
@@ -221,7 +228,7 @@ export default function QAEnviarFotoPage() {
 
           {step === "selfie" && (
             <>
-              <button onClick={() => { setStep("cpf"); setSelfie(""); stream?.getTracks().forEach(t => t.stop()); setStream(null); }} className="text-xs uppercase tracking-wide mb-3" style={{ color: "hsl(220 10% 50%)" }}>← Voltar</button>
+              <button onClick={handleVoltar} className="text-xs uppercase tracking-wide mb-3" style={{ color: "hsl(220 10% 50%)" }}>← Voltar</button>
               <h1 className="text-xl font-bold mb-1" style={{ color: "hsl(220 20% 18%)" }}>ATUALIZAR FOTO</h1>
               {nome && <p className="text-sm mb-5 font-medium" style={{ color: "hsl(220 20% 35%)" }}>{nome}</p>}
 
@@ -286,15 +293,13 @@ export default function QAEnviarFotoPage() {
               </div>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>FOTO ATUALIZADA</h1>
               <p className="text-sm" style={{ color: "hsl(220 10% 46%)" }}>Sua foto foi atualizada com sucesso.</p>
-              {returnTo && (
-                <button
-                  onClick={() => navigate(returnTo, { replace: true })}
+              <button
+                  onClick={handleVoltar}
                   className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2"
                   style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
                 >
                   VOLTAR PARA ÁREA DO CLIENTE
                 </button>
-              )}
             </div>
           )}
         </div>
