@@ -61,7 +61,7 @@ function filterContractAnexosBySlugs(
   if (!html) return html;
   const slugs = (slugsContratados || [])
     .filter((s): s is string => typeof s === "string")
-    .map((s) => s.trim().toLowerCase().replace(/_/g, "-"))
+    .map((s) => normalizeContractSlug(s))
     .filter(Boolean);
   const slugSet = new Set(slugs);
   const sectionRegex =
@@ -70,7 +70,7 @@ function filterContractAnexosBySlugs(
   let kept = 0;
   let result = html.replace(sectionRegex, (full, s) => {
     foundAny = true;
-    const sslug = String(s).trim().toLowerCase().replace(/_/g, "-");
+    const sslug = normalizeContractSlug(String(s));
     if (slugSet.has(sslug)) { kept++; return full; }
     return "";
   });
@@ -85,10 +85,13 @@ function filterContractAnexosBySlugs(
 
 function filterAnexoIByHeadings(html: string, slugSet: Set<string>): string {
   const headingRegex = /<h3[^>]*>\s*I\.\d+\.[^<]*<\/h3>/g;
-  const heads: { start: number }[] = [];
+  const heads: { start: number; titulo: string }[] = [];
   let m: RegExpExecArray | null;
   while ((m = headingRegex.exec(html)) !== null) {
-    heads.push({ start: m.index });
+    heads.push({
+      start: m.index,
+      titulo: m[0].replace(/<[^>]+>/g, "").trim(),
+    });
   }
   if (heads.length === 0) return html;
   const tailRel = html.slice(heads[heads.length - 1].start).search(/<h2[^>]*>/);
@@ -98,13 +101,12 @@ function filterAnexoIByHeadings(html: string, slugSet: Set<string>): string {
   const blocks: Block[] = heads.map((h, i) => {
     const end = i + 1 < heads.length ? heads[i + 1].start : lastEnd;
     const seg = html.slice(h.start, end);
-    const sm = seg.match(
-      /Identificador\s*\(\s*slug\s*\)\s*:\s*([a-z0-9][a-z0-9-]+)/i,
-    );
+    const slugExtraido = extractSlugFromAnexoBlock(seg);
+    const slugInferido = slugExtraido ? null : inferSlugFromAnexoTitle(h.titulo);
     return {
       start: h.start,
       end,
-      slug: sm ? sm[1].toLowerCase().replace(/_/g, "-") : null,
+      slug: slugExtraido || slugInferido,
     };
   });
   const kept = blocks.filter((b) => b.slug && slugSet.has(b.slug));
