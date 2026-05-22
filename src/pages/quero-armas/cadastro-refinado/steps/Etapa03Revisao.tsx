@@ -74,6 +74,11 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
   // ser sobrescritos por busca de CEP nem rotulados como "Extraído por IA".
   const editedRef = useRef<Set<string>>(new Set());
 
+  // Exceção temporária de teste: permite e-mail duplicado quando o CPF é diferente.
+  // CPF continua sendo o documento canônico e único.
+  const allowDuplicateEmailTest =
+    import.meta.env.VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST === "true";
+
   // "Extraído por IA" só faz sentido quando algum documento foi realmente
   // enviado na Etapa 02. Sem documento → sem selo.
   const veioDeIA = useMemo(
@@ -87,11 +92,23 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
 
   // Wrappers de onChange com máscara + marcação de edição manual.
   const markEdited = (k: string) => editedRef.current.add(k);
-  const setCpf = (v: string) => { markEdited("cpf"); updateDados({ cpf: formatCPF(v) }); };
+  const setCpf = (v: string) => {
+    markEdited("cpf");
+    updateDados({ cpf: formatCPF(v) });
+    // Trocar CPF invalida qualquer checagem/bloqueio anterior.
+    setError(null);
+    setCpfCheck({ checking: false, existe: false, checked: null });
+    update({ clienteExistente: false });
+  };
   const setTel = (v: string) => { markEdited("telefone"); updateDados({ telefone: formatPhone(v) }); };
   const setNasc = (v: string) => { markEdited("data_nascimento"); updateDados({ data_nascimento: formatDateBR(v) }); };
   const setCep = (v: string) => { markEdited("endereco_cep"); updateDados({ endereco_cep: formatCEP(v) }); };
-  const setEmail = (v: string) => { markEdited("email"); updateDados({ email: v.toLowerCase().trim() }); };
+  const setEmail = (v: string) => {
+    markEdited("email");
+    updateDados({ email: v.toLowerCase().trim() });
+    // Trocar e-mail nunca deve manter bloqueio antigo — CPF é o canônico.
+    setError(null);
+  };
 
   // Autobusca CEP ao atingir 8 dígitos.
   useEffect(() => {
@@ -174,12 +191,19 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
         body: { cpf: cpfDigits, email: d.email.trim().toLowerCase() },
       });
       if (error) throw error;
-      const exists = !!(data?.cpf_existe || data?.email_existe);
-      update({ clienteExistente: exists });
-      if (exists && !user) {
+      const cpfExiste = !!data?.cpf_existe;
+      const emailExiste = !!data?.email_existe;
+      // Bloqueio canônico: somente CPF. E-mail só bloqueia se a flag de teste estiver OFF.
+      const bloqueia = cpfExiste || (emailExiste && !allowDuplicateEmailTest);
+      update({ clienteExistente: cpfExiste });
+      if (bloqueia && !user) {
         setChecking(false);
-        setCpfCheck({ checking: false, existe: true, checked: cpfDigits });
-        setError("Encontramos um cadastro para este CPF/e-mail. Faça login para continuar de onde parou.");
+        if (cpfExiste) {
+          setCpfCheck({ checking: false, existe: true, checked: cpfDigits });
+          setError("Encontramos um cadastro para este CPF. Para proteger seus dados, faça login para continuar.");
+        } else {
+          setError("Encontramos um cadastro para este e-mail. Faça login para continuar de onde parou.");
+        }
         return;
       }
       // Snapshot operacional p/ Equipe Quero Armas — não bloqueia.
@@ -201,7 +225,9 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
     }
   }
 
-  const bloqueadoPorCpfExistente = !user && cpfCheck.existe;
+  // Só bloqueia se a checagem mais recente corresponde ao CPF atual.
+  const bloqueadoPorCpfExistente =
+    !user && cpfCheck.existe && cpfCheck.checked === cpfDigits;
   const selo = veioDeIA ? "Extraído por IA · revise" : "Preenchimento manual";
 
   return (
