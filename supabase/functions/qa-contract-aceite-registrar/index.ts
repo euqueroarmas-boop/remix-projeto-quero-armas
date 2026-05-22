@@ -61,21 +61,60 @@ function filterContractAnexosBySlugs(
   if (!html) return html;
   const slugs = (slugsContratados || [])
     .filter((s): s is string => typeof s === "string")
-    .map((s) => s.trim())
+    .map((s) => s.trim().toLowerCase().replace(/_/g, "-"))
     .filter(Boolean);
   const slugSet = new Set(slugs);
   const sectionRegex =
     /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
   let foundAny = false;
   let kept = 0;
-  const filtered = html.replace(sectionRegex, (full, s) => {
+  let result = html.replace(sectionRegex, (full, s) => {
     foundAny = true;
-    if (slugSet.has(s)) { kept++; return full; }
+    const sslug = String(s).trim().toLowerCase().replace(/_/g, "-");
+    if (slugSet.has(sslug)) { kept++; return full; }
     return "";
   });
-  if (!foundAny) return html; // template sem anexos
-  if (kept === 0) return filtered + AVISO_SEM_ANEXO_HTML;
-  return filtered;
+  if (foundAny && kept === 0) result = result + AVISO_SEM_ANEXO_HTML;
+  // Segundo passe: filtro heading-based do ANEXO I (template legado).
+  // Identifica subseções <h3>I.N. ...</h3> com "Identificador (slug): xxx"
+  // e remove as que NÃO foram contratadas. Sem isso, o template oficial
+  // mostra TODOS os serviços, mesmo os não contratados.
+  result = filterAnexoIByHeadings(result, slugSet);
+  return result;
+}
+
+function filterAnexoIByHeadings(html: string, slugSet: Set<string>): string {
+  const headingRegex = /<h3[^>]*>\s*I\.\d+\.[^<]*<\/h3>/g;
+  const heads: { start: number }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = headingRegex.exec(html)) !== null) {
+    heads.push({ start: m.index });
+  }
+  if (heads.length === 0) return html;
+  const tailRel = html.slice(heads[heads.length - 1].start).search(/<h2[^>]*>/);
+  const lastEnd =
+    tailRel >= 0 ? heads[heads.length - 1].start + tailRel : html.length;
+  type Block = { start: number; end: number; slug: string | null };
+  const blocks: Block[] = heads.map((h, i) => {
+    const end = i + 1 < heads.length ? heads[i + 1].start : lastEnd;
+    const seg = html.slice(h.start, end);
+    const sm = seg.match(
+      /Identificador\s*\(\s*slug\s*\)\s*:\s*([a-z0-9][a-z0-9-]+)/i,
+    );
+    return {
+      start: h.start,
+      end,
+      slug: sm ? sm[1].toLowerCase().replace(/_/g, "-") : null,
+    };
+  });
+  const kept = blocks.filter((b) => b.slug && slugSet.has(b.slug));
+  const head = html.slice(0, blocks[0].start);
+  const tail = html.slice(lastEnd);
+  const middle =
+    kept.length === 0
+      ? AVISO_SEM_ANEXO_HTML
+      : kept.map((b) => html.slice(b.start, b.end)).join("");
+  return head + middle + tail;
 }
 
 async function sha256Hex(input: string): Promise<string> {
