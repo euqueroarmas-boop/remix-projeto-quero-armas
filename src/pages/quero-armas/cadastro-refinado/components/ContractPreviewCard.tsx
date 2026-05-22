@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { filterContractAnexosBySlugs } from "@/lib/quero-armas/contractAnexoFilter";
+import {
+  filterContractAnexosBySlugs,
+  type ContractAnexoFilterDebug,
+} from "@/lib/quero-armas/contractAnexoFilter";
 import type { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
 interface Props {
@@ -101,7 +104,31 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
         : state.servicoSlug
           ? [state.servicoSlug]
           : [];
-    return filterContractAnexosBySlugs(filled, slugsParaFiltrar);
+    const debug: ContractAnexoFilterDebug | undefined = import.meta.env.DEV
+      ? {
+          slugsContratados: [],
+          sectionsAnexoSlugFound: [],
+          sectionsAnexoSlugKept: [],
+          anexoIBlocksFound: [],
+          anexoIBlocksKept: [],
+          anexoIBlocksRemoved: [],
+        }
+      : undefined;
+    const out = filterContractAnexosBySlugs(
+      filled,
+      slugsParaFiltrar,
+      debug ? { debug } : undefined,
+    );
+    if (import.meta.env.DEV && debug) {
+      // eslint-disable-next-line no-console
+      console.debug("[ContractPreviewCard] filtro de anexos", {
+        servicoSlug: state.servicoSlug,
+        servicosSlugs: state.servicosSlugs,
+        slugsParaFiltrar,
+        ...debug,
+      });
+    }
+    return out;
   }, [template, state.dadosPessoais, state.servicoSlug, state.servicosSlugs, nomeServico, precoServico]);
 
   function handleDownload() {
