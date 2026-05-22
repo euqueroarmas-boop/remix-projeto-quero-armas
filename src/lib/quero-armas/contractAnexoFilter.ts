@@ -25,12 +25,103 @@ const AVISO_SEM_ANEXO_HTML =
   "contrato final assinado." +
   "</section>";
 
+/**
+ * Normalização robusta de slug de contrato. Aceita strings cruas, com
+ * HTML, acentos, espaços, underscores, &nbsp;, etc.
+ */
+export function normalizeContractSlug(value: string | null | undefined): string {
+  if (!value) return "";
+  let s = String(value);
+  // remove tags HTML
+  s = s.replace(/<[^>]+>/g, " ");
+  // entidades básicas
+  s = s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+  // remove acentos
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  s = s.toLowerCase();
+  // underscore e espaços viram hífen
+  s = s.replace(/[_\s]+/g, "-");
+  // descarta tudo que não for [a-z0-9-]
+  s = s.replace(/[^a-z0-9-]+/g, "");
+  // colapsa múltiplos hífens
+  s = s.replace(/-+/g, "-");
+  // trim hífens
+  s = s.replace(/^-+|-+$/g, "");
+  return s;
+}
+
 function normalizeSlugs(slugs: string[] | null | undefined): string[] {
   if (!Array.isArray(slugs)) return [];
   return slugs
     .filter((s): s is string => typeof s === "string")
-    .map((s) => s.trim().toLowerCase().replace(/_/g, "-"))
+    .map((s) => normalizeContractSlug(s))
     .filter(Boolean);
+}
+
+/**
+ * Extrai slug de um bloco Anexo I tentando regex flexíveis e, depois,
+ * o texto puro do segmento.
+ */
+export function extractSlugFromAnexoBlock(segment: string): string | null {
+  // 1) regex flexível em HTML bruto: aceita tags entre "slug)" e ":" e o valor.
+  //    Ex.: Identificador (slug)</strong>: concessao-cr
+  //         Identificador (slug):</strong> <code>concessao-cr</code>
+  //         <strong>Identificador (slug):</strong>&nbsp;concessao-cr
+  const rawRegexes: RegExp[] = [
+    /Identificador[\s\S]{0,40}?\(\s*slug\s*\)[^A-Za-z0-9<]{0,20}(?:<[^>]+>\s*)*([^<\n\r.;]+)/i,
+    /\(\s*slug\s*\)[\s\S]{0,20}?:[\s\S]{0,40}?([a-z0-9][\w\s\-]{1,80})/i,
+  ];
+  for (const r of rawRegexes) {
+    const m = segment.match(r);
+    if (m && m[1]) {
+      const slug = normalizeContractSlug(m[1]);
+      if (slug) return slug;
+    }
+  }
+
+  // 2) texto puro
+  const text = segment
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ");
+  const tm = text.match(
+    /Identificador\s*\(\s*slug\s*\)\s*:?\s*([^.;<\n\r]+?)(?:\s|\.|;|<|$)/i,
+  );
+  if (tm && tm[1]) {
+    const slug = normalizeContractSlug(tm[1]);
+    if (slug) return slug;
+  }
+  return null;
+}
+
+/**
+ * Fallback: deduz slug a partir do título do <h3> (ex.: "I.6. CONCESSÃO DE CR").
+ * Tabela explícita, sem heurísticas perigosas.
+ */
+export function inferSlugFromAnexoTitle(titulo: string): string | null {
+  if (!titulo) return null;
+  const t = normalizeContractSlug(titulo); // ex.: "i-6-concessao-de-cr"
+  // remove o prefixo "i-N-"
+  const semPrefixo = t.replace(/^i-\d+-/, "");
+  const map: Array<{ test: RegExp; slug: string }> = [
+    { test: /concessao-de-cr|concessao-cr/, slug: "concessao-cr" },
+    { test: /renovacao-de-cr|renovacao-cr/, slug: "renovacao-cr" },
+    { test: /autorizacao-de-compra|autorizacao-compra/, slug: "autorizacao-compra" },
+    { test: /craf/, slug: "craf" },
+    { test: /gte|guia-de-trafego/, slug: "gte" },
+    { test: /porte/, slug: "porte" },
+    { test: /posse/, slug: "posse" },
+    { test: /apostilamento/, slug: "apostilamento" },
+    { test: /registro/, slug: "registro" },
+  ];
+  for (const m of map) {
+    if (m.test.test(semPrefixo) || m.test.test(t)) return m.slug;
+  }
+  return null;
 }
 
 /**
@@ -80,14 +171,14 @@ function filterAnexoIByHeadings(
   const blocks: Block[] = heads.map((h, i) => {
     const end = i + 1 < heads.length ? heads[i + 1].start : lastEnd;
     const segment = html.slice(h.start, end);
-    const slugMatch = segment.match(
-      /Identificador\s*\(\s*slug\s*\)\s*:\s*([a-z0-9][a-z0-9-]+)/i,
-    );
+    const slugExtraido = extractSlugFromAnexoBlock(segment);
+    const slugInferido = slugExtraido ? null : inferSlugFromAnexoTitle(h.titulo);
+    const slugFinal = slugExtraido || slugInferido;
     return {
       start: h.start,
       end,
       titulo: h.titulo,
-      slug: slugMatch ? slugMatch[1].toLowerCase().replace(/_/g, "-") : null,
+      slug: slugFinal,
     };
   });
 
