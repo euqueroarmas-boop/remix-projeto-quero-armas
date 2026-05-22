@@ -41,13 +41,6 @@ export default function QAEnviarFotoPage() {
     sanitizeReturnTo(searchParams.get("next")) ||
     "/area-do-cliente";
 
-  const handleVoltar = () => {
-    try { stream?.getTracks().forEach(t => t.stop()); } catch {}
-    setStream(null);
-    setSelfie("");
-    navigate(returnTo, { replace: true });
-  };
-
   const [step, setStep] = useState<Step>("cpf");
   const [cpf, setCpf] = useState(presetCpf ? maskCpf(presetCpf) : "");
   const [loading, setLoading] = useState(false);
@@ -61,6 +54,13 @@ export default function QAEnviarFotoPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => () => { stream?.getTracks().forEach(t => t.stop()); }, [stream]);
+
+  const handleVoltar = () => {
+    try { stream?.getTracks().forEach(t => t.stop()); } catch {}
+    setStream(null);
+    setSelfie("");
+    navigate(returnTo, { replace: true });
+  };
 
   // Auto-lookup quando vem da Área do Cliente com CPF pré-preenchido
   useEffect(() => {
