@@ -33,6 +33,25 @@ function isEmailValido(s: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 }
 
+function isDuplicateEmailTestAllowed() {
+  const raw = import.meta.env.VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST;
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    const isLocalhost = host === "localhost" || host === "127.0.0.1";
+    const isLovablePreview =
+      host.includes("lovable.app") ||
+      host.includes("lovable.dev") ||
+      host.includes("lovableproject.com");
+    if (isLocalhost || isLovablePreview || import.meta.env.DEV) {
+      return true;
+    }
+    return false;
+  }
+  return import.meta.env.DEV === true;
+}
+
 function field(
   label: string,
   name: keyof CadastroRefinadoState["dadosPessoais"],
@@ -76,10 +95,11 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
 
   // Exceção temporária aprovada: e-mail duplicado NÃO bloqueia quando o CPF é diferente.
   // CPF continua sendo o documento canônico e único.
-  // Padrão: LIGADA. Para desligar e restaurar bloqueio por e-mail, defina
-  // VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST="false" no ambiente.
-  const allowDuplicateEmailTest =
-    import.meta.env.VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST !== "false";
+  // Regra de ativação:
+  //  - "true"  → sempre ligada
+  //  - "false" → sempre desligada
+  //  - ausente → ligada apenas em dev/localhost/Lovable preview; desligada em produção real.
+  const allowDuplicateEmailTest = isDuplicateEmailTestAllowed();
 
   // "Extraído por IA" só faz sentido quando algum documento foi realmente
   // enviado na Etapa 02. Sem documento → sem selo.
