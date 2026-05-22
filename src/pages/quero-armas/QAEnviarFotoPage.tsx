@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle, Trash2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
@@ -22,8 +22,25 @@ interface FoundData {
 export default function QAEnviarFotoPage() {
   const location = useLocation() as any;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const presetCpf: string = location?.state?.cpf || "";
-  const returnTo: string | null = location?.state?.returnTo || null;
+
+  // Resolve returnTo: state -> ?returnTo -> ?next -> /area-do-cliente
+  // Apenas caminhos internos (começando com "/" e sem "//" ou esquema).
+  const sanitizeReturnTo = (v: string | null | undefined): string | null => {
+    if (!v) return null;
+    const s = String(v).trim();
+    if (!s.startsWith("/")) return null;
+    if (s.startsWith("//")) return null;
+    if (/^https?:\/\//i.test(s)) return null;
+    return s;
+  };
+  const returnTo: string =
+    sanitizeReturnTo(location?.state?.returnTo) ||
+    sanitizeReturnTo(searchParams.get("returnTo")) ||
+    sanitizeReturnTo(searchParams.get("next")) ||
+    "/area-do-cliente";
+
   const [step, setStep] = useState<Step>("cpf");
   const [cpf, setCpf] = useState(presetCpf ? maskCpf(presetCpf) : "");
   const [loading, setLoading] = useState(false);
@@ -37,6 +54,13 @@ export default function QAEnviarFotoPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => () => { stream?.getTracks().forEach(t => t.stop()); }, [stream]);
+
+  const handleVoltar = () => {
+    try { stream?.getTracks().forEach(t => t.stop()); } catch {}
+    setStream(null);
+    setSelfie("");
+    navigate(returnTo, { replace: true });
+  };
 
   // Auto-lookup quando vem da Área do Cliente com CPF pré-preenchido
   useEffect(() => {
@@ -160,6 +184,13 @@ export default function QAEnviarFotoPage() {
         <div className="qa-card rounded-2xl p-6 md:p-8">
           {step === "cpf" && (
             <>
+              <button
+                onClick={handleVoltar}
+                className="text-xs uppercase tracking-wide mb-3"
+                style={{ color: "hsl(220 10% 50%)" }}
+              >
+                ← Voltar para Área do Cliente
+              </button>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>ENVIAR APENAS FOTO</h1>
               <p className="text-sm mb-6" style={{ color: "hsl(220 10% 46%)" }}>
                 Já fez seu cadastro? Atualize ou envie sua foto sem precisar refazer o formulário.
@@ -197,7 +228,7 @@ export default function QAEnviarFotoPage() {
 
           {step === "selfie" && (
             <>
-              <button onClick={() => { setStep("cpf"); setSelfie(""); stream?.getTracks().forEach(t => t.stop()); setStream(null); }} className="text-xs uppercase tracking-wide mb-3" style={{ color: "hsl(220 10% 50%)" }}>← Voltar</button>
+              <button onClick={handleVoltar} className="text-xs uppercase tracking-wide mb-3" style={{ color: "hsl(220 10% 50%)" }}>← Voltar</button>
               <h1 className="text-xl font-bold mb-1" style={{ color: "hsl(220 20% 18%)" }}>ATUALIZAR FOTO</h1>
               {nome && <p className="text-sm mb-5 font-medium" style={{ color: "hsl(220 20% 35%)" }}>{nome}</p>}
 
@@ -262,15 +293,13 @@ export default function QAEnviarFotoPage() {
               </div>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>FOTO ATUALIZADA</h1>
               <p className="text-sm" style={{ color: "hsl(220 10% 46%)" }}>Sua foto foi atualizada com sucesso.</p>
-              {returnTo && (
-                <button
-                  onClick={() => navigate(returnTo, { replace: true })}
+              <button
+                  onClick={handleVoltar}
                   className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2"
                   style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
                 >
                   VOLTAR PARA ÁREA DO CLIENTE
                 </button>
-              )}
             </div>
           )}
         </div>
