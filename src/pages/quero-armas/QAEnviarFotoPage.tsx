@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle, Trash2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
@@ -22,8 +22,32 @@ interface FoundData {
 export default function QAEnviarFotoPage() {
   const location = useLocation() as any;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const presetCpf: string = location?.state?.cpf || "";
-  const returnTo: string | null = location?.state?.returnTo || null;
+
+  // Resolve returnTo: state -> ?returnTo -> ?next -> /area-do-cliente
+  // Apenas caminhos internos (começando com "/" e sem "//" ou esquema).
+  const sanitizeReturnTo = (v: string | null | undefined): string | null => {
+    if (!v) return null;
+    const s = String(v).trim();
+    if (!s.startsWith("/")) return null;
+    if (s.startsWith("//")) return null;
+    if (/^https?:\/\//i.test(s)) return null;
+    return s;
+  };
+  const returnTo: string =
+    sanitizeReturnTo(location?.state?.returnTo) ||
+    sanitizeReturnTo(searchParams.get("returnTo")) ||
+    sanitizeReturnTo(searchParams.get("next")) ||
+    "/area-do-cliente";
+
+  const handleVoltar = () => {
+    try { stream?.getTracks().forEach(t => t.stop()); } catch {}
+    setStream(null);
+    setSelfie("");
+    navigate(returnTo, { replace: true });
+  };
+
   const [step, setStep] = useState<Step>("cpf");
   const [cpf, setCpf] = useState(presetCpf ? maskCpf(presetCpf) : "");
   const [loading, setLoading] = useState(false);
