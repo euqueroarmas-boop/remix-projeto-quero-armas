@@ -33,6 +33,25 @@ function isEmailValido(s: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 }
 
+function isDuplicateEmailTestAllowed() {
+  const raw = import.meta.env.VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST;
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname.toLowerCase();
+    const isLocalhost = host === "localhost" || host === "127.0.0.1";
+    const isLovablePreview =
+      host.includes("lovable.app") ||
+      host.includes("lovable.dev") ||
+      host.includes("lovableproject.com");
+    if (isLocalhost || isLovablePreview || import.meta.env.DEV) {
+      return true;
+    }
+    return false;
+  }
+  return import.meta.env.DEV === true;
+}
+
 function field(
   label: string,
   name: keyof CadastroRefinadoState["dadosPessoais"],
