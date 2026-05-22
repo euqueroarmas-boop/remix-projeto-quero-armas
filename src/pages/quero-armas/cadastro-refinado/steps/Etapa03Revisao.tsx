@@ -76,10 +76,11 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
 
   // Exceção temporária aprovada: e-mail duplicado NÃO bloqueia quando o CPF é diferente.
   // CPF continua sendo o documento canônico e único.
-  // Padrão: LIGADA. Para desligar e restaurar bloqueio por e-mail, defina
-  // VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST="false" no ambiente.
-  const allowDuplicateEmailTest =
-    import.meta.env.VITE_QA_ALLOW_DUPLICATE_EMAIL_TEST !== "false";
+  // Regra de ativação:
+  //  - "true"  → sempre ligada
+  //  - "false" → sempre desligada
+  //  - ausente → ligada apenas em dev/localhost/Lovable preview; desligada em produção real.
+  const allowDuplicateEmailTest = isDuplicateEmailTestAllowed();
 
   // "Extraído por IA" só faz sentido quando algum documento foi realmente
   // enviado na Etapa 02. Sem documento → sem selo.
