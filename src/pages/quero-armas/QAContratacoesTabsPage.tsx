@@ -9,11 +9,12 @@
  */
 
 import { useState } from "react";
-import { ClipboardList, Inbox } from "lucide-react";
+import { ClipboardList, Inbox, FileSignature } from "lucide-react";
 import QAVendasPendentesPage from "./QAVendasPendentesPage";
 import QAContratacoesPendentesPage from "./QAContratacoesPendentesPage";
+import QAContratosEquipePanel from "@/components/quero-armas/contratos/QAContratosEquipePanel";
 
-type TabKey = "vendas" | "cadastros";
+type TabKey = "vendas" | "cadastros" | "contratos";
 
 export default function QAContratacoesTabsPage() {
   const [tab, setTab] = useState<TabKey>("vendas");
@@ -54,12 +55,26 @@ export default function QAContratacoesTabsPage() {
               <Inbox className="h-3.5 w-3.5" />
               Cadastros incompletos
             </button>
+            <button
+              type="button"
+              onClick={() => setTab("contratos")}
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
+                tab === "contratos"
+                  ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <FileSignature className="h-3.5 w-3.5" />
+              Contratos
+            </button>
           </div>
         </div>
       </header>
 
       <div>
-        {tab === "vendas" ? <QAVendasPendentesPage /> : <QAContratacoesPendentesPage />}
+        {tab === "vendas" && <QAVendasPendentesPage />}
+        {tab === "cadastros" && <QAContratacoesPendentesPage />}
+        {tab === "contratos" && <QAContratosEquipePanel />}
       </div>
     </div>
   );
