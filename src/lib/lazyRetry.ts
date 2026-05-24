@@ -11,7 +11,12 @@ function isChunkError(error: unknown): boolean {
     msg.includes("importing a module script failed") ||
     msg.includes("loading chunk") ||
     msg.includes("loading css chunk") ||
-    msg.includes("dynamically imported module")
+    msg.includes("dynamically imported module") ||
+    msg.includes("undefined is not an object") ||
+    msg.includes("_result.default") ||
+    msg.includes("cannot read properties of undefined") ||
+    msg.includes("reading 'default'") ||
+    msg.includes("lazyinvalidmodule")
   );
 }
 
@@ -35,6 +40,9 @@ export function lazyRetry<T extends ComponentType<any>>(
           await new Promise((r) => setTimeout(r, 500 * attempt));
         }
         const mod = await importFn();
+        if (!mod || typeof (mod as any).default !== "function") {
+          throw new Error(`[LazyInvalidModule] ${moduleName || "unknown"} não retornou default export válido`);
+        }
         sessionStorage.removeItem(RELOAD_KEY);
         return mod;
       } catch (err) {
