@@ -1,6 +1,7 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+import { lazyRetry } from "@/lib/lazyRetry";
 import {
   AlertTriangle, CheckCircle, Clock, XCircle, PenTool,
   ArrowRight, FileText, Shield, Users, ListChecks,
@@ -9,7 +10,7 @@ import {
 import { LoadingState } from "@/components/quero-armas/LoadStates";
 import { useCadastroPendenciasCriticas } from "@/components/quero-armas/clientes/useCadastroPendenciasCriticas";
 
-const PendenciasEssenciaisModal = lazy(() => import("@/components/quero-armas/PendenciasEssenciaisModal"));
+const PendenciasEssenciaisModal = lazyRetry(() => import("@/components/quero-armas/PendenciasEssenciaisModal"), "PendenciasEssenciaisModal");
 
 /**
  * Dashboard Principal — enxuta.
@@ -17,11 +18,11 @@ const PendenciasEssenciaisModal = lazy(() => import("@/components/quero-armas/Pe
  * Gráficos analíticos e listas longas vivem em /operacao/monitoramento.
  */
 
-const DashboardExames                = lazy(() => import("@/components/quero-armas/dashboard/DashboardExames"));
-const DashboardProcessosMonitor      = lazy(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"));
-const DashboardPrazosRecursais       = lazy(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"));
-const DashboardSlaClientesNovos      = lazy(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"));
-const DashboardNovosCadastrosRecebidos = lazy(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"));
+const DashboardExames                  = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardExames"), "DashboardExames");
+const DashboardProcessosMonitor        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProcessosMonitor"), "DashboardProcessosMonitor");
+const DashboardPrazosRecursais         = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
+const DashboardSlaClientesNovos        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"), "DashboardSlaClientesNovos");
+const DashboardNovosCadastrosRecebidos = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"), "DashboardNovosCadastrosRecebidos");
 
 interface Stats {
   documentos: number;
