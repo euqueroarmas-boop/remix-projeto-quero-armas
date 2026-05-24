@@ -9,7 +9,7 @@
  * Não altera nenhum outro comportamento da linha.
  */
 
-import { Phone, MapPin, Trash2 } from "lucide-react";
+import { Phone, MapPin, Trash2, ArchiveRestore, Archive } from "lucide-react";
 import ClienteSelfieAvatar from "./ClienteSelfieAvatar";
 import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
 import type { CorStatus } from "@/lib/quero-armas/statusUnificado";
@@ -41,10 +41,15 @@ interface Props {
   c: any;
   openClient: (c: any) => void;
   setDeleteModal: (m: any) => void;
+  /** Pré-checa vínculos e abre modal apropriado (arquivar vs excluir). */
+  onRequestDelete?: (c: any) => void;
+  /** Restaura cliente arquivado. */
+  onRestore?: (c: any) => void;
 }
 
-export default function ClienteSearchRow({ c, openClient, setDeleteModal }: Props) {
+export default function ClienteSearchRow({ c, openClient, setDeleteModal, onRequestDelete, onRestore }: Props) {
   const { data: agregado } = useClienteStatusAgregado(c?.id ?? null);
+  const arquivado = !!c?.arquivado;
 
   const baseTone =
     c.status === "ATIVO"
@@ -74,6 +79,11 @@ export default function ClienteSearchRow({ c, openClient, setDeleteModal }: Prop
             <span className="text-[14px] font-bold uppercase tracking-tight truncate" style={{ color: "hsl(220 20% 12%)" }}>
               {c.nome_completo}
             </span>
+            {arquivado && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] bg-slate-100 text-slate-500 border border-slate-200">
+                <Archive className="h-2.5 w-2.5" /> Arquivado
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-wrap text-[10px] text-slate-500">
             <span className="font-mono tracking-wider text-slate-400">CPF {formatCpf(c.cpf)}</span>
@@ -116,16 +126,27 @@ export default function ClienteSearchRow({ c, openClient, setDeleteModal }: Prop
               #{String((c as any).display_id ?? c.id).padStart(4, "0")}
             </span>
           </div>
+          {arquivado && onRestore ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRestore(c); }}
+              className="h-8 w-8 rounded-xl flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all"
+              title="Restaurar cliente"
+            >
+              <ArchiveRestore className="h-3.5 w-3.5" />
+            </button>
+          ) : (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
+              if (onRequestDelete) onRequestDelete(c);
+              else setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
             }}
             className="h-8 w-8 rounded-xl flex items-center justify-center bg-white border border-slate-200 text-slate-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-all md:opacity-0 md:group-hover:opacity-100"
             title="Excluir cliente"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
+          )}
         </div>
       </div>
     </button>
