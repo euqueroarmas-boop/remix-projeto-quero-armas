@@ -83,7 +83,7 @@ export default function QADashboardPage() {
       const results = await Promise.allSettled([
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("ativo", true).eq("papel_documento", "aprendizado"),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }),
-        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).neq("status", "recusado"),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).neq("status", "recusado").or("arquivado.is.null,arquivado.eq.false"),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "aprovado"),
         supabase.from("qa_geracoes_pecas" as any).select("id", { count: "exact", head: true }).eq("status_revisao", "rascunho"),
         supabase.from("qa_documentos_conhecimento" as any).select("id", { count: "exact", head: true }).eq("status_validacao", "nao_validado").eq("ativo", true).eq("papel_documento", "aprendizado"),
