@@ -4127,6 +4127,27 @@ export default function QAClientesPage() {
         />
       </div>
 
+      {/* Filtro Ativos / Arquivados / Todos */}
+      <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ background: "hsl(220 20% 96%)" }}>
+        {([
+          { key: "ativos", label: "Ativos" },
+          { key: "arquivados", label: "Arquivados" },
+          { key: "todos", label: "Todos" },
+        ] as const).map(opt => (
+          <button
+            key={opt.key}
+            onClick={() => setArchivedFilter(opt.key)}
+            className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
+            style={{
+              background: archivedFilter === opt.key ? "hsl(352 60% 30%)" : "transparent",
+              color: archivedFilter === opt.key ? "white" : "hsl(220 10% 55%)",
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl" style={{ background: "hsl(220 20% 96%)" }}>
         <button
