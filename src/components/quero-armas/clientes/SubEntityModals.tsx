@@ -1061,17 +1061,28 @@ export function FiliacaoModal({ open, onClose, onSaved, clienteId, filiacao }: F
 interface DeleteConfirmProps {
   open: boolean; onClose: () => void; onConfirm: () => void;
   title: string; description: string; loading?: boolean;
+  mode?: "delete" | "archive";
 }
-export function DeleteConfirm({ open, onClose, onConfirm, title, description, loading }: DeleteConfirmProps) {
+export function DeleteConfirm({ open, onClose, onConfirm, title, description, loading, mode = "delete" }: DeleteConfirmProps) {
+  const isArchive = mode === "archive";
+  const accent = isArchive ? "amber" : "red";
+  const Icon = isArchive ? Archive : Trash2;
+  const btnText = isArchive ? "Arquivar" : "Excluir";
+  const topBar = isArchive ? "bg-amber-500" : "bg-red-500";
+  const titleText = isArchive ? "text-amber-700" : "text-red-600";
+  const iconBg = isArchive ? "bg-amber-500" : "bg-red-500";
+  const btnBg = isArchive ? "bg-amber-600 hover:bg-amber-700" : "bg-red-600 hover:bg-red-700";
+  const shadow = isArchive ? "shadow-amber-200/50" : "shadow-red-200/50";
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-sm border-0 shadow-2xl shadow-red-100/30 rounded-2xl overflow-hidden p-0 bg-white">
-        <div className="h-1 w-full bg-red-500" />
+      <DialogContent className={`max-w-sm border-0 shadow-2xl rounded-2xl overflow-hidden p-0 bg-white ${isArchive ? "shadow-amber-100/30" : "shadow-red-100/30"}`}>
+        <div className={`h-1 w-full ${topBar}`} />
         <div className="p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-red-600 tracking-tight">
-              <div className="h-8 w-8 rounded-lg bg-red-500 flex items-center justify-center">
-                <Trash2 className="h-4 w-4 text-white" />
+            <DialogTitle className={`flex items-center gap-2.5 text-base font-bold ${titleText} tracking-tight`}>
+              <div className={`h-8 w-8 rounded-lg ${iconBg} flex items-center justify-center`}>
+                <Icon className="h-4 w-4 text-white" />
               </div>
               {title}
             </DialogTitle>
@@ -1088,10 +1099,10 @@ export function DeleteConfirm({ open, onClose, onConfirm, title, description, lo
             <Button
               onClick={onConfirm}
               disabled={loading}
-              className="h-9 px-5 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md shadow-red-200/50"
+              className={`h-9 px-5 text-xs font-semibold ${btnBg} text-white rounded-lg shadow-md ${shadow}`}
             >
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
-              Excluir
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Icon className="h-3.5 w-3.5 mr-1.5" />}
+              {btnText}
             </Button>
           </div>
         </div>
