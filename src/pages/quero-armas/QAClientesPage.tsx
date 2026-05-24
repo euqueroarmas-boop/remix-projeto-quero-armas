@@ -1147,8 +1147,10 @@ export default function QAClientesPage() {
   const [clienteModal, setClienteModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
-  const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string; mode?: "delete" | "archive" }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
+  // Filtro de arquivamento — Ativos por padrão.
+  const [archivedFilter, setArchivedFilter] = useState<"ativos" | "arquivados" | "todos">("ativos");
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
