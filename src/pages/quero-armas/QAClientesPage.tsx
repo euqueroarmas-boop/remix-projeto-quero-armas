@@ -2457,7 +2457,13 @@ export default function QAClientesPage() {
     }
   };
 
-  const filtered = clientes.filter(c => {
+  // Aplica antes o filtro Ativos/Arquivados/Todos.
+  const clientesPorArquivamento = clientes.filter((c: any) =>
+    archivedFilter === "todos" ? true
+    : archivedFilter === "arquivados" ? !!c.arquivado
+    : !c.arquivado
+  );
+  const filtered = clientesPorArquivamento.filter(c => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
     if (!s) return true;
