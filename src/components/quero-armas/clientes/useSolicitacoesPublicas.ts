@@ -53,6 +53,7 @@ export function useSolicitacoesPublicasDoCliente(
         )
         .eq("cliente_id", clienteIdReal)
         .eq("origem", "formulario_publico")
+        .or("arquivado.is.null,arquivado.eq.false")
         .order("created_at", { ascending: false });
 
       const canonRows = (sols as any[]) ?? [];
@@ -93,6 +94,7 @@ export function useSolicitacoesPublicasDoCliente(
         .from("qa_cadastro_publico" as any)
         .select("id, cliente_id_vinculado, servico_interesse, created_at")
         .eq("cliente_id_vinculado", clienteIdReal)
+        .or("arquivado.is.null,arquivado.eq.false")
         .order("created_at", { ascending: false });
       const legacyRows = ((legacy as any[]) ?? []).filter(
         (r) => !cadIdsCanon.has(r.id) && (r.servico_interesse ?? "").toString().trim().length > 0,

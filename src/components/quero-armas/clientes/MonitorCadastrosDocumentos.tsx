@@ -296,8 +296,8 @@ export default function MonitorCadastrosDocumentos() {
       const hoje = new Date();
       const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
       const [aguardando, aprovHoje] = await Promise.all([
-        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).in("status", CADASTRO_STATUS_PENDENTES as any),
-        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).in("status", CADASTRO_STATUS_APROVADOS as any).gte("updated_at", inicio),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).in("status", CADASTRO_STATUS_PENDENTES as any).or("arquivado.is.null,arquivado.eq.false"),
+        supabase.from("qa_cadastro_publico" as any).select("id", { count: "exact", head: true }).in("status", CADASTRO_STATUS_APROVADOS as any).gte("updated_at", inicio).or("arquivado.is.null,arquivado.eq.false"),
       ]);
       setKpiCadastros({
         aguardando:    aguardando.count ?? 0,
@@ -307,8 +307,8 @@ export default function MonitorCadastrosDocumentos() {
       // 4.b) Listas detalhadas dos cadastros (para drill-down)
       const cadCols = "id, nome_completo, cpf, emp_cnpj, email, telefone_principal, servico_fechado_final, servico_principal, servico_interesse, origem_cadastro, status, created_at, processado_em, cliente_id_vinculado";
       const [{ data: cadAguard }, { data: cadAprov }] = await Promise.all([
-        supabase.from("qa_cadastro_publico" as any).select(cadCols).in("status", CADASTRO_STATUS_PENDENTES as any).order("created_at", { ascending: false }).limit(500),
-        supabase.from("qa_cadastro_publico" as any).select(cadCols).in("status", CADASTRO_STATUS_APROVADOS as any).gte("updated_at", inicio).order("processado_em", { ascending: false }).limit(500),
+        supabase.from("qa_cadastro_publico" as any).select(cadCols).in("status", CADASTRO_STATUS_PENDENTES as any).or("arquivado.is.null,arquivado.eq.false").order("created_at", { ascending: false }).limit(500),
+        supabase.from("qa_cadastro_publico" as any).select(cadCols).in("status", CADASTRO_STATUS_APROVADOS as any).gte("updated_at", inicio).or("arquivado.is.null,arquivado.eq.false").order("processado_em", { ascending: false }).limit(500),
       ]);
       setCadastrosAguardando((cadAguard ?? []) as unknown as CadastroRow[]);
       setCadastrosAprovHoje((cadAprov ?? []) as unknown as CadastroRow[]);
