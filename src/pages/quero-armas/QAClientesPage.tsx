@@ -3402,7 +3402,7 @@ export default function QAClientesPage() {
           venda={vendaModal.item}
           solicitacaoId={vendaModal.solicitacaoId ?? null}
         />
-        <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} />
+        <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} mode={deleteModal.mode} />
       </div>
     );
   }
@@ -4422,6 +4422,7 @@ export default function QAClientesPage() {
         title={deleteModal.title}
         description={deleteModal.desc}
         loading={deleting}
+        mode={deleteModal.mode}
       />
     </div>
   );
