@@ -2602,7 +2602,9 @@ export default function QAClientesPage() {
           armasCount={crafs.length + gtes.length}
           onBack={() => setSelected(null)}
           onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
-          onDelete={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
+          onDelete={() => requestDeleteCliente(c)}
+          onRestore={(c as any).arquivado ? () => restaurarCliente(c) : undefined}
+          arquivado={!!(c as any).arquivado}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
