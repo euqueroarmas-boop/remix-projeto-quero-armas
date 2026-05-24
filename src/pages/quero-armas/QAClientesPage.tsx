@@ -4781,6 +4781,11 @@ function ClienteHeaderCard({
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
               ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
             </span>
+            {arquivado && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] bg-slate-100 text-slate-600 border border-slate-200">
+                Arquivado
+              </span>
+            )}
           </div>
           <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
             {c.nome_completo}
@@ -4804,15 +4809,27 @@ function ClienteHeaderCard({
           >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
-            title="Excluir cliente"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {arquivado && onRestore ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRestore}
+              className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
+              title="Restaurar cliente"
+            >
+              Restaurar
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+              title="Excluir cliente"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
       <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
