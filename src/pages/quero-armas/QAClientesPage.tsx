@@ -2441,7 +2441,8 @@ export default function QAClientesPage() {
         mode: critico ? "archive" : "delete",
       });
     } catch (e: any) {
-      toast.error(`Falha ao verificar vínculos: ${e?.message || e}`);
+      console.error("[qa_cliente_dependencias] erro:", e);
+      toast.error("Não foi possível verificar os vínculos do cliente. Tente novamente ou acione a Equipe Quero Armas.");
     }
   };
 
