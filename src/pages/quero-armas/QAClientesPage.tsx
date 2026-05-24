@@ -4422,6 +4422,7 @@ export default function QAClientesPage() {
         title={deleteModal.title}
         description={deleteModal.desc}
         loading={deleting}
+        mode={deleteModal.mode}
       />
     </div>
   );
