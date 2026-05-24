@@ -2713,6 +2713,9 @@ export type Database = {
       qa_cadastro_publico: {
         Row: {
           aguardando_cliente_desde: string | null
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
           aut_atividade: string | null
           aut_cnpj: string | null
           aut_endereco: string | null
@@ -2775,6 +2778,7 @@ export type Database = {
           end2_tipo: string | null
           estado_civil: string | null
           id: string
+          motivo_arquivamento: string | null
           motivo_recusa: string | null
           nacionalidade: string | null
           naturalidade_municipio: string | null
@@ -2846,6 +2850,9 @@ export type Database = {
         }
         Insert: {
           aguardando_cliente_desde?: string | null
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           aut_atividade?: string | null
           aut_cnpj?: string | null
           aut_endereco?: string | null
@@ -2908,6 +2915,7 @@ export type Database = {
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
+          motivo_arquivamento?: string | null
           motivo_recusa?: string | null
           nacionalidade?: string | null
           naturalidade_municipio?: string | null
@@ -2979,6 +2987,9 @@ export type Database = {
         }
         Update: {
           aguardando_cliente_desde?: string | null
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           aut_atividade?: string | null
           aut_cnpj?: string | null
           aut_endereco?: string | null
@@ -3041,6 +3052,7 @@ export type Database = {
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
+          motivo_arquivamento?: string | null
           motivo_recusa?: string | null
           nacionalidade?: string | null
           naturalidade_municipio?: string | null
@@ -7830,12 +7842,16 @@ export type Database = {
       }
       qa_solicitacoes_servico: {
         Row: {
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
           cadastro_publico_id: string | null
           categoria_atendimento: string
           cliente_id: number
           created_at: string
           id: string
           item_venda_id: number | null
+          motivo_arquivamento: string | null
           observacoes: string | null
           origem: string
           pendente_classificacao: boolean
@@ -7852,12 +7868,16 @@ export type Database = {
           venda_id: number | null
         }
         Insert: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           cadastro_publico_id?: string | null
           categoria_atendimento?: string
           cliente_id: number
           created_at?: string
           id?: string
           item_venda_id?: number | null
+          motivo_arquivamento?: string | null
           observacoes?: string | null
           origem?: string
           pendente_classificacao?: boolean
@@ -7874,12 +7894,16 @@ export type Database = {
           venda_id?: number | null
         }
         Update: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           cadastro_publico_id?: string | null
           categoria_atendimento?: string
           cliente_id?: number
           created_at?: string
           id?: string
           item_venda_id?: number | null
+          motivo_arquivamento?: string | null
           observacoes?: string | null
           origem?: string
           pendente_classificacao?: boolean
