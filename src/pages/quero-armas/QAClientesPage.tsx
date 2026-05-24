@@ -4711,6 +4711,8 @@ function ClienteHeaderCard({
   onBack,
   onEdit,
   onDelete,
+  onRestore,
+  arquivado,
 }: {
   cliente: any;
   clienteCadastroIdForSub: number;
@@ -4719,6 +4721,8 @@ function ClienteHeaderCard({
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onRestore?: () => void;
+  arquivado?: boolean;
 }) {
   const { data: agregado } = useClienteStatusAgregado(clienteCadastroIdForSub || c.id);
   // Status cadastral (selo pequeno) — mantém comportamento legado
