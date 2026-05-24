@@ -2358,28 +2358,53 @@ export default function QAClientesPage() {
     setDeleting(true);
     try {
       if (deleteModal.table === "qa_clientes") {
-        // Cascade: delete sub-entities first
         const clienteObj = clientes.find(c => c.id === deleteModal.id);
-        const clienteId = clienteObj ? getClienteFK(clienteObj) : deleteModal.id;
-        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id, id_legado").eq("cliente_id", clienteId);
-        if (vendasCliente && vendasCliente.length > 0) {
-          const vendaIds = (vendasCliente as any[]).map(v => getVendaFK(v));
-          await supabase.from("qa_itens_venda" as any).delete().in("venda_id", vendaIds);
-          await supabase.from("qa_vendas" as any).delete().eq("cliente_id", clienteId);
+        // Modo ARQUIVAR (cliente com vínculos críticos).
+        if (deleteModal.mode === "archive") {
+          const { error } = await supabase.rpc("qa_cliente_arquivar" as any, {
+            p_cliente_id: deleteModal.id,
+            p_motivo: "Arquivado pela Equipe Quero Armas — possui vínculos críticos (vendas/processos/contratos/cobranças).",
+          });
+          if (error) throw error;
+          setClientes(prev => prev.map(c => c.id === deleteModal.id ? ({ ...(c as any), arquivado: true }) : c));
+          setSelected(null);
+          toast.success("Cliente arquivado com segurança.");
+          setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
+          return;
         }
-        await Promise.all([
-          supabase.from("qa_crafs" as any).delete().eq("cliente_id", clienteId),
-          supabase.from("qa_gtes" as any).delete().eq("cliente_id", clienteId),
-          supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", clienteId),
-        ]);
+        // Modo EXCLUIR físico (cliente sem vínculos críticos).
+        // Re-checa dependências server-side antes de tentar apagar.
+        const { data: depsData, error: depsErr } = await supabase.rpc("qa_cliente_dependencias" as any, { p_cliente_id: deleteModal.id });
+        if (depsErr) throw depsErr;
+        const deps: any = depsData ?? {};
+        if (deps.tem_vinculo_critico) {
+          throw new Error("Este cliente passou a ter vínculos críticos. Recarregue a lista e use 'Arquivar'.");
+        }
+        // Limpa apenas tabelas de cadastro/arsenal (sem FK restritiva).
+        const cidReal = clienteObj?.id ?? deleteModal.id;
+        const passos: Array<[string, any]> = [
+          ["qa_crafs", supabase.from("qa_crafs" as any).delete().eq("cliente_id", cidReal)],
+          ["qa_gtes", supabase.from("qa_gtes" as any).delete().eq("cliente_id", cidReal)],
+          ["qa_filiacoes", supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", cidReal)],
+        ];
+        for (const [tabela, promise] of passos) {
+          const { error: ePasso } = await promise;
+          if (ePasso) throw new Error(`Falha ao limpar ${tabela}: ${ePasso.message}`);
+        }
       }
       if (deleteModal.table === "qa_vendas") {
         const vendaObj = (vendas as any[]).find(v => v.id === deleteModal.id);
         const vendaFk = vendaObj ? getVendaFK(vendaObj) : deleteModal.id;
-        await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
+        const { error: eItens } = await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
+        if (eItens) throw eItens;
       }
       const { error } = await supabase.from(deleteModal.table as any).delete().eq("id", deleteModal.id);
-      if (error) throw error;
+      if (error) {
+        if (deleteModal.table === "qa_clientes" && /foreign key|violates/i.test(String(error.message || ""))) {
+          throw new Error("Cliente possui vínculos protegidos. Por segurança, será necessário arquivá-lo em vez de excluir.");
+        }
+        throw error;
+      }
       toast.success("Excluído com sucesso");
       if (deleteModal.table === "qa_clientes") {
         setClientes(prev => prev.filter(c => c.id !== deleteModal.id));
@@ -2388,7 +2413,48 @@ export default function QAClientesPage() {
         await loadSubData(selected);
       }
       setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
-    } catch (e: any) { toast.error(e.message); } finally { setDeleting(false); }
+    } catch (e: any) { toast.error(e?.message || "Falha na operação"); } finally { setDeleting(false); }
+  };
+
+  // Decide ARQUIVAR vs EXCLUIR consultando dependências server-side.
+  const requestDeleteCliente = async (c: any) => {
+    try {
+      const { data, error } = await supabase.rpc("qa_cliente_dependencias" as any, { p_cliente_id: c.id });
+      if (error) throw error;
+      const deps: any = data ?? {};
+      const critico = !!deps.tem_vinculo_critico;
+      const detalhes: string[] = [];
+      if (deps.vendas) detalhes.push(`${deps.vendas} venda(s)`);
+      if (deps.processos) detalhes.push(`${deps.processos} processo(s)`);
+      if (deps.contracts) detalhes.push(`${deps.contracts} contrato(s)`);
+      if (deps.cobrancas_asaas) detalhes.push(`${deps.cobrancas_asaas} cobrança(s)`);
+      if (deps.documentos) detalhes.push(`${deps.documentos} documento(s)`);
+      if (deps.portal_links) detalhes.push(`${deps.portal_links} vínculo(s) de portal`);
+      setDeleteModal({
+        open: true,
+        table: "qa_clientes",
+        id: c.id,
+        title: critico ? "Arquivar Cliente" : "Excluir Cliente",
+        desc: critico
+          ? `Este cliente possui vendas/processos vinculados${detalhes.length ? ` (${detalhes.join(", ")})` : ""}. Por segurança jurídica e financeira, ele será ARQUIVADO, não excluído definitivamente. Deseja continuar?`
+          : `Excluir "${c.nome_completo}" definitivamente? Esta ação é irreversível.`,
+        mode: critico ? "archive" : "delete",
+      });
+    } catch (e: any) {
+      toast.error(`Falha ao verificar vínculos: ${e?.message || e}`);
+    }
+  };
+
+  // Restaurar cliente arquivado.
+  const restaurarCliente = async (c: any) => {
+    try {
+      const { error } = await supabase.rpc("qa_cliente_restaurar" as any, { p_cliente_id: c.id });
+      if (error) throw error;
+      setClientes(prev => prev.map(x => x.id === c.id ? ({ ...(x as any), arquivado: false }) : x));
+      toast.success("Cliente restaurado.");
+    } catch (e: any) {
+      toast.error(`Falha ao restaurar: ${e?.message || e}`);
+    }
   };
 
   const filtered = clientes.filter(c => {
