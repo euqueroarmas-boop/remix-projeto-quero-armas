@@ -59,7 +59,15 @@ export function lazyRetry<T extends ComponentType<any>>(
 
             if (!alreadyReloaded) {
               sessionStorage.setItem(RELOAD_KEY, Date.now().toString());
-              window.location.reload();
+              // Force cache bypass on Safari iOS: append cache-buster query.
+              // window.location.reload() alone can reuse cached index.html on iOS.
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.set("_cb", Date.now().toString());
+                window.location.replace(url.toString());
+              } catch {
+                window.location.reload();
+              }
               // Return a never-resolving promise to prevent rendering while reloading
               return new Promise(() => {});
             }
