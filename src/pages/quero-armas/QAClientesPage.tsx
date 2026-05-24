@@ -1147,8 +1147,10 @@ export default function QAClientesPage() {
   const [clienteModal, setClienteModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
-  const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string; mode?: "delete" | "archive" }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
+  // Filtro de arquivamento — Ativos por padrão.
+  const [archivedFilter, setArchivedFilter] = useState<"ativos" | "arquivados" | "todos">("ativos");
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
@@ -2356,28 +2358,53 @@ export default function QAClientesPage() {
     setDeleting(true);
     try {
       if (deleteModal.table === "qa_clientes") {
-        // Cascade: delete sub-entities first
         const clienteObj = clientes.find(c => c.id === deleteModal.id);
-        const clienteId = clienteObj ? getClienteFK(clienteObj) : deleteModal.id;
-        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id, id_legado").eq("cliente_id", clienteId);
-        if (vendasCliente && vendasCliente.length > 0) {
-          const vendaIds = (vendasCliente as any[]).map(v => getVendaFK(v));
-          await supabase.from("qa_itens_venda" as any).delete().in("venda_id", vendaIds);
-          await supabase.from("qa_vendas" as any).delete().eq("cliente_id", clienteId);
+        // Modo ARQUIVAR (cliente com vínculos críticos).
+        if (deleteModal.mode === "archive") {
+          const { error } = await supabase.rpc("qa_cliente_arquivar" as any, {
+            p_cliente_id: deleteModal.id,
+            p_motivo: "Arquivado pela Equipe Quero Armas — possui vínculos críticos (vendas/processos/contratos/cobranças).",
+          });
+          if (error) throw error;
+          setClientes(prev => prev.map(c => c.id === deleteModal.id ? ({ ...(c as any), arquivado: true }) : c));
+          setSelected(null);
+          toast.success("Cliente arquivado com segurança.");
+          setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
+          return;
         }
-        await Promise.all([
-          supabase.from("qa_crafs" as any).delete().eq("cliente_id", clienteId),
-          supabase.from("qa_gtes" as any).delete().eq("cliente_id", clienteId),
-          supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", clienteId),
-        ]);
+        // Modo EXCLUIR físico (cliente sem vínculos críticos).
+        // Re-checa dependências server-side antes de tentar apagar.
+        const { data: depsData, error: depsErr } = await supabase.rpc("qa_cliente_dependencias" as any, { p_cliente_id: deleteModal.id });
+        if (depsErr) throw depsErr;
+        const deps: any = depsData ?? {};
+        if (deps.tem_vinculo_critico) {
+          throw new Error("Este cliente passou a ter vínculos críticos. Recarregue a lista e use 'Arquivar'.");
+        }
+        // Limpa apenas tabelas de cadastro/arsenal (sem FK restritiva).
+        const cidReal = clienteObj?.id ?? deleteModal.id;
+        const passos: Array<[string, any]> = [
+          ["qa_crafs", supabase.from("qa_crafs" as any).delete().eq("cliente_id", cidReal)],
+          ["qa_gtes", supabase.from("qa_gtes" as any).delete().eq("cliente_id", cidReal)],
+          ["qa_filiacoes", supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", cidReal)],
+        ];
+        for (const [tabela, promise] of passos) {
+          const { error: ePasso } = await promise;
+          if (ePasso) throw new Error(`Falha ao limpar ${tabela}: ${ePasso.message}`);
+        }
       }
       if (deleteModal.table === "qa_vendas") {
         const vendaObj = (vendas as any[]).find(v => v.id === deleteModal.id);
         const vendaFk = vendaObj ? getVendaFK(vendaObj) : deleteModal.id;
-        await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
+        const { error: eItens } = await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
+        if (eItens) throw eItens;
       }
       const { error } = await supabase.from(deleteModal.table as any).delete().eq("id", deleteModal.id);
-      if (error) throw error;
+      if (error) {
+        if (deleteModal.table === "qa_clientes" && /foreign key|violates/i.test(String(error.message || ""))) {
+          throw new Error("Cliente possui vínculos protegidos. Por segurança, será necessário arquivá-lo em vez de excluir.");
+        }
+        throw error;
+      }
       toast.success("Excluído com sucesso");
       if (deleteModal.table === "qa_clientes") {
         setClientes(prev => prev.filter(c => c.id !== deleteModal.id));
@@ -2386,10 +2413,57 @@ export default function QAClientesPage() {
         await loadSubData(selected);
       }
       setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
-    } catch (e: any) { toast.error(e.message); } finally { setDeleting(false); }
+    } catch (e: any) { toast.error(e?.message || "Falha na operação"); } finally { setDeleting(false); }
   };
 
-  const filtered = clientes.filter(c => {
+  // Decide ARQUIVAR vs EXCLUIR consultando dependências server-side.
+  const requestDeleteCliente = async (c: any) => {
+    try {
+      const { data, error } = await supabase.rpc("qa_cliente_dependencias" as any, { p_cliente_id: c.id });
+      if (error) throw error;
+      const deps: any = data ?? {};
+      const critico = !!deps.tem_vinculo_critico;
+      const detalhes: string[] = [];
+      if (deps.vendas) detalhes.push(`${deps.vendas} venda(s)`);
+      if (deps.processos) detalhes.push(`${deps.processos} processo(s)`);
+      if (deps.contracts) detalhes.push(`${deps.contracts} contrato(s)`);
+      if (deps.cobrancas_asaas) detalhes.push(`${deps.cobrancas_asaas} cobrança(s)`);
+      if (deps.documentos) detalhes.push(`${deps.documentos} documento(s)`);
+      if (deps.portal_links) detalhes.push(`${deps.portal_links} vínculo(s) de portal`);
+      setDeleteModal({
+        open: true,
+        table: "qa_clientes",
+        id: c.id,
+        title: critico ? "Arquivar Cliente" : "Excluir Cliente",
+        desc: critico
+          ? `Este cliente possui vendas/processos vinculados${detalhes.length ? ` (${detalhes.join(", ")})` : ""}. Por segurança jurídica e financeira, ele será ARQUIVADO, não excluído definitivamente. Deseja continuar?`
+          : `Excluir "${c.nome_completo}" definitivamente? Esta ação é irreversível.`,
+        mode: critico ? "archive" : "delete",
+      });
+    } catch (e: any) {
+      toast.error(`Falha ao verificar vínculos: ${e?.message || e}`);
+    }
+  };
+
+  // Restaurar cliente arquivado.
+  const restaurarCliente = async (c: any) => {
+    try {
+      const { error } = await supabase.rpc("qa_cliente_restaurar" as any, { p_cliente_id: c.id });
+      if (error) throw error;
+      setClientes(prev => prev.map(x => x.id === c.id ? ({ ...(x as any), arquivado: false }) : x));
+      toast.success("Cliente restaurado.");
+    } catch (e: any) {
+      toast.error(`Falha ao restaurar: ${e?.message || e}`);
+    }
+  };
+
+  // Aplica antes o filtro Ativos/Arquivados/Todos.
+  const clientesPorArquivamento = clientes.filter((c: any) =>
+    archivedFilter === "todos" ? true
+    : archivedFilter === "arquivados" ? !!c.arquivado
+    : !c.arquivado
+  );
+  const filtered = clientesPorArquivamento.filter(c => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
     if (!s) return true;
@@ -2528,7 +2602,9 @@ export default function QAClientesPage() {
           armasCount={crafs.length + gtes.length}
           onBack={() => setSelected(null)}
           onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
-          onDelete={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })}
+          onDelete={() => requestDeleteCliente(c)}
+          onRestore={(c as any).arquivado ? () => restaurarCliente(c) : undefined}
+          arquivado={!!(c as any).arquivado}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -4053,6 +4129,27 @@ export default function QAClientesPage() {
         />
       </div>
 
+      {/* Filtro Ativos / Arquivados / Todos */}
+      <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ background: "hsl(220 20% 96%)" }}>
+        {([
+          { key: "ativos", label: "Ativos" },
+          { key: "arquivados", label: "Arquivados" },
+          { key: "todos", label: "Todos" },
+        ] as const).map(opt => (
+          <button
+            key={opt.key}
+            onClick={() => setArchivedFilter(opt.key)}
+            className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
+            style={{
+              background: archivedFilter === opt.key ? "hsl(352 60% 30%)" : "transparent",
+              color: archivedFilter === opt.key ? "white" : "hsl(220 10% 55%)",
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Tabs */}
       <div className="flex gap-1 p-1 rounded-xl" style={{ background: "hsl(220 20% 96%)" }}>
         <button
@@ -4175,6 +4272,8 @@ export default function QAClientesPage() {
               c={c}
               openClient={openClient}
               setDeleteModal={setDeleteModal}
+              onRequestDelete={requestDeleteCliente}
+              onRestore={restaurarCliente}
             />
           ))}
         </div>
@@ -4612,6 +4711,8 @@ function ClienteHeaderCard({
   onBack,
   onEdit,
   onDelete,
+  onRestore,
+  arquivado,
 }: {
   cliente: any;
   clienteCadastroIdForSub: number;
@@ -4620,6 +4721,8 @@ function ClienteHeaderCard({
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onRestore?: () => void;
+  arquivado?: boolean;
 }) {
   const { data: agregado } = useClienteStatusAgregado(clienteCadastroIdForSub || c.id);
   // Status cadastral (selo pequeno) — mantém comportamento legado
@@ -4678,6 +4781,11 @@ function ClienteHeaderCard({
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
               ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
             </span>
+            {arquivado && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] bg-slate-100 text-slate-600 border border-slate-200">
+                Arquivado
+              </span>
+            )}
           </div>
           <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
             {c.nome_completo}
@@ -4701,15 +4809,27 @@ function ClienteHeaderCard({
           >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
-            title="Excluir cliente"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {arquivado && onRestore ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRestore}
+              className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
+              title="Restaurar cliente"
+            >
+              Restaurar
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onDelete}
+              className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+              title="Excluir cliente"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
       <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
