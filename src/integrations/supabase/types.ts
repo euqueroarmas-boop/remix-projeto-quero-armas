@@ -3772,6 +3772,9 @@ export type Database = {
       }
       qa_clientes: {
         Row: {
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
           arsenal_plano: string
           arsenal_status: string
           arsenal_ultimo_acesso_em: string | null
@@ -3823,6 +3826,7 @@ export type Database = {
           id_legado: number | null
           imagem: string | null
           matricula_funcional: string | null
+          motivo_arquivamento: string | null
           nacionalidade: string | null
           naturalidade: string | null
           naturalidade_municipio: string | null
@@ -3884,6 +3888,9 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           arsenal_plano?: string
           arsenal_status?: string
           arsenal_ultimo_acesso_em?: string | null
@@ -3935,6 +3942,7 @@ export type Database = {
           id_legado?: number | null
           imagem?: string | null
           matricula_funcional?: string | null
+          motivo_arquivamento?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
           naturalidade_municipio?: string | null
@@ -3996,6 +4004,9 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           arsenal_plano?: string
           arsenal_status?: string
           arsenal_ultimo_acesso_em?: string | null
@@ -4047,6 +4058,7 @@ export type Database = {
           id_legado?: number | null
           imagem?: string | null
           matricula_funcional?: string | null
+          motivo_arquivamento?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
           naturalidade_municipio?: string | null
@@ -9347,6 +9359,10 @@ export type Database = {
         }[]
       }
       qa_categoria_documento: { Args: { tipo: string }; Returns: string }
+      qa_cliente_arquivar: {
+        Args: { p_cliente_id: number; p_motivo?: string }
+        Returns: Json
+      }
       qa_cliente_criar_conta_publica: {
         Args: {
           p_cpf: string
@@ -9377,6 +9393,8 @@ export type Database = {
         }
         Returns: Json
       }
+      qa_cliente_dependencias: { Args: { p_cliente_id: number }; Returns: Json }
+      qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
       qa_confirmar_pagamento_processo: {
         Args: { p_origem?: string; p_processo_id: string }
         Returns: Json
