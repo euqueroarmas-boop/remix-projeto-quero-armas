@@ -4270,6 +4270,8 @@ export default function QAClientesPage() {
               c={c}
               openClient={openClient}
               setDeleteModal={setDeleteModal}
+              onRequestDelete={requestDeleteCliente}
+              onRestore={restaurarCliente}
             />
           ))}
         </div>
