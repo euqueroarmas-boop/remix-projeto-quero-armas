@@ -9422,6 +9422,10 @@ export type Database = {
         Args: { p_cliente_id: number }
         Returns: Json
       }
+      qa_cliente_excluir_total_v2: {
+        Args: { p_cliente_id: number }
+        Returns: Json
+      }
       qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
       qa_confirmar_pagamento_processo: {
         Args: { p_origem?: string; p_processo_id: string }
