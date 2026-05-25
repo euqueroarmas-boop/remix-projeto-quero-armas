@@ -52,7 +52,9 @@ export default function QALoginPage() {
       }
       if (import.meta.env.DEV) console.log("[NAV] redirecionando para /dashboard");
       toast.success("Acesso autorizado");
-      navigate("/dashboard", { replace: true });
+      const dashboardUrl = new URL("/dashboard", window.location.origin);
+      dashboardUrl.searchParams.set("_qa_auth", Date.now().toString());
+      window.location.replace(dashboardUrl.toString());
     } catch (err: any) {
       if (import.meta.env.DEV) console.error("[LOGIN] catch:", err?.message);
       toast.error(err.message || "Erro ao autenticar");
