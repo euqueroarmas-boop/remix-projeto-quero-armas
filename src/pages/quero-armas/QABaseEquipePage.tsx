@@ -88,6 +88,7 @@ function auditComplete(a?: Partial<Article> | null) {
 export default function QABaseEquipePage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filterCat, setFilterCat] = useState<string>("__all__");
   const [filterText, setFilterText] = useState("");
   const [filterEmb, setFilterEmb] = useState<string>("__all__");
@@ -126,40 +127,48 @@ export default function QABaseEquipePage() {
 
   async function loadAll() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("qa_kb_artigos" as any)
-      .select("*")
-      .order("category", { ascending: true })
-      .order("title", { ascending: true });
-    if (error) {
-      toast.error("Erro ao carregar base: " + error.message);
-      setArticles([]);
-    } else {
+    setLoadError(null);
+    try {
+      const { data, error } = await supabase
+        .from("qa_kb_artigos" as any)
+        .select("*")
+        .order("category", { ascending: true })
+        .order("title", { ascending: true });
+      if (error) throw error;
       setArticles((data ?? []) as any as Article[]);
+    } catch (e: any) {
+      console.error("[QABaseEquipePage] loadAll error:", e);
+      setArticles([]);
+      setLoadError(e?.message || "Falha ao carregar a base da equipe.");
+      toast.error("Não foi possível carregar a base. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => { loadAll(); }, []);
 
   async function loadImageStats() {
-    // contagens globais
-    const [{ data: arts }, { data: imgs }] = await Promise.all([
-      supabase.from("qa_kb_artigos" as any).select("id"),
-      supabase.from("qa_kb_artigo_imagens" as any)
-        .select("article_id,status,is_ai_generated_blocked,original_image_type")
-        .not("status", "in", "(archived,archived_invalid_ai)")
-        .eq("is_ai_generated_blocked", false),
-    ]);
-    const allIds = new Set(((arts ?? []) as any[]).map(a => a.id));
-    const withActive = new Set<string>();
-    let approved = 0, draft = 0, erro = 0;
-    for (const i of (imgs ?? []) as any[]) {
-      if (i.status === "approved") { approved++; withActive.add(i.article_id); }
-      else if (i.status === "draft") { draft++; withActive.add(i.article_id); }
-      else if (i.status === "error") { erro++; }
+    try {
+      const [{ data: arts }, { data: imgs }] = await Promise.all([
+        supabase.from("qa_kb_artigos" as any).select("id"),
+        supabase.from("qa_kb_artigo_imagens" as any)
+          .select("article_id,status,is_ai_generated_blocked,original_image_type")
+          .not("status", "in", "(archived,archived_invalid_ai)")
+          .eq("is_ai_generated_blocked", false),
+      ]);
+      const allIds = new Set(((arts ?? []) as any[]).map(a => a.id));
+      const withActive = new Set<string>();
+      let approved = 0, draft = 0, erro = 0;
+      for (const i of (imgs ?? []) as any[]) {
+        if (i.status === "approved") { approved++; withActive.add(i.article_id); }
+        else if (i.status === "draft") { draft++; withActive.add(i.article_id); }
+        else if (i.status === "error") { erro++; }
+      }
+      setImgStats({ semImagem: allIds.size - withActive.size, approved, draft, erro });
+    } catch (e) {
+      console.error("[QABaseEquipePage] loadImageStats error:", e);
     }
-    setImgStats({ semImagem: allIds.size - withActive.size, approved, draft, erro });
   }
   useEffect(() => { loadImageStats(); }, [articles.length]);
 
@@ -1168,6 +1177,15 @@ export default function QABaseEquipePage() {
       {/* Lista agrupada */}
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : loadError ? (
+        <div className="flex flex-col items-center gap-3 py-12 text-center">
+          <AlertCircle className="h-6 w-6 text-red-600" />
+          <p className="text-sm text-red-700 font-medium">Não foi possível carregar a base.</p>
+          <p className="text-xs text-muted-foreground max-w-md break-words">{loadError}</p>
+          <Button size="sm" variant="outline" onClick={loadAll}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1" /> Tentar novamente
+          </Button>
+        </div>
       ) : grouped.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-12">Nenhum artigo encontrado.</p>
       ) : (
