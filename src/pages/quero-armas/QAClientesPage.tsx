@@ -1704,6 +1704,7 @@ export default function QAClientesPage() {
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
       .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro, documento_identidade_path, comprovante_endereco_path, selfie_path, cliente_id_vinculado")
+      .or("arquivado.is.null,arquivado.eq.false")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
@@ -2471,6 +2472,35 @@ export default function QAClientesPage() {
       await loadClientes(archivedFilter);
     } catch (e: any) {
       toast.error(`Falha ao restaurar: ${e?.message || e}`);
+    }
+  };
+
+  // Exclusão LGPD definitiva — apaga TODOS os rastros (vendas, contratos,
+  // cobranças, processos, documentos, cadastros públicos, arsenal etc.).
+  // Exige cliente já ARQUIVADO e dupla confirmação (digitar EXCLUIR).
+  const excluirDefinitivamenteCliente = async (c: any) => {
+    if (!c?.arquivado) {
+      toast.error("Arquive o cliente antes de excluí-lo definitivamente.");
+      return;
+    }
+    const ok1 = window.confirm(
+      `EXCLUSÃO LGPD DEFINITIVA\n\n"${c.nome_completo}" e TODOS os rastros (vendas, contratos, cobranças, processos, documentos, formulários, arsenal) serão APAGADOS irreversivelmente.\n\nContinuar?`
+    );
+    if (!ok1) return;
+    const confirma = window.prompt('Para confirmar, digite EXCLUIR em maiúsculas:');
+    if ((confirma || "").trim() !== "EXCLUIR") {
+      toast.message("Operação cancelada.");
+      return;
+    }
+    try {
+      const { error } = await supabase.rpc("qa_cliente_excluir_total" as any, { p_cliente_id: c.id });
+      if (error) throw error;
+      toast.success("Cliente e todos os rastros foram excluídos.");
+      setSelected(null);
+      setClientes(prev => prev.filter(x => x.id !== c.id));
+      await Promise.all([loadClientes(archivedFilter), loadCadastrosPublicos()]);
+    } catch (e: any) {
+      toast.error(`Falha na exclusão definitiva: ${e?.message || e}`);
     }
   };
 
