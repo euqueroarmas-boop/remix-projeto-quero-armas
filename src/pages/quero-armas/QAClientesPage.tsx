@@ -1529,7 +1529,7 @@ export default function QAClientesPage() {
     if (data) setServicos(data as any[]);
   };
 
-  const loadClientes = async () => {
+  const loadClientes = async (archivedOverride?: "ativos" | "arquivados" | "todos") => {
     setLoading(true);
     setLoadError(null);
     // Safety: nunca deixar o spinner principal eterno (12s).
@@ -1539,10 +1539,19 @@ export default function QAClientesPage() {
       setLoading(false);
     }, 12000);
     try {
-      const { data, error } = await supabase
+      const filtroArquivamento = archivedOverride ?? archivedFilter;
+      let q = supabase
         .from("qa_clientes" as any)
         .select("*")
         .order("nome_completo", { ascending: true });
+      // Filtro server-side de arquivamento — fonte de verdade é o banco.
+      // "ativos": coalesce(arquivado,false) = false. "arquivados": arquivado = true.
+      if (filtroArquivamento === "ativos") {
+        q = q.or("arquivado.is.null,arquivado.eq.false");
+      } else if (filtroArquivamento === "arquivados") {
+        q = q.eq("arquivado", true);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       const rows = (data as any[]) ?? [];
 
