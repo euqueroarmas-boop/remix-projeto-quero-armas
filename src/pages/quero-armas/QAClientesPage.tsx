@@ -2382,10 +2382,10 @@ export default function QAClientesPage() {
             p_motivo: "Arquivado pela Equipe Quero Armas — possui vínculos críticos (vendas/processos/contratos/cobranças).",
           });
           if (error) throw error;
-          setClientes(prev => prev.map(c => c.id === deleteModal.id ? ({ ...(c as any), arquivado: true }) : c));
           setSelected(null);
           toast.success("Cliente arquivado com segurança.");
           setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
+          await loadClientes(archivedFilter);
           return;
         }
         // Modo EXCLUIR físico (cliente sem vínculos críticos).
@@ -2467,8 +2467,8 @@ export default function QAClientesPage() {
     try {
       const { error } = await supabase.rpc("qa_cliente_restaurar" as any, { p_cliente_id: c.id });
       if (error) throw error;
-      setClientes(prev => prev.map(x => x.id === c.id ? ({ ...(x as any), arquivado: false }) : x));
       toast.success("Cliente restaurado.");
+      await loadClientes(archivedFilter);
     } catch (e: any) {
       toast.error(`Falha ao restaurar: ${e?.message || e}`);
     }
