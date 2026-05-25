@@ -4861,15 +4861,28 @@ function ClienteHeaderCard({
             <Edit className="h-4 w-4" />
           </Button>
           {arquivado && onRestore ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRestore}
-              className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
-              title="Restaurar cliente"
-            >
-              Restaurar
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRestore}
+                className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
+                title="Restaurar cliente"
+              >
+                Restaurar
+              </Button>
+              {onPurge && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onPurge}
+                  className="h-9 px-3 rounded-xl bg-white border border-red-200 text-red-700 hover:text-white hover:bg-red-600 hover:border-red-600 text-[11px] font-bold uppercase tracking-wider"
+                  title="Excluir definitivamente (LGPD) — apaga todos os rastros"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir LGPD
+                </Button>
+              )}
+            </>
           ) : (
             <Button
               variant="ghost"
