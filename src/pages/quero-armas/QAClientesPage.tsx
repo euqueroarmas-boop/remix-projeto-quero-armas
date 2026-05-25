@@ -1493,6 +1493,13 @@ export default function QAClientesPage() {
     loadClientes(); loadCadastrosPublicos(); loadServicos();
   }, []);
 
+  // Re-busca clientes quando o filtro Ativos/Arquivados/Todos muda — DB é a verdade.
+  useEffect(() => {
+    if (!dataLoadedRef.current) return;
+    loadClientes(archivedFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [archivedFilter]);
+
   // Auto-abrir cliente via ?cliente=ID (vindo do Dashboard de Exames, etc.)
   const autoOpenedRef = useRef(false);
   useEffect(() => {
@@ -1529,7 +1536,7 @@ export default function QAClientesPage() {
     if (data) setServicos(data as any[]);
   };
 
-  const loadClientes = async () => {
+  const loadClientes = async (archivedOverride?: "ativos" | "arquivados" | "todos") => {
     setLoading(true);
     setLoadError(null);
     // Safety: nunca deixar o spinner principal eterno (12s).
@@ -1539,10 +1546,19 @@ export default function QAClientesPage() {
       setLoading(false);
     }, 12000);
     try {
-      const { data, error } = await supabase
+      const filtroArquivamento = archivedOverride ?? archivedFilter;
+      let q = supabase
         .from("qa_clientes" as any)
         .select("*")
         .order("nome_completo", { ascending: true });
+      // Filtro server-side de arquivamento — fonte de verdade é o banco.
+      // "ativos": coalesce(arquivado,false) = false. "arquivados": arquivado = true.
+      if (filtroArquivamento === "ativos") {
+        q = q.or("arquivado.is.null,arquivado.eq.false");
+      } else if (filtroArquivamento === "arquivados") {
+        q = q.eq("arquivado", true);
+      }
+      const { data, error } = await q;
       if (error) throw error;
       const rows = (data as any[]) ?? [];
 
@@ -2366,10 +2382,10 @@ export default function QAClientesPage() {
             p_motivo: "Arquivado pela Equipe Quero Armas — possui vínculos críticos (vendas/processos/contratos/cobranças).",
           });
           if (error) throw error;
-          setClientes(prev => prev.map(c => c.id === deleteModal.id ? ({ ...(c as any), arquivado: true }) : c));
           setSelected(null);
           toast.success("Cliente arquivado com segurança.");
           setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
+          await loadClientes(archivedFilter);
           return;
         }
         // Modo EXCLUIR físico (cliente sem vínculos críticos).
@@ -2451,8 +2467,8 @@ export default function QAClientesPage() {
     try {
       const { error } = await supabase.rpc("qa_cliente_restaurar" as any, { p_cliente_id: c.id });
       if (error) throw error;
-      setClientes(prev => prev.map(x => x.id === c.id ? ({ ...(x as any), arquivado: false }) : x));
       toast.success("Cliente restaurado.");
+      await loadClientes(archivedFilter);
     } catch (e: any) {
       toast.error(`Falha ao restaurar: ${e?.message || e}`);
     }
