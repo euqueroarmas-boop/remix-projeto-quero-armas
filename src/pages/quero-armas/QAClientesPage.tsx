@@ -2651,6 +2651,7 @@ export default function QAClientesPage() {
           onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
           onDelete={() => requestDeleteCliente(c)}
           onRestore={(c as any).arquivado ? () => restaurarCliente(c) : undefined}
+          onPurge={(c as any).arquivado ? () => excluirDefinitivamenteCliente(c) : undefined}
           arquivado={!!(c as any).arquivado}
         />
 
