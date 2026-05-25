@@ -2493,7 +2493,7 @@ export default function QAClientesPage() {
       return;
     }
     try {
-      const { error } = await supabase.rpc("qa_cliente_excluir_total" as any, { p_cliente_id: c.id });
+      const { error } = await supabase.rpc("qa_cliente_excluir_total_v2" as any, { p_cliente_id: c.id });
       if (error) throw error;
       toast.success("Cliente e todos os rastros foram excluídos.");
       setSelected(null);
