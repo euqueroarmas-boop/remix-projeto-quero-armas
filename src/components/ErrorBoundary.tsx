@@ -58,6 +58,14 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   handleReload = () => {
+    if (this.state.isChunkError) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("_cb", Date.now().toString());
+        window.location.replace(url.toString());
+        return;
+      } catch {}
+    }
     window.location.reload();
   };
 
