@@ -1493,6 +1493,13 @@ export default function QAClientesPage() {
     loadClientes(); loadCadastrosPublicos(); loadServicos();
   }, []);
 
+  // Re-busca clientes quando o filtro Ativos/Arquivados/Todos muda — DB é a verdade.
+  useEffect(() => {
+    if (!dataLoadedRef.current) return;
+    loadClientes(archivedFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [archivedFilter]);
+
   // Auto-abrir cliente via ?cliente=ID (vindo do Dashboard de Exames, etc.)
   const autoOpenedRef = useRef(false);
   useEffect(() => {
