@@ -2,6 +2,7 @@ import { lazy, type ComponentType } from "react";
 import { logSistema } from "@/lib/logSistema";
 
 const RELOAD_KEY = "qa_chunk_reload";
+const RELOAD_MAX_MS = 60_000; // janela em que NÃO tentamos outro reload
 
 function isChunkError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -49,7 +50,14 @@ export function lazyRetry<T extends ComponentType<any>>(
         if (!isChunkError(err) || attempt === retries) {
           // Not a chunk error or exhausted retries — try auto reload once
           if (isChunkError(err)) {
-            const alreadyReloaded = sessionStorage.getItem(RELOAD_KEY);
+            // Usa localStorage para que o flag persista entre reloads,
+            // mesmo se sessionStorage for limpo pelo navegador/iframe.
+            // Considera "já recarregado" se foi nos últimos 60s.
+            const rawTs =
+              localStorage.getItem(RELOAD_KEY) ||
+              sessionStorage.getItem(RELOAD_KEY);
+            const ts = rawTs ? parseInt(rawTs, 10) : 0;
+            const alreadyReloaded = ts && Date.now() - ts < RELOAD_MAX_MS;
             
             logSistema({
               tipo: "erro",
@@ -66,7 +74,9 @@ export function lazyRetry<T extends ComponentType<any>>(
             });
 
             if (!alreadyReloaded) {
-              sessionStorage.setItem(RELOAD_KEY, Date.now().toString());
+              const now = Date.now().toString();
+              sessionStorage.setItem(RELOAD_KEY, now);
+              localStorage.setItem(RELOAD_KEY, now);
               // Force cache bypass on Safari iOS: append cache-buster query.
               // window.location.reload() alone can reuse cached index.html on iOS.
               try {
@@ -79,8 +89,9 @@ export function lazyRetry<T extends ComponentType<any>>(
               // Return a never-resolving promise to prevent rendering while reloading
               return new Promise(() => {});
             }
-            // Already reloaded once, clear flag and let error propagate
-            sessionStorage.removeItem(RELOAD_KEY);
+            // Já recarregamos recentemente — NÃO limpar o flag e NÃO recarregar
+            // de novo. Deixa o erro subir para o ErrorBoundary mostrar UI clara
+            // em vez de cair em loop infinito de reloads.
           }
           throw err;
         }
@@ -95,7 +106,13 @@ export function lazyRetry<T extends ComponentType<any>>(
 
 /** Call on app mount to clear the reload flag if we successfully loaded */
 export function clearChunkReloadFlag() {
-  window.setTimeout(() => sessionStorage.removeItem(RELOAD_KEY), 30_000);
+  // Só limpa depois de 60s saudáveis — confirma que o app montou de verdade
+  // sem precisar de outro reload, evitando que um novo chunk-error reabra o
+  // ciclo de reload infinito (login → /dashboard → fail → reload → fail → ...).
+  window.setTimeout(() => {
+    sessionStorage.removeItem(RELOAD_KEY);
+    localStorage.removeItem(RELOAD_KEY);
+  }, 60_000);
 }
 
 export { isChunkError };

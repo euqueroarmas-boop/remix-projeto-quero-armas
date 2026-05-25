@@ -29,9 +29,14 @@ export default function QALoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    if (import.meta.env.DEV) console.log("[LOGIN] submit iniciado", { email });
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        if (import.meta.env.DEV) console.warn("[LOGIN] signIn erro:", error.message);
+        throw error;
+      }
+      if (import.meta.env.DEV) console.log("[LOGIN] signIn sucesso");
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Falha ao obter usuário");
       const { data: profile } = await supabase
@@ -45,9 +50,11 @@ export default function QALoginPage() {
         toast.error("Acesso negado. Perfil não encontrado.");
         return;
       }
+      if (import.meta.env.DEV) console.log("[NAV] redirecionando para /dashboard");
       toast.success("Acesso autorizado");
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
+      if (import.meta.env.DEV) console.error("[LOGIN] catch:", err?.message);
       toast.error(err.message || "Erro ao autenticar");
     } finally {
       setLoading(false);
