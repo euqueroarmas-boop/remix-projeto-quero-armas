@@ -1704,6 +1704,7 @@ export default function QAClientesPage() {
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
       .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro, documento_identidade_path, comprovante_endereco_path, selfie_path, cliente_id_vinculado")
+      .or("arquivado.is.null,arquivado.eq.false")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
@@ -2474,6 +2475,35 @@ export default function QAClientesPage() {
     }
   };
 
+  // Exclusão LGPD definitiva — apaga TODOS os rastros (vendas, contratos,
+  // cobranças, processos, documentos, cadastros públicos, arsenal etc.).
+  // Exige cliente já ARQUIVADO e dupla confirmação (digitar EXCLUIR).
+  const excluirDefinitivamenteCliente = async (c: any) => {
+    if (!c?.arquivado) {
+      toast.error("Arquive o cliente antes de excluí-lo definitivamente.");
+      return;
+    }
+    const ok1 = window.confirm(
+      `EXCLUSÃO LGPD DEFINITIVA\n\n"${c.nome_completo}" e TODOS os rastros (vendas, contratos, cobranças, processos, documentos, formulários, arsenal) serão APAGADOS irreversivelmente.\n\nContinuar?`
+    );
+    if (!ok1) return;
+    const confirma = window.prompt('Para confirmar, digite EXCLUIR em maiúsculas:');
+    if ((confirma || "").trim() !== "EXCLUIR") {
+      toast.message("Operação cancelada.");
+      return;
+    }
+    try {
+      const { error } = await supabase.rpc("qa_cliente_excluir_total" as any, { p_cliente_id: c.id });
+      if (error) throw error;
+      toast.success("Cliente e todos os rastros foram excluídos.");
+      setSelected(null);
+      setClientes(prev => prev.filter(x => x.id !== c.id));
+      await Promise.all([loadClientes(archivedFilter), loadCadastrosPublicos()]);
+    } catch (e: any) {
+      toast.error(`Falha na exclusão definitiva: ${e?.message || e}`);
+    }
+  };
+
   // Aplica antes o filtro Ativos/Arquivados/Todos.
   const clientesPorArquivamento = clientes.filter((c: any) =>
     archivedFilter === "todos" ? true
@@ -2621,6 +2651,7 @@ export default function QAClientesPage() {
           onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
           onDelete={() => requestDeleteCliente(c)}
           onRestore={(c as any).arquivado ? () => restaurarCliente(c) : undefined}
+          onPurge={(c as any).arquivado ? () => excluirDefinitivamenteCliente(c) : undefined}
           arquivado={!!(c as any).arquivado}
         />
 
@@ -4730,6 +4761,7 @@ function ClienteHeaderCard({
   onEdit,
   onDelete,
   onRestore,
+  onPurge,
   arquivado,
 }: {
   cliente: any;
@@ -4740,6 +4772,7 @@ function ClienteHeaderCard({
   onEdit: () => void;
   onDelete: () => void;
   onRestore?: () => void;
+  onPurge?: () => void;
   arquivado?: boolean;
 }) {
   const { data: agregado } = useClienteStatusAgregado(clienteCadastroIdForSub || c.id);
@@ -4828,15 +4861,28 @@ function ClienteHeaderCard({
             <Edit className="h-4 w-4" />
           </Button>
           {arquivado && onRestore ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRestore}
-              className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
-              title="Restaurar cliente"
-            >
-              Restaurar
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onRestore}
+                className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
+                title="Restaurar cliente"
+              >
+                Restaurar
+              </Button>
+              {onPurge && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onPurge}
+                  className="h-9 px-3 rounded-xl bg-white border border-red-200 text-red-700 hover:text-white hover:bg-red-600 hover:border-red-600 text-[11px] font-bold uppercase tracking-wider"
+                  title="Excluir definitivamente (LGPD) — apaga todos os rastros"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir LGPD
+                </Button>
+              )}
+            </>
           ) : (
             <Button
               variant="ghost"
