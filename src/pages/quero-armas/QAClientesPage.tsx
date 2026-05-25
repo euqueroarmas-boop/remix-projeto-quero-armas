@@ -4761,6 +4761,7 @@ function ClienteHeaderCard({
   onEdit,
   onDelete,
   onRestore,
+  onPurge,
   arquivado,
 }: {
   cliente: any;
@@ -4771,6 +4772,7 @@ function ClienteHeaderCard({
   onEdit: () => void;
   onDelete: () => void;
   onRestore?: () => void;
+  onPurge?: () => void;
   arquivado?: boolean;
 }) {
   const { data: agregado } = useClienteStatusAgregado(clienteCadastroIdForSub || c.id);
