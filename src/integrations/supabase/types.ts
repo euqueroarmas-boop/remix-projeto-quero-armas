@@ -9373,6 +9373,10 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_cadastro_publico_excluir_total: {
+        Args: { p_cadastro_id: string }
+        Returns: Json
+      }
       qa_calcular_progresso: {
         Args: { _solicitacao_id: string }
         Returns: {
