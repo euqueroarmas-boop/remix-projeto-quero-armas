@@ -1055,6 +1055,27 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
                     Após o pagamento, volte para esta página — o status será
                     atualizado automaticamente.
                   </p>
+                  <button
+                    type="button"
+                    onClick={handleCheckNow}
+                    disabled={checkingNow}
+                    style={{
+                      marginTop: 14,
+                      width: "100%",
+                      padding: "14px 18px",
+                      background: "transparent",
+                      color: "var(--qa-ref-brass, #D6A64B)",
+                      border: "1px solid var(--qa-ref-brass, #D6A64B)",
+                      borderRadius: 10,
+                      fontWeight: 600,
+                      letterSpacing: 0.4,
+                      textTransform: "uppercase",
+                      cursor: checkingNow ? "wait" : "pointer",
+                      opacity: checkingNow ? 0.6 : 1,
+                    }}
+                  >
+                    {checkingNow ? "Verificando…" : "Já paguei — verificar agora"}
+                  </button>
                 </>
               ) : (
                 <div className="qa-ref-empty">Carregando ambiente seguro…</div>
