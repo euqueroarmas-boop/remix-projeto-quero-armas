@@ -1035,3 +1035,10 @@
 .qa-ref-parcela-list::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.28);
 }
+
+/* Logout button — esconde o rótulo no mobile, mantém só o ícone. */
+@media (max-width: 640px) {
+  .qa-ref-logout-label {
+    display: none;
+  }
+}

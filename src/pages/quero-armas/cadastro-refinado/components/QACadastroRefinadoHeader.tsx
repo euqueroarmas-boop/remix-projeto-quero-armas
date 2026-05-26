@@ -1,6 +1,7 @@
-import { ArrowLeft, X, UserCheck } from "lucide-react";
+import { ArrowLeft, X, UserCheck, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { MiraDot } from "../mira-ui";
 
 interface Props {
@@ -27,6 +28,8 @@ export default function QACadastroRefinadoHeader({
       ? Math.min(100, Math.max(0, Math.round((step / total) * 100)))
       : 0;
   const [userLabel, setUserLabel] = useState<string | null>(null);
+  const [hasSession, setHasSession] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -58,9 +61,13 @@ export default function QACadastroRefinadoHeader({
       const u = session?.user;
       if (!u) {
         console.log("[QAHeader] sem sessão ativa");
-        if (active) setUserLabel(null);
+        if (active) {
+          setUserLabel(null);
+          setHasSession(false);
+        }
         return;
       }
+      if (active) setHasSession(true);
       const metaName =
         (u.user_metadata?.full_name as string | undefined) ??
         (u.user_metadata?.name as string | undefined) ??
@@ -78,6 +85,27 @@ export default function QACadastroRefinadoHeader({
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  const handleLogout = async () => {
+    const ok = window.confirm(
+      "Deseja sair desta conta? O serviço selecionado será mantido, mas você precisará informar seus dados novamente ou entrar com outra conta."
+    );
+    if (!ok) return;
+    setSigningOut(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUserLabel(null);
+      setHasSession(false);
+      // Mantém pathname/search atuais — apenas recarrega o estado sem sessão.
+      window.location.reload();
+    } catch (e) {
+      console.error("[QAHeader] erro ao sair", e);
+      toast.error("Não foi possível sair da conta agora. Tente novamente.");
+      setSigningOut(false);
+    }
+  };
+
   return (
     <header className="qa-ref-header">
       <div className="qa-ref-header-inner">
@@ -128,6 +156,37 @@ export default function QACadastroRefinadoHeader({
                 {userLabel}
               </span>
             </span>
+          )}
+          {hasSession && (
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={signingOut}
+              aria-label="Sair da conta"
+              title="Sair da conta"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 10px",
+                borderRadius: 999,
+                background: "rgba(122, 31, 43, 0.18)",
+                border: "1px solid rgba(214, 166, 75, 0.45)",
+                color: "#f4e7c8",
+                fontSize: 10.5,
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                cursor: signingOut ? "wait" : "pointer",
+                opacity: signingOut ? 0.6 : 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <LogOut size={12} />
+              <span className="qa-ref-logout-label">
+                {signingOut ? "Saindo..." : "Sair da conta"}
+              </span>
+            </button>
           )}
           <button
             type="button"
