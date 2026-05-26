@@ -1,4 +1,4 @@
-import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen } from "lucide-react";
+import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +70,24 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
   const primeiroNome = (state.dadosPessoais.nome_completo || "").split(" ")[0] || "tudo certo";
   const [baixando, setBaixando] = useState(false);
   const [erroBaixar, setErroBaixar] = useState<string | null>(null);
+  /** Credenciais temporárias do Arsenal — local apenas (não persiste no zustand). */
+  const [credenciais, setCredenciais] = useState<{
+    email: string;
+    senha_temporaria: string;
+    expira_em: string;
+  } | null>(null);
+  const [copiado, setCopiado] = useState<"email" | "senha" | null>(null);
+
+  function copiar(valor: string, qual: "email" | "senha") {
+    if (!valor) return;
+    navigator.clipboard
+      .writeText(valor)
+      .then(() => {
+        setCopiado(qual);
+        window.setTimeout(() => setCopiado((c) => (c === qual ? null : c)), 1800);
+      })
+      .catch(() => {});
+  }
 
   /* Status real derivado de qa-checkout-status. Default seguro: aguardando_pagamento. */
   const statusAtual = r.pagamento_status ?? "aguardando_pagamento";
