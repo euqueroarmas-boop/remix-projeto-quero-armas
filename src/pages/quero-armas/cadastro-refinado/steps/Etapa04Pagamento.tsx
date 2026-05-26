@@ -507,10 +507,32 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         <div>
           <div className="qa-ref-total-label">Total a pagar</div>
           <div className="qa-ref-caps" style={{ marginTop: 4 }}>
-            {servicos.length > 1
-              ? `${servicos.length} serviços selecionados`
-              : "1 serviço selecionado"}
+            {servicos.length === 0
+              ? "Nenhum serviço selecionado"
+              : servicos.length === 1
+                ? "1 serviço selecionado"
+                : `${servicos.length} serviços selecionados`}
           </div>
+          {servicos.length > 0 && (
+            <ul
+              style={{
+                marginTop: 8,
+                paddingLeft: 0,
+                listStyle: "none",
+                fontSize: 13,
+                color: "var(--qa-ref-ink-soft)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              {servicos.map((s) => (
+                <li key={s.id}>
+                  · {s.nome} — {formatarReais(Math.round(s.preco * 100))}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <div className="qa-ref-total-value">
@@ -529,6 +551,28 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           )}
         </div>
       </div>
+
+      {stage === "form" && catalogoCarregado && servicos.length === 0 && (
+        <div
+          className="qa-ref-pay-panel"
+          style={{ marginTop: 16, borderColor: "var(--qa-ref-danger, #b91c1c)" }}
+        >
+          <div className="qa-ref-pay-status">Selecione um serviço para continuar</div>
+          <p style={{ marginTop: 10, fontSize: 13.5, color: "var(--qa-ref-ink-soft)" }}>
+            {catalogoErro ||
+              "Não identificamos nenhum serviço vinculado a esta contratação. Volte e escolha o serviço desejado para que possamos exibir os valores e as opções de parcelamento."}
+          </p>
+          <div style={{ marginTop: 14 }}>
+            <button
+              type="button"
+              className="qa-ref-btn qa-ref-btn-primary"
+              onClick={() => navigate("/cadastro?etapa=1")}
+            >
+              Escolher serviço
+            </button>
+          </div>
+        </div>
+      )}
 
       {stage === "form" && (
         <>
