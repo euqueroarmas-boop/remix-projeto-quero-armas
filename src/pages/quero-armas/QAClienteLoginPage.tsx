@@ -111,6 +111,33 @@ export default function QAClienteLoginPage() {
 
       let efectiveLink = clienteLink as any;
 
+      // FALLBACK 0: vínculo direto via qa_clientes.user_id (provisionamento legado
+      // que não criou cliente_auth_links). Repara silenciosamente.
+      if (!qaProfile && !efectiveLink) {
+        const { data: clienteDireto } = await supabase
+          .from("qa_clientes" as any)
+          .select("id, status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (clienteDireto && (clienteDireto as any).status !== "excluido_lgpd") {
+          const { data: novoLink } = await supabase
+            .from("cliente_auth_links" as any)
+            .insert({
+              qa_cliente_id: (clienteDireto as any).id,
+              user_id: user.id,
+              email: emailNorm,
+              status: "active",
+              activated_at: new Date().toISOString(),
+            })
+            .select("id, status, qa_cliente_id, customer_id")
+            .maybeSingle();
+          if (novoLink) {
+            efectiveLink = novoLink;
+            console.warn("[QAClienteLogin] Link criado a partir de qa_clientes.user_id para cliente", (clienteDireto as any).id);
+          }
+        }
+      }
+
       // FALLBACK SEGURO: vínculo ausente para esse user_id, mas existe link
       // ativo localizável pelo e-mail normalizado e cliente correspondente ativo
       // e único. Repara o vínculo sem expor outros clientes.
