@@ -797,7 +797,9 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           <div style={{ marginTop: 28 }}>
             <button
               className="qa-ref-btn qa-ref-btn-primary"
-              disabled={!state.aceiteContrato}
+              disabled={
+                !state.aceiteContrato || servicos.length === 0 || !pricingSelecionado
+              }
               onClick={handleSubmit}
             >
               {labelBtn}
