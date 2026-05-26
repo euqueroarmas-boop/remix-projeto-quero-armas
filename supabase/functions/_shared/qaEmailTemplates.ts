@@ -13,7 +13,13 @@
  */
 
 const LOGO_URL = "https://ogkltfqvzweeqkfmrzts.supabase.co/storage/v1/object/public/contract-assets/quero-armas-logo.png";
-const PORTAL_URL = "https://www.euqueroarmas.com.br/quero-armas/cliente/login";
+/**
+ * Rota REAL do portal/Arsenal do cliente (ver src/pages/quero-armas/QARoutes.tsx).
+ * NÃO usar `/quero-armas/cliente/login` — essa rota foi removida e cai no catch-all
+ * que joga o cliente na home. O link tem que abrir o login do Arsenal, que após
+ * autenticação redireciona automaticamente para /area-do-cliente.
+ */
+const PORTAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente/login";
 const SITE_URL = "https://www.euqueroarmas.com.br";
 const SUPPORT_EMAIL = "naoresponda@euqueroarmas.com.br";
 
