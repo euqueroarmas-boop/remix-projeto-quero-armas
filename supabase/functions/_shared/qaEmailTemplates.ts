@@ -490,7 +490,8 @@ export const qaGenericText = (o: { name?: string; subject: string; message: stri
 // 11. BEM-VINDO AO ARSENAL (conta gratuita pública — pós-cadastro)
 //    Identidade: Arsenal UI (papel + âmbar + header escuro)
 // ════════════════════════════════════════════════════════════════════
-const ARSENAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente/arsenal";
+/** Arsenal = portal do cliente. Rota real: /area-do-cliente. */
+const ARSENAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente";
 
 export function qaArsenalWelcomeHtml(opts: {
   name: string;
@@ -514,7 +515,7 @@ export function qaArsenalWelcomeHtml(opts: {
         { k: "Identificador", v: opts.email, mono: true },
         { k: "Plano", v: "GRATUITO · VITALÍCIO", mono: true, tone: "success" },
         { k: "Capacidade", v: "ARMAS, CRAFs, GTEs, DOCUMENTOS", mono: true },
-        { k: "Endpoint", v: "/area-do-cliente/arsenal", mono: true },
+        { k: "Endpoint", v: "/area-do-cliente", mono: true },
       ], AMBER)}
       ${btn(url, "Entrar no Arsenal")}
       ${hr}
@@ -550,7 +551,7 @@ export function qaCadastroExistenteHtml(opts: {
 }) {
   const firstName = (opts.name || "").trim().split(/\s+/)[0] || "Cliente";
   const loginUrl = opts.loginUrl || "https://www.euqueroarmas.com.br/area-do-cliente/login";
-  const recuperarUrl = opts.recuperarUrl || "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha";
+  const recuperarUrl = opts.recuperarUrl || "https://www.euqueroarmas.com.br/redefinir-senha";
   const motivoTxt = opts.motivo === "email_ja_cadastrado"
     ? "Já existe um Arsenal vinculado a este e-mail."
     : "Já existe um Arsenal vinculado a este CPF.";
