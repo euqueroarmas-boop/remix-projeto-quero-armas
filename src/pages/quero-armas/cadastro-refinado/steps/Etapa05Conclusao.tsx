@@ -420,6 +420,46 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
               </button>
             </div>
           ))}
+          <button
+            type="button"
+            onClick={() => {
+              onReset();
+              navigate("/area-do-cliente/login", {
+                state: {
+                  prefillEmail: credenciais.email,
+                  prefillPassword: credenciais.senha_temporaria,
+                },
+              });
+            }}
+            style={{
+              marginTop: 14,
+              width: "100%",
+              padding: "12px 16px",
+              background: "var(--qa-ref-brass, #D6A64B)",
+              color: "#0A0A0A",
+              border: "none",
+              borderRadius: 8,
+              fontFamily: "Oswald, sans-serif",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: 0.8,
+              textTransform: "uppercase",
+              cursor: "pointer",
+            }}
+          >
+            Entrar no Arsenal agora
+          </button>
+          <p
+            style={{
+              fontSize: 11,
+              color: "var(--qa-ref-ink-soft)",
+              margin: "10px 0 0",
+              textAlign: "center",
+            }}
+          >
+            Preenchemos login e senha automaticamente. Você poderá definir
+            uma nova senha logo após entrar.
+          </p>
         </div>
       )}
 
