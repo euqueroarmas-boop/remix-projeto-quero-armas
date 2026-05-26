@@ -370,7 +370,6 @@ const QuizPage = () => {
   const customTotalLabel = totalCents > 0
     ? `R$ ${(totalCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
     : null;
-  const showCustomTotal = canCustomize && removableSlugs.every((sl) => visibleServices.some((s) => s.slug === sl)) === false;
   const allRemoved = canCustomize && visibleServices.length === 0;
 
   const checkoutHref = useMemo(() => {
