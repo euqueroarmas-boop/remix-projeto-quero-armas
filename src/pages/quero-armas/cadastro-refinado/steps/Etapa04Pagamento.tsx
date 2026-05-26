@@ -268,20 +268,21 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       );
       if (contaErr) throw contaErr;
 
-      // Idempotência por CPF: se a função retornou que o cliente já existe,
-      // bloquear criação de venda e mandar o cliente fazer login para retomar
-      // o checkout com o cadastro correto. Preserva o state via "next".
+      // Idempotência por CPF (checkout público SEM login obrigatório):
+      // Se a conta pública já existir (CPF/e-mail), NÃO redirecionar para
+      // login. A venda é criada e vinculada ao qa_cliente existente pelo
+      // CPF normalizado dentro de qa-checkout-criar-venda. O acesso ao
+      // Arsenal/histórico continua exigindo autenticação posterior — aqui
+      // apenas seguimos com a contratação. Nenhum dado sensível antigo é
+      // exibido no checkout enquanto o cliente estiver deslogado.
       const reasonExistente = contaData?.reason as string | undefined;
-      if (
+      const clienteJaExistente =
         contaData?.ok === false &&
         (reasonExistente === "cpf_ja_possui_login" ||
           reasonExistente === "email_ja_cadastrado" ||
-          reasonExistente === "cpf_ja_possui_cadastro_sem_login")
-      ) {
+          reasonExistente === "cpf_ja_possui_cadastro_sem_login");
+      if (clienteJaExistente) {
         update({ clienteExistente: true });
-        const next = encodeURIComponent(`${window.location.pathname}${window.location.search || ""}`);
-        window.location.href = `/area-do-cliente/login?next=${next}`;
-        return;
       }
 
       const qaClienteId = contaData?.qa_cliente_id ?? contaData?.cliente_id ?? null;
