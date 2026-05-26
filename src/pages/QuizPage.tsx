@@ -439,27 +439,52 @@ const QuizPage = () => {
                 <p className="qa-ref-subtitle">{recommendation.desc}</p>
                 <div className="qa-ref-section">
                   <div className="qa-ref-opt-list">
-                    {recommendation.services.map((service, index) => (
-                      <div key={service.name} className="qa-ref-opt-card is-popular" style={{ cursor: 'default' }}>
-                        <div className="qa-ref-opt-icon" aria-hidden>
-                          <CheckCircle2 size={18} />
+                    {visibleServices.map((service, index) => {
+                      const removable = canCustomize && !!service.slug;
+                      return (
+                        <div key={service.slug || service.name} className="qa-ref-opt-card is-popular" style={{ cursor: 'default', position: 'relative' }}>
+                          <div className="qa-ref-opt-icon" aria-hidden>
+                            <CheckCircle2 size={18} />
+                          </div>
+                          <div className="qa-ref-opt-body">
+                            <span className="qa-ref-caps qa-ref-opt-eyebrow">
+                              SERVIÇO {index + 1} DE {visibleServices.length}
+                            </span>
+                            <div className="qa-ref-opt-title">{service.name}</div>
+                            <div className="qa-ref-opt-desc">{service.desc}</div>
+                          </div>
+                          {service.price && (
+                            <span className="qa-ref-opt-tag-popular" style={{ position: 'static', fontSize: 13 }}>
+                              {service.price}
+                            </span>
+                          )}
+                          {removable && (
+                            <button
+                              type="button"
+                              aria-label={`Remover ${service.name}`}
+                              onClick={() => toggleRemove(service.slug)}
+                              style={{
+                                position: 'absolute', top: 8, right: 8,
+                                width: 26, height: 26, borderRadius: '50%',
+                                border: '0.5px solid var(--qa-ref-border)',
+                                background: 'transparent', color: 'var(--qa-ref-ink-soft)',
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
                         </div>
-                        <div className="qa-ref-opt-body">
-                          <span className="qa-ref-caps qa-ref-opt-eyebrow">
-                            SERVIÇO {index + 1} DE {recommendation.services.length}
-                          </span>
-                          <div className="qa-ref-opt-title">{service.name}</div>
-                          <div className="qa-ref-opt-desc">{service.desc}</div>
-                        </div>
-                        {service.price && (
-                          <span className="qa-ref-opt-tag-popular" style={{ position: 'static', fontSize: 13 }}>
-                            {service.price}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-                  {recommendation.total && (
+                  {allRemoved && (
+                    <p className="qa-ref-subtitle" style={{ marginTop: 12, color: 'var(--qa-ref-ink-soft)' }}>
+                      Você removeu todos os serviços. Restaure para continuar ou volte para o catálogo.
+                    </p>
+                  )}
+                  {(recommendation.total || customTotalLabel) && !allRemoved && (
                     <div
                       className="qa-ref-opt-card"
                       style={{ marginTop: 12, justifyContent: 'space-between', cursor: 'default' }}
@@ -468,9 +493,24 @@ const QuizPage = () => {
                         TOTAL DOS SERVIÇOS
                       </span>
                       <strong style={{ color: 'var(--qa-ref-accent)', fontFamily: 'Oswald, system-ui', fontSize: 22 }}>
-                        {recommendation.total}
+                        {customTotalLabel || recommendation.total}
                       </strong>
                     </div>
+                  )}
+                  {canCustomize && removedSlugs.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={restoreAll}
+                      style={{
+                        marginTop: 10, padding: '8px 12px', borderRadius: 'var(--qa-ref-radius)',
+                        background: 'transparent', color: 'var(--qa-ref-ink-soft)',
+                        border: '0.5px solid var(--qa-ref-border)', cursor: 'pointer',
+                        fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <RotateCcw size={12} /> Restaurar serviços removidos
+                    </button>
                   )}
                   <div style={{ display: 'grid', gap: 10, marginTop: 18 }}>
                     <button
@@ -478,10 +518,11 @@ const QuizPage = () => {
                       aria-label="Contratar serviço recomendado"
                       data-testid="quiz-final-cta"
                       className="qa-ref-btn-primary"
-                      style={{ padding: '14px 18px', borderRadius: 'var(--qa-ref-radius)', border: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                      onClick={() => navigate(recommendation.url)}
+                      disabled={allRemoved}
+                      style={{ padding: '14px 18px', borderRadius: 'var(--qa-ref-radius)', border: 0, cursor: allRemoved ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: allRemoved ? 0.5 : 1 }}
+                      onClick={() => !allRemoved && navigate(checkoutHref)}
                     >
-                      CONTRATAR SERVIÇO RECOMENDADO
+                      {visibleServices.length > 1 ? 'CONTRATAR SERVIÇOS SELECIONADOS' : 'CONTRATAR SERVIÇO SELECIONADO'}
                       <ChevronRight size={16} />
                     </button>
                     <button
