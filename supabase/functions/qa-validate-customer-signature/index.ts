@@ -29,7 +29,7 @@ function jsonResp(b: unknown, s = 200) {
   return new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
-async function isAuthorized(req: Request): Promise<boolean> {
+async function authorizeRequest(req: Request, contractId: string | undefined): Promise<boolean> {
   const h = req.headers.get("Authorization") || "";
   if (!h.startsWith("Bearer ")) return false;
   const token = h.slice(7).trim();
@@ -42,24 +42,38 @@ async function isAuthorized(req: Request): Promise<boolean> {
     const { data, error } = await u.auth.getUser(token);
     if (error || !data?.user) return false;
     const sb = svc();
+    // Equipe Quero Armas
     const { data: perfil } = await sb
       .from("qa_usuarios_perfis")
       .select("perfil")
       .eq("user_id", data.user.id)
       .eq("ativo", true)
       .maybeSingle();
-    return !!perfil;
+    if (perfil) return true;
+    // Cliente dono do contrato — pode disparar revalidação
+    if (!contractId) return false;
+    const { data: cred } = await sb
+      .from("qa_cliente_credenciais")
+      .select("cliente_id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+    if (!cred?.cliente_id) return false;
+    const { data: contract } = await sb
+      .from("qa_contracts")
+      .select("cliente_id")
+      .eq("id", contractId)
+      .maybeSingle();
+    return !!contract && (contract as any).cliente_id === cred.cliente_id;
   } catch { return false; }
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  if (!(await isAuthorized(req))) return jsonResp({ error: "Unauthorized" }, 401);
-
   let body: { contract_id?: string };
   try { body = await req.json(); } catch { return jsonResp({ error: "JSON inválido" }, 400); }
   if (!body.contract_id) return jsonResp({ error: "contract_id obrigatório" }, 400);
+  if (!(await authorizeRequest(req, body.contract_id))) return jsonResp({ error: "Unauthorized" }, 401);
 
   const sb = svc();
 
