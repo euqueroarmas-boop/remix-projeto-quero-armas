@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
   if (!contractId && !vendaId) return jsonResp({ error: "contract_id ou venda_id obrigatório" }, 400);
 
   let q = sb.from("qa_contracts").select(
-    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number"
+    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado"
   );
   if (contractId) q = q.eq("id", contractId);
   else q = q.eq("venda_id", vendaId!);
@@ -114,7 +114,24 @@ Deno.serve(async (req) => {
     path = (contract as any).company_signed_pdf_path ?? (contract as any).original_pdf_path ?? null;
   }
 
-  if (!path) return jsonResp({ error: "PDF indisponível para esta variante" }, 404);
+  if (!path) {
+    // Fallback contrato de adesão: sem PDF físico, devolve o snapshot HTML
+    // renderizado (conteudo_renderizado) como documento baixável.
+    const html = (contract as any).conteudo_renderizado as string | null;
+    if (variant !== "customer_signed" && html && html.trim()) {
+      const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
+      return new Response(html, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": `inline; filename="${fname}"`,
+          "Cache-Control": "private, max-age=60",
+        },
+      });
+    }
+    return jsonResp({ error: "PDF indisponível para esta variante" }, 404);
+  }
 
   const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
   if (dlErr || !file) return jsonResp({ error: "Falha ao baixar arquivo", detail: dlErr?.message }, 500);
