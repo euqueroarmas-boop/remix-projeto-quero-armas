@@ -234,7 +234,15 @@ function resolveCheckout(answers: Partial<Record<Question['id'], AnswerId>>, sco
   return checkoutUrl('operador-de-pistola-nivel-i', 'orientacao_necessaria', 'curso_operador');
 }
 
-function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>>) {
+interface Recommendation {
+  url: string;
+  title: string;
+  desc: string;
+  services: RecommendedService[];
+  total?: string;
+}
+
+function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>>): Recommendation {
   const scores = buildScores(answers);
   const url = resolveCheckout(answers, scores);
   const objetivo = answers.objetivo;
