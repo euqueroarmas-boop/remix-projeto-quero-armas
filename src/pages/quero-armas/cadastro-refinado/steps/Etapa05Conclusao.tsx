@@ -296,17 +296,6 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
         >
           {numeroPedido ? "Acompanhar pedido no Arsenal" : "Acessar meu Arsenal"}
         </button>
-        {cpfDigits.length === 11 && (
-          <button
-            type="button"
-            className="qa-ref-btn qa-ref-btn-ghost"
-            onClick={irParaFoto}
-            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-          >
-            <Camera size={16} />
-            {jaTemFoto ? "Atualizar minha foto" : "Enviar sua foto agora"}
-          </button>
-        )}
         {state.clienteExistente ? (
           <>
             <button className="qa-ref-btn qa-ref-btn-ghost" onClick={() => navigate("/area-do-cliente/login")}>
