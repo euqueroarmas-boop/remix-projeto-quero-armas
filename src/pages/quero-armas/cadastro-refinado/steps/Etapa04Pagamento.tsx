@@ -45,6 +45,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   const [servicos, setServicos] = useState<
     Array<{ id: string; slug: string; nome: string; preco: number }>
   >([]);
+  const [catalogoCarregado, setCatalogoCarregado] = useState(false);
+  const [catalogoErro, setCatalogoErro] = useState<string | null>(null);
   // Mantém compat para chamadas antigas/edge function: 1º serviço como "principal".
   const servicoIdPrincipal = servicos[0]?.id ?? null;
   const nomeServicoPrincipal = servicos[0]?.nome ?? null;
@@ -75,12 +77,27 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         : state.servicoSlug
           ? [state.servicoSlug]
           : [];
-    if (slugs.length === 0) return;
+    if (slugs.length === 0) {
+      setServicos([]);
+      setPreco(0);
+      setCatalogoCarregado(true);
+      setCatalogoErro(null);
+      return;
+    }
     (async () => {
-      const { data } = await supabase
+      setCatalogoCarregado(false);
+      setCatalogoErro(null);
+      const { data, error } = await supabase
         .from("qa_servicos_catalogo")
         .select("id, preco, nome, slug")
-        .in("slug", slugs);
+        .in("slug", slugs)
+        .eq("ativo", true);
+      if (error) {
+        console.error("[Etapa04] falha ao carregar catálogo:", error);
+        setCatalogoErro("Não foi possível carregar os serviços. Recarregue a página.");
+        setCatalogoCarregado(true);
+        return;
+      }
       const rows = (data || []) as Array<{
         id: string;
         slug: string;
@@ -100,6 +117,12 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       }));
       setServicos(normalized);
       setPreco(normalized.reduce((acc, r) => acc + r.preco, 0));
+      setCatalogoCarregado(true);
+      if (normalized.length === 0) {
+        setCatalogoErro(
+          "Nenhum serviço ativo encontrado para esta contratação. Selecione um serviço novamente.",
+        );
+      }
     })();
   }, [state.servicosSlugs?.join(","), state.servicoSlug]);
 
