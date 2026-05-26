@@ -138,8 +138,7 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
   };
 
   const numeroPedido =
-    r.numero_processo ||
-    (r.venda_id ? `PED-${String(r.venda_id).padStart(6, "0")}` : null);
+    r.numero_processo || null;
 
   /* Acesso ao Arsenal só é "enviado" quando o status real reflete isso ou serviço liberado.
    * Arsenal Inteligente continua GRATUITO e nunca bloqueado — apenas o aviso de envio
