@@ -22,6 +22,18 @@ const corsHeaders = {
 };
 const BUCKET = "paid-contracts";
 
+/**
+ * Extrai todo o texto "ascii/latin1" visível do PDF para procurar marcadores
+ * de binding (contract_number). Não é OCR — só funciona com PDFs textuais,
+ * o que é o caso dos nossos contratos gerados.
+ */
+function extractPdfPlainText(bytes: Uint8Array): string {
+  const txt = new TextDecoder("latin1").decode(bytes);
+  // Concatena conteúdo de streams BT/ET (texto) + também a íntegra para
+  // capturar metadados/contract_number escapados.
+  return txt.replace(/\s+/g, " ");
+}
+
 function svc() {
   return createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 }
@@ -79,7 +91,7 @@ Deno.serve(async (req) => {
 
   const { data: contract } = await sb
     .from("qa_contracts")
-    .select("id, cliente_id, status, customer_signed_pdf_path")
+    .select("id, cliente_id, status, customer_signed_pdf_path, contract_number")
     .eq("id", body.contract_id)
     .maybeSingle();
   if (!contract) return jsonResp({ error: "Contrato não encontrado" }, 404);
@@ -108,6 +120,42 @@ Deno.serve(async (req) => {
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
   const meta = validatePdfSignature(bytes);
+
+  // ----- BINDING contrato ↔ PDF assinado -----
+  // Impede que o cliente assine o contrato A e suba na venda/contrato B.
+  // Regra: o contract_number ÚNICO do contrato precisa aparecer no texto
+  // do PDF enviado. (Os contratos QA-ACEITE-* / QA-* são gerados por nós
+  // com o número impresso no corpo, então o assinador sempre o carrega.)
+  const numero = ((contract as any).contract_number || "").toString().trim();
+  const pdfText = extractPdfPlainText(bytes);
+  const numeroPresente = numero.length > 0 && pdfText.includes(numero);
+  if (!numeroPresente) {
+    const motivo = numero
+      ? `O PDF enviado não contém o número deste contrato (${numero}). Verifique se você baixou e assinou o contrato correto desta venda.`
+      : "Contrato sem número de referência — não foi possível confirmar o vínculo.";
+    await sb.from("qa_contracts").update({
+      status: "rejected",
+      validation_status: "invalid",
+      validation_details: {
+        motivo_falha: motivo,
+        binding_check: "failed",
+        expected_contract_number: numero,
+        ...meta,
+      },
+    }).eq("id", contract.id);
+    await sb.from("qa_contract_events").insert({
+      contract_id: contract.id,
+      event_type: "customer_signature_wrong_contract",
+      event_payload: { expected_contract_number: numero },
+    });
+    return jsonResp({
+      ok: false,
+      outcome: "invalid",
+      status: "rejected",
+      reason: "wrong_contract",
+      message: motivo,
+    });
+  }
 
   const cpfCliente = normalizeCpf(cliente?.cpf);
   const cpfSigner = normalizeCpf(meta.cpf_signatario);
@@ -138,6 +186,8 @@ Deno.serve(async (req) => {
       ...meta,
       cpf_match: cpfMatch || false,
       cliente_cpf_normalized: cpfCliente || null,
+      binding_check: "ok",
+      expected_contract_number: numero,
     },
   };
   if (outcome === "valid") update.customer_signature_validated_at = new Date().toISOString();
