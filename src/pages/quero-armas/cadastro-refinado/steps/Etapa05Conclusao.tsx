@@ -288,6 +288,11 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
           {" "}— {meta.desc}
         </div>
       </div>
+      {numeroPedidoTemporario && (
+        <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
+          O número definitivo será atualizado automaticamente após a criação do processo.
+        </p>
+      )}
       <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
         O Arsenal Inteligente é onde você acompanha esta contratação em tempo real:
         andamento do processo, documentos, prazos e mensagens da Equipe Quero Armas.
