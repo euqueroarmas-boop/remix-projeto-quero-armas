@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
   // 1) Carrega cliente (única fonte de verdade)
   const { data: cliente, error: cliErr } = await admin
     .from("qa_clientes")
-    .select("id, nome_completo, email, cpf, status, user_id, portal_provisionado_em")
+    .select("id, nome_completo, email, cpf, status, user_id, portal_provisionado_em, senha_temporaria, senha_temporaria_expira_em")
     .eq("id", qaClientId)
     .maybeSingle();
 
@@ -190,10 +190,17 @@ Deno.serve(async (req) => {
     return json({ ok: false, reason: "no_email" }, 200);
   }
 
-  // 4) Idempotência forte: já provisionado anteriormente?
-  if (cliente.portal_provisionado_em) {
+  // 4) Idempotência: só pulamos se já existe senha temporária ATIVA (TTL válido).
+  //    Sem isso o cliente recompra/recadastra e fica sem credenciais para mostrar
+  //    na tela de conclusão (Etapa 05). Quando a senha expirou ou nunca foi
+  //    persistida, geramos uma nova abaixo (resetando a senha do auth user).
+  const senhaAtiva =
+    !!cliente.senha_temporaria &&
+    !!cliente.senha_temporaria_expira_em &&
+    new Date(cliente.senha_temporaria_expira_em as string).getTime() > Date.now();
+  if (cliente.portal_provisionado_em && senhaAtiva) {
     await logEvento(admin, cliente.id, "convite_acesso_reutilizado",
-      `Acesso já provisionado em ${cliente.portal_provisionado_em}; reaproveitado para venda ${vendaId ?? "?"}.`);
+      `Acesso já provisionado em ${cliente.portal_provisionado_em}; senha temporária ativa reaproveitada para venda ${vendaId ?? "?"}.`);
     return json({
       ok: true,
       reused: true,
@@ -257,6 +264,33 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.warn("[qa-provisionar-acesso-portal] falha persistir senha temp:", e);
       }
+    }
+  }
+
+  // 6b) Usuário JÁ existia em auth.users e ainda não há senha temporária ativa
+  //     (primeira venda paga deste cliente, ou senha anterior expirou).
+  //     Resetamos a senha para uma nova temporária para que a Etapa 05 possa
+  //     exibir as credenciais prontas para copiar/colar. O cliente troca no 1º acesso.
+  if (!isNewUser && !senhaAtiva) {
+    const tempPwd = genStrongPassword();
+    try {
+      const { error: pwdErr } = await admin.auth.admin.updateUserById(authUser.id, {
+        password: tempPwd,
+      });
+      if (pwdErr) {
+        console.warn("[qa-provisionar-acesso-portal] falha reset senha:", pwdErr.message);
+      } else {
+        const expira = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await admin
+          .from("qa_clientes")
+          .update({
+            senha_temporaria: tempPwd,
+            senha_temporaria_expira_em: expira,
+          })
+          .eq("id", cliente.id);
+      }
+    } catch (e) {
+      console.warn("[qa-provisionar-acesso-portal] erro reset senha existente:", e);
     }
   }
 
