@@ -36,6 +36,39 @@ export default function QACadastroRefinadoPage() {
   const [params, setParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
+  // Logout reativo: se o usuário deixar de existir (signOut) e o state
+  // ainda guardar marcas de "autenticado", limpamos imediatamente em memória
+  // para que mensagens como "Entramos com sua conta..." sumam SEM depender
+  // de recarregar a página. Preserva serviço, documentos enviados, URL e
+  // demais campos do checkout. Não toca em sessionStorage diretamente — o
+  // próprio hook persiste o novo state.
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) return;
+    if (
+      state.modo_cliente === "autenticado" ||
+      state.dados_carregados_do_arsenal ||
+      state.cliente_existente_id ||
+      state.clienteExistente
+    ) {
+      update({
+        modo_cliente: "indefinido",
+        identificacao_confirmada: false,
+        cliente_existente_id: null,
+        clienteExistente: false,
+        dados_carregados_do_arsenal: false,
+        documentos_reaproveitados: [],
+        documentos_vencidos: [],
+        documentos_pendentes_revisao: [],
+        servicos_anteriores: [],
+        processos_ativos: [],
+        contratos_existentes: [],
+        arsenal_resumo: null,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
+
   // Regra de primeira tela:
   // /cadastro e /cadastro-mira SEMPRE abrem em Etapa00Identificacao, exceto se:
   //  1) `?retomar=1` (continuação explícita do fluxo);
