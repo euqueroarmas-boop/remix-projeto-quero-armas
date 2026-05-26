@@ -20,6 +20,8 @@ const ICP_HINTS = [
   "ICP-Brasil","AC Raiz Brasileira","AC SERASA","AC SAFEWEB","AC SOLUTI","AC VALID",
   "AC CERTISIGN","AC SERPRO","AC CAIXA","AC BR RFB","AC RFB","AC IMESP","AC PRODEMGE",
   "AC DIGITAL","AC GOVBR","Gov.br",
+  "Governo Federal do Brasil","AC Final do Governo Federal","AC Pessoa Fisica",
+  "ITI","Autoridade Certificadora",
 ];
 
 function extractBlobs(pdf: Uint8Array): Uint8Array[] {
@@ -28,7 +30,11 @@ function extractBlobs(pdf: Uint8Array): Uint8Array[] {
   const re = /\/Contents\s*<([0-9A-Fa-f\s]+)>/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
-    const hex = m[1].replace(/\s+/g, "").replace(/(00)+$/i, "");
+    // Mantém TODOS os bytes do slot /Contents — não remover zeros finais.
+    // Assinaturas BER (gov.br) terminam com 00 00 (end-of-contents) que
+    // não pode ser truncado, e o parser ASN.1 (modo não-estrito) ignora
+    // o padding posterior naturalmente.
+    const hex = m[1].replace(/\s+/g, "");
     if (hex.length < 16 || hex.length % 2) continue;
     const out = new Uint8Array(hex.length / 2);
     for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.substr(i * 2, 2), 16);
@@ -67,7 +73,9 @@ export function validatePdfSignature(pdfBytes: Uint8Array): SignatureMeta {
       const der = forge.util.createBuffer(
         Array.from(blob).map((b) => String.fromCharCode(b)).join(""),
       );
-      const asn1 = forge.asn1.fromDer(der);
+      // strict:false + parseAllBytes:false → aceita BER indefinite-length
+      // usado pelo assinador gov.br e ignora o padding 00 do slot /Contents.
+      const asn1 = forge.asn1.fromDer(der, { strict: false, parseAllBytes: false } as any);
       const p7 = forge.pkcs7.messageFromAsn1(asn1) as any;
       const certs = p7.certificates || [];
       if (!certs.length) continue;
