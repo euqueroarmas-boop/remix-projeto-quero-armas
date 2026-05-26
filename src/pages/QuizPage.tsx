@@ -313,6 +313,7 @@ const QuizPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<Record<Question['id'], AnswerId>>>({});
+  const [removedSlugs, setRemovedSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -348,6 +349,48 @@ const QuizPage = () => {
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const path = explainPath(answers);
   const recommendation = resolveRecommendation(answers);
+
+  // Permite ao cliente remover serviços recomendados e recalcular total + URL
+  // de checkout. A remoção só faz sentido quando há slug + priceCents (ex.: CAC).
+  const removableSlugs = useMemo(
+    () => recommendation.services.filter((s) => s.slug && typeof s.priceCents === 'number').map((s) => s.slug as string),
+    [recommendation.services]
+  );
+  const canCustomize = removableSlugs.length > 1;
+  const visibleServices = recommendation.services.filter((s) => !s.slug || !removedSlugs.has(s.slug));
+  const totalCents = visibleServices.reduce((acc, s) => acc + (s.priceCents ?? 0), 0);
+  const customTotalLabel = totalCents > 0
+    ? `R$ ${(totalCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+    : null;
+  const showCustomTotal = canCustomize && removableSlugs.every((sl) => visibleServices.some((s) => s.slug === sl)) === false;
+  const allRemoved = canCustomize && visibleServices.length === 0;
+
+  const checkoutHref = useMemo(() => {
+    if (!canCustomize) return recommendation.url;
+    const selectedSlugs = visibleServices
+      .map((s) => s.slug)
+      .filter((s): s is string => !!s);
+    if (selectedSlugs.length === 0) return recommendation.url;
+    // Reaproveita a URL base do checkout substituindo apenas o parâmetro `servico`.
+    try {
+      const u = new URL(recommendation.url, window.location.origin);
+      u.searchParams.set('servico', selectedSlugs.join(','));
+      return `${u.pathname}?${u.searchParams.toString()}`;
+    } catch {
+      return recommendation.url;
+    }
+  }, [canCustomize, recommendation.url, visibleServices]);
+
+  const toggleRemove = (slug?: string) => {
+    if (!slug) return;
+    setRemovedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  };
+  const restoreAll = () => setRemovedSlugs(new Set());
   const answeredTrail = questions
     .filter((question) => answers[question.id])
     .map((question) => ({
