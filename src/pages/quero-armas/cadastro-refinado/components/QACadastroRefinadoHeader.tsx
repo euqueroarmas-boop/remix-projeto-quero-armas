@@ -1,4 +1,4 @@
-import { ArrowLeft, X, UserCheck, LogOut } from "lucide-react";
+import { ArrowLeft, X, UserCheck, LogOut, LogIn } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -217,6 +217,38 @@ export default function QACadastroRefinadoHeader({
               <span className="qa-ref-logout-label">
                 {signingOut ? "Saindo..." : "Sair da conta"}
               </span>
+            </button>
+          )}
+          {!hasSession && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = encodeURIComponent(
+                  window.location.pathname + window.location.search,
+                );
+                window.location.href = `/area-do-cliente/login?next=${next}`;
+              }}
+              aria-label="Entrar na conta"
+              title="Entrar na conta"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 999,
+                background: "rgba(214, 166, 75, 0.15)",
+                border: "1px solid rgba(214, 166, 75, 0.55)",
+                color: "#f4e7c8",
+                fontSize: 10.5,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <LogIn size={12} />
+              <span>Entrar</span>
             </button>
           )}
           <button
