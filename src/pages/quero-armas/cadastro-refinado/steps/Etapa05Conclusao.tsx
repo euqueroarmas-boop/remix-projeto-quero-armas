@@ -317,6 +317,112 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
           {" "}— {meta.desc}
         </div>
       </div>
+
+      {credenciais && (
+        <div
+          style={{
+            marginTop: 18,
+            padding: 18,
+            borderRadius: 12,
+            background: "rgba(214, 166, 75, 0.08)",
+            border: "1px solid rgba(214, 166, 75, 0.35)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "Oswald, sans-serif",
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
+              fontSize: 13,
+              color: "var(--qa-ref-brass, #D6A64B)",
+              marginBottom: 10,
+              fontWeight: 600,
+            }}
+          >
+            Acesso temporário ao Arsenal
+          </div>
+          <p
+            style={{
+              fontSize: 13,
+              color: "var(--qa-ref-ink-soft)",
+              margin: "0 0 14px",
+            }}
+          >
+            Use estes dados para entrar agora. Você poderá trocar a senha no
+            primeiro acesso. Este acesso temporário expira em 24h.
+          </p>
+
+          {[
+            { label: "E-mail", valor: credenciais.email, qual: "email" as const },
+            { label: "Senha temporária", valor: credenciais.senha_temporaria, qual: "senha" as const },
+          ].map(({ label, valor, qual }) => (
+            <div
+              key={qual}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 10,
+                padding: "10px 12px",
+                marginBottom: qual === "email" ? 8 : 0,
+                background: "rgba(0,0,0,0.35)",
+                borderRadius: 8,
+                border: "1px solid rgba(214, 166, 75, 0.2)",
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    color: "var(--qa-ref-ink-soft)",
+                    marginBottom: 2,
+                  }}
+                >
+                  {label}
+                </div>
+                <div
+                  style={{
+                    fontFamily:
+                      "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                    fontSize: 14,
+                    color: "#fff",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {valor}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => copiar(valor, qual)}
+                style={{
+                  flexShrink: 0,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 12px",
+                  background: "transparent",
+                  color: "var(--qa-ref-brass, #D6A64B)",
+                  border: "1px solid var(--qa-ref-brass, #D6A64B)",
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: 0.4,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+                aria-label={`Copiar ${label}`}
+              >
+                <Copy size={13} />
+                {copiado === qual ? "Copiado" : "Copiar"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {numeroPedidoTemporario && (
         <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
           O número definitivo será atualizado automaticamente após a criação do processo.
