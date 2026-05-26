@@ -121,6 +121,33 @@ export default function QACadastroRefinadoPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
+  // Pré-seleção do serviço a partir da URL.
+  // Antes, quem hidratava `state.servicosSlugs` a partir de `?servico=` era a
+  // Etapa 01. Quando a URL traz `servico_confirmado=1`, pulamos direto para o
+  // step 2 e a Etapa 01 nunca roda — então o state ficava sem serviço e o
+  // checkout (Etapa 04) não encontrava nada no catálogo. Aqui garantimos a
+  // hidratação sempre que houver `?servico=` na URL, sem alterar o pulo de
+  // etapas já aprovado.
+  useEffect(() => {
+    const raw = params.get("servico");
+    if (!raw) return;
+    const slugs = raw
+      .split(",")
+      .map((s) => s.trim().replace(/_/g, "-"))
+      .filter(Boolean);
+    if (slugs.length === 0) return;
+    const sameAsState =
+      state.servicosSlugs.length === slugs.length &&
+      state.servicosSlugs.every((s, i) => s === slugs[i]);
+    if (sameAsState) return;
+    update({
+      servicosSlugs: slugs,
+      origem: params.get("origem") || state.origem,
+      perfilV2: params.get("perfil_v2") || state.perfilV2,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
+
   // PR 2 — Retomada pós-login + reaproveitamento automático.
   // Quando o usuário retorna autenticado (via /login?next=/cadastro?...),
   // hidratamos os dadosPessoais a partir de qa_clientes do cliente vinculado.
