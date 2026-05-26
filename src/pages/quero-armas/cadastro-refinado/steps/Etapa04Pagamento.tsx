@@ -528,7 +528,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             >
               {servicos.map((s) => (
                 <li key={s.id}>
-                  · {s.nome} — {formatarReais(Math.round(s.preco * 100))}
+                  · {s.nome} — {formatarReais(s.preco)}
                 </li>
               ))}
             </ul>
