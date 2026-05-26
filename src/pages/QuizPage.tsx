@@ -246,9 +246,9 @@ function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>
       title: 'Comprar arma como CAC',
       desc: 'Como voce ja tem CR ativo, o caminho indicado e contratar a sequencia de compra, registro/apostilamento e GTE.',
       services: [
-        { name: 'Autorizacao de compra de arma de fogo atirador esportivo (CAC)', desc: 'Pedido de autorizacao para aquisicao como CAC.', price: 'R$ 497' },
-        { name: 'Registro e apostilamento de arma de fogo (CAC)', desc: 'Registro da arma e vinculacao ao acervo.', price: 'R$ 247' },
-        { name: 'Guia de Trafego Especial (CAC)', desc: 'Guia para deslocamento conforme a finalidade autorizada.', price: 'R$ 147' },
+        { slug: 'autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac', name: 'Autorizacao de compra de arma de fogo atirador esportivo (CAC)', desc: 'Pedido de autorizacao para aquisicao como CAC.', price: 'R$ 497', priceCents: 49700 },
+        { slug: 'registro-e-apostilamento-de-arma-de-fogo-cac', name: 'Registro e apostilamento de arma de fogo (CAC)', desc: 'Registro da arma e vinculacao ao acervo.', price: 'R$ 247', priceCents: 24700 },
+        { slug: 'guia-de-trafego-especial-cac', name: 'Guia de Trafego Especial (CAC)', desc: 'Guia para deslocamento conforme a finalidade autorizada.', price: 'R$ 147', priceCents: 14700 },
       ],
       total: 'R$ 891',
     };
