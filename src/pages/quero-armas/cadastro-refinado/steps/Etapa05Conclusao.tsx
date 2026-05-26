@@ -68,6 +68,72 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
   const statusAtual = r.pagamento_status ?? "aguardando_pagamento";
   const meta = STATUS_META[statusAtual];
   const IconNow = meta.icon;
+  const pagamentoConfirmado =
+    statusAtual !== "aguardando_pagamento";
+
+  /* Slugs efetivos da contratação (bundle ou single). */
+  const slugsContratados = (
+    state.servicosSlugs && state.servicosSlugs.length > 0
+      ? state.servicosSlugs
+      : state.servicoSlug
+        ? [state.servicoSlug]
+        : []
+  );
+
+  /* Nome legível dos serviços (qa_servicos_catalogo) + valor pago (qa_vendas).
+   * Render-only: não cria/duplica registros, não toca em webhook/contrato. */
+  const [servicosNomes, setServicosNomes] = useState<string[]>([]);
+  const [valorTotal, setValorTotal] = useState<number | null>(null);
+  useEffect(() => {
+    if (slugsContratados.length === 0) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_servicos_catalogo")
+        .select("slug, nome")
+        .in("slug", slugsContratados);
+      if (cancel) return;
+      const map = new Map((data || []).map((r: any) => [r.slug, r.nome]));
+      setServicosNomes(slugsContratados.map((s) => map.get(s) || humanizeSlug(s)));
+    })();
+    return () => { cancel = true; };
+  }, [slugsContratados.join(",")]);
+
+  useEffect(() => {
+    if (!r.venda_id) return;
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_vendas")
+        .select("valor_cobrado, valor_a_pagar, numero_processo")
+        .eq("id", Number(r.venda_id))
+        .maybeSingle();
+      if (cancel || !data) return;
+      const v = Number((data as any).valor_cobrado ?? (data as any).valor_a_pagar);
+      if (!Number.isNaN(v) && v > 0) setValorTotal(v);
+      if ((data as any).numero_processo && update && !r.numero_processo) {
+        update({ resultado: { ...r, numero_processo: (data as any).numero_processo } });
+      }
+    })();
+    return () => { cancel = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.venda_id]);
+
+  const valorFormatado =
+    valorTotal != null
+      ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorTotal)
+      : null;
+
+  const formaPagamentoLabel: Record<typeof state.formaPagamento, string> = {
+    pix: "PIX",
+    cartao: "Cartão de crédito",
+    boleto: "Boleto bancário",
+  };
+
+  const numeroPedido =
+    r.numero_processo ||
+    (r.venda_id ? `PED-${String(r.venda_id).padStart(6, "0")}` : null);
+
   /* Acesso ao Arsenal só é "enviado" quando o status real reflete isso ou serviço liberado.
    * Arsenal Inteligente continua GRATUITO e nunca bloqueado — apenas o aviso de envio
    * é condicional ao webhook ter disparado o e-mail. */
@@ -172,34 +238,48 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
     <QACadastroRefinadoShell
       step={5}
       eyebrow="ETAPA 05 · CONCLUSÃO"
-      title={`Tudo certo, ${primeiroNome}`}
-      subtitle="Sua contratação foi registrada. Acompanhe o status real abaixo — os próximos passos chegam por e-mail e WhatsApp conforme o banco confirma o pagamento."
+      title={pagamentoConfirmado ? "Pagamento confirmado" : `Tudo certo, ${primeiroNome}`}
+      subtitle={
+        pagamentoConfirmado
+          ? "Recebemos a confirmação do pagamento. Seu pedido foi registrado e o acompanhamento será feito pelo Arsenal."
+          : "Sua contratação foi registrada. Acompanhe o status real abaixo — os próximos passos chegam por e-mail e WhatsApp conforme o banco confirma o pagamento."
+      }
       showBack={false}
     >
       <div style={{ textAlign: "center" }}>
         <div className="qa-ref-check" aria-hidden>
-          {statusAtual === "aguardando_pagamento" ? <Clock size={28} /> : <Check size={28} />}
+          {pagamentoConfirmado ? <Check size={28} /> : <Clock size={28} />}
         </div>
       </div>
 
       <dl className="qa-ref-ficha">
         <div className="qa-ref-ficha-row">
-          <dt>Serviço</dt>
-          <dd>{state.servicoSlug || "—"}</dd>
+          <dt>{servicosNomes.length > 1 ? "Serviços" : "Serviço"}</dt>
+          <dd>
+            {servicosNomes.length > 0
+              ? servicosNomes.join(" + ")
+              : slugsContratados.map(humanizeSlug).join(" + ") || "—"}
+          </dd>
         </div>
-        {r.numero_processo && (
+        {numeroPedido && (
           <div className="qa-ref-ficha-row">
-            <dt>Processo</dt>
-            <dd className="qa-ref-mono">{r.numero_processo}</dd>
+            <dt>{r.numero_processo ? "Processo" : "Pedido"}</dt>
+            <dd className="qa-ref-mono">{numeroPedido}</dd>
+          </div>
+        )}
+        {valorFormatado && (
+          <div className="qa-ref-ficha-row">
+            <dt>{pagamentoConfirmado ? "Valor pago" : "Valor"}</dt>
+            <dd>{valorFormatado}</dd>
           </div>
         )}
         <div className="qa-ref-ficha-row">
-          <dt>Pagamento</dt>
-          <dd>{state.formaPagamento.toUpperCase()}</dd>
+          <dt>Forma de pagamento</dt>
+          <dd>{formaPagamentoLabel[state.formaPagamento] || state.formaPagamento.toUpperCase()}</dd>
         </div>
         <div className="qa-ref-ficha-row">
           <dt>Status</dt>
-          <dd>{meta.label}</dd>
+          <dd>{pagamentoConfirmado ? "Pagamento confirmado" : meta.label}</dd>
         </div>
       </dl>
 
@@ -210,6 +290,10 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
           {" "}— {meta.desc}
         </div>
       </div>
+      <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
+        O Arsenal Inteligente é onde você acompanha esta contratação em tempo real:
+        andamento do processo, documentos, prazos e mensagens da Equipe Quero Armas.
+      </p>
       {!acessoEnviado && (
         <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
           O Arsenal Inteligente é gratuito e nunca bloqueado. Após a confirmação do
@@ -221,9 +305,16 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
       <div style={{ marginTop: 28, display: "grid", gap: 12 }}>
         <button
           className="qa-ref-btn qa-ref-btn-primary"
-          onClick={() => { onReset(); navigate("/area-do-cliente"); }}
+          onClick={() => {
+            onReset();
+            const params = new URLSearchParams();
+            if (r.venda_id) params.set("pedido", String(r.venda_id));
+            if (r.numero_processo) params.set("processo", r.numero_processo);
+            const qs = params.toString();
+            navigate(qs ? `/area-do-cliente?${qs}` : "/area-do-cliente");
+          }}
         >
-          Acessar meu Arsenal
+          {numeroPedido ? "Acompanhar pedido no Arsenal" : "Acessar meu Arsenal"}
         </button>
         {cpfDigits.length === 11 && (
           <button
