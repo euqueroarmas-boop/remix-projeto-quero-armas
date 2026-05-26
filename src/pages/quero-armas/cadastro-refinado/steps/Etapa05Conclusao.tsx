@@ -6,6 +6,13 @@ import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import QAReiniciarLink from "../components/QAReiniciarLink";
 import { CadastroRefinadoState } from "../hooks/useCadastroRefinadoState";
 
+function humanizeSlug(slug: string): string {
+  if (!slug) return "—";
+  return slug
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 interface Props {
   state: CadastroRefinadoState;
   /** Permite atualizar o resultado conforme o status real avança (webhook → DB). */
