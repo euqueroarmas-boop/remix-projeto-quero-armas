@@ -137,9 +137,16 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
     boleto: "Boleto bancário",
   };
 
-  const numeroPedido =
-    r.numero_processo ||
-    (r.venda_id ? `PED-${String(r.venda_id).padStart(6, "0")}` : null);
+  /* Prioridade de exibição do número de pedido/protocolo:
+   * 1. número definitivo do processo (numero_processo)
+   * 2. número temporário derivado da venda (nunca fixo/hardcoded)
+   * 3. texto neutro quando ainda não há identificador */
+  const numeroPedidoDefinitivo = r.numero_processo || null;
+  const numeroPedidoTemporario =
+    !numeroPedidoDefinitivo && r.venda_id
+      ? `PED-${String(r.venda_id).slice(0, 8).toUpperCase()}`
+      : null;
+  const numeroPedido = numeroPedidoDefinitivo || numeroPedidoTemporario;
 
   /* Acesso ao Arsenal só é "enviado" quando o status real reflete isso ou serviço liberado.
    * Arsenal Inteligente continua GRATUITO e nunca bloqueado — apenas o aviso de envio
@@ -242,10 +249,20 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
               : slugsContratados.map(humanizeSlug).join(" + ") || "—"}
           </dd>
         </div>
-        {numeroPedido && (
+        {numeroPedidoDefinitivo ? (
           <div className="qa-ref-ficha-row">
-            <dt>{r.numero_processo ? "Processo" : "Pedido"}</dt>
-            <dd className="qa-ref-mono">{numeroPedido}</dd>
+            <dt>Processo</dt>
+            <dd className="qa-ref-mono">{numeroPedidoDefinitivo}</dd>
+          </div>
+        ) : numeroPedidoTemporario ? (
+          <div className="qa-ref-ficha-row">
+            <dt>Pedido temporário</dt>
+            <dd className="qa-ref-mono">{numeroPedidoTemporario}</dd>
+          </div>
+        ) : (
+          <div className="qa-ref-ficha-row">
+            <dt>Pedido</dt>
+            <dd>Pedido em processamento</dd>
           </div>
         )}
         {valorFormatado && (
@@ -271,6 +288,11 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
           {" "}— {meta.desc}
         </div>
       </div>
+      {numeroPedidoTemporario && (
+        <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
+          O número definitivo será atualizado automaticamente após a criação do processo.
+        </p>
+      )}
       <p className="qa-ref-aceite-fineprint" style={{ marginTop: 12, paddingLeft: 0 }}>
         O Arsenal Inteligente é onde você acompanha esta contratação em tempo real:
         andamento do processo, documentos, prazos e mensagens da Equipe Quero Armas.
