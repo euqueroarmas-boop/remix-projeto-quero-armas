@@ -52,18 +52,18 @@ async function authorizeRequest(req: Request, contractId: string | undefined): P
     if (perfil) return true;
     // Cliente dono do contrato — pode disparar revalidação
     if (!contractId) return false;
-    const { data: cred } = await sb
-      .from("qa_cliente_credenciais")
-      .select("cliente_id")
+    const { data: cliente } = await sb
+      .from("qa_clientes")
+      .select("id")
       .eq("user_id", data.user.id)
       .maybeSingle();
-    if (!cred?.cliente_id) return false;
+    if (!cliente?.id) return false;
     const { data: contract } = await sb
       .from("qa_contracts")
       .select("cliente_id")
       .eq("id", contractId)
       .maybeSingle();
-    return !!contract && (contract as any).cliente_id === cred.cliente_id;
+    return !!contract && (contract as any).cliente_id === (cliente as any).id;
   } catch { return false; }
 }
 
