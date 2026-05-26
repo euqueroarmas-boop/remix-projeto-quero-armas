@@ -260,6 +260,34 @@ Deno.serve(async (req) => {
       mensagem: `qa-asaas-webhook: venda ${venda_id} marcada como PAGO`,
       payload: { event, paymentId, venda_id },
     });
+
+    // Gera protocolo oficial (QA-{SIGLA}-{ANO}-{SEQ}) — idempotente.
+    // Best-effort: falha NÃO compromete o webhook.
+    try {
+      const { data: protoData, error: protoErr } = await supabase.rpc(
+        "qa_gerar_protocolo",
+        { p_venda_id: venda_id },
+      );
+      if (protoErr) {
+        await logSistemaBackend({
+          tipo: "protocolo", status: "error",
+          mensagem: `qa-asaas-webhook: falha gerar protocolo venda ${venda_id}`,
+          payload: { venda_id, error: protoErr.message },
+        });
+      } else {
+        await logSistemaBackend({
+          tipo: "protocolo", status: "success",
+          mensagem: `qa-asaas-webhook: protocolo ${protoData} gerado p/ venda ${venda_id}`,
+          payload: { venda_id, numero_protocolo: protoData },
+        });
+      }
+    } catch (e) {
+      await logSistemaBackend({
+        tipo: "protocolo", status: "error",
+        mensagem: `qa-asaas-webhook: exceção gerar protocolo venda ${venda_id}`,
+        payload: { venda_id, error: String((e as any)?.message || e) },
+      });
+    }
   } else {
     await logSistemaBackend({
       tipo: "webhook", status: "info",
