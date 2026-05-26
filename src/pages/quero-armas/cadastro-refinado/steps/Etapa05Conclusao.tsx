@@ -189,7 +189,7 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
       const { data, error } = await filtered.maybeSingle();
       if (error) throw error;
       if (!data?.conteudo_renderizado) {
-        setErroBaixar("Contrato ainda não disponível para download. Tente novamente em instantes.");
+        setErroBaixar("Contrato ainda não disponível. Tente novamente em instantes.");
         return;
       }
       const w = window.open("", "_blank", "width=900,height=1100");
@@ -317,7 +317,7 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
             disabled={baixando}
             onClick={handleBaixarContrato}
           >
-            {baixando ? "Preparando…" : "Baixar contrato assinado"}
+            {baixando ? "Contrato sendo gerado" : "Baixar contrato aceito"}
           </button>
         )}
         {erroBaixar && <div className="qa-ref-error-text">{erroBaixar}</div>}
