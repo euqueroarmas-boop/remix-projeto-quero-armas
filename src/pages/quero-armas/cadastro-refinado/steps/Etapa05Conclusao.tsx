@@ -196,6 +196,9 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
         if (Object.keys(patch).length > 0) {
           update({ resultado: { ...r, ...patch } });
         }
+        if (data.portal_credenciais && !credenciais) {
+          setCredenciais(data.portal_credenciais);
+        }
       } catch { /* silencioso */ }
     };
     pollRef.current = window.setInterval(tick, 8000);
