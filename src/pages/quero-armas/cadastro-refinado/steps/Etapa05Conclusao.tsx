@@ -1,4 +1,4 @@
-import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen, Camera } from "lucide-react";
+import { Check, Clock, ShieldCheck, FileSignature, MailCheck, PackageOpen } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
