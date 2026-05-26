@@ -235,7 +235,7 @@ export function qaWelcomeHtml(opts: { name: string; email: string; tempPassword:
       ${diagBlock([
         { k: "Identificador", v: opts.email, mono: true },
         { k: "Senha provisória", v: opts.tempPassword, mono: true, tone: "warn" },
-        { k: "Endpoint", v: "Portal do Cliente · /cliente/login", mono: true },
+        { k: "Endpoint", v: "Arsenal do Cliente · /area-do-cliente/login", mono: true },
       ])}
       ${btn(url, "Entrar no Portal Tático")}
       ${hr}
