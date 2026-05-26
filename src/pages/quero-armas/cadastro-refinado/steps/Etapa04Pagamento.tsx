@@ -474,7 +474,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       subtitle={
         stage === "confirmed"
           ? "Estamos preparando seu contrato para assinatura."
-          : "Após a confirmação você assina o contrato digitalmente e libera o início do serviço."
+          : "Após a confirmação do pagamento, seu aceite eletrônico do contrato será registrado e o serviço será iniciado."
       }
       onBack={stage === "form" ? onBack : undefined}
     >
