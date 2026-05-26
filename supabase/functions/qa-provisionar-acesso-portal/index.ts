@@ -243,6 +243,20 @@ Deno.serve(async (req) => {
     } else {
       authUser = created.user;
       isNewUser = true;
+      // Persiste senha temporária (TTL 24h) para a UI de conclusão exibir.
+      // Limpa-se sozinha após expirar ou após o cliente trocar a senha.
+      try {
+        const expira = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        await admin
+          .from("qa_clientes")
+          .update({
+            senha_temporaria: tempPwd,
+            senha_temporaria_expira_em: expira,
+          })
+          .eq("id", cliente.id);
+      } catch (e) {
+        console.warn("[qa-provisionar-acesso-portal] falha persistir senha temp:", e);
+      }
     }
   }
 
