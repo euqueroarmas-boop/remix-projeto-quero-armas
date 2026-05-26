@@ -109,10 +109,8 @@ Deno.serve(async (req) => {
   if (variant === "original") path = (contract as any).original_pdf_path ?? null;
   else if (variant === "customer_signed") path = (contract as any).customer_signed_pdf_path ?? null;
   else {
-    // company_signed: cliente só pode baixar se empresa já assinou
-    if (!isStaff && !["pending_customer_signature","customer_signature_uploaded","validating","validated","rejected","pending_manual_review"].includes((contract as any).status)) {
-      return jsonResp({ error: "Contrato ainda não foi assinado pela Quero Armas" }, 409);
-    }
+    // Contrato de adesão: cliente pode baixar assim que o contrato é emitido.
+    // Prioriza versão "assinada pela empresa" se existir, senão o PDF original emitido.
     path = (contract as any).company_signed_pdf_path ?? (contract as any).original_pdf_path ?? null;
   }
 

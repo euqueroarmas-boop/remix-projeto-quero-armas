@@ -115,7 +115,13 @@ Deno.serve(async (req) => {
   if (!contract) return jsonResp({ error: "Contrato não encontrado" }, 404);
   if ((contract as any).cliente_id !== clienteId) return jsonResp({ error: "Acesso negado" }, 403);
 
-  const allowed = ["pending_customer_signature", "rejected", "pending_manual_review", "customer_signature_uploaded"];
+  const allowed = [
+    "generated_pending_company_signature",
+    "pending_customer_signature",
+    "rejected",
+    "pending_manual_review",
+    "customer_signature_uploaded",
+  ];
   if (!allowed.includes((contract as any).status)) {
     return jsonResp({ error: `Contrato em status ${(contract as any).status} não aceita upload` }, 409);
   }
