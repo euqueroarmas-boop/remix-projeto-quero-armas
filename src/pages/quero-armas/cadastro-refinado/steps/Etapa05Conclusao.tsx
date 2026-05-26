@@ -176,39 +176,40 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
     setErroBaixar(null);
     setBaixando(true);
     try {
-      const baseQuery: any = supabase
-        .from("qa_contracts")
-        .select("conteudo_renderizado, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash, status, created_at")
-        .order("created_at", { ascending: false })
-        .limit(1);
-      const filtered = r.venda_id
-        ? baseQuery.eq("venda_id", r.venda_id)
-        : r.cliente_id
-          ? baseQuery.eq("cliente_id", r.cliente_id)
-          : baseQuery;
-      const { data, error } = await filtered.maybeSingle();
-      if (error) throw error;
-      if (!data?.conteudo_renderizado) {
-        setErroBaixar("Contrato ainda não disponível. Tente novamente em instantes.");
+      if (!r.venda_id || !r.checkout_token) {
+        setErroBaixar("Não conseguimos identificar sua contratação. Recarregue a página e tente novamente.");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("qa-baixar-contrato-aceite", {
+        body: { venda_id: Number(r.venda_id), checkout_token: r.checkout_token },
+      });
+      if (error) {
+        // Edge function devolve 202 quando o contrato ainda não foi gerado.
+        const ctx: any = (error as any)?.context;
+        if (ctx?.status === 202) {
+          setErroBaixar("Contrato sendo gerado. Tente novamente em instantes.");
+          return;
+        }
+        throw error;
+      }
+      if (!data?.ok || !data?.html_doc) {
+        setErroBaixar(
+          data?.message ||
+            "Contrato ainda não disponível. Tente novamente em instantes.",
+        );
         return;
       }
       const w = window.open("", "_blank", "width=900,height=1100");
-      if (!w) return;
-      const hoje = new Date().toLocaleString("pt-BR");
-      const rodape = `Documento gerado em ${hoje}. Aceite eletrônico registrado em ${data.aceite_eletronico_data || "—"}, IP ${data.aceite_ip || "—"}, dispositivo ${data.aceite_user_agent || "—"}, hash de integridade ${data.aceite_hash || "—"}. Status atual: ${data.status || "—"}.`;
-      w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Contrato — Quero Armas</title>
-        <style>
-          body{font-family:Georgia,'Times New Roman',serif;color:#0a0a0a;max-width:780px;margin:32px auto;padding:0 24px;line-height:1.65;font-size:13px;}
-          h1{font-size:18px;text-align:center;text-transform:uppercase;letter-spacing:0.04em;}
-          h2,h3{font-size:13px;text-transform:uppercase;letter-spacing:0.04em;margin-top:24px;}
-          p{margin:10px 0;text-align:justify;} ul,ol{padding-left:22px;} li{margin:6px 0;}
-          .qa-rodape-probatorio{margin-top:36px;padding-top:14px;border-top:0.5px solid rgba(0,0,0,0.2);font-size:10.5px;color:#4a4a4a;text-align:left;}
-          @media print { body{margin:0;} }
-        </style></head><body>${data.conteudo_renderizado}<div class="qa-rodape-probatorio">${rodape}</div></body></html>`);
+      if (!w) {
+        setErroBaixar("Habilite pop-ups para baixar o contrato.");
+        return;
+      }
+      w.document.write(data.html_doc);
       w.document.close();
       setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 400);
     } catch (e: any) {
-      setErroBaixar(e?.message || "Não foi possível baixar o contrato agora.");
+      console.error("[Etapa05] baixar contrato falhou:", e);
+      setErroBaixar("Não foi possível baixar o contrato agora. Nossa equipe foi notificada.");
     } finally {
       setBaixando(false);
     }
