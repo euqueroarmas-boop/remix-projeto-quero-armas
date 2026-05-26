@@ -308,6 +308,42 @@ Deno.serve(async (req) => {
     return json({ error: "qa_clientes_link_failed", message: updErr.message }, 500);
   }
 
+  // 7.1) Garante vínculo em cliente_auth_links (idempotente).
+  // Sem isso o login do portal nega acesso ("Conta sem vínculo de cliente ativo").
+  try {
+    const { data: existingLink } = await admin
+      .from("cliente_auth_links")
+      .select("id, status, qa_cliente_id")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+    if (!existingLink) {
+      await admin.from("cliente_auth_links").insert({
+        qa_cliente_id: cliente.id,
+        user_id: authUser.id,
+        email,
+        status: "active",
+        activated_at: new Date().toISOString(),
+      });
+    } else if (
+      existingLink.status !== "active" ||
+      existingLink.qa_cliente_id !== cliente.id
+    ) {
+      await admin
+        .from("cliente_auth_links")
+        .update({
+          qa_cliente_id: cliente.id,
+          email,
+          status: "active",
+          activated_at: new Date().toISOString(),
+          motivo: null,
+          email_pendente: null,
+        })
+        .eq("id", existingLink.id);
+    }
+  } catch (e) {
+    console.warn("[qa-provisionar-acesso-portal] falha ao garantir cliente_auth_links:", e);
+  }
+
   // 8) Envia e-mail (boas-vindas / aviso de pagamento+contrato)
   const mail = await sendWelcomeEmail(admin, {
     email,
