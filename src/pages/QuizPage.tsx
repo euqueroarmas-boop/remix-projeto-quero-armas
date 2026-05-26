@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/shared/components/SEO';
-import { ChevronRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2, X, RotateCcw } from 'lucide-react';
 import QACadastroRefinadoHeader from './quero-armas/cadastro-refinado/components/QACadastroRefinadoHeader';
 import QACadastroRefinadoFooter from './quero-armas/cadastro-refinado/components/QACadastroRefinadoFooter';
 import './quero-armas/cadastro-refinado/styles/cadastroRefinado.css';
@@ -31,6 +31,8 @@ interface RecommendedService {
   name: string;
   desc: string;
   price?: string;
+  slug?: string;
+  priceCents?: number;
 }
 
 const questions: Question[] = [
@@ -232,7 +234,15 @@ function resolveCheckout(answers: Partial<Record<Question['id'], AnswerId>>, sco
   return checkoutUrl('operador-de-pistola-nivel-i', 'orientacao_necessaria', 'curso_operador');
 }
 
-function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>>) {
+interface Recommendation {
+  url: string;
+  title: string;
+  desc: string;
+  services: RecommendedService[];
+  total?: string;
+}
+
+function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>>): Recommendation {
   const scores = buildScores(answers);
   const url = resolveCheckout(answers, scores);
   const objetivo = answers.objetivo;
@@ -244,9 +254,9 @@ function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>
       title: 'Comprar arma como CAC',
       desc: 'Como voce ja tem CR ativo, o caminho indicado e contratar a sequencia de compra, registro/apostilamento e GTE.',
       services: [
-        { name: 'Autorizacao de compra de arma de fogo atirador esportivo (CAC)', desc: 'Pedido de autorizacao para aquisicao como CAC.', price: 'R$ 497' },
-        { name: 'Registro e apostilamento de arma de fogo (CAC)', desc: 'Registro da arma e vinculacao ao acervo.', price: 'R$ 247' },
-        { name: 'Guia de Trafego Especial (CAC)', desc: 'Guia para deslocamento conforme a finalidade autorizada.', price: 'R$ 147' },
+        { slug: 'autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac', name: 'Autorizacao de compra de arma de fogo atirador esportivo (CAC)', desc: 'Pedido de autorizacao para aquisicao como CAC.', price: 'R$ 497', priceCents: 49700 },
+        { slug: 'registro-e-apostilamento-de-arma-de-fogo-cac', name: 'Registro e apostilamento de arma de fogo (CAC)', desc: 'Registro da arma e vinculacao ao acervo.', price: 'R$ 247', priceCents: 24700 },
+        { slug: 'guia-de-trafego-especial-cac', name: 'Guia de Trafego Especial (CAC)', desc: 'Guia para deslocamento conforme a finalidade autorizada.', price: 'R$ 147', priceCents: 14700 },
       ],
       total: 'R$ 891',
     };
@@ -311,6 +321,7 @@ const QuizPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Partial<Record<Question['id'], AnswerId>>>({});
+  const [removedSlugs, setRemovedSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -346,6 +357,47 @@ const QuizPage = () => {
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
   const path = explainPath(answers);
   const recommendation = resolveRecommendation(answers);
+
+  // Permite ao cliente remover serviços recomendados e recalcular total + URL
+  // de checkout. A remoção só faz sentido quando há slug + priceCents (ex.: CAC).
+  const removableSlugs = useMemo(
+    () => recommendation.services.filter((s) => s.slug && typeof s.priceCents === 'number').map((s) => s.slug as string),
+    [recommendation.services]
+  );
+  const canCustomize = removableSlugs.length > 1;
+  const visibleServices = recommendation.services.filter((s) => !s.slug || !removedSlugs.has(s.slug));
+  const totalCents = visibleServices.reduce((acc, s) => acc + (s.priceCents ?? 0), 0);
+  const customTotalLabel = totalCents > 0
+    ? `R$ ${(totalCents / 100).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+    : null;
+  const allRemoved = canCustomize && visibleServices.length === 0;
+
+  const checkoutHref = useMemo(() => {
+    if (!canCustomize) return recommendation.url;
+    const selectedSlugs = visibleServices
+      .map((s) => s.slug)
+      .filter((s): s is string => !!s);
+    if (selectedSlugs.length === 0) return recommendation.url;
+    // Reaproveita a URL base do checkout substituindo apenas o parâmetro `servico`.
+    try {
+      const u = new URL(recommendation.url, window.location.origin);
+      u.searchParams.set('servico', selectedSlugs.join(','));
+      return `${u.pathname}?${u.searchParams.toString()}`;
+    } catch {
+      return recommendation.url;
+    }
+  }, [canCustomize, recommendation.url, visibleServices]);
+
+  const toggleRemove = (slug?: string) => {
+    if (!slug) return;
+    setRemovedSlugs((prev) => {
+      const next = new Set(prev);
+      if (next.has(slug)) next.delete(slug);
+      else next.add(slug);
+      return next;
+    });
+  };
+  const restoreAll = () => setRemovedSlugs(new Set());
   const answeredTrail = questions
     .filter((question) => answers[question.id])
     .map((question) => ({
@@ -386,27 +438,52 @@ const QuizPage = () => {
                 <p className="qa-ref-subtitle">{recommendation.desc}</p>
                 <div className="qa-ref-section">
                   <div className="qa-ref-opt-list">
-                    {recommendation.services.map((service, index) => (
-                      <div key={service.name} className="qa-ref-opt-card is-popular" style={{ cursor: 'default' }}>
-                        <div className="qa-ref-opt-icon" aria-hidden>
-                          <CheckCircle2 size={18} />
+                    {visibleServices.map((service, index) => {
+                      const removable = canCustomize && !!service.slug;
+                      return (
+                        <div key={service.slug || service.name} className="qa-ref-opt-card is-popular" style={{ cursor: 'default', position: 'relative' }}>
+                          <div className="qa-ref-opt-icon" aria-hidden>
+                            <CheckCircle2 size={18} />
+                          </div>
+                          <div className="qa-ref-opt-body">
+                            <span className="qa-ref-caps qa-ref-opt-eyebrow">
+                              SERVIÇO {index + 1} DE {visibleServices.length}
+                            </span>
+                            <div className="qa-ref-opt-title">{service.name}</div>
+                            <div className="qa-ref-opt-desc">{service.desc}</div>
+                          </div>
+                          {service.price && (
+                            <span className="qa-ref-opt-tag-popular" style={{ position: 'static', fontSize: 13 }}>
+                              {service.price}
+                            </span>
+                          )}
+                          {removable && (
+                            <button
+                              type="button"
+                              aria-label={`Remover ${service.name}`}
+                              onClick={() => toggleRemove(service.slug)}
+                              style={{
+                                position: 'absolute', top: 8, right: 8,
+                                width: 26, height: 26, borderRadius: '50%',
+                                border: '0.5px solid var(--qa-ref-border)',
+                                background: 'transparent', color: 'var(--qa-ref-ink-soft)',
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
                         </div>
-                        <div className="qa-ref-opt-body">
-                          <span className="qa-ref-caps qa-ref-opt-eyebrow">
-                            SERVIÇO {index + 1} DE {recommendation.services.length}
-                          </span>
-                          <div className="qa-ref-opt-title">{service.name}</div>
-                          <div className="qa-ref-opt-desc">{service.desc}</div>
-                        </div>
-                        {service.price && (
-                          <span className="qa-ref-opt-tag-popular" style={{ position: 'static', fontSize: 13 }}>
-                            {service.price}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
-                  {recommendation.total && (
+                  {allRemoved && (
+                    <p className="qa-ref-subtitle" style={{ marginTop: 12, color: 'var(--qa-ref-ink-soft)' }}>
+                      Você removeu todos os serviços. Restaure para continuar ou volte para o catálogo.
+                    </p>
+                  )}
+                  {(recommendation.total || customTotalLabel) && !allRemoved && (
                     <div
                       className="qa-ref-opt-card"
                       style={{ marginTop: 12, justifyContent: 'space-between', cursor: 'default' }}
@@ -415,9 +492,24 @@ const QuizPage = () => {
                         TOTAL DOS SERVIÇOS
                       </span>
                       <strong style={{ color: 'var(--qa-ref-accent)', fontFamily: 'Oswald, system-ui', fontSize: 22 }}>
-                        {recommendation.total}
+                        {customTotalLabel || recommendation.total}
                       </strong>
                     </div>
+                  )}
+                  {canCustomize && removedSlugs.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={restoreAll}
+                      style={{
+                        marginTop: 10, padding: '8px 12px', borderRadius: 'var(--qa-ref-radius)',
+                        background: 'transparent', color: 'var(--qa-ref-ink-soft)',
+                        border: '0.5px solid var(--qa-ref-border)', cursor: 'pointer',
+                        fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase',
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                      }}
+                    >
+                      <RotateCcw size={12} /> Restaurar serviços removidos
+                    </button>
                   )}
                   <div style={{ display: 'grid', gap: 10, marginTop: 18 }}>
                     <button
@@ -425,10 +517,11 @@ const QuizPage = () => {
                       aria-label="Contratar serviço recomendado"
                       data-testid="quiz-final-cta"
                       className="qa-ref-btn-primary"
-                      style={{ padding: '14px 18px', borderRadius: 'var(--qa-ref-radius)', border: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-                      onClick={() => navigate(recommendation.url)}
+                      disabled={allRemoved}
+                      style={{ padding: '14px 18px', borderRadius: 'var(--qa-ref-radius)', border: 0, cursor: allRemoved ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: allRemoved ? 0.5 : 1 }}
+                      onClick={() => !allRemoved && navigate(checkoutHref)}
                     >
-                      CONTRATAR SERVIÇO RECOMENDADO
+                      {visibleServices.length > 1 ? 'CONTRATAR SERVIÇOS SELECIONADOS' : 'CONTRATAR SERVIÇO SELECIONADO'}
                       <ChevronRight size={16} />
                     </button>
                     <button
