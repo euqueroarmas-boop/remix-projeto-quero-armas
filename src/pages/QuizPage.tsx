@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/shared/components/SEO';
-import { ChevronRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2, X, RotateCcw } from 'lucide-react';
 import QACadastroRefinadoHeader from './quero-armas/cadastro-refinado/components/QACadastroRefinadoHeader';
 import QACadastroRefinadoFooter from './quero-armas/cadastro-refinado/components/QACadastroRefinadoFooter';
 import './quero-armas/cadastro-refinado/styles/cadastroRefinado.css';
@@ -31,6 +31,8 @@ interface RecommendedService {
   name: string;
   desc: string;
   price?: string;
+  slug?: string;
+  priceCents?: number;
 }
 
 const questions: Question[] = [
