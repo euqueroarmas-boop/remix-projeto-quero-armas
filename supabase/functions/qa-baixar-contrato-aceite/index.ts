@@ -40,6 +40,23 @@ function escapeHtml(s: string | null | undefined): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Remove jargão técnico ("slug", "Identificador (slug)") do conteúdo do
+ * contrato/anexo antes de servir ao cliente. O snapshot (conteudo_renderizado)
+ * permanece intacto na base — apenas a apresentação é higienizada.
+ */
+function sanitizeTechnicalJargon(html: string): string {
+  if (!html) return html;
+  return html
+    // "Identificador (slug): xxx"  ->  "Identificador: xxx"
+    .replace(/Identificador\s*\(\s*slug\s*\)\s*:?/gi, "Identificador:")
+    // "(slug)" residual em qualquer outro contexto visível
+    .replace(/\(\s*slug\s*\)/gi, "")
+    // linhas/itens cuja única função era expor o slug
+    .replace(/<li[^>]*>\s*slug[^<]*<\/li>/gi, "")
+    .replace(/\bslug\s*:\s*[a-z0-9_-]+/gi, "");
+}
+
 function buildPrintableDocument(args: {
   conteudo_renderizado: string;
   contract_number: string | null;
@@ -75,7 +92,6 @@ function buildPrintableDocument(args: {
     `hash de integridade ${escapeHtml(args.aceite_hash || "—")}. ` +
     `Pedido nº ${escapeHtml(String(args.venda_id))}` +
     (args.cliente_id != null ? ` · Cliente ${escapeHtml(String(args.cliente_id))}` : "") +
-    (args.servico_slug ? ` · Serviço ${escapeHtml(args.servico_slug)}` : "") +
     ` · Valor ${escapeHtml(valorFmt)}` +
     ` · Template ${escapeHtml(args.template_codigo || "—")} v${escapeHtml(String(args.template_versao ?? "—"))}` +
     (args.contract_number ? ` · Nº ${escapeHtml(args.contract_number)}` : "") +
@@ -92,7 +108,7 @@ function buildPrintableDocument(args: {
   p{margin:10px 0;text-align:justify;} ul,ol{padding-left:22px;} li{margin:6px 0;}
   .qa-rodape-probatorio{margin-top:36px;padding-top:14px;border-top:0.5px solid rgba(0,0,0,0.2);font-size:10.5px;color:#4a4a4a;text-align:left;}
   @media print { body{margin:0;} }
-</style></head><body>${args.conteudo_renderizado}
+</style></head><body>${sanitizeTechnicalJargon(args.conteudo_renderizado)}
 <div class="qa-rodape-probatorio">${rodape}</div>
 </body></html>`;
 }
