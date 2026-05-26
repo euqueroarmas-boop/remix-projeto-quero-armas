@@ -138,10 +138,11 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
   };
 
   /* Prioridade de exibição do número de pedido/protocolo:
-   * 1. número definitivo do processo (numero_processo)
-   * 2. número temporário derivado da venda (nunca fixo/hardcoded)
-   * 3. texto neutro quando ainda não há identificador */
-  const numeroPedidoDefinitivo = r.numero_processo || null;
+   * 1. número do processo PF/administrativo (numero_processo) — só depois de protocolado
+   * 2. protocolo OFICIAL da Quero Armas (QA-{SIGLA}-{ANO}-{SEQ}) gerado no webhook PAGO
+   * 3. número temporário derivado da venda enquanto webhook não confirmou */
+  const numeroPedidoDefinitivo =
+    r.numero_processo || (r as any).numero_protocolo || null;
   const numeroPedidoTemporario =
     !numeroPedidoDefinitivo && r.venda_id
       ? `PED-${String(r.venda_id).slice(0, 8).toUpperCase()}`
@@ -167,8 +168,15 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
           body: { venda_id: Number(r.venda_id), checkout_token: r.checkout_token },
         });
         if (error || !data) return;
+        const patch: any = {};
         if (data.pago && statusAtual === "aguardando_pagamento") {
-          update({ resultado: { ...r, pagamento_status: "pagamento_confirmado" } });
+          patch.pagamento_status = "pagamento_confirmado";
+        }
+        if (data.numero_protocolo && !(r as any).numero_protocolo) {
+          patch.numero_protocolo = data.numero_protocolo;
+        }
+        if (Object.keys(patch).length > 0) {
+          update({ resultado: { ...r, ...patch } });
         }
       } catch { /* silencioso */ }
     };

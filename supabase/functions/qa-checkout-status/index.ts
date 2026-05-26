@@ -65,6 +65,17 @@ Deno.serve(async (req) => {
   const cobStatus = String(venda.cobranca_status || "").toLowerCase();
   const pago = statusUpper === "PAGO" || cobStatus === "confirmada";
 
+  // Protocolo oficial (QA-{SIGLA}-{ANO}-{SEQ}) — só existe após webhook PAGO.
+  let numero_protocolo: string | null = null;
+  try {
+    const { data: proto } = await supabase
+      .from("qa_protocolos")
+      .select("numero")
+      .eq("venda_id", venda_id)
+      .maybeSingle();
+    numero_protocolo = (proto?.numero as string) || null;
+  } catch { /* best-effort */ }
+
   return json({
     ok: true,
     venda_id: venda.id,
@@ -78,5 +89,6 @@ Deno.serve(async (req) => {
     asaas_due_date: venda.asaas_due_date,
     valor: venda.valor_a_pagar,
     atualizado_em: venda.cobranca_gerada_em || null,
+    numero_protocolo,
   });
 });
