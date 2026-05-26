@@ -137,8 +137,16 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
     boleto: "Boleto bancário",
   };
 
-  const numeroPedido =
-    r.numero_processo || null;
+  /* Prioridade de exibição do número de pedido/protocolo:
+   * 1. número definitivo do processo (numero_processo)
+   * 2. número temporário derivado da venda (nunca fixo/hardcoded)
+   * 3. texto neutro quando ainda não há identificador */
+  const numeroPedidoDefinitivo = r.numero_processo || null;
+  const numeroPedidoTemporario =
+    !numeroPedidoDefinitivo && r.venda_id
+      ? `PED-${String(r.venda_id).slice(0, 8).toUpperCase()}`
+      : null;
+  const numeroPedido = numeroPedidoDefinitivo || numeroPedidoTemporario;
 
   /* Acesso ao Arsenal só é "enviado" quando o status real reflete isso ou serviço liberado.
    * Arsenal Inteligente continua GRATUITO e nunca bloqueado — apenas o aviso de envio
