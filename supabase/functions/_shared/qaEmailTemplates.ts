@@ -13,7 +13,13 @@
  */
 
 const LOGO_URL = "https://ogkltfqvzweeqkfmrzts.supabase.co/storage/v1/object/public/contract-assets/quero-armas-logo.png";
-const PORTAL_URL = "https://www.euqueroarmas.com.br/quero-armas/cliente/login";
+/**
+ * Rota REAL do portal/Arsenal do cliente (ver src/pages/quero-armas/QARoutes.tsx).
+ * NÃO usar `/quero-armas/cliente/login` — essa rota foi removida e cai no catch-all
+ * que joga o cliente na home. O link tem que abrir o login do Arsenal, que após
+ * autenticação redireciona automaticamente para /area-do-cliente.
+ */
+const PORTAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente/login";
 const SITE_URL = "https://www.euqueroarmas.com.br";
 const SUPPORT_EMAIL = "naoresponda@euqueroarmas.com.br";
 
@@ -229,7 +235,7 @@ export function qaWelcomeHtml(opts: { name: string; email: string; tempPassword:
       ${diagBlock([
         { k: "Identificador", v: opts.email, mono: true },
         { k: "Senha provisória", v: opts.tempPassword, mono: true, tone: "warn" },
-        { k: "Endpoint", v: "Portal do Cliente · /cliente/login", mono: true },
+        { k: "Endpoint", v: "Arsenal do Cliente · /area-do-cliente/login", mono: true },
       ])}
       ${btn(url, "Entrar no Portal Tático")}
       ${hr}
@@ -484,7 +490,8 @@ export const qaGenericText = (o: { name?: string; subject: string; message: stri
 // 11. BEM-VINDO AO ARSENAL (conta gratuita pública — pós-cadastro)
 //    Identidade: Arsenal UI (papel + âmbar + header escuro)
 // ════════════════════════════════════════════════════════════════════
-const ARSENAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente/arsenal";
+/** Arsenal = portal do cliente. Rota real: /area-do-cliente. */
+const ARSENAL_URL = "https://www.euqueroarmas.com.br/area-do-cliente";
 
 export function qaArsenalWelcomeHtml(opts: {
   name: string;
@@ -508,7 +515,7 @@ export function qaArsenalWelcomeHtml(opts: {
         { k: "Identificador", v: opts.email, mono: true },
         { k: "Plano", v: "GRATUITO · VITALÍCIO", mono: true, tone: "success" },
         { k: "Capacidade", v: "ARMAS, CRAFs, GTEs, DOCUMENTOS", mono: true },
-        { k: "Endpoint", v: "/area-do-cliente/arsenal", mono: true },
+        { k: "Endpoint", v: "/area-do-cliente", mono: true },
       ], AMBER)}
       ${btn(url, "Entrar no Arsenal")}
       ${hr}
@@ -544,7 +551,7 @@ export function qaCadastroExistenteHtml(opts: {
 }) {
   const firstName = (opts.name || "").trim().split(/\s+/)[0] || "Cliente";
   const loginUrl = opts.loginUrl || "https://www.euqueroarmas.com.br/area-do-cliente/login";
-  const recuperarUrl = opts.recuperarUrl || "https://www.euqueroarmas.com.br/area-do-cliente/recuperar-senha";
+  const recuperarUrl = opts.recuperarUrl || "https://www.euqueroarmas.com.br/redefinir-senha";
   const motivoTxt = opts.motivo === "email_ja_cadastrado"
     ? "Já existe um Arsenal vinculado a este e-mail."
     : "Já existe um Arsenal vinculado a este CPF.";
