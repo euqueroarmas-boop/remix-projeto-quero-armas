@@ -159,8 +159,13 @@ export default function PendenciasEssenciaisModal({
           <Button variant="ghost" size="sm" onClick={close} className="text-slate-500">
             <X className="h-3.5 w-3.5 mr-1" /> Fechar
           </Button>
-          <Button variant="outline" size="sm" onClick={goToList}>
-            Ver lista completa em /clientes
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToList}
+            className="border-slate-300 bg-white text-slate-900 hover:bg-slate-100 hover:text-slate-900"
+          >
+            Ver lista completa
           </Button>
         </div>
       </DialogContent>
