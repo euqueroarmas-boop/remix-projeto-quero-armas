@@ -45,6 +45,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   const [servicos, setServicos] = useState<
     Array<{ id: string; slug: string; nome: string; preco: number }>
   >([]);
+  const [catalogoCarregado, setCatalogoCarregado] = useState(false);
+  const [catalogoErro, setCatalogoErro] = useState<string | null>(null);
   // Mantém compat para chamadas antigas/edge function: 1º serviço como "principal".
   const servicoIdPrincipal = servicos[0]?.id ?? null;
   const nomeServicoPrincipal = servicos[0]?.nome ?? null;
@@ -75,12 +77,27 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         : state.servicoSlug
           ? [state.servicoSlug]
           : [];
-    if (slugs.length === 0) return;
+    if (slugs.length === 0) {
+      setServicos([]);
+      setPreco(0);
+      setCatalogoCarregado(true);
+      setCatalogoErro(null);
+      return;
+    }
     (async () => {
-      const { data } = await supabase
+      setCatalogoCarregado(false);
+      setCatalogoErro(null);
+      const { data, error } = await supabase
         .from("qa_servicos_catalogo")
         .select("id, preco, nome, slug")
-        .in("slug", slugs);
+        .in("slug", slugs)
+        .eq("ativo", true);
+      if (error) {
+        console.error("[Etapa04] falha ao carregar catálogo:", error);
+        setCatalogoErro("Não foi possível carregar os serviços. Recarregue a página.");
+        setCatalogoCarregado(true);
+        return;
+      }
       const rows = (data || []) as Array<{
         id: string;
         slug: string;
@@ -100,6 +117,12 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       }));
       setServicos(normalized);
       setPreco(normalized.reduce((acc, r) => acc + r.preco, 0));
+      setCatalogoCarregado(true);
+      if (normalized.length === 0) {
+        setCatalogoErro(
+          "Nenhum serviço ativo encontrado para esta contratação. Selecione um serviço novamente.",
+        );
+      }
     })();
   }, [state.servicosSlugs?.join(","), state.servicoSlug]);
 
@@ -484,10 +507,32 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         <div>
           <div className="qa-ref-total-label">Total a pagar</div>
           <div className="qa-ref-caps" style={{ marginTop: 4 }}>
-            {servicos.length > 1
-              ? `${servicos.length} serviços selecionados`
-              : "1 serviço selecionado"}
+            {servicos.length === 0
+              ? "Nenhum serviço selecionado"
+              : servicos.length === 1
+                ? "1 serviço selecionado"
+                : `${servicos.length} serviços selecionados`}
           </div>
+          {servicos.length > 0 && (
+            <ul
+              style={{
+                marginTop: 8,
+                paddingLeft: 0,
+                listStyle: "none",
+                fontSize: 13,
+                color: "var(--qa-ref-ink-soft)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              {servicos.map((s) => (
+                <li key={s.id}>
+                  · {s.nome} — {formatarReais(Math.round(s.preco * 100))}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
           <div className="qa-ref-total-value">
@@ -506,6 +551,28 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           )}
         </div>
       </div>
+
+      {stage === "form" && catalogoCarregado && servicos.length === 0 && (
+        <div
+          className="qa-ref-pay-panel"
+          style={{ marginTop: 16, borderColor: "var(--qa-ref-danger, #b91c1c)" }}
+        >
+          <div className="qa-ref-pay-status">Selecione um serviço para continuar</div>
+          <p style={{ marginTop: 10, fontSize: 13.5, color: "var(--qa-ref-ink-soft)" }}>
+            {catalogoErro ||
+              "Não identificamos nenhum serviço vinculado a esta contratação. Volte e escolha o serviço desejado para que possamos exibir os valores e as opções de parcelamento."}
+          </p>
+          <div style={{ marginTop: 14 }}>
+            <button
+              type="button"
+              className="qa-ref-btn qa-ref-btn-primary"
+              onClick={() => navigate("/cadastro?etapa=1")}
+            >
+              Escolher serviço
+            </button>
+          </div>
+        </div>
+      )}
 
       {stage === "form" && (
         <>
@@ -730,7 +797,9 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           <div style={{ marginTop: 28 }}>
             <button
               className="qa-ref-btn qa-ref-btn-primary"
-              disabled={!state.aceiteContrato}
+              disabled={
+                !state.aceiteContrato || servicos.length === 0 || !pricingSelecionado
+              }
               onClick={handleSubmit}
             >
               {labelBtn}
