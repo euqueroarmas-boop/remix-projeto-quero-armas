@@ -26,7 +26,7 @@ interface Contract {
 }
 
 const STATUS_MAP: Record<string, { label: string; tone: "muted" | "info" | "warn" | "ok" | "err" }> = {
-  generated_pending_company_signature: { label: "AGUARDANDO ASSINATURA DA QUERO ARMAS", tone: "warn" },
+  generated_pending_company_signature: { label: "DISPONÍVEL PARA ASSINATURA", tone: "info" },
   pending_customer_signature: { label: "DISPONÍVEL PARA ASSINATURA", tone: "info" },
   customer_signature_uploaded: { label: "AGUARDANDO ENVIO DO PDF ASSINADO", tone: "info" },
   validating: { label: "ASSINATURA EM VALIDAÇÃO", tone: "info" },
@@ -213,8 +213,15 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
   }
 
   const meta = STATUS_MAP[contract.status] || { label: contract.status.toUpperCase(), tone: "muted" as const };
-  const canDownloadCompany = !!contract.company_signed_at;
-  const canUpload = ["pending_customer_signature", "rejected", "pending_manual_review", "customer_signature_uploaded"].includes(contract.status);
+  // Contrato de adesão: cliente pode baixar assim que o contrato é emitido.
+  const canDownloadCompany = !!contract.issued_at;
+  const canUpload = [
+    "generated_pending_company_signature",
+    "pending_customer_signature",
+    "rejected",
+    "pending_manual_review",
+    "customer_signature_uploaded",
+  ].includes(contract.status);
   const motivoFalha = contract.validation_details?.motivo_falha as string | undefined;
 
   return (
@@ -232,10 +239,6 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
         <li className="flex items-center gap-2">
           <CheckCircle2 className={`h-3.5 w-3.5 ${contract.issued_at ? "text-emerald-600" : "text-neutral-300"}`} />
           Contrato emitido {contract.issued_at && <span className="text-neutral-400">· {new Date(contract.issued_at).toLocaleString("pt-BR")}</span>}
-        </li>
-        <li className="flex items-center gap-2">
-          <ShieldCheck className={`h-3.5 w-3.5 ${contract.company_signed_at ? "text-emerald-600" : "text-neutral-300"}`} />
-          Assinatura da Quero Armas {contract.company_signed_at && <span className="text-neutral-400">· {new Date(contract.company_signed_at).toLocaleString("pt-BR")}</span>}
         </li>
         <li className="flex items-center gap-2">
           <Clock className={`h-3.5 w-3.5 ${contract.customer_uploaded_at ? "text-emerald-600" : "text-neutral-300"}`} />
@@ -310,7 +313,7 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
       </div>
 
       <p className="mt-3 text-[11px] text-neutral-500">
-        O contrato deve ser assinado com Gov.br ou certificado ICP-Brasil. A validação é criptográfica — não usamos OCR.
+        Contrato de adesão: baixe, assine com Gov.br ou certificado ICP-Brasil e reenvie. A validação é criptográfica — não usamos OCR.
       </p>
     </div>
   );
