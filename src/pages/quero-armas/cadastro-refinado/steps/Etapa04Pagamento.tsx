@@ -208,13 +208,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   const labelBtn = useMemo(() => {
     if (!pricingSelecionado) return "Continuar";
     const total = formatarReais(pricingSelecionado.valorTotal);
-    if (state.formaPagamento === "pix") return `Gerar PIX e assinar contrato — ${total}`;
-    if (state.formaPagamento === "cartao") {
-      const n = pricingSelecionado.parcelas;
-      return `Pagar ${n}x e assinar contrato — ${total}`;
-    }
-    return `Gerar boleto e assinar contrato — ${total}`;
-  }, [pricingSelecionado, state.formaPagamento]);
+    return `PAGAMENTO E ACEITE DO CONTRATO — ${total}`;
+  }, [pricingSelecionado]);
 
   async function handleSubmit() {
     setError(null);
