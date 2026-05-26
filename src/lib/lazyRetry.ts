@@ -57,7 +57,19 @@ export function lazyRetry<T extends ComponentType<any>>(
               localStorage.getItem(RELOAD_KEY) ||
               sessionStorage.getItem(RELOAD_KEY);
             const ts = rawTs ? parseInt(rawTs, 10) : 0;
-            const alreadyReloaded = ts && Date.now() - ts < RELOAD_MAX_MS;
+            // Fallback à prova de iframe: alguns previews limpam localStorage
+            // entre navegações. Se a URL já tem ?_cb=... significa que já
+            // recarregamos uma vez nesta sessão de navegação — não recarregar
+            // de novo, deixar o erro subir para o ErrorBoundary.
+            let urlHasCacheBuster = false;
+            try {
+              urlHasCacheBuster = new URL(window.location.href).searchParams.has("_cb");
+            } catch {
+              urlHasCacheBuster = false;
+            }
+            const alreadyReloaded =
+              urlHasCacheBuster ||
+              (ts && Date.now() - ts < RELOAD_MAX_MS);
             
             logSistema({
               tipo: "erro",
