@@ -170,6 +170,13 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
 
   async function downloadContract(c: Contract) {
     setDownloadingId(c.id);
+    // Abre a janela SÍNCRONA dentro do gesto do usuário (iOS Safari exige isso).
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(
+        '<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carregando contrato…</title><body style="font-family:system-ui;padding:24px;color:#444">Carregando contrato…</body>',
+      );
+    }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
@@ -187,15 +194,16 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
         throw new Error(err.error || `HTTP ${resp.status}`);
       }
       const blob = await resp.blob();
-      const isHtml = (resp.headers.get("Content-Type") || "").includes("text/html");
-      const ext = isHtml ? "html" : "pdf";
       const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `contrato-${c.contract_number ?? c.id.slice(0, 8)}.${ext}`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+      if (win && !win.closed) {
+        win.location.href = blobUrl;
+      } else {
+        // Fallback (popup bloqueado): navega na própria aba.
+        window.location.href = blobUrl;
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e: any) {
+      if (win && !win.closed) win.close();
       toast.error(`Falha ao baixar contrato: ${e?.message ?? "erro"}`);
     } finally {
       setDownloadingId(null);
