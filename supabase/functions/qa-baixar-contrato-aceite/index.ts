@@ -106,9 +106,43 @@ Deno.serve(async (req) => {
 
   const venda_id = Number(body?.venda_id);
   const checkout_token = String(body?.checkout_token || "");
-  if (!Number.isFinite(venda_id) || venda_id <= 0) return json({ error: "venda_id_required" }, 400);
-  if (!checkout_token || checkout_token.length < 16 || checkout_token.length > 256) {
-    return json({ error: "checkout_token_required" }, 400);
+
+  // Resposta genérica para QUALQUER falha de autorização — nunca revela
+  // se o problema foi venda inexistente, token errado, expirado, origem
+  // incompatível ou status inválido. Detalhes ficam apenas em logs_sistema.
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    null;
+  const userAgent = req.headers.get("user-agent") || null;
+  const denyGeneric = async (motivo: string, extra: Record<string, unknown> = {}) => {
+    await logSistemaBackend({
+      tipo: "contrato",
+      status: "warning",
+      mensagem: "qa-baixar-contrato-aceite: acesso negado",
+      payload: {
+        venda_id: Number.isFinite(venda_id) ? venda_id : null,
+        motivo, // nunca contém token
+        ip,
+        user_agent: userAgent,
+        ...extra,
+      },
+    });
+    return json({ error: "acesso_negado" }, 401);
+  };
+
+  // Formato: token cripto-aleatório base64url/hex/alfanum, 24–256 chars.
+  // Validações puramente sintáticas — não revelam ao cliente.
+  if (!Number.isFinite(venda_id) || venda_id <= 0) {
+    return denyGeneric("venda_id_invalido");
+  }
+  if (
+    !checkout_token ||
+    checkout_token.length < 24 ||
+    checkout_token.length > 256 ||
+    !/^[A-Za-z0-9_\-]+$/.test(checkout_token)
+  ) {
+    return denyGeneric("token_formato_invalido");
   }
 
   const sb = createClient(
@@ -129,21 +163,44 @@ Deno.serve(async (req) => {
     await logSistemaBackend({
       tipo: "erro", status: "error",
       mensagem: "qa-baixar-contrato-aceite: falha ao ler qa_vendas",
-      payload: { venda_id, detail: vErr.message },
+      payload: { venda_id, detail: vErr.message, ip, user_agent: userAgent },
     });
     return json({ error: "db_error" }, 500);
   }
-  if (!venda) return json({ error: "venda_not_found" }, 404);
+  if (!venda) return denyGeneric("venda_inexistente");
   if ((venda.cobranca_origem || "") !== "checkout_site") {
-    return json({ error: "venda_nao_eh_checkout_publico" }, 403);
+    return denyGeneric("origem_incompativel");
   }
 
+  // Sempre executa hash + compare em tempo constante, mesmo quando o
+  // hash da venda está vazio — evita timing oracle entre "sem token na
+  // venda" e "token errado".
   const submittedHash = await sha256Hex(checkout_token);
-  if (!venda.checkout_token_hash || !constantTimeEqual(submittedHash, venda.checkout_token_hash)) {
-    return json({ error: "checkout_token_invalido" }, 401);
+  const storedHash = venda.checkout_token_hash || "0".repeat(64);
+  const hashOk = constantTimeEqual(submittedHash, storedHash) && !!venda.checkout_token_hash;
+  if (!hashOk) {
+    return denyGeneric("token_nao_confere");
   }
-  if (!venda.checkout_token_expires_at || new Date(venda.checkout_token_expires_at).getTime() < Date.now()) {
-    return json({ error: "checkout_token_expirado" }, 401);
+  if (
+    !venda.checkout_token_expires_at ||
+    new Date(venda.checkout_token_expires_at).getTime() < Date.now()
+  ) {
+    // Após expirar, exigir login no Arsenal — mensagem amigável mas
+    // sem confirmar que o token estava certo.
+    await logSistemaBackend({
+      tipo: "contrato",
+      status: "warning",
+      mensagem: "qa-baixar-contrato-aceite: token expirado",
+      payload: { venda_id, ip, user_agent: userAgent },
+    });
+    return json(
+      {
+        error: "acesso_expirado",
+        message:
+          "Este link público expirou. Acesse o Arsenal com sua conta para baixar o contrato.",
+      },
+      401,
+    );
   }
 
   const statusUpper = String(venda.status || "").toUpperCase().trim();
@@ -165,7 +222,7 @@ Deno.serve(async (req) => {
     await logSistemaBackend({
       tipo: "erro", status: "error",
       mensagem: "qa-baixar-contrato-aceite: falha ao ler qa_contracts",
-      payload: { venda_id, detail: cErr.message },
+      payload: { venda_id, detail: cErr.message, ip, user_agent: userAgent },
     });
     return json({ error: "db_error" }, 500);
   }
