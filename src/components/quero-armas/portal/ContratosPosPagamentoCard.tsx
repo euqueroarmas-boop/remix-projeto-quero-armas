@@ -169,20 +169,32 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
   }, [clienteIdLegado]);
 
   async function downloadContract(c: Contract) {
-    if (!c.original_pdf_path) {
-      toast.error("PDF do contrato indisponível");
-      return;
-    }
     setDownloadingId(c.id);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-serve-contract-pdf", {
-        body: { contract_id: c.id, variant: "original" },
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token ?? ""}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ contract_id: c.id, variant: "company_signed" }),
       });
-      if (error) throw error;
-      // qa-serve-contract-pdf retorna { url } assinado
-      const url = (data as any)?.url;
-      if (!url) throw new Error("URL não retornada");
-      window.open(url, "_blank", "noopener,noreferrer");
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({} as any));
+        throw new Error(err.error || `HTTP ${resp.status}`);
+      }
+      const blob = await resp.blob();
+      const isHtml = (resp.headers.get("Content-Type") || "").includes("text/html");
+      const ext = isHtml ? "html" : "pdf";
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `contrato-${c.contract_number ?? c.id.slice(0, 8)}.${ext}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     } catch (e: any) {
       toast.error(`Falha ao baixar contrato: ${e?.message ?? "erro"}`);
     } finally {
@@ -333,7 +345,7 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
                 size="sm"
                 variant="outline"
                 onClick={() => downloadContract(c)}
-                disabled={downloadingId === c.id || !c.original_pdf_path}
+                disabled={downloadingId === c.id}
                 className="h-8 text-[11px]"
               >
                 <Download className="h-3 w-3 mr-1.5" />
