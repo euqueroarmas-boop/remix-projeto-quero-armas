@@ -64,6 +64,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
 
   const pollRef = useRef<number | null>(null);
   const pollStartRef = useRef<number>(0);
+  const resumedRef = useRef(false);
+  const [checkingNow, setCheckingNow] = useState(false);
   const barcodeRef = useRef<SVGSVGElement | null>(null);
   const resultadoRef = useRef(state.resultado);
   useEffect(() => {
@@ -186,6 +188,37 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
 
   useEffect(() => () => { if (pollRef.current) window.clearInterval(pollRef.current); }, []);
 
+  /** Consulta o status uma única vez. Retorna true se já está pago. */
+  const checkPaymentOnce = useCallback(
+    async (venda_id: number, checkout_token: string): Promise<boolean> => {
+      try {
+        const { data, error } = await supabase.functions.invoke("qa-checkout-status", {
+          body: { venda_id, checkout_token },
+        });
+        if (error) {
+          console.warn("[Etapa04] status err:", error);
+          return false;
+        }
+        if (data?.pago) {
+          if (pollRef.current) window.clearInterval(pollRef.current);
+          setStage("confirmed");
+          update({
+            resultado: {
+              ...(resultadoRef.current || {}),
+              pagamento_status: "pagamento_confirmado",
+            },
+          });
+          window.setTimeout(() => onNext(), 4000);
+          return true;
+        }
+      } catch (e) {
+        console.warn("[Etapa04] poll exception:", e);
+      }
+      return false;
+    },
+    [onNext, update],
+  );
+
   const startPolling = useCallback(
     (venda_id: number, checkout_token: string) => {
       if (pollRef.current) window.clearInterval(pollRef.current);
@@ -198,35 +231,91 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           setPollTimedOut(true);
           return;
         }
-        try {
-          const { data, error } = await supabase.functions.invoke("qa-checkout-status", {
-            body: { venda_id, checkout_token },
-          });
-          if (error) {
-            console.warn("[Etapa04] status err:", error);
-            return;
-          }
-          if (data?.pago) {
-            if (pollRef.current) window.clearInterval(pollRef.current);
-            setStage("confirmed");
-            update({
-              resultado: {
-                ...(resultadoRef.current || {}),
-                pagamento_status: "pagamento_confirmado",
-              },
-            });
-            window.setTimeout(() => onNext(), 4000);
-          }
-        } catch (e) {
-          console.warn("[Etapa04] poll exception:", e);
-        }
+        await checkPaymentOnce(venda_id, checkout_token);
       };
 
       pollRef.current = window.setInterval(tick, POLL_INTERVAL_MS);
       window.setTimeout(tick, 1000);
     },
-    [onNext, update],
+    [checkPaymentOnce],
   );
+
+  /**
+   * Retoma polling após reload/retorno da aba: se o estado persistido tem
+   * venda_id + checkout_token e o pagamento estava "aguardando", reidrata
+   * o stage e volta a consultar o backend automaticamente.
+   */
+  useEffect(() => {
+    if (resumedRef.current) return;
+    const r: any = state.resultado || {};
+    const vendaIdNum = Number(r.venda_id);
+    const token: string = r.checkout_token || "";
+    if (
+      Number.isFinite(vendaIdNum) &&
+      vendaIdNum > 0 &&
+      token.length >= 16 &&
+      r.pagamento_status === "aguardando_pagamento"
+    ) {
+      resumedRef.current = true;
+      const billing =
+        (r.billing_type as PaymentData["billing_type"]) ||
+        (state.formaPagamento === "pix"
+          ? "PIX"
+          : state.formaPagamento === "boleto"
+            ? "BOLETO"
+            : "CREDIT_CARD");
+      setPay({
+        venda_id: vendaIdNum,
+        checkout_token: token,
+        asaas_payment_id: r.asaas_payment_id ?? null,
+        asaas_invoice_url: r.asaas_invoice_url ?? null,
+        asaas_bank_slip_url: r.asaas_bank_slip_url ?? null,
+        asaas_pix_payload: r.asaas_pix_payload ?? null,
+        billing_type: billing,
+        parcelas: Number(r.parcelas) || 1,
+        valor_cobrado: Number(r.valor_cobrado) || 0,
+      });
+      setStage("awaiting");
+      // Verifica imediatamente — webhook pode já ter confirmado durante o reload.
+      void checkPaymentOnce(vendaIdNum, token).then((ok) => {
+        if (!ok) startPolling(vendaIdNum, token);
+      });
+    }
+  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling]);
+
+  /**
+   * Quando o usuário volta para a aba (após pagar no Asaas em outra aba),
+   * dispara verificação imediata em vez de esperar o próximo tick do polling.
+   */
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      if (!pay) return;
+      void checkPaymentOnce(pay.venda_id, pay.checkout_token);
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [pay, checkPaymentOnce]);
+
+  async function handleCheckNow() {
+    if (!pay || checkingNow) return;
+    setCheckingNow(true);
+    try {
+      const ok = await checkPaymentOnce(pay.venda_id, pay.checkout_token);
+      if (!ok) {
+        // Reinicia janela de polling para dar mais 30min a partir daqui.
+        pollStartRef.current = Date.now();
+        setPollTimedOut(false);
+        if (!pollRef.current) startPolling(pay.venda_id, pay.checkout_token);
+      }
+    } finally {
+      setCheckingNow(false);
+    }
+  }
 
   const labelBtn = useMemo(() => {
     if (!pricingSelecionado) return "Continuar";
