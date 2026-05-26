@@ -249,10 +249,20 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
               : slugsContratados.map(humanizeSlug).join(" + ") || "—"}
           </dd>
         </div>
-        {numeroPedido && (
+        {numeroPedidoDefinitivo ? (
           <div className="qa-ref-ficha-row">
-            <dt>{r.numero_processo ? "Processo" : "Pedido"}</dt>
-            <dd className="qa-ref-mono">{numeroPedido}</dd>
+            <dt>Processo</dt>
+            <dd className="qa-ref-mono">{numeroPedidoDefinitivo}</dd>
+          </div>
+        ) : numeroPedidoTemporario ? (
+          <div className="qa-ref-ficha-row">
+            <dt>Pedido temporário</dt>
+            <dd className="qa-ref-mono">{numeroPedidoTemporario}</dd>
+          </div>
+        ) : (
+          <div className="qa-ref-ficha-row">
+            <dt>Pedido</dt>
+            <dd>Pedido em processamento</dd>
           </div>
         )}
         {valorFormatado && (
