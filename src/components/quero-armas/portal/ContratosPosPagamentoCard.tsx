@@ -43,8 +43,8 @@ const formatDate = (d: string | null) => {
 
 type Tone = "warn" | "ok" | "info" | "danger";
 const STATUS_LABELS: Record<string, { label: string; tone: Tone }> = {
-  generated_pending_company_signature: { label: "AGUARDANDO ASSINATURA QUERO ARMAS", tone: "warn" },
-  pending_customer_signature: { label: "AGUARDANDO SUA ASSINATURA", tone: "warn" },
+  generated_pending_company_signature: { label: "DISPONÍVEL PARA SUA ASSINATURA", tone: "info" },
+  pending_customer_signature: { label: "AGUARDANDO SUA ASSINATURA", tone: "info" },
   customer_signature_uploaded: { label: "CONTRATO ENVIADO — EM VALIDAÇÃO", tone: "info" },
   validating: { label: "VALIDANDO ASSINATURA", tone: "info" },
   validated: { label: "ASSINADO E VALIDADO", tone: "ok" },
