@@ -83,6 +83,8 @@ function maskCep(v: string): string {
 }
 
 export default function Etapa02Documentos({ state, update, updateDados, onNext, onBack }: Props) {
+  const { user: authUser } = useAuth();
+  const isClienteLogado = !!authUser?.id;
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [docsLoading, setDocsLoading] = useState<boolean>(true);
 
