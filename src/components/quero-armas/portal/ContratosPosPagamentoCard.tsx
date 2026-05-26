@@ -99,6 +99,7 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [revalidatingId, setRevalidatingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   async function reload() {
@@ -241,6 +242,23 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
     }
   }
 
+  async function revalidate(c: Contract) {
+    setRevalidatingId(c.id);
+    try {
+      const { error } = await supabase.functions.invoke("qa-validate-customer-signature", {
+        body: { contract_id: c.id },
+      });
+      if (error) throw error;
+      toast.success("Revalidando assinatura…");
+      setTimeout(reload, 1500);
+      setTimeout(reload, 5000);
+    } catch (e: any) {
+      toast.error(`Falha ao revalidar: ${e?.message ?? "erro"}`);
+    } finally {
+      setRevalidatingId(null);
+    }
+  }
+
   if (loading) {
     return <div className="text-[11px] text-slate-500">Carregando contratos…</div>;
   }
@@ -359,6 +377,22 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
                 <Download className="h-3 w-3 mr-1.5" />
                 {downloadingId === c.id ? "Baixando…" : "BAIXAR CONTRATO"}
               </Button>
+              {c.status === "rejected" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => revalidate(c)}
+                  disabled={revalidatingId === c.id}
+                  className="h-8 text-[11px] border-rose-300 text-rose-800 hover:bg-rose-50"
+                >
+                  {revalidatingId === c.id ? (
+                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-3 w-3 mr-1.5" />
+                  )}
+                  {revalidatingId === c.id ? "REVALIDANDO…" : "REVALIDAR ASSINATURA"}
+                </Button>
+              )}
               {canUpload && (
                 <Button
                   size="sm"
