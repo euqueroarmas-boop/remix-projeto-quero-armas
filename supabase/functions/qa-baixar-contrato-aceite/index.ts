@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
   const { data: venda, error: vErr } = await sb
     .from("qa_vendas")
     .select(
-      "id, status, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, valor_a_pagar, valor_cobrado",
+      "id, id_legado, status, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, valor_a_pagar, valor_cobrado",
     )
     .eq("id", venda_id)
     .maybeSingle();
@@ -208,12 +208,17 @@ Deno.serve(async (req) => {
   const pago = statusUpper === "PAGO" || cobStatus === "confirmada";
 
   // 2) Carrega snapshot do contrato (mais recente para a venda)
+  // qa_contracts.venda_id pode referenciar o id NOVO ou o id_legado
+  // (schema legado). Buscamos por ambos para não devolver "em processamento"
+  // quando o contrato existe sob o id antigo.
+  const idLegado = (venda as any).id_legado as number | null;
+  const idsLookup = [venda_id, ...(idLegado ? [Number(idLegado)] : [])];
   const { data: contract, error: cErr } = await sb
     .from("qa_contracts")
     .select(
       "id, contract_number, status, conteudo_renderizado, template_codigo, template_versao, servico_slug, valor, cliente_id, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash, created_at",
     )
-    .eq("venda_id", venda_id)
+    .in("venda_id", idsLookup)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

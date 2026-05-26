@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
   const { data: venda, error } = await supabase
     .from("qa_vendas")
     .select(
-      "id, status, valor_a_pagar, asaas_payment_id, asaas_invoice_url, asaas_bank_slip_url, asaas_pix_payload, asaas_due_date, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, cobranca_gerada_em",
+      "id, cliente_id, status, valor_a_pagar, asaas_payment_id, asaas_invoice_url, asaas_bank_slip_url, asaas_pix_payload, asaas_due_date, cobranca_status, cobranca_origem, checkout_token_hash, checkout_token_expires_at, cobranca_gerada_em",
     )
     .eq("id", venda_id)
     .maybeSingle();
@@ -76,6 +76,35 @@ Deno.serve(async (req) => {
     numero_protocolo = (proto?.numero as string) || null;
   } catch { /* best-effort */ }
 
+  // Credenciais temporárias do Arsenal — só quando pago, dentro do TTL
+  // e ainda não foram consumidas. Gated pelo checkout_token (já validado acima).
+  let portal_credenciais: {
+    email: string;
+    senha_temporaria: string;
+    expira_em: string;
+  } | null = null;
+  if (pago && (venda as any).cliente_id) {
+    try {
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("email, senha_temporaria, senha_temporaria_expira_em")
+        .eq("id", (venda as any).cliente_id)
+        .maybeSingle();
+      if (
+        cli?.email &&
+        cli?.senha_temporaria &&
+        cli?.senha_temporaria_expira_em &&
+        new Date(cli.senha_temporaria_expira_em as string).getTime() > Date.now()
+      ) {
+        portal_credenciais = {
+          email: cli.email as string,
+          senha_temporaria: cli.senha_temporaria as string,
+          expira_em: cli.senha_temporaria_expira_em as string,
+        };
+      }
+    } catch { /* best-effort */ }
+  }
+
   return json({
     ok: true,
     venda_id: venda.id,
@@ -90,5 +119,6 @@ Deno.serve(async (req) => {
     valor: venda.valor_a_pagar,
     atualizado_em: venda.cobranca_gerada_em || null,
     numero_protocolo,
+    portal_credenciais,
   });
 });

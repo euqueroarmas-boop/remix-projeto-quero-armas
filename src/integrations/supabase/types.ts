@@ -3889,6 +3889,8 @@ export type Database = {
           responsavel_endereco_telefone: string | null
           responsavel_endereco_vinculo: string | null
           rg: string | null
+          senha_temporaria: string | null
+          senha_temporaria_expira_em: string | null
           sexo: string | null
           status: string | null
           subcategoria: string | null
@@ -4005,6 +4007,8 @@ export type Database = {
           responsavel_endereco_telefone?: string | null
           responsavel_endereco_vinculo?: string | null
           rg?: string | null
+          senha_temporaria?: string | null
+          senha_temporaria_expira_em?: string | null
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
@@ -4121,6 +4125,8 @@ export type Database = {
           responsavel_endereco_telefone?: string | null
           responsavel_endereco_vinculo?: string | null
           rg?: string | null
+          senha_temporaria?: string | null
+          senha_temporaria_expira_em?: string | null
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
