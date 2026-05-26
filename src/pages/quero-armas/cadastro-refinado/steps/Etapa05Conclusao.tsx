@@ -286,13 +286,32 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
       <div style={{ marginTop: 28, display: "grid", gap: 12 }}>
         <button
           className="qa-ref-btn qa-ref-btn-primary"
-          onClick={() => {
-            onReset();
+          onClick={async () => {
             const params = new URLSearchParams();
             if (r.venda_id) params.set("pedido", String(r.venda_id));
             if (r.numero_processo) params.set("processo", r.numero_processo);
             const qs = params.toString();
-            navigate(qs ? `/area-do-cliente?${qs}` : "/area-do-cliente");
+            const destino = qs ? `/area-do-cliente?${qs}` : "/area-do-cliente";
+
+            /* Cenário A — autenticado: vai direto pro Arsenal carregando o pedido.
+             * Cenário B — deslogado: NUNCA cair em "/". Manda para login seguro
+             * com ?next=destino, preservando o contexto da contratação. Nunca
+             * enviamos senha em texto puro nem expomos dados só por CPF. */
+            let autenticado = false;
+            try {
+              const { data } = await supabase.auth.getSession();
+              autenticado = !!data.session?.user;
+            } catch {
+              autenticado = false;
+            }
+
+            onReset();
+            if (autenticado) {
+              navigate(destino);
+            } else {
+              const next = encodeURIComponent(destino);
+              navigate(`/area-do-cliente/login?next=${next}`);
+            }
           }}
         >
           {numeroPedido ? "Acompanhar pedido no Arsenal" : "Acessar meu Arsenal"}
