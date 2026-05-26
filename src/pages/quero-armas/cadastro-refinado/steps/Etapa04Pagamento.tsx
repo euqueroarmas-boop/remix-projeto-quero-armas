@@ -528,7 +528,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             >
               {servicos.map((s) => (
                 <li key={s.id}>
-                  · {s.nome} — {formatarReais(Math.round(s.preco * 100))}
+                  · {s.nome} — {formatarReais(s.preco)}
                 </li>
               ))}
             </ul>
@@ -931,26 +931,44 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
 
           {pay.billing_type === "CREDIT_CARD" && (
             <>
-              <div className="qa-ref-iframe-wrap">
-                {pay.asaas_invoice_url ? (
-                  <iframe
-                    src={pay.asaas_invoice_url}
-                    title="Pagamento com cartão"
-                    sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
-                  />
-                ) : (
-                  <div className="qa-ref-empty">Carregando ambiente seguro…</div>
-                )}
-              </div>
-              {pay.asaas_invoice_url && (
-                <a
-                  href={pay.asaas_invoice_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="qa-ref-pay-invoice-link"
-                >
-                  Não carregou? Abrir checkout em nova aba
-                </a>
+              {pay.asaas_invoice_url ? (
+                <>
+                  <a
+                    href={pay.asaas_invoice_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="qa-ref-pay-cta"
+                    style={{
+                      display: "block",
+                      textAlign: "center",
+                      padding: "18px 22px",
+                      background: "var(--qa-ref-brass, #D6A64B)",
+                      color: "#0a0a0a",
+                      fontWeight: 700,
+                      borderRadius: 10,
+                      textDecoration: "none",
+                      fontSize: 16,
+                      letterSpacing: 0.4,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Pagar com cartão — abrir checkout seguro
+                  </a>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      color: "var(--qa-ref-ink-soft)",
+                      marginTop: 10,
+                      textAlign: "center",
+                    }}
+                  >
+                    O checkout do cartão abre em uma nova aba segura do banco.
+                    Após o pagamento, volte para esta página — o status será
+                    atualizado automaticamente.
+                  </p>
+                </>
+              ) : (
+                <div className="qa-ref-empty">Carregando ambiente seguro…</div>
               )}
             </>
           )}
