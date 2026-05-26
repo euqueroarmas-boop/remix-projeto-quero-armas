@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, Check, X as XIcon, Sparkles, Info, Loader2, Camera, Paperclip, RefreshCw, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/shared/auth/AuthProvider";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import QAReiniciarLink from "../components/QAReiniciarLink";
 import { CadastroRefinadoState, DocumentoArsenal } from "../hooks/useCadastroRefinadoState";
@@ -82,6 +83,8 @@ function maskCep(v: string): string {
 }
 
 export default function Etapa02Documentos({ state, update, updateDados, onNext, onBack }: Props) {
+  const { user: authUser } = useAuth();
+  const isClienteLogado = !!authUser?.id;
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [docsLoading, setDocsLoading] = useState<boolean>(true);
 
@@ -389,7 +392,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         </span>
       </div>
 
-      {state.modo_cliente === "autenticado" && state.dados_carregados_do_arsenal && (
+      {isClienteLogado && state.modo_cliente === "autenticado" && state.dados_carregados_do_arsenal && (
         <div className="qa-ref-banner" style={{ marginBottom: 14, background: "#0f2f1a", borderColor: "#1f5a36" }}>
           <Check size={16} style={{ flexShrink: 0, marginTop: 2, color: "#86efac" }} />
           <div>
@@ -398,7 +401,16 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         </div>
       )}
 
-      {state.modo_cliente === "autenticado" && ambosCobertosPorReuso && (
+      {!isClienteLogado && (
+        <div className="qa-ref-banner" style={{ marginBottom: 14 }}>
+          <Info size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div>
+            Você ainda não está logado. Envie seus documentos ou continue preenchendo manualmente. Caso já tenha cadastro, entre na sua conta para reaproveitar informações e documentos existentes.
+          </div>
+        </div>
+      )}
+
+      {isClienteLogado && state.modo_cliente === "autenticado" && ambosCobertosPorReuso && (
         <div className="qa-ref-found-card" style={{ marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Check size={16} style={{ color: "#86efac" }} />
@@ -413,7 +425,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
         </div>
       )}
 
-      {state.modo_cliente === "autenticado" && (
+      {isClienteLogado && state.modo_cliente === "autenticado" && (
         (() => {
           const reapRel = filtrarRelevantesEtapa02(state.documentos_reaproveitados);
           const vencRel = filtrarRelevantesEtapa02(state.documentos_vencidos);

@@ -97,6 +97,37 @@ export default function QACadastroRefinadoHeader({
       if (error) throw error;
       setUserLabel(null);
       setHasSession(false);
+      // Limpa APENAS os campos do state em sessionStorage que indicam
+      // sessão autenticada (modo_cliente, dados carregados do Arsenal,
+      // documentos reaproveitados etc.). Mantém serviço selecionado,
+      // origem, pathname e demais dados temporários do checkout.
+      try {
+        const raw = sessionStorage.getItem("qa_cadastro_refinado_state");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const cleaned = {
+            ...parsed,
+            modo_cliente: "indefinido",
+            identificacao_confirmada: false,
+            cliente_existente_id: null,
+            clienteExistente: false,
+            dados_carregados_do_arsenal: false,
+            documentos_reaproveitados: [],
+            documentos_vencidos: [],
+            documentos_pendentes_revisao: [],
+            servicos_anteriores: [],
+            processos_ativos: [],
+            contratos_existentes: [],
+            arsenal_resumo: null,
+          };
+          sessionStorage.setItem(
+            "qa_cadastro_refinado_state",
+            JSON.stringify(cleaned),
+          );
+        }
+      } catch (cleanupErr) {
+        console.warn("[QAHeader] falha ao limpar estado autenticado", cleanupErr);
+      }
       // Mantém pathname/search atuais — apenas recarrega o estado sem sessão.
       window.location.reload();
     } catch (e) {
