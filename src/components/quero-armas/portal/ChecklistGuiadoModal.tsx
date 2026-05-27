@@ -690,6 +690,31 @@ function DocumentoView({
     ano_competencia: (doc as any).ano_competencia ?? null,
     regra_validacao: (doc as any).regra_validacao ?? null,
   });
+
+  const [externalLinks, setExternalLinks] = useState<Array<{
+    id: string; nome_botao: string; url: string; descricao: string | null;
+  }>>([]);
+  useEffect(() => {
+    if (!doc?.tipo_documento) { setExternalLinks([]); return; }
+    let cancelled = false;
+    const rv = (doc.regra_validacao && typeof doc.regra_validacao === "object")
+      ? (doc.regra_validacao as any) : {};
+    const tipoBase: string | null = rv?.tipo_base ?? null;
+    const tipos = Array.from(new Set(
+      [doc.tipo_documento, tipoBase].filter(Boolean) as string[]
+    ));
+    (async () => {
+      const { data, error } = await supabase
+        .from("qa_document_external_links" as any)
+        .select("id, nome_botao, url, descricao")
+        .in("tipo_documento", tipos)
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (!cancelled && !error) setExternalLinks((data ?? []) as any);
+    })();
+    return () => { cancelled = true; };
+  }, [doc?.tipo_documento, doc?.regra_validacao]);
+
   const validadeTone =
     validade.semVencimento
       ? "border-slate-200 bg-slate-50 text-slate-600"
@@ -739,14 +764,23 @@ function DocumentoView({
         </div>
       )}
 
-      {/* botões auxiliares: emitir online / modelo / exemplo */}
-      {(doc.link_emissao || doc.modelo_url || doc.exemplo_url) && (
+      {/* botões auxiliares: emitir online / links externos / modelo / exemplo */}
+      {(doc.link_emissao || doc.modelo_url || doc.exemplo_url || externalLinks.length > 0) && (
         <div className="mt-3 flex flex-wrap gap-2">
           {doc.link_emissao && (
             <a href={doc.link_emissao} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:brightness-95">
               <ExternalLink className="h-3.5 w-3.5" /> Emitir online
             </a>
           )}
+          {externalLinks
+            .filter(l => l.url && l.url !== doc.link_emissao)
+            .map(l => (
+              <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer"
+                 title={l.descricao ?? undefined}
+                 className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:brightness-95">
+                <ExternalLink className="h-3.5 w-3.5" /> {l.nome_botao}
+              </a>
+            ))}
           {doc.modelo_url && (
             <a href={doc.modelo_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800 hover:brightness-95">
               <FileDown className="h-3.5 w-3.5" /> Baixar modelo
