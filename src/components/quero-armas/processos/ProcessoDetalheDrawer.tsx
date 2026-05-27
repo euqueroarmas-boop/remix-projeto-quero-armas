@@ -2268,6 +2268,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         cliente={clienteCompleto}
         documentoNome={confirmacaoTpl.doc?.nome_documento ?? null}
         gerando={baixandoTemplateId === confirmacaoTpl.doc?.id || carregandoCliente}
+        permitirGerarComPendencias
         onConfirmGenerate={async () => {
           const d = confirmacaoTpl.doc;
           const tk = confirmacaoTpl.templateKey;

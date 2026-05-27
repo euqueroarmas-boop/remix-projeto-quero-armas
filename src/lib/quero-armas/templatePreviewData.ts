@@ -14,6 +14,8 @@ export interface TemplatePreviewField {
   value: string;
   /** quando true, indica que o cliente NÃO pode editar pelo portal */
   locked?: boolean;
+  /** quando true, o documento NÃO pode ser gerado se este campo estiver vazio */
+  required?: boolean;
   /** grupo lógico para agrupar campos no modal */
   group: "identificacao" | "civil" | "endereco" | "contato";
 }
@@ -42,20 +44,20 @@ export function buildTemplatePreviewData(cliente: any): TemplatePreviewField[] {
   const cidadeUf = [safe(c.cidade), safe(c.estado)].filter(Boolean).join(" / ");
 
   return [
-    { key: "nome_completo", label: "Nome completo", value: safe(c.nome_completo), group: "identificacao" },
-    { key: "cpf", label: "CPF", value: safe(c.cpf), group: "identificacao", locked: true },
-    { key: "rg", label: "RG", value: safe(c.rg), group: "identificacao" },
-    { key: "emissor_rg", label: "Órgão emissor", value: safe(c.emissor_rg), group: "identificacao" },
-    { key: "data_nascimento", label: "Data de nascimento", value: safe(c.data_nascimento), group: "identificacao" },
-    { key: "nacionalidade", label: "Nacionalidade", value: safe(c.nacionalidade) || "brasileiro(a)", group: "civil" },
+    { key: "nome_completo", label: "Nome completo", value: safe(c.nome_completo), group: "identificacao", required: true },
+    { key: "cpf", label: "CPF", value: safe(c.cpf), group: "identificacao", locked: true, required: true },
+    { key: "rg", label: "RG", value: safe(c.rg), group: "identificacao", required: true },
+    { key: "emissor_rg", label: "Órgão emissor", value: safe(c.emissor_rg), group: "identificacao", required: true },
+    { key: "data_nascimento", label: "Data de nascimento", value: safe(c.data_nascimento), group: "identificacao", required: true },
+    { key: "nacionalidade", label: "Nacionalidade", value: safe(c.nacionalidade) || "brasileiro(a)", group: "civil", required: true },
     { key: "naturalidade", label: "Naturalidade", value: safe(c.naturalidade), group: "civil" },
-    { key: "profissao", label: "Profissão", value: safe(c.profissao), group: "civil" },
-    { key: "estado_civil", label: "Estado civil", value: safe(c.estado_civil), group: "civil" },
-    { key: "endereco", label: "Endereço", value: enderecoLinha, group: "endereco" },
-    { key: "cidade_uf", label: "Cidade / UF", value: cidadeUf, group: "endereco" },
-    { key: "cep", label: "CEP", value: safe(c.cep), group: "endereco" },
+    { key: "profissao", label: "Profissão", value: safe(c.profissao), group: "civil", required: true },
+    { key: "estado_civil", label: "Estado civil", value: safe(c.estado_civil), group: "civil", required: true },
+    { key: "endereco", label: "Endereço", value: enderecoLinha, group: "endereco", required: true },
+    { key: "cidade_uf", label: "Cidade / UF", value: cidadeUf, group: "endereco", required: true },
+    { key: "cep", label: "CEP", value: safe(c.cep), group: "endereco", required: true },
     { key: "email", label: "E-mail", value: safe(c.email), group: "contato", locked: true },
-    { key: "celular", label: "Celular", value: safe(c.celular), group: "contato" },
+    { key: "celular", label: "Celular", value: safe(c.celular), group: "contato", required: true },
   ];
 }
 
