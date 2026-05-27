@@ -1207,7 +1207,7 @@ export default function QAClientePortalPage() {
 
         {/* ═══ HERO — PRÓXIMA AÇÃO ═══ */}
         {(() => {
-          const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+          const cadastroIncompleto = cadastroEstaIncompleto(cliente);
           const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
           const vencido = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
           const venceHoje = analysis?.expDocs.find((d) => d.days === 0);
@@ -1242,8 +1242,8 @@ export default function QAClientePortalPage() {
             onClick = () => setShowAddDoc(true);
           } else if (cadastroIncompleto) {
             titulo = "Completar seu cadastro";
-            descricao = "Endereço, telefone e dados básicos faltando.";
-            onClick = () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } });
+            descricao = resumoFaltantesCadastro(cliente) || "Dados básicos faltando.";
+            onClick = () => setShowCadastroModal(true);
           }
 
           const temAcao = !!onClick || usaChecklistBotao;
