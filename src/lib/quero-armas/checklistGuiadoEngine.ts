@@ -154,14 +154,10 @@ export function itemCumpridoGuia(d: GuiaDoc, respostas: Record<string, string>):
 
 // Item ainda exige AÇÃO do cliente (entra na fila do assistente)?
 export function itemPendenteAcaoGuia(d: GuiaDoc, respostas: Record<string, string>): boolean {
-  if (isPerguntaGuia(d)) {
-    const chave = (d.regra_validacao as any)?.chave as string | undefined;
-    if (!chave) return false;
-    return !(respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "");
-  }
-  if (isCondicaoGuia(d)) return true; // some quando a condição é definida
-  // documentos: precisa (re)enviar quando pendente/invalido/divergente. em_analise = em validação.
-  return d.status === "pendente" || d.status === "invalido" || d.status === "divergente" || d.status === "em_analise";
+  // Delegamos para isDocumentActionable para manter um único mapeamento de
+  // status e garantir que documentos em análise / em revisão humana / já
+  // aprovados nunca voltem a aparecer na fila do assistente.
+  return isDocumentActionable(d, respostas);
 }
 
 export type TipoItemGuia = "pergunta" | "condicao" | "documento";
