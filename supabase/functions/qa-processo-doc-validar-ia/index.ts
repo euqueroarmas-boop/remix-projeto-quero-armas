@@ -1028,6 +1028,60 @@ Deno.serve(async (req) => {
       ator: "ia",
     });
 
+    // ===== ALTERAÇÃO DE NOME: persiste registro auditável no processo =====
+    // Quando a certidão averbada é aprovada (ou vai a revisão humana com dados
+    // bons), gravamos o bloco em respostas_questionario_json.alteracao_nome.
+    // NUNCA sobrescrevemos qa_clientes.nome_completo — o nome oficial continua
+    // sendo o do cadastro. Este bloco serve APENAS para justificar divergência
+    // de nome em documentos futuros do mesmo processo.
+    if (doc.tipo_documento === "certidao_alteracao_nome") {
+      const cx: Record<string, any> = camposExtraidosFinal || {};
+      const nomeAnterior = cx.nome_anterior ? String(cx.nome_anterior).trim() : null;
+      const nomeAtual = cx.nome_atual ? String(cx.nome_atual).trim() : null;
+      if (nomeAnterior && nomeAtual) {
+        const aprovada = novoStatus === "aprovado";
+        const respostas =
+          ((processo as any)?.respostas_questionario_json as Record<string, any>) ?? {};
+        respostas.alteracao_nome = {
+          aprovada,
+          pendente_aprovacao: !aprovada && novoStatus === "revisao_humana",
+          nome_anterior: nomeAnterior,
+          nome_atual: nomeAtual,
+          tipo_certidao: cx.tipo_certidao ?? null,
+          data_averbacao: cx.data_averbacao ?? null,
+          cartorio_registro: cx.cartorio_registro ?? null,
+          tipo_documento_comprobatorio: "certidao_alteracao_nome",
+          documento_comprobatorio_id: documento_id,
+          data_validacao: new Date().toISOString(),
+          origem: "ia",
+        };
+        try {
+          await supabase
+            .from("qa_processos")
+            .update({ respostas_questionario_json: respostas })
+            .eq("id", processo_id);
+          await supabase.from("qa_processo_eventos").insert({
+            processo_id,
+            documento_id,
+            tipo_evento: aprovada
+              ? "alteracao_nome_aprovada"
+              : "alteracao_nome_em_analise",
+            descricao: aprovada
+              ? "Alteração de nome em cartório comprovada. Processo aceita nome atual e nome anterior."
+              : "Certidão averbada enviada — aguardando confirmação para validar nomes equivalentes.",
+            ator: "ia",
+            dados_json: {
+              nome_anterior: nomeAnterior,
+              nome_atual: nomeAtual,
+              status: novoStatus,
+            },
+          } as any);
+        } catch (e) {
+          console.warn("[validar-ia] persistir alteracao_nome falhou:", e);
+        }
+      }
+    }
+
     // ===================================================================
     // FASE 3: RECONCILIAÇÃO SEGURA — preenche SOMENTE campos vazios do cliente
     // ===================================================================
