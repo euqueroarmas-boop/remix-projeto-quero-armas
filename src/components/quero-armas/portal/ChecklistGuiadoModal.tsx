@@ -457,6 +457,9 @@ export default function ChecklistGuiadoModal({
                   <DocumentoView
                     doc={docAtivo}
                     orientacoesIA={orientacoesIA(docAtivo)}
+                    template={pickTemplateGuia(docAtivo, carga.respostas)}
+                    baixandoTemplate={baixandoTemplate}
+                    onBaixarTemplate={(key) => handleBaixarTemplate(docAtivo, key)}
                     onEnviar={handleEscolherArquivo}
                     onVer={() =>
                       docAtivo.arquivo_storage_key &&
