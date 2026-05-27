@@ -949,7 +949,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
               <th className="px-3 py-2 font-semibold w-40">PREÇO (R$)</th>
               <th className="px-3 py-2 font-semibold w-28 text-center">RECORRENTE</th>
               <th className="px-3 py-2 font-semibold w-24 text-center">ATIVO</th>
-              <th className="px-3 py-2 font-semibold w-44 text-right">AÇÕES</th>
+              <th className="px-3 py-2 font-semibold w-52 text-right">AÇÕES</th>
             </tr>
           </thead>
           <SortableContext items={ids} strategy={verticalListSortingStrategy}>
