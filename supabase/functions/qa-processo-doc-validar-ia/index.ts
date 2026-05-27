@@ -162,6 +162,12 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
     "QSA (Quadro de Sócios e Administradores) emitido pela Receita Federal a partir do Cartão CNPJ. Extraia: razao_social, cnpj (apenas dígitos), data_emissao (YYYY-MM-DD se houver), socios (array {nome, cpf, qualificacao, data_entrada}), administradores (array {nome, cpf, qualificacao}). NÃO exija um campo 'nome_titular' único. Se o cliente cadastrado aparecer no QSA, registre cliente_e_socio=true em campos_complementares.",
   renda_nf_empresa:
     "Nota fiscal recente emitida pela PESSOA JURÍDICA. Extraia: razao_social_emitente, cnpj_emitente (apenas dígitos), razao_social_tomador (se houver), cnpj_tomador (se houver), numero_nota, serie, data_emissao (YYYY-MM-DD), valor_total, municipio_emissao e natureza_operacao/servico. NÃO exija 'nome_titular': nota fiscal de empresa identifica a empresa por razão social/CNPJ/emitente.",
+  // === ALTERAÇÃO DE NOME EM CARTÓRIO ===
+  // Certidão averbada que comprova alteração legal de nome. NUNCA marque
+  // divergência de nome para este tipo: por definição os nomes (anterior e
+  // atual) são diferentes — é exatamente o que estamos comprovando.
+  certidao_alteracao_nome:
+    "Certidão averbada (casamento, nascimento ou outro documento oficial) que comprova ALTERAÇÃO DE NOME em cartório. Extraia obrigatoriamente: nome_anterior (nome completo ANTES da alteração), nome_atual (nome completo APÓS a alteração/averbação), tipo_certidao ('casamento' | 'nascimento' | 'outro'), data_averbacao (YYYY-MM-DD da averbação no cartório, se visível), cartorio_registro (nome/identificação do cartório/serventia), data_emissao (YYYY-MM-DD da emissão da certidão), cpf (do titular, se constar). REGRA CRÍTICA: NÃO marque divergência de nome para este documento — a divergência entre nome_anterior e nome_atual é o conteúdo esperado. Se você identificar com clareza a ligação entre o nome_anterior e o nome_atual (ex.: averbação explícita, casamento com adoção de sobrenome), eleve a confiança; caso contrário, deixe em revisão humana.",
 };
 
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
@@ -169,6 +175,10 @@ function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
     "Documento administrativo. Extraia nome_titular, cpf, datas, números identificadores.";
   const isIdentificacao = ["rg", "cin", "cnh"].includes(tipoDoc);
   const isComprovanteEnd = tipoDoc === "comprovante_residencia";
+  const isAlteracaoNome = tipoDoc === "certidao_alteracao_nome";
+  const nomesAceitos: string[] = Array.isArray(cadastro?.nomes_aceitos_alteracao)
+    ? (cadastro.nomes_aceitos_alteracao as string[]).filter(Boolean)
+    : [];
   return `Você é um auditor RIGOROSO de documentos para Polícia Federal / Exército Brasileiro.
 TAREFA: Valide a imagem/PDF e responda SEMPRE chamando "validar_documento".
 REGRAS CRÍTICAS:
@@ -183,6 +193,8 @@ REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo):
 ${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos somente RG, CIN ou CNH. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).` : ""}
 ${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
 9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
+${isAlteracaoNome ? `8. CERTIDÃO AVERBADA DE ALTERAÇÃO DE NOME: o conteúdo esperado é exatamente uma DIFERENÇA entre nome_anterior e nome_atual. NÃO gere divergência de nome com o cadastro. Foque em extrair nome_anterior, nome_atual, tipo_certidao, data_averbacao e cartorio_registro.` : ""}
+${nomesAceitos.length > 0 && !isAlteracaoNome ? `10. ALTERAÇÃO DE NOME COMPROVADA NESTE PROCESSO: o cliente possui certidão averbada aprovada. Considere como nomes do cliente ACEITOS qualquer um destes: ${JSON.stringify(nomesAceitos)}. Se o nome no documento bater com QUALQUER um deles, NÃO gere divergência de nome — registre apenas em observações que o nome confere com a alteração comprovada. Outros campos (CPF, RG, datas, endereço) continuam comparados normalmente.` : ""}
 Tipo esperado: ${tipoDoc}
 Detalhes: ${docHint}
 Cadastro do cliente:
@@ -195,6 +207,7 @@ ${JSON.stringify({
   cidade: cadastro?.cidade,
   uf: cadastro?.estado ?? cadastro?.uf,
   cep: cadastro?.cep,
+  nomes_aceitos_alteracao_nome: nomesAceitos.length > 0 ? nomesAceitos : undefined,
 }, null, 2)}`;
 }
 
@@ -447,7 +460,10 @@ Deno.serve(async (req) => {
     if (!path) return json({ error: "storage_path ausente" }, 400);
 
     const { data: processo } = await supabase
-      .from("qa_processos").select("id, cliente_id, servico_id").eq("id", processo_id).maybeSingle();
+      .from("qa_processos")
+      .select("id, cliente_id, servico_id, respostas_questionario_json")
+      .eq("id", processo_id)
+      .maybeSingle();
     if (!processo) return json({ error: "Processo não encontrado" }, 404);
 
     const { data: cliente } = await supabase
@@ -455,12 +471,30 @@ Deno.serve(async (req) => {
       .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep")
       .eq("id", processo.cliente_id).maybeSingle();
 
+    // Alteração de nome em cartório (se já comprovada neste processo): usamos
+    // os nomes aprovados como nomes ACEITOS para a comparação da IA — assim
+    // documentos futuros não geram divergência de nome quando bater com o
+    // nome anterior OU o nome atual. NUNCA sobrescrevemos o nome do cadastro.
+    const altNome =
+      ((processo as any)?.respostas_questionario_json?.alteracao_nome ?? null) as
+        | { aprovada?: boolean; nome_anterior?: string | null; nome_atual?: string | null }
+        | null;
+    const nomesAceitosAlteracao: string[] = [];
+    if (altNome?.aprovada) {
+      if (altNome.nome_anterior) nomesAceitosAlteracao.push(String(altNome.nome_anterior));
+      if (altNome.nome_atual) nomesAceitosAlteracao.push(String(altNome.nome_atual));
+    }
+    const cadastroParaPrompt = {
+      ...(cliente ?? {}),
+      nomes_aceitos_alteracao: nomesAceitosAlteracao,
+    };
+
     await supabase.from("qa_processo_documentos")
       .update({ status: "em_analise", validacao_ia_status: "processando" })
       .eq("id", documento_id);
 
     const { b64, mime } = await downloadAsBase64(supabase, path);
-    const systemPrompt = buildSystemPrompt(doc.tipo_documento, cliente);
+    const systemPrompt = buildSystemPrompt(doc.tipo_documento, cadastroParaPrompt);
 
     // Estratégia por tipo de arquivo:
     //  - PDF: tenta primeiro extrair a CAMADA DE TEXTO via pdfjs-dist
@@ -750,6 +784,49 @@ Deno.serve(async (req) => {
       parsed.divergencias = divsKeep;
     }
 
+    // ===== ALTERAÇÃO DE NOME EM CARTÓRIO =====
+    // (a) Se este é o próprio doc da certidão averbada, NUNCA gere divergência
+    //     de nome contra o cadastro — é o conteúdo esperado do documento.
+    if (doc.tipo_documento === "certidao_alteracao_nome") {
+      parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+        const c = String(d?.campo || "").toLowerCase();
+        return !["nome", "nome_titular", "titular", "nome_completo"].includes(c);
+      });
+    }
+    // (b) Se a alteração já está comprovada no processo, considere os nomes
+    //     aprovados como ACEITOS — remove divergência de nome cujo valor do
+    //     documento bata (normalizado) com qualquer um deles.
+    if (
+      doc.tipo_documento !== "certidao_alteracao_nome" &&
+      nomesAceitosAlteracao.length > 0
+    ) {
+      const norm = (s: any) =>
+        String(s ?? "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      const aceitos = new Set(nomesAceitosAlteracao.map(norm).filter(Boolean));
+      let justificou = false;
+      parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+        const c = String(d?.campo || "").toLowerCase();
+        if (!["nome", "nome_titular", "titular", "nome_completo"].includes(c)) return true;
+        const vd = norm(d?.valor_documento ?? d?.encontrado);
+        if (vd && aceitos.has(vd)) {
+          justificou = true;
+          return false;
+        }
+        return true;
+      });
+      if (justificou) {
+        const aviso = "Nome divergente justificado por certidão averbada aprovada.";
+        parsed.observacoes = parsed.observacoes
+          ? `${parsed.observacoes} | ${aviso}`
+          : aviso;
+      }
+    }
+
     // ========== LÓGICA DE DECISÃO ENDURECIDA ==========
     const regra = (doc.regra_validacao ?? {}) as any;
     const exige: string[] = Array.isArray(regra.exige) ? regra.exige : [];
@@ -950,6 +1027,60 @@ Deno.serve(async (req) => {
       },
       ator: "ia",
     });
+
+    // ===== ALTERAÇÃO DE NOME: persiste registro auditável no processo =====
+    // Quando a certidão averbada é aprovada (ou vai a revisão humana com dados
+    // bons), gravamos o bloco em respostas_questionario_json.alteracao_nome.
+    // NUNCA sobrescrevemos qa_clientes.nome_completo — o nome oficial continua
+    // sendo o do cadastro. Este bloco serve APENAS para justificar divergência
+    // de nome em documentos futuros do mesmo processo.
+    if (doc.tipo_documento === "certidao_alteracao_nome") {
+      const cx: Record<string, any> = camposExtraidosFinal || {};
+      const nomeAnterior = cx.nome_anterior ? String(cx.nome_anterior).trim() : null;
+      const nomeAtual = cx.nome_atual ? String(cx.nome_atual).trim() : null;
+      if (nomeAnterior && nomeAtual) {
+        const aprovada = novoStatus === "aprovado";
+        const respostas =
+          ((processo as any)?.respostas_questionario_json as Record<string, any>) ?? {};
+        respostas.alteracao_nome = {
+          aprovada,
+          pendente_aprovacao: !aprovada && novoStatus === "revisao_humana",
+          nome_anterior: nomeAnterior,
+          nome_atual: nomeAtual,
+          tipo_certidao: cx.tipo_certidao ?? null,
+          data_averbacao: cx.data_averbacao ?? null,
+          cartorio_registro: cx.cartorio_registro ?? null,
+          tipo_documento_comprobatorio: "certidao_alteracao_nome",
+          documento_comprobatorio_id: documento_id,
+          data_validacao: new Date().toISOString(),
+          origem: "ia",
+        };
+        try {
+          await supabase
+            .from("qa_processos")
+            .update({ respostas_questionario_json: respostas })
+            .eq("id", processo_id);
+          await supabase.from("qa_processo_eventos").insert({
+            processo_id,
+            documento_id,
+            tipo_evento: aprovada
+              ? "alteracao_nome_aprovada"
+              : "alteracao_nome_em_analise",
+            descricao: aprovada
+              ? "Alteração de nome em cartório comprovada. Processo aceita nome atual e nome anterior."
+              : "Certidão averbada enviada — aguardando confirmação para validar nomes equivalentes.",
+            ator: "ia",
+            dados_json: {
+              nome_anterior: nomeAnterior,
+              nome_atual: nomeAtual,
+              status: novoStatus,
+            },
+          } as any);
+        } catch (e) {
+          console.warn("[validar-ia] persistir alteracao_nome falhou:", e);
+        }
+      }
+    }
 
     // ===================================================================
     // FASE 3: RECONCILIAÇÃO SEGURA — preenche SOMENTE campos vazios do cliente
