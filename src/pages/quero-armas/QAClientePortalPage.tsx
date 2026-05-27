@@ -21,6 +21,8 @@ import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
 import { ClienteProcessosSection } from "@/components/quero-armas/processos/ClienteProcessosSection";
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
+import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
+import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -1852,6 +1854,17 @@ export default function QAClientePortalPage() {
           <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
             <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
             {cliente?.id ? (
+              <div className="mb-4 rounded-2xl border border-[#7A1F2B]/20 bg-gradient-to-br from-[#7A1F2B]/5 to-white p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-bold text-slate-900">Envie seus documentos com o assistente guiado</div>
+                    <p className="mt-0.5 text-[11px] text-slate-600">Um item por vez, com validação automática por IA. Igual à abertura de conta de um banco.</p>
+                  </div>
+                  <ChecklistGuiadoBotao />
+                </div>
+              </div>
+            ) : null}
+            {cliente?.id ? (
               <div className="mb-4">
                 <ContratoBlock clienteId={cliente.id} />
               </div>
@@ -1901,6 +1914,10 @@ export default function QAClientePortalPage() {
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
+
+      {cliente?.id ? (
+        <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
+      ) : null}
     </div>
   );
 }
