@@ -59,6 +59,8 @@ import {
   resolveResumeDocId,
   saveDocumentAssistantProgress,
 } from "@/lib/quero-armas/documentAssistantProgress";
+import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
+import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 
 const MARROM = "#7A1F2B";
 
@@ -323,6 +325,41 @@ export default function ChecklistGuiadoModal({
 
   const [baixandoTemplate, setBaixandoTemplate] = useState(false);
 
+  // ----- Conferência obrigatória antes de gerar o .docx -----
+  const [confirmacao, setConfirmacao] = useState<
+    | { open: boolean; doc: GuiaDoc | null; templateKey: string | null }
+  >({ open: false, doc: null, templateKey: null });
+  const [clienteDados, setClienteDados] = useState<any | null>(null);
+  const [carregandoCliente, setCarregandoCliente] = useState(false);
+  const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
+
+  const recarregarClienteDados = useCallback(async () => {
+    if (!carga) return null;
+    setCarregandoCliente(true);
+    try {
+      const { data, error } = await supabase
+        .from("qa_clientes")
+        .select("*")
+        .eq("id", carga.processo.cliente_id)
+        .maybeSingle();
+      if (error) throw error;
+      setClienteDados(data ?? null);
+      return data ?? null;
+    } catch (e: any) {
+      toast.error("Não foi possível carregar seus dados para conferência.");
+      return null;
+    } finally {
+      setCarregandoCliente(false);
+    }
+  }, [carga]);
+
+  const abrirConfirmacaoTemplate = async (doc: GuiaDoc, templateKey: string) => {
+    if (!carga) return;
+    setErroAcao(null);
+    await recarregarClienteDados();
+    setConfirmacao({ open: true, doc, templateKey });
+  };
+
   const handleBaixarTemplate = async (doc: GuiaDoc, templateKey: string) => {
     if (!carga) return;
     setBaixandoTemplate(true);
@@ -365,6 +402,14 @@ export default function ChecklistGuiadoModal({
     } finally {
       setBaixandoTemplate(false);
     }
+  };
+
+  const confirmarEGerar = async () => {
+    const doc = confirmacao.doc;
+    const tk = confirmacao.templateKey;
+    if (!doc || !tk) return;
+    await handleBaixarTemplate(doc, tk);
+    setConfirmacao({ open: false, doc: null, templateKey: null });
   };
 
   return (
@@ -506,7 +551,7 @@ export default function ChecklistGuiadoModal({
                     orientacoesIA={orientacoesIA(docAtivo)}
                     template={pickTemplateGuia(docAtivo, carga.respostas)}
                     baixandoTemplate={baixandoTemplate}
-                    onBaixarTemplate={(key) => handleBaixarTemplate(docAtivo, key)}
+                    onBaixarTemplate={(key) => abrirConfirmacaoTemplate(docAtivo, key)}
                     onEnviar={handleEscolherArquivo}
                     onVer={() =>
                       docAtivo.arquivo_storage_key &&
@@ -661,6 +706,27 @@ export default function ChecklistGuiadoModal({
       <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
 
       <DocumentoViewerModal open={viewer.open} onClose={viewer.fechar} source={viewer.source} title={viewer.title} />
+
+      <TemplateDataConfirmationModal
+        open={confirmacao.open}
+        onOpenChange={(n) => !n && setConfirmacao({ open: false, doc: null, templateKey: null })}
+        cliente={clienteDados}
+        documentoNome={confirmacao.doc?.nome_documento ?? null}
+        gerando={baixandoTemplate || carregandoCliente}
+        onConfirmGenerate={confirmarEGerar}
+        onEditCadastro={() => setEditarCadastroAberto(true)}
+      />
+
+      {clienteDados && (
+        <ClienteCadastroProgressivoModal
+          open={editarCadastroAberto}
+          onClose={() => setEditarCadastroAberto(false)}
+          cliente={clienteDados}
+          onUpdated={async () => {
+            await recarregarClienteDados();
+          }}
+        />
+      )}
     </>
   );
 }

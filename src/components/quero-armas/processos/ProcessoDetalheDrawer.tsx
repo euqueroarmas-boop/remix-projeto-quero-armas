@@ -6,6 +6,8 @@ import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, 
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
+import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 
 interface DocRow {
   id: string;
@@ -741,6 +743,39 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [respondendoPerguntaId, setRespondendoPerguntaId] = useState<string | null>(null);
   const [baixandoTemplateId, setBaixandoTemplateId] = useState<string | null>(null);
 
+  // ----- Conferência obrigatória antes de gerar o .docx -----
+  const [confirmacaoTpl, setConfirmacaoTpl] = useState<
+    { open: boolean; doc: DocRow | null; templateKey: string | null }
+  >({ open: false, doc: null, templateKey: null });
+  const [clienteCompleto, setClienteCompleto] = useState<any | null>(null);
+  const [carregandoCliente, setCarregandoCliente] = useState(false);
+  const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
+
+  const recarregarClienteCompleto = useCallback(async () => {
+    if (!processo) return null;
+    setCarregandoCliente(true);
+    try {
+      const { data, error } = await supabase
+        .from("qa_clientes")
+        .select("*")
+        .eq("id", processo.cliente_id)
+        .maybeSingle();
+      if (error) throw error;
+      setClienteCompleto(data ?? null);
+      return data ?? null;
+    } catch {
+      toast.error("Não foi possível carregar os dados do cliente para conferência.");
+      return null;
+    } finally {
+      setCarregandoCliente(false);
+    }
+  }, [processo]);
+
+  const abrirConfirmacaoTemplate = async (doc: DocRow, templateKey: string) => {
+    await recarregarClienteCompleto();
+    setConfirmacaoTpl({ open: true, doc, templateKey });
+  };
+
   const responderPergunta = async (doc: DocRow, valor: string) => {
     if (!processo) return;
     setRespondendoPerguntaId(doc.id);
@@ -1431,7 +1466,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           </span>
                           <button
                             disabled={baixandoTemplateId === doc.id}
-                            onClick={() => baixarTemplatePreenchido(doc, tplEscolhido.key)}
+                            onClick={() => abrirConfirmacaoTemplate(doc, tplEscolhido.key)}
                             className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
                           >
                             <Download className="h-3 w-3" />
@@ -2226,6 +2261,33 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         source={viewer.source}
         title={viewer.title}
       />
+
+      <TemplateDataConfirmationModal
+        open={confirmacaoTpl.open}
+        onOpenChange={(n) => !n && setConfirmacaoTpl({ open: false, doc: null, templateKey: null })}
+        cliente={clienteCompleto}
+        documentoNome={confirmacaoTpl.doc?.nome_documento ?? null}
+        gerando={baixandoTemplateId === confirmacaoTpl.doc?.id || carregandoCliente}
+        onConfirmGenerate={async () => {
+          const d = confirmacaoTpl.doc;
+          const tk = confirmacaoTpl.templateKey;
+          if (!d || !tk) return;
+          await baixarTemplatePreenchido(d, tk);
+          setConfirmacaoTpl({ open: false, doc: null, templateKey: null });
+        }}
+        onEditCadastro={() => setEditarCadastroAberto(true)}
+      />
+
+      {clienteCompleto && (
+        <ClienteCadastroProgressivoModal
+          open={editarCadastroAberto}
+          onClose={() => setEditarCadastroAberto(false)}
+          cliente={clienteCompleto}
+          onUpdated={async () => {
+            await recarregarClienteCompleto();
+          }}
+        />
+      )}
     </div>
   );
 }
