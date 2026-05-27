@@ -1268,7 +1268,15 @@ export default function QAClientePortalPage() {
                 </div>
                 <div className="shrink-0">
                   {usaChecklistBotao ? (
-                    <ChecklistGuiadoBotao />
+                    (() => {
+                      const d = (checklistReproc || checklistPend)!;
+                      return (
+                        <ChecklistGuiadoBotao
+                          processoId={d.processo_id}
+                          focusDocId={d.id}
+                        />
+                      );
+                    })()
                   ) : onClick ? (
                     <button
                       type="button"
@@ -1789,7 +1797,12 @@ export default function QAClientePortalPage() {
                             {lista.map((d) => {
                               const reprov = ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
                               return (
-                                <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                                <button
+                                  key={d.id}
+                                  type="button"
+                                  onClick={() => abrirChecklistGuiado({ processoId: d.processo_id, focusDocId: d.id })}
+                                  className="w-full flex items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition"
+                                >
                                   <div className="min-w-0">
                                     <div className="text-[12px] font-semibold text-slate-800 truncate">
                                       {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
@@ -1801,7 +1814,7 @@ export default function QAClientePortalPage() {
                                   <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
                                     {reprov ? "Reenviar" : "Pendente"}
                                   </span>
-                                </div>
+                                </button>
                               );
                             })}
                           </div>
