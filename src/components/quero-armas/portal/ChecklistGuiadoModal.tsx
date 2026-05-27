@@ -16,6 +16,7 @@ import {
   ArrowRight,
   BookOpen,
   Building2,
+  CalendarClock,
   Camera,
   CheckCircle2,
   ChevronRight,
@@ -31,6 +32,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import {
   CargaProcesso,
   CONDICAO_OPCOES_GUIA,
@@ -616,11 +618,35 @@ function DocumentoView({
     ? (doc.formato_aceito as string[]).map((f) => String(f).toUpperCase())
     : [];
   const jaEnviado = !!doc.arquivo_storage_key && (doc.status === "invalido" || doc.status === "divergente" || doc.status === "em_analise");
+  const validade = getValidadeInfo({
+    tipo_documento: doc.tipo_documento,
+    data_emissao: (doc as any).data_emissao ?? null,
+    data_validade_efetiva: (doc as any).data_validade_efetiva ?? null,
+    data_validade: (doc as any).data_validade ?? null,
+  });
+  const validadeTone =
+    validade.status === "vencido"
+      ? "border-red-200 bg-red-50 text-red-800"
+      : validade.status === "vence_em_breve"
+        ? "border-amber-200 bg-amber-50 text-amber-800"
+        : "border-emerald-200 bg-emerald-50 text-emerald-800";
   return (
     <div>
       <h3 className="text-base font-bold text-slate-900">{doc.nome_documento}</h3>
       {doc.instrucoes && <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{doc.instrucoes}</p>}
       {doc.observacoes_cliente && <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{doc.observacoes_cliente}</p>}
+
+      {/* validade efetiva (apenas para envios já feitos) */}
+      {!!doc.arquivo_storage_key && validade.label && (
+        <div className={`mt-3 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${validadeTone}`}>
+          <CalendarClock className="h-3.5 w-3.5" />
+          {validade.status === "vencido"
+            ? `Vencido em ${validade.label}`
+            : validade.status === "vence_em_breve"
+              ? `Vence em ${validade.label} (${validade.dias} dia${validade.dias === 1 ? "" : "s"})`
+              : `Válido até ${validade.label}`}
+        </div>
+      )}
 
       {/* metadados úteis */}
       {(doc.orgao_emissor || doc.prazo_recomendado_dias != null || doc.validade_dias != null) && (

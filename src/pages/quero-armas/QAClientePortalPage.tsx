@@ -9,7 +9,9 @@ import {
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
+  ShieldCheck,
 } from "lucide-react";
+import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
@@ -154,6 +156,9 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
+  // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
+  // lê qa_processo_eventos (somente os processos do cliente).
+  const [processoEventos, setProcessoEventos] = useState<any[]>([]);
 
   // Fonte oficial do header: função autenticada resolve e assina, em ordem:
   // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
@@ -399,11 +404,20 @@ export default function QAClientePortalPage() {
           const procIds = procsList.map((p) => p.id);
           const { data: procDocsData } = await supabase
             .from("qa_processo_documentos" as any)
-            .select("id, processo_id, status, obrigatorio, tipo_documento, etapa, ordem")
+            .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at")
             .in("processo_id", procIds);
           setProcessoDocs((procDocsData as any[]) ?? []);
+          // Eventos da linha do tempo (envios, aprovações, reprovações, etc).
+          const { data: eventosData } = await supabase
+            .from("qa_processo_eventos" as any)
+            .select("id, processo_id, tipo_evento, descricao, ator, created_at, documento_id")
+            .in("processo_id", procIds)
+            .order("created_at", { ascending: false })
+            .limit(200);
+          setProcessoEventos((eventosData as any[]) ?? []);
         } else {
           setProcessoDocs([]);
+          setProcessoEventos([]);
         }
 
       } catch (e: any) {
@@ -652,16 +666,45 @@ export default function QAClientePortalPage() {
 
   // Timeline
   const timeline = useMemo(() => {
-    const events: { date: string; label: string; icon: any; color: string }[] = [];
+    const events: { date: string; label: string; icon: any; color: string; sub?: string | null }[] = [];
     vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(352 60% 30%)" }));
     itens.forEach((it: any) => {
       const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || "Serviço";
       if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${servicoLabel} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
       if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${servicoLabel} — Deferido`, icon: CheckCircle, color: "hsl(152 60% 42%)" });
     });
+    // BLOCO 5 — eventos do qa_processo_eventos (envios, aprovações, rejeições, etc).
+    // Anexa "Válido até DD/MM/AAAA" quando o evento referencia um documento.
+    const docById = new Map<string, any>(processoDocs.map((d) => [String(d.id), d]));
+    processoEventos.forEach((ev: any) => {
+      const tipo = String(ev.tipo_evento || "").toLowerCase();
+      let icon: any = Activity;
+      let color = "hsl(220 60% 48%)";
+      if (tipo.includes("aprov")) { icon = CheckCircle; color = "hsl(152 60% 42%)"; }
+      else if (tipo.includes("reje") || tipo.includes("inval") || tipo.includes("reprov")) { icon = AlertTriangle; color = "hsl(352 70% 45%)"; }
+      else if (tipo.includes("envio") || tipo.includes("upload")) { icon = Upload; color = "hsl(210 60% 50%)"; }
+      else if (tipo.includes("revis")) { icon = ShieldCheck; color = "hsl(38 92% 50%)"; }
+      const baseLabel = ev.descricao || ev.tipo_evento || "Evento";
+      const doc = ev.documento_id ? docById.get(String(ev.documento_id)) : null;
+      let sub: string | null = null;
+      if (doc) {
+        const v = getValidadeInfo({
+          tipo_documento: doc.tipo_documento,
+          data_emissao: doc.data_emissao,
+          data_validade_efetiva: doc.data_validade_efetiva,
+          data_validade: doc.data_validade,
+        });
+        if (v.label) {
+          sub = v.status === "vencido" ? `${doc.nome_documento || doc.tipo_documento} · vencido em ${v.label}` : `${doc.nome_documento || doc.tipo_documento} · válido até ${v.label}`;
+        } else if (doc.nome_documento) {
+          sub = String(doc.nome_documento);
+        }
+      }
+      events.push({ date: ev.created_at, label: baseLabel, icon, color, sub });
+    });
     events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return events.slice(0, 12);
-  }, [vendas, itens, catalogoByServicoId, SERVICO_MAP]);
+    return events.slice(0, 20);
+  }, [vendas, itens, catalogoByServicoId, SERVICO_MAP, processoEventos, processoDocs]);
 
   const navItems = useMemo(() => [
     { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente" },
@@ -1708,6 +1751,9 @@ export default function QAClientePortalPage() {
                       </div>
                       <div className="flex-1 pl-4">
                         <div className="text-[11px] font-medium text-slate-700">{ev.label}</div>
+                        {ev.sub && (
+                          <div className="mt-0.5 text-[10px] text-slate-500">{ev.sub}</div>
+                        )}
                         <div className="text-[10px] text-slate-400 mt-0.5">{formatDate(ev.date)}</div>
                       </div>
                     </div>
