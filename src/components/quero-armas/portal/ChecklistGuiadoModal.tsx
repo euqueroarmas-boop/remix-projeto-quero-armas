@@ -618,6 +618,10 @@ function DocumentoView({
     ? (doc.formato_aceito as string[]).map((f) => String(f).toUpperCase())
     : [];
   const jaEnviado = !!doc.arquivo_storage_key && (doc.status === "invalido" || doc.status === "divergente" || doc.status === "em_analise");
+  // Comprovante de endereço de anos anteriores é histórico (imutável) — não
+  // possui prazo de validade. Só o comprovante do ano corrente tem os 90 dias.
+  const matchEnderecoAno = /^comprovante_endereco_ano_(\d{4})$/.exec(doc.tipo_documento || "");
+  const ehEnderecoHistorico = !!matchEnderecoAno && Number(matchEnderecoAno[1]) < new Date().getFullYear();
   const validade = getValidadeInfo({
     tipo_documento: doc.tipo_documento,
     data_emissao: (doc as any).data_emissao ?? null,
@@ -641,7 +645,7 @@ function DocumentoView({
       {doc.observacoes_cliente && <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{doc.observacoes_cliente}</p>}
 
       {/* validade efetiva (apenas para envios já feitos) */}
-      {!!doc.arquivo_storage_key && validade.label && (
+      {!ehEnderecoHistorico && !!doc.arquivo_storage_key && validade.label && (
         <div className={`mt-3 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${validadeTone}`}>
           <CalendarClock className="h-3.5 w-3.5" />
           {validade.semVencimento
@@ -655,7 +659,7 @@ function DocumentoView({
       )}
 
       {/* metadados úteis */}
-      {(doc.orgao_emissor || doc.prazo_recomendado_dias != null || doc.validade_dias != null) && (
+      {(doc.orgao_emissor || doc.prazo_recomendado_dias != null || (doc.validade_dias != null && !ehEnderecoHistorico)) && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {doc.orgao_emissor && (
             <span className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
@@ -667,7 +671,7 @@ function DocumentoView({
               Prazo: {doc.prazo_recomendado_dias} dias
             </span>
           )}
-          {doc.validade_dias != null && (
+          {doc.validade_dias != null && !ehEnderecoHistorico && (
             <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               Validade: {doc.validade_dias} dias
             </span>
