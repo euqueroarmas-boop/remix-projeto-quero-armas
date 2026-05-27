@@ -29,12 +29,42 @@ const guardKey = (contractId: string) => `qa_checklist_guiado_auto_${contractId}
 export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const contratoIdRef = useRef<string | null>(null);
+  // Garante que o auto-popup por pendências documentais aconteça UMA única vez
+  // por entrada na página — se o cliente fechar o assistente, não reabre sozinho
+  // na mesma sessão (regra explícita do produto).
+  const autoOpenedRef = useRef(false);
 
   // 1) abertura manual via bus
   useEffect(() => {
     const off = onAbrirChecklistGuiado(() => setOpen(true));
     return off;
   }, []);
+
+  // 1.b) AUTO-ABERTURA POR PENDÊNCIAS DOCUMENTAIS
+  // Assim que o portal monta e o cliente é identificado, contamos itens
+  // pendentes (ausentes, reprovados/invalidos, divergentes, em análise ou
+  // perguntas sem resposta) somando todos os processos elegíveis. Se houver
+  // qualquer pendência, abrimos o assistente automaticamente — uma vez só.
+  useEffect(() => {
+    if (!clienteId) return;
+    if (autoOpenedRef.current) return;
+    let cancel = false;
+    (async () => {
+      try {
+        const pendentes = await contarPendentesClienteGuia(clienteId);
+        if (cancel) return;
+        if (pendentes > 0 && !autoOpenedRef.current) {
+          autoOpenedRef.current = true;
+          setOpen(true);
+        }
+      } catch {
+        /* silencioso — feature opcional, nunca derruba o portal */
+      }
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [clienteId]);
 
   // helper: tenta auto-abrir se o contrato está validado e há itens pendentes
   const tentarAutoAbrir = async (contractId: string) => {
