@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
 import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
+import QAServicoDocumentosLinks from "./QAServicoDocumentosLinks";
 
 /* =============================================================================
  * QAServicoDocumentosModal — Editor de DOCUMENTOS EXIGIDOS de um serviço.
@@ -768,6 +769,11 @@ function ExigenciaCard({
               servicoId={row.servico_id}
               tipoDocumento={row.tipo_documento}
             />
+          ) : null}
+
+          {/* Links de emissão (botões reaproveitados) */}
+          {row.tipo_documento ? (
+            <QAServicoDocumentosLinks tipoDocumento={row.tipo_documento} />
           ) : null}
 
           {/* Repete por período/ano (opcional) */}
