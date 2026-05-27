@@ -58,7 +58,15 @@ const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QA
 const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
 const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPage"), "QAAlertasVencimentoPage");
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
-// DEV-ONLY: QA visual do Wizard KYC sem login real. Removido em build de prod.
+// ============================================================================
+// DEV-ONLY: Bancada visual do Wizard KYC (DocumentDataOnboardingWizard).
+//   - Permite QA do fluxo de cadastro documental SEM login real, SEM cliente
+//     real e SEM tocar no banco — mocks ficam confinados à própria página.
+//   - Gated por `import.meta.env.DEV`: em build de produção a constante vira
+//     `null`, o lazy import é eliminado (tree-shaking) e o <Route> abaixo
+//     também não é montado, então a rota nem existe no bundle publicado.
+//   - Não deve aparecer em menus, sidebar, sitemap ou links públicos.
+// ============================================================================
 const QAWizardKycPreviewPage = import.meta.env.DEV
   ? lazyRetry(() => import("./dev/QAWizardKycPreviewPage"), "QAWizardKycPreviewPage")
   : null;
