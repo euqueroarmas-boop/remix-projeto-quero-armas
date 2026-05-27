@@ -23,6 +23,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
+import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
 
 /* =============================================================================
  * QAServicoDocumentosModal — Editor de DOCUMENTOS EXIGIDOS de um serviço.
@@ -760,6 +761,14 @@ function ExigenciaCard({
               onClear={() => onClearArquivo("exemplo_url")}
             />
           </div>
+
+          {/* Modelos de referência (alimentam a IA) */}
+          {row.tipo_documento && row.servico_id ? (
+            <QAServicoDocumentosRefs
+              servicoId={row.servico_id}
+              tipoDocumento={row.tipo_documento}
+            />
+          ) : null}
 
           {/* Repete por período/ano (opcional) */}
           <div className="col-span-12 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
