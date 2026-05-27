@@ -25,6 +25,7 @@ import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
+import { PortalFilterProvider } from "@/components/quero-armas/portal/PortalFilterContext";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -149,7 +150,18 @@ export default function QAClientePortalPage() {
   const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
-  const [activeSection, setActiveSection] = useState<"resumo" | "contratacoes" | "documentos" | "arsenal" | "mensagens" | "financeiro" | "configuracoes">("resumo");
+  const [activeSection, setActiveSection] = useState<
+    | "resumo"
+    | "pendencias"
+    | "processos"
+    | "financeiro"
+    | "documentos"
+    | "contratos"
+    | "contratacoes"
+    | "arsenal"
+    | "mensagens"
+    | "configuracoes"
+  >("resumo");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
@@ -710,15 +722,25 @@ export default function QAClientePortalPage() {
     return events.slice(0, 20);
   }, [vendas, itens, catalogoByServicoId, SERVICO_MAP, processoEventos, processoDocs]);
 
+  // Nova IA do portal (Fase 1): as 6 abas oficiais aparecem primeiro, na ordem
+  // do briefing. Arsenal / Mensagens / Configurações continuam acessíveis como
+  // seções secundárias do sidebar — não foram removidas (zero regressão).
+  // `contratacoes` permanece como chave válida para deep-links legados, mas
+  // não é mais exposta como item de navegação — "Meus processos" cobre o
+  // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente" },
-    { key: "contratacoes" as const, label: "Contratações", icon: BriefcaseBusiness, path: "/area-do-cliente/contratacoes" },
-    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos" },
-    { key: "arsenal" as const, label: "Arsenal", icon: Shield, path: "/area-do-cliente/arsenal" },
-    { key: "mensagens" as const, label: "Mensagens", icon: MessageCircle, path: "/area-do-cliente/mensagens" },
-    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro" },
-    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes" },
+    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente", group: "primary" as const },
+    { key: "pendencias" as const, label: "Pendências", icon: AlertTriangle, path: "/area-do-cliente/pendencias", group: "primary" as const },
+    { key: "processos" as const, label: "Meus processos", icon: BriefcaseBusiness, path: "/area-do-cliente/processos", group: "primary" as const },
+    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro", group: "primary" as const },
+    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: FileStack, path: "/area-do-cliente/contratos", group: "primary" as const },
+    { key: "arsenal" as const, label: "Meu Arsenal", icon: Shield, path: "/area-do-cliente/arsenal", group: "secondary" as const },
+    { key: "mensagens" as const, label: "Suporte", icon: MessageCircle, path: "/area-do-cliente/mensagens", group: "secondary" as const },
+    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
   ], []);
+  const primaryNavItems = useMemo(() => navItems.filter((i) => i.group === "primary"), [navItems]);
+  const secondaryNavItems = useMemo(() => navItems.filter((i) => i.group === "secondary"), [navItems]);
 
   // Sincroniza seção a partir da URL apenas no primeiro mount / quando a rota base muda.
   // Navegação interna do portal NÃO altera URL — apenas estado.
@@ -760,7 +782,7 @@ export default function QAClientePortalPage() {
         titulo: `${prazoCritico.evento}: manifestar-se até ${formatDate(prazoCritico.dataLimite)}`,
         descricao: `${prazoCritico.servicoNome || "Processo"} · ${prazoCritico.statusLabel}`,
         icon: AlertTriangle,
-        onClick: () => goSection("contratacoes"),
+        onClick: () => goSection("processos"),
       };
     } else if (docVencidoHoje) {
       proximaAcao = {
@@ -805,6 +827,7 @@ export default function QAClientePortalPage() {
   }
 
   return (
+    <PortalFilterProvider>
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
       <ForcePasswordChangeModal
         open={mustChangePassword}
@@ -815,13 +838,23 @@ export default function QAClientePortalPage() {
           <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
           <button type="button" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center"><ChevronRight className="h-4 w-4 rotate-180" /></button>
         </div>
-        <nav className="mt-6 space-y-2">
-          {navItems.map((item) => {
+        <nav className="mt-6 space-y-1">
+          {primaryNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
+            return (
+              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
+                <Icon className="h-5 w-5" /> {item.label}
+              </button>
+            );
+          })}
+          <div className="mt-4 mb-1 px-4 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Mais</div>
+          {secondaryNavItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key;
             return (
-              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
-                <Icon className="h-5 w-5" /> {item.label}
+              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 text-[12px] font-semibold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}>
+                <Icon className="h-4 w-4" /> {item.label}
               </button>
             );
           })}
@@ -932,9 +965,9 @@ export default function QAClientePortalPage() {
         <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-6 overflow-x-auto">
-              {navItems.slice(0, 4).map((item) => {
+              {primaryNavItems.map((item) => {
                 const Icon = item.icon;
-                const active = activeSection === item.key;
+                const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
                 return (
                   <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`relative inline-flex items-center gap-2 px-1 py-2 text-[13px] font-bold ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}>
                     <Icon className="h-4 w-4" /> {item.label}
@@ -1900,7 +1933,7 @@ export default function QAClientePortalPage() {
         </div>
         )}
 
-        {activeSection === "contratacoes" && (
+        {(activeSection === "contratacoes" || activeSection === "processos") && (
           <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
             <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
             {cliente?.id ? (
@@ -1953,6 +1986,31 @@ export default function QAClientePortalPage() {
             </div>
           </SectionCard>
         )}
+
+        {activeSection === "pendencias" && (
+          <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
+            <p className="py-8 text-center text-sm text-slate-500">
+              Lista completa de pendências por processo chega na próxima etapa do redesign.
+              Use o assistente guiado para resolver agora.
+            </p>
+            <div className="flex justify-center"><ChecklistGuiadoBotao /></div>
+          </SectionCard>
+        )}
+
+        {activeSection === "contratos" && (
+          <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
+            {cliente?.id ? (
+              <>
+                <ContratoBlock clienteId={cliente.id} />
+                {(cliente as any)?.id_legado != null && (
+                  <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
+                )}
+              </>
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
+            )}
+          </SectionCard>
+        )}
       </main>
 
       {(customerId || cliente?.id) && (
@@ -1969,5 +2027,6 @@ export default function QAClientePortalPage() {
         <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
       ) : null}
     </div>
+    </PortalFilterProvider>
   );
 }
