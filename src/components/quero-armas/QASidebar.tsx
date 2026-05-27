@@ -46,6 +46,7 @@ const NAV_GROUPS = [
       { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel },
       { title: "Modelos DOCX", url: "/modelos-docx", icon: FileBox },
       { title: "Modelos de Declaração", url: "/modelos-declaracao", icon: FileSignature },
+      { title: "Wizard de Perguntas", url: "/wizard-perguntas", icon: FileSignature },
       { title: "Correções da IA", url: "/correcoes-ia", icon: GraduationCap },
     ],
   },
