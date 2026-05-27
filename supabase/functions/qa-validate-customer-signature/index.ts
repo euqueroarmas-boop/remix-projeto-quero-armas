@@ -121,18 +121,69 @@ Deno.serve(async (req) => {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const meta = validatePdfSignature(bytes);
 
-  // ----- BINDING contrato ↔ PDF assinado -----
-  // Impede que o cliente assine o contrato A e suba na venda/contrato B.
-  // Regra: o contract_number ÚNICO do contrato precisa aparecer no texto
-  // do PDF enviado. (Os contratos QA-ACEITE-* / QA-* são gerados por nós
-  // com o número impresso no corpo, então o assinador sempre o carrega.)
+  // ----- BINDING contrato ↔ PDF assinado (continuidade criptográfica) -----
+  // Impede fraude trivial (assinar um papel em branco contendo o número do
+  // contrato). Regra forte: o PDF assinado pelo Gov.br/ICP-Brasil é uma
+  // ATUALIZAÇÃO INCREMENTAL PAdES — os bytes do PDF original que geramos
+  // precisam aparecer como PREFIXO do PDF enviado. Comparamos byte-a-byte
+  // contra `original_pdf_path` (storage) e contra `original_sha256`.
   const numero = ((contract as any).contract_number || "").toString().trim();
+  const originalPath = (contract as any).original_pdf_path as string | null;
+  const expectedSha = ((contract as any).original_sha256 || "").toString().toLowerCase();
+
+  let bindingOk = false;
+  let bindingReason = "";
+  let bindingDetails: Record<string, unknown> = {};
+
+  if (!originalPath) {
+    bindingReason = "Contrato original não localizado para comparação criptográfica.";
+  } else {
+    const { data: origFile, error: origErr } = await sb.storage.from(BUCKET).download(originalPath);
+    if (origErr || !origFile) {
+      bindingReason = "Falha ao baixar PDF original para comparação.";
+      bindingDetails = { erro: origErr?.message };
+    } else {
+      const origBytes = new Uint8Array(await origFile.arrayBuffer());
+      // 1) Confere SHA-256 do original armazenado (defesa contra adulteração interna).
+      const origDigest = await crypto.subtle.digest("SHA-256", origBytes as BufferSource);
+      const origSha = Array.from(new Uint8Array(origDigest))
+        .map((x) => x.toString(16).padStart(2, "0")).join("");
+      const shaMatchInternal = !expectedSha || origSha === expectedSha;
+      // 2) Prefixo: o PDF assinado precisa começar com os bytes do original.
+      let isPrefix = bytes.byteLength >= origBytes.byteLength;
+      if (isPrefix) {
+        for (let i = 0; i < origBytes.byteLength; i++) {
+          if (bytes[i] !== origBytes[i]) { isPrefix = false; break; }
+        }
+      }
+      bindingDetails = {
+        original_sha256_stored: expectedSha || null,
+        original_sha256_recomputed: origSha,
+        original_size: origBytes.byteLength,
+        signed_size: bytes.byteLength,
+        prefix_match: isPrefix,
+      };
+      if (!shaMatchInternal) {
+        bindingReason = "PDF original divergente do hash registrado. Acione o suporte.";
+      } else if (!isPrefix) {
+        bindingReason = numero
+          ? `O arquivo enviado NÃO é a assinatura do contrato ${numero}. O PDF assinado precisa ser o próprio contrato baixado deste sistema (apenas adicionando a assinatura digital, sem alterar o conteúdo).`
+          : "O arquivo enviado não corresponde ao contrato original gerado.";
+      } else {
+        bindingOk = true;
+      }
+    }
+  }
+
+  // Camada extra (defesa em profundidade): número do contrato precisa aparecer no texto.
   const pdfText = extractPdfPlainText(bytes);
   const numeroPresente = numero.length > 0 && pdfText.includes(numero);
-  if (!numeroPresente) {
-    const motivo = numero
-      ? `O PDF enviado não contém o número deste contrato (${numero}). Verifique se você baixou e assinou o contrato correto desta venda.`
-      : "Contrato sem número de referência — não foi possível confirmar o vínculo.";
+
+  if (!bindingOk || !numeroPresente) {
+    const motivo = bindingReason
+      || (numero
+        ? `O PDF enviado não corresponde a este contrato (${numero}).`
+        : "Não foi possível confirmar o vínculo do PDF com o contrato.");
     await sb.from("qa_contracts").update({
       status: "rejected",
       validation_status: "invalid",
@@ -140,13 +191,15 @@ Deno.serve(async (req) => {
         motivo_falha: motivo,
         binding_check: "failed",
         expected_contract_number: numero,
+        contract_number_in_pdf: numeroPresente,
+        ...bindingDetails,
         ...meta,
       },
     }).eq("id", contract.id);
     await sb.from("qa_contract_events").insert({
       contract_id: contract.id,
       event_type: "customer_signature_wrong_contract",
-      event_payload: { expected_contract_number: numero },
+      event_payload: { expected_contract_number: numero, ...bindingDetails, contract_number_in_pdf: numeroPresente },
     });
     return jsonResp({
       ok: false,
