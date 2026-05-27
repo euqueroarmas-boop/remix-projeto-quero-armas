@@ -82,6 +82,8 @@ interface Props {
   onClose: () => void;
   /** opcional: já abre direto neste processo (pula a tela de seleção) */
   processoIdInicial?: string | null;
+  /** opcional: já abre direto neste documento (pendência clicada) */
+  focusDocIdInicial?: string | null;
   /** chamado quando algo muda, para o portal recarregar contadores */
   onUpdated?: () => void;
 }
@@ -91,6 +93,7 @@ export default function ChecklistGuiadoModal({
   open,
   onClose,
   processoIdInicial,
+  focusDocIdInicial,
   onUpdated,
 }: Props) {
   const viewer = useDocumentoViewer();
@@ -155,12 +158,19 @@ export default function ChecklistGuiadoModal({
       setFase("carregando");
       setAvisoRetomada(null);
       const c = await recarregarCarga(pid);
-      // Retomada: tenta abrir no último documento onde o cliente parou.
-      const saved = loadDocumentAssistantProgress({ clienteId, processoId: pid });
-      avancarPara(c, pularIds, saved?.currentDocumentId ?? null, saved?.currentDocumentKey ?? null);
+      // Foco explícito (ex.: pendência clicada) tem prioridade sobre o
+      // progresso salvo. Se o doc focado não existir mais na fila, o
+      // resolveResumeDocId cai naturalmente no primeiro acionável.
+      if (focusDocIdInicial) {
+        avancarPara(c, pularIds, focusDocIdInicial, null);
+      } else {
+        // Retomada: tenta abrir no último documento onde o cliente parou.
+        const saved = loadDocumentAssistantProgress({ clienteId, processoId: pid });
+        avancarPara(c, pularIds, saved?.currentDocumentId ?? null, saved?.currentDocumentKey ?? null);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recarregarCarga, pularIds],
+    [recarregarCarga, pularIds, focusDocIdInicial],
   );
 
   // decide a próxima tela a partir da carga atual
