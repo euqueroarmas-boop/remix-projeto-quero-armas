@@ -288,6 +288,92 @@ Deno.serve(async (req) => {
         payload: { venda_id, error: String((e as any)?.message || e) },
       });
     }
+
+    // ── Camada ADITIVA: dispara qa_confirmar_pagamento_processo para cada
+    //    processo desta venda. A RPC é idempotente (ja_estava_confirmado=true
+    //    no segundo disparo) e ela mesma EXPLODE o checklist via
+    //    qa_explodir_checklist_processo. Substitui o passo manual da Equipe.
+    //    Best-effort: erro aqui NÃO derruba o webhook.
+    try {
+      const { data: procs, error: procsErr } = await supabase
+        .from("qa_processos")
+        .select("id, pagamento_status")
+        .eq("venda_id", venda_id);
+
+      if (procsErr) {
+        await logSistemaBackend({
+          tipo: "webhook", status: "error",
+          mensagem: `qa-asaas-webhook: falha listar processos da venda ${venda_id}`,
+          payload: { venda_id, error: procsErr.message },
+        });
+      } else if (!procs || procs.length === 0) {
+        await logSistemaBackend({
+          tipo: "webhook", status: "warning",
+          mensagem: `qa-asaas-webhook: nenhum processo encontrado p/ venda ${venda_id} no instante do PAGO`,
+          payload: { venda_id },
+        });
+      } else {
+        for (const p of procs) {
+          try {
+            const { data: confRes, error: confErr } = await supabase.rpc(
+              "qa_confirmar_pagamento_processo",
+              { p_processo_id: p.id, p_origem: "asaas_webhook" },
+            );
+            if (confErr) {
+              await logSistemaBackend({
+                tipo: "pagamento", status: "error",
+                mensagem: `qa-asaas-webhook: confirmar_pagamento_processo falhou`,
+                payload: { venda_id, processo_id: p.id, error: confErr.message },
+              });
+              continue;
+            }
+
+            // pós-pagamento (protocolo interno do processo + status produção)
+            try {
+              await supabase.rpc("qa_pos_pagamento_protocolar", {
+                p_processo_id: p.id,
+              });
+            } catch (e) {
+              console.warn("[qa-asaas-webhook] pos_pagamento_protocolar:", e);
+            }
+
+            // Notifica apenas se a confirmação foi efetiva agora
+            if (!confRes?.ja_estava_confirmado) {
+              supabase.functions
+                .invoke("qa-processo-notificar", {
+                  body: { processo_id: p.id, evento: "pagamento_confirmado" },
+                })
+                .catch((e) =>
+                  console.warn("[qa-asaas-webhook] notificar falhou:", e),
+                );
+
+              await logSistemaBackend({
+                tipo: "pagamento", status: "success",
+                mensagem: `qa-asaas-webhook: processo ${p.id} confirmado + checklist explodido (venda ${venda_id})`,
+                payload: {
+                  venda_id,
+                  processo_id: p.id,
+                  checklist_inseridos: confRes?.checklist_inseridos ?? null,
+                  checklist_ja_existentes: confRes?.checklist_ja_existentes ?? null,
+                },
+              });
+            }
+          } catch (e) {
+            await logSistemaBackend({
+              tipo: "pagamento", status: "error",
+              mensagem: `qa-asaas-webhook: exceção confirmando processo ${p.id}`,
+              payload: { venda_id, processo_id: p.id, error: String((e as any)?.message || e) },
+            });
+          }
+        }
+      }
+    } catch (e) {
+      await logSistemaBackend({
+        tipo: "webhook", status: "error",
+        mensagem: `qa-asaas-webhook: exceção no bloco automação processos venda ${venda_id}`,
+        payload: { venda_id, error: String((e as any)?.message || e) },
+      });
+    }
   } else {
     await logSistemaBackend({
       tipo: "webhook", status: "info",
