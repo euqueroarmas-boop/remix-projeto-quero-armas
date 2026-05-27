@@ -96,10 +96,10 @@ function pickAnoCompetencia(doc: DocValidadeInput): number | null {
     if (Number.isFinite(n) && n > 1900 && n < 3000) return n;
   }
   // Fallback: comprovantes históricos são modelados como
-  // `comprovante_endereco_ano_YYYY` — extraímos o ano do próprio tipo
-  // para que o motor de validade trate corretamente como histórico,
-  // sem depender de coluna nova nem migração.
-  const m = /^comprovante_(?:endereco|residencia)_ano_(\d{4})$/i.exec(String(doc.tipo_documento || ""));
+  // `comprovante_residencia_YYYY` (gerado pelo modal) ou, legado,
+  // `comprovante_endereco_ano_YYYY`. Extraímos o ano do próprio tipo
+  // para que o motor de validade trate corretamente como histórico.
+  const m = /^comprovante_(?:endereco|residencia)(?:_ano)?_(\d{4})$/i.exec(String(doc.tipo_documento || ""));
   if (m) {
     const n = Number(m[1]);
     if (Number.isFinite(n) && n > 1900 && n < 3000) return n;
