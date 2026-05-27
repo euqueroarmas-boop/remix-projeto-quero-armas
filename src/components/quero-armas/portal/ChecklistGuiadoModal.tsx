@@ -105,6 +105,9 @@ export default function ChecklistGuiadoModal({
   const [resultadoDoc, setResultadoDoc] = useState<GuiaDoc | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  // Mostra aviso discreto quando o assistente pulou automaticamente um
+  // documento salvo no progresso (porque ele já está aprovado, em análise, etc).
+  const [avisoRetomada, setAvisoRetomada] = useState<string | null>(null);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
@@ -150,6 +153,7 @@ export default function ChecklistGuiadoModal({
     async (pid: string) => {
       setProcessoId(pid);
       setFase("carregando");
+      setAvisoRetomada(null);
       const c = await recarregarCarga(pid);
       // Retomada: tenta abrir no último documento onde o cliente parou.
       const saved = loadDocumentAssistantProgress({ clienteId, processoId: pid });
@@ -189,6 +193,24 @@ export default function ChecklistGuiadoModal({
             }
           : null,
       );
+      // Se o cliente tinha progresso salvo mas o documento salvo não é mais
+      // acionável (já aprovado / em análise / dispensado), avisamos de forma
+      // discreta que pulamos para o próximo item realmente acionável.
+      if (preferDocId || preferDocKey) {
+        const aindaNaFila =
+          (preferDocId && fila.some((d) => d.id === preferDocId)) ||
+          (preferDocKey &&
+            fila.some(
+              (d) => (d.tipo_documento ?? "").toLowerCase() === preferDocKey.toLowerCase(),
+            ));
+        if (!aindaNaFila) {
+          setAvisoRetomada("Continuamos do próximo item que precisa da sua atenção.");
+        } else {
+          setAvisoRetomada(null);
+        }
+      } else {
+        setAvisoRetomada(null);
+      }
       setDocAtivoId(resumeId ?? fila[0].id);
       setResultadoDoc(null);
       setErroAcao(null);
@@ -505,6 +527,12 @@ export default function ChecklistGuiadoModal({
             {/* ITEM ATUAL */}
             {fase === "item" && docAtivo && carga && (
               <div className="space-y-4">
+                {avisoRetomada && (
+                  <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] text-slate-600">
+                    <Info className="mt-[2px] h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <span>{avisoRetomada}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">
                     Etapa {grupoAtivo?.stepOrder ?? 1}/{grupoAtivo?.stepTotal ?? 5} · {grupoAtivo?.stepLabel ?? "Documentação"}
@@ -682,12 +710,12 @@ export default function ChecklistGuiadoModal({
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                   <PartyPopper className="h-8 w-8" />
                 </div>
-                <h3 className="text-lg font-extrabold text-slate-900">Tudo enviado por aqui!</h3>
+                <h3 className="text-lg font-extrabold text-slate-900">Tudo enviado por enquanto</h3>
                 <p className="max-w-sm text-sm text-slate-500">
-                  Você concluiu os itens liberados desta etapa.
+                  A Equipe Quero Armas está analisando seus documentos.
                   {prog.emRevisao > 0
-                    ? ` ${prog.emRevisao} documento(s) estão em conferência pela Equipe Quero Armas.`
-                    : " Assim que a próxima etapa for liberada, o assistente avisa você."}
+                    ? ` ${prog.emRevisao} documento(s) em conferência.`
+                    : " Assim que houver um próximo item para você, o assistente avisa."}
                 </p>
                 <button onClick={onClose} className="mt-2 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white" style={{ background: MARROM }}>
                   Concluir
