@@ -1,52 +1,94 @@
-# Bundle CAC — Comprar arma (3 serviços)
+## Objetivo
 
-Quando o CAC com CR ativo escolhe "Comprar arma" como atirador ou caçador, o sistema passa a selecionar automaticamente 3 serviços (autorização + registro + GTE), permitindo remover individualmente na Etapa 01, mantendo no mínimo 1.
+Transformar a home `/area-do-cliente` em uma visão executiva premium e simples, com abas (Resumo, Pendências, Meus processos, Financeiro, Documentos, Contratos), filtro multi-processo, e a aba **Resumo** funcionando como dashboard de 1 olhada — sem destruir nada que já funciona.
 
-## Bundles
+## Identidade visual confirmada
 
-- **Atirador**: `autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac`, `registro-e-apostilamento-de-arma-de-fogo-cac`, `guia-de-trafego-especial-cac`
-- **Caçador**: `autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac`, `registro-e-apostilamento-de-arma-de-fogo-cac`, `guia-de-trafego-especial-cac`
+Arsenal UI oficial:
+- Papel `#f6f5f1`
+- Bordô `#7A1F2B` (acento de marca)
+- Cards brancos, bordas `#E5EAF2`, raio 8px
+- Vermelho/âmbar apenas para alerta crítico
+- Tipografia atual, sem fundo preto, sem azul institucional
 
-## Arquivos & mudanças
+## Fase 1 — Esqueleto de navegação (sem mexer em conteúdo)
 
-**1. `useCadastroRefinadoState.ts`** — adicionar `servicosSlugs: string[]` (default `[]`). Manter `servicoSlug` como derivado (`servicosSlugs[0] ?? null`) via getter ou sincronia em `update()`. Persistir em localStorage como hoje.
+Refatorar **somente** o sistema de abas dentro de `QAClientePortalPage.tsx`:
 
-**2. `qaCadastroV2Catalog.ts`** — novo tipo de opção:
-```ts
-type QAV2NodeOption =
-  | { kind: "service"; servicoSlug: string; ... }
-  | { kind: "bundle"; servicoSlugs: string[]; ... }
-  | { kind: "node"; nextNodeId: string; ... };
-```
-Trocar as 2 opções do node `comprar_arma` (atirador, caçador) para `kind: "bundle"` com os arrays acima.
+- Trocar o set atual `"resumo" | "contratacoes" | "documentos" | "arsenal" | "mensagens" | "financeiro" | "configuracoes"` por:
+  `"resumo" | "pendencias" | "processos" | "financeiro" | "documentos" | "contratos"`
+- Sidebar desktop (já existe) recebe os novos labels/ícones, no estilo Arsenal (preto + bordô ativo).
+- Mobile: bottom-nav compacta com 5 itens principais + "mais" para Contratos/Suporte.
+- Header mantém: "Área do Cliente" + nome + badge "N processos ativos" + sino + suporte.
+- Adicionar **ProcessoFilterContext** (provider local no portal) com state `processoSelecionado: "todos" | <processo_id>` — usado por todas as abas para escopar dados, sem mudar nenhuma query existente ainda. Padrão = "todos".
 
-**3. `Etapa00Escolha.tsx`** — quando `opt.kind === "bundle"`, chamar novo callback `onSelectBundle(slugs)` que faz `update({ servicosSlugs: slugs })` e avança para Etapa 01. Quando `service`, comportamento atual: `update({ servicosSlugs: [slug] })`.
+Critério: abas trocam, nada quebra, conteúdo antigo continua sendo renderizado nas abas equivalentes.
 
-**4. `Etapa01Servico.tsx`** — refatorar para multi-serviço:
-- Buscar via `.in("slug", state.servicosSlugs)`.
-- Renderizar lista de cards (um por serviço) com nome, descrição, preço, e botão **Remover** (X) — desabilitado quando `servicosSlugs.length === 1`.
-- Rodapé com somatório (label "Total dos serviços").
-- Quando array tem 1 item, manter visual atual (card único sem X).
+## Fase 2 — Aba Resumo (home nova)
 
-**5. `Etapa04Pagamento.tsx`** — buscar todos: `.select("id, preco, nome, slug").in("slug", state.servicosSlugs)`. `preco = Σ`. Popular `cart` com `servicos.map(s => ({ servico_id: s.id, slug: s.slug, quantidade: 1 }))`. Enviar `catalogo_slug` como `servicosSlugs.join(",")` para `qa-cliente-criar-conta-publica`.
+Redesenhar **apenas** o conteúdo renderizado quando `activeSection === "resumo"`. Mantém todos os hooks de carga já existentes (`processoSnap`, `analysis`, `vendas`, `processos`, `processoDocs`).
 
-**6. `ContractPreviewCard.tsx`** — aceitar `servicos: Array<{nome, preco}>` (ou via slugs) e listar todos.
+Layout em 2 colunas no desktop, 1 coluna no mobile, todos cards brancos, raio 8px, borda `#E5EAF2`:
 
-## Fora de escopo (não tocar)
+1. **Card "Próxima ação"** (full-width, destaque bordô)
+   - Deriva da mesma fila que o `ChecklistGuiado` usa hoje (`contarPendentesClienteGuia` + primeiro item da fila).
+   - Mostra: serviço-tag, descrição da ação, prioridade, botão "Resolver agora" → abre `ChecklistGuiadoModal` (reuso direto, sem duplicar lógica).
+   - Se não há pendência: card neutro "Tudo em dia".
 
-- Edge functions de pagamento (já consomem `cart`).
-- `checkoutPricing.ts` (recebe valor total).
-- Fluxos não-CAC ou CAC fora de "comprar arma" continuam com 1 serviço (state aceita array de 1).
-- Banco de dados: não há migração.
+2. **Grid 4 cards compactos** (Pendências / Financeiro / Documentos / Processos)
+   - Cada card: ícone, número grande, label, link "Ver detalhes" que troca a aba ativa.
+   - Pendências = `processoSnap.pendentes` total. Financeiro = total em aberto de `vendas`. Documentos = `meusDocs.length` enviados / total esperado. Processos = ativos.
 
-## Riscos & mitigação
+3. **Seção "Processos em andamento"**
+   - Lista curta (máx 3, com "Ver todos" → aba Processos).
+   - Cada item: nome do serviço, status badge, barra de progresso (já existe em `processoSnap`), próxima ação curta, "Ver detalhes" → seta `processoSelecionado` e troca para aba Processos.
 
-- **Zero Regression**: state continua expondo `servicoSlug` como compat (derivado), então qualquer leitura existente segue funcionando até migrar.
-- **Remover último**: botão remover gateado por `servicosSlugs.length > 1`.
-- **CAC simples** (registro avulso, GTE avulso) seguem como `kind: "service"` — não afetados.
+4. **Resumo financeiro compacto**
+   - Total contratado, Total pago, Em aberto (destaque vermelho se > 0), CTA "Ver financeiro".
 
-## Validação pós-implementação
+5. **Card Equipe Quero Armas**
+   - Texto curto + botão WhatsApp (reuso do que já existe).
 
-1. CAC → Comprar arma → Atirador → Etapa 01 mostra 3 cards, total = soma. Remover 1 → 2 cards, total recalcula. Botão X some no último.
-2. Pagamento PIX → checkout cria venda com `cart` de N itens (N = serviços restantes).
-3. Fluxo Posse (não-CAC) continua com 1 serviço, sem regressão visual.
+Tudo o que estava na home antiga (HistoricoAtualizacoes detalhado, Arsenal completo, etc.) **é movido** para as abas correspondentes — nunca apagado.
+
+## Fase 3 — Abas detalhadas + filtro multi-processo
+
+Para cada aba, encapsular o conteúdo já existente em componentes filhos respeitando `processoSelecionado`:
+
+- **Pendências**: lista completa agrupada por processo (deriva de `processoSnap.processos[].pendencias`). Quando `processoSelecionado !== "todos"`, mostra só aquele.
+- **Meus processos**: reusa `ClienteProcessosSection` já existente, com filtro aplicado.
+- **Financeiro**: lista vendas/cobranças do cliente, filtrável por processo via `qa_itens_venda.venda_id`.
+- **Documentos**: reusa hub de documentos atual, filtrável.
+- **Contratos**: reusa `ContratoBlock` + `ContratosPosPagamentoCard`, filtrável.
+
+Filtro renderizado como segmented control no topo de cada aba detalhada: "Todos os processos · <nome processo 1> · <nome processo 2>...". Default "todos".
+
+## Fase 4 — Mobile polish + QA
+
+- Header colapsa, abas viram scroll horizontal sticky.
+- Cards empilham, "Próxima ação" sempre primeiro.
+- Bottom-nav fixa no mobile.
+- Botões mínimo 44px.
+- Typecheck: `tsc --noEmit` deve passar.
+- Smoke: abrir `/area-do-cliente` como cliente com pendências e validar que o `ChecklistGuiado` ainda explode (regra já aprovada).
+
+## O que NÃO vai mudar
+
+- `ChecklistGuiado`, `ChecklistGuiadoModal`, `ChecklistGuiadoBotao`, `ContratoBlock`, `ContratosPosPagamentoCard`
+- Hooks de carga de `qa_clientes`, `qa_vendas`, `qa_itens_venda`, `qa_processos`, `qa_processo_documentos`, `qa_processo_eventos`
+- Realtime channels
+- Lógica de FK `getClienteFK` / `getVendaFK`
+- RLS, Edge Functions, schema
+- `ArsenalView`, `ClienteProcessosSection`, `CentralAjudaCliente`, `HistoricoAtualizacoes` (reusados como filhos)
+
+## Detalhes técnicos
+
+- Provider `PortalFilterContext` novo em `src/components/quero-armas/portal/PortalFilterContext.tsx` (aditivo, ninguém depende dele ainda).
+- Refator de `QAClientePortalPage.tsx` mantém o mesmo nome/rota; muda a estrutura interna do JSX e quebra o monolito em ~5 componentes filhos (`ResumoTab`, `PendenciasTab`, `ProcessosTab`, `FinanceiroTab`, `DocumentosTab`, `ContratosTab`) em `src/components/quero-armas/portal/tabs/`.
+- Próxima ação calculada por util novo `derivarProximaAcao(processos, processoDocs, respostas)` em `src/lib/quero-armas/proximaAcao.ts` — reusa exatamente a mesma fila do `checklistGuiadoEngine` (sem duplicar regra).
+
+## Entrega
+
+Faço uma fase por vez, commitando ao final de cada. Após cada fase, valido visualmente no preview e só sigo para a próxima quando confirmar que nada regrediu.
+
+Posso começar pela Fase 1?
