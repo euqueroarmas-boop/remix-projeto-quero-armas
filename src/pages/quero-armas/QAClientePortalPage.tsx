@@ -782,7 +782,7 @@ export default function QAClientePortalPage() {
         titulo: `${prazoCritico.evento}: manifestar-se até ${formatDate(prazoCritico.dataLimite)}`,
         descricao: `${prazoCritico.servicoNome || "Processo"} · ${prazoCritico.statusLabel}`,
         icon: AlertTriangle,
-        onClick: () => goSection("contratacoes"),
+        onClick: () => goSection("processos"),
       };
     } else if (docVencidoHoje) {
       proximaAcao = {
