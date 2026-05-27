@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import JSZip from "https://esm.sh/jszip@3.10.1";
+import { auditTemplate, buildReplacementsMap } from "../_shared/qaPlaceholders.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,48 +15,12 @@ const MESES = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-function buildReplacements(cliente: any, extra: Record<string, string> = {}): Record<string, string> {
-  const now = new Date();
-  const endereco1Parts = [
-    cliente.endereco,
-    cliente.numero ? `nº ${cliente.numero}` : "",
-    cliente.complemento || "",
-    cliente.bairro || "",
-    cliente.cidade ? `${cliente.cidade}` : "",
-    cliente.estado || "",
-    cliente.cep ? `CEP: ${cliente.cep}` : "",
-  ].filter(Boolean);
-
-  const endereco2Parts = [
-    cliente.endereco2,
-    cliente.numero2 ? `nº ${cliente.numero2}` : "",
-    cliente.complemento2 || "",
-    cliente.bairro2 || "",
-    cliente.cidade2 ? `${cliente.cidade2}` : "",
-    cliente.estado2 || "",
-    cliente.cep2 ? `CEP: ${cliente.cep2}` : "",
-  ].filter(Boolean);
-
-  const map: Record<string, string> = {
-    "[NOME COMPLETO]": cliente.nome_completo || "",
-    "[NACIONALIDADE]": cliente.nacionalidade || "brasileiro(a)",
-    "[NATURALIDADE]": cliente.naturalidade || "",
-    "[DATA NASCIMENTO]": cliente.data_nascimento || "",
-    "[PROFISSÃO]": cliente.profissao || "",
-    "[ESTADO CIVIL]": cliente.estado_civil || "",
-    "[CPF]": cliente.cpf || "",
-    "[RG]": cliente.rg || "",
-    "[EMISSOR]": cliente.emissor_rg || "",
-    "[ENDEREÇO 1]": endereco1Parts.join(", "),
-    "[ENDEREÇO 2]": endereco2Parts.join(", "),
-    "[CIDADE]": cliente.cidade || "",
-    "[DIA]": String(now.getDate()).padStart(2, "0"),
-    "[MÊS]": MESES[now.getMonth()],
-    "[ANO]": String(now.getFullYear()),
-    ...extra,
-  };
-
-  return map;
+function buildReplacements(
+  cliente: any,
+  templateData: Record<string, any> | null | undefined,
+  extra: Record<string, string> = {},
+): Record<string, string> {
+  return { ...buildReplacementsMap(cliente, templateData ?? {}), ...extra };
 }
 
 function replaceInXml(xml: string, replacements: Record<string, string>): string {
@@ -157,7 +122,7 @@ Deno.serve(async (req) => {
     const guard = await requireQAStaff(req);
     if (!guard.ok) return guard.response;
 
-    const { template_key, cliente_id, extra_fields } = await req.json();
+    const { template_key, cliente_id, processo_id, extra_fields } = await req.json();
 
     if (!template_key || !cliente_id) {
       return new Response(
@@ -195,8 +160,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build replacements
-    const replacements = buildReplacements(cliente, extra_fields || {});
+    // Merge template_data do processo, se fornecido
+    let templateData: Record<string, any> = {};
+    if (processo_id) {
+      const { data: proc } = await supabase
+        .from("qa_processos")
+        .select("respostas_questionario_json")
+        .eq("id", processo_id)
+        .maybeSingle();
+      const r = (proc as any)?.respostas_questionario_json;
+      if (r && typeof r === "object" && !Array.isArray(r) && r.template_data && typeof r.template_data === "object") {
+        templateData = r.template_data;
+      }
+    }
+    const replacements = buildReplacements(cliente, templateData, extra_fields || {});
 
     // Unzip DOCX
     const zip = await JSZip.loadAsync(await fileData.arrayBuffer());
@@ -212,6 +189,16 @@ Deno.serve(async (req) => {
 
     const newDocXml = replaceInXml(docXml, replacements);
     zip.file("word/document.xml", newDocXml);
+
+    // Aviso (não bloqueia admin) se houver placeholders obrigatórios faltando.
+    try {
+      const audit = auditTemplate(docXml, cliente, templateData);
+      if (audit.required_missing.length > 0 || audit.unknown.length > 0) {
+        console.warn("[qa-fill-template] admin gerou com pendências:", {
+          template_key, missing: audit.required_missing, unknown: audit.unknown,
+        });
+      }
+    } catch (_) { /* não bloqueia */ }
 
     // Also replace in headers/footers if they exist
     for (const filename of Object.keys(zip.files)) {

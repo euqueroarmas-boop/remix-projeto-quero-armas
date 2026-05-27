@@ -43,6 +43,7 @@ const CAMPOS_PERMITIDOS = new Set<string>([
   "nacionalidade",
   "naturalidade_municipio",
   "naturalidade_uf",
+  "naturalidade",
   "nome_mae",
   "nome_pai",
   // Contato
