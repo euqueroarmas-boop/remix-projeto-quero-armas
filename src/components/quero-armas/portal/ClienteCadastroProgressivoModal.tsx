@@ -20,11 +20,42 @@ import {
   CAMPOS_CADASTRO, CampoCadastro, CadastroGrupo, GRUPO_LABELS,
   calcularProgressoCadastro, getCamposFaltantesCadastro,
 } from "@/lib/quero-armas/cadastroCompleteness";
+import {
+  listarProcessosElegiveisGuia, carregarProcessoGuia,
+  itensObrigatoriosGuia, itemPendenteAcaoGuia, enviarDocumentoGuia,
+  type GuiaProcesso, type GuiaDoc,
+} from "@/lib/quero-armas/checklistGuiadoEngine";
 
 const MARROM = "#7A1F2B";
 
 type Modo = "escolher" | "manual" | "ia_upload" | "ia_revisao";
 type SaveState = "idle" | "saving" | "saved" | "error";
+
+// Match entre documento extraído pela IA e itens pendentes do checklist.
+interface ChecklistMatch {
+  processo: GuiaProcesso;
+  doc: GuiaDoc;
+  label: string;
+}
+
+// Classifica o documento enviado a partir dos campos retornados pela IA.
+function tiposCanditatosDoDoc(fields: Record<string, string>): string[] {
+  const tipos: string[] = [];
+  const hasEnd = !!(fields.cep || fields.endereco || fields.cidade || fields.bairro);
+  const hasId = !!(fields.rg || fields.emissor_rg || fields.data_expedicao_rg);
+  const idTipo = (fields.tipo_documento_identidade || "").toLowerCase();
+  if (hasEnd) tipos.push("comprovante_residencia", "residencia", "endereco");
+  if (hasId || idTipo) {
+    if (idTipo === "cnh") tipos.push("cnh");
+    else tipos.push("rg", "identidade", "cnh");
+  }
+  return tipos;
+}
+
+function tipoDocBate(tipoChecklist: string, candidatos: string[]): boolean {
+  const t = (tipoChecklist || "").toLowerCase();
+  return candidatos.some((c) => t.includes(c));
+}
 
 interface Props {
   open: boolean;
@@ -124,6 +155,9 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
   const [iaFields, setIaFields] = useState<Record<string, string>>({});
   const [iaWarnings, setIaWarnings] = useState<string[]>([]);
   const [iaSalvando, setIaSalvando] = useState(false);
+  const [iaFile, setIaFile] = useState<File | null>(null);
+  const [checklistMatches, setChecklistMatches] = useState<ChecklistMatch[]>([]);
+  const [checklistSelecionados, setChecklistSelecionados] = useState<Record<string, boolean>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<Record<string, number>>({});
 
@@ -135,6 +169,9 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       setSavingState({});
       setIaFields({});
       setIaWarnings([]);
+      setIaFile(null);
+      setChecklistMatches([]);
+      setChecklistSelecionados({});
     }
     return () => {
       Object.values(timersRef.current).forEach((t) => window.clearTimeout(t));
@@ -215,6 +252,30 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       }
       setIaFields(mapped);
       setIaWarnings(Array.isArray(fields?.warnings) ? fields.warnings : []);
+      setIaFile(file);
+      // Procura itens pendentes do checklist que combinem com este documento.
+      try {
+        const candidatos = tiposCanditatosDoDoc(mapped);
+        if (candidatos.length > 0 && cliente?.id) {
+          const procs = await listarProcessosElegiveisGuia(cliente.id);
+          const matches: ChecklistMatch[] = [];
+          for (const p of procs) {
+            if (p.pendentes <= 0) continue;
+            const carga = await carregarProcessoGuia(p.id);
+            const pend = itensObrigatoriosGuia(carga).filter(
+              (d) => itemPendenteAcaoGuia(d, carga.respostas) && tipoDocBate(d.tipo_documento, candidatos),
+            );
+            for (const d of pend) {
+              matches.push({ processo: carga.processo, doc: d, label: `${d.nome_documento} — ${p.servico_nome}` });
+            }
+          }
+          setChecklistMatches(matches);
+          // Pré-marca todos (cliente decide se quer desmarcar).
+          setChecklistSelecionados(Object.fromEntries(matches.map((m) => [m.doc.id, true])));
+        }
+      } catch {
+        /* sem matches — não bloqueia o fluxo principal */
+      }
       setModo("ia_revisao");
     } catch (e: any) {
       toast.error(e?.message || "Não foi possível extrair os dados.");
@@ -234,19 +295,37 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       if (atual && String(atual).trim() && String(atual).trim() === v.trim()) continue;
       toSave[k] = v;
     }
-    if (Object.keys(toSave).length === 0) {
+    const matchesSelecionados = checklistMatches.filter((m) => checklistSelecionados[m.doc.id]);
+    if (Object.keys(toSave).length === 0 && matchesSelecionados.length === 0) {
       toast.info("Nada novo para salvar.");
       onClose();
       return;
     }
     setIaSalvando(true);
-    const r = await chamarAtualizarCadastro(toSave);
-    setIaSalvando(false);
-    if (!r.ok) {
-      toast.error(r.error || "Erro ao salvar");
-      return;
+    if (Object.keys(toSave).length > 0) {
+      const r = await chamarAtualizarCadastro(toSave);
+      if (!r.ok) {
+        setIaSalvando(false);
+        toast.error(r.error || "Erro ao salvar");
+        return;
+      }
     }
-    toast.success(`${Object.keys(toSave).length} campo(s) atualizado(s).`);
+    // Encaminha o MESMO arquivo para os itens de checklist selecionados (sem novo upload pelo cliente).
+    let checklistOk = 0;
+    let checklistFail = 0;
+    if (matchesSelecionados.length > 0 && iaFile) {
+      for (const m of matchesSelecionados) {
+        const r = await enviarDocumentoGuia(m.processo, m.doc, iaFile);
+        if (r.ok) checklistOk++;
+        else checklistFail++;
+      }
+    }
+    setIaSalvando(false);
+    const partes: string[] = [];
+    if (Object.keys(toSave).length > 0) partes.push(`${Object.keys(toSave).length} campo(s) atualizado(s)`);
+    if (checklistOk > 0) partes.push(`${checklistOk} documento(s) enviado(s) ao checklist`);
+    if (partes.length > 0) toast.success(partes.join(" · "));
+    if (checklistFail > 0) toast.error(`${checklistFail} envio(s) ao checklist falhou(aram).`);
     onUpdated?.();
     onClose();
   };
@@ -451,6 +530,36 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                   );
                 })}
               </div>
+              {checklistMatches.length > 0 && (
+                <div className="rounded-xl border border-[#E5C2C6] bg-[#FBF3F4]/50 p-4">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0" style={{ color: MARROM }} />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+                        Aproveitar este documento no checklist?
+                      </h4>
+                      <p className="mt-0.5 text-[11px] text-slate-600">
+                        O mesmo arquivo pode ser enviado para os itens pendentes do seu checklist — sem precisar fazer upload novamente.
+                      </p>
+                      <div className="mt-2 space-y-1.5">
+                        {checklistMatches.map((m) => (
+                          <label key={m.doc.id} className="flex items-start gap-2 text-[12px] text-slate-800 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#7A1F2B]"
+                              checked={!!checklistSelecionados[m.doc.id]}
+                              onChange={(e) =>
+                                setChecklistSelecionados((prev) => ({ ...prev, [m.doc.id]: e.target.checked }))
+                              }
+                            />
+                            <span>{m.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setModo("ia_upload")}
                   className="rounded-xl border border-slate-200 px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-50">
