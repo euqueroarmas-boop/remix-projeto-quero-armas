@@ -106,3 +106,85 @@ export function resumoFaltantesCadastro(cliente: any): string {
   const base = nomes.join(", ");
   return sobra > 0 ? `${base} e mais ${sobra} item(ns).` : `${base}.`;
 }
+
+// ---------------------------------------------------------------------------
+// computeCadastroCompleteness — usado pelo painel admin (QAClientesPage) para
+// exibir contadores por seção da aba "Dados". Mantém a contract estável.
+// ---------------------------------------------------------------------------
+export interface SecaoCount {
+  preenchidos: number;
+  total: number;
+}
+
+export interface CadastroCompleteness {
+  preenchidos: number;
+  total: number;
+  secoes: {
+    identificacao: SecaoCount;
+    filiacao: SecaoCount;
+    contato: SecaoCount;
+    endereco: SecaoCount;
+    responsavelEndereco?: SecaoCount;
+    segundoEndereco?: SecaoCount;
+    complementares: SecaoCount;
+  };
+}
+
+function countFilled(cliente: any, keys: string[]): SecaoCount {
+  const total = keys.length;
+  const preenchidos = keys.reduce((acc, k) => (isVazio(cliente?.[k]) ? acc : acc + 1), 0);
+  return { preenchidos, total };
+}
+
+const SECOES_KEYS = {
+  identificacao: [
+    "nome_completo", "cpf", "rg", "data_nascimento", "naturalidade",
+    "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
+  ],
+  filiacao: ["nome_mae", "nome_pai"],
+  contato: ["celular", "email"],
+  endereco: ["endereco", "numero", "complemento", "bairro", "cep", "cidade", "estado"],
+  segundoEndereco: ["endereco2", "numero2", "bairro2", "cep2", "cidade2", "estado2"],
+  responsavelEndereco: [
+    "responsavel_endereco_nome", "responsavel_endereco_cpf", "responsavel_endereco_rg_cin",
+    "responsavel_endereco_telefone", "responsavel_endereco_vinculo",
+    "responsavel_endereco_cep", "responsavel_endereco_logradouro", "responsavel_endereco_numero",
+    "responsavel_endereco_bairro", "responsavel_endereco_cidade", "responsavel_endereco_estado",
+    "responsavel_endereco_declaracao_path", "responsavel_endereco_comprovante_path",
+  ],
+  complementares: [
+    "origem_cadastro", "created_at", "cadastro_publico_aplicado_em", "updated_at",
+  ],
+};
+
+export function computeCadastroCompleteness(cliente: any): CadastroCompleteness {
+  const identificacao = countFilled(cliente, SECOES_KEYS.identificacao);
+  const filiacao = countFilled(cliente, SECOES_KEYS.filiacao);
+  const contato = countFilled(cliente, SECOES_KEYS.contato);
+  const endereco = countFilled(cliente, SECOES_KEYS.endereco);
+  const complementares = countFilled(cliente, SECOES_KEYS.complementares);
+
+  const temSegundoEndereco = !!(
+    cliente?.endereco2 || cliente?.cidade2 || cliente?.cep2 || cliente?.end2_tipo
+  );
+  const segundoEndereco = temSegundoEndereco
+    ? countFilled(cliente, SECOES_KEYS.segundoEndereco)
+    : undefined;
+
+  const exigeResponsavel =
+    String(cliente?.comprovante_endereco_em_nome_proprio || "").toLowerCase() === "nao";
+  const temDadosResponsavel = SECOES_KEYS.responsavelEndereco.some((k) => !isVazio(cliente?.[k]));
+  const responsavelEndereco = exigeResponsavel || temDadosResponsavel
+    ? countFilled(cliente, SECOES_KEYS.responsavelEndereco)
+    : undefined;
+
+  const sec = { identificacao, filiacao, contato, endereco, segundoEndereco, responsavelEndereco, complementares };
+  let preenchidos = 0;
+  let total = 0;
+  for (const s of Object.values(sec)) {
+    if (!s) continue;
+    preenchidos += s.preenchidos;
+    total += s.total;
+  }
+  return { preenchidos, total, secoes: sec as CadastroCompleteness["secoes"] };
+}
