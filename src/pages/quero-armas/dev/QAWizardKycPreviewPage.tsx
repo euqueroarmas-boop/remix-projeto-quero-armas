@@ -48,7 +48,8 @@ function jsonResp(body: unknown, status = 200): Response {
 }
 
 export default function QAWizardKycPreviewPage() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [patched, setPatched] = useState(false);
   const [round, setRound] = useState(0);
   const [generated, setGenerated] = useState<string | null>(null);
   const probeCountRef = useRef(0);
@@ -116,6 +117,8 @@ export default function QAWizardKycPreviewPage() {
       return origFetch(input as any, init);
     }) as typeof window.fetch;
 
+    setPatched(true);
+    setOpen(true);
     return () => {
       window.fetch = origFetch;
       (supabase.auth as any).getSession = origGetSession;
