@@ -59,7 +59,7 @@ import {
   resolveResumeDocId,
   saveDocumentAssistantProgress,
 } from "@/lib/quero-armas/documentAssistantProgress";
-import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
+import DocumentDataOnboardingWizard from "@/components/quero-armas/portal/DocumentDataOnboardingWizard";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import SugestaoCadastroFromDocModal, {
   temSugestoesDeCadastro,
