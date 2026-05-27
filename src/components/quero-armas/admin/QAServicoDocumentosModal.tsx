@@ -383,17 +383,84 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
 
   async function moveRow(row: ExigenciaRow, dir: -1 | 1) {
     const idx = merged.findIndex((r) => r.id === row.id);
-    const swap = merged[idx + dir];
-    if (!swap) return;
-    const a = row.ordem ?? 0;
-    const b = swap.ordem ?? 0;
-    const ordemA = a === b ? a + dir : b;
-    const ordemB = a === b ? a : a;
-    await Promise.all([
-      supabase.from("qa_servicos_documentos" as any).update({ ordem: ordemA }).eq("id", row.id),
-      supabase.from("qa_servicos_documentos" as any).update({ ordem: ordemB }).eq("id", swap.id),
-    ]);
-    void load();
+    const next = idx + dir;
+    if (next < 0 || next >= merged.length) return;
+    const newOrder = arrayMove(merged.slice(), idx, next);
+    await persistirOrdem(newOrder.map((r) => r.id));
+  }
+
+  /** Persiste nova ordem normalizada (10, 20, 30…) para os ids na sequência dada.
+   *  Atualiza linha-a-linha (em paralelo) e o estado local. */
+  async function persistirOrdem(orderedIds: string[]) {
+    setReordenando(true);
+    try {
+      const updates = orderedIds.map((id, i) => ({ id, ordem: (i + 1) * 10 }));
+      const byId = new Map(updates.map((u) => [u.id, u.ordem]));
+      const results = await Promise.all(
+        updates.map((u) =>
+          supabase.from("qa_servicos_documentos" as any).update({ ordem: u.ordem }).eq("id", u.id),
+        ),
+      );
+      const erro = results.find((r) => r.error)?.error;
+      if (erro) {
+        toast.error("FALHA AO REORDENAR — " + erro.message.toUpperCase());
+        void load();
+        return;
+      }
+      setRows((prev) => {
+        const next = prev.map((r) => ({ ...r, ordem: byId.get(r.id) ?? r.ordem }));
+        next.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+        return next;
+      });
+      // limpa qualquer patch pendente de `ordem` para não reescrever em cima
+      setPatches((prev) => {
+        const out: Record<string, Patch> = {};
+        for (const [k, v] of Object.entries(prev)) {
+          const { ordem: _o, ...rest } = v;
+          if (Object.keys(rest).length) out[k] = rest;
+        }
+        return out;
+      });
+      toast.success("ORDEM ATUALIZADA");
+    } finally {
+      setReordenando(false);
+    }
+  }
+
+  async function ordenarAutomaticamente() {
+    // mantém a sequência atual (já ordenada por ordem asc / nome asc) e normaliza 10/20/30…
+    const orderedIds = merged.slice().map((r) => r.id);
+    await persistirOrdem(orderedIds);
+  }
+
+  function expandAll() {
+    setExpandedIds(new Set(rows.map((r) => r.id)));
+  }
+  function collapseAll() {
+    setExpandedIds(new Set());
+  }
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = merged.findIndex((r) => r.id === String(active.id));
+    const newIdx = merged.findIndex((r) => r.id === String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const orderedIds = arrayMove(merged.slice(), oldIdx, newIdx).map((r) => r.id);
+    void persistirOrdem(orderedIds);
   }
 
   async function uploadModeloOuExemplo(row: ExigenciaRow, campo: "modelo_url" | "exemplo_url", file: File) {
