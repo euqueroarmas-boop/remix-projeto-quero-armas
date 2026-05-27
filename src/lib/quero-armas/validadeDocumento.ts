@@ -20,9 +20,11 @@ export interface DocValidadeInput {
   data_emissao?: string | null;
   data_validade_efetiva?: string | null;
   data_validade?: string | null;
+  ano_competencia?: number | string | null;
+  regra_validacao?: any;
 }
 
-export type ValidadeStatus = "vigente" | "vence_em_breve" | "vencido" | "indefinido";
+export type ValidadeStatus = "vigente" | "vence_em_breve" | "vencido" | "indefinido" | "historico";
 
 export interface ValidadeInfo {
   /** ISO yyyy-mm-dd da data de validade efetiva calculada. Null se desconhecida. */
@@ -33,7 +35,13 @@ export interface ValidadeInfo {
   dias: number | null;
   status: ValidadeStatus;
   /** Origem da data: recálculo de negócio, valor do backend, ou desconhecido. */
-  origem: "regra_negocio" | "backend" | "indefinido";
+  origem: "regra_negocio" | "backend" | "indefinido" | "historico";
+  /**
+   * Documento histórico (ex.: comprovante de residência de competência passada):
+   * não vence, não deve receber cor de vencido. UI mostra apenas `label`
+   * (ex.: "Competência 2023").
+   */
+  semVencimento?: boolean;
 }
 
 const COMPROVANTE_TOKENS = [
@@ -76,6 +84,33 @@ function ultimoDiaDoMes(year: number, monthZeroBased: number): Date {
   return new Date(Date.UTC(year, monthZeroBased + 1, 0));
 }
 
+function pickAnoCompetencia(doc: DocValidadeInput): number | null {
+  const r = doc.regra_validacao;
+  const candidates: any[] = [
+    r && typeof r === "object" ? r.ano_competencia : null,
+    doc.ano_competencia,
+  ];
+  for (const c of candidates) {
+    if (c == null) continue;
+    const n = Number(c);
+    if (Number.isFinite(n) && n > 1900 && n < 3000) return n;
+  }
+  return null;
+}
+
+function pickTipoBase(doc: DocValidadeInput): string | null {
+  const r = doc.regra_validacao;
+  const tb = r && typeof r === "object" ? r.tipo_base : null;
+  return (tb || doc.tipo_documento || null) as string | null;
+}
+
+function isResidenciaDoc(doc: DocValidadeInput): boolean {
+  const tipoBase = String(pickTipoBase(doc) || "").toLowerCase();
+  if (tipoBase === "comprovante_residencia" || tipoBase === "comprovante_endereco") return true;
+  const tipo = String(doc.tipo_documento || "").toLowerCase();
+  return tipo.startsWith("comprovante_residencia") || tipo.startsWith("comprovante_endereco");
+}
+
 /**
  * Calcula a data de validade efetiva conforme regra de negócio.
  * Retorna null se não houver `data_emissao` (não recalcula).
@@ -101,6 +136,25 @@ export function calcularValidadeEfetiva(
  * Retorna o pacote completo de validade para a UI.
  */
 export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()): ValidadeInfo {
+  // 0) Comprovante de residência HISTÓRICO → não vence.
+  //    Distinção sem coluna nova: usa regra_validacao.ano_competencia / ano_competencia
+  //    contra o ano corrente. Canônico sem ano = corrente.
+  if (isResidenciaDoc(doc)) {
+    const ano = pickAnoCompetencia(doc);
+    const anoAtual = hoje.getUTCFullYear();
+    const isCorrente = ano == null || ano >= anoAtual;
+    if (!isCorrente) {
+      return {
+        iso: null,
+        label: ano ? `Competência ${ano}` : "Documento histórico",
+        dias: null,
+        status: "historico",
+        origem: "historico",
+        semVencimento: true,
+      };
+    }
+  }
+
   // 1) Preferência: recálculo a partir de data_emissao (regra oficial).
   let iso = calcularValidadeEfetiva(doc.tipo_documento, doc.data_emissao);
   let origem: ValidadeInfo["origem"] = iso ? "regra_negocio" : "indefinido";

@@ -693,8 +693,12 @@ export default function QAClientePortalPage() {
           data_emissao: doc.data_emissao,
           data_validade_efetiva: doc.data_validade_efetiva,
           data_validade: doc.data_validade,
+          ano_competencia: (doc as any).ano_competencia ?? null,
+          regra_validacao: (doc as any).regra_validacao ?? null,
         });
-        if (v.label) {
+        if (v.semVencimento && v.label) {
+          sub = `${doc.nome_documento || doc.tipo_documento} · ${v.label}`;
+        } else if (v.label) {
           sub = v.status === "vencido" ? `${doc.nome_documento || doc.tipo_documento} · vencido em ${v.label}` : `${doc.nome_documento || doc.tipo_documento} · válido até ${v.label}`;
         } else if (doc.nome_documento) {
           sub = String(doc.nome_documento);
