@@ -272,7 +272,53 @@ export default function ChecklistGuiadoModal({
     return orient && typeof orient === "string" && orient.trim().length > 0 ? orient : null;
   };
 
-  const etapaDoAtivo = docAtivo ? etapaDoTipoGuia(docAtivo.tipo_documento) : 1;
+  const grupoAtivo = docAtivo ? getDocumentStepGroup(docAtivo) : null;
+
+  const [baixandoTemplate, setBaixandoTemplate] = useState(false);
+
+  const handleBaixarTemplate = async (doc: GuiaDoc, templateKey: string) => {
+    if (!carga) return;
+    setBaixandoTemplate(true);
+    setErroAcao(null);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const base = import.meta.env.VITE_SUPABASE_URL as string;
+      if (!token) throw new Error("Sessão expirada. Entre novamente.");
+
+      const resp = await fetch(`${base}/functions/v1/qa-fill-template-cliente`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ template_key: templateKey, processo_id: carga.processo.id }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao gerar declaração");
+      }
+      const blob = await resp.blob();
+      if (!blob || blob.size < 200) {
+        throw new Error("Declaração gerada veio vazia. Tente novamente em alguns instantes.");
+      }
+      const baseNome = slugifyParaArquivo(doc.nome_documento || templateKey);
+      const sufixoCliente = slugifyParaArquivo(carga.clienteNome || "cliente");
+      const fileName = `${baseNome || "declaracao"}-${sufixoCliente || "cliente"}.docx`;
+      const a = document.createElement("a");
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+      toast.success("Declaração gerada. Confira o arquivo baixado.");
+    } catch (e: any) {
+      const msg = e?.message ?? "Erro ao gerar declaração";
+      setErroAcao(msg);
+      toast.error(msg);
+    } finally {
+      setBaixandoTemplate(false);
+    }
+  };
 
   return (
     <>
