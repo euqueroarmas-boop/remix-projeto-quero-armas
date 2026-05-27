@@ -1685,10 +1685,33 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "financeiro" && analysis && (
-          <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
-            <div className="space-y-2">{vendas.map((v: any) => <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"><div><div className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</div><div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div></div><div className="font-mono text-sm font-bold text-slate-900">{formatCurrency(Number(v.valor_a_pagar || 0))}</div></div>)}</div>
-            <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">Total investido</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(analysis.totalVendas)}</span></div>
-          </SectionCard>
+          <div className="space-y-4">
+            <PortalScopeSelector hint="Cobranças sem venda vinculada só aparecem em 'Todos os processos'." />
+            <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
+              {(() => {
+                const vendaIdAlvo = currentScope.type === "processo" ? currentScope.vendaId : null;
+                const vendasFiltradas = vendaIdAlvo != null
+                  ? vendas.filter((v: any) => Number(getVendaFK(v)) === Number(vendaIdAlvo))
+                  : vendas;
+                const totalFiltrado = vendasFiltradas.reduce((a: number, v: any) => a + Number(v.valor_a_pagar || 0), 0);
+                if (vendasFiltradas.length === 0) {
+                  return (
+                    <p className="py-8 text-center text-sm text-slate-500">
+                      {currentScope.type === "processo"
+                        ? "Nenhuma cobrança vinculada a este processo."
+                        : "Nenhuma cobrança registrada."}
+                    </p>
+                  );
+                }
+                return (
+                  <>
+                    <div className="space-y-2">{vendasFiltradas.map((v: any) => <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"><div><div className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</div><div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div></div><div className="font-mono text-sm font-bold text-slate-900">{formatCurrency(Number(v.valor_a_pagar || 0))}</div></div>)}</div>
+                    <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">{currentScope.type === "processo" ? "Total do processo" : "Total investido"}</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(totalFiltrado)}</span></div>
+                  </>
+                );
+              })()}
+            </SectionCard>
+          </div>
         )}
 
         {activeSection === "configuracoes" && (
@@ -1701,28 +1724,101 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "pendencias" && (
-          <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
-            <p className="py-8 text-center text-sm text-slate-500">
-              Lista completa de pendências por processo chega na próxima etapa do redesign.
-              Use o assistente guiado para resolver agora.
-            </p>
-            <div className="flex justify-center"><ChecklistGuiadoBotao /></div>
-          </SectionCard>
+          <div className="space-y-4">
+            <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
+            <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
+              {(() => {
+                const docsBase = processoDocs.filter((d) =>
+                  d.obrigatorio &&
+                  (isChecklistPendente(d.status) ||
+                    ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())),
+                );
+                const docsFilt = currentScope.type === "processo"
+                  ? docsBase.filter((d) => String(d.processo_id) === String(currentScope.processoId))
+                  : docsBase;
+                if (docsFilt.length === 0) {
+                  return (
+                    <div className="py-8 text-center">
+                      <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                      <p className="text-sm text-slate-600 font-semibold">
+                        {currentScope.type === "processo"
+                          ? "Sem pendências obrigatórias neste processo."
+                          : "Você não tem pendências obrigatórias agora."}
+                      </p>
+                    </div>
+                  );
+                }
+                // Agrupa por processo (UI mais clara mesmo em "Todos").
+                const byProc = new Map<string, any[]>();
+                for (const d of docsFilt) {
+                  const key = String(d.processo_id);
+                  if (!byProc.has(key)) byProc.set(key, []);
+                  byProc.get(key)!.push(d);
+                }
+                return (
+                  <div className="space-y-4">
+                    <div className="flex justify-end"><ChecklistGuiadoBotao /></div>
+                    {Array.from(byProc.entries()).map(([procId, lista]) => {
+                      const proc = processos.find((p) => String(p.id) === procId);
+                      const nome = proc?.servico_nome || "Processo";
+                      return (
+                        <div key={procId} className="rounded-xl border border-slate-200 bg-white">
+                          <div className="px-4 py-2 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                            {nome} <span className="ml-1 text-slate-400">· {lista.length} pendência(s)</span>
+                          </div>
+                          <div className="divide-y divide-slate-100">
+                            {lista.map((d) => {
+                              const reprov = ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
+                              return (
+                                <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                                  <div className="min-w-0">
+                                    <div className="text-[12px] font-semibold text-slate-800 truncate">
+                                      {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">
+                                      {d.etapa ? String(d.etapa).toUpperCase() : "—"}
+                                    </div>
+                                  </div>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                                    {reprov ? "Reenviar" : "Pendente"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </SectionCard>
+          </div>
         )}
 
         {activeSection === "contratos" && (
-          <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
-            {cliente?.id ? (
-              <>
-                <ContratoBlock clienteId={cliente.id} />
-                {(cliente as any)?.id_legado != null && (
-                  <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
-                )}
-              </>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
-            )}
-          </SectionCard>
+          <div className="space-y-4">
+            <PortalScopeSelector hint="Contratos são compartilhados entre processos do mesmo cliente." />
+            <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
+              {currentScope.type === "processo" && (
+                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                  Os contratos abaixo são do cliente como um todo. Quando não houver
+                  vínculo direto entre contrato e processo, o documento permanece
+                  visível para evitar omissão indevida.
+                </div>
+              )}
+              {cliente?.id ? (
+                <>
+                  <ContratoBlock clienteId={cliente.id} />
+                  {(cliente as any)?.id_legado != null && (
+                    <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
+                  )}
+                </>
+              ) : (
+                <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
+              )}
+            </SectionCard>
+          </div>
         )}
       </main>
 
