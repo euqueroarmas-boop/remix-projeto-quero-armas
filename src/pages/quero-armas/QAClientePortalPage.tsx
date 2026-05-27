@@ -965,9 +965,9 @@ export default function QAClientePortalPage() {
         <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-6 overflow-x-auto">
-              {navItems.slice(0, 4).map((item) => {
+              {primaryNavItems.map((item) => {
                 const Icon = item.icon;
-                const active = activeSection === item.key;
+                const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
                 return (
                   <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`relative inline-flex items-center gap-2 px-1 py-2 text-[13px] font-bold ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}>
                     <Icon className="h-4 w-4" /> {item.label}
