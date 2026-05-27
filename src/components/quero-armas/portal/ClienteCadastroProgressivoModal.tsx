@@ -94,6 +94,7 @@ function formatBr(value: any, tipo?: string): string {
     return maskDate(s);
   }
   if (tipo === "uf") return s.toUpperCase().slice(0, 2);
+  if (tipo === "text" || tipo == null) return s.toUpperCase();
   return s;
 }
 
@@ -197,6 +198,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     else if (campo.tipo === "tel") v = maskTel(raw);
     else if (campo.tipo === "date") v = maskDate(raw);
     else if (campo.tipo === "uf") v = raw.toUpperCase().slice(0, 2);
+    else if (campo.tipo === "text" || campo.tipo == null) v = raw.toUpperCase();
     setValores((prev) => ({ ...prev, [campo.key]: v }));
     setSavingState((prev) => ({ ...prev, [campo.key]: "idle" }));
 
