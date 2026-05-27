@@ -172,6 +172,8 @@ export default function QAClientePortalPage() {
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
   // lê qa_processo_eventos (somente os processos do cliente).
   const [processoEventos, setProcessoEventos] = useState<any[]>([]);
+  // Fase 3 — escopo selecionado no segmented control das abas detalhadas.
+  const [selectedScopeId, setSelectedScopeId] = useState<string>("todos");
 
   // Fonte oficial do header: função autenticada resolve e assina, em ordem:
   // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
