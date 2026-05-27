@@ -2002,5 +2002,6 @@ export default function QAClientePortalPage() {
         <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
       ) : null}
     </div>
+    </PortalFilterProvider>
   );
 }
