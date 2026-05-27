@@ -252,6 +252,30 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       }
       setIaFields(mapped);
       setIaWarnings(Array.isArray(fields?.warnings) ? fields.warnings : []);
+      setIaFile(file);
+      // Procura itens pendentes do checklist que combinem com este documento.
+      try {
+        const candidatos = tiposCanditatosDoDoc(mapped);
+        if (candidatos.length > 0 && cliente?.id) {
+          const procs = await listarProcessosElegiveisGuia(cliente.id);
+          const matches: ChecklistMatch[] = [];
+          for (const p of procs) {
+            if (p.pendentes <= 0) continue;
+            const carga = await carregarProcessoGuia(p.id);
+            const pend = itensObrigatoriosGuia(carga).filter(
+              (d) => itemPendenteAcaoGuia(d, carga.respostas) && tipoDocBate(d.tipo_documento, candidatos),
+            );
+            for (const d of pend) {
+              matches.push({ processo: carga.processo, doc: d, label: `${d.nome_documento} — ${p.servico_nome}` });
+            }
+          }
+          setChecklistMatches(matches);
+          // Pré-marca todos (cliente decide se quer desmarcar).
+          setChecklistSelecionados(Object.fromEntries(matches.map((m) => [m.doc.id, true])));
+        }
+      } catch {
+        /* sem matches — não bloqueia o fluxo principal */
+      }
       setModo("ia_revisao");
     } catch (e: any) {
       toast.error(e?.message || "Não foi possível extrair os dados.");
@@ -271,19 +295,37 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       if (atual && String(atual).trim() && String(atual).trim() === v.trim()) continue;
       toSave[k] = v;
     }
-    if (Object.keys(toSave).length === 0) {
+    const matchesSelecionados = checklistMatches.filter((m) => checklistSelecionados[m.doc.id]);
+    if (Object.keys(toSave).length === 0 && matchesSelecionados.length === 0) {
       toast.info("Nada novo para salvar.");
       onClose();
       return;
     }
     setIaSalvando(true);
-    const r = await chamarAtualizarCadastro(toSave);
-    setIaSalvando(false);
-    if (!r.ok) {
-      toast.error(r.error || "Erro ao salvar");
-      return;
+    if (Object.keys(toSave).length > 0) {
+      const r = await chamarAtualizarCadastro(toSave);
+      if (!r.ok) {
+        setIaSalvando(false);
+        toast.error(r.error || "Erro ao salvar");
+        return;
+      }
     }
-    toast.success(`${Object.keys(toSave).length} campo(s) atualizado(s).`);
+    // Encaminha o MESMO arquivo para os itens de checklist selecionados (sem novo upload pelo cliente).
+    let checklistOk = 0;
+    let checklistFail = 0;
+    if (matchesSelecionados.length > 0 && iaFile) {
+      for (const m of matchesSelecionados) {
+        const r = await enviarDocumentoGuia(m.processo, m.doc, iaFile);
+        if (r.ok) checklistOk++;
+        else checklistFail++;
+      }
+    }
+    setIaSalvando(false);
+    const partes: string[] = [];
+    if (Object.keys(toSave).length > 0) partes.push(`${Object.keys(toSave).length} campo(s) atualizado(s)`);
+    if (checklistOk > 0) partes.push(`${checklistOk} documento(s) enviado(s) ao checklist`);
+    if (partes.length > 0) toast.success(partes.join(" · "));
+    if (checklistFail > 0) toast.error(`${checklistFail} envio(s) ao checklist falhou(aram).`);
     onUpdated?.();
     onClose();
   };
