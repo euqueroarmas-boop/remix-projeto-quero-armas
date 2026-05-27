@@ -844,7 +844,7 @@ export default function QAClientePortalPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-dvh flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
       </div>
     );
@@ -852,7 +852,7 @@ export default function QAClientePortalPage() {
 
   if (!cliente) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
+      <div className="min-h-dvh flex items-center justify-center px-4 bg-slate-50">
         <div className="text-center max-w-sm">
           <Shield className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-slate-900">Perfil não vinculado</h2>
@@ -869,7 +869,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
+    <div className="min-h-dvh bg-slate-50 text-slate-900 lg:pl-72 overflow-x-hidden">
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -877,7 +877,7 @@ export default function QAClientePortalPage() {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
         <div className="flex items-center justify-between h-20">
           <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
-          <button type="button" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center"><ChevronRight className="h-4 w-4 rotate-180" /></button>
+          <button type="button" aria-label="Recolher menu lateral" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><ChevronRight className="h-4 w-4 rotate-180" aria-hidden="true" /></button>
         </div>
         <nav className="mt-6 space-y-1">
           {primaryNavItems.map((item) => {
@@ -920,7 +920,7 @@ export default function QAClientePortalPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <button type="button" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center"><Menu className="h-4 w-4" /></button>
+            <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
             {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
             <button
               type="button"
@@ -1002,23 +1002,35 @@ export default function QAClientePortalPage() {
         </div>
       </header>
 
-      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5">
-        <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-md">
+      <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
+        <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-3 sm:px-4 py-2.5 shadow-sm backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-6 overflow-x-auto">
+            <div
+              className="flex gap-4 sm:gap-6 overflow-x-auto -mx-1 px-1 scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              role="tablist"
+              aria-label="Seções da Área do Cliente"
+            >
               {primaryNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
                 return (
-                  <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`relative inline-flex items-center gap-2 px-1 py-2 text-[13px] font-bold ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}>
-                    <Icon className="h-4 w-4" /> {item.label}
-                    {active && <span className="absolute inset-x-0 -bottom-3 h-1 rounded-full bg-[#7A1F2B]" />}
+                  <button
+                    key={item.key}
+                    type="button"
+                    role="tab"
+                    aria-current={active ? "page" : undefined}
+                    aria-label={item.label}
+                    onClick={() => goSection(item.key)}
+                    className={`relative shrink-0 inline-flex items-center gap-2 px-1 min-h-11 py-2 text-[13px] font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] rounded-md ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" /> {item.label}
+                    {active && <span className="absolute inset-x-0 -bottom-2 h-0.5 rounded-full bg-[#7A1F2B]" />}
                   </button>
                 );
               })}
             </div>
-            <button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2.5 text-[12px] font-bold text-white shadow-sm hover:bg-[#641722]">
-              <Upload className="h-4 w-4" /> Enviar documento
+            <button type="button" aria-label="Enviar documento" onClick={() => setShowAddDoc(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] px-4 min-h-11 py-2.5 text-[12px] font-bold text-white shadow-sm hover:bg-[#641722] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-2">
+              <Upload className="h-4 w-4" aria-hidden="true" /> Enviar documento
             </button>
           </div>
         </div>
