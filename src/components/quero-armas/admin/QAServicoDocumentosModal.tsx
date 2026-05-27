@@ -156,6 +156,8 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   const [previewOpen, setPreviewOpen] = useState(false);
   const [viewer, setViewer] = useState<{ bucket: string; path: string; fileName?: string } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [reordenando, setReordenando] = useState(false);
 
   const load = useCallback(async () => {
     if (!servicoId) return;
@@ -182,6 +184,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       setPatches({});
       setPreviewOpen(false);
       setViewer(null);
+      setExpandedIds(new Set());
     }
   }, [open, servicoId, load]);
 
