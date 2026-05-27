@@ -745,6 +745,40 @@ export default function QAClientePortalPage() {
   const primaryNavItems = useMemo(() => navItems.filter((i) => i.group === "primary"), [navItems]);
   const secondaryNavItems = useMemo(() => navItems.filter((i) => i.group === "secondary"), [navItems]);
 
+  // Fase 3 — escopos exibidos no PortalScopeSelector. Um item por processo
+  // do cliente, mais "Todos os processos" (injetado pelo provider se ausente).
+  const portalScopes = useMemo<PortalScope[]>(() => {
+    const items: PortalScope[] = processos.map((p: any) => {
+      const nome = getQAServiceDisplayName({
+        ...catalogoByServicoId[Number(p.servico_id)],
+        servico_id: p.servico_id,
+        servico_nome: p.servico_nome || SERVICO_MAP[p.servico_id],
+      }) || p.servico_nome || "Processo";
+      return {
+        id: String(p.id),
+        label: String(nome).toUpperCase(),
+        type: "processo" as const,
+        processoId: String(p.id),
+        vendaId: p.venda_id != null ? Number(p.venda_id) : null,
+        serviceSlug: p.servico_slug ?? null,
+        serviceName: nome,
+      };
+    });
+    return [{ id: "todos", label: "Todos os processos", type: "todos" as const }, ...items];
+  }, [processos, catalogoByServicoId, SERVICO_MAP]);
+
+  // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
+  useEffect(() => {
+    if (!portalScopes.some((s) => s.id === selectedScopeId)) {
+      setSelectedScopeId("todos");
+    }
+  }, [portalScopes, selectedScopeId]);
+
+  const currentScope = useMemo<PortalScope>(
+    () => portalScopes.find((s) => s.id === selectedScopeId) || portalScopes[0],
+    [portalScopes, selectedScopeId],
+  );
+
   // Sincroniza seção a partir da URL apenas no primeiro mount / quando a rota base muda.
   // Navegação interna do portal NÃO altera URL — apenas estado.
   useEffect(() => {
