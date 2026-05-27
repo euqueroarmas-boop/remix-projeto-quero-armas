@@ -760,6 +760,57 @@ function ExigenciaCard({
               onClear={() => onClearArquivo("exemplo_url")}
             />
           </div>
+
+          {/* Repete por período/ano (opcional) */}
+          <div className="col-span-12 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
+            <label className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={repeteAberto}
+                onChange={(e) => setRepeteAberto(e.target.checked)}
+                className="accent-[#7A1F2B]"
+              />
+              ESTE DOCUMENTO SE REPETE POR PERÍODO / ANO?
+            </label>
+            {repeteAberto && (
+              <div className="mt-2 grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-8">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                    ANOS (separe por vírgula — ex.: 2026, 2025, 2024)
+                  </div>
+                  <input
+                    value={anosTxt}
+                    onChange={(e) => setAnosTxt(e.target.value)}
+                    className={inputCls + " font-mono"}
+                    placeholder="2026, 2025, 2024"
+                  />
+                </div>
+                <div className="col-span-4 flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                    {anosParsed.length} ANO(S)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (anosParsed.length === 0) {
+                        toast.error("INFORME AO MENOS UM ANO VÁLIDO");
+                        return;
+                      }
+                      onExpandirAnos(anosParsed);
+                      setRepeteAberto(false);
+                    }}
+                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                  >
+                    <Plus className="h-3 w-3" /> GERAR 1 EXIGÊNCIA POR ANO
+                  </button>
+                </div>
+                <div className="col-span-12 text-[10px] uppercase tracking-wider text-slate-500">
+                  CRIA NOVAS LINHAS COM TIPO_DOCUMENTO ÚNICO POR ANO (EX.: <span className="font-mono">{normalizeSlug(row.tipo_documento || "documento")}_2026</span>).
+                  A LINHA ATUAL NÃO É ALTERADA.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
