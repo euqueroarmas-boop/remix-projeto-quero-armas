@@ -920,7 +920,7 @@ export default function QAClientePortalPage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
         <div className="relative max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <button type="button" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center"><Menu className="h-4 w-4" /></button>
+            <button type="button" aria-label="Abrir menu de navegação" onClick={() => setMobileNavOpen(true)} className="lg:hidden h-11 w-11 rounded-lg border border-slate-200 bg-white text-slate-700 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><Menu className="h-4 w-4" aria-hidden="true" /></button>
             {/* Foto oficial do cliente (mesma fonte de /clientes) com fallback p/ iniciais */}
             <button
               type="button"
