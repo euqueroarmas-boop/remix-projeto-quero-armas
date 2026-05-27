@@ -20,6 +20,7 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
+  Download,
   ExternalLink,
   FileDown,
   FileText,
@@ -36,7 +37,6 @@ import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import {
   CargaProcesso,
   CONDICAO_OPCOES_GUIA,
-  ETAPA_NOMES_GUIA,
   GuiaDoc,
   ProcessoElegivel,
   aguardarValidacaoIAGuia,
@@ -44,12 +44,15 @@ import {
   construirFilaGuia,
   definirCondicaoGuia,
   enviarDocumentoGuia,
-  etapaDoTipoGuia,
   listarProcessosElegiveisGuia,
+  pickTemplateGuia,
   progressoGuia,
   responderPerguntaGuia,
   tipoItemGuia,
 } from "@/lib/quero-armas/checklistGuiadoEngine";
+import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const MARROM = "#7A1F2B";
 
