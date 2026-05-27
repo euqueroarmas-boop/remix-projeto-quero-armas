@@ -1432,6 +1432,7 @@ export default function QAClientePortalPage() {
 
         {(activeSection === "contratacoes" || activeSection === "processos") && (
           <div className="space-y-4">
+            <PortalScopeSelector hint="Filtra histórico, linha do tempo e cards de processo." />
             <SectionCard icon={BriefcaseBusiness} title="Meus processos" color="hsl(352 60% 30%)">
               <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
               {cliente?.id ? (
@@ -1450,15 +1451,41 @@ export default function QAClientePortalPage() {
                   <ContratoBlock clienteId={cliente.id} />
                 </div>
               ) : null}
-              {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
+              {cliente?.id ? (
+                <ClienteProcessosSection
+                  clienteId={cliente.id}
+                  processoIdFiltro={currentScope.type === "processo" ? currentScope.processoId ?? null : null}
+                />
+              ) : null}
             </SectionCard>
 
-            {timeline.length > 0 && (
+            {(() => {
+              const tlFiltered = currentScope.type === "processo"
+                ? timeline // timeline events não têm processo_id direto; ver nota abaixo
+                : timeline;
+              // A linha do tempo combina vendas + itens + eventos de processo.
+              // Quando filtrada por processo, mostramos apenas eventos com vínculo
+              // direto a esse processo via processo_id (qa_processo_eventos).
+              const tlForScope = currentScope.type === "processo"
+                ? processoEventos
+                    .filter((ev: any) => String(ev.processo_id) === String(currentScope.processoId))
+                    .map((ev: any) => ({
+                      date: ev.created_at,
+                      label: ev.descricao || ev.tipo_evento || "Evento",
+                      icon: Activity,
+                      color: "hsl(220 60% 48%)",
+                      sub: null as string | null,
+                    }))
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 20)
+                : tlFiltered;
+              if (tlForScope.length === 0) return null;
+              return (
               <SectionCard icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)">
                 <div className="relative pl-6">
                   <div className="absolute left-2.5 top-1 bottom-1 w-px bg-slate-200" />
                   <div className="space-y-3">
-                    {timeline.map((ev, i) => {
+                    {tlForScope.map((ev, i) => {
                       const Icon = ev.icon;
                       return (
                         <div key={i} className="relative flex items-start gap-3">
@@ -1476,7 +1503,8 @@ export default function QAClientePortalPage() {
                   </div>
                 </div>
               </SectionCard>
-            )}
+              );
+            })()}
 
             {cliente?.id && (
               <SectionCard icon={History} title="Histórico de Atualizações" color="hsl(220 65% 48%)">
