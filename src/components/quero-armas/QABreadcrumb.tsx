@@ -13,6 +13,7 @@ const LABELS: Record<string, string> = {
   legislacao: "Legislação",
   jurisprudencia: "Jurisprudência",
   "modelos-docx": "Modelos DOCX",
+  "modelos-declaracao": "Modelos de Declaração",
   "gerar-peca": "Gerar Peça",
   casos: "Casos",
   historico: "Histórico",
