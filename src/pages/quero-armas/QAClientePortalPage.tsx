@@ -35,6 +35,8 @@ import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
@@ -149,6 +151,7 @@ export default function QAClientePortalPage() {
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showArmaManual, setShowArmaManual] = useState(false);
+  const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
@@ -805,7 +808,7 @@ export default function QAClientePortalPage() {
   };
 
   const resumoState = useMemo(() => {
-    const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+    const cadastroIncompleto = cadastroEstaIncompleto(cliente);
     const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
     const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
     const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
@@ -835,7 +838,7 @@ export default function QAClientePortalPage() {
     } else if (checklistPend) {
       proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => setShowAddDoc(true) };
     } else if (cadastroIncompleto) {
-      proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", icon: User, onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
+      proximaAcao = { titulo: "Completar seu cadastro", descricao: resumoFaltantesCadastro(cliente) || "Dados básicos faltando.", icon: User, onClick: () => setShowCadastroModal(true) };
     } else if (docsHubEmAnalise > 0) {
       proximaAcao = { titulo: "Aguardar análise da equipe", descricao: `${docsHubEmAnalise} documento(s) em validação operacional.`, icon: Clock, onClick: () => goSection("documentos") };
     }
@@ -1003,7 +1006,7 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
-        <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-3 sm:px-4 py-2.5 shadow-sm backdrop-blur-md">
+        <div className="sticky top-[64px] z-30 mb-5 rounded-xl border border-slate-200 bg-white/95 px-3 sm:px-4 py-2.5 shadow-sm backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div
               className="flex gap-4 sm:gap-6 overflow-x-auto -mx-1 px-1 scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -1204,7 +1207,7 @@ export default function QAClientePortalPage() {
 
         {/* ═══ HERO — PRÓXIMA AÇÃO ═══ */}
         {(() => {
-          const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+          const cadastroIncompleto = cadastroEstaIncompleto(cliente);
           const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
           const vencido = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
           const venceHoje = analysis?.expDocs.find((d) => d.days === 0);
@@ -1239,8 +1242,8 @@ export default function QAClientePortalPage() {
             onClick = () => setShowAddDoc(true);
           } else if (cadastroIncompleto) {
             titulo = "Completar seu cadastro";
-            descricao = "Endereço, telefone e dados básicos faltando.";
-            onClick = () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } });
+            descricao = resumoFaltantesCadastro(cliente) || "Dados básicos faltando.";
+            onClick = () => setShowCadastroModal(true);
           }
 
           const temAcao = !!onClick || usaChecklistBotao;
@@ -1846,6 +1849,15 @@ export default function QAClientePortalPage() {
 
       {cliente?.id ? (
         <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
+      ) : null}
+
+      {cliente?.id ? (
+        <ClienteCadastroProgressivoModal
+          open={showCadastroModal}
+          onClose={() => setShowCadastroModal(false)}
+          cliente={cliente}
+          onUpdated={() => setDocsReloadKey((k) => k + 1)}
+        />
       ) : null}
     </div>
     </PortalFilterProvider>
