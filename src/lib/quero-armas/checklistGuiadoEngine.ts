@@ -171,6 +171,30 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
   return "documento";
 }
 
+// Prioridade DENTRO da Etapa 1 (Comprovação de endereço):
+// 0 = documento de identidade (CIN/RG/CNH) — sempre PRIMEIRO
+// 1 = comprovante de endereço (todos os anos)
+// 2 = demais itens da etapa (perguntas-pivot, declarações vinculadas, etc.)
+// As outras etapas (2..5) não são afetadas.
+function prioridadeEtapa1(d: GuiaDoc): number {
+  const t = (d.tipo_documento || "").toLowerCase();
+  const nome = (d.nome_documento || "").toLowerCase();
+  const ehIdentidade =
+    t === "cnh" ||
+    t === "rg" ||
+    t === "rg_com_cpf" ||
+    t === "cin" ||
+    t === "documento_identidade" ||
+    t.includes("identidade") ||
+    t.includes("identificacao") ||
+    /\b(cnh|rg|cin)\b/.test(nome) ||
+    nome.includes("identidade");
+  if (ehIdentidade) return 0;
+  const ehEndereco = t.includes("endereco") || t.includes("residenc");
+  if (ehEndereco) return 1;
+  return 2;
+}
+
 // ---------------------------------------------------------------------------
 // Carga + construção da fila (um item por vez, na ordem do checklist completo).
 // ---------------------------------------------------------------------------
@@ -228,6 +252,12 @@ export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
       const ea = etapaDoTipoGuia(a.tipo_documento);
       const eb = etapaDoTipoGuia(b.tipo_documento);
       if (ea !== eb) return ea - eb;
+      // Dentro da Etapa 1: identidade primeiro, depois endereço, depois resto.
+      if (ea === 1) {
+        const pa = prioridadeEtapa1(a);
+        const pb = prioridadeEtapa1(b);
+        if (pa !== pb) return pa - pb;
+      }
       // perguntas/condição primeiro dentro da etapa (destravam itens dependentes)
       const oa = isPerguntaGuia(a) || isCondicaoGuia(a) ? 0 : 1;
       const ob = isPerguntaGuia(b) || isCondicaoGuia(b) ? 0 : 1;
