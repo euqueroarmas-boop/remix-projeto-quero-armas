@@ -2261,6 +2261,33 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         source={viewer.source}
         title={viewer.title}
       />
+
+      <TemplateDataConfirmationModal
+        open={confirmacaoTpl.open}
+        onOpenChange={(n) => !n && setConfirmacaoTpl({ open: false, doc: null, templateKey: null })}
+        cliente={clienteCompleto}
+        documentoNome={confirmacaoTpl.doc?.nome_documento ?? null}
+        gerando={baixandoTemplateId === confirmacaoTpl.doc?.id || carregandoCliente}
+        onConfirmGenerate={async () => {
+          const d = confirmacaoTpl.doc;
+          const tk = confirmacaoTpl.templateKey;
+          if (!d || !tk) return;
+          await baixarTemplatePreenchido(d, tk);
+          setConfirmacaoTpl({ open: false, doc: null, templateKey: null });
+        }}
+        onEditCadastro={() => setEditarCadastroAberto(true)}
+      />
+
+      {clienteCompleto && (
+        <ClienteCadastroProgressivoModal
+          open={editarCadastroAberto}
+          onClose={() => setEditarCadastroAberto(false)}
+          cliente={clienteCompleto}
+          onUpdated={async () => {
+            await recarregarClienteCompleto();
+          }}
+        />
+      )}
     </div>
   );
 }
