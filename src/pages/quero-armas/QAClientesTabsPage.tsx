@@ -5,18 +5,20 @@
  * Rotas antigas /acessos e /clubes permanecem ativas em QARoutes.
  */
 import { useState } from "react";
-import { Users, KeyRound, Building2, Activity } from "lucide-react";
+import { Users, KeyRound, Building2, Activity, ShieldCheck } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
 import QAClientesPage from "./QAClientesPage";
 import QAAcessosPage from "./QAAcessosPage";
 import QAClubesPage from "./QAClubesPage";
 import MonitorCadastrosDocumentos from "@/components/quero-armas/clientes/MonitorCadastrosDocumentos";
+import QAFilaRevisaoHumana from "@/components/quero-armas/admin/QAFilaRevisaoHumana";
 
-type TabKey = "clientes" | "monitor" | "acessos" | "clubes";
+type TabKey = "clientes" | "monitor" | "revisao" | "acessos" | "clubes";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "clientes", label: "Clientes", icon: Users },
   { key: "monitor",  label: "Monitor",  icon: Activity },
+  { key: "revisao",  label: "Revisão IA", icon: ShieldCheck },
   { key: "acessos", label: "Acessos", icon: KeyRound },
   { key: "clubes", label: "Clubes de Tiro", icon: Building2 },
 ];
@@ -71,6 +73,7 @@ export default function QAClientesTabsPage() {
       <div className="pt-6 md:pt-8 pb-8">
         {tab === "clientes" && <QAClientesPage />}
         {tab === "monitor"  && <MonitorCadastrosDocumentos />}
+        {tab === "revisao"  && <QAFilaRevisaoHumana />}
         {tab === "acessos" && <QAAcessosPage />}
         {tab === "clubes" && <QAClubesPage />}
       </div>
