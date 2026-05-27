@@ -61,6 +61,9 @@ import {
 } from "@/lib/quero-armas/documentAssistantProgress";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import SugestaoCadastroFromDocModal, {
+  temSugestoesDeCadastro,
+} from "@/components/quero-armas/portal/SugestaoCadastroFromDocModal";
 
 const MARROM = "#7A1F2B";
 
@@ -324,6 +327,20 @@ export default function ChecklistGuiadoModal({
     else if (st === "em_revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
     else setFase("resultado_demorando"); // ainda em análise (timeout)
+
+    // ---- Fase 5: sugerir atualização do cadastro com dados extraídos ----
+    const dadosExtraidos = (final as any)?.dados_extraidos_json ?? null;
+    const stOk = st === "aprovado" || st === "em_revisao_humana" || st === "divergente";
+    if (stOk && dadosExtraidos && typeof dadosExtraidos === "object") {
+      const cli = await recarregarClienteDados();
+      if (cli && temSugestoesDeCadastro(cli, dadosExtraidos)) {
+        setSugestao({
+          open: true,
+          dados: dadosExtraidos as Record<string, any>,
+          nomeDoc: docAtivo?.nome_documento ?? null,
+        });
+      }
+    }
   };
 
   const continuarAposResultado = async (opts?: { pularAtual?: boolean }) => {
@@ -364,6 +381,11 @@ export default function ChecklistGuiadoModal({
   const [clienteDados, setClienteDados] = useState<any | null>(null);
   const [carregandoCliente, setCarregandoCliente] = useState(false);
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
+
+  // ----- Sugestão de atualização de cadastro (Fase 5) -----
+  const [sugestao, setSugestao] = useState<
+    | { open: boolean; dados: Record<string, any> | null; nomeDoc: string | null }
+  >({ open: false, dados: null, nomeDoc: null });
 
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
@@ -765,6 +787,18 @@ export default function ChecklistGuiadoModal({
           }}
         />
       )}
+
+      <SugestaoCadastroFromDocModal
+        open={sugestao.open}
+        onOpenChange={(n) => !n && setSugestao({ open: false, dados: null, nomeDoc: null })}
+        cliente={clienteDados}
+        dadosExtraidos={sugestao.dados}
+        nomeDoc={sugestao.nomeDoc}
+        onApplied={async () => {
+          await recarregarClienteDados();
+          onUpdated?.();
+        }}
+      />
     </>
   );
 }
