@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
 
   const { data: contract } = await sb
     .from("qa_contracts")
-    .select("id, cliente_id, status, customer_signed_pdf_path, contract_number")
+    .select("id, cliente_id, status, customer_signed_pdf_path, contract_number, original_pdf_path, original_sha256")
     .eq("id", body.contract_id)
     .maybeSingle();
   if (!contract) return jsonResp({ error: "Contrato não encontrado" }, 404);
