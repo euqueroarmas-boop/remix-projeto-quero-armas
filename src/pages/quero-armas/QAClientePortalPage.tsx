@@ -1516,15 +1516,50 @@ export default function QAClientePortalPage() {
 
         {activeSection === "documentos" && analysis && (
           <div className="space-y-4">
+            <PortalScopeSelector hint="Documentos sem vínculo direto só aparecem em 'Todos os processos'." />
             <SectionCard icon={FileText} title="Documentos com validade" color="hsl(262 60% 55%)">
               <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
-              {analysis.expDocs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nenhum documento com validade cadastrado.</p> : (
-                <div className="grid gap-2">{analysis.expDocs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
-              )}
+              {(() => {
+                // Documentos com validade: CR/CRAF/GTE/Exames/Hub não têm
+                // processo_id explícito no schema atual. Quando o escopo é um
+                // processo, mostramos somente os "serviço" associados àquele
+                // processo (via servico_id ↔ scope.processoId via processos[]).
+                let docs = analysis.expDocs;
+                if (currentScope.type === "processo") {
+                  const proc = processos.find((p) => String(p.id) === String(currentScope.processoId));
+                  const procServicoNome = proc
+                    ? (getQAServiceDisplayName({
+                        ...catalogoByServicoId[Number(proc.servico_id)],
+                        servico_id: proc.servico_id,
+                        servico_nome: proc.servico_nome || SERVICO_MAP[proc.servico_id],
+                      }) || proc.servico_nome)
+                    : null;
+                  docs = analysis.expDocs.filter((d) =>
+                    procServicoNome
+                      ? d.label.toLowerCase().includes(String(procServicoNome).toLowerCase())
+                      : false,
+                  );
+                }
+                return docs.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-slate-500">
+                    {currentScope.type === "processo"
+                      ? "Nenhum documento com validade vinculado a este processo."
+                      : "Nenhum documento com validade cadastrado."}
+                  </p>
+                ) : (
+                  <div className="grid gap-2">{docs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
+                );
+              })()}
             </SectionCard>
 
             {(customerId || cliente?.id) && (
               <SectionCard icon={FolderArchive} title="Meu Hub de Documentos" color="hsl(280 60% 50%)">
+                {currentScope.type === "processo" && (
+                  <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                    O Hub de Documentos do cliente é compartilhado entre processos.
+                    Itens sem vínculo direto continuam visíveis apenas em <strong>"Todos os processos"</strong>.
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
                     {cliente?.tipo_cliente === "cliente_app" && !customerId
@@ -1541,7 +1576,12 @@ export default function QAClientePortalPage() {
                   </Button>
                 </div>
 
-                {meusDocs.length === 0 ? (
+                {(() => {
+                  // qa_documentos_cliente não possui processo_id no schema atual.
+                  // Por isso, ao filtrar por processo, escondemos o hub completo
+                  // (já avisamos no banner acima). Em "Todos" mantemos a lista.
+                  if (currentScope.type === "processo") return null;
+                  return meusDocs.length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
                     <FolderArchive className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-[11px] text-slate-400">
@@ -1631,7 +1671,8 @@ export default function QAClientePortalPage() {
                       );
                     })}
                   </div>
-                )}
+                  );
+                })()}
               </SectionCard>
             )}
           </div>
