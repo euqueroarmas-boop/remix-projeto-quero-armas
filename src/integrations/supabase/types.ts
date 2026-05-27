@@ -6984,6 +6984,7 @@ export type Database = {
           obrigatorio: boolean
           observacoes: string | null
           observacoes_cliente: string | null
+          ordem: number | null
           orgao_emissor: string | null
           prazo_recomendado_dias: number | null
           processo_id: string
@@ -7045,6 +7046,7 @@ export type Database = {
           obrigatorio?: boolean
           observacoes?: string | null
           observacoes_cliente?: string | null
+          ordem?: number | null
           orgao_emissor?: string | null
           prazo_recomendado_dias?: number | null
           processo_id: string
@@ -7106,6 +7108,7 @@ export type Database = {
           obrigatorio?: boolean
           observacoes?: string | null
           observacoes_cliente?: string | null
+          ordem?: number | null
           orgao_emissor?: string | null
           prazo_recomendado_dias?: number | null
           processo_id?: string
