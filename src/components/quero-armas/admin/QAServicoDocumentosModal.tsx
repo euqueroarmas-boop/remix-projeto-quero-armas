@@ -158,6 +158,24 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [reordenando, setReordenando] = useState(false);
+  const [templates, setTemplates] = useState<string[]>([]);
+
+  /* carrega lista de templates .docx disponíveis */
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.storage
+        .from("qa-templates")
+        .list("declaracoes", { limit: 1000, sortBy: { column: "name", order: "asc" } });
+      if (cancelled) return;
+      const keys = (data ?? [])
+        .filter((o: any) => o.name?.toLowerCase().endsWith(".docx") && !o.name.startsWith("."))
+        .map((o: any) => o.name.replace(/\.docx$/i, ""));
+      setTemplates(keys);
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
 
   const load = useCallback(async () => {
     if (!servicoId) return;
