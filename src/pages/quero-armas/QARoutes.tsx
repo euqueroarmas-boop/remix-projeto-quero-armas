@@ -121,6 +121,14 @@ export default function QARoutes() {
         {/* Raiz: landing page principal pública */}
         <Route path="/" element={<HomePage />} />
 
+        {/* DEV-ONLY: rota de QA visual do Wizard KYC (não montada em produção). */}
+        {QAWizardKycPreviewPage && (
+          <Route
+            path="dev/wizard-kyc-preview"
+            element={<QAScope><QAWizardKycPreviewPage /></QAScope>}
+          />
+        )}
+
         {/* Public routes (no auth required) */}
         <Route path="servicos" element={<ServicesListPage />} />
         <Route path="servicos/:slug" element={<ServicoDetalhePage />} />
