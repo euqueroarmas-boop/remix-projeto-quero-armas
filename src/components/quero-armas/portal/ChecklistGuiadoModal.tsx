@@ -61,6 +61,9 @@ import {
 } from "@/lib/quero-armas/documentAssistantProgress";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import SugestaoCadastroFromDocModal, {
+  temSugestoesDeCadastro,
+} from "@/components/quero-armas/portal/SugestaoCadastroFromDocModal";
 
 const MARROM = "#7A1F2B";
 
