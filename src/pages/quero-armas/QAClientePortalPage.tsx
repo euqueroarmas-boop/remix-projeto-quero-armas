@@ -827,6 +827,7 @@ export default function QAClientePortalPage() {
   }
 
   return (
+    <PortalFilterProvider>
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
       <ForcePasswordChangeModal
         open={mustChangePassword}
@@ -837,13 +838,23 @@ export default function QAClientePortalPage() {
           <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
           <button type="button" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center"><ChevronRight className="h-4 w-4 rotate-180" /></button>
         </div>
-        <nav className="mt-6 space-y-2">
-          {navItems.map((item) => {
+        <nav className="mt-6 space-y-1">
+          {primaryNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
+            return (
+              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
+                <Icon className="h-5 w-5" /> {item.label}
+              </button>
+            );
+          })}
+          <div className="mt-4 mb-1 px-4 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Mais</div>
+          {secondaryNavItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key;
             return (
-              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-3 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
-                <Icon className="h-5 w-5" /> {item.label}
+              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 text-[12px] font-semibold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}>
+                <Icon className="h-4 w-4" /> {item.label}
               </button>
             );
           })}
