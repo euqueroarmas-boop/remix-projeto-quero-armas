@@ -23,6 +23,8 @@ interface Processo {
 
 interface Props {
   clienteId: number;
+  /** Quando preenchido, filtra a lista para mostrar apenas o processo indicado. */
+  processoIdFiltro?: string | null;
 }
 
 const ETAPA_LABELS: Record<number, string> = {
@@ -48,9 +50,9 @@ const prazoTone = (dias: number | null) => {
   return { bg: "bg-emerald-50", border: "border-emerald-300", text: "text-emerald-900", chip: "bg-emerald-600 text-white" };
 };
 
-export function ClienteProcessosSection({ clienteId }: Props) {
+export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: Props) {
   const [loading, setLoading] = useState(true);
-  const [processos, setProcessos] = useState<Processo[]>([]);
+  const [processosRaw, setProcessosRaw] = useState<Processo[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
@@ -87,7 +89,7 @@ export function ClienteProcessosSection({ clienteId }: Props) {
 
         return { ...p, total_docs: total, pendentes, aprovados, acao, prazo_critico_doc_label };
       });
-      setProcessos(enriched);
+      setProcessosRaw(enriched);
     } catch (e: any) {
       toast.error("Erro ao carregar processos: " + (e?.message ?? "desconhecido"));
     } finally {
@@ -96,6 +98,10 @@ export function ClienteProcessosSection({ clienteId }: Props) {
   }, [clienteId]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  const processos = processoIdFiltro
+    ? processosRaw.filter((p) => p.id === processoIdFiltro)
+    : processosRaw;
 
   if (loading) return <div className="text-xs uppercase tracking-wider text-slate-400 text-center py-6">CARREGANDO PROCESSOS...</div>;
 

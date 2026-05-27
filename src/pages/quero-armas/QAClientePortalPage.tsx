@@ -25,7 +25,8 @@ import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
-import { PortalFilterProvider } from "@/components/quero-armas/portal/PortalFilterContext";
+import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
+import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -171,6 +172,8 @@ export default function QAClientePortalPage() {
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
   // lê qa_processo_eventos (somente os processos do cliente).
   const [processoEventos, setProcessoEventos] = useState<any[]>([]);
+  // Fase 3 — escopo selecionado no segmented control das abas detalhadas.
+  const [selectedScopeId, setSelectedScopeId] = useState<string>("todos");
 
   // Fonte oficial do header: função autenticada resolve e assina, em ordem:
   // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
@@ -742,6 +745,40 @@ export default function QAClientePortalPage() {
   const primaryNavItems = useMemo(() => navItems.filter((i) => i.group === "primary"), [navItems]);
   const secondaryNavItems = useMemo(() => navItems.filter((i) => i.group === "secondary"), [navItems]);
 
+  // Fase 3 — escopos exibidos no PortalScopeSelector. Um item por processo
+  // do cliente, mais "Todos os processos" (injetado pelo provider se ausente).
+  const portalScopes = useMemo<PortalScope[]>(() => {
+    const items: PortalScope[] = processos.map((p: any) => {
+      const nome = getQAServiceDisplayName({
+        ...catalogoByServicoId[Number(p.servico_id)],
+        servico_id: p.servico_id,
+        servico_nome: p.servico_nome || SERVICO_MAP[p.servico_id],
+      }) || p.servico_nome || "Processo";
+      return {
+        id: String(p.id),
+        label: String(nome).toUpperCase(),
+        type: "processo" as const,
+        processoId: String(p.id),
+        vendaId: p.venda_id != null ? Number(p.venda_id) : null,
+        serviceSlug: p.servico_slug ?? null,
+        serviceName: nome,
+      };
+    });
+    return [{ id: "todos", label: "Todos os processos", type: "todos" as const }, ...items];
+  }, [processos, catalogoByServicoId, SERVICO_MAP]);
+
+  // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
+  useEffect(() => {
+    if (!portalScopes.some((s) => s.id === selectedScopeId)) {
+      setSelectedScopeId("todos");
+    }
+  }, [portalScopes, selectedScopeId]);
+
+  const currentScope = useMemo<PortalScope>(
+    () => portalScopes.find((s) => s.id === selectedScopeId) || portalScopes[0],
+    [portalScopes, selectedScopeId],
+  );
+
   // Sincroniza seção a partir da URL apenas no primeiro mount / quando a rota base muda.
   // Navegação interna do portal NÃO altera URL — apenas estado.
   useEffect(() => {
@@ -827,7 +864,11 @@ export default function QAClientePortalPage() {
   }
 
   return (
-    <PortalFilterProvider>
+    <PortalFilterProvider
+      scopes={portalScopes}
+      selectedScopeId={selectedScopeId}
+      onScopeChange={setSelectedScopeId}
+    >
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
       <ForcePasswordChangeModal
         open={mustChangePassword}
@@ -1391,6 +1432,7 @@ export default function QAClientePortalPage() {
 
         {(activeSection === "contratacoes" || activeSection === "processos") && (
           <div className="space-y-4">
+            <PortalScopeSelector hint="Filtra histórico, linha do tempo e cards de processo." />
             <SectionCard icon={BriefcaseBusiness} title="Meus processos" color="hsl(352 60% 30%)">
               <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
               {cliente?.id ? (
@@ -1409,15 +1451,41 @@ export default function QAClientePortalPage() {
                   <ContratoBlock clienteId={cliente.id} />
                 </div>
               ) : null}
-              {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
+              {cliente?.id ? (
+                <ClienteProcessosSection
+                  clienteId={cliente.id}
+                  processoIdFiltro={currentScope.type === "processo" ? currentScope.processoId ?? null : null}
+                />
+              ) : null}
             </SectionCard>
 
-            {timeline.length > 0 && (
+            {(() => {
+              const tlFiltered = currentScope.type === "processo"
+                ? timeline // timeline events não têm processo_id direto; ver nota abaixo
+                : timeline;
+              // A linha do tempo combina vendas + itens + eventos de processo.
+              // Quando filtrada por processo, mostramos apenas eventos com vínculo
+              // direto a esse processo via processo_id (qa_processo_eventos).
+              const tlForScope = currentScope.type === "processo"
+                ? processoEventos
+                    .filter((ev: any) => String(ev.processo_id) === String(currentScope.processoId))
+                    .map((ev: any) => ({
+                      date: ev.created_at,
+                      label: ev.descricao || ev.tipo_evento || "Evento",
+                      icon: Activity,
+                      color: "hsl(220 60% 48%)",
+                      sub: null as string | null,
+                    }))
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 20)
+                : tlFiltered;
+              if (tlForScope.length === 0) return null;
+              return (
               <SectionCard icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)">
                 <div className="relative pl-6">
                   <div className="absolute left-2.5 top-1 bottom-1 w-px bg-slate-200" />
                   <div className="space-y-3">
-                    {timeline.map((ev, i) => {
+                    {tlForScope.map((ev, i) => {
                       const Icon = ev.icon;
                       return (
                         <div key={i} className="relative flex items-start gap-3">
@@ -1435,7 +1503,8 @@ export default function QAClientePortalPage() {
                   </div>
                 </div>
               </SectionCard>
-            )}
+              );
+            })()}
 
             {cliente?.id && (
               <SectionCard icon={History} title="Histórico de Atualizações" color="hsl(220 65% 48%)">
@@ -1447,15 +1516,50 @@ export default function QAClientePortalPage() {
 
         {activeSection === "documentos" && analysis && (
           <div className="space-y-4">
+            <PortalScopeSelector hint="Documentos sem vínculo direto só aparecem em 'Todos os processos'." />
             <SectionCard icon={FileText} title="Documentos com validade" color="hsl(262 60% 55%)">
               <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
-              {analysis.expDocs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nenhum documento com validade cadastrado.</p> : (
-                <div className="grid gap-2">{analysis.expDocs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
-              )}
+              {(() => {
+                // Documentos com validade: CR/CRAF/GTE/Exames/Hub não têm
+                // processo_id explícito no schema atual. Quando o escopo é um
+                // processo, mostramos somente os "serviço" associados àquele
+                // processo (via servico_id ↔ scope.processoId via processos[]).
+                let docs = analysis.expDocs;
+                if (currentScope.type === "processo") {
+                  const proc = processos.find((p) => String(p.id) === String(currentScope.processoId));
+                  const procServicoNome = proc
+                    ? (getQAServiceDisplayName({
+                        ...catalogoByServicoId[Number(proc.servico_id)],
+                        servico_id: proc.servico_id,
+                        servico_nome: proc.servico_nome || SERVICO_MAP[proc.servico_id],
+                      }) || proc.servico_nome)
+                    : null;
+                  docs = analysis.expDocs.filter((d) =>
+                    procServicoNome
+                      ? d.label.toLowerCase().includes(String(procServicoNome).toLowerCase())
+                      : false,
+                  );
+                }
+                return docs.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-slate-500">
+                    {currentScope.type === "processo"
+                      ? "Nenhum documento com validade vinculado a este processo."
+                      : "Nenhum documento com validade cadastrado."}
+                  </p>
+                ) : (
+                  <div className="grid gap-2">{docs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
+                );
+              })()}
             </SectionCard>
 
             {(customerId || cliente?.id) && (
               <SectionCard icon={FolderArchive} title="Meu Hub de Documentos" color="hsl(280 60% 50%)">
+                {currentScope.type === "processo" && (
+                  <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                    O Hub de Documentos do cliente é compartilhado entre processos.
+                    Itens sem vínculo direto continuam visíveis apenas em <strong>"Todos os processos"</strong>.
+                  </div>
+                )}
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
                     {cliente?.tipo_cliente === "cliente_app" && !customerId
@@ -1472,7 +1576,12 @@ export default function QAClientePortalPage() {
                   </Button>
                 </div>
 
-                {meusDocs.length === 0 ? (
+                {(() => {
+                  // qa_documentos_cliente não possui processo_id no schema atual.
+                  // Por isso, ao filtrar por processo, escondemos o hub completo
+                  // (já avisamos no banner acima). Em "Todos" mantemos a lista.
+                  if (currentScope.type === "processo") return null;
+                  return meusDocs.length === 0 ? (
                   <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
                     <FolderArchive className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-[11px] text-slate-400">
@@ -1562,7 +1671,8 @@ export default function QAClientePortalPage() {
                       );
                     })}
                   </div>
-                )}
+                  );
+                })()}
               </SectionCard>
             )}
           </div>
@@ -1575,10 +1685,33 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "financeiro" && analysis && (
-          <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
-            <div className="space-y-2">{vendas.map((v: any) => <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"><div><div className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</div><div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div></div><div className="font-mono text-sm font-bold text-slate-900">{formatCurrency(Number(v.valor_a_pagar || 0))}</div></div>)}</div>
-            <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">Total investido</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(analysis.totalVendas)}</span></div>
-          </SectionCard>
+          <div className="space-y-4">
+            <PortalScopeSelector hint="Cobranças sem venda vinculada só aparecem em 'Todos os processos'." />
+            <SectionCard icon={Wallet} title="Financeiro" color="hsl(152 60% 42%)">
+              {(() => {
+                const vendaIdAlvo = currentScope.type === "processo" ? currentScope.vendaId : null;
+                const vendasFiltradas = vendaIdAlvo != null
+                  ? vendas.filter((v: any) => Number(getVendaFK(v)) === Number(vendaIdAlvo))
+                  : vendas;
+                const totalFiltrado = vendasFiltradas.reduce((a: number, v: any) => a + Number(v.valor_a_pagar || 0), 0);
+                if (vendasFiltradas.length === 0) {
+                  return (
+                    <p className="py-8 text-center text-sm text-slate-500">
+                      {currentScope.type === "processo"
+                        ? "Nenhuma cobrança vinculada a este processo."
+                        : "Nenhuma cobrança registrada."}
+                    </p>
+                  );
+                }
+                return (
+                  <>
+                    <div className="space-y-2">{vendasFiltradas.map((v: any) => <div key={v.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-3"><div><div className="text-[12px] font-bold text-slate-800">{formatDate(v.data_cadastro || v.created_at)}</div><div className="text-[10px] text-slate-500">{v.forma_pagamento || 'Contratação'}</div></div><div className="font-mono text-sm font-bold text-slate-900">{formatCurrency(Number(v.valor_a_pagar || 0))}</div></div>)}</div>
+                    <div className="mt-4 flex justify-between border-t border-slate-200 pt-3"><span className="text-[11px] font-bold uppercase text-slate-500">{currentScope.type === "processo" ? "Total do processo" : "Total investido"}</span><span className="font-mono text-base font-bold text-slate-900">{formatCurrency(totalFiltrado)}</span></div>
+                  </>
+                );
+              })()}
+            </SectionCard>
+          </div>
         )}
 
         {activeSection === "configuracoes" && (
@@ -1591,28 +1724,101 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "pendencias" && (
-          <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
-            <p className="py-8 text-center text-sm text-slate-500">
-              Lista completa de pendências por processo chega na próxima etapa do redesign.
-              Use o assistente guiado para resolver agora.
-            </p>
-            <div className="flex justify-center"><ChecklistGuiadoBotao /></div>
-          </SectionCard>
+          <div className="space-y-4">
+            <PortalScopeSelector hint="Filtra pendências do checklist por processo." />
+            <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
+              {(() => {
+                const docsBase = processoDocs.filter((d) =>
+                  d.obrigatorio &&
+                  (isChecklistPendente(d.status) ||
+                    ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase())),
+                );
+                const docsFilt = currentScope.type === "processo"
+                  ? docsBase.filter((d) => String(d.processo_id) === String(currentScope.processoId))
+                  : docsBase;
+                if (docsFilt.length === 0) {
+                  return (
+                    <div className="py-8 text-center">
+                      <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                      <p className="text-sm text-slate-600 font-semibold">
+                        {currentScope.type === "processo"
+                          ? "Sem pendências obrigatórias neste processo."
+                          : "Você não tem pendências obrigatórias agora."}
+                      </p>
+                    </div>
+                  );
+                }
+                // Agrupa por processo (UI mais clara mesmo em "Todos").
+                const byProc = new Map<string, any[]>();
+                for (const d of docsFilt) {
+                  const key = String(d.processo_id);
+                  if (!byProc.has(key)) byProc.set(key, []);
+                  byProc.get(key)!.push(d);
+                }
+                return (
+                  <div className="space-y-4">
+                    <div className="flex justify-end"><ChecklistGuiadoBotao /></div>
+                    {Array.from(byProc.entries()).map(([procId, lista]) => {
+                      const proc = processos.find((p) => String(p.id) === procId);
+                      const nome = proc?.servico_nome || "Processo";
+                      return (
+                        <div key={procId} className="rounded-xl border border-slate-200 bg-white">
+                          <div className="px-4 py-2 border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                            {nome} <span className="ml-1 text-slate-400">· {lista.length} pendência(s)</span>
+                          </div>
+                          <div className="divide-y divide-slate-100">
+                            {lista.map((d) => {
+                              const reprov = ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase());
+                              return (
+                                <div key={d.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                                  <div className="min-w-0">
+                                    <div className="text-[12px] font-semibold text-slate-800 truncate">
+                                      {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">
+                                      {d.etapa ? String(d.etapa).toUpperCase() : "—"}
+                                    </div>
+                                  </div>
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${reprov ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}>
+                                    {reprov ? "Reenviar" : "Pendente"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </SectionCard>
+          </div>
         )}
 
         {activeSection === "contratos" && (
-          <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
-            {cliente?.id ? (
-              <>
-                <ContratoBlock clienteId={cliente.id} />
-                {(cliente as any)?.id_legado != null && (
-                  <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
-                )}
-              </>
-            ) : (
-              <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
-            )}
-          </SectionCard>
+          <div className="space-y-4">
+            <PortalScopeSelector hint="Contratos são compartilhados entre processos do mesmo cliente." />
+            <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
+              {currentScope.type === "processo" && (
+                <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                  Os contratos abaixo são do cliente como um todo. Quando não houver
+                  vínculo direto entre contrato e processo, o documento permanece
+                  visível para evitar omissão indevida.
+                </div>
+              )}
+              {cliente?.id ? (
+                <>
+                  <ContratoBlock clienteId={cliente.id} />
+                  {(cliente as any)?.id_legado != null && (
+                    <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
+                  )}
+                </>
+              ) : (
+                <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
+              )}
+            </SectionCard>
+          </div>
         )}
       </main>
 
