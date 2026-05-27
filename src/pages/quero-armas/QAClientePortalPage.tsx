@@ -154,6 +154,9 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
+  // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
+  // lê qa_processo_eventos (somente os processos do cliente).
+  const [processoEventos, setProcessoEventos] = useState<any[]>([]);
 
   // Fonte oficial do header: função autenticada resolve e assina, em ordem:
   // qa_clientes.imagem → qa_cadastro_publico.selfie_path → avatar_tatico_path.
