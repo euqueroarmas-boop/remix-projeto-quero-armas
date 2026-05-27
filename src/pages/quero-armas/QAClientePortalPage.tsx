@@ -1933,7 +1933,7 @@ export default function QAClientePortalPage() {
         </div>
         )}
 
-        {activeSection === "contratacoes" && (
+        {(activeSection === "contratacoes" || activeSection === "processos") && (
           <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
             <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
             {cliente?.id ? (
