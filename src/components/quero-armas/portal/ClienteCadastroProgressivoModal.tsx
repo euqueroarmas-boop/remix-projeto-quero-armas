@@ -20,11 +20,42 @@ import {
   CAMPOS_CADASTRO, CampoCadastro, CadastroGrupo, GRUPO_LABELS,
   calcularProgressoCadastro, getCamposFaltantesCadastro,
 } from "@/lib/quero-armas/cadastroCompleteness";
+import {
+  listarProcessosElegiveisGuia, carregarProcessoGuia,
+  itensObrigatoriosGuia, itemPendenteAcaoGuia, enviarDocumentoGuia,
+  type GuiaProcesso, type GuiaDoc,
+} from "@/lib/quero-armas/checklistGuiadoEngine";
 
 const MARROM = "#7A1F2B";
 
 type Modo = "escolher" | "manual" | "ia_upload" | "ia_revisao";
 type SaveState = "idle" | "saving" | "saved" | "error";
+
+// Match entre documento extraído pela IA e itens pendentes do checklist.
+interface ChecklistMatch {
+  processo: GuiaProcesso;
+  doc: GuiaDoc;
+  label: string;
+}
+
+// Classifica o documento enviado a partir dos campos retornados pela IA.
+function tiposCanditatosDoDoc(fields: Record<string, string>): string[] {
+  const tipos: string[] = [];
+  const hasEnd = !!(fields.cep || fields.endereco || fields.cidade || fields.bairro);
+  const hasId = !!(fields.rg || fields.emissor_rg || fields.data_expedicao_rg);
+  const idTipo = (fields.tipo_documento_identidade || "").toLowerCase();
+  if (hasEnd) tipos.push("comprovante_residencia", "residencia", "endereco");
+  if (hasId || idTipo) {
+    if (idTipo === "cnh") tipos.push("cnh");
+    else tipos.push("rg", "identidade", "cnh");
+  }
+  return tipos;
+}
+
+function tipoDocBate(tipoChecklist: string, candidatos: string[]): boolean {
+  const t = (tipoChecklist || "").toLowerCase();
+  return candidatos.some((c) => t.includes(c));
+}
 
 interface Props {
   open: boolean;
