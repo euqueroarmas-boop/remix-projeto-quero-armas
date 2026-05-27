@@ -169,6 +169,56 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
 }
 
 // ---------------------------------------------------------------------------
+// Mapeamento explícito de status — usado pelo Assistente para nunca prender
+// o cliente em um documento que já foi enviado e está em análise/aprovação.
+// ---------------------------------------------------------------------------
+export const STATUS_DOCS_ACIONAVEIS: ReadonlySet<string> = new Set([
+  "pendente",
+  "nao_enviado",
+  "reprovado",
+  "invalido",
+  "divergente",
+  "ajuste_necessario",
+  "correcao_solicitada",
+  "pulou",
+]);
+
+export const STATUS_DOCS_NAO_ACIONAVEIS: ReadonlySet<string> = new Set([
+  "aprovado",
+  "validado",
+  "em_analise",
+  "enviado",
+  "fila",
+  "pendente_aprovacao",
+  "aguardando_equipe",
+  "em_revisao_humana",
+  "dispensado",
+  "dispensado_grupo",
+  "nao_aplicavel",
+]);
+
+/**
+ * Item ainda exige ação concreta do cliente AGORA?
+ * - Pergunta: sem resposta gravada.
+ * - Condição profissional: sempre acionável (some quando definida).
+ * - Documento: status NÃO está na lista de não-acionáveis.
+ */
+export function isDocumentActionable(
+  d: GuiaDoc,
+  respostas: Record<string, string>,
+): boolean {
+  if (isPerguntaGuia(d)) {
+    const chave = (d.regra_validacao as any)?.chave as string | undefined;
+    if (!chave) return false;
+    return !(respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "");
+  }
+  if (isCondicaoGuia(d)) return true;
+  const st = String(d.status ?? "").toLowerCase();
+  if (STATUS_DOCS_NAO_ACIONAVEIS.has(st)) return false;
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // Resolve o template_key do modelo preenchível para um documento (quando
 // a regra_validacao define template_key ou template_quando). Espelho da
 // função pickTemplate do ProcessoDetalheDrawer — sem alterar dados nem RLS.
