@@ -360,30 +360,26 @@ export async function responderPerguntaGuia(
   try {
     const chave = (doc.regra_validacao as any)?.chave as string;
     if (!chave) throw new Error("Pergunta sem chave configurada");
-    const respostas = (processo.respostas_questionario_json ?? {}) as Record<string, string>;
-    const novasRespostas = { ...respostas, [chave]: valor };
-    // 1º: grava a resposta no questionário (o trigger exige a chave presente antes do doc).
-    const { error: upErr } = await supabase
-      .from("qa_processos")
-      .update({ respostas_questionario_json: novasRespostas })
-      .eq("id", processo.id);
-    if (upErr) throw upErr;
-    // 2º: marca a pergunta como respondida (dispensado_grupo — não é doc aprovado).
-    await supabase
-      .from("qa_processo_documentos")
-      .update({
-        status: "dispensado_grupo",
-        observacoes: `Resposta do cliente: ${valor.toUpperCase()} em ${new Date().toISOString()}`,
-      })
-      .eq("id", doc.id);
-    // 3º: evento auditável.
-    await supabase.from("qa_processo_eventos").insert({
-      processo_id: processo.id,
-      tipo_evento: "pergunta_respondida",
-      descricao: `Cliente respondeu "${chave}": ${valor.toUpperCase()}`,
-      ator: "cliente",
-      dados_json: { documento_id: doc.id, tipo_documento: doc.tipo_documento, chave, valor },
-    });
+    // RLS bloqueia UPDATE em qa_processos pelo cliente — usamos edge function
+    // service_role (camada aditiva) para gravar resposta + status + evento.
+    const headers = await authHeader();
+    const resp = await fetch(
+      `${SUPA_URL}/functions/v1/qa-processo-responder-pergunta`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          processo_id: processo.id,
+          documento_id: doc.id,
+          chave,
+          valor,
+        }),
+      },
+    );
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(txt || "Falha ao registrar resposta");
+    }
     return { ok: true };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "Erro ao responder" };

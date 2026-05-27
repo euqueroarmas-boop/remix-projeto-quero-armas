@@ -275,7 +275,7 @@ export default function ChecklistGuiadoModal({
     <>
       <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
         <DialogContent
-          className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
+          className="qa-scope w-[calc(100vw-1rem)] max-w-2xl sm:max-w-3xl rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
         >
           {/* Cabeçalho */}
           <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
