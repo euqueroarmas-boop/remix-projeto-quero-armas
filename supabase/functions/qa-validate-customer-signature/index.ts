@@ -13,6 +13,7 @@
  * (usado pelo encadeamento qa-upload-signed-contract).
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
 import { validatePdfSignature, normalizeCpf } from "../_shared/qaPdfSignatureValidate.ts";
 
 const corsHeaders = {
@@ -241,6 +242,9 @@ Deno.serve(async (req) => {
       cliente_cpf_normalized: cpfCliente || null,
       binding_check: "ok",
       expected_contract_number: numero,
+      original_sha256_stored: expectedSha || null,
+      original_size: bindingDetails.original_size,
+      signed_size: bindingDetails.signed_size,
     },
   };
   if (outcome === "valid") update.customer_signature_validated_at = new Date().toISOString();
