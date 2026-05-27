@@ -155,6 +155,7 @@ export default function QAPrecosServicosPage() {
   const [novaCategoria, setNovaCategoria] = useState("");
   const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
   const [catBusy, setCatBusy] = useState(false);
+  const [docsModal, setDocsModal] = useState<{ servico_id: number; nome: string } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -617,6 +618,11 @@ export default function QAPrecosServicosPage() {
                 save={save}
                 openEdit={openEdit}
                 removeRow={removeRow}
+                openDocs={(row) =>
+                  row.servico_id
+                    ? setDocsModal({ servico_id: row.servico_id, nome: row.nome })
+                    : toast.error("ESTE SERVIÇO NÃO TEM SERVICO_ID VINCULADO")
+                }
               />
             ))}
           </div>
@@ -887,6 +893,14 @@ export default function QAPrecosServicosPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Editor de DOCUMENTOS EXIGIDOS (template por servico_id) */}
+      <QAServicoDocumentosModal
+        open={!!docsModal}
+        servicoId={docsModal?.servico_id ?? null}
+        servicoNome={docsModal?.nome ?? ""}
+        onClose={() => setDocsModal(null)}
+      />
     </div>
   );
 }
