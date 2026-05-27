@@ -460,7 +460,10 @@ Deno.serve(async (req) => {
     if (!path) return json({ error: "storage_path ausente" }, 400);
 
     const { data: processo } = await supabase
-      .from("qa_processos").select("id, cliente_id, servico_id").eq("id", processo_id).maybeSingle();
+      .from("qa_processos")
+      .select("id, cliente_id, servico_id, respostas_questionario_json")
+      .eq("id", processo_id)
+      .maybeSingle();
     if (!processo) return json({ error: "Processo não encontrado" }, 404);
 
     const { data: cliente } = await supabase
@@ -468,12 +471,30 @@ Deno.serve(async (req) => {
       .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep")
       .eq("id", processo.cliente_id).maybeSingle();
 
+    // Alteração de nome em cartório (se já comprovada neste processo): usamos
+    // os nomes aprovados como nomes ACEITOS para a comparação da IA — assim
+    // documentos futuros não geram divergência de nome quando bater com o
+    // nome anterior OU o nome atual. NUNCA sobrescrevemos o nome do cadastro.
+    const altNome =
+      ((processo as any)?.respostas_questionario_json?.alteracao_nome ?? null) as
+        | { aprovada?: boolean; nome_anterior?: string | null; nome_atual?: string | null }
+        | null;
+    const nomesAceitosAlteracao: string[] = [];
+    if (altNome?.aprovada) {
+      if (altNome.nome_anterior) nomesAceitosAlteracao.push(String(altNome.nome_anterior));
+      if (altNome.nome_atual) nomesAceitosAlteracao.push(String(altNome.nome_atual));
+    }
+    const cadastroParaPrompt = {
+      ...(cliente ?? {}),
+      nomes_aceitos_alteracao: nomesAceitosAlteracao,
+    };
+
     await supabase.from("qa_processo_documentos")
       .update({ status: "em_analise", validacao_ia_status: "processando" })
       .eq("id", documento_id);
 
     const { b64, mime } = await downloadAsBase64(supabase, path);
-    const systemPrompt = buildSystemPrompt(doc.tipo_documento, cliente);
+    const systemPrompt = buildSystemPrompt(doc.tipo_documento, cadastroParaPrompt);
 
     // Estratégia por tipo de arquivo:
     //  - PDF: tenta primeiro extrair a CAMADA DE TEXTO via pdfjs-dist
