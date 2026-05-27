@@ -706,6 +706,27 @@ export default function ChecklistGuiadoModal({
       <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
 
       <DocumentoViewerModal open={viewer.open} onClose={viewer.fechar} source={viewer.source} title={viewer.title} />
+
+      <TemplateDataConfirmationModal
+        open={confirmacao.open}
+        onOpenChange={(n) => !n && setConfirmacao({ open: false, doc: null, templateKey: null })}
+        cliente={clienteDados}
+        documentoNome={confirmacao.doc?.nome_documento ?? null}
+        gerando={baixandoTemplate || carregandoCliente}
+        onConfirmGenerate={confirmarEGerar}
+        onEditCadastro={() => setEditarCadastroAberto(true)}
+      />
+
+      {clienteDados && (
+        <ClienteCadastroProgressivoModal
+          open={editarCadastroAberto}
+          onClose={() => setEditarCadastroAberto(false)}
+          cliente={clienteDados}
+          onUpdated={async () => {
+            await recarregarClienteDados();
+          }}
+        />
+      )}
     </>
   );
 }
