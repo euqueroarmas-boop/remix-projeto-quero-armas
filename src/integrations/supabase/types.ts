@@ -3804,6 +3804,7 @@ export type Database = {
           cidade: string | null
           cidade2: string | null
           cliente_lions: boolean | null
+          clube_atual_id: number | null
           cnh: string | null
           complemento: string | null
           complemento2: string | null
@@ -3849,6 +3850,7 @@ export type Database = {
           nome_pai: string | null
           numero: string | null
           numero_documento_identidade: string | null
+          numero_filiacao: string | null
           numero2: string | null
           observacao: string | null
           orgao_vinculado: string | null
@@ -3900,6 +3902,7 @@ export type Database = {
           uf_emissor_rg: string | null
           updated_at: string
           user_id: string | null
+          validade_filiacao: string | null
         }
         Insert: {
           arquivado?: boolean
@@ -3922,6 +3925,7 @@ export type Database = {
           cidade?: string | null
           cidade2?: string | null
           cliente_lions?: boolean | null
+          clube_atual_id?: number | null
           cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
@@ -3967,6 +3971,7 @@ export type Database = {
           nome_pai?: string | null
           numero?: string | null
           numero_documento_identidade?: string | null
+          numero_filiacao?: string | null
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
@@ -4018,6 +4023,7 @@ export type Database = {
           uf_emissor_rg?: string | null
           updated_at?: string
           user_id?: string | null
+          validade_filiacao?: string | null
         }
         Update: {
           arquivado?: boolean
@@ -4040,6 +4046,7 @@ export type Database = {
           cidade?: string | null
           cidade2?: string | null
           cliente_lions?: boolean | null
+          clube_atual_id?: number | null
           cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
@@ -4085,6 +4092,7 @@ export type Database = {
           nome_pai?: string | null
           numero?: string | null
           numero_documento_identidade?: string | null
+          numero_filiacao?: string | null
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
@@ -4136,8 +4144,16 @@ export type Database = {
           uf_emissor_rg?: string | null
           updated_at?: string
           user_id?: string | null
+          validade_filiacao?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_clientes_clube_atual_id_fkey"
+            columns: ["clube_atual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clubes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_clientes_customer_id_fkey"
             columns: ["customer_id"]
@@ -4149,31 +4165,55 @@ export type Database = {
       }
       qa_clubes: {
         Row: {
+          atualizado_em: string
+          cidade: string | null
+          cliente_id_origem: number | null
           cnpj: string | null
           data_validade: string | null
+          documento_id_origem: string | null
           endereco: string | null
+          estado: string | null
           id: number
           id_legado: number | null
           nome_clube: string
           numero_cr: string | null
+          origem: string
+          processo_id_origem: string | null
+          status_verificacao: string
         }
         Insert: {
+          atualizado_em?: string
+          cidade?: string | null
+          cliente_id_origem?: number | null
           cnpj?: string | null
           data_validade?: string | null
+          documento_id_origem?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: number
           id_legado?: number | null
           nome_clube: string
           numero_cr?: string | null
+          origem?: string
+          processo_id_origem?: string | null
+          status_verificacao?: string
         }
         Update: {
+          atualizado_em?: string
+          cidade?: string | null
+          cliente_id_origem?: number | null
           cnpj?: string | null
           data_validade?: string | null
+          documento_id_origem?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: number
           id_legado?: number | null
           nome_clube?: string
           numero_cr?: string | null
+          origem?: string
+          processo_id_origem?: string | null
+          status_verificacao?: string
         }
         Relationships: []
       }
