@@ -864,7 +864,11 @@ export default function QAClientePortalPage() {
   }
 
   return (
-    <PortalFilterProvider>
+    <PortalFilterProvider
+      scopes={portalScopes}
+      selectedScopeId={selectedScopeId}
+      onScopeChange={setSelectedScopeId}
+    >
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
       <ForcePasswordChangeModal
         open={mustChangePassword}
