@@ -527,6 +527,7 @@ interface CardProps {
   onUpload: (campo: "modelo_url" | "exemplo_url", file: File) => void;
   onClearArquivo: (campo: "modelo_url" | "exemplo_url") => void;
   onView: (path: string, fileName?: string) => void;
+  onExpandirAnos: (anos: number[]) => void;
 }
 
 function ExigenciaCard({
@@ -545,7 +546,26 @@ function ExigenciaCard({
   onUpload,
   onClearArquivo,
   onView,
+  onExpandirAnos,
 }: CardProps) {
+  const [repeteAberto, setRepeteAberto] = useState(false);
+  const [anosTxt, setAnosTxt] = useState(() => {
+    const y = new Date().getFullYear();
+    return `${y}, ${y - 1}, ${y - 2}, ${y - 3}, ${y - 4}, ${y - 5}`;
+  });
+  const anosParsed = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          anosTxt
+            .split(/[,\s]+/)
+            .map((s) => parseInt(s.trim(), 10))
+            .filter((n) => Number.isFinite(n) && n >= 1900 && n <= 2100),
+        ),
+      ).sort((a, b) => b - a),
+    [anosTxt],
+  );
+
   return (
     <div
       className={`rounded-xl border bg-white p-3 transition ${
