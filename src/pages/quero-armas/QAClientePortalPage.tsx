@@ -25,6 +25,7 @@ import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
+import { abrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
 import { PortalFilterProvider, type PortalScope } from "@/components/quero-armas/portal/PortalFilterContext";
 import PortalScopeSelector from "@/components/quero-armas/portal/PortalScopeSelector";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
@@ -832,11 +833,11 @@ export default function QAClientePortalPage() {
         onClick: () => goSection("documentos"),
       };
     } else if (checklistReproc) {
-      proximaAcao = { titulo: `Reenviar ${String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório reprovado precisa ser corrigido.", icon: FileText, onClick: () => setShowAddDoc(true) };
+      proximaAcao = { titulo: `Reenviar ${String(checklistReproc.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório reprovado precisa ser corrigido.", icon: FileText, onClick: () => abrirChecklistGuiado({ processoId: checklistReproc.processo_id, focusDocId: checklistReproc.id }) };
     } else if (docsHubReprovados > 0) {
       proximaAcao = { titulo: "Reenviar documento reprovado", descricao: `${docsHubReprovados} documento(s) do hub precisam de correção.`, icon: FileText, onClick: () => setShowAddDoc(true) };
     } else if (checklistPend) {
-      proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => setShowAddDoc(true) };
+      proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => abrirChecklistGuiado({ processoId: checklistPend.processo_id, focusDocId: checklistPend.id }) };
     } else if (cadastroIncompleto) {
       proximaAcao = { titulo: "Completar seu cadastro", descricao: resumoFaltantesCadastro(cliente) || "Dados básicos faltando.", icon: User, onClick: () => setShowCadastroModal(true) };
     } else if (docsHubEmAnalise > 0) {
@@ -1221,6 +1222,9 @@ export default function QAClientePortalPage() {
           let usaChecklistBotao = false;
 
           if (vencido) {
+            // Renovação de documento expirado pode envolver acervo geral OU
+            // um item de processo. Se houver checklistReproc/checklistPend
+            // referente, priorizamos o assistente; caso contrário, hub geral.
             titulo = `Renovar ${vencido.label}`;
             descricao = `Vencido há ${Math.abs(vencido.days as number)} dia(s) — regularize com urgência.`;
             onClick = () => setShowAddDoc(true);
