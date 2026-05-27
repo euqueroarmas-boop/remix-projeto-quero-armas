@@ -59,8 +59,8 @@ Deno.serve(async (req) => {
 
     // Resolve cliente_id do usuário e flag staff (best-effort).
     const [clienteRes, staffRes] = await Promise.all([
-      admin.rpc("qa_current_cliente_id", { p_user_id: userId } as any),
-      admin.rpc("qa_is_active_staff", { p_user_id: userId } as any),
+      admin.rpc("qa_current_cliente_id", { _uid: userId } as any),
+      admin.rpc("qa_is_active_staff", { _uid: userId } as any),
     ]);
     const clienteIdUsuario = (clienteRes.data as number | null) ?? null;
     const isStaff = staffRes.data === true;
