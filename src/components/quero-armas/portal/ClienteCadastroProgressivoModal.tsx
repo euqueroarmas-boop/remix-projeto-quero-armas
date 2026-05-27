@@ -155,6 +155,9 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
   const [iaFields, setIaFields] = useState<Record<string, string>>({});
   const [iaWarnings, setIaWarnings] = useState<string[]>([]);
   const [iaSalvando, setIaSalvando] = useState(false);
+  const [iaFile, setIaFile] = useState<File | null>(null);
+  const [checklistMatches, setChecklistMatches] = useState<ChecklistMatch[]>([]);
+  const [checklistSelecionados, setChecklistSelecionados] = useState<Record<string, boolean>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<Record<string, number>>({});
 
@@ -166,6 +169,9 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       setSavingState({});
       setIaFields({});
       setIaWarnings([]);
+      setIaFile(null);
+      setChecklistMatches([]);
+      setChecklistSelecionados({});
     }
     return () => {
       Object.values(timersRef.current).forEach((t) => window.clearTimeout(t));
