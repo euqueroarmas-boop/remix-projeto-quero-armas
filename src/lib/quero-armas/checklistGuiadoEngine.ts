@@ -171,6 +171,38 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
   return "documento";
 }
 
+// ---------------------------------------------------------------------------
+// Resolve o template_key do modelo preenchível para um documento (quando
+// a regra_validacao define template_key ou template_quando). Espelho da
+// função pickTemplate do ProcessoDetalheDrawer — sem alterar dados nem RLS.
+// ---------------------------------------------------------------------------
+export function pickTemplateGuia(
+  doc: Pick<GuiaDoc, "regra_validacao">,
+  respostas: Record<string, string>,
+): { key: string; label: string } | null {
+  const rule: any = doc?.regra_validacao;
+  if (!rule || typeof rule !== "object") return null;
+  const match = (cond: Record<string, string> | undefined | null) => {
+    if (!cond || typeof cond !== "object") return true;
+    return Object.entries(cond).every(([k, v]) => respostas[k] === v);
+  };
+  if (Array.isArray(rule.template_quando)) {
+    for (const opt of rule.template_quando) {
+      if (match(opt?.se)) {
+        return {
+          key: String(opt.template_key),
+          label: String(opt.label || "Baixar declaração preenchida"),
+        };
+      }
+    }
+    return null;
+  }
+  if (typeof rule.template_key === "string") {
+    return { key: rule.template_key, label: "Baixar declaração preenchida" };
+  }
+  return null;
+}
+
 // Prioridade DENTRO da Etapa 1 (Comprovação de endereço):
 // 0 = documento de identidade (CIN/RG/CNH) — sempre PRIMEIRO
 // 1 = comprovante de endereço (todos os anos)
