@@ -875,6 +875,39 @@ function ExigenciaCard({
             />
           </Field>
 
+          {/* Seletor de template preenchível (.docx) */}
+          {mostraSeletorTemplate && (
+            <div className="col-span-12">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                TEMPLATE PREENCHÍVEL (.DOCX)
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={currentTemplateKey}
+                  onChange={(e) => setRegraTemplateKey(e.target.value)}
+                  className={inputCls + " flex-1 normal-case"}
+                  style={{ textTransform: "none" }}
+                >
+                  <option value="">— NENHUM —</option>
+                  {templates.map((k) => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
+                <a
+                  href="/modelos-declaracao"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 shrink-0"
+                >
+                  GERENCIAR
+                </a>
+              </div>
+              <p className="mt-1 text-[10px] text-slate-500 normal-case">
+                Quando definido, o cliente vê o botão "BAIXAR DECLARAÇÃO PREENCHIDA" no assistente guiado, gerado com os dados dele a partir do template.
+              </p>
+            </div>
+          )}
+
           {/* Anexos do template */}
           <div className="col-span-12 grid grid-cols-2 gap-2">
             <AnexoBox
