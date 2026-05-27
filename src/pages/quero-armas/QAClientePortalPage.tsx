@@ -1986,6 +1986,29 @@ export default function QAClientePortalPage() {
             </div>
           </SectionCard>
         )}
+
+        {activeSection === "pendencias" && (
+          <SectionCard icon={AlertTriangle} title="Pendências" color="hsl(352 60% 30%)">
+            <p className="py-8 text-center text-sm text-slate-500">
+              Lista completa de pendências por processo chega na próxima etapa do redesign.
+              Use o assistente guiado para resolver agora.
+            </p>
+            <div className="flex justify-center"><ChecklistGuiadoBotao /></div>
+          </SectionCard>
+        )}
+
+        {activeSection === "contratos" && (
+          <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
+            {cliente?.id ? (
+              <>
+                <ContratoBlock clienteId={cliente.id} />
+                <div className="mt-4"><ContratosPosPagamentoCard clienteId={cliente.id} /></div>
+              </>
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
+            )}
+          </SectionCard>
+        )}
       </main>
 
       {(customerId || cliente?.id) && (
