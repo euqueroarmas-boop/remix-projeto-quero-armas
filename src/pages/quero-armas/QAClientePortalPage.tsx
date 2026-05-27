@@ -9,7 +9,9 @@ import {
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
+  ShieldCheck,
 } from "lucide-react";
+import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { CentralAjudaCliente } from "@/components/quero-armas/cliente/CentralAjudaCliente";
 import { Button } from "@/components/ui/button";
