@@ -35,6 +35,8 @@ import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
