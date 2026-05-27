@@ -817,14 +817,18 @@ export default function ChecklistGuiadoModal({
 
       <DocumentoViewerModal open={viewer.open} onClose={viewer.fechar} source={viewer.source} title={viewer.title} />
 
-      <TemplateDataConfirmationModal
-        open={confirmacao.open}
-        onOpenChange={(n) => !n && setConfirmacao({ open: false, doc: null, templateKey: null })}
-        cliente={clienteDados}
-        documentoNome={confirmacao.doc?.nome_documento ?? null}
-        gerando={baixandoTemplate || carregandoCliente}
-        onConfirmGenerate={confirmarEGerar}
-        onEditCadastro={() => setEditarCadastroAberto(true)}
+      <DocumentDataOnboardingWizard
+        open={wizard.open}
+        onClose={fecharWizard}
+        processoId={carga?.processo.id ?? null}
+        clienteId={carga?.processo.cliente_id ?? null}
+        templateKey={wizard.templateKey}
+        documentoNome={wizard.doc?.nome_documento ?? null}
+        onGenerated={handleWizardGenerated}
+        onUpdated={async () => {
+          await recarregarClienteDados();
+          onUpdated?.();
+        }}
       />
 
       {clienteDados && (
