@@ -623,9 +623,13 @@ function DocumentoView({
     data_emissao: (doc as any).data_emissao ?? null,
     data_validade_efetiva: (doc as any).data_validade_efetiva ?? null,
     data_validade: (doc as any).data_validade ?? null,
+    ano_competencia: (doc as any).ano_competencia ?? null,
+    regra_validacao: (doc as any).regra_validacao ?? null,
   });
   const validadeTone =
-    validade.status === "vencido"
+    validade.semVencimento
+      ? "border-slate-200 bg-slate-50 text-slate-600"
+      : validade.status === "vencido"
       ? "border-red-200 bg-red-50 text-red-800"
       : validade.status === "vence_em_breve"
         ? "border-amber-200 bg-amber-50 text-amber-800"
@@ -640,7 +644,9 @@ function DocumentoView({
       {!!doc.arquivo_storage_key && validade.label && (
         <div className={`mt-3 inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${validadeTone}`}>
           <CalendarClock className="h-3.5 w-3.5" />
-          {validade.status === "vencido"
+          {validade.semVencimento
+            ? validade.label
+            : validade.status === "vencido"
             ? `Vencido em ${validade.label}`
             : validade.status === "vence_em_breve"
               ? `Vence em ${validade.label} (${validade.dias} dia${validade.dias === 1 ? "" : "s"})`
