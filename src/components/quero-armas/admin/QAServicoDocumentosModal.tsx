@@ -662,6 +662,7 @@ interface CardProps {
   uploadingId: string | null;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  templates: string[];
   onPatch: (p: Patch) => void;
   onSave: () => void;
   onDuplicate: () => void;
