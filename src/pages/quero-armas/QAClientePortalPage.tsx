@@ -25,6 +25,7 @@ import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import ChecklistGuiado from "@/components/quero-armas/portal/ChecklistGuiado";
 import ChecklistGuiadoBotao from "@/components/quero-armas/portal/ChecklistGuiadoBotao";
+import { PortalFilterProvider } from "@/components/quero-armas/portal/PortalFilterContext";
 import { Crosshair as CrosshairIcon, LayoutDashboard, Upload } from "lucide-react";
 import { ForcePasswordChangeModal } from "@/components/quero-armas/clientes/ForcePasswordChangeModal";
 import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAuthUser";
@@ -149,7 +150,18 @@ export default function QAClientePortalPage() {
   const [showArmaManual, setShowArmaManual] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
-  const [activeSection, setActiveSection] = useState<"resumo" | "contratacoes" | "documentos" | "arsenal" | "mensagens" | "financeiro" | "configuracoes">("resumo");
+  const [activeSection, setActiveSection] = useState<
+    | "resumo"
+    | "pendencias"
+    | "processos"
+    | "financeiro"
+    | "documentos"
+    | "contratos"
+    | "contratacoes"
+    | "arsenal"
+    | "mensagens"
+    | "configuracoes"
+  >("resumo");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
