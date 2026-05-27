@@ -52,12 +52,16 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
     (async () => {
       try {
         const pendentes = await contarPendentesClienteGuia(clienteId);
+        // eslint-disable-next-line no-console
+        console.info("[ChecklistGuiado] auto-open check", { clienteId, pendentes });
         if (cancel) return;
         if (pendentes > 0 && !autoOpenedRef.current) {
           autoOpenedRef.current = true;
           setOpen(true);
         }
-      } catch {
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn("[ChecklistGuiado] auto-open error", e);
         /* silencioso — feature opcional, nunca derruba o portal */
       }
     })();
