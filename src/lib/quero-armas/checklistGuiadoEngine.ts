@@ -211,6 +211,7 @@ export interface CargaProcesso {
   docs: GuiaDoc[];
   respostas: Record<string, string>;
   etapaLiberada: number;
+  clienteNome?: string | null;
 }
 
 export async function carregarProcessoGuia(processoId: string): Promise<CargaProcesso> {
@@ -234,7 +235,18 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const processo = p as unknown as GuiaProcesso;
   const respostas = (processo.respostas_questionario_json ?? {}) as Record<string, string>;
   const etapaLiberada = Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
-  return { processo, docs: (dList ?? []) as GuiaDoc[], respostas, etapaLiberada };
+  const { data: cli } = await supabase
+    .from("qa_clientes")
+    .select("nome_completo")
+    .eq("id", processo.cliente_id)
+    .maybeSingle();
+  return {
+    processo,
+    docs: (dList ?? []) as GuiaDoc[],
+    respostas,
+    etapaLiberada,
+    clienteNome: (cli as any)?.nome_completo ?? null,
+  };
 }
 
 // Conjunto obrigatório visível no checklist do processo.
