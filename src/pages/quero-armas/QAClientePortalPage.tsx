@@ -402,11 +402,20 @@ export default function QAClientePortalPage() {
           const procIds = procsList.map((p) => p.id);
           const { data: procDocsData } = await supabase
             .from("qa_processo_documentos" as any)
-            .select("id, processo_id, status, obrigatorio, tipo_documento, etapa, ordem")
+            .select("id, processo_id, status, obrigatorio, tipo_documento, nome_documento, etapa, ordem, data_emissao, data_validade_efetiva, data_validade, updated_at")
             .in("processo_id", procIds);
           setProcessoDocs((procDocsData as any[]) ?? []);
+          // Eventos da linha do tempo (envios, aprovações, reprovações, etc).
+          const { data: eventosData } = await supabase
+            .from("qa_processo_eventos" as any)
+            .select("id, processo_id, tipo_evento, descricao, ator, created_at, documento_id")
+            .in("processo_id", procIds)
+            .order("created_at", { ascending: false })
+            .limit(200);
+          setProcessoEventos((eventosData as any[]) ?? []);
         } else {
           setProcessoDocs([]);
+          setProcessoEventos([]);
         }
 
       } catch (e: any) {
