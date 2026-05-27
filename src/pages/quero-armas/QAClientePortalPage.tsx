@@ -1751,6 +1751,9 @@ export default function QAClientePortalPage() {
                       </div>
                       <div className="flex-1 pl-4">
                         <div className="text-[11px] font-medium text-slate-700">{ev.label}</div>
+                        {ev.sub && (
+                          <div className="mt-0.5 text-[10px] text-slate-500">{ev.sub}</div>
+                        )}
                         <div className="text-[10px] text-slate-400 mt-0.5">{formatDate(ev.date)}</div>
                       </div>
                     </div>
