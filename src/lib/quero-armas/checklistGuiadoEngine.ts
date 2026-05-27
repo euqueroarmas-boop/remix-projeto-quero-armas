@@ -171,6 +171,38 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
   return "documento";
 }
 
+// ---------------------------------------------------------------------------
+// Resolve o template_key do modelo preenchível para um documento (quando
+// a regra_validacao define template_key ou template_quando). Espelho da
+// função pickTemplate do ProcessoDetalheDrawer — sem alterar dados nem RLS.
+// ---------------------------------------------------------------------------
+export function pickTemplateGuia(
+  doc: Pick<GuiaDoc, "regra_validacao">,
+  respostas: Record<string, string>,
+): { key: string; label: string } | null {
+  const rule: any = doc?.regra_validacao;
+  if (!rule || typeof rule !== "object") return null;
+  const match = (cond: Record<string, string> | undefined | null) => {
+    if (!cond || typeof cond !== "object") return true;
+    return Object.entries(cond).every(([k, v]) => respostas[k] === v);
+  };
+  if (Array.isArray(rule.template_quando)) {
+    for (const opt of rule.template_quando) {
+      if (match(opt?.se)) {
+        return {
+          key: String(opt.template_key),
+          label: String(opt.label || "Baixar declaração preenchida"),
+        };
+      }
+    }
+    return null;
+  }
+  if (typeof rule.template_key === "string") {
+    return { key: rule.template_key, label: "Baixar declaração preenchida" };
+  }
+  return null;
+}
+
 // Prioridade DENTRO da Etapa 1 (Comprovação de endereço):
 // 0 = documento de identidade (CIN/RG/CNH) — sempre PRIMEIRO
 // 1 = comprovante de endereço (todos os anos)
@@ -211,6 +243,7 @@ export interface CargaProcesso {
   docs: GuiaDoc[];
   respostas: Record<string, string>;
   etapaLiberada: number;
+  clienteNome?: string | null;
 }
 
 export async function carregarProcessoGuia(processoId: string): Promise<CargaProcesso> {
@@ -234,7 +267,18 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const processo = p as unknown as GuiaProcesso;
   const respostas = (processo.respostas_questionario_json ?? {}) as Record<string, string>;
   const etapaLiberada = Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
-  return { processo, docs: (dList ?? []) as GuiaDoc[], respostas, etapaLiberada };
+  const { data: cli } = await supabase
+    .from("qa_clientes")
+    .select("nome_completo")
+    .eq("id", processo.cliente_id)
+    .maybeSingle();
+  return {
+    processo,
+    docs: (dList ?? []) as GuiaDoc[],
+    respostas,
+    etapaLiberada,
+    clienteNome: (cli as any)?.nome_completo ?? null,
+  };
 }
 
 // Conjunto obrigatório visível no checklist do processo.

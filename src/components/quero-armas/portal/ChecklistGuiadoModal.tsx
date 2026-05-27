@@ -20,6 +20,7 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
+  Download,
   ExternalLink,
   FileDown,
   FileText,
@@ -36,7 +37,6 @@ import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import {
   CargaProcesso,
   CONDICAO_OPCOES_GUIA,
-  ETAPA_NOMES_GUIA,
   GuiaDoc,
   ProcessoElegivel,
   aguardarValidacaoIAGuia,
@@ -44,12 +44,15 @@ import {
   construirFilaGuia,
   definirCondicaoGuia,
   enviarDocumentoGuia,
-  etapaDoTipoGuia,
   listarProcessosElegiveisGuia,
+  pickTemplateGuia,
   progressoGuia,
   responderPerguntaGuia,
   tipoItemGuia,
 } from "@/lib/quero-armas/checklistGuiadoEngine";
+import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const MARROM = "#7A1F2B";
 
@@ -269,7 +272,53 @@ export default function ChecklistGuiadoModal({
     return orient && typeof orient === "string" && orient.trim().length > 0 ? orient : null;
   };
 
-  const etapaDoAtivo = docAtivo ? etapaDoTipoGuia(docAtivo.tipo_documento) : 1;
+  const grupoAtivo = docAtivo ? getDocumentStepGroup(docAtivo) : null;
+
+  const [baixandoTemplate, setBaixandoTemplate] = useState(false);
+
+  const handleBaixarTemplate = async (doc: GuiaDoc, templateKey: string) => {
+    if (!carga) return;
+    setBaixandoTemplate(true);
+    setErroAcao(null);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      const base = import.meta.env.VITE_SUPABASE_URL as string;
+      if (!token) throw new Error("Sessão expirada. Entre novamente.");
+
+      const resp = await fetch(`${base}/functions/v1/qa-fill-template-cliente`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ template_key: templateKey, processo_id: carga.processo.id }),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Falha ao gerar declaração");
+      }
+      const blob = await resp.blob();
+      if (!blob || blob.size < 200) {
+        throw new Error("Declaração gerada veio vazia. Tente novamente em alguns instantes.");
+      }
+      const baseNome = slugifyParaArquivo(doc.nome_documento || templateKey);
+      const sufixoCliente = slugifyParaArquivo(carga.clienteNome || "cliente");
+      const fileName = `${baseNome || "declaracao"}-${sufixoCliente || "cliente"}.docx`;
+      const a = document.createElement("a");
+      const objUrl = URL.createObjectURL(blob);
+      a.href = objUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objUrl);
+      toast.success("Declaração gerada. Confira o arquivo baixado.");
+    } catch (e: any) {
+      const msg = e?.message ?? "Erro ao gerar declaração";
+      setErroAcao(msg);
+      toast.error(msg);
+    } finally {
+      setBaixandoTemplate(false);
+    }
+  };
 
   return (
     <>
@@ -365,7 +414,9 @@ export default function ChecklistGuiadoModal({
             {fase === "item" && docAtivo && carga && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">Etapa {etapaDoAtivo}/5 · {ETAPA_NOMES_GUIA[etapaDoAtivo]}</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">
+                    Etapa {grupoAtivo?.stepOrder ?? 1}/{grupoAtivo?.stepTotal ?? 5} · {grupoAtivo?.stepLabel ?? "Documentação"}
+                  </span>
                 </div>
 
                 {/* PERGUNTA */}
@@ -406,6 +457,9 @@ export default function ChecklistGuiadoModal({
                   <DocumentoView
                     doc={docAtivo}
                     orientacoesIA={orientacoesIA(docAtivo)}
+                    template={pickTemplateGuia(docAtivo, carga.respostas)}
+                    baixandoTemplate={baixandoTemplate}
+                    onBaixarTemplate={(key) => handleBaixarTemplate(docAtivo, key)}
                     onEnviar={handleEscolherArquivo}
                     onVer={() =>
                       docAtivo.arquivo_storage_key &&
@@ -606,11 +660,17 @@ function PerguntaView({
 function DocumentoView({
   doc,
   orientacoesIA,
+  template,
+  baixandoTemplate,
+  onBaixarTemplate,
   onEnviar,
   onVer,
 }: {
   doc: GuiaDoc;
   orientacoesIA: string | null;
+  template: { key: string; label: string } | null;
+  baixandoTemplate: boolean;
+  onBaixarTemplate: (templateKey: string) => void;
   onEnviar: () => void;
   onVer: () => void;
 }) {
@@ -710,6 +770,42 @@ function DocumentoView({
         <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 p-2.5 text-[12px] text-amber-900">
           <div className="mb-1 inline-flex items-center gap-1.5 font-bold uppercase tracking-wider"><Info className="h-3.5 w-3.5" /> O que corrigir</div>
           <p className="whitespace-pre-line leading-relaxed">{orientacoesIA}</p>
+        </div>
+      )}
+
+      {/* Modelo preenchível — declaração gerada com os dados do cliente */}
+      {template && (
+        <div className="mt-4 rounded-2xl border border-[#E5C2C6] bg-[#FBF3F4]/70 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: MARROM }}>
+              <FileText className="h-4.5 w-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MARROM }}>
+                Modelo preenchido
+              </div>
+              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-700">
+                Baixe a declaração já preenchida com seus dados, assine no Gov.br e anexe o PDF assinado aqui.
+              </p>
+              <button
+                type="button"
+                onClick={() => onBaixarTemplate(template.key)}
+                disabled={baixandoTemplate}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-white shadow-sm transition disabled:opacity-60"
+                style={{ background: MARROM }}
+              >
+                {baixandoTemplate ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Gerando declaração...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" /> Baixar declaração preenchida
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
