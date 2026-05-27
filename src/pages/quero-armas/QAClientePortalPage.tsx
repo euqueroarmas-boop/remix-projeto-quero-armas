@@ -844,7 +844,7 @@ export default function QAClientePortalPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-dvh flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-700 rounded-full animate-spin" />
       </div>
     );
@@ -852,7 +852,7 @@ export default function QAClientePortalPage() {
 
   if (!cliente) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
+      <div className="min-h-dvh flex items-center justify-center px-4 bg-slate-50">
         <div className="text-center max-w-sm">
           <Shield className="h-12 w-12 text-slate-400 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-slate-900">Perfil não vinculado</h2>
