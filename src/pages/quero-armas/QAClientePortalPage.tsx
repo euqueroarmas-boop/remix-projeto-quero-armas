@@ -1390,35 +1390,182 @@ export default function QAClientePortalPage() {
         )}
 
         {(activeSection === "contratacoes" || activeSection === "processos") && (
-          <SectionCard icon={BriefcaseBusiness} title="Contratações" color="hsl(352 60% 30%)">
-            <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
-            {cliente?.id ? (
-              <div className="mb-4 rounded-2xl border border-[#7A1F2B]/20 bg-gradient-to-br from-[#7A1F2B]/5 to-white p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-bold text-slate-900">Envie seus documentos com o assistente guiado</div>
-                    <p className="mt-0.5 text-[11px] text-slate-600">Um item por vez, com validação automática por IA. Igual à abertura de conta de um banco.</p>
+          <div className="space-y-4">
+            <SectionCard icon={BriefcaseBusiness} title="Meus processos" color="hsl(352 60% 30%)">
+              <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
+              {cliente?.id ? (
+                <div className="mb-4 rounded-2xl border border-[#7A1F2B]/20 bg-gradient-to-br from-[#7A1F2B]/5 to-white p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="text-[13px] font-bold text-slate-900">Envie seus documentos com o assistente guiado</div>
+                      <p className="mt-0.5 text-[11px] text-slate-600">Um item por vez, com validação automática por IA. Igual à abertura de conta de um banco.</p>
+                    </div>
+                    <ChecklistGuiadoBotao />
                   </div>
-                  <ChecklistGuiadoBotao />
                 </div>
-              </div>
-            ) : null}
-            {cliente?.id ? (
-              <div className="mb-4">
-                <ContratoBlock clienteId={cliente.id} />
-              </div>
-            ) : null}
-            {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
-          </SectionCard>
+              ) : null}
+              {cliente?.id ? (
+                <div className="mb-4">
+                  <ContratoBlock clienteId={cliente.id} />
+                </div>
+              ) : null}
+              {cliente?.id ? <ClienteProcessosSection clienteId={cliente.id} /> : null}
+            </SectionCard>
+
+            {timeline.length > 0 && (
+              <SectionCard icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)">
+                <div className="relative pl-6">
+                  <div className="absolute left-2.5 top-1 bottom-1 w-px bg-slate-200" />
+                  <div className="space-y-3">
+                    {timeline.map((ev, i) => {
+                      const Icon = ev.icon;
+                      return (
+                        <div key={i} className="relative flex items-start gap-3">
+                          <div className="absolute -left-3.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-10" style={{ background: `${ev.color}18` }}>
+                            <Icon className="h-2.5 w-2.5" style={{ color: ev.color }} />
+                          </div>
+                          <div className="flex-1 pl-4">
+                            <div className="text-[11px] font-medium text-slate-700">{ev.label}</div>
+                            {ev.sub && <div className="mt-0.5 text-[10px] text-slate-500">{ev.sub}</div>}
+                            <div className="text-[10px] text-slate-400 mt-0.5">{formatDate(ev.date)}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </SectionCard>
+            )}
+
+            {cliente?.id && (
+              <SectionCard icon={History} title="Histórico de Atualizações" color="hsl(220 65% 48%)">
+                <HistoricoAtualizacoes clienteId={cliente.id} showSnapshot={false} />
+              </SectionCard>
+            )}
+          </div>
         )}
 
         {activeSection === "documentos" && analysis && (
-          <SectionCard icon={FileText} title="Documentos" color="hsl(262 60% 55%)">
-            <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
-            {analysis.expDocs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nenhum documento com validade cadastrado.</p> : (
-              <div className="grid gap-2">{analysis.expDocs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
+          <div className="space-y-4">
+            <SectionCard icon={FileText} title="Documentos com validade" color="hsl(262 60% 55%)">
+              <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
+              {analysis.expDocs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Nenhum documento com validade cadastrado.</p> : (
+                <div className="grid gap-2">{analysis.expDocs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
+              )}
+            </SectionCard>
+
+            {(customerId || cliente?.id) && (
+              <SectionCard icon={FolderArchive} title="Meu Hub de Documentos" color="hsl(280 60% 50%)">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
+                    {cliente?.tipo_cliente === "cliente_app" && !customerId
+                      ? "Envie aqui seus documentos de acervo, CR, CRAF, GTE, autorização de compra ou comprovantes para manter tudo organizado."
+                      : "Cadastre seus CR, CRAF/SINARM, GT, GTE e Autorizações de Compra. A IA pode preencher os campos a partir da foto."}
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowAddDoc(true)}
+                    className="h-8 text-[10px] uppercase tracking-wider"
+                    style={{ background: "hsl(280 60% 50%)" }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Adicionar
+                  </Button>
+                </div>
+
+                {meusDocs.length === 0 ? (
+                  <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
+                    <FolderArchive className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-[11px] text-slate-400">
+                      {cliente?.tipo_cliente === "cliente_app"
+                        ? "Você ainda não enviou documentos do acervo."
+                        : "Nenhum documento cadastrado ainda."}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1">Use o botão acima para começar.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {meusDocs.map((d: any) => {
+                      const dias = daysUntil(d.data_validade);
+                      const cat = (d.tipo_documento || "outro").toUpperCase();
+                      return (
+                        <div key={d.id} className={`p-3 rounded-xl border ${urgencyBg(dias)}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-slate-600">{cat}</span>
+                                {d.status === "aprovado" && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
+                                    <BadgeCheck className="h-2.5 w-2.5" /> APROVADO
+                                  </span>
+                                )}
+                                {d.status === "pendente_aprovacao" && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#F1D9DC] text-[#4F121C] inline-flex items-center gap-0.5">
+                                    AGUARDANDO ANÁLISE
+                                  </span>
+                                )}
+                                {d.status === "reprovado" && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 inline-flex items-center gap-0.5">
+                                    REPROVADO
+                                  </span>
+                                )}
+                                {d.ia_status === "sugerido" && d.status !== "aprovado" && (
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#FBF3F4] text-[#7A1F2B] inline-flex items-center gap-0.5">
+                                    <Sparkles className="h-2.5 w-2.5" /> IA
+                                  </span>
+                                )}
+                                {d.arquivo_storage_path && (
+                                  <span className="text-[9px] text-slate-500 inline-flex items-center gap-0.5">
+                                    <Paperclip className="h-2.5 w-2.5" /> anexo
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[12px] font-semibold text-slate-800 mt-1">
+                                {d.numero_documento || "Sem número"}
+                                {d.arma_modelo && (
+                                  <span className="font-normal text-slate-500"> · {d.arma_marca} {d.arma_modelo}{d.arma_calibre ? ` (${d.arma_calibre})` : ""}</span>
+                                )}
+                              </div>
+                              {d.orgao_emissor && (
+                                <div className="text-[10px] text-slate-500 mt-0.5">{d.orgao_emissor}</div>
+                              )}
+                              {d.status === "reprovado" && d.motivo_reprovacao && (
+                                <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-700">
+                                  <span className="font-bold uppercase">Motivo da reprovação:</span> {d.motivo_reprovacao}
+                                  <div className="mt-1 text-[9px] text-red-600">Reenvie o documento corrigido pelo botão Adicionar.</div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="text-[10px] text-slate-500 font-mono">{formatDate(d.data_validade)}</div>
+                              <div className={`text-[9px] font-bold ${urgencyColor(dias)}`}>{urgencyLabel(dias)}</div>
+                            </div>
+                          </div>
+                          <div className="flex justify-end mt-2">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!confirm("Remover este documento?")) return;
+                                const { error } = await supabase
+                                  .from("qa_documentos_cliente" as any)
+                                  .delete()
+                                  .eq("id", d.id);
+                                if (error) { toast.error("Erro ao remover."); return; }
+                                toast.success("Documento removido.");
+                                setDocsReloadKey((k) => k + 1);
+                              }}
+                              className="text-[10px] text-slate-400 hover:text-red-500 inline-flex items-center gap-1"
+                            >
+                              <Trash2 className="h-3 w-3" /> remover
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </SectionCard>
             )}
-          </SectionCard>
+          </div>
         )}
 
         {activeSection === "mensagens" && (
