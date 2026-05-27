@@ -2002,7 +2002,9 @@ export default function QAClientePortalPage() {
             {cliente?.id ? (
               <>
                 <ContratoBlock clienteId={cliente.id} />
-                <div className="mt-4"><ContratosPosPagamentoCard clienteId={cliente.id} /></div>
+                {(cliente as any)?.id_legado != null && (
+                  <div className="mt-4"><ContratosPosPagamentoCard clienteIdLegado={(cliente as any).id_legado} /></div>
+                )}
               </>
             ) : (
               <p className="py-8 text-center text-sm text-slate-500">Nenhum contrato disponível.</p>
