@@ -787,6 +787,18 @@ export default function ChecklistGuiadoModal({
           }}
         />
       )}
+
+      <SugestaoCadastroFromDocModal
+        open={sugestao.open}
+        onOpenChange={(n) => !n && setSugestao({ open: false, dados: null, nomeDoc: null })}
+        cliente={clienteDados}
+        dadosExtraidos={sugestao.dados}
+        nomeDoc={sugestao.nomeDoc}
+        onApplied={async () => {
+          await recarregarClienteDados();
+          onUpdated?.();
+        }}
+      />
     </>
   );
 }
