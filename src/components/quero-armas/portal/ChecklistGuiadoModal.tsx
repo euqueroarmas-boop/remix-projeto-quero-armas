@@ -414,7 +414,9 @@ export default function ChecklistGuiadoModal({
             {fase === "item" && docAtivo && carga && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">Etapa {etapaDoAtivo}/5 · {ETAPA_NOMES_GUIA[etapaDoAtivo]}</span>
+                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">
+                    Etapa {grupoAtivo?.stepOrder ?? 1}/{grupoAtivo?.stepTotal ?? 5} · {grupoAtivo?.stepLabel ?? "Documentação"}
+                  </span>
                 </div>
 
                 {/* PERGUNTA */}
