@@ -682,6 +682,7 @@ function ExigenciaCard({
   uploadingId,
   canMoveUp,
   canMoveDown,
+  templates,
   onPatch,
   onSave,
   onDuplicate,
