@@ -1128,6 +1128,127 @@ function Field({ label, children, colSpan = 12 }: { label: string; children: Rea
   );
 }
 
+/* -------------------- SortableExigenciaItem (DnD + colapso) -------------------- */
+
+interface SortableProps extends CardProps {
+  expanded: boolean;
+  onToggleExpand: () => void;
+}
+
+function SortableExigenciaItem(props: SortableProps) {
+  const { row, expanded, dirty, saving, canMoveUp, canMoveDown, onToggleExpand, onPatch, onMoveUp, onMoveDown, onDelete } = props;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 20 : "auto",
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-xl border bg-white transition ${
+        dirty ? "border-[#7A1F2B]/40 shadow-[0_0_0_3px_rgba(122,31,43,0.06)]" : "border-slate-200"
+      }`}
+    >
+      {/* CABEÇALHO COMPACTO — sempre visível */}
+      <div className="flex items-center gap-2 px-2.5 py-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Arrastar para reordenar"
+          title="Arraste para reordenar"
+          className="h-7 w-6 inline-flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+          title={expanded ? "Recolher" : "Expandir"}
+          aria-expanded={expanded}
+        >
+          {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+
+        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+          <div className="text-[12.5px] font-bold uppercase tracking-tight text-slate-900 truncate" title={row.nome_documento}>
+            {row.nome_documento || "—"}
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+            {row.etapa || "base"}
+          </span>
+          <span className="text-[10px] font-mono lowercase text-slate-500 truncate max-w-[200px]" title={row.tipo_documento}>
+            {row.tipo_documento}
+          </span>
+          {row.obrigatorio ? (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
+          ) : (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">OPC</span>
+          )}
+          {!row.ativo && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">INATIVO</span>
+          )}
+          {dirty && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">• NÃO SALVO</span>
+          )}
+        </div>
+
+        {/* ordem editável inline */}
+        <div className="flex items-center gap-1">
+          <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">ORD</label>
+          <input
+            type="number"
+            value={row.ordem ?? 0}
+            onChange={(e) => onPatch({ ordem: Number(e.target.value) || 0 })}
+            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[11px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
+            title="Ordem — edite e clique fora para salvar via SALVAR"
+          />
+        </div>
+
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            title="Subir"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            title="Descer"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Excluir"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* CORPO COMPLETO — só quando expandido */}
+      {expanded && (
+        <div className="border-t border-slate-100 px-2 pb-2 pt-1">
+          <ExigenciaCard {...props} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 const inputCls =
   "h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15";
 const textareaCls =
