@@ -712,6 +712,19 @@ function ExigenciaCard({
     [anosTxt],
   );
 
+  const mostraSeletorTemplate = /^(declaracao_|dsa_|compromisso_)/i.test(row.tipo_documento || "");
+  const currentTemplateKey = (row.regra_validacao as any)?.template_key ?? "";
+
+  function setRegraTemplateKey(value: string) {
+    const rv = row.regra_validacao && typeof row.regra_validacao === "object" ? { ...row.regra_validacao } : {};
+    if (value) {
+      rv.template_key = value;
+    } else {
+      delete (rv as any).template_key;
+    }
+    onPatch({ regra_validacao: rv });
+  }
+
   return (
     <div className="p-2">
       <div className="flex items-start gap-2 mb-2">
