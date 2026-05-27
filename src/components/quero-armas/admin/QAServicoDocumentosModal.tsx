@@ -158,6 +158,24 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [reordenando, setReordenando] = useState(false);
+  const [templates, setTemplates] = useState<string[]>([]);
+
+  /* carrega lista de templates .docx disponíveis */
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.storage
+        .from("qa-templates")
+        .list("declaracoes", { limit: 1000, sortBy: { column: "name", order: "asc" } });
+      if (cancelled) return;
+      const keys = (data ?? [])
+        .filter((o: any) => o.name?.toLowerCase().endsWith(".docx") && !o.name.startsWith("."))
+        .map((o: any) => o.name.replace(/\.docx$/i, ""));
+      setTemplates(keys);
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
 
   const load = useCallback(async () => {
     if (!servicoId) return;
@@ -590,6 +608,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                         uploadingId={uploadingId}
                         canMoveUp={idx > 0}
                         canMoveDown={idx < merged.length - 1}
+                        templates={templates}
                         onToggleExpand={() => toggleExpand(row.id)}
                         onPatch={(p) => patch(row.id, p)}
                         onSave={() => void saveRow(row)}
@@ -643,6 +662,7 @@ interface CardProps {
   uploadingId: string | null;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  templates: string[];
   onPatch: (p: Patch) => void;
   onSave: () => void;
   onDuplicate: () => void;
@@ -662,6 +682,7 @@ function ExigenciaCard({
   uploadingId,
   canMoveUp,
   canMoveDown,
+  templates,
   onPatch,
   onSave,
   onDuplicate,
@@ -690,6 +711,19 @@ function ExigenciaCard({
       ).sort((a, b) => b - a),
     [anosTxt],
   );
+
+  const mostraSeletorTemplate = /^(declaracao_|dsa_|compromisso_)/i.test(row.tipo_documento || "");
+  const currentTemplateKey = (row.regra_validacao as any)?.template_key ?? "";
+
+  function setRegraTemplateKey(value: string) {
+    const rv = row.regra_validacao && typeof row.regra_validacao === "object" ? { ...row.regra_validacao } : {};
+    if (value) {
+      rv.template_key = value;
+    } else {
+      delete (rv as any).template_key;
+    }
+    onPatch({ regra_validacao: rv });
+  }
 
   return (
     <div className="p-2">
@@ -840,6 +874,39 @@ function ExigenciaCard({
               placeholder='{ "exemplo": true }'
             />
           </Field>
+
+          {/* Seletor de template preenchível (.docx) */}
+          {mostraSeletorTemplate && (
+            <div className="col-span-12">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                TEMPLATE PREENCHÍVEL (.DOCX)
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={currentTemplateKey}
+                  onChange={(e) => setRegraTemplateKey(e.target.value)}
+                  className={inputCls + " flex-1 normal-case"}
+                  style={{ textTransform: "none" }}
+                >
+                  <option value="">— NENHUM —</option>
+                  {templates.map((k) => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
+                <a
+                  href="/modelos-declaracao"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 shrink-0"
+                >
+                  GERENCIAR
+                </a>
+              </div>
+              <p className="mt-1 text-[10px] text-slate-500 normal-case">
+                Quando definido, o cliente vê o botão "BAIXAR DECLARAÇÃO PREENCHIDA" no assistente guiado, gerado com os dados dele a partir do template.
+              </p>
+            </div>
+          )}
 
           {/* Anexos do template */}
           <div className="col-span-12 grid grid-cols-2 gap-2">
