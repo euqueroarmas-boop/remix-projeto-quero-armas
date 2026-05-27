@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { AlertCircle, CheckCircle2, FileSignature, Loader2, Lock, Pencil, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSignature, Loader2, Lock, Pencil, ShieldAlert, X } from "lucide-react";
 import {
   buildTemplatePreviewData,
   TEMPLATE_PREVIEW_GROUP_LABEL,
@@ -26,6 +26,11 @@ interface Props {
   onEditCadastro: () => void;
   /** quando true, o botão de confirmar fica em loading */
   gerando?: boolean;
+  /**
+   * Se true, pula a validação de obrigatórios (admin gerando manualmente).
+   * No portal do cliente, mantenha FALSE para bloquear total quando faltar dado.
+   */
+  permitirGerarComPendencias?: boolean;
 }
 
 export default function TemplateDataConfirmationModal({
@@ -36,9 +41,12 @@ export default function TemplateDataConfirmationModal({
   onConfirmGenerate,
   onEditCadastro,
   gerando = false,
+  permitirGerarComPendencias = false,
 }: Props) {
   const campos = buildTemplatePreviewData(cliente);
   const faltando = campos.filter((c) => !c.value);
+  const faltandoObrigatorios = campos.filter((c) => c.required && !c.value);
+  const bloqueado = !permitirGerarComPendencias && faltandoObrigatorios.length > 0;
   const grupos = (["identificacao", "civil", "endereco", "contato"] as const).map((g) => ({
     id: g,
     label: TEMPLATE_PREVIEW_GROUP_LABEL[g],
@@ -88,7 +96,22 @@ export default function TemplateDataConfirmationModal({
 
         {/* Corpo */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {faltando.length > 0 && (
+          {bloqueado && (
+            <div className="mb-3 flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 px-3 py-2.5 text-[12px] text-red-800">
+              <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <strong className="font-bold uppercase tracking-wide">
+                  Faltam {faltandoObrigatorios.length} dado(s) obrigatório(s).
+                </strong>{" "}
+                Não conseguimos gerar este documento até você completar:{" "}
+                <span className="font-semibold">
+                  {faltandoObrigatorios.map((f) => f.label).join(", ")}
+                </span>
+                . Clique em <span className="font-bold">Corrigir dados</span> para preencher agora.
+              </div>
+            </div>
+          )}
+          {!bloqueado && faltando.length > 0 && (
             <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
@@ -132,13 +155,18 @@ export default function TemplateDataConfirmationModal({
           <button
             type="button"
             onClick={onConfirmGenerate}
-            disabled={gerando}
+            disabled={gerando || bloqueado}
+            title={bloqueado ? "Complete os campos obrigatórios antes de gerar" : undefined}
             className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-bold text-white shadow-sm hover:opacity-95 disabled:opacity-60"
             style={{ background: MARROM }}
           >
             {gerando ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Gerando...
+              </>
+            ) : bloqueado ? (
+              <>
+                <ShieldAlert className="h-4 w-4" /> Complete os obrigatórios
               </>
             ) : (
               <>
