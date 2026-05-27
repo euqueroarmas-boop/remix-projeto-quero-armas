@@ -6,6 +6,8 @@ import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, 
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
+import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 
 interface DocRow {
   id: string;
@@ -740,6 +742,39 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const [respondendoPerguntaId, setRespondendoPerguntaId] = useState<string | null>(null);
   const [baixandoTemplateId, setBaixandoTemplateId] = useState<string | null>(null);
+
+  // ----- Conferência obrigatória antes de gerar o .docx -----
+  const [confirmacaoTpl, setConfirmacaoTpl] = useState<
+    { open: boolean; doc: DocRow | null; templateKey: string | null }
+  >({ open: false, doc: null, templateKey: null });
+  const [clienteCompleto, setClienteCompleto] = useState<any | null>(null);
+  const [carregandoCliente, setCarregandoCliente] = useState(false);
+  const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
+
+  const recarregarClienteCompleto = useCallback(async () => {
+    if (!processo) return null;
+    setCarregandoCliente(true);
+    try {
+      const { data, error } = await supabase
+        .from("qa_clientes")
+        .select("*")
+        .eq("id", processo.cliente_id)
+        .maybeSingle();
+      if (error) throw error;
+      setClienteCompleto(data ?? null);
+      return data ?? null;
+    } catch {
+      toast.error("Não foi possível carregar os dados do cliente para conferência.");
+      return null;
+    } finally {
+      setCarregandoCliente(false);
+    }
+  }, [processo]);
+
+  const abrirConfirmacaoTemplate = async (doc: DocRow, templateKey: string) => {
+    await recarregarClienteCompleto();
+    setConfirmacaoTpl({ open: true, doc, templateKey });
+  };
 
   const responderPergunta = async (doc: DocRow, valor: string) => {
     if (!processo) return;
