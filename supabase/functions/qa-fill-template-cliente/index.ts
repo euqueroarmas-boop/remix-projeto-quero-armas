@@ -9,6 +9,12 @@
 // ============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import JSZip from "https://esm.sh/jszip@3.10.1";
+import {
+  auditTemplate,
+  buildReplacementsMap,
+  extractPlaceholderTokens,
+  findPlaceholder,
+} from "../_shared/qaPlaceholders.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,57 +30,25 @@ const MESES = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-function buildReplacements(cliente: any, extra: Record<string, string> = {}): Record<string, string> {
-  const now = new Date();
-  const endereco1Parts = [
-    cliente.endereco,
-    cliente.numero ? `nº ${cliente.numero}` : "",
-    cliente.complemento || "",
-    cliente.bairro || "",
-    cliente.cidade ? `${cliente.cidade}` : "",
-    cliente.estado || "",
-    cliente.cep ? `CEP: ${cliente.cep}` : "",
-  ].filter(Boolean);
-
-  const endereco2Parts = [
-    cliente.endereco2,
-    cliente.numero2 ? `nº ${cliente.numero2}` : "",
-    cliente.complemento2 || "",
-    cliente.bairro2 || "",
-    cliente.cidade2 ? `${cliente.cidade2}` : "",
-    cliente.estado2 || "",
-    cliente.cep2 ? `CEP: ${cliente.cep2}` : "",
-  ].filter(Boolean);
-
+function buildReplacements(
+  cliente: any,
+  templateData: Record<string, any> | null | undefined,
+  extra: Record<string, string> = {},
+): Record<string, string> {
+  // Catálogo central cobre cliente + processo + sistema.
+  const base = buildReplacementsMap(cliente, templateData ?? {});
+  // Placeholders "3ª pessoa" continuam fora do catálogo (uso pontual em
+  // "Declaração do Responsável pelo Imóvel") e ficam aqui como adendo.
   return {
-    "[NOME COMPLETO]": cliente.nome_completo || "",
-    "[NACIONALIDADE]": cliente.nacionalidade || "brasileiro(a)",
-    "[NATURALIDADE]": cliente.naturalidade || "",
-    "[DATA NASCIMENTO]": cliente.data_nascimento || "",
-    "[PROFISSÃO]": cliente.profissao || "",
-    "[ESTADO CIVIL]": cliente.estado_civil || "",
-    "[CPF]": cliente.cpf || "",
-    "[RG]": cliente.rg || "",
-    "[EMISSOR]": cliente.emissor_rg || "",
-    "[ENDEREÇO 1]": endereco1Parts.join(", "),
-    "[ENDEREÇO 2]": endereco2Parts.join(", "),
-    "[CIDADE]": cliente.cidade || "",
-    "[DIA]": String(now.getDate()).padStart(2, "0"),
-    "[MÊS]": MESES[now.getMonth()],
-    "[ANO]": String(now.getFullYear()),
-    // --- Terceira pessoa: responsável pelo imóvel (template "Declaração do Responsável pelo Imóvel") ---
-    // Colunas reais no schema têm prefixo `responsavel_endereco_*`.
-    "[NOME COMPLETO 3]": cliente.responsavel_endereco_nome ?? "",
-    "[CPF 3]": cliente.responsavel_endereco_cpf ?? "",
-    "[ESTADO CIVIL 3]": cliente.responsavel_endereco_estado_civil ?? "",
-    "[DATA NASCIMENTO 3]": cliente.responsavel_endereco_data_nascimento ?? "",
-    "[NATURALIDADE 3]": cliente.responsavel_endereco_naturalidade ?? "",
-    "[PROFISSÃO 3]": cliente.responsavel_endereco_profissao ?? "",
-    // Período de moradia: usa colunas existentes reside_desde / residiu_ate do responsável.
-    // TODO: se for necessário rastrear datas de entrada/saída do PRÓPRIO cliente,
-    // adicionar colunas dedicadas em qa_clientes em uma rodada futura.
-    "[DATA ENTRADA]": cliente.responsavel_endereco_reside_desde ?? "",
-    "[DATA SAÍDA]": cliente.responsavel_endereco_residiu_ate ?? "",
+    ...base,
+    "[NOME COMPLETO 3]": cliente?.responsavel_endereco_nome ?? "",
+    "[CPF 3]": cliente?.responsavel_endereco_cpf ?? "",
+    "[ESTADO CIVIL 3]": cliente?.responsavel_endereco_estado_civil ?? "",
+    "[DATA NASCIMENTO 3]": cliente?.responsavel_endereco_data_nascimento ?? "",
+    "[NATURALIDADE 3]": cliente?.responsavel_endereco_naturalidade ?? "",
+    "[PROFISSÃO 3]": cliente?.responsavel_endereco_profissao ?? "",
+    "[DATA ENTRADA]": cliente?.responsavel_endereco_reside_desde ?? "",
+    "[DATA SAÍDA]": cliente?.responsavel_endereco_residiu_ate ?? "",
     ...extra,
   };
 }
@@ -155,7 +129,12 @@ Deno.serve(async (req) => {
     const authUserId = userData.user.id;
 
     // 2) Body
-    const { template_key, processo_id } = await req.json();
+    const reqBody = await req.json().catch(() => ({}));
+    const { template_key, processo_id, probe } = reqBody as {
+      template_key?: string;
+      processo_id?: string;
+      probe?: boolean;
+    };
     if (!template_key || !processo_id) {
       return new Response(JSON.stringify({ error: "template_key e processo_id são obrigatórios" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -217,21 +196,88 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 6) Preenche placeholders
-    const replacements = buildReplacements(cliente);
+    // 6) Merge template_data do processo (clube etc.)
+    const { data: processoFull } = await admin
+      .from("qa_processos")
+      .select("respostas_questionario_json")
+      .eq("id", processo_id)
+      .maybeSingle();
+    const respostas = (processoFull as any)?.respostas_questionario_json;
+    const templateData =
+      respostas && typeof respostas === "object" && !Array.isArray(respostas) && respostas.template_data && typeof respostas.template_data === "object"
+        ? respostas.template_data as Record<string, any>
+        : {};
+
+    // 7) Audit: detecta placeholders no XML e checa obrigatórios faltantes
     const zip = await JSZip.loadAsync(await fileData.arrayBuffer());
-    const docXml = await zip.file("word/document.xml")?.async("string");
-    if (!docXml) {
+    const docXmlRaw = await zip.file("word/document.xml")?.async("string");
+    if (!docXmlRaw) {
       return new Response(JSON.stringify({ error: "Template DOCX inválido" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    zip.file("word/document.xml", replaceInXml(docXml, replacements));
+    // Junta XMLs relevantes (doc + header/footer) para auditoria abrangente
+    let auditXml = docXmlRaw;
+    for (const filename of Object.keys(zip.files)) {
+      if ((filename.startsWith("word/header") || filename.startsWith("word/footer")) && filename.endsWith(".xml")) {
+        const c = await zip.file(filename)?.async("string");
+        if (c) auditXml += "\n" + c;
+      }
+    }
+
+    const audit = auditTemplate(auditXml, cliente, templateData);
+
+    // Modo PROBE: não gera arquivo, só devolve o relatório (front decide se abre wizard).
+    if (probe) {
+      return new Response(
+        JSON.stringify({
+          ok: audit.required_missing.length === 0 && audit.unknown.length === 0,
+          missing_placeholders: audit.required_missing,
+          unknown_placeholders: audit.unknown,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Guard: se faltar dado obrigatório, devolve 422 (cliente) — staff é tolerado abaixo.
+    if (!isStaff && audit.required_missing.length > 0) {
+      return new Response(
+        JSON.stringify({
+          error: "Dados obrigatórios ausentes para gerar o documento",
+          missing_placeholders: audit.required_missing,
+          unknown_placeholders: audit.unknown,
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // 8) Preenche placeholders
+    const replacements = buildReplacements(cliente, templateData);
+    zip.file("word/document.xml", replaceInXml(docXmlRaw, replacements));
 
     for (const filename of Object.keys(zip.files)) {
       if ((filename.startsWith("word/header") || filename.startsWith("word/footer")) && filename.endsWith(".xml")) {
         const content = await zip.file(filename)?.async("string");
         if (content) zip.file(filename, replaceInXml(content, replacements));
+      }
+    }
+
+    // 8b) Pós-check: se ainda restar placeholder obrigatório no XML final, aborta.
+    if (!isStaff) {
+      const finalDoc = await zip.file("word/document.xml")?.async("string") ?? "";
+      const remainingTokens = extractPlaceholderTokens(finalDoc);
+      const remainingRequired = remainingTokens
+        .map((t) => ({ token: t, def: findPlaceholder(t) }))
+        .filter((x) => x.def?.required);
+      if (remainingRequired.length > 0) {
+        return new Response(
+          JSON.stringify({
+            error: "Dados obrigatórios ausentes para gerar o documento",
+            missing_placeholders: remainingRequired.map((x) => ({ token: x.def!.placeholder, key: x.def!.key, source: x.def!.source })),
+            unknown_placeholders: [],
+          }),
+          { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       }
     }
 
