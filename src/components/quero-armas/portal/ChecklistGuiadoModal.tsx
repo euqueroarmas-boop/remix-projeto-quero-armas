@@ -16,6 +16,7 @@ import {
   ArrowRight,
   BookOpen,
   Building2,
+  CalendarClock,
   Camera,
   CheckCircle2,
   ChevronRight,
@@ -31,6 +32,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import {
   CargaProcesso,
   CONDICAO_OPCOES_GUIA,
