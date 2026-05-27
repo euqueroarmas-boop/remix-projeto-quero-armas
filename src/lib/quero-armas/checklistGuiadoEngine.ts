@@ -172,7 +172,7 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
 }
 
 // ---------------------------------------------------------------------------
-// Carga + construção da fila (um item por vez, na ordem das etapas liberadas).
+// Carga + construção da fila (um item por vez, na ordem do checklist completo).
 // ---------------------------------------------------------------------------
 export interface CargaProcesso {
   processo: GuiaProcesso;
@@ -205,19 +205,21 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   return { processo, docs: (dList ?? []) as GuiaDoc[], respostas, etapaLiberada };
 }
 
-// Conjunto obrigatório visível dentro das etapas já liberadas (<= etapaLiberada).
+// Conjunto obrigatório visível no checklist do processo.
+// O assistente deve espelhar as exigências explodidas em qa_processo_documentos,
+// sem depender de liberação manual de etapa. As regras condicionais continuam
+// sendo respeitadas para não pedir documento que ainda depende de resposta.
 export function itensObrigatoriosGuia(carga: CargaProcesso): GuiaDoc[] {
-  const { docs, respostas, etapaLiberada } = carga;
+  const { docs, respostas } = carga;
   return docs.filter((d) => {
     if (!itemVisivelGuia(d, respostas)) return false;
-    if (etapaDoTipoGuia(d.tipo_documento) > etapaLiberada) return false;
     // perguntas e o seletor de condição são itens legítimos do checklist
     if (isPerguntaGuia(d) || isCondicaoGuia(d)) return true;
     return d.obrigatorio === true;
   });
 }
 
-// Fila de itens que AINDA exigem ação do cliente, na ordem das etapas.
+// Fila de itens que AINDA exigem ação do cliente, na ordem das etapas do checklist.
 export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
   const { respostas } = carga;
   return itensObrigatoriosGuia(carga)
