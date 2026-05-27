@@ -62,6 +62,19 @@ function buildReplacements(cliente: any, extra: Record<string, string> = {}): Re
     "[DIA]": String(now.getDate()).padStart(2, "0"),
     "[MÊS]": MESES[now.getMonth()],
     "[ANO]": String(now.getFullYear()),
+    // --- Terceira pessoa: responsável pelo imóvel (template "Declaração do Responsável pelo Imóvel") ---
+    // Colunas reais no schema têm prefixo `responsavel_endereco_*`.
+    "[NOME COMPLETO 3]": cliente.responsavel_endereco_nome ?? "",
+    "[CPF 3]": cliente.responsavel_endereco_cpf ?? "",
+    "[ESTADO CIVIL 3]": cliente.responsavel_endereco_estado_civil ?? "",
+    "[DATA NASCIMENTO 3]": cliente.responsavel_endereco_data_nascimento ?? "",
+    "[NATURALIDADE 3]": cliente.responsavel_endereco_naturalidade ?? "",
+    "[PROFISSÃO 3]": cliente.responsavel_endereco_profissao ?? "",
+    // Período de moradia: usa colunas existentes reside_desde / residiu_ate do responsável.
+    // TODO: se for necessário rastrear datas de entrada/saída do PRÓPRIO cliente,
+    // adicionar colunas dedicadas em qa_clientes em uma rodada futura.
+    "[DATA ENTRADA]": cliente.responsavel_endereco_reside_desde ?? "",
+    "[DATA SAÍDA]": cliente.responsavel_endereco_residiu_ate ?? "",
     ...extra,
   };
 }
