@@ -162,6 +162,12 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
     "QSA (Quadro de Sócios e Administradores) emitido pela Receita Federal a partir do Cartão CNPJ. Extraia: razao_social, cnpj (apenas dígitos), data_emissao (YYYY-MM-DD se houver), socios (array {nome, cpf, qualificacao, data_entrada}), administradores (array {nome, cpf, qualificacao}). NÃO exija um campo 'nome_titular' único. Se o cliente cadastrado aparecer no QSA, registre cliente_e_socio=true em campos_complementares.",
   renda_nf_empresa:
     "Nota fiscal recente emitida pela PESSOA JURÍDICA. Extraia: razao_social_emitente, cnpj_emitente (apenas dígitos), razao_social_tomador (se houver), cnpj_tomador (se houver), numero_nota, serie, data_emissao (YYYY-MM-DD), valor_total, municipio_emissao e natureza_operacao/servico. NÃO exija 'nome_titular': nota fiscal de empresa identifica a empresa por razão social/CNPJ/emitente.",
+  // === ALTERAÇÃO DE NOME EM CARTÓRIO ===
+  // Certidão averbada que comprova alteração legal de nome. NUNCA marque
+  // divergência de nome para este tipo: por definição os nomes (anterior e
+  // atual) são diferentes — é exatamente o que estamos comprovando.
+  certidao_alteracao_nome:
+    "Certidão averbada (casamento, nascimento ou outro documento oficial) que comprova ALTERAÇÃO DE NOME em cartório. Extraia obrigatoriamente: nome_anterior (nome completo ANTES da alteração), nome_atual (nome completo APÓS a alteração/averbação), tipo_certidao ('casamento' | 'nascimento' | 'outro'), data_averbacao (YYYY-MM-DD da averbação no cartório, se visível), cartorio_registro (nome/identificação do cartório/serventia), data_emissao (YYYY-MM-DD da emissão da certidão), cpf (do titular, se constar). REGRA CRÍTICA: NÃO marque divergência de nome para este documento — a divergência entre nome_anterior e nome_atual é o conteúdo esperado. Se você identificar com clareza a ligação entre o nome_anterior e o nome_atual (ex.: averbação explícita, casamento com adoção de sobrenome), eleve a confiança; caso contrário, deixe em revisão humana.",
 };
 
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
@@ -169,6 +175,10 @@ function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
     "Documento administrativo. Extraia nome_titular, cpf, datas, números identificadores.";
   const isIdentificacao = ["rg", "cin", "cnh"].includes(tipoDoc);
   const isComprovanteEnd = tipoDoc === "comprovante_residencia";
+  const isAlteracaoNome = tipoDoc === "certidao_alteracao_nome";
+  const nomesAceitos: string[] = Array.isArray(cadastro?.nomes_aceitos_alteracao)
+    ? (cadastro.nomes_aceitos_alteracao as string[]).filter(Boolean)
+    : [];
   return `Você é um auditor RIGOROSO de documentos para Polícia Federal / Exército Brasileiro.
 TAREFA: Valide a imagem/PDF e responda SEMPRE chamando "validar_documento".
 REGRAS CRÍTICAS:
@@ -183,6 +193,8 @@ REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo):
 ${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos somente RG, CIN ou CNH. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).` : ""}
 ${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
 9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
+${isAlteracaoNome ? `8. CERTIDÃO AVERBADA DE ALTERAÇÃO DE NOME: o conteúdo esperado é exatamente uma DIFERENÇA entre nome_anterior e nome_atual. NÃO gere divergência de nome com o cadastro. Foque em extrair nome_anterior, nome_atual, tipo_certidao, data_averbacao e cartorio_registro.` : ""}
+${nomesAceitos.length > 0 && !isAlteracaoNome ? `10. ALTERAÇÃO DE NOME COMPROVADA NESTE PROCESSO: o cliente possui certidão averbada aprovada. Considere como nomes do cliente ACEITOS qualquer um destes: ${JSON.stringify(nomesAceitos)}. Se o nome no documento bater com QUALQUER um deles, NÃO gere divergência de nome — registre apenas em observações que o nome confere com a alteração comprovada. Outros campos (CPF, RG, datas, endereço) continuam comparados normalmente.` : ""}
 Tipo esperado: ${tipoDoc}
 Detalhes: ${docHint}
 Cadastro do cliente:
@@ -195,6 +207,7 @@ ${JSON.stringify({
   cidade: cadastro?.cidade,
   uf: cadastro?.estado ?? cadastro?.uf,
   cep: cadastro?.cep,
+  nomes_aceitos_alteracao_nome: nomesAceitos.length > 0 ? nomesAceitos : undefined,
 }, null, 2)}`;
 }
 
