@@ -1466,7 +1466,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           </span>
                           <button
                             disabled={baixandoTemplateId === doc.id}
-                            onClick={() => baixarTemplatePreenchido(doc, tplEscolhido.key)}
+                            onClick={() => abrirConfirmacaoTemplate(doc, tplEscolhido.key)}
                             className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
                           >
                             <Download className="h-3 w-3" />
