@@ -530,6 +530,36 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                   );
                 })}
               </div>
+              {checklistMatches.length > 0 && (
+                <div className="rounded-xl border border-[#E5C2C6] bg-[#FBF3F4]/50 p-4">
+                  <div className="flex items-start gap-2">
+                    <Sparkles className="mt-0.5 h-4 w-4 shrink-0" style={{ color: MARROM }} />
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[12px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+                        Aproveitar este documento no checklist?
+                      </h4>
+                      <p className="mt-0.5 text-[11px] text-slate-600">
+                        O mesmo arquivo pode ser enviado para os itens pendentes do seu checklist — sem precisar fazer upload novamente.
+                      </p>
+                      <div className="mt-2 space-y-1.5">
+                        {checklistMatches.map((m) => (
+                          <label key={m.doc.id} className="flex items-start gap-2 text-[12px] text-slate-800 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#7A1F2B]"
+                              checked={!!checklistSelecionados[m.doc.id]}
+                              onChange={(e) =>
+                                setChecklistSelecionados((prev) => ({ ...prev, [m.doc.id]: e.target.checked }))
+                              }
+                            />
+                            <span>{m.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex items-center justify-end gap-2">
                 <button type="button" onClick={() => setModo("ia_upload")}
                   className="rounded-xl border border-slate-200 px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-50">
