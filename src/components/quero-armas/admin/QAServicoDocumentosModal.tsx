@@ -514,18 +514,44 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[11px] uppercase tracking-wider text-slate-500">
-              CADA LINHA É UMA EXIGÊNCIA QUE O CLIENTE PRECISA ENVIAR PARA CONTRATAR ESTE SERVIÇO.
+              CADA LINHA É UMA EXIGÊNCIA — A ORDEM AQUI É A ORDEM QUE O CLIENTE VÊ NO ASSISTENTE.
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                title="Recolher todos"
+              >
+                <ChevronsDownUp className="h-3.5 w-3.5" /> RECOLHER
+              </button>
+              <button
+                type="button"
+                onClick={expandAll}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                title="Expandir todos"
+              >
+                <ChevronsUpDown className="h-3.5 w-3.5" /> EXPANDIR
+              </button>
+              <button
+                type="button"
+                onClick={() => void ordenarAutomaticamente()}
+                disabled={reordenando || merged.length === 0}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                title="Normalizar ordem em 10, 20, 30…"
+              >
+                {reordenando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ListOrdered className="h-3.5 w-3.5" />}
+                ORDENAR 10/20/30
+              </button>
               <button
                 type="button"
                 onClick={() => setPreviewOpen((v) => !v)}
-                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
               >
                 {previewOpen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {previewOpen ? "OCULTAR PRÉ-VIA" : "PRÉ-VISUALIZAR COMO CLIENTE"}
+                {previewOpen ? "OCULTAR PRÉ-VIA" : "PRÉ-VIA CLIENTE"}
               </button>
               <button
                 type="button"
@@ -551,29 +577,35 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                 NENHUMA EXIGÊNCIA CADASTRADA. CLIQUE EM "NOVA EXIGÊNCIA".
               </div>
             ) : (
-              <div className="space-y-3">
-                {merged.map((row, idx) => (
-                  <ExigenciaCard
-                    key={row.id}
-                    row={row}
-                    dirty={isDirty(row.id)}
-                    saving={savingId === row.id}
-                    uploadingId={uploadingId}
-                    canMoveUp={idx > 0}
-                    canMoveDown={idx < merged.length - 1}
-                    onPatch={(p) => patch(row.id, p)}
-                    onSave={() => void saveRow(row)}
-                    onDuplicate={() => void addNew(row)}
-                    onDelete={() => void removeRow(row)}
-                    onMoveUp={() => void moveRow(row, -1)}
-                    onMoveDown={() => void moveRow(row, 1)}
-                    onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
-                    onClearArquivo={(campo) => void clearArquivo(row, campo)}
-                    onView={(path, fileName) => setViewer({ bucket: BUCKET, path, fileName })}
-                    onExpandirAnos={(anos) => void expandirPorAnos(row, anos)}
-                  />
-                ))}
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={merged.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {merged.map((row, idx) => (
+                      <SortableExigenciaItem
+                        key={row.id}
+                        row={row}
+                        expanded={expandedIds.has(row.id)}
+                        dirty={isDirty(row.id)}
+                        saving={savingId === row.id}
+                        uploadingId={uploadingId}
+                        canMoveUp={idx > 0}
+                        canMoveDown={idx < merged.length - 1}
+                        onToggleExpand={() => toggleExpand(row.id)}
+                        onPatch={(p) => patch(row.id, p)}
+                        onSave={() => void saveRow(row)}
+                        onDuplicate={() => void addNew(row)}
+                        onDelete={() => void removeRow(row)}
+                        onMoveUp={() => void moveRow(row, -1)}
+                        onMoveDown={() => void moveRow(row, 1)}
+                        onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
+                        onClearArquivo={(campo) => void clearArquivo(row, campo)}
+                        onView={(path, fileName) => setViewer({ bucket: BUCKET, path, fileName })}
+                        onExpandirAnos={(anos) => void expandirPorAnos(row, anos)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
 
