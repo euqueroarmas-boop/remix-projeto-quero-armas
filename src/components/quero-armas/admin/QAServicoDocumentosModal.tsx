@@ -21,7 +21,28 @@ import {
   FileText,
   FilePlus2,
   EyeOff,
+  GripVertical,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  ListOrdered,
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
 import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
 import QAServicoDocumentosLinks from "./QAServicoDocumentosLinks";
