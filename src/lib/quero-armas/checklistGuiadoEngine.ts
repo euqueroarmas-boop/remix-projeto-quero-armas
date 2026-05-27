@@ -101,13 +101,36 @@ export function etapaDoTipoGuia(tipo: string): number {
     t === "pergunta_comprovante_em_nome" ||
     t === "pergunta_ainda_reside_imovel" ||
     t === "pergunta_responde_inquerito_criminal" ||
-    t === "declaracao_responsavel_imovel" ||
-    t === "declaracao_sem_inquerito_processo_criminal"
+    t === "declaracao_responsavel_imovel"
   )
     return 1;
   if (t.includes("endereco") || t.includes("residenc")) return 1;
+  // BUG-FIX: "declaracao_sem_inquerito_processo_criminal" e qualquer outra
+  // declaração devem cair em DECLARAÇÕES, não em endereço. Mantemos depois do
+  // bloco de endereço para que tipos explicitamente de endereço continuem em 1.
   if (t.startsWith("declaracao") || t.startsWith("dsa_") || t.includes("compromisso")) return 4;
   return 1;
+}
+
+/**
+ * Retorna o número da etapa (1..5) preferindo o campo `etapa` salvo no banco
+ * (`qa_processo_documentos.etapa` / `qa_servicos_documentos.etapa`).
+ * Valores reais no banco hoje são coarse (`base`/`complementar`/`tecnico`),
+ * então caímos no mapeamento por `tipo_documento` quando o DB não desambigua.
+ * O label exibido vem de ETAPA_NOMES_GUIA[n].
+ */
+export function etapaDoDoc(d: Pick<GuiaDoc, "etapa" | "tipo_documento">): number {
+  const raw = String(d?.etapa ?? "").trim().toLowerCase();
+  // valores numéricos diretos
+  if (/^[1-5]$/.test(raw)) return Number(raw);
+  // labels semânticas (caso o catálogo evolua para etapa por nome)
+  if (raw === "endereco" || raw === "endereço" || raw === "comprovacao_endereco") return 1;
+  if (raw === "renda" || raw === "condicao_profissional" || raw === "condicao") return 2;
+  if (raw === "antecedentes" || raw === "criminal") return 3;
+  if (raw === "declaracoes" || raw === "declaracao" || raw === "compromissos") return 4;
+  if (raw === "tecnico" || raw === "exames" || raw === "laudo" || raw === "psicologico") return 5;
+  // base/complementar/(vazio) → fallback ao mapa por tipo_documento
+  return etapaDoTipoGuia(d?.tipo_documento ?? "");
 }
 
 export function isPerguntaGuia(d: GuiaDoc): boolean {
@@ -176,24 +199,32 @@ export const STATUS_DOCS_ACIONAVEIS: ReadonlySet<string> = new Set([
   "pendente",
   "nao_enviado",
   "reprovado",
+  "rejeitado",
   "invalido",
   "divergente",
   "ajuste_necessario",
   "correcao_solicitada",
+  "pendente_reenvio",
+  "expirado",
   "pulou",
 ]);
 
 export const STATUS_DOCS_NAO_ACIONAVEIS: ReadonlySet<string> = new Set([
   "aprovado",
   "validado",
+  "concluido",
+  "concluído",
   "em_analise",
   "enviado",
   "fila",
+  "processando",
+  "revisao_humana",
   "pendente_aprovacao",
   "aguardando_equipe",
   "em_revisao_humana",
   "dispensado",
   "dispensado_grupo",
+  "dispensado_por_reaproveitamento",
   "nao_aplicavel",
 ]);
 
@@ -370,8 +401,12 @@ export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
   return itensObrigatoriosGuia(carga)
     .filter((d) => itemPendenteAcaoGuia(d, respostas))
     .sort((a, b) => {
-      const ea = etapaDoTipoGuia(a.tipo_documento);
-      const eb = etapaDoTipoGuia(b.tipo_documento);
+      // Ordem do cliente: 1) etapa  2) ordem do catálogo  3) created_at.
+      // Preferimos o campo `etapa` salvo no banco (espelhado de
+      // qa_servicos_documentos / qa_processo_documentos) sobre a heurística
+      // por tipo_documento — assim a categorização visual respeita o catálogo.
+      const ea = etapaDoDoc(a);
+      const eb = etapaDoDoc(b);
       if (ea !== eb) return ea - eb;
       // Dentro da Etapa 1: identidade primeiro, depois endereço, depois resto.
       if (ea === 1) {
@@ -389,6 +424,10 @@ export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
       if (typeof oaT === "number" && typeof obT === "number" && oaT !== obT) return oaT - obT;
       if (typeof oaT === "number" && typeof obT !== "number") return -1;
       if (typeof obT === "number" && typeof oaT !== "number") return 1;
+      // Último tiebreak: created_at (ordem natural de criação do checklist).
+      const ca = String((a as any).created_at ?? "");
+      const cb = String((b as any).created_at ?? "");
+      if (ca && cb && ca !== cb) return ca < cb ? -1 : 1;
       return String(a.nome_documento).localeCompare(String(b.nome_documento));
     });
 }
