@@ -660,11 +660,17 @@ function PerguntaView({
 function DocumentoView({
   doc,
   orientacoesIA,
+  template,
+  baixandoTemplate,
+  onBaixarTemplate,
   onEnviar,
   onVer,
 }: {
   doc: GuiaDoc;
   orientacoesIA: string | null;
+  template: { key: string; label: string } | null;
+  baixandoTemplate: boolean;
+  onBaixarTemplate: (templateKey: string) => void;
   onEnviar: () => void;
   onVer: () => void;
 }) {
