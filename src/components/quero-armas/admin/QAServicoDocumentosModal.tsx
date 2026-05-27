@@ -692,33 +692,8 @@ function ExigenciaCard({
   );
 
   return (
-    <div
-      className={`rounded-xl border bg-white p-3 transition ${
-        dirty ? "border-[#7A1F2B]/40 shadow-[0_0_0_3px_rgba(122,31,43,0.06)]" : "border-slate-200"
-      }`}
-    >
+    <div className="p-2">
       <div className="flex items-start gap-2 mb-2">
-        <div className="flex flex-col gap-0.5">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={!canMoveUp}
-            className="w-6 h-6 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-            title="Subir"
-          >
-            <ChevronUp className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={!canMoveDown}
-            className="w-6 h-6 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-            title="Descer"
-          >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-        </div>
-
         <div className="flex-1 grid grid-cols-12 gap-2">
           <Field label="NOME DO DOCUMENTO" colSpan={6}>
             <input
