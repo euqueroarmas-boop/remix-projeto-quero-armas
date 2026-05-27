@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface GuiaProcesso {
   id: string;
   cliente_id: number;
+  servico_id?: number | null;
   servico_nome: string;
   status: string;
   pagamento_status: string;
@@ -250,7 +251,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
     .select(
-      "id, cliente_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional",
+      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional",
     )
     .eq("id", processoId)
     .maybeSingle();
@@ -272,9 +273,31 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     .select("nome_completo")
     .eq("id", processo.cliente_id)
     .maybeSingle();
+
+  // Mapa de ordem definido no admin (qa_servicos_documentos) — usado para
+  // ordenar a fila do assistente respeitando a sequência configurada por serviço.
+  let ordemMap = new Map<string, number>();
+  if (processo.servico_id && (dList?.length ?? 0) > 0) {
+    try {
+      const { data: tpl } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .select("tipo_documento, ordem")
+        .eq("servico_id", processo.servico_id);
+      if (tpl) {
+        for (const t of tpl as any[]) {
+          ordemMap.set(String(t.tipo_documento ?? "").toLowerCase(), Number(t.ordem ?? 0));
+        }
+      }
+    } catch { /* fallback silencioso para ordenação alfabética */ }
+  }
+  const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => ({
+    ...d,
+    _template_ordem: ordemMap.get(String((d as any).tipo_documento ?? "").toLowerCase()) ?? null,
+  }));
+
   return {
     processo,
-    docs: (dList ?? []) as GuiaDoc[],
+    docs: docsComOrdem as GuiaDoc[],
     respostas,
     etapaLiberada,
     clienteNome: (cli as any)?.nome_completo ?? null,
@@ -314,6 +337,12 @@ export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
       const oa = isPerguntaGuia(a) || isCondicaoGuia(a) ? 0 : 1;
       const ob = isPerguntaGuia(b) || isCondicaoGuia(b) ? 0 : 1;
       if (oa !== ob) return oa - ob;
+      // Respeita a ordem definida no admin (qa_servicos_documentos.ordem).
+      const oaT = (a as any)._template_ordem;
+      const obT = (b as any)._template_ordem;
+      if (typeof oaT === "number" && typeof obT === "number" && oaT !== obT) return oaT - obT;
+      if (typeof oaT === "number" && typeof obT !== "number") return -1;
+      if (typeof obT === "number" && typeof oaT !== "number") return 1;
       return String(a.nome_documento).localeCompare(String(b.nome_documento));
     });
 }

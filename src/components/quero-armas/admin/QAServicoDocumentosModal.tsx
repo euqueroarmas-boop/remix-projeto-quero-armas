@@ -21,7 +21,28 @@ import {
   FileText,
   FilePlus2,
   EyeOff,
+  GripVertical,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  ListOrdered,
 } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
 import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
 import QAServicoDocumentosLinks from "./QAServicoDocumentosLinks";
@@ -135,6 +156,8 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   const [previewOpen, setPreviewOpen] = useState(false);
   const [viewer, setViewer] = useState<{ bucket: string; path: string; fileName?: string } | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [reordenando, setReordenando] = useState(false);
 
   const load = useCallback(async () => {
     if (!servicoId) return;
@@ -161,6 +184,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       setPatches({});
       setPreviewOpen(false);
       setViewer(null);
+      setExpandedIds(new Set());
     }
   }, [open, servicoId, load]);
 
@@ -359,17 +383,84 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
 
   async function moveRow(row: ExigenciaRow, dir: -1 | 1) {
     const idx = merged.findIndex((r) => r.id === row.id);
-    const swap = merged[idx + dir];
-    if (!swap) return;
-    const a = row.ordem ?? 0;
-    const b = swap.ordem ?? 0;
-    const ordemA = a === b ? a + dir : b;
-    const ordemB = a === b ? a : a;
-    await Promise.all([
-      supabase.from("qa_servicos_documentos" as any).update({ ordem: ordemA }).eq("id", row.id),
-      supabase.from("qa_servicos_documentos" as any).update({ ordem: ordemB }).eq("id", swap.id),
-    ]);
-    void load();
+    const next = idx + dir;
+    if (next < 0 || next >= merged.length) return;
+    const newOrder = arrayMove(merged.slice(), idx, next);
+    await persistirOrdem(newOrder.map((r) => r.id));
+  }
+
+  /** Persiste nova ordem normalizada (10, 20, 30…) para os ids na sequência dada.
+   *  Atualiza linha-a-linha (em paralelo) e o estado local. */
+  async function persistirOrdem(orderedIds: string[]) {
+    setReordenando(true);
+    try {
+      const updates = orderedIds.map((id, i) => ({ id, ordem: (i + 1) * 10 }));
+      const byId = new Map(updates.map((u) => [u.id, u.ordem]));
+      const results = await Promise.all(
+        updates.map((u) =>
+          supabase.from("qa_servicos_documentos" as any).update({ ordem: u.ordem }).eq("id", u.id),
+        ),
+      );
+      const erro = results.find((r) => r.error)?.error;
+      if (erro) {
+        toast.error("FALHA AO REORDENAR — " + erro.message.toUpperCase());
+        void load();
+        return;
+      }
+      setRows((prev) => {
+        const next = prev.map((r) => ({ ...r, ordem: byId.get(r.id) ?? r.ordem }));
+        next.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+        return next;
+      });
+      // limpa qualquer patch pendente de `ordem` para não reescrever em cima
+      setPatches((prev) => {
+        const out: Record<string, Patch> = {};
+        for (const [k, v] of Object.entries(prev)) {
+          const { ordem: _o, ...rest } = v;
+          if (Object.keys(rest).length) out[k] = rest;
+        }
+        return out;
+      });
+      toast.success("ORDEM ATUALIZADA");
+    } finally {
+      setReordenando(false);
+    }
+  }
+
+  async function ordenarAutomaticamente() {
+    // mantém a sequência atual (já ordenada por ordem asc / nome asc) e normaliza 10/20/30…
+    const orderedIds = merged.slice().map((r) => r.id);
+    await persistirOrdem(orderedIds);
+  }
+
+  function expandAll() {
+    setExpandedIds(new Set(rows.map((r) => r.id)));
+  }
+  function collapseAll() {
+    setExpandedIds(new Set());
+  }
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = merged.findIndex((r) => r.id === String(active.id));
+    const newIdx = merged.findIndex((r) => r.id === String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const orderedIds = arrayMove(merged.slice(), oldIdx, newIdx).map((r) => r.id);
+    void persistirOrdem(orderedIds);
   }
 
   async function uploadModeloOuExemplo(row: ExigenciaRow, campo: "modelo_url" | "exemplo_url", file: File) {
@@ -423,18 +514,44 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[11px] uppercase tracking-wider text-slate-500">
-              CADA LINHA É UMA EXIGÊNCIA QUE O CLIENTE PRECISA ENVIAR PARA CONTRATAR ESTE SERVIÇO.
+              CADA LINHA É UMA EXIGÊNCIA — A ORDEM AQUI É A ORDEM QUE O CLIENTE VÊ NO ASSISTENTE.
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                title="Recolher todos"
+              >
+                <ChevronsDownUp className="h-3.5 w-3.5" /> RECOLHER
+              </button>
+              <button
+                type="button"
+                onClick={expandAll}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                title="Expandir todos"
+              >
+                <ChevronsUpDown className="h-3.5 w-3.5" /> EXPANDIR
+              </button>
+              <button
+                type="button"
+                onClick={() => void ordenarAutomaticamente()}
+                disabled={reordenando || merged.length === 0}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                title="Normalizar ordem em 10, 20, 30…"
+              >
+                {reordenando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ListOrdered className="h-3.5 w-3.5" />}
+                ORDENAR 10/20/30
+              </button>
               <button
                 type="button"
                 onClick={() => setPreviewOpen((v) => !v)}
-                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
               >
                 {previewOpen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {previewOpen ? "OCULTAR PRÉ-VIA" : "PRÉ-VISUALIZAR COMO CLIENTE"}
+                {previewOpen ? "OCULTAR PRÉ-VIA" : "PRÉ-VIA CLIENTE"}
               </button>
               <button
                 type="button"
@@ -460,29 +577,35 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                 NENHUMA EXIGÊNCIA CADASTRADA. CLIQUE EM "NOVA EXIGÊNCIA".
               </div>
             ) : (
-              <div className="space-y-3">
-                {merged.map((row, idx) => (
-                  <ExigenciaCard
-                    key={row.id}
-                    row={row}
-                    dirty={isDirty(row.id)}
-                    saving={savingId === row.id}
-                    uploadingId={uploadingId}
-                    canMoveUp={idx > 0}
-                    canMoveDown={idx < merged.length - 1}
-                    onPatch={(p) => patch(row.id, p)}
-                    onSave={() => void saveRow(row)}
-                    onDuplicate={() => void addNew(row)}
-                    onDelete={() => void removeRow(row)}
-                    onMoveUp={() => void moveRow(row, -1)}
-                    onMoveDown={() => void moveRow(row, 1)}
-                    onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
-                    onClearArquivo={(campo) => void clearArquivo(row, campo)}
-                    onView={(path, fileName) => setViewer({ bucket: BUCKET, path, fileName })}
-                    onExpandirAnos={(anos) => void expandirPorAnos(row, anos)}
-                  />
-                ))}
-              </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={merged.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {merged.map((row, idx) => (
+                      <SortableExigenciaItem
+                        key={row.id}
+                        row={row}
+                        expanded={expandedIds.has(row.id)}
+                        dirty={isDirty(row.id)}
+                        saving={savingId === row.id}
+                        uploadingId={uploadingId}
+                        canMoveUp={idx > 0}
+                        canMoveDown={idx < merged.length - 1}
+                        onToggleExpand={() => toggleExpand(row.id)}
+                        onPatch={(p) => patch(row.id, p)}
+                        onSave={() => void saveRow(row)}
+                        onDuplicate={() => void addNew(row)}
+                        onDelete={() => void removeRow(row)}
+                        onMoveUp={() => void moveRow(row, -1)}
+                        onMoveDown={() => void moveRow(row, 1)}
+                        onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
+                        onClearArquivo={(campo) => void clearArquivo(row, campo)}
+                        onView={(path, fileName) => setViewer({ bucket: BUCKET, path, fileName })}
+                        onExpandirAnos={(anos) => void expandirPorAnos(row, anos)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
 
@@ -569,33 +692,8 @@ function ExigenciaCard({
   );
 
   return (
-    <div
-      className={`rounded-xl border bg-white p-3 transition ${
-        dirty ? "border-[#7A1F2B]/40 shadow-[0_0_0_3px_rgba(122,31,43,0.06)]" : "border-slate-200"
-      }`}
-    >
+    <div className="p-2">
       <div className="flex items-start gap-2 mb-2">
-        <div className="flex flex-col gap-0.5">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={!canMoveUp}
-            className="w-6 h-6 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-            title="Subir"
-          >
-            <ChevronUp className="h-3.5 w-3.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={!canMoveDown}
-            className="w-6 h-6 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-            title="Descer"
-          >
-            <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-        </div>
-
         <div className="flex-1 grid grid-cols-12 gap-2">
           <Field label="NOME DO DOCUMENTO" colSpan={6}>
             <input
@@ -1001,6 +1099,127 @@ function Field({ label, children, colSpan = 12 }: { label: string; children: Rea
     <div className={cls}>
       <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{label}</div>
       {children}
+    </div>
+  );
+}
+
+/* -------------------- SortableExigenciaItem (DnD + colapso) -------------------- */
+
+interface SortableProps extends CardProps {
+  expanded: boolean;
+  onToggleExpand: () => void;
+}
+
+function SortableExigenciaItem(props: SortableProps) {
+  const { row, expanded, dirty, saving, canMoveUp, canMoveDown, onToggleExpand, onPatch, onMoveUp, onMoveDown, onDelete } = props;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 20 : "auto",
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-xl border bg-white transition ${
+        dirty ? "border-[#7A1F2B]/40 shadow-[0_0_0_3px_rgba(122,31,43,0.06)]" : "border-slate-200"
+      }`}
+    >
+      {/* CABEÇALHO COMPACTO — sempre visível */}
+      <div className="flex items-center gap-2 px-2.5 py-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Arrastar para reordenar"
+          title="Arraste para reordenar"
+          className="h-7 w-6 inline-flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+          title={expanded ? "Recolher" : "Expandir"}
+          aria-expanded={expanded}
+        >
+          {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+
+        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+          <div className="text-[12.5px] font-bold uppercase tracking-tight text-slate-900 truncate" title={row.nome_documento}>
+            {row.nome_documento || "—"}
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+            {row.etapa || "base"}
+          </span>
+          <span className="text-[10px] font-mono lowercase text-slate-500 truncate max-w-[200px]" title={row.tipo_documento}>
+            {row.tipo_documento}
+          </span>
+          {row.obrigatorio ? (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
+          ) : (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">OPC</span>
+          )}
+          {!row.ativo && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">INATIVO</span>
+          )}
+          {dirty && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">• NÃO SALVO</span>
+          )}
+        </div>
+
+        {/* ordem editável inline */}
+        <div className="flex items-center gap-1">
+          <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">ORD</label>
+          <input
+            type="number"
+            value={row.ordem ?? 0}
+            onChange={(e) => onPatch({ ordem: Number(e.target.value) || 0 })}
+            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[11px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
+            title="Ordem — edite e clique fora para salvar via SALVAR"
+          />
+        </div>
+
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            title="Subir"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            title="Descer"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Excluir"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* CORPO COMPLETO — só quando expandido */}
+      {expanded && (
+        <div className="border-t border-slate-100 px-2 pb-2 pt-1">
+          <ExigenciaCard {...props} />
+        </div>
+      )}
     </div>
   );
 }
