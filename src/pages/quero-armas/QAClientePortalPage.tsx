@@ -1850,6 +1850,15 @@ export default function QAClientePortalPage() {
       {cliente?.id ? (
         <ChecklistGuiado clienteId={cliente.id} onUpdated={() => setDocsReloadKey((k) => k + 1)} />
       ) : null}
+
+      {cliente?.id ? (
+        <ClienteCadastroProgressivoModal
+          open={showCadastroModal}
+          onClose={() => setShowCadastroModal(false)}
+          cliente={cliente}
+          onUpdated={() => setDocsReloadKey((k) => k + 1)}
+        />
+      ) : null}
     </div>
     </PortalFilterProvider>
   );
