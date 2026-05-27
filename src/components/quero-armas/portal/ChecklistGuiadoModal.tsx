@@ -368,6 +368,11 @@ export default function ChecklistGuiadoModal({
   const [carregandoCliente, setCarregandoCliente] = useState(false);
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
+  // ----- Sugestão de atualização de cadastro (Fase 5) -----
+  const [sugestao, setSugestao] = useState<
+    | { open: boolean; dados: Record<string, any> | null; nomeDoc: string | null }
+  >({ open: false, dados: null, nomeDoc: null });
+
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
     setCarregandoCliente(true);
