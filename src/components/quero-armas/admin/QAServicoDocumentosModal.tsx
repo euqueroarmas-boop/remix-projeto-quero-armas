@@ -83,6 +83,48 @@ const EMPTY_NEW: Patch = {
   emissor: "cliente",
 };
 
+/* ----------------------------- helpers tipo --------------------------------- */
+
+function normalizeSlug(s: string): string {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function sameCondicao(a: string | null | undefined, b: string | null | undefined) {
+  return (a ?? "") === (b ?? "");
+}
+
+/** Garante um tipo_documento único dentro de (servico_id, condicao_profissional).
+ *  Tenta primeiro `${base}_<próximoAno>`, depois `${base}_2`, `_3`, etc. */
+function uniqueTipo(
+  base: string,
+  condicao: string | null | undefined,
+  existing: ExigenciaRow[],
+  excludeId?: string,
+): string {
+  const baseSlug = normalizeSlug(base) || "documento";
+  const taken = new Set(
+    existing
+      .filter((r) => r.id !== excludeId && sameCondicao(r.condicao_profissional, condicao))
+      .map((r) => (r.tipo_documento ?? "").toLowerCase()),
+  );
+  if (!taken.has(baseSlug)) return baseSlug;
+  // 1) tentar sufixo por ano (próximo ano não usado, indo para trás)
+  const yearNow = new Date().getFullYear();
+  for (let y = yearNow; y >= yearNow - 10; y--) {
+    const cand = `${baseSlug}_${y}`;
+    if (!taken.has(cand)) return cand;
+  }
+  // 2) fallback _2, _3...
+  let i = 2;
+  while (taken.has(`${baseSlug}_${i}`)) i++;
+  return `${baseSlug}_${i}`;
+}
+
 export default function QAServicoDocumentosModal({ open, onClose, servicoId, servicoNome }: Props) {
   const [rows, setRows] = useState<ExigenciaRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -135,10 +177,36 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   async function saveRow(row: ExigenciaRow) {
     const p = patches[row.id];
     if (!p) return;
+
+    // valida duplicidade de tipo_documento no cliente (mesma condição)
+    const novoTipo = (p.tipo_documento ?? row.tipo_documento ?? "").toLowerCase();
+    const novaCond = p.condicao_profissional !== undefined ? p.condicao_profissional : row.condicao_profissional;
+    const colide = rows.some(
+      (r) =>
+        r.id !== row.id &&
+        (r.tipo_documento ?? "").toLowerCase() === novoTipo &&
+        sameCondicao(r.condicao_profissional, novaCond),
+    );
+    if (colide) {
+      toast.error("JÁ EXISTE UMA EXIGÊNCIA COM ESSE TIPO PARA ESTE SERVIÇO");
+      return;
+    }
+
+    // garante regra_validacao como JSON válido (não persiste string crua)
+    const payload: Patch = { ...p };
+    if (payload.regra_validacao !== undefined && typeof payload.regra_validacao === "string") {
+      try {
+        payload.regra_validacao = JSON.parse(payload.regra_validacao as unknown as string);
+      } catch {
+        toast.error("REGRA DE VALIDAÇÃO COM JSON INVÁLIDO");
+        return;
+      }
+    }
+
     setSavingId(row.id);
     const { error } = await supabase
       .from("qa_servicos_documentos" as any)
-      .update(p)
+      .update(payload)
       .eq("id", row.id);
     setSavingId(null);
     if (error) {
@@ -146,7 +214,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       return;
     }
     toast.success("EXIGÊNCIA SALVA");
-    setRows((prev) => prev.map((r) => (r.id === row.id ? ({ ...r, ...p } as ExigenciaRow) : r)));
+    setRows((prev) => prev.map((r) => (r.id === row.id ? ({ ...r, ...payload } as ExigenciaRow) : r)));
     setPatches((prev) => {
       const { [row.id]: _drop, ...rest } = prev;
       return rest;
@@ -155,16 +223,21 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
 
   async function addNew(source?: ExigenciaRow) {
     if (!servicoId) return;
+    const baseTipo = source ? normalizeSlug(source.tipo_documento || "documento") : "documento";
+    const tipoUnico = source ? uniqueTipo(baseTipo, source.condicao_profissional, rows) : "documento";
     const base: any = source
       ? {
           servico_id: servicoId,
-          tipo_documento: source.tipo_documento,
+          tipo_documento: tipoUnico,
           nome_documento: (source.nome_documento || "DOCUMENTO") + " (CÓPIA)",
           etapa: source.etapa,
           obrigatorio: source.obrigatorio,
           validade_dias: source.validade_dias,
           formato_aceito: source.formato_aceito,
-          regra_validacao: source.regra_validacao,
+          regra_validacao: {
+            ...(source.regra_validacao && typeof source.regra_validacao === "object" ? source.regra_validacao : {}),
+            tipo_base: baseTipo,
+          },
           link_emissao: source.link_emissao,
           condicao_profissional: source.condicao_profissional,
           ordem: (source.ordem ?? 0) + 1,
@@ -191,8 +264,80 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       toast.error("FALHA AO CRIAR — " + error.message.toUpperCase());
       return;
     }
-    toast.success("EXIGÊNCIA CRIADA");
+    toast.success(source ? "DUPLICADA — REVISE O TIPO ANTES DE SALVAR" : "EXIGÊNCIA CRIADA");
     setRows((prev) => [...prev, (data as unknown) as ExigenciaRow]);
+    if (source) {
+      // marca dirty no novo registro para destacar e forçar revisão do tipo
+      const created = data as unknown as ExigenciaRow;
+      patch(created.id, { tipo_documento: tipoUnico });
+    }
+  }
+
+  /** Expande uma exigência em N linhas, uma por ano informado.
+   *  Cada linha vira `${tipoCanonico}_${ano}` e `${nomeBase} ${ano}`. */
+  async function expandirPorAnos(row: ExigenciaRow, anos: number[]) {
+    if (!servicoId || anos.length === 0) return;
+    const tipoCanonico = normalizeSlug(row.tipo_documento || "documento");
+    const nomeBase = (row.nome_documento || "DOCUMENTO").replace(/\s+\d{4}\s*$/, "").trim();
+    const baseOrdem = row.ordem ?? 0;
+    const sortedAnos = [...new Set(anos)].sort((a, b) => b - a); // mais recente primeiro
+    const existentes = new Set(
+      rows
+        .filter((r) => sameCondicao(r.condicao_profissional, row.condicao_profissional))
+        .map((r) => (r.tipo_documento ?? "").toLowerCase()),
+    );
+    const payloads: any[] = [];
+    const ignorados: number[] = [];
+    sortedAnos.forEach((ano, i) => {
+      const tipo = `${tipoCanonico}_${ano}`;
+      if (existentes.has(tipo)) {
+        ignorados.push(ano);
+        return;
+      }
+      existentes.add(tipo);
+      payloads.push({
+        servico_id: servicoId,
+        tipo_documento: tipo,
+        nome_documento: `${nomeBase} ${ano}`.toUpperCase(),
+        etapa: row.etapa,
+        obrigatorio: row.obrigatorio,
+        validade_dias: row.validade_dias,
+        formato_aceito: row.formato_aceito,
+        regra_validacao: {
+          ...(row.regra_validacao && typeof row.regra_validacao === "object" ? row.regra_validacao : {}),
+          tipo_base: tipoCanonico,
+          ano_competencia: ano,
+        },
+        link_emissao: row.link_emissao,
+        condicao_profissional: row.condicao_profissional,
+        ordem: baseOrdem + i + 1,
+        ativo: true,
+        instrucoes: row.instrucoes,
+        observacoes_cliente: row.observacoes_cliente,
+        modelo_url: row.modelo_url,
+        exemplo_url: row.exemplo_url,
+        orgao_emissor: row.orgao_emissor,
+        prazo_recomendado_dias: row.prazo_recomendado_dias,
+        emissor: row.emissor,
+      });
+    });
+    if (payloads.length === 0) {
+      toast.error("TODOS OS ANOS INFORMADOS JÁ EXISTEM PARA ESTE SERVIÇO");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .insert(payloads)
+      .select("*");
+    if (error) {
+      toast.error("FALHA AO EXPANDIR — " + error.message.toUpperCase());
+      return;
+    }
+    toast.success(
+      `${payloads.length} EXIGÊNCIA(S) CRIADA(S)` +
+        (ignorados.length ? ` — IGNORADOS: ${ignorados.join(", ")}` : ""),
+    );
+    setRows((prev) => [...prev, ...((data ?? []) as unknown as ExigenciaRow[])]);
   }
 
   async function removeRow(row: ExigenciaRow) {
@@ -332,6 +477,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                     onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
                     onClearArquivo={(campo) => void clearArquivo(row, campo)}
                     onView={(path, fileName) => setViewer({ bucket: BUCKET, path, fileName })}
+                    onExpandirAnos={(anos) => void expandirPorAnos(row, anos)}
                   />
                 ))}
               </div>
@@ -381,6 +527,7 @@ interface CardProps {
   onUpload: (campo: "modelo_url" | "exemplo_url", file: File) => void;
   onClearArquivo: (campo: "modelo_url" | "exemplo_url") => void;
   onView: (path: string, fileName?: string) => void;
+  onExpandirAnos: (anos: number[]) => void;
 }
 
 function ExigenciaCard({
@@ -399,7 +546,26 @@ function ExigenciaCard({
   onUpload,
   onClearArquivo,
   onView,
+  onExpandirAnos,
 }: CardProps) {
+  const [repeteAberto, setRepeteAberto] = useState(false);
+  const [anosTxt, setAnosTxt] = useState(() => {
+    const y = new Date().getFullYear();
+    return `${y}, ${y - 1}, ${y - 2}, ${y - 3}, ${y - 4}, ${y - 5}`;
+  });
+  const anosParsed = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          anosTxt
+            .split(/[,\s]+/)
+            .map((s) => parseInt(s.trim(), 10))
+            .filter((n) => Number.isFinite(n) && n >= 1900 && n <= 2100),
+        ),
+      ).sort((a, b) => b - a),
+    [anosTxt],
+  );
+
   return (
     <div
       className={`rounded-xl border bg-white p-3 transition ${
@@ -593,6 +759,57 @@ function ExigenciaCard({
               onView={() => row.exemplo_url && onView(row.exemplo_url, "EXEMPLO")}
               onClear={() => onClearArquivo("exemplo_url")}
             />
+          </div>
+
+          {/* Repete por período/ano (opcional) */}
+          <div className="col-span-12 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
+            <label className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={repeteAberto}
+                onChange={(e) => setRepeteAberto(e.target.checked)}
+                className="accent-[#7A1F2B]"
+              />
+              ESTE DOCUMENTO SE REPETE POR PERÍODO / ANO?
+            </label>
+            {repeteAberto && (
+              <div className="mt-2 grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-8">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                    ANOS (separe por vírgula — ex.: 2026, 2025, 2024)
+                  </div>
+                  <input
+                    value={anosTxt}
+                    onChange={(e) => setAnosTxt(e.target.value)}
+                    className={inputCls + " font-mono"}
+                    placeholder="2026, 2025, 2024"
+                  />
+                </div>
+                <div className="col-span-4 flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                    {anosParsed.length} ANO(S)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (anosParsed.length === 0) {
+                        toast.error("INFORME AO MENOS UM ANO VÁLIDO");
+                        return;
+                      }
+                      onExpandirAnos(anosParsed);
+                      setRepeteAberto(false);
+                    }}
+                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                  >
+                    <Plus className="h-3 w-3" /> GERAR 1 EXIGÊNCIA POR ANO
+                  </button>
+                </div>
+                <div className="col-span-12 text-[10px] uppercase tracking-wider text-slate-500">
+                  CRIA NOVAS LINHAS COM TIPO_DOCUMENTO ÚNICO POR ANO (EX.: <span className="font-mono">{normalizeSlug(row.tipo_documento || "documento")}_2026</span>).
+                  A LINHA ATUAL NÃO É ALTERADA.
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
