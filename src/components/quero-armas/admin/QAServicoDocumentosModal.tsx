@@ -105,7 +105,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       toast.error("FALHA AO CARREGAR EXIGÊNCIAS — " + error.message.toUpperCase());
       setRows([]);
     } else {
-      setRows((data ?? []) as ExigenciaRow[]);
+      setRows(((data ?? []) as unknown) as ExigenciaRow[]);
     }
     setPatches({});
     setLoading(false);
@@ -192,7 +192,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
       return;
     }
     toast.success("EXIGÊNCIA CRIADA");
-    setRows((prev) => [...prev, data as ExigenciaRow]);
+    setRows((prev) => [...prev, (data as unknown) as ExigenciaRow]);
   }
 
   async function removeRow(row: ExigenciaRow) {
