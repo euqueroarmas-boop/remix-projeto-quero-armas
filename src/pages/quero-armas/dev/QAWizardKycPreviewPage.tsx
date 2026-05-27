@@ -174,6 +174,7 @@ export default function QAWizardKycPreviewPage() {
         </div>
       </div>
 
+      {patched && (
       <DocumentDataOnboardingWizard
         key={round}
         open={open}
@@ -184,6 +185,7 @@ export default function QAWizardKycPreviewPage() {
         documentoNome="Declaração CAC (DEMO)"
         onGenerated={(_blob, filename) => setGenerated(filename)}
       />
+      )}
     </div>
   );
 }
