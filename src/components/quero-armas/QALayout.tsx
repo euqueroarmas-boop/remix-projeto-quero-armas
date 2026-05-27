@@ -13,7 +13,7 @@ const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal
  * Mantém compatibilidade com perfil legado "administrador" (acesso total).
  */
 function canAccessRoute(perfil: string, pathname: string): boolean {
-  const blockedForLeitura = ["/gerar-peca", "/modelos-docx", "/correcoes-ia", "/correcoes-ia/"];
+  const blockedForLeitura = ["/gerar-peca", "/modelos-docx", "/modelos-declaracao", "/correcoes-ia", "/correcoes-ia/"];
   const blockedForAssistente = ["/configuracoes"];
   if (perfil === "leitura_auditoria") {
     return !blockedForLeitura.some((p) => pathname === p || pathname.startsWith(p + "/"));

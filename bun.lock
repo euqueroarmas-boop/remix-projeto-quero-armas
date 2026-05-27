@@ -55,6 +55,7 @@
         "jsbarcode": "^3.12.3",
         "jscanify": "1.4.2",
         "jspdf": "^4.2.1",
+        "jszip": "^3.10.1",
         "lucide-react": "^0.462.0",
         "mammoth": "1.12.0",
         "mochawesome": "7.1.3",
