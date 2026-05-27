@@ -5,6 +5,7 @@ import { Search, FileStack, RefreshCw, Filter, ChevronRight, FileText, AlertTria
 import { getStatusProcesso, getStatusDocumento, formatDate, formatDateTime, STATUS_PROCESSO } from "@/components/quero-armas/processos/processoConstants";
 import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/ProcessoDetalheDrawer";
 import { computeChecklistMetrics } from "@/lib/quero-armas/checklistMetrics";
+import QASincronizarExigenciasBtn from "@/components/quero-armas/admin/QASincronizarExigenciasBtn";
 
 interface ProcessoRow {
   id: string;
@@ -294,7 +295,13 @@ export default function QAProcessosPage() {
                       </td>
                       <td className="px-4 py-3 text-xs text-slate-500">{formatDate(p.data_criacao)}</td>
                       <td className="px-4 py-3 text-right">
-                        <ChevronRight className="h-4 w-4 text-slate-400 inline" />
+                        <div className="inline-flex items-center gap-2">
+                          <QASincronizarExigenciasBtn
+                            processoId={p.id}
+                            onDone={() => carregar()}
+                          />
+                          <ChevronRight className="h-4 w-4 text-slate-400 inline" />
+                        </div>
                       </td>
                     </tr>
                   );
