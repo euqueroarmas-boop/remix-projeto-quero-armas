@@ -423,12 +423,11 @@ export default function ChecklistGuiadoModal({
 
   const [baixandoTemplate, setBaixandoTemplate] = useState(false);
 
-  // ----- Conferência obrigatória antes de gerar o .docx -----
-  const [confirmacao, setConfirmacao] = useState<
+  // ----- Assistente de Cadastro Documental (Wizard KYC) -----
+  const [wizard, setWizard] = useState<
     | { open: boolean; doc: GuiaDoc | null; templateKey: string | null }
   >({ open: false, doc: null, templateKey: null });
   const [clienteDados, setClienteDados] = useState<any | null>(null);
-  const [carregandoCliente, setCarregandoCliente] = useState(false);
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
@@ -438,7 +437,6 @@ export default function ChecklistGuiadoModal({
 
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
-    setCarregandoCliente(true);
     try {
       const { data, error } = await supabase
         .from("qa_clientes")
@@ -448,71 +446,39 @@ export default function ChecklistGuiadoModal({
       if (error) throw error;
       setClienteDados(data ?? null);
       return data ?? null;
-    } catch (e: any) {
-      toast.error("Não foi possível carregar seus dados para conferência.");
+    } catch {
       return null;
-    } finally {
-      setCarregandoCliente(false);
     }
   }, [carga]);
 
   const abrirConfirmacaoTemplate = async (doc: GuiaDoc, templateKey: string) => {
     if (!carga) return;
     setErroAcao(null);
-    await recarregarClienteDados();
-    setConfirmacao({ open: true, doc, templateKey });
-  };
-
-  const handleBaixarTemplate = async (doc: GuiaDoc, templateKey: string) => {
-    if (!carga) return;
     setBaixandoTemplate(true);
-    setErroAcao(null);
-    try {
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token;
-      const base = import.meta.env.VITE_SUPABASE_URL as string;
-      if (!token) throw new Error("Sessão expirada. Entre novamente.");
-
-      const resp = await fetch(`${base}/functions/v1/qa-fill-template-cliente`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ template_key: templateKey, processo_id: carga.processo.id }),
-      });
-      if (!resp.ok) {
-        const txt = await resp.text();
-        throw new Error(txt || "Falha ao gerar declaração");
-      }
-      const blob = await resp.blob();
-      if (!blob || blob.size < 200) {
-        throw new Error("Declaração gerada veio vazia. Tente novamente em alguns instantes.");
-      }
-      const baseNome = slugifyParaArquivo(doc.nome_documento || templateKey);
-      const sufixoCliente = slugifyParaArquivo(carga.clienteNome || "cliente");
-      const fileName = `${baseNome || "declaracao"}-${sufixoCliente || "cliente"}.docx`;
-      const a = document.createElement("a");
-      const objUrl = URL.createObjectURL(blob);
-      a.href = objUrl;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(objUrl);
-      toast.success("Declaração gerada. Confira o arquivo baixado.");
-    } catch (e: any) {
-      const msg = e?.message ?? "Erro ao gerar declaração";
-      setErroAcao(msg);
-      toast.error(msg);
-    } finally {
-      setBaixandoTemplate(false);
-    }
+    setWizard({ open: true, doc, templateKey });
   };
 
-  const confirmarEGerar = async () => {
-    const doc = confirmacao.doc;
-    const tk = confirmacao.templateKey;
-    if (!doc || !tk) return;
-    await handleBaixarTemplate(doc, tk);
-    setConfirmacao({ open: false, doc: null, templateKey: null });
+  const fecharWizard = () => {
+    setWizard({ open: false, doc: null, templateKey: null });
+    setBaixandoTemplate(false);
+  };
+
+  const handleWizardGenerated = (blob: Blob, _filename: string) => {
+    const doc = wizard.doc;
+    const templateKey = wizard.templateKey;
+    if (!doc || !templateKey || !carga) return;
+    const baseNome = slugifyParaArquivo(doc.nome_documento || templateKey);
+    const sufixoCliente = slugifyParaArquivo(carga.clienteNome || "cliente");
+    const fileName = `${baseNome || "declaracao"}-${sufixoCliente || "cliente"}.docx`;
+    const a = document.createElement("a");
+    const objUrl = URL.createObjectURL(blob);
+    a.href = objUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objUrl);
+    toast.success("Documento gerado. Confira o arquivo baixado.");
   };
 
   return (
