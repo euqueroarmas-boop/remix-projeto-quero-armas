@@ -14,7 +14,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { onAbrirChecklistGuiado } from "@/lib/quero-armas/checklistGuiadoBus";
+import { onAbrirChecklistGuiado, AbrirChecklistPayload } from "@/lib/quero-armas/checklistGuiadoBus";
 import { contarPendentesClienteGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
 import ChecklistGuiadoModal from "./ChecklistGuiadoModal";
 
@@ -28,15 +28,21 @@ const guardKey = (contractId: string) => `qa_checklist_guiado_auto_${contractId}
 
 export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
+  const [processoIdAlvo, setProcessoIdAlvo] = useState<string | null>(null);
+  const [focusDocId, setFocusDocId] = useState<string | null>(null);
   const contratoIdRef = useRef<string | null>(null);
   // Garante que o auto-popup por pendências documentais aconteça UMA única vez
   // por entrada na página — se o cliente fechar o assistente, não reabre sozinho
   // na mesma sessão (regra explícita do produto).
   const autoOpenedRef = useRef(false);
 
-  // 1) abertura manual via bus
+  // 1) abertura manual via bus (com payload opcional vindo do botão clicado)
   useEffect(() => {
-    const off = onAbrirChecklistGuiado(() => setOpen(true));
+    const off = onAbrirChecklistGuiado((payload?: AbrirChecklistPayload) => {
+      setProcessoIdAlvo(payload?.processoId ?? null);
+      setFocusDocId(payload?.focusDocId ?? null);
+      setOpen(true);
+    });
     return off;
   }, []);
 
@@ -140,7 +146,13 @@ export default function ChecklistGuiado({ clienteId, onUpdated }: Props) {
     <ChecklistGuiadoModal
       clienteId={clienteId}
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={() => {
+        setOpen(false);
+        setProcessoIdAlvo(null);
+        setFocusDocId(null);
+      }}
+      processoIdInicial={processoIdAlvo}
+      focusDocIdInicial={focusDocId}
       onUpdated={onUpdated}
     />
   );
