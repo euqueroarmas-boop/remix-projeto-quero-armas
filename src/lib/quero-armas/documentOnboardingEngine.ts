@@ -15,6 +15,11 @@ import {
   PlaceholderDef,
   TEMPLATE_PLACEHOLDERS,
 } from "@/lib/quero-armas/templatePlaceholders";
+import {
+  effectiveOrder,
+  mergeOverride,
+  OverridesMap,
+} from "@/lib/quero-armas/templatePlaceholderOverrides";
 
 export interface ProbeResult {
   ok: boolean;
@@ -156,15 +161,18 @@ export function buildWizardSteps(params: {
   cliente: Record<string, any> | null;
   templateData: Record<string, any> | null;
   iaSuggestions: Record<string, string>;
+  overrides?: OverridesMap;
 }): WizardStep[] {
-  const { missing, cliente, templateData, iaSuggestions } = params;
+  const { missing, cliente, templateData, iaSuggestions, overrides } = params;
   const seen = new Set<string>();
   const steps: WizardStep[] = [];
   for (const m of missing) {
-    const def = findPlaceholder(m.token) ?? findPlaceholderByKey(m.key);
-    if (!def) continue;
-    if (seen.has(def.key)) continue;
-    seen.add(def.key);
+    const baseDef = findPlaceholder(m.token) ?? findPlaceholderByKey(m.key);
+    if (!baseDef) continue;
+    if (seen.has(baseDef.key)) continue;
+    seen.add(baseDef.key);
+    const ov = overrides?.[baseDef.placeholder] ?? null;
+    const def = mergeOverride(baseDef, ov);
     const initialValue =
       def.source === "cliente"
         ? safeStr(cliente?.[def.key])
@@ -173,6 +181,12 @@ export function buildWizardSteps(params: {
           : "";
     steps.push({ def, initialValue, iaSuggestion: iaSuggestions[def.key] });
   }
+  // Reordena por `ordem` do override quando informado.
+  steps.sort((a, b) => {
+    const oa = overrides?.[a.def.placeholder] ?? null;
+    const ob = overrides?.[b.def.placeholder] ?? null;
+    return effectiveOrder(a.def, oa) - effectiveOrder(b.def, ob);
+  });
   return steps;
 }
 

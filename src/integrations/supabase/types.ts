@@ -8053,6 +8053,54 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_template_placeholder_config: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          exemplo_placeholder: string | null
+          grupo_visual: string | null
+          id: string
+          label_cliente: string | null
+          obrigatorio_override: boolean | null
+          ordem: number | null
+          pergunta_cliente: string | null
+          placeholder: string
+          texto_ajuda: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          exemplo_placeholder?: string | null
+          grupo_visual?: string | null
+          id?: string
+          label_cliente?: string | null
+          obrigatorio_override?: boolean | null
+          ordem?: number | null
+          pergunta_cliente?: string | null
+          placeholder: string
+          texto_ajuda?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          exemplo_placeholder?: string | null
+          grupo_visual?: string | null
+          id?: string
+          label_cliente?: string | null
+          obrigatorio_override?: boolean | null
+          ordem?: number | null
+          pergunta_cliente?: string | null
+          placeholder?: string
+          texto_ajuda?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       qa_tempo_validade: {
         Row: {
           id: number

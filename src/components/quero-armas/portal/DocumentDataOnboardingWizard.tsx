@@ -47,6 +47,7 @@ import {
   probeTemplate,
   saveWizardAnswer,
 } from "@/lib/quero-armas/documentOnboardingEngine";
+import { loadPlaceholderOverrides } from "@/lib/quero-armas/templatePlaceholderOverrides";
 
 const MARROM = "#7A1F2B";
 
@@ -103,7 +104,7 @@ export default function DocumentDataOnboardingWizard({
     setErro(null);
     setUnknownTokens([]);
     try {
-      const [probe, ia, clienteRow, processoRow] = await Promise.all([
+      const [probe, ia, clienteRow, processoRow, overrides] = await Promise.all([
         probeTemplate({ templateKey, processoId }),
         loadIaSuggestions(processoId),
         supabase.from("qa_clientes").select("*").eq("id", clienteId).maybeSingle(),
@@ -112,6 +113,7 @@ export default function DocumentDataOnboardingWizard({
           .select("respostas_questionario_json")
           .eq("id", processoId)
           .maybeSingle(),
+        loadPlaceholderOverrides(),
       ]);
 
       const cliente = (clienteRow.data ?? null) as Record<string, any> | null;
@@ -141,6 +143,7 @@ export default function DocumentDataOnboardingWizard({
         cliente,
         templateData,
         iaSuggestions: ia,
+        overrides,
       });
 
       // Se algum step depende de suporte (cpf/email/nome) → tela específica.
