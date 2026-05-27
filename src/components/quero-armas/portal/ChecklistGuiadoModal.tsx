@@ -773,6 +773,42 @@ function DocumentoView({
         </div>
       )}
 
+      {/* Modelo preenchível — declaração gerada com os dados do cliente */}
+      {template && (
+        <div className="mt-4 rounded-2xl border border-[#E5C2C6] bg-[#FBF3F4]/70 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white" style={{ background: MARROM }}>
+              <FileText className="h-4.5 w-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: MARROM }}>
+                Modelo preenchido
+              </div>
+              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-700">
+                Baixe a declaração já preenchida com seus dados, assine no Gov.br e anexe o PDF assinado aqui.
+              </p>
+              <button
+                type="button"
+                onClick={() => onBaixarTemplate(template.key)}
+                disabled={baixandoTemplate}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[12px] font-bold uppercase tracking-wider text-white shadow-sm transition disabled:opacity-60"
+                style={{ background: MARROM }}
+              >
+                {baixandoTemplate ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Gerando declaração...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" /> Baixar declaração preenchida
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* área de upload */}
       <button
         onClick={onEnviar}
