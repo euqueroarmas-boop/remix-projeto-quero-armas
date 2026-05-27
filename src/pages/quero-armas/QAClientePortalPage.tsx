@@ -1006,7 +1006,7 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
-        <div className="sticky top-[64px] z-30 mb-1 rounded-xl border border-slate-200 bg-white/95 px-3 sm:px-4 py-2.5 shadow-sm backdrop-blur-md">
+        <div className="sticky top-[64px] z-30 mb-5 rounded-xl border border-slate-200 bg-white/95 px-3 sm:px-4 py-2.5 shadow-sm backdrop-blur-md">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div
               className="flex gap-4 sm:gap-6 overflow-x-auto -mx-1 px-1 scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
