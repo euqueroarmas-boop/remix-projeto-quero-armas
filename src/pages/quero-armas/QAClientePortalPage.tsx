@@ -869,7 +869,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className="min-h-screen bg-slate-50 text-slate-900 lg:pl-72">
+    <div className="min-h-dvh bg-slate-50 text-slate-900 lg:pl-72 overflow-x-hidden">
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -877,7 +877,7 @@ export default function QAClientePortalPage() {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
         <div className="flex items-center justify-between h-20">
           <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
-          <button type="button" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center"><ChevronRight className="h-4 w-4 rotate-180" /></button>
+          <button type="button" aria-label="Recolher menu lateral" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><ChevronRight className="h-4 w-4 rotate-180" aria-hidden="true" /></button>
         </div>
         <nav className="mt-6 space-y-1">
           {primaryNavItems.map((item) => {
