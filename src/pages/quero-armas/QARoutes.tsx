@@ -58,6 +58,10 @@ const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QA
 const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
 const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPage"), "QAAlertasVencimentoPage");
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
+// DEV-ONLY: QA visual do Wizard KYC sem login real. Removido em build de prod.
+const QAWizardKycPreviewPage = import.meta.env.DEV
+  ? lazyRetry(() => import("./dev/QAWizardKycPreviewPage"), "QAWizardKycPreviewPage")
+  : null;
 const HomePage = lazyRetry(() => import("@/pages/HomePage"), "HomePage");
 const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "ServicesListPage");
 const ServicoDetalhePage = lazyRetry(() => import("./ServicoDetalhePage"), "ServicoDetalhePage");
