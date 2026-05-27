@@ -784,6 +784,49 @@ Deno.serve(async (req) => {
       parsed.divergencias = divsKeep;
     }
 
+    // ===== ALTERAÇÃO DE NOME EM CARTÓRIO =====
+    // (a) Se este é o próprio doc da certidão averbada, NUNCA gere divergência
+    //     de nome contra o cadastro — é o conteúdo esperado do documento.
+    if (doc.tipo_documento === "certidao_alteracao_nome") {
+      parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+        const c = String(d?.campo || "").toLowerCase();
+        return !["nome", "nome_titular", "titular", "nome_completo"].includes(c);
+      });
+    }
+    // (b) Se a alteração já está comprovada no processo, considere os nomes
+    //     aprovados como ACEITOS — remove divergência de nome cujo valor do
+    //     documento bata (normalizado) com qualquer um deles.
+    if (
+      doc.tipo_documento !== "certidao_alteracao_nome" &&
+      nomesAceitosAlteracao.length > 0
+    ) {
+      const norm = (s: any) =>
+        String(s ?? "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      const aceitos = new Set(nomesAceitosAlteracao.map(norm).filter(Boolean));
+      let justificou = false;
+      parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+        const c = String(d?.campo || "").toLowerCase();
+        if (!["nome", "nome_titular", "titular", "nome_completo"].includes(c)) return true;
+        const vd = norm(d?.valor_documento ?? d?.encontrado);
+        if (vd && aceitos.has(vd)) {
+          justificou = true;
+          return false;
+        }
+        return true;
+      });
+      if (justificou) {
+        const aviso = "Nome divergente justificado por certidão averbada aprovada.";
+        parsed.observacoes = parsed.observacoes
+          ? `${parsed.observacoes} | ${aviso}`
+          : aviso;
+      }
+    }
+
     // ========== LÓGICA DE DECISÃO ENDURECIDA ==========
     const regra = (doc.regra_validacao ?? {}) as any;
     const exige: string[] = Array.isArray(regra.exige) ? regra.exige : [];
