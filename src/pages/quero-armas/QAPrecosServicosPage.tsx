@@ -926,9 +926,10 @@ interface CategoriaSectionProps {
   save: (row: ServicoRow) => void;
   openEdit: (row: ServicoRow) => void;
   removeRow: (row: ServicoRow) => void;
+  openDocs: (row: ServicoRow) => void;
 }
 
-function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit, save, openEdit, removeRow }: CategoriaSectionProps) {
+function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit, save, openEdit, removeRow, openDocs }: CategoriaSectionProps) {
   const ids = itens.map((i) => i.id);
   const { setNodeRef: setDropRef } = useSortable({ id: `cat::${categoria}` });
   return (
@@ -971,6 +972,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
                     save={save}
                     openEdit={openEdit}
                     removeRow={removeRow}
+                    openDocs={openDocs}
                   />
                 ))
               )}
@@ -991,9 +993,10 @@ interface SortableRowProps {
   save: (row: ServicoRow) => void;
   openEdit: (row: ServicoRow) => void;
   removeRow: (row: ServicoRow) => void;
+  openDocs: (row: ServicoRow) => void;
 }
 
-function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, removeRow }: SortableRowProps) {
+function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, removeRow, openDocs }: SortableRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -1082,6 +1085,14 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
             className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B] transition"
           >
             <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => openDocs(row)}
+            title="Documentos exigidos"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B] transition"
+          >
+            <FileText className="h-3.5 w-3.5" />
           </button>
           <button
             type="button"
