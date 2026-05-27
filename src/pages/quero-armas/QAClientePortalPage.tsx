@@ -664,16 +664,45 @@ export default function QAClientePortalPage() {
 
   // Timeline
   const timeline = useMemo(() => {
-    const events: { date: string; label: string; icon: any; color: string }[] = [];
+    const events: { date: string; label: string; icon: any; color: string; sub?: string | null }[] = [];
     vendas.forEach((v: any) => events.push({ date: v.data_cadastro || v.created_at, label: `Serviço contratado — ${formatCurrency(Number(v.valor_a_pagar || 0))}`, icon: CreditCard, color: "hsl(352 60% 30%)" }));
     itens.forEach((it: any) => {
       const servicoLabel = getQAServiceDisplayName({ ...catalogoByServicoId[Number(it.servico_id)], servico_id: it.servico_id, servico_nome: SERVICO_MAP[it.servico_id] }) || "Serviço";
       if (it.data_protocolo) events.push({ date: it.data_protocolo, label: `${servicoLabel} — Protocolado`, icon: FileText, color: "hsl(38 92% 50%)" });
       if (it.data_deferimento) events.push({ date: it.data_deferimento, label: `${servicoLabel} — Deferido`, icon: CheckCircle, color: "hsl(152 60% 42%)" });
     });
+    // BLOCO 5 — eventos do qa_processo_eventos (envios, aprovações, rejeições, etc).
+    // Anexa "Válido até DD/MM/AAAA" quando o evento referencia um documento.
+    const docById = new Map<string, any>(processoDocs.map((d) => [String(d.id), d]));
+    processoEventos.forEach((ev: any) => {
+      const tipo = String(ev.tipo_evento || "").toLowerCase();
+      let icon: any = Activity;
+      let color = "hsl(220 60% 48%)";
+      if (tipo.includes("aprov")) { icon = CheckCircle; color = "hsl(152 60% 42%)"; }
+      else if (tipo.includes("reje") || tipo.includes("inval") || tipo.includes("reprov")) { icon = AlertTriangle; color = "hsl(352 70% 45%)"; }
+      else if (tipo.includes("envio") || tipo.includes("upload")) { icon = Upload; color = "hsl(210 60% 50%)"; }
+      else if (tipo.includes("revis")) { icon = ShieldCheck; color = "hsl(38 92% 50%)"; }
+      const baseLabel = ev.descricao || ev.tipo_evento || "Evento";
+      const doc = ev.documento_id ? docById.get(String(ev.documento_id)) : null;
+      let sub: string | null = null;
+      if (doc) {
+        const v = getValidadeInfo({
+          tipo_documento: doc.tipo_documento,
+          data_emissao: doc.data_emissao,
+          data_validade_efetiva: doc.data_validade_efetiva,
+          data_validade: doc.data_validade,
+        });
+        if (v.label) {
+          sub = v.status === "vencido" ? `${doc.nome_documento || doc.tipo_documento} · vencido em ${v.label}` : `${doc.nome_documento || doc.tipo_documento} · válido até ${v.label}`;
+        } else if (doc.nome_documento) {
+          sub = String(doc.nome_documento);
+        }
+      }
+      events.push({ date: ev.created_at, label: baseLabel, icon, color, sub });
+    });
     events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return events.slice(0, 12);
-  }, [vendas, itens, catalogoByServicoId, SERVICO_MAP]);
+    return events.slice(0, 20);
+  }, [vendas, itens, catalogoByServicoId, SERVICO_MAP, processoEventos, processoDocs]);
 
   const navItems = useMemo(() => [
     { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente" },
