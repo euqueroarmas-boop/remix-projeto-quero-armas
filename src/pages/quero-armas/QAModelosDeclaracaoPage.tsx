@@ -283,6 +283,9 @@ export default function QAModelosDeclaracaoPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button onClick={() => setVisualizarRow(row)} className="qa-btn-outline h-8 px-3 text-[11px] flex items-center gap-1.5">
+                    <Eye className="h-3 w-3" /> VISUALIZAR
+                  </button>
                   <button onClick={() => baixar(row)} className="qa-btn-outline h-8 px-3 text-[11px] flex items-center gap-1.5">
                     <Download className="h-3 w-3" /> BAIXAR
                   </button>
@@ -320,6 +323,15 @@ export default function QAModelosDeclaracaoPage() {
           uso={usoMap[excluirRow.template_key] || []}
           onClose={() => setExcluirRow(null)}
           onSuccess={() => { setExcluirRow(null); carregar(); }}
+        />
+      )}
+      {visualizarRow && (
+        <VisualizarTemplateModal
+          row={visualizarRow}
+          uso={usoMap[visualizarRow.template_key] || []}
+          onClose={() => setVisualizarRow(null)}
+          onBaixar={() => baixar(visualizarRow)}
+          onSubstituir={() => { setSubstituirRow(visualizarRow); setVisualizarRow(null); }}
         />
       )}
     </div>
