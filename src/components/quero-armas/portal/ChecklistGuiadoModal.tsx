@@ -327,6 +327,20 @@ export default function ChecklistGuiadoModal({
     else if (st === "em_revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
     else setFase("resultado_demorando"); // ainda em análise (timeout)
+
+    // ---- Fase 5: sugerir atualização do cadastro com dados extraídos ----
+    const dadosExtraidos = (final as any)?.dados_extraidos_json ?? null;
+    const stOk = st === "aprovado" || st === "em_revisao_humana" || st === "divergente";
+    if (stOk && dadosExtraidos && typeof dadosExtraidos === "object") {
+      const cli = await recarregarClienteDados();
+      if (cli && temSugestoesDeCadastro(cli, dadosExtraidos)) {
+        setSugestao({
+          open: true,
+          dados: dadosExtraidos as Record<string, any>,
+          nomeDoc: docAtivo?.nome_documento ?? null,
+        });
+      }
+    }
   };
 
   const continuarAposResultado = async (opts?: { pularAtual?: boolean }) => {
