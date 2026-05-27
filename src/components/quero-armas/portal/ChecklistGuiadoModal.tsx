@@ -53,6 +53,12 @@ import {
 import { getDocumentStepGroup, slugifyParaArquivo } from "@/lib/quero-armas/documentStepGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  clearDocumentAssistantProgress,
+  loadDocumentAssistantProgress,
+  resolveResumeDocId,
+  saveDocumentAssistantProgress,
+} from "@/lib/quero-armas/documentAssistantProgress";
 
 const MARROM = "#7A1F2B";
 
@@ -143,20 +149,45 @@ export default function ChecklistGuiadoModal({
       setProcessoId(pid);
       setFase("carregando");
       const c = await recarregarCarga(pid);
-      avancarPara(c, pularIds);
+      // Retomada: tenta abrir no último documento onde o cliente parou.
+      const saved = loadDocumentAssistantProgress({ clienteId, processoId: pid });
+      avancarPara(c, pularIds, saved?.currentDocumentId ?? null, saved?.currentDocumentKey ?? null);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [recarregarCarga, pularIds],
   );
 
   // decide a próxima tela a partir da carga atual
-  const avancarPara = (c: CargaProcesso, pular: Set<string>) => {
+  const avancarPara = (
+    c: CargaProcesso,
+    pular: Set<string>,
+    preferDocId: string | null = null,
+    preferDocKey: string | null = null,
+  ) => {
     const fila = construirFilaGuia(c).filter((d) => !pular.has(d.id));
     if (fila.length === 0) {
+      // tudo concluído neste processo — limpa marcador de retomada
+      clearDocumentAssistantProgress({ clienteId, processoId: c.processo.id });
       setFase("concluido");
       setDocAtivoId(null);
     } else {
-      setDocAtivoId(fila[0].id);
+      const resumeId = resolveResumeDocId(
+        fila,
+        preferDocId || preferDocKey
+          ? {
+              clienteId,
+              clienteIdLegado: null,
+              processoId: c.processo.id,
+              vendaId: null,
+              serviceSlug: null,
+              currentDocumentId: preferDocId,
+              currentDocumentKey: preferDocKey,
+              currentIndex: null,
+              updatedAt: "",
+            }
+          : null,
+      );
+      setDocAtivoId(resumeId ?? fila[0].id);
       setResultadoDoc(null);
       setErroAcao(null);
       setFase("item");
@@ -172,6 +203,22 @@ export default function ChecklistGuiadoModal({
     () => (carga?.docs ?? []).find((d) => d.id === docAtivoId) ?? filaAtual[0] ?? null,
     [carga, docAtivoId, filaAtual],
   );
+
+  // Persistência do ponto de retomada — sempre que o cliente avança/recua para
+  // um documento concreto dentro de um processo, gravamos o marcador.
+  useEffect(() => {
+    if (!open) return;
+    if (!processoId || !docAtivo || fase !== "item") return;
+    const idx = filaAtual.findIndex((d) => d.id === docAtivo.id);
+    saveDocumentAssistantProgress(
+      { clienteId, processoId },
+      {
+        currentDocumentId: docAtivo.id,
+        currentDocumentKey: docAtivo.tipo_documento ?? null,
+        currentIndex: idx >= 0 ? idx : null,
+      },
+    );
+  }, [open, clienteId, processoId, docAtivo, fase, filaAtual]);
 
   const prog = useMemo(() => (carga ? progressoGuia(carga) : { total: 0, cumpridos: 0, emRevisao: 0 }), [carga]);
   const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
