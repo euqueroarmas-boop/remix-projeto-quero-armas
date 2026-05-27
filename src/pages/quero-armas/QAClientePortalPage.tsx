@@ -722,15 +722,25 @@ export default function QAClientePortalPage() {
     return events.slice(0, 20);
   }, [vendas, itens, catalogoByServicoId, SERVICO_MAP, processoEventos, processoDocs]);
 
+  // Nova IA do portal (Fase 1): as 6 abas oficiais aparecem primeiro, na ordem
+  // do briefing. Arsenal / Mensagens / Configurações continuam acessíveis como
+  // seções secundárias do sidebar — não foram removidas (zero regressão).
+  // `contratacoes` permanece como chave válida para deep-links legados, mas
+  // não é mais exposta como item de navegação — "Meus processos" cobre o
+  // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente" },
-    { key: "contratacoes" as const, label: "Contratações", icon: BriefcaseBusiness, path: "/area-do-cliente/contratacoes" },
-    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos" },
-    { key: "arsenal" as const, label: "Arsenal", icon: Shield, path: "/area-do-cliente/arsenal" },
-    { key: "mensagens" as const, label: "Mensagens", icon: MessageCircle, path: "/area-do-cliente/mensagens" },
-    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro" },
-    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes" },
+    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente", group: "primary" as const },
+    { key: "pendencias" as const, label: "Pendências", icon: AlertTriangle, path: "/area-do-cliente/pendencias", group: "primary" as const },
+    { key: "processos" as const, label: "Meus processos", icon: BriefcaseBusiness, path: "/area-do-cliente/processos", group: "primary" as const },
+    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro", group: "primary" as const },
+    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: FileStack, path: "/area-do-cliente/contratos", group: "primary" as const },
+    { key: "arsenal" as const, label: "Meu Arsenal", icon: Shield, path: "/area-do-cliente/arsenal", group: "secondary" as const },
+    { key: "mensagens" as const, label: "Suporte", icon: MessageCircle, path: "/area-do-cliente/mensagens", group: "secondary" as const },
+    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
   ], []);
+  const primaryNavItems = useMemo(() => navItems.filter((i) => i.group === "primary"), [navItems]);
+  const secondaryNavItems = useMemo(() => navItems.filter((i) => i.group === "secondary"), [navItems]);
 
   // Sincroniza seção a partir da URL apenas no primeiro mount / quando a rota base muda.
   // Navegação interna do portal NÃO altera URL — apenas estado.
