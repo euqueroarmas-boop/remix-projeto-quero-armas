@@ -808,7 +808,7 @@ export default function QAClientePortalPage() {
   };
 
   const resumoState = useMemo(() => {
-    const cadastroIncompleto = !cliente?.cep || !cliente?.endereco || !cliente?.telefone;
+    const cadastroIncompleto = cadastroEstaIncompleto(cliente);
     const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
     const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
     const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "rejeitado", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
@@ -838,7 +838,7 @@ export default function QAClientePortalPage() {
     } else if (checklistPend) {
       proximaAcao = { titulo: `Enviar ${String(checklistPend.tipo_documento || "documento").replace(/_/g, " ").toUpperCase()}`, descricao: "Documento obrigatório para dar andamento.", icon: FileText, onClick: () => setShowAddDoc(true) };
     } else if (cadastroIncompleto) {
-      proximaAcao = { titulo: "Completar seu cadastro", descricao: "Endereço, telefone e dados básicos faltando.", icon: User, onClick: () => navigate("/cadastro/foto", { state: { cpf: cliente?.cpf || "", returnTo: "/area-do-cliente" } }) };
+      proximaAcao = { titulo: "Completar seu cadastro", descricao: resumoFaltantesCadastro(cliente) || "Dados básicos faltando.", icon: User, onClick: () => setShowCadastroModal(true) };
     } else if (docsHubEmAnalise > 0) {
       proximaAcao = { titulo: "Aguardar análise da equipe", descricao: `${docsHubEmAnalise} documento(s) em validação operacional.`, icon: Clock, onClick: () => goSection("documentos") };
     }
