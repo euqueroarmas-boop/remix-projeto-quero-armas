@@ -105,6 +105,9 @@ export default function ChecklistGuiadoModal({
   const [resultadoDoc, setResultadoDoc] = useState<GuiaDoc | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  // Mostra aviso discreto quando o assistente pulou automaticamente um
+  // documento salvo no progresso (porque ele já está aprovado, em análise, etc).
+  const [avisoRetomada, setAvisoRetomada] = useState<string | null>(null);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
@@ -150,6 +153,7 @@ export default function ChecklistGuiadoModal({
     async (pid: string) => {
       setProcessoId(pid);
       setFase("carregando");
+      setAvisoRetomada(null);
       const c = await recarregarCarga(pid);
       // Retomada: tenta abrir no último documento onde o cliente parou.
       const saved = loadDocumentAssistantProgress({ clienteId, processoId: pid });
@@ -189,6 +193,24 @@ export default function ChecklistGuiadoModal({
             }
           : null,
       );
+      // Se o cliente tinha progresso salvo mas o documento salvo não é mais
+      // acionável (já aprovado / em análise / dispensado), avisamos de forma
+      // discreta que pulamos para o próximo item realmente acionável.
+      if (preferDocId || preferDocKey) {
+        const aindaNaFila =
+          (preferDocId && fila.some((d) => d.id === preferDocId)) ||
+          (preferDocKey &&
+            fila.some(
+              (d) => (d.tipo_documento ?? "").toLowerCase() === preferDocKey.toLowerCase(),
+            ));
+        if (!aindaNaFila) {
+          setAvisoRetomada("Continuamos do próximo item que precisa da sua atenção.");
+        } else {
+          setAvisoRetomada(null);
+        }
+      } else {
+        setAvisoRetomada(null);
+      }
       setDocAtivoId(resumeId ?? fila[0].id);
       setResultadoDoc(null);
       setErroAcao(null);
