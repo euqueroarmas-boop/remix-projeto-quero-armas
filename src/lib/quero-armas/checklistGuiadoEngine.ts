@@ -174,7 +174,10 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
 // Prioridade DENTRO da Etapa 1 (Comprovação de endereço):
 // 0 = documento de identidade (CIN/RG/CNH) — sempre PRIMEIRO
 // 1 = comprovante de endereço (todos os anos)
-// 2 = demais itens da etapa (perguntas-pivot, declarações vinculadas, etc.)
+// 2 = perguntas/declarações vinculadas ao endereço (titularidade, residência atual)
+//     — vêm IMEDIATAMENTE após o comprovante para destravar a análise da IA
+// 3 = demais itens da etapa (ex.: pergunta/declaração de inquérito criminal,
+//     que continuam mapeados na etapa 1 pelo etapaDoTipoGuia legado)
 // As outras etapas (2..5) não são afetadas.
 function prioridadeEtapa1(d: GuiaDoc): number {
   const t = (d.tipo_documento || "").toLowerCase();
@@ -192,7 +195,12 @@ function prioridadeEtapa1(d: GuiaDoc): number {
   if (ehIdentidade) return 0;
   const ehEndereco = t.includes("endereco") || t.includes("residenc");
   if (ehEndereco) return 1;
-  return 2;
+  const ehPerguntaOuDeclaracaoEndereco =
+    t === "pergunta_comprovante_em_nome" ||
+    t === "pergunta_ainda_reside_imovel" ||
+    t === "declaracao_responsavel_imovel";
+  if (ehPerguntaOuDeclaracaoEndereco) return 2;
+  return 3;
 }
 
 // ---------------------------------------------------------------------------
