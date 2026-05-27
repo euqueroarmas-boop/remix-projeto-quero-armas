@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DollarSign, Loader2, Save, Power, PowerOff, Search, Plus, Pencil, Trash2, X, FolderCog, GripVertical } from "lucide-react";
+import { DollarSign, Loader2, Save, Power, PowerOff, Search, Plus, Pencil, Trash2, X, FolderCog, GripVertical, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import QAServicoDocumentosModal from "@/components/quero-armas/admin/QAServicoDocumentosModal";
 
 /* =============================================================================
  * QAPrecosServicosPage — admin de preços do catálogo de contratação.
@@ -46,6 +47,7 @@ interface ServicoRow {
   ativo: boolean;
   display_order: number;
   descricao_curta?: string | null;
+  servico_id?: number | null;
 }
 
 function fmtBRL(v: number | null) {
@@ -158,7 +160,7 @@ export default function QAPrecosServicosPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("qa_servicos_catalogo" as any)
-      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta")
+      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id")
       .order("categoria", { ascending: true })
       .order("display_order", { ascending: true });
     if (error) {
