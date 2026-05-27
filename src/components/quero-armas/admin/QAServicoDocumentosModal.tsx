@@ -608,6 +608,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                         uploadingId={uploadingId}
                         canMoveUp={idx > 0}
                         canMoveDown={idx < merged.length - 1}
+                        templates={templates}
                         onToggleExpand={() => toggleExpand(row.id)}
                         onPatch={(p) => patch(row.id, p)}
                         onSave={() => void saveRow(row)}
