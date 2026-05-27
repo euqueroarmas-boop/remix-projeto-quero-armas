@@ -369,7 +369,11 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   }
   const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => ({
     ...d,
-    _template_ordem: ordemMap.get(String((d as any).tipo_documento ?? "").toLowerCase()) ?? null,
+    // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
+    // depois o catálogo (qa_servicos_documentos.ordem).
+    _template_ordem:
+      (typeof (d as any).ordem === "number" ? (d as any).ordem : null) ??
+      (ordemMap.get(String((d as any).tipo_documento ?? "").toLowerCase()) ?? null),
   }));
 
   return {
