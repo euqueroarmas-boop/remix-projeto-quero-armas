@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
   FileSignature, Plus, Loader2, Upload, Download, RefreshCw, Trash2, AlertTriangle, CheckCircle2,
+  Eye, X, FileText,
 } from "lucide-react";
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import {
@@ -19,6 +20,7 @@ const PLACEHOLDERS_OFICIAIS = [
   "[NOME COMPLETO]", "[NACIONALIDADE]", "[NATURALIDADE]", "[DATA NASCIMENTO]",
   "[PROFISSÃO]", "[ESTADO CIVIL]", "[CPF]", "[RG]", "[EMISSOR]",
   "[ENDEREÇO 1]", "[ENDEREÇO 2]", "[CIDADE]", "[DIA]", "[MÊS]", "[ANO]",
+  "[EXPEDIÇÃO RG]", "[DATA EXPEDIÇÃO RG]", "[UF EMISSOR RG]",
 ];
 
 function normalizeSlug(s: string): string {
@@ -108,6 +110,7 @@ export default function QAModelosDeclaracaoPage() {
   const [showNovo, setShowNovo] = useState(false);
   const [substituirRow, setSubstituirRow] = useState<StorageRow | null>(null);
   const [excluirRow, setExcluirRow] = useState<StorageRow | null>(null);
+  const [visualizarRow, setVisualizarRow] = useState<StorageRow | null>(null);
 
   const loadedRef = useRef(false);
 
