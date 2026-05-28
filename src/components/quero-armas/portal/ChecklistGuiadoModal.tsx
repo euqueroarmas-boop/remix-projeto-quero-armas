@@ -444,8 +444,7 @@ export default function ChecklistGuiadoModal({
   // Fonte de verdade da comprovação de alteração de nome:
   //  (a) `respostas_questionario_json.alteracao_nome.aprovada === true`, OU
   //  (b) existe documento `certidao_alteracao_nome` neste processo já em
-  //      estado aprovado/validado/em_revisao_humana (a equipe pode validar
-  //      manualmente antes de o bloco em respostas ser preenchido).
+  //      estado aprovado/validado (aceito como comprovação efetiva).
   const altNomeBlock =
     ((carga?.processo?.respostas_questionario_json as any)?.alteracao_nome ?? null) as
       | { aprovada?: boolean; nome_anterior?: string | null; nome_atual?: string | null }
@@ -453,7 +452,7 @@ export default function ChecklistGuiadoModal({
   const certidaoAprovadaDoc = (carga?.docs || []).find((d: any) => {
     if (String(d?.tipo_documento || "").toLowerCase() !== "certidao_alteracao_nome") return false;
     const st = String(d?.status || "").toLowerCase();
-    return ["aprovado", "validado", "em_revisao_humana"].includes(st);
+    return ["aprovado", "validado"].includes(st);
   });
   const altNomeJaComprovada = !!altNomeBlock?.aprovada || !!certidaoAprovadaDoc;
   // Nomes aceitos: cadastro + nomes da averbação aprovada. Usado para
@@ -490,7 +489,7 @@ export default function ChecklistGuiadoModal({
       if (!resp.ok) throw new Error(out?.error || "Falha ao iniciar pendência.");
       const statusRet = String(out?.status ?? "").toLowerCase();
       const certidaoJaAprovada =
-        statusRet === "aprovado" || statusRet === "validado" || statusRet === "em_revisao_humana";
+        statusRet === "aprovado" || statusRet === "validado";
       return {
         documentoId: (out?.document_id as string | null | undefined) ?? null,
         status: statusRet,
