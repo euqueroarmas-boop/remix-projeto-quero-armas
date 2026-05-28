@@ -42,6 +42,7 @@ import {
   ProcessoElegivel,
   aguardarValidacaoIAGuia,
   carregarProcessoGuia,
+  calcularResumoProcessoAssistente,
   construirFilaGuia,
   definirCondicaoGuia,
   enviarDocumentoGuia,
@@ -87,6 +88,25 @@ import {
 
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
+
+function getLabelResumoProcessoAssistente(p: ProcessoElegivel): string {
+  if (p.label_resumo && p.label_resumo.trim()) return p.label_resumo;
+  const parts: string[] = [];
+  if ((p.documentos_pendentes_cliente ?? 0) > 0) {
+    const n = p.documentos_pendentes_cliente;
+    parts.push(`${n} documento${n === 1 ? "" : "s"} pendente${n === 1 ? "" : "s"}`);
+  }
+  if ((p.wizards_pendentes ?? 0) > 0) {
+    const n = p.wizards_pendentes;
+    parts.push(`${n} pergunta${n === 1 ? "" : "s"} pendente${n === 1 ? "" : "s"}`);
+  }
+  if ((p.documentos_em_analise ?? p.em_analise ?? 0) > 0) {
+    parts.push(`${p.documentos_em_analise ?? p.em_analise} em análise`);
+  }
+  if (parts.length === 0) parts.push("Tudo em dia");
+  parts.push(`${p.percentual ?? p.pct ?? 0}% pronto`);
+  return parts.join(" · ");
+}
 
 function ehCertidaoAlteracaoNome(doc: Pick<GuiaDoc, "tipo_documento"> | null | undefined): boolean {
   return String(doc?.tipo_documento || "").toLowerCase() === TIPO_CERTIDAO_ALTERACAO_NOME;
@@ -177,6 +197,17 @@ export default function ChecklistGuiadoModal({
     setErroAcao(null);
     try {
       const lista = await listarProcessosElegiveisGuia(clienteId);
+      if (import.meta.env.DEV) {
+        lista.forEach((p) => {
+          console.debug("[assistente-card-resumo]", {
+            processo: p.servico_nome,
+            pendentesAntigo: p.pendentes,
+            documentos_pendentes_cliente: p.documentos_pendentes_cliente,
+            wizards_pendentes: p.wizards_pendentes,
+            label_resumo: p.label_resumo,
+          });
+        });
+      }
       setProcessos(lista);
       const alvo = processoIdInicial && lista.some((p) => p.id === processoIdInicial)
         ? processoIdInicial
@@ -284,6 +315,11 @@ export default function ChecklistGuiadoModal({
       setResultadoDoc(null);
       setErroAcao(null);
       setAvisoIrParaCertidao(null);
+      const primeiroDoc = fila.find((d) => d.id === (resumeId ?? fila[0].id)) ?? fila[0];
+      const cfg = wizardPendentePara(primeiroDoc, clienteDados, c.processo);
+      if (cfg && tipoItemGuia(primeiroDoc) === "documento") {
+        setWizardPre({ open: true, doc: primeiroDoc, cfg, acaoPendente: { tipo: "continuar" } });
+      }
       setFase("item");
     }
   };
@@ -411,13 +447,12 @@ export default function ChecklistGuiadoModal({
   };
 
   const prog = useMemo(() => (carga ? progressoGuia(carga) : { total: 0, cumpridos: 0, emRevisao: 0 }), [carga]);
-  const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
-  // "Pendências restantes" no topo deve usar EXATAMENTE o mesmo universo dos
-  // cards de seleção (= construirFilaGuia.length). Caso contrário, itens em
-  // análise / em revisão humana inflam o número e ficamos com discrepância
-  // ("18 pendentes" no topo vs "10 pendentes" no card).
-  const pendentesAcao = filaAtual.length;
-  const emAnalise = Math.max(0, prog.total - prog.cumpridos - pendentesAcao);
+  const resumoAtual = useMemo(() => (carga ? calcularResumoProcessoAssistente(carga, null) : null), [carga]);
+  const pct = resumoAtual?.percentual ?? (prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0);
+  const pendentesAcao = resumoAtual
+    ? resumoAtual.documentosPendentesCliente + resumoAtual.wizardsPendentes
+    : filaAtual.length;
+  const emAnalise = resumoAtual?.documentosEmAnalise ?? Math.max(0, prog.total - prog.cumpridos - pendentesAcao);
   const processoAtual = useMemo(
     () => processos.find((p) => p.id === processoId) ?? null,
     [processos, processoId],
@@ -903,7 +938,7 @@ export default function ChecklistGuiadoModal({
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
   // ----- Wizard de Perguntas vinculado a uma exigência (regra_validacao.wizard_pre_documento) -----
-  type WizardPreAction = "anexar" | "baixar_template" | "reaproveitar";
+  type WizardPreAction = "continuar" | "anexar" | "baixar_template" | "reaproveitar";
   const [wizardPre, setWizardPre] = useState<{
     open: boolean;
     doc: GuiaDoc | null;
@@ -978,6 +1013,13 @@ export default function ChecklistGuiadoModal({
     fecharWizardPre();
     await recarregarClienteDados();
     if (!doc || !acaoPendente) return;
+    if (carga?.processo.id) {
+      const c = await recarregarCarga(carga.processo.id);
+      if (acaoPendente.tipo === "continuar") {
+        avancarPara(c, pularIds, doc.id, null);
+        return;
+      }
+    }
     // Reabre a ação que estava bloqueada.
     if (acaoPendente.tipo === "baixar_template" && typeof acaoPendente.payload === "string") {
       setBaixandoTemplate(true);
@@ -1118,31 +1160,12 @@ export default function ChecklistGuiadoModal({
                         <FileText className="h-3.5 w-3.5" /> Processo
                       </div>
                       <div className="mt-0.5 truncate text-sm font-bold uppercase text-slate-800">{p.servico_nome}</div>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-bold uppercase tracking-wider">
-                        {(p.documentos_pendentes_cliente ?? 0) > 0 && (
-                          <span style={{ color: MARROM }}>
-                            {p.documentos_pendentes_cliente} documento{p.documentos_pendentes_cliente === 1 ? "" : "s"} pendente{p.documentos_pendentes_cliente === 1 ? "" : "s"}
-                          </span>
-                        )}
-                        {(p.wizards_pendentes ?? 0) > 0 && (
-                          <span style={{ color: MARROM }}>
-                            {(p.documentos_pendentes_cliente ?? 0) > 0 ? "· " : ""}
-                            {p.wizards_pendentes} pergunta{p.wizards_pendentes === 1 ? "" : "s"} pendente{p.wizards_pendentes === 1 ? "" : "s"}
-                          </span>
-                        )}
-                        {(p.documentos_pendentes_cliente ?? 0) === 0 && (p.wizards_pendentes ?? 0) === 0 && (
-                          <span style={{ color: "#64748B" }}>Tudo em dia</span>
-                        )}
-                        {p.em_analise > 0 && (
-                          <span className="text-slate-500">· {p.em_analise} em análise</span>
-                        )}
-                        {p.total > 0 && (
-                          <span className="text-slate-500">· {p.pct}% pronto</span>
-                        )}
+                      <div className="mt-1 text-[11px] font-bold uppercase tracking-wider" style={{ color: (p.documentos_pendentes_cliente ?? 0) > 0 || (p.wizards_pendentes ?? 0) > 0 ? MARROM : "#64748B" }}>
+                        {getLabelResumoProcessoAssistente(p)}
                       </div>
                       {p.total > 0 && (
                         <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.pct}%`, background: MARROM }} />
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.percentual ?? p.pct}%`, background: MARROM }} />
                         </div>
                       )}
                     </div>

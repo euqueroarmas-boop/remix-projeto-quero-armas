@@ -493,6 +493,21 @@ function campoEhNome(campo: any): boolean {
   return ["nome", "nome_titular", "titular", "nome_completo"].includes(String(campo || "").toLowerCase());
 }
 
+function ehDocumentoIdentidadeChecklist(tipo: any): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return ["rg", "cin", "cnh", "rg_com_cpf", "documento_identidade", "identidade"].includes(t) ||
+    t.includes("identidade") || t.includes("identificacao") || t.includes("identificação");
+}
+
+function iaDetectouCin(parsed: any): boolean {
+  const cx = parsed?.campos_extraidos || {};
+  const cc = parsed?.campos_complementares || {};
+  const raw = [parsed?.tipo_documento_detectado, cx?.tipo_documento_detectado, cx?.tipo_documento, cc?.tipo_documento_detectado]
+    .map((v) => String(v || "").toLowerCase())
+    .join(" ");
+  return raw.includes("cin") || raw.includes("carteira de identidade nacional") || raw.includes("gov.br");
+}
+
 async function reconciliarDivergenciasNomeAprovada(
   supabase: any,
   processoId: string,
@@ -851,15 +866,25 @@ Deno.serve(async (req) => {
     }
 
     // ===== FASE 2: regras de identificação (RG/CIN/CNH) =====
-    if (["rg", "cin", "cnh"].includes(doc.tipo_documento)) {
+    if (ehDocumentoIdentidadeChecklist(doc.tipo_documento)) {
       const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const cinDetectada = doc.tipo_documento === "cin" || iaDetectouCin(parsed);
+      if (cinDetectada) {
+        parsed.tipo_correto = true;
+        cx.tipo_documento_detectado = "cin";
+        if (!cx.rg && cx.cpf) cx.rg = cx.cpf;
+        if (!cx.numero_documento && cx.cpf) cx.numero_documento = cx.cpf;
+        if (typeof parsed.motivo_rejeicao === "string" && /tipo|rg|registro geral|cpf/i.test(parsed.motivo_rejeicao)) {
+          parsed.motivo_rejeicao = null;
+        }
+      }
       const cpfDigits = String(cx.cpf ?? cliente?.cpf ?? "").replace(/\D+/g, "");
       const numDoc = String(cx.numero_documento ?? cx.rg ?? "").replace(/\D+/g, "");
       // CIN: numero_documento == cpf é VÁLIDO. Remove qualquer divergência derivada disso.
-      if (doc.tipo_documento === "cin" && cpfDigits && numDoc && cpfDigits === numDoc) {
+      if (cinDetectada && cpfDigits && numDoc && cpfDigits === numDoc) {
         parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
           const c = String(d?.campo || "").toLowerCase();
-          return !["rg", "numero_documento"].includes(c);
+          return !["rg", "numero_documento", "ambiguidade_cpf_rg"].includes(c);
         });
       }
       // RG: rg == cpf gera apenas observação, não bloqueia

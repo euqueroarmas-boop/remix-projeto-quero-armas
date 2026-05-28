@@ -112,9 +112,8 @@ export function isWizardCompleto(
  * Devolve a config quando o wizard está pendente para este documento; null
  * quando não há wizard vinculado, está desabilitado ou já foi resolvido.
  *
- * Ordem de verificação:
- *   1. wizard_pre_documento gravado NESTE processo (fonte primária).
- *   2. Fallback: dados consolidados em qa_clientes (legado).
+ * Para exigências documentais dentro de processo, a fonte é o PRÓPRIO processo.
+ * O fallback em qa_clientes só vale para chamadas legadas sem processo.
  */
 export function wizardPendentePara(
   doc: { regra_validacao?: unknown } | null | undefined,
@@ -124,7 +123,9 @@ export function wizardPendentePara(
   if (!doc) return null;
   const cfg = getWizardPreDocumento(doc.regra_validacao);
   if (!cfg || !cfg.enabled || !cfg.bloquear_documento_ate_responder) return null;
-  if (isWizardCompletoNoProcesso(cfg.wizard_key, processo ?? null)) return null;
+  if (processo) {
+    return isWizardCompletoNoProcesso(cfg.wizard_key, processo) ? null : cfg;
+  }
   if (isWizardCompleto(cfg.wizard_key, cliente)) return null;
   return cfg;
 }
