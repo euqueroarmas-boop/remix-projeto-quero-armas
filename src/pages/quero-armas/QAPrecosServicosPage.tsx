@@ -924,10 +924,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 interface CategoriaSectionProps {
   categoria: string;
   itens: ServicoRow[];
-  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>;
+  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean; exige_acervo?: boolean | null }>;
   savingId: string | null;
   isDirty: (row: ServicoRow) => boolean;
-  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) => void;
+  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean; exige_acervo: boolean | null }>) => void;
   save: (row: ServicoRow) => void;
   openEdit: (row: ServicoRow) => void;
   removeRow: (row: ServicoRow) => void;
@@ -953,6 +953,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
               <th className="px-3 py-2 font-semibold">SERVIÇO</th>
               <th className="px-3 py-2 font-semibold w-40">PREÇO (R$)</th>
               <th className="px-3 py-2 font-semibold w-28 text-center">RECORRENTE</th>
+              <th className="px-3 py-2 font-semibold w-36 text-center">TRILHA</th>
               <th className="px-3 py-2 font-semibold w-24 text-center">ATIVO</th>
               <th className="px-3 py-2 font-semibold w-52 text-right">AÇÕES</th>
             </tr>
@@ -961,7 +962,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
             <tbody>
               {itens.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-[10px] uppercase tracking-wider text-slate-400">
+                  <td colSpan={7} className="px-3 py-6 text-center text-[10px] uppercase tracking-wider text-slate-400">
                     ARRASTE UM SERVIÇO PARA CÁ
                   </td>
                 </tr>
