@@ -371,6 +371,12 @@ export default function ChecklistGuiadoModal({
     if (divs.length === 0) return false;
     return divs.some((x) => NOME_CAMPOS.includes(String(x?.campo || "").toLowerCase()));
   };
+  const divergeMotivoMencionaNome = (d: GuiaDoc | null): boolean => {
+    if (!d) return false;
+    const motivo = String((d as any).motivo_rejeicao || "").toLowerCase();
+    if (!motivo) return false;
+    return /\bnome\b|\btitular\b/i.test(motivo);
+  };
   const altNomeJaComprovada = !!(
     carga?.processo?.respostas_questionario_json as any
   )?.alteracao_nome?.aprovada;
@@ -724,7 +730,7 @@ export default function ChecklistGuiadoModal({
                     <p className="whitespace-pre-line leading-relaxed">{orientacoesIA(resultadoDoc)}</p>
                   </div>
                 )}
-                {divergeApenasPorNome(resultadoDoc) && !altNomeJaComprovada && (
+                {(divergeApenasPorNome(resultadoDoc) || divergeMotivoMencionaNome(resultadoDoc)) && !altNomeJaComprovada && (
                   <div className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left">
                     <div className="text-[12px] font-bold uppercase tracking-wider text-slate-700">
                       Encontramos diferença no nome
