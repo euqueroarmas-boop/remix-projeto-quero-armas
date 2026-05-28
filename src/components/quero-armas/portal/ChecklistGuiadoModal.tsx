@@ -72,6 +72,11 @@ import DivergenciasResolverPanel, {
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 import { isDocDeArma } from "@/lib/quero-armas/documentosDeArma";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
+import {
+  buscarCandidatosReaproveitamento,
+  aplicarReaproveitamento,
+  type CandidatoReaproveitamento,
+} from "@/lib/quero-armas/reaproveitamentoCandidatos";
 
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
@@ -153,6 +158,11 @@ export default function ChecklistGuiadoModal({
   const [armaSelecionada, setArmaSelecionada] = useState<string | null>(null);
   const [armasCliente, setArmasCliente] = useState<ArmaCli[]>([]);
   const [cadastroArmaAberto, setCadastroArmaAberto] = useState(false);
+
+  // ----- Bloco 12 — sugestões de reaproveitamento p/ o doc ativo -----
+  const [candidatosReuso, setCandidatosReuso] = useState<CandidatoReaproveitamento[]>([]);
+  const [reusoCarregando, setReusoCarregando] = useState(false);
+  const [reusoAplicando, setReusoAplicando] = useState<string | null>(null);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
