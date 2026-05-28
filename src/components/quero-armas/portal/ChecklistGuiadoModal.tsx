@@ -342,6 +342,8 @@ export default function ChecklistGuiadoModal({
           open: true,
           dados: dadosExtraidos as Record<string, any>,
           nomeDoc: docAtivo?.nome_documento ?? null,
+          filtroCampos: null,
+          titulo: null,
         });
       }
     }
