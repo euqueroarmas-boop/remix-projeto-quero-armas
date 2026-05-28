@@ -11,6 +11,10 @@
 // continuam contando como manual.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import {
+  gravarAlteracaoNomeNoProcesso,
+  reconciliarDivergenciasNomeAprovada,
+} from "../_shared/reconciliarNomeAprovada.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,7 +43,7 @@ Deno.serve(async (req) => {
 
     const { data: doc, error: docErr } = await supabase
       .from("qa_processo_documentos")
-      .select("id, processo_id, cliente_id, tipo_documento, nome_documento, status, arquivo_storage_key, usado_como_modelo")
+      .select("id, processo_id, cliente_id, tipo_documento, nome_documento, status, arquivo_storage_key, usado_como_modelo, campos_complementares_json")
       .eq("id", documento_id)
       .maybeSingle();
     if (docErr || !doc) return json({ error: "Documento não encontrado" }, 404);
@@ -53,6 +57,48 @@ Deno.serve(async (req) => {
         dados_json: { ...dados, ator_user_id: guard.userId },
         ator: "equipe",
       }).then(() => {}, () => {});
+    };
+
+    // Se a equipe acaba de aprovar uma certidão de alteração de nome, fecha o
+    // ciclo: grava o bloco em qa_processos.respostas_questionario_json e
+    // destrava a divergência de nome dos demais documentos do mesmo processo.
+    const fecharCicloAlteracaoNomeSeAplicavel = async () => {
+      if (doc.tipo_documento !== "certidao_alteracao_nome") return;
+      const cx =
+        doc.campos_complementares_json &&
+        typeof doc.campos_complementares_json === "object"
+          ? (doc.campos_complementares_json as Record<string, any>)
+          : {};
+      const nomeAnterior = cx.nome_anterior ? String(cx.nome_anterior).trim() : null;
+      const nomeAtual = cx.nome_atual ? String(cx.nome_atual).trim() : null;
+      try {
+        await gravarAlteracaoNomeNoProcesso(supabase, doc.processo_id, {
+          aprovada: true,
+          nome_anterior: nomeAnterior,
+          nome_atual: nomeAtual,
+          certidaoDocumentoId: doc.id,
+          tipo_certidao: cx.tipo_certidao ?? null,
+          data_averbacao: cx.data_averbacao ?? null,
+          cartorio_registro: cx.cartorio_registro ?? null,
+          origem: "equipe",
+        });
+        const nomesAceitos = [nomeAnterior, nomeAtual].filter(Boolean) as string[];
+        if (nomesAceitos.length > 0) {
+          await reconciliarDivergenciasNomeAprovada(
+            supabase,
+            doc.processo_id,
+            nomesAceitos,
+            doc.id,
+          );
+          await evento(
+            "alteracao_nome_aprovada",
+            "Certidão de alteração de nome aprovada pela equipe. Divergências de nome dos demais documentos foram reconciliadas.",
+            { nome_anterior: nomeAnterior, nome_atual: nomeAtual },
+          );
+        }
+      } catch (e) {
+        console.warn("[qa-doc-acao-equipe] fechar ciclo alteração de nome falhou:", e);
+      }
     };
 
     // Auditoria universal de status (qa_status_eventos). Não bloqueante.
@@ -101,6 +147,7 @@ Deno.serve(async (req) => {
         }).eq("id", documento_id);
         await evento("aprovacao_manual", `Equipe aprovou manualmente "${doc.nome_documento}".`);
         await auditarStatus("aprovado", null, "aprovar");
+        await fecharCicloAlteracaoNomeSeAplicavel();
         return json({ ok: true });
       }
 
@@ -149,6 +196,7 @@ Deno.serve(async (req) => {
           await evento("aprovacao_manual", `Equipe aprovou "${doc.nome_documento}" (encadeado a modelo).`);
           await auditarStatus("aprovado", observacoes ?? null, "aprovar_e_modelar");
         }
+        await fecharCicloAlteracaoNomeSeAplicavel();
         // 2) Encadeia a função de promoção a modelo (passando o JWT da equipe)
         const auth = req.headers.get("Authorization") || "";
         const r = await fetch(`${url}/functions/v1/qa-modelo-aprovado-criar`, {
