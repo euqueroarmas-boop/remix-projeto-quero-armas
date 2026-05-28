@@ -6994,6 +6994,7 @@ export type Database = {
       qa_processo_documentos: {
         Row: {
           ano_competencia: number | null
+          arma_id: string | null
           arquivo_storage_key: string | null
           arquivo_url: string | null
           assinatura_autoridade: string | null
@@ -7056,6 +7057,7 @@ export type Database = {
         }
         Insert: {
           ano_competencia?: number | null
+          arma_id?: string | null
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
           assinatura_autoridade?: string | null
@@ -7118,6 +7120,7 @@ export type Database = {
         }
         Update: {
           ano_competencia?: number | null
+          arma_id?: string | null
           arquivo_storage_key?: string | null
           arquivo_url?: string | null
           assinatura_autoridade?: string | null
