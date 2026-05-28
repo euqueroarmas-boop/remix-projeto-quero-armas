@@ -870,6 +870,9 @@ export default function ChecklistGuiadoModal({
                   onAtualizarCadastroComGrupo={(grupo) => abrirSugestaoCadastroPorGrupo(grupo)}
                   onMarcarComprovanteAntigo={handleComprovanteAntigo}
                   onReenviarDocumento={reenviarAtual}
+                  onEditarCadastroManual={(grupo) =>
+                    abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
+                  }
                 />
                 {altNomeJaComprovada && (
                   <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-left text-[12px] text-emerald-900">
