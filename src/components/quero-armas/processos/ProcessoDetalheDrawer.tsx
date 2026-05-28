@@ -2098,6 +2098,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">
                   DOCUMENTOS DO PROCESSO ({docs.length})
                 </h4>
+                {/* Bloco 11 — resumo das 3 caixas (aditivo, não muda a listagem abaixo) */}
+                <div className="mb-3">
+                  <DocsTresCaixasPanel docs={docs} />
+                </div>
                 {docs.length === 0 ? (
                   <div className="text-[11px] uppercase text-slate-400">NENHUM DOCUMENTO REGISTRADO.</div>
                 ) : (
