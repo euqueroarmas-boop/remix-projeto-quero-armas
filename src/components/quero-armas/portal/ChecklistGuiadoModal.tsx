@@ -263,6 +263,16 @@ export default function ChecklistGuiadoModal({
 
   const prog = useMemo(() => (carga ? progressoGuia(carga) : { total: 0, cumpridos: 0, emRevisao: 0 }), [carga]);
   const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
+  // "Pendências restantes" no topo deve usar EXATAMENTE o mesmo universo dos
+  // cards de seleção (= construirFilaGuia.length). Caso contrário, itens em
+  // análise / em revisão humana inflam o número e ficamos com discrepância
+  // ("18 pendentes" no topo vs "10 pendentes" no card).
+  const pendentesAcao = filaAtual.length;
+  const emAnalise = Math.max(0, prog.total - prog.cumpridos - pendentesAcao);
+  const processoAtual = useMemo(
+    () => processos.find((p) => p.id === processoId) ?? null,
+    [processos, processoId],
+  );
 
   // ----- ações -----
   const handleResponderPergunta = async (valor: string) => {
