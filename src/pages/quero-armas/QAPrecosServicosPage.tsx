@@ -48,6 +48,7 @@ interface ServicoRow {
   display_order: number;
   descricao_curta?: string | null;
   servico_id?: number | null;
+  exige_acervo: boolean | null;
 }
 
 function fmtBRL(v: number | null) {
@@ -144,7 +145,7 @@ export default function QAPrecosServicosPage() {
   const [rows, setRows] = useState<ServicoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [edits, setEdits] = useState<Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>>({});
+  const [edits, setEdits] = useState<Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean; exige_acervo?: boolean | null }>>({});
   const [filter, setFilter] = useState("");
   const [form, setForm] = useState<FormState | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -161,7 +162,7 @@ export default function QAPrecosServicosPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("qa_servicos_catalogo" as any)
-      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id")
+      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id, exige_acervo")
       .order("categoria", { ascending: true })
       .order("display_order", { ascending: true });
     if (error) {
@@ -220,7 +221,7 @@ export default function QAPrecosServicosPage() {
     return Array.from(map.entries());
   }, [rows, filter]);
 
-  function setEdit(id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) {
+  function setEdit(id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean; exige_acervo: boolean | null }>) {
     setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
@@ -233,6 +234,7 @@ export default function QAPrecosServicosPage() {
     }
     if (e.recorrente !== undefined && e.recorrente !== row.recorrente) return true;
     if (e.ativo !== undefined && e.ativo !== row.ativo) return true;
+    if (e.exige_acervo !== undefined && e.exige_acervo !== row.exige_acervo) return true;
     return false;
   }
 
@@ -242,6 +244,7 @@ export default function QAPrecosServicosPage() {
     if (e.preco !== undefined) payload.preco = parseBRL(e.preco);
     if (e.recorrente !== undefined) payload.recorrente = e.recorrente;
     if (e.ativo !== undefined) payload.ativo = e.ativo;
+    if (e.exige_acervo !== undefined) payload.exige_acervo = e.exige_acervo;
     if (Object.keys(payload).length === 0) return;
 
     setSavingId(row.id);
@@ -263,6 +266,8 @@ export default function QAPrecosServicosPage() {
               preco: payload.preco !== undefined ? (payload.preco as number | null) : r.preco,
               recorrente: payload.recorrente !== undefined ? (payload.recorrente as boolean) : r.recorrente,
               ativo: payload.ativo !== undefined ? (payload.ativo as boolean) : r.ativo,
+              exige_acervo:
+                payload.exige_acervo !== undefined ? (payload.exige_acervo as boolean | null) : r.exige_acervo,
             }
           : r,
       ),
@@ -919,10 +924,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 interface CategoriaSectionProps {
   categoria: string;
   itens: ServicoRow[];
-  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>;
+  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean; exige_acervo?: boolean | null }>;
   savingId: string | null;
   isDirty: (row: ServicoRow) => boolean;
-  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) => void;
+  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean; exige_acervo: boolean | null }>) => void;
   save: (row: ServicoRow) => void;
   openEdit: (row: ServicoRow) => void;
   removeRow: (row: ServicoRow) => void;
@@ -948,6 +953,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
               <th className="px-3 py-2 font-semibold">SERVIÇO</th>
               <th className="px-3 py-2 font-semibold w-40">PREÇO (R$)</th>
               <th className="px-3 py-2 font-semibold w-28 text-center">RECORRENTE</th>
+              <th className="px-3 py-2 font-semibold w-36 text-center">TRILHA</th>
               <th className="px-3 py-2 font-semibold w-24 text-center">ATIVO</th>
               <th className="px-3 py-2 font-semibold w-52 text-right">AÇÕES</th>
             </tr>
@@ -956,7 +962,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
             <tbody>
               {itens.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-6 text-center text-[10px] uppercase tracking-wider text-slate-400">
+                  <td colSpan={7} className="px-3 py-6 text-center text-[10px] uppercase tracking-wider text-slate-400">
                     ARRASTE UM SERVIÇO PARA CÁ
                   </td>
                 </tr>
@@ -986,10 +992,10 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
 
 interface SortableRowProps {
   row: ServicoRow;
-  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>;
+  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean; exige_acervo?: boolean | null }>;
   savingId: string | null;
   isDirty: (row: ServicoRow) => boolean;
-  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) => void;
+  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean; exige_acervo: boolean | null }>) => void;
   save: (row: ServicoRow) => void;
   openEdit: (row: ServicoRow) => void;
   removeRow: (row: ServicoRow) => void;
@@ -1008,6 +1014,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
     e.preco !== undefined ? e.preco : row.preco != null ? String(row.preco).replace(".", ",") : "";
   const recorrente = e.recorrente ?? row.recorrente;
   const ativo = e.ativo ?? row.ativo;
+  const exigeAcervo: boolean | null = e.exige_acervo !== undefined ? e.exige_acervo : row.exige_acervo;
   const dirty = isDirty(row);
   const saving = savingId === row.id;
   return (
@@ -1052,6 +1059,23 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
         >
           {recorrente ? "MENSAL" : "ÚNICA"}
         </button>
+      </td>
+      <td className="px-3 py-2.5 text-center">
+        <select
+          value={exigeAcervo === null ? "ambos" : exigeAcervo ? "continuidade" : "inicial"}
+          onChange={(ev) => {
+            const v = ev.target.value;
+            setEdit(row.id, {
+              exige_acervo: v === "ambos" ? null : v === "continuidade",
+            });
+          }}
+          title="Trilha: Inicial (sem acervo) · Continuidade (já tem arma) · Ambos"
+          className="h-7 w-full px-1.5 rounded-md border border-slate-200 bg-white text-[10px] font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+        >
+          <option value="inicial">INICIAL</option>
+          <option value="continuidade">CONTINUIDADE</option>
+          <option value="ambos">AMBOS</option>
+        </select>
       </td>
       <td className="px-3 py-2.5 text-center">
         <button
