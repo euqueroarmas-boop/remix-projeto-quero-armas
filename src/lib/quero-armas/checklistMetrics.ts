@@ -153,3 +153,34 @@ export function ordenarDocumentosChecklist<T extends ChecklistOrderableDoc>(docs
     return String(a.nome_documento ?? "").localeCompare(String(b.nome_documento ?? ""));
   });
 }
+
+// ---------------------------------------------------------------------------
+// Bloco 14 — UX operacional do Admin no checklist.
+// Retorna o próximo documento que ainda exige ação da Equipe Quero Armas,
+// começando pelo item logo após `itemAtualId` na ordem canônica. Se não houver
+// próximo na sequência, volta para o primeiro pendente da lista (wrap-around).
+// Retorna null quando nenhum item está pendente.
+// ---------------------------------------------------------------------------
+export interface ProximoItemDoc extends ChecklistOrderableDoc {
+  id: string;
+  status: string | null;
+}
+
+export function getProximoItemAcionavelAdmin<T extends ProximoItemDoc>(
+  docs: T[],
+  itemAtualId: string | null | undefined,
+): T | null {
+  const ordenados = ordenarDocumentosChecklist(docs);
+  const pendentes = ordenados.filter((d) => isChecklistPendente(d.status));
+  if (pendentes.length === 0) return null;
+  if (!itemAtualId) return pendentes[0];
+  const idx = ordenados.findIndex((d) => d.id === itemAtualId);
+  if (idx >= 0) {
+    const seguinte = ordenados
+      .slice(idx + 1)
+      .find((d) => isChecklistPendente(d.status));
+    if (seguinte) return seguinte;
+  }
+  // Sem próximo após o item atual — volta para o primeiro pendente (wrap).
+  return pendentes[0];
+}

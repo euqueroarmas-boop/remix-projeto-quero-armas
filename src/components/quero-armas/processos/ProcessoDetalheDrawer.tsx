@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
-import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist } from "@/lib/quero-armas/checklistMetrics";
+import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist, getProximoItemAcionavelAdmin } from "@/lib/quero-armas/checklistMetrics";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
@@ -135,9 +135,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [salvandoAcao, setSalvandoAcao] = useState(false);
   const [reprocessandoId, setReprocessandoId] = useState<string | null>(null);
   const [validandoAssinaturaId, setValidandoAssinaturaId] = useState<string | null>(null);
+  // Bloco 14 — UX operacional: destaque temporário do próximo item pendente
+  // após uma ação da equipe. O drawer NUNCA fecha sozinho; só destacamos e
+  // rolamos suavemente até o próximo item para a equipe operar em sequência.
+  const [highlightedDocId, setHighlightedDocId] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const viewer = useDocumentoViewer();
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async (): Promise<DocRow[]> => {
     setLoading(true);
     try {
       const { data: p, error: pErr } = await supabase
@@ -156,7 +161,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       if (dErr) throw dErr;
 
       setProcesso({ ...p, cliente: cli ?? undefined } as unknown as ProcessoFull);
-      setDocs((dList ?? []) as DocRow[]);
+      const docsAtualizados = (dList ?? []) as DocRow[];
+      setDocs(docsAtualizados);
       setEventos((evs ?? []) as Evento[]);
 
       // Carrega documentos do CADASTRO PÚBLICO do cliente (selfie / identidade /
@@ -189,14 +195,40 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         console.warn("[drawer] falha ao carregar cadastro público:", e);
         setCadastroPublico(null);
       }
+      return docsAtualizados;
     } catch (e: any) {
       toast.error("Erro ao carregar processo: " + (e?.message ?? "desconhecido"));
+      return [];
     } finally {
       setLoading(false);
     }
   }, [processoId]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  // Bloco 14 — destaca o próximo item pendente da equipe após uma ação,
+  // rolando suavemente até ele dentro do container do drawer. O destaque
+  // some sozinho após 2s; o drawer permanece aberto e a aba ativa preservada.
+  const destacarProximoItem = useCallback((novosDocs: DocRow[], itemAtualId: string | null) => {
+    const proximo = getProximoItemAcionavelAdmin(novosDocs, itemAtualId);
+    if (!proximo) {
+      setHighlightedDocId(null);
+      return;
+    }
+    setHighlightedDocId(proximo.id);
+    // Aguarda o próximo paint para garantir que o card já está no DOM.
+    requestAnimationFrame(() => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+      const el = container.querySelector<HTMLElement>(`[data-doc-id="${proximo.id}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    });
+    setTimeout(() => {
+      setHighlightedDocId((current) => (current === proximo.id ? null : current));
+    }, 2000);
+  }, []);
 
   const handleFileSelect = (docId: string) => {
     setPendingDocId(docId);
@@ -387,8 +419,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           body: { processo_id: processoId, documento_id: docId, evento: eventoEmail, motivo },
         }).catch((e) => console.warn("notificação:", e));
       }
-      toast.success("Status do documento atualizado.");
-      await carregar();
+      const toastMsg =
+        novoStatus === "aprovado" ? "Documento aprovado." :
+        novoStatus === "invalido" ? "Documento rejeitado." :
+        novoStatus === "divergente" ? "Documento marcado como divergente." :
+        "Checklist atualizado.";
+      toast.success(toastMsg);
+      const novosDocs = await carregar();
+      destacarProximoItem(novosDocs, docId);
       onUpdated?.();
     } catch (e: any) {
       toast.error("Erro: " + (e?.message ?? "desconhecido"));
@@ -542,8 +580,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         descricao: `Equipe Quero Armas reprocessou validação de ${doc.nome_documento}.`,
         ator: "equipe_operacional",
       });
-      toast.success("Documento reprocessado.");
-      await carregar();
+      toast.success("Documento enviado para reprocessamento.");
+      const novosDocs = await carregar();
+      destacarProximoItem(novosDocs, doc.id);
       onUpdated?.();
     } catch (e: any) {
       toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
@@ -989,7 +1028,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         dados_json: { etapa_anterior: etapaLiberada, etapa_nova: proximaEtapa, modo: "manual" },
       });
       toast.success(`ETAPA "${ETAPA_NOMES[proximaEtapa]}" LIBERADA AO CLIENTE.`);
-      await carregar();
+      const novosDocs = await carregar();
+      destacarProximoItem(novosDocs, null);
       onUpdated?.();
     } catch (e: any) {
       toast.error("Erro ao liberar etapa: " + (e?.message ?? "desconhecido"));
@@ -1184,7 +1224,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5">
           {loading ? (
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
@@ -1295,8 +1335,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       ? { label: "RESPONDIDA", color: "#7c3aed" }
                       : { label: "AGUARDANDO SUA RESPOSTA", color: "#d97706" })
                   : null;
+                const isHighlighted = highlightedDocId === doc.id;
                 return (
-                  <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div
+                    key={doc.id}
+                    data-doc-id={doc.id}
+                    className={`bg-white border rounded-xl overflow-hidden transition-shadow duration-300 ${
+                      isHighlighted
+                        ? "border-amber-400 ring-2 ring-amber-300 shadow-lg"
+                        : "border-slate-200"
+                    }`}
+                  >
+                    {isHighlighted && (
+                      <div className="px-4 py-1.5 bg-amber-100 border-b border-amber-200 text-[10px] uppercase tracking-[0.14em] font-bold text-amber-800 inline-flex items-center gap-1.5">
+                        <ChevronRight className="h-3 w-3" /> PRÓXIMO ITEM PARA REVISAR
+                      </div>
+                    )}
                     <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -1981,6 +2035,28 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         <div className="space-y-3">{docsOutros.map(renderDoc)}</div>
                       </>
                     )}
+
+                    {/* Bloco 14 — Estado vazio operacional: nada pendente, em análise
+                        ou desconhecido. Sinaliza para a equipe que o checklist está
+                        em dia neste momento (cumpridos seguem acessíveis na seção
+                        arquivada abaixo). O drawer continua aberto. */}
+                    {docsPendencias.length === 0 &&
+                      docsAnalise.length === 0 &&
+                      docsOutros.length === 0 &&
+                      totalExigencias > 0 && (
+                        <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/70 px-4 py-5 flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <div className="text-[12px] uppercase tracking-[0.14em] font-bold text-emerald-800">
+                              NENHUMA PENDÊNCIA DOCUMENTAL NO MOMENTO.
+                            </div>
+                            <p className="text-[11px] text-emerald-800/80 mt-1 leading-relaxed normal-case">
+                              Checklist concluído por enquanto. Você pode liberar a próxima etapa
+                              ou consultar os itens já cumpridos na seção arquivada abaixo.
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
                     {/* 3.5 ETAPAS CONCLUÍDAS — docs de etapas anteriores (consulta) */}
