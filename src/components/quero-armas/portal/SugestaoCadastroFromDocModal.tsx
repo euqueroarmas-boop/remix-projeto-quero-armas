@@ -104,6 +104,16 @@ export default function SugestaoCadastroFromDocModal({
     () => buildSuggestions(cliente, dadosExtraidos || {}, filtroCampos),
     [cliente, dadosExtraidos, filtroCampos],
   );
+  // Aviso quando o filtro é de endereço mas a IA só conseguiu extrair o
+  // logradouro — usuário precisa conferir número, bairro, cidade, UF e CEP.
+  const enderecoSoLogradouro = useMemo(() => {
+    const filtro = Array.isArray(filtroCampos) ? filtroCampos.map((s) => String(s).toLowerCase()) : [];
+    const ehFiltroEndereco =
+      filtro.length > 0 && filtro.some((c) => ["endereco", "numero", "bairro", "cidade", "estado", "cep", "complemento"].includes(c));
+    if (!ehFiltroEndereco) return false;
+    const campos = sugestoes.map((s) => s.campo);
+    return campos.length === 1 && campos[0] === "endereco";
+  }, [filtroCampos, sugestoes]);
   const [selecionados, setSelecionados] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(sugestoes.map((s) => [s.campo, true])),
   );
