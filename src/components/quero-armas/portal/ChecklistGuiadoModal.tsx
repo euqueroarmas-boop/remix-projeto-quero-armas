@@ -1013,6 +1013,13 @@ export default function ChecklistGuiadoModal({
     fecharWizardPre();
     await recarregarClienteDados();
     if (!doc || !acaoPendente) return;
+    if (carga?.processo.id) {
+      const c = await recarregarCarga(carga.processo.id);
+      if (acaoPendente.tipo === "continuar") {
+        avancarPara(c, pularIds, doc.id, null);
+        return;
+      }
+    }
     // Reabre a ação que estava bloqueada.
     if (acaoPendente.tipo === "baixar_template" && typeof acaoPendente.payload === "string") {
       setBaixandoTemplate(true);
