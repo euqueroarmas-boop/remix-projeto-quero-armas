@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { extrairPrazoDoItem, calcularPrazosProcessuais, pickMarcoExato } from "../prazosProcessuais";
+import {
+  extrairPrazoDoItem,
+  calcularPrazosProcessuais,
+  pickMarcoExato,
+  isDocumentoAtivoParaPrazoCritico,
+  maiorAnoEnderecoAprovado,
+} from "../prazosProcessuais";
 
 function isoToday(offsetDays = 0): string {
   const d = new Date();
@@ -101,5 +107,64 @@ describe("prazosProcessuais (motor único)", () => {
     expect(k("X", "NOTIFICAÇÃO", 7, "email", "2026-05-20")).not.toBe(
       k("X", "INDEFERIMENTO", 7, "email", "2026-05-20"),
     );
+  });
+});
+
+describe("isDocumentoAtivoParaPrazoCritico", () => {
+  it("descarta certidão civil sem validade", () => {
+    expect(
+      isDocumentoAtivoParaPrazoCritico(
+        { tipo_documento: "certidao_nascimento", status: "aprovado", data_validade_efetiva: "2024-01-01" },
+        [],
+      ),
+    ).toBe(false);
+  });
+
+  it("descarta status inativo (nao_aplicavel, dispensado, hub_reaproveitado)", () => {
+    for (const s of ["nao_aplicavel", "dispensado", "dispensado_grupo", "hub_reaproveitado", "arquivado"]) {
+      expect(
+        isDocumentoAtivoParaPrazoCritico(
+          { tipo_documento: "comprovante_endereco_ano_2025", status: s, data_validade_efetiva: "2025-12-01" },
+          [],
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it("descarta documento sem data_validade_efetiva", () => {
+    expect(
+      isDocumentoAtivoParaPrazoCritico(
+        { tipo_documento: "certidao_estadual", status: "aprovado", data_validade_efetiva: null },
+        [],
+      ),
+    ).toBe(false);
+  });
+
+  it("série anual: 2022 substituído por 2025 aprovado → 2022 some, 2025 fica", () => {
+    const docs = [
+      { id: "a", tipo_documento: "comprovante_endereco_ano_2022", status: "aprovado", data_validade_efetiva: "2022-10-23" },
+      { id: "b", tipo_documento: "comprovante_endereco_ano_2025", status: "aprovado", data_validade_efetiva: "2026-01-10" },
+    ];
+    expect(isDocumentoAtivoParaPrazoCritico(docs[0], docs)).toBe(false);
+    expect(isDocumentoAtivoParaPrazoCritico(docs[1], docs)).toBe(true);
+  });
+
+  it("série anual: 2024 pendente NÃO conta como 'maior ano aprovado'", () => {
+    const docs = [
+      { id: "a", tipo_documento: "comprovante_endereco_ano_2022", status: "aprovado", data_validade_efetiva: "2022-10-23" },
+      { id: "b", tipo_documento: "comprovante_endereco_ano_2024", status: "pendente", data_validade_efetiva: "2024-08-01" },
+    ];
+    expect(maiorAnoEnderecoAprovado(docs)).toBe(2022);
+    // 2022 é o maior aprovado, então ele permanece ativo (não é menor que si mesmo)
+    expect(isDocumentoAtivoParaPrazoCritico(docs[0], docs)).toBe(true);
+  });
+
+  it("documento normal aprovado com validade futura permanece ativo", () => {
+    expect(
+      isDocumentoAtivoParaPrazoCritico(
+        { tipo_documento: "laudo_psicologico", status: "aprovado", data_validade_efetiva: "2027-01-01" },
+        [],
+      ),
+    ).toBe(true);
   });
 });
