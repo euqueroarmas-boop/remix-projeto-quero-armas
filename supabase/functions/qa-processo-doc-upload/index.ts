@@ -52,6 +52,19 @@ function normalizeFmt(raw: unknown): string {
   return v;
 }
 
+const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
+
+function arquivoPareceCertidaoAlteracaoNome(nome: string | undefined | null): boolean {
+  const n = String(nome || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return /(certidao|casamento|nascimento|averbac|averbad|alteracao.*nome|nome.*alteracao)/.test(n);
+}
+
+function docTemDivergenciaNome(doc: any): boolean {
+  const divs = Array.isArray(doc?.divergencias_json) ? doc.divergencias_json : [];
+  if (divs.some((d: any) => /^(nome|nome_titular|titular|nome_completo)$/i.test(String(d?.campo || "")))) return true;
+  return /\bnome\b|\btitular\b/i.test(String(doc?.motivo_rejeicao || ""));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
