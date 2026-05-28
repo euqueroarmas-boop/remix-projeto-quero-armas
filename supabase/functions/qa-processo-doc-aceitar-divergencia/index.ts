@@ -94,14 +94,39 @@ Deno.serve(async (req) => {
     if (dErr) return json({ error: dErr.message }, 500);
     if (!doc) return json({ error: "documento_not_found" }, 404);
 
-    // Confirma dono do processo.
+    // Confirma dono do processo. O `doc.cliente_id` é frágil: documentos
+    // antigos ou criados em fluxos auxiliares podem ter o campo nulo ou
+    // divergente do processo real. Fonte de verdade = `qa_processos.cliente_id`.
+    if (!doc.processo_id) return json({ error: "documento_sem_processo" }, 400);
+    const { data: processo } = await admin
+      .from("qa_processos")
+      .select("id, cliente_id")
+      .eq("id", doc.processo_id)
+      .maybeSingle();
+    if (!processo) return json({ error: "processo_not_found" }, 404);
+    const targetClienteId = processo.cliente_id ?? doc.cliente_id ?? null;
+    if (!targetClienteId) return json({ error: "cliente_indefinido" }, 400);
     const { data: cliente } = await admin
       .from("qa_clientes")
       .select("id, user_id, excluido")
-      .eq("id", doc.cliente_id)
+      .eq("id", targetClienteId)
       .maybeSingle();
-    if (!cliente || cliente.user_id !== authUserId) return json({ error: "forbidden" }, 403);
+    if (!cliente) return json({ error: "cliente_not_found" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
+
+    // Permite dono OU staff/equipe QA (perfil em qa_usuarios_perfis ativo).
+    const isOwner = cliente.user_id === authUserId;
+    let isStaff = false;
+    if (!isOwner) {
+      const { data: perfil } = await admin
+        .from("qa_usuarios_perfis")
+        .select("id, ativo")
+        .eq("user_id", authUserId)
+        .eq("ativo", true)
+        .maybeSingle();
+      isStaff = !!perfil;
+    }
+    if (!isOwner && !isStaff) return json({ error: "forbidden" }, 403);
 
     const divs = Array.isArray(doc.divergencias_json) ? (doc.divergencias_json as any[]) : [];
     const restantes = divs.filter((d) => !ehCampoDoGrupo((d as any)?.campo, grupo));
