@@ -952,6 +952,49 @@ export default function ChecklistGuiadoModal({
     setBaixandoTemplate(false);
   };
 
+  /**
+   * Verifica se a exigência exige um Wizard de Perguntas antes de qualquer
+   * ação. Se exigir e ainda não estiver completo, abre o modal e devolve
+   * `true` (= ação bloqueada). A ação é guardada para ser retomada após o
+   * cliente concluir o wizard.
+   */
+  const gateWizardPre = (
+    doc: GuiaDoc | null | undefined,
+    acao: { tipo: "anexar" | "baixar_template" | "reaproveitar"; payload?: any },
+  ): boolean => {
+    if (!doc) return false;
+    const cfg = wizardPendentePara(doc, clienteDados);
+    if (!cfg) return false;
+    setWizardPre({ open: true, doc, cfg, acaoPendente: acao });
+    return true;
+  };
+
+  const fecharWizardPre = () => {
+    setWizardPre({ open: false, doc: null, cfg: null, acaoPendente: null });
+  };
+
+  const retomarAcaoPosWizardPre = async () => {
+    const { doc, acaoPendente } = wizardPre;
+    fecharWizardPre();
+    await recarregarClienteDados();
+    if (!doc || !acaoPendente) return;
+    // Reabre a ação que estava bloqueada.
+    if (acaoPendente.tipo === "baixar_template" && typeof acaoPendente.payload === "string") {
+      setBaixandoTemplate(true);
+      setWizard({ open: true, doc, templateKey: acaoPendente.payload });
+      return;
+    }
+    if (acaoPendente.tipo === "anexar") {
+      // Reentrega no fluxo de upload — passa pelos checks normais.
+      handleEscolherArquivo();
+      return;
+    }
+    if (acaoPendente.tipo === "reaproveitar" && typeof acaoPendente.payload === "string") {
+      void handleReaproveitar(acaoPendente.payload);
+      return;
+    }
+  };
+
   const handleWizardGenerated = (blob: Blob, _filename: string) => {
     const doc = wizard.doc;
     const templateKey = wizard.templateKey;
