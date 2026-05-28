@@ -196,6 +196,17 @@ export default function ChecklistGuiadoModal({
     setErroAcao(null);
     try {
       const lista = await listarProcessosElegiveisGuia(clienteId);
+      if (import.meta.env.DEV) {
+        lista.forEach((p) => {
+          console.debug("[assistente-card-resumo]", {
+            processo: p.servico_nome,
+            pendentesAntigo: p.pendentes,
+            documentos_pendentes_cliente: p.documentos_pendentes_cliente,
+            wizards_pendentes: p.wizards_pendentes,
+            label_resumo: p.label_resumo,
+          });
+        });
+      }
       setProcessos(lista);
       const alvo = processoIdInicial && lista.some((p) => p.id === processoIdInicial)
         ? processoIdInicial
