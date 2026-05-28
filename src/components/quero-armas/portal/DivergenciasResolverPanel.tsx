@@ -388,7 +388,7 @@ export default function DivergenciasResolverPanel({
                       </div>
                     </div>
                   )}
-                  {grupo === "nome" && !altNomeJaComprovada && (
+                  {grupo === "nome" && !altNomeJaComprovada && !altNomeEmComprovacao && (
                     <>
                       <button
                         type="button"
