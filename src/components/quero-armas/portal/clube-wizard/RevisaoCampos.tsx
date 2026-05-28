@@ -45,7 +45,7 @@ export default function RevisaoCampos({ state, onChange, origem, readonlyNome }:
         {LABELS.map((f) => {
           const isLocked = readonlyNome && f.key === "nome_clube";
           return (
-            <div key={f.key} className="space-y-1">
+            <div key={String(f.key)} className="space-y-1">
               <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{f.label}</label>
               <input
                 value={state[f.key] || ""}
