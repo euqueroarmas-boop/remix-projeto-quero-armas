@@ -217,9 +217,35 @@ export default function QAClientePortalPage() {
           }
         : prev,
     );
-    // Navega para o catálogo com filtro de trilha aplicado (chip removível lá).
     const trilha = respostas.objetivo;
-    navigate(`/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`);
+    const destino = `/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`;
+
+    // BLOCO 12 — Cadastro mínimo de arma.
+    // Se o cliente declarou possuir arma E ainda não tem nada no acervo,
+    // ofereça o cadastro rápido ANTES de seguir para o catálogo. A intenção
+    // de navegação fica guardada e é executada quando o form fecha.
+    if (respostas.possuiArma === "sim") {
+      void (async () => {
+        try {
+          const { count } = await supabase
+            .from("qa_cliente_armas" as any)
+            .select("arma_uid", { count: "exact", head: true })
+            .eq("qa_cliente_id", (cliente as any)?.id);
+          if ((count ?? 0) === 0) {
+            setPendingTrilhaDestino(destino);
+            setShowArmaManual(true);
+            return;
+          }
+        } catch {
+          /* falha silenciosa — segue para o catálogo */
+        }
+        navigate(destino);
+      })();
+      return;
+    }
+
+    // Navega direto para o catálogo (chip removível "Trilha: ..." lá).
+    navigate(destino);
   }
 
   useEffect(() => {
