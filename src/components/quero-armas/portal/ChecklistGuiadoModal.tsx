@@ -793,7 +793,8 @@ export default function ChecklistGuiadoModal({
     grupo: GrupoDivergencia,
     opts?: { iniciarComCadastroAtual?: boolean },
   ) => {
-    const extraidos = (resultadoDoc as any)?.dados_extraidos_json;
+    const docBase = (resultadoDoc as any) ?? (docAtivo as any) ?? null;
+    const extraidos = docBase?.dados_extraidos_json;
     // No modo "editar manualmente" para endereço, dispensamos `extraidos`
     // (o cliente vai preencher do zero, partindo do cadastro atual).
     const editandoManualmenteEndereco =
@@ -820,7 +821,7 @@ export default function ChecklistGuiadoModal({
     setSugestao({
       open: true,
       dados: (extraidos ?? {}) as Record<string, any>,
-      nomeDoc: docAtivo?.nome_documento ?? null,
+      nomeDoc: docBase?.nome_documento ?? docAtivo?.nome_documento ?? null,
       filtroCampos: colunas,
       titulo: titulos[grupo],
       iniciarComCadastroAtual: !!opts?.iniciarComCadastroAtual,
@@ -845,27 +846,50 @@ export default function ChecklistGuiadoModal({
       const resp = await fetch(`${base}/functions/v1/qa-cliente-atualizar-cadastro`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fields: { nome_completo: nome } }),
+        body: JSON.stringify({ fields: { nome_completo: nome }, cliente_id: carga.processo.cliente_id }),
       });
       if (!resp.ok) throw new Error((await resp.text()) || "Falha ao salvar");
       await recarregarClienteDados();
       onUpdated?.();
-      await supabase
-        .from("qa_processo_documentos")
-        .update({
-          status: "em_analise",
-          validacao_ia_status: "fila",
-          validacao_ia_erro: null,
-          motivo_rejeicao: null,
-        })
-        .eq("id", resultadoDoc.id);
       toast.success("Nome atualizado no seu cadastro. Vamos conferir o documento novamente.");
-      const c = await recarregarCarga(carga.processo.id);
-      avancarPara(c, pularIds);
+      await reprocessarDocumentoCliente(resultadoDoc.id, "nome_do_documento");
     } catch (e: any) {
       toast.error(e?.message || "Erro ao atualizar nome do cadastro.");
     }
   };
+
+  const reprocessarDocumentoCliente = useCallback(
+    async (documentoId: string, motivo = "decisao_cadastral") => {
+      if (!carga?.processo?.id) throw new Error("Processo não localizado.");
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error("Sessão expirada. Entre novamente.");
+      const base = import.meta.env.VITE_SUPABASE_URL as string;
+      const resp = await fetch(`${base}/functions/v1/qa-processo-doc-reprocessar-cliente`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          processo_id: carga.processo.id,
+          documento_id: documentoId,
+          motivo,
+        }),
+      });
+      const out = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(out?.error || "Falha ao enviar documento para validação.");
+
+      setFase("validando");
+      const final = await aguardarValidacaoIAGuia(documentoId);
+      setResultadoDoc(final);
+      await recarregarCarga(carga.processo.id);
+      onUpdated?.();
+      const st = final?.status;
+      if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
+      else if (st === "em_revisao_humana" || st === "revisao_humana") setFase("resultado_revisao");
+      else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
+      else setFase("resultado_demorando");
+    },
+    [carga?.processo?.id, recarregarCarga, onUpdated],
+  );
 
   // ----- "Meu cadastro está correto — aceitar este comprovante" -----
   // Dispensa a divergência de um grupo (ex.: endereço) para o documento ativo,
@@ -1731,22 +1755,13 @@ export default function ChecklistGuiadoModal({
           // Se a sugestão foi aberta a partir do painel de divergências
           // (filtroCampos definido), reprocessa o documento para que a IA
           // reavalie com o cadastro atualizado.
-          if (sugestao.filtroCampos && resultadoDoc?.id && carga) {
+          const documentoParaReprocessar = resultadoDoc?.id ?? docAtivo?.id ?? null;
+          if (sugestao.filtroCampos && documentoParaReprocessar && carga) {
             try {
-              await supabase
-                .from("qa_processo_documentos")
-                .update({
-                  status: "em_analise",
-                  validacao_ia_status: "fila",
-                  validacao_ia_erro: null,
-                  motivo_rejeicao: null,
-                })
-                .eq("id", resultadoDoc.id);
               toast.success(
                 "Cadastro atualizado. Vamos conferir o documento novamente.",
               );
-              const c = await recarregarCarga(carga.processo.id);
-              avancarPara(c, pularIds);
+              await reprocessarDocumentoCliente(documentoParaReprocessar, "cadastro_atualizado");
             } catch (e) {
               console.warn("[ChecklistGuiado] falha ao reenfileirar IA:", e);
             }

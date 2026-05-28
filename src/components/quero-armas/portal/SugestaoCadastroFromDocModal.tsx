@@ -250,7 +250,7 @@ export default function SugestaoCadastroFromDocModal({
       const resp = await fetch(`${base}/functions/v1/qa-cliente-atualizar-cadastro`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fields: toSave }),
+        body: JSON.stringify({ fields: toSave, cliente_id: cliente?.id ?? null }),
       });
       if (!resp.ok) throw new Error((await resp.text()) || "Falha ao salvar");
       toast.success("Cadastro atualizado com os dados do documento.");
