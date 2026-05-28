@@ -41,6 +41,7 @@ export interface DivergenciaItem {
 export type GrupoDivergencia =
   | "nome"
   | "endereco"
+  | "estado_civil"
   | "rg"
   | "cpf"
   | "data_nascimento"
@@ -50,6 +51,7 @@ export type GrupoDivergencia =
 const GRUPO_LABEL: Record<GrupoDivergencia, string> = {
   nome: "Nome diferente",
   endereco: "Endereço diferente",
+  estado_civil: "Estado civil diferente",
   rg: "Documento de identidade diferente",
   cpf: "CPF diferente",
   data_nascimento: "Data de nascimento diferente",
@@ -60,6 +62,7 @@ const GRUPO_LABEL: Record<GrupoDivergencia, string> = {
 const GRUPO_ICON: Record<GrupoDivergencia, any> = {
   nome: User,
   endereco: Home,
+  estado_civil: Heart,
   rg: IdCard,
   cpf: ShieldAlert,
   data_nascimento: ShieldAlert,
