@@ -201,7 +201,16 @@ export default function SugestaoCadastroFromDocModal({
 
   const aplicar = async () => {
     const toSave: Record<string, string> = {};
-    for (const s of sugestoes) if (selecionados[s.campo]) toSave[s.campo] = s.valorNovo;
+    if (ehEnderecoScope) {
+      for (const c of ENDERECO_COLS) {
+        const novo = norm(form[c]);
+        const atual = valoresAtuais[c];
+        if (normCmp(novo) === normCmp(atual)) continue;
+        toSave[c] = novo;
+      }
+    } else {
+      for (const s of sugestoes) if (selecionados[s.campo]) toSave[s.campo] = s.valorNovo;
+    }
     if (!Object.keys(toSave).length) {
       onOpenChange(false);
       return;
