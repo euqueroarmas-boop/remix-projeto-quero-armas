@@ -1,94 +1,67 @@
-## Objetivo
 
-Transformar a home `/area-do-cliente` em uma visão executiva premium e simples, com abas (Resumo, Pendências, Meus processos, Financeiro, Documentos, Contratos), filtro multi-processo, e a aba **Resumo** funcionando como dashboard de 1 olhada — sem destruir nada que já funciona.
+# Plano: Simulação completa CR Atirador (cliente sintético)
 
-## Identidade visual confirmada
+## Identidade do teste
+- **Cliente novo** em `qa_clientes` (CPF sintético, sem histórico):
+  - Nome: `VANESSA MASSAROTO (TESTE QA)`
+  - CPF: `111.444.777-35` (CPF de teste válido na regra)
+  - E-mail: `will.rodrigues.wrii@icloud.com`
+  - Celular: `11963166915`
+  - Categoria: PF — Atirador
+  - Marca: `observacao = 'SIMULACAO_QA_<timestamp>'` para isolar do real.
 
-Arsenal UI oficial:
-- Papel `#f6f5f1`
-- Bordô `#7A1F2B` (acento de marca)
-- Cards brancos, bordas `#E5EAF2`, raio 8px
-- Vermelho/âmbar apenas para alerta crítico
-- Tipografia atual, sem fundo preto, sem azul institucional
+## Fluxo executado (mesma ordem do cliente real)
 
-## Fase 1 — Esqueleto de navegação (sem mexer em conteúdo)
+### 1. Checkout público — `qa-checkout-criar-venda`
+Chamo via curl com `cart = [{servico: CR Atirador (id 44 / slug correspondente em qa_servicos_catalogo), qtd: 1}]` + identificação.
+Resultado: venda criada com `cobranca_origem='checkout_site'`, `checkout_token`, status `RASCUNHO`.
 
-Refatorar **somente** o sistema de abas dentro de `QAClientePortalPage.tsx`:
+### 2. Geração da cobrança — `qa-checkout-iniciar-pagamento`
+Billing type **PIX** sandbox. Cria customer + payment no Asaas sandbox (ambiente já configurado no projeto).
+Resultado: `asaas_payment_id`, `asaas_invoice_url`, `cobranca_status='pendente'`.
 
-- Trocar o set atual `"resumo" | "contratacoes" | "documentos" | "arsenal" | "mensagens" | "financeiro" | "configuracoes"` por:
-  `"resumo" | "pendencias" | "processos" | "financeiro" | "documentos" | "contratos"`
-- Sidebar desktop (já existe) recebe os novos labels/ícones, no estilo Arsenal (preto + bordô ativo).
-- Mobile: bottom-nav compacta com 5 itens principais + "mais" para Contratos/Suporte.
-- Header mantém: "Área do Cliente" + nome + badge "N processos ativos" + sino + suporte.
-- Adicionar **ProcessoFilterContext** (provider local no portal) com state `processoSelecionado: "todos" | <processo_id>` — usado por todas as abas para escopar dados, sem mudar nenhuma query existente ainda. Padrão = "todos".
+### 3. Confirmação de pagamento — webhook simulado em `qa-asaas-webhook`
+POST com `event=PAYMENT_CONFIRMED`, `externalReference=qa_venda:<id>`, token correto.
+A trigger em `qa_vendas` (status → PAGO) dispara provisionamento:
+- contrato (qa_generate-contract / qa-liberar-servicos-contrato)
+- conta no portal (qa-provisionar-acesso-portal) → cria `qa_cliente_credenciais` com senha temporária + envia e-mail de boas-vindas (template já existente).
+- criação do processo CR Atirador (`qa-processo-criar`) com checklist montado a partir de `qa_servico_documentos_obrigatorios`.
 
-Critério: abas trocam, nada quebra, conteúdo antigo continua sendo renderizado nas abas equivalentes.
+### 4. Checklist — força-aprovação via service_role
+Loop em `qa_processo_documentos` do processo: para cada item obrigatório
+- gera arquivo dummy no bucket privado de cliente,
+- `status='aprovado'`, `validado_em=now()`, `validado_por='SIMULACAO_QA'`,
+- insere evento em `qa_processo_eventos` (`tipo='doc_aprovado_simulacao'`).
+- registra em `qa_status_eventos` (origem=`sistema`, motivo=`simulacao_qa_force_approve`).
 
-## Fase 2 — Aba Resumo (home nova)
+### 5. Reconciliação de pivot + auto-liberação — `qa-processo-etapa-auto-liberar`
+Roda até saturar (até 5 etapas). Cada transição grava evento.
 
-Redesenhar **apenas** o conteúdo renderizado quando `activeSection === "resumo"`. Mantém todos os hooks de carga já existentes (`processoSnap`, `analysis`, `vendas`, `processos`, `processoDocs`).
+### 6. Conclusão do checklist — `qa-processo-checar-conclusao-checklist`
+Promove `status='pronto_para_protocolar'` + dispara:
+- e-mail ao cliente ("documentação completa, pronto para protocolar")
+- e-mail à equipe ("processo pronto para entrar na PF")
 
-Layout em 2 colunas no desktop, 1 coluna no mobile, todos cards brancos, raio 8px, borda `#E5EAF2`:
+### 7. Auditoria final
+Gero um relatório consolidado (.md em `/mnt/documents/`) com:
+- IDs criados (cliente, venda, payment, contrato, processo, credencial)
+- Linha do tempo completa via `qa_status_eventos` + `qa_venda_eventos` + `qa_processo_eventos`
+- E-mails enviados (consulta `email_send_log` filtrando por message_id `simulacao_qa_*`)
+- Logs em `qa_logs_auditoria` + `logs_sistema` com tag `SIMULACAO_QA_<timestamp>`
+- Estado final do processo (etapa, prazos, status)
 
-1. **Card "Próxima ação"** (full-width, destaque bordô)
-   - Deriva da mesma fila que o `ChecklistGuiado` usa hoje (`contarPendentesClienteGuia` + primeiro item da fila).
-   - Mostra: serviço-tag, descrição da ação, prioridade, botão "Resolver agora" → abre `ChecklistGuiadoModal` (reuso direto, sem duplicar lógica).
-   - Se não há pendência: card neutro "Tudo em dia".
+## Restrições/seguranças
+- **Sandbox Asaas**: se as credenciais sandbox não estiverem configuradas no projeto, paro em (2) e te aviso.
+- **E-mails só para você**: todos os templates já usam `recipientEmail` do cliente — como o cliente sintético tem o seu e-mail, nada vai para terceiros.
+- **Tag de teste**: cliente, venda e processo levam tag `SIMULACAO_QA_<timestamp>` em `observacao`/`metadata_json` para você localizar e remover depois com 1 query.
+- **Rollback simples**: ao final entrego um `DELETE` em cascata pronto (cliente sintético + venda + processo) caso queira purgar.
 
-2. **Grid 4 cards compactos** (Pendências / Financeiro / Documentos / Processos)
-   - Cada card: ícone, número grande, label, link "Ver detalhes" que troca a aba ativa.
-   - Pendências = `processoSnap.pendentes` total. Financeiro = total em aberto de `vendas`. Documentos = `meusDocs.length` enviados / total esperado. Processos = ativos.
+## Não faço sem nova confirmação
+- Não toco nos clientes reais existentes.
+- Não envio nada para terceiros.
+- Não promovo para `protocolado` (esse é passo humano da equipe).
 
-3. **Seção "Processos em andamento"**
-   - Lista curta (máx 3, com "Ver todos" → aba Processos).
-   - Cada item: nome do serviço, status badge, barra de progresso (já existe em `processoSnap`), próxima ação curta, "Ver detalhes" → seta `processoSelecionado` e troca para aba Processos.
+## Estimativa
+~25-30 tool calls (inserts/curls/queries). ~3-5 min.
 
-4. **Resumo financeiro compacto**
-   - Total contratado, Total pago, Em aberto (destaque vermelho se > 0), CTA "Ver financeiro".
-
-5. **Card Equipe Quero Armas**
-   - Texto curto + botão WhatsApp (reuso do que já existe).
-
-Tudo o que estava na home antiga (HistoricoAtualizacoes detalhado, Arsenal completo, etc.) **é movido** para as abas correspondentes — nunca apagado.
-
-## Fase 3 — Abas detalhadas + filtro multi-processo
-
-Para cada aba, encapsular o conteúdo já existente em componentes filhos respeitando `processoSelecionado`:
-
-- **Pendências**: lista completa agrupada por processo (deriva de `processoSnap.processos[].pendencias`). Quando `processoSelecionado !== "todos"`, mostra só aquele.
-- **Meus processos**: reusa `ClienteProcessosSection` já existente, com filtro aplicado.
-- **Financeiro**: lista vendas/cobranças do cliente, filtrável por processo via `qa_itens_venda.venda_id`.
-- **Documentos**: reusa hub de documentos atual, filtrável.
-- **Contratos**: reusa `ContratoBlock` + `ContratosPosPagamentoCard`, filtrável.
-
-Filtro renderizado como segmented control no topo de cada aba detalhada: "Todos os processos · <nome processo 1> · <nome processo 2>...". Default "todos".
-
-## Fase 4 — Mobile polish + QA
-
-- Header colapsa, abas viram scroll horizontal sticky.
-- Cards empilham, "Próxima ação" sempre primeiro.
-- Bottom-nav fixa no mobile.
-- Botões mínimo 44px.
-- Typecheck: `tsc --noEmit` deve passar.
-- Smoke: abrir `/area-do-cliente` como cliente com pendências e validar que o `ChecklistGuiado` ainda explode (regra já aprovada).
-
-## O que NÃO vai mudar
-
-- `ChecklistGuiado`, `ChecklistGuiadoModal`, `ChecklistGuiadoBotao`, `ContratoBlock`, `ContratosPosPagamentoCard`
-- Hooks de carga de `qa_clientes`, `qa_vendas`, `qa_itens_venda`, `qa_processos`, `qa_processo_documentos`, `qa_processo_eventos`
-- Realtime channels
-- Lógica de FK `getClienteFK` / `getVendaFK`
-- RLS, Edge Functions, schema
-- `ArsenalView`, `ClienteProcessosSection`, `CentralAjudaCliente`, `HistoricoAtualizacoes` (reusados como filhos)
-
-## Detalhes técnicos
-
-- Provider `PortalFilterContext` novo em `src/components/quero-armas/portal/PortalFilterContext.tsx` (aditivo, ninguém depende dele ainda).
-- Refator de `QAClientePortalPage.tsx` mantém o mesmo nome/rota; muda a estrutura interna do JSX e quebra o monolito em ~5 componentes filhos (`ResumoTab`, `PendenciasTab`, `ProcessosTab`, `FinanceiroTab`, `DocumentosTab`, `ContratosTab`) em `src/components/quero-armas/portal/tabs/`.
-- Próxima ação calculada por util novo `derivarProximaAcao(processos, processoDocs, respostas)` em `src/lib/quero-armas/proximaAcao.ts` — reusa exatamente a mesma fila do `checklistGuiadoEngine` (sem duplicar regra).
-
-## Entrega
-
-Faço uma fase por vez, commitando ao final de cada. Após cada fase, valido visualmente no preview e só sigo para a próxima quando confirmar que nada regrediu.
-
-Posso começar pela Fase 1?
+Se aprovar, executo a sequência e te entrego o relatório de auditoria no final.
