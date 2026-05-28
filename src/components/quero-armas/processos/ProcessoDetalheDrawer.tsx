@@ -1267,9 +1267,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         {st && (
           <div className={`px-5 py-3 border-b border-slate-200 ${st.bg}`}>
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
+                {equipeMode && processo?.status === "pronto_para_protocolar" && (
+                  <button
+                    onClick={() => setProtocoloModalOpen(true)}
+                    className="ml-2 h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700"
+                    title="Confirma que este processo foi protocolado no órgão competente"
+                  >
+                    <FileSignature className="h-3 w-3" />
+                    MARCAR COMO PROTOCOLADO
+                  </button>
+                )}
               </div>
               {!aguardandoPagto && (
                 <div className="flex items-center gap-3">
@@ -1467,7 +1477,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   ? doc.regra_validacao.label_botao : null;
                 const checklistOperador: string[] = (doc.regra_validacao && typeof doc.regra_validacao === "object" && Array.isArray((doc.regra_validacao as any).checklist_operador))
                   ? (doc.regra_validacao as any).checklist_operador as string[] : [];
-                const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
+                const div = limparDivergenciasVazias(
+                  Array.isArray(doc.divergencias_json) ? (doc.divergencias_json as any[]) : [],
+                  doc.status,
+                );
                 const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
                 const pergunta = isPergunta(doc) ? (doc.regra_validacao as any) : null;
                 const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
