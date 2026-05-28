@@ -15,6 +15,32 @@ import { toast } from "sonner";
 
 const MARROM = "#7A1F2B";
 
+function Campo({
+  label,
+  value,
+  onChange,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        {label}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="block h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-slate-400"
+      />
+    </label>
+  );
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (n: boolean) => void;
