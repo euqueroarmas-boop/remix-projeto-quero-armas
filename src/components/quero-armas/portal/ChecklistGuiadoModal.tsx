@@ -314,6 +314,11 @@ export default function ChecklistGuiadoModal({
       setResultadoDoc(null);
       setErroAcao(null);
       setAvisoIrParaCertidao(null);
+      const primeiroDoc = fila.find((d) => d.id === (resumeId ?? fila[0].id)) ?? fila[0];
+      const cfg = wizardPendentePara(primeiroDoc, clienteDados, c.processo);
+      if (cfg && tipoItemGuia(primeiroDoc) === "documento") {
+        setWizardPre({ open: true, doc: primeiroDoc, cfg, acaoPendente: { tipo: "continuar" } });
+      }
       setFase("item");
     }
   };
