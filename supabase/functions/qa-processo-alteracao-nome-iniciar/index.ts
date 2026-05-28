@@ -117,6 +117,7 @@ Deno.serve(async (req) => {
       etapa: "complementar",
       obrigatorio: true,
       formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+      campos_complementares_json: { incluir_no_dossie: true },
       regra_validacao: {
         descricao:
           "Certidão de casamento ou nascimento AVERBADA, ou outro documento oficial com averbação de alteração de nome em cartório.",
