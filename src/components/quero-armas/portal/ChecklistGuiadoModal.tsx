@@ -607,6 +607,46 @@ export default function ChecklistGuiadoModal({
     });
   };
 
+  // ----- Atalho 1-clique: "Usar nome do documento" -----
+  // Grava `nome_completo` no cadastro com o valor extraído do documento e
+  // re-enfileira a IA para reavaliar o doc atual, avançando o assistente.
+  const usarNomeDoDocumento = async (novoNome: string) => {
+    const nome = String(novoNome || "").trim();
+    if (!nome) return;
+    if (!carga || !resultadoDoc?.id) {
+      toast.error("Não consegui localizar o documento atual.");
+      return;
+    }
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error("Sessão expirada. Entre novamente.");
+      const base = import.meta.env.VITE_SUPABASE_URL as string;
+      const resp = await fetch(`${base}/functions/v1/qa-cliente-atualizar-cadastro`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ fields: { nome_completo: nome } }),
+      });
+      if (!resp.ok) throw new Error((await resp.text()) || "Falha ao salvar");
+      await recarregarClienteDados();
+      onUpdated?.();
+      await supabase
+        .from("qa_processo_documentos")
+        .update({
+          status: "em_analise",
+          validacao_ia_status: "fila",
+          validacao_ia_erro: null,
+          motivo_rejeicao: null,
+        })
+        .eq("id", resultadoDoc.id);
+      toast.success("Nome atualizado no seu cadastro. Vamos conferir o documento novamente.");
+      const c = await recarregarCarga(carga.processo.id);
+      avancarPara(c, pularIds);
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao atualizar nome do cadastro.");
+    }
+  };
+
   // ----- "Este comprovante é antigo" -----
   const handleComprovanteAntigo = async () => {
     if (!carga || !docAtivo) return;
