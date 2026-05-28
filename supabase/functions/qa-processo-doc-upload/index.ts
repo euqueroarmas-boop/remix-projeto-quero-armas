@@ -25,13 +25,31 @@ const MIN_IMG_BYTES = 40 * 1024;    // 40KB mínimo p/ foto (evita JPG borrado/c
 const MIN_PDF_BYTES = 8 * 1024;     // 8KB mínimo p/ PDF (evita PDF vazio/corrompido)
 
 function extOf(name: string | undefined | null, mime: string | undefined | null): string {
-  const fromName = (name?.split(".").pop() || "").toLowerCase();
+  const fromName = (name?.split(".").pop() || "").toLowerCase().trim();
   if (fromName) return fromName;
   const m = (mime || "").toLowerCase();
   if (m.includes("pdf")) return "pdf";
   if (m.includes("png")) return "png";
   if (m.includes("jpeg") || m.includes("jpg")) return "jpg";
   return "";
+}
+
+// Normaliza valores de formato_aceito (que podem vir como MIME types tipo
+// "application/pdf", "APPLICATION/PDF", "image/jpeg" ou como extensões "pdf",
+// "jpg") para uma extensão canônica em minúsculo. Garante que a comparação
+// seja sempre case-insensitive e independente de MIME vs extensão.
+function normalizeFmt(raw: unknown): string {
+  const v = String(raw ?? "").toLowerCase().trim();
+  if (!v) return "";
+  if (v.includes("/")) {
+    if (v.includes("pdf")) return "pdf";
+    if (v.includes("png")) return "png";
+    if (v.includes("jpeg") || v.includes("jpg")) return "jpg";
+    const tail = v.split("/").pop() || "";
+    return tail;
+  }
+  if (v === "jpeg") return "jpg";
+  return v;
 }
 
 Deno.serve(async (req) => {
@@ -114,11 +132,14 @@ Deno.serve(async (req) => {
     const ext = extOf(nome_arquivo_original, realMime);
 
     // ===== Enforcement de formato =====
+    // Normaliza para extensão canônica em minúsculo dos dois lados (banco pode
+    // ter "application/pdf", "APPLICATION/PDF", "pdf", etc.).
     const formatosAceitos: string[] = Array.isArray(docRow0.formato_aceito)
-      ? (docRow0.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      ? (docRow0.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
       : [];
+    const extNorm = normalizeFmt(ext);
 
-    if (formatosAceitos.length > 0 && !formatosAceitos.includes(ext)) {
+    if (formatosAceitos.length > 0 && !formatosAceitos.includes(extNorm)) {
       // Bloqueia antes da IA, registra evento + status invalido
       const motivo =
         formatosAceitos.length === 1 && formatosAceitos[0] === "pdf"
