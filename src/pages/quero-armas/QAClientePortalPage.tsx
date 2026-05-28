@@ -153,6 +153,9 @@ export default function QAClientePortalPage() {
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showArmaManual, setShowArmaManual] = useState(false);
+  // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
+  // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
+  const [pendingTrilhaDestino, setPendingTrilhaDestino] = useState<string | null>(null);
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
