@@ -873,18 +873,27 @@ export default function ChecklistGuiadoModal({
                   <AlertTriangle className="h-8 w-8" />
                 </div>
                 <h3 className="text-lg font-extrabold text-slate-900">Precisamos de um ajuste</h3>
-                {resultadoDoc?.motivo_rejeicao && (
+                {(resultadoDoc?.motivo_rejeicao || orientacoesIA(resultadoDoc)) && (
                   <div className="w-full rounded-lg border border-amber-200 bg-amber-50 p-3 text-left text-[12px] text-amber-900">
-                    <span className="font-bold uppercase tracking-wider">Motivo: </span>
-                    {resultadoDoc.motivo_rejeicao}
-                  </div>
-                )}
-                {orientacoesIA(resultadoDoc) && (
-                  <div className="w-full rounded-lg border border-amber-200 bg-amber-50/70 p-3 text-left text-[12px] text-amber-900">
                     <div className="mb-1 inline-flex items-center gap-1.5 font-bold uppercase tracking-wider">
                       <Info className="h-3.5 w-3.5" /> O que corrigir
                     </div>
-                    <p className="whitespace-pre-line leading-relaxed">{orientacoesIA(resultadoDoc)}</p>
+                    <p className="whitespace-pre-line leading-relaxed">
+                      {(() => {
+                        const divs = Array.isArray((resultadoDoc as any)?.divergencias_json)
+                          ? (resultadoDoc as any).divergencias_json
+                          : [];
+                        if (divs.length > 0) {
+                          return "Encontramos diferenças entre o documento e seu cadastro. Resolva cada uma abaixo.";
+                        }
+                        const motivo = String(resultadoDoc?.motivo_rejeicao || "");
+                        if (motivo) return motivo;
+                        return (
+                          orientacoesIA(resultadoDoc) ||
+                          "O documento enviado não atende a todos os critérios. Resolva as diferenças abaixo ou envie um novo documento."
+                        );
+                      })()}
+                    </p>
                   </div>
                 )}
                 <DivergenciasResolverPanel
@@ -1215,15 +1224,25 @@ function DocumentoView({
       )}
 
       {/* motivo/orientação anterior, quando reenviando */}
-      {jaEnviado && doc.motivo_rejeicao && (
+      {jaEnviado && (doc.motivo_rejeicao || orientacoesIA) && (
         <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[12px] text-amber-900">
-          <span className="font-bold uppercase tracking-wider">Ajuste necessário: </span>{doc.motivo_rejeicao}
-        </div>
-      )}
-      {jaEnviado && orientacoesIA && (
-        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 p-2.5 text-[12px] text-amber-900">
-          <div className="mb-1 inline-flex items-center gap-1.5 font-bold uppercase tracking-wider"><Info className="h-3.5 w-3.5" /> O que corrigir</div>
-          <p className="whitespace-pre-line leading-relaxed">{orientacoesIA}</p>
+          <div className="mb-1 inline-flex items-center gap-1.5 font-bold uppercase tracking-wider">
+            <Info className="h-3.5 w-3.5" /> O que corrigir
+          </div>
+          <p className="whitespace-pre-line leading-relaxed">
+            {(() => {
+              const divs = Array.isArray((doc as any)?.divergencias_json) ? (doc as any).divergencias_json : [];
+              if (divs.length > 0) {
+                return "Encontramos diferenças entre o documento e seu cadastro. Resolva cada uma abaixo.";
+              }
+              const motivo = String(doc.motivo_rejeicao || "");
+              if (motivo) return motivo;
+              return (
+                orientacoesIA ||
+                "O documento enviado não atende a todos os critérios. Resolva as diferenças abaixo ou envie um novo documento."
+              );
+            })()}
+          </p>
         </div>
       )}
 
