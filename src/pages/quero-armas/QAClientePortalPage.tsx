@@ -38,6 +38,7 @@ import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosPro
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
+import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
@@ -173,6 +174,9 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
+  // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
+  const [entradaWizardOpen, setEntradaWizardOpen] = useState(false);
+  const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
   // lê qa_processo_eventos (somente os processos do cliente).
   const [processoEventos, setProcessoEventos] = useState<any[]>([]);
@@ -187,6 +191,36 @@ export default function QAClientePortalPage() {
   const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
   const activeTab: "arsenal" | "resumo" | null = activeSection === "arsenal" ? "arsenal" : activeSection === "resumo" ? "resumo" : null;
   const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
+
+  // BLOCO 9 — Auto-abre o Assistente de Entrada para cliente novo que NUNCA
+  // respondeu (entrada_respondida_em IS NULL) E ainda não tem processo ativo.
+  // Clientes legados foram backfillados na migração; não vêem o wizard de surpresa.
+  useEffect(() => {
+    if (entradaAutoChecked) return;
+    if (!cliente) return;
+    const respondida = (cliente as any)?.entrada_respondida_em ?? null;
+    const semProcessos = !processos || processos.length === 0;
+    if (respondida == null && semProcessos) {
+      setEntradaWizardOpen(true);
+    }
+    setEntradaAutoChecked(true);
+  }, [cliente, processos, entradaAutoChecked]);
+
+  function handleEntradaConcluido(respostas: EntradaWizardRespostas) {
+    setCliente((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            entrada_objetivo: respostas.objetivo,
+            entrada_possui_arma: respostas.possuiArma,
+            entrada_respondida_em: new Date().toISOString(),
+          }
+        : prev,
+    );
+    // Navega para o catálogo com filtro de trilha aplicado (chip removível lá).
+    const trilha = respostas.objetivo;
+    navigate(`/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`);
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -878,6 +912,12 @@ export default function QAClientePortalPage() {
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
       />
+      <EntradaWizard
+        open={entradaWizardOpen}
+        onOpenChange={setEntradaWizardOpen}
+        clienteId={(cliente as any)?.id ?? null}
+        onConcluido={handleEntradaConcluido}
+      />
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
         <div className="flex items-center justify-between h-20">
           <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
@@ -1461,7 +1501,15 @@ export default function QAClientePortalPage() {
           <div className="space-y-4">
             <PortalScopeSelector hint="Filtra histórico, linha do tempo e cards de processo." />
             <SectionCard icon={BriefcaseBusiness} title="Meus processos" color="hsl(352 60% 30%)">
-              <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
+              <div className="mb-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEntradaWizardOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"
+                >
+                  <ShoppingBag className="h-4 w-4" /> Iniciar novo serviço
+                </button>
+              </div>
               {cliente?.id ? (
                 <div className="mb-4 rounded-2xl border border-[#7A1F2B]/20 bg-gradient-to-br from-[#7A1F2B]/5 to-white p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
