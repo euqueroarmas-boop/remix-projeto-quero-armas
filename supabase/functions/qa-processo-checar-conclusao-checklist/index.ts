@@ -18,6 +18,7 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { itemContaParaConclusao } from "../_shared/checklistVisibility.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -146,7 +147,10 @@ Deno.serve(async (req) => {
       .select("id, status, obrigatorio, tipo_documento, regra_validacao")
       .eq("processo_id", processoId);
     const lista = (docs || []) as any[];
-    const obrigatorios = lista.filter((d) => d.obrigatorio !== false);
+    // Filtra usando a regra compartilhada com o front (itemVisivelGuia +
+    // obrigatório). Itens escondidos por exige_quando/depende_de a partir das
+    // respostas atuais NÃO contam como pendentes.
+    const obrigatorios = lista.filter((d) => itemContaParaConclusao(d, respostas));
 
     if (obrigatorios.length === 0) {
       return json({ pronto: false, motivo: "sem_exigencias_obrigatorias" });
