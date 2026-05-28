@@ -635,7 +635,20 @@ export default function ChecklistGuiadoModal({
                   </div>
                 )}
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="truncate pr-2 text-[11px] font-bold text-slate-800">Sua pasta está {pct}% pronta</span>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate pr-2 text-[11px] font-bold text-slate-800 cursor-help underline decoration-dotted underline-offset-2">
+                          {processoAtual?.servico_nome || carga.processo.servico_nome
+                            ? `${processoAtual?.servico_nome || carga.processo.servico_nome} está ${pct}% pronta`
+                            : `Sua pasta está ${pct}% pronta`}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                        <p>Este progresso considera apenas os documentos deste processo.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   <span className="shrink-0 text-[11px] text-slate-500">
                     {prog.cumpridos} de {prog.total} itens resolvidos · {pendentesAcao} pendência{pendentesAcao === 1 ? "" : "s"} restante{pendentesAcao === 1 ? "" : "s"}
                     {emAnalise > 0 ? ` · ${emAnalise} em análise` : ""}
