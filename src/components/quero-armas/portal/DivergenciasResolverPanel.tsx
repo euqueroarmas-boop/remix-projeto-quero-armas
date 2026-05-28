@@ -209,6 +209,13 @@ export function agruparDivergencias(
   );
   for (const d of lista) {
     const g = classificarCampo(d?.campo || "");
+    // Diferença apenas de caixa/acento/espaço no NOME não é divergência
+    // real — ex.: "JOSÉ DA SILVA" vs "José da Silva".
+    if (g === "nome") {
+      const vd = normalizarNome(d?.valor_documento);
+      const vc = normalizarNome(d?.valor_cadastro);
+      if (vd && vc && vd === vc) continue;
+    }
     // Se a alteração de nome já está comprovada e o nome do documento bate
     // com um nome aceito (atual/anterior/cadastro), tratamos como resolvido
     // — não é uma pendência real para o cliente.
@@ -225,9 +232,9 @@ export function agruparDivergencias(
       if (!map.has(g)) map.set(g, []);
     }
   }
-  // Ordem estável: nome > endereço > rg > contato > cpf > data_nasc > outros
+  // Ordem estável.
   const ordem: GrupoDivergencia[] = [
-    "nome", "endereco", "rg", "contato", "cpf", "data_nascimento", "outros",
+    "nome", "endereco", "estado_civil", "rg", "contato", "cpf", "data_nascimento", "outros",
   ];
   return ordem
     .filter((g) => map.has(g))
