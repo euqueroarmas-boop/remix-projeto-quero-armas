@@ -793,9 +793,22 @@ export default function ChecklistGuiadoModal({
                         <FileText className="h-3.5 w-3.5" /> Processo
                       </div>
                       <div className="mt-0.5 truncate text-sm font-bold uppercase text-slate-800">{p.servico_nome}</div>
-                      <div className="mt-1 text-[11px] font-bold uppercase tracking-wider" style={{ color: p.pendentes > 0 ? MARROM : "#64748B" }}>
-                        {p.pendentes > 0 ? `${p.pendentes} item(ns) pendente(s)` : "Tudo em dia"}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-bold uppercase tracking-wider">
+                        <span style={{ color: p.pendentes > 0 ? MARROM : "#64748B" }}>
+                          {p.pendentes > 0 ? `${p.pendentes} pendência${p.pendentes === 1 ? "" : "s"}` : "Tudo em dia"}
+                        </span>
+                        {p.em_analise > 0 && (
+                          <span className="text-slate-500">· {p.em_analise} em análise</span>
+                        )}
+                        {p.total > 0 && (
+                          <span className="text-slate-500">· {p.pct}% pronto</span>
+                        )}
                       </div>
+                      {p.total > 0 && (
+                        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${p.pct}%`, background: MARROM }} />
+                        </div>
+                      )}
                     </div>
                     <ChevronRight className="h-5 w-5 shrink-0 text-slate-400" />
                   </button>
