@@ -112,7 +112,7 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
 
 /** Colunas de qa_clientes elegíveis para atualização em cada grupo. */
 export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
-  nome: ["nome"],
+  nome: ["nome_completo"],
   endereco: ["endereco", "numero", "complemento", "bairro", "cidade", "estado", "cep"],
   rg: ["rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg"],
   cpf: [],
