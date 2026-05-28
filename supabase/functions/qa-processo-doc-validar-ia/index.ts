@@ -398,6 +398,39 @@ function isVencido(dataEmissao: string | undefined, validadeDias: number | null 
   return limite < new Date();
 }
 
+/**
+ * Certidões civis (nascimento, casamento, averbação) NÃO têm validade
+ * para este fluxo — o que importa é o estado civil atual e a averbação.
+ * Espelho da regra do front (validadeDocumento.ts).
+ */
+function ehCertidaoCivilSemVencimento(tipo?: string | null): boolean {
+  if (!tipo) return false;
+  const t = String(tipo).toLowerCase();
+  if ([
+    "certidao_nascimento",
+    "certidao_casamento",
+    "certidao_alteracao_nome",
+    "certidao_averbacao",
+    "certidao_civil",
+  ].includes(t)) return true;
+  return /^certidao_(nascimento|casamento|averbacao|alteracao_nome)(_|$)/.test(t);
+}
+
+/** Normaliza o estado civil do cadastro para um conjunto fechado. */
+function normalizarEstadoCivil(raw: any): "solteiro" | "casado" | "divorciado" | "viuvo" | "separado" | "uniao_estavel" | "indefinido" {
+  const s = String(raw ?? "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().trim();
+  if (!s) return "indefinido";
+  if (s.startsWith("solt")) return "solteiro";
+  if (s.startsWith("cas")) return "casado";
+  if (s.startsWith("div")) return "divorciado";
+  if (s.startsWith("viu")) return "viuvo";
+  if (s.startsWith("sep")) return "separado";
+  if (s.includes("uniao")) return "uniao_estavel";
+  return "indefinido";
+}
+
 // Holerite: precisa corresponder ao mês atual ou mês imediatamente anterior.
 // Aceita "periodo_referencia" ou "mes_referencia" no formato YYYY-MM, "MM/YYYY" ou nomes.
 const MESES_PT: Record<string, number> = {
