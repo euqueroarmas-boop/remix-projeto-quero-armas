@@ -1318,6 +1318,7 @@ export default function ChecklistGuiadoModal({
                       }
                       onUsarNomeDoDocumento={usarNomeDoDocumento}
                       onAceitarDivergenciaCadastro={handleAceitarDivergencia}
+                      altNomeEmComprovacao={!!altNomeEmComprovacao}
                     />
                   )}
 
