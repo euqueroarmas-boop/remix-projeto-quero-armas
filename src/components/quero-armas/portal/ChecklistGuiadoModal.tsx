@@ -997,6 +997,7 @@ export default function ChecklistGuiadoModal({
                       onEditarCadastroManual={(grupo) =>
                         abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
                       }
+                      onUsarNomeDoDocumento={usarNomeDoDocumento}
                     />
                   )}
 
