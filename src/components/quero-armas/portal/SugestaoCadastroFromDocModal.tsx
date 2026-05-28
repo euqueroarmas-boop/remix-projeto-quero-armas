@@ -6,14 +6,40 @@
 // Camada 100% aditiva — não toca nas edges existentes.
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
+import { CheckCircle2, Loader2, MapPin, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const MARROM = "#7A1F2B";
+
+function Campo({
+  label,
+  value,
+  onChange,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  className?: string;
+}) {
+  return (
+    <label className={`block ${className}`}>
+      <span className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        {label}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="block h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[13px] text-slate-900 outline-none focus:border-slate-400"
+      />
+    </label>
+  );
+}
 
 interface Props {
   open: boolean;
@@ -31,6 +57,12 @@ interface Props {
   filtroCampos?: string[] | null;
   /** Título customizado no header. */
   tituloCustomizado?: string | null;
+  /**
+   * Quando true, o formulário de endereço é pré-preenchido com os dados
+   * atuais do cadastro (modo "editar manualmente") em vez de propor os
+   * valores extraídos do documento. O cliente pode editar livremente.
+   */
+  iniciarComCadastroAtual?: boolean;
 }
 
 interface Suggestion {
@@ -98,12 +130,75 @@ export function temSugestoesDeCadastro(cliente: any, extraidos: Record<string, a
 }
 
 export default function SugestaoCadastroFromDocModal({
-  open, onOpenChange, cliente, dadosExtraidos, nomeDoc, onApplied, filtroCampos, tituloCustomizado,
+  open, onOpenChange, cliente, dadosExtraidos, nomeDoc, onApplied, filtroCampos, tituloCustomizado, iniciarComCadastroAtual,
 }: Props) {
   const sugestoes = useMemo(
     () => buildSuggestions(cliente, dadosExtraidos || {}, filtroCampos),
     [cliente, dadosExtraidos, filtroCampos],
   );
+  // ---------------------------------------------------------------------
+  // Modo "endereço editável": quando o filtro é exclusivamente de endereço,
+  // renderizamos um formulário editável com os 7 campos em vez do diff em
+  // checkboxes. O cliente sempre revisa/edita antes de salvar.
+  // ---------------------------------------------------------------------
+  const ENDERECO_COLS = ["endereco", "numero", "complemento", "bairro", "cidade", "estado", "cep"] as const;
+  const ehEnderecoScope = useMemo(() => {
+    const filtro = Array.isArray(filtroCampos) ? filtroCampos.map((c) => String(c).toLowerCase()) : [];
+    if (filtro.length === 0) return false;
+    const set = new Set<string>(ENDERECO_COLS);
+    return filtro.every((c) => set.has(c));
+  }, [filtroCampos]);
+
+  function extractValor(col: string): string {
+    const m = MAPA.find((x) => x.col === col);
+    if (!m) return "";
+    for (const k of m.src) {
+      const v = norm((dadosExtraidos as any)?.[k]);
+      if (v) return v;
+    }
+    return "";
+  }
+  const valoresAtuais = useMemo(() => {
+    const o: Record<string, string> = {};
+    for (const c of ENDERECO_COLS) o[c] = norm(cliente?.[c]);
+    return o;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cliente?.endereco, cliente?.numero, cliente?.complemento, cliente?.bairro, cliente?.cidade, cliente?.estado, cliente?.cep]);
+  const valoresDoc = useMemo(() => {
+    const o: Record<string, string> = {};
+    for (const c of ENDERECO_COLS) o[c] = extractValor(c);
+    return o;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dadosExtraidos]);
+
+  const [form, setForm] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!open || !ehEnderecoScope) return;
+    const inicial: Record<string, string> = {};
+    for (const c of ENDERECO_COLS) {
+      const docV = valoresDoc[c];
+      const atual = valoresAtuais[c];
+      inicial[c] = iniciarComCadastroAtual ? atual : (docV || atual);
+    }
+    setForm(inicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, ehEnderecoScope, iniciarComCadastroAtual, JSON.stringify(valoresDoc), JSON.stringify(valoresAtuais)]);
+
+  const camposExtraidosFaltantes = useMemo(
+    () => ehEnderecoScope && ENDERECO_COLS.some((c) => !valoresDoc[c] && c !== "complemento"),
+    [ehEnderecoScope, valoresDoc],
+  );
+
+  const composeEndereco = (v: Record<string, string>) => {
+    const linha1 = [v.endereco, v.numero].filter(Boolean).join(", ");
+    const linha2 = [v.complemento, v.bairro].filter(Boolean).join(" — ");
+    const linha3 = [v.cidade, v.estado].filter(Boolean).join("/");
+    const linha4 = v.cep ? `CEP ${v.cep}` : "";
+    return [linha1, linha2, linha3, linha4].filter(Boolean).join(" • ");
+  };
+  const enderecoDocLinha = useMemo(() => composeEndereco(valoresDoc), [valoresDoc]);
+  const enderecoAtualLinha = useMemo(() => composeEndereco(valoresAtuais), [valoresAtuais]);
+
   // Aviso quando o filtro é de endereço mas a IA só conseguiu extrair o
   // logradouro — usuário precisa conferir número, bairro, cidade, UF e CEP.
   const enderecoSoLogradouro = useMemo(() => {
@@ -132,7 +227,16 @@ export default function SugestaoCadastroFromDocModal({
 
   const aplicar = async () => {
     const toSave: Record<string, string> = {};
-    for (const s of sugestoes) if (selecionados[s.campo]) toSave[s.campo] = s.valorNovo;
+    if (ehEnderecoScope) {
+      for (const c of ENDERECO_COLS) {
+        const novo = norm(form[c]);
+        const atual = valoresAtuais[c];
+        if (normCmp(novo) === normCmp(atual)) continue;
+        toSave[c] = novo;
+      }
+    } else {
+      for (const s of sugestoes) if (selecionados[s.campo]) toSave[s.campo] = s.valorNovo;
+    }
     if (!Object.keys(toSave).length) {
       onOpenChange(false);
       return;
@@ -195,7 +299,46 @@ export default function SugestaoCadastroFromDocModal({
 
         {/* Corpo */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2">
-          {sugestoes.length === 0 ? (
+          {ehEnderecoScope ? (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3">
+                <div className="flex items-start gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "#FBF3F4", color: MARROM }}>
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400">Endereço atual no cadastro</div>
+                      <div className="text-[12px] italic text-slate-600 break-words">{enderecoAtualLinha || "—"}</div>
+                    </div>
+                    {enderecoDocLinha && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider" style={{ color: MARROM }}>Endereço extraído do documento</div>
+                        <div className="text-[12px] font-semibold text-slate-900 break-words">{enderecoDocLinha}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="text-[12px] text-slate-600">
+                Confira os campos abaixo antes de salvar. Você pode editar manualmente qualquer valor.
+              </p>
+              {camposExtraidosFaltantes && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                  Extraímos apenas parte do endereço. Confira os demais campos antes de salvar.
+                </div>
+              )}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-6">
+                <Campo className="sm:col-span-4" label="Endereço (logradouro)" value={form.endereco || ""} onChange={(v) => setForm((p) => ({ ...p, endereco: v }))} />
+                <Campo className="sm:col-span-2" label="Número" value={form.numero || ""} onChange={(v) => setForm((p) => ({ ...p, numero: v }))} />
+                <Campo className="sm:col-span-3" label="Complemento" value={form.complemento || ""} onChange={(v) => setForm((p) => ({ ...p, complemento: v }))} />
+                <Campo className="sm:col-span-3" label="Bairro" value={form.bairro || ""} onChange={(v) => setForm((p) => ({ ...p, bairro: v }))} />
+                <Campo className="sm:col-span-3" label="Cidade" value={form.cidade || ""} onChange={(v) => setForm((p) => ({ ...p, cidade: v }))} />
+                <Campo className="sm:col-span-1" label="UF" value={form.estado || ""} onChange={(v) => setForm((p) => ({ ...p, estado: v.toUpperCase().slice(0, 2) }))} />
+                <Campo className="sm:col-span-2" label="CEP" value={form.cep || ""} onChange={(v) => setForm((p) => ({ ...p, cep: v }))} />
+              </div>
+            </div>
+          ) : sugestoes.length === 0 ? (
             <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[12px] text-emerald-800">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               Seu cadastro já está em sintonia com este documento — nada a atualizar.
@@ -264,7 +407,7 @@ export default function SugestaoCadastroFromDocModal({
           >
             {sugestoes.length === 0 ? "Continuar" : "Manter cadastro atual"}
           </button>
-          {sugestoes.length > 0 && (
+          {(ehEnderecoScope || sugestoes.length > 0) && (
             <button
               type="button"
               onClick={aplicar}
@@ -278,7 +421,8 @@ export default function SugestaoCadastroFromDocModal({
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-4 w-4" /> Atualizar cadastro
+                  <CheckCircle2 className="h-4 w-4" />
+                  {ehEnderecoScope ? "Salvar endereço no cadastro" : "Atualizar cadastro"}
                 </>
               )}
             </button>

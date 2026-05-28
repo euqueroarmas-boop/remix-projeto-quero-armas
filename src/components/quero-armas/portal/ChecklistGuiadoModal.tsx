@@ -433,9 +433,16 @@ export default function ChecklistGuiadoModal({
   };
 
   // ----- Abrir SugestaoCadastroFromDocModal escopado a um grupo de campos -----
-  const abrirSugestaoCadastroPorGrupo = (grupo: GrupoDivergencia) => {
+  const abrirSugestaoCadastroPorGrupo = (
+    grupo: GrupoDivergencia,
+    opts?: { iniciarComCadastroAtual?: boolean },
+  ) => {
     const extraidos = (resultadoDoc as any)?.dados_extraidos_json;
-    if (!extraidos || typeof extraidos !== "object") {
+    // No modo "editar manualmente" para endereço, dispensamos `extraidos`
+    // (o cliente vai preencher do zero, partindo do cadastro atual).
+    const editandoManualmenteEndereco =
+      !!opts?.iniciarComCadastroAtual && grupo === "endereco";
+    if (!editandoManualmenteEndereco && (!extraidos || typeof extraidos !== "object")) {
       toast.error("Não há dados extraídos do documento para atualizar o cadastro.");
       return;
     }
@@ -455,10 +462,11 @@ export default function ChecklistGuiadoModal({
     };
     setSugestao({
       open: true,
-      dados: extraidos as Record<string, any>,
+      dados: (extraidos ?? {}) as Record<string, any>,
       nomeDoc: docAtivo?.nome_documento ?? null,
       filtroCampos: colunas,
       titulo: titulos[grupo],
+      iniciarComCadastroAtual: !!opts?.iniciarComCadastroAtual,
     });
   };
 
@@ -513,8 +521,9 @@ export default function ChecklistGuiadoModal({
         nomeDoc: string | null;
         filtroCampos: string[] | null;
         titulo: string | null;
+        iniciarComCadastroAtual?: boolean;
       }
-  >({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null });
+  >({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null, iniciarComCadastroAtual: false });
 
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
@@ -757,6 +766,9 @@ export default function ChecklistGuiadoModal({
                       }
                       onMarcarComprovanteAntigo={handleComprovanteAntigo}
                       onReenviarDocumento={handleEscolherArquivo}
+                      onEditarCadastroManual={(grupo) =>
+                        abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
+                      }
                     />
                   )}
 
@@ -858,6 +870,9 @@ export default function ChecklistGuiadoModal({
                   onAtualizarCadastroComGrupo={(grupo) => abrirSugestaoCadastroPorGrupo(grupo)}
                   onMarcarComprovanteAntigo={handleComprovanteAntigo}
                   onReenviarDocumento={reenviarAtual}
+                  onEditarCadastroManual={(grupo) =>
+                    abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
+                  }
                 />
                 {altNomeJaComprovada && (
                   <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-left text-[12px] text-emerald-900">
@@ -952,13 +967,14 @@ export default function ChecklistGuiadoModal({
         open={sugestao.open}
         onOpenChange={(n) =>
           !n &&
-          setSugestao({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null })
+          setSugestao({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null, iniciarComCadastroAtual: false })
         }
         cliente={clienteDados}
         dadosExtraidos={sugestao.dados}
         nomeDoc={sugestao.nomeDoc}
         filtroCampos={sugestao.filtroCampos}
         tituloCustomizado={sugestao.titulo}
+        iniciarComCadastroAtual={!!sugestao.iniciarComCadastroAtual}
         onApplied={async () => {
           await recarregarClienteDados();
           onUpdated?.();

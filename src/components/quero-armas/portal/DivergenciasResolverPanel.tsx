@@ -199,6 +199,8 @@ export interface DivergenciasResolverPanelProps {
   onAtualizarCadastroComGrupo: (grupo: GrupoDivergencia) => void;
   onMarcarComprovanteAntigo: () => void;
   onReenviarDocumento: () => void;
+  /** Abre o editor de cadastro pré-preenchido com os valores atuais. */
+  onEditarCadastroManual?: (grupo: GrupoDivergencia) => void;
 }
 
 export default function DivergenciasResolverPanel({
@@ -211,6 +213,7 @@ export default function DivergenciasResolverPanel({
   onAtualizarCadastroComGrupo,
   onMarcarComprovanteAntigo,
   onReenviarDocumento,
+  onEditarCadastroManual,
 }: DivergenciasResolverPanelProps) {
   const grupos = useMemo(
     () => agruparDivergencias(divergencias, motivoRejeicao),
@@ -304,7 +307,8 @@ export default function DivergenciasResolverPanel({
                           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
-                          Atualizar cadastro com este nome
+                          <span className="hidden sm:inline">Usar nome do documento no cadastro</span>
+                          <span className="sm:hidden">Usar nome do documento</span>
                         </button>
                       )}
                       <button
@@ -320,6 +324,11 @@ export default function DivergenciasResolverPanel({
 
                   {grupo === "endereco" && (
                     <>
+                      <p className="w-full text-[11px] leading-relaxed text-slate-600">
+                        O endereço do documento é diferente do endereço salvo
+                        no seu cadastro. Você pode usar o endereço do documento
+                        ou editar manualmente antes de salvar.
+                      </p>
                       {podeAtualizarCadastro && (
                         <button
                           type="button"
@@ -328,7 +337,17 @@ export default function DivergenciasResolverPanel({
                           style={{ background: MARROM }}
                         >
                           <Sparkles className="h-3.5 w-3.5" />
-                          Atualizar cadastro com este endereço
+                          <span className="hidden sm:inline">Usar endereço do documento no cadastro</span>
+                          <span className="sm:hidden">Usar endereço do documento</span>
+                        </button>
+                      )}
+                      {podeAtualizarCadastro && onEditarCadastroManual && (
+                        <button
+                          type="button"
+                          onClick={() => onEditarCadastroManual("endereco")}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
+                        >
+                          Editar endereço manualmente
                         </button>
                       )}
                       <button
