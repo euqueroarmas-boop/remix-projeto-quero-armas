@@ -1064,6 +1064,7 @@ Deno.serve(async (req) => {
       ...(parsed.campos_complementares || {}),
       ...(parsed.tipo_documento_detectado ? { tipo_documento_detectado: parsed.tipo_documento_detectado } : {}),
       ...(parsed.orientacoes_cliente ? { orientacoes_cliente: parsed.orientacoes_cliente } : {}),
+      ...(doc.tipo_documento === "certidao_alteracao_nome" ? { incluir_no_dossie: true } : {}),
     };
 
     await supabase.from("qa_processo_documentos")
@@ -1131,6 +1132,7 @@ Deno.serve(async (req) => {
           pendente_aprovacao: !aprovada && novoStatus === "revisao_humana",
           nome_anterior: nomeAnterior,
           nome_atual: nomeAtual,
+          documento_id,
           tipo_certidao: cx.tipo_certidao ?? null,
           data_averbacao: cx.data_averbacao ?? null,
           cartorio_registro: cx.cartorio_registro ?? null,
@@ -1144,6 +1146,14 @@ Deno.serve(async (req) => {
             .from("qa_processos")
             .update({ respostas_questionario_json: respostas })
             .eq("id", processo_id);
+          if (aprovada) {
+            await reconciliarDivergenciasNomeAprovada(
+              supabase,
+              processo_id,
+              [cliente?.nome_completo, nomeAnterior, nomeAtual],
+              documento_id,
+            );
+          }
           await supabase.from("qa_processo_eventos").insert({
             processo_id,
             documento_id,
