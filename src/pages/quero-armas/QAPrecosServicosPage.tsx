@@ -48,6 +48,7 @@ interface ServicoRow {
   display_order: number;
   descricao_curta?: string | null;
   servico_id?: number | null;
+  exige_acervo: boolean | null;
 }
 
 function fmtBRL(v: number | null) {
@@ -161,7 +162,7 @@ export default function QAPrecosServicosPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("qa_servicos_catalogo" as any)
-      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id")
+      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id, exige_acervo")
       .order("categoria", { ascending: true })
       .order("display_order", { ascending: true });
     if (error) {
