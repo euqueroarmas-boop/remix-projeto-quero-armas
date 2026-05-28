@@ -207,6 +207,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   useEffect(() => { carregar(); }, [carregar]);
 
+  // Auto-liberação idempotente da próxima etapa quando a atual está cumprida.
+  // Evita disparo duplicado na mesma sessão por (processo, etapa).
+  const autoLiberadoRef = useRef<Set<string>>(new Set());
+
   // Bloco 14 — destaca o próximo item pendente da equipe após uma ação,
   // rolando suavemente até ele dentro do container do drawer. O destaque
   // some sozinho após 2s; o drawer permanece aberto e a aba ativa preservada.
