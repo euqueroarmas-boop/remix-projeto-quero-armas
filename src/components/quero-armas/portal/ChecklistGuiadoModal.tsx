@@ -793,7 +793,8 @@ export default function ChecklistGuiadoModal({
     grupo: GrupoDivergencia,
     opts?: { iniciarComCadastroAtual?: boolean },
   ) => {
-    const extraidos = (resultadoDoc as any)?.dados_extraidos_json;
+    const docBase = (resultadoDoc as any) ?? (docAtivo as any) ?? null;
+    const extraidos = docBase?.dados_extraidos_json;
     // No modo "editar manualmente" para endereço, dispensamos `extraidos`
     // (o cliente vai preencher do zero, partindo do cadastro atual).
     const editandoManualmenteEndereco =
@@ -820,7 +821,7 @@ export default function ChecklistGuiadoModal({
     setSugestao({
       open: true,
       dados: (extraidos ?? {}) as Record<string, any>,
-      nomeDoc: docAtivo?.nome_documento ?? null,
+      nomeDoc: docBase?.nome_documento ?? docAtivo?.nome_documento ?? null,
       filtroCampos: colunas,
       titulo: titulos[grupo],
       iniciarComCadastroAtual: !!opts?.iniciarComCadastroAtual,
