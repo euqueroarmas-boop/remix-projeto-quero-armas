@@ -308,6 +308,30 @@ export interface CargaProcesso {
   clienteNome?: string | null;
 }
 
+/**
+ * Hidrata `regra_validacao.wizard_pre_documento` do catálogo
+ * (qa_servicos_documentos) no doc do processo quando ele ainda não tem o
+ * bloco. O catálogo é a FONTE DE VERDADE para vínculo de wizards. Quando o
+ * doc do processo já trouxer um wizard_pre_documento próprio (override
+ * pontual), ele tem prioridade sobre o catálogo.
+ */
+function mesclarWizardPreDocumentoCatalogo(
+  regraDoc: unknown,
+  regraCatalogo: unknown,
+): Record<string, any> | null {
+  const baseDoc =
+    regraDoc && typeof regraDoc === "object" ? { ...(regraDoc as Record<string, any>) } : {};
+  const baseCat =
+    regraCatalogo && typeof regraCatalogo === "object"
+      ? (regraCatalogo as Record<string, any>)
+      : null;
+  if (!baseCat) return Object.keys(baseDoc).length > 0 ? baseDoc : (regraDoc as any) ?? null;
+  if (!baseDoc.wizard_pre_documento && baseCat.wizard_pre_documento) {
+    baseDoc.wizard_pre_documento = baseCat.wizard_pre_documento;
+  }
+  return baseDoc;
+}
+
 export async function carregarProcessoGuia(processoId: string): Promise<CargaProcesso> {
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
