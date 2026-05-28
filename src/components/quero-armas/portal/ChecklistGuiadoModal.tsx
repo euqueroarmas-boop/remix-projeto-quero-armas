@@ -374,9 +374,21 @@ export default function ChecklistGuiadoModal({
       setErroAcao(enviar.error ?? "Erro no envio.");
       return;
     }
+    const documentoIdValidacao = enviar.documentoId || docUpload.id;
+    if (enviar.redirecionado && documentoIdValidacao !== docUpload.id) {
+      const c = await recarregarCarga(cargaUpload.processo.id);
+      const alvo = (c.docs || []).find((d) => d.id === documentoIdValidacao) || (c.docs || []).find(ehCertidaoAlteracaoNome);
+      if (alvo) {
+        docUpload = alvo;
+        cargaUpload = c;
+        setDocAtivoId(alvo.id);
+        setCertidaoUploadForcadoId(alvo.id);
+      }
+      toast.message("Este arquivo foi associado ao item correto de certidão averbada.");
+    }
     onUpdated?.();
     setFase("validando");
-    const final = await aguardarValidacaoIAGuia(docUpload.id);
+    const final = await aguardarValidacaoIAGuia(documentoIdValidacao);
     setResultadoDoc(final);
     await recarregarCarga(cargaUpload.processo.id);
     onUpdated?.();
@@ -385,7 +397,7 @@ export default function ChecklistGuiadoModal({
       setCertidaoUploadForcadoId(null);
     }
     if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
-    else if (st === "em_revisao_humana") setFase("resultado_revisao");
+    else if (st === "em_revisao_humana" || st === "revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
     else setFase("resultado_demorando"); // ainda em análise (timeout)
 
@@ -482,7 +494,7 @@ export default function ChecklistGuiadoModal({
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ processo_id: carga.processo.id }),
+          body: JSON.stringify({ processo_id: pid }),
         },
       );
       const out = await resp.json().catch(() => ({}));
@@ -495,6 +507,7 @@ export default function ChecklistGuiadoModal({
         status: statusRet,
         certidaoJaAprovada,
         reaproveitado: !!out?.reaproveitado,
+        jaExistia: !!out?.ja_existia,
       };
   };
 
@@ -527,6 +540,8 @@ export default function ChecklistGuiadoModal({
         );
       } else if (out.certidaoJaAprovada) {
         toast.success("Alteração de nome já comprovada por certidão averbada.");
+      } else if (out.jaExistia) {
+        toast.success("Abrimos o item correto para anexar a certidão averbada.");
       } else {
         toast.success(
           "Pendência criada. Anexe a certidão averbada no item correto que abrimos agora.",

@@ -463,6 +463,8 @@ async function authHeader(): Promise<Record<string, string>> {
 export interface ResultadoAcao {
   ok: boolean;
   error?: string;
+  documentoId?: string | null;
+  redirecionado?: boolean;
 }
 
 // Espelho de handleUpload (sem alterar a edge function).
@@ -512,19 +514,24 @@ export async function enviarDocumentoGuia(
         nome_arquivo_original: file.name,
       }),
     });
+    const out = await resp.json().catch(() => ({}));
     if (!resp.ok) {
-      const txt = await resp.text();
-      throw new Error(txt || "Falha ao registrar upload");
+      const msg = out?.error || out?.message || JSON.stringify(out) || "Falha ao registrar upload";
+      throw new Error(msg);
     }
+    const documentoIdAlvo =
+      (out?.documento_id_alvo as string | null | undefined) ??
+      (out?.documento?.id as string | null | undefined) ??
+      doc.id;
     // Extração de datas em background (mesmo comportamento do drawer).
     fetch(`${SUPA_URL}/functions/v1/qa-extract-doc-dates`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ documento_id: doc.id }),
+        body: JSON.stringify({ documento_id: documentoIdAlvo }),
     }).catch(() => {
       /* background — não bloqueia o fluxo */
     });
-    return { ok: true };
+    return { ok: true, documentoId: documentoIdAlvo, redirecionado: !!out?.redirecionado };
   } catch (err: any) {
     return { ok: false, error: err?.message ?? "Erro no upload" };
   }

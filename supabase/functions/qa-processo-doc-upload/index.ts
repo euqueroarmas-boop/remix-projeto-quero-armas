@@ -334,7 +334,13 @@ Deno.serve(async (req) => {
       );
     } catch (_) {}
 
-    return json({ success: true, documento: docRow, ia_em_analise: iaTriggered });
+    return json({
+      success: true,
+      documento: docRow,
+      documento_id_alvo: documentoIdAlvo,
+      redirecionado: documentoIdAlvo !== documento_id,
+      ia_em_analise: iaTriggered,
+    });
   } catch (err: any) {
     console.error("qa-processo-doc-upload:", err);
     return json({ error: err?.message || "Erro interno" }, 500);
