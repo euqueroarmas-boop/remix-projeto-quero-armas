@@ -933,7 +933,7 @@ export default function ChecklistGuiadoModal({
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
   // ----- Wizard de Perguntas vinculado a uma exigência (regra_validacao.wizard_pre_documento) -----
-  type WizardPreAction = "anexar" | "baixar_template" | "reaproveitar";
+  type WizardPreAction = "continuar" | "anexar" | "baixar_template" | "reaproveitar";
   const [wizardPre, setWizardPre] = useState<{
     open: boolean;
     doc: GuiaDoc | null;
