@@ -964,6 +964,13 @@ Deno.serve(async (req) => {
       novoStatus = "divergente";
       motivoRejeicao = "Divergência entre o documento e seu cadastro: " +
         divergencias.map((d: any) => d.campo).join(", ");
+    } else if (
+      doc.tipo_documento === "certidao_alteracao_nome" &&
+      camposFaltando.length === 0 &&
+      conf >= REVISAO_HUMANA_MIN
+    ) {
+      novoStatus = conf >= APROVA_AUTO_MIN ? "aprovado" : "revisao_humana";
+      motivoRejeicao = null;
     } else if (conf < REVISAO_HUMANA_MIN) {
       novoStatus = "invalido";
       motivoRejeicao = `Confiança da IA insuficiente (${conf.toFixed(2)}). Reenvie ou aguarde revisão manual.`;
