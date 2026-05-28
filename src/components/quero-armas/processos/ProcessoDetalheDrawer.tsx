@@ -6,7 +6,7 @@ import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, 
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist, getProximoItemAcionavelAdmin } from "@/lib/quero-armas/checklistMetrics";
-import { auditarChecklistProcesso, type ChecklistAuditIssue } from "@/lib/quero-armas/checklistAudit";
+import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
@@ -1270,55 +1270,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <span className="text-slate-400">TOTAL {totalExigencias}</span>
                 </div>
               )}
-              {/* Bloco 15 — Saúde do checklist (auditoria visual da Equipe) */}
-              {equipeMode && totalExigencias > 0 && (() => {
-                const issues: ChecklistAuditIssue[] = auditarChecklistProcesso(docs as any);
-                if (issues.length === 0) {
-                  return (
-                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-1.5 text-[10px] uppercase tracking-wider font-bold text-emerald-800 inline-flex items-center gap-1.5">
-                      <ShieldCheck className="h-3 w-3" /> CHECKLIST CONSISTENTE
-                    </div>
-                  );
-                }
-                const sevStyle = (s: ChecklistAuditIssue["severity"]) => {
-                  if (s === "critical") return { box: "border-rose-300 bg-rose-50", chip: "bg-rose-600 text-white", text: "text-rose-900", icon: "text-rose-700" };
-                  if (s === "warning") return { box: "border-amber-300 bg-amber-50/70", chip: "bg-amber-600 text-white", text: "text-amber-900", icon: "text-amber-700" };
-                  return { box: "border-slate-300 bg-slate-50", chip: "bg-slate-600 text-white", text: "text-slate-800", icon: "text-slate-600" };
-                };
-                return (
-                  <div className="rounded-lg border border-slate-300 bg-white p-3 space-y-2">
-                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-700">
-                      <ShieldAlert className="h-3 w-3" /> SAÚDE DO CHECKLIST · {issues.length} ALERTA{issues.length > 1 ? "S" : ""}
-                    </div>
-                    <ul className="space-y-1.5">
-                      {issues.map((iss) => {
-                        const s = sevStyle(iss.severity);
-                        return (
-                          <li
-                            key={iss.code + "::" + (iss.docIds ?? []).join(",")}
-                            className={`rounded-md border ${s.box} px-2.5 py-2 flex items-start gap-2`}
-                          >
-                            <AlertTriangle className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${s.icon}`} />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold ${s.chip}`}>
-                                  {iss.severity === "critical" ? "CRÍTICO" : iss.severity === "warning" ? "ATENÇÃO" : "INFO"}
-                                </span>
-                                <span className={`text-[11px] font-semibold leading-snug ${s.text}`}>{iss.message}</span>
-                              </div>
-                              {iss.docIds && iss.docIds.length > 0 && (
-                                <div className="mt-1 text-[10px] uppercase tracking-wider text-slate-500">
-                                  {iss.docIds.length} REGISTRO{iss.docIds.length > 1 ? "S" : ""} AFETADO{iss.docIds.length > 1 ? "S" : ""}
-                                </div>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                );
-              })()}
+              {/* Bloco 15/16 — Saúde do checklist (auditoria + correção assistida) */}
+              {equipeMode && totalExigencias > 0 && (
+                <SaudeChecklistPanel
+                  processoId={processoId}
+                  clienteId={processo?.cliente_id ?? null}
+                  docs={docs as any}
+                  onChanged={carregar}
+                />
+              )}
               {/* Emissão em lote de certidões oficiais */}
               {(() => {
                 const certidoesPendentes = docs.filter(
