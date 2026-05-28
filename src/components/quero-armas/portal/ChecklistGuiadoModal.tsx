@@ -72,6 +72,13 @@ import DivergenciasResolverPanel, {
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 import { isDocDeArma } from "@/lib/quero-armas/documentosDeArma";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
+import ClubeFiliacaoStep from "@/components/quero-armas/portal/clube-wizard/ClubeFiliacaoStep";
+import {
+  WizardPreDocumentoConfig,
+  getWizardDescricaoCliente,
+  getWizardLabel,
+  wizardPendentePara,
+} from "@/lib/quero-armas/checklistWizardGate";
 import {
   buscarCandidatosReaproveitamento,
   aplicarReaproveitamento,
@@ -385,6 +392,7 @@ export default function ChecklistGuiadoModal({
 
   const handleReaproveitar = async (origemId: string) => {
     if (!docAtivo || !carga) return;
+    if (gateWizardPre(docAtivo, { tipo: "reaproveitar", payload: origemId })) return;
     setReusoAplicando(origemId);
     setErroAcao(null);
     const r = await aplicarReaproveitamento({
@@ -452,6 +460,7 @@ export default function ChecklistGuiadoModal({
       setErroAcao("Selecione a arma antes de enviar o documento.");
       return;
     }
+    if (gateWizardPre(doc, { tipo: "anexar" })) return;
     const fmts: string[] = Array.isArray(doc?.formato_aceito)
       ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
       : [];
@@ -893,6 +902,15 @@ export default function ChecklistGuiadoModal({
   >({ open: false, doc: null, templateKey: null });
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
+  // ----- Wizard de Perguntas vinculado a uma exigência (regra_validacao.wizard_pre_documento) -----
+  type WizardPreAction = "anexar" | "baixar_template" | "reaproveitar";
+  const [wizardPre, setWizardPre] = useState<{
+    open: boolean;
+    doc: GuiaDoc | null;
+    cfg: WizardPreDocumentoConfig | null;
+    acaoPendente: { tipo: WizardPreAction; payload?: any } | null;
+  }>({ open: false, doc: null, cfg: null, acaoPendente: null });
+
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
   const [sugestao, setSugestao] = useState<
     | {
@@ -924,6 +942,7 @@ export default function ChecklistGuiadoModal({
   const abrirConfirmacaoTemplate = async (doc: GuiaDoc, templateKey: string) => {
     if (!carga) return;
     setErroAcao(null);
+    if (gateWizardPre(doc, { tipo: "baixar_template", payload: templateKey })) return;
     setBaixandoTemplate(true);
     setWizard({ open: true, doc, templateKey });
   };
@@ -931,6 +950,49 @@ export default function ChecklistGuiadoModal({
   const fecharWizard = () => {
     setWizard({ open: false, doc: null, templateKey: null });
     setBaixandoTemplate(false);
+  };
+
+  /**
+   * Verifica se a exigência exige um Wizard de Perguntas antes de qualquer
+   * ação. Se exigir e ainda não estiver completo, abre o modal e devolve
+   * `true` (= ação bloqueada). A ação é guardada para ser retomada após o
+   * cliente concluir o wizard.
+   */
+  const gateWizardPre = (
+    doc: GuiaDoc | null | undefined,
+    acao: { tipo: "anexar" | "baixar_template" | "reaproveitar"; payload?: any },
+  ): boolean => {
+    if (!doc) return false;
+    const cfg = wizardPendentePara(doc, clienteDados);
+    if (!cfg) return false;
+    setWizardPre({ open: true, doc, cfg, acaoPendente: acao });
+    return true;
+  };
+
+  const fecharWizardPre = () => {
+    setWizardPre({ open: false, doc: null, cfg: null, acaoPendente: null });
+  };
+
+  const retomarAcaoPosWizardPre = async () => {
+    const { doc, acaoPendente } = wizardPre;
+    fecharWizardPre();
+    await recarregarClienteDados();
+    if (!doc || !acaoPendente) return;
+    // Reabre a ação que estava bloqueada.
+    if (acaoPendente.tipo === "baixar_template" && typeof acaoPendente.payload === "string") {
+      setBaixandoTemplate(true);
+      setWizard({ open: true, doc, templateKey: acaoPendente.payload });
+      return;
+    }
+    if (acaoPendente.tipo === "anexar") {
+      // Reentrega no fluxo de upload — passa pelos checks normais.
+      handleEscolherArquivo();
+      return;
+    }
+    if (acaoPendente.tipo === "reaproveitar" && typeof acaoPendente.payload === "string") {
+      void handleReaproveitar(acaoPendente.payload);
+      return;
+    }
   };
 
   const handleWizardGenerated = (blob: Blob, _filename: string) => {
@@ -1528,6 +1590,59 @@ export default function ChecklistGuiadoModal({
           onUpdated?.();
         }}
       />
+
+      {/* Wizard de Perguntas vinculado à exigência — abre antes de qualquer ação */}
+      <Dialog open={wizardPre.open} onOpenChange={(n) => !n && fecharWizardPre()}>
+        <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
+          <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style={{ background: MARROM }}>
+                <ShieldCheck className="h-5 w-5" strokeWidth={2.3} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                  Antes de continuar
+                </div>
+                <h2 className="text-[17px] font-extrabold leading-tight text-slate-900">
+                  {wizardPre.cfg ? getWizardLabel(wizardPre.cfg.wizard_key) : ""}
+                </h2>
+                {wizardPre.doc?.nome_documento && (
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Documento: <span className="font-semibold text-slate-700">{wizardPre.doc.nome_documento}</span>
+                  </p>
+                )}
+                {wizardPre.cfg && (
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-slate-600">
+                    {getWizardDescricaoCliente(wizardPre.cfg.wizard_key)}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={fecharWizardPre}
+                aria-label="Fechar"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="min-h-[260px] flex-1 overflow-y-auto px-5 py-5">
+            {wizardPre.open && wizardPre.cfg?.wizard_key === "clube_filiacao" && carga && (
+              <ClubeFiliacaoStep
+                processoId={carga.processo.id}
+                clienteId={carga.processo.cliente_id}
+                onConfirmed={() => {
+                  toast.success("Clube e filiação confirmados.");
+                  onUpdated?.();
+                  void retomarAcaoPosWizardPre();
+                }}
+                onBack={fecharWizardPre}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {clienteDados && (
         <ClienteCadastroProgressivoModal

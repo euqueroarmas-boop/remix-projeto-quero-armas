@@ -46,6 +46,7 @@ import { CSS } from "@dnd-kit/utilities";
 import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
 import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
 import QAServicoDocumentosLinks from "./QAServicoDocumentosLinks";
+import { WIZARD_REGISTRY } from "@/lib/quero-armas/checklistWizardGate";
 
 /* =============================================================================
  * QAServicoDocumentosModal — Editor de DOCUMENTOS EXIGIDOS de um serviço.
@@ -725,6 +726,27 @@ function ExigenciaCard({
     onPatch({ regra_validacao: rv });
   }
 
+  const currentWizardKey =
+    (row.regra_validacao as any)?.wizard_pre_documento?.wizard_key ?? "";
+
+  function setRegraWizardPreDocumento(wizardKey: string) {
+    const rv =
+      row.regra_validacao && typeof row.regra_validacao === "object"
+        ? { ...(row.regra_validacao as any) }
+        : {};
+    if (wizardKey) {
+      rv.wizard_pre_documento = {
+        enabled: true,
+        wizard_key: wizardKey,
+        required: true,
+        bloquear_documento_ate_responder: true,
+      };
+    } else {
+      delete rv.wizard_pre_documento;
+    }
+    onPatch({ regra_validacao: rv });
+  }
+
   return (
     <div className="p-2">
       <div className="flex items-start gap-2 mb-2">
@@ -907,6 +929,27 @@ function ExigenciaCard({
               </p>
             </div>
           )}
+
+          {/* Wizard de Perguntas vinculado — bloqueia o documento até resolver */}
+          <div className="col-span-12">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              WIZARD OBRIGATÓRIO ANTES DESTE DOCUMENTO
+            </div>
+            <select
+              value={currentWizardKey}
+              onChange={(e) => setRegraWizardPreDocumento(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— NENHUM —</option>
+              {WIZARD_REGISTRY.map((w) => (
+                <option key={w.key} value={w.key}>{w.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-[10px] text-slate-500 normal-case">
+              Quando definido, o cliente precisa responder este wizard antes de baixar,
+              anexar, reaproveitar ou concluir o documento.
+            </p>
+          </div>
 
           {/* Anexos do template */}
           <div className="col-span-12 grid grid-cols-2 gap-2">
