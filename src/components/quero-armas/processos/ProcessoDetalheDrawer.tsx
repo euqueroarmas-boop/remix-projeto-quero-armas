@@ -199,8 +199,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     setPendingDocId(docId);
     // ajusta accept conforme formato_aceito do item
     const doc = docs.find((d) => d.id === docId);
+    const normalizeFmt = (f: string): string => {
+      const s = String(f).toLowerCase().trim();
+      if (!s) return s;
+      const sub = s.includes("/") ? (s.split("/").pop() || s) : s;
+      return sub === "jpeg" ? "jpg" : sub;
+    };
     const fmts: string[] = Array.isArray(doc?.formato_aceito)
-      ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      ? (doc!.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
       : [];
     let accept = "image/*,application/pdf";
     if (fmts.length > 0) {
@@ -222,10 +228,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     setUploadingId(docId);
     // valida extensão no front antes de subir (UX rápida)
     const docMeta = docs.find((d) => d.id === docId);
+    const normalizeFmt = (f: string): string => {
+      const s = String(f).toLowerCase().trim();
+      if (!s) return s;
+      const sub = s.includes("/") ? (s.split("/").pop() || s) : s;
+      return sub === "jpeg" ? "jpg" : sub;
+    };
     const fmts: string[] = Array.isArray(docMeta?.formato_aceito)
-      ? (docMeta!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+      ? (docMeta!.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
       : [];
-    const extLocal = (file.name.split(".").pop() || "").toLowerCase();
+    const extRaw = (file.name.split(".").pop() || "").toLowerCase();
+    const extLocal = extRaw === "jpeg" ? "jpg" : extRaw;
     if (fmts.length > 0 && !fmts.includes(extLocal)) {
       const msg = fmts.length === 1 && fmts[0] === "pdf"
         ? "Este documento deve ser enviado exclusivamente em PDF."
