@@ -22,6 +22,15 @@ interface Props {
   dadosExtraidos: Record<string, any> | null | undefined;
   nomeDoc?: string | null;
   onApplied?: () => void;
+  /**
+   * Restringe quais COLUNAS de qa_clientes podem aparecer no modal. Quando
+   * informado, só as colunas listadas são consideradas — útil para abrir o
+   * modal "escopado" (ex.: só endereço, só RG) a partir do painel de
+   * divergências.
+   */
+  filtroCampos?: string[] | null;
+  /** Título customizado no header. */
+  tituloCustomizado?: string | null;
 }
 
 interface Suggestion {
@@ -34,6 +43,7 @@ interface Suggestion {
 // IA pode emitir várias variantes de chave para o mesmo dado.
 // Mapeamos múltiplas chaves de origem → 1 coluna em qa_clientes.
 const MAPA: { src: string[]; col: string; label: string }[] = [
+  { src: ["nome", "nome_titular", "titular", "nome_completo", "titular_comprovante_nome"], col: "nome", label: "Nome completo" },
   { src: ["data_nascimento"], col: "data_nascimento", label: "Data de nascimento" },
   { src: ["naturalidade_municipio", "naturalidade"], col: "naturalidade_municipio", label: "Naturalidade (município)" },
   { src: ["naturalidade_uf"], col: "naturalidade_uf", label: "Naturalidade (UF)" },
@@ -57,9 +67,17 @@ const MAPA: { src: string[]; col: string; label: string }[] = [
 const norm = (v: any) => (v === null || v === undefined ? "" : String(v).trim());
 const normCmp = (v: any) => norm(v).toLowerCase().replace(/[\s.\-/()]/g, "");
 
-function buildSuggestions(cliente: any, extraidos: Record<string, any>): Suggestion[] {
+function buildSuggestions(
+  cliente: any,
+  extraidos: Record<string, any>,
+  filtroCampos?: string[] | null,
+): Suggestion[] {
   const out: Suggestion[] = [];
+  const filtro = Array.isArray(filtroCampos) && filtroCampos.length > 0
+    ? new Set(filtroCampos.map((c) => String(c).toLowerCase()))
+    : null;
   for (const m of MAPA) {
+    if (filtro && !filtro.has(m.col.toLowerCase())) continue;
     let novo = "";
     for (const k of m.src) {
       const v = norm(extraidos?.[k]);
@@ -80,20 +98,22 @@ export function temSugestoesDeCadastro(cliente: any, extraidos: Record<string, a
 }
 
 export default function SugestaoCadastroFromDocModal({
-  open, onOpenChange, cliente, dadosExtraidos, nomeDoc, onApplied,
+  open, onOpenChange, cliente, dadosExtraidos, nomeDoc, onApplied, filtroCampos, tituloCustomizado,
 }: Props) {
   const sugestoes = useMemo(
-    () => buildSuggestions(cliente, dadosExtraidos || {}),
-    [cliente, dadosExtraidos],
+    () => buildSuggestions(cliente, dadosExtraidos || {}, filtroCampos),
+    [cliente, dadosExtraidos, filtroCampos],
   );
   const [selecionados, setSelecionados] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(sugestoes.map((s) => [s.campo, !s.valorAtual])),
+    Object.fromEntries(sugestoes.map((s) => [s.campo, true])),
   );
   const [salvando, setSalvando] = useState(false);
 
   // Recalcula seleção default quando as sugestões mudam (novo doc).
   useMemo(() => {
-    setSelecionados(Object.fromEntries(sugestoes.map((s) => [s.campo, !s.valorAtual])));
+    // Quando filtroCampos vem informado, o cliente já escolheu resolver
+    // essa divergência específica — marca todos os campos por padrão.
+    setSelecionados(Object.fromEntries(sugestoes.map((s) => [s.campo, true])));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sugestoes.map((s) => s.campo + s.valorNovo).join("|")]);
 
@@ -143,7 +163,7 @@ export default function SugestaoCadastroFromDocModal({
                 Sugestão de atualização
               </div>
               <h2 className="text-[17px] font-extrabold leading-tight text-slate-900">
-                Encontramos dados no seu documento
+                {tituloCustomizado || "Encontramos dados no seu documento"}
               </h2>
               {nomeDoc && (
                 <p className="mt-1 text-[11px] text-slate-500">
