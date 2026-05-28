@@ -231,6 +231,18 @@ export interface DivergenciasResolverPanelProps {
    * Quando ausente, cai no fluxo do modal de sugestão (fallback).
    */
   onUsarNomeDoDocumento?: (novoNome: string) => void | Promise<void>;
+  /**
+   * Cliente declara que o cadastro está correto e o documento deve ser
+   * aceito como comprovação. Remove as divergências do grupo informado e
+   * envia o doc para conferência humana (sem reupload).
+   */
+  onAceitarDivergenciaCadastro?: (grupo: GrupoDivergencia) => void | Promise<void>;
+  /**
+   * Indica que existe certidão averbada de alteração de nome AGUARDANDO
+   * conferência (revisão humana / em análise). O painel mostra banner
+   * informativo e não exige nova ação para divergência de nome.
+   */
+  altNomeEmComprovacao?: boolean;
 }
 
 export default function DivergenciasResolverPanel({
