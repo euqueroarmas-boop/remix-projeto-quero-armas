@@ -192,6 +192,36 @@ export default function QAClientePortalPage() {
   const activeTab: "arsenal" | "resumo" | null = activeSection === "arsenal" ? "arsenal" : activeSection === "resumo" ? "resumo" : null;
   const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
 
+  // BLOCO 9 — Auto-abre o Assistente de Entrada para cliente novo que NUNCA
+  // respondeu (entrada_respondida_em IS NULL) E ainda não tem processo ativo.
+  // Clientes legados foram backfillados na migração; não vêem o wizard de surpresa.
+  useEffect(() => {
+    if (entradaAutoChecked) return;
+    if (!cliente) return;
+    const respondida = (cliente as any)?.entrada_respondida_em ?? null;
+    const semProcessos = !processos || processos.length === 0;
+    if (respondida == null && semProcessos) {
+      setEntradaWizardOpen(true);
+    }
+    setEntradaAutoChecked(true);
+  }, [cliente, processos, entradaAutoChecked]);
+
+  function handleEntradaConcluido(respostas: EntradaWizardRespostas) {
+    setCliente((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            entrada_objetivo: respostas.objetivo,
+            entrada_possui_arma: respostas.possuiArma,
+            entrada_respondida_em: new Date().toISOString(),
+          }
+        : prev,
+    );
+    // Navega para o catálogo com filtro de trilha aplicado (chip removível lá).
+    const trilha = respostas.objetivo;
+    navigate(`/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`);
+  }
+
   useEffect(() => {
     const load = async () => {
       try {
