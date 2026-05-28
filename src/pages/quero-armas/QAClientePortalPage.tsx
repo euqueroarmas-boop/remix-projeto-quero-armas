@@ -477,7 +477,7 @@ export default function QAClientePortalPage() {
         // Processos canônicos do cliente (fonte real de progresso/etapa/checklist)
         const { data: procsData } = await supabase
           .from("qa_processos" as any)
-          .select("id, cliente_id, venda_id, servico_id, servico_nome, servico_slug, status, pagamento_status, data_criacao, prazo_critico_data, primeiro_doc_aprovado_em")
+          .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, prazo_critico_data, primeiro_doc_aprovado_em")
           .eq("cliente_id", clienteIdReal)
           .order("data_criacao", { ascending: false });
         const procsList = (procsData as any[]) ?? [];
