@@ -930,6 +930,27 @@ function ExigenciaCard({
             </div>
           )}
 
+          {/* Wizard de Perguntas vinculado — bloqueia o documento até resolver */}
+          <div className="col-span-12">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              WIZARD OBRIGATÓRIO ANTES DESTE DOCUMENTO
+            </div>
+            <select
+              value={currentWizardKey}
+              onChange={(e) => setRegraWizardPreDocumento(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— NENHUM —</option>
+              {WIZARD_REGISTRY.map((w) => (
+                <option key={w.key} value={w.key}>{w.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-[10px] text-slate-500 normal-case">
+              Quando definido, o cliente precisa responder este wizard antes de baixar,
+              anexar, reaproveitar ou concluir o documento.
+            </p>
+          </div>
+
           {/* Anexos do template */}
           <div className="col-span-12 grid grid-cols-2 gap-2">
             <AnexoBox
