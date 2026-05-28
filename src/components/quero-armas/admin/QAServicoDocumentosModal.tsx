@@ -25,6 +25,8 @@ import {
   ChevronsDownUp,
   ChevronsUpDown,
   ListOrdered,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DndContext,
@@ -160,6 +162,59 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [reordenando, setReordenando] = useState(false);
   const [templates, setTemplates] = useState<string[]>([]);
+  const [divergencia, setDivergencia] = useState<{
+    processos_ativos: number;
+    processos_divergentes: number;
+    exigencias_faltando: number;
+    exigencias_removidas_pendentes: number;
+  } | null>(null);
+  const [sincronizando, setSincronizando] = useState(false);
+
+  const carregarDivergencia = useCallback(async () => {
+    if (!servicoId) return;
+    const { data, error } = await supabase.rpc(
+      "qa_servico_divergencia_catalogo" as any,
+      { p_servico_id: servicoId } as any,
+    );
+    if (error) {
+      setDivergencia(null);
+      return;
+    }
+    const row = Array.isArray(data) ? (data[0] as any) : (data as any);
+    setDivergencia(row ?? null);
+  }, [servicoId]);
+
+  async function sincronizarProcessos() {
+    if (!servicoId) return;
+    if (!window.confirm(
+      "Isso atualizará os processos ATIVOS deste serviço para refletir o catálogo atual.\n\n" +
+      "• Exigências novas serão adicionadas.\n" +
+      "• Exigências removidas do catálogo serão dispensadas (apenas se o cliente ainda não enviou nada).\n" +
+      "• Documentos já enviados ou aprovados NÃO serão apagados.\n\n" +
+      "Continuar?"
+    )) return;
+    setSincronizando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "qa-sincronizar-checklist-servico",
+        { body: { servico_id: servicoId } },
+      );
+      if (error) throw error;
+      const r = (data as any)?.resumo ?? {};
+      toast.success(
+        `SINCRONIZADO — ${r.processos_processados ?? 0} PROCESSO(S): ` +
+          `+${r.exigencias_adicionadas ?? 0} ADICIONADAS · ` +
+          `${r.exigencias_atualizadas ?? 0} ATUALIZADAS · ` +
+          `${r.exigencias_arquivadas ?? 0} ARQUIVADAS · ` +
+          `${r.documentos_preservados ?? 0} PRESERVADAS COM ARQUIVO`,
+      );
+      await carregarDivergencia();
+    } catch (e: any) {
+      toast.error("FALHA AO SINCRONIZAR — " + (e?.message ?? "ERRO").toUpperCase());
+    } finally {
+      setSincronizando(false);
+    }
+  }
 
   /* carrega lista de templates .docx disponíveis */
   useEffect(() => {
@@ -198,14 +253,18 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   }, [servicoId]);
 
   useEffect(() => {
-    if (open && servicoId) void load();
+    if (open && servicoId) {
+      void load();
+      void carregarDivergencia();
+    }
     if (!open) {
       setPatches({});
       setPreviewOpen(false);
       setViewer(null);
       setExpandedIds(new Set());
+      setDivergencia(null);
     }
-  }, [open, servicoId, load]);
+  }, [open, servicoId, load, carregarDivergencia]);
 
   const merged = useMemo<ExigenciaRow[]>(() => {
     return rows.map((r) => ({ ...r, ...patches[r.id] }));
