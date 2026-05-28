@@ -627,6 +627,10 @@ export interface ProcessoElegivel {
   status: string;
   pagamento_status: string;
   pendentes: number;
+  em_analise: number;
+  total: number;
+  cumpridos: number;
+  pct: number;
 }
 
 export async function listarProcessosElegiveisGuia(clienteId: number): Promise<ProcessoElegivel[]> {
@@ -651,12 +655,19 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
     const etapaLiberada = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
     const carga: CargaProcesso = { processo: p, docs: (docs ?? []) as GuiaDoc[], respostas, etapaLiberada };
     const fila = construirFilaGuia(carga);
+    const prog = progressoGuia(carga);
+    const emAnalise = Math.max(0, prog.total - prog.cumpridos - fila.length);
+    const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
     elegiveis.push({
       id: p.id,
       servico_nome: p.servico_nome,
       status: p.status,
       pagamento_status: p.pagamento_status,
       pendentes: fila.length,
+      em_analise: emAnalise,
+      total: prog.total,
+      cumpridos: prog.cumpridos,
+      pct,
     });
   }
   return elegiveis;
