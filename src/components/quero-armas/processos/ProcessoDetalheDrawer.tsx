@@ -1037,6 +1037,26 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     })();
   }, [processo, etapaLiberada, etapaCompleta, proximaEtapa, carregar, onUpdated]);
 
+  // Fallback idempotente: ao abrir o drawer, checa se o processo já cumpriu
+  // tudo e deve virar pronto_para_protocolar. Edge function é guardada por
+  // idempotência server-side — chamadas extras são no-op.
+  useEffect(() => {
+    if (!processo?.id) return;
+    const statusAtual = String((processo as any).status || "").toLowerCase();
+    if (["pronto_para_protocolar", "protocolado", "em_analise_orgao", "deferido", "indeferido", "concluido", "cancelado"].includes(statusAtual)) return;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("qa-processo-checar-conclusao-checklist", {
+          body: { processo_id: processo.id, origem: "drawer_admin" },
+        });
+        if ((data as any)?.pronto && !(data as any)?.ja_estava) {
+          await carregar();
+          onUpdated?.();
+        }
+      } catch (e) { console.warn("[drawer] checar-conclusao falhou", e); }
+    })();
+  }, [processo, carregar, onUpdated]);
+
   const liberarProximaEtapa = async () => {
     if (!processo || !proximaEtapa) return;
     const ok = window.confirm(
