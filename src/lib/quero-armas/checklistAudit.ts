@@ -45,6 +45,7 @@ export interface AuditableDoc {
   arquivo_url?: string | null;
   dados_extraidos_json?: any;
   divergencias_json?: any;
+  created_at?: string | null;
 }
 
 const STATUS_CONHECIDOS: ReadonlySet<string> = new Set<string>([
@@ -84,7 +85,8 @@ export function auditarChecklistProcesso(
     if (!tipo) continue;
     const escopo = getDocumentoEscopo(d);
     const arma = norm(d.arma_id);
-    const key = `${tipo}::${escopo}::${arma}`;
+    const etapa = norm(d.etapa);
+    const key = `${tipo}::${escopo}::${etapa}::${arma}`;
     const arr = buckets.get(key) ?? [];
     arr.push(d);
     buckets.set(key, arr);
@@ -96,19 +98,20 @@ export function auditarChecklistProcesso(
     const tipo = norm(arr[0].tipo_documento);
 
     if (cumpridos.length > 0 && pendentes.length > 0) {
-      // Mesma exigência aparece como cumprida E como pendente.
       issues.push({
         severity: "critical",
-        code: "checklist_divergente_status",
+        code: "duplicado",
         message: `EXIGÊNCIA "${tipo.toUpperCase()}" APARECE COMO CUMPRIDA E COMO PENDENTE AO MESMO TEMPO — UNIFIQUE OS REGISTROS.`,
         docIds: arr.map((d) => d.id),
+        actionLabel: "Resolver duplicidade",
       });
     } else {
       issues.push({
         severity: "warning",
-        code: "documento_duplicado",
+        code: "duplicado",
         message: `EXIGÊNCIA "${tipo.toUpperCase()}" APARECE ${arr.length} VEZES NO MESMO ESCOPO — VERIFIQUE SE É DUPLICATA.`,
         docIds: arr.map((d) => d.id),
+        actionLabel: "Resolver duplicidade",
       });
     }
   }
@@ -119,7 +122,8 @@ export function auditarChecklistProcesso(
   const semEtapa: string[] = [];
   const semOrdemDinamica: string[] = [];
   const statusEstranho: { id: string; status: string }[] = [];
-  const armaSemArmaId: string[] = [];
+  const docArmaSemId: string[] = [];
+  const armaIdEmTipoNaoArma: string[] = [];
   const processoComoPermanente: string[] = [];
   const tipoErrado: { id: string; detectado: string }[] = [];
 
@@ -145,13 +149,12 @@ export function auditarChecklistProcesso(
       statusEstranho.push({ id: d.id, status });
     }
 
-    if (escopo === "arma" && !norm(d.arma_id)) {
-      armaSemArmaId.push(d.id);
+    if (isDocDeArma(tipo) && !norm(d.arma_id)) {
+      docArmaSemId.push(d.id);
     }
-    // Doc do catálogo de arma mas escopo NÃO virou "arma" — só acontece se
-    // a regra de escopo mudar; cobertura defensiva.
-    if (isDocDeArma(tipo) && escopo !== "arma") {
-      armaSemArmaId.push(d.id);
+    // Tem arma_id mas o tipo não está catalogado como doc de arma.
+    if (!isDocDeArma(tipo) && norm(d.arma_id)) {
+      armaIdEmTipoNaoArma.push(d.id);
     }
 
     if (escopo === "processo" && etapa && ETAPAS_PERMANENTES.has(etapa)) {
@@ -171,17 +174,19 @@ export function auditarChecklistProcesso(
   if (semEtapa.length > 0) {
     issues.push({
       severity: "warning",
-      code: "documento_sem_etapa",
+      code: "sem_etapa",
       message: `${semEtapa.length} DOCUMENTO(S) SEM ETAPA DEFINIDA — ORDENAÇÃO PODE FICAR IMPREVISÍVEL.`,
       docIds: semEtapa,
+      actionLabel: "Definir etapa",
     });
   }
   if (semOrdemDinamica.length > 0) {
     issues.push({
       severity: "info",
-      code: "exigencia_dinamica_sem_ordem",
+      code: "sem_ordem",
       message: `${semOrdemDinamica.length} EXIGÊNCIA(S) DINÂMICA(S) SEM ORDEM DEFINIDA — APARECEM NO FIM DA ETAPA.`,
       docIds: semOrdemDinamica,
+      actionLabel: "Aplicar próxima ordem",
     });
   }
   if (statusEstranho.length > 0) {
@@ -191,15 +196,26 @@ export function auditarChecklistProcesso(
       code: "status_desconhecido",
       message: `${statusEstranho.length} DOCUMENTO(S) COM STATUS FORA DO PADRÃO (${exemplos}) — REVISE A CLASSIFICAÇÃO.`,
       docIds: statusEstranho.map((s) => s.id),
+      actionLabel: "Normalizar status",
     });
   }
-  if (armaSemArmaId.length > 0) {
-    const unicos = Array.from(new Set(armaSemArmaId));
+  if (docArmaSemId.length > 0) {
+    const unicos = Array.from(new Set(docArmaSemId));
     issues.push({
       severity: "critical",
-      code: "doc_de_arma_sem_arma_id",
+      code: "doc_arma_sem_arma_id",
       message: `${unicos.length} DOCUMENTO(S) DE ARMA SEM VÍNCULO COM ARMA ESPECÍFICA (\`arma_id\`) — RISCO DE MISTURAR ACERVO.`,
       docIds: unicos,
+      actionLabel: "Vincular arma",
+    });
+  }
+  if (armaIdEmTipoNaoArma.length > 0) {
+    issues.push({
+      severity: "warning",
+      code: "arma_id_em_tipo_nao_arma",
+      message: `${armaIdEmTipoNaoArma.length} DOCUMENTO(S) VINCULADO(S) A UMA ARMA, MAS O TIPO NÃO ESTÁ NA LISTA DE DOCS DE ARMA — REVISAR.`,
+      docIds: armaIdEmTipoNaoArma,
+      actionLabel: "Revisar tipo",
     });
   }
   if (processoComoPermanente.length > 0) {
