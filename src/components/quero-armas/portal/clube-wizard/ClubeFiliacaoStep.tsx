@@ -22,6 +22,34 @@ import type { OverridesMap } from "@/lib/quero-armas/templatePlaceholderOverride
 
 const MARROM = "#7A1F2B";
 
+/**
+ * Normaliza datas em vários formatos aceitos para ISO `YYYY-MM-DD`.
+ * Retorna null se inválida.
+ */
+function normalizeDateInput(v: string): string | null {
+  const t = (v || "").trim();
+  if (!t) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  const br = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  const d8 = t.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (d8) return `${d8[3]}-${d8[2]}-${d8[1]}`;
+  const y8 = t.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (y8) return `${y8[1]}-${y8[2]}-${y8[3]}`;
+  return null;
+}
+
+function mensagemAmigavelErro(status: number | null, msg: string): string {
+  if (status === 401 || status === 403) return "Não foi possível confirmar sua sessão. Entre novamente.";
+  if (status === 400) return "Revise os dados preenchidos.";
+  if (status === 404) return "Processo ou clube não encontrado.";
+  if (status === 500) return "Não conseguimos salvar agora. A equipe já pode revisar o erro.";
+  if (/failed to (send|fetch)|networkerror|load failed/i.test(msg)) {
+    return "Não conseguimos conectar ao servidor. Tente novamente.";
+  }
+  return msg || "Não foi possível salvar agora.";
+}
+
 interface Props {
   processoId: string;
   clienteId: number;
@@ -192,39 +220,89 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, on
       toast.error("Informe o nome do clube.");
       return;
     }
+    // Pré-validação e normalização de datas (DD/MM/AAAA, DDMMAAAA ou ISO).
+    const validadeIso = form.validade_filiacao.trim()
+      ? normalizeDateInput(form.validade_filiacao)
+      : null;
+    if (form.validade_filiacao.trim() && !validadeIso) {
+      toast.error("Informe a validade da filiação no formato DD/MM/AAAA.");
+      return;
+    }
+    const dataCrIso = form.data_cr.trim()
+      ? normalizeDateInput(form.data_cr)
+      : null;
+    if (form.data_cr.trim() && !dataCrIso) {
+      toast.error("Informe a validade do CR do clube no formato DD/MM/AAAA.");
+      return;
+    }
+
+    // Sessão ativa antes de chamar a edge.
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess?.session?.access_token) {
+      toast.error("Sua sessão expirou. Entre novamente para salvar.");
+      return;
+    }
+
+    const payload = {
+      processo_id: processoId,
+      clube_id_selecionado: clubeSelecionado?.id ?? null,
+      origem:
+        origem === "declaracao"
+          ? "declaracao_filiacao_cliente"
+          : origem === "catalogo"
+            ? "catalogo_interno"
+            : "manual",
+      clube: {
+        nome: form.nome_clube,
+        cnpj: form.cnpj,
+        numero_cr: form.numero_cr,
+        data_cr: dataCrIso || form.data_cr,
+        endereco: form.endereco,
+        cidade: form.cidade,
+        uf: form.uf,
+      },
+      filiacao: {
+        numero: form.numero_filiacao,
+        validade: validadeIso || form.validade_filiacao,
+      },
+    };
+
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-clube-sugerir", {
-        body: {
-          processo_id: processoId,
-          clube_id_selecionado: clubeSelecionado?.id ?? null,
-          origem:
-            origem === "declaracao"
-              ? "declaracao_filiacao_cliente"
-              : origem === "catalogo"
-                ? "catalogo_interno"
-                : "manual",
-          clube: {
-            nome: form.nome_clube,
-            cnpj: form.cnpj,
-            numero_cr: form.numero_cr,
-            data_cr: form.data_cr,
-            endereco: form.endereco,
-            cidade: form.cidade,
-            uf: form.uf,
-          },
-          filiacao: {
-            numero: form.numero_filiacao,
-            validade: form.validade_filiacao,
-          },
+      // Fetch direto: dá controle do status HTTP e do corpo da resposta para
+      // mensagens amigáveis. supabase.functions.invoke esconde o status real.
+      const base = import.meta.env.VITE_SUPABASE_URL as string;
+      const anon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+      const resp = await fetch(`${base}/functions/v1/qa-clube-sugerir`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sess.session.access_token}`,
+          apikey: anon,
         },
+        body: JSON.stringify(payload),
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      const text = await resp.text();
+      let parsed: any = null;
+      try { parsed = text ? JSON.parse(text) : null; } catch { /* keep text */ }
+      if (!resp.ok || parsed?.error) {
+        // eslint-disable-next-line no-console
+        console.error("[qa-clube-sugerir] erro", {
+          edge: "qa-clube-sugerir",
+          status: resp.status,
+          body: parsed ?? text,
+          payload,
+        });
+        const raw = parsed?.error || text || `HTTP ${resp.status}`;
+        toast.error(mensagemAmigavelErro(resp.status, String(raw)));
+        return;
+      }
       toast.success("Clube e filiação confirmados ✓");
       onConfirmed();
     } catch (e: any) {
-      toast.error(e?.message || "Não foi possível salvar agora.");
+      // eslint-disable-next-line no-console
+      console.error("[qa-clube-sugerir] exceção", { edge: "qa-clube-sugerir", message: e?.message, payload });
+      toast.error(mensagemAmigavelErro(null, e?.message || ""));
     } finally {
       setSaving(false);
     }
