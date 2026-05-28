@@ -14,6 +14,7 @@ import {
   buildReplacementsMap,
   extractPlaceholderTokens,
   findPlaceholder,
+  postProcessDocxXml,
 } from "../_shared/qaPlaceholders.ts";
 
 const corsHeaders = {
@@ -251,14 +252,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 8) Preenche placeholders
+    // 8) Preenche placeholders + aplica padrão visual (UPPERCASE + espaçamento de assinatura)
     const replacements = buildReplacements(cliente, templateData);
-    zip.file("word/document.xml", replaceInXml(docXmlRaw, replacements));
+    zip.file("word/document.xml", postProcessDocxXml(replaceInXml(docXmlRaw, replacements)));
 
     for (const filename of Object.keys(zip.files)) {
       if ((filename.startsWith("word/header") || filename.startsWith("word/footer")) && filename.endsWith(".xml")) {
         const content = await zip.file(filename)?.async("string");
-        if (content) zip.file(filename, replaceInXml(content, replacements));
+        if (content) zip.file(filename, postProcessDocxXml(replaceInXml(content, replacements)));
       }
     }
 

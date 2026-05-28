@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import JSZip from "https://esm.sh/jszip@3.10.1";
-import { auditTemplate, buildReplacementsMap } from "../_shared/qaPlaceholders.ts";
+import { auditTemplate, buildReplacementsMap, postProcessDocxXml } from "../_shared/qaPlaceholders.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const newDocXml = replaceInXml(docXml, replacements);
+    const newDocXml = postProcessDocxXml(replaceInXml(docXml, replacements));
     zip.file("word/document.xml", newDocXml);
 
     // Aviso (não bloqueia admin) se houver placeholders obrigatórios faltando.
@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
       ) {
         const content = await zip.file(filename)?.async("string");
         if (content) {
-          zip.file(filename, replaceInXml(content, replacements));
+          zip.file(filename, postProcessDocxXml(replaceInXml(content, replacements)));
         }
       }
     }
