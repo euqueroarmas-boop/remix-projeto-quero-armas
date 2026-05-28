@@ -433,9 +433,16 @@ export default function ChecklistGuiadoModal({
   };
 
   // ----- Abrir SugestaoCadastroFromDocModal escopado a um grupo de campos -----
-  const abrirSugestaoCadastroPorGrupo = (grupo: GrupoDivergencia) => {
+  const abrirSugestaoCadastroPorGrupo = (
+    grupo: GrupoDivergencia,
+    opts?: { iniciarComCadastroAtual?: boolean },
+  ) => {
     const extraidos = (resultadoDoc as any)?.dados_extraidos_json;
-    if (!extraidos || typeof extraidos !== "object") {
+    // No modo "editar manualmente" para endereço, dispensamos `extraidos`
+    // (o cliente vai preencher do zero, partindo do cadastro atual).
+    const editandoManualmenteEndereco =
+      !!opts?.iniciarComCadastroAtual && grupo === "endereco";
+    if (!editandoManualmenteEndereco && (!extraidos || typeof extraidos !== "object")) {
       toast.error("Não há dados extraídos do documento para atualizar o cadastro.");
       return;
     }
@@ -455,10 +462,11 @@ export default function ChecklistGuiadoModal({
     };
     setSugestao({
       open: true,
-      dados: extraidos as Record<string, any>,
+      dados: (extraidos ?? {}) as Record<string, any>,
       nomeDoc: docAtivo?.nome_documento ?? null,
       filtroCampos: colunas,
       titulo: titulos[grupo],
+      iniciarComCadastroAtual: !!opts?.iniciarComCadastroAtual,
     });
   };
 
