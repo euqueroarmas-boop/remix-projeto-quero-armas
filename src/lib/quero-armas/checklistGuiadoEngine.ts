@@ -785,7 +785,7 @@ export function calcularResumoProcessoAssistente(
 export async function listarProcessosElegiveisGuia(clienteId: number): Promise<ProcessoElegivel[]> {
   const { data: procs, error } = await supabase
     .from("qa_processos")
-    .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json")
+    .select("id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json")
     .eq("cliente_id", clienteId)
     .order("data_criacao", { ascending: false });
   if (error) throw error;
