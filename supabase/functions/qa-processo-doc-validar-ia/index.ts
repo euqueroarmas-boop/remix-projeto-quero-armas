@@ -1553,6 +1553,16 @@ Deno.serve(async (req) => {
       } catch (e) { console.warn("[validar-ia] notificação falhou:", e); }
     }
 
+    // Após cada validação que resultou em status terminal, checa se o
+    // processo virou pronto_para_protocolar (idempotente, fire-and-forget).
+    try {
+      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
+      await supabase.functions.invoke("qa-processo-checar-conclusao-checklist", {
+        headers: { "x-internal-token": internalToken },
+        body: { processo_id, origem: "validar_ia" },
+      });
+    } catch (e) { console.warn("[validar-ia] checar-conclusao falhou", e); }
+
     // ===== FASE 2: retorno enriquecido =====
     const exigeList: string[] = Array.isArray((doc.regra_validacao as any)?.exige) ? (doc.regra_validacao as any).exige : [];
     const camposPreenchidos = Object.keys(camposExtraidosFinal).filter((k) => {
