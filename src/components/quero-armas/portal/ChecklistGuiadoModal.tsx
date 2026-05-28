@@ -70,6 +70,8 @@ import DivergenciasResolverPanel, {
   type GrupoDivergencia,
 } from "@/components/quero-armas/portal/DivergenciasResolverPanel";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
+import { isDocDeArma } from "@/lib/quero-armas/documentosDeArma";
+import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
@@ -138,6 +140,19 @@ export default function ChecklistGuiadoModal({
   // guardamos o id para oferecer um botão de fallback "Ir para pendência".
   const [avisoIrParaCertidao, setAvisoIrParaCertidao] = useState<string | null>(null);
   const [certidaoUploadForcadoId, setCertidaoUploadForcadoId] = useState<string | null>(null);
+
+  // ----- Vínculo documento ↔ arma do acervo (Bloco 10) -----
+  interface ArmaCli {
+    arma_uid: string;
+    marca: string | null;
+    modelo: string | null;
+    calibre: string | null;
+    numero_serie: string | null;
+    numero_craf: string | null;
+  }
+  const [armaSelecionada, setArmaSelecionada] = useState<string | null>(null);
+  const [armasCliente, setArmasCliente] = useState<ArmaCli[]>([]);
+  const [cadastroArmaAberto, setCadastroArmaAberto] = useState(false);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
@@ -282,6 +297,35 @@ export default function ChecklistGuiadoModal({
     );
   }, [open, clienteId, processoId, docAtivo, fase, filaAtual]);
 
+  // Carrega as armas do cliente sempre que o item ativo for um doc "de arma".
+  // Para os demais itens, zera a lista/seleção — comportamento legado preservado.
+  const loadArmasCliente = useCallback(async () => {
+    const { data } = await supabase
+      .from("qa_cliente_armas" as any)
+      .select("arma_uid, marca, modelo, calibre, numero_serie, numero_craf")
+      .eq("qa_cliente_id", clienteId);
+    return ((data ?? []) as unknown) as ArmaCli[];
+  }, [clienteId]);
+
+  useEffect(() => {
+    if (!isDocDeArma(docAtivo?.tipo_documento)) {
+      setArmasCliente([]);
+      setArmaSelecionada(null);
+      return;
+    }
+    let cancel = false;
+    (async () => {
+      const lista = await loadArmasCliente();
+      if (cancel) return;
+      setArmasCliente(lista);
+      // se só há uma arma cadastrada, pré-seleciona para acelerar o fluxo
+      setArmaSelecionada((prev) => prev ?? (lista.length === 1 ? lista[0].arma_uid : null));
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [docAtivo?.id, docAtivo?.tipo_documento, loadArmasCliente]);
+
   const prog = useMemo(() => (carga ? progressoGuia(carga) : { total: 0, cumpridos: 0, emRevisao: 0 }), [carga]);
   const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
   // "Pendências restantes" no topo deve usar EXATAMENTE o mesmo universo dos
@@ -328,6 +372,10 @@ export default function ChecklistGuiadoModal({
 
   const handleEscolherArquivo = () => {
     const doc = docAtivo;
+    if (isDocDeArma(doc?.tipo_documento) && !armaSelecionada) {
+      setErroAcao("Selecione a arma antes de enviar o documento.");
+      return;
+    }
     const fmts: string[] = Array.isArray(doc?.formato_aceito)
       ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
       : [];
@@ -370,7 +418,13 @@ export default function ChecklistGuiadoModal({
       toast.message("Vamos anexar este arquivo no item correto: certidão averbada de alteração de nome.");
     }
 
-    const enviar = await enviarDocumentoGuia(cargaUpload.processo, docUpload, file);
+    const armaParaEnvio = isDocDeArma(docUpload?.tipo_documento) ? armaSelecionada : undefined;
+    const enviar = await enviarDocumentoGuia(
+      cargaUpload.processo,
+      docUpload,
+      file,
+      armaParaEnvio,
+    );
     if (!enviar.ok) {
       setErroAcao(enviar.error ?? "Erro no envio.");
       return;
@@ -397,6 +451,8 @@ export default function ChecklistGuiadoModal({
     if (ehCertidaoAlteracaoNome(docUpload) && (st === "aprovado" || st === "validado" || st === "em_revisao_humana")) {
       setCertidaoUploadForcadoId(null);
     }
+    // Upload concluído: limpa a arma selecionada para o próximo item.
+    setArmaSelecionada(null);
     if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
     else if (st === "em_revisao_humana" || st === "revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
@@ -960,6 +1016,45 @@ export default function ChecklistGuiadoModal({
 
                 {/* DOCUMENTO */}
                 {tipoItemGuia(docAtivo) === "documento" && (
+                  <>
+                  {isDocDeArma(docAtivo.tipo_documento) && (
+                    <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+                        A qual arma este documento se refere?
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-600">
+                        Cada arma do seu acervo tem o próprio CRAF/documento. Isso mantém sua pasta organizada por arma.
+                      </p>
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <select
+                          value={armaSelecionada ?? ""}
+                          onChange={(e) => setArmaSelecionada(e.target.value || null)}
+                          className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-[12px] uppercase text-slate-800"
+                        >
+                          <option value="">SELECIONE A ARMA…</option>
+                          {armasCliente.map((a) => {
+                            const label = `${(a.marca ?? "").toUpperCase()} ${(a.modelo ?? "").toUpperCase()} — ${(a.calibre ?? "?").toUpperCase()} — SÉRIE ${(a.numero_serie ?? "S/ SÉRIE").toUpperCase()}`.replace(/\s+/g, " ").trim();
+                            return (
+                              <option key={a.arma_uid} value={a.arma_uid}>{label}</option>
+                            );
+                          })}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setCadastroArmaAberto(true)}
+                          className="h-9 whitespace-nowrap rounded-md border px-3 text-[11px] font-bold uppercase tracking-wider"
+                          style={{ borderColor: MARROM, color: MARROM }}
+                        >
+                          + CADASTRAR NOVA ARMA
+                        </button>
+                      </div>
+                      {!armaSelecionada && (
+                        <div className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+                          Selecione a arma antes de enviar o documento.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <DocumentoView
                     doc={docAtivo}
                     orientacoesIA={orientacoesIA(docAtivo)}
@@ -975,6 +1070,7 @@ export default function ChecklistGuiadoModal({
                       })
                     }
                   />
+                  </>
                 )}
 
                 {/* Painel de divergências — também disponível ao reabrir um
@@ -1176,6 +1272,21 @@ export default function ChecklistGuiadoModal({
       <input ref={fileRef} type="file" className="hidden" onChange={handleUpload} />
 
       <DocumentoViewerModal open={viewer.open} onClose={viewer.fechar} source={viewer.source} title={viewer.title} />
+
+      <ArmaManualForm
+        open={cadastroArmaAberto}
+        onOpenChange={setCadastroArmaAberto}
+        qaClienteId={clienteId}
+        onSaved={async () => {
+          const lista = await loadArmasCliente();
+          setArmasCliente(lista);
+          // seleciona a arma recém-criada (a que não estava antes)
+          const previa = new Set(armasCliente.map((a) => a.arma_uid));
+          const nova = lista.find((a) => !previa.has(a.arma_uid));
+          if (nova) setArmaSelecionada(nova.arma_uid);
+          else if (lista.length === 1) setArmaSelecionada(lista[0].arma_uid);
+        }}
+      />
 
       <DocumentDataOnboardingWizard
         open={wizard.open}

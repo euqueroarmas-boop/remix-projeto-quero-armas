@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
     const mime_type: string | undefined = body?.mime_type;
     const tamanho_bytes: number | undefined = body?.tamanho_bytes;
     const skip_ia: boolean = !!body?.skip_ia;
+    const arma_id: string | undefined = body?.arma_id ?? undefined;
 
     if (!documento_id || !storage_path) {
       return json({ error: "documento_id e storage_path/storage_key são obrigatórios" }, 400);
@@ -296,6 +297,7 @@ Deno.serve(async (req) => {
         observacoes: nome_arquivo_original
           ? `arquivo:${nome_arquivo_original}|mime:${realMime}|bytes:${realSize}`
           : `mime:${realMime}|bytes:${realSize}`,
+        ...(arma_id ? { arma_id } : {}),
       })
       .eq("id", documentoIdAlvo)
       .eq("processo_id", processo_id)
