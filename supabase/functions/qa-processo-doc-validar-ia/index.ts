@@ -1203,11 +1203,19 @@ Deno.serve(async (req) => {
     // NUNCA sobrescrevemos qa_clientes.nome_completo — o nome oficial continua
     // sendo o do cadastro. Este bloco serve APENAS para justificar divergência
     // de nome em documentos futuros do mesmo processo.
-    if (doc.tipo_documento === "certidao_alteracao_nome") {
+    if (
+      doc.tipo_documento === "certidao_alteracao_nome" ||
+      doc.tipo_documento === "certidao_nascimento" ||
+      doc.tipo_documento === "certidao_casamento" ||
+      ehCertidaoCivilSemVencimento(doc.tipo_documento)
+    ) {
       const cx: Record<string, any> = camposExtraidosFinal || {};
       const nomeAnterior = cx.nome_anterior ? String(cx.nome_anterior).trim() : null;
       const nomeAtual = cx.nome_atual ? String(cx.nome_atual).trim() : null;
-      if (nomeAnterior && nomeAtual) {
+      // Só persiste o bloco de alteração de nome quando há averbação
+      // legítima — caso contrário a certidão é civil simples (sem
+      // alteração) e não deve injetar nomes_aceitos no processo.
+      if (nomeAnterior && nomeAtual && nomeAnterior.toLowerCase() !== nomeAtual.toLowerCase()) {
         const aprovada = novoStatus === "aprovado";
         const respostas =
           ((processo as any)?.respostas_questionario_json as Record<string, any>) ?? {};
@@ -1217,10 +1225,14 @@ Deno.serve(async (req) => {
           nome_anterior: nomeAnterior,
           nome_atual: nomeAtual,
           documento_id,
-          tipo_certidao: cx.tipo_certidao ?? null,
+          tipo_certidao: cx.tipo_certidao ?? (
+            doc.tipo_documento === "certidao_nascimento" ? "nascimento" :
+            doc.tipo_documento === "certidao_casamento" ? "casamento" : null
+          ),
+          estado_civil_base: normalizarEstadoCivil((cliente as any)?.estado_civil),
           data_averbacao: cx.data_averbacao ?? null,
           cartorio_registro: cx.cartorio_registro ?? null,
-          tipo_documento_comprobatorio: "certidao_alteracao_nome",
+          tipo_documento_comprobatorio: doc.tipo_documento,
           documento_comprobatorio_id: documento_id,
           data_validacao: new Date().toISOString(),
           origem: "ia",
