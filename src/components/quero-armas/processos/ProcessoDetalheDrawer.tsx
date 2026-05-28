@@ -1224,7 +1224,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5">
           {loading ? (
             <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
           ) : tab === "checklist" ? (
@@ -1335,8 +1335,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       ? { label: "RESPONDIDA", color: "#7c3aed" }
                       : { label: "AGUARDANDO SUA RESPOSTA", color: "#d97706" })
                   : null;
+                const isHighlighted = highlightedDocId === doc.id;
                 return (
-                  <div key={doc.id} className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+                  <div
+                    key={doc.id}
+                    data-doc-id={doc.id}
+                    className={`bg-white border rounded-xl overflow-hidden transition-shadow duration-300 ${
+                      isHighlighted
+                        ? "border-amber-400 ring-2 ring-amber-300 shadow-lg"
+                        : "border-slate-200"
+                    }`}
+                  >
+                    {isHighlighted && (
+                      <div className="px-4 py-1.5 bg-amber-100 border-b border-amber-200 text-[10px] uppercase tracking-[0.14em] font-bold text-amber-800 inline-flex items-center gap-1.5">
+                        <ChevronRight className="h-3 w-3" /> PRÓXIMO ITEM PARA REVISAR
+                      </div>
+                    )}
                     <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
