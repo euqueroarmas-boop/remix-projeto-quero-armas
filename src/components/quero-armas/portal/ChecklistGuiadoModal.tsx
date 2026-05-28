@@ -397,7 +397,7 @@ export default function ChecklistGuiadoModal({
       setCertidaoUploadForcadoId(null);
     }
     if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
-    else if (st === "em_revisao_humana") setFase("resultado_revisao");
+    else if (st === "em_revisao_humana" || st === "revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
     else setFase("resultado_demorando"); // ainda em análise (timeout)
 
