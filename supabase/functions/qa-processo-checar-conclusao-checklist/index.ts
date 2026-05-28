@@ -18,6 +18,7 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { itemContaParaConclusao } from "../_shared/checklistVisibility.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -146,7 +147,10 @@ Deno.serve(async (req) => {
       .select("id, status, obrigatorio, tipo_documento, regra_validacao")
       .eq("processo_id", processoId);
     const lista = (docs || []) as any[];
-    const obrigatorios = lista.filter((d) => d.obrigatorio !== false);
+    // Filtra usando a regra compartilhada com o front (itemVisivelGuia +
+    // obrigatório). Itens escondidos por exige_quando/depende_de a partir das
+    // respostas atuais NÃO contam como pendentes.
+    const obrigatorios = lista.filter((d) => itemContaParaConclusao(d, respostas));
 
     if (obrigatorios.length === 0) {
       return json({ pronto: false, motivo: "sem_exigencias_obrigatorias" });
@@ -155,11 +159,15 @@ Deno.serve(async (req) => {
     for (const d of obrigatorios) {
       if (isPergunta(d)) {
         const chave = d?.regra_validacao?.chave;
-        const v = chave ? respostas[chave] : undefined;
-        if (v === undefined || v === null || v === "") {
-          return json({ pronto: false, motivo: "pergunta_pendente" });
+        // Só trata como pergunta-pivot quando existe `chave` válida.
+        // Perguntas legadas sem chave caem no fluxo padrão por status.
+        if (chave) {
+          const v = respostas[chave];
+          if (v === undefined || v === null || v === "") {
+            return json({ pronto: false, motivo: "pergunta_pendente" });
+          }
+          continue;
         }
-        continue;
       }
       const st = String(d.status || "").toLowerCase();
       if (EM_ANALISE.has(st)) return json({ pronto: false, motivo: "documento_em_analise" });
