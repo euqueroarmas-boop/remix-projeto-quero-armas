@@ -2036,6 +2036,28 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       </>
                     )}
 
+                    {/* Bloco 14 — Estado vazio operacional: nada pendente, em análise
+                        ou desconhecido. Sinaliza para a equipe que o checklist está
+                        em dia neste momento (cumpridos seguem acessíveis na seção
+                        arquivada abaixo). O drawer continua aberto. */}
+                    {docsPendencias.length === 0 &&
+                      docsAnalise.length === 0 &&
+                      docsOutros.length === 0 &&
+                      totalExigencias > 0 && (
+                        <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/70 px-4 py-5 flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <div className="text-[12px] uppercase tracking-[0.14em] font-bold text-emerald-800">
+                              NENHUMA PENDÊNCIA DOCUMENTAL NO MOMENTO.
+                            </div>
+                            <p className="text-[11px] text-emerald-800/80 mt-1 leading-relaxed normal-case">
+                              Checklist concluído por enquanto. Você pode liberar a próxima etapa
+                              ou consultar os itens já cumpridos na seção arquivada abaixo.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
                     {/* 3.5 ETAPAS CONCLUÍDAS — docs de etapas anteriores (consulta) */}
                     {docsArquivados.length > 0 && (
