@@ -493,6 +493,21 @@ function campoEhNome(campo: any): boolean {
   return ["nome", "nome_titular", "titular", "nome_completo"].includes(String(campo || "").toLowerCase());
 }
 
+function ehDocumentoIdentidadeChecklist(tipo: any): boolean {
+  const t = String(tipo || "").toLowerCase();
+  return ["rg", "cin", "cnh", "rg_com_cpf", "documento_identidade", "identidade"].includes(t) ||
+    t.includes("identidade") || t.includes("identificacao") || t.includes("identificação");
+}
+
+function iaDetectouCin(parsed: any): boolean {
+  const cx = parsed?.campos_extraidos || {};
+  const cc = parsed?.campos_complementares || {};
+  const raw = [parsed?.tipo_documento_detectado, cx?.tipo_documento_detectado, cx?.tipo_documento, cc?.tipo_documento_detectado]
+    .map((v) => String(v || "").toLowerCase())
+    .join(" ");
+  return raw.includes("cin") || raw.includes("carteira de identidade nacional") || raw.includes("gov.br");
+}
+
 async function reconciliarDivergenciasNomeAprovada(
   supabase: any,
   processoId: string,
