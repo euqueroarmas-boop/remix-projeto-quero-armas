@@ -680,6 +680,29 @@ export default function ChecklistGuiadoModal({
     return Array.from(new Set(out.filter(Boolean)));
   }, [altNomeJaComprovada, clienteDados?.nome_completo, altNomeBlock?.nome_anterior, altNomeBlock?.nome_atual, certidaoAprovadaDoc]);
   const [iniciandoAltNome, setIniciandoAltNome] = useState(false);
+
+  // Diagnóstico temporário (DEV) — confirma se o doc ativo carrega a
+  // configuração de wizard_pre_documento (hidratada do catálogo) e se o gate
+  // está enxergando essa pendência.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    if (!docAtivo) return;
+    try {
+      const rv = (docAtivo as any).regra_validacao ?? null;
+      const wp = rv && typeof rv === "object" ? (rv as any).wizard_pre_documento : null;
+      const pendente = wizardPendentePara(docAtivo as any, clienteDados, carga?.processo as any);
+      console.debug("[wizard-pre-doc]", {
+        doc: (docAtivo as any).nome_documento,
+        tipo: (docAtivo as any).tipo_documento,
+        regra_validacao: rv,
+        wizard: wp,
+        wizardPendente: pendente,
+      });
+    } catch (e) {
+      console.debug("[wizard-pre-doc] erro de diagnóstico", e);
+    }
+  }, [docAtivo, carga?.processo, clienteDados]);
+
   const iniciarOuLocalizarPendenciaAlteracaoNome = async (pid: string) => {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;

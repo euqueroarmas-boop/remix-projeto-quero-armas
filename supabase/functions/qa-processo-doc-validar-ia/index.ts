@@ -200,7 +200,8 @@ REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo):
 5. NUNCA assuma campos não vistos. Se incerto, baixe a confiança.
 6. Datas YYYY-MM-DD.
 7. EXTRAIA TUDO O QUE FOR ÚTIL: campos com correspondência no cadastro vão em "campos_extraidos"; dados úteis sem campo fixo (observações, códigos auxiliares, anotações, números de protocolo, etc.) vão em "campos_complementares"; metadados gerais do documento (resolução, idioma, observações de qualidade) vão em "metadados_documento".
-${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos somente RG, CIN ou CNH. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).` : ""}
+${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos RG, CIN (Carteira de Identidade Nacional) ou CNH — incluindo VERSÕES DIGITAIS compartilhadas pelo aplicativo gov.br. Para CIN, o numero_documento pode coincidir com o CPF — isso é VÁLIDO, não gere divergência. Para RG, se rg == cpf, ainda assim aceite mas registre uma observação de alerta (não bloqueie).
+REGRA CRÍTICA gov.br: Um PDF gerado pelo app gov.br contendo a Carteira de Identidade Nacional é DOCUMENTO DE IDENTIDADE VÁLIDO. NÃO classifique como "capa", "página de instruções", "tela do aplicativo" ou similar quando houver imagem da CIN (frente/verso), QR Code de verificação, MRZ, ou os dados pessoais (nome, CPF, filiação, data de nascimento). A presença do cabeçalho gov.br, do aviso "Compartilhado pelo aplicativo gov.br" ou do QR Code de verificação NÃO é motivo para rejeição. Só marque tipo_correto=false se NÃO houver nem imagem/dados da identidade nem nenhum dado pessoal extraível.` : ""}
 ${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
 9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
 ${isAlteracaoNome ? `8. CERTIDÃO AVERBADA DE ALTERAÇÃO DE NOME: o conteúdo esperado é exatamente uma DIFERENÇA entre nome_anterior e nome_atual. NÃO gere divergência de nome com o cadastro. Foque em extrair nome_anterior, nome_atual, tipo_certidao, data_averbacao e cartorio_registro.` : ""}
@@ -502,10 +503,52 @@ function ehDocumentoIdentidadeChecklist(tipo: any): boolean {
 function iaDetectouCin(parsed: any): boolean {
   const cx = parsed?.campos_extraidos || {};
   const cc = parsed?.campos_complementares || {};
-  const raw = [parsed?.tipo_documento_detectado, cx?.tipo_documento_detectado, cx?.tipo_documento, cc?.tipo_documento_detectado]
+  const md = parsed?.metadados_documento || {};
+  const raw = [
+    parsed?.tipo_documento_detectado,
+    cx?.tipo_documento_detectado,
+    cx?.tipo_documento,
+    cc?.tipo_documento_detectado,
+    parsed?.motivo_rejeicao,
+    parsed?.observacoes,
+    cc?.titulo_documento,
+    cc?.cabecalho,
+    md?.descricao,
+  ]
     .map((v) => String(v || "").toLowerCase())
-    .join(" ");
-  return raw.includes("cin") || raw.includes("carteira de identidade nacional") || raw.includes("gov.br");
+    .join(" | ");
+  return (
+    raw.includes("cin") ||
+    raw.includes("carteira de identidade nacional") ||
+    raw.includes("gov.br") ||
+    raw.includes("governo digital") ||
+    raw.includes("identificação civil nacional")
+  );
+}
+
+/**
+ * Verifica se há dados pessoais mínimos extraídos para considerar a CIN
+ * gov.br válida (ainda que vá para revisão humana). Critério: ao menos
+ * nome OU cpf/numero_registro, e algum dado de complemento (data_nasc,
+ * filiacao, naturalidade, MRZ ou QR Code).
+ */
+function cinTemDadosMinimos(parsed: any): boolean {
+  const cx = parsed?.campos_extraidos || {};
+  const cc = parsed?.campos_complementares || {};
+  const md = parsed?.metadados_documento || {};
+  const temNome = !!(cx.nome_completo || cx.nome || cx.nome_titular);
+  const temId = !!(cx.cpf || cx.rg || cx.numero_documento || cx.numero_registro);
+  const temComplemento = !!(
+    cx.data_nascimento ||
+    cx.filiacao_completa ||
+    cx.nome_mae ||
+    cx.nome_pai ||
+    cx.naturalidade ||
+    cc.mrz ||
+    cc.qr_code ||
+    md?.tem_qr_code
+  );
+  return (temNome || temId) && (temNome ? true : temComplemento);
 }
 
 async function reconciliarDivergenciasNomeAprovada(
@@ -874,8 +917,23 @@ Deno.serve(async (req) => {
         cx.tipo_documento_detectado = "cin";
         if (!cx.rg && cx.cpf) cx.rg = cx.cpf;
         if (!cx.numero_documento && cx.cpf) cx.numero_documento = cx.cpf;
-        if (typeof parsed.motivo_rejeicao === "string" && /tipo|rg|registro geral|cpf/i.test(parsed.motivo_rejeicao)) {
+        if (
+          typeof parsed.motivo_rejeicao === "string" &&
+          /tipo|rg|registro geral|cpf|capa|instru[cç][aã]o|instru[cç][õo]es|aplicativo|gov\.br|p[aá]gina/i.test(parsed.motivo_rejeicao)
+        ) {
           parsed.motivo_rejeicao = null;
+        }
+        // Se a IA marcou tipo_correto=false alegando "capa do gov.br" mas há
+        // dados pessoais mínimos, força aceite como CIN — pior cenário vai
+        // para revisão humana, NUNCA invalida silenciosamente um documento
+        // de identidade real.
+        if (cinTemDadosMinimos(parsed)) {
+          parsed.tipo_correto = true;
+          parsed.legivel = parsed.legivel !== false;
+          if (typeof parsed.confianca !== "number" || parsed.confianca < REVISAO_HUMANA_MIN) {
+            // garante que vai para revisão humana, não invalido por baixa confiança
+            parsed.confianca = REVISAO_HUMANA_MIN;
+          }
         }
       }
       const cpfDigits = String(cx.cpf ?? cliente?.cpf ?? "").replace(/\D+/g, "");

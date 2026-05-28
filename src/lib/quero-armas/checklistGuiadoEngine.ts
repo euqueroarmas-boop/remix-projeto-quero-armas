@@ -308,6 +308,30 @@ export interface CargaProcesso {
   clienteNome?: string | null;
 }
 
+/**
+ * Hidrata `regra_validacao.wizard_pre_documento` do catálogo
+ * (qa_servicos_documentos) no doc do processo quando ele ainda não tem o
+ * bloco. O catálogo é a FONTE DE VERDADE para vínculo de wizards. Quando o
+ * doc do processo já trouxer um wizard_pre_documento próprio (override
+ * pontual), ele tem prioridade sobre o catálogo.
+ */
+function mesclarWizardPreDocumentoCatalogo(
+  regraDoc: unknown,
+  regraCatalogo: unknown,
+): Record<string, any> | null {
+  const baseDoc =
+    regraDoc && typeof regraDoc === "object" ? { ...(regraDoc as Record<string, any>) } : {};
+  const baseCat =
+    regraCatalogo && typeof regraCatalogo === "object"
+      ? (regraCatalogo as Record<string, any>)
+      : null;
+  if (!baseCat) return Object.keys(baseDoc).length > 0 ? baseDoc : (regraDoc as any) ?? null;
+  if (!baseDoc.wizard_pre_documento && baseCat.wizard_pre_documento) {
+    baseDoc.wizard_pre_documento = baseCat.wizard_pre_documento;
+  }
+  return baseDoc;
+}
+
 export async function carregarProcessoGuia(processoId: string): Promise<CargaProcesso> {
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
@@ -338,27 +362,48 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   // Mapa de ordem definido no admin (qa_servicos_documentos) — usado para
   // ordenar a fila do assistente respeitando a sequência configurada por serviço.
   let ordemMap = new Map<string, number>();
+  // Mapa de regra_validacao do catálogo — usado para HIDRATAR no doc do processo
+  // configurações adicionadas DEPOIS da explosão do checklist (ex.: o admin
+  // vinculou um Wizard de Perguntas a uma exigência). Sem isso, processos
+  // antigos nunca veriam o gate até serem re-explodidos. A fonte é sempre o
+  // catálogo do serviço: se o admin remover o vínculo, o gate também some.
+  let catalogoRegraMap = new Map<string, any>();
   if (processo.servico_id && (dList?.length ?? 0) > 0) {
     try {
       const { data: tpl } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("tipo_documento, ordem")
+        .select("tipo_documento, ordem, regra_validacao")
         .eq("servico_id", processo.servico_id);
       if (tpl) {
         for (const t of tpl as any[]) {
-          ordemMap.set(String(t.tipo_documento ?? "").toLowerCase(), Number(t.ordem ?? 0));
+          const key = String(t.tipo_documento ?? "").toLowerCase();
+          ordemMap.set(key, Number(t.ordem ?? 0));
+          if (t.regra_validacao && typeof t.regra_validacao === "object") {
+            catalogoRegraMap.set(key, t.regra_validacao);
+          }
         }
       }
     } catch { /* fallback silencioso para ordenação alfabética */ }
   }
-  const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => ({
-    ...d,
-    // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
-    // depois o catálogo (qa_servicos_documentos.ordem).
-    _template_ordem:
-      (typeof (d as any).ordem === "number" ? (d as any).ordem : null) ??
-      (ordemMap.get(String((d as any).tipo_documento ?? "").toLowerCase()) ?? null),
-  }));
+  const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => {
+    const key = String((d as any).tipo_documento ?? "").toLowerCase();
+    const catalogoRegra = catalogoRegraMap.get(key);
+    return {
+      ...d,
+      // Hidrata wizard_pre_documento do catálogo quando o doc do processo não
+      // o possui — permite que o admin vincule wizards a exigências sem
+      // exigir re-explosão de checklist em processos já existentes.
+      regra_validacao: mesclarWizardPreDocumentoCatalogo(
+        (d as any).regra_validacao,
+        catalogoRegra,
+      ),
+      // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
+      // depois o catálogo (qa_servicos_documentos.ordem).
+      _template_ordem:
+        (typeof (d as any).ordem === "number" ? (d as any).ordem : null) ??
+        (ordemMap.get(key) ?? null),
+    };
+  });
 
   return {
     processo,
@@ -740,7 +785,7 @@ export function calcularResumoProcessoAssistente(
 export async function listarProcessosElegiveisGuia(clienteId: number): Promise<ProcessoElegivel[]> {
   const { data: procs, error } = await supabase
     .from("qa_processos")
-    .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json")
+    .select("id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json")
     .eq("cliente_id", clienteId)
     .order("data_criacao", { ascending: false });
   if (error) throw error;
@@ -763,9 +808,34 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
       .select("*")
       .eq("processo_id", p.id)
       .order("created_at");
+    // Hidrata wizard_pre_documento do catálogo — necessário para que a
+    // contagem de "perguntas pendentes" reflita vínculos adicionados depois
+    // que o checklist foi explodido.
+    let docsHidratados = (docs ?? []) as GuiaDoc[];
+    if (p.servico_id && docsHidratados.length > 0) {
+      try {
+        const { data: tpl } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .select("tipo_documento, regra_validacao")
+          .eq("servico_id", p.servico_id);
+        const mapCat = new Map<string, any>();
+        for (const t of (tpl ?? []) as any[]) {
+          if (t?.regra_validacao && typeof t.regra_validacao === "object") {
+            mapCat.set(String(t.tipo_documento ?? "").toLowerCase(), t.regra_validacao);
+          }
+        }
+        docsHidratados = docsHidratados.map((d) => ({
+          ...d,
+          regra_validacao: mesclarWizardPreDocumentoCatalogo(
+            (d as any).regra_validacao,
+            mapCat.get(String((d as any).tipo_documento ?? "").toLowerCase()),
+          ),
+        })) as GuiaDoc[];
+      } catch { /* hidratação é melhor-esforço */ }
+    }
     const respostas = (p.respostas_questionario_json ?? {}) as Record<string, string>;
     const etapaLiberada = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
-    const carga: CargaProcesso = { processo: p, docs: (docs ?? []) as GuiaDoc[], respostas, etapaLiberada };
+    const carga: CargaProcesso = { processo: p, docs: docsHidratados, respostas, etapaLiberada };
     const resumo = calcularResumoProcessoAssistente(carga, clienteRow as any);
     // `pendentes` agora reflete o que o cliente pode resolver AGORA:
     // documentos acionáveis (não bloqueados por wizard) + perguntas/wizards pendentes.
