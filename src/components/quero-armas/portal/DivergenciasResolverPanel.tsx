@@ -209,6 +209,12 @@ export function agruparDivergencias(
   );
   for (const d of lista) {
     const g = classificarCampo(d?.campo || "");
+    // Lixo de validação: divergência com esperado e encontrado vazios
+    // (ex.: estado_civil "" vs "") não representa diferença real e não pode
+    // virar pendência exibida ao cliente. Ignora silenciosamente.
+    const vdRaw = String(d?.valor_documento ?? "").trim();
+    const vcRaw = String(d?.valor_cadastro ?? "").trim();
+    if (!vdRaw && !vcRaw) continue;
     // Diferença apenas de caixa/acento/espaço no NOME não é divergência
     // real — ex.: "JOSÉ DA SILVA" vs "José da Silva".
     if (g === "nome") {
