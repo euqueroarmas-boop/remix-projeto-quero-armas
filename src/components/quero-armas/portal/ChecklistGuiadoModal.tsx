@@ -911,6 +911,29 @@ export default function ChecklistGuiadoModal({
         onApplied={async () => {
           await recarregarClienteDados();
           onUpdated?.();
+          // Se a sugestão foi aberta a partir do painel de divergências
+          // (filtroCampos definido), reprocessa o documento para que a IA
+          // reavalie com o cadastro atualizado.
+          if (sugestao.filtroCampos && resultadoDoc?.id && carga) {
+            try {
+              await supabase
+                .from("qa_processo_documentos")
+                .update({
+                  status: "em_analise",
+                  validacao_ia_status: "fila",
+                  validacao_ia_erro: null,
+                  motivo_rejeicao: null,
+                })
+                .eq("id", resultadoDoc.id);
+              toast.success(
+                "Cadastro atualizado. Vamos conferir o documento novamente.",
+              );
+              const c = await recarregarCarga(carga.processo.id);
+              avancarPara(c, pularIds);
+            } catch (e) {
+              console.warn("[ChecklistGuiado] falha ao reenfileirar IA:", e);
+            }
+          }
         }}
       />
     </>
