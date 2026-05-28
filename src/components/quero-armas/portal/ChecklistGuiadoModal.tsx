@@ -651,10 +651,19 @@ export default function ChecklistGuiadoModal({
                     <span>{avisoRetomada}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-slate-600">
-                    Etapa {grupoAtivo?.stepOrder ?? 1}/{grupoAtivo?.stepTotal ?? 5} · {grupoAtivo?.stepLabel ?? "Documentação"}
-                  </span>
+                <div className="flex flex-col gap-1">
+                  <div className="text-[11px] font-semibold text-slate-700">
+                    Tarefa atual: <span className="font-bold text-slate-900">{docAtivo?.nome_documento ?? "Documento"}</span>
+                    {docAtivo?.status === "invalido" || docAtivo?.status === "divergente" ? (
+                      <span className="ml-2 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">Precisa de ajuste</span>
+                    ) : docAtivo?.status === "aprovado" ? (
+                      <span className="ml-2 inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">Aprovado</span>
+                    ) : docAtivo?.status === "em_analise" ? (
+                      <span className="ml-2 inline-flex items-center rounded-md bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700">Em análise</span>
+                    ) : null}
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Categoria: {grupoAtivo?.stepLabel ?? "Documentação"}</div>
+                  <p className="text-[12px] text-slate-500">Resolva esta tarefa para avançarmos para o próximo item.</p>
                 </div>
 
                 {/* PERGUNTA */}
