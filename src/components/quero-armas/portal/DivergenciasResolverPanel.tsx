@@ -97,6 +97,11 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
   endereco_uf: "endereco",
   endereco_estado: "endereco",
   endereco_cep: "endereco",
+  // Estado civil (NUNCA é endereço)
+  estado_civil: "estado_civil",
+  estado_civil_titular: "estado_civil",
+  estadocivil: "estado_civil",
+  civil_status: "estado_civil",
   // RG
   rg: "rg",
   orgao_emissor: "rg",
@@ -118,6 +123,7 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
 export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
   nome: ["nome_completo"],
   endereco: ["endereco", "numero", "complemento", "bairro", "cidade", "estado", "cep"],
+  estado_civil: ["estado_civil"],
   rg: ["rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg"],
   cpf: [],
   data_nascimento: [],
@@ -125,12 +131,29 @@ export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
   outros: [],
 };
 
+/** Normaliza chave de campo: lowercase + sem acento + trim. Preserva
+ * underscores para manter `estado` distinto de `estado_civil`. */
+function normalizarCampoKey(campo: string): string {
+  return String(campo || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function classificarCampo(campo: string): GrupoDivergencia {
-  const k = String(campo || "").toLowerCase().trim();
+  const k = normalizarCampoKey(campo);
+  // 1) Estado civil ANTES de qualquer regra de endereço — a chave
+  //    `estado_civil` contém "estado" e seria mal classificada como UF.
+  if (/estado[_\s-]?civil|civil[_\s-]?status|estadocivil/.test(k)) {
+    return "estado_civil";
+  }
   if (CAMPO_PARA_GRUPO[k]) return CAMPO_PARA_GRUPO[k];
-  // Heurística por substring — cobre variações tipo `endereco_logradouro`,
-  // `endereco_numero`, `dados_endereco_cep`, `titular_nome`, etc.
-  if (/(endere[cç]o|logradouro|^rua$|avenida|travessa|^numero$|n[uú]mero|bairro|cidade|estado|^uf$|^cep$|complemento)/.test(k)) {
+  // 2) Heurística por substring — cobre `endereco_logradouro`,
+  //    `dados_endereco_cep`, `titular_nome`, etc. O teste de
+  //    estado/uf exige limite por underscore para não pegar
+  //    `estado_civil` (já tratado acima de qualquer forma).
+  if (/(endere[cç]o|logradouro|^rua$|avenida|travessa|^numero$|n[uú]mero|bairro|cidade|(^|_)estado(_|$)|(^|_)uf(_|$)|^cep$|complemento)/.test(k)) {
     return "endereco";
   }
   if (/(^nome|titular)/.test(k)) return "nome";
@@ -150,6 +173,7 @@ function gruposDoMotivo(motivo: string): GrupoDivergencia[] {
   const t = String(motivo || "").toLowerCase();
   const out = new Set<GrupoDivergencia>();
   if (/\bnome\b|\btitular\b/.test(t)) out.add("nome");
+  if (/estado\s*civil|estado_civil/.test(t)) out.add("estado_civil");
   if (/\bendere[çc]o\b|\blogradour|\brua\b|\bavenida\b|\bcep\b|\bbairro\b|\bcidade\b/.test(t)) out.add("endereco");
   if (/\brg\b|\bidentidade\b|\borg[aã]o emissor\b/.test(t)) out.add("rg");
   if (/\bcpf\b/.test(t)) out.add("cpf");
