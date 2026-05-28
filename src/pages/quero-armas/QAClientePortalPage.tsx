@@ -662,6 +662,7 @@ export default function QAClientePortalPage() {
       em_validacao_ia: "Validando documentos",
       em_revisao_humana: "Em revisão pela equipe",
       aprovado: "Documentação aprovada",
+      pronto_para_protocolar: "Documentação completa — pronto para protocolo",
       enviado_ao_orgao: "Protocolado no órgão",
       protocolado: "Protocolado no órgão",
       em_analise_orgao: "Em análise pelo órgão",
