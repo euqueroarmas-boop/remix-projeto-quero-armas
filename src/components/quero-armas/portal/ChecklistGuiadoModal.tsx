@@ -389,7 +389,13 @@ export default function ChecklistGuiadoModal({
       toast.message("Vamos anexar este arquivo no item correto: certidão averbada de alteração de nome.");
     }
 
-    const enviar = await enviarDocumentoGuia(cargaUpload.processo, docUpload, file);
+    const armaParaEnvio = isDocDeArma(docUpload?.tipo_documento) ? armaSelecionada : undefined;
+    const enviar = await enviarDocumentoGuia(
+      cargaUpload.processo,
+      docUpload,
+      file,
+      armaParaEnvio,
+    );
     if (!enviar.ok) {
       setErroAcao(enviar.error ?? "Erro no envio.");
       return;
@@ -416,6 +422,8 @@ export default function ChecklistGuiadoModal({
     if (ehCertidaoAlteracaoNome(docUpload) && (st === "aprovado" || st === "validado" || st === "em_revisao_humana")) {
       setCertidaoUploadForcadoId(null);
     }
+    // Upload concluído: limpa a arma selecionada para o próximo item.
+    setArmaSelecionada(null);
     if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
     else if (st === "em_revisao_humana" || st === "revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
