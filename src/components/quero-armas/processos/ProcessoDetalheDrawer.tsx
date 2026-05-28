@@ -997,7 +997,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         if (!chave) return false;
         return respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
       }
-      return d.status === "aprovado" || d.status === "dispensado_grupo";
+      // Fonte única de classificação — alinhada com checklistMetrics e com a
+      // edge function de auto-liberação. Aceita aprovado/validado/concluido/
+      // dispensado/dispensado_grupo/dispensado_por_reaproveitamento/nao_aplicavel.
+      return isChecklistCumprido(d.status);
     }).length;
     return { total: lista.length, aprovados, completo: lista.length > 0 && aprovados === lista.length };
   };
