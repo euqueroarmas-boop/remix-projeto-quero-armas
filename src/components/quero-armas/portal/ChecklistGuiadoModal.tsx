@@ -119,6 +119,10 @@ export default function ChecklistGuiadoModal({
   // Mostra aviso discreto quando o assistente pulou automaticamente um
   // documento salvo no progresso (porque ele já está aprovado, em análise, etc).
   const [avisoRetomada, setAvisoRetomada] = useState<string | null>(null);
+  // Quando criamos/encontramos a pendência de certidão averbada mas não
+  // conseguimos navegar automaticamente (ex.: fila ainda não inclui o item),
+  // guardamos o id para oferecer um botão de fallback "Ir para pendência".
+  const [avisoIrParaCertidao, setAvisoIrParaCertidao] = useState<string | null>(null);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
@@ -232,6 +236,7 @@ export default function ChecklistGuiadoModal({
       setDocAtivoId(resumeId ?? fila[0].id);
       setResultadoDoc(null);
       setErroAcao(null);
+      setAvisoIrParaCertidao(null);
       setFase("item");
     }
   };
@@ -446,15 +451,47 @@ export default function ChecklistGuiadoModal({
       );
       const out = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(out?.error || "Falha ao iniciar pendência.");
+      const statusRet = String(out?.status ?? "").toLowerCase();
+      const certidaoJaAprovada =
+        statusRet === "aprovado" || statusRet === "validado" || statusRet === "em_revisao_humana";
       if (out?.reaproveitado) {
-        toast.success("Encontramos sua certidão averbada já aprovada e a reaproveitamos neste processo.");
+        toast.success(
+          "Alteração de nome já comprovada por certidão averbada. Reaproveitamos neste processo.",
+        );
+      } else if (certidaoJaAprovada) {
+        toast.success("Alteração de nome já comprovada por certidão averbada.");
       } else {
-        toast.success("Pendência criada. Anexe a certidão averbada para comprovar a alteração de nome.");
+        toast.success(
+          "Pendência criada. Vamos abrir o item para você anexar a certidão averbada.",
+        );
       }
       onUpdated?.();
       const c = await recarregarCarga(carga.processo.id);
-      // Foca no doc da certidão recém-criado (ou no próximo acionável).
-      avancarPara(c, pularIds, out?.document_id ?? null, "certidao_alteracao_nome");
+      // Se a certidão já está aprovada/reaproveitada, NÃO navegamos: o painel
+      // de divergência no doc atual passa a mostrar o banner verde "nome já
+      // justificado" e o cliente segue resolvendo as outras divergências.
+      // Apenas limpamos o resultado anterior para refletir a carga recarregada.
+      if (certidaoJaAprovada) {
+        setResultadoDoc(null);
+        return;
+      }
+      // Caso normal: pendência criada/existente. Navegar para o item da
+      // certidão para que o upload aconteça no lugar certo.
+      const novoDocId = out?.document_id ?? null;
+      const fila = construirFilaGuia(c).filter((d) => !pularIds.has(d.id));
+      const alvoNaFila = novoDocId
+        ? fila.find((d) => d.id === novoDocId)
+        : fila.find(
+            (d) =>
+              String(d.tipo_documento ?? "").toLowerCase() === "certidao_alteracao_nome",
+          );
+      if (alvoNaFila) {
+        avancarPara(c, pularIds, alvoNaFila.id, "certidao_alteracao_nome");
+      } else {
+        // Fallback defensivo: não conseguimos localizar a pendência na fila.
+        // Exibe o aviso com botão de "Ir para pendência da certidão".
+        setAvisoIrParaCertidao(novoDocId);
+      }
     } catch (e: any) {
       setErroAcao(e?.message ?? "Erro ao iniciar comprovação.");
     } finally {
@@ -718,6 +755,31 @@ export default function ChecklistGuiadoModal({
                   <div className="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[12px] text-slate-600">
                     <Info className="mt-[2px] h-3.5 w-3.5 shrink-0 text-slate-400" />
                     <span>{avisoRetomada}</span>
+                  </div>
+                )}
+                {avisoIrParaCertidao && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                    <span>
+                      Pendência da certidão averbada criada. Anexe a certidão no item correto para
+                      não enviar no documento errado.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!carga) return;
+                        const c = await recarregarCarga(carga.processo.id);
+                        avancarPara(
+                          c,
+                          pularIds,
+                          avisoIrParaCertidao,
+                          "certidao_alteracao_nome",
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-bold text-white"
+                      style={{ background: MARROM }}
+                    >
+                      Ir para pendência da certidão
+                    </button>
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
