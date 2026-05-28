@@ -422,6 +422,59 @@ export default function ChecklistGuiadoModal({
     }
   };
 
+  // ----- Abrir SugestaoCadastroFromDocModal escopado a um grupo de campos -----
+  const abrirSugestaoCadastroPorGrupo = (grupo: GrupoDivergencia) => {
+    const extraidos = (resultadoDoc as any)?.dados_extraidos_json;
+    if (!extraidos || typeof extraidos !== "object") {
+      toast.error("Não há dados extraídos do documento para atualizar o cadastro.");
+      return;
+    }
+    const colunas = GRUPO_PARA_COLUNAS_CADASTRO[grupo] || [];
+    if (colunas.length === 0) {
+      toast.message("Este tipo de divergência não pode ser corrigido automaticamente.");
+      return;
+    }
+    const titulos: Record<GrupoDivergencia, string> = {
+      nome: "Revise antes de atualizar seu nome",
+      endereco: "Revise antes de atualizar seu endereço",
+      rg: "Revise antes de atualizar seu RG",
+      contato: "Revise antes de atualizar seu contato",
+      cpf: "Revise antes de atualizar",
+      data_nascimento: "Revise antes de atualizar",
+      outros: "Revise antes de atualizar seu cadastro",
+    };
+    setSugestao({
+      open: true,
+      dados: extraidos as Record<string, any>,
+      nomeDoc: docAtivo?.nome_documento ?? null,
+      filtroCampos: colunas,
+      titulo: titulos[grupo],
+    });
+  };
+
+  // ----- "Este comprovante é antigo" -----
+  const handleComprovanteAntigo = async () => {
+    if (!carga || !docAtivo) return;
+    try {
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: carga.processo.id,
+        documento_id: docAtivo.id,
+        tipo_evento: "comprovante_endereco_antigo_confirmado",
+        descricao:
+          "Cliente confirmou que o comprovante anexado é de endereço antigo.",
+        ator: "cliente",
+      });
+    } catch (e) {
+      // não é crítico — segue o fluxo
+      console.warn("[ChecklistGuiado] falha ao registrar evento antigo:", e);
+    }
+    toast.message(
+      "Marcamos como endereço antigo. Anexe um comprovante recente para seguir.",
+    );
+    // Mantém o documento como divergente e volta para o upload do comprovante atual.
+    reenviarAtual();
+  };
+
   // ----- helpers de render -----
   const orientacoesIA = (doc: GuiaDoc | null): string | null => {
     const compl = doc?.campos_complementares_json && typeof doc.campos_complementares_json === "object"
