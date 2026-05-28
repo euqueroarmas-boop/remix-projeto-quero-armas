@@ -1119,9 +1119,20 @@ export default function ChecklistGuiadoModal({
                       </div>
                       <div className="mt-0.5 truncate text-sm font-bold uppercase text-slate-800">{p.servico_nome}</div>
                       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-bold uppercase tracking-wider">
-                        <span style={{ color: p.pendentes > 0 ? MARROM : "#64748B" }}>
-                          {p.pendentes > 0 ? `${p.pendentes} pendência${p.pendentes === 1 ? "" : "s"}` : "Tudo em dia"}
-                        </span>
+                        {(p.documentos_pendentes_cliente ?? 0) > 0 && (
+                          <span style={{ color: MARROM }}>
+                            {p.documentos_pendentes_cliente} documento{p.documentos_pendentes_cliente === 1 ? "" : "s"} pendente{p.documentos_pendentes_cliente === 1 ? "" : "s"}
+                          </span>
+                        )}
+                        {(p.wizards_pendentes ?? 0) > 0 && (
+                          <span style={{ color: MARROM }}>
+                            {(p.documentos_pendentes_cliente ?? 0) > 0 ? "· " : ""}
+                            {p.wizards_pendentes} pergunta{p.wizards_pendentes === 1 ? "" : "s"} pendente{p.wizards_pendentes === 1 ? "" : "s"}
+                          </span>
+                        )}
+                        {(p.documentos_pendentes_cliente ?? 0) === 0 && (p.wizards_pendentes ?? 0) === 0 && (
+                          <span style={{ color: "#64748B" }}>Tudo em dia</span>
+                        )}
                         {p.em_analise > 0 && (
                           <span className="text-slate-500">· {p.em_analise} em análise</span>
                         )}
