@@ -379,6 +379,7 @@ export default function ChecklistGuiadoModal({
 
   // ----- Alteração de nome em cartório (regra especial) -----
   const NOME_CAMPOS = ["nome", "nome_titular", "titular", "nome_completo"];
+  const [clienteDados, setClienteDados] = useState<any | null>(null);
   const divergeApenasPorNome = (d: GuiaDoc | null): boolean => {
     if (!d) return false;
     const divs = Array.isArray((d as any).divergencias_json)
@@ -393,9 +394,37 @@ export default function ChecklistGuiadoModal({
     if (!motivo) return false;
     return /\bnome\b|\btitular\b/i.test(motivo);
   };
-  const altNomeJaComprovada = !!(
-    carga?.processo?.respostas_questionario_json as any
-  )?.alteracao_nome?.aprovada;
+  // Fonte de verdade da comprovação de alteração de nome:
+  //  (a) `respostas_questionario_json.alteracao_nome.aprovada === true`, OU
+  //  (b) existe documento `certidao_alteracao_nome` neste processo já em
+  //      estado aprovado/validado/em_revisao_humana (a equipe pode validar
+  //      manualmente antes de o bloco em respostas ser preenchido).
+  const altNomeBlock =
+    ((carga?.processo?.respostas_questionario_json as any)?.alteracao_nome ?? null) as
+      | { aprovada?: boolean; nome_anterior?: string | null; nome_atual?: string | null }
+      | null;
+  const certidaoAprovadaDoc = (carga?.docs || []).find((d: any) => {
+    if (String(d?.tipo_documento || "").toLowerCase() !== "certidao_alteracao_nome") return false;
+    const st = String(d?.status || "").toLowerCase();
+    return ["aprovado", "validado", "em_revisao_humana"].includes(st);
+  });
+  const altNomeJaComprovada = !!altNomeBlock?.aprovada || !!certidaoAprovadaDoc;
+  // Nomes aceitos: cadastro + nomes da averbação aprovada. Usado para
+  // dispensar divergências de nome cujo valor do documento bate (normalizado)
+  // com qualquer desses nomes.
+  const nomesAceitosAlteracao = useMemo(() => {
+    if (!altNomeJaComprovada) return [] as string[];
+    const out: string[] = [];
+    if (clienteDados?.nome_completo) out.push(String(clienteDados.nome_completo));
+    if (altNomeBlock?.nome_anterior) out.push(String(altNomeBlock.nome_anterior));
+    if (altNomeBlock?.nome_atual) out.push(String(altNomeBlock.nome_atual));
+    const cx = (certidaoAprovadaDoc as any)?.campos_complementares_json ?? null;
+    if (cx && typeof cx === "object") {
+      if (cx.nome_anterior) out.push(String(cx.nome_anterior));
+      if (cx.nome_atual) out.push(String(cx.nome_atual));
+    }
+    return Array.from(new Set(out.filter(Boolean)));
+  }, [altNomeJaComprovada, clienteDados?.nome_completo, altNomeBlock?.nome_anterior, altNomeBlock?.nome_atual, certidaoAprovadaDoc]);
   const [iniciandoAltNome, setIniciandoAltNome] = useState(false);
   const handleSimAlteracaoNome = async () => {
     if (!carga) return;
@@ -510,7 +539,6 @@ export default function ChecklistGuiadoModal({
   const [wizard, setWizard] = useState<
     | { open: boolean; doc: GuiaDoc | null; templateKey: string | null }
   >({ open: false, doc: null, templateKey: null });
-  const [clienteDados, setClienteDados] = useState<any | null>(null);
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
@@ -758,6 +786,7 @@ export default function ChecklistGuiadoModal({
                       divergencias={(docAtivo as any)?.divergencias_json as any}
                       motivoRejeicao={(docAtivo as any)?.motivo_rejeicao ?? null}
                       altNomeJaComprovada={!!altNomeJaComprovada}
+                      nomesAceitosAlteracao={nomesAceitosAlteracao}
                       iniciandoAltNome={iniciandoAltNome}
                       podeAtualizarCadastro={!!clienteDados}
                       onIniciarAlteracaoNome={handleSimAlteracaoNome}
@@ -862,6 +891,7 @@ export default function ChecklistGuiadoModal({
                   divergencias={(resultadoDoc as any)?.divergencias_json as any}
                   motivoRejeicao={(resultadoDoc as any)?.motivo_rejeicao ?? null}
                   altNomeJaComprovada={!!altNomeJaComprovada}
+                  nomesAceitosAlteracao={nomesAceitosAlteracao}
                   iniciandoAltNome={iniciandoAltNome}
                   podeAtualizarCadastro={
                     !!((resultadoDoc as any)?.dados_extraidos_json) && !!clienteDados
@@ -874,12 +904,6 @@ export default function ChecklistGuiadoModal({
                     abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
                   }
                 />
-                {altNomeJaComprovada && (
-                  <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-left text-[12px] text-emerald-900">
-                    <span className="font-bold uppercase tracking-wider">Alteração de nome comprovada. </span>
-                    Este processo aceita o nome atual e o nome anterior.
-                  </div>
-                )}
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
                   <button onClick={reenviarAtual} className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: MARROM }}>
                     <RotateCcw className="h-4 w-4" /> Reenviar documento

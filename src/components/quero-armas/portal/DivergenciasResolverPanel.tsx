@@ -16,6 +16,7 @@
 import { useMemo } from "react";
 import {
   AlertTriangle,
+  CheckCircle2,
   FileText,
   Home,
   IdCard,
@@ -158,14 +159,35 @@ export interface AgrupamentoDivergencias {
   itens: DivergenciaItem[];
 }
 
+/** Normalização tolerante para comparação de nomes (sem acento, lower, espaços simples). */
+function normalizarNome(s: any): string {
+  return String(s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function agruparDivergencias(
   divergencias: DivergenciaItem[] | null | undefined,
   motivoRejeicao: string | null | undefined,
+  opts?: { nomesAceitosAlteracao?: string[] },
 ): AgrupamentoDivergencias[] {
   const map = new Map<GrupoDivergencia, DivergenciaItem[]>();
   const lista = Array.isArray(divergencias) ? divergencias : [];
+  const aceitosSet = new Set(
+    (opts?.nomesAceitosAlteracao || []).map(normalizarNome).filter(Boolean),
+  );
   for (const d of lista) {
     const g = classificarCampo(d?.campo || "");
+    // Se a alteração de nome já está comprovada e o nome do documento bate
+    // com um nome aceito (atual/anterior/cadastro), tratamos como resolvido
+    // — não é uma pendência real para o cliente.
+    if (g === "nome" && aceitosSet.size > 0) {
+      const vd = normalizarNome(d?.valor_documento);
+      if (vd && aceitosSet.has(vd)) continue;
+    }
     if (!map.has(g)) map.set(g, []);
     map.get(g)!.push(d);
   }
@@ -193,6 +215,8 @@ export interface DivergenciasResolverPanelProps {
   motivoRejeicao: string | null | undefined;
   /** Bloqueia ações de "atualizar cadastro com X". */
   altNomeJaComprovada?: boolean;
+  /** Nomes aceitos (atual, anterior, cadastro) após averbação aprovada. */
+  nomesAceitosAlteracao?: string[];
   iniciandoAltNome?: boolean;
   podeAtualizarCadastro?: boolean;
   onIniciarAlteracaoNome: () => void;
@@ -207,6 +231,7 @@ export default function DivergenciasResolverPanel({
   divergencias,
   motivoRejeicao,
   altNomeJaComprovada,
+  nomesAceitosAlteracao,
   iniciandoAltNome,
   podeAtualizarCadastro = true,
   onIniciarAlteracaoNome,
@@ -216,8 +241,13 @@ export default function DivergenciasResolverPanel({
   onEditarCadastroManual,
 }: DivergenciasResolverPanelProps) {
   const grupos = useMemo(
-    () => agruparDivergencias(divergencias, motivoRejeicao),
-    [divergencias, motivoRejeicao],
+    () =>
+      agruparDivergencias(divergencias, motivoRejeicao, {
+        nomesAceitosAlteracao: altNomeJaComprovada
+          ? nomesAceitosAlteracao
+          : undefined,
+      }),
+    [divergencias, motivoRejeicao, altNomeJaComprovada, nomesAceitosAlteracao],
   );
 
   if (grupos.length === 0) return null;
@@ -231,8 +261,6 @@ export default function DivergenciasResolverPanel({
 
       {grupos.map(({ grupo, itens }) => {
         const Icon = GRUPO_ICON[grupo];
-        const oculto = grupo === "nome" && altNomeJaComprovada;
-        if (oculto) return null;
         return (
           <div
             key={grupo}
@@ -284,7 +312,19 @@ export default function DivergenciasResolverPanel({
 
                 {/* Ações por grupo */}
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {grupo === "nome" && (
+                  {grupo === "nome" && altNomeJaComprovada && (
+                    <div className="flex w-full items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 p-2 text-[11px] text-emerald-900">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <div>
+                        <span className="font-bold uppercase tracking-wider">
+                          Nome já justificado por certidão averbada aprovada.{" "}
+                        </span>
+                        Esta diferença de nome não precisa de nova ação — o
+                        processo aceita o nome atual e o nome anterior.
+                      </div>
+                    </div>
+                  )}
+                  {grupo === "nome" && !altNomeJaComprovada && (
                     <>
                       <button
                         type="button"
