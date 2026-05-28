@@ -645,6 +645,38 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
             <ClientePreview rows={merged.filter((r) => r.ativo)} />
           )}
 
+          {divergencia && divergencia.processos_divergentes > 0 && (
+            <div className="mb-3 flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-700 shrink-0" />
+                <div className="text-[11px] uppercase tracking-wider text-amber-900 leading-relaxed">
+                  <div className="font-bold">
+                    EXISTEM {divergencia.processos_divergentes} PROCESSO(S) ATIVO(S) COM CHECKLIST DIFERENTE DESTE CATÁLOGO.
+                  </div>
+                  <div className="font-normal normal-case mt-0.5 text-amber-800">
+                    {divergencia.exigencias_faltando} exigência(s) faltando · {divergencia.exigencias_removidas_pendentes} item(ns) removido(s) ainda pendente(s) no cliente.
+                    Sincronize para que esses processos passem a refletir o catálogo atual. Documentos já enviados não serão apagados.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void sincronizarProcessos()}
+                disabled={sincronizando}
+                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+              >
+                {sincronizando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                SINCRONIZAR PROCESSOS EXISTENTES
+              </button>
+            </div>
+          )}
+
+          {divergencia && divergencia.processos_divergentes === 0 && divergencia.processos_ativos > 0 && (
+            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] uppercase tracking-wider text-emerald-800">
+              {divergencia.processos_ativos} PROCESSO(S) ATIVO(S) — TODOS EM DIA COM O CATÁLOGO ATUAL.
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto -mx-2 px-2">
             {loading ? (
               <div className="flex items-center justify-center py-16">
