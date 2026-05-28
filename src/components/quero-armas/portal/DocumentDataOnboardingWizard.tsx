@@ -49,6 +49,7 @@ import {
   CLUBE_PLACEHOLDER_KEYS,
 } from "@/lib/quero-armas/documentOnboardingEngine";
 import { loadPlaceholderOverrides } from "@/lib/quero-armas/templatePlaceholderOverrides";
+import type { OverridesMap } from "@/lib/quero-armas/templatePlaceholderOverrides";
 import ClubeFiliacaoStep from "./clube-wizard/ClubeFiliacaoStep";
 
 const MARROM = "#7A1F2B";
@@ -98,6 +99,7 @@ export default function DocumentDataOnboardingWizard({
   const [unsupportedField, setUnsupportedField] = useState<PlaceholderDef | null>(null);
   const carregouRef = useRef(false);
   const [clubeNeeded, setClubeNeeded] = useState(false);
+  const [overrides, setOverrides] = useState<OverridesMap>({});
 
   // -------------------------------------------------------------------------
   // Carga inicial: probe + sugestões + dados atuais
@@ -121,6 +123,7 @@ export default function DocumentDataOnboardingWizard({
       ]);
 
       const cliente = (clienteRow.data ?? null) as Record<string, any> | null;
+      setOverrides(overrides);
       const respostas = (processoRow.data as any)?.respostas_questionario_json;
       const templateData =
         respostas && typeof respostas === "object" && !Array.isArray(respostas)
@@ -409,6 +412,7 @@ export default function DocumentDataOnboardingWizard({
             <ClubeFiliacaoStep
               processoId={processoId}
               clienteId={clienteId}
+              overrides={overrides}
               onConfirmed={() => {
                 onUpdated?.();
                 setClubeNeeded(false);
