@@ -374,9 +374,21 @@ export default function ChecklistGuiadoModal({
       setErroAcao(enviar.error ?? "Erro no envio.");
       return;
     }
+    const documentoIdValidacao = enviar.documentoId || docUpload.id;
+    if (enviar.redirecionado && documentoIdValidacao !== docUpload.id) {
+      const c = await recarregarCarga(cargaUpload.processo.id);
+      const alvo = (c.docs || []).find((d) => d.id === documentoIdValidacao) || (c.docs || []).find(ehCertidaoAlteracaoNome);
+      if (alvo) {
+        docUpload = alvo;
+        cargaUpload = c;
+        setDocAtivoId(alvo.id);
+        setCertidaoUploadForcadoId(alvo.id);
+      }
+      toast.message("Este arquivo foi associado ao item correto de certidão averbada.");
+    }
     onUpdated?.();
     setFase("validando");
-    const final = await aguardarValidacaoIAGuia(docUpload.id);
+    const final = await aguardarValidacaoIAGuia(documentoIdValidacao);
     setResultadoDoc(final);
     await recarregarCarga(cargaUpload.processo.id);
     onUpdated?.();
