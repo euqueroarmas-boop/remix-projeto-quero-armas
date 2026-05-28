@@ -568,6 +568,7 @@ function EnderecoEscolhaCard({
   onEditarCadastroManual,
   onReenviarDocumento,
   onMarcarComprovanteAntigo,
+  onAceitarDivergenciaCadastro,
 }: {
   itens: DivergenciaItem[];
   podeAtualizarCadastro: boolean;
@@ -575,6 +576,7 @@ function EnderecoEscolhaCard({
   onEditarCadastroManual?: (g: GrupoDivergencia) => void;
   onReenviarDocumento: () => void;
   onMarcarComprovanteAntigo: () => void;
+  onAceitarDivergenciaCadastro?: (g: GrupoDivergencia) => void | Promise<void>;
 }) {
   const [escolha, setEscolha] = useState<"cadastro" | "documento" | null>(null);
 
@@ -701,6 +703,17 @@ function EnderecoEscolhaCard({
           </button>
         )}
         {escolha === "cadastro" && (
+          onAceitarDivergenciaCadastro ? (
+            <button
+              type="button"
+              onClick={() => onAceitarDivergenciaCadastro("endereco")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+              style={{ background: MARROM }}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Confirmar endereço do cadastro
+            </button>
+          ) : (
           <button
             type="button"
             onClick={onReenviarDocumento}
@@ -710,6 +723,7 @@ function EnderecoEscolhaCard({
             <RotateCcw className="h-3.5 w-3.5" />
             Enviar comprovante com este endereço
           </button>
+          )
         )}
         {podeAtualizarCadastro && onEditarCadastroManual && (
           <button
