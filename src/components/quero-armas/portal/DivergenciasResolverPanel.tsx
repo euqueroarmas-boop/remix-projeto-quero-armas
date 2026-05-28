@@ -245,6 +245,7 @@ export default function DivergenciasResolverPanel({
   onMarcarComprovanteAntigo,
   onReenviarDocumento,
   onEditarCadastroManual,
+  onUsarNomeDoDocumento,
 }: DivergenciasResolverPanelProps) {
   const grupos = useMemo(
     () =>
