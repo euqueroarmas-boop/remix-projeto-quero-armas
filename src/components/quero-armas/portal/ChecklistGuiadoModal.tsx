@@ -1016,6 +1016,45 @@ export default function ChecklistGuiadoModal({
 
                 {/* DOCUMENTO */}
                 {tipoItemGuia(docAtivo) === "documento" && (
+                  <>
+                  {isDocDeArma(docAtivo.tipo_documento) && (
+                    <div className="rounded-xl border border-[#E5C2C6] bg-[#FAF6F1] p-3">
+                      <div className="text-[11px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+                        A qual arma este documento se refere?
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-600">
+                        Cada arma do seu acervo tem o próprio CRAF/documento. Isso mantém sua pasta organizada por arma.
+                      </p>
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <select
+                          value={armaSelecionada ?? ""}
+                          onChange={(e) => setArmaSelecionada(e.target.value || null)}
+                          className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-[12px] uppercase text-slate-800"
+                        >
+                          <option value="">SELECIONE A ARMA…</option>
+                          {armasCliente.map((a) => {
+                            const label = `${(a.marca ?? "").toUpperCase()} ${(a.modelo ?? "").toUpperCase()} — ${(a.calibre ?? "?").toUpperCase()} — SÉRIE ${(a.numero_serie ?? "S/ SÉRIE").toUpperCase()}`.replace(/\s+/g, " ").trim();
+                            return (
+                              <option key={a.arma_uid} value={a.arma_uid}>{label}</option>
+                            );
+                          })}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => setCadastroArmaAberto(true)}
+                          className="h-9 whitespace-nowrap rounded-md border px-3 text-[11px] font-bold uppercase tracking-wider"
+                          style={{ borderColor: MARROM, color: MARROM }}
+                        >
+                          + CADASTRAR NOVA ARMA
+                        </button>
+                      </div>
+                      {!armaSelecionada && (
+                        <div className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+                          Selecione a arma antes de enviar o documento.
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <DocumentoView
                     doc={docAtivo}
                     orientacoesIA={orientacoesIA(docAtivo)}
@@ -1031,6 +1070,7 @@ export default function ChecklistGuiadoModal({
                       })
                     }
                   />
+                  </>
                 )}
 
                 {/* Painel de divergências — também disponível ao reabrir um
