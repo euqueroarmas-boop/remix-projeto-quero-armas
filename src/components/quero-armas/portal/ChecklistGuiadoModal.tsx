@@ -920,7 +920,14 @@ function DocumentoView({
   onVer: () => void;
 }) {
   const fmts: string[] = Array.isArray(doc.formato_aceito)
-    ? (doc.formato_aceito as string[]).map((f) => String(f).toUpperCase())
+    ? (doc.formato_aceito as string[])
+        .map((f) => {
+          const s = String(f).toLowerCase().trim();
+          if (!s) return "";
+          const sub = s.includes("/") ? (s.split("/").pop() || s) : s;
+          return (sub === "jpeg" ? "jpg" : sub).toUpperCase();
+        })
+        .filter(Boolean)
     : [];
   const jaEnviado = !!doc.arquivo_storage_key && (doc.status === "invalido" || doc.status === "divergente" || doc.status === "em_analise");
   // Comprovante de endereço de anos anteriores é histórico (imutável) — não
