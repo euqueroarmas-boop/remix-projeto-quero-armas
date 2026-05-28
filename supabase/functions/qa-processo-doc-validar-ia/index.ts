@@ -430,6 +430,77 @@ function holeriteForaDoPeriodo(extraidos: Record<string, any>): boolean {
   return monthsDiff < 0 || monthsDiff > 1;
 }
 
+function normalizarNomePessoa(s: any): string {
+  return String(s ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function campoEhNome(campo: any): boolean {
+  return ["nome", "nome_titular", "titular", "nome_completo"].includes(String(campo || "").toLowerCase());
+}
+
+async function reconciliarDivergenciasNomeAprovada(
+  supabase: any,
+  processoId: string,
+  nomesAceitosRaw: any[],
+  certidaoDocumentoId: string,
+) {
+  const aceitos = new Set(nomesAceitosRaw.map(normalizarNomePessoa).filter(Boolean));
+  if (aceitos.size === 0) return;
+  const { data: docs } = await supabase
+    .from("qa_processo_documentos")
+    .select("id, tipo_documento, nome_documento, status, motivo_rejeicao, divergencias_json")
+    .eq("processo_id", processoId)
+    .neq("tipo_documento", "certidao_alteracao_nome");
+  for (const d of docs ?? []) {
+    const divs = Array.isArray(d?.divergencias_json) ? d.divergencias_json : [];
+    if (divs.length === 0) continue;
+    let removeuNome = false;
+    const restantes = divs.filter((x: any) => {
+      if (!campoEhNome(x?.campo)) return true;
+      const valorDoc = normalizarNomePessoa(x?.valor_documento ?? x?.encontrado);
+      const valorCad = normalizarNomePessoa(x?.valor_cadastro ?? x?.esperado);
+      const compativel = (valorDoc && aceitos.has(valorDoc)) || (valorCad && aceitos.has(valorCad));
+      if (compativel) {
+        removeuNome = true;
+        return false;
+      }
+      return true;
+    });
+    if (!removeuNome) continue;
+    const update: Record<string, any> = {
+      divergencias_json: restantes,
+      campos_complementares_json: {
+        nome_justificado_por_certidao: true,
+        certidao_alteracao_nome_id: certidaoDocumentoId,
+      },
+    };
+    if (restantes.length === 0 && String(d.status || "").toLowerCase() === "divergente") {
+      update.status = "revisao_humana";
+      update.motivo_rejeicao = null;
+      update.validacao_ia_status = "revisao_humana";
+    } else if (restantes.length > 0) {
+      update.motivo_rejeicao = "Divergência entre o documento e seu cadastro: " + restantes.map((x: any) => x.campo).join(", ");
+    }
+    await supabase.from("qa_processo_documentos").update(update).eq("id", d.id);
+    await supabase.from("qa_processo_eventos").insert({
+      processo_id: processoId,
+      documento_id: d.id,
+      tipo_evento: "divergencia_nome_justificada",
+      descricao: restantes.length === 0
+        ? "Divergência de nome removida por certidão averbada aprovada; documento enviado para conferência."
+        : "Divergência de nome removida por certidão averbada aprovada; demais divergências permanecem.",
+      ator: "sistema",
+      dados_json: { certidao_documento_id: certidaoDocumentoId, divergencias_restantes: restantes.map((x: any) => x.campo) },
+    } as any);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
