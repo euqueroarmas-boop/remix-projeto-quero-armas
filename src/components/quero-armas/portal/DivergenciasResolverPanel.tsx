@@ -225,6 +225,12 @@ export interface DivergenciasResolverPanelProps {
   onReenviarDocumento: () => void;
   /** Abre o editor de cadastro pré-preenchido com os valores atuais. */
   onEditarCadastroManual?: (grupo: GrupoDivergencia) => void;
+  /**
+   * Atalho de 1 clique para o grupo "nome": grava `nome_completo` no
+   * cadastro com o valor extraído do documento e avança o assistente.
+   * Quando ausente, cai no fluxo do modal de sugestão (fallback).
+   */
+  onUsarNomeDoDocumento?: (novoNome: string) => void | Promise<void>;
 }
 
 export default function DivergenciasResolverPanel({
