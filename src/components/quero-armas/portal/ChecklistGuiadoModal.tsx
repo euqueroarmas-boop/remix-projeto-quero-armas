@@ -845,7 +845,7 @@ export default function ChecklistGuiadoModal({
       const resp = await fetch(`${base}/functions/v1/qa-cliente-atualizar-cadastro`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fields: { nome_completo: nome } }),
+        body: JSON.stringify({ fields: { nome_completo: nome }, cliente_id: carga.processo.cliente_id }),
       });
       if (!resp.ok) throw new Error((await resp.text()) || "Falha ao salvar");
       await recarregarClienteDados();
