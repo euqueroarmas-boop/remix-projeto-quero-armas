@@ -231,6 +231,18 @@ export interface DivergenciasResolverPanelProps {
    * Quando ausente, cai no fluxo do modal de sugestão (fallback).
    */
   onUsarNomeDoDocumento?: (novoNome: string) => void | Promise<void>;
+  /**
+   * Cliente declara que o cadastro está correto e o documento deve ser
+   * aceito como comprovação. Remove as divergências do grupo informado e
+   * envia o doc para conferência humana (sem reupload).
+   */
+  onAceitarDivergenciaCadastro?: (grupo: GrupoDivergencia) => void | Promise<void>;
+  /**
+   * Indica que existe certidão averbada de alteração de nome AGUARDANDO
+   * conferência (revisão humana / em análise). O painel mostra banner
+   * informativo e não exige nova ação para divergência de nome.
+   */
+  altNomeEmComprovacao?: boolean;
 }
 
 export default function DivergenciasResolverPanel({
@@ -246,6 +258,8 @@ export default function DivergenciasResolverPanel({
   onReenviarDocumento,
   onEditarCadastroManual,
   onUsarNomeDoDocumento,
+  onAceitarDivergenciaCadastro,
+  altNomeEmComprovacao,
 }: DivergenciasResolverPanelProps) {
   const grupos = useMemo(
     () =>
@@ -331,6 +345,19 @@ export default function DivergenciasResolverPanel({
                       </div>
                     </div>
                   )}
+                  {grupo === "nome" && !altNomeJaComprovada && altNomeEmComprovacao && (
+                    <div className="flex w-full items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <div>
+                        <span className="font-bold uppercase tracking-wider">
+                          Certidão averbada recebida — em conferência.{" "}
+                        </span>
+                        Sua parte está feita. Assim que a equipe confirmar, esta
+                        divergência de nome será dispensada automaticamente.
+                        Você pode seguir para os próximos itens.
+                      </div>
+                    </div>
+                  )}
                   {grupo === "nome" && !altNomeJaComprovada && (
                     <>
                       <button
@@ -386,6 +413,7 @@ export default function DivergenciasResolverPanel({
                       onEditarCadastroManual={onEditarCadastroManual}
                       onReenviarDocumento={onReenviarDocumento}
                       onMarcarComprovanteAntigo={onMarcarComprovanteAntigo}
+                      onAceitarDivergenciaCadastro={onAceitarDivergenciaCadastro}
                     />
                   )}
 

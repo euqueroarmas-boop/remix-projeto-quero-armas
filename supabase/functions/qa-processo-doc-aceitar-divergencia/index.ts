@@ -1,0 +1,149 @@
+// ============================================================================
+// qa-processo-doc-aceitar-divergencia
+// ----------------------------------------------------------------------------
+// Permite que o CLIENTE LOGADO declare que o cadastro está correto e o
+// documento, mesmo divergente em um grupo de campos (ex.: endereço), deve
+// ser aceito como comprovação. A função:
+//   1. Valida que o usuário autenticado é o dono do processo do documento.
+//   2. Remove de `divergencias_json` apenas itens do grupo solicitado
+//      (endereço por enquanto). Outros grupos permanecem como divergência.
+//   3. Se não sobrar divergência, move o documento para `revisao_humana`
+//      para conferência final pela equipe (nunca aprovamos automaticamente).
+//   4. Registra evento auditável em qa_processo_eventos.
+// Não altera qa_clientes nem outros documentos.
+// ============================================================================
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+function json(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+const CAMPOS_POR_GRUPO: Record<string, string[]> = {
+  endereco: [
+    "endereco", "logradouro", "rua", "avenida", "travessa",
+    "numero", "complemento", "bairro", "cidade", "municipio",
+    "uf", "estado", "cep",
+    "endereco_logradouro", "endereco_numero", "endereco_complemento",
+    "endereco_bairro", "endereco_cidade", "endereco_uf", "endereco_estado",
+    "endereco_cep",
+  ],
+};
+
+function ehCampoDoGrupo(campo: any, grupo: string): boolean {
+  const k = String(campo || "").toLowerCase().trim();
+  if (!k) return false;
+  const lista = CAMPOS_POR_GRUPO[grupo] || [];
+  if (lista.includes(k)) return true;
+  if (grupo === "endereco") {
+    return /endereco|logradouro|^rua$|^avenida$|^travessa$|numero|complemento|bairro|cidade|municipio|^uf$|estado|cep/i.test(k);
+  }
+  return false;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+
+  try {
+    const authHeader = req.headers.get("Authorization") || "";
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
+    const token = authHeader.slice(7).trim();
+
+    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: userData, error: userErr } = await userClient.auth.getUser(token);
+    if (userErr || !userData?.user?.id) return json({ error: "invalid_token" }, 401);
+    const authUserId = userData.user.id;
+
+    const body = await req.json().catch(() => ({}));
+    const documentoId = String(body?.documento_id ?? "").trim();
+    const grupo = String(body?.grupo ?? "").trim().toLowerCase();
+    if (!documentoId) return json({ error: "documento_id_required" }, 400);
+    if (!CAMPOS_POR_GRUPO[grupo]) return json({ error: "grupo_invalido" }, 400);
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+    const { data: doc, error: dErr } = await admin
+      .from("qa_processo_documentos")
+      .select("id, processo_id, cliente_id, status, divergencias_json, motivo_rejeicao, campos_complementares_json")
+      .eq("id", documentoId)
+      .maybeSingle();
+    if (dErr) return json({ error: dErr.message }, 500);
+    if (!doc) return json({ error: "documento_not_found" }, 404);
+
+    // Confirma dono do processo.
+    const { data: cliente } = await admin
+      .from("qa_clientes")
+      .select("id, user_id, excluido")
+      .eq("id", doc.cliente_id)
+      .maybeSingle();
+    if (!cliente || cliente.user_id !== authUserId) return json({ error: "forbidden" }, 403);
+    if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
+
+    const divs = Array.isArray(doc.divergencias_json) ? (doc.divergencias_json as any[]) : [];
+    const restantes = divs.filter((d) => !ehCampoDoGrupo((d as any)?.campo, grupo));
+    const removidos = divs.length - restantes.length;
+
+    const compl = (doc.campos_complementares_json && typeof doc.campos_complementares_json === "object")
+      ? { ...(doc.campos_complementares_json as Record<string, any>) }
+      : {};
+    compl[`${grupo}_dispensado_por_cliente`] = true;
+    compl[`${grupo}_dispensado_em`] = new Date().toISOString();
+
+    const update: Record<string, any> = {
+      divergencias_json: restantes,
+      campos_complementares_json: compl,
+    };
+    if (restantes.length === 0 && String(doc.status || "").toLowerCase() === "divergente") {
+      update.status = "revisao_humana";
+      update.motivo_rejeicao = null;
+      update.validacao_ia_status = "revisao_humana";
+    } else if (restantes.length > 0) {
+      update.motivo_rejeicao = "Divergência entre o documento e seu cadastro: " +
+        restantes.map((x: any) => x.campo).filter(Boolean).join(", ");
+    }
+
+    const { error: upErr } = await admin
+      .from("qa_processo_documentos")
+      .update(update)
+      .eq("id", documentoId);
+    if (upErr) return json({ error: upErr.message }, 500);
+
+    await admin.from("qa_processo_eventos").insert({
+      processo_id: doc.processo_id,
+      documento_id: documentoId,
+      tipo_evento: `divergencia_${grupo}_dispensada_pelo_cliente`,
+      descricao:
+        grupo === "endereco"
+          ? "Cliente declarou que o endereço do cadastro está correto. Documento aceito como comprovação."
+          : `Cliente dispensou divergência do grupo ${grupo}.`,
+      ator: "cliente",
+      dados_json: { removidos, restantes: restantes.map((x: any) => x.campo) },
+    } as any);
+
+    return json({
+      success: true,
+      status: update.status ?? doc.status,
+      removidos,
+      restantes: restantes.length,
+    });
+  } catch (e: any) {
+    console.error("[qa-processo-doc-aceitar-divergencia]", e);
+    return json({ error: e?.message || "internal_error" }, 500);
+  }
+});
