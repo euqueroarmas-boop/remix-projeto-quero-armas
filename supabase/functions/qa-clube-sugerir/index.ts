@@ -289,6 +289,39 @@ Deno.serve(async (req) => {
     if (clubeId) novaResposta.clube_id_associado = clubeId;
     if (divergencia) novaResposta.clube_divergencia = divergencia;
 
+    // ---------------------------------------------------------------------
+    // wizard_pre_documento.clube_filiacao — fonte de verdade por PROCESSO.
+    // Permite que o checklist trate clube/filiação por GTE/processo, sem
+    // depender de campos consolidados em qa_clientes (que valem por cliente).
+    // ---------------------------------------------------------------------
+    const wizardPreAtual = (respostasAtuais.wizard_pre_documento && typeof respostasAtuais.wizard_pre_documento === "object" && !Array.isArray(respostasAtuais.wizard_pre_documento))
+      ? respostasAtuais.wizard_pre_documento as Record<string, any>
+      : {};
+    const origemSimples =
+      origem === "declaracao_filiacao_cliente" ? "declaracao"
+      : origem === "catalogo_interno" ? "catalogo"
+      : "manual";
+    const wizardClubeFiliacao: Record<string, unknown> = {
+      completed: !!(clubeNorm.nome_clube && (filiacaoNumero || filiacaoValidade)),
+      completed_at: new Date().toISOString(),
+      documento_id: documentoIdOrigem,
+      clube_id: clubeId,
+      nome_clube: clubeNorm.nome_clube || null,
+      cnpj_clube: templateDataPatch.cnpj_clube || (cnpjDig || null),
+      numero_cr_clube: clubeNorm.numero_cr,
+      data_cr_clube: templateDataPatch.data_cr_clube || clubeNorm.data_validade,
+      endereco_clube: templateDataPatch.endereco_clube || clubeNorm.endereco,
+      cidade_clube: clubeNorm.cidade,
+      uf_clube: clubeNorm.estado,
+      numero_filiacao: filiacaoNumero || null,
+      validade_filiacao: templateDataPatch.validade_filiacao || filiacaoValidade,
+      origem: origemSimples,
+    };
+    novaResposta.wizard_pre_documento = {
+      ...wizardPreAtual,
+      clube_filiacao: wizardClubeFiliacao,
+    };
+
     const { error: upErr } = await admin
       .from("qa_processos")
       .update({ respostas_questionario_json: novaResposta })

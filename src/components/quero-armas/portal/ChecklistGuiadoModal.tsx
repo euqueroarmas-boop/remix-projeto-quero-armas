@@ -963,7 +963,7 @@ export default function ChecklistGuiadoModal({
     acao: { tipo: "anexar" | "baixar_template" | "reaproveitar"; payload?: any },
   ): boolean => {
     if (!doc) return false;
-    const cfg = wizardPendentePara(doc, clienteDados);
+    const cfg = wizardPendentePara(doc, clienteDados, carga?.processo);
     if (!cfg) return false;
     setWizardPre({ open: true, doc, cfg, acaoPendente: acao });
     return true;
@@ -1632,6 +1632,7 @@ export default function ChecklistGuiadoModal({
               <ClubeFiliacaoStep
                 processoId={carga.processo.id}
                 clienteId={carga.processo.cliente_id}
+                documentoId={wizardPre.doc?.id ?? null}
                 onConfirmed={() => {
                   toast.success("Clube e filiação confirmados.");
                   onUpdated?.();

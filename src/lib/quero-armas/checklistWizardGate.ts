@@ -69,7 +69,30 @@ function strOk(v: unknown): boolean {
   return typeof v === "string" && v.trim().length > 0;
 }
 
-/** Verifica se os dados mínimos do wizard já estão preenchidos no cliente. */
+/**
+ * Verifica se o wizard foi concluído NESTE processo (fonte de verdade nova).
+ * O ClubeFiliacaoStep pode variar por processo — não basta olhar para o cliente.
+ */
+export function isWizardCompletoNoProcesso(
+  wizardKey: WizardKey,
+  processo: { respostas_questionario_json?: unknown } | null | undefined,
+): boolean {
+  if (!processo) return false;
+  const raw = (processo as any).respostas_questionario_json;
+  if (!raw || typeof raw !== "object") return false;
+  const bloco = (raw as any).wizard_pre_documento;
+  if (!bloco || typeof bloco !== "object") return false;
+  const entry = bloco[wizardKey];
+  if (!entry || typeof entry !== "object") return false;
+  if (entry.completed === true) return true;
+  // Fallback: campos mínimos preenchidos no próprio bloco.
+  if (wizardKey === "clube_filiacao") {
+    return strOk(entry.nome_clube) && (strOk(entry.numero_filiacao) || strOk(entry.validade_filiacao));
+  }
+  return false;
+}
+
+/** Verifica se os dados mínimos do wizard já estão preenchidos no cliente (legado). */
 export function isWizardCompleto(
   wizardKey: WizardKey,
   cliente: Record<string, any> | null | undefined,
@@ -88,14 +111,20 @@ export function isWizardCompleto(
 /**
  * Devolve a config quando o wizard está pendente para este documento; null
  * quando não há wizard vinculado, está desabilitado ou já foi resolvido.
+ *
+ * Ordem de verificação:
+ *   1. wizard_pre_documento gravado NESTE processo (fonte primária).
+ *   2. Fallback: dados consolidados em qa_clientes (legado).
  */
 export function wizardPendentePara(
   doc: { regra_validacao?: unknown } | null | undefined,
   cliente: Record<string, any> | null | undefined,
+  processo?: { respostas_questionario_json?: unknown } | null | undefined,
 ): WizardPreDocumentoConfig | null {
   if (!doc) return null;
   const cfg = getWizardPreDocumento(doc.regra_validacao);
   if (!cfg || !cfg.enabled || !cfg.bloquear_documento_ate_responder) return null;
+  if (isWizardCompletoNoProcesso(cfg.wizard_key, processo ?? null)) return null;
   if (isWizardCompleto(cfg.wizard_key, cliente)) return null;
   return cfg;
 }
