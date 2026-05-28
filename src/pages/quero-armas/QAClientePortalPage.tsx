@@ -912,6 +912,12 @@ export default function QAClientePortalPage() {
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
       />
+      <EntradaWizard
+        open={entradaWizardOpen}
+        onOpenChange={setEntradaWizardOpen}
+        clienteId={(cliente as any)?.id ?? null}
+        onConcluido={handleEntradaConcluido}
+      />
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
         <div className="flex items-center justify-between h-20">
           <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
