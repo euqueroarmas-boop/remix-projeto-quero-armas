@@ -2519,6 +2519,89 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         title={viewer.title}
       />
 
+      {/* Modal — Marcar como protocolado */}
+      {protocoloModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <FileSignature className="h-4 w-4 text-emerald-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">MARCAR COMO PROTOCOLADO</h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-700 uppercase tracking-wide">
+                Confirma que este processo foi protocolado no órgão competente?
+              </p>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  ÓRGÃO
+                </label>
+                <select
+                  value={protocoloForm.orgao}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, orgao: e.target.value as any }))}
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                >
+                  <option value="POLICIA_FEDERAL">POLÍCIA FEDERAL</option>
+                  <option value="EXERCITO">EXÉRCITO</option>
+                  <option value="SIGMA">SIGMA</option>
+                  <option value="OUTRO">OUTRO</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  NÚMERO DO PROTOCOLO (OPCIONAL)
+                </label>
+                <input
+                  type="text"
+                  value={protocoloForm.numero}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
+                  placeholder="EX.: 2026.0001234-56"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  DATA DO PROTOCOLO
+                </label>
+                <input
+                  type="date"
+                  value={protocoloForm.data}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, data: e.target.value }))}
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  OBSERVAÇÃO (OPCIONAL)
+                </label>
+                <textarea
+                  value={protocoloForm.observacao}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, observacao: e.target.value }))}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full text-xs uppercase tracking-wide rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setProtocoloModalOpen(false)}
+                disabled={salvandoProtocolo}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarMarcarProtocolado}
+                disabled={salvandoProtocolo}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <CheckCircle className="h-3 w-3" /> {salvandoProtocolo ? "SALVANDO..." : "CONFIRMAR PROTOCOLO"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <TemplateDataConfirmationModal
         open={confirmacaoTpl.open}
         onOpenChange={(n) => !n && setConfirmacaoTpl({ open: false, doc: null, templateKey: null })}
