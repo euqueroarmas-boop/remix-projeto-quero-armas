@@ -1011,6 +1011,29 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     5: "EXAMES TÉCNICOS",
   };
 
+  // Auto-liberação idempotente da próxima etapa: dispara quando a etapa atual
+  // está cumprida (sem pendência, sem em análise, perguntas respondidas). A
+  // edge function valida tudo novamente server-side antes de mudar o estado.
+  useEffect(() => {
+    if (!processo || !proximaEtapa || !etapaCompleta) return;
+    const chave = `${processo.id}:${etapaLiberada}`;
+    if (autoLiberadoRef.current.has(chave)) return;
+    autoLiberadoRef.current.add(chave);
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("qa-processo-etapa-auto-liberar", {
+          body: { processo_id: processo.id, origem: "drawer_admin" },
+        });
+        if ((data as any)?.liberada) {
+          await carregar();
+          onUpdated?.();
+        }
+      } catch (e) {
+        console.warn("[drawer] auto-liberar etapa falhou", e);
+      }
+    })();
+  }, [processo, etapaLiberada, etapaCompleta, proximaEtapa, carregar, onUpdated]);
+
   const liberarProximaEtapa = async () => {
     if (!processo || !proximaEtapa) return;
     const ok = window.confirm(
