@@ -808,9 +808,34 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
       .select("*")
       .eq("processo_id", p.id)
       .order("created_at");
+    // Hidrata wizard_pre_documento do catálogo — necessário para que a
+    // contagem de "perguntas pendentes" reflita vínculos adicionados depois
+    // que o checklist foi explodido.
+    let docsHidratados = (docs ?? []) as GuiaDoc[];
+    if (p.servico_id && docsHidratados.length > 0) {
+      try {
+        const { data: tpl } = await supabase
+          .from("qa_servicos_documentos" as any)
+          .select("tipo_documento, regra_validacao")
+          .eq("servico_id", p.servico_id);
+        const mapCat = new Map<string, any>();
+        for (const t of (tpl ?? []) as any[]) {
+          if (t?.regra_validacao && typeof t.regra_validacao === "object") {
+            mapCat.set(String(t.tipo_documento ?? "").toLowerCase(), t.regra_validacao);
+          }
+        }
+        docsHidratados = docsHidratados.map((d) => ({
+          ...d,
+          regra_validacao: mesclarWizardPreDocumentoCatalogo(
+            (d as any).regra_validacao,
+            mapCat.get(String((d as any).tipo_documento ?? "").toLowerCase()),
+          ),
+        })) as GuiaDoc[];
+      } catch { /* hidratação é melhor-esforço */ }
+    }
     const respostas = (p.respostas_questionario_json ?? {}) as Record<string, string>;
     const etapaLiberada = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
-    const carga: CargaProcesso = { processo: p, docs: (docs ?? []) as GuiaDoc[], respostas, etapaLiberada };
+    const carga: CargaProcesso = { processo: p, docs: docsHidratados, respostas, etapaLiberada };
     const resumo = calcularResumoProcessoAssistente(carga, clienteRow as any);
     // `pendentes` agora reflete o que o cliente pode resolver AGORA:
     // documentos acionáveis (não bloqueados por wizard) + perguntas/wizards pendentes.
