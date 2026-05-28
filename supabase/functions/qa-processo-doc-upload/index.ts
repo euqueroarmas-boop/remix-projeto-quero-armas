@@ -102,12 +102,14 @@ Deno.serve(async (req) => {
     // Carrega item do checklist
     const { data: docRow0, error: docErr } = await supabase
       .from("qa_processo_documentos")
-      .select("id, processo_id, cliente_id, tipo_documento, formato_aceito, regra_validacao, status")
+      .select("id, processo_id, cliente_id, tipo_documento, nome_documento, formato_aceito, regra_validacao, status, motivo_rejeicao, divergencias_json")
       .eq("id", documento_id)
       .maybeSingle();
     if (docErr || !docRow0) return json({ error: "Item do checklist não encontrado" }, 404);
 
     const processo_id = docRow0.processo_id;
+    let documentoIdAlvo = documento_id;
+    let docUpload: any = docRow0;
 
     // Verifica permissão: ou staff QA ou cliente dono do processo
     const { data: staffRow } = await supabase
@@ -134,6 +136,60 @@ Deno.serve(async (req) => {
       if (!link) return json({ error: "Sem permissão para este processo" }, 403);
     }
 
+    // Proteção crítica: se o cliente anexar uma certidão averbada enquanto o
+    // item ativo ainda é um comprovante divergente por nome, redirecionamos o
+    // upload para a pendência própria. A IA nunca deve validar certidão como
+    // comprovante_endereco_ano_YYYY.
+    if (
+      docRow0.tipo_documento !== TIPO_CERTIDAO_ALTERACAO_NOME &&
+      docTemDivergenciaNome(docRow0) &&
+      arquivoPareceCertidaoAlteracaoNome(nome_arquivo_original)
+    ) {
+      const { data: existente } = await supabase
+        .from("qa_processo_documentos")
+        .select("*")
+        .eq("processo_id", processo_id)
+        .eq("tipo_documento", TIPO_CERTIDAO_ALTERACAO_NOME)
+        .maybeSingle();
+
+      if (existente?.id) {
+        documentoIdAlvo = existente.id;
+        docUpload = existente;
+      } else {
+        const { data: criada, error: criaErr } = await supabase
+          .from("qa_processo_documentos")
+          .insert({
+            processo_id,
+            cliente_id: processo.cliente_id,
+            tipo_documento: TIPO_CERTIDAO_ALTERACAO_NOME,
+            nome_documento: "Certidão averbada de alteração de nome",
+            etapa: "complementar",
+            obrigatorio: true,
+            formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+            status: "pendente",
+            regra_validacao: {
+              descricao: "Certidão de casamento ou nascimento averbada que comprova alteração de nome em cartório.",
+              exige: ["nome_anterior", "nome_atual"],
+            },
+            instrucoes: "Envie sua certidão de casamento ou nascimento averbada para comprovar a alteração do seu nome.",
+          })
+          .select("*")
+          .maybeSingle();
+        if (criaErr || !criada) return json({ error: criaErr?.message || "Falha ao criar pendência da certidão" }, 500);
+        documentoIdAlvo = criada.id;
+        docUpload = criada;
+      }
+
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id,
+        documento_id: documentoIdAlvo,
+        tipo_evento: "upload_certidao_redirecionado",
+        descricao: "Certidão averbada enviada a partir de divergência de nome foi associada ao item correto.",
+        dados_json: { documento_origem_id: documento_id, tipo_origem: docRow0.tipo_documento },
+        ator: "sistema",
+      });
+    }
+
     // Verifica que o arquivo existe no storage e descobre o tamanho real (anti-spoof do client)
     const { data: blob, error: dlErr } = await supabase.storage
       .from("qa-processo-docs")
@@ -147,8 +203,8 @@ Deno.serve(async (req) => {
     // ===== Enforcement de formato =====
     // Normaliza para extensão canônica em minúsculo dos dois lados (banco pode
     // ter "application/pdf", "APPLICATION/PDF", "pdf", etc.).
-    const formatosAceitos: string[] = Array.isArray(docRow0.formato_aceito)
-      ? (docRow0.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
+    const formatosAceitos: string[] = Array.isArray(docUpload.formato_aceito)
+      ? (docUpload.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
       : [];
     const extNorm = normalizeFmt(ext);
 
