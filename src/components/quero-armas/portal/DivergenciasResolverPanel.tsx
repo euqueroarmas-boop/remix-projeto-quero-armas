@@ -13,7 +13,7 @@
 // orquestra o que o cliente pode fazer DEPOIS de receber o veredito.
 // ============================================================================
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -279,7 +279,7 @@ export default function DivergenciasResolverPanel({
                 </div>
 
                 {/* Pares valor_documento × valor_cadastro */}
-                {itens.length > 0 && (
+                {itens.length > 0 && grupo !== "endereco" && (
                   <div className="mt-2 space-y-1.5">
                     {itens.map((it, idx) => (
                       <div
@@ -363,49 +363,14 @@ export default function DivergenciasResolverPanel({
                   )}
 
                   {grupo === "endereco" && (
-                    <>
-                      <p className="w-full text-[11px] leading-relaxed text-slate-600">
-                        O endereço do documento é diferente do endereço salvo
-                        no seu cadastro. Você pode usar o endereço do documento
-                        ou editar manualmente antes de salvar.
-                      </p>
-                      {podeAtualizarCadastro && (
-                        <button
-                          type="button"
-                          onClick={() => onAtualizarCadastroComGrupo("endereco")}
-                          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
-                          style={{ background: MARROM }}
-                        >
-                          <Sparkles className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Usar endereço do documento no cadastro</span>
-                          <span className="sm:hidden">Usar endereço do documento</span>
-                        </button>
-                      )}
-                      {podeAtualizarCadastro && onEditarCadastroManual && (
-                        <button
-                          type="button"
-                          onClick={() => onEditarCadastroManual("endereco")}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
-                        >
-                          Editar endereço manualmente
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={onReenviarDocumento}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-600 hover:bg-slate-50"
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        Enviar comprovante atual
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onMarcarComprovanteAntigo}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-600 hover:bg-slate-50"
-                      >
-                        Este comprovante é antigo
-                      </button>
-                    </>
+                    <EnderecoEscolhaCard
+                      itens={itens}
+                      podeAtualizarCadastro={podeAtualizarCadastro}
+                      onAtualizarCadastroComGrupo={onAtualizarCadastroComGrupo}
+                      onEditarCadastroManual={onEditarCadastroManual}
+                      onReenviarDocumento={onReenviarDocumento}
+                      onMarcarComprovanteAntigo={onMarcarComprovanteAntigo}
+                    />
                   )}
 
                   {grupo === "rg" && (
@@ -482,6 +447,249 @@ export default function DivergenciasResolverPanel({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-componente: card de escolha de endereço (cadastro vs documento)
+// ---------------------------------------------------------------------------
+
+const CAMPO_LABEL_END: Record<string, string> = {
+  endereco: "Logradouro",
+  logradouro: "Logradouro",
+  endereco_logradouro: "Logradouro",
+  numero: "Número",
+  endereco_numero: "Número",
+  complemento: "Complemento",
+  endereco_complemento: "Complemento",
+  bairro: "Bairro",
+  endereco_bairro: "Bairro",
+  cidade: "Cidade",
+  endereco_cidade: "Cidade",
+  estado: "Estado",
+  uf: "Estado",
+  endereco_uf: "Estado",
+  endereco_estado: "Estado",
+  cep: "CEP",
+  endereco_cep: "CEP",
+};
+
+function labelCampoEnd(campo: string): string {
+  const k = String(campo || "").toLowerCase().trim();
+  if (CAMPO_LABEL_END[k]) return CAMPO_LABEL_END[k];
+  if (/logradour|^rua$|avenida|travessa|endere[cç]o/.test(k)) return "Logradouro";
+  if (/n[uú]mero/.test(k)) return "Número";
+  if (/bairro/.test(k)) return "Bairro";
+  if (/cidade/.test(k)) return "Cidade";
+  if (/estado|^uf$/.test(k)) return "Estado";
+  if (/cep/.test(k)) return "CEP";
+  if (/complemento/.test(k)) return "Complemento";
+  return campo;
+}
+
+function montarResumoEndereco(
+  itens: DivergenciaItem[],
+  lado: "cadastro" | "documento",
+): string {
+  const ordem = ["logradouro", "numero", "complemento", "bairro", "cidade", "estado", "cep"];
+  const map: Record<string, string> = {};
+  for (const it of itens) {
+    const k = String(it.campo || "").toLowerCase().trim();
+    const label = labelCampoEnd(k).toLowerCase();
+    const valor = (lado === "cadastro" ? it.valor_cadastro : it.valor_documento)?.toString().trim();
+    if (!valor) continue;
+    // mapa por chave normalizada
+    const slug = label === "estado" ? "estado" : label.replace(/[^a-z]/g, "");
+    if (!map[slug]) map[slug] = valor;
+  }
+  const partes: string[] = [];
+  for (const s of ordem) {
+    if (map[s]) partes.push(map[s]);
+  }
+  // se nenhum campo conhecido bateu, junta o que houver
+  if (partes.length === 0) {
+    return itens
+      .map((it) => (lado === "cadastro" ? it.valor_cadastro : it.valor_documento))
+      .filter((v) => v && String(v).trim())
+      .join(", ");
+  }
+  return partes.join(", ");
+}
+
+function EnderecoEscolhaCard({
+  itens,
+  podeAtualizarCadastro,
+  onAtualizarCadastroComGrupo,
+  onEditarCadastroManual,
+  onReenviarDocumento,
+  onMarcarComprovanteAntigo,
+}: {
+  itens: DivergenciaItem[];
+  podeAtualizarCadastro: boolean;
+  onAtualizarCadastroComGrupo: (g: GrupoDivergencia) => void;
+  onEditarCadastroManual?: (g: GrupoDivergencia) => void;
+  onReenviarDocumento: () => void;
+  onMarcarComprovanteAntigo: () => void;
+}) {
+  const [escolha, setEscolha] = useState<"cadastro" | "documento" | null>(null);
+
+  const resumoCadastro = useMemo(() => montarResumoEndereco(itens, "cadastro"), [itens]);
+  const resumoDocumento = useMemo(() => montarResumoEndereco(itens, "documento"), [itens]);
+
+  const detalhes = useMemo(() => {
+    return itens
+      .map((it) => ({
+        label: labelCampoEnd(it.campo),
+        cadastro: it.valor_cadastro?.toString().trim() || "—",
+        documento: it.valor_documento?.toString().trim() || "—",
+      }))
+      .filter((d) => d.cadastro !== d.documento);
+  }, [itens]);
+
+  return (
+    <div className="w-full space-y-3">
+      <div>
+        <div className="text-[12px] font-bold text-slate-800">
+          Qual endereço está correto?
+        </div>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+          Escolha o endereço que deve ficar no seu cadastro. Se escolher o
+          endereço do documento, você poderá revisar antes de salvar.
+        </p>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setEscolha("cadastro")}
+          className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition ${
+            escolha === "cadastro"
+              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+              escolha === "cadastro" ? "border-[#7A1F2B]" : "border-slate-300"
+            }`}
+          >
+            {escolha === "cadastro" && (
+              <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Usar endereço do cadastro
+            </div>
+            <div className="mt-0.5 break-words text-[12px] font-semibold text-slate-900">
+              {resumoCadastro || "—"}
+            </div>
+            <p className="mt-1 text-[10px] leading-snug text-slate-500">
+              Mantém seu cadastro como está e considera que o documento enviado
+              não corresponde ao endereço cadastrado.
+            </p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEscolha("documento")}
+          disabled={!podeAtualizarCadastro}
+          className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            escolha === "documento"
+              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+              escolha === "documento" ? "border-[#7A1F2B]" : "border-slate-300"
+            }`}
+          >
+            {escolha === "documento" && (
+              <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+              Usar endereço do documento
+            </div>
+            <div className="mt-0.5 break-words text-[12px] font-semibold text-slate-900">
+              {resumoDocumento || "—"}
+            </div>
+            <p className="mt-1 text-[10px] leading-snug text-slate-500">
+              Atualiza seu cadastro com o endereço extraído deste comprovante.
+              Você poderá revisar os campos antes de salvar.
+            </p>
+          </div>
+        </button>
+      </div>
+
+      {detalhes.length > 0 && (
+        <details className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+          <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Ver diferenças campo a campo
+          </summary>
+          <div className="mt-2 space-y-1.5">
+            {detalhes.map((d, idx) => (
+              <div key={idx} className="grid grid-cols-1 gap-1 text-[11px] sm:grid-cols-[80px_1fr_1fr]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{d.label}</div>
+                <div className="truncate italic text-slate-600">{d.cadastro}</div>
+                <div className="truncate font-semibold text-slate-900">{d.documento}</div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+
+      {/* CTA principal depende da escolha */}
+      <div className="flex flex-wrap items-center gap-2">
+        {escolha === "documento" && podeAtualizarCadastro && (
+          <button
+            type="button"
+            onClick={() => onAtualizarCadastroComGrupo("endereco")}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+            style={{ background: MARROM }}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Revisar e atualizar cadastro
+          </button>
+        )}
+        {escolha === "cadastro" && (
+          <button
+            type="button"
+            onClick={onReenviarDocumento}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+            style={{ background: MARROM }}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Enviar comprovante com este endereço
+          </button>
+        )}
+        {podeAtualizarCadastro && onEditarCadastroManual && (
+          <button
+            type="button"
+            onClick={() => onEditarCadastroManual("endereco")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Editar endereço manualmente
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onMarcarComprovanteAntigo}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-600 hover:bg-slate-50"
+        >
+          Este comprovante é antigo
+        </button>
+      </div>
+
+      {!escolha && (
+        <p className="text-[10px] italic text-slate-500">
+          Selecione uma das opções acima para ver a próxima ação.
+        </p>
+      )}
     </div>
   );
 }
