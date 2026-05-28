@@ -22,6 +22,34 @@ import type { OverridesMap } from "@/lib/quero-armas/templatePlaceholderOverride
 
 const MARROM = "#7A1F2B";
 
+/**
+ * Normaliza datas em vários formatos aceitos para ISO `YYYY-MM-DD`.
+ * Retorna null se inválida.
+ */
+function normalizeDateInput(v: string): string | null {
+  const t = (v || "").trim();
+  if (!t) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
+  const br = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  const d8 = t.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (d8) return `${d8[3]}-${d8[2]}-${d8[1]}`;
+  const y8 = t.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (y8) return `${y8[1]}-${y8[2]}-${y8[3]}`;
+  return null;
+}
+
+function mensagemAmigavelErro(status: number | null, msg: string): string {
+  if (status === 401 || status === 403) return "Não foi possível confirmar sua sessão. Entre novamente.";
+  if (status === 400) return "Revise os dados preenchidos.";
+  if (status === 404) return "Processo ou clube não encontrado.";
+  if (status === 500) return "Não conseguimos salvar agora. A equipe já pode revisar o erro.";
+  if (/failed to (send|fetch)|networkerror|load failed/i.test(msg)) {
+    return "Não conseguimos conectar ao servidor. Tente novamente.";
+  }
+  return msg || "Não foi possível salvar agora.";
+}
+
 interface Props {
   processoId: string;
   clienteId: number;
