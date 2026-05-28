@@ -180,6 +180,15 @@ Deno.serve(async (req) => {
       dados_json: { removidos, restantes: restantes.map((x: any) => x.campo) },
     } as any);
 
+    // Checa se o processo virou pronto_para_protocolar (idempotente, fire-and-forget).
+    try {
+      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
+      await admin.functions.invoke("qa-processo-checar-conclusao-checklist", {
+        headers: { "x-internal-token": internalToken },
+        body: { processo_id: doc.processo_id, origem: "aceitar_divergencia" },
+      });
+    } catch (e) { console.warn("[aceitar-divergencia] checar-conclusao falhou", e); }
+
     return json({
       success: true,
       status: update.status ?? doc.status,
