@@ -336,6 +336,72 @@ export default function ChecklistGuiadoModal({
     };
   }, [docAtivo?.id, docAtivo?.tipo_documento, loadArmasCliente]);
 
+  // Bloco 12 — busca candidatos a reaproveitamento toda vez que o doc ativo
+  // (de tipo "documento") mudar. Falha silenciosa: a UI segue funcionando.
+  useEffect(() => {
+    if (!docAtivo || tipoItemGuia(docAtivo) !== "documento") {
+      setCandidatosReuso([]);
+      return;
+    }
+    // Não reaproveita por cima de docs em análise/aprovados/etc.
+    const st = String(docAtivo.status ?? "").toLowerCase();
+    const acionavel = !["aprovado", "validado", "dispensado_grupo",
+      "dispensado_por_reaproveitamento", "em_revisao_humana", "revisao_humana",
+      "em_analise", "enviado", "fila", "processando"].includes(st);
+    if (!acionavel) {
+      setCandidatosReuso([]);
+      return;
+    }
+    // Para docs de arma, só busca depois que a arma estiver selecionada
+    // (senão `arma_id` do destino é nulo e nada bate).
+    if (isDocDeArma(docAtivo.tipo_documento) && !armaSelecionada) {
+      setCandidatosReuso([]);
+      return;
+    }
+    let cancel = false;
+    setReusoCarregando(true);
+    (async () => {
+      try {
+        const destino = {
+          id: docAtivo.id,
+          tipo_documento: docAtivo.tipo_documento,
+          etapa: docAtivo.etapa,
+          arma_id: isDocDeArma(docAtivo.tipo_documento) ? armaSelecionada ?? (docAtivo as any).arma_id ?? null : (docAtivo as any).arma_id ?? null,
+          processo_id: carga?.processo.id,
+        };
+        const lista = await buscarCandidatosReaproveitamento(destino, {
+          clienteId,
+        });
+        if (!cancel) setCandidatosReuso(lista);
+      } catch (e) {
+        console.warn("[ChecklistGuiado] reaproveitamento falhou (silencioso):", e);
+        if (!cancel) setCandidatosReuso([]);
+      } finally {
+        if (!cancel) setReusoCarregando(false);
+      }
+    })();
+    return () => { cancel = true; };
+  }, [docAtivo?.id, docAtivo?.tipo_documento, docAtivo?.status, armaSelecionada, clienteId, carga?.processo.id]);
+
+  const handleReaproveitar = async (origemId: string) => {
+    if (!docAtivo || !carga) return;
+    setReusoAplicando(origemId);
+    setErroAcao(null);
+    const r = await aplicarReaproveitamento({
+      destinoDocumentoId: docAtivo.id,
+      origemDocumentoId: origemId,
+    });
+    setReusoAplicando(null);
+    if (!r.ok) {
+      setErroAcao(r.error ?? "Não foi possível reaproveitar este documento.");
+      return;
+    }
+    toast.success("Documento reaproveitado. Próximo item.");
+    onUpdated?.();
+    const c = await recarregarCarga(carga.processo.id);
+    avancarPara(c, pularIds);
+  };
+
   const prog = useMemo(() => (carga ? progressoGuia(carga) : { total: 0, cumpridos: 0, emRevisao: 0 }), [carga]);
   const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
   // "Pendências restantes" no topo deve usar EXATAMENTE o mesmo universo dos
