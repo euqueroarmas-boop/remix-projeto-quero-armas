@@ -625,11 +625,14 @@ export interface ProcessoElegivel {
   servico_nome: string;
   status: string;
   pagamento_status: string;
+  /** Legado interno: soma somente ações resolvíveis agora. Não usar para texto do card. */
   pendentes: number;
   em_analise: number;
+  documentos_em_analise: number;
   total: number;
   cumpridos: number;
   pct: number;
+  percentual: number;
   /** Contagens granulares vindas de calcularResumoProcessoAssistente. */
   documentos_pendentes_cliente: number;
   wizards_pendentes: number;
@@ -775,9 +778,11 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
       pagamento_status: p.pagamento_status,
       pendentes: resumo.documentosPendentesCliente + resumo.wizardsPendentes,
       em_analise: resumo.documentosEmAnalise,
+      documentos_em_analise: resumo.documentosEmAnalise,
       total: resumo.totalDocumentos,
       cumpridos: resumo.documentosResolvidos,
       pct: resumo.percentual,
+      percentual: resumo.percentual,
       documentos_pendentes_cliente: resumo.documentosPendentesCliente,
       wizards_pendentes: resumo.wizardsPendentes,
       label_resumo: resumo.labelResumo,
