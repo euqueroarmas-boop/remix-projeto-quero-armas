@@ -307,7 +307,8 @@ export default function DivergenciasResolverPanel({
                           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
-                          Atualizar cadastro com este nome
+                          <span className="hidden sm:inline">Usar nome do documento no cadastro</span>
+                          <span className="sm:hidden">Usar nome do documento</span>
                         </button>
                       )}
                       <button
