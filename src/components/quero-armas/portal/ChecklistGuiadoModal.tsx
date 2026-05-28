@@ -824,7 +824,12 @@ export default function ChecklistGuiadoModal({
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ documento_id: docId, grupo }),
+            body: JSON.stringify({
+              documento_id: docId,
+              processo_id: carga.processo.id,
+              grupo,
+              fonte_aceita: "cadastro",
+            }),
           },
         );
         const out = await resp.json().catch(() => ({}));
