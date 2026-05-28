@@ -538,7 +538,6 @@ export default function ChecklistGuiadoModal({
   const [wizard, setWizard] = useState<
     | { open: boolean; doc: GuiaDoc | null; templateKey: string | null }
   >({ open: false, doc: null, templateKey: null });
-  const [clienteDados, setClienteDados] = useState<any | null>(null);
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
