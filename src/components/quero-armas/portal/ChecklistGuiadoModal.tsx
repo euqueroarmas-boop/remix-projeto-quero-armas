@@ -70,6 +70,8 @@ import DivergenciasResolverPanel, {
   type GrupoDivergencia,
 } from "@/components/quero-armas/portal/DivergenciasResolverPanel";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
+import { isDocDeArma } from "@/lib/quero-armas/documentosDeArma";
+import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
@@ -138,6 +140,19 @@ export default function ChecklistGuiadoModal({
   // guardamos o id para oferecer um botão de fallback "Ir para pendência".
   const [avisoIrParaCertidao, setAvisoIrParaCertidao] = useState<string | null>(null);
   const [certidaoUploadForcadoId, setCertidaoUploadForcadoId] = useState<string | null>(null);
+
+  // ----- Vínculo documento ↔ arma do acervo (Bloco 10) -----
+  interface ArmaCli {
+    arma_uid: string;
+    marca: string | null;
+    modelo: string | null;
+    calibre: string | null;
+    numero_serie: string | null;
+    numero_craf: string | null;
+  }
+  const [armaSelecionada, setArmaSelecionada] = useState<string | null>(null);
+  const [armasCliente, setArmasCliente] = useState<ArmaCli[]>([]);
+  const [cadastroArmaAberto, setCadastroArmaAberto] = useState(false);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
@@ -328,6 +343,10 @@ export default function ChecklistGuiadoModal({
 
   const handleEscolherArquivo = () => {
     const doc = docAtivo;
+    if (isDocDeArma(doc?.tipo_documento) && !armaSelecionada) {
+      setErroAcao("Selecione a arma antes de enviar o documento.");
+      return;
+    }
     const fmts: string[] = Array.isArray(doc?.formato_aceito)
       ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
       : [];
