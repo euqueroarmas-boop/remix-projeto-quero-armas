@@ -786,6 +786,7 @@ export default function ChecklistGuiadoModal({
                       divergencias={(docAtivo as any)?.divergencias_json as any}
                       motivoRejeicao={(docAtivo as any)?.motivo_rejeicao ?? null}
                       altNomeJaComprovada={!!altNomeJaComprovada}
+                      nomesAceitosAlteracao={nomesAceitosAlteracao}
                       iniciandoAltNome={iniciandoAltNome}
                       podeAtualizarCadastro={!!clienteDados}
                       onIniciarAlteracaoNome={handleSimAlteracaoNome}
@@ -890,6 +891,7 @@ export default function ChecklistGuiadoModal({
                   divergencias={(resultadoDoc as any)?.divergencias_json as any}
                   motivoRejeicao={(resultadoDoc as any)?.motivo_rejeicao ?? null}
                   altNomeJaComprovada={!!altNomeJaComprovada}
+                  nomesAceitosAlteracao={nomesAceitosAlteracao}
                   iniciandoAltNome={iniciandoAltNome}
                   podeAtualizarCadastro={
                     !!((resultadoDoc as any)?.dados_extraidos_json) && !!clienteDados
@@ -902,12 +904,6 @@ export default function ChecklistGuiadoModal({
                     abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
                   }
                 />
-                {altNomeJaComprovada && (
-                  <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-left text-[12px] text-emerald-900">
-                    <span className="font-bold uppercase tracking-wider">Alteração de nome comprovada. </span>
-                    Este processo aceita o nome atual e o nome anterior.
-                  </div>
-                )}
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
                   <button onClick={reenviarAtual} className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: MARROM }}>
                     <RotateCcw className="h-4 w-4" /> Reenviar documento
