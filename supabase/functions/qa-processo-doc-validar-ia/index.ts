@@ -1538,6 +1538,16 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ===== ARSENAL AUTO-POPULATE (colateral, não falha a aprovação) =====
+    if (novoStatus === "aprovado") {
+      try {
+        const { popularArsenalAposAprovacao } = await import("../_shared/popularArsenalAprovado.ts");
+        await popularArsenalAposAprovacao(supabase, documento_id);
+      } catch (e) {
+        console.error("[arsenal_auto] falhou no caminho IA:", e);
+      }
+    }
+
     // Notifica granular (cobra SOMENTE este item)
     const eventoEmail =
       novoStatus === "aprovado" ? "documento_aprovado" :
