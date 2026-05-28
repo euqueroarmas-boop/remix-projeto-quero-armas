@@ -1273,6 +1273,21 @@ export default function ChecklistGuiadoModal({
 
       <DocumentoViewerModal open={viewer.open} onClose={viewer.fechar} source={viewer.source} title={viewer.title} />
 
+      <ArmaManualForm
+        open={cadastroArmaAberto}
+        onOpenChange={setCadastroArmaAberto}
+        qaClienteId={clienteId}
+        onSaved={async () => {
+          const lista = await loadArmasCliente();
+          setArmasCliente(lista);
+          // seleciona a arma recém-criada (a que não estava antes)
+          const previa = new Set(armasCliente.map((a) => a.arma_uid));
+          const nova = lista.find((a) => !previa.has(a.arma_uid));
+          if (nova) setArmaSelecionada(nova.arma_uid);
+          else if (lista.length === 1) setArmaSelecionada(lista[0].arma_uid);
+        }}
+      />
+
       <DocumentDataOnboardingWizard
         open={wizard.open}
         onClose={fecharWizard}
