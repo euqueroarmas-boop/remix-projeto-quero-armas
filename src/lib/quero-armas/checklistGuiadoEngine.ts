@@ -17,6 +17,12 @@
 // ============================================================================
 
 import { supabase } from "@/integrations/supabase/client";
+import {
+  STATUS_CHECKLIST_CUMPRIDO,
+  STATUS_CHECKLIST_EM_ANALISE,
+  STATUS_CHECKLIST_PENDENTE,
+  isChecklistCumprido,
+} from "./checklistMetrics";
 
 export interface GuiaProcesso {
   id: string;
@@ -171,8 +177,10 @@ export function itemCumpridoGuia(d: GuiaDoc, respostas: Record<string, string>):
     if (!chave) return false;
     return respostas[chave] !== undefined && respostas[chave] !== null && respostas[chave] !== "";
   }
-  // em_revisao_humana = cliente já fez a parte dele (aguarda equipe) → conta como entregue
-  return d.status === "aprovado" || d.status === "dispensado_grupo" || d.status === "em_revisao_humana";
+  // Bloco 13: usa a mesma classificação do Admin (checklistMetrics).
+  // Doc em revisão humana é "em análise", não "cumprido" — alinha o progresso
+  // do assistente com o que o admin enxerga no checklist.
+  return isChecklistCumprido(d.status);
 }
 
 // Item ainda exige AÇÃO do cliente (entra na fila do assistente)?
@@ -192,40 +200,14 @@ export function tipoItemGuia(d: GuiaDoc): TipoItemGuia {
 }
 
 // ---------------------------------------------------------------------------
-// Mapeamento explícito de status — usado pelo Assistente para nunca prender
-// o cliente em um documento que já foi enviado e está em análise/aprovação.
+// Mapeamento explícito de status — Bloco 13: reusa os conjuntos canônicos
+// definidos em checklistMetrics.ts para garantir que Admin e Cliente sempre
+// classifiquem o mesmo documento da mesma forma.
 // ---------------------------------------------------------------------------
-export const STATUS_DOCS_ACIONAVEIS: ReadonlySet<string> = new Set([
-  "pendente",
-  "nao_enviado",
-  "reprovado",
-  "rejeitado",
-  "invalido",
-  "divergente",
-  "ajuste_necessario",
-  "correcao_solicitada",
-  "pendente_reenvio",
-  "expirado",
-  "pulou",
-]);
-
-export const STATUS_DOCS_NAO_ACIONAVEIS: ReadonlySet<string> = new Set([
-  "aprovado",
-  "validado",
-  "concluido",
-  "concluído",
-  "em_analise",
-  "enviado",
-  "fila",
-  "processando",
-  "revisao_humana",
-  "pendente_aprovacao",
-  "aguardando_equipe",
-  "em_revisao_humana",
-  "dispensado",
-  "dispensado_grupo",
-  "dispensado_por_reaproveitamento",
-  "nao_aplicavel",
+export const STATUS_DOCS_ACIONAVEIS: ReadonlySet<string> = STATUS_CHECKLIST_PENDENTE;
+export const STATUS_DOCS_NAO_ACIONAVEIS: ReadonlySet<string> = new Set<string>([
+  ...STATUS_CHECKLIST_CUMPRIDO,
+  ...STATUS_CHECKLIST_EM_ANALISE,
 ]);
 
 /**
@@ -402,6 +384,12 @@ export function itensObrigatoriosGuia(carga: CargaProcesso): GuiaDoc[] {
 // Fila de itens que AINDA exigem ação do cliente, na ordem das etapas do checklist.
 export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
   const { respostas } = carga;
+  // Bloco 13: a fonte e os filtros já vêm do mesmo helper canônico
+  // (STATUS_DOCS_ACIONAVEIS = STATUS_CHECKLIST_PENDENTE). A ordenação aqui
+  // estende a canônica (etapa → ordem → created_at) com refinamentos
+  // próprios do assistente — perguntas/condição primeiro dentro da etapa e
+  // prioridade dentro da Etapa 1 (identidade → endereço) — para destravar
+  // itens dependentes na ordem certa.
   return itensObrigatoriosGuia(carga)
     .filter((d) => itemPendenteAcaoGuia(d, respostas))
     .sort((a, b) => {

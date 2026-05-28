@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
-import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist } from "@/lib/quero-armas/checklistMetrics";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
@@ -931,8 +931,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   // (etapa 2). Permanece visível enquanto a profissão não foi escolhida; ao
   // ser definida, a edge function qa-processo-set-condicao remove o
   // placeholder e cria os documentos reais de renda no lugar.
-  const docsChecklist = docs.filter(
-    (d) => itemVisivel(d) && docVisivelPorEtapa(d),
+  // Bloco 13: ordenação canônica (etapa → ordem → created_at) compartilhada
+  // com o Cliente (construirFilaGuia). Admin e Cliente enxergam o mesmo
+  // documento na mesma posição relativa dentro da etapa.
+  const docsChecklist = ordenarDocumentosChecklist(
+    docs.filter((d) => itemVisivel(d) && docVisivelPorEtapa(d)),
   );
 
   // Para o admin: lista TODAS as etapas + status de cada uma (para o painel
