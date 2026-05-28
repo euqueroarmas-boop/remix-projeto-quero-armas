@@ -72,6 +72,13 @@ import DivergenciasResolverPanel, {
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 import { isDocDeArma } from "@/lib/quero-armas/documentosDeArma";
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
+import ClubeFiliacaoStep from "@/components/quero-armas/portal/clube-wizard/ClubeFiliacaoStep";
+import {
+  WizardPreDocumentoConfig,
+  getWizardDescricaoCliente,
+  getWizardLabel,
+  wizardPendentePara,
+} from "@/lib/quero-armas/checklistWizardGate";
 import {
   buscarCandidatosReaproveitamento,
   aplicarReaproveitamento,
