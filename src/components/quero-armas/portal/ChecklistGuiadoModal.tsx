@@ -64,6 +64,10 @@ import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/Cli
 import SugestaoCadastroFromDocModal, {
   temSugestoesDeCadastro,
 } from "@/components/quero-armas/portal/SugestaoCadastroFromDocModal";
+import DivergenciasResolverPanel, {
+  GRUPO_PARA_COLUNAS_CADASTRO,
+  type GrupoDivergencia,
+} from "@/components/quero-armas/portal/DivergenciasResolverPanel";
 
 const MARROM = "#7A1F2B";
 
@@ -438,8 +442,14 @@ export default function ChecklistGuiadoModal({
 
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
   const [sugestao, setSugestao] = useState<
-    | { open: boolean; dados: Record<string, any> | null; nomeDoc: string | null }
-  >({ open: false, dados: null, nomeDoc: null });
+    | {
+        open: boolean;
+        dados: Record<string, any> | null;
+        nomeDoc: string | null;
+        filtroCampos: string[] | null;
+        titulo: string | null;
+      }
+  >({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null });
 
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
