@@ -6,10 +6,10 @@
 // Camada 100% aditiva — não toca nas edges existentes.
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle2, Loader2, Sparkles, X } from "lucide-react";
+import { CheckCircle2, Loader2, MapPin, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -31,6 +31,12 @@ interface Props {
   filtroCampos?: string[] | null;
   /** Título customizado no header. */
   tituloCustomizado?: string | null;
+  /**
+   * Quando true, o formulário de endereço é pré-preenchido com os dados
+   * atuais do cadastro (modo "editar manualmente") em vez de propor os
+   * valores extraídos do documento. O cliente pode editar livremente.
+   */
+  iniciarComCadastroAtual?: boolean;
 }
 
 interface Suggestion {
@@ -98,12 +104,75 @@ export function temSugestoesDeCadastro(cliente: any, extraidos: Record<string, a
 }
 
 export default function SugestaoCadastroFromDocModal({
-  open, onOpenChange, cliente, dadosExtraidos, nomeDoc, onApplied, filtroCampos, tituloCustomizado,
+  open, onOpenChange, cliente, dadosExtraidos, nomeDoc, onApplied, filtroCampos, tituloCustomizado, iniciarComCadastroAtual,
 }: Props) {
   const sugestoes = useMemo(
     () => buildSuggestions(cliente, dadosExtraidos || {}, filtroCampos),
     [cliente, dadosExtraidos, filtroCampos],
   );
+  // ---------------------------------------------------------------------
+  // Modo "endereço editável": quando o filtro é exclusivamente de endereço,
+  // renderizamos um formulário editável com os 7 campos em vez do diff em
+  // checkboxes. O cliente sempre revisa/edita antes de salvar.
+  // ---------------------------------------------------------------------
+  const ENDERECO_COLS = ["endereco", "numero", "complemento", "bairro", "cidade", "estado", "cep"] as const;
+  const ehEnderecoScope = useMemo(() => {
+    const filtro = Array.isArray(filtroCampos) ? filtroCampos.map((c) => String(c).toLowerCase()) : [];
+    if (filtro.length === 0) return false;
+    const set = new Set<string>(ENDERECO_COLS);
+    return filtro.every((c) => set.has(c));
+  }, [filtroCampos]);
+
+  function extractValor(col: string): string {
+    const m = MAPA.find((x) => x.col === col);
+    if (!m) return "";
+    for (const k of m.src) {
+      const v = norm((dadosExtraidos as any)?.[k]);
+      if (v) return v;
+    }
+    return "";
+  }
+  const valoresAtuais = useMemo(() => {
+    const o: Record<string, string> = {};
+    for (const c of ENDERECO_COLS) o[c] = norm(cliente?.[c]);
+    return o;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cliente?.endereco, cliente?.numero, cliente?.complemento, cliente?.bairro, cliente?.cidade, cliente?.estado, cliente?.cep]);
+  const valoresDoc = useMemo(() => {
+    const o: Record<string, string> = {};
+    for (const c of ENDERECO_COLS) o[c] = extractValor(c);
+    return o;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dadosExtraidos]);
+
+  const [form, setForm] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!open || !ehEnderecoScope) return;
+    const inicial: Record<string, string> = {};
+    for (const c of ENDERECO_COLS) {
+      const docV = valoresDoc[c];
+      const atual = valoresAtuais[c];
+      inicial[c] = iniciarComCadastroAtual ? atual : (docV || atual);
+    }
+    setForm(inicial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, ehEnderecoScope, iniciarComCadastroAtual, JSON.stringify(valoresDoc), JSON.stringify(valoresAtuais)]);
+
+  const camposExtraidosFaltantes = useMemo(
+    () => ehEnderecoScope && ENDERECO_COLS.some((c) => !valoresDoc[c] && c !== "complemento"),
+    [ehEnderecoScope, valoresDoc],
+  );
+
+  const composeEndereco = (v: Record<string, string>) => {
+    const linha1 = [v.endereco, v.numero].filter(Boolean).join(", ");
+    const linha2 = [v.complemento, v.bairro].filter(Boolean).join(" — ");
+    const linha3 = [v.cidade, v.estado].filter(Boolean).join("/");
+    const linha4 = v.cep ? `CEP ${v.cep}` : "";
+    return [linha1, linha2, linha3, linha4].filter(Boolean).join(" • ");
+  };
+  const enderecoDocLinha = useMemo(() => composeEndereco(valoresDoc), [valoresDoc]);
+  const enderecoAtualLinha = useMemo(() => composeEndereco(valoresAtuais), [valoresAtuais]);
+
   // Aviso quando o filtro é de endereço mas a IA só conseguiu extrair o
   // logradouro — usuário precisa conferir número, bairro, cidade, UF e CEP.
   const enderecoSoLogradouro = useMemo(() => {
