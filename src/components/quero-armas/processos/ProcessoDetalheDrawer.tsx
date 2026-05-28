@@ -10,6 +10,7 @@ import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
+import { limparDivergenciasVazias } from "@/lib/quero-armas/divergenciasUtils";
 
 interface DocRow {
   id: string;
@@ -691,6 +692,80 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const [savingCond, setSavingCond] = useState<string | null>(null);
   const [confirmandoPagto, setConfirmandoPagto] = useState(false);
+  // CTA "Marcar como protocolado" (admin)
+  const [protocoloModalOpen, setProtocoloModalOpen] = useState(false);
+  const [protocoloForm, setProtocoloForm] = useState({
+    numero: "",
+    orgao: "POLICIA_FEDERAL" as "POLICIA_FEDERAL" | "EXERCITO" | "SIGMA" | "OUTRO",
+    data: new Date().toISOString().slice(0, 10),
+    observacao: "",
+  });
+  const [salvandoProtocolo, setSalvandoProtocolo] = useState(false);
+
+  const confirmarMarcarProtocolado = async () => {
+    if (!processo) return;
+    setSalvandoProtocolo(true);
+    try {
+      const statusAnterior = processo.status;
+      const agora = new Date().toISOString();
+      const respostasAtuais: Record<string, any> =
+        (processo.respostas_questionario_json as any) ?? {};
+      const protocoloPayload = {
+        numero_protocolo: protocoloForm.numero.trim().toUpperCase() || null,
+        orgao: protocoloForm.orgao,
+        data_protocolo: protocoloForm.data || null,
+        observacao: protocoloForm.observacao.trim() || null,
+        registrado_em: agora,
+      };
+      const { error } = await supabase
+        .from("qa_processos")
+        .update({
+          status: "protocolado",
+          respostas_questionario_json: {
+            ...respostasAtuais,
+            protocolo: protocoloPayload,
+          },
+          updated_at: agora,
+        })
+        .eq("id", processo.id);
+      if (error) throw error;
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processo.id,
+        tipo_evento: "processo_protocolado",
+        descricao:
+          `PROCESSO PROTOCOLADO NO ÓRGÃO ${protocoloForm.orgao}` +
+          (protocoloPayload.numero_protocolo ? ` — Nº ${protocoloPayload.numero_protocolo}` : ""),
+        ator: "equipe_operacional",
+        dados_json: { ...protocoloPayload, status_anterior: statusAnterior },
+      });
+      void registrarStatusEvento({
+        cliente_id: processo.cliente_id ?? null,
+        processo_id: processo.id,
+        origem: "equipe",
+        entidade: "processo",
+        entidade_id: processo.id,
+        campo_status: "status",
+        status_anterior: statusAnterior,
+        status_novo: "protocolado",
+        usuario_id: (await supabase.auth.getUser()).data.user?.id ?? null,
+        detalhes: { contexto: "ProcessoDetalheDrawer.marcarProtocolado", ...protocoloPayload },
+      });
+      toast.success("Processo marcado como protocolado.");
+      setProtocoloModalOpen(false);
+      setProtocoloForm({
+        numero: "",
+        orgao: "POLICIA_FEDERAL",
+        data: new Date().toISOString().slice(0, 10),
+        observacao: "",
+      });
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao marcar protocolado: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setSalvandoProtocolo(false);
+    }
+  };
 
   const confirmarPagamentoManual = async () => {
     if (!processo) return;
