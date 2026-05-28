@@ -1145,6 +1145,7 @@ export default function ChecklistGuiadoModal({
                         abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
                       }
                       onUsarNomeDoDocumento={usarNomeDoDocumento}
+                      onAceitarDivergenciaCadastro={handleAceitarDivergencia}
                     />
                   )}
 
