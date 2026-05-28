@@ -7,9 +7,9 @@
 //
 // REGRAS DE SEGURANÇA:
 // - Exige Bearer token de usuário autenticado.
-// - O cliente alvo é SEMPRE resolvido por qa_clientes.user_id = auth.uid().
-//   O `cliente_id` enviado pelo front é IGNORADO — esta função nunca aceita
-//   "atualizar outro cliente". Equipe Quero Armas usa funções próprias.
+// - O cliente alvo é resolvido pelo vínculo autenticado do portal
+//   (qa_clientes.user_id OU cliente_auth_links.user_id). Se `cliente_id` vier
+//   do front, ele só é usado depois de validar esse vínculo.
 // - CPF e e-mail NUNCA são atualizados por esta função (campos sensíveis).
 // - Apenas um conjunto branco-listado de campos é gravado.
 // - Service role é usado apenas para bypass de RLS após validação manual.
@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const rawFields = body?.fields;
+    const requestedClienteId = Number(body?.cliente_id || 0) || null;
     if (!rawFields || typeof rawFields !== "object" || Array.isArray(rawFields)) {
       return json({ error: "fields_required" }, 400);
     }
@@ -167,13 +168,62 @@ Deno.serve(async (req) => {
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    // Resolve cliente do usuário autenticado.
-    const { data: cliente, error: cErr } = await admin
-      .from("qa_clientes")
-      .select("id, user_id, excluido")
-      .eq("user_id", authUserId)
-      .maybeSingle();
-    if (cErr) return json({ error: cErr.message }, 500);
+    // Resolve cliente do usuário autenticado. Alguns acessos do portal usam
+    // `cliente_auth_links` em vez de gravar `qa_clientes.user_id` diretamente.
+    let cliente: any = null;
+    if (requestedClienteId) {
+      const { data: direto, error: diretoErr } = await admin
+        .from("qa_clientes")
+        .select("id, user_id, excluido")
+        .eq("id", requestedClienteId)
+        .maybeSingle();
+      if (diretoErr) return json({ error: diretoErr.message }, 500);
+      if (direto) {
+        const isDirectOwner = direto.user_id === authUserId;
+        let isLinkedOwner = false;
+        if (!isDirectOwner) {
+          const { data: link } = await admin
+            .from("cliente_auth_links")
+            .select("qa_cliente_id")
+            .eq("user_id", authUserId)
+            .eq("qa_cliente_id", requestedClienteId)
+            .maybeSingle();
+          isLinkedOwner = !!link;
+        }
+        if (!isDirectOwner && !isLinkedOwner) return json({ error: "forbidden" }, 403);
+        cliente = direto;
+      }
+    }
+
+    if (!cliente) {
+      const { data: direto, error: cErr } = await admin
+        .from("qa_clientes")
+        .select("id, user_id, excluido")
+        .eq("user_id", authUserId)
+        .maybeSingle();
+      if (cErr) return json({ error: cErr.message }, 500);
+      cliente = direto;
+    }
+
+    if (!cliente) {
+      const { data: link } = await admin
+        .from("cliente_auth_links")
+        .select("qa_cliente_id")
+        .eq("user_id", authUserId)
+        .limit(2);
+      if ((link || []).length === 1) {
+        const { data: vinculado, error: vErr } = await admin
+          .from("qa_clientes")
+          .select("id, user_id, excluido")
+          .eq("id", (link as any[])[0].qa_cliente_id)
+          .maybeSingle();
+        if (vErr) return json({ error: vErr.message }, 500);
+        cliente = vinculado;
+      } else if ((link || []).length > 1) {
+        return json({ error: "cliente_id_required" }, 400);
+      }
+    }
+
     if (!cliente) return json({ error: "cliente_nao_vinculado" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
 
