@@ -1320,13 +1320,33 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               </div>
               {equipeMode && proximaEtapa && (
                 etapaCompleta ? (
-                  <span
-                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-emerald-300 bg-emerald-50 text-emerald-800"
-                    title="Próxima etapa será liberada automaticamente"
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data, error } = await supabase.functions.invoke(
+                          "qa-processo-etapa-auto-liberar",
+                          { body: { processo_id: processo!.id, origem: "drawer_reconciliar" } },
+                        );
+                        if (error) throw error;
+                        if ((data as any)?.liberada) {
+                          toast.success(`ETAPA ${(data as any).etapa_nova} LIBERADA.`);
+                          await carregar();
+                          onUpdated?.();
+                        } else {
+                          toast.info(
+                            `Não foi possível liberar: ${(data as any)?.motivo || "verifique itens condicionais"}`,
+                          );
+                        }
+                      } catch (e: any) {
+                        toast.error("Erro ao reconciliar: " + (e?.message ?? "desconhecido"));
+                      }
+                    }}
+                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                    title="Reconciliar itens condicionais / perguntas-pivot pendentes e liberar próxima etapa"
                   >
                     <CheckCircle className="h-3 w-3" />
-                    PRÓXIMA ETAPA LIBERADA AUTOMATICAMENTE
-                  </span>
+                    RECONCILIAR ITEM CONDICIONAL
+                  </button>
                 ) : (
                   <button
                     onClick={liberarProximaEtapa}
