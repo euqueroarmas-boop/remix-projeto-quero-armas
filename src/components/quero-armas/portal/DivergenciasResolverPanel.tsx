@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   FileText,
   Home,
+  Heart,
   IdCard,
   Loader2,
   Phone,
@@ -40,6 +41,7 @@ export interface DivergenciaItem {
 export type GrupoDivergencia =
   | "nome"
   | "endereco"
+  | "estado_civil"
   | "rg"
   | "cpf"
   | "data_nascimento"
@@ -49,6 +51,7 @@ export type GrupoDivergencia =
 const GRUPO_LABEL: Record<GrupoDivergencia, string> = {
   nome: "Nome diferente",
   endereco: "Endereço diferente",
+  estado_civil: "Estado civil diferente",
   rg: "Documento de identidade diferente",
   cpf: "CPF diferente",
   data_nascimento: "Data de nascimento diferente",
@@ -59,6 +62,7 @@ const GRUPO_LABEL: Record<GrupoDivergencia, string> = {
 const GRUPO_ICON: Record<GrupoDivergencia, any> = {
   nome: User,
   endereco: Home,
+  estado_civil: Heart,
   rg: IdCard,
   cpf: ShieldAlert,
   data_nascimento: ShieldAlert,
@@ -93,6 +97,11 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
   endereco_uf: "endereco",
   endereco_estado: "endereco",
   endereco_cep: "endereco",
+  // Estado civil (NUNCA é endereço)
+  estado_civil: "estado_civil",
+  estado_civil_titular: "estado_civil",
+  estadocivil: "estado_civil",
+  civil_status: "estado_civil",
   // RG
   rg: "rg",
   orgao_emissor: "rg",
@@ -114,6 +123,7 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
 export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
   nome: ["nome_completo"],
   endereco: ["endereco", "numero", "complemento", "bairro", "cidade", "estado", "cep"],
+  estado_civil: ["estado_civil"],
   rg: ["rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg"],
   cpf: [],
   data_nascimento: [],
@@ -121,12 +131,29 @@ export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
   outros: [],
 };
 
+/** Normaliza chave de campo: lowercase + sem acento + trim. Preserva
+ * underscores para manter `estado` distinto de `estado_civil`. */
+function normalizarCampoKey(campo: string): string {
+  return String(campo || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 function classificarCampo(campo: string): GrupoDivergencia {
-  const k = String(campo || "").toLowerCase().trim();
+  const k = normalizarCampoKey(campo);
+  // 1) Estado civil ANTES de qualquer regra de endereço — a chave
+  //    `estado_civil` contém "estado" e seria mal classificada como UF.
+  if (/estado[_\s-]?civil|civil[_\s-]?status|estadocivil/.test(k)) {
+    return "estado_civil";
+  }
   if (CAMPO_PARA_GRUPO[k]) return CAMPO_PARA_GRUPO[k];
-  // Heurística por substring — cobre variações tipo `endereco_logradouro`,
-  // `endereco_numero`, `dados_endereco_cep`, `titular_nome`, etc.
-  if (/(endere[cç]o|logradouro|^rua$|avenida|travessa|^numero$|n[uú]mero|bairro|cidade|estado|^uf$|^cep$|complemento)/.test(k)) {
+  // 2) Heurística por substring — cobre `endereco_logradouro`,
+  //    `dados_endereco_cep`, `titular_nome`, etc. O teste de
+  //    estado/uf exige limite por underscore para não pegar
+  //    `estado_civil` (já tratado acima de qualquer forma).
+  if (/(endere[cç]o|logradouro|^rua$|avenida|travessa|^numero$|n[uú]mero|bairro|cidade|(^|_)estado(_|$)|(^|_)uf(_|$)|^cep$|complemento)/.test(k)) {
     return "endereco";
   }
   if (/(^nome|titular)/.test(k)) return "nome";
@@ -146,6 +173,7 @@ function gruposDoMotivo(motivo: string): GrupoDivergencia[] {
   const t = String(motivo || "").toLowerCase();
   const out = new Set<GrupoDivergencia>();
   if (/\bnome\b|\btitular\b/.test(t)) out.add("nome");
+  if (/estado\s*civil|estado_civil/.test(t)) out.add("estado_civil");
   if (/\bendere[çc]o\b|\blogradour|\brua\b|\bavenida\b|\bcep\b|\bbairro\b|\bcidade\b/.test(t)) out.add("endereco");
   if (/\brg\b|\bidentidade\b|\borg[aã]o emissor\b/.test(t)) out.add("rg");
   if (/\bcpf\b/.test(t)) out.add("cpf");
@@ -181,6 +209,13 @@ export function agruparDivergencias(
   );
   for (const d of lista) {
     const g = classificarCampo(d?.campo || "");
+    // Diferença apenas de caixa/acento/espaço no NOME não é divergência
+    // real — ex.: "JOSÉ DA SILVA" vs "José da Silva".
+    if (g === "nome") {
+      const vd = normalizarNome(d?.valor_documento);
+      const vc = normalizarNome(d?.valor_cadastro);
+      if (vd && vc && vd === vc) continue;
+    }
     // Se a alteração de nome já está comprovada e o nome do documento bate
     // com um nome aceito (atual/anterior/cadastro), tratamos como resolvido
     // — não é uma pendência real para o cliente.
@@ -197,9 +232,9 @@ export function agruparDivergencias(
       if (!map.has(g)) map.set(g, []);
     }
   }
-  // Ordem estável: nome > endereço > rg > contato > cpf > data_nasc > outros
+  // Ordem estável.
   const ordem: GrupoDivergencia[] = [
-    "nome", "endereco", "rg", "contato", "cpf", "data_nascimento", "outros",
+    "nome", "endereco", "estado_civil", "rg", "contato", "cpf", "data_nascimento", "outros",
   ];
   return ordem
     .filter((g) => map.has(g))
@@ -275,11 +310,6 @@ export default function DivergenciasResolverPanel({
 
   return (
     <div className="w-full space-y-2 text-left">
-      <p className="text-[12px] text-slate-600">
-        Encontramos diferenças entre o documento e seu cadastro. Resolva cada
-        uma abaixo.
-      </p>
-
       {grupos.map(({ grupo, itens }) => {
         const Icon = GRUPO_ICON[grupo];
         return (
@@ -300,7 +330,7 @@ export default function DivergenciasResolverPanel({
                 </div>
 
                 {/* Pares valor_documento × valor_cadastro */}
-                {itens.length > 0 && grupo !== "endereco" && (
+                {itens.length > 0 && grupo !== "endereco" && grupo !== "estado_civil" && (
                   <div className="mt-2 space-y-1.5">
                     {itens.map((it, idx) => (
                       <div
@@ -413,6 +443,17 @@ export default function DivergenciasResolverPanel({
                       onEditarCadastroManual={onEditarCadastroManual}
                       onReenviarDocumento={onReenviarDocumento}
                       onMarcarComprovanteAntigo={onMarcarComprovanteAntigo}
+                      onAceitarDivergenciaCadastro={onAceitarDivergenciaCadastro}
+                    />
+                  )}
+
+                  {grupo === "estado_civil" && (
+                    <EstadoCivilEscolhaCard
+                      itens={itens}
+                      podeAtualizarCadastro={podeAtualizarCadastro}
+                      onAtualizarCadastroComGrupo={onAtualizarCadastroComGrupo}
+                      onEditarCadastroManual={onEditarCadastroManual}
+                      onReenviarDocumento={onReenviarDocumento}
                       onAceitarDivergenciaCadastro={onAceitarDivergenciaCadastro}
                     />
                   )}
@@ -741,6 +782,167 @@ function EnderecoEscolhaCard({
         >
           Este comprovante é antigo
         </button>
+      </div>
+
+      {!escolha && (
+        <p className="text-[10px] italic text-slate-500">
+          Selecione uma das opções acima para ver a próxima ação.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sub-componente: card de escolha de estado civil (cadastro vs documento)
+// ---------------------------------------------------------------------------
+
+function valoresEstadoCivil(itens: DivergenciaItem[]): {
+  cadastro: string;
+  documento: string;
+} {
+  const cadastro = (itens.find((i) => i?.valor_cadastro)?.valor_cadastro || "")
+    .toString()
+    .trim();
+  const documento = (itens.find((i) => i?.valor_documento)?.valor_documento || "")
+    .toString()
+    .trim();
+  return { cadastro, documento };
+}
+
+function EstadoCivilEscolhaCard({
+  itens,
+  podeAtualizarCadastro,
+  onAtualizarCadastroComGrupo,
+  onEditarCadastroManual,
+  onReenviarDocumento,
+  onAceitarDivergenciaCadastro,
+}: {
+  itens: DivergenciaItem[];
+  podeAtualizarCadastro: boolean;
+  onAtualizarCadastroComGrupo: (g: GrupoDivergencia) => void;
+  onEditarCadastroManual?: (g: GrupoDivergencia) => void;
+  onReenviarDocumento: () => void;
+  onAceitarDivergenciaCadastro?: (g: GrupoDivergencia) => void | Promise<void>;
+}) {
+  const [escolha, setEscolha] = useState<"cadastro" | "documento" | null>(null);
+  const { cadastro, documento } = useMemo(() => valoresEstadoCivil(itens), [itens]);
+
+  return (
+    <div className="w-full space-y-3">
+      <div>
+        <div className="text-[12px] font-bold text-slate-800">
+          Qual estado civil está correto?
+        </div>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+          Escolha o estado civil que deve ficar no seu cadastro. Se escolher o
+          valor do documento, você poderá revisar antes de salvar.
+        </p>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setEscolha("cadastro")}
+          className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition ${
+            escolha === "cadastro"
+              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+              escolha === "cadastro" ? "border-[#7A1F2B]" : "border-slate-300"
+            }`}
+          >
+            {escolha === "cadastro" && (
+              <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Manter estado civil do cadastro
+            </div>
+            <div className="mt-0.5 break-words text-[12px] font-semibold text-slate-900">
+              {cadastro || "—"}
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEscolha("documento")}
+          disabled={!podeAtualizarCadastro}
+          className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            escolha === "documento"
+              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+              escolha === "documento" ? "border-[#7A1F2B]" : "border-slate-300"
+            }`}
+          >
+            {escolha === "documento" && (
+              <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+              Usar estado civil do documento
+            </div>
+            <div className="mt-0.5 break-words text-[12px] font-semibold text-slate-900">
+              {documento || "—"}
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {escolha === "documento" && podeAtualizarCadastro && (
+          <button
+            type="button"
+            onClick={() => onAtualizarCadastroComGrupo("estado_civil")}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+            style={{ background: MARROM }}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Revisar e atualizar cadastro
+          </button>
+        )}
+        {escolha === "cadastro" && (
+          onAceitarDivergenciaCadastro ? (
+            <button
+              type="button"
+              onClick={() => onAceitarDivergenciaCadastro("estado_civil")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+              style={{ background: MARROM }}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Confirmar estado civil do cadastro
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onReenviarDocumento}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+              style={{ background: MARROM }}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Enviar outro documento
+            </button>
+          )
+        )}
+        {podeAtualizarCadastro && onEditarCadastroManual && (
+          <button
+            type="button"
+            onClick={() => onEditarCadastroManual("estado_civil")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Editar manualmente
+          </button>
+        )}
       </div>
 
       {!escolha && (
