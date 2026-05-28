@@ -37,6 +37,7 @@ function json(body: Record<string, unknown>, status = 200) {
 // Campos brancos-listados. Qualquer outro é descartado.
 const CAMPOS_PERMITIDOS = new Set<string>([
   // Pessoais
+  "nome",
   "data_nascimento",
   "sexo",
   "estado_civil",

@@ -64,6 +64,10 @@ import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/Cli
 import SugestaoCadastroFromDocModal, {
   temSugestoesDeCadastro,
 } from "@/components/quero-armas/portal/SugestaoCadastroFromDocModal";
+import DivergenciasResolverPanel, {
+  GRUPO_PARA_COLUNAS_CADASTRO,
+  type GrupoDivergencia,
+} from "@/components/quero-armas/portal/DivergenciasResolverPanel";
 
 const MARROM = "#7A1F2B";
 
@@ -338,6 +342,8 @@ export default function ChecklistGuiadoModal({
           open: true,
           dados: dadosExtraidos as Record<string, any>,
           nomeDoc: docAtivo?.nome_documento ?? null,
+          filtroCampos: null,
+          titulo: null,
         });
       }
     }
@@ -416,6 +422,59 @@ export default function ChecklistGuiadoModal({
     }
   };
 
+  // ----- Abrir SugestaoCadastroFromDocModal escopado a um grupo de campos -----
+  const abrirSugestaoCadastroPorGrupo = (grupo: GrupoDivergencia) => {
+    const extraidos = (resultadoDoc as any)?.dados_extraidos_json;
+    if (!extraidos || typeof extraidos !== "object") {
+      toast.error("Não há dados extraídos do documento para atualizar o cadastro.");
+      return;
+    }
+    const colunas = GRUPO_PARA_COLUNAS_CADASTRO[grupo] || [];
+    if (colunas.length === 0) {
+      toast.message("Este tipo de divergência não pode ser corrigido automaticamente.");
+      return;
+    }
+    const titulos: Record<GrupoDivergencia, string> = {
+      nome: "Revise antes de atualizar seu nome",
+      endereco: "Revise antes de atualizar seu endereço",
+      rg: "Revise antes de atualizar seu RG",
+      contato: "Revise antes de atualizar seu contato",
+      cpf: "Revise antes de atualizar",
+      data_nascimento: "Revise antes de atualizar",
+      outros: "Revise antes de atualizar seu cadastro",
+    };
+    setSugestao({
+      open: true,
+      dados: extraidos as Record<string, any>,
+      nomeDoc: docAtivo?.nome_documento ?? null,
+      filtroCampos: colunas,
+      titulo: titulos[grupo],
+    });
+  };
+
+  // ----- "Este comprovante é antigo" -----
+  const handleComprovanteAntigo = async () => {
+    if (!carga || !docAtivo) return;
+    try {
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: carga.processo.id,
+        documento_id: docAtivo.id,
+        tipo_evento: "comprovante_endereco_antigo_confirmado",
+        descricao:
+          "Cliente confirmou que o comprovante anexado é de endereço antigo.",
+        ator: "cliente",
+      });
+    } catch (e) {
+      // não é crítico — segue o fluxo
+      console.warn("[ChecklistGuiado] falha ao registrar evento antigo:", e);
+    }
+    toast.message(
+      "Marcamos como endereço antigo. Anexe um comprovante recente para seguir.",
+    );
+    // Mantém o documento como divergente e volta para o upload do comprovante atual.
+    reenviarAtual();
+  };
+
   // ----- helpers de render -----
   const orientacoesIA = (doc: GuiaDoc | null): string | null => {
     const compl = doc?.campos_complementares_json && typeof doc.campos_complementares_json === "object"
@@ -438,8 +497,14 @@ export default function ChecklistGuiadoModal({
 
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
   const [sugestao, setSugestao] = useState<
-    | { open: boolean; dados: Record<string, any> | null; nomeDoc: string | null }
-  >({ open: false, dados: null, nomeDoc: null });
+    | {
+        open: boolean;
+        dados: Record<string, any> | null;
+        nomeDoc: string | null;
+        filtroCampos: string[] | null;
+        titulo: string | null;
+      }
+  >({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null });
 
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
@@ -730,35 +795,19 @@ export default function ChecklistGuiadoModal({
                     <p className="whitespace-pre-line leading-relaxed">{orientacoesIA(resultadoDoc)}</p>
                   </div>
                 )}
-                {(divergeApenasPorNome(resultadoDoc) || divergeMotivoMencionaNome(resultadoDoc)) && !altNomeJaComprovada && (
-                  <div className="w-full rounded-xl border border-slate-200 bg-white p-3 text-left">
-                    <div className="text-[12px] font-bold uppercase tracking-wider text-slate-700">
-                      Encontramos diferença no nome
-                    </div>
-                    <p className="mt-1 text-[12px] leading-relaxed text-slate-600">
-                      Se seu nome foi alterado em cartório, envie a certidão averbada (casamento, nascimento ou outro documento oficial) para justificar a diferença.
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={iniciandoAltNome}
-                        onClick={handleSimAlteracaoNome}
-                        className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-bold text-white disabled:opacity-60"
-                        style={{ background: MARROM }}
-                      >
-                        {iniciandoAltNome ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-                        Sim, tenho certidão averbada
-                      </button>
-                      <button
-                        type="button"
-                        onClick={reenviarAtual}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-600 hover:bg-slate-50"
-                      >
-                        Não, preciso corrigir
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <DivergenciasResolverPanel
+                  divergencias={(resultadoDoc as any)?.divergencias_json as any}
+                  motivoRejeicao={(resultadoDoc as any)?.motivo_rejeicao ?? null}
+                  altNomeJaComprovada={!!altNomeJaComprovada}
+                  iniciandoAltNome={iniciandoAltNome}
+                  podeAtualizarCadastro={
+                    !!((resultadoDoc as any)?.dados_extraidos_json) && !!clienteDados
+                  }
+                  onIniciarAlteracaoNome={handleSimAlteracaoNome}
+                  onAtualizarCadastroComGrupo={(grupo) => abrirSugestaoCadastroPorGrupo(grupo)}
+                  onMarcarComprovanteAntigo={handleComprovanteAntigo}
+                  onReenviarDocumento={reenviarAtual}
+                />
                 {altNomeJaComprovada && (
                   <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-left text-[12px] text-emerald-900">
                     <span className="font-bold uppercase tracking-wider">Alteração de nome comprovada. </span>
@@ -850,13 +899,41 @@ export default function ChecklistGuiadoModal({
 
       <SugestaoCadastroFromDocModal
         open={sugestao.open}
-        onOpenChange={(n) => !n && setSugestao({ open: false, dados: null, nomeDoc: null })}
+        onOpenChange={(n) =>
+          !n &&
+          setSugestao({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null })
+        }
         cliente={clienteDados}
         dadosExtraidos={sugestao.dados}
         nomeDoc={sugestao.nomeDoc}
+        filtroCampos={sugestao.filtroCampos}
+        tituloCustomizado={sugestao.titulo}
         onApplied={async () => {
           await recarregarClienteDados();
           onUpdated?.();
+          // Se a sugestão foi aberta a partir do painel de divergências
+          // (filtroCampos definido), reprocessa o documento para que a IA
+          // reavalie com o cadastro atualizado.
+          if (sugestao.filtroCampos && resultadoDoc?.id && carga) {
+            try {
+              await supabase
+                .from("qa_processo_documentos")
+                .update({
+                  status: "em_analise",
+                  validacao_ia_status: "fila",
+                  validacao_ia_erro: null,
+                  motivo_rejeicao: null,
+                })
+                .eq("id", resultadoDoc.id);
+              toast.success(
+                "Cadastro atualizado. Vamos conferir o documento novamente.",
+              );
+              const c = await recarregarCarga(carga.processo.id);
+              avancarPara(c, pularIds);
+            } catch (e) {
+              console.warn("[ChecklistGuiado] falha ao reenfileirar IA:", e);
+            }
+          }
         }}
       />
     </>
