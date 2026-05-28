@@ -413,6 +413,7 @@ export default function DivergenciasResolverPanel({
                       onEditarCadastroManual={onEditarCadastroManual}
                       onReenviarDocumento={onReenviarDocumento}
                       onMarcarComprovanteAntigo={onMarcarComprovanteAntigo}
+                      onAceitarDivergenciaCadastro={onAceitarDivergenciaCadastro}
                     />
                   )}
 
