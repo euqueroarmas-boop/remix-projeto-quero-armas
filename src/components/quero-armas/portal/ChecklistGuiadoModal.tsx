@@ -69,6 +69,7 @@ import DivergenciasResolverPanel, {
   GRUPO_PARA_COLUNAS_CADASTRO,
   type GrupoDivergencia,
 } from "@/components/quero-armas/portal/DivergenciasResolverPanel";
+import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
