@@ -704,6 +704,52 @@ export default function ChecklistGuiadoModal({
     }
   };
 
+  // ----- "Meu cadastro está correto — aceitar este comprovante" -----
+  // Dispensa a divergência de um grupo (ex.: endereço) para o documento ativo,
+  // chamando a edge qa-processo-doc-aceitar-divergencia. Se não sobrar
+  // divergência, a edge já move o documento para revisao_humana.
+  const handleAceitarDivergencia = useCallback(
+    async (grupo: GrupoDivergencia) => {
+      const docId = resultadoDoc?.id ?? docAtivo?.id ?? null;
+      if (!carga || !docId) {
+        toast.error("Não consegui localizar o documento atual.");
+        return;
+      }
+      try {
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess?.session?.access_token;
+        if (!token) throw new Error("Sessão expirada. Entre novamente.");
+        const base = import.meta.env.VITE_SUPABASE_URL as string;
+        const resp = await fetch(
+          `${base}/functions/v1/qa-processo-doc-aceitar-divergencia`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ documento_id: docId, grupo }),
+          },
+        );
+        const out = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          throw new Error(out?.error || "Falha ao aceitar divergência.");
+        }
+        toast.success(
+          grupo === "endereco"
+            ? "Endereço confirmado. Vamos enviar este comprovante para conferência."
+            : "Divergência dispensada. Vamos enviar para conferência.",
+        );
+        const c = await recarregarCarga(carga.processo.id);
+        onUpdated?.();
+        avancarPara(c, pularIds);
+      } catch (e: any) {
+        toast.error(e?.message || "Erro ao aceitar divergência.");
+      }
+    },
+    [carga, resultadoDoc, docAtivo, pularIds, recarregarCarga, onUpdated],
+  );
+
   // ----- "Este comprovante é antigo" -----
   const handleComprovanteAntigo = async () => {
     if (!carga || !docAtivo) return;
