@@ -345,6 +345,19 @@ export default function DivergenciasResolverPanel({
                       </div>
                     </div>
                   )}
+                  {grupo === "nome" && !altNomeJaComprovada && altNomeEmComprovacao && (
+                    <div className="flex w-full items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <div>
+                        <span className="font-bold uppercase tracking-wider">
+                          Certidão averbada recebida — em conferência.{" "}
+                        </span>
+                        Sua parte está feita. Assim que a equipe confirmar, esta
+                        divergência de nome será dispensada automaticamente.
+                        Você pode seguir para os próximos itens.
+                      </div>
+                    </div>
+                  )}
                   {grupo === "nome" && !altNomeJaComprovada && (
                     <>
                       <button
