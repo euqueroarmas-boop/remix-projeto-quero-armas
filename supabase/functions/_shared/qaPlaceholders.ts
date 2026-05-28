@@ -84,7 +84,16 @@ export function extractPlaceholderTokens(xml: string): string[] {
   return Array.from(set);
 }
 
-const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const MESES = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
+
+// Uppercase pt-BR preservando números, pontuação e entidades XML.
+export function upperPtBR(input: string): string {
+  if (!input) return input;
+  return input.replace(/&[a-zA-Z#0-9]+;|[\p{L}]/gu, (m) => {
+    if (m.startsWith("&")) return m; // não mexer em entidades XML
+    return m.toLocaleUpperCase("pt-BR");
+  });
+}
 
 function s(v: unknown): string {
   if (v === null || v === undefined) return "";
@@ -132,7 +141,44 @@ export function buildReplacementsMap(
     for (const a of def.aliases ?? []) map[a] = v;
   }
   if (!map["[NACIONALIDADE]"]) map["[NACIONALIDADE]"] = "brasileiro(a)";
+  // Padrão visual obrigatório: todos os valores substituídos saem em CAIXA ALTA pt-BR.
+  for (const k of Object.keys(map)) map[k] = upperPtBR(map[k] ?? "");
   return map;
+}
+
+// ---------------------------------------------------------------------------
+// Pós-processamento do XML do .docx:
+//  1) Uppercase pt-BR de todo conteúdo textual dentro de <w:t>...</w:t>
+//     (cobre tanto texto fixo do template quanto valores já substituídos).
+//  2) Inserção de ~5 parágrafos vazios antes da linha de assinatura
+//     (parágrafo cujo texto contém ≥10 underscores seguidos).
+// Não altera estrutura/tags do OOXML.
+// ---------------------------------------------------------------------------
+export function postProcessDocxXml(xml: string): string {
+  // 1) Uppercase em <w:t>
+  let out = xml.replace(
+    /(<w:t(?:\s[^>]*)?>)([^<]*)(<\/w:t>)/g,
+    (_m, open: string, content: string, close: string) =>
+      open + upperPtBR(content) + close,
+  );
+
+  // 2) Espaçamento antes da assinatura
+  const EMPTY_P = `<w:p/>`.repeat(5);
+  out = out.replace(
+    /(<w:p\b[^>]*>[\s\S]*?<\/w:p>)/g,
+    (full) => {
+      // detecta texto agregado do parágrafo
+      const text = (full.match(/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/g) ?? [])
+        .map((t) => t.replace(/<[^>]+>/g, ""))
+        .join("");
+      if (/_{10,}/.test(text)) {
+        return EMPTY_P + full;
+      }
+      return full;
+    },
+  );
+
+  return out;
 }
 
 export interface AuditResult {
