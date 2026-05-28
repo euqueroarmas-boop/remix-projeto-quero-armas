@@ -304,7 +304,7 @@ export default function ChecklistGuiadoModal({
       .from("qa_cliente_armas" as any)
       .select("arma_uid, marca, modelo, calibre, numero_serie, numero_craf")
       .eq("qa_cliente_id", clienteId);
-    return (data ?? []) as ArmaCli[];
+    return ((data ?? []) as unknown) as ArmaCli[];
   }, [clienteId]);
 
   useEffect(() => {
