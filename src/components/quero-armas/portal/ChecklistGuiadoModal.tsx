@@ -967,13 +967,14 @@ export default function ChecklistGuiadoModal({
         open={sugestao.open}
         onOpenChange={(n) =>
           !n &&
-          setSugestao({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null })
+          setSugestao({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null, iniciarComCadastroAtual: false })
         }
         cliente={clienteDados}
         dadosExtraidos={sugestao.dados}
         nomeDoc={sugestao.nomeDoc}
         filtroCampos={sugestao.filtroCampos}
         tituloCustomizado={sugestao.titulo}
+        iniciarComCadastroAtual={!!sugestao.iniciarComCadastroAtual}
         onApplied={async () => {
           await recarregarClienteDados();
           onUpdated?.();
