@@ -379,6 +379,7 @@ export default function ChecklistGuiadoModal({
 
   // ----- Alteração de nome em cartório (regra especial) -----
   const NOME_CAMPOS = ["nome", "nome_titular", "titular", "nome_completo"];
+  const [clienteDados, setClienteDados] = useState<any | null>(null);
   const divergeApenasPorNome = (d: GuiaDoc | null): boolean => {
     if (!d) return false;
     const divs = Array.isArray((d as any).divergencias_json)
