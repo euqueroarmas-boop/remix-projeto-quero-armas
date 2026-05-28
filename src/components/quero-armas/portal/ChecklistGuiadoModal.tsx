@@ -392,6 +392,7 @@ export default function ChecklistGuiadoModal({
 
   const handleReaproveitar = async (origemId: string) => {
     if (!docAtivo || !carga) return;
+    if (gateWizardPre(docAtivo, { tipo: "reaproveitar", payload: origemId })) return;
     setReusoAplicando(origemId);
     setErroAcao(null);
     const r = await aplicarReaproveitamento({
@@ -459,6 +460,7 @@ export default function ChecklistGuiadoModal({
       setErroAcao("Selecione a arma antes de enviar o documento.");
       return;
     }
+    if (gateWizardPre(doc, { tipo: "anexar" })) return;
     const fmts: string[] = Array.isArray(doc?.formato_aceito)
       ? (doc!.formato_aceito as string[]).map((f) => String(f).toLowerCase())
       : [];
