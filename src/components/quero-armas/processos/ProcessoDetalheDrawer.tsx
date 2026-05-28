@@ -1276,7 +1276,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   processoId={processoId}
                   clienteId={processo?.cliente_id ?? null}
                   docs={docs as any}
-                  onChanged={carregar}
+                  onChanged={async () => { await carregar(); }}
                 />
               )}
               {/* Emissão em lote de certidões oficiais */}
