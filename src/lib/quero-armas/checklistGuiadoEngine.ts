@@ -22,7 +22,9 @@ import {
   STATUS_CHECKLIST_EM_ANALISE,
   STATUS_CHECKLIST_PENDENTE,
   isChecklistCumprido,
+  isChecklistEmAnalise,
 } from "./checklistMetrics";
+import { wizardPendentePara } from "./checklistWizardGate";
 
 export interface GuiaProcesso {
   id: string;
