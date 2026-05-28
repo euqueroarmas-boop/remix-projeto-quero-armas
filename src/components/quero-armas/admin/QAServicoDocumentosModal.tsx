@@ -25,6 +25,8 @@ import {
   ChevronsDownUp,
   ChevronsUpDown,
   ListOrdered,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import {
   DndContext,
@@ -160,6 +162,59 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [reordenando, setReordenando] = useState(false);
   const [templates, setTemplates] = useState<string[]>([]);
+  const [divergencia, setDivergencia] = useState<{
+    processos_ativos: number;
+    processos_divergentes: number;
+    exigencias_faltando: number;
+    exigencias_removidas_pendentes: number;
+  } | null>(null);
+  const [sincronizando, setSincronizando] = useState(false);
+
+  const carregarDivergencia = useCallback(async () => {
+    if (!servicoId) return;
+    const { data, error } = await supabase.rpc(
+      "qa_servico_divergencia_catalogo" as any,
+      { p_servico_id: servicoId } as any,
+    );
+    if (error) {
+      setDivergencia(null);
+      return;
+    }
+    const row = Array.isArray(data) ? (data[0] as any) : (data as any);
+    setDivergencia(row ?? null);
+  }, [servicoId]);
+
+  async function sincronizarProcessos() {
+    if (!servicoId) return;
+    if (!window.confirm(
+      "Isso atualizará os processos ATIVOS deste serviço para refletir o catálogo atual.\n\n" +
+      "• Exigências novas serão adicionadas.\n" +
+      "• Exigências removidas do catálogo serão dispensadas (apenas se o cliente ainda não enviou nada).\n" +
+      "• Documentos já enviados ou aprovados NÃO serão apagados.\n\n" +
+      "Continuar?"
+    )) return;
+    setSincronizando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "qa-sincronizar-checklist-servico",
+        { body: { servico_id: servicoId } },
+      );
+      if (error) throw error;
+      const r = (data as any)?.resumo ?? {};
+      toast.success(
+        `SINCRONIZADO — ${r.processos_processados ?? 0} PROCESSO(S): ` +
+          `+${r.exigencias_adicionadas ?? 0} ADICIONADAS · ` +
+          `${r.exigencias_atualizadas ?? 0} ATUALIZADAS · ` +
+          `${r.exigencias_arquivadas ?? 0} ARQUIVADAS · ` +
+          `${r.documentos_preservados ?? 0} PRESERVADAS COM ARQUIVO`,
+      );
+      await carregarDivergencia();
+    } catch (e: any) {
+      toast.error("FALHA AO SINCRONIZAR — " + (e?.message ?? "ERRO").toUpperCase());
+    } finally {
+      setSincronizando(false);
+    }
+  }
 
   /* carrega lista de templates .docx disponíveis */
   useEffect(() => {
@@ -198,14 +253,18 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
   }, [servicoId]);
 
   useEffect(() => {
-    if (open && servicoId) void load();
+    if (open && servicoId) {
+      void load();
+      void carregarDivergencia();
+    }
     if (!open) {
       setPatches({});
       setPreviewOpen(false);
       setViewer(null);
       setExpandedIds(new Set());
+      setDivergencia(null);
     }
-  }, [open, servicoId, load]);
+  }, [open, servicoId, load, carregarDivergencia]);
 
   const merged = useMemo<ExigenciaRow[]>(() => {
     return rows.map((r) => ({ ...r, ...patches[r.id] }));
@@ -584,6 +643,38 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
 
           {previewOpen && (
             <ClientePreview rows={merged.filter((r) => r.ativo)} />
+          )}
+
+          {divergencia && divergencia.processos_divergentes > 0 && (
+            <div className="mb-3 flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-700 shrink-0" />
+                <div className="text-[11px] uppercase tracking-wider text-amber-900 leading-relaxed">
+                  <div className="font-bold">
+                    EXISTEM {divergencia.processos_divergentes} PROCESSO(S) ATIVO(S) COM CHECKLIST DIFERENTE DESTE CATÁLOGO.
+                  </div>
+                  <div className="font-normal normal-case mt-0.5 text-amber-800">
+                    {divergencia.exigencias_faltando} exigência(s) faltando · {divergencia.exigencias_removidas_pendentes} item(ns) removido(s) ainda pendente(s) no cliente.
+                    Sincronize para que esses processos passem a refletir o catálogo atual. Documentos já enviados não serão apagados.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void sincronizarProcessos()}
+                disabled={sincronizando}
+                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+              >
+                {sincronizando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                SINCRONIZAR PROCESSOS EXISTENTES
+              </button>
+            </div>
+          )}
+
+          {divergencia && divergencia.processos_divergentes === 0 && divergencia.processos_ativos > 0 && (
+            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] uppercase tracking-wider text-emerald-800">
+              {divergencia.processos_ativos} PROCESSO(S) ATIVO(S) — TODOS EM DIA COM O CATÁLOGO ATUAL.
+            </div>
           )}
 
           <div className="flex-1 overflow-y-auto -mx-2 px-2">

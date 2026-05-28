@@ -9737,6 +9737,25 @@ export type Database = {
         Args: { p_processo_id: string }
         Returns: number
       }
+      qa_servico_divergencia_catalogo: {
+        Args: { p_servico_id: number }
+        Returns: {
+          exigencias_faltando: number
+          exigencias_removidas_pendentes: number
+          processos_ativos: number
+          processos_divergentes: number
+        }[]
+      }
+      qa_sincronizar_checklist_processos_servico: {
+        Args: { p_servico_id: number }
+        Returns: {
+          documentos_preservados: number
+          exigencias_adicionadas: number
+          exigencias_arquivadas: number
+          exigencias_atualizadas: number
+          processos_processados: number
+        }[]
+      }
       qa_sweep_indeferimento_por_prazo: {
         Args: never
         Returns: {
