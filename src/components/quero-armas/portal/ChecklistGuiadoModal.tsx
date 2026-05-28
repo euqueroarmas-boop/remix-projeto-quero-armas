@@ -591,9 +591,17 @@ export default function ChecklistGuiadoModal({
             {/* Barra de progresso (somente quando há um processo carregado) */}
             {carga && fase !== "escolher_processo" && fase !== "vazio" && (
               <div className="mt-3">
+                {(processoAtual?.servico_nome || carga.processo.servico_nome) && (
+                  <div className="mb-1 truncate text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                    Processo: <span className="text-slate-800">{processoAtual?.servico_nome || carga.processo.servico_nome}</span>
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
                   <span className="truncate pr-2 text-[11px] font-bold text-slate-800">Sua pasta está {pct}% pronta</span>
-                  <span className="shrink-0 text-[11px] text-slate-500">{prog.cumpridos} de {prog.total} itens resolvidos · {Math.max(0, prog.total - prog.cumpridos)} pendências restantes</span>
+                  <span className="shrink-0 text-[11px] text-slate-500">
+                    {prog.cumpridos} de {prog.total} itens resolvidos · {pendentesAcao} pendência{pendentesAcao === 1 ? "" : "s"} restante{pendentesAcao === 1 ? "" : "s"}
+                    {emAnalise > 0 ? ` · ${emAnalise} em análise` : ""}
+                  </span>
                 </div>
                 <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: MARROM }} />
