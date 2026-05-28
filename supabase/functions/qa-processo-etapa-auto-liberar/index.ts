@@ -167,6 +167,16 @@ Deno.serve(async (req) => {
       dados_json: { etapa_anterior: etapaAtual, etapa_nova: proximaEtapa, modo: "automatico", origem: body?.origem || null },
     });
 
+    // Após liberar etapa, checa se TODAS as etapas já estão cumpridas e o
+    // processo deve virar pronto_para_protocolar (idempotente).
+    try {
+      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
+      await admin.functions.invoke("qa-processo-checar-conclusao-checklist", {
+        headers: { "x-internal-token": internalToken },
+        body: { processo_id: processoId, origem: "etapa_auto_liberar" },
+      });
+    } catch (e) { console.warn("[etapa-auto-liberar] checar-conclusao falhou", e); }
+
     return json({ liberada: true, etapa_anterior: etapaAtual, etapa_nova: proximaEtapa });
   } catch (err: any) {
     console.error("qa-processo-etapa-auto-liberar:", err);
