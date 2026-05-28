@@ -7629,6 +7629,7 @@ export type Database = {
           descricao_curta: string | null
           descricao_full: string | null
           display_order: number
+          exige_acervo: boolean | null
           exige_cadastro: boolean
           exige_pagamento: boolean
           gera_processo: boolean
@@ -7655,6 +7656,7 @@ export type Database = {
           descricao_curta?: string | null
           descricao_full?: string | null
           display_order?: number
+          exige_acervo?: boolean | null
           exige_cadastro?: boolean
           exige_pagamento?: boolean
           gera_processo?: boolean
@@ -7681,6 +7683,7 @@ export type Database = {
           descricao_curta?: string | null
           descricao_full?: string | null
           display_order?: number
+          exige_acervo?: boolean | null
           exige_cadastro?: boolean
           exige_pagamento?: boolean
           gera_processo?: boolean
