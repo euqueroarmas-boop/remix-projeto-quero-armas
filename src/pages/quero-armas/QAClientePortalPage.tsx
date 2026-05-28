@@ -1501,7 +1501,15 @@ export default function QAClientePortalPage() {
           <div className="space-y-4">
             <PortalScopeSelector hint="Filtra histórico, linha do tempo e cards de processo." />
             <SectionCard icon={BriefcaseBusiness} title="Meus processos" color="hsl(352 60% 30%)">
-              <div className="mb-4 flex justify-end"><button type="button" onClick={() => navigate("/area-do-cliente/contratar")} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><ShoppingBag className="h-4 w-4" /> Contratar novo serviço</button></div>
+              <div className="mb-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setEntradaWizardOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"
+                >
+                  <ShoppingBag className="h-4 w-4" /> Iniciar novo serviço
+                </button>
+              </div>
               {cliente?.id ? (
                 <div className="mb-4 rounded-2xl border border-[#7A1F2B]/20 bg-gradient-to-br from-[#7A1F2B]/5 to-white p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
