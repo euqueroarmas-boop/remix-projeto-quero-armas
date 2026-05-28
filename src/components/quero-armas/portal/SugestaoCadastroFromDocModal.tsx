@@ -75,7 +75,7 @@ interface Suggestion {
 // IA pode emitir várias variantes de chave para o mesmo dado.
 // Mapeamos múltiplas chaves de origem → 1 coluna em qa_clientes.
 const MAPA: { src: string[]; col: string; label: string }[] = [
-  { src: ["nome", "nome_titular", "titular", "nome_completo", "titular_comprovante_nome"], col: "nome", label: "Nome completo" },
+  { src: ["nome", "nome_titular", "titular", "nome_completo", "titular_comprovante_nome"], col: "nome_completo", label: "Nome completo" },
   { src: ["data_nascimento"], col: "data_nascimento", label: "Data de nascimento" },
   { src: ["naturalidade_municipio", "naturalidade"], col: "naturalidade_municipio", label: "Naturalidade (município)" },
   { src: ["naturalidade_uf"], col: "naturalidade_uf", label: "Naturalidade (UF)" },

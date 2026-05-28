@@ -38,6 +38,7 @@ function json(body: Record<string, unknown>, status = 200) {
 const CAMPOS_PERMITIDOS = new Set<string>([
   // Pessoais
   "nome",
+  "nome_completo",
   "data_nascimento",
   "sexo",
   "estado_civil",
@@ -153,7 +154,11 @@ Deno.serve(async (req) => {
         if (!iso) continue;
         cleaned = iso;
       }
-      updates[k] = cleaned;
+      // A coluna real em qa_clientes é `nome_completo`. Aceitamos a chave
+      // legada `nome` (vinda de versões anteriores do front) e gravamos no
+      // campo correto, evitando erro de coluna inexistente.
+      const targetCol = k === "nome" ? "nome_completo" : k;
+      updates[targetCol] = cleaned;
     }
 
     if (Object.keys(updates).length === 0) {

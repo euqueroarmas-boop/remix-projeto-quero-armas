@@ -112,7 +112,7 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
 
 /** Colunas de qa_clientes elegíveis para atualização em cada grupo. */
 export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
-  nome: ["nome"],
+  nome: ["nome_completo"],
   endereco: ["endereco", "numero", "complemento", "bairro", "cidade", "estado", "cep"],
   rg: ["rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg"],
   cpf: [],
@@ -225,6 +225,12 @@ export interface DivergenciasResolverPanelProps {
   onReenviarDocumento: () => void;
   /** Abre o editor de cadastro pré-preenchido com os valores atuais. */
   onEditarCadastroManual?: (grupo: GrupoDivergencia) => void;
+  /**
+   * Atalho de 1 clique para o grupo "nome": grava `nome_completo` no
+   * cadastro com o valor extraído do documento e avança o assistente.
+   * Quando ausente, cai no fluxo do modal de sugestão (fallback).
+   */
+  onUsarNomeDoDocumento?: (novoNome: string) => void | Promise<void>;
 }
 
 export default function DivergenciasResolverPanel({
@@ -239,6 +245,7 @@ export default function DivergenciasResolverPanel({
   onMarcarComprovanteAntigo,
   onReenviarDocumento,
   onEditarCadastroManual,
+  onUsarNomeDoDocumento,
 }: DivergenciasResolverPanelProps) {
   const grupos = useMemo(
     () =>
@@ -343,7 +350,16 @@ export default function DivergenciasResolverPanel({
                       {podeAtualizarCadastro && (
                         <button
                           type="button"
-                          onClick={() => onAtualizarCadastroComGrupo("nome")}
+                          onClick={() => {
+                            const novoNome = (itens || [])
+                              .map((x) => String(x.valor_documento || "").trim())
+                              .find((v) => v.length > 0) || "";
+                            if (onUsarNomeDoDocumento && novoNome) {
+                              void onUsarNomeDoDocumento(novoNome);
+                            } else {
+                              onAtualizarCadastroComGrupo("nome");
+                            }
+                          }}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
