@@ -393,9 +393,37 @@ export default function ChecklistGuiadoModal({
     if (!motivo) return false;
     return /\bnome\b|\btitular\b/i.test(motivo);
   };
-  const altNomeJaComprovada = !!(
-    carga?.processo?.respostas_questionario_json as any
-  )?.alteracao_nome?.aprovada;
+  // Fonte de verdade da comprovação de alteração de nome:
+  //  (a) `respostas_questionario_json.alteracao_nome.aprovada === true`, OU
+  //  (b) existe documento `certidao_alteracao_nome` neste processo já em
+  //      estado aprovado/validado/em_revisao_humana (a equipe pode validar
+  //      manualmente antes de o bloco em respostas ser preenchido).
+  const altNomeBlock =
+    ((carga?.processo?.respostas_questionario_json as any)?.alteracao_nome ?? null) as
+      | { aprovada?: boolean; nome_anterior?: string | null; nome_atual?: string | null }
+      | null;
+  const certidaoAprovadaDoc = (carga?.docs || []).find((d: any) => {
+    if (String(d?.tipo_documento || "").toLowerCase() !== "certidao_alteracao_nome") return false;
+    const st = String(d?.status || "").toLowerCase();
+    return ["aprovado", "validado", "em_revisao_humana"].includes(st);
+  });
+  const altNomeJaComprovada = !!altNomeBlock?.aprovada || !!certidaoAprovadaDoc;
+  // Nomes aceitos: cadastro + nomes da averbação aprovada. Usado para
+  // dispensar divergências de nome cujo valor do documento bate (normalizado)
+  // com qualquer desses nomes.
+  const nomesAceitosAlteracao = useMemo(() => {
+    if (!altNomeJaComprovada) return [] as string[];
+    const out: string[] = [];
+    if (clienteDados?.nome_completo) out.push(String(clienteDados.nome_completo));
+    if (altNomeBlock?.nome_anterior) out.push(String(altNomeBlock.nome_anterior));
+    if (altNomeBlock?.nome_atual) out.push(String(altNomeBlock.nome_atual));
+    const cx = (certidaoAprovadaDoc as any)?.campos_complementares_json ?? null;
+    if (cx && typeof cx === "object") {
+      if (cx.nome_anterior) out.push(String(cx.nome_anterior));
+      if (cx.nome_atual) out.push(String(cx.nome_atual));
+    }
+    return Array.from(new Set(out.filter(Boolean)));
+  }, [altNomeJaComprovada, clienteDados?.nome_completo, altNomeBlock?.nome_anterior, altNomeBlock?.nome_atual, certidaoAprovadaDoc]);
   const [iniciandoAltNome, setIniciandoAltNome] = useState(false);
   const handleSimAlteracaoNome = async () => {
     if (!carga) return;
