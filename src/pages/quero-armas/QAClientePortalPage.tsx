@@ -153,6 +153,9 @@ export default function QAClientePortalPage() {
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
   const [showArmaManual, setShowArmaManual] = useState(false);
+  // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
+  // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
+  const [pendingTrilhaDestino, setPendingTrilhaDestino] = useState<string | null>(null);
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
@@ -217,9 +220,35 @@ export default function QAClientePortalPage() {
           }
         : prev,
     );
-    // Navega para o catálogo com filtro de trilha aplicado (chip removível lá).
     const trilha = respostas.objetivo;
-    navigate(`/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`);
+    const destino = `/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`;
+
+    // BLOCO 12 — Cadastro mínimo de arma.
+    // Se o cliente declarou possuir arma E ainda não tem nada no acervo,
+    // ofereça o cadastro rápido ANTES de seguir para o catálogo. A intenção
+    // de navegação fica guardada e é executada quando o form fecha.
+    if (respostas.possuiArma === "sim") {
+      void (async () => {
+        try {
+          const { count } = await supabase
+            .from("qa_cliente_armas" as any)
+            .select("arma_uid", { count: "exact", head: true })
+            .eq("qa_cliente_id", (cliente as any)?.id);
+          if ((count ?? 0) === 0) {
+            setPendingTrilhaDestino(destino);
+            setShowArmaManual(true);
+            return;
+          }
+        } catch {
+          /* falha silenciosa — segue para o catálogo */
+        }
+        navigate(destino);
+      })();
+      return;
+    }
+
+    // Navega direto para o catálogo (chip removível "Trilha: ..." lá).
+    navigate(destino);
   }
 
   useEffect(() => {
@@ -1206,7 +1235,16 @@ export default function QAClientePortalPage() {
           </div>
           <ArmaManualForm
             open={showArmaManual}
-            onOpenChange={setShowArmaManual}
+            onOpenChange={(v) => {
+              setShowArmaManual(v);
+              // BLOCO 12 — ao fechar (salvou OU pulou), prossegue para o
+              // catálogo se havia uma navegação pendente do wizard.
+              if (!v && pendingTrilhaDestino) {
+                const dest = pendingTrilhaDestino;
+                setPendingTrilhaDestino(null);
+                navigate(dest);
+              }
+            }}
             qaClienteId={cliente.id}
             defaultEmail={cliente.email}
             defaultCpf={cliente.cpf}
