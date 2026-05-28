@@ -513,8 +513,9 @@ export default function ChecklistGuiadoModal({
         nomeDoc: string | null;
         filtroCampos: string[] | null;
         titulo: string | null;
+        iniciarComCadastroAtual?: boolean;
       }
-  >({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null });
+  >({ open: false, dados: null, nomeDoc: null, filtroCampos: null, titulo: null, iniciarComCadastroAtual: false });
 
   const recarregarClienteDados = useCallback(async () => {
     if (!carga) return null;
