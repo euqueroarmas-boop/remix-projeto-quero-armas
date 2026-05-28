@@ -220,39 +220,89 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, on
       toast.error("Informe o nome do clube.");
       return;
     }
+    // Pré-validação e normalização de datas (DD/MM/AAAA, DDMMAAAA ou ISO).
+    const validadeIso = form.validade_filiacao.trim()
+      ? normalizeDateInput(form.validade_filiacao)
+      : null;
+    if (form.validade_filiacao.trim() && !validadeIso) {
+      toast.error("Informe a validade da filiação no formato DD/MM/AAAA.");
+      return;
+    }
+    const dataCrIso = form.data_cr.trim()
+      ? normalizeDateInput(form.data_cr)
+      : null;
+    if (form.data_cr.trim() && !dataCrIso) {
+      toast.error("Informe a validade do CR do clube no formato DD/MM/AAAA.");
+      return;
+    }
+
+    // Sessão ativa antes de chamar a edge.
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess?.session?.access_token) {
+      toast.error("Sua sessão expirou. Entre novamente para salvar.");
+      return;
+    }
+
+    const payload = {
+      processo_id: processoId,
+      clube_id_selecionado: clubeSelecionado?.id ?? null,
+      origem:
+        origem === "declaracao"
+          ? "declaracao_filiacao_cliente"
+          : origem === "catalogo"
+            ? "catalogo_interno"
+            : "manual",
+      clube: {
+        nome: form.nome_clube,
+        cnpj: form.cnpj,
+        numero_cr: form.numero_cr,
+        data_cr: dataCrIso || form.data_cr,
+        endereco: form.endereco,
+        cidade: form.cidade,
+        uf: form.uf,
+      },
+      filiacao: {
+        numero: form.numero_filiacao,
+        validade: validadeIso || form.validade_filiacao,
+      },
+    };
+
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke("qa-clube-sugerir", {
-        body: {
-          processo_id: processoId,
-          clube_id_selecionado: clubeSelecionado?.id ?? null,
-          origem:
-            origem === "declaracao"
-              ? "declaracao_filiacao_cliente"
-              : origem === "catalogo"
-                ? "catalogo_interno"
-                : "manual",
-          clube: {
-            nome: form.nome_clube,
-            cnpj: form.cnpj,
-            numero_cr: form.numero_cr,
-            data_cr: form.data_cr,
-            endereco: form.endereco,
-            cidade: form.cidade,
-            uf: form.uf,
-          },
-          filiacao: {
-            numero: form.numero_filiacao,
-            validade: form.validade_filiacao,
-          },
+      // Fetch direto: dá controle do status HTTP e do corpo da resposta para
+      // mensagens amigáveis. supabase.functions.invoke esconde o status real.
+      const base = import.meta.env.VITE_SUPABASE_URL as string;
+      const anon = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+      const resp = await fetch(`${base}/functions/v1/qa-clube-sugerir`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sess.session.access_token}`,
+          apikey: anon,
         },
+        body: JSON.stringify(payload),
       });
-      if (error) throw error;
-      if ((data as any)?.error) throw new Error((data as any).error);
+      const text = await resp.text();
+      let parsed: any = null;
+      try { parsed = text ? JSON.parse(text) : null; } catch { /* keep text */ }
+      if (!resp.ok || parsed?.error) {
+        // eslint-disable-next-line no-console
+        console.error("[qa-clube-sugerir] erro", {
+          edge: "qa-clube-sugerir",
+          status: resp.status,
+          body: parsed ?? text,
+          payload,
+        });
+        const raw = parsed?.error || text || `HTTP ${resp.status}`;
+        toast.error(mensagemAmigavelErro(resp.status, String(raw)));
+        return;
+      }
       toast.success("Clube e filiação confirmados ✓");
       onConfirmed();
     } catch (e: any) {
-      toast.error(e?.message || "Não foi possível salvar agora.");
+      // eslint-disable-next-line no-console
+      console.error("[qa-clube-sugerir] exceção", { edge: "qa-clube-sugerir", message: e?.message, payload });
+      toast.error(mensagemAmigavelErro(null, e?.message || ""));
     } finally {
       setSaving(false);
     }
