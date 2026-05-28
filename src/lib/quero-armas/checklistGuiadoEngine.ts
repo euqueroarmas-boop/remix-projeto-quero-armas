@@ -22,7 +22,6 @@ import {
   STATUS_CHECKLIST_EM_ANALISE,
   STATUS_CHECKLIST_PENDENTE,
   isChecklistCumprido,
-  ordenarDocumentosChecklist,
 } from "./checklistMetrics";
 
 export interface GuiaProcesso {
@@ -385,16 +384,14 @@ export function itensObrigatoriosGuia(carga: CargaProcesso): GuiaDoc[] {
 // Fila de itens que AINDA exigem ação do cliente, na ordem das etapas do checklist.
 export function construirFilaGuia(carga: CargaProcesso): GuiaDoc[] {
   const { respostas } = carga;
-  const acionaveis = itensObrigatoriosGuia(carga).filter((d) =>
-    itemPendenteAcaoGuia(d, respostas),
-  );
-  // Bloco 13: ordenação canônica primeiro (mesma usada pelo Admin no
-  // ProcessoDetalheDrawer). Depois aplicamos refinamentos próprios do
-  // assistente — prioridade dentro da Etapa 1 (identidade → endereço →
-  // perguntas) e perguntas/condição antes dos demais — para manter a UX
-  // guiada destravando os itens dependentes na ordem certa.
-  const base = ordenarDocumentosChecklist(acionaveis);
-  return base
+  // Bloco 13: a fonte e os filtros já vêm do mesmo helper canônico
+  // (STATUS_DOCS_ACIONAVEIS = STATUS_CHECKLIST_PENDENTE). A ordenação aqui
+  // estende a canônica (etapa → ordem → created_at) com refinamentos
+  // próprios do assistente — perguntas/condição primeiro dentro da etapa e
+  // prioridade dentro da Etapa 1 (identidade → endereço) — para destravar
+  // itens dependentes na ordem certa.
+  return itensObrigatoriosGuia(carga)
+    .filter((d) => itemPendenteAcaoGuia(d, respostas))
     .sort((a, b) => {
       // Ordem do cliente: 1) etapa  2) ordem do catálogo  3) created_at.
       // Preferimos o campo `etapa` salvo no banco (espelhado de
