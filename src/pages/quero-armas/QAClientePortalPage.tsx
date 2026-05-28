@@ -38,6 +38,7 @@ import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosPro
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
+import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
@@ -173,6 +174,9 @@ export default function QAClientePortalPage() {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [processos, setProcessos] = useState<any[]>([]);
   const [processoDocs, setProcessoDocs] = useState<any[]>([]);
+  // BLOCO 9 — Assistente de Entrada (wizard inicial do portal).
+  const [entradaWizardOpen, setEntradaWizardOpen] = useState(false);
+  const [entradaAutoChecked, setEntradaAutoChecked] = useState(false);
   // BLOCO 5 — eventos do processo (linha do tempo expandida). Camada aditiva,
   // lê qa_processo_eventos (somente os processos do cliente).
   const [processoEventos, setProcessoEventos] = useState<any[]>([]);
