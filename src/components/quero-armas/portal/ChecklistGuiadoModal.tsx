@@ -334,28 +334,6 @@ export default function ChecklistGuiadoModal({
     [carga, docAtivoId, filaAtual],
   );
 
-  // Diagnóstico temporário (DEV) — confirma se o doc ativo carrega a
-  // configuração de wizard_pre_documento (hidratada do catálogo) e se o gate
-  // está enxergando essa pendência.
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    if (!docAtivo) return;
-    try {
-      const rv = (docAtivo as any).regra_validacao ?? null;
-      const wp = rv && typeof rv === "object" ? (rv as any).wizard_pre_documento : null;
-      const pendente = wizardPendentePara(docAtivo as any, clienteDados, carga?.processo as any);
-      console.debug("[wizard-pre-doc]", {
-        doc: (docAtivo as any).nome_documento,
-        tipo: (docAtivo as any).tipo_documento,
-        regra_validacao: rv,
-        wizard: wp,
-        wizardPendente: pendente,
-      });
-    } catch (e) {
-      console.debug("[wizard-pre-doc] erro de diagnóstico", e);
-    }
-  }, [docAtivo, carga?.processo, clienteDados]);
-
   // Persistência do ponto de retomada — sempre que o cliente avança/recua para
   // um documento concreto dentro de um processo, gravamos o marcador.
   useEffect(() => {
