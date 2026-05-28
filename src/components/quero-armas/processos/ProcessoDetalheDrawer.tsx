@@ -8,6 +8,7 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
+import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 
 interface DocRow {
   id: string;
@@ -47,6 +48,8 @@ interface DocRow {
   titular_comprovante_nome?: string | null;
   titular_comprovante_documento?: string | null;
   endereco_em_nome_de_terceiro?: boolean | null;
+  // Bloco 10/11 — vínculo opcional com uma arma específica do acervo
+  arma_id?: string | null;
   // APRENDIZADO SUPERVISIONADO
   texto_ocr_extraido?: string | null;
   score_modelo_aprovado?: number | null;
