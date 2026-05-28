@@ -297,6 +297,35 @@ export default function ChecklistGuiadoModal({
     );
   }, [open, clienteId, processoId, docAtivo, fase, filaAtual]);
 
+  // Carrega as armas do cliente sempre que o item ativo for um doc "de arma".
+  // Para os demais itens, zera a lista/seleção — comportamento legado preservado.
+  const loadArmasCliente = useCallback(async () => {
+    const { data } = await supabase
+      .from("qa_cliente_armas" as any)
+      .select("arma_uid, marca, modelo, calibre, numero_serie, numero_craf")
+      .eq("qa_cliente_id", clienteId);
+    return (data ?? []) as ArmaCli[];
+  }, [clienteId]);
+
+  useEffect(() => {
+    if (!isDocDeArma(docAtivo?.tipo_documento)) {
+      setArmasCliente([]);
+      setArmaSelecionada(null);
+      return;
+    }
+    let cancel = false;
+    (async () => {
+      const lista = await loadArmasCliente();
+      if (cancel) return;
+      setArmasCliente(lista);
+      // se só há uma arma cadastrada, pré-seleciona para acelerar o fluxo
+      setArmaSelecionada((prev) => prev ?? (lista.length === 1 ? lista[0].arma_uid : null));
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [docAtivo?.id, docAtivo?.tipo_documento, loadArmasCliente]);
+
   const prog = useMemo(() => (carga ? progressoGuia(carga) : { total: 0, cumpridos: 0, emRevisao: 0 }), [carga]);
   const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
   // "Pendências restantes" no topo deve usar EXATAMENTE o mesmo universo dos
