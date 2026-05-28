@@ -279,7 +279,7 @@ export default function DivergenciasResolverPanel({
                 </div>
 
                 {/* Pares valor_documento × valor_cadastro */}
-                {itens.length > 0 && (
+                {itens.length > 0 && grupo !== "endereco" && (
                   <div className="mt-2 space-y-1.5">
                     {itens.map((it, idx) => (
                       <div
