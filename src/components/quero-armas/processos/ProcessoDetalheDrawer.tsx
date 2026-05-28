@@ -10,6 +10,7 @@ import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
+import { limparDivergenciasVazias } from "@/lib/quero-armas/divergenciasUtils";
 
 interface DocRow {
   id: string;
@@ -691,6 +692,80 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const [savingCond, setSavingCond] = useState<string | null>(null);
   const [confirmandoPagto, setConfirmandoPagto] = useState(false);
+  // CTA "Marcar como protocolado" (admin)
+  const [protocoloModalOpen, setProtocoloModalOpen] = useState(false);
+  const [protocoloForm, setProtocoloForm] = useState({
+    numero: "",
+    orgao: "POLICIA_FEDERAL" as "POLICIA_FEDERAL" | "EXERCITO" | "SIGMA" | "OUTRO",
+    data: new Date().toISOString().slice(0, 10),
+    observacao: "",
+  });
+  const [salvandoProtocolo, setSalvandoProtocolo] = useState(false);
+
+  const confirmarMarcarProtocolado = async () => {
+    if (!processo) return;
+    setSalvandoProtocolo(true);
+    try {
+      const statusAnterior = processo.status;
+      const agora = new Date().toISOString();
+      const respostasAtuais: Record<string, any> =
+        (processo.respostas_questionario_json as any) ?? {};
+      const protocoloPayload = {
+        numero_protocolo: protocoloForm.numero.trim().toUpperCase() || null,
+        orgao: protocoloForm.orgao,
+        data_protocolo: protocoloForm.data || null,
+        observacao: protocoloForm.observacao.trim() || null,
+        registrado_em: agora,
+      };
+      const { error } = await supabase
+        .from("qa_processos")
+        .update({
+          status: "protocolado",
+          respostas_questionario_json: {
+            ...respostasAtuais,
+            protocolo: protocoloPayload,
+          },
+          updated_at: agora,
+        })
+        .eq("id", processo.id);
+      if (error) throw error;
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processo.id,
+        tipo_evento: "processo_protocolado",
+        descricao:
+          `PROCESSO PROTOCOLADO NO ÓRGÃO ${protocoloForm.orgao}` +
+          (protocoloPayload.numero_protocolo ? ` — Nº ${protocoloPayload.numero_protocolo}` : ""),
+        ator: "equipe_operacional",
+        dados_json: { ...protocoloPayload, status_anterior: statusAnterior },
+      });
+      void registrarStatusEvento({
+        cliente_id: processo.cliente_id ?? null,
+        processo_id: processo.id,
+        origem: "equipe",
+        entidade: "processo",
+        entidade_id: processo.id,
+        campo_status: "status",
+        status_anterior: statusAnterior,
+        status_novo: "protocolado",
+        usuario_id: (await supabase.auth.getUser()).data.user?.id ?? null,
+        detalhes: { contexto: "ProcessoDetalheDrawer.marcarProtocolado", ...protocoloPayload },
+      });
+      toast.success("Processo marcado como protocolado.");
+      setProtocoloModalOpen(false);
+      setProtocoloForm({
+        numero: "",
+        orgao: "POLICIA_FEDERAL",
+        data: new Date().toISOString().slice(0, 10),
+        observacao: "",
+      });
+      await carregar();
+      onUpdated?.();
+    } catch (e: any) {
+      toast.error("Erro ao marcar protocolado: " + (e?.message ?? "desconhecido"));
+    } finally {
+      setSalvandoProtocolo(false);
+    }
+  };
 
   const confirmarPagamentoManual = async () => {
     if (!processo) return;
@@ -1192,9 +1267,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         {st && (
           <div className={`px-5 py-3 border-b border-slate-200 ${st.bg}`}>
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
+                {equipeMode && processo?.status === "pronto_para_protocolar" && (
+                  <button
+                    onClick={() => setProtocoloModalOpen(true)}
+                    className="ml-2 h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700"
+                    title="Confirma que este processo foi protocolado no órgão competente"
+                  >
+                    <FileSignature className="h-3 w-3" />
+                    MARCAR COMO PROTOCOLADO
+                  </button>
+                )}
               </div>
               {!aguardandoPagto && (
                 <div className="flex items-center gap-3">
@@ -1392,7 +1477,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   ? doc.regra_validacao.label_botao : null;
                 const checklistOperador: string[] = (doc.regra_validacao && typeof doc.regra_validacao === "object" && Array.isArray((doc.regra_validacao as any).checklist_operador))
                   ? (doc.regra_validacao as any).checklist_operador as string[] : [];
-                const div = Array.isArray(doc.divergencias_json) ? doc.divergencias_json : [];
+                const div = limparDivergenciasVazias(
+                  Array.isArray(doc.divergencias_json) ? (doc.divergencias_json as any[]) : [],
+                  doc.status,
+                );
                 const ext = doc.dados_extraidos_json && typeof doc.dados_extraidos_json === "object" ? doc.dados_extraidos_json : null;
                 const pergunta = isPergunta(doc) ? (doc.regra_validacao as any) : null;
                 const respostaAtual = pergunta ? respostas[pergunta.chave] : null;
@@ -2430,6 +2518,89 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         source={viewer.source}
         title={viewer.title}
       />
+
+      {/* Modal — Marcar como protocolado */}
+      {protocoloModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <FileSignature className="h-4 w-4 text-emerald-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">MARCAR COMO PROTOCOLADO</h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-700 uppercase tracking-wide">
+                Confirma que este processo foi protocolado no órgão competente?
+              </p>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  ÓRGÃO
+                </label>
+                <select
+                  value={protocoloForm.orgao}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, orgao: e.target.value as any }))}
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                >
+                  <option value="POLICIA_FEDERAL">POLÍCIA FEDERAL</option>
+                  <option value="EXERCITO">EXÉRCITO</option>
+                  <option value="SIGMA">SIGMA</option>
+                  <option value="OUTRO">OUTRO</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  NÚMERO DO PROTOCOLO (OPCIONAL)
+                </label>
+                <input
+                  type="text"
+                  value={protocoloForm.numero}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
+                  placeholder="EX.: 2026.0001234-56"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  DATA DO PROTOCOLO
+                </label>
+                <input
+                  type="date"
+                  value={protocoloForm.data}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, data: e.target.value }))}
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  OBSERVAÇÃO (OPCIONAL)
+                </label>
+                <textarea
+                  value={protocoloForm.observacao}
+                  onChange={(e) => setProtocoloForm((f) => ({ ...f, observacao: e.target.value }))}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full text-xs uppercase tracking-wide rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setProtocoloModalOpen(false)}
+                disabled={salvandoProtocolo}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarMarcarProtocolado}
+                disabled={salvandoProtocolo}
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 inline-flex items-center gap-1.5"
+              >
+                <CheckCircle className="h-3 w-3" /> {salvandoProtocolo ? "SALVANDO..." : "CONFIRMAR PROTOCOLO"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <TemplateDataConfirmationModal
         open={confirmacaoTpl.open}

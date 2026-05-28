@@ -358,6 +358,22 @@ Deno.serve(async (req) => {
                 },
               });
             }
+
+            // Camada ADITIVA — se o pagamento era o último bloqueio para
+            // promover o processo a "pronto_para_protocolar", a edge
+            // function abaixo cuidará da promoção e do envio idempotente
+            // dos e-mails. Best-effort: erro NÃO derruba o webhook.
+            try {
+              await supabase.functions.invoke(
+                "qa-processo-checar-conclusao-checklist",
+                { body: { processo_id: p.id, origem: "webhook_asaas" } },
+              );
+            } catch (e) {
+              console.warn(
+                "[qa-asaas-webhook] checar-conclusao falhou:",
+                e,
+              );
+            }
           } catch (e) {
             await logSistemaBackend({
               tipo: "pagamento", status: "error",

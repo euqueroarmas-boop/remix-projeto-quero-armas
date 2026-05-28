@@ -23,6 +23,7 @@ const DashboardProcessosMonitor        = lazyRetry(() => import("@/components/qu
 const DashboardPrazosRecursais         = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
 const DashboardSlaClientesNovos        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardSlaClientesNovos"), "DashboardSlaClientesNovos");
 const DashboardNovosCadastrosRecebidos = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardNovosCadastrosRecebidos"), "DashboardNovosCadastrosRecebidos");
+const DashboardProntoProtocolar        = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProntoProtocolar"), "DashboardProntoProtocolar");
 
 interface Stats {
   documentos: number;
@@ -161,6 +162,11 @@ export default function QADashboardPage() {
           Renderiza fora do gate `mountHeavy` para garantir prioridade absoluta. */}
       <Suspense fallback={<Spinner />}>
         <DashboardPrazosRecursais />
+      </Suspense>
+
+      {/* Processos prontos para protocolar — alerta operacional para a equipe */}
+      <Suspense fallback={<Spinner />}>
+        <DashboardProntoProtocolar />
       </Suspense>
 
       {/* Alerts */}

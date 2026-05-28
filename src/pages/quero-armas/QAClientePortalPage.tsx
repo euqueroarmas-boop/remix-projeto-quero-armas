@@ -547,6 +547,44 @@ export default function QAClientePortalPage() {
     navigate("/area-do-cliente/login", { replace: true });
   };
 
+  // Fallback idempotente — para cada processo ativo, dispara o checador de
+  // conclusão server-side. Se algum processo virar pronto_para_protocolar,
+  // recarrega para refletir o novo badge. A edge function é guardada por
+  // idempotência (não reenvia e-mail/evento).
+  useEffect(() => {
+    if (!processos || processos.length === 0) return;
+    const STATUS_FINAL = new Set([
+      "pronto_para_protocolar", "protocolado", "em_analise_orgao",
+      "deferido", "indeferido", "concluido", "finalizado", "cancelado",
+    ]);
+    const candidatos = processos.filter(
+      (p: any) => !STATUS_FINAL.has(String(p.status || "").toLowerCase()),
+    );
+    if (candidatos.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      let alguemPromovido = false;
+      for (const p of candidatos) {
+        try {
+          const { data } = await supabase.functions.invoke(
+            "qa-processo-checar-conclusao-checklist",
+            { body: { processo_id: p.id, origem: "portal_cliente" } },
+          );
+          if ((data as any)?.pronto && !(data as any)?.ja_estava) {
+            alguemPromovido = true;
+          }
+        } catch (e) {
+          console.warn("[portal] checar-conclusao falhou", e);
+        }
+      }
+      if (!cancelled && alguemPromovido) {
+        setDocsReloadKey((k) => k + 1);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processos.map((p: any) => `${p.id}:${p.status}`).join("|")]);
+
   // Realtime: ouve mudanças nos próprios documentos (admin aprovou/reprovou/excluiu)
   // e nas tabelas de arsenal — recarrega imediatamente.
   useEffect(() => {
