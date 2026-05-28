@@ -238,6 +238,21 @@ export default function ChecklistGuiadoModal({
 
   const recarregarCarga = useCallback(async (pid: string): Promise<CargaProcesso> => {
     const c = await carregarProcessoGuia(pid);
+    // Auto-liberação idempotente da próxima etapa. A edge function valida tudo
+    // server-side (perguntas respondidas, docs cumpridos, nada em análise) e
+    // só altera o estado quando seguro. Se liberar, recarrega para refletir.
+    try {
+      const { data } = await supabase.functions.invoke("qa-processo-etapa-auto-liberar", {
+        body: { processo_id: pid, origem: "assistente_cliente" },
+      });
+      if ((data as any)?.liberada) {
+        const c2 = await carregarProcessoGuia(pid);
+        setCarga(c2);
+        return c2;
+      }
+    } catch (e) {
+      console.warn("[assistente] auto-liberar etapa falhou", e);
+    }
     setCarga(c);
     return c;
   }, []);
