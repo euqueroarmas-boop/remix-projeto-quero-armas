@@ -1076,38 +1076,6 @@ export default function QAClientePortalPage() {
       </header>
 
       <main className="max-w-[1540px] mx-auto px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
-        <div className="sticky top-[64px] z-30 mb-5 rounded-xl border border-slate-200 bg-white/95 px-3 sm:px-4 py-2.5 shadow-sm backdrop-blur-md">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div
-              className="flex gap-4 sm:gap-6 overflow-x-auto -mx-1 px-1 scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              role="tablist"
-              aria-label="Seções da Área do Cliente"
-            >
-              {primaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    role="tab"
-                    aria-current={active ? "page" : undefined}
-                    aria-label={item.label}
-                    onClick={() => goSection(item.key)}
-                    className={`relative shrink-0 inline-flex items-center gap-2 px-1 min-h-11 py-2 text-[13px] font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] rounded-md ${active ? "text-[#7A1F2B]" : "text-slate-500"}`}
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" /> {item.label}
-                    {active && <span className="absolute inset-x-0 -bottom-2 h-0.5 rounded-full bg-[#7A1F2B]" />}
-                  </button>
-                );
-              })}
-            </div>
-            <button type="button" aria-label="Enviar documento" onClick={() => setShowAddDoc(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] px-4 min-h-11 py-2.5 text-[12px] font-bold text-white shadow-sm hover:bg-[#641722] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-2">
-              <Upload className="h-4 w-4" aria-hidden="true" /> Enviar documento
-            </button>
-          </div>
-        </div>
-
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}
