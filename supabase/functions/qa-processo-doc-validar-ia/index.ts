@@ -917,8 +917,23 @@ Deno.serve(async (req) => {
         cx.tipo_documento_detectado = "cin";
         if (!cx.rg && cx.cpf) cx.rg = cx.cpf;
         if (!cx.numero_documento && cx.cpf) cx.numero_documento = cx.cpf;
-        if (typeof parsed.motivo_rejeicao === "string" && /tipo|rg|registro geral|cpf/i.test(parsed.motivo_rejeicao)) {
+        if (
+          typeof parsed.motivo_rejeicao === "string" &&
+          /tipo|rg|registro geral|cpf|capa|instru[cç][aã]o|instru[cç][õo]es|aplicativo|gov\.br|p[aá]gina/i.test(parsed.motivo_rejeicao)
+        ) {
           parsed.motivo_rejeicao = null;
+        }
+        // Se a IA marcou tipo_correto=false alegando "capa do gov.br" mas há
+        // dados pessoais mínimos, força aceite como CIN — pior cenário vai
+        // para revisão humana, NUNCA invalida silenciosamente um documento
+        // de identidade real.
+        if (cinTemDadosMinimos(parsed)) {
+          parsed.tipo_correto = true;
+          parsed.legivel = parsed.legivel !== false;
+          if (typeof parsed.confianca !== "number" || parsed.confianca < REVISAO_HUMANA_MIN) {
+            // garante que vai para revisão humana, não invalido por baixa confiança
+            parsed.confianca = REVISAO_HUMANA_MIN;
+          }
         }
       }
       const cpfDigits = String(cx.cpf ?? cliente?.cpf ?? "").replace(/\D+/g, "");
