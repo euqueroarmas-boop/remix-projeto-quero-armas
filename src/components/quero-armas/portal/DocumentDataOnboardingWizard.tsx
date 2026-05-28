@@ -405,6 +405,20 @@ export default function DocumentDataOnboardingWizard({
             />
           )}
 
+          {fase === "clube" && processoId && clienteId && (
+            <ClubeFiliacaoStep
+              processoId={processoId}
+              clienteId={clienteId}
+              onConfirmed={() => {
+                onUpdated?.();
+                setClubeNeeded(false);
+                if (steps.length === 0) setFase("review");
+                else setFase("step");
+              }}
+              onBack={handleClose}
+            />
+          )}
+
           {fase === "review" && (
             <ReviewView valores={valoresFinal} />
           )}
