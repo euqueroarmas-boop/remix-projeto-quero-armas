@@ -205,6 +205,12 @@ export default function SugestaoCadastroFromDocModal({
               <p className="mb-2 text-[12px] text-slate-600">
                 Marque os campos que devem ser <strong>atualizados no seu cadastro</strong> com base no que extraímos do documento. Você pode desmarcar qualquer item.
               </p>
+              {enderecoSoLogradouro && (
+                <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                  Extraímos apenas o logradouro. Confira número, bairro, cidade,
+                  UF e CEP no seu cadastro antes de salvar.
+                </div>
+              )}
               {sugestoes.map((s) => {
                 const marcado = !!selecionados[s.campo];
                 return (
