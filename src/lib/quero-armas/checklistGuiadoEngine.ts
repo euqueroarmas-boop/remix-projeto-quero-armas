@@ -22,7 +22,9 @@ import {
   STATUS_CHECKLIST_EM_ANALISE,
   STATUS_CHECKLIST_PENDENTE,
   isChecklistCumprido,
+  isChecklistEmAnalise,
 } from "./checklistMetrics";
+import { wizardPendentePara } from "./checklistWizardGate";
 
 export interface GuiaProcesso {
   id: string;
@@ -628,6 +630,108 @@ export interface ProcessoElegivel {
   total: number;
   cumpridos: number;
   pct: number;
+  /** Contagens granulares vindas de calcularResumoProcessoAssistente. */
+  documentos_pendentes_cliente: number;
+  wizards_pendentes: number;
+  label_resumo: string;
+}
+
+// ---------------------------------------------------------------------------
+// Resumo do processo para o Assistente — fonte única de verdade da contagem
+// exibida nos cards de seleção de processos e no auto-popup.
+// ---------------------------------------------------------------------------
+// Regra de ouro: pendência = aquilo que o cliente pode resolver AGORA.
+// - Doc em análise / em revisão humana / aprovado / dispensado → NÃO é pendência.
+// - Doc bloqueado por wizard pré-documento → conta como "pergunta pendente",
+//   não como documento pendente (evita inflar a contagem quando 1 wizard
+//   destrava vários documentos do mesmo grupo).
+// - Pergunta nativa do checklist (regra_validacao.tipo === "pergunta") e o
+//   seletor de condição profissional também contam como "pergunta pendente".
+// ---------------------------------------------------------------------------
+export interface ResumoProcessoAssistente {
+  totalDocumentos: number;
+  documentosResolvidos: number;
+  documentosPendentesCliente: number;
+  documentosEmAnalise: number;
+  wizardsPendentes: number;
+  percentual: number;
+  labelResumo: string;
+}
+
+export function calcularResumoProcessoAssistente(
+  carga: CargaProcesso,
+  cliente?: Record<string, any> | null,
+): ResumoProcessoAssistente {
+  const obrig = itensObrigatoriosGuia(carga);
+  const totalDocumentos = obrig.length;
+  const documentosResolvidos = obrig.filter((d) =>
+    itemCumpridoGuia(d, carga.respostas),
+  ).length;
+  const documentosEmAnalise = obrig.filter((d) =>
+    isChecklistEmAnalise(d.status),
+  ).length;
+
+  // Itens que ainda exigem ação concreta do cliente.
+  const acionaveis = obrig.filter((d) =>
+    isDocumentActionable(d, carga.respostas),
+  );
+
+  // Wizards pendentes deduplicados por wizard_key.
+  // Perguntas nativas pendentes contam como pergunta também (cada uma uma).
+  const wizardKeys = new Set<string>();
+  let perguntasNativasPendentes = 0;
+  let documentosPendentesCliente = 0;
+  for (const d of acionaveis) {
+    if (isPerguntaGuia(d) || isCondicaoGuia(d)) {
+      perguntasNativasPendentes += 1;
+      continue;
+    }
+    const wp = wizardPendentePara(
+      d as any,
+      cliente ?? null,
+      carga.processo as any,
+    );
+    if (wp) {
+      wizardKeys.add(wp.wizard_key);
+      continue; // doc bloqueado por wizard NÃO é pendência documental agora
+    }
+    documentosPendentesCliente += 1;
+  }
+  const wizardsPendentes = wizardKeys.size + perguntasNativasPendentes;
+
+  const percentual =
+    totalDocumentos > 0
+      ? Math.round((documentosResolvidos / totalDocumentos) * 100)
+      : 0;
+
+  const parts: string[] = [];
+  if (documentosPendentesCliente > 0) {
+    parts.push(
+      `${documentosPendentesCliente} documento${documentosPendentesCliente === 1 ? "" : "s"} pendente${documentosPendentesCliente === 1 ? "" : "s"}`,
+    );
+  }
+  if (wizardsPendentes > 0) {
+    parts.push(
+      `${wizardsPendentes} pergunta${wizardsPendentes === 1 ? "" : "s"} pendente${wizardsPendentes === 1 ? "" : "s"}`,
+    );
+  }
+  if (parts.length === 0 && documentosEmAnalise > 0) {
+    parts.push(`${documentosEmAnalise} em análise`);
+  } else if (documentosEmAnalise > 0) {
+    parts.push(`${documentosEmAnalise} em análise`);
+  }
+  if (parts.length === 0) parts.push("Tudo em dia");
+  parts.push(`${percentual}% pronto`);
+
+  return {
+    totalDocumentos,
+    documentosResolvidos,
+    documentosPendentesCliente,
+    documentosEmAnalise,
+    wizardsPendentes,
+    percentual,
+    labelResumo: parts.join(" · "),
+  };
 }
 
 export async function listarProcessosElegiveisGuia(clienteId: number): Promise<ProcessoElegivel[]> {
@@ -637,6 +741,14 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
     .eq("cliente_id", clienteId)
     .order("data_criacao", { ascending: false });
   if (error) throw error;
+
+  // Carrega o cliente uma única vez — usado como fallback legado pelo
+  // wizardPendentePara (fonte primária é qa_processos.respostas_questionario_json).
+  const { data: clienteRow } = await supabase
+    .from("qa_clientes")
+    .select("*")
+    .eq("id", clienteId)
+    .maybeSingle();
 
   const elegiveis: ProcessoElegivel[] = [];
   for (const p of (procs ?? []) as any[]) {
@@ -651,20 +763,24 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
     const respostas = (p.respostas_questionario_json ?? {}) as Record<string, string>;
     const etapaLiberada = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
     const carga: CargaProcesso = { processo: p, docs: (docs ?? []) as GuiaDoc[], respostas, etapaLiberada };
-    const fila = construirFilaGuia(carga);
-    const prog = progressoGuia(carga);
-    const emAnalise = Math.max(0, prog.total - prog.cumpridos - fila.length);
-    const pct = prog.total > 0 ? Math.round((prog.cumpridos / prog.total) * 100) : 0;
+    const resumo = calcularResumoProcessoAssistente(carga, clienteRow as any);
+    // `pendentes` agora reflete o que o cliente pode resolver AGORA:
+    // documentos acionáveis (não bloqueados por wizard) + perguntas/wizards pendentes.
+    // Mantemos o nome do campo para preservar a API usada por auto-open
+    // (`contarPendentesClienteGuia`) e pela seleção do processo default.
     elegiveis.push({
       id: p.id,
       servico_nome: p.servico_nome,
       status: p.status,
       pagamento_status: p.pagamento_status,
-      pendentes: fila.length,
-      em_analise: emAnalise,
-      total: prog.total,
-      cumpridos: prog.cumpridos,
-      pct,
+      pendentes: resumo.documentosPendentesCliente + resumo.wizardsPendentes,
+      em_analise: resumo.documentosEmAnalise,
+      total: resumo.totalDocumentos,
+      cumpridos: resumo.documentosResolvidos,
+      pct: resumo.percentual,
+      documentos_pendentes_cliente: resumo.documentosPendentesCliente,
+      wizards_pendentes: resumo.wizardsPendentes,
+      label_resumo: resumo.labelResumo,
     });
   }
   return elegiveis;
