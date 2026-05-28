@@ -18,12 +18,14 @@ import ClubeSearchCombobox, { ClubeRow } from "./ClubeSearchCombobox";
 import DeclaracaoFiliacaoUploader, { DeclaracaoExtraida } from "./DeclaracaoFiliacaoUploader";
 import RevisaoCampos from "./RevisaoCampos";
 import { ClubeFiliacaoFormState, EMPTY_FORM } from "./types";
+import type { OverridesMap } from "@/lib/quero-armas/templatePlaceholderOverrides";
 
 const MARROM = "#7A1F2B";
 
 interface Props {
   processoId: string;
   clienteId: number;
+  overrides?: OverridesMap;
   onConfirmed: () => void;
   onBack: () => void;
 }
@@ -37,8 +39,15 @@ interface ReuseSuggestion {
   criadoEm: string | null;
 }
 
-export default function ClubeFiliacaoStep({ processoId, clienteId, onConfirmed, onBack }: Props) {
+export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, onConfirmed, onBack }: Props) {
   const [phase, setPhase] = useState<SubPhase>("search");
+
+  // Texto editável pelo admin via qa_template_placeholder_config.
+  const txt = (placeholder: string, field: "pergunta_cliente" | "label_cliente" | "texto_ajuda" | "exemplo_placeholder", fallback: string): string => {
+    const ov = overrides?.[placeholder];
+    const v = ov?.[field];
+    return (typeof v === "string" && v.trim()) ? v.trim() : fallback;
+  };
   const [origem, setOrigem] = useState<Origem>("catalogo");
   const [clubeSelecionado, setClubeSelecionado] = useState<ClubeRow | null>(null);
   const [form, setForm] = useState<ClubeFiliacaoFormState>(EMPTY_FORM);
@@ -227,13 +236,13 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, onConfirmed, 
   const headerTitle = useMemo(() => {
     switch (phase) {
       case "reuso": return "Já temos seu clube?";
-      case "search": return "Escolha seu clube";
-      case "filiacao_mode": return "Sua filiação";
-      case "upload": return "Envie sua declaração de filiação";
-      case "manual": return "Preencha sua filiação";
+      case "search": return txt("[NOME CLUBE]", "pergunta_cliente", "Escolha seu clube");
+      case "filiacao_mode": return txt("[NUMERO FILIACAO]", "label_cliente", "Sua filiação");
+      case "upload": return txt("[NUMERO FILIACAO]", "texto_ajuda", "Envie sua declaração de filiação");
+      case "manual": return txt("[NUMERO FILIACAO]", "pergunta_cliente", "Preencha sua filiação");
       case "review": return "Revise antes de confirmar";
     }
-  }, [phase]);
+  }, [phase, overrides]);
 
   return (
     <div className="space-y-4">
