@@ -1235,7 +1235,16 @@ export default function QAClientePortalPage() {
           </div>
           <ArmaManualForm
             open={showArmaManual}
-            onOpenChange={setShowArmaManual}
+            onOpenChange={(v) => {
+              setShowArmaManual(v);
+              // BLOCO 12 — ao fechar (salvou OU pulou), prossegue para o
+              // catálogo se havia uma navegação pendente do wizard.
+              if (!v && pendingTrilhaDestino) {
+                const dest = pendingTrilhaDestino;
+                setPendingTrilhaDestino(null);
+                navigate(dest);
+              }
+            }}
             qaClienteId={cliente.id}
             defaultEmail={cliente.email}
             defaultCpf={cliente.cpf}
