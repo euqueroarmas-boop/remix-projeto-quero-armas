@@ -1250,6 +1250,7 @@ function DocumentoView({
     ano_competencia: (doc as any).ano_competencia ?? null,
     regra_validacao: (doc as any).regra_validacao ?? null,
   });
+  const isCertidaoAltNome = ehCertidaoAlteracaoNome(doc);
 
   const [externalLinks, setExternalLinks] = useState<Array<{
     id: string; nome_botao: string; url: string; descricao: string | null;
@@ -1286,7 +1287,11 @@ function DocumentoView({
   return (
     <div>
       <h3 className="text-base font-bold text-slate-900">{doc.nome_documento}</h3>
-      {doc.instrucoes && <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{doc.instrucoes}</p>}
+      {isCertidaoAltNome ? (
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">
+          Envie sua certidão de casamento ou nascimento averbada para comprovar a alteração do seu nome.
+        </p>
+      ) : doc.instrucoes && <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{doc.instrucoes}</p>}
       {doc.observacoes_cliente && <p className="mt-1 text-[13px] leading-relaxed text-slate-500">{doc.observacoes_cliente}</p>}
 
       {/* validade efetiva (apenas para envios já feitos) */}
@@ -1421,7 +1426,9 @@ function DocumentoView({
         <div className="flex h-11 w-11 items-center justify-center rounded-full text-white" style={{ background: MARROM }}>
           <Upload className="h-5 w-5" />
         </div>
-        <span className="text-sm font-bold text-slate-800">{jaEnviado ? "Reenviar documento" : "Anexar documento"}</span>
+        <span className="text-sm font-bold text-slate-800">
+          {isCertidaoAltNome ? "Anexar certidão averbada" : jaEnviado ? "Reenviar documento" : "Anexar documento"}
+        </span>
         <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
           <Camera className="h-3.5 w-3.5" /> Tire uma foto ou selecione um arquivo
         </span>
