@@ -54,13 +54,13 @@ const MAPA: { src: string[]; col: string; label: string }[] = [
   { src: ["orgao_emissor"], col: "emissor_rg", label: "Órgão emissor do RG" },
   { src: ["uf_emissao"], col: "uf_emissor_rg", label: "UF emissora do RG" },
   { src: ["data_emissao"], col: "expedicao_rg", label: "Data de expedição do RG" },
-  { src: ["logradouro", "endereco"], col: "endereco", label: "Endereço" },
-  { src: ["numero"], col: "numero", label: "Número" },
-  { src: ["complemento"], col: "complemento", label: "Complemento" },
-  { src: ["bairro"], col: "bairro", label: "Bairro" },
-  { src: ["cidade"], col: "cidade", label: "Cidade" },
-  { src: ["uf", "estado"], col: "estado", label: "UF" },
-  { src: ["cep"], col: "cep", label: "CEP" },
+  { src: ["logradouro", "endereco", "endereco_logradouro"], col: "endereco", label: "Endereço" },
+  { src: ["numero", "endereco_numero"], col: "numero", label: "Número" },
+  { src: ["complemento", "endereco_complemento"], col: "complemento", label: "Complemento" },
+  { src: ["bairro", "endereco_bairro"], col: "bairro", label: "Bairro" },
+  { src: ["cidade", "endereco_cidade", "municipio"], col: "cidade", label: "Cidade" },
+  { src: ["uf", "estado", "endereco_uf", "endereco_estado"], col: "estado", label: "UF" },
+  { src: ["cep", "endereco_cep"], col: "cep", label: "CEP" },
   { src: ["celular", "telefone"], col: "celular", label: "Celular" },
 ];
 
@@ -104,6 +104,16 @@ export default function SugestaoCadastroFromDocModal({
     () => buildSuggestions(cliente, dadosExtraidos || {}, filtroCampos),
     [cliente, dadosExtraidos, filtroCampos],
   );
+  // Aviso quando o filtro é de endereço mas a IA só conseguiu extrair o
+  // logradouro — usuário precisa conferir número, bairro, cidade, UF e CEP.
+  const enderecoSoLogradouro = useMemo(() => {
+    const filtro = Array.isArray(filtroCampos) ? filtroCampos.map((s) => String(s).toLowerCase()) : [];
+    const ehFiltroEndereco =
+      filtro.length > 0 && filtro.some((c) => ["endereco", "numero", "bairro", "cidade", "estado", "cep", "complemento"].includes(c));
+    if (!ehFiltroEndereco) return false;
+    const campos = sugestoes.map((s) => s.campo);
+    return campos.length === 1 && campos[0] === "endereco";
+  }, [filtroCampos, sugestoes]);
   const [selecionados, setSelecionados] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(sugestoes.map((s) => [s.campo, true])),
   );
@@ -195,6 +205,12 @@ export default function SugestaoCadastroFromDocModal({
               <p className="mb-2 text-[12px] text-slate-600">
                 Marque os campos que devem ser <strong>atualizados no seu cadastro</strong> com base no que extraímos do documento. Você pode desmarcar qualquer item.
               </p>
+              {enderecoSoLogradouro && (
+                <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                  Extraímos apenas o logradouro. Confira número, bairro, cidade,
+                  UF e CEP no seu cadastro antes de salvar.
+                </div>
+              )}
               {sugestoes.map((s) => {
                 const marcado = !!selecionados[s.campo];
                 return (

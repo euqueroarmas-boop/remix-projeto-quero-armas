@@ -84,6 +84,14 @@ const CAMPO_PARA_GRUPO: Record<string, GrupoDivergencia> = {
   uf: "endereco",
   estado: "endereco",
   cep: "endereco",
+  endereco_logradouro: "endereco",
+  endereco_numero: "endereco",
+  endereco_complemento: "endereco",
+  endereco_bairro: "endereco",
+  endereco_cidade: "endereco",
+  endereco_uf: "endereco",
+  endereco_estado: "endereco",
+  endereco_cep: "endereco",
   // RG
   rg: "rg",
   orgao_emissor: "rg",
@@ -114,7 +122,18 @@ export const GRUPO_PARA_COLUNAS_CADASTRO: Record<GrupoDivergencia, string[]> = {
 
 function classificarCampo(campo: string): GrupoDivergencia {
   const k = String(campo || "").toLowerCase().trim();
-  return CAMPO_PARA_GRUPO[k] ?? "outros";
+  if (CAMPO_PARA_GRUPO[k]) return CAMPO_PARA_GRUPO[k];
+  // Heurística por substring — cobre variações tipo `endereco_logradouro`,
+  // `endereco_numero`, `dados_endereco_cep`, `titular_nome`, etc.
+  if (/(endere[cç]o|logradouro|^rua$|avenida|travessa|^numero$|n[uú]mero|bairro|cidade|estado|^uf$|^cep$|complemento)/.test(k)) {
+    return "endereco";
+  }
+  if (/(^nome|titular)/.test(k)) return "nome";
+  if (/(^rg$|identidade|emissor|expedi[cç][aã]o)/.test(k)) return "rg";
+  if (/^cpf/.test(k)) return "cpf";
+  if (/nascimento/.test(k)) return "data_nascimento";
+  if (/(telefone|celular|e-?mail)/.test(k)) return "contato";
+  return "outros";
 }
 
 /**
