@@ -792,3 +792,164 @@ function EnderecoEscolhaCard({
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Sub-componente: card de escolha de estado civil (cadastro vs documento)
+// ---------------------------------------------------------------------------
+
+function valoresEstadoCivil(itens: DivergenciaItem[]): {
+  cadastro: string;
+  documento: string;
+} {
+  const cadastro = (itens.find((i) => i?.valor_cadastro)?.valor_cadastro || "")
+    .toString()
+    .trim();
+  const documento = (itens.find((i) => i?.valor_documento)?.valor_documento || "")
+    .toString()
+    .trim();
+  return { cadastro, documento };
+}
+
+function EstadoCivilEscolhaCard({
+  itens,
+  podeAtualizarCadastro,
+  onAtualizarCadastroComGrupo,
+  onEditarCadastroManual,
+  onReenviarDocumento,
+  onAceitarDivergenciaCadastro,
+}: {
+  itens: DivergenciaItem[];
+  podeAtualizarCadastro: boolean;
+  onAtualizarCadastroComGrupo: (g: GrupoDivergencia) => void;
+  onEditarCadastroManual?: (g: GrupoDivergencia) => void;
+  onReenviarDocumento: () => void;
+  onAceitarDivergenciaCadastro?: (g: GrupoDivergencia) => void | Promise<void>;
+}) {
+  const [escolha, setEscolha] = useState<"cadastro" | "documento" | null>(null);
+  const { cadastro, documento } = useMemo(() => valoresEstadoCivil(itens), [itens]);
+
+  return (
+    <div className="w-full space-y-3">
+      <div>
+        <div className="text-[12px] font-bold text-slate-800">
+          Qual estado civil está correto?
+        </div>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+          Escolha o estado civil que deve ficar no seu cadastro. Se escolher o
+          valor do documento, você poderá revisar antes de salvar.
+        </p>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setEscolha("cadastro")}
+          className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition ${
+            escolha === "cadastro"
+              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+              escolha === "cadastro" ? "border-[#7A1F2B]" : "border-slate-300"
+            }`}
+          >
+            {escolha === "cadastro" && (
+              <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Manter estado civil do cadastro
+            </div>
+            <div className="mt-0.5 break-words text-[12px] font-semibold text-slate-900">
+              {cadastro || "—"}
+            </div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setEscolha("documento")}
+          disabled={!podeAtualizarCadastro}
+          className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            escolha === "documento"
+              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span
+            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+              escolha === "documento" ? "border-[#7A1F2B]" : "border-slate-300"
+            }`}
+          >
+            {escolha === "documento" && (
+              <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: MARROM }}>
+              Usar estado civil do documento
+            </div>
+            <div className="mt-0.5 break-words text-[12px] font-semibold text-slate-900">
+              {documento || "—"}
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {escolha === "documento" && podeAtualizarCadastro && (
+          <button
+            type="button"
+            onClick={() => onAtualizarCadastroComGrupo("estado_civil")}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+            style={{ background: MARROM }}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Revisar e atualizar cadastro
+          </button>
+        )}
+        {escolha === "cadastro" && (
+          onAceitarDivergenciaCadastro ? (
+            <button
+              type="button"
+              onClick={() => onAceitarDivergenciaCadastro("estado_civil")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+              style={{ background: MARROM }}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Confirmar estado civil do cadastro
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onReenviarDocumento}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold text-white"
+              style={{ background: MARROM }}
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Enviar outro documento
+            </button>
+          )
+        )}
+        {podeAtualizarCadastro && onEditarCadastroManual && (
+          <button
+            type="button"
+            onClick={() => onEditarCadastroManual("estado_civil")}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Editar manualmente
+          </button>
+        )}
+      </div>
+
+      {!escolha && (
+        <p className="text-[10px] italic text-slate-500">
+          Selecione uma das opções acima para ver a próxima ação.
+        </p>
+      )}
+    </div>
+  );
+}
