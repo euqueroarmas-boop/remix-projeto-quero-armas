@@ -345,18 +345,45 @@ export default function ChecklistGuiadoModal({
     e.target.value = "";
     if (!file || !carga || !docAtivo) return;
     setErroAcao(null);
-    const enviar = await enviarDocumentoGuia(carga.processo, docAtivo, file);
+    let cargaUpload = carga;
+    let docUpload = docAtivo;
+    const deveProtegerCertidao =
+      certidaoUploadForcadoId ||
+      (!ehCertidaoAlteracaoNome(docAtivo) &&
+        (divergeApenasPorNome(docAtivo) || divergeMotivoMencionaNome(docAtivo)) &&
+        arquivoPareceCertidaoAlteracaoNome(file));
+
+    if (deveProtegerCertidao) {
+      const alvoId = certidaoUploadForcadoId || (await iniciarOuLocalizarPendenciaAlteracaoNome(carga.processo.id)).documentoId;
+      const c = await recarregarCarga(carga.processo.id);
+      const alvo = (c.docs || []).find((d) => d.id === alvoId) || (c.docs || []).find(ehCertidaoAlteracaoNome);
+      if (!alvo) {
+        setErroAcao("Não localizamos o item da certidão averbada. Tente novamente.");
+        return;
+      }
+      cargaUpload = c;
+      docUpload = alvo;
+      setDocAtivoId(alvo.id);
+      setCertidaoUploadForcadoId(alvo.id);
+      setAvisoIrParaCertidao(null);
+      toast.message("Vamos anexar este arquivo no item correto: certidão averbada de alteração de nome.");
+    }
+
+    const enviar = await enviarDocumentoGuia(cargaUpload.processo, docUpload, file);
     if (!enviar.ok) {
       setErroAcao(enviar.error ?? "Erro no envio.");
       return;
     }
     onUpdated?.();
     setFase("validando");
-    const final = await aguardarValidacaoIAGuia(docAtivo.id);
+    const final = await aguardarValidacaoIAGuia(docUpload.id);
     setResultadoDoc(final);
-    await recarregarCarga(carga.processo.id);
+    await recarregarCarga(cargaUpload.processo.id);
     onUpdated?.();
     const st = final?.status;
+    if (ehCertidaoAlteracaoNome(docUpload) && (st === "aprovado" || st === "validado" || st === "em_revisao_humana")) {
+      setCertidaoUploadForcadoId(null);
+    }
     if (st === "aprovado" || st === "dispensado_grupo") setFase("resultado_ok");
     else if (st === "em_revisao_humana") setFase("resultado_revisao");
     else if (st === "invalido" || st === "divergente") setFase("resultado_erro");
@@ -371,7 +398,7 @@ export default function ChecklistGuiadoModal({
         setSugestao({
           open: true,
           dados: dadosExtraidos as Record<string, any>,
-          nomeDoc: docAtivo?.nome_documento ?? null,
+          nomeDoc: docUpload?.nome_documento ?? null,
           filtroCampos: null,
           titulo: null,
         });
@@ -446,11 +473,7 @@ export default function ChecklistGuiadoModal({
     return Array.from(new Set(out.filter(Boolean)));
   }, [altNomeJaComprovada, clienteDados?.nome_completo, altNomeBlock?.nome_anterior, altNomeBlock?.nome_atual, certidaoAprovadaDoc]);
   const [iniciandoAltNome, setIniciandoAltNome] = useState(false);
-  const handleSimAlteracaoNome = async () => {
-    if (!carga) return;
-    setIniciandoAltNome(true);
-    setErroAcao(null);
-    try {
+  const iniciarOuLocalizarPendenciaAlteracaoNome = async (pid: string) => {
       const { data: sess } = await supabase.auth.getSession();
       const token = sess?.session?.access_token;
       const base = import.meta.env.VITE_SUPABASE_URL as string;
@@ -468,15 +491,46 @@ export default function ChecklistGuiadoModal({
       const statusRet = String(out?.status ?? "").toLowerCase();
       const certidaoJaAprovada =
         statusRet === "aprovado" || statusRet === "validado" || statusRet === "em_revisao_humana";
+      return {
+        documentoId: (out?.document_id as string | null | undefined) ?? null,
+        status: statusRet,
+        certidaoJaAprovada,
+        reaproveitado: !!out?.reaproveitado,
+      };
+  };
+
+  const navegarParaCertidaoAlteracaoNome = (c: CargaProcesso, documentoId: string | null) => {
+    const alvo =
+      (documentoId ? (c.docs || []).find((d) => d.id === documentoId) : null) ||
+      (c.docs || []).find(ehCertidaoAlteracaoNome);
+    if (!alvo) {
+      setAvisoIrParaCertidao(documentoId);
+      return false;
+    }
+    setDocAtivoId(alvo.id);
+    setResultadoDoc(null);
+    setErroAcao(null);
+    setAvisoIrParaCertidao(null);
+    setCertidaoUploadForcadoId(alvo.id);
+    setFase("item");
+    return true;
+  };
+
+  const handleSimAlteracaoNome = async () => {
+    if (!carga) return;
+    setIniciandoAltNome(true);
+    setErroAcao(null);
+    try {
+      const out = await iniciarOuLocalizarPendenciaAlteracaoNome(carga.processo.id);
       if (out?.reaproveitado) {
         toast.success(
           "Alteração de nome já comprovada por certidão averbada. Reaproveitamos neste processo.",
         );
-      } else if (certidaoJaAprovada) {
+      } else if (out.certidaoJaAprovada) {
         toast.success("Alteração de nome já comprovada por certidão averbada.");
       } else {
         toast.success(
-          "Pendência criada. Vamos abrir o item para você anexar a certidão averbada.",
+          "Pendência criada. Anexe a certidão averbada no item correto que abrimos agora.",
         );
       }
       onUpdated?.();
@@ -485,27 +539,15 @@ export default function ChecklistGuiadoModal({
       // de divergência no doc atual passa a mostrar o banner verde "nome já
       // justificado" e o cliente segue resolvendo as outras divergências.
       // Apenas limpamos o resultado anterior para refletir a carga recarregada.
-      if (certidaoJaAprovada) {
+      if (out.certidaoJaAprovada) {
         setResultadoDoc(null);
+        setCertidaoUploadForcadoId(null);
         return;
       }
-      // Caso normal: pendência criada/existente. Navegar para o item da
-      // certidão para que o upload aconteça no lugar certo.
-      const novoDocId = out?.document_id ?? null;
-      const fila = construirFilaGuia(c).filter((d) => !pularIds.has(d.id));
-      const alvoNaFila = novoDocId
-        ? fila.find((d) => d.id === novoDocId)
-        : fila.find(
-            (d) =>
-              String(d.tipo_documento ?? "").toLowerCase() === "certidao_alteracao_nome",
-          );
-      if (alvoNaFila) {
-        avancarPara(c, pularIds, alvoNaFila.id, "certidao_alteracao_nome");
-      } else {
-        // Fallback defensivo: não conseguimos localizar a pendência na fila.
-        // Exibe o aviso com botão de "Ir para pendência da certidão".
-        setAvisoIrParaCertidao(novoDocId);
-      }
+      // Caso normal: pendência criada/existente. Navegar FORÇADAMENTE para o
+      // item da certidão para que o upload/IA use `certidao_alteracao_nome`,
+      // nunca o comprovante de endereço que originou a divergência.
+      navegarParaCertidaoAlteracaoNome(c, out.documentoId);
     } catch (e: any) {
       setErroAcao(e?.message ?? "Erro ao iniciar comprovação.");
     } finally {
