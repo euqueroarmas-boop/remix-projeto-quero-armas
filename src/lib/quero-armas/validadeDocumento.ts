@@ -57,6 +57,26 @@ export function isComprovanteEndereco(tipo?: string | null): boolean {
   return COMPROVANTE_TOKENS.some((k) => t.includes(k));
 }
 
+/**
+ * Certidões civis (nascimento, casamento, averbação) NÃO têm validade
+ * para o fluxo da Quero Armas — o que conta é o estado civil atual e a
+ * averbação. A camada de UI nunca deve marcar este tipo como "vencido".
+ */
+const CERTIDAO_CIVIL_TIPOS = new Set<string>([
+  "certidao_nascimento",
+  "certidao_casamento",
+  "certidao_alteracao_nome",
+  "certidao_averbacao",
+  "certidao_civil",
+]);
+export function isCertidaoCivilSemVencimento(tipo?: string | null): boolean {
+  if (!tipo) return false;
+  const t = String(tipo).toLowerCase();
+  if (CERTIDAO_CIVIL_TIPOS.has(t)) return true;
+  // cobre variações tipo `certidao_nascimento_averbada`, `certidao_casamento_v2`
+  return /^certidao_(nascimento|casamento|averbacao|alteracao_nome)(_|$)/.test(t);
+}
+
 function parseISODate(s?: string | null): Date | null {
   if (!s) return null;
   // aceita "yyyy-mm-dd" ou ISO completo
@@ -145,6 +165,19 @@ export function calcularValidadeEfetiva(
  * Retorna o pacote completo de validade para a UI.
  */
 export function getValidadeInfo(doc: DocValidadeInput, hoje: Date = new Date()): ValidadeInfo {
+  // 0a) Certidão civil (nascimento/casamento/averbação) NÃO tem vencimento
+  //     para este fluxo. Curto-circuito antes de qualquer cálculo de prazo.
+  if (isCertidaoCivilSemVencimento(doc.tipo_documento)) {
+    return {
+      iso: null,
+      label: "Sem vencimento",
+      dias: null,
+      status: "indefinido",
+      origem: "indefinido",
+      semVencimento: true,
+    };
+  }
+
   // 0) Comprovante de residência HISTÓRICO → não vence.
   //    Distinção sem coluna nova: usa regra_validacao.ano_competencia / ano_competencia
   //    contra o ano corrente. Canônico sem ano = corrente.
