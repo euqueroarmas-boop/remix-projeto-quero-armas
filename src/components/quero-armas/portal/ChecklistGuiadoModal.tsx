@@ -600,6 +600,25 @@ export default function ChecklistGuiadoModal({
     return ["aprovado", "validado"].includes(st);
   });
   const altNomeJaComprovada = !!altNomeBlock?.aprovada || !!certidaoAprovadaDoc;
+  // Certidão averbada já recebida mas ainda em conferência (não aprovada).
+  // Enquanto está nesse estado, não cobramos o cliente para enviar novamente
+  // a certidão e escondemos o botão "Meu nome foi alterado em cartório".
+  const altNomeEmComprovacao = (carga?.docs || []).some((d: any) => {
+    const tipo = String(d?.tipo_documento || "").toLowerCase();
+    const status = String(d?.status || "").toLowerCase();
+    return (
+      tipo === "certidao_alteracao_nome" &&
+      [
+        "em_analise",
+        "fila",
+        "processando",
+        "revisao_humana",
+        "em_revisao_humana",
+        "pendente_aprovacao",
+        "aguardando_equipe",
+      ].includes(status)
+    );
+  });
   // Nomes aceitos: cadastro + nomes da averbação aprovada. Usado para
   // dispensar divergências de nome cujo valor do documento bate (normalizado)
   // com qualquer desses nomes.
@@ -805,7 +824,12 @@ export default function ChecklistGuiadoModal({
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({ documento_id: docId, grupo }),
+            body: JSON.stringify({
+              documento_id: docId,
+              processo_id: carga.processo.id,
+              grupo,
+              fonte_aceita: "cadastro",
+            }),
           },
         );
         const out = await resp.json().catch(() => ({}));
@@ -1299,6 +1323,7 @@ export default function ChecklistGuiadoModal({
                       }
                       onUsarNomeDoDocumento={usarNomeDoDocumento}
                       onAceitarDivergenciaCadastro={handleAceitarDivergencia}
+                      altNomeEmComprovacao={!!altNomeEmComprovacao}
                     />
                   )}
 
@@ -1415,6 +1440,7 @@ export default function ChecklistGuiadoModal({
                   }
                   onUsarNomeDoDocumento={usarNomeDoDocumento}
                   onAceitarDivergenciaCadastro={handleAceitarDivergencia}
+                  altNomeEmComprovacao={!!altNomeEmComprovacao}
                 />
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
                   <button onClick={reenviarAtual} className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: MARROM }}>
