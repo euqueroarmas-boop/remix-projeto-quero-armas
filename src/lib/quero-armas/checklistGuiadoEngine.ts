@@ -338,27 +338,48 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   // Mapa de ordem definido no admin (qa_servicos_documentos) — usado para
   // ordenar a fila do assistente respeitando a sequência configurada por serviço.
   let ordemMap = new Map<string, number>();
+  // Mapa de regra_validacao do catálogo — usado para HIDRATAR no doc do processo
+  // configurações adicionadas DEPOIS da explosão do checklist (ex.: o admin
+  // vinculou um Wizard de Perguntas a uma exigência). Sem isso, processos
+  // antigos nunca veriam o gate até serem re-explodidos. A fonte é sempre o
+  // catálogo do serviço: se o admin remover o vínculo, o gate também some.
+  let catalogoRegraMap = new Map<string, any>();
   if (processo.servico_id && (dList?.length ?? 0) > 0) {
     try {
       const { data: tpl } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("tipo_documento, ordem")
+        .select("tipo_documento, ordem, regra_validacao")
         .eq("servico_id", processo.servico_id);
       if (tpl) {
         for (const t of tpl as any[]) {
-          ordemMap.set(String(t.tipo_documento ?? "").toLowerCase(), Number(t.ordem ?? 0));
+          const key = String(t.tipo_documento ?? "").toLowerCase();
+          ordemMap.set(key, Number(t.ordem ?? 0));
+          if (t.regra_validacao && typeof t.regra_validacao === "object") {
+            catalogoRegraMap.set(key, t.regra_validacao);
+          }
         }
       }
     } catch { /* fallback silencioso para ordenação alfabética */ }
   }
-  const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => ({
-    ...d,
-    // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
-    // depois o catálogo (qa_servicos_documentos.ordem).
-    _template_ordem:
-      (typeof (d as any).ordem === "number" ? (d as any).ordem : null) ??
-      (ordemMap.get(String((d as any).tipo_documento ?? "").toLowerCase()) ?? null),
-  }));
+  const docsComOrdem = ((dList ?? []) as GuiaDoc[]).map((d) => {
+    const key = String((d as any).tipo_documento ?? "").toLowerCase();
+    const catalogoRegra = catalogoRegraMap.get(key);
+    return {
+      ...d,
+      // Hidrata wizard_pre_documento do catálogo quando o doc do processo não
+      // o possui — permite que o admin vincule wizards a exigências sem
+      // exigir re-explosão de checklist em processos já existentes.
+      regra_validacao: mesclarWizardPreDocumentoCatalogo(
+        (d as any).regra_validacao,
+        catalogoRegra,
+      ),
+      // Ordem efetiva: prefere override por processo (qa_processo_documentos.ordem),
+      // depois o catálogo (qa_servicos_documentos.ordem).
+      _template_ordem:
+        (typeof (d as any).ordem === "number" ? (d as any).ordem : null) ??
+        (ordemMap.get(key) ?? null),
+    };
+  });
 
   return {
     processo,
