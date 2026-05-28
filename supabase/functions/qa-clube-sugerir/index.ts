@@ -57,6 +57,12 @@ function parseDateAny(v: string): string | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t;
   const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  // DDMMYYYY puro (ex: 27052030)
+  const d8 = t.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (d8) return `${d8[3]}-${d8[2]}-${d8[1]}`;
+  // YYYYMMDD puro
+  const y8 = t.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (y8) return `${y8[1]}-${y8[2]}-${y8[3]}`;
   return null;
 }
 
