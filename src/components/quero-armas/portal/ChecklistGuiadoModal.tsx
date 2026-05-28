@@ -766,6 +766,9 @@ export default function ChecklistGuiadoModal({
                       }
                       onMarcarComprovanteAntigo={handleComprovanteAntigo}
                       onReenviarDocumento={handleEscolherArquivo}
+                      onEditarCadastroManual={(grupo) =>
+                        abrirSugestaoCadastroPorGrupo(grupo, { iniciarComCadastroAtual: true })
+                      }
                     />
                   )}
 
