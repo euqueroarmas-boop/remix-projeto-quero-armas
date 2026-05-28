@@ -1195,6 +1195,82 @@ export default function ChecklistGuiadoModal({
                   </>
                 )}
 
+                {/* Bloco 12 — sugestão de reaproveitamento */}
+                {tipoItemGuia(docAtivo) === "documento" && candidatosReuso.length > 0 && (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[12px] font-bold text-emerald-900">
+                          Encontramos um documento já aprovado que pode ser usado aqui
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-emerald-800/90">
+                          {candidatosReuso.length === 1
+                            ? "Você pode reaproveitar este documento agora, sem reenviar."
+                            : `${candidatosReuso.length} documentos compatíveis encontrados. Escolha qual reaproveitar.`}
+                        </p>
+                        <ul className="mt-2 space-y-1.5">
+                          {candidatosReuso.slice(0, 3).map((c) => (
+                            <li
+                              key={c.id}
+                              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-white px-2.5 py-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-[12px] font-semibold text-slate-800">
+                                  {c.nome_documento ?? c.tipo_documento}
+                                </div>
+                                <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                                  {c.escopo === "cliente" ? "Documento pessoal" : c.escopo === "arma" ? "Documento de arma" : "Documento"}
+                                  {c.data_envio
+                                    ? ` · enviado em ${new Date(c.data_envio).toLocaleDateString("pt-BR")}`
+                                    : ""}
+                                  {c.data_validade_efetiva || c.data_validade
+                                    ? ` · validade ${new Date((c.data_validade_efetiva ?? c.data_validade) as string).toLocaleDateString("pt-BR")}`
+                                    : ""}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {c.arquivo_storage_key && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      viewer.abrirStorage("qa-processo-docs", c.arquivo_storage_key!, {
+                                        fileName: c.nome_documento ?? c.tipo_documento,
+                                        title: c.nome_documento ?? c.tipo_documento,
+                                      })
+                                    }
+                                    className="rounded-md border border-slate-300 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-50"
+                                  >
+                                    Ver
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={reusoAplicando === c.id}
+                                  onClick={() => handleReaproveitar(c.id)}
+                                  className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
+                                  style={{ background: MARROM }}
+                                >
+                                  {reusoAplicando === c.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : null}
+                                  Usar este
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="mt-2 text-[10px] text-emerald-800/80">
+                          Prefere enviar um novo? É só usar o botão de envio abaixo.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {tipoItemGuia(docAtivo) === "documento" && reusoCarregando && candidatosReuso.length === 0 && (
+                  <div className="text-[10px] text-slate-400">Verificando se há documento reaproveitável…</div>
+                )}
+
                 {/* Painel de divergências — também disponível ao reabrir um
                     item já enviado e marcado como divergente/inválido. Sem
                     isto, documentos validados em versões anteriores da IA
