@@ -1211,14 +1211,24 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 </span>
               </div>
               {equipeMode && proximaEtapa && (
-                <button
-                  onClick={liberarProximaEtapa}
-                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                  title={etapaCompleta ? "Etapa atual concluída — pode liberar a próxima" : "Forçar liberação antecipada da próxima etapa"}
-                >
-                  <ChevronRight className="h-3 w-3" />
-                  LIBERAR ETAPA {proximaEtapa}: {ETAPA_NOMES[proximaEtapa]}
-                </button>
+                etapaCompleta ? (
+                  <span
+                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-emerald-300 bg-emerald-50 text-emerald-800"
+                    title="Próxima etapa será liberada automaticamente"
+                  >
+                    <CheckCircle className="h-3 w-3" />
+                    PRÓXIMA ETAPA LIBERADA AUTOMATICAMENTE
+                  </span>
+                ) : (
+                  <button
+                    onClick={liberarProximaEtapa}
+                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                    title="Forçar liberação antecipada (fallback administrativo)"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                    FORÇAR LIBERAR ETAPA {proximaEtapa}: {ETAPA_NOMES[proximaEtapa]}
+                  </button>
+                )
               )}
             </div>
             {processo.prazo_critico_data && (
