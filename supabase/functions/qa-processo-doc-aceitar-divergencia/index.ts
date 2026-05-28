@@ -41,6 +41,9 @@ const CAMPOS_POR_GRUPO: Record<string, string[]> = {
     "endereco_bairro", "endereco_cidade", "endereco_uf", "endereco_estado",
     "endereco_cep",
   ],
+  estado_civil: [
+    "estado_civil", "estadocivil", "estado_civil_titular", "civil_status",
+  ],
 };
 
 function ehCampoDoGrupo(campo: any, grupo: string): boolean {
@@ -48,8 +51,13 @@ function ehCampoDoGrupo(campo: any, grupo: string): boolean {
   if (!k) return false;
   const lista = CAMPOS_POR_GRUPO[grupo] || [];
   if (lista.includes(k)) return true;
+  if (grupo === "estado_civil") {
+    return /estado[_\s-]?civil|civil[_\s-]?status/.test(k);
+  }
   if (grupo === "endereco") {
-    return /endereco|logradouro|^rua$|^avenida$|^travessa$|numero|complemento|bairro|cidade|municipio|^uf$|estado|cep/i.test(k);
+    // Não classificar `estado_civil` como endereço.
+    if (/estado[_\s-]?civil|civil[_\s-]?status/.test(k)) return false;
+    return /endereco|logradouro|^rua$|^avenida$|^travessa$|numero|complemento|bairro|cidade|municipio|^uf$|(^|_)estado(_|$)|cep/i.test(k);
   }
   return false;
 }
