@@ -13,7 +13,7 @@
 // orquestra o que o cliente pode fazer DEPOIS de receber o veredito.
 // ============================================================================
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
