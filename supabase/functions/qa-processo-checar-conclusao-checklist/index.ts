@@ -159,11 +159,15 @@ Deno.serve(async (req) => {
     for (const d of obrigatorios) {
       if (isPergunta(d)) {
         const chave = d?.regra_validacao?.chave;
-        const v = chave ? respostas[chave] : undefined;
-        if (v === undefined || v === null || v === "") {
-          return json({ pronto: false, motivo: "pergunta_pendente" });
+        // Só trata como pergunta-pivot quando existe `chave` válida.
+        // Perguntas legadas sem chave caem no fluxo padrão por status.
+        if (chave) {
+          const v = respostas[chave];
+          if (v === undefined || v === null || v === "") {
+            return json({ pronto: false, motivo: "pergunta_pendente" });
+          }
+          continue;
         }
-        continue;
       }
       const st = String(d.status || "").toLowerCase();
       if (EM_ANALISE.has(st)) return json({ pronto: false, motivo: "documento_em_analise" });
