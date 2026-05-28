@@ -52,6 +52,19 @@ function normalizeFmt(raw: unknown): string {
   return v;
 }
 
+const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
+
+function arquivoPareceCertidaoAlteracaoNome(nome: string | undefined | null): boolean {
+  const n = String(nome || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return /(certidao|casamento|nascimento|averbac|averbad|alteracao.*nome|nome.*alteracao)/.test(n);
+}
+
+function docTemDivergenciaNome(doc: any): boolean {
+  const divs = Array.isArray(doc?.divergencias_json) ? doc.divergencias_json : [];
+  if (divs.some((d: any) => /^(nome|nome_titular|titular|nome_completo)$/i.test(String(d?.campo || "")))) return true;
+  return /\bnome\b|\btitular\b/i.test(String(doc?.motivo_rejeicao || ""));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -89,12 +102,14 @@ Deno.serve(async (req) => {
     // Carrega item do checklist
     const { data: docRow0, error: docErr } = await supabase
       .from("qa_processo_documentos")
-      .select("id, processo_id, cliente_id, tipo_documento, formato_aceito, regra_validacao, status")
+      .select("id, processo_id, cliente_id, tipo_documento, nome_documento, formato_aceito, regra_validacao, status, motivo_rejeicao, divergencias_json")
       .eq("id", documento_id)
       .maybeSingle();
     if (docErr || !docRow0) return json({ error: "Item do checklist não encontrado" }, 404);
 
     const processo_id = docRow0.processo_id;
+    let documentoIdAlvo = documento_id;
+    let docUpload: any = docRow0;
 
     // Verifica permissão: ou staff QA ou cliente dono do processo
     const { data: staffRow } = await supabase
@@ -121,6 +136,60 @@ Deno.serve(async (req) => {
       if (!link) return json({ error: "Sem permissão para este processo" }, 403);
     }
 
+    // Proteção crítica: se o cliente anexar uma certidão averbada enquanto o
+    // item ativo ainda é um comprovante divergente por nome, redirecionamos o
+    // upload para a pendência própria. A IA nunca deve validar certidão como
+    // comprovante_endereco_ano_YYYY.
+    if (
+      docRow0.tipo_documento !== TIPO_CERTIDAO_ALTERACAO_NOME &&
+      docTemDivergenciaNome(docRow0) &&
+      arquivoPareceCertidaoAlteracaoNome(nome_arquivo_original)
+    ) {
+      const { data: existente } = await supabase
+        .from("qa_processo_documentos")
+        .select("*")
+        .eq("processo_id", processo_id)
+        .eq("tipo_documento", TIPO_CERTIDAO_ALTERACAO_NOME)
+        .maybeSingle();
+
+      if (existente?.id) {
+        documentoIdAlvo = existente.id;
+        docUpload = existente;
+      } else {
+        const { data: criada, error: criaErr } = await supabase
+          .from("qa_processo_documentos")
+          .insert({
+            processo_id,
+            cliente_id: processo.cliente_id,
+            tipo_documento: TIPO_CERTIDAO_ALTERACAO_NOME,
+            nome_documento: "Certidão averbada de alteração de nome",
+            etapa: "complementar",
+            obrigatorio: true,
+            formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+            status: "pendente",
+            regra_validacao: {
+              descricao: "Certidão de casamento ou nascimento averbada que comprova alteração de nome em cartório.",
+              exige: ["nome_anterior", "nome_atual"],
+            },
+            instrucoes: "Envie sua certidão de casamento ou nascimento averbada para comprovar a alteração do seu nome.",
+          })
+          .select("*")
+          .maybeSingle();
+        if (criaErr || !criada) return json({ error: criaErr?.message || "Falha ao criar pendência da certidão" }, 500);
+        documentoIdAlvo = criada.id;
+        docUpload = criada;
+      }
+
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id,
+        documento_id: documentoIdAlvo,
+        tipo_evento: "upload_certidao_redirecionado",
+        descricao: "Certidão averbada enviada a partir de divergência de nome foi associada ao item correto.",
+        dados_json: { documento_origem_id: documento_id, tipo_origem: docRow0.tipo_documento },
+        ator: "sistema",
+      });
+    }
+
     // Verifica que o arquivo existe no storage e descobre o tamanho real (anti-spoof do client)
     const { data: blob, error: dlErr } = await supabase.storage
       .from("qa-processo-docs")
@@ -134,8 +203,8 @@ Deno.serve(async (req) => {
     // ===== Enforcement de formato =====
     // Normaliza para extensão canônica em minúsculo dos dois lados (banco pode
     // ter "application/pdf", "APPLICATION/PDF", "pdf", etc.).
-    const formatosAceitos: string[] = Array.isArray(docRow0.formato_aceito)
-      ? (docRow0.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
+    const formatosAceitos: string[] = Array.isArray(docUpload.formato_aceito)
+      ? (docUpload.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
       : [];
     const extNorm = normalizeFmt(ext);
 
@@ -153,10 +222,10 @@ Deno.serve(async (req) => {
         data_envio: new Date().toISOString(),
         validacao_ia_status: "bloqueado_pre_ia",
         validacao_ia_erro: "formato_invalido",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
 
       await supabase.from("qa_processo_eventos").insert({
-        processo_id, documento_id,
+        processo_id, documento_id: documentoIdAlvo,
         tipo_evento: "upload_bloqueado_formato",
         descricao: motivo,
         dados_json: { formatos_aceitos: formatosAceitos, recebido: ext, mime: realMime, bytes: realSize },
@@ -178,7 +247,7 @@ Deno.serve(async (req) => {
       await supabase.from("qa_processo_documentos").update({
         status: "invalido", motivo_rejeicao: motivo,
         validacao_ia_status: "bloqueado_pre_ia", validacao_ia_erro: "arquivo_muito_grande",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
       return json({ error: motivo, code: "arquivo_muito_grande" }, 400);
     }
     const isImage = ["jpg", "jpeg", "png"].includes(ext);
@@ -189,9 +258,9 @@ Deno.serve(async (req) => {
         arquivo_storage_key: storage_path,
         status: "invalido", motivo_rejeicao: motivo,
         validacao_ia_status: "bloqueado_pre_ia", validacao_ia_erro: "imagem_baixa_qualidade",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
       await supabase.from("qa_processo_eventos").insert({
-        processo_id, documento_id,
+        processo_id, documento_id: documentoIdAlvo,
         tipo_evento: "upload_bloqueado_qualidade",
         descricao: motivo,
         dados_json: { bytes: realSize, ext },
@@ -209,7 +278,7 @@ Deno.serve(async (req) => {
       await supabase.from("qa_processo_documentos").update({
         status: "invalido", motivo_rejeicao: motivo,
         validacao_ia_status: "bloqueado_pre_ia", validacao_ia_erro: "pdf_invalido",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
       return json({ error: motivo, code: "pdf_invalido" }, 400);
     }
 
@@ -228,7 +297,7 @@ Deno.serve(async (req) => {
           ? `arquivo:${nome_arquivo_original}|mime:${realMime}|bytes:${realSize}`
           : `mime:${realMime}|bytes:${realSize}`,
       })
-      .eq("id", documento_id)
+      .eq("id", documentoIdAlvo)
       .eq("processo_id", processo_id)
       .select()
       .single();
@@ -247,7 +316,7 @@ Deno.serve(async (req) => {
               "Authorization": `Bearer ${service}`,
               "x-internal-call": "1",
             },
-            body: JSON.stringify({ processo_id, documento_id, storage_path }),
+            body: JSON.stringify({ processo_id, documento_id: documentoIdAlvo, storage_path }),
           }).then(r => r.text()).catch(e => console.error("IA dispatch err:", e))
         );
         iaTriggered = true;
@@ -260,7 +329,7 @@ Deno.serve(async (req) => {
       // @ts-ignore EdgeRuntime
       (globalThis as any).EdgeRuntime?.waitUntil(
         supabase.functions.invoke("qa-processo-notificar", {
-          body: { processo_id, documento_id, evento: "documento_em_validacao" },
+          body: { processo_id, documento_id: documentoIdAlvo, evento: "documento_em_validacao" },
         }).catch((e: any) => console.warn("[upload] notif falhou:", e?.message ?? e)),
       );
     } catch (_) {}
