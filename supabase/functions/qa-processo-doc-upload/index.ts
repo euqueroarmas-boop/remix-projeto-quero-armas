@@ -222,10 +222,10 @@ Deno.serve(async (req) => {
         data_envio: new Date().toISOString(),
         validacao_ia_status: "bloqueado_pre_ia",
         validacao_ia_erro: "formato_invalido",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
 
       await supabase.from("qa_processo_eventos").insert({
-        processo_id, documento_id,
+        processo_id, documento_id: documentoIdAlvo,
         tipo_evento: "upload_bloqueado_formato",
         descricao: motivo,
         dados_json: { formatos_aceitos: formatosAceitos, recebido: ext, mime: realMime, bytes: realSize },
@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
       await supabase.from("qa_processo_documentos").update({
         status: "invalido", motivo_rejeicao: motivo,
         validacao_ia_status: "bloqueado_pre_ia", validacao_ia_erro: "arquivo_muito_grande",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
       return json({ error: motivo, code: "arquivo_muito_grande" }, 400);
     }
     const isImage = ["jpg", "jpeg", "png"].includes(ext);
@@ -258,9 +258,9 @@ Deno.serve(async (req) => {
         arquivo_storage_key: storage_path,
         status: "invalido", motivo_rejeicao: motivo,
         validacao_ia_status: "bloqueado_pre_ia", validacao_ia_erro: "imagem_baixa_qualidade",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
       await supabase.from("qa_processo_eventos").insert({
-        processo_id, documento_id,
+        processo_id, documento_id: documentoIdAlvo,
         tipo_evento: "upload_bloqueado_qualidade",
         descricao: motivo,
         dados_json: { bytes: realSize, ext },
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       await supabase.from("qa_processo_documentos").update({
         status: "invalido", motivo_rejeicao: motivo,
         validacao_ia_status: "bloqueado_pre_ia", validacao_ia_erro: "pdf_invalido",
-      }).eq("id", documento_id);
+      }).eq("id", documentoIdAlvo);
       return json({ error: motivo, code: "pdf_invalido" }, 400);
     }
 
@@ -297,7 +297,7 @@ Deno.serve(async (req) => {
           ? `arquivo:${nome_arquivo_original}|mime:${realMime}|bytes:${realSize}`
           : `mime:${realMime}|bytes:${realSize}`,
       })
-      .eq("id", documento_id)
+      .eq("id", documentoIdAlvo)
       .eq("processo_id", processo_id)
       .select()
       .single();
@@ -316,7 +316,7 @@ Deno.serve(async (req) => {
               "Authorization": `Bearer ${service}`,
               "x-internal-call": "1",
             },
-            body: JSON.stringify({ processo_id, documento_id, storage_path }),
+            body: JSON.stringify({ processo_id, documento_id: documentoIdAlvo, storage_path }),
           }).then(r => r.text()).catch(e => console.error("IA dispatch err:", e))
         );
         iaTriggered = true;
@@ -329,7 +329,7 @@ Deno.serve(async (req) => {
       // @ts-ignore EdgeRuntime
       (globalThis as any).EdgeRuntime?.waitUntil(
         supabase.functions.invoke("qa-processo-notificar", {
-          body: { processo_id, documento_id, evento: "documento_em_validacao" },
+          body: { processo_id, documento_id: documentoIdAlvo, evento: "documento_em_validacao" },
         }).catch((e: any) => console.warn("[upload] notif falhou:", e?.message ?? e)),
       );
     } catch (_) {}
