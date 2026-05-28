@@ -963,7 +963,7 @@ export default function ChecklistGuiadoModal({
     acao: { tipo: "anexar" | "baixar_template" | "reaproveitar"; payload?: any },
   ): boolean => {
     if (!doc) return false;
-    const cfg = wizardPendentePara(doc, clienteDados);
+    const cfg = wizardPendentePara(doc, clienteDados, carga?.processo);
     if (!cfg) return false;
     setWizardPre({ open: true, doc, cfg, acaoPendente: acao });
     return true;
