@@ -1632,6 +1632,7 @@ export default function ChecklistGuiadoModal({
               <ClubeFiliacaoStep
                 processoId={carga.processo.id}
                 clienteId={carga.processo.cliente_id}
+                documentoId={wizardPre.doc?.id ?? null}
                 onConfirmed={() => {
                   toast.success("Clube e filiação confirmados.");
                   onUpdated?.();
