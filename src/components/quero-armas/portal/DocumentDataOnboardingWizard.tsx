@@ -46,8 +46,10 @@ import {
   maskValue,
   probeTemplate,
   saveWizardAnswer,
+  CLUBE_PLACEHOLDER_KEYS,
 } from "@/lib/quero-armas/documentOnboardingEngine";
 import { loadPlaceholderOverrides } from "@/lib/quero-armas/templatePlaceholderOverrides";
+import ClubeFiliacaoStep from "./clube-wizard/ClubeFiliacaoStep";
 
 const MARROM = "#7A1F2B";
 
@@ -66,6 +68,7 @@ interface Props {
 
 type Fase =
   | "probe"
+  | "clube"
   | "step"
   | "review"
   | "gerando"
@@ -94,6 +97,7 @@ export default function DocumentDataOnboardingWizard({
   const [valoresFinal, setValoresFinal] = useState<Record<string, { def: PlaceholderDef; value: string; origem: "cadastro" | "processo" | "ia" | "agora" }>>({});
   const [unsupportedField, setUnsupportedField] = useState<PlaceholderDef | null>(null);
   const carregouRef = useRef(false);
+  const [clubeNeeded, setClubeNeeded] = useState(false);
 
   // -------------------------------------------------------------------------
   // Carga inicial: probe + sugestões + dados atuais
@@ -138,13 +142,18 @@ export default function DocumentDataOnboardingWizard({
       }
 
       // Monta passos.
-      const nextSteps = buildWizardSteps({
+      const allSteps = buildWizardSteps({
         missing: probe.missing_placeholders,
         cliente,
         templateData,
         iaSuggestions: ia,
         overrides,
       });
+
+      // Extrai o bloco composto "Clube de tiro" do fluxo padrão.
+      const needsClube = allSteps.some((s) => CLUBE_PLACEHOLDER_KEYS.has(s.def.key));
+      const nextSteps = allSteps.filter((s) => !CLUBE_PLACEHOLDER_KEYS.has(s.def.key));
+      setClubeNeeded(needsClube);
 
       // Se algum step depende de suporte (cpf/email/nome) → tela específica.
       const blocker = nextSteps.find((s) => FIELDS_NEEDING_SUPPORT.has(s.def.key));
@@ -174,7 +183,11 @@ export default function DocumentDataOnboardingWizard({
       const cur = nextSteps[idx];
       setStepValue(cur?.initialValue || cur?.iaSuggestion || "");
       setUnknownTokens(probe.unknown_placeholders);
-      setFase(nextSteps.length === 0 ? "review" : "step");
+      if (needsClube) {
+        setFase("clube");
+      } else {
+        setFase(nextSteps.length === 0 ? "review" : "step");
+      }
     } catch (e: any) {
       setErro(e?.message || "Não conseguimos consultar este modelo agora.");
       setFase("erro");
@@ -289,6 +302,7 @@ export default function DocumentDataOnboardingWizard({
     setUnknownTokens([]);
     setUnsupportedField(null);
     setErro(null);
+    setClubeNeeded(false);
   };
 
   const handleClose = () => {
