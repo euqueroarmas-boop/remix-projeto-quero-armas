@@ -145,7 +145,7 @@ export default function QAPrecosServicosPage() {
   const [rows, setRows] = useState<ServicoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [edits, setEdits] = useState<Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>>({});
+  const [edits, setEdits] = useState<Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean; exige_acervo?: boolean | null }>>({});
   const [filter, setFilter] = useState("");
   const [form, setForm] = useState<FormState | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -221,7 +221,7 @@ export default function QAPrecosServicosPage() {
     return Array.from(map.entries());
   }, [rows, filter]);
 
-  function setEdit(id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) {
+  function setEdit(id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean; exige_acervo: boolean | null }>) {
     setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
   }
 
@@ -234,6 +234,7 @@ export default function QAPrecosServicosPage() {
     }
     if (e.recorrente !== undefined && e.recorrente !== row.recorrente) return true;
     if (e.ativo !== undefined && e.ativo !== row.ativo) return true;
+    if (e.exige_acervo !== undefined && e.exige_acervo !== row.exige_acervo) return true;
     return false;
   }
 
@@ -243,6 +244,7 @@ export default function QAPrecosServicosPage() {
     if (e.preco !== undefined) payload.preco = parseBRL(e.preco);
     if (e.recorrente !== undefined) payload.recorrente = e.recorrente;
     if (e.ativo !== undefined) payload.ativo = e.ativo;
+    if (e.exige_acervo !== undefined) payload.exige_acervo = e.exige_acervo;
     if (Object.keys(payload).length === 0) return;
 
     setSavingId(row.id);
@@ -264,6 +266,8 @@ export default function QAPrecosServicosPage() {
               preco: payload.preco !== undefined ? (payload.preco as number | null) : r.preco,
               recorrente: payload.recorrente !== undefined ? (payload.recorrente as boolean) : r.recorrente,
               ativo: payload.ativo !== undefined ? (payload.ativo as boolean) : r.ativo,
+              exige_acervo:
+                payload.exige_acervo !== undefined ? (payload.exige_acervo as boolean | null) : r.exige_acervo,
             }
           : r,
       ),
