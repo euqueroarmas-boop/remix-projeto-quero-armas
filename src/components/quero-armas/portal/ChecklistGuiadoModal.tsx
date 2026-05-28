@@ -718,6 +718,30 @@ export default function ChecklistGuiadoModal({
                   />
                 )}
 
+                {/* Painel de divergências — também disponível ao reabrir um
+                    item já enviado e marcado como divergente/inválido. Sem
+                    isto, documentos validados em versões anteriores da IA
+                    (sem `divergencias_json`) ficam sem botões de ação. */}
+                {tipoItemGuia(docAtivo) === "documento" &&
+                  !!docAtivo.arquivo_storage_key &&
+                  (docAtivo.status === "divergente" ||
+                    docAtivo.status === "invalido" ||
+                    /diverg/i.test(String((docAtivo as any).motivo_rejeicao || ""))) && (
+                    <DivergenciasResolverPanel
+                      divergencias={(docAtivo as any)?.divergencias_json as any}
+                      motivoRejeicao={(docAtivo as any)?.motivo_rejeicao ?? null}
+                      altNomeJaComprovada={!!altNomeJaComprovada}
+                      iniciandoAltNome={iniciandoAltNome}
+                      podeAtualizarCadastro={!!clienteDados}
+                      onIniciarAlteracaoNome={handleSimAlteracaoNome}
+                      onAtualizarCadastroComGrupo={(grupo) =>
+                        abrirSugestaoCadastroPorGrupo(grupo)
+                      }
+                      onMarcarComprovanteAntigo={handleComprovanteAntigo}
+                      onReenviarDocumento={handleEscolherArquivo}
+                    />
+                  )}
+
                 {erroAcao && (
                   <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-[12px] text-red-800">{erroAcao}</div>
                 )}
