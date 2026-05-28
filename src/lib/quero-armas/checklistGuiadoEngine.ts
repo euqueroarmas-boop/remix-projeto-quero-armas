@@ -472,6 +472,7 @@ export async function enviarDocumentoGuia(
   processo: GuiaProcesso,
   doc: GuiaDoc,
   file: File,
+  armaId?: string | null,
 ): Promise<ResultadoAcao> {
   // Validação de formato no front (UX rápida) — idêntica ao drawer.
   // Aceita tanto extensões ("pdf","jpg") quanto MIME ("application/pdf","image/jpeg").
@@ -512,6 +513,7 @@ export async function enviarDocumentoGuia(
         mime_type: file.type,
         tamanho_bytes: file.size,
         nome_arquivo_original: file.name,
+        ...(armaId ? { arma_id: armaId } : {}),
       }),
     });
     const out = await resp.json().catch(() => ({}));
