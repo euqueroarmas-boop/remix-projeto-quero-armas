@@ -71,6 +71,19 @@ import DivergenciasResolverPanel, {
 } from "@/components/quero-armas/portal/DivergenciasResolverPanel";
 
 const MARROM = "#7A1F2B";
+const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
+
+function ehCertidaoAlteracaoNome(doc: Pick<GuiaDoc, "tipo_documento"> | null | undefined): boolean {
+  return String(doc?.tipo_documento || "").toLowerCase() === TIPO_CERTIDAO_ALTERACAO_NOME;
+}
+
+function arquivoPareceCertidaoAlteracaoNome(file: File): boolean {
+  const nome = String(file?.name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  return /(certidao|casamento|nascimento|averbac|averbad|alteracao.*nome|nome.*alteracao)/.test(nome);
+}
 
 type Fase =
   | "carregando"
@@ -123,6 +136,7 @@ export default function ChecklistGuiadoModal({
   // conseguimos navegar automaticamente (ex.: fila ainda não inclui o item),
   // guardamos o id para oferecer um botão de fallback "Ir para pendência".
   const [avisoIrParaCertidao, setAvisoIrParaCertidao] = useState<string | null>(null);
+  const [certidaoUploadForcadoId, setCertidaoUploadForcadoId] = useState<string | null>(null);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
