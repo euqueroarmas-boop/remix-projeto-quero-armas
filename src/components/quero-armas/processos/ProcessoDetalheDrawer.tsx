@@ -580,8 +580,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         descricao: `Equipe Quero Armas reprocessou validação de ${doc.nome_documento}.`,
         ator: "equipe_operacional",
       });
-      toast.success("Documento reprocessado.");
-      await carregar();
+      toast.success("Documento enviado para reprocessamento.");
+      const novosDocs = await carregar();
+      destacarProximoItem(novosDocs, doc.id);
       onUpdated?.();
     } catch (e: any) {
       toast.error("Erro ao reprocessar: " + (e?.message ?? "desconhecido"));
@@ -1027,7 +1028,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         dados_json: { etapa_anterior: etapaLiberada, etapa_nova: proximaEtapa, modo: "manual" },
       });
       toast.success(`ETAPA "${ETAPA_NOMES[proximaEtapa]}" LIBERADA AO CLIENTE.`);
-      await carregar();
+      const novosDocs = await carregar();
+      destacarProximoItem(novosDocs, null);
       onUpdated?.();
     } catch (e: any) {
       toast.error("Erro ao liberar etapa: " + (e?.message ?? "desconhecido"));
