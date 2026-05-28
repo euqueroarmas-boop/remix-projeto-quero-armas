@@ -199,6 +199,8 @@ export interface DivergenciasResolverPanelProps {
   onAtualizarCadastroComGrupo: (grupo: GrupoDivergencia) => void;
   onMarcarComprovanteAntigo: () => void;
   onReenviarDocumento: () => void;
+  /** Abre o editor de cadastro pré-preenchido com os valores atuais. */
+  onEditarCadastroManual?: (grupo: GrupoDivergencia) => void;
 }
 
 export default function DivergenciasResolverPanel({
@@ -211,6 +213,7 @@ export default function DivergenciasResolverPanel({
   onAtualizarCadastroComGrupo,
   onMarcarComprovanteAntigo,
   onReenviarDocumento,
+  onEditarCadastroManual,
 }: DivergenciasResolverPanelProps) {
   const grupos = useMemo(
     () => agruparDivergencias(divergencias, motivoRejeicao),
