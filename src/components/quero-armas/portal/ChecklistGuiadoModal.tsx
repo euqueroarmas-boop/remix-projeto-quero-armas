@@ -1435,6 +1435,7 @@ export default function ChecklistGuiadoModal({
                   }
                   onUsarNomeDoDocumento={usarNomeDoDocumento}
                   onAceitarDivergenciaCadastro={handleAceitarDivergencia}
+                  altNomeEmComprovacao={!!altNomeEmComprovacao}
                 />
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
                   <button onClick={reenviarAtual} className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white" style={{ background: MARROM }}>
