@@ -38,6 +38,7 @@ function json(body: Record<string, unknown>, status = 200) {
 const CAMPOS_PERMITIDOS = new Set<string>([
   // Pessoais
   "nome",
+  "nome_completo",
   "data_nascimento",
   "sexo",
   "estado_civil",
