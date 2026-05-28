@@ -407,7 +407,7 @@ export default function SugestaoCadastroFromDocModal({
           >
             {sugestoes.length === 0 ? "Continuar" : "Manter cadastro atual"}
           </button>
-          {sugestoes.length > 0 && (
+          {(ehEnderecoScope || sugestoes.length > 0) && (
             <button
               type="button"
               onClick={aplicar}
@@ -421,7 +421,8 @@ export default function SugestaoCadastroFromDocModal({
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-4 w-4" /> Atualizar cadastro
+                  <CheckCircle2 className="h-4 w-4" />
+                  {ehEnderecoScope ? "Salvar endereço no cadastro" : "Atualizar cadastro"}
                 </>
               )}
             </button>
