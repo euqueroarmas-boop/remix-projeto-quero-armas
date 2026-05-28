@@ -1591,6 +1591,59 @@ export default function ChecklistGuiadoModal({
         }}
       />
 
+      {/* Wizard de Perguntas vinculado à exigência — abre antes de qualquer ação */}
+      <Dialog open={wizardPre.open} onOpenChange={(n) => !n && fecharWizardPre()}>
+        <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
+          <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style={{ background: MARROM }}>
+                <ShieldCheck className="h-5 w-5" strokeWidth={2.3} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">
+                  Antes de continuar
+                </div>
+                <h2 className="text-[17px] font-extrabold leading-tight text-slate-900">
+                  {wizardPre.cfg ? getWizardLabel(wizardPre.cfg.wizard_key) : ""}
+                </h2>
+                {wizardPre.doc?.nome_documento && (
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Documento: <span className="font-semibold text-slate-700">{wizardPre.doc.nome_documento}</span>
+                  </p>
+                )}
+                {wizardPre.cfg && (
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-slate-600">
+                    {getWizardDescricaoCliente(wizardPre.cfg.wizard_key)}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={fecharWizardPre}
+                aria-label="Fechar"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="min-h-[260px] flex-1 overflow-y-auto px-5 py-5">
+            {wizardPre.open && wizardPre.cfg?.wizard_key === "clube_filiacao" && carga && (
+              <ClubeFiliacaoStep
+                processoId={carga.processo.id}
+                clienteId={carga.processo.cliente_id}
+                onConfirmed={() => {
+                  toast.success("Clube e filiação confirmados.");
+                  onUpdated?.();
+                  void retomarAcaoPosWizardPre();
+                }}
+                onBack={fecharWizardPre}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {clienteDados && (
         <ClienteCadastroProgressivoModal
           open={editarCadastroAberto}
