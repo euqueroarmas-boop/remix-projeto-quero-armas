@@ -123,6 +123,15 @@ Deno.serve(async (req) => {
       },
     });
 
+    // Checa se o processo virou pronto_para_protocolar (idempotente).
+    try {
+      const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") ?? "";
+      await admin.functions.invoke("qa-processo-checar-conclusao-checklist", {
+        headers: { "x-internal-token": internalToken },
+        body: { processo_id, origem: "responder_pergunta" },
+      });
+    } catch (e) { console.warn("[responder-pergunta] checar-conclusao falhou", e); }
+
     return json({ success: true, processo_id, documento_id, chave, valor });
   } catch (e) {
     console.error("qa-processo-responder-pergunta:", e);
