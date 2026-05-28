@@ -156,6 +156,21 @@ export interface WizardStep {
   iaSuggestion?: string;
 }
 
+/** Keys de placeholders que pertencem ao bloco composto "Clube de tiro". */
+export const CLUBE_PLACEHOLDER_KEYS = new Set<string>([
+  "nome_clube",
+  "cnpj_clube",
+  "numero_cr_clube",
+  "data_cr_clube",
+  "endereco_clube",
+  "numero_filiacao",
+  "validade_filiacao",
+]);
+
+export function hasClubePlaceholders(missing: ProbeResult["missing_placeholders"]): boolean {
+  return missing.some((m) => CLUBE_PLACEHOLDER_KEYS.has(m.key));
+}
+
 export function buildWizardSteps(params: {
   missing: ProbeResult["missing_placeholders"];
   cliente: Record<string, any> | null;
