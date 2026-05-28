@@ -88,6 +88,25 @@ import {
 const MARROM = "#7A1F2B";
 const TIPO_CERTIDAO_ALTERACAO_NOME = "certidao_alteracao_nome";
 
+function getLabelResumoProcessoAssistente(p: ProcessoElegivel): string {
+  if (p.label_resumo && p.label_resumo.trim()) return p.label_resumo;
+  const parts: string[] = [];
+  if ((p.documentos_pendentes_cliente ?? 0) > 0) {
+    const n = p.documentos_pendentes_cliente;
+    parts.push(`${n} documento${n === 1 ? "" : "s"} pendente${n === 1 ? "" : "s"}`);
+  }
+  if ((p.wizards_pendentes ?? 0) > 0) {
+    const n = p.wizards_pendentes;
+    parts.push(`${n} pergunta${n === 1 ? "" : "s"} pendente${n === 1 ? "" : "s"}`);
+  }
+  if ((p.documentos_em_analise ?? p.em_analise ?? 0) > 0) {
+    parts.push(`${p.documentos_em_analise ?? p.em_analise} em análise`);
+  }
+  if (parts.length === 0) parts.push("Tudo em dia");
+  parts.push(`${p.percentual ?? p.pct ?? 0}% pronto`);
+  return parts.join(" · ");
+}
+
 function ehCertidaoAlteracaoNome(doc: Pick<GuiaDoc, "tipo_documento"> | null | undefined): boolean {
   return String(doc?.tipo_documento || "").toLowerCase() === TIPO_CERTIDAO_ALTERACAO_NOME;
 }
