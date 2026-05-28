@@ -992,10 +992,10 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
 
 interface SortableRowProps {
   row: ServicoRow;
-  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean }>;
+  edits: Record<string, { preco?: string; recorrente?: boolean; ativo?: boolean; exige_acervo?: boolean | null }>;
   savingId: string | null;
   isDirty: (row: ServicoRow) => boolean;
-  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean }>) => void;
+  setEdit: (id: string, patch: Partial<{ preco: string; recorrente: boolean; ativo: boolean; exige_acervo: boolean | null }>) => void;
   save: (row: ServicoRow) => void;
   openEdit: (row: ServicoRow) => void;
   removeRow: (row: ServicoRow) => void;
@@ -1014,6 +1014,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
     e.preco !== undefined ? e.preco : row.preco != null ? String(row.preco).replace(".", ",") : "";
   const recorrente = e.recorrente ?? row.recorrente;
   const ativo = e.ativo ?? row.ativo;
+  const exigeAcervo: boolean | null = e.exige_acervo !== undefined ? e.exige_acervo : row.exige_acervo;
   const dirty = isDirty(row);
   const saving = savingId === row.id;
   return (
@@ -1058,6 +1059,23 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
         >
           {recorrente ? "MENSAL" : "ÚNICA"}
         </button>
+      </td>
+      <td className="px-3 py-2.5 text-center">
+        <select
+          value={exigeAcervo === null ? "ambos" : exigeAcervo ? "continuidade" : "inicial"}
+          onChange={(ev) => {
+            const v = ev.target.value;
+            setEdit(row.id, {
+              exige_acervo: v === "ambos" ? null : v === "continuidade",
+            });
+          }}
+          title="Trilha: Inicial (sem acervo) · Continuidade (já tem arma) · Ambos"
+          className="h-7 w-full px-1.5 rounded-md border border-slate-200 bg-white text-[10px] font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+        >
+          <option value="inicial">INICIAL</option>
+          <option value="continuidade">CONTINUIDADE</option>
+          <option value="ambos">AMBOS</option>
+        </select>
       </td>
       <td className="px-3 py-2.5 text-center">
         <button
