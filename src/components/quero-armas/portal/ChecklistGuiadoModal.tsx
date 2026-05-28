@@ -119,6 +119,10 @@ export default function ChecklistGuiadoModal({
   // Mostra aviso discreto quando o assistente pulou automaticamente um
   // documento salvo no progresso (porque ele já está aprovado, em análise, etc).
   const [avisoRetomada, setAvisoRetomada] = useState<string | null>(null);
+  // Quando criamos/encontramos a pendência de certidão averbada mas não
+  // conseguimos navegar automaticamente (ex.: fila ainda não inclui o item),
+  // guardamos o id para oferecer um botão de fallback "Ir para pendência".
+  const [avisoIrParaCertidao, setAvisoIrParaCertidao] = useState<string | null>(null);
 
   // ----- carregar processos elegíveis ao abrir -----
   const iniciar = useCallback(async () => {
