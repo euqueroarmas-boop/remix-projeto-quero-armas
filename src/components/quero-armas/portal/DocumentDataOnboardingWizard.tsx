@@ -412,6 +412,7 @@ export default function DocumentDataOnboardingWizard({
             <ClubeFiliacaoStep
               processoId={processoId}
               clienteId={clienteId}
+              overrides={overrides}
               onConfirmed={() => {
                 onUpdated?.();
                 setClubeNeeded(false);
