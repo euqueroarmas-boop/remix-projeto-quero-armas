@@ -446,15 +446,47 @@ export default function ChecklistGuiadoModal({
       );
       const out = await resp.json().catch(() => ({}));
       if (!resp.ok) throw new Error(out?.error || "Falha ao iniciar pendência.");
+      const statusRet = String(out?.status ?? "").toLowerCase();
+      const certidaoJaAprovada =
+        statusRet === "aprovado" || statusRet === "validado" || statusRet === "em_revisao_humana";
       if (out?.reaproveitado) {
-        toast.success("Encontramos sua certidão averbada já aprovada e a reaproveitamos neste processo.");
+        toast.success(
+          "Alteração de nome já comprovada por certidão averbada. Reaproveitamos neste processo.",
+        );
+      } else if (certidaoJaAprovada) {
+        toast.success("Alteração de nome já comprovada por certidão averbada.");
       } else {
-        toast.success("Pendência criada. Anexe a certidão averbada para comprovar a alteração de nome.");
+        toast.success(
+          "Pendência criada. Vamos abrir o item para você anexar a certidão averbada.",
+        );
       }
       onUpdated?.();
       const c = await recarregarCarga(carga.processo.id);
-      // Foca no doc da certidão recém-criado (ou no próximo acionável).
-      avancarPara(c, pularIds, out?.document_id ?? null, "certidao_alteracao_nome");
+      // Se a certidão já está aprovada/reaproveitada, NÃO navegamos: o painel
+      // de divergência no doc atual passa a mostrar o banner verde "nome já
+      // justificado" e o cliente segue resolvendo as outras divergências.
+      // Apenas limpamos o resultado anterior para refletir a carga recarregada.
+      if (certidaoJaAprovada) {
+        setResultadoDoc(null);
+        return;
+      }
+      // Caso normal: pendência criada/existente. Navegar para o item da
+      // certidão para que o upload aconteça no lugar certo.
+      const novoDocId = out?.document_id ?? null;
+      const fila = construirFilaGuia(c).filter((d) => !pularIds.has(d.id));
+      const alvoNaFila = novoDocId
+        ? fila.find((d) => d.id === novoDocId)
+        : fila.find(
+            (d) =>
+              String(d.tipo_documento ?? "").toLowerCase() === "certidao_alteracao_nome",
+          );
+      if (alvoNaFila) {
+        avancarPara(c, pularIds, alvoNaFila.id, "certidao_alteracao_nome");
+      } else {
+        // Fallback defensivo: não conseguimos localizar a pendência na fila.
+        // Exibe o aviso com botão de "Ir para pendência da certidão".
+        setAvisoIrParaCertidao(novoDocId);
+      }
     } catch (e: any) {
       setErroAcao(e?.message ?? "Erro ao iniciar comprovação.");
     } finally {
