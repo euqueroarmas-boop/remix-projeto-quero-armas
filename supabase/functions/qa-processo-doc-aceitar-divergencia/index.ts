@@ -114,8 +114,19 @@ Deno.serve(async (req) => {
     if (!cliente) return json({ error: "cliente_not_found" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
 
-    // Permite dono OU staff/equipe QA (perfil em qa_usuarios_perfis ativo).
-    const isOwner = cliente.user_id === authUserId;
+    // Permite dono direto, vínculo do portal OU staff/equipe QA.
+    const isDirectOwner = cliente.user_id === authUserId;
+    let isLinkedOwner = false;
+    if (!isDirectOwner) {
+      const { data: link } = await admin
+        .from("cliente_auth_links")
+        .select("qa_cliente_id")
+        .eq("user_id", authUserId)
+        .eq("qa_cliente_id", targetClienteId)
+        .maybeSingle();
+      isLinkedOwner = !!link;
+    }
+    const isOwner = isDirectOwner || isLinkedOwner;
     let isStaff = false;
     if (!isOwner) {
       const { data: perfil } = await admin
