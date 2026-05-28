@@ -53,6 +53,8 @@ function mensagemAmigavelErro(status: number | null, msg: string): string {
 interface Props {
   processoId: string;
   clienteId: number;
+  /** Documento que disparou o wizard (gravado em wizard_pre_documento.documento_id). */
+  documentoId?: string | null;
   overrides?: OverridesMap;
   onConfirmed: () => void;
   onBack: () => void;
@@ -67,7 +69,7 @@ interface ReuseSuggestion {
   criadoEm: string | null;
 }
 
-export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, onConfirmed, onBack }: Props) {
+export default function ClubeFiliacaoStep({ processoId, clienteId, documentoId, overrides, onConfirmed, onBack }: Props) {
   const [phase, setPhase] = useState<SubPhase>("search");
 
   // Texto editável pelo admin via qa_template_placeholder_config.
@@ -246,6 +248,7 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, on
     const payload = {
       processo_id: processoId,
       clube_id_selecionado: clubeSelecionado?.id ?? null,
+      documento_id_origem: documentoId || null,
       origem:
         origem === "declaracao"
           ? "declaracao_filiacao_cliente"
