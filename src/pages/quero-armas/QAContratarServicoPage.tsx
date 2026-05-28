@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, ShoppingBag, Sparkles, FileText, ChevronRight, Shield, Loader2 } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Sparkles, FileText, ChevronRight, Shield, Loader2, X } from "lucide-react";
 
 /* =============================================================================
  * QAContratarServicoPage — catálogo de serviços/produtos para o cliente.
@@ -25,6 +25,7 @@ interface CatalogoItem {
   exige_pagamento: boolean;
   ativo: boolean;
   display_order: number;
+  exige_acervo: boolean | null;
 }
 
 function formatBRL(v: number | null) {
@@ -34,6 +35,8 @@ function formatBRL(v: number | null) {
 
 export default function QAContratarServicoPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const trilha = searchParams.get("trilha"); // "inicial" | "continuidade" | null
   const [items, setItems] = useState<CatalogoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [logado, setLogado] = useState(false);
@@ -44,7 +47,7 @@ export default function QAContratarServicoPage() {
       setLogado(!!sess.session);
       const { data, error } = await supabase
         .from("qa_servicos_catalogo" as any)
-        .select("id, slug, nome, categoria, tipo, descricao_curta, preco, recorrente, gera_processo, exige_pagamento, ativo, display_order")
+        .select("id, slug, nome, categoria, tipo, descricao_curta, preco, recorrente, gera_processo, exige_pagamento, ativo, display_order, exige_acervo")
         .eq("ativo", true)
         .order("display_order", { ascending: true });
       if (!error && data) setItems(data as any);
@@ -52,15 +55,36 @@ export default function QAContratarServicoPage() {
     })();
   }, []);
 
+  // BLOCO 9 — Filtra catálogo pela trilha escolhida no Assistente de Entrada.
+  // `inicial` → exige_acervo IN (false, null);  `continuidade` → IN (true, null).
+  const itemsFiltrados = useMemo(() => {
+    if (trilha === "inicial") return items.filter((i) => i.exige_acervo !== true);
+    if (trilha === "continuidade") return items.filter((i) => i.exige_acervo !== false);
+    return items;
+  }, [items, trilha]);
+
   const grupos = useMemo(() => {
     const map = new Map<string, CatalogoItem[]>();
-    items.forEach((it) => {
+    itemsFiltrados.forEach((it) => {
       const arr = map.get(it.categoria) ?? [];
       arr.push(it);
       map.set(it.categoria, arr);
     });
     return Array.from(map.entries());
-  }, [items]);
+  }, [itemsFiltrados]);
+
+  function limparTrilha() {
+    const next = new URLSearchParams(searchParams);
+    next.delete("trilha");
+    setSearchParams(next, { replace: true });
+  }
+
+  const labelTrilha =
+    trilha === "inicial"
+      ? "Tirar/renovar meu CR"
+      : trilha === "continuidade"
+      ? "Mexer em arma que já tenho"
+      : null;
 
   const handleContratar = (slug: string) => {
     if (logado) {
