@@ -124,6 +124,22 @@ export default function QAContratarServicoPage() {
 
         {/* Conteúdo */}
         <div className="max-w-3xl mx-auto px-4 py-5 space-y-6">
+          {labelTrilha && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#7A1F2B]/30 bg-[#FBF3F4] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                Trilha: {labelTrilha}
+                <button
+                  type="button"
+                  onClick={limparTrilha}
+                  className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-[#7A1F2B]/10"
+                  aria-label="Remover filtro de trilha"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+              <span className="text-[11px] text-slate-500">Mostrando apenas serviços compatíveis</span>
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
