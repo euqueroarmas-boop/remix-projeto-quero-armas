@@ -148,6 +148,12 @@ Deno.serve(async (req) => {
         await evento("aprovacao_manual", `Equipe aprovou manualmente "${doc.nome_documento}".`);
         await auditarStatus("aprovado", null, "aprovar");
         await fecharCicloAlteracaoNomeSeAplicavel();
+        try {
+          const { popularArsenalAposAprovacao } = await import("../_shared/popularArsenalAprovado.ts");
+          await popularArsenalAposAprovacao(supabase, documento_id);
+        } catch (e) {
+          console.error("[arsenal_auto] falhou no caminho equipe (aprovar):", e);
+        }
         return json({ ok: true });
       }
 
@@ -197,6 +203,12 @@ Deno.serve(async (req) => {
           await auditarStatus("aprovado", observacoes ?? null, "aprovar_e_modelar");
         }
         await fecharCicloAlteracaoNomeSeAplicavel();
+        try {
+          const { popularArsenalAposAprovacao } = await import("../_shared/popularArsenalAprovado.ts");
+          await popularArsenalAposAprovacao(supabase, documento_id);
+        } catch (e) {
+          console.error("[arsenal_auto] falhou no caminho equipe (aprovar_e_modelar):", e);
+        }
         // 2) Encadeia a função de promoção a modelo (passando o JWT da equipe)
         const auth = req.headers.get("Authorization") || "";
         const r = await fetch(`${url}/functions/v1/qa-modelo-aprovado-criar`, {
