@@ -236,6 +236,7 @@ export default function ChecklistGuiadoModal({
       setDocAtivoId(resumeId ?? fila[0].id);
       setResultadoDoc(null);
       setErroAcao(null);
+      setAvisoIrParaCertidao(null);
       setFase("item");
     }
   };
