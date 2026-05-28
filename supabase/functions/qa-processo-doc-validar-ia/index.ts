@@ -502,10 +502,52 @@ function ehDocumentoIdentidadeChecklist(tipo: any): boolean {
 function iaDetectouCin(parsed: any): boolean {
   const cx = parsed?.campos_extraidos || {};
   const cc = parsed?.campos_complementares || {};
-  const raw = [parsed?.tipo_documento_detectado, cx?.tipo_documento_detectado, cx?.tipo_documento, cc?.tipo_documento_detectado]
+  const md = parsed?.metadados_documento || {};
+  const raw = [
+    parsed?.tipo_documento_detectado,
+    cx?.tipo_documento_detectado,
+    cx?.tipo_documento,
+    cc?.tipo_documento_detectado,
+    parsed?.motivo_rejeicao,
+    parsed?.observacoes,
+    cc?.titulo_documento,
+    cc?.cabecalho,
+    md?.descricao,
+  ]
     .map((v) => String(v || "").toLowerCase())
-    .join(" ");
-  return raw.includes("cin") || raw.includes("carteira de identidade nacional") || raw.includes("gov.br");
+    .join(" | ");
+  return (
+    raw.includes("cin") ||
+    raw.includes("carteira de identidade nacional") ||
+    raw.includes("gov.br") ||
+    raw.includes("governo digital") ||
+    raw.includes("identificação civil nacional")
+  );
+}
+
+/**
+ * Verifica se há dados pessoais mínimos extraídos para considerar a CIN
+ * gov.br válida (ainda que vá para revisão humana). Critério: ao menos
+ * nome OU cpf/numero_registro, e algum dado de complemento (data_nasc,
+ * filiacao, naturalidade, MRZ ou QR Code).
+ */
+function cinTemDadosMinimos(parsed: any): boolean {
+  const cx = parsed?.campos_extraidos || {};
+  const cc = parsed?.campos_complementares || {};
+  const md = parsed?.metadados_documento || {};
+  const temNome = !!(cx.nome_completo || cx.nome || cx.nome_titular);
+  const temId = !!(cx.cpf || cx.rg || cx.numero_documento || cx.numero_registro);
+  const temComplemento = !!(
+    cx.data_nascimento ||
+    cx.filiacao_completa ||
+    cx.nome_mae ||
+    cx.nome_pai ||
+    cx.naturalidade ||
+    cc.mrz ||
+    cc.qr_code ||
+    md?.tem_qr_code
+  );
+  return (temNome || temId) && (temNome ? true : temComplemento);
 }
 
 async function reconciliarDivergenciasNomeAprovada(
