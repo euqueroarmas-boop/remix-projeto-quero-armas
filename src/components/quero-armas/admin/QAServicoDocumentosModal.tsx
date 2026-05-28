@@ -46,6 +46,7 @@ import { CSS } from "@dnd-kit/utilities";
 import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
 import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
 import QAServicoDocumentosLinks from "./QAServicoDocumentosLinks";
+import { WIZARD_REGISTRY } from "@/lib/quero-armas/checklistWizardGate";
 
 /* =============================================================================
  * QAServicoDocumentosModal — Editor de DOCUMENTOS EXIGIDOS de um serviço.
@@ -721,6 +722,27 @@ function ExigenciaCard({
       rv.template_key = value;
     } else {
       delete (rv as any).template_key;
+    }
+    onPatch({ regra_validacao: rv });
+  }
+
+  const currentWizardKey =
+    (row.regra_validacao as any)?.wizard_pre_documento?.wizard_key ?? "";
+
+  function setRegraWizardPreDocumento(wizardKey: string) {
+    const rv =
+      row.regra_validacao && typeof row.regra_validacao === "object"
+        ? { ...(row.regra_validacao as any) }
+        : {};
+    if (wizardKey) {
+      rv.wizard_pre_documento = {
+        enabled: true,
+        wizard_key: wizardKey,
+        required: true,
+        bloquear_documento_ate_responder: true,
+      };
+    } else {
+      delete rv.wizard_pre_documento;
     }
     onPatch({ regra_validacao: rv });
   }
