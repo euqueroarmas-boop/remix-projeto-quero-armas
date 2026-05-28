@@ -572,7 +572,7 @@ Deno.serve(async (req) => {
 
     const { data: cliente } = await supabase
       .from("qa_clientes")
-      .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep")
+      .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep, estado_civil")
       .eq("id", processo.cliente_id).maybeSingle();
 
     // Alteração de nome em cartório (se já comprovada neste processo): usamos
@@ -591,6 +591,7 @@ Deno.serve(async (req) => {
     const cadastroParaPrompt = {
       ...(cliente ?? {}),
       nomes_aceitos_alteracao: nomesAceitosAlteracao,
+      estado_civil_normalizado: normalizarEstadoCivil((cliente as any)?.estado_civil),
     };
 
     await supabase.from("qa_processo_documentos")
