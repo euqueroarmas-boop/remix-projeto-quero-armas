@@ -482,7 +482,7 @@ export default function ChecklistGuiadoModal({
         {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ processo_id: carga.processo.id }),
+          body: JSON.stringify({ processo_id: pid }),
         },
       );
       const out = await resp.json().catch(() => ({}));
@@ -495,6 +495,7 @@ export default function ChecklistGuiadoModal({
         status: statusRet,
         certidaoJaAprovada,
         reaproveitado: !!out?.reaproveitado,
+        jaExistia: !!out?.ja_existia,
       };
   };
 
@@ -527,6 +528,8 @@ export default function ChecklistGuiadoModal({
         );
       } else if (out.certidaoJaAprovada) {
         toast.success("Alteração de nome já comprovada por certidão averbada.");
+      } else if (out.jaExistia) {
+        toast.success("Abrimos o item correto para anexar a certidão averbada.");
       } else {
         toast.success(
           "Pendência criada. Anexe a certidão averbada no item correto que abrimos agora.",
