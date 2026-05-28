@@ -942,6 +942,7 @@ export default function ChecklistGuiadoModal({
   const abrirConfirmacaoTemplate = async (doc: GuiaDoc, templateKey: string) => {
     if (!carga) return;
     setErroAcao(null);
+    if (gateWizardPre(doc, { tipo: "baixar_template", payload: templateKey })) return;
     setBaixandoTemplate(true);
     setWizard({ open: true, doc, templateKey });
   };
