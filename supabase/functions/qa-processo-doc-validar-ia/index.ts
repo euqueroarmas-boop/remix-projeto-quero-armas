@@ -222,7 +222,7 @@ const VALIDAR_TOOL = {
         tipo_correto: { type: "boolean" },
         legivel: { type: "boolean" },
         confianca: { type: "number" },
-        tipo_documento_detectado: { type: "string", description: "Tipo real detectado: rg, cin, cnh, energia, agua, gas, internet, telefone_fixo, iptu, cartao_credito, boleto, extrato_bancario, outro." },
+        tipo_documento_detectado: { type: "string", description: "Tipo real detectado: rg, cin, cnh, energia, agua, gas, internet, telefone_fixo, iptu, certidao_casamento, certidao_nascimento, certidao_alteracao_nome, cartao_credito, boleto, extrato_bancario, outro." },
         campos_extraidos: { type: "object", additionalProperties: true },
         campos_complementares: { type: "object", additionalProperties: true, description: "Dados úteis sem campo fixo no cadastro principal." },
         metadados_documento: { type: "object", additionalProperties: true, description: "Metadados gerais (qualidade, idioma, observações operacionais)." },
