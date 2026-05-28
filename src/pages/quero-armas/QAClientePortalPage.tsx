@@ -1415,7 +1415,16 @@ export default function QAClientePortalPage() {
                   const metrics = computeChecklistMetrics(meus);
                   const sKey = String(p.status || "").toLowerCase();
                   const done = ["concluido", "deferido", "finalizado"].includes(sKey);
+                  const prontoProto = sKey === "pronto_para_protocolar";
                   const bad = ["indeferido", "cancelado"].includes(sKey);
+                  const badgeCls = done || prontoProto
+                    ? "bg-emerald-100 text-emerald-800"
+                    : bad
+                      ? "bg-red-100 text-red-800"
+                      : "bg-amber-100 text-amber-800";
+                  const badgeLabel = prontoProto
+                    ? "DOCUMENTAÇÃO COMPLETA"
+                    : (sKey.replace(/_/g, " ") || "ATIVO");
                   return (
                     <button
                       key={p.id}
@@ -1425,14 +1434,14 @@ export default function QAClientePortalPage() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="text-[13px] font-bold text-slate-900 truncate">{p.servico_nome || "Serviço"}</div>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
-                          {sKey.replace(/_/g, " ") || "ATIVO"}
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${badgeCls}`}>
+                          {badgeLabel}
                         </span>
                       </div>
                       <div className="mt-2 w-full h-1.5 rounded-full bg-slate-200">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${metrics.progresso}%`, background: done ? "hsl(152 60% 42%)" : bad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }}
+                          style={{ width: `${metrics.progresso}%`, background: (done || prontoProto) ? "hsl(152 60% 42%)" : bad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }}
                         />
                       </div>
                       <div className="flex justify-between text-[10px] mt-1">
