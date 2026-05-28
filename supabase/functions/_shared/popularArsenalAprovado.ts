@@ -111,6 +111,20 @@ export async function popularArsenalAposAprovacao(
         dados_json: { motivo: "sem_identificador", campos_complementares: cx },
         ator: "sistema",
       });
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: doc.processo_id,
+        documento_id: doc.id,
+        tipo_evento: "reaberto_para_revisao_arsenal",
+        descricao: "Documento reaberto para revisão humana: IA não extraiu identificador da arma.",
+        dados_json: { motivo: "sem_identificador", suprimir_notificacao_cliente: true },
+        ator: "sistema",
+      });
+      await supabase.from("qa_processo_documentos")
+        .update({
+          status: "revisao_humana",
+          motivo_rejeicao: "Documento aprovado, mas a IA não extraiu identificador da arma (série/CRAF/SINARM/SIGMA). Cadastre manualmente no Meu Arsenal ou verifique a qualidade do documento.",
+        })
+        .eq("id", doc.id);
       return { resultado: "sem_identificador" };
     }
 
@@ -150,6 +164,20 @@ export async function popularArsenalAposAprovacao(
               },
               ator: "sistema",
             });
+            await supabase.from("qa_processo_eventos").insert({
+              processo_id: doc.processo_id,
+              documento_id: doc.id,
+              tipo_evento: "reaberto_para_revisao_arsenal",
+              descricao: "Documento reaberto para revisão humana: dados extraídos divergem da arma vinculada.",
+              dados_json: { motivo: "divergencia", suprimir_notificacao_cliente: true },
+              ator: "sistema",
+            });
+            await supabase.from("qa_processo_documentos")
+              .update({
+                status: "revisao_humana",
+                motivo_rejeicao: "Os dados extraídos do documento (série/CRAF) não batem com a arma selecionada no upload. Confira se o documento foi anexado à arma certa.",
+              })
+              .eq("id", doc.id);
             return { resultado: "divergencia", detalhe: "divergencia com arma vinculada" };
           }
         }
