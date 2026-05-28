@@ -350,7 +350,16 @@ export default function DivergenciasResolverPanel({
                       {podeAtualizarCadastro && (
                         <button
                           type="button"
-                          onClick={() => onAtualizarCadastroComGrupo("nome")}
+                          onClick={() => {
+                            const novoNome = (itens || [])
+                              .map((x) => String(x.valor_documento || "").trim())
+                              .find((v) => v.length > 0) || "";
+                            if (onUsarNomeDoDocumento && novoNome) {
+                              void onUsarNomeDoDocumento(novoNome);
+                            } else {
+                              onAtualizarCadastroComGrupo("nome");
+                            }
+                          }}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50"
                         >
                           <Sparkles className="h-3.5 w-3.5" />
