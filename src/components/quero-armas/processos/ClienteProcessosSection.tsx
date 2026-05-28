@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard, CalendarClock, Timer } from "lucide-react";
 import { getStatusProcesso, formatDate } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
+import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 
 interface Processo {
   id: string;
@@ -73,9 +74,10 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
       const enriched: Processo[] = (procs ?? []).map((p: any) => {
         const myDocs = (docs ?? []).filter((d: any) => d.processo_id === p.id);
         const total = myDocs.length;
-        // pendentes: apenas obrigatórios não satisfeitos. dispensado_grupo NÃO é pendência.
-        const pendentes = myDocs.filter((d: any) => d.obrigatorio && (d.status === "pendente" || d.status === "invalido" || d.status === "divergente")).length;
-        const aprovados = myDocs.filter((d: any) => d.status === "aprovado" || d.status === "dispensado_grupo").length;
+        // Bloco 13: usa os mesmos helpers canônicos do Admin/drawer para que
+        // o card do cliente reflita EXATAMENTE o checklist do processo.
+        const pendentes = myDocs.filter((d: any) => d.obrigatorio && isChecklistPendente(d.status)).length;
+        const aprovados = myDocs.filter((d: any) => isChecklistCumprido(d.status)).length;
         const docCritico = p.prazo_critico_doc_id ? myDocs.find((d: any) => d.id === p.prazo_critico_doc_id) : null;
         const prazo_critico_doc_label = docCritico?.tipo_documento ? String(docCritico.tipo_documento).replace(/_/g, " ").toUpperCase() : null;
 
