@@ -349,6 +349,7 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, on
             state={form}
             onChange={setForm}
             origem={origem}
+            overrides={overrides}
             readonlyNome={!!clubeSelecionado && clubeSelecionado.status_verificacao === "verificado"}
           />
           <button
@@ -393,6 +394,7 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, overrides, on
             state={form}
             onChange={setForm}
             origem={origem}
+            overrides={overrides}
             readonlyNome={!!clubeSelecionado && clubeSelecionado.status_verificacao === "verificado"}
           />
         </div>
