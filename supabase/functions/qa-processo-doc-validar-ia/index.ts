@@ -859,6 +859,12 @@ Deno.serve(async (req) => {
     // (a) Se este é o próprio doc da certidão averbada, NUNCA gere divergência
     //     de nome contra o cadastro — é o conteúdo esperado do documento.
     if (doc.tipo_documento === "certidao_alteracao_nome") {
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const cc: Record<string, any> = parsed.campos_complementares || {};
+      for (const k of ["nome_anterior", "nome_atual", "tipo_certidao", "data_averbacao", "cartorio_registro", "cpf", "data_emissao"]) {
+        if ((cx[k] == null || String(cx[k]).trim() === "") && cc[k] != null) cx[k] = cc[k];
+      }
+      parsed.campos_extraidos = cx;
       parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
         const c = String(d?.campo || "").toLowerCase();
         return !["nome", "nome_titular", "titular", "nome_completo"].includes(c);
