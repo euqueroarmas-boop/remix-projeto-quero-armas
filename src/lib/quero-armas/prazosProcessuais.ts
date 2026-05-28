@@ -185,3 +185,88 @@ export function pickMarcoExato(dias: number): number | null {
   if (dias < 0) return -1;
   return (MARCOS_PRAZO as readonly number[]).includes(dias) ? dias : null;
 }
+
+// ============================================================================
+// Prazo crítico do processo (qa_processos.prazo_critico_data)
+// ----------------------------------------------------------------------------
+// Decide se um documento do processo deve participar do cálculo do "prazo
+// crítico" exibido no header do drawer. A regra precisa ignorar:
+//   - status que cancelam o item (nao_aplicavel/dispensado*/hub_reaproveitado/
+//     arquivado/excluido/cancelado)
+//   - certidões civis sem validade real (nascimento/casamento/alteração nome)
+//   - documentos sem `data_validade_efetiva`
+//   - séries anuais antigas: para `comprovante_endereco_ano_YYYY`, manter
+//     apenas o MAIOR ano aprovado/validado no processo
+// ============================================================================
+
+export interface DocParaPrazoCritico {
+  id?: string | number;
+  tipo_documento?: string | null;
+  status?: string | null;
+  data_validade_efetiva?: string | null;
+  arquivado?: boolean | null;
+}
+
+const STATUS_INATIVO_PRAZO = new Set([
+  "nao_aplicavel",
+  "dispensado",
+  "dispensado_grupo",
+  "dispensado_por_reaproveitamento",
+  "hub_reaproveitado",
+  "arquivado",
+  "excluido",
+  "cancelado",
+]);
+
+const STATUS_CUMPRIDO_PRAZO = new Set(["aprovado", "validado"]);
+
+const CERTIDOES_CIVIS_SEM_VALIDADE = new Set([
+  "certidao_nascimento",
+  "certidao_casamento",
+  "certidao_alteracao_nome",
+]);
+
+const REGEX_ENDERECO_ANO = /^comprovante_endereco_ano_(\d{4})$/;
+
+/** Maior ano da série `comprovante_endereco_ano_YYYY` aprovado/validado. */
+export function maiorAnoEnderecoAprovado(
+  docs: DocParaPrazoCritico[] | null | undefined,
+): number | null {
+  let max: number | null = null;
+  for (const d of docs ?? []) {
+    const m = String(d.tipo_documento ?? "").match(REGEX_ENDERECO_ANO);
+    if (!m) continue;
+    if (!STATUS_CUMPRIDO_PRAZO.has(String(d.status ?? "").toLowerCase())) continue;
+    const ano = Number(m[1]);
+    if (!Number.isFinite(ano)) continue;
+    if (max === null || ano > max) max = ano;
+  }
+  return max;
+}
+
+export function isDocumentoAtivoParaPrazoCritico(
+  doc: DocParaPrazoCritico,
+  docsDoProcesso: DocParaPrazoCritico[] = [],
+): boolean {
+  if (!doc) return false;
+  if (doc.arquivado === true) return false;
+  if (!doc.data_validade_efetiva) return false;
+
+  const status = String(doc.status ?? "").toLowerCase();
+  if (STATUS_INATIVO_PRAZO.has(status)) return false;
+
+  const tipo = String(doc.tipo_documento ?? "").toLowerCase();
+  if (CERTIDOES_CIVIS_SEM_VALIDADE.has(tipo)) return false;
+
+  // Série anual de comprovante de endereço: descartar anos anteriores ao
+  // maior ano aprovado/validado já existente no processo. O MAIOR ano
+  // sempre é mantido.
+  const m = tipo.match(REGEX_ENDERECO_ANO);
+  if (m) {
+    const anoDoc = Number(m[1]);
+    const anoMax = maiorAnoEnderecoAprovado(docsDoProcesso);
+    if (anoMax !== null && Number.isFinite(anoDoc) && anoDoc < anoMax) return false;
+  }
+
+  return true;
+}

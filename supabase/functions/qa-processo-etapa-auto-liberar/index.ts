@@ -27,6 +27,7 @@ function json(body: Record<string, unknown>, status = 200) {
 const CUMPRIDO = new Set([
   "aprovado", "validado", "concluido", "concluído",
   "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento", "nao_aplicavel",
+  "hub_reaproveitado",
 ]);
 const EM_ANALISE = new Set([
   "em_analise", "enviado", "fila", "processando",
@@ -61,6 +62,20 @@ function isPergunta(d: any): boolean {
   const tipoRegra = d?.regra_validacao?.tipo;
   if (tipoRegra === "pergunta") return true;
   return String(d?.tipo_documento || "").toLowerCase().startsWith("pergunta_");
+}
+
+// Item oculto por condição não satisfeita. Mantém paridade com
+// src/lib/quero-armas/itemBloqueanteEtapa.ts.
+function ocultoPorCondicao(d: any, respostas: Record<string, any>): boolean {
+  const cond = d?.regra_validacao?.condicional;
+  if (!cond || typeof cond !== "object") return false;
+  const chave = cond.depende_de;
+  if (!chave) return false;
+  const v = respostas?.[chave];
+  if (v === undefined || v === null || v === "") return true;
+  if (cond.valor === undefined) return false;
+  if (Array.isArray(cond.valor)) return !cond.valor.map(String).includes(String(v));
+  return String(cond.valor) !== String(v);
 }
 
 Deno.serve(async (req) => {
@@ -130,23 +145,60 @@ Deno.serve(async (req) => {
     const lista = (docs || []) as any[];
     const respostas = (processo as any).respostas_questionario_json || {};
 
+    // ----------------------------------------------------------------------
+    // RECONCILIAÇÃO INLINE de perguntas-pivot: se a resposta já existe em
+    // respostas_questionario_json mas o status do documento ainda está
+    // pendente/aguardando, marcar como `dispensado_grupo` (cumprido canônico)
+    // e registrar evento `pergunta_pivot_reconciliada`. Defesa contra estado
+    // dessincronizado de processos antigos.
+    // ----------------------------------------------------------------------
+    const reconciliados: string[] = [];
+    for (const d of lista) {
+      if (!isPergunta(d)) continue;
+      const chave = d?.regra_validacao?.chave;
+      if (!chave) continue;
+      const v = respostas[chave];
+      if (v === undefined || v === null || v === "") continue;
+      if (CUMPRIDO.has(String(d.status || "").toLowerCase())) continue;
+      const { error: rcErr } = await admin
+        .from("qa_processo_documentos")
+        .update({ status: "dispensado_grupo", updated_at: new Date().toISOString() })
+        .eq("id", d.id);
+      if (!rcErr) {
+        reconciliados.push(d.id);
+        d.status = "dispensado_grupo";
+        await admin.from("qa_processo_eventos").insert({
+          processo_id: processoId,
+          tipo_evento: "pergunta_pivot_reconciliada",
+          descricao: `PERGUNTA-PIVOT ${d.tipo_documento} RECONCILIADA (resposta presente no questionário)`,
+          ator: isStaff ? "sistema_reconciliacao_staff" : "sistema_reconciliacao_cliente",
+          dados_json: { documento_id: d.id, chave, valor: v },
+        });
+      }
+    }
+
     const docsEtapa = lista.filter(
       (d) => etapaDoTipo(d.tipo_documento, d.etapa) === etapaAtual && d.obrigatorio !== false,
     );
 
     if (docsEtapa.length > 0) {
       for (const d of docsEtapa) {
+        // Item condicional oculto → não aplicável → não bloqueia.
+        if (ocultoPorCondicao(d, respostas)) continue;
+
         if (isPergunta(d)) {
           const chave = d?.regra_validacao?.chave;
           const v = chave ? respostas[chave] : undefined;
+          if (CUMPRIDO.has(String(d.status || "").toLowerCase())) continue;
           if (v === undefined || v === null || v === "") {
             return json({ liberada: false, motivo: "pergunta_pendente", etapa_atual: etapaAtual });
           }
           continue;
         }
         const st = String(d.status || "").toLowerCase();
+        if (CUMPRIDO.has(st)) continue;
         if (EM_ANALISE.has(st)) return json({ liberada: false, motivo: "documento_em_analise", etapa_atual: etapaAtual });
-        if (!CUMPRIDO.has(st)) return json({ liberada: false, motivo: "documento_pendente", etapa_atual: etapaAtual });
+        return json({ liberada: false, motivo: "documento_pendente", etapa_atual: etapaAtual });
       }
     }
 
@@ -164,7 +216,13 @@ Deno.serve(async (req) => {
       tipo_evento: "etapa_liberada_automaticamente",
       descricao: `ETAPA ${proximaEtapa} LIBERADA AUTOMATICAMENTE (checklist da etapa ${etapaAtual} cumprido)`,
       ator: isStaff ? "sistema_auto" : "sistema_auto_cliente",
-      dados_json: { etapa_anterior: etapaAtual, etapa_nova: proximaEtapa, modo: "automatico", origem: body?.origem || null },
+      dados_json: {
+        etapa_anterior: etapaAtual,
+        etapa_nova: proximaEtapa,
+        modo: "automatico",
+        origem: body?.origem || null,
+        reconciliados: reconciliados.length,
+      },
     });
 
     // Após liberar etapa, checa se TODAS as etapas já estão cumpridas e o
@@ -177,7 +235,12 @@ Deno.serve(async (req) => {
       });
     } catch (e) { console.warn("[etapa-auto-liberar] checar-conclusao falhou", e); }
 
-    return json({ liberada: true, etapa_anterior: etapaAtual, etapa_nova: proximaEtapa });
+    return json({
+      liberada: true,
+      etapa_anterior: etapaAtual,
+      etapa_nova: proximaEtapa,
+      reconciliados: reconciliados.length,
+    });
   } catch (err: any) {
     console.error("qa-processo-etapa-auto-liberar:", err);
     return json({ error: err?.message || "erro_interno" }, 500);
