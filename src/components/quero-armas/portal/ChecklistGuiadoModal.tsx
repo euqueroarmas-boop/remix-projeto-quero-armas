@@ -724,6 +724,7 @@ export default function ChecklistGuiadoModal({
     const titulos: Record<GrupoDivergencia, string> = {
       nome: "Revise antes de atualizar seu nome",
       endereco: "Revise antes de atualizar seu endereço",
+      estado_civil: "Revise antes de atualizar seu estado civil",
       rg: "Revise antes de atualizar seu RG",
       contato: "Revise antes de atualizar seu contato",
       cpf: "Revise antes de atualizar",
