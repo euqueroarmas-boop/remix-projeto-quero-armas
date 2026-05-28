@@ -900,6 +900,15 @@ export default function ChecklistGuiadoModal({
   >({ open: false, doc: null, templateKey: null });
   const [editarCadastroAberto, setEditarCadastroAberto] = useState(false);
 
+  // ----- Wizard de Perguntas vinculado a uma exigência (regra_validacao.wizard_pre_documento) -----
+  type WizardPreAction = "anexar" | "baixar_template" | "reaproveitar";
+  const [wizardPre, setWizardPre] = useState<{
+    open: boolean;
+    doc: GuiaDoc | null;
+    cfg: WizardPreDocumentoConfig | null;
+    acaoPendente: { tipo: WizardPreAction; payload?: any } | null;
+  }>({ open: false, doc: null, cfg: null, acaoPendente: null });
+
   // ----- Sugestão de atualização de cadastro (Fase 5) -----
   const [sugestao, setSugestao] = useState<
     | {
