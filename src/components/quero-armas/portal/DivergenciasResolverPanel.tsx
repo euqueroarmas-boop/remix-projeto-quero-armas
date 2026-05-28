@@ -310,11 +310,6 @@ export default function DivergenciasResolverPanel({
 
   return (
     <div className="w-full space-y-2 text-left">
-      <p className="text-[12px] text-slate-600">
-        Encontramos diferenças entre o documento e seu cadastro. Resolva cada
-        uma abaixo.
-      </p>
-
       {grupos.map(({ grupo, itens }) => {
         const Icon = GRUPO_ICON[grupo];
         return (
@@ -335,7 +330,7 @@ export default function DivergenciasResolverPanel({
                 </div>
 
                 {/* Pares valor_documento × valor_cadastro */}
-                {itens.length > 0 && grupo !== "endereco" && (
+                {itens.length > 0 && grupo !== "endereco" && grupo !== "estado_civil" && (
                   <div className="mt-2 space-y-1.5">
                     {itens.map((it, idx) => (
                       <div
@@ -448,6 +443,17 @@ export default function DivergenciasResolverPanel({
                       onEditarCadastroManual={onEditarCadastroManual}
                       onReenviarDocumento={onReenviarDocumento}
                       onMarcarComprovanteAntigo={onMarcarComprovanteAntigo}
+                      onAceitarDivergenciaCadastro={onAceitarDivergenciaCadastro}
+                    />
+                  )}
+
+                  {grupo === "estado_civil" && (
+                    <EstadoCivilEscolhaCard
+                      itens={itens}
+                      podeAtualizarCadastro={podeAtualizarCadastro}
+                      onAtualizarCadastroComGrupo={onAtualizarCadastroComGrupo}
+                      onEditarCadastroManual={onEditarCadastroManual}
+                      onReenviarDocumento={onReenviarDocumento}
                       onAceitarDivergenciaCadastro={onAceitarDivergenciaCadastro}
                     />
                   )}
