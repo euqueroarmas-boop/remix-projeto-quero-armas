@@ -168,6 +168,10 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   // atual) são diferentes — é exatamente o que estamos comprovando.
   certidao_alteracao_nome:
     "Certidão averbada (casamento, nascimento ou outro documento oficial) que comprova ALTERAÇÃO DE NOME em cartório. Extraia obrigatoriamente: nome_anterior (nome completo ANTES da alteração), nome_atual (nome completo APÓS a alteração/averbação), tipo_certidao ('casamento' | 'nascimento' | 'outro'), data_averbacao (YYYY-MM-DD da averbação no cartório, se visível), cartorio_registro (nome/identificação do cartório/serventia), data_emissao (YYYY-MM-DD da emissão da certidão), cpf (do titular, se constar). REGRA CRÍTICA: NÃO marque divergência de nome para este documento — a divergência entre nome_anterior e nome_atual é o conteúdo esperado. Se você identificar com clareza a ligação entre o nome_anterior e o nome_atual (ex.: averbação explícita, casamento com adoção de sobrenome), eleve a confiança; caso contrário, deixe em revisão humana.",
+  certidao_nascimento:
+    "Certidão de NASCIMENTO. Extraia: nome_completo (nome ATUAL do registrado), nome_anterior (se houver averbação de alteração de nome), tipo_certidao ('nascimento'), nome_pai, nome_mae, data_nascimento (YYYY-MM-DD), naturalidade, cartorio_registro, livro, folha, termo, data_averbacao (YYYY-MM-DD, se houver), observacoes_averbacao (texto da averbação, se houver), estado_civil_indicado (se a certidão indicar — geralmente 'solteiro' por padrão, exceto se averbação disser o contrário), data_emissao (YYYY-MM-DD da 2ª via), cpf (se constar). REGRA CRÍTICA: Certidão de nascimento NÃO tem prazo de validade neste fluxo. Se houver averbação de alteração de nome, preencha nome_anterior e observacoes_averbacao e NÃO gere divergência de nome com o cadastro — registre como conteúdo esperado. Se NÃO houver averbação, é certidão civil simples.",
+  certidao_casamento:
+    "Certidão de CASAMENTO. Extraia: nome_conjuge_1, nome_conjuge_2, nome_completo (do titular cadastrado, igual a nome_conjuge_1 ou nome_conjuge_2 conforme o cadastro), nome_anterior (nome do titular ANTES do casamento, se houve alteração), nome_atual (nome do titular APÓS o casamento), tipo_certidao ('casamento'), regime_bens, data_casamento (YYYY-MM-DD), cartorio_registro, livro, folha, termo, data_averbacao (YYYY-MM-DD, se houver — ex.: divórcio, separação, alteração de nome), observacoes_averbacao, estado_civil_indicado ('casado' por padrão; 'divorciado', 'separado' ou 'viuvo' se houver averbação correspondente), data_emissao (YYYY-MM-DD da 2ª via), cpf (se constar). REGRA CRÍTICA: Certidão de casamento NÃO tem prazo de validade neste fluxo. Se houver alteração de nome (por casamento OU por averbação posterior), preencha nome_anterior e nome_atual e NÃO gere divergência de nome.",
 };
 
 function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
@@ -176,6 +180,12 @@ function buildSystemPrompt(tipoDoc: string, cadastro: any): string {
   const isIdentificacao = ["rg", "cin", "cnh"].includes(tipoDoc);
   const isComprovanteEnd = tipoDoc === "comprovante_residencia";
   const isAlteracaoNome = tipoDoc === "certidao_alteracao_nome";
+  const isCertidaoCivil =
+    isAlteracaoNome ||
+    tipoDoc === "certidao_nascimento" ||
+    tipoDoc === "certidao_casamento" ||
+    ehCertidaoCivilSemVencimento(tipoDoc);
+  const estadoCivil = String((cadastro as any)?.estado_civil_normalizado ?? "indefinido");
   const nomesAceitos: string[] = Array.isArray(cadastro?.nomes_aceitos_alteracao)
     ? (cadastro.nomes_aceitos_alteracao as string[]).filter(Boolean)
     : [];
@@ -194,6 +204,11 @@ ${isIdentificacao ? `8. DOCUMENTO DE IDENTIFICAÇÃO: aceitos somente RG, CIN ou
 ${isComprovanteEnd ? `8. COMPROVANTE DE RESIDÊNCIA: REJEITE (tipo_correto=false) se for fatura de cartão de crédito, boleto genérico, correspondência bancária, extrato, ou documento sem vínculo claro com imóvel. ACEITE apenas energia, água, gás, internet fixa, telefone fixo ou IPTU.
 9. TERCEIROS: se o titular do comprovante for diferente do cliente, NÃO marque divergência de nome. Em vez disso, preencha campos_extraidos.endereco_em_nome_de_terceiro=true, titular_comprovante_nome e titular_comprovante_documento. O endereço deve ser extraído normalmente.` : ""}
 ${isAlteracaoNome ? `8. CERTIDÃO AVERBADA DE ALTERAÇÃO DE NOME: o conteúdo esperado é exatamente uma DIFERENÇA entre nome_anterior e nome_atual. NÃO gere divergência de nome com o cadastro. Foque em extrair nome_anterior, nome_atual, tipo_certidao, data_averbacao e cartorio_registro.` : ""}
+${isCertidaoCivil ? `8b. CERTIDÃO CIVIL (nascimento/casamento/averbação): NÃO tem prazo de validade neste fluxo — NUNCA marque "vencido" e NUNCA cite "data de validade" em motivo_rejeicao. Regras por estado civil do cliente (estado_civil_cliente="${estadoCivil}"):
+  - SOLTEIRO → documento civil base esperado: certidão de NASCIMENTO. Certidão de nascimento com averbação de alteração de nome é aceita como comprovação de alteração.
+  - CASADO → documento civil base esperado: certidão de CASAMENTO. Aceite normalmente. Se o cliente CASADO enviar certidão de NASCIMENTO (mesmo com averbação), NÃO rejeite por tipo incorreto: marque tipo_correto=true e use orientacoes_cliente="Para clientes casados, normalmente usamos a certidão de casamento. Se esta certidão de nascimento contém a averbação necessária, nossa equipe irá revisar." — a decisão final fica para revisão humana.
+  - DIVORCIADO/SEPARADO/VIUVO/INDEFINIDO → pode haver mais de um caminho legítimo (certidão de casamento atualizada com averbação de divórcio, ou certidão de nascimento). NÃO rejeite automaticamente por estado civil; em caso de dúvida, deixe para revisão humana.
+  PROIBIDO rejeitar uma certidão de NASCIMENTO com a mensagem "O documento não é uma certidão de alteração de nome" — se houver averbação, classifique como certidão civil com averbação e extraia nome_anterior, nome_atual, tipo_certidao, data_averbacao, cartorio_registro e observacoes_averbacao.` : ""}
 ${nomesAceitos.length > 0 && !isAlteracaoNome ? `10. ALTERAÇÃO DE NOME COMPROVADA NESTE PROCESSO: o cliente possui certidão averbada aprovada. Considere como nomes do cliente ACEITOS qualquer um destes: ${JSON.stringify(nomesAceitos)}. Se o nome no documento bater com QUALQUER um deles, NÃO gere divergência de nome — registre apenas em observações que o nome confere com a alteração comprovada. Outros campos (CPF, RG, datas, endereço) continuam comparados normalmente.` : ""}
 Tipo esperado: ${tipoDoc}
 Detalhes: ${docHint}
@@ -207,6 +222,7 @@ ${JSON.stringify({
   cidade: cadastro?.cidade,
   uf: cadastro?.estado ?? cadastro?.uf,
   cep: cadastro?.cep,
+  estado_civil: estadoCivil,
   nomes_aceitos_alteracao_nome: nomesAceitos.length > 0 ? nomesAceitos : undefined,
 }, null, 2)}`;
 }
@@ -398,6 +414,39 @@ function isVencido(dataEmissao: string | undefined, validadeDias: number | null 
   return limite < new Date();
 }
 
+/**
+ * Certidões civis (nascimento, casamento, averbação) NÃO têm validade
+ * para este fluxo — o que importa é o estado civil atual e a averbação.
+ * Espelho da regra do front (validadeDocumento.ts).
+ */
+function ehCertidaoCivilSemVencimento(tipo?: string | null): boolean {
+  if (!tipo) return false;
+  const t = String(tipo).toLowerCase();
+  if ([
+    "certidao_nascimento",
+    "certidao_casamento",
+    "certidao_alteracao_nome",
+    "certidao_averbacao",
+    "certidao_civil",
+  ].includes(t)) return true;
+  return /^certidao_(nascimento|casamento|averbacao|alteracao_nome)(_|$)/.test(t);
+}
+
+/** Normaliza o estado civil do cadastro para um conjunto fechado. */
+function normalizarEstadoCivil(raw: any): "solteiro" | "casado" | "divorciado" | "viuvo" | "separado" | "uniao_estavel" | "indefinido" {
+  const s = String(raw ?? "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().trim();
+  if (!s) return "indefinido";
+  if (s.startsWith("solt")) return "solteiro";
+  if (s.startsWith("cas")) return "casado";
+  if (s.startsWith("div")) return "divorciado";
+  if (s.startsWith("viu")) return "viuvo";
+  if (s.startsWith("sep")) return "separado";
+  if (s.includes("uniao")) return "uniao_estavel";
+  return "indefinido";
+}
+
 // Holerite: precisa corresponder ao mês atual ou mês imediatamente anterior.
 // Aceita "periodo_referencia" ou "mes_referencia" no formato YYYY-MM, "MM/YYYY" ou nomes.
 const MESES_PT: Record<string, number> = {
@@ -539,7 +588,7 @@ Deno.serve(async (req) => {
 
     const { data: cliente } = await supabase
       .from("qa_clientes")
-      .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep")
+      .select("id, nome_completo, cpf, rg, data_nascimento, endereco, cidade, estado, cep, estado_civil")
       .eq("id", processo.cliente_id).maybeSingle();
 
     // Alteração de nome em cartório (se já comprovada neste processo): usamos
@@ -558,6 +607,7 @@ Deno.serve(async (req) => {
     const cadastroParaPrompt = {
       ...(cliente ?? {}),
       nomes_aceitos_alteracao: nomesAceitosAlteracao,
+      estado_civil_normalizado: normalizarEstadoCivil((cliente as any)?.estado_civil),
     };
 
     await supabase.from("qa_processo_documentos")
@@ -858,10 +908,19 @@ Deno.serve(async (req) => {
     // ===== ALTERAÇÃO DE NOME EM CARTÓRIO =====
     // (a) Se este é o próprio doc da certidão averbada, NUNCA gere divergência
     //     de nome contra o cadastro — é o conteúdo esperado do documento.
-    if (doc.tipo_documento === "certidao_alteracao_nome") {
+    if (
+      doc.tipo_documento === "certidao_alteracao_nome" ||
+      doc.tipo_documento === "certidao_nascimento" ||
+      doc.tipo_documento === "certidao_casamento" ||
+      ehCertidaoCivilSemVencimento(doc.tipo_documento)
+    ) {
       const cx: Record<string, any> = parsed.campos_extraidos || {};
       const cc: Record<string, any> = parsed.campos_complementares || {};
-      for (const k of ["nome_anterior", "nome_atual", "tipo_certidao", "data_averbacao", "cartorio_registro", "cpf", "data_emissao"]) {
+      for (const k of [
+        "nome_anterior", "nome_atual", "tipo_certidao", "data_averbacao",
+        "cartorio_registro", "cpf", "data_emissao", "observacoes_averbacao",
+        "estado_civil_indicado",
+      ]) {
         if ((cx[k] == null || String(cx[k]).trim() === "") && cc[k] != null) cx[k] = cc[k];
       }
       parsed.campos_extraidos = cx;
@@ -915,7 +974,10 @@ Deno.serve(async (req) => {
     );
     const esperadoViolado = checaEsperado(parsed.campos_extraidos || {}, esperado);
     const dataEmissao = parsed.campos_extraidos?.data_emissao || parsed.campos_extraidos?.validade;
-    const vencido = isVencido(dataEmissao, doc.validade_dias);
+    // Certidões civis (nascimento/casamento/averbação) NUNCA vencem.
+    const vencido = ehCertidaoCivilSemVencimento(doc.tipo_documento)
+      ? false
+      : isVencido(dataEmissao, doc.validade_dias);
     const divergencias = parsed.divergencias || [];
     const conf = parsed.confianca ?? 0;
     let novoStatus: string;
@@ -965,11 +1027,33 @@ Deno.serve(async (req) => {
       motivoRejeicao = "Divergência entre o documento e seu cadastro: " +
         divergencias.map((d: any) => d.campo).join(", ");
     } else if (
-      doc.tipo_documento === "certidao_alteracao_nome" &&
+      (doc.tipo_documento === "certidao_alteracao_nome" ||
+        doc.tipo_documento === "certidao_nascimento" ||
+        doc.tipo_documento === "certidao_casamento" ||
+        ehCertidaoCivilSemVencimento(doc.tipo_documento)) &&
       camposFaltando.length === 0 &&
       conf >= REVISAO_HUMANA_MIN
     ) {
-      novoStatus = conf >= APROVA_AUTO_MIN ? "aprovado" : "revisao_humana";
+      // Certidões civis: aprovam só se IA muito confiante; em caso de
+      // estado civil divergente ou averbação detectada, manda para
+      // revisão humana — NUNCA rejeita automaticamente.
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const ecCadastro = normalizarEstadoCivil((cliente as any)?.estado_civil);
+      const ecDoc = normalizarEstadoCivil(cx.estado_civil_indicado);
+      const temAverbacao =
+        !!cx.nome_anterior || !!cx.data_averbacao || !!cx.observacoes_averbacao;
+      const incompativel =
+        ecCadastro !== "indefinido" &&
+        ecDoc !== "indefinido" &&
+        ecCadastro !== ecDoc;
+      // Cliente casado enviando certidão de nascimento → revisão humana.
+      const casadoEnviouNascimento =
+        ecCadastro === "casado" && doc.tipo_documento === "certidao_nascimento";
+      if (incompativel || casadoEnviouNascimento || temAverbacao) {
+        novoStatus = "revisao_humana";
+      } else {
+        novoStatus = conf >= APROVA_AUTO_MIN ? "aprovado" : "revisao_humana";
+      }
       motivoRejeicao = null;
     } else if (conf < REVISAO_HUMANA_MIN) {
       novoStatus = "invalido";
@@ -1119,11 +1203,19 @@ Deno.serve(async (req) => {
     // NUNCA sobrescrevemos qa_clientes.nome_completo — o nome oficial continua
     // sendo o do cadastro. Este bloco serve APENAS para justificar divergência
     // de nome em documentos futuros do mesmo processo.
-    if (doc.tipo_documento === "certidao_alteracao_nome") {
+    if (
+      doc.tipo_documento === "certidao_alteracao_nome" ||
+      doc.tipo_documento === "certidao_nascimento" ||
+      doc.tipo_documento === "certidao_casamento" ||
+      ehCertidaoCivilSemVencimento(doc.tipo_documento)
+    ) {
       const cx: Record<string, any> = camposExtraidosFinal || {};
       const nomeAnterior = cx.nome_anterior ? String(cx.nome_anterior).trim() : null;
       const nomeAtual = cx.nome_atual ? String(cx.nome_atual).trim() : null;
-      if (nomeAnterior && nomeAtual) {
+      // Só persiste o bloco de alteração de nome quando há averbação
+      // legítima — caso contrário a certidão é civil simples (sem
+      // alteração) e não deve injetar nomes_aceitos no processo.
+      if (nomeAnterior && nomeAtual && nomeAnterior.toLowerCase() !== nomeAtual.toLowerCase()) {
         const aprovada = novoStatus === "aprovado";
         const respostas =
           ((processo as any)?.respostas_questionario_json as Record<string, any>) ?? {};
@@ -1133,10 +1225,14 @@ Deno.serve(async (req) => {
           nome_anterior: nomeAnterior,
           nome_atual: nomeAtual,
           documento_id,
-          tipo_certidao: cx.tipo_certidao ?? null,
+          tipo_certidao: cx.tipo_certidao ?? (
+            doc.tipo_documento === "certidao_nascimento" ? "nascimento" :
+            doc.tipo_documento === "certidao_casamento" ? "casamento" : null
+          ),
+          estado_civil_base: normalizarEstadoCivil((cliente as any)?.estado_civil),
           data_averbacao: cx.data_averbacao ?? null,
           cartorio_registro: cx.cartorio_registro ?? null,
-          tipo_documento_comprobatorio: "certidao_alteracao_nome",
+          tipo_documento_comprobatorio: doc.tipo_documento,
           documento_comprobatorio_id: documento_id,
           data_validacao: new Date().toISOString(),
           origem: "ia",
