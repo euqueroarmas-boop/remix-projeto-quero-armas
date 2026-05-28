@@ -472,10 +472,18 @@ export async function enviarDocumentoGuia(
   file: File,
 ): Promise<ResultadoAcao> {
   // Validação de formato no front (UX rápida) — idêntica ao drawer.
+  // Aceita tanto extensões ("pdf","jpg") quanto MIME ("application/pdf","image/jpeg").
+  const normalizeFmt = (f: string): string => {
+    const s = String(f).toLowerCase().trim();
+    if (!s) return s;
+    const sub = s.includes("/") ? (s.split("/").pop() || s) : s;
+    return sub === "jpeg" ? "jpg" : sub;
+  };
   const fmts: string[] = Array.isArray(doc.formato_aceito)
-    ? (doc.formato_aceito as string[]).map((f) => String(f).toLowerCase())
+    ? (doc.formato_aceito as string[]).map(normalizeFmt).filter(Boolean)
     : [];
-  const ext = (file.name.split(".").pop() || "").toLowerCase();
+  const extRaw = (file.name.split(".").pop() || "").toLowerCase();
+  const ext = extRaw === "jpeg" ? "jpg" : extRaw;
   if (fmts.length > 0 && !fmts.includes(ext)) {
     const msg =
       fmts.length === 1 && fmts[0] === "pdf"
