@@ -757,6 +757,31 @@ export default function ChecklistGuiadoModal({
                     <span>{avisoRetomada}</span>
                   </div>
                 )}
+                {avisoIrParaCertidao && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                    <span>
+                      Pendência da certidão averbada criada. Anexe a certidão no item correto para
+                      não enviar no documento errado.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!carga) return;
+                        const c = await recarregarCarga(carga.processo.id);
+                        avancarPara(
+                          c,
+                          pularIds,
+                          avisoIrParaCertidao,
+                          "certidao_alteracao_nome",
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-bold text-white"
+                      style={{ background: MARROM }}
+                    >
+                      Ir para pendência da certidão
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1">
                   <div className="text-[11px] font-semibold text-slate-700">
                     Tarefa atual: <span className="font-bold text-slate-900">{docAtivo?.nome_documento ?? "Documento"}</span>
