@@ -908,10 +908,19 @@ Deno.serve(async (req) => {
     // ===== ALTERAÇÃO DE NOME EM CARTÓRIO =====
     // (a) Se este é o próprio doc da certidão averbada, NUNCA gere divergência
     //     de nome contra o cadastro — é o conteúdo esperado do documento.
-    if (doc.tipo_documento === "certidao_alteracao_nome") {
+    if (
+      doc.tipo_documento === "certidao_alteracao_nome" ||
+      doc.tipo_documento === "certidao_nascimento" ||
+      doc.tipo_documento === "certidao_casamento" ||
+      ehCertidaoCivilSemVencimento(doc.tipo_documento)
+    ) {
       const cx: Record<string, any> = parsed.campos_extraidos || {};
       const cc: Record<string, any> = parsed.campos_complementares || {};
-      for (const k of ["nome_anterior", "nome_atual", "tipo_certidao", "data_averbacao", "cartorio_registro", "cpf", "data_emissao"]) {
+      for (const k of [
+        "nome_anterior", "nome_atual", "tipo_certidao", "data_averbacao",
+        "cartorio_registro", "cpf", "data_emissao", "observacoes_averbacao",
+        "estado_civil_indicado",
+      ]) {
         if ((cx[k] == null || String(cx[k]).trim() === "") && cc[k] != null) cx[k] = cc[k];
       }
       parsed.campos_extraidos = cx;
@@ -965,7 +974,10 @@ Deno.serve(async (req) => {
     );
     const esperadoViolado = checaEsperado(parsed.campos_extraidos || {}, esperado);
     const dataEmissao = parsed.campos_extraidos?.data_emissao || parsed.campos_extraidos?.validade;
-    const vencido = isVencido(dataEmissao, doc.validade_dias);
+    // Certidões civis (nascimento/casamento/averbação) NUNCA vencem.
+    const vencido = ehCertidaoCivilSemVencimento(doc.tipo_documento)
+      ? false
+      : isVencido(dataEmissao, doc.validade_dias);
     const divergencias = parsed.divergencias || [];
     const conf = parsed.confianca ?? 0;
     let novoStatus: string;
@@ -1015,11 +1027,33 @@ Deno.serve(async (req) => {
       motivoRejeicao = "Divergência entre o documento e seu cadastro: " +
         divergencias.map((d: any) => d.campo).join(", ");
     } else if (
-      doc.tipo_documento === "certidao_alteracao_nome" &&
+      (doc.tipo_documento === "certidao_alteracao_nome" ||
+        doc.tipo_documento === "certidao_nascimento" ||
+        doc.tipo_documento === "certidao_casamento" ||
+        ehCertidaoCivilSemVencimento(doc.tipo_documento)) &&
       camposFaltando.length === 0 &&
       conf >= REVISAO_HUMANA_MIN
     ) {
-      novoStatus = conf >= APROVA_AUTO_MIN ? "aprovado" : "revisao_humana";
+      // Certidões civis: aprovam só se IA muito confiante; em caso de
+      // estado civil divergente ou averbação detectada, manda para
+      // revisão humana — NUNCA rejeita automaticamente.
+      const cx: Record<string, any> = parsed.campos_extraidos || {};
+      const ecCadastro = normalizarEstadoCivil((cliente as any)?.estado_civil);
+      const ecDoc = normalizarEstadoCivil(cx.estado_civil_indicado);
+      const temAverbacao =
+        !!cx.nome_anterior || !!cx.data_averbacao || !!cx.observacoes_averbacao;
+      const incompativel =
+        ecCadastro !== "indefinido" &&
+        ecDoc !== "indefinido" &&
+        ecCadastro !== ecDoc;
+      // Cliente casado enviando certidão de nascimento → revisão humana.
+      const casadoEnviouNascimento =
+        ecCadastro === "casado" && doc.tipo_documento === "certidao_nascimento";
+      if (incompativel || casadoEnviouNascimento || temAverbacao) {
+        novoStatus = "revisao_humana";
+      } else {
+        novoStatus = conf >= APROVA_AUTO_MIN ? "aprovado" : "revisao_humana";
+      }
       motivoRejeicao = null;
     } else if (conf < REVISAO_HUMANA_MIN) {
       novoStatus = "invalido";
