@@ -67,7 +67,9 @@ Deno.serve(async (req) => {
     cpfExiste = !!data;
   }
 
-  // Email: checa em cliente_auth_links (rápido, sem paginar auth.users)
+  // Email: checa somente vínculo Arsenal ativo. Usuário de autenticação
+  // órfão (sem cliente_auth_links active) NÃO é cadastro ativo e não deve
+  // bloquear/reaproveitar dados no checkout público.
   if (emailNorm) {
     const { data } = await admin
       .from("cliente_auth_links")
@@ -77,20 +79,6 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
     emailExiste = !!data;
-
-    // Fallback: se ainda não foi vinculado mas existe em auth.users,
-    // também consideramos como "já cadastrado".
-    if (!emailExiste) {
-      try {
-        const { data: rpcData } = await admin.rpc(
-          "qa_email_existe_em_auth" as any,
-          { p_email: emailNorm },
-        );
-        if (rpcData === true) emailExiste = true;
-      } catch {
-        // silencioso
-      }
-    }
   }
 
   return json({
