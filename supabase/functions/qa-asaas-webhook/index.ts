@@ -289,6 +289,49 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── Camada ADITIVA: provisiona acesso ao Arsenal Inteligente (portal)
+    //    para o cliente da venda. A function é idempotente (no-op se
+    //    portal_provisionado_em já existir). Best-effort: erro NÃO derruba
+    //    o webhook.
+    try {
+      const { data: vendaCli, error: vendaCliErr } = await supabase
+        .from("qa_vendas")
+        .select("qa_cliente_id")
+        .eq("id", venda_id)
+        .maybeSingle();
+      if (vendaCliErr || !vendaCli?.qa_cliente_id) {
+        await logSistemaBackend({
+          tipo: "portal", status: "warning",
+          mensagem: `qa-asaas-webhook: venda ${venda_id} sem qa_cliente_id p/ provisionar portal`,
+          payload: { venda_id, error: vendaCliErr?.message ?? null },
+        });
+      } else {
+        const { data: provData, error: provErr } = await supabase.functions.invoke(
+          "qa-provisionar-acesso-portal",
+          { body: { qa_client_id: vendaCli.qa_cliente_id, venda_id } },
+        );
+        if (provErr) {
+          await logSistemaBackend({
+            tipo: "portal", status: "error",
+            mensagem: `qa-asaas-webhook: provisionar acesso portal falhou venda ${venda_id}`,
+            payload: { venda_id, qa_cliente_id: vendaCli.qa_cliente_id, error: provErr.message },
+          });
+        } else {
+          await logSistemaBackend({
+            tipo: "portal", status: "success",
+            mensagem: `qa-asaas-webhook: acesso portal provisionado venda ${venda_id}`,
+            payload: { venda_id, qa_cliente_id: vendaCli.qa_cliente_id, result: provData ?? null },
+          });
+        }
+      }
+    } catch (e) {
+      await logSistemaBackend({
+        tipo: "portal", status: "error",
+        mensagem: `qa-asaas-webhook: exceção provisionar portal venda ${venda_id}`,
+        payload: { venda_id, error: String((e as any)?.message || e) },
+      });
+    }
+
     // ── Camada ADITIVA: dispara qa_confirmar_pagamento_processo para cada
     //    processo desta venda. A RPC é idempotente (ja_estava_confirmado=true
     //    no segundo disparo) e ela mesma EXPLODE o checklist via
