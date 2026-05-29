@@ -1,9 +1,10 @@
-// FASE 2C-3 — qa-checkout-status (PÚBLICA, anon, READ-ONLY)
+// FASE 2C-3 — qa-checkout-status (PÚBLICA, anon)
 //
 // Polling do status de cobrança do Pipeline B (qa_vendas).
 // Autorizado pelo checkout_token devolvido em qa-checkout-criar-venda.
-// NÃO toca payments/contracts/quotes. NÃO faz UPDATE/INSERT.
-// A reconciliação real continua sendo feita por qa-asaas-webhook.
+// NÃO toca payments/contracts/quotes. A reconciliação real continua sendo
+// feita por qa-asaas-webhook; este endpoint apenas faz self-heal idempotente
+// do protocolo oficial quando a venda já está paga.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { constantTimeEqual, sha256Hex } from "../_shared/qaAsaas.ts";
@@ -65,7 +66,9 @@ Deno.serve(async (req) => {
   const cobStatus = String(venda.cobranca_status || "").toLowerCase();
   const pago = statusUpper === "PAGO" || cobStatus === "confirmada";
 
-  // Protocolo oficial (QA-{SIGLA}-{ANO}-{SEQ}) — só existe após webhook PAGO.
+  // Protocolo oficial (QA-{SIGLA}-{ANO}-{SEQ}). Se a cobrança já está paga
+  // mas o webhook ainda não deixou o número gravado, gera aqui de forma
+  // idempotente para a tela final nunca cair no identificador temporário.
   let numero_protocolo: string | null = null;
   try {
     const { data: proto } = await supabase
@@ -74,6 +77,12 @@ Deno.serve(async (req) => {
       .eq("venda_id", venda_id)
       .maybeSingle();
     numero_protocolo = (proto?.numero as string) || null;
+    if (!numero_protocolo && pago) {
+      const { data: generated } = await supabase.rpc("qa_gerar_protocolo", {
+        p_venda_id: venda_id,
+      });
+      numero_protocolo = (generated as string) || null;
+    }
   } catch { /* best-effort */ }
 
   // Credenciais temporárias do Arsenal — só quando pago, dentro do TTL
