@@ -9404,6 +9404,14 @@ export type Database = {
           tipo_documento: string
         }[]
       }
+      qa_admin_destravar_cancel_pending_sale: {
+        Args: { p_cliente_id: number }
+        Returns: Json
+      }
+      qa_admin_destravar_reset_total: {
+        Args: { p_cliente_id: number; p_confirm_cpf: string }
+        Returns: Json
+      }
       qa_aproveitar_endereco_cadastro_publico: {
         Args: { p_processo_id: string }
         Returns: number

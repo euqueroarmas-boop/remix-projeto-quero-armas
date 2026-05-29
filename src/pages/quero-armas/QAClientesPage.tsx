@@ -12,7 +12,7 @@ import {
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
   HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
   ShoppingCart, RefreshCw, Landmark,
-  Database, Briefcase,
+  Database, Briefcase, Wrench,
 } from "lucide-react";
 import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
@@ -38,6 +38,7 @@ import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
 import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
+import ClienteDestravarCadastro from "@/components/quero-armas/clientes/ClienteDestravarCadastro";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
 import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
 import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
@@ -2662,6 +2663,7 @@ export default function QAClientesPage() {
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
+                { value: "destravar", icon: Wrench, label: "Destravar" },
               ].map(t => (
                 <TabsTrigger key={t.value} value={t.value} className="text-[12px] whitespace-nowrap px-3 data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white rounded-lg font-bold">
                   <t.icon className="h-3.5 w-3.5 mr-1.5" /> {t.label}
@@ -3418,6 +3420,9 @@ export default function QAClientesPage() {
               </TabsContent>
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
+              </TabsContent>
+              <TabsContent value="destravar" className="mt-3">
+                <ClienteDestravarCadastro cliente={c} />
               </TabsContent>
             </>
           )}
