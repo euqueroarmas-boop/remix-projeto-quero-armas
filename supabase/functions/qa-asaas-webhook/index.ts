@@ -296,31 +296,31 @@ Deno.serve(async (req) => {
     try {
       const { data: vendaCli, error: vendaCliErr } = await supabase
         .from("qa_vendas")
-        .select("qa_cliente_id")
+        .select("cliente_id")
         .eq("id", venda_id)
         .maybeSingle();
-      if (vendaCliErr || !vendaCli?.qa_cliente_id) {
+      if (vendaCliErr || !vendaCli?.cliente_id) {
         await logSistemaBackend({
           tipo: "portal", status: "warning",
-          mensagem: `qa-asaas-webhook: venda ${venda_id} sem qa_cliente_id p/ provisionar portal`,
+          mensagem: `qa-asaas-webhook: venda ${venda_id} sem cliente_id p/ provisionar portal`,
           payload: { venda_id, error: vendaCliErr?.message ?? null },
         });
       } else {
         const { data: provData, error: provErr } = await supabase.functions.invoke(
           "qa-provisionar-acesso-portal",
-          { body: { qa_client_id: vendaCli.qa_cliente_id, venda_id } },
+          { body: { qa_client_id: vendaCli.cliente_id, venda_id } },
         );
         if (provErr) {
           await logSistemaBackend({
             tipo: "portal", status: "error",
             mensagem: `qa-asaas-webhook: provisionar acesso portal falhou venda ${venda_id}`,
-            payload: { venda_id, qa_cliente_id: vendaCli.qa_cliente_id, error: provErr.message },
+            payload: { venda_id, cliente_id: vendaCli.cliente_id, error: provErr.message },
           });
         } else {
           await logSistemaBackend({
             tipo: "portal", status: "success",
             mensagem: `qa-asaas-webhook: acesso portal provisionado venda ${venda_id}`,
-            payload: { venda_id, qa_cliente_id: vendaCli.qa_cliente_id, result: provData ?? null },
+            payload: { venda_id, cliente_id: vendaCli.cliente_id, result: provData ?? null },
           });
         }
       }
