@@ -202,10 +202,16 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         if (data?.pago) {
           if (pollRef.current) window.clearInterval(pollRef.current);
           setStage("confirmed");
+          const patchResultado: NonNullable<CadastroRefinadoState["resultado"]> = {
+            ...(resultadoRef.current || {}),
+            pagamento_status: "pagamento_confirmado",
+          };
+          if (data.numero_protocolo) {
+            patchResultado.numero_protocolo = data.numero_protocolo;
+          }
           update({
             resultado: {
-              ...(resultadoRef.current || {}),
-              pagamento_status: "pagamento_confirmado",
+              ...patchResultado,
             },
           });
           window.setTimeout(() => onNext(), 4000);

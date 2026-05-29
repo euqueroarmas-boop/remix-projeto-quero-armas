@@ -107,6 +107,7 @@ export interface CadastroRefinadoState {
     venda_id?: string;
     solicitacao_id?: string;
     numero_processo?: string;
+    numero_protocolo?: string;
     pagamento_url?: string;
     /* Campos de checkout 2C — persistidos pela Etapa04 para a Etapa05 derivar status real. */
     checkout_token?: string;

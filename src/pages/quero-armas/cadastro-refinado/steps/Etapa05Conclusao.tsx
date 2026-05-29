@@ -159,8 +159,9 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
    * 1. número do processo PF/administrativo (numero_processo) — só depois de protocolado
    * 2. protocolo OFICIAL da Quero Armas (QA-{SIGLA}-{ANO}-{SEQ}) gerado no webhook PAGO
    * 3. número temporário derivado da venda enquanto webhook não confirmou */
-  const numeroPedidoDefinitivo =
-    r.numero_processo || (r as any).numero_protocolo || null;
+  const numeroProcesso = r.numero_processo || null;
+  const numeroProtocolo = r.numero_protocolo || null;
+  const numeroPedidoDefinitivo = numeroProcesso || numeroProtocolo;
   const numeroPedidoTemporario =
     !numeroPedidoDefinitivo && r.venda_id
       ? `PED-${String(r.venda_id).slice(0, 8).toUpperCase()}`
@@ -280,7 +281,7 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
         </div>
         {numeroPedidoDefinitivo ? (
           <div className="qa-ref-ficha-row">
-            <dt>Processo</dt>
+            <dt>{numeroProcesso ? "Processo" : "Protocolo"}</dt>
             <dd className="qa-ref-mono">{numeroPedidoDefinitivo}</dd>
           </div>
         ) : numeroPedidoTemporario ? (
