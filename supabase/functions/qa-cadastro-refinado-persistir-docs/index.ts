@@ -145,5 +145,97 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "insert_failed", detail: insErr.message }, 500);
   }
 
+  // 3) Propaga para o portal do cliente (qa_clientes + qa_documentos_cliente)
+  await propagarParaPortal(admin, qaClienteId, d, docs).catch((e) =>
+    console.warn("[qa-cadastro-refinado-persistir-docs] propagar portal falhou (best-effort):", e?.message),
+  );
+
   return json({ ok: true, cadastro_id: inserted.id, action: "inserted" });
 });
+
+/**
+ * Espelha os dados/documentos enviados no checkout para o cadastro
+ * operacional do cliente (portal). Best-effort, sem erro fatal.
+ *  - qa_clientes: COALESCE — só grava onde está NULL/''.
+ *  - qa_documentos_cliente: insere com status=pendente_aprovacao,
+ *    origem=cliente, ignora se já existe um registro com mesmo
+ *    arquivo_storage_path (idempotência por upload).
+ */
+async function propagarParaPortal(
+  admin: ReturnType<typeof createClient>,
+  qaClienteId: number | null,
+  dados: any,
+  docs: Record<string, DocItem>,
+) {
+  if (!qaClienteId) return;
+
+  // -------- 1) qa_clientes: preenche somente campos vazios --------
+  const { data: cli } = await admin
+    .from("qa_clientes")
+    .select(
+      "id_legado, nome_completo, cpf, data_nascimento, celular, email, endereco, numero, complemento, bairro, cidade, estado, cep",
+    )
+    .eq("id_legado", qaClienteId)
+    .maybeSingle();
+
+  if (cli) {
+    const isEmpty = (v: any) => v == null || String(v).trim() === "";
+    const onlyDigits = (v: any) => String(v ?? "").replace(/\D/g, "");
+    const norm = (v: any) => (v == null ? null : String(v).trim() || null);
+
+    const cliPatch: Record<string, any> = {};
+    if (isEmpty((cli as any).nome_completo) && !isEmpty(dados?.nome_completo)) cliPatch.nome_completo = String(dados.nome_completo).trim();
+    if (isEmpty((cli as any).cpf) && onlyDigits(dados?.cpf).length === 11) cliPatch.cpf = onlyDigits(dados.cpf);
+    if (isEmpty((cli as any).data_nascimento) && !isEmpty(dados?.data_nascimento)) cliPatch.data_nascimento = dados.data_nascimento;
+    if (isEmpty((cli as any).celular) && !isEmpty(dados?.telefone)) cliPatch.celular = onlyDigits(dados.telefone);
+    if (isEmpty((cli as any).email) && !isEmpty(dados?.email)) cliPatch.email = String(dados.email).trim().toLowerCase();
+    if (isEmpty((cli as any).cep) && !isEmpty(dados?.endereco_cep)) cliPatch.cep = onlyDigits(dados.endereco_cep);
+    if (isEmpty((cli as any).endereco) && !isEmpty(dados?.endereco_logradouro)) cliPatch.endereco = norm(dados.endereco_logradouro);
+    if (isEmpty((cli as any).numero) && !isEmpty(dados?.endereco_numero)) cliPatch.numero = norm(dados.endereco_numero);
+    if (isEmpty((cli as any).complemento) && !isEmpty(dados?.endereco_complemento)) cliPatch.complemento = norm(dados.endereco_complemento);
+    if (isEmpty((cli as any).bairro) && !isEmpty(dados?.endereco_bairro)) cliPatch.bairro = norm(dados.endereco_bairro);
+    if (isEmpty((cli as any).cidade) && !isEmpty(dados?.endereco_cidade)) cliPatch.cidade = norm(dados.endereco_cidade);
+    if (isEmpty((cli as any).estado) && !isEmpty(dados?.endereco_estado)) cliPatch.estado = String(dados.endereco_estado).toUpperCase().slice(0, 2);
+
+    if (Object.keys(cliPatch).length > 0) {
+      const { error: upCliErr } = await admin
+        .from("qa_clientes")
+        .update(cliPatch)
+        .eq("id_legado", qaClienteId);
+      if (upCliErr) console.warn("[propagarParaPortal] qa_clientes update warn:", upCliErr.message);
+    }
+  }
+
+  // -------- 2) qa_documentos_cliente: insert idempotente --------
+  const docsParaInserir: Array<{ tipo: string; item: DocItem }> = [];
+  if (docs?.doc_identidade?.storagePath) docsParaInserir.push({ tipo: "RG", item: docs.doc_identidade });
+  if (docs?.doc_endereco?.storagePath) docsParaInserir.push({ tipo: "COMPROVANTE_RESIDENCIA", item: docs.doc_endereco });
+
+  for (const d of docsParaInserir) {
+    const path = d.item.storagePath!;
+    const { data: ja } = await admin
+      .from("qa_documentos_cliente")
+      .select("id")
+      .eq("qa_cliente_id", qaClienteId)
+      .eq("arquivo_storage_path", path)
+      .maybeSingle();
+    if (ja) continue;
+
+    const { error: insDocErr } = await admin.from("qa_documentos_cliente").insert({
+      qa_cliente_id: qaClienteId,
+      tipo_documento: d.tipo,
+      arquivo_storage_path: path,
+      arquivo_nome: d.item.fileName || null,
+      arquivo_mime: null,
+      status: "pendente_aprovacao",
+      origem: "cliente",
+    });
+    if (insDocErr) {
+      console.warn(
+        "[propagarParaPortal] qa_documentos_cliente insert warn:",
+        insDocErr.message,
+        { tipo: d.tipo, path },
+      );
+    }
+  }
+}
