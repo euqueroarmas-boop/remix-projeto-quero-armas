@@ -247,6 +247,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
    */
   useEffect(() => {
     if (resumedRef.current) return;
+    // Se o pay já foi setado nesta sessão (fluxo normal pós-submit),
+    // não sobrescreve com dados parcialmente persistidos — o resume
+    // só deve atuar em reloads reais da página.
+    if (pay) {
+      resumedRef.current = true;
+      return;
+    }
     const r: any = state.resultado || {};
     const vendaIdNum = Number(r.venda_id);
     const token: string = r.checkout_token || "";
@@ -281,7 +288,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         if (!ok) startPolling(vendaIdNum, token);
       });
     }
-  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling]);
+  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling, pay]);
 
   /**
    * Quando o usuário volta para a aba (após pagar no Asaas em outra aba),
