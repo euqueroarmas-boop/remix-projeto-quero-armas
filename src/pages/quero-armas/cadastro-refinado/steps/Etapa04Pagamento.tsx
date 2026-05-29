@@ -247,6 +247,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
    */
   useEffect(() => {
     if (resumedRef.current) return;
+    // Se o pay já foi setado nesta sessão (fluxo normal pós-submit),
+    // não sobrescreve com dados parcialmente persistidos — o resume
+    // só deve atuar em reloads reais da página.
+    if (pay) {
+      resumedRef.current = true;
+      return;
+    }
     const r: any = state.resultado || {};
     const vendaIdNum = Number(r.venda_id);
     const token: string = r.checkout_token || "";
@@ -281,7 +288,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         if (!ok) startPolling(vendaIdNum, token);
       });
     }
-  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling]);
+  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling, pay]);
 
   /**
    * Quando o usuário volta para a aba (após pagar no Asaas em outra aba),
@@ -548,6 +555,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           checkout_token: checkoutToken,
           asaas_invoice_url: payData.asaas_invoice_url ?? undefined,
           asaas_payment_id: payData.asaas_payment_id ?? undefined,
+          asaas_pix_payload: payData.asaas_pix_payload ?? undefined,
+          asaas_bank_slip_url: payData.asaas_bank_slip_url ?? undefined,
+          parcelas: payData.parcelas,
+          valor_cobrado: payData.valor_cobrado,
           billing_type: billing,
           pagamento_status: "aguardando_pagamento",
           pagamento_url: payData.asaas_invoice_url ?? undefined,
