@@ -112,6 +112,10 @@ export interface CadastroRefinadoState {
     checkout_token?: string;
     asaas_invoice_url?: string;
     asaas_payment_id?: string;
+    asaas_pix_payload?: string;
+    asaas_bank_slip_url?: string;
+    parcelas?: number;
+    valor_cobrado?: number;
     billing_type?: "PIX" | "BOLETO" | "CREDIT_CARD";
     /* Status real derivado de qa-checkout-status (webhook Asaas).
      * - "aguardando_pagamento": cobrança criada, sem confirmação do webhook
