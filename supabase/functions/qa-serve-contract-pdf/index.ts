@@ -120,7 +120,26 @@ Deno.serve(async (req) => {
     const html = (contract as any).conteudo_renderizado as string | null;
     if (variant !== "customer_signed" && html && html.trim()) {
       const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
-      return new Response(html, {
+      // Envelopa o snapshot em documento HTML completo com <meta charset="utf-8">.
+      // Sem isso, navegadores (especialmente iOS Safari ao abrir via Blob URL)
+      // ignoram o charset do header e renderizam o conteúdo como Latin-1,
+      // produzindo mojibake do tipo "CONCESSÃƒO" / "CLÃ□USULA".
+      const titulo =
+        `Contrato ${(contract as any).contract_number || (contract as any).id} — Quero Armas`;
+      const isFullDoc = /<!doctype|<html[\s>]/i.test(html);
+      const body = isFullDoc
+        ? html
+        : `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">` +
+          `<meta name="viewport" content="width=device-width,initial-scale=1">` +
+          `<title>${titulo}</title><style>` +
+          `body{font-family:Georgia,'Times New Roman',serif;color:#0a0a0a;` +
+          `max-width:780px;margin:32px auto;padding:0 24px;line-height:1.65;font-size:13px;}` +
+          `h1{font-size:18px;text-align:center;text-transform:uppercase;letter-spacing:.04em;}` +
+          `h2,h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;margin-top:24px;}` +
+          `p{margin:10px 0;text-align:justify;}ul,ol{padding-left:22px;}li{margin:6px 0;}` +
+          `@media print{body{margin:0;}}` +
+          `</style></head><body>${html}</body></html>`;
+      return new Response(body, {
         status: 200,
         headers: {
           ...corsHeaders,
