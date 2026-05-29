@@ -109,6 +109,9 @@ Deno.serve(async (req) => {
       console.error("[qa-cadastro-refinado-persistir-docs] update error:", error);
       return json({ ok: false, error: "update_failed", detail: error.message }, 500);
     }
+    await propagarParaPortal(admin, qaClienteId, d, docs).catch((e) =>
+      console.warn("[qa-cadastro-refinado-persistir-docs] propagar portal falhou (best-effort):", e?.message),
+    );
     return json({ ok: true, cadastro_id: existing.id, action: "updated" });
   }
 
