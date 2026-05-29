@@ -127,24 +127,15 @@ Deno.serve(async (req) => {
 
     // ── CANCELAR VENDA PENDENTE ─────────────────────────────────
     if (action === "cancel_pending_sale") {
-      const { data: vendas } = await admin.from("qa_vendas")
-        .select("id, cobranca_confirmada_em")
-        .eq("cliente_id", clienteId);
-      const pendingIds = (vendas || []).filter((v: any) => !v.cobranca_confirmada_em).map((v: any) => v.id);
-      if (pendingIds.length === 0) return json({ ok: true, message: "Nenhuma venda pendente." });
-
-      await admin.rpc("set_config" as any, { setting_name: "app.allow_venda_evento_delete", new_value: "on", is_local: false });
-      await admin.rpc("set_config" as any, { setting_name: "qa.allow_total_client_delete", new_value: "1", is_local: false });
-
-      await admin.from("qa_contract_aceites_log").delete().in("venda_id", pendingIds);
-      await admin.from("qa_contracts").delete().in("venda_id", pendingIds);
-      await admin.from("qa_venda_eventos").delete().in("venda_id", pendingIds);
-      await admin.from("qa_itens_venda").delete().in("venda_id", pendingIds);
-      const { error } = await admin.from("qa_vendas").delete().in("id", pendingIds);
+      // RPC roda como service_role (admin) — checa has_role internamente via auth.uid()
+      // Para preservar identidade do admin, criamos um client com o JWT do usuário e usamos RPC.
+      const userScoped = createClient(url, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data, error } = await userScoped.rpc("qa_admin_destravar_cancel_pending_sale", { p_cliente_id: clienteId });
       if (error) throw error;
-
-      await audit("cancel_pending_sale", { vendas_canceladas: pendingIds });
-      return json({ ok: true, vendas_canceladas: pendingIds.length });
+      await audit("cancel_pending_sale", { resultado: data });
+      return json({ ok: true, resultado: data });
     }
 
     // ── RESETAR AUTH USER (mantém cliente) ──────────────────────
@@ -169,56 +160,30 @@ Deno.serve(async (req) => {
 
     // ── RESET TOTAL (bloqueado se pago / contrato assinado) ─────
     if (action === "reset_total") {
-      const { data: vendas } = await admin.from("qa_vendas")
-        .select("id, cobranca_confirmada_em")
-        .eq("cliente_id", clienteId);
-      const vendaPaga = (vendas || []).find((v: any) => !!v.cobranca_confirmada_em);
-      if (vendaPaga) {
-        return json({ error: "venda_paga", message: "Cliente possui venda paga. Reset total bloqueado." }, 409);
-      }
-      const { data: contratos } = await admin.from("qa_contracts")
-        .select("id, signed_at")
-        .eq("client_id", clienteId);
-      const contratoAssinado = (contratos || []).find((c: any) => !!c.signed_at);
-      if (contratoAssinado) {
-        return json({ error: "contrato_assinado", message: "Cliente possui contrato assinado. Reset total bloqueado." }, 409);
-      }
-
-      const confirmCpf = String(body.confirm_cpf || "").replace(/\D/g, "");
-      const clienteCpf = String(cliente.cpf || "").replace(/\D/g, "");
-      if (!clienteCpf || confirmCpf !== clienteCpf) {
-        return json({ error: "cpf_confirmacao_invalida" }, 400);
-      }
-
-      const vendaIds = (vendas || []).map((v: any) => v.id);
+      const confirmCpf = String(body.confirm_cpf || "");
       const uid = cliente.user_id;
-      const emailNorm = (cliente.email || "").trim().toLowerCase();
 
-      await admin.rpc("set_config" as any, { setting_name: "app.allow_venda_evento_delete", new_value: "on", is_local: false });
-      await admin.rpc("set_config" as any, { setting_name: "qa.allow_total_client_delete", new_value: "1", is_local: false });
-
-      if (vendaIds.length) {
-        await admin.from("qa_contract_aceites_log").delete().in("venda_id", vendaIds);
-        await admin.from("qa_contracts").delete().in("venda_id", vendaIds);
-        await admin.from("qa_venda_eventos").delete().in("venda_id", vendaIds);
-        await admin.from("qa_itens_venda").delete().in("venda_id", vendaIds);
-        await admin.from("qa_vendas").delete().in("id", vendaIds);
+      // Deleta auth user ANTES da RPC (rpc apaga linhas, mas auth.users só via admin API)
+      const userScoped = createClient(url, anonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data, error } = await userScoped.rpc("qa_admin_destravar_reset_total", {
+        p_cliente_id: clienteId,
+        p_confirm_cpf: confirmCpf,
+      });
+      if (error) {
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("venda_paga")) return json({ error: "venda_paga", message: "Cliente possui venda paga. Reset total bloqueado." }, 409);
+        if (msg.includes("contrato_assinado")) return json({ error: "contrato_assinado", message: "Cliente possui contrato assinado. Reset total bloqueado." }, 409);
+        if (msg.includes("cpf_confirmacao_invalida")) return json({ error: "cpf_confirmacao_invalida" }, 400);
+        if (msg.includes("forbidden")) return json({ error: "forbidden" }, 403);
+        throw error;
       }
-      await admin.from("cliente_auth_links").delete().eq("qa_cliente_id", clienteId);
       if (uid) {
-        await admin.from("qa_usuarios_perfis").delete().eq("user_id", uid);
-        await admin.from("cliente_auth_links").delete().eq("user_id", uid);
         await admin.auth.admin.deleteUser(uid).catch(() => {});
       }
-      if (emailNorm || clienteCpf) {
-        await admin.from("qa_cadastros_publicos").delete()
-          .or(`cpf.eq.${clienteCpf || "__none__"},email.ilike.${emailNorm || "__none__"}`);
-      }
-      const { error } = await admin.from("qa_clientes").delete().eq("id", clienteId);
-      if (error) throw error;
-
-      await audit("reset_total", { vendas: vendaIds, user_id: uid, email: emailNorm });
-      return json({ ok: true, message: "Cadastro destravado por completo." });
+      await audit("reset_total", { resultado: data });
+      return json({ ok: true, resultado: data });
     }
 
     return json({ error: "unknown_action" }, 400);
