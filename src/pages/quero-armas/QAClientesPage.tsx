@@ -3421,6 +3421,9 @@ export default function QAClientesPage() {
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
               </TabsContent>
+              <TabsContent value="destravar" className="mt-3">
+                <ClienteDestravarCadastro cliente={c} />
+              </TabsContent>
             </>
           )}
         </Tabs>
