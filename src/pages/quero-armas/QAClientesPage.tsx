@@ -2663,6 +2663,7 @@ export default function QAClientesPage() {
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
+                { value: "destravar", icon: Wrench, label: "Destravar" },
               ].map(t => (
                 <TabsTrigger key={t.value} value={t.value} className="text-[12px] whitespace-nowrap px-3 data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white rounded-lg font-bold">
                   <t.icon className="h-3.5 w-3.5 mr-1.5" /> {t.label}
