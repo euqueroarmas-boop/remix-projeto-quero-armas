@@ -2,12 +2,15 @@
 // (identidade + comprovante de residência) no painel da equipe.
 //
 // Estratégia (Zero Regression):
-//  • Upsert idempotente por CPF na tabela `qa_cadastro_publico` (mesma área
-//    já usada hoje pelo painel `/clientes` para mostrar identidade/endereço).
-//  • Atualiza apenas os caminhos de storage e dados mínimos do titular.
+//  • Upsert idempotente por CPF na tabela `qa_cadastro_publico` (painel
+//    /clientes — área de cadastros públicos).
+//  • REAPROVEITA os mesmos arquivos no portal do cliente:
+//      - INSERT em `qa_documentos_cliente` (origem='cliente',
+//        status='pendente_aprovacao') para cada doc enviado, evitando
+//        duplicidade pelo arquivo_storage_path.
+//      - UPDATE em `qa_clientes` preenchendo SOMENTE campos vazios com os
+//        dados extraídos pela IA (nunca sobrescreve digitação existente).
 //  • Não cria cliente, venda, contrato, Auth, selfie, Arsenal ou Asaas.
-//  • Não sobrescreve documento existente se o cliente não enviou um novo
-//    naquele campo (apenas grava o que veio do state.documentos).
 //  • Vincula `cliente_id_vinculado` ao qa_cliente_id quando disponível.
 //  • Best-effort: falha silenciosa não pode bloquear o checkout.
 
