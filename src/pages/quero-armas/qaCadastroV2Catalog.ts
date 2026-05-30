@@ -48,7 +48,6 @@ export const QA_V2_PERFIS: QAV2Perfil[] = [
     id: "orientacao_necessaria",
     titulo: "Ainda não sei, preciso de orientação",
     descricao: "Quero entender qual é o melhor caminho para o meu caso",
-    acao: "redirecionar_quiz",
   },
 ];
 
