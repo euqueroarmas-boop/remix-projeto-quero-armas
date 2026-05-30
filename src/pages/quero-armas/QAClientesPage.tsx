@@ -3207,14 +3207,14 @@ export default function QAClientesPage() {
                                 {/* Aprovar valor em 1 clique (libera o checklist) */}
                                 <AprovarValorButton
                                   venda={v}
-                                  onApproved={() => { loadSubData(selected!); loadClientes(); }}
+                                  onApproved={() => { loadSubData(selected!, { silent: true }); loadClientes(); }}
                                 />
                                 <GerarProcessoButton
                                   venda={v}
                                   itens={itens}
                                   clienteNome={c.nome_completo}
                                   processoExistente={processosVenda.find((p: any) => p.venda_id === v.id) || null}
-                                  onCreated={() => loadSubData(selected!)}
+                                  onCreated={() => loadSubData(selected!, { silent: true })}
                                 />
                                 <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700">
                                   <Edit className="h-3.5 w-3.5" />
