@@ -198,6 +198,26 @@ Deno.serve(async (req) => {
       .select("id")
       .single();
     if (insErr) throw insErr;
+
+    // 4) Pós-insert: arquiva qualquer duplicata em andamento gerada em corrida
+    //     (mesmo CPF + origem_cadastro), mantendo apenas a linha recém-criada.
+    try {
+      await supabase
+        .from("qa_cadastro_publico")
+        .update({
+          arquivado: true,
+          arquivado_em: new Date().toISOString(),
+          motivo_arquivamento: "duplicado_auto_dedupe",
+        })
+        .eq("cpf", cpf)
+        .eq("origem_cadastro", "cadastro_mira")
+        .neq("id", inserted.id)
+        .in("status", Array.from(STATUS_EM_ANDAMENTO))
+        .eq("arquivado", false);
+    } catch (e) {
+      console.warn("[qa-cadastro-mira-snapshot] pos-dedupe falhou (best-effort):", (e as Error)?.message);
+    }
+
     return json({ ok: true, snapshot_id: inserted.id, action: "inserted" });
   } catch (e: any) {
     console.error("[qa-cadastro-mira-snapshot] erro:", e?.message || e);
