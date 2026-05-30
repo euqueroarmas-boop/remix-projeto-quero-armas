@@ -950,6 +950,50 @@ export default function QAClientePortalPage() {
     return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
   }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
 
+  // Carrega contratos pós-pagamento pendentes de assinatura do cliente.
+  // Se houver pelo menos 1, abre popup automaticamente (uma vez por sessão)
+  // e força "Assinar contrato" como próxima ação prioritária.
+  useEffect(() => {
+    const idLegado = (cliente as any)?.id_legado as number | null | undefined;
+    if (!idLegado) {
+      setPendingContracts(0);
+      return;
+    }
+    let alive = true;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("qa_contracts" as any)
+          .select("id, status")
+          .eq("cliente_id", idLegado)
+          .in("status", [
+            "generated_pending_company_signature",
+            "pending_customer_signature",
+            "rejected",
+          ]);
+        if (!alive) return;
+        if (error) {
+          setPendingContracts(0);
+          return;
+        }
+        const count = Array.isArray(data) ? data.length : 0;
+        setPendingContracts(count);
+        if (count > 0) {
+          const key = `qa-contract-signing-popup-${idLegado}`;
+          if (!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, "1");
+            setShowContratoPopup(true);
+          }
+        }
+      } catch {
+        if (alive) setPendingContracts(0);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [cliente, docsReloadKey]);
+
   if (loading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-slate-50">
