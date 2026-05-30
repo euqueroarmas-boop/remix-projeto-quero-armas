@@ -448,3 +448,134 @@ export const QA_V2_PATH_APOSENTADO: QAV2PathDefinition = {
     magistratura_mp: buildSubServicoD("magistratura_mp"),
   },
 };
+
+/* ----------------------- E — Orientação necessária (absorve /descobrir-meu-caminho) -----------------------
+ * Converte o quiz legado de 3 perguntas (objetivo → documentação → frequência)
+ * para o formato de árvore guiada do /cadastro. Preserva a lógica de recomendação
+ * final, os slugs de serviço e os parâmetros `perfil_v2`/`subperfil_v2` que o
+ * checkout já consome.
+ * ----------------------------------------------------------------------------- */
+
+export const QA_V2_PATH_ORIENTACAO: QAV2PathDefinition = {
+  perfil: "orientacao_necessaria",
+  rota: "/cadastro/orientacao",
+  tituloBreadcrumb: "Orientação necessária",
+  raiz: {
+    pergunta: "Qual é a sua motivação real?",
+    subtitulo: "Sem rodeio. Por que você está aqui?",
+    opcoes: [
+      {
+        kind: "step",
+        key: "defesa_casa",
+        titulo: "Defesa pessoal: defender minha família em casa",
+        descricao: "Quero arma legalizada em casa. Dormir tranquilo. Proteger quem amo.",
+      },
+      {
+        kind: "step",
+        key: "cac_objetivo",
+        titulo: "CAC: colecionar, atirar e caçar",
+        descricao: "Quero CR no Exército. Construir acervo. Treinar habitualidade.",
+      },
+      {
+        kind: "service",
+        titulo: "Só quero atirar de vez em quando",
+        descricao: "Curiosidade, lazer, experiência no estande. Sem compromisso.",
+        servicoSlug: "operador-de-pistola-nivel-i",
+        subperfilV2: "curso_operador",
+      },
+      {
+        kind: "service",
+        titulo: "Profissão exige (segurança, escolta, VIP)",
+        descricao: "Trabalho na área. Preciso de capacitação técnica e enquadramento de porte.",
+        servicoSlug: "porte-arma-fogo",
+        subperfilV2: "porte_funcional_atividade_risco",
+      },
+    ],
+  },
+  steps: {
+    defesa_casa: {
+      pergunta: "Onde você está hoje na documentação?",
+      subtitulo: "Selecione o seu ponto de partida para defesa residencial",
+      opcoes: [
+        {
+          kind: "service",
+          titulo: "Começando do zero (não tenho nada)",
+          descricao: "Aquisição + registro + posse SINARM pela PF",
+          servicoSlug: "aquisicao-registro-posse-de-arma-de-fogo",
+          subperfilV2: "primeira_aquisicao",
+        },
+        {
+          kind: "service",
+          titulo: "Já tenho posse na PF",
+          descricao: "Renovação / regularização do registro existente",
+          servicoSlug: "renovacao-posse-de-arma-de-fogo",
+          subperfilV2: "renovacao_posse",
+        },
+        {
+          kind: "service",
+          titulo: "Só quero experimentar antes de decidir",
+          descricao: "Curso prático de tiro como porta de entrada",
+          servicoSlug: "operador-de-pistola-nivel-i",
+          subperfilV2: "curso_operador",
+        },
+      ],
+    },
+    cac_objetivo: {
+      pergunta: "Onde você está hoje na documentação?",
+      subtitulo: "Selecione o seu ponto de partida como CAC",
+      opcoes: [
+        {
+          kind: "step",
+          key: "cac_zero",
+          titulo: "Começando do zero (não tenho nada)",
+          descricao: "Nunca dei entrada em nada. Vamos definir o ritmo de treino.",
+        },
+        {
+          kind: "bundle",
+          titulo: "Já sou CAC com CR ativo",
+          descricao: "Autorização de compra + registro/apostilamento + Guia de Tráfego (CAC)",
+          servicoSlugs: [
+            "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac",
+            "registro-e-apostilamento-de-arma-de-fogo-cac",
+            "guia-de-trafego-especial-cac",
+          ],
+          subperfilV2: "cr_ativo_compra_registro_gte",
+        },
+        {
+          kind: "service",
+          titulo: "Só quero experimentar antes de decidir",
+          descricao: "Curso prático de tiro como porta de entrada",
+          servicoSlug: "operador-de-pistola-nivel-i",
+          subperfilV2: "curso_operador",
+        },
+      ],
+    },
+    cac_zero: {
+      pergunta: "Com que frequência você pretende atirar?",
+      subtitulo: "O ritmo de treino define o perfil de concessão de CR",
+      opcoes: [
+        {
+          kind: "service",
+          titulo: "Toda semana. Quero virar operador.",
+          descricao: "Concessão de CR com perfil de treino semanal / operador",
+          servicoSlug: "concessao-cr",
+          subperfilV2: "concessao_cr_operador",
+        },
+        {
+          kind: "service",
+          titulo: "Mensal — continuar mantendo a técnica",
+          descricao: "Concessão de CR com manutenção mensal da habitualidade",
+          servicoSlug: "concessao-cr",
+          subperfilV2: "concessao_cr",
+        },
+        {
+          kind: "service",
+          titulo: "Esporádico. Quando der vontade.",
+          descricao: "Curso prático de tiro — sem necessidade de CR neste momento",
+          servicoSlug: "operador-de-pistola-nivel-i",
+          subperfilV2: "curso_operador",
+        },
+      ],
+    },
+  },
+};
