@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ChevronRight, GraduationCap } from "lucide-react";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import {
