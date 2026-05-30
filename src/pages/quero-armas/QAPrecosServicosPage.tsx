@@ -49,6 +49,7 @@ interface ServicoRow {
   descricao_curta?: string | null;
   servico_id?: number | null;
   exige_acervo: boolean | null;
+  base_legal?: string | null;
 }
 
 function fmtBRL(v: number | null) {
@@ -86,6 +87,7 @@ interface FormState {
   ativo: boolean;
   display_order: string;
   descricao_curta: string;
+  base_legal: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -98,6 +100,7 @@ const EMPTY_FORM: FormState = {
   ativo: true,
   display_order: "100",
   descricao_curta: "",
+  base_legal: "",
 };
 
 const CATEGORIAS_CUSTOM_KEY = "qa_categorias_custom_v1";
@@ -162,7 +165,7 @@ export default function QAPrecosServicosPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("qa_servicos_catalogo" as any)
-      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id, exige_acervo")
+      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id, exige_acervo, base_legal")
       .order("categoria", { ascending: true })
       .order("display_order", { ascending: true });
     if (error) {
@@ -296,6 +299,7 @@ export default function QAPrecosServicosPage() {
       ativo: row.ativo,
       display_order: String(row.display_order ?? 100),
       descricao_curta: row.descricao_curta ?? "",
+      base_legal: row.base_legal ?? "",
     });
   }
 
@@ -318,6 +322,7 @@ export default function QAPrecosServicosPage() {
       ativo: form.ativo,
       display_order: Number(form.display_order) || 100,
       descricao_curta: form.descricao_curta.trim() || null,
+      base_legal: form.base_legal.trim() || null,
     };
     setSubmitting(true);
     let error;
