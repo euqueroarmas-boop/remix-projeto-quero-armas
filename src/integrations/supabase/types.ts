@@ -7633,6 +7633,7 @@ export type Database = {
       qa_servicos_catalogo: {
         Row: {
           ativo: boolean
+          base_legal: string | null
           categoria: string
           categoria_servico_slug: string | null
           checklist_type: string | null
@@ -7660,6 +7661,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          base_legal?: string | null
           categoria: string
           categoria_servico_slug?: string | null
           checklist_type?: string | null
@@ -7687,6 +7689,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          base_legal?: string | null
           categoria?: string
           categoria_servico_slug?: string | null
           checklist_type?: string | null
