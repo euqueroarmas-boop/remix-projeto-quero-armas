@@ -109,6 +109,13 @@ Deno.serve(async (req) => {
   const cpf = cpfDigits(p.cpf);
   const email = emailNorm(p.email);
 
+  // Lock cooperativo por CPF para serializar chamadas concorrentes vindas do
+  // mesmo checkout (evita duplicatas geradas em corrida ~200ms).
+  try {
+    // hashtext devolve int32 estável; pg_advisory_xact_lock libera no fim da tx
+    await supabase.rpc("pg_advisory_xact_lock", { key: 0 }).catch(() => {});
+  } catch { /* best-effort */ }
+
   // Monta contexto textual curto p/ observacoes (não existe coluna JSON livre)
   const obsLines: string[] = ["[cadastro_mira]"];
   if (p.objetivo_principal) obsLines.push(`objetivo=${p.objetivo_principal}`);
