@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ChevronRight, GraduationCap } from "lucide-react";
 import QACadastroRefinadoShell from "../components/QACadastroRefinadoShell";
 import {
@@ -9,6 +8,7 @@ import {
   QA_V2_PATH_CAC,
   QA_V2_PATH_PROFISSAO,
   QA_V2_PATH_APOSENTADO,
+  QA_V2_PATH_ORIENTACAO,
   QA_V2_PATH_SESSION_KEY,
   type QAV2Node,
   type QAV2PathDefinition,
@@ -38,12 +38,12 @@ const PATH_MAP: Record<string, QAV2PathDefinition> = {
   cac: QA_V2_PATH_CAC,
   profissional_ativo: QA_V2_PATH_PROFISSAO,
   aposentado_inativo: QA_V2_PATH_APOSENTADO,
+  orientacao_necessaria: QA_V2_PATH_ORIENTACAO,
 };
 
 const ROOT_STACK: string[] = [];
 
 export default function Etapa00Escolha({ onSelectService, onSelectBundle, onBackToHome, initialPerfil, onAbrirIdentificacao }: Props) {
-  const navigate = useNavigate();
   const [stack, setStack] = useState<string[]>(() => {
     if (initialPerfil && (PATH_MAP[initialPerfil] || initialPerfil === "cursos")) {
       return [initialPerfil];
@@ -177,13 +177,7 @@ export default function Etapa00Escolha({ onSelectService, onSelectBundle, onBack
               key={p.id}
               type="button"
               className={`qa-ref-opt-card${isPopular ? " is-popular" : ""}`}
-              onClick={() => {
-                if (p.acao === "redirecionar_quiz") {
-                  navigate("/descobrir-meu-caminho");
-                  return;
-                }
-                push(p.id);
-              }}
+              onClick={() => push(p.id)}
             >
               <div className="qa-ref-opt-icon" aria-hidden />
               <div className="qa-ref-opt-body">
