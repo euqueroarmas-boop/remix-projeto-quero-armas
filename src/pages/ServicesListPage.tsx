@@ -570,6 +570,11 @@ const ServicesListPage = () => {
                           <p className="mt-3 line-clamp-3 min-h-[4.05rem] text-sm leading-relaxed text-muted-foreground">
                             {compactDescription(s.short_description)}
                           </p>
+                          {s.base_legal && (
+                            <p className="mt-1.5 text-[11px] italic leading-snug text-muted-foreground/80">
+                              {s.base_legal}
+                            </p>
+                          )}
                           <div className="mt-4 min-h-[3.25rem]">
                             <span className="block font-heading text-[10px] uppercase tracking-widest text-muted-foreground">
                               {s.base_price_cents > 0 ? 'A partir de' : 'Investimento'}
