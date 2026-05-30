@@ -162,10 +162,10 @@ const HomePage = () => {
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <Link to={PORTAL_PATH} data-testid="home-cta-arsenal"><LogIn className="mr-2 size-5" />Acessar Arsenal</Link>
               </Button>
-              <Button asChild size="lg" variant="ghost" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
+              <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <Link to="/servicos" data-testid="home-cta-servicos">Ver serviços</Link>
               </Button>
-              <Button asChild size="lg" variant="ghost" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
+              <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
               </Button>
             </div>
