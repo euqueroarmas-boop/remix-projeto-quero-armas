@@ -143,7 +143,14 @@ export default function QARoutes() {
         <Route path="servicos/:slug" element={<ServicoDetalhePage />} />
         <Route path="carrinho" element={<CarrinhoPage />} />
         <Route path="checkout/finalizar" element={<QAScope><QACheckoutFinalizarPage /></QAScope>} />
-        <Route path="descobrir-meu-caminho" element={<QuizPage />} />
+        {/* /descobrir-meu-caminho foi absorvido pelo fluxo guiado de /cadastro.
+            Redireciona para a sub-árvore "orientacao_necessaria" preservando
+            query string original (origem, utm_*, etc). O QuizPage permanece
+            como componente legado mas não é mais montado em rota pública. */}
+        <Route
+          path="descobrir-meu-caminho"
+          element={<CadastroV2Redirect extraParams={{ perfil_v2: "orientacao_necessaria", origem: "descobrir_meu_caminho" }} />}
+        />
         <Route path="lp/defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
         <Route path="lp/cac-cr" element={<LpCacCr />} />
         <Route path="arsenal-digital-gratuito" element={<QAArsenalDigitalGratuitoPage />} />
