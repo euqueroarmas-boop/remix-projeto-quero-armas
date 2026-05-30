@@ -2404,10 +2404,13 @@ export default function QAClientesPage() {
         }
       }
       if (deleteModal.table === "qa_vendas") {
-        const vendaObj = (vendas as any[]).find(v => v.id === deleteModal.id);
-        const vendaFk = vendaObj ? getVendaFK(vendaObj) : deleteModal.id;
-        const { error: eItens } = await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
-        if (eItens) throw eItens;
+        const { data, error } = await supabase.rpc("qa_venda_excluir_total" as any, { p_venda_id: deleteModal.id });
+        if (error) throw error;
+        if ((data as any)?.ok === false) throw new Error((data as any)?.message || "Falha ao excluir venda.");
+        toast.success("Venda excluída com sucesso");
+        if (selected) await loadSubData(selected);
+        setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
+        return;
       }
       const { error } = await supabase.from(deleteModal.table as any).delete().eq("id", deleteModal.id);
       if (error) {
