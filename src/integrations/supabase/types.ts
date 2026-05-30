@@ -9464,6 +9464,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      qa_avancar_proximo_servico_venda: {
+        Args: { p_processo_id: string }
+        Returns: string
+      }
       qa_busca_auxiliar_caso: {
         Args: {
           match_count?: number
