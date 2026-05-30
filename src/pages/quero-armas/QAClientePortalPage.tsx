@@ -2030,6 +2030,64 @@ export default function QAClientePortalPage() {
           onUpdated={() => setDocsReloadKey((k) => k + 1)}
         />
       ) : null}
+
+      {showContratoPopup && pendingContracts > 0 && (
+        <div
+          className="fixed inset-0 z-[120] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowContratoPopup(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl border border-[#7A1F2B]/40 shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h-1.5 w-full bg-[#7A1F2B]" />
+            <div className="p-5 md:p-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-11 h-11 rounded-xl bg-[#FBF3F4] flex items-center justify-center shrink-0">
+                  <FileText className="h-5 w-5 text-[#7A1F2B]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">
+                    Contrato aguardando sua assinatura
+                  </div>
+                  <div className="text-[16px] font-bold text-slate-900 mt-1 leading-tight">
+                    {pendingContracts === 1
+                      ? "Você tem 1 contrato pendente de assinatura"
+                      : `Você tem ${pendingContracts} contratos pendentes de assinatura`}
+                  </div>
+                  <p className="text-[12.5px] text-slate-600 mt-2 leading-relaxed">
+                    Pagamento confirmado. Para liberarmos a execução do serviço,
+                    baixe o contrato, assine digitalmente pelo{" "}
+                    <strong>GOV.BR</strong> ou certificado{" "}
+                    <strong>ICP-Brasil</strong> e reenvie pelo portal.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col-reverse md:flex-row gap-2 md:justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowContratoPopup(false)}
+                  className="h-10 px-4 rounded-xl border border-slate-200 text-slate-700 text-[12px] font-bold uppercase tracking-wider hover:bg-slate-50"
+                >
+                  Agora não
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowContratoPopup(false);
+                    goSection("contratos");
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[12px] font-bold uppercase tracking-wider shadow-sm"
+                >
+                  Assinar agora <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </PortalFilterProvider>
   );
