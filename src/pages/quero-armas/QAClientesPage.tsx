@@ -2406,6 +2406,25 @@ export default function QAClientesPage() {
       if (deleteModal.table === "qa_vendas") {
         const vendaObj = (vendas as any[]).find(v => v.id === deleteModal.id);
         const vendaFk = vendaObj ? getVendaFK(vendaObj) : deleteModal.id;
+        const contractFilters = [`venda_id.eq.${deleteModal.id}`, `venda_id.eq.${vendaFk}`].join(",");
+        const { data: linkedContracts, error: eContractsRead } = await supabase
+          .from("qa_contracts" as any)
+          .select("id")
+          .or(contractFilters);
+        if (eContractsRead) throw eContractsRead;
+        const contractIds = ((linkedContracts || []) as any[]).map((contract) => contract.id).filter(Boolean);
+        if (contractIds.length > 0) {
+          const { error: eContractEvents } = await supabase.from("qa_contract_events" as any).delete().in("contract_id", contractIds);
+          if (eContractEvents) throw eContractEvents;
+          const { error: eContractSignatures } = await supabase.from("qa_contract_signatures" as any).delete().in("contract_id", contractIds);
+          if (eContractSignatures) throw eContractSignatures;
+          const { error: eContractItemsByContract } = await supabase.from("qa_contract_items" as any).delete().in("contract_id", contractIds);
+          if (eContractItemsByContract) throw eContractItemsByContract;
+        }
+        const { error: eContractItemsByVenda } = await supabase.from("qa_contract_items" as any).delete().or(contractFilters);
+        if (eContractItemsByVenda) throw eContractItemsByVenda;
+        const { error: eContracts } = await supabase.from("qa_contracts" as any).delete().or(contractFilters);
+        if (eContracts) throw eContracts;
         const { error: eItens } = await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
         if (eItens) throw eItens;
       }
