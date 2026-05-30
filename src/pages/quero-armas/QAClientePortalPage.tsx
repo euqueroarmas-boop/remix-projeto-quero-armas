@@ -158,6 +158,8 @@ export default function QAClientePortalPage() {
   const [pendingTrilhaDestino, setPendingTrilhaDestino] = useState<string | null>(null);
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
+  const [pendingContracts, setPendingContracts] = useState<number>(0);
+  const [showContratoPopup, setShowContratoPopup] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
     | "resumo"
