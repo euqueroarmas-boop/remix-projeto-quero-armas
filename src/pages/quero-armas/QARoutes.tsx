@@ -76,7 +76,6 @@ const ServicesListPage = lazyRetry(() => import("@/pages/ServicesListPage"), "Se
 const ServicoDetalhePage = lazyRetry(() => import("./ServicoDetalhePage"), "ServicoDetalhePage");
 const CarrinhoPage = lazyRetry(() => import("@/pages/CarrinhoPage"), "CarrinhoPage");
 const QACheckoutFinalizarPage = lazyRetry(() => import("./QACheckoutFinalizarPage"), "QACheckoutFinalizarPage");
-const QuizPage = lazyRetry(() => import("@/pages/QuizPage"), "QuizPage");
 const LpDefesaPessoalPosse = lazyRetry(() => import("@/pages/LpDefesaPessoalPosse"), "LpDefesaPessoalPosse");
 const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
 const LpAtividadesAvulsas = lazyRetry(() => import("@/pages/LpAtividadesAvulsas"), "LpAtividadesAvulsas");
