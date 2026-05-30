@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 
 const PORTAL_PATH = '/area-do-cliente/login';
-const QUIZ_PATH = '/descobrir-meu-caminho';
 const CADASTRO_HERO = '/cadastro?origem=home_hero';
 const CADASTRO_COMO_FUNCIONA = '/cadastro?origem=home_como_funciona';
 const CADASTRO_CLIENTE_EXISTENTE = '/cadastro?origem=home_cliente_existente';
