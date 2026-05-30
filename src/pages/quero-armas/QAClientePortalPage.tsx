@@ -1352,7 +1352,13 @@ export default function QAClientePortalPage() {
           let onClick: (() => void) | null = null;
           let usaChecklistBotao = false;
 
-          if (vencido) {
+          if (pendingContracts > 0) {
+            titulo = pendingContracts === 1
+              ? "Assinar seu contrato"
+              : `Assinar seus contratos (${pendingContracts})`;
+            descricao = "Pagamento confirmado. Assine digitalmente o contrato pelo GOV.BR ou ICP-Brasil para liberar a execução do serviço.";
+            onClick = () => goSection("contratos");
+          } else if (vencido) {
             // Renovação de documento expirado pode envolver acervo geral OU
             // um item de processo. Se houver checklistReproc/checklistPend
             // referente, priorizamos o assistente; caso contrário, hub geral.
