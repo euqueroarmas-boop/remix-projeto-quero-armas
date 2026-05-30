@@ -739,6 +739,16 @@ export default function QAPrecosServicosPage() {
                 />
               </Field>
 
+              <Field label="BASE LEGAL (OPCIONAL)">
+                <textarea
+                  value={form.base_legal}
+                  onChange={(e) => setForm((f) => f && { ...f, base_legal: e.target.value })}
+                  rows={2}
+                  placeholder="EX: ART. 10 LEI 10.826/2003 · DECRETO 11.615/2023"
+                  className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                />
+              </Field>
+
               <div className="flex items-center gap-4 pt-1">
                 <label className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-700 font-bold">
                   <input
