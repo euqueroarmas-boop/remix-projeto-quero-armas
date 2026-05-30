@@ -6,7 +6,6 @@ Allow: /servicos
 Allow: /cadastro
 Allow: /lp/
 Allow: /curso-operador-pistola
-Allow: /descobrir-meu-caminho
 Allow: /login
 Allow: /area-do-cliente/login
 

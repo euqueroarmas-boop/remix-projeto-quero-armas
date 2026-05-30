@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 
 const PORTAL_PATH = '/area-do-cliente/login';
-const QUIZ_PATH = '/descobrir-meu-caminho';
 const CADASTRO_HERO = '/cadastro?origem=home_hero';
 const CADASTRO_COMO_FUNCIONA = '/cadastro?origem=home_como_funciona';
 const CADASTRO_CLIENTE_EXISTENTE = '/cadastro?origem=home_cliente_existente';
@@ -154,10 +153,7 @@ const HomePage = () => {
             </p>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to={QUIZ_PATH} data-testid="home-cta-descobrir">Descobrir meu caminho <ArrowRight className="ml-2 size-5" /></Link>
-              </Button>
-              <Button asChild size="lg" variant="secondary" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to={CADASTRO_HERO} data-testid="home-cta-cadastro">Começar cadastro <ArrowRight className="ml-2 size-5" /></Link>
+                <Link to={CADASTRO_HERO} data-testid="home-cta-cadastro">Começar meu cadastro <ArrowRight className="ml-2 size-5" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <Link to={PORTAL_PATH} data-testid="home-cta-arsenal"><LogIn className="mr-2 size-5" />Acessar Arsenal</Link>
