@@ -575,7 +575,19 @@ const QuizPage = () => {
                     </p>
                   )}
                   <div className="qa-ref-opt-list">
-                    {q.options.map((opt) => {
+                    {q.options
+                      .filter((opt) => {
+                        // Quem escolheu CAC nao tem fluxo de "Posse na PF" (SINARM).
+                        if (
+                          q.id === 'documentacao' &&
+                          answers.objetivo === 'cac_objetivo' &&
+                          opt.id === 'posse_pf'
+                        ) {
+                          return false;
+                        }
+                        return true;
+                      })
+                      .map((opt) => {
                       const Icon = opt.icon;
                       return (
                         <button
