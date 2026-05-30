@@ -47,6 +47,7 @@ interface QACatalogRow {
   preco: string | number | null;
   ativo: boolean;
   display_order: number;
+  base_legal?: string | null;
 }
 
 function rowToService(r: QACatalogRow): ServiceWithCategory {
@@ -63,13 +64,14 @@ function rowToService(r: QACatalogRow): ServiceWithCategory {
     is_active: r.ativo,
     display_order: r.display_order ?? 100,
     category: { id: catSlug, slug: catSlug, name: r.categoria },
+    base_legal: r.base_legal ?? null,
   };
 }
 
 export const listActiveServices = async (): Promise<ServiceWithCategory[]> => {
   const { data, error } = await supabase
     .from('qa_servicos_catalogo' as any)
-    .select('id, slug, nome, categoria, tipo, descricao_curta, descricao_full, preco, ativo, display_order')
+    .select('id, slug, nome, categoria, tipo, descricao_curta, descricao_full, preco, ativo, display_order, base_legal')
     .eq('ativo', true)
     .order('display_order', { ascending: true });
   if (error) throw error;
@@ -99,7 +101,7 @@ export const getServiceBySlug = async (
 ): Promise<{ service: ServiceWithCategory; landing: ServiceLandingData | null } | null> => {
   const { data, error } = await supabase
     .from('qa_servicos_catalogo' as any)
-    .select('id, slug, nome, categoria, tipo, descricao_curta, descricao_full, preco, ativo, display_order')
+    .select('id, slug, nome, categoria, tipo, descricao_curta, descricao_full, preco, ativo, display_order, base_legal')
     .eq('slug', slug)
     .eq('ativo', true)
     .maybeSingle();
@@ -113,7 +115,7 @@ export const validateCartAgainstCatalog = async (
   if (serviceIds.length === 0) return new Map();
   const { data, error } = await supabase
     .from('qa_servicos_catalogo' as any)
-    .select('id, slug, nome, categoria, tipo, descricao_curta, descricao_full, preco, ativo, display_order')
+    .select('id, slug, nome, categoria, tipo, descricao_curta, descricao_full, preco, ativo, display_order, base_legal')
     .in('id', serviceIds)
     .eq('ativo', true);
   if (error) throw error;
