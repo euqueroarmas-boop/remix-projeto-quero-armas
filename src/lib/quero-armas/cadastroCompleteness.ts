@@ -138,7 +138,10 @@ function countFilled(cliente: any, keys: string[]): SecaoCount {
 
 const SECOES_KEYS = {
   identificacao: [
-    "nome_completo", "cpf", "rg", "data_nascimento", "sexo",
+    "nome_completo", "cpf",
+    "rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg",
+    "data_nascimento", "sexo",
+    "naturalidade_municipio", "naturalidade_uf",
     "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
   ],
   filiacao: ["nome_mae", "nome_pai"],
