@@ -47,10 +47,6 @@ export default function QACadastroV2EtapaUmPage() {
       setSelecionado(perfil.id);
       persistir({ perfil: perfil.id, orgao: perfil.orgao ?? null, origem: "v2" });
 
-      if (perfil.acao === "redirecionar_quiz") {
-        navigate("/descobrir-meu-caminho");
-        return;
-      }
       // Etapa 2 — sub-rotas guiadas dedicadas (aditivo).
       const subRotaPorPerfil: Record<string, string> = {
         defesa_pessoal: "/cadastro-v2/defesa-pessoal",
