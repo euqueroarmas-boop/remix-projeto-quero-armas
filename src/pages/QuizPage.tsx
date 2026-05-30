@@ -330,6 +330,14 @@ const QuizPage = () => {
   const handleAnswer = (answerId: AnswerId) => {
     const nextAnswers = { ...answers, [questions[step].id]: answerId };
     setAnswers(nextAnswers);
+    // Atalho: "So quero experimentar antes de decidir" encerra o diagnostico
+    // e leva direto ao checkout do curso de tiro, sem mais perguntas.
+    if (questions[step].id === 'documentacao' && answerId === 'experimentar') {
+      const scores = buildScores(nextAnswers);
+      const url = resolveCheckout(nextAnswers, scores);
+      navigate(url);
+      return;
+    }
     if (step + 1 < questions.length) {
       setStep(step + 1);
     } else {
