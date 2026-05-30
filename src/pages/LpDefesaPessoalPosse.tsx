@@ -139,7 +139,7 @@ const LpDefesaPessoalPosse = () => (
         <p className="mt-4 text-base text-muted-foreground">Lei 10.826/03 te ampara. Decreto 11.615/23 te garante. A gente te conduz.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={DEFESA_CHECKOUT}>Iniciar minha Posse <ArrowRight className="ml-2 size-4" /></Link></Button>
-          <Button asChild size="lg" variant="outline"><Link to="/descobrir-meu-caminho">Descobrir meu caminho</Link></Button>
+          <Button asChild size="lg" variant="outline"><Link to="/cadastro">Começar meu cadastro</Link></Button>
         </div>
       </div>
     </section>

@@ -198,7 +198,7 @@ const LpAtividadesAvulsas = () => (
         <p className="mt-4 text-base text-muted-foreground">Estandes regularizados e instrutores credenciados. Direto pelo WhatsApp ou monte seu pacote.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CURSO_CHECKOUT}>Ver pacotes <ArrowRight className="ml-2 size-4" /></Link></Button>
-          <Button asChild size="lg" variant="outline"><Link to="/descobrir-meu-caminho">Refazer diagnóstico</Link></Button>
+          <Button asChild size="lg" variant="outline"><Link to="/cadastro">Começar meu cadastro</Link></Button>
         </div>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs uppercase tracking-widest text-muted-foreground">
           <span className="flex items-center gap-2"><CheckCircle2 className="size-4 text-accent" /> Sem compromisso</span>
