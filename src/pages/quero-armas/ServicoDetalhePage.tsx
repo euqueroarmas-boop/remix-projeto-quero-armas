@@ -184,6 +184,11 @@ export default function ServicoDetalhePage() {
                 {service.short_description}
               </p>
             ) : null}
+            {service.base_legal ? (
+              <p className="mt-2 text-[12px] italic leading-snug text-muted-foreground/80">
+                {service.base_legal}
+              </p>
+            ) : null}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button

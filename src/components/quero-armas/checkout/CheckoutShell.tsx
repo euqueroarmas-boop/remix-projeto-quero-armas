@@ -20,6 +20,7 @@ interface ServiceSummary {
   descricao_curta: string | null;
   preco: number | null;
   recorrente: boolean;
+  base_legal?: string | null;
 }
 
 interface CheckoutShellProps {
@@ -63,7 +64,7 @@ export default function CheckoutShell({
     (async () => {
       const { data } = await supabase
         .from("qa_servicos_catalogo" as any)
-        .select("nome, descricao_curta, preco, recorrente")
+        .select("nome, descricao_curta, preco, recorrente, base_legal")
         .eq("slug", slug)
         .eq("ativo", true)
         .maybeSingle();
@@ -165,6 +166,11 @@ export default function CheckoutShell({
                   {internal?.descricao_curta && (
                     <p className="text-[11px] text-slate-600 mt-1 leading-relaxed line-clamp-3">
                       {internal.descricao_curta}
+                    </p>
+                  )}
+                  {internal?.base_legal && (
+                    <p className="text-[10px] text-slate-500 mt-1.5 italic leading-snug">
+                      {internal.base_legal}
                     </p>
                   )}
                 </div>

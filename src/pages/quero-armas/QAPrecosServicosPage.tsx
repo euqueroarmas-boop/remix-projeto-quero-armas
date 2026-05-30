@@ -49,6 +49,7 @@ interface ServicoRow {
   descricao_curta?: string | null;
   servico_id?: number | null;
   exige_acervo: boolean | null;
+  base_legal?: string | null;
 }
 
 function fmtBRL(v: number | null) {
@@ -86,6 +87,7 @@ interface FormState {
   ativo: boolean;
   display_order: string;
   descricao_curta: string;
+  base_legal: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -98,6 +100,7 @@ const EMPTY_FORM: FormState = {
   ativo: true,
   display_order: "100",
   descricao_curta: "",
+  base_legal: "",
 };
 
 const CATEGORIAS_CUSTOM_KEY = "qa_categorias_custom_v1";
@@ -162,7 +165,7 @@ export default function QAPrecosServicosPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("qa_servicos_catalogo" as any)
-      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id, exige_acervo")
+      .select("id, slug, nome, categoria, tipo, preco, recorrente, ativo, display_order, descricao_curta, servico_id, exige_acervo, base_legal")
       .order("categoria", { ascending: true })
       .order("display_order", { ascending: true });
     if (error) {
@@ -296,6 +299,7 @@ export default function QAPrecosServicosPage() {
       ativo: row.ativo,
       display_order: String(row.display_order ?? 100),
       descricao_curta: row.descricao_curta ?? "",
+      base_legal: row.base_legal ?? "",
     });
   }
 
@@ -318,6 +322,7 @@ export default function QAPrecosServicosPage() {
       ativo: form.ativo,
       display_order: Number(form.display_order) || 100,
       descricao_curta: form.descricao_curta.trim() || null,
+      base_legal: form.base_legal.trim() || null,
     };
     setSubmitting(true);
     let error;
@@ -734,6 +739,16 @@ export default function QAPrecosServicosPage() {
                 />
               </Field>
 
+              <Field label="BASE LEGAL (OPCIONAL)">
+                <textarea
+                  value={form.base_legal}
+                  onChange={(e) => setForm((f) => f && { ...f, base_legal: e.target.value })}
+                  rows={2}
+                  placeholder="EX: ART. 10 LEI 10.826/2003 · DECRETO 11.615/2023"
+                  className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                />
+              </Field>
+
               <div className="flex items-center gap-4 pt-1">
                 <label className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wider text-slate-700 font-bold">
                   <input
@@ -1034,6 +1049,9 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
       <td className="px-3 py-2.5">
         <div className="font-bold uppercase text-slate-900 leading-tight">{row.nome}</div>
         <div className="text-[10px] text-slate-400 font-mono mt-0.5">{row.slug}</div>
+        {row.base_legal && (
+          <div className="text-[10px] italic text-slate-500 mt-1 leading-snug">{row.base_legal}</div>
+        )}
       </td>
       <td className="px-3 py-2.5">
         <input
