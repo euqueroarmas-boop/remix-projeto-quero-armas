@@ -1066,10 +1066,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <FInput label="Naturalidade (Município) *" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} error={requiredErrors.naturalidade_municipio ? "Obrigatório" : undefined} />
                 <FSelect label="Naturalidade (UF) *" value={f.naturalidade_uf} onChange={v => set("naturalidade_uf", v)} options={ufOptions} placeholder="UF" error={requiredErrors.naturalidade_uf ? "Obrigatório" : undefined} />
-                <FInput label="Naturalidade (País) *" value={f.naturalidade_pais} onChange={v => set("naturalidade_pais", v)} />
+                <FInput label="Nacionalidade *" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} error={requiredErrors.nacionalidade ? "Obrigatório" : undefined} />
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="Nacionalidade *" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} error={requiredErrors.nacionalidade ? "Obrigatório" : undefined} />
                 <FSelect label="Estado Civil *" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Obrigatório" : undefined} />
                 <FInput label="Profissão *" value={f.profissao} onChange={v => set("profissao", v)} error={requiredErrors.profissao ? "Obrigatório" : undefined} />
               </div>
