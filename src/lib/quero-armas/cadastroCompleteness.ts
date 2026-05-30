@@ -138,7 +138,7 @@ function countFilled(cliente: any, keys: string[]): SecaoCount {
 
 const SECOES_KEYS = {
   identificacao: [
-    "nome_completo", "cpf", "rg", "data_nascimento", "naturalidade",
+    "nome_completo", "cpf", "rg", "data_nascimento", "sexo",
     "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
   ],
   filiacao: ["nome_mae", "nome_pai"],
@@ -158,18 +158,7 @@ const SECOES_KEYS = {
 };
 
 export function computeCadastroCompleteness(cliente: any): CadastroCompleteness {
-  // Naturalidade pode estar gravada no campo legado `naturalidade` ou nos
-  // novos campos `naturalidade_municipio` / `naturalidade_uf`. Tratamos como
-  // preenchido se qualquer um deles tiver valor.
-  const clienteNorm = {
-    ...cliente,
-    naturalidade:
-      cliente?.naturalidade ||
-      cliente?.naturalidade_municipio ||
-      cliente?.naturalidade_uf ||
-      "",
-  };
-  const identificacao = countFilled(clienteNorm, SECOES_KEYS.identificacao);
+  const identificacao = countFilled(cliente, SECOES_KEYS.identificacao);
   const filiacao = countFilled(cliente, SECOES_KEYS.filiacao);
   const contato = countFilled(cliente, SECOES_KEYS.contato);
   const endereco = countFilled(cliente, SECOES_KEYS.endereco);

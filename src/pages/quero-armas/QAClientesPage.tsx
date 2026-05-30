@@ -821,7 +821,7 @@ const UF_LIST = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT
 interface Cliente {
   id: number; id_legado: number; nome_completo: string; cpf: string; rg: string; emissor_rg: string;
   uf_emissor_rg?: string;
-  data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
+  data_nascimento: string; naturalidade: string; nacionalidade: string; sexo?: string; nome_mae: string; nome_pai: string;
   estado_civil: string; profissao: string; email: string; celular: string; endereco: string; numero: string;
   bairro: string; cep: string; cidade: string; estado: string; observacao: string; complemento: string;
   status: string; created_at: string; escolaridade?: string; titulo_eleitor?: string;
@@ -2786,13 +2786,7 @@ export default function QAClientesPage() {
                         )}
                       />
                       <QAFieldRow label="Nascimento" value={renderObrig(formatDate(c.data_nascimento), !c.data_nascimento)} />
-                      {(() => {
-                        const mun = (c as any).naturalidade_municipio || "";
-                        const uf = (c as any).naturalidade_uf || "";
-                        const composta = [mun, uf].filter(Boolean).join("/");
-                        const valor = c.naturalidade || composta;
-                        return <QAFieldRow label="Naturalidade" value={renderObrig(valor, !valor)} />;
-                      })()}
+                      <QAFieldRow label="Sexo" value={renderObrig(c.sexo, !c.sexo)} />
                       <QAFieldRow label="Nacionalidade" value={renderObrig(c.nacionalidade, !c.nacionalidade)} />
                       <QAFieldRow label="Estado Civil" value={renderObrig(c.estado_civil, !c.estado_civil)} />
                       <QAFieldRow label="Profissão" value={renderObrig(c.profissao, !c.profissao)} />
