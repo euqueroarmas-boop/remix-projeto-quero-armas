@@ -1049,6 +1049,9 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
       <td className="px-3 py-2.5">
         <div className="font-bold uppercase text-slate-900 leading-tight">{row.nome}</div>
         <div className="text-[10px] text-slate-400 font-mono mt-0.5">{row.slug}</div>
+        {row.base_legal && (
+          <div className="text-[10px] italic text-slate-500 mt-1 leading-snug">{row.base_legal}</div>
+        )}
       </td>
       <td className="px-3 py-2.5">
         <input
