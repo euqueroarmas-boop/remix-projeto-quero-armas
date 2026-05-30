@@ -2785,8 +2785,21 @@ export default function QAClientesPage() {
                           !c.rg
                         )}
                       />
+                      <QAFieldRow
+                        label="Expedição RG"
+                        value={renderObrig(formatDate((c as any).expedicao_rg), !(c as any).expedicao_rg)}
+                      />
                       <QAFieldRow label="Nascimento" value={renderObrig(formatDate(c.data_nascimento), !c.data_nascimento)} />
                       <QAFieldRow label="Sexo" value={renderObrig(c.sexo, !c.sexo)} />
+                      <QAFieldRow
+                        label="Naturalidade"
+                        value={(() => {
+                          const mun = (c as any).naturalidade_municipio || "";
+                          const uf = (c as any).naturalidade_uf || "";
+                          const composto = c.naturalidade || [mun, uf].filter(Boolean).join("/");
+                          return renderObrig(composto || null, !composto);
+                        })()}
+                      />
                       <QAFieldRow label="Nacionalidade" value={renderObrig(c.nacionalidade, !c.nacionalidade)} />
                       <QAFieldRow label="Estado Civil" value={renderObrig(c.estado_civil, !c.estado_civil)} />
                       <QAFieldRow label="Profissão" value={renderObrig(c.profissao, !c.profissao)} />
