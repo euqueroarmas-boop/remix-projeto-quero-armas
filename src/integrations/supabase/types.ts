@@ -9779,6 +9779,7 @@ export type Database = {
         }
         Returns: Json
       }
+      qa_venda_excluir_total: { Args: { p_venda_id: number }; Returns: Json }
       qa_venda_propor_valor: {
         Args: { p_origem?: string; p_valor: number; p_venda_id: number }
         Returns: Json
