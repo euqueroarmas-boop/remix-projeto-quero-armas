@@ -793,7 +793,6 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       // formato ASCII lowercase.
       payload.email = sanitizeEmailForDb(payload.email);
       payload.responsavel_endereco_email = sanitizeEmailForDb(payload.responsavel_endereco_email);
-      console.log("[qa_clientes payload final]", payload.email, payload.responsavel_endereco_email, payload);
       let savedId: number | null = null;
       if (isEdit) {
         // Upload photo if new file selected
@@ -801,6 +800,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           const path = await uploadPhoto(cliente.id);
           if (path) payload.imagem = path;
         }
+        console.log("[qa_clientes payload final]", payload.email, payload.responsavel_endereco_email, payload);
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
         savedId = cliente.id;
@@ -809,6 +809,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         // Marca origem='manual' para distinguir cadastros feitos pela equipe
         // dos enviados via formulário público.
         payload.origem = "manual";
+        console.log("[qa_clientes payload final]", payload.email, payload.responsavel_endereco_email, payload);
         const { data, error } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
         if (error) throw error;
         savedId = (data as any)?.id;
