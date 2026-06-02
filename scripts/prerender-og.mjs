@@ -274,5 +274,5 @@ export function prerenderOg({ distDir = DEFAULT_DIST } = {}) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
-  prerenderOg();
+  prerenderOg({ distDir: process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_DIST });
 }
