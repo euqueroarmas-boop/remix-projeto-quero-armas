@@ -1,20 +1,22 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { prerenderOg } from "./scripts/prerender-og.mjs";
+import { execFileSync } from "node:child_process";
 
-function queroArmasPrerenderOgPlugin() {
+function queroArmasPrerenderOgPlugin(): Plugin {
   let outDir = path.resolve(process.cwd(), "dist");
 
   return {
     name: "quero-armas-prerender-og",
-    apply: "build" as const,
-    configResolved(config) {
+    apply: "build",
+    configResolved(config: ResolvedConfig) {
       outDir = path.resolve(config.root, config.build.outDir || "dist");
     },
     closeBundle() {
-      prerenderOg({ distDir: outDir });
+      execFileSync(process.execPath, [path.resolve(process.cwd(), "scripts/prerender-og.mjs"), outDir], {
+        stdio: "inherit",
+      });
     },
   };
 }
