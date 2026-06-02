@@ -12,6 +12,9 @@ import {
 } from "@/lib/quero-armas/serviceLegalDetails";
 import { formatBRL } from "@/shared/lib/formatters";
 import { ArrowLeft, ArrowRight, Loader2, ShoppingCart } from "lucide-react";
+import { SEO } from "@/shared/components/SEO";
+import { ShareButton } from "@/shared/components/ShareButton";
+import { buildServiceMeta } from "@/shared/seo/pageMeta";
 
 const sectionCls =
   "relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden";
