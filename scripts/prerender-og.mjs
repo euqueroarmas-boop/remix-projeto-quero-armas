@@ -10,6 +10,9 @@ import { pathToFileURL } from "node:url";
 const SITE = "https://www.euqueroarmas.com.br";
 const OG_DEFAULT = `${SITE}/og/home.jpg`;
 const DEFAULT_DIST = path.resolve(process.cwd(), "dist");
+let activeDist = DEFAULT_DIST;
+let templatePath = path.join(activeDist, "index.html");
+let template = "";
 
 /** Catálogo público de rotas com metadados específicos.
  *  Os slugs de serviço são EXATAMENTE os ativos em qa_servicos_catalogo.
@@ -224,7 +227,7 @@ function buildHtml({ routePath, title, description, image }) {
 
 function writeRoute(routePath, meta) {
   const cleanPath = routePath.replace(/^\/+|\/+$/g, "");
-  const dir = path.join(DIST, cleanPath);
+  const dir = path.join(activeDist, cleanPath);
   fs.mkdirSync(dir, { recursive: true });
   const slugForImg = cleanPath.split("/").pop();
   const image = ogImageFor(slugForImg);
@@ -237,22 +240,39 @@ function writeRoute(routePath, meta) {
   fs.writeFileSync(path.join(dir, "index.html"), html, "utf8");
 }
 
-let count = 0;
-for (const [page, meta] of Object.entries(STATIC_PAGES)) {
-  writeRoute(page, meta);
-  count++;
-}
-for (const [slug, meta] of Object.entries(SERVICE_META)) {
-  writeRoute(`servicos/${slug}`, meta);
-  count++;
+export function prerenderOg({ distDir = DEFAULT_DIST } = {}) {
+  activeDist = distDir;
+  templatePath = path.join(activeDist, "index.html");
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`[prerender-og] ${templatePath} não encontrado — pulando.`);
+    return 0;
+  }
+
+  template = fs.readFileSync(templatePath, "utf8");
+
+  let count = 0;
+  for (const [page, meta] of Object.entries(STATIC_PAGES)) {
+    writeRoute(page, meta);
+    count++;
+  }
+  for (const [slug, meta] of Object.entries(SERVICE_META)) {
+    writeRoute(`servicos/${slug}`, meta);
+    count++;
+  }
+
+  // Atualiza também a home (dist/index.html) com imagem OG correta caso ainda
+  // não tenha sido corrigida — defensivo.
+  const homeFixed = setMeta(
+    setMeta(template, { property: "og:image", content: OG_DEFAULT }),
+    { name: "twitter:image", content: OG_DEFAULT },
+  );
+  fs.writeFileSync(templatePath, homeFixed, "utf8");
+
+  console.log(`[prerender-og] ${count} rotas com <head> específico geradas em ${activeDist}.`);
+  return count;
 }
 
-// Atualiza também a home (dist/index.html) com imagem OG correta caso ainda
-// não tenha sido corrigida — defensivo.
-const homeFixed = setMeta(
-  setMeta(template, { property: "og:image", content: OG_DEFAULT }),
-  { name: "twitter:image", content: OG_DEFAULT },
-);
-fs.writeFileSync(TEMPLATE_PATH, homeFixed, "utf8");
-
-console.log(`[prerender-og] ${count} rotas com <head> específico geradas em dist/.`);
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  prerenderOg();
+}
