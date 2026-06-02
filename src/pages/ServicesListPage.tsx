@@ -271,6 +271,10 @@ const ServicesListPage = () => {
 
   return (
     <SiteShell>
+      {(() => {
+        const m = getPageMeta('/servicos')!;
+        return <SEO title={m.title} description={m.description} image={m.image} canonical="/servicos" />;
+      })()}
       {/* HERO */}
       <section
         className={`${publicSectionCls} min-h-[720px] border-b border-border bg-background lg:min-h-[760px] xl:min-h-[800px]`}
