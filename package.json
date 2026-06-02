@@ -10,8 +10,8 @@
   "scripts": {
     "dev": "vite",
     "generate:sitemaps": "node scripts/generate-sitemaps.mjs",
-    "build": "npm run generate:sitemaps && vite build && node scripts/prerender-og.mjs",
-    "build:dev": "npm run generate:sitemaps && vite build --mode development && node scripts/prerender-og.mjs",
+    "build": "npm run generate:sitemaps && vite build",
+    "build:dev": "npm run generate:sitemaps && vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",

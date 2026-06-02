@@ -5,18 +5,14 @@
 // de comportamento (mesmo bundle, mesmo #root).
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const SITE = "https://www.euqueroarmas.com.br";
 const OG_DEFAULT = `${SITE}/og/home.jpg`;
-const DIST = path.resolve(process.cwd(), "dist");
-const TEMPLATE_PATH = path.join(DIST, "index.html");
-
-if (!fs.existsSync(TEMPLATE_PATH)) {
-  console.warn("[prerender-og] dist/index.html não encontrado — pulando.");
-  process.exit(0);
-}
-
-const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
+const DEFAULT_DIST = path.resolve(process.cwd(), "dist");
+let activeDist = DEFAULT_DIST;
+let templatePath = path.join(activeDist, "index.html");
+let template = "";
 
 /** Catálogo público de rotas com metadados específicos.
  *  Os slugs de serviço são EXATAMENTE os ativos em qa_servicos_catalogo.
@@ -24,9 +20,9 @@ const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
  *  fallback do Helmet client-side (suficiente para Google, não para WhatsApp). */
 const SERVICE_META = {
   "posse-de-arma-de-fogo": {
-    title: "Posse de Arma de Fogo (PF) | Quero Armas",
+    title: "Posse de Arma de Fogo | Quero Armas",
     description:
-      "Assessoria completa para aquisição e posse de arma de fogo junto à Polícia Federal: documentação, exames, fundamentação e acompanhamento até a entrega do CRAF.",
+      "Assessoria para aquisição legal, registro e posse de arma de fogo, com acompanhamento completo do processo.",
   },
   "aquisicao-registro-posse-de-arma-de-fogo": {
     title: "Aquisição, Registro e Posse de Arma de Fogo | Quero Armas",
@@ -175,7 +171,7 @@ const STATIC_PAGES = {
 
 function ogImageFor(slug) {
   // Imagem específica em /public/og/<slug>.jpg se existir, senão fallback.
-  const candidate = path.join(DIST, "og", `${slug}.jpg`);
+  const candidate = path.join(activeDist, "og", `${slug}.jpg`);
   if (fs.existsSync(candidate)) return `${SITE}/og/${slug}.jpg`;
   return OG_DEFAULT;
 }
@@ -231,7 +227,7 @@ function buildHtml({ routePath, title, description, image }) {
 
 function writeRoute(routePath, meta) {
   const cleanPath = routePath.replace(/^\/+|\/+$/g, "");
-  const dir = path.join(DIST, cleanPath);
+  const dir = path.join(activeDist, cleanPath);
   fs.mkdirSync(dir, { recursive: true });
   const slugForImg = cleanPath.split("/").pop();
   const image = ogImageFor(slugForImg);
@@ -244,22 +240,39 @@ function writeRoute(routePath, meta) {
   fs.writeFileSync(path.join(dir, "index.html"), html, "utf8");
 }
 
-let count = 0;
-for (const [page, meta] of Object.entries(STATIC_PAGES)) {
-  writeRoute(page, meta);
-  count++;
-}
-for (const [slug, meta] of Object.entries(SERVICE_META)) {
-  writeRoute(`servicos/${slug}`, meta);
-  count++;
+export function prerenderOg({ distDir = DEFAULT_DIST } = {}) {
+  activeDist = distDir;
+  templatePath = path.join(activeDist, "index.html");
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`[prerender-og] ${templatePath} não encontrado — pulando.`);
+    return 0;
+  }
+
+  template = fs.readFileSync(templatePath, "utf8");
+
+  let count = 0;
+  for (const [page, meta] of Object.entries(STATIC_PAGES)) {
+    writeRoute(page, meta);
+    count++;
+  }
+  for (const [slug, meta] of Object.entries(SERVICE_META)) {
+    writeRoute(`servicos/${slug}`, meta);
+    count++;
+  }
+
+  // Atualiza também a home (dist/index.html) com imagem OG correta caso ainda
+  // não tenha sido corrigida — defensivo.
+  const homeFixed = setMeta(
+    setMeta(template, { property: "og:image", content: OG_DEFAULT }),
+    { name: "twitter:image", content: OG_DEFAULT },
+  );
+  fs.writeFileSync(templatePath, homeFixed, "utf8");
+
+  console.log(`[prerender-og] ${count} rotas com <head> específico geradas em ${activeDist}.`);
+  return count;
 }
 
-// Atualiza também a home (dist/index.html) com imagem OG correta caso ainda
-// não tenha sido corrigida — defensivo.
-const homeFixed = setMeta(
-  setMeta(template, { property: "og:image", content: OG_DEFAULT }),
-  { name: "twitter:image", content: OG_DEFAULT },
-);
-fs.writeFileSync(TEMPLATE_PATH, homeFixed, "utf8");
-
-console.log(`[prerender-og] ${count} rotas com <head> específico geradas em dist/.`);
+if (import.meta.url === pathToFileURL(process.argv[1] || "").href) {
+  prerenderOg({ distDir: process.argv[2] ? path.resolve(process.argv[2]) : DEFAULT_DIST });
+}

@@ -48,9 +48,9 @@ export const pageMeta: Record<string, PageMeta> = {
  *  estático para crawlers de WhatsApp/Facebook/Telegram). */
 export const serviceMetaBySlug: Record<string, PageMeta> = {
   'posse-de-arma-de-fogo': {
-    title: 'Posse de Arma de Fogo (PF) | Quero Armas',
+    title: 'Posse de Arma de Fogo | Quero Armas',
     description:
-      'Assessoria completa para aquisição e posse de arma de fogo junto à Polícia Federal: documentação, exames, fundamentação e acompanhamento até a entrega do CRAF.',
+      'Assessoria para aquisição legal, registro e posse de arma de fogo, com acompanhamento completo do processo.',
     image: og('home.jpg'),
   },
   'aquisicao-registro-posse-de-arma-de-fogo': {
