@@ -788,19 +788,12 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       for (const k of Object.keys(payload)) {
         if (payload[k] === "") payload[k] = null;
       }
-      // Normaliza e-mails para o formato aceito pela check constraint
-      // `chk_qa_clientes_email_format` (ASCII, lowercase). Se não passar
-      // na validação, salva como null para não violar o CHECK.
-      const sanitizeEmail = (v: any): string | null => {
-        if (v == null) return null;
-        const s = String(v).trim().toLowerCase();
-        if (!s) return null;
-        return isValidEmail(s) ? s : null;
-      };
-      payload.email = sanitizeEmail(payload.email);
-      if ("responsavel_endereco_email" in payload) {
-        payload.responsavel_endereco_email = sanitizeEmail(payload.responsavel_endereco_email);
-      }
+      // Última barreira antes do insert/update: e-mail nunca pode seguir em
+      // uppercase nem com espaços invisíveis, pois a constraint do banco exige
+      // formato ASCII lowercase.
+      payload.email = sanitizeEmailForDb(payload.email);
+      payload.responsavel_endereco_email = sanitizeEmailForDb(payload.responsavel_endereco_email);
+      console.log("[qa_clientes payload final]", payload.email, payload.responsavel_endereco_email, payload);
       let savedId: number | null = null;
       if (isEdit) {
         // Upload photo if new file selected
@@ -1142,7 +1135,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                           value={f.senha_gov}
                           onChange={e => { set("senha_gov", e.target.value); setAiSenhaGovNeedsReview(false); }}
                           placeholder="Senha GOV importada"
-                          className={cn(inputClass.replace(" uppercase", ""), aiSenhaGovFromAI && "pr-32")}
+                          className={cn(inputClassPreserveCase, aiSenhaGovFromAI && "pr-32")}
                         />
                         {aiSenhaGovFromAI && (
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
@@ -1193,7 +1186,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FInput label="Celular *" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" error={requiredErrors.celular ? "Obrigatório" : undefined} />
-                <FInput label="E-mail *" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" error={requiredErrors.email ? "Obrigatório" : undefined} />
+                <FInput label="E-mail *" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" error={requiredErrors.email ? "Obrigatório" : undefined} preserveCase type="email" />
               </div>
             </section>
 
@@ -1289,7 +1282,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FInput label="Telefone *" value={f.responsavel_endereco_telefone} onChange={v => set("responsavel_endereco_telefone", v)} placeholder="(00) 00000-0000" />
-                    <FInput label="E-mail" value={f.responsavel_endereco_email} onChange={v => set("responsavel_endereco_email", v)} />
+                    <FInput label="E-mail" value={f.responsavel_endereco_email} onChange={v => set("responsavel_endereco_email", v)} preserveCase type="email" />
                   </div>
                   <div className="text-[10px] font-bold uppercase tracking-widest text-amber-900/90 pt-2">
                     Endereço do imóvel comprovado pelo responsável
