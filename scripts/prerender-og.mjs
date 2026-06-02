@@ -5,18 +5,11 @@
 // de comportamento (mesmo bundle, mesmo #root).
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const SITE = "https://www.euqueroarmas.com.br";
 const OG_DEFAULT = `${SITE}/og/home.jpg`;
-const DIST = path.resolve(process.cwd(), "dist");
-const TEMPLATE_PATH = path.join(DIST, "index.html");
-
-if (!fs.existsSync(TEMPLATE_PATH)) {
-  console.warn("[prerender-og] dist/index.html não encontrado — pulando.");
-  process.exit(0);
-}
-
-const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
+const DEFAULT_DIST = path.resolve(process.cwd(), "dist");
 
 /** Catálogo público de rotas com metadados específicos.
  *  Os slugs de serviço são EXATAMENTE os ativos em qa_servicos_catalogo.
@@ -24,9 +17,9 @@ const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
  *  fallback do Helmet client-side (suficiente para Google, não para WhatsApp). */
 const SERVICE_META = {
   "posse-de-arma-de-fogo": {
-    title: "Posse de Arma de Fogo (PF) | Quero Armas",
+    title: "Posse de Arma de Fogo | Quero Armas",
     description:
-      "Assessoria completa para aquisição e posse de arma de fogo junto à Polícia Federal: documentação, exames, fundamentação e acompanhamento até a entrega do CRAF.",
+      "Assessoria para aquisição legal, registro e posse de arma de fogo, com acompanhamento completo do processo.",
   },
   "aquisicao-registro-posse-de-arma-de-fogo": {
     title: "Aquisição, Registro e Posse de Arma de Fogo | Quero Armas",
@@ -175,7 +168,7 @@ const STATIC_PAGES = {
 
 function ogImageFor(slug) {
   // Imagem específica em /public/og/<slug>.jpg se existir, senão fallback.
-  const candidate = path.join(DIST, "og", `${slug}.jpg`);
+  const candidate = path.join(activeDist, "og", `${slug}.jpg`);
   if (fs.existsSync(candidate)) return `${SITE}/og/${slug}.jpg`;
   return OG_DEFAULT;
 }
