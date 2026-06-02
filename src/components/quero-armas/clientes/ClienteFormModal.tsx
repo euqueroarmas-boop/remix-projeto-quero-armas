@@ -84,7 +84,24 @@ function Field({ label, children, span }: { label: string; children: React.React
 }
 
 const inputClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all uppercase";
+const inputClassPreserveCase = inputClass.replace(" uppercase", "");
 const selectClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all appearance-none cursor-pointer";
+
+function sanitizeEmailForDb(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const normalized = value
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+  if (!normalized) return null;
+
+  const emailRegex = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/;
+
+  return emailRegex.test(normalized) ? normalized : null;
+}
 
 const EMPTY_FORM = {
   nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
@@ -137,15 +154,16 @@ const EMPTY_FORM = {
   responsavel_endereco_residiu_ate: "",
 };
 
-function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error }: {
+function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error, preserveCase, type = "text" }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
   placeholder?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
-  maxLength?: number; span?: boolean; disabled?: boolean; error?: string;
+  maxLength?: number; span?: boolean; disabled?: boolean; error?: string; preserveCase?: boolean;
+  type?: React.HTMLInputTypeAttribute;
 }) {
   return (
     <Field label={label} span={span}>
       <input
-        type="text"
+        type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         onBlur={onBlur}
@@ -153,7 +171,7 @@ function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLen
         inputMode={inputMode}
         maxLength={maxLength}
         disabled={disabled}
-        className={cn(inputClass, disabled && "opacity-50 cursor-not-allowed", error && "border-red-500 ring-1 ring-red-500")}
+        className={cn(preserveCase ? inputClassPreserveCase : inputClass, disabled && "opacity-50 cursor-not-allowed", error && "border-red-500 ring-1 ring-red-500")}
       />
       {error && <p className="text-[10px] text-red-600 mt-1 uppercase">{error}</p>}
     </Field>
