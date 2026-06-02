@@ -160,9 +160,19 @@ export default function ServicoDetalhePage() {
   const preco =
     service.base_price_cents > 0 ? formatBRL(service.base_price_cents) : "Sob consulta";
   const cadastroHref = `/cadastro?servico=${encodeURIComponent(service.slug)}`;
+  const meta = buildServiceMeta(service.slug, {
+    name: details?.titulo ?? service.name,
+    short_description: service.short_description,
+  });
 
   return (
     <SiteShell>
+      <SEO
+        title={meta.title}
+        description={meta.description}
+        image={meta.image}
+        canonical={`/servicos/${service.slug}`}
+      />
       {/* HERO EDITORIAL */}
       <section className={`${sectionCls} border-b border-border bg-background`}>
         <div className={`${innerCls} py-12 sm:py-16`}>
