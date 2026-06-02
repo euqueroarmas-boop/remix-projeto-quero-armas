@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
  * brand=quero-armas em APP_ENV=production.
  */
 export const QA_PASSWORD_RESET_REDIRECT_URL =
-  "https://euqueroarmas.com.br/redefinir-senha";
+  "https://www.euqueroarmas.com.br/redefinir-senha";
 
 export interface PasswordResetResult {
   success: boolean;
