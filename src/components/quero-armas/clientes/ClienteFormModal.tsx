@@ -770,6 +770,19 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       for (const k of Object.keys(payload)) {
         if (payload[k] === "") payload[k] = null;
       }
+      // Normaliza e-mails para o formato aceito pela check constraint
+      // `chk_qa_clientes_email_format` (ASCII, lowercase). Se não passar
+      // na validação, salva como null para não violar o CHECK.
+      const sanitizeEmail = (v: any): string | null => {
+        if (v == null) return null;
+        const s = String(v).trim().toLowerCase();
+        if (!s) return null;
+        return isValidEmail(s) ? s : null;
+      };
+      payload.email = sanitizeEmail(payload.email);
+      if ("responsavel_endereco_email" in payload) {
+        payload.responsavel_endereco_email = sanitizeEmail(payload.responsavel_endereco_email);
+      }
       let savedId: number | null = null;
       if (isEdit) {
         // Upload photo if new file selected

@@ -47,7 +47,10 @@ export function isValidCpf(value: string | null | undefined): boolean {
 /** Valida e-mail simples. */
 export function isValidEmail(value: string | null | undefined): boolean {
   if (!value) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  // Espelha a check constraint `chk_qa_clientes_email_format` no banco
+  // (ASCII apenas, TLD com 2+ letras). Mantém validação client-side
+  // alinhada com o DB para evitar 23514 ao salvar.
+  return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/i.test(value.trim());
 }
 
 /** Telefone BR aceitável: 10 ou 11 dígitos. */
