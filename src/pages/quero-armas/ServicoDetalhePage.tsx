@@ -12,6 +12,9 @@ import {
 } from "@/lib/quero-armas/serviceLegalDetails";
 import { formatBRL } from "@/shared/lib/formatters";
 import { ArrowLeft, ArrowRight, Loader2, ShoppingCart } from "lucide-react";
+import { SEO } from "@/shared/components/SEO";
+import { ShareButton } from "@/shared/components/ShareButton";
+import { buildServiceMeta } from "@/shared/seo/pageMeta";
 
 const sectionCls =
   "relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden";
@@ -157,9 +160,19 @@ export default function ServicoDetalhePage() {
   const preco =
     service.base_price_cents > 0 ? formatBRL(service.base_price_cents) : "Sob consulta";
   const cadastroHref = `/cadastro?servico=${encodeURIComponent(service.slug)}`;
+  const meta = buildServiceMeta(service.slug, {
+    name: details?.titulo ?? service.name,
+    short_description: service.short_description,
+  });
 
   return (
     <SiteShell>
+      <SEO
+        title={meta.title}
+        description={meta.description}
+        image={meta.image}
+        canonical={`/servicos/${service.slug}`}
+      />
       {/* HERO EDITORIAL */}
       <section className={`${sectionCls} border-b border-border bg-background`}>
         <div className={`${innerCls} py-12 sm:py-16`}>
@@ -223,6 +236,7 @@ export default function ServicoDetalhePage() {
               >
                 <ShoppingCart className="mr-2 size-4" /> Adicionar ao carrinho
               </Button>
+              <ShareButton size="lg" />
               <div className="sm:ml-auto">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   A partir de

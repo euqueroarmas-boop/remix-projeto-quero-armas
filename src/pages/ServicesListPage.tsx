@@ -7,6 +7,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/shared/cart/CartProvider';
 import { listActiveServices, type ServiceWithCategory } from '@/shared/data/catalog';
 import { formatBRL } from '@/shared/lib/formatters';
+import { SEO } from '@/shared/components/SEO';
+import { ShareButton } from '@/shared/components/ShareButton';
+import { getPageMeta } from '@/shared/seo/pageMeta';
 import {
   Carousel,
   CarouselApi,
@@ -268,6 +271,10 @@ const ServicesListPage = () => {
 
   return (
     <SiteShell>
+      {(() => {
+        const m = getPageMeta('/servicos')!;
+        return <SEO title={m.title} description={m.description} image={m.image} canonical="/servicos" />;
+      })()}
       {/* HERO */}
       <section
         className={`${publicSectionCls} min-h-[720px] border-b border-border bg-background lg:min-h-[760px] xl:min-h-[800px]`}
