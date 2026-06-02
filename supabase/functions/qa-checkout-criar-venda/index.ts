@@ -40,7 +40,7 @@ function isValidCPF(cpf: string): boolean {
   return true;
 }
 function isValidEmail(e: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || "");
+  return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test((e || "").trim().toLowerCase());
 }
 
 Deno.serve(async (req) => {
