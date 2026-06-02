@@ -29,8 +29,12 @@ function formatDateBR(v: string) {
   return `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
 }
 
+function normalizeEmail(s: string) {
+  return (s || "").trim().toLowerCase();
+}
+
 function isEmailValido(s: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+  return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(normalizeEmail(s));
 }
 
 function isDuplicateEmailTestAllowed() {
@@ -127,7 +131,7 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
   const setCep = (v: string) => { markEdited("endereco_cep"); updateDados({ endereco_cep: formatCEP(v) }); };
   const setEmail = (v: string) => {
     markEdited("email");
-    updateDados({ email: v.toLowerCase().trim() });
+    updateDados({ email: normalizeEmail(v) });
     // Trocar e-mail nunca deve manter bloqueio antigo — CPF é o canônico.
     setError(null);
   };
@@ -189,8 +193,9 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
 
   async function handleContinue() {
     setError(null);
-    if (!d.nome_completo.trim() || cpfDigits.length !== 11 || !isEmailValido(d.email)) {
-      setError("Nome, CPF e e-mail são obrigatórios.");
+    const emailNorm = normalizeEmail(d.email);
+    if (!d.nome_completo.trim() || cpfDigits.length !== 11 || !isEmailValido(emailNorm)) {
+      setError("Nome, CPF e e-mail válido são obrigatórios. Use apenas letras, números e domínio comum, como nome@email.com.");
       return;
     }
     if (telDigits.length && telDigits.length < 10) {
@@ -210,7 +215,7 @@ export default function Etapa03Revisao({ state, updateDados, update, onNext, onB
     try {
       // Bug 1 fix preservado — checa se cliente já existe (CPF/email)
       const { data, error } = await supabase.functions.invoke("qa-cliente-checar-existente", {
-        body: { cpf: cpfDigits, email: d.email.trim().toLowerCase() },
+        body: { cpf: cpfDigits, email: emailNorm },
       });
       if (error) throw error;
       const cpfExiste = !!data?.cpf_existe;

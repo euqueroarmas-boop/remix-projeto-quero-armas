@@ -20,7 +20,7 @@ const corsHeaders = {
 const BodySchema = z.object({
   cpf: z.string().min(11).max(20),
   nome: z.string().trim().min(2).max(160),
-  email: z.string().trim().email().max(255),
+  email: z.string().trim().max(255),
   telefone: z.string().trim().max(40).optional().nullable(),
   senha: z.string().min(8).max(72),
   servico_interesse: z.string().trim().max(200).optional().nullable(),
@@ -35,6 +35,10 @@ function json(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function isEmailCompativelComQaClientes(email: string): boolean {
+  return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(email.trim().toLowerCase());
 }
 
 Deno.serve(async (req) => {
@@ -59,6 +63,9 @@ Deno.serve(async (req) => {
     return json({ error: "cpf_invalido" }, 400);
   }
   const emailNorm = email.toLowerCase().trim();
+  if (!isEmailCompativelComQaClientes(emailNorm)) {
+    return json({ error: "email_invalido", message: "E-mail inválido." }, 400);
+  }
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

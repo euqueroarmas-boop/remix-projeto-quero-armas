@@ -36,6 +36,14 @@ interface PaymentData {
   valor_cobrado: number;
 }
 
+function normalizeEmail(value: string | null | undefined): string {
+  return (value || "").trim().toLowerCase();
+}
+
+function isEmailCompativelComBanco(value: string | null | undefined): boolean {
+  return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test(normalizeEmail(value));
+}
+
 const POLL_INTERVAL_MS = 4000;
 const POLL_TIMEOUT_MS = 30 * 60 * 1000;
 
@@ -353,6 +361,12 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
     setStage("preparing");
     try {
       const d = state.dadosPessoais;
+      const emailNorm = normalizeEmail(d.email);
+      if (!isEmailCompativelComBanco(emailNorm)) {
+        setStage("form");
+        setError("E-mail inválido. Corrija antes de gerar a cobrança.");
+        return;
+      }
       // 1) Cria conta pública
       const senhaAuto =
         "QA-" +
@@ -365,7 +379,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             nome: d.nome_completo,
             nome_completo: d.nome_completo,
             cpf: d.cpf.replace(/\D/g, ""),
-            email: d.email.trim().toLowerCase(),
+            email: emailNorm,
             telefone: d.telefone,
             senha: senhaAuto,
             catalogo_slug:
@@ -434,7 +448,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             identificacao: {
               nome_completo: d.nome_completo,
               cpf: cpfDigits,
-              email: d.email.trim().toLowerCase(),
+              email: emailNorm,
               celular,
             },
           },
