@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
 import { useHomologados } from "./useHomologados";
+import { calcularPrazoProcessual } from "@/lib/quero-armas/prazosProcessuais";
 
 /* ================================================================
  * Catálogo BASE de status conhecidos (ícone, cor, grupo, ordem).
@@ -234,7 +235,7 @@ export default function DashboardProcessosMonitor() {
   const { state, data, reload } = useWidgetLoader<MonitorRow[]>(async () => {
     const { data: itens, error: e1 } = await supabase
       .from("qa_itens_venda" as any)
-      .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento, data_recurso_administrativo")
+      .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_notificacao, data_indeferimento_recurso, data_deferimento, data_recurso_administrativo")
       .not("status", "is", null);
     if (e1) throw e1;
 
@@ -287,8 +288,15 @@ export default function DashboardProcessosMonitor() {
           statusUpper === "RECURSO ADMINISTRATIVO" ? dataRecurso                    : null;
         const stopRef = dataDoStatus || it.data_ultima_atualizacao || it.data_protocolo || vendaDate;
         const servicoNome = servico?.nome_servico || `Serviço #${it.servico_id ?? "?"}`;
-        const isRecurso = statusUpper === "RECURSO ADMINISTRATIVO";
-        const recursoDiasRestantes = isRecurso && dataRecurso ? 10 - diffDays(dataRecurso) : null;
+        // Motor unificado: prazo só existe se houver evento de abertura SEM recurso
+        // cumprido, ou indeferimento do recurso (Mandado de Segurança).
+        const prazo = calcularPrazoProcessual({
+          data_notificacao: (it as any).data_notificacao ?? null,
+          data_indeferimento: (it as any).data_indeferimento ?? null,
+          data_recurso_administrativo: dataRecurso,
+          data_indeferimento_recurso: (it as any).data_indeferimento_recurso ?? null,
+        });
+        const recursoDiasRestantes = prazo ? prazo.diasRestantes : null;
 
         return {
           itemId: it.id,
