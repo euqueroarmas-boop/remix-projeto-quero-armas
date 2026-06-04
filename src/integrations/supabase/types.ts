@@ -310,249 +310,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cipa_cycles: {
-        Row: {
-          created_at: string
-          duration_days: number | null
-          duration_label: string | null
-          duration_seconds: number | null
-          ended_at: string | null
-          id: string
-          is_current: boolean
-          note: string | null
-          started_at: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          duration_days?: number | null
-          duration_label?: string | null
-          duration_seconds?: number | null
-          ended_at?: string | null
-          id?: string
-          is_current?: boolean
-          note?: string | null
-          started_at?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          duration_days?: number | null
-          duration_label?: string | null
-          duration_seconds?: number | null
-          ended_at?: string | null
-          id?: string
-          is_current?: boolean
-          note?: string | null
-          started_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      cipa_locations: {
-        Row: {
-          accuracy: number | null
-          captured_at: string
-          created_at: string
-          device_name: string
-          id: string
-          is_priority: boolean
-          latitude: number
-          longitude: number
-          person_label: string
-          priority_order: number | null
-        }
-        Insert: {
-          accuracy?: number | null
-          captured_at?: string
-          created_at?: string
-          device_name?: string
-          id?: string
-          is_priority?: boolean
-          latitude: number
-          longitude: number
-          person_label?: string
-          priority_order?: number | null
-        }
-        Update: {
-          accuracy?: number | null
-          captured_at?: string
-          created_at?: string
-          device_name?: string
-          id?: string
-          is_priority?: boolean
-          latitude?: number
-          longitude?: number
-          person_label?: string
-          priority_order?: number | null
-        }
-        Relationships: []
-      }
-      cipa_stress_daily_stats: {
-        Row: {
-          cooldown_efficiency_score: number | null
-          created_at: string
-          critical_exposure_minutes: number | null
-          daily_conflict_risk: number | null
-          day_key: string
-          fight_events_count: number | null
-          id: string
-          max_value: number | null
-          min_value: number | null
-          near_fight_events_count: number | null
-          rapid_escalation_count: number | null
-          updated_at: string
-          weighted_average: number | null
-        }
-        Insert: {
-          cooldown_efficiency_score?: number | null
-          created_at?: string
-          critical_exposure_minutes?: number | null
-          daily_conflict_risk?: number | null
-          day_key: string
-          fight_events_count?: number | null
-          id?: string
-          max_value?: number | null
-          min_value?: number | null
-          near_fight_events_count?: number | null
-          rapid_escalation_count?: number | null
-          updated_at?: string
-          weighted_average?: number | null
-        }
-        Update: {
-          cooldown_efficiency_score?: number | null
-          created_at?: string
-          critical_exposure_minutes?: number | null
-          daily_conflict_risk?: number | null
-          day_key?: string
-          fight_events_count?: number | null
-          id?: string
-          max_value?: number | null
-          min_value?: number | null
-          near_fight_events_count?: number | null
-          rapid_escalation_count?: number | null
-          updated_at?: string
-          weighted_average?: number | null
-        }
-        Relationships: []
-      }
-      cipa_stress_logs: {
-        Row: {
-          created_at: string
-          day_key: string
-          delta_from_previous: number | null
-          id: string
-          minutes_since_previous: number | null
-          session_id: string | null
-          source: string
-          value: number
-        }
-        Insert: {
-          created_at?: string
-          day_key?: string
-          delta_from_previous?: number | null
-          id?: string
-          minutes_since_previous?: number | null
-          session_id?: string | null
-          source?: string
-          value: number
-        }
-        Update: {
-          created_at?: string
-          day_key?: string
-          delta_from_previous?: number | null
-          id?: string
-          minutes_since_previous?: number | null
-          session_id?: string | null
-          source?: string
-          value?: number
-        }
-        Relationships: []
-      }
-      cipa_stress_monthly_stats: {
-        Row: {
-          average_cooldown_time: number | null
-          created_at: string
-          fight_events: number | null
-          high_risk_days: number | null
-          id: string
-          max_peak: number | null
-          month_key: string
-          month_over_month_variation: number | null
-          monthly_average: number | null
-          monthly_stability_score: number | null
-          near_fight_events: number | null
-          stable_days_percent: number | null
-          updated_at: string
-        }
-        Insert: {
-          average_cooldown_time?: number | null
-          created_at?: string
-          fight_events?: number | null
-          high_risk_days?: number | null
-          id?: string
-          max_peak?: number | null
-          month_key: string
-          month_over_month_variation?: number | null
-          monthly_average?: number | null
-          monthly_stability_score?: number | null
-          near_fight_events?: number | null
-          stable_days_percent?: number | null
-          updated_at?: string
-        }
-        Update: {
-          average_cooldown_time?: number | null
-          created_at?: string
-          fight_events?: number | null
-          high_risk_days?: number | null
-          id?: string
-          max_peak?: number | null
-          month_key?: string
-          month_over_month_variation?: number | null
-          monthly_average?: number | null
-          monthly_stability_score?: number | null
-          near_fight_events?: number | null
-          stable_days_percent?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      cipa_voice_daily_stats: {
-        Row: {
-          anger_spikes_count: number | null
-          average_tension_score: number | null
-          cooldown_voice_recovery_score: number | null
-          created_at: string
-          day_key: string
-          id: string
-          peak_tension_score: number | null
-          sustained_high_tension_minutes: number | null
-          updated_at: string
-        }
-        Insert: {
-          anger_spikes_count?: number | null
-          average_tension_score?: number | null
-          cooldown_voice_recovery_score?: number | null
-          created_at?: string
-          day_key: string
-          id?: string
-          peak_tension_score?: number | null
-          sustained_high_tension_minutes?: number | null
-          updated_at?: string
-        }
-        Update: {
-          anger_spikes_count?: number | null
-          average_tension_score?: number | null
-          cooldown_voice_recovery_score?: number | null
-          created_at?: string
-          day_key?: string
-          id?: string
-          peak_tension_score?: number | null
-          sustained_high_tension_minutes?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       client_events: {
         Row: {
           created_at: string
@@ -653,7 +410,7 @@ export type Database = {
           qa_cliente_id: number | null
           status: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           activated_at?: string | null
@@ -668,7 +425,7 @@ export type Database = {
           qa_cliente_id?: number | null
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           activated_at?: string | null
@@ -683,7 +440,7 @@ export type Database = {
           qa_cliente_id?: number | null
           status?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -695,6 +452,13 @@ export type Database = {
           },
           {
             foreignKeyName: "cliente_auth_links_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_cliente_auth_links__qa_cliente"
             columns: ["qa_cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
@@ -1147,7 +911,7 @@ export type Database = {
           contract_text: string | null
           contract_type: string | null
           created_at: string
-          customer_id: string | null
+          customer_id: string
           id: string
           monthly_value: number | null
           quote_id: string | null
@@ -1166,7 +930,7 @@ export type Database = {
           contract_text?: string | null
           contract_type?: string | null
           created_at?: string
-          customer_id?: string | null
+          customer_id: string
           id?: string
           monthly_value?: number | null
           quote_id?: string | null
@@ -1185,7 +949,7 @@ export type Database = {
           contract_text?: string | null
           contract_type?: string | null
           created_at?: string
-          customer_id?: string | null
+          customer_id?: string
           id?: string
           monthly_value?: number | null
           quote_id?: string | null
@@ -1205,6 +969,20 @@ export type Database = {
           },
           {
             foreignKeyName: "contracts_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_contracts__customer"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_contracts__quote"
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
@@ -1260,186 +1038,6 @@ export type Database = {
           suspended_at?: string | null
           telefone?: string | null
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      emotion_events: {
-        Row: {
-          conflict_flag: boolean
-          created_at: string
-          device_id: string | null
-          device_type: string | null
-          duration_minutes: number | null
-          ended_at: string | null
-          id: string
-          peak_level: number
-          relationship_id: string | null
-          source_type: string | null
-          started_at: string
-          user_id: string
-        }
-        Insert: {
-          conflict_flag?: boolean
-          created_at?: string
-          device_id?: string | null
-          device_type?: string | null
-          duration_minutes?: number | null
-          ended_at?: string | null
-          id?: string
-          peak_level?: number
-          relationship_id?: string | null
-          source_type?: string | null
-          started_at?: string
-          user_id?: string
-        }
-        Update: {
-          conflict_flag?: boolean
-          created_at?: string
-          device_id?: string | null
-          device_type?: string | null
-          duration_minutes?: number | null
-          ended_at?: string | null
-          id?: string
-          peak_level?: number
-          relationship_id?: string | null
-          source_type?: string | null
-          started_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      emotion_logs: {
-        Row: {
-          bio_source: string | null
-          created_at: string
-          data_mode: string | null
-          device_id: string | null
-          device_type: string | null
-          heart_rate: number | null
-          hrv: number | null
-          id: string
-          manual_level: number
-          partner_user_id: string | null
-          relationship_id: string | null
-          session_id: string | null
-          sleep_score: number | null
-          source_type: string | null
-          status_label: string
-          user_id: string
-        }
-        Insert: {
-          bio_source?: string | null
-          created_at?: string
-          data_mode?: string | null
-          device_id?: string | null
-          device_type?: string | null
-          heart_rate?: number | null
-          hrv?: number | null
-          id?: string
-          manual_level: number
-          partner_user_id?: string | null
-          relationship_id?: string | null
-          session_id?: string | null
-          sleep_score?: number | null
-          source_type?: string | null
-          status_label?: string
-          user_id?: string
-        }
-        Update: {
-          bio_source?: string | null
-          created_at?: string
-          data_mode?: string | null
-          device_id?: string | null
-          device_type?: string | null
-          heart_rate?: number | null
-          hrv?: number | null
-          id?: string
-          manual_level?: number
-          partner_user_id?: string | null
-          relationship_id?: string | null
-          session_id?: string | null
-          sleep_score?: number | null
-          source_type?: string | null
-          status_label?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      emotion_statistics: {
-        Row: {
-          average_score: number | null
-          conflict_events: number | null
-          cooldown_avg_minutes: number | null
-          created_at: string
-          critical_events: number | null
-          id: string
-          max_score: number | null
-          month_key: string
-          stability_score: number | null
-          total_readings: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          average_score?: number | null
-          conflict_events?: number | null
-          cooldown_avg_minutes?: number | null
-          created_at?: string
-          critical_events?: number | null
-          id?: string
-          max_score?: number | null
-          month_key: string
-          stability_score?: number | null
-          total_readings?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          average_score?: number | null
-          conflict_events?: number | null
-          cooldown_avg_minutes?: number | null
-          created_at?: string
-          critical_events?: number | null
-          id?: string
-          max_score?: number | null
-          month_key?: string
-          stability_score?: number | null
-          total_readings?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      emotion_triggers: {
-        Row: {
-          avg_intensity: number | null
-          created_at: string
-          frequency: number | null
-          id: string
-          last_seen: string | null
-          trigger_name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avg_intensity?: number | null
-          created_at?: string
-          frequency?: number | null
-          id?: string
-          last_seen?: string | null
-          trigger_name: string
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          avg_intensity?: number | null
-          created_at?: string
-          frequency?: number | null
-          id?: string
-          last_seen?: string | null
-          trigger_name?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -1698,53 +1296,6 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
-      }
-      intervention_logs: {
-        Row: {
-          accepted: boolean | null
-          created_at: string
-          effectiveness_score: number | null
-          id: string
-          intervention_text: string | null
-          intervention_type: string
-          notes: string | null
-          relationship_id: string | null
-          trigger_event_id: string | null
-          user_id: string
-        }
-        Insert: {
-          accepted?: boolean | null
-          created_at?: string
-          effectiveness_score?: number | null
-          id?: string
-          intervention_text?: string | null
-          intervention_type?: string
-          notes?: string | null
-          relationship_id?: string | null
-          trigger_event_id?: string | null
-          user_id?: string
-        }
-        Update: {
-          accepted?: boolean | null
-          created_at?: string
-          effectiveness_score?: number | null
-          id?: string
-          intervention_text?: string | null
-          intervention_type?: string
-          notes?: string | null
-          relationship_id?: string | null
-          trigger_event_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "intervention_logs_trigger_event_id_fkey"
-            columns: ["trigger_event_id"]
-            isOneToOne: false
-            referencedRelation: "emotion_events"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       invoice_files: {
         Row: {
@@ -2005,6 +1556,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_lp_contracts__order"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lp_contracts_order_id_fkey"
             columns: ["order_id"]
             isOneToOne: false
@@ -2055,6 +1613,13 @@ export type Database = {
           unit_price_cents?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_lp_order_items__order"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "lp_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lp_order_items_order_id_fkey"
             columns: ["order_id"]
@@ -2659,6 +2224,87 @@ export type Database = {
           },
         ]
       }
+      qa_arma_gt_declaracoes: {
+        Row: {
+          arma_manual_id: number | null
+          calibre: string | null
+          created_at: string
+          declarado_em: string
+          declarado_por: string | null
+          id: number
+          marca: string | null
+          metadados_json: Json
+          modelo: string | null
+          numero_serie: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          origem: string
+          qa_cliente_id: number
+          revertido_em: string | null
+          revertido_por: string | null
+          status: string
+          updated_at: string
+          weapon_key: string
+        }
+        Insert: {
+          arma_manual_id?: number | null
+          calibre?: string | null
+          created_at?: string
+          declarado_em?: string
+          declarado_por?: string | null
+          id?: number
+          marca?: string | null
+          metadados_json?: Json
+          modelo?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id: number
+          revertido_em?: string | null
+          revertido_por?: string | null
+          status?: string
+          updated_at?: string
+          weapon_key: string
+        }
+        Update: {
+          arma_manual_id?: number | null
+          calibre?: string | null
+          created_at?: string
+          declarado_em?: string
+          declarado_por?: string | null
+          id?: number
+          marca?: string | null
+          metadados_json?: Json
+          modelo?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id?: number
+          revertido_em?: string | null
+          revertido_por?: string | null
+          status?: string
+          updated_at?: string
+          weapon_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_arma_gt_declaracoes_arma_manual_id_fkey"
+            columns: ["arma_manual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cliente_armas_manual"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_arma_gt_declaracoes_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_armamentos_catalogo: {
         Row: {
           alcance_efetivo_m: number | null
@@ -2674,10 +2320,16 @@ export type Database = {
           fonte_url: string | null
           id: string
           imagem: string | null
+          imagem_aprovada: boolean
+          imagem_enviada_em: string | null
+          imagem_enviada_por: string | null
           imagem_fonte: string | null
           imagem_gerada_em: string | null
           imagem_status: string
           imagem_url: string | null
+          imagem_validacao_motivo: string | null
+          imagem_validada_em: string | null
+          imagens: string[]
           manual_url: string | null
           marca: string
           modelo: string
@@ -2713,10 +2365,16 @@ export type Database = {
           fonte_url?: string | null
           id?: string
           imagem?: string | null
+          imagem_aprovada?: boolean
+          imagem_enviada_em?: string | null
+          imagem_enviada_por?: string | null
           imagem_fonte?: string | null
           imagem_gerada_em?: string | null
           imagem_status?: string
           imagem_url?: string | null
+          imagem_validacao_motivo?: string | null
+          imagem_validada_em?: string | null
+          imagens?: string[]
           manual_url?: string | null
           marca: string
           modelo: string
@@ -2752,10 +2410,16 @@ export type Database = {
           fonte_url?: string | null
           id?: string
           imagem?: string | null
+          imagem_aprovada?: boolean
+          imagem_enviada_em?: string | null
+          imagem_enviada_por?: string | null
           imagem_fonte?: string | null
           imagem_gerada_em?: string | null
           imagem_status?: string
           imagem_url?: string | null
+          imagem_validacao_motivo?: string | null
+          imagem_validada_em?: string | null
+          imagens?: string[]
           manual_url?: string | null
           marca?: string
           modelo?: string
@@ -2779,16 +2443,187 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_armamentos_validacao_logs: {
+        Row: {
+          confianca: number
+          created_at: string
+          id: string
+          imagem_url: string
+          item_id: string
+          motivo: string | null
+          validacao_resultado: string
+          validado_em: string
+        }
+        Insert: {
+          confianca: number
+          created_at?: string
+          id?: string
+          imagem_url: string
+          item_id: string
+          motivo?: string | null
+          validacao_resultado: string
+          validado_em?: string
+        }
+        Update: {
+          confianca?: number
+          created_at?: string
+          id?: string
+          imagem_url?: string
+          item_id?: string
+          motivo?: string | null
+          validacao_resultado?: string
+          validado_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_armamentos_validacao_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "qa_armamentos_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_arsenal_grupos_layout: {
+        Row: {
+          cliente_id: number
+          contexto: string
+          created_at: string
+          id: string
+          ordem_grupos: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          ordem_grupos?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          ordem_grupos?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      qa_arsenal_notificacoes: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          icone: string | null
+          id: string
+          lida: boolean
+          lida_em: string | null
+          link: string | null
+          mensagem: string
+          metadata: Json | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          icone?: string | null
+          id?: string
+          lida?: boolean
+          lida_em?: string | null
+          link?: string | null
+          mensagem: string
+          metadata?: Json | null
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          icone?: string | null
+          id?: string
+          lida?: boolean
+          lida_em?: string | null
+          link?: string | null
+          mensagem?: string
+          metadata?: Json | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_arsenal_notificacoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_asaas_webhook_events: {
+        Row: {
+          asaas_payment_id: string | null
+          created_at: string
+          error_message: string | null
+          event: string
+          event_key: string
+          external_reference: string | null
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          status: string
+          venda_id: number | null
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event: string
+          event_key: string
+          external_reference?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          status?: string
+          venda_id?: number | null
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          event?: string
+          event_key?: string
+          external_reference?: string | null
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          status?: string
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
       qa_cadastro_cr: {
         Row: {
           check_exame_tiro: boolean | null
           check_laudo_psi: boolean | null
           cliente_id: number | null
+          consolidado_em: string | null
+          consolidado_motivo: string | null
+          consolidado_por: string | null
           id: number
           id_legado: number | null
           num_item_servico_cr: number | null
           numero_cr: string | null
           senha_gov: string | null
+          senha_gov_encrypted: string | null
+          senha_gov_iv: string | null
+          senha_gov_tag: string | null
+          senha_gov_updated_at: string | null
+          senha_gov_updated_by: string | null
           validade_cr: string | null
           validade_exame_tiro: string | null
           validade_laudo_psicologico: string | null
@@ -2797,11 +2632,19 @@ export type Database = {
           check_exame_tiro?: boolean | null
           check_laudo_psi?: boolean | null
           cliente_id?: number | null
+          consolidado_em?: string | null
+          consolidado_motivo?: string | null
+          consolidado_por?: string | null
           id?: number
           id_legado?: number | null
           num_item_servico_cr?: number | null
           numero_cr?: string | null
           senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
           validade_cr?: string | null
           validade_exame_tiro?: string | null
           validade_laudo_psicologico?: string | null
@@ -2810,26 +2653,79 @@ export type Database = {
           check_exame_tiro?: boolean | null
           check_laudo_psi?: boolean | null
           cliente_id?: number | null
+          consolidado_em?: string | null
+          consolidado_motivo?: string | null
+          consolidado_por?: string | null
           id?: number
           id_legado?: number | null
           num_item_servico_cr?: number | null
           numero_cr?: string | null
           senha_gov?: string | null
+          senha_gov_encrypted?: string | null
+          senha_gov_iv?: string | null
+          senha_gov_tag?: string | null
+          senha_gov_updated_at?: string | null
+          senha_gov_updated_by?: string | null
           validade_cr?: string | null
           validade_exame_tiro?: string | null
           validade_laudo_psicologico?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_cadastro_cr_audit: {
+        Row: {
+          cadastro_cr_id: number
+          changed_by: string | null
+          cliente_id_anterior: number | null
+          cliente_id_novo: number | null
+          contexto: string | null
+          created_at: string
+          id: number
+        }
+        Insert: {
+          cadastro_cr_id: number
+          changed_by?: string | null
+          cliente_id_anterior?: number | null
+          cliente_id_novo?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          cadastro_cr_id?: number
+          changed_by?: string | null
+          cliente_id_anterior?: number | null
+          cliente_id_novo?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: number
         }
         Relationships: []
       }
       qa_cadastro_publico: {
         Row: {
+          aguardando_cliente_desde: string | null
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
           aut_atividade: string | null
           aut_cnpj: string | null
           aut_endereco: string | null
           aut_nome_profissional: string | null
           aut_telefone: string | null
           categoria_servico: string | null
+          categoria_titular: string | null
           cliente_id_vinculado: number | null
+          cnh: string | null
+          comprovante_endereco_em_nome_proprio: string | null
           comprovante_endereco_path: string | null
           consentimento_dados_verdadeiros: boolean
           consentimento_ip: string | null
@@ -2839,8 +2735,11 @@ export type Database = {
           consentimento_user_agent: string | null
           cpf: string
           created_at: string
+          ctps: string | null
+          data_expedicao_rg: string | null
           data_nascimento: string | null
           descricao_servico_livre: string | null
+          dias_pausados: number
           documento_identidade_path: string | null
           email: string
           emissor_rg: string | null
@@ -2865,6 +2764,7 @@ export type Database = {
           end1_logradouro: string | null
           end1_longitude: string | null
           end1_numero: string | null
+          end1_pais: string | null
           end2_bairro: string | null
           end2_cep: string | null
           end2_cidade: string | null
@@ -2874,31 +2774,67 @@ export type Database = {
           end2_logradouro: string | null
           end2_longitude: string | null
           end2_numero: string | null
+          end2_observacao: string | null
           end2_tipo: string | null
           estado_civil: string | null
           id: string
+          motivo_arquivamento: string | null
+          motivo_recusa: string | null
           nacionalidade: string | null
+          naturalidade_municipio: string | null
+          naturalidade_pais: string | null
+          naturalidade_uf: string | null
           nome_completo: string
           nome_mae: string | null
           nome_pai: string | null
           notas_processamento: string | null
+          numero_documento_identidade: string | null
           objetivo_principal: string | null
           observacoes: string | null
           origem_cadastro: string | null
           pago: boolean
+          pago_em: string | null
+          pis_pasep: string | null
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
+          responsavel_endereco_bairro: string | null
+          responsavel_endereco_cep: string | null
+          responsavel_endereco_cidade: string | null
+          responsavel_endereco_complemento: string | null
+          responsavel_endereco_comprovante_path: string | null
+          responsavel_endereco_cpf: string | null
+          responsavel_endereco_data_nascimento: string | null
+          responsavel_endereco_declaracao_path: string | null
+          responsavel_endereco_email: string | null
+          responsavel_endereco_estado: string | null
+          responsavel_endereco_estado_civil: string | null
+          responsavel_endereco_geolocalizacao: string | null
+          responsavel_endereco_logradouro: string | null
+          responsavel_endereco_nacionalidade: string | null
+          responsavel_endereco_naturalidade: string | null
+          responsavel_endereco_nome: string | null
+          responsavel_endereco_numero: string | null
+          responsavel_endereco_profissao: string | null
+          responsavel_endereco_reside_desde: string | null
+          responsavel_endereco_residiu_ate: string | null
+          responsavel_endereco_rg_cin: string | null
+          responsavel_endereco_telefone: string | null
+          responsavel_endereco_vinculo: string | null
           rg: string | null
           selfie_path: string | null
           servico_fechado_final: string | null
           servico_interesse: string | null
           servico_principal: string | null
+          sexo: string | null
+          sla_concluido_em: string | null
           status: string
           subtipo_servico: string | null
           telefone_principal: string
           telefone_secundario: string | null
           tem_segundo_endereco: boolean | null
+          tipo_documento_identidade: string
+          titulo_eleitor: string | null
           trab_cargo_funcao: string | null
           trab_cnpj_empresa: string | null
           trab_data_admissao: string | null
@@ -2907,17 +2843,26 @@ export type Database = {
           trab_nome_empresa: string | null
           trab_telefone_empresa: string | null
           uf_emissor_rg: string | null
+          ultima_solicitacao_cliente: string | null
           updated_at: string
+          valor_servico: number | null
           vinculo_tipo: string | null
         }
         Insert: {
+          aguardando_cliente_desde?: string | null
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           aut_atividade?: string | null
           aut_cnpj?: string | null
           aut_endereco?: string | null
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
           categoria_servico?: string | null
+          categoria_titular?: string | null
           cliente_id_vinculado?: number | null
+          cnh?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
@@ -2927,8 +2872,11 @@ export type Database = {
           consentimento_user_agent?: string | null
           cpf: string
           created_at?: string
+          ctps?: string | null
+          data_expedicao_rg?: string | null
           data_nascimento?: string | null
           descricao_servico_livre?: string | null
+          dias_pausados?: number
           documento_identidade_path?: string | null
           email: string
           emissor_rg?: string | null
@@ -2953,6 +2901,7 @@ export type Database = {
           end1_logradouro?: string | null
           end1_longitude?: string | null
           end1_numero?: string | null
+          end1_pais?: string | null
           end2_bairro?: string | null
           end2_cep?: string | null
           end2_cidade?: string | null
@@ -2962,31 +2911,67 @@ export type Database = {
           end2_logradouro?: string | null
           end2_longitude?: string | null
           end2_numero?: string | null
+          end2_observacao?: string | null
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
+          motivo_arquivamento?: string | null
+          motivo_recusa?: string | null
           nacionalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo: string
           nome_mae?: string | null
           nome_pai?: string | null
           notas_processamento?: string | null
+          numero_documento_identidade?: string | null
           objetivo_principal?: string | null
           observacoes?: string | null
           origem_cadastro?: string | null
           pago?: boolean
+          pago_em?: string | null
+          pis_pasep?: string | null
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
           selfie_path?: string | null
           servico_fechado_final?: string | null
           servico_interesse?: string | null
           servico_principal?: string | null
+          sexo?: string | null
+          sla_concluido_em?: string | null
           status?: string
           subtipo_servico?: string | null
           telefone_principal: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
+          tipo_documento_identidade?: string
+          titulo_eleitor?: string | null
           trab_cargo_funcao?: string | null
           trab_cnpj_empresa?: string | null
           trab_data_admissao?: string | null
@@ -2995,17 +2980,26 @@ export type Database = {
           trab_nome_empresa?: string | null
           trab_telefone_empresa?: string | null
           uf_emissor_rg?: string | null
+          ultima_solicitacao_cliente?: string | null
           updated_at?: string
+          valor_servico?: number | null
           vinculo_tipo?: string | null
         }
         Update: {
+          aguardando_cliente_desde?: string | null
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
           aut_atividade?: string | null
           aut_cnpj?: string | null
           aut_endereco?: string | null
           aut_nome_profissional?: string | null
           aut_telefone?: string | null
           categoria_servico?: string | null
+          categoria_titular?: string | null
           cliente_id_vinculado?: number | null
+          cnh?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           comprovante_endereco_path?: string | null
           consentimento_dados_verdadeiros?: boolean
           consentimento_ip?: string | null
@@ -3015,8 +3009,11 @@ export type Database = {
           consentimento_user_agent?: string | null
           cpf?: string
           created_at?: string
+          ctps?: string | null
+          data_expedicao_rg?: string | null
           data_nascimento?: string | null
           descricao_servico_livre?: string | null
+          dias_pausados?: number
           documento_identidade_path?: string | null
           email?: string
           emissor_rg?: string | null
@@ -3041,6 +3038,7 @@ export type Database = {
           end1_logradouro?: string | null
           end1_longitude?: string | null
           end1_numero?: string | null
+          end1_pais?: string | null
           end2_bairro?: string | null
           end2_cep?: string | null
           end2_cidade?: string | null
@@ -3050,31 +3048,67 @@ export type Database = {
           end2_logradouro?: string | null
           end2_longitude?: string | null
           end2_numero?: string | null
+          end2_observacao?: string | null
           end2_tipo?: string | null
           estado_civil?: string | null
           id?: string
+          motivo_arquivamento?: string | null
+          motivo_recusa?: string | null
           nacionalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo?: string
           nome_mae?: string | null
           nome_pai?: string | null
           notas_processamento?: string | null
+          numero_documento_identidade?: string | null
           objetivo_principal?: string | null
           observacoes?: string | null
           origem_cadastro?: string | null
           pago?: boolean
+          pago_em?: string | null
+          pis_pasep?: string | null
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
           selfie_path?: string | null
           servico_fechado_final?: string | null
           servico_interesse?: string | null
           servico_principal?: string | null
+          sexo?: string | null
+          sla_concluido_em?: string | null
           status?: string
           subtipo_servico?: string | null
           telefone_principal?: string
           telefone_secundario?: string | null
           tem_segundo_endereco?: boolean | null
+          tipo_documento_identidade?: string
+          titulo_eleitor?: string | null
           trab_cargo_funcao?: string | null
           trab_cnpj_empresa?: string | null
           trab_data_admissao?: string | null
@@ -3083,8 +3117,145 @@ export type Database = {
           trab_nome_empresa?: string | null
           trab_telefone_empresa?: string | null
           uf_emissor_rg?: string | null
+          ultima_solicitacao_cliente?: string | null
           updated_at?: string
+          valor_servico?: number | null
           vinculo_tipo?: string | null
+        }
+        Relationships: []
+      }
+      qa_cadastro_publico_audit: {
+        Row: {
+          acao: string
+          cadastro_publico_id: string
+          campo: string | null
+          cliente_id: number | null
+          cpf_normalizado: string | null
+          created_at: string
+          divergencia: boolean
+          id: string
+          service_slug: string | null
+          user_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          acao: string
+          cadastro_publico_id: string
+          campo?: string | null
+          cliente_id?: number | null
+          cpf_normalizado?: string | null
+          created_at?: string
+          divergencia?: boolean
+          id?: string
+          service_slug?: string | null
+          user_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          acao?: string
+          cadastro_publico_id?: string
+          campo?: string | null
+          cliente_id?: number | null
+          cpf_normalizado?: string | null
+          created_at?: string
+          divergencia?: boolean
+          id?: string
+          service_slug?: string | null
+          user_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: []
+      }
+      qa_cadastro_publico_recusados: {
+        Row: {
+          cadastro_created_at: string | null
+          cadastro_original_id: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          end1_cidade: string | null
+          end1_estado: string | null
+          id: string
+          motivo_recusa: string | null
+          nome_completo: string | null
+          pago: boolean | null
+          payload_original: Json | null
+          recusado_em: string
+          recusado_por: string | null
+          servico_interesse: string | null
+          telefone_principal: string | null
+        }
+        Insert: {
+          cadastro_created_at?: string | null
+          cadastro_original_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          end1_cidade?: string | null
+          end1_estado?: string | null
+          id?: string
+          motivo_recusa?: string | null
+          nome_completo?: string | null
+          pago?: boolean | null
+          payload_original?: Json | null
+          recusado_em?: string
+          recusado_por?: string | null
+          servico_interesse?: string | null
+          telefone_principal?: string | null
+        }
+        Update: {
+          cadastro_created_at?: string | null
+          cadastro_original_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          end1_cidade?: string | null
+          end1_estado?: string | null
+          id?: string
+          motivo_recusa?: string | null
+          nome_completo?: string | null
+          pago?: boolean | null
+          payload_original?: Json | null
+          recusado_em?: string
+          recusado_por?: string | null
+          servico_interesse?: string | null
+          telefone_principal?: string | null
+        }
+        Relationships: []
+      }
+      qa_cadastro_telemetria: {
+        Row: {
+          categoria_titular: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_hash: string | null
+          payload: Json
+          sessao_id: string | null
+          user_agent_hash: string | null
+        }
+        Insert: {
+          categoria_titular?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          sessao_id?: string | null
+          user_agent_hash?: string | null
+        }
+        Update: {
+          categoria_titular?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          payload?: Json
+          sessao_id?: string | null
+          user_agent_hash?: string | null
         }
         Relationships: []
       }
@@ -3093,6 +3264,7 @@ export type Database = {
           bairro: string | null
           cep: string | null
           cidade: string | null
+          cliente_id: number | null
           cpf_cnpj: string | null
           created_at: string
           descricao_caso: string | null
@@ -3103,6 +3275,8 @@ export type Database = {
           foco_argumentativo: string | null
           geracao_id: string | null
           id: string
+          indeferimento_analise: Json | null
+          indeferimento_texto: string | null
           minuta_gerada: string | null
           nome_requerente: string
           sigla_unidade_pf: string | null
@@ -3119,6 +3293,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          cliente_id?: number | null
           cpf_cnpj?: string | null
           created_at?: string
           descricao_caso?: string | null
@@ -3129,6 +3304,8 @@ export type Database = {
           foco_argumentativo?: string | null
           geracao_id?: string | null
           id?: string
+          indeferimento_analise?: Json | null
+          indeferimento_texto?: string | null
           minuta_gerada?: string | null
           nome_requerente?: string
           sigla_unidade_pf?: string | null
@@ -3145,6 +3322,7 @@ export type Database = {
           bairro?: string | null
           cep?: string | null
           cidade?: string | null
+          cliente_id?: number | null
           cpf_cnpj?: string | null
           created_at?: string
           descricao_caso?: string | null
@@ -3155,6 +3333,8 @@ export type Database = {
           foco_argumentativo?: string | null
           geracao_id?: string | null
           id?: string
+          indeferimento_analise?: Json | null
+          indeferimento_texto?: string | null
           minuta_gerada?: string | null
           nome_requerente?: string
           sigla_unidade_pf?: string | null
@@ -3167,7 +3347,22 @@ export type Database = {
           updated_at?: string
           usuario_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_casos__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_casos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_chunks_conhecimento: {
         Row: {
@@ -3201,6 +3396,13 @@ export type Database = {
           texto_chunk?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_chunks__documento"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_conhecimento"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_chunks_conhecimento_documento_id_fkey"
             columns: ["documento_id"]
@@ -3252,6 +3454,257 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_armas_auditoria: {
+        Row: {
+          acao: string
+          arma_manual_id: number
+          ator_tipo: string
+          campos_alterados: Json | null
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: number
+          origem: string | null
+          qa_cliente_id: number | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          arma_manual_id: number
+          ator_tipo: string
+          campos_alterados?: Json | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: number
+          origem?: string | null
+          qa_cliente_id?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          arma_manual_id?: number
+          ator_tipo?: string
+          campos_alterados?: Json | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: number
+          origem?: string | null
+          qa_cliente_id?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      qa_cliente_armas_manual: {
+        Row: {
+          calibre: string | null
+          created_at: string
+          dados_extraidos_json: Json | null
+          id: number
+          marca: string | null
+          modelo: string | null
+          needs_review: boolean
+          numero_autorizacao_compra: string | null
+          numero_cad_sinarm: string | null
+          numero_craf: string | null
+          numero_registro_sigma: string | null
+          numero_serie: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          origem: string
+          qa_cliente_id: number
+          sistema: string | null
+          sistema_registro: string | null
+          status_documental: string | null
+          tipo_arma: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          calibre?: string | null
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          id?: number
+          marca?: string | null
+          modelo?: string | null
+          needs_review?: boolean
+          numero_autorizacao_compra?: string | null
+          numero_cad_sinarm?: string | null
+          numero_craf?: string | null
+          numero_registro_sigma?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id: number
+          sistema?: string | null
+          sistema_registro?: string | null
+          status_documental?: string | null
+          tipo_arma?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          calibre?: string | null
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          id?: number
+          marca?: string | null
+          modelo?: string | null
+          needs_review?: boolean
+          numero_autorizacao_compra?: string | null
+          numero_cad_sinarm?: string | null
+          numero_craf?: string | null
+          numero_registro_sigma?: string | null
+          numero_serie?: string | null
+          numero_sigma?: string | null
+          numero_sinarm?: string | null
+          origem?: string
+          qa_cliente_id?: number
+          sistema?: string | null
+          sistema_registro?: string | null
+          status_documental?: string | null
+          tipo_arma?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_armas_manual_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_cliente_credenciais: {
+        Row: {
+          cadastro_cr_id: number | null
+          cliente_id: number
+          created_at: string
+          id: number
+          notas: string | null
+          origem: string
+          senha_encrypted: string
+          senha_iv: string
+          senha_tag: string
+          status: string
+          tipo_credencial: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cadastro_cr_id?: number | null
+          cliente_id: number
+          created_at?: string
+          id?: number
+          notas?: string | null
+          origem: string
+          senha_encrypted: string
+          senha_iv: string
+          senha_tag: string
+          status?: string
+          tipo_credencial?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cadastro_cr_id?: number | null
+          cliente_id?: number
+          created_at?: string
+          id?: number
+          notas?: string | null
+          origem?: string
+          senha_encrypted?: string
+          senha_iv?: string
+          senha_tag?: string
+          status?: string
+          tipo_credencial?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_credenciais_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cadastro_cr"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_senha_gov_incident_audit"
+            referencedColumns: ["cadastro_cr_id"]
+          },
+          {
+            foreignKeyName: "qa_cliente_credenciais_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_cliente_credenciais_audit: {
+        Row: {
+          acao: string
+          cliente_id: number
+          contexto: string | null
+          created_at: string
+          credencial_id: number | null
+          id: number
+          ip: string | null
+          origem: string | null
+          rollback_payload: Json | null
+          status_resultado: string | null
+          tipo_credencial: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao: string
+          cliente_id: number
+          contexto?: string | null
+          created_at?: string
+          credencial_id?: number | null
+          id?: number
+          ip?: string | null
+          origem?: string | null
+          rollback_payload?: Json | null
+          status_resultado?: string | null
+          tipo_credencial: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string
+          cliente_id?: number
+          contexto?: string | null
+          created_at?: string
+          credencial_id?: number | null
+          id?: number
+          ip?: string | null
+          origem?: string | null
+          rollback_payload?: Json | null
+          status_resultado?: string | null
+          tipo_credencial?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_credenciais_audit_credencial_id_fkey"
+            columns: ["credencial_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cliente_credenciais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_cliente_historico_atualizacoes: {
         Row: {
           autor: string | null
@@ -3288,12 +3741,62 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_cliente_kpi_layouts: {
+        Row: {
+          cliente_id: number
+          contexto: string
+          created_at: string
+          id: string
+          kpis_ocultas: Json
+          ordem_kpis: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cliente_id: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          kpis_ocultas?: Json
+          ordem_kpis?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cliente_id?: number
+          contexto?: string
+          created_at?: string
+          id?: string
+          kpis_ocultas?: Json
+          ordem_kpis?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_kpi_layouts_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_clientes: {
         Row: {
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
+          arsenal_plano: string
+          arsenal_status: string
+          arsenal_ultimo_acesso_em: string | null
+          arsenal_upgrade_em: string | null
           avatar_tatico_gerado_em: string | null
           avatar_tatico_path: string | null
           bairro: string | null
           bairro2: string | null
+          cadastro_publico_aplicado_em: string | null
+          cadastro_publico_id: string | null
           categoria_titular: string | null
           celular: string | null
           cep: string | null
@@ -3301,16 +3804,28 @@ export type Database = {
           cidade: string | null
           cidade2: string | null
           cliente_lions: boolean | null
+          clube_atual_id: number | null
+          cnh: string | null
           complemento: string | null
           complemento2: string | null
+          comprovante_endereco_em_nome_proprio: string | null
           cpf: string | null
           created_at: string
+          ctps: string | null
           customer_id: string | null
           data_nascimento: string | null
           email: string | null
           emissor_rg: string | null
+          end2_observacao: string | null
+          end2_tipo: string | null
           endereco: string | null
+          endereco_em_nome_de_terceiro: boolean
+          endereco_titular_documento: string | null
+          endereco_titular_nome: string | null
           endereco2: string | null
+          entrada_objetivo: string | null
+          entrada_possui_arma: string | null
+          entrada_respondida_em: string | null
           escolaridade: string | null
           estado: string | null
           estado_civil: string | null
@@ -3319,35 +3834,93 @@ export type Database = {
           expedicao_rg: string | null
           geolocalizacao: string | null
           geolocalizacao2: string | null
+          homologacao_observacoes: string | null
+          homologacao_status: string
+          homologado_em: string | null
+          homologado_por: string | null
           id: number
-          id_legado: number
+          id_legado: number | null
           imagem: string | null
           matricula_funcional: string | null
+          motivo_arquivamento: string | null
           nacionalidade: string | null
           naturalidade: string | null
+          naturalidade_municipio: string | null
+          naturalidade_pais: string | null
+          naturalidade_uf: string | null
           nome_completo: string
           nome_mae: string | null
           nome_pai: string | null
           numero: string | null
+          numero_documento_identidade: string | null
+          numero_filiacao: string | null
           numero2: string | null
           observacao: string | null
           orgao_vinculado: string | null
+          origem: string | null
           pais: string | null
           pais2: string | null
+          pis_pasep: string | null
+          portal_credenciais_enviadas_em: string | null
+          portal_provisionado_em: string | null
+          portal_ultimo_envio_erro: string | null
+          portal_ultimo_envio_status: string | null
           profissao: string | null
+          recadastramento_concluido_em: string | null
+          recadastramento_iniciado_em: string | null
+          recadastramento_obrigatorio: boolean
+          recadastramento_status: string | null
+          responsavel_endereco_bairro: string | null
+          responsavel_endereco_cep: string | null
+          responsavel_endereco_cidade: string | null
+          responsavel_endereco_complemento: string | null
+          responsavel_endereco_comprovante_path: string | null
+          responsavel_endereco_cpf: string | null
+          responsavel_endereco_data_nascimento: string | null
+          responsavel_endereco_declaracao_path: string | null
+          responsavel_endereco_email: string | null
+          responsavel_endereco_estado: string | null
+          responsavel_endereco_estado_civil: string | null
+          responsavel_endereco_geolocalizacao: string | null
+          responsavel_endereco_logradouro: string | null
+          responsavel_endereco_nacionalidade: string | null
+          responsavel_endereco_naturalidade: string | null
+          responsavel_endereco_nome: string | null
+          responsavel_endereco_numero: string | null
+          responsavel_endereco_profissao: string | null
+          responsavel_endereco_reside_desde: string | null
+          responsavel_endereco_residiu_ate: string | null
+          responsavel_endereco_rg_cin: string | null
+          responsavel_endereco_telefone: string | null
+          responsavel_endereco_vinculo: string | null
           rg: string | null
+          senha_temporaria: string | null
+          senha_temporaria_expira_em: string | null
+          sexo: string | null
           status: string | null
           subcategoria: string | null
+          tipo_cliente: string | null
+          tipo_documento_identidade: string
           titulo_eleitor: string | null
           uf_emissor_rg: string | null
           updated_at: string
           user_id: string | null
+          validade_filiacao: string | null
         }
         Insert: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
+          arsenal_plano?: string
+          arsenal_status?: string
+          arsenal_ultimo_acesso_em?: string | null
+          arsenal_upgrade_em?: string | null
           avatar_tatico_gerado_em?: string | null
           avatar_tatico_path?: string | null
           bairro?: string | null
           bairro2?: string | null
+          cadastro_publico_aplicado_em?: string | null
+          cadastro_publico_id?: string | null
           categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
@@ -3355,16 +3928,28 @@ export type Database = {
           cidade?: string | null
           cidade2?: string | null
           cliente_lions?: boolean | null
+          clube_atual_id?: number | null
+          cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           cpf?: string | null
           created_at?: string
+          ctps?: string | null
           customer_id?: string | null
           data_nascimento?: string | null
           email?: string | null
           emissor_rg?: string | null
+          end2_observacao?: string | null
+          end2_tipo?: string | null
           endereco?: string | null
+          endereco_em_nome_de_terceiro?: boolean
+          endereco_titular_documento?: string | null
+          endereco_titular_nome?: string | null
           endereco2?: string | null
+          entrada_objetivo?: string | null
+          entrada_possui_arma?: string | null
+          entrada_respondida_em?: string | null
           escolaridade?: string | null
           estado?: string | null
           estado_civil?: string | null
@@ -3373,35 +3958,93 @@ export type Database = {
           expedicao_rg?: string | null
           geolocalizacao?: string | null
           geolocalizacao2?: string | null
+          homologacao_observacoes?: string | null
+          homologacao_status?: string
+          homologado_em?: string | null
+          homologado_por?: string | null
           id?: number
-          id_legado: number
+          id_legado?: number | null
           imagem?: string | null
           matricula_funcional?: string | null
+          motivo_arquivamento?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo: string
           nome_mae?: string | null
           nome_pai?: string | null
           numero?: string | null
+          numero_documento_identidade?: string | null
+          numero_filiacao?: string | null
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
+          origem?: string | null
           pais?: string | null
           pais2?: string | null
+          pis_pasep?: string | null
+          portal_credenciais_enviadas_em?: string | null
+          portal_provisionado_em?: string | null
+          portal_ultimo_envio_erro?: string | null
+          portal_ultimo_envio_status?: string | null
           profissao?: string | null
+          recadastramento_concluido_em?: string | null
+          recadastramento_iniciado_em?: string | null
+          recadastramento_obrigatorio?: boolean
+          recadastramento_status?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
+          senha_temporaria?: string | null
+          senha_temporaria_expira_em?: string | null
+          sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tipo_cliente?: string | null
+          tipo_documento_identidade?: string
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
           user_id?: string | null
+          validade_filiacao?: string | null
         }
         Update: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
+          arsenal_plano?: string
+          arsenal_status?: string
+          arsenal_ultimo_acesso_em?: string | null
+          arsenal_upgrade_em?: string | null
           avatar_tatico_gerado_em?: string | null
           avatar_tatico_path?: string | null
           bairro?: string | null
           bairro2?: string | null
+          cadastro_publico_aplicado_em?: string | null
+          cadastro_publico_id?: string | null
           categoria_titular?: string | null
           celular?: string | null
           cep?: string | null
@@ -3409,16 +4052,28 @@ export type Database = {
           cidade?: string | null
           cidade2?: string | null
           cliente_lions?: boolean | null
+          clube_atual_id?: number | null
+          cnh?: string | null
           complemento?: string | null
           complemento2?: string | null
+          comprovante_endereco_em_nome_proprio?: string | null
           cpf?: string | null
           created_at?: string
+          ctps?: string | null
           customer_id?: string | null
           data_nascimento?: string | null
           email?: string | null
           emissor_rg?: string | null
+          end2_observacao?: string | null
+          end2_tipo?: string | null
           endereco?: string | null
+          endereco_em_nome_de_terceiro?: boolean
+          endereco_titular_documento?: string | null
+          endereco_titular_nome?: string | null
           endereco2?: string | null
+          entrada_objetivo?: string | null
+          entrada_possui_arma?: string | null
+          entrada_respondida_em?: string | null
           escolaridade?: string | null
           estado?: string | null
           estado_civil?: string | null
@@ -3427,31 +4082,87 @@ export type Database = {
           expedicao_rg?: string | null
           geolocalizacao?: string | null
           geolocalizacao2?: string | null
+          homologacao_observacoes?: string | null
+          homologacao_status?: string
+          homologado_em?: string | null
+          homologado_por?: string | null
           id?: number
-          id_legado?: number
+          id_legado?: number | null
           imagem?: string | null
           matricula_funcional?: string | null
+          motivo_arquivamento?: string | null
           nacionalidade?: string | null
           naturalidade?: string | null
+          naturalidade_municipio?: string | null
+          naturalidade_pais?: string | null
+          naturalidade_uf?: string | null
           nome_completo?: string
           nome_mae?: string | null
           nome_pai?: string | null
           numero?: string | null
+          numero_documento_identidade?: string | null
+          numero_filiacao?: string | null
           numero2?: string | null
           observacao?: string | null
           orgao_vinculado?: string | null
+          origem?: string | null
           pais?: string | null
           pais2?: string | null
+          pis_pasep?: string | null
+          portal_credenciais_enviadas_em?: string | null
+          portal_provisionado_em?: string | null
+          portal_ultimo_envio_erro?: string | null
+          portal_ultimo_envio_status?: string | null
           profissao?: string | null
+          recadastramento_concluido_em?: string | null
+          recadastramento_iniciado_em?: string | null
+          recadastramento_obrigatorio?: boolean
+          recadastramento_status?: string | null
+          responsavel_endereco_bairro?: string | null
+          responsavel_endereco_cep?: string | null
+          responsavel_endereco_cidade?: string | null
+          responsavel_endereco_complemento?: string | null
+          responsavel_endereco_comprovante_path?: string | null
+          responsavel_endereco_cpf?: string | null
+          responsavel_endereco_data_nascimento?: string | null
+          responsavel_endereco_declaracao_path?: string | null
+          responsavel_endereco_email?: string | null
+          responsavel_endereco_estado?: string | null
+          responsavel_endereco_estado_civil?: string | null
+          responsavel_endereco_geolocalizacao?: string | null
+          responsavel_endereco_logradouro?: string | null
+          responsavel_endereco_nacionalidade?: string | null
+          responsavel_endereco_naturalidade?: string | null
+          responsavel_endereco_nome?: string | null
+          responsavel_endereco_numero?: string | null
+          responsavel_endereco_profissao?: string | null
+          responsavel_endereco_reside_desde?: string | null
+          responsavel_endereco_residiu_ate?: string | null
+          responsavel_endereco_rg_cin?: string | null
+          responsavel_endereco_telefone?: string | null
+          responsavel_endereco_vinculo?: string | null
           rg?: string | null
+          senha_temporaria?: string | null
+          senha_temporaria_expira_em?: string | null
+          sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tipo_cliente?: string | null
+          tipo_documento_identidade?: string
           titulo_eleitor?: string | null
           uf_emissor_rg?: string | null
           updated_at?: string
           user_id?: string | null
+          validade_filiacao?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_clientes_clube_atual_id_fkey"
+            columns: ["clube_atual_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clubes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_clientes_customer_id_fkey"
             columns: ["customer_id"]
@@ -3463,31 +4174,55 @@ export type Database = {
       }
       qa_clubes: {
         Row: {
+          atualizado_em: string
+          cidade: string | null
+          cliente_id_origem: number | null
           cnpj: string | null
           data_validade: string | null
+          documento_id_origem: string | null
           endereco: string | null
+          estado: string | null
           id: number
           id_legado: number | null
           nome_clube: string
           numero_cr: string | null
+          origem: string
+          processo_id_origem: string | null
+          status_verificacao: string
         }
         Insert: {
+          atualizado_em?: string
+          cidade?: string | null
+          cliente_id_origem?: number | null
           cnpj?: string | null
           data_validade?: string | null
+          documento_id_origem?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: number
           id_legado?: number | null
           nome_clube: string
           numero_cr?: string | null
+          origem?: string
+          processo_id_origem?: string | null
+          status_verificacao?: string
         }
         Update: {
+          atualizado_em?: string
+          cidade?: string | null
+          cliente_id_origem?: number | null
           cnpj?: string | null
           data_validade?: string | null
+          documento_id_origem?: string | null
           endereco?: string | null
+          estado?: string | null
           id?: number
           id_legado?: number | null
           nome_clube?: string
           numero_cr?: string | null
+          origem?: string
+          processo_id_origem?: string | null
+          status_verificacao?: string
         }
         Relationships: []
       }
@@ -3572,41 +4307,438 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_contract_aceites_log: {
+        Row: {
+          aceite_data: string
+          aceite_dispositivo: Json | null
+          aceite_inicio_imediato: boolean | null
+          aceite_ip: string | null
+          aceite_user_agent: string | null
+          cliente_id: number | null
+          conteudo_hash: string
+          contract_id: string | null
+          created_at: string | null
+          id: string
+          template_codigo: string | null
+          template_versao: number | null
+        }
+        Insert: {
+          aceite_data?: string
+          aceite_dispositivo?: Json | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
+          cliente_id?: number | null
+          conteudo_hash: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          template_codigo?: string | null
+          template_versao?: number | null
+        }
+        Update: {
+          aceite_data?: string
+          aceite_dispositivo?: Json | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
+          cliente_id?: number | null
+          conteudo_hash?: string
+          contract_id?: string | null
+          created_at?: string | null
+          id?: string
+          template_codigo?: string | null
+          template_versao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_aceites_log_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contract_events: {
+        Row: {
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          event_payload: Json
+          event_type: string
+          id: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          event_payload?: Json
+          event_type: string
+          id?: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          event_payload?: Json
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contract_items: {
+        Row: {
+          contract_id: string
+          created_at: string
+          id: string
+          item_venda_id: number | null
+          metadata: Json
+          quantity: number
+          service_description_snapshot: string | null
+          service_id_snapshot: number | null
+          service_name_snapshot: string
+          service_slug_snapshot: string | null
+          total_price_cents: number
+          unit_price_cents: number
+          venda_id: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          metadata?: Json
+          quantity?: number
+          service_description_snapshot?: string | null
+          service_id_snapshot?: number | null
+          service_name_snapshot: string
+          service_slug_snapshot?: string | null
+          total_price_cents?: number
+          unit_price_cents?: number
+          venda_id: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          metadata?: Json
+          quantity?: number
+          service_description_snapshot?: string | null
+          service_id_snapshot?: number | null
+          service_name_snapshot?: string
+          service_slug_snapshot?: string | null
+          total_price_cents?: number
+          unit_price_cents?: number
+          venda_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contract_signatures: {
+        Row: {
+          contract_id: string
+          created_at: string
+          id: string
+          signature_type: string | null
+          signed_at: string | null
+          signed_pdf_path: string | null
+          signed_pdf_sha256: string | null
+          signer_document: string | null
+          signer_name: string | null
+          signer_role: string
+          validation_details: Json
+          validation_status: string | null
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          id?: string
+          signature_type?: string | null
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          signed_pdf_sha256?: string | null
+          signer_document?: string | null
+          signer_name?: string | null
+          signer_role: string
+          validation_details?: Json
+          validation_status?: string | null
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          id?: string
+          signature_type?: string | null
+          signed_at?: string | null
+          signed_pdf_path?: string | null
+          signed_pdf_sha256?: string | null
+          signer_document?: string | null
+          signer_name?: string | null
+          signer_role?: string
+          validation_details?: Json
+          validation_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_contract_signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_contract_templates: {
+        Row: {
+          codigo: string
+          corpo_html: string
+          corpo_markdown: string | null
+          created_at: string | null
+          data_publicacao: string | null
+          id: string
+          observacoes: string | null
+          titulo: string
+          updated_at: string | null
+          variaveis: Json | null
+          versao: number
+          vigente: boolean | null
+        }
+        Insert: {
+          codigo: string
+          corpo_html: string
+          corpo_markdown?: string | null
+          created_at?: string | null
+          data_publicacao?: string | null
+          id?: string
+          observacoes?: string | null
+          titulo: string
+          updated_at?: string | null
+          variaveis?: Json | null
+          versao: number
+          vigente?: boolean | null
+        }
+        Update: {
+          codigo?: string
+          corpo_html?: string
+          corpo_markdown?: string | null
+          created_at?: string | null
+          data_publicacao?: string | null
+          id?: string
+          observacoes?: string | null
+          titulo?: string
+          updated_at?: string | null
+          variaveis?: Json | null
+          versao?: number
+          vigente?: boolean | null
+        }
+        Relationships: []
+      }
+      qa_contracts: {
+        Row: {
+          aceite_eletronico_data: string | null
+          aceite_hash: string | null
+          aceite_inicio_imediato: boolean | null
+          aceite_ip: string | null
+          aceite_user_agent: string | null
+          cliente_id: number
+          company_signed_at: string | null
+          company_signed_pdf_path: string | null
+          company_signed_sha256: string | null
+          conteudo_renderizado: string | null
+          contract_number: string
+          created_at: string
+          customer_signature_validated_at: string | null
+          customer_signed_pdf_path: string | null
+          customer_signed_sha256: string | null
+          customer_uploaded_at: string | null
+          id: string
+          issued_at: string | null
+          original_pdf_path: string | null
+          original_sha256: string | null
+          servico_slug: string | null
+          signature_mode_company: string | null
+          status: string
+          template_codigo: string | null
+          template_id: string | null
+          template_versao: number | null
+          updated_at: string
+          validation_details: Json
+          validation_status: string | null
+          valor: number | null
+          venda_id: number
+        }
+        Insert: {
+          aceite_eletronico_data?: string | null
+          aceite_hash?: string | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
+          cliente_id: number
+          company_signed_at?: string | null
+          company_signed_pdf_path?: string | null
+          company_signed_sha256?: string | null
+          conteudo_renderizado?: string | null
+          contract_number: string
+          created_at?: string
+          customer_signature_validated_at?: string | null
+          customer_signed_pdf_path?: string | null
+          customer_signed_sha256?: string | null
+          customer_uploaded_at?: string | null
+          id?: string
+          issued_at?: string | null
+          original_pdf_path?: string | null
+          original_sha256?: string | null
+          servico_slug?: string | null
+          signature_mode_company?: string | null
+          status?: string
+          template_codigo?: string | null
+          template_id?: string | null
+          template_versao?: number | null
+          updated_at?: string
+          validation_details?: Json
+          validation_status?: string | null
+          valor?: number | null
+          venda_id: number
+        }
+        Update: {
+          aceite_eletronico_data?: string | null
+          aceite_hash?: string | null
+          aceite_inicio_imediato?: boolean | null
+          aceite_ip?: string | null
+          aceite_user_agent?: string | null
+          cliente_id?: number
+          company_signed_at?: string | null
+          company_signed_pdf_path?: string | null
+          company_signed_sha256?: string | null
+          conteudo_renderizado?: string | null
+          contract_number?: string
+          created_at?: string
+          customer_signature_validated_at?: string | null
+          customer_signed_pdf_path?: string | null
+          customer_signed_sha256?: string | null
+          customer_uploaded_at?: string | null
+          id?: string
+          issued_at?: string | null
+          original_pdf_path?: string | null
+          original_sha256?: string | null
+          servico_slug?: string | null
+          signature_mode_company?: string | null
+          status?: string
+          template_codigo?: string | null
+          template_id?: string | null
+          template_versao?: number | null
+          updated_at?: string
+          validation_details?: Json
+          validation_status?: string | null
+          valor?: number | null
+          venda_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_contracts_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "fk_qa_contracts_venda"
+            columns: ["venda_id"]
+            isOneToOne: true
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "qa_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "qa_contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_crafs: {
         Row: {
+          arma_especie: string | null
+          arquivo_mime: string | null
+          arquivo_nome: string | null
+          arquivo_storage_path: string | null
           catalogo_id: string | null
           cliente_id: number | null
           data_validade: string | null
+          documento_origem_id: string | null
           id: number
           id_legado: number | null
           nome_arma: string | null
           nome_craf: string | null
           numero_arma: string | null
+          numero_cad_sinarm: string | null
+          numero_registro_sigma: string | null
           numero_sigma: string | null
+          sistema_registro: string | null
         }
         Insert: {
+          arma_especie?: string | null
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
           catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
+          documento_origem_id?: string | null
           id?: number
           id_legado?: number | null
           nome_arma?: string | null
           nome_craf?: string | null
           numero_arma?: string | null
+          numero_cad_sinarm?: string | null
+          numero_registro_sigma?: string | null
           numero_sigma?: string | null
+          sistema_registro?: string | null
         }
         Update: {
+          arma_especie?: string | null
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_storage_path?: string | null
           catalogo_id?: string | null
           cliente_id?: number | null
           data_validade?: string | null
+          documento_origem_id?: string | null
           id?: number
           id_legado?: number | null
           nome_arma?: string | null
           nome_craf?: string | null
           numero_arma?: string | null
+          numero_cad_sinarm?: string | null
+          numero_registro_sigma?: string | null
           numero_sigma?: string | null
+          sistema_registro?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_crafs__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_crafs_catalogo_id_fkey"
             columns: ["catalogo_id"]
@@ -3615,6 +4747,125 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      qa_dashboard_kpi_layout: {
+        Row: {
+          cliente_id: number | null
+          created_at: string
+          dashboard_type: string
+          id: string
+          kpi_order: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: number | null
+          created_at?: string
+          dashboard_type?: string
+          id?: string
+          kpi_order: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: number | null
+          created_at?: string
+          dashboard_type?: string
+          id?: string
+          kpi_order?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      qa_document_examples: {
+        Row: {
+          arquivo_url: string
+          ativo: boolean
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          exemplo_valido: boolean
+          id: string
+          observacoes: string | null
+          servico_id: number | null
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          exemplo_valido?: boolean
+          id?: string
+          observacoes?: string | null
+          servico_id?: number | null
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          exemplo_valido?: boolean
+          id?: string
+          observacoes?: string | null
+          servico_id?: number | null
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_document_examples_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_document_external_links: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          nome_botao: string
+          ordem: number
+          tipo_documento: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_botao: string
+          ordem?: number
+          tipo_documento: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_botao?: string
+          ordem?: number
+          tipo_documento?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
       }
       qa_document_jobs: {
         Row: {
@@ -3676,8 +4927,49 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documento_status_producao: {
+        Row: {
+          bloqueio_motivo: string | null
+          created_at: string
+          entregue_em: string | null
+          id: string
+          iniciado_em: string | null
+          processo_documento_id: string
+          pronto_em: string | null
+          responsavel_admin_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bloqueio_motivo?: string | null
+          created_at?: string
+          entregue_em?: string | null
+          id?: string
+          iniciado_em?: string | null
+          processo_documento_id: string
+          pronto_em?: string | null
+          responsavel_admin_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bloqueio_motivo?: string | null
+          created_at?: string
+          entregue_em?: string | null
+          id?: string
+          iniciado_em?: string | null
+          processo_documento_id?: string
+          pronto_em?: string | null
+          responsavel_admin_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_documentos_cliente: {
         Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
           arma_calibre: string | null
           arma_especie: string | null
           arma_marca: string | null
@@ -3686,25 +4978,45 @@ export type Database = {
           arquivo_mime: string | null
           arquivo_nome: string | null
           arquivo_storage_path: string | null
+          cadastro_publico_id: string | null
+          campos_complementares_json: Json | null
           created_at: string
-          customer_id: string
+          customer_id: string | null
           data_emissao: string | null
           data_validade: string | null
+          endereco_em_nome_de_terceiro: boolean
           ia_dados_extraidos: Json | null
           ia_processado_em: string | null
           ia_status: string
           id: string
+          metadados_documento_json: Json | null
+          motivo_reprovacao: string | null
+          numero_cad_sinarm: string | null
           numero_documento: string | null
+          numero_registro_sigma: string | null
           observacoes: string | null
           orgao_emissor: string | null
+          origem: string
           qa_cliente_id: number | null
+          reprovado_em: string | null
+          reprovado_por: string | null
+          sistema_registro: string | null
+          status: string
+          substitui_documento_id: string | null
+          substituido_em: string | null
+          substituido_por_documento_id: string | null
           tipo_documento: string
+          titular_comprovante_documento: string | null
+          titular_comprovante_nome: string | null
           updated_at: string
           validado_admin: boolean
           validado_em: string | null
           validado_por: string | null
+          versao: number
         }
         Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           arma_calibre?: string | null
           arma_especie?: string | null
           arma_marca?: string | null
@@ -3713,25 +5025,45 @@ export type Database = {
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
+          cadastro_publico_id?: string | null
+          campos_complementares_json?: Json | null
           created_at?: string
-          customer_id: string
+          customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
+          endereco_em_nome_de_terceiro?: boolean
           ia_dados_extraidos?: Json | null
           ia_processado_em?: string | null
           ia_status?: string
           id?: string
+          metadados_documento_json?: Json | null
+          motivo_reprovacao?: string | null
+          numero_cad_sinarm?: string | null
           numero_documento?: string | null
+          numero_registro_sigma?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
+          origem?: string
           qa_cliente_id?: number | null
+          reprovado_em?: string | null
+          reprovado_por?: string | null
+          sistema_registro?: string | null
+          status?: string
+          substitui_documento_id?: string | null
+          substituido_em?: string | null
+          substituido_por_documento_id?: string | null
           tipo_documento: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
           updated_at?: string
           validado_admin?: boolean
           validado_em?: string | null
           validado_por?: string | null
+          versao?: number
         }
         Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
           arma_calibre?: string | null
           arma_especie?: string | null
           arma_marca?: string | null
@@ -3740,25 +5072,50 @@ export type Database = {
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_storage_path?: string | null
+          cadastro_publico_id?: string | null
+          campos_complementares_json?: Json | null
           created_at?: string
-          customer_id?: string
+          customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
+          endereco_em_nome_de_terceiro?: boolean
           ia_dados_extraidos?: Json | null
           ia_processado_em?: string | null
           ia_status?: string
           id?: string
+          metadados_documento_json?: Json | null
+          motivo_reprovacao?: string | null
+          numero_cad_sinarm?: string | null
           numero_documento?: string | null
+          numero_registro_sigma?: string | null
           observacoes?: string | null
           orgao_emissor?: string | null
+          origem?: string
           qa_cliente_id?: number | null
+          reprovado_em?: string | null
+          reprovado_por?: string | null
+          sistema_registro?: string | null
+          status?: string
+          substitui_documento_id?: string | null
+          substituido_em?: string | null
+          substituido_por_documento_id?: string | null
           tipo_documento?: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
           updated_at?: string
           validado_admin?: boolean
           validado_em?: string | null
           validado_por?: string | null
+          versao?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_documentos_cliente_customer_id_fkey"
             columns: ["customer_id"]
@@ -3771,6 +5128,20 @@ export type Database = {
             columns: ["qa_cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_substitui_documento_id_fkey"
+            columns: ["substitui_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_documentos_cliente_substituido_por_documento_id_fkey"
+            columns: ["substituido_por_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_cliente"
             referencedColumns: ["id"]
           },
         ]
@@ -3865,6 +5236,74 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_documentos_modelos_aprovados: {
+        Row: {
+          aprovado_em: string
+          aprovado_por: string | null
+          ativo: boolean
+          campos_esperados_json: Json
+          created_at: string
+          documento_origem_id: string | null
+          embedding_texto: string | null
+          id: string
+          layout_fingerprint_json: Json | null
+          nome_modelo: string | null
+          observacoes: string | null
+          origem_emissora: string | null
+          palavras_chave_json: Json
+          texto_ocr_normalizado: string | null
+          tipo_documento: string
+          updated_at: string
+          versao_modelo: number
+        }
+        Insert: {
+          aprovado_em?: string
+          aprovado_por?: string | null
+          ativo?: boolean
+          campos_esperados_json?: Json
+          created_at?: string
+          documento_origem_id?: string | null
+          embedding_texto?: string | null
+          id?: string
+          layout_fingerprint_json?: Json | null
+          nome_modelo?: string | null
+          observacoes?: string | null
+          origem_emissora?: string | null
+          palavras_chave_json?: Json
+          texto_ocr_normalizado?: string | null
+          tipo_documento: string
+          updated_at?: string
+          versao_modelo?: number
+        }
+        Update: {
+          aprovado_em?: string
+          aprovado_por?: string | null
+          ativo?: boolean
+          campos_esperados_json?: Json
+          created_at?: string
+          documento_origem_id?: string | null
+          embedding_texto?: string | null
+          id?: string
+          layout_fingerprint_json?: Json | null
+          nome_modelo?: string | null
+          observacoes?: string | null
+          origem_emissora?: string | null
+          palavras_chave_json?: Json
+          texto_ocr_normalizado?: string | null
+          tipo_documento?: string
+          updated_at?: string
+          versao_modelo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_documentos_modelos_aprovados_documento_origem_id_fkey"
+            columns: ["documento_origem_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processo_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_embeddings: {
         Row: {
           chunk_id: string
@@ -3888,6 +5327,13 @@ export type Database = {
           vetor_embedding?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_embeddings__chunk"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "qa_chunks_conhecimento"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_embeddings_chunk_id_fkey"
             columns: ["chunk_id"]
@@ -3976,7 +5422,15 @@ export type Database = {
           tipo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_feedback_geracoes: {
         Row: {
@@ -4065,7 +5519,15 @@ export type Database = {
           numero_filiacao?: string | null
           validade_filiacao?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_filiacoes__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_fontes_normativas: {
         Row: {
@@ -4129,6 +5591,10 @@ export type Database = {
       }
       qa_geracoes_pecas: {
         Row: {
+          caso_id: string | null
+          cliente_id: number | null
+          correcoes_ia_alertas_json: Json
+          correcoes_ia_usadas_json: Json
           created_at: string
           documentos_referencia_json: Json | null
           docx_path: string | null
@@ -4151,6 +5617,10 @@ export type Database = {
           versao: number
         }
         Insert: {
+          caso_id?: string | null
+          cliente_id?: number | null
+          correcoes_ia_alertas_json?: Json
+          correcoes_ia_usadas_json?: Json
           created_at?: string
           documentos_referencia_json?: Json | null
           docx_path?: string | null
@@ -4173,6 +5643,10 @@ export type Database = {
           versao?: number
         }
         Update: {
+          caso_id?: string | null
+          cliente_id?: number | null
+          correcoes_ia_alertas_json?: Json
+          correcoes_ia_usadas_json?: Json
           created_at?: string
           documentos_referencia_json?: Json | null
           docx_path?: string | null
@@ -4193,6 +5667,179 @@ export type Database = {
           updated_at?: string
           usuario_id?: string
           versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_geracoes_pecas_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "qa_casos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_geracoes_pecas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_gte_alertas_enviados: {
+        Row: {
+          canal: string
+          cliente_id: number
+          data_referencia: string | null
+          destinatario: string | null
+          detalhes: Json | null
+          enviado_em: string
+          erro_mensagem: string | null
+          gte_documento_id: string
+          id: string
+          marco_dias: number
+          status: string
+        }
+        Insert: {
+          canal: string
+          cliente_id: number
+          data_referencia?: string | null
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          gte_documento_id: string
+          id?: string
+          marco_dias: number
+          status?: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number
+          data_referencia?: string | null
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          gte_documento_id?: string
+          id?: string
+          marco_dias?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_gte_alertas_enviados_gte_documento_id_fkey"
+            columns: ["gte_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_gte_documentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_gte_documentos: {
+        Row: {
+          armas_json: Json
+          armas_total: number
+          armas_vinculadas_json: Json
+          cliente_id: number
+          clubes_json: Json
+          created_at: string
+          dados_extraidos_json: Json
+          data_emissao: string | null
+          data_validade: string | null
+          documento_origem_id: string | null
+          endereco_destino: string | null
+          endereco_origem: string | null
+          enderecos_json: Json
+          enderecos_total: number
+          enviado_por: string | null
+          erro_mensagem: string | null
+          id: string
+          matching_em: string | null
+          matching_resumo_json: Json
+          matching_status: string
+          mime_type: string | null
+          nome_original: string | null
+          numero_gte: string | null
+          observacoes_ia: string | null
+          orgao_emissor: string | null
+          origem_envio: string
+          processado_em: string | null
+          requerente_cpf: string | null
+          requerente_nome: string | null
+          status_processamento: string
+          storage_path: string
+          tamanho_bytes: number | null
+          updated_at: string
+        }
+        Insert: {
+          armas_json?: Json
+          armas_total?: number
+          armas_vinculadas_json?: Json
+          cliente_id: number
+          clubes_json?: Json
+          created_at?: string
+          dados_extraidos_json?: Json
+          data_emissao?: string | null
+          data_validade?: string | null
+          documento_origem_id?: string | null
+          endereco_destino?: string | null
+          endereco_origem?: string | null
+          enderecos_json?: Json
+          enderecos_total?: number
+          enviado_por?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          matching_em?: string | null
+          matching_resumo_json?: Json
+          matching_status?: string
+          mime_type?: string | null
+          nome_original?: string | null
+          numero_gte?: string | null
+          observacoes_ia?: string | null
+          orgao_emissor?: string | null
+          origem_envio?: string
+          processado_em?: string | null
+          requerente_cpf?: string | null
+          requerente_nome?: string | null
+          status_processamento?: string
+          storage_path: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          armas_json?: Json
+          armas_total?: number
+          armas_vinculadas_json?: Json
+          cliente_id?: number
+          clubes_json?: Json
+          created_at?: string
+          dados_extraidos_json?: Json
+          data_emissao?: string | null
+          data_validade?: string | null
+          documento_origem_id?: string | null
+          endereco_destino?: string | null
+          endereco_origem?: string | null
+          enderecos_json?: Json
+          enderecos_total?: number
+          enviado_por?: string | null
+          erro_mensagem?: string | null
+          id?: string
+          matching_em?: string | null
+          matching_resumo_json?: Json
+          matching_status?: string
+          mime_type?: string | null
+          nome_original?: string | null
+          numero_gte?: string | null
+          observacoes_ia?: string | null
+          orgao_emissor?: string | null
+          origem_envio?: string
+          processado_em?: string | null
+          requerente_cpf?: string | null
+          requerente_nome?: string | null
+          status_processamento?: string
+          storage_path?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4240,6 +5887,129 @@ export type Database = {
           },
         ]
       }
+      qa_homologacao_sessoes: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          etapa: string
+          id: string
+          observacoes: string | null
+          payload: Json
+          servico_slug: string | null
+          sessao_codigo: string
+          venda_id: number | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          etapa: string
+          id?: string
+          observacoes?: string | null
+          payload?: Json
+          servico_slug?: string | null
+          sessao_codigo: string
+          venda_id?: number | null
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          etapa?: string
+          id?: string
+          observacoes?: string | null
+          payload?: Json
+          servico_slug?: string | null
+          sessao_codigo?: string
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
+      qa_ia_correcoes_juridicas: {
+        Row: {
+          aplicar_globalmente: boolean
+          ativo: boolean
+          caso_id: string | null
+          categoria: string | null
+          categoria_erro: Database["public"]["Enums"]["qa_categoria_erro_ia"]
+          cliente_id: number | null
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string | null
+          exemplo_aplicacao: string | null
+          explicacao: string | null
+          foco_argumentativo: string | null
+          id: string
+          instrucao: string | null
+          peca_id: string | null
+          prioridade: Database["public"]["Enums"]["qa_ia_prioridade"]
+          regra_aplicavel: string | null
+          servico_procedimento: string | null
+          tipo_peca: string
+          tipo_registro: Database["public"]["Enums"]["qa_ia_tipo_registro"]
+          titulo: string | null
+          trecho_correto: string | null
+          trecho_errado: string | null
+          ultima_utilizacao: string | null
+          updated_at: string
+          usado_vezes: number
+        }
+        Insert: {
+          aplicar_globalmente?: boolean
+          ativo?: boolean
+          caso_id?: string | null
+          categoria?: string | null
+          categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
+          cliente_id?: number | null
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string | null
+          exemplo_aplicacao?: string | null
+          explicacao?: string | null
+          foco_argumentativo?: string | null
+          id?: string
+          instrucao?: string | null
+          peca_id?: string | null
+          prioridade?: Database["public"]["Enums"]["qa_ia_prioridade"]
+          regra_aplicavel?: string | null
+          servico_procedimento?: string | null
+          tipo_peca: string
+          tipo_registro?: Database["public"]["Enums"]["qa_ia_tipo_registro"]
+          titulo?: string | null
+          trecho_correto?: string | null
+          trecho_errado?: string | null
+          ultima_utilizacao?: string | null
+          updated_at?: string
+          usado_vezes?: number
+        }
+        Update: {
+          aplicar_globalmente?: boolean
+          ativo?: boolean
+          caso_id?: string | null
+          categoria?: string | null
+          categoria_erro?: Database["public"]["Enums"]["qa_categoria_erro_ia"]
+          cliente_id?: number | null
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string | null
+          exemplo_aplicacao?: string | null
+          explicacao?: string | null
+          foco_argumentativo?: string | null
+          id?: string
+          instrucao?: string | null
+          peca_id?: string | null
+          prioridade?: Database["public"]["Enums"]["qa_ia_prioridade"]
+          regra_aplicavel?: string | null
+          servico_procedimento?: string | null
+          tipo_peca?: string
+          tipo_registro?: Database["public"]["Enums"]["qa_ia_tipo_registro"]
+          titulo?: string | null
+          trecho_correto?: string | null
+          trecho_errado?: string | null
+          ultima_utilizacao?: string | null
+          updated_at?: string
+          usado_vezes?: number
+        }
+        Relationships: []
+      }
       qa_itens_venda: {
         Row: {
           calibre: string | null
@@ -4273,10 +6043,11 @@ export type Database = {
           registro_cad: string | null
           servico_id: number | null
           sort_order: number | null
-          status: string | null
+          status: string
+          tipo_venda: string
           validade_autorizacao: string | null
-          valor: number | null
-          venda_id: number | null
+          valor: number
+          venda_id: number
         }
         Insert: {
           calibre?: string | null
@@ -4310,10 +6081,11 @@ export type Database = {
           registro_cad?: string | null
           servico_id?: number | null
           sort_order?: number | null
-          status?: string | null
+          status?: string
+          tipo_venda?: string
           validade_autorizacao?: string | null
-          valor?: number | null
-          venda_id?: number | null
+          valor?: number
+          venda_id: number
         }
         Update: {
           calibre?: string | null
@@ -4347,12 +6119,27 @@ export type Database = {
           registro_cad?: string | null
           servico_id?: number | null
           sort_order?: number | null
-          status?: string | null
+          status?: string
+          tipo_venda?: string
           validade_autorizacao?: string | null
-          valor?: number | null
-          venda_id?: number | null
+          valor?: number
+          venda_id?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_itens_venda__servico"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_qa_itens_venda__venda_legado"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id_legado"]
+          },
           {
             foreignKeyName: "qa_itens_venda_venda_id_fk"
             columns: ["venda_id"]
@@ -4370,7 +6157,7 @@ export type Database = {
           payload: Json
         }
         Insert: {
-          id: number
+          id?: number
           motivo?: string
           movido_em?: string
           payload: Json
@@ -4448,6 +6235,408 @@ export type Database = {
           validada_humanamente?: boolean
         }
         Relationships: []
+      }
+      qa_kb_article_reviews: {
+        Row: {
+          action: string
+          article_id: string
+          id: string
+          new_body: string | null
+          notes: string | null
+          old_body: string | null
+          reason: string | null
+          reviewed_at: string
+          reviewed_by: string | null
+          screenshot_id: string | null
+          screenshot_url: string | null
+        }
+        Insert: {
+          action: string
+          article_id: string
+          id?: string
+          new_body?: string | null
+          notes?: string | null
+          old_body?: string | null
+          reason?: string | null
+          reviewed_at?: string
+          reviewed_by?: string | null
+          screenshot_id?: string | null
+          screenshot_url?: string | null
+        }
+        Update: {
+          action?: string
+          article_id?: string
+          id?: string
+          new_body?: string | null
+          notes?: string | null
+          old_body?: string | null
+          reason?: string | null
+          reviewed_at?: string
+          reviewed_by?: string | null
+          screenshot_id?: string | null
+          screenshot_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_article_reviews_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_kb_article_reviews_screenshot_id_fkey"
+            columns: ["screenshot_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigo_imagens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_kb_article_versions: {
+        Row: {
+          article_id: string
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          images_snapshot: Json
+          reason: string | null
+          status: string
+          title: string
+          version_number: number
+        }
+        Insert: {
+          article_id: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          images_snapshot?: Json
+          reason?: string | null
+          status: string
+          title: string
+          version_number: number
+        }
+        Update: {
+          article_id?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          images_snapshot?: Json
+          reason?: string | null
+          status?: string
+          title?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_kb_artigo_imagens: {
+        Row: {
+          article_id: string
+          audit_session_id: string | null
+          caption: string | null
+          captured_at: string | null
+          created_at: string
+          device: string | null
+          error_message: string | null
+          id: string
+          image_type: string
+          image_url: string | null
+          is_ai_generated_blocked: boolean
+          origem: string | null
+          original_image_type: string | null
+          prompt_used: string | null
+          route_path: string | null
+          status: string
+          step_number: number
+          step_title: string | null
+          storage_path: string | null
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+          viewport: string | null
+        }
+        Insert: {
+          article_id: string
+          audit_session_id?: string | null
+          caption?: string | null
+          captured_at?: string | null
+          created_at?: string
+          device?: string | null
+          error_message?: string | null
+          id?: string
+          image_type?: string
+          image_url?: string | null
+          is_ai_generated_blocked?: boolean
+          origem?: string | null
+          original_image_type?: string | null
+          prompt_used?: string | null
+          route_path?: string | null
+          status?: string
+          step_number?: number
+          step_title?: string | null
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          article_id?: string
+          audit_session_id?: string | null
+          caption?: string | null
+          captured_at?: string | null
+          created_at?: string
+          device?: string | null
+          error_message?: string | null
+          id?: string
+          image_type?: string
+          image_url?: string | null
+          is_ai_generated_blocked?: boolean
+          origem?: string | null
+          original_image_type?: string | null
+          prompt_used?: string | null
+          route_path?: string | null
+          status?: string
+          step_number?: number
+          step_title?: string | null
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          viewport?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_artigo_imagens_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_kb_artigo_imagens_audit_session_id_fkey"
+            columns: ["audit_session_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_audit_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_kb_artigos: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          audience: string
+          audit_plan_generated_at: string | null
+          audit_plan_json: Json | null
+          audit_plan_model: string | null
+          audit_ready_at: string | null
+          audit_session_id: string | null
+          audit_status: string
+          author_id: string | null
+          body: string
+          category: string
+          checklist_audited_at: string | null
+          created_at: string
+          embedding: string | null
+          embedding_error: string | null
+          embedding_status: string
+          embedding_updated_at: string | null
+          id: string
+          knowledge_base_audited_at: string | null
+          last_review_reason: string | null
+          module: string | null
+          procedure_tested_at: string | null
+          related_articles: string[]
+          reprocess_reason: string | null
+          reprocessed_at: string | null
+          reprocessed_by: string | null
+          search_tsv: unknown
+          slug: string
+          status: string
+          symptoms: string[]
+          tags: string[]
+          title: string
+          updated_at: string
+          version: number
+          visual_bug_detected: boolean
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          audience?: string
+          audit_plan_generated_at?: string | null
+          audit_plan_json?: Json | null
+          audit_plan_model?: string | null
+          audit_ready_at?: string | null
+          audit_session_id?: string | null
+          audit_status?: string
+          author_id?: string | null
+          body?: string
+          category: string
+          checklist_audited_at?: string | null
+          created_at?: string
+          embedding?: string | null
+          embedding_error?: string | null
+          embedding_status?: string
+          embedding_updated_at?: string | null
+          id?: string
+          knowledge_base_audited_at?: string | null
+          last_review_reason?: string | null
+          module?: string | null
+          procedure_tested_at?: string | null
+          related_articles?: string[]
+          reprocess_reason?: string | null
+          reprocessed_at?: string | null
+          reprocessed_by?: string | null
+          search_tsv?: unknown
+          slug: string
+          status?: string
+          symptoms?: string[]
+          tags?: string[]
+          title: string
+          updated_at?: string
+          version?: number
+          visual_bug_detected?: boolean
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          audience?: string
+          audit_plan_generated_at?: string | null
+          audit_plan_json?: Json | null
+          audit_plan_model?: string | null
+          audit_ready_at?: string | null
+          audit_session_id?: string | null
+          audit_status?: string
+          author_id?: string | null
+          body?: string
+          category?: string
+          checklist_audited_at?: string | null
+          created_at?: string
+          embedding?: string | null
+          embedding_error?: string | null
+          embedding_status?: string
+          embedding_updated_at?: string | null
+          id?: string
+          knowledge_base_audited_at?: string | null
+          last_review_reason?: string | null
+          module?: string | null
+          procedure_tested_at?: string | null
+          related_articles?: string[]
+          reprocess_reason?: string | null
+          reprocessed_at?: string | null
+          reprocessed_by?: string | null
+          search_tsv?: unknown
+          slug?: string
+          status?: string
+          symptoms?: string[]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          version?: number
+          visual_bug_detected?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_artigos_audit_session_id_fkey"
+            columns: ["audit_session_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_audit_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_kb_audit_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          finished_at: string | null
+          id: string
+          modules_audited: string[]
+          notes: string | null
+          routes_audited: string[]
+          started_at: string
+          status: string
+          title: string
+          total_screenshots: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          modules_audited?: string[]
+          notes?: string | null
+          routes_audited?: string[]
+          started_at?: string
+          status?: string
+          title: string
+          total_screenshots?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          finished_at?: string | null
+          id?: string
+          modules_audited?: string[]
+          notes?: string | null
+          routes_audited?: string[]
+          started_at?: string
+          status?: string
+          title?: string
+          total_screenshots?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_kb_embeddings_log: {
+        Row: {
+          article_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          modelo: string | null
+          status: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          modelo?: string | null
+          status: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          modelo?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_kb_embeddings_log_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "qa_kb_artigos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_logs_auditoria: {
         Row: {
@@ -4571,11 +6760,39 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_monitoramento_configuracoes: {
+        Row: {
+          config_key: string
+          created_at: string
+          enabled: boolean
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          config_key: string
+          created_at?: string
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          config_key?: string
+          created_at?: string
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       qa_municoes: {
         Row: {
           calibre: string
           cliente_id: number
           created_at: string
+          data_fabricacao: string | null
           id: string
           marca: string | null
           observacao: string | null
@@ -4586,6 +6803,7 @@ export type Database = {
           calibre: string
           cliente_id: number
           created_at?: string
+          data_fabricacao?: string | null
           id?: string
           marca?: string | null
           observacao?: string | null
@@ -4596,11 +6814,642 @@ export type Database = {
           calibre?: string
           cliente_id?: number
           created_at?: string
+          data_fabricacao?: string | null
           id?: string
           marca?: string | null
           observacao?: string | null
           quantidade?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_municoes_movimentacoes: {
+        Row: {
+          calibre: string
+          cliente_id: number
+          created_at: string
+          created_by: string | null
+          data_fabricacao: string | null
+          data_movimentacao: string
+          data_validade: string | null
+          documento_nome: string | null
+          documento_origem_id: string | null
+          documento_revisado_em: string | null
+          documento_revisado_por: string | null
+          documento_url: string | null
+          ia_dados_extraidos: Json | null
+          ia_status: string
+          id: string
+          lote: string | null
+          marca: string | null
+          motivo: string | null
+          observacao: string | null
+          quantidade: number
+          revisao_obrigatoria: boolean
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          calibre: string
+          cliente_id: number
+          created_at?: string
+          created_by?: string | null
+          data_fabricacao?: string | null
+          data_movimentacao?: string
+          data_validade?: string | null
+          documento_nome?: string | null
+          documento_origem_id?: string | null
+          documento_revisado_em?: string | null
+          documento_revisado_por?: string | null
+          documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string
+          id?: string
+          lote?: string | null
+          marca?: string | null
+          motivo?: string | null
+          observacao?: string | null
+          quantidade: number
+          revisao_obrigatoria?: boolean
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          calibre?: string
+          cliente_id?: number
+          created_at?: string
+          created_by?: string | null
+          data_fabricacao?: string | null
+          data_movimentacao?: string
+          data_validade?: string | null
+          documento_nome?: string | null
+          documento_origem_id?: string | null
+          documento_revisado_em?: string | null
+          documento_revisado_por?: string | null
+          documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string
+          id?: string
+          lote?: string | null
+          marca?: string | null
+          motivo?: string | null
+          observacao?: string | null
+          quantidade?: number
+          revisao_obrigatoria?: boolean
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_pagamento_auditoria: {
+        Row: {
+          ator: string | null
+          campo: string
+          cliente_id: number | null
+          contexto: Json | null
+          created_at: string
+          id: string
+          origem: string
+          solicitacao_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+          venda_id: number | null
+        }
+        Insert: {
+          ator?: string | null
+          campo: string
+          cliente_id?: number | null
+          contexto?: Json | null
+          created_at?: string
+          id?: string
+          origem: string
+          solicitacao_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+          venda_id?: number | null
+        }
+        Update: {
+          ator?: string | null
+          campo?: string
+          cliente_id?: number | null
+          contexto?: Json | null
+          created_at?: string
+          id?: string
+          origem?: string
+          solicitacao_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
+      qa_prazos_procedimentos: {
+        Row: {
+          ativo: boolean
+          base_calculo: string
+          created_at: string
+          descricao: string | null
+          evento_base: string | null
+          id: string
+          janela_alerta_dias: number
+          prazo_dias: number
+          prioridade: number
+          procedimento_servico: string | null
+          tipo_contagem: string
+          tipo_peca: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_calculo?: string
+          created_at?: string
+          descricao?: string | null
+          evento_base?: string | null
+          id?: string
+          janela_alerta_dias?: number
+          prazo_dias: number
+          prioridade?: number
+          procedimento_servico?: string | null
+          tipo_contagem?: string
+          tipo_peca?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_calculo?: string
+          created_at?: string
+          descricao?: string | null
+          evento_base?: string | null
+          id?: string
+          janela_alerta_dias?: number
+          prazo_dias?: number
+          prioridade?: number
+          procedimento_servico?: string | null
+          tipo_contagem?: string
+          tipo_peca?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_processo_documentos: {
+        Row: {
+          ano_competencia: number | null
+          arma_id: string | null
+          arquivo_storage_key: string | null
+          arquivo_url: string | null
+          assinatura_autoridade: string | null
+          assinatura_cpf: string | null
+          assinatura_data: string | null
+          assinatura_detalhes_json: Json | null
+          assinatura_motivo_falha: string | null
+          assinatura_signatario: string | null
+          assinatura_status: string | null
+          assinatura_validada_em: string | null
+          campos_complementares_json: Json | null
+          cliente_id: number
+          confirmado_pelo_cliente_em: string | null
+          created_at: string
+          dados_extraidos_json: Json | null
+          data_emissao: string | null
+          data_envio: string | null
+          data_validacao: string | null
+          data_validade: string | null
+          data_validade_efetiva: string | null
+          decisao_ia: string | null
+          divergencias_json: Json | null
+          endereco_em_nome_de_terceiro: boolean
+          etapa: string
+          exemplo_url: string | null
+          extracao_ia_json: Json | null
+          extracao_ia_status: string | null
+          formato_aceito: string[]
+          id: string
+          instrucoes: string | null
+          link_emissao: string | null
+          metadados_documento_json: Json | null
+          modelo_aprovado_id: string | null
+          modelo_url: string | null
+          motivo_rejeicao: string | null
+          nome_documento: string
+          obrigatorio: boolean
+          observacoes: string | null
+          observacoes_cliente: string | null
+          ordem: number | null
+          orgao_emissor: string | null
+          prazo_recomendado_dias: number | null
+          processo_id: string
+          proxima_leitura: string | null
+          regra_validacao: Json | null
+          revisado_por: string | null
+          score_modelo_aprovado: number | null
+          status: string
+          texto_ocr_extraido: string | null
+          tipo_documento: string
+          titular_comprovante_documento: string | null
+          titular_comprovante_nome: string | null
+          updated_at: string
+          usado_como_modelo: boolean
+          validacao_ia_confianca: number | null
+          validacao_ia_erro: string | null
+          validacao_ia_modelo: string | null
+          validacao_ia_status: string | null
+          validade_dias: number | null
+        }
+        Insert: {
+          ano_competencia?: number | null
+          arma_id?: string | null
+          arquivo_storage_key?: string | null
+          arquivo_url?: string | null
+          assinatura_autoridade?: string | null
+          assinatura_cpf?: string | null
+          assinatura_data?: string | null
+          assinatura_detalhes_json?: Json | null
+          assinatura_motivo_falha?: string | null
+          assinatura_signatario?: string | null
+          assinatura_status?: string | null
+          assinatura_validada_em?: string | null
+          campos_complementares_json?: Json | null
+          cliente_id: number
+          confirmado_pelo_cliente_em?: string | null
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          data_emissao?: string | null
+          data_envio?: string | null
+          data_validacao?: string | null
+          data_validade?: string | null
+          data_validade_efetiva?: string | null
+          decisao_ia?: string | null
+          divergencias_json?: Json | null
+          endereco_em_nome_de_terceiro?: boolean
+          etapa?: string
+          exemplo_url?: string | null
+          extracao_ia_json?: Json | null
+          extracao_ia_status?: string | null
+          formato_aceito?: string[]
+          id?: string
+          instrucoes?: string | null
+          link_emissao?: string | null
+          metadados_documento_json?: Json | null
+          modelo_aprovado_id?: string | null
+          modelo_url?: string | null
+          motivo_rejeicao?: string | null
+          nome_documento: string
+          obrigatorio?: boolean
+          observacoes?: string | null
+          observacoes_cliente?: string | null
+          ordem?: number | null
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
+          processo_id: string
+          proxima_leitura?: string | null
+          regra_validacao?: Json | null
+          revisado_por?: string | null
+          score_modelo_aprovado?: number | null
+          status?: string
+          texto_ocr_extraido?: string | null
+          tipo_documento: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
+          updated_at?: string
+          usado_como_modelo?: boolean
+          validacao_ia_confianca?: number | null
+          validacao_ia_erro?: string | null
+          validacao_ia_modelo?: string | null
+          validacao_ia_status?: string | null
+          validade_dias?: number | null
+        }
+        Update: {
+          ano_competencia?: number | null
+          arma_id?: string | null
+          arquivo_storage_key?: string | null
+          arquivo_url?: string | null
+          assinatura_autoridade?: string | null
+          assinatura_cpf?: string | null
+          assinatura_data?: string | null
+          assinatura_detalhes_json?: Json | null
+          assinatura_motivo_falha?: string | null
+          assinatura_signatario?: string | null
+          assinatura_status?: string | null
+          assinatura_validada_em?: string | null
+          campos_complementares_json?: Json | null
+          cliente_id?: number
+          confirmado_pelo_cliente_em?: string | null
+          created_at?: string
+          dados_extraidos_json?: Json | null
+          data_emissao?: string | null
+          data_envio?: string | null
+          data_validacao?: string | null
+          data_validade?: string | null
+          data_validade_efetiva?: string | null
+          decisao_ia?: string | null
+          divergencias_json?: Json | null
+          endereco_em_nome_de_terceiro?: boolean
+          etapa?: string
+          exemplo_url?: string | null
+          extracao_ia_json?: Json | null
+          extracao_ia_status?: string | null
+          formato_aceito?: string[]
+          id?: string
+          instrucoes?: string | null
+          link_emissao?: string | null
+          metadados_documento_json?: Json | null
+          modelo_aprovado_id?: string | null
+          modelo_url?: string | null
+          motivo_rejeicao?: string | null
+          nome_documento?: string
+          obrigatorio?: boolean
+          observacoes?: string | null
+          observacoes_cliente?: string | null
+          ordem?: number | null
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
+          processo_id?: string
+          proxima_leitura?: string | null
+          regra_validacao?: Json | null
+          revisado_por?: string | null
+          score_modelo_aprovado?: number | null
+          status?: string
+          texto_ocr_extraido?: string | null
+          tipo_documento?: string
+          titular_comprovante_documento?: string | null
+          titular_comprovante_nome?: string | null
+          updated_at?: string
+          usado_como_modelo?: boolean
+          validacao_ia_confianca?: number | null
+          validacao_ia_erro?: string | null
+          validacao_ia_modelo?: string | null
+          validacao_ia_status?: string | null
+          validade_dias?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_documentos_modelo_aprovado_id_fkey"
+            columns: ["modelo_aprovado_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_modelos_aprovados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processo_documentos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_processo_eventos: {
+        Row: {
+          ator: string | null
+          created_at: string
+          dados_json: Json | null
+          descricao: string | null
+          documento_id: string | null
+          id: string
+          processo_id: string
+          tipo_evento: string
+          user_id: string | null
+        }
+        Insert: {
+          ator?: string | null
+          created_at?: string
+          dados_json?: Json | null
+          descricao?: string | null
+          documento_id?: string | null
+          id?: string
+          processo_id: string
+          tipo_evento: string
+          user_id?: string | null
+        }
+        Update: {
+          ator?: string | null
+          created_at?: string
+          dados_json?: Json | null
+          descricao?: string | null
+          documento_id?: string | null
+          id?: string
+          processo_id?: string
+          tipo_evento?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_eventos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processo_documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processo_eventos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_processos: {
+        Row: {
+          cliente_id: number
+          condicao_profissional: string | null
+          created_at: string
+          data_criacao: string
+          data_validacao: string | null
+          etapa_liberada_ate: number
+          id: string
+          mes_protocolo_alvo: string | null
+          observacao_prazo: string | null
+          observacoes_admin: string | null
+          pagamento_id: string | null
+          pagamento_status: string
+          prazo_critico_data: string | null
+          prazo_critico_doc_id: string | null
+          primeiro_doc_aprovado_em: string | null
+          respostas_questionario_json: Json
+          servico_id: number | null
+          servico_nome: string
+          solicitacao_id: string | null
+          status: string
+          updated_at: string
+          venda_id: number | null
+        }
+        Insert: {
+          cliente_id: number
+          condicao_profissional?: string | null
+          created_at?: string
+          data_criacao?: string
+          data_validacao?: string | null
+          etapa_liberada_ate?: number
+          id?: string
+          mes_protocolo_alvo?: string | null
+          observacao_prazo?: string | null
+          observacoes_admin?: string | null
+          pagamento_id?: string | null
+          pagamento_status?: string
+          prazo_critico_data?: string | null
+          prazo_critico_doc_id?: string | null
+          primeiro_doc_aprovado_em?: string | null
+          respostas_questionario_json?: Json
+          servico_id?: number | null
+          servico_nome: string
+          solicitacao_id?: string | null
+          status?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Update: {
+          cliente_id?: number
+          condicao_profissional?: string | null
+          created_at?: string
+          data_criacao?: string
+          data_validacao?: string | null
+          etapa_liberada_ate?: number
+          id?: string
+          mes_protocolo_alvo?: string | null
+          observacao_prazo?: string | null
+          observacoes_admin?: string | null
+          pagamento_id?: string | null
+          pagamento_status?: string
+          prazo_critico_data?: string | null
+          prazo_critico_doc_id?: string | null
+          primeiro_doc_aprovado_em?: string | null
+          respostas_questionario_json?: Json
+          servico_id?: number | null
+          servico_nome?: string
+          solicitacao_id?: string | null
+          status?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_solicitacoes_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_status_divergencias"
+            referencedColumns: ["solicitacao_id"]
+          },
+        ]
+      }
+      qa_processos_alertas_enviados: {
+        Row: {
+          canal: string
+          cliente_id: number | null
+          created_at: string
+          evento: string
+          id: string
+          marco_dias: number
+          prazo_data: string | null
+          processo_id: string
+        }
+        Insert: {
+          canal: string
+          cliente_id?: number | null
+          created_at?: string
+          evento?: string
+          id?: string
+          marco_dias: number
+          prazo_data?: string | null
+          processo_id: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number | null
+          created_at?: string
+          evento?: string
+          id?: string
+          marco_dias?: number
+          prazo_data?: string | null
+          processo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processos_alertas_enviados_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_protocolo_sequencias: {
+        Row: {
+          ano: number
+          sigla: string
+          ultimo_numero: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          sigla: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          sigla?: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_protocolos: {
+        Row: {
+          ano: number
+          created_at: string
+          id: string
+          numero: string
+          observacoes: string | null
+          qa_cliente_id: number | null
+          sequencia_ano: number
+          servico_id: number
+          sigla_protocolo: string
+          status: string
+          updated_at: string
+          venda_id: number
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          id?: string
+          numero: string
+          observacoes?: string | null
+          qa_cliente_id?: number | null
+          sequencia_ano: number
+          servico_id: number
+          sigla_protocolo: string
+          status?: string
+          updated_at?: string
+          venda_id: number
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          qa_cliente_id?: number | null
+          sequencia_ano?: number
+          servico_id?: number
+          sigla_protocolo?: string
+          status?: string
+          updated_at?: string
+          venda_id?: number
         }
         Relationships: []
       }
@@ -4634,6 +7483,24 @@ export type Database = {
           peso_manual?: number | null
           tipo_referencia?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      qa_remove_bg_usage: {
+        Row: {
+          armamento_id: string | null
+          created_at: string
+          id: string
+        }
+        Insert: {
+          armamento_id?: string | null
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          armamento_id?: string | null
+          created_at?: string
+          id?: string
         }
         Relationships: []
       }
@@ -4684,6 +7551,64 @@ export type Database = {
           },
         ]
       }
+      qa_senha_gov_acessos: {
+        Row: {
+          acao: string
+          cadastro_cr_id: number | null
+          cliente_id: number | null
+          contexto: string | null
+          created_at: string
+          id: string
+          ip: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          cadastro_cr_id?: number | null
+          cliente_id?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          cadastro_cr_id?: number | null
+          cliente_id?: number | null
+          contexto?: string | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_cadastro_cr"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_senha_gov_acessos_cadastro_cr_id_fkey"
+            columns: ["cadastro_cr_id"]
+            isOneToOne: false
+            referencedRelation: "qa_senha_gov_incident_audit"
+            referencedColumns: ["cadastro_cr_id"]
+          },
+        ]
+      }
       qa_servicos: {
         Row: {
           id: number
@@ -4704,6 +7629,101 @@ export type Database = {
           valor_servico?: number
         }
         Relationships: []
+      }
+      qa_servicos_catalogo: {
+        Row: {
+          ativo: boolean
+          base_legal: string | null
+          categoria: string
+          categoria_servico_slug: string | null
+          checklist_type: string | null
+          contrato_type: string | null
+          created_at: string
+          descricao_curta: string | null
+          descricao_full: string | null
+          display_order: number
+          exige_acervo: boolean | null
+          exige_cadastro: boolean
+          exige_pagamento: boolean
+          gera_processo: boolean
+          id: string
+          nome: string
+          objetivo_slug: string | null
+          preco: number | null
+          recorrente: boolean
+          servico_id: number | null
+          servico_principal_slug: string | null
+          sigla_protocolo: string | null
+          slug: string
+          tipo: string
+          tipo_processo: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          base_legal?: string | null
+          categoria: string
+          categoria_servico_slug?: string | null
+          checklist_type?: string | null
+          contrato_type?: string | null
+          created_at?: string
+          descricao_curta?: string | null
+          descricao_full?: string | null
+          display_order?: number
+          exige_acervo?: boolean | null
+          exige_cadastro?: boolean
+          exige_pagamento?: boolean
+          gera_processo?: boolean
+          id?: string
+          nome: string
+          objetivo_slug?: string | null
+          preco?: number | null
+          recorrente?: boolean
+          servico_id?: number | null
+          servico_principal_slug?: string | null
+          sigla_protocolo?: string | null
+          slug: string
+          tipo?: string
+          tipo_processo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          base_legal?: string | null
+          categoria?: string
+          categoria_servico_slug?: string | null
+          checklist_type?: string | null
+          contrato_type?: string | null
+          created_at?: string
+          descricao_curta?: string | null
+          descricao_full?: string | null
+          display_order?: number
+          exige_acervo?: boolean | null
+          exige_cadastro?: boolean
+          exige_pagamento?: boolean
+          gera_processo?: boolean
+          id?: string
+          nome?: string
+          objetivo_slug?: string | null
+          preco?: number | null
+          recorrente?: boolean
+          servico_id?: number | null
+          servico_principal_slug?: string | null
+          sigla_protocolo?: string | null
+          slug?: string
+          tipo?: string
+          tipo_processo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_catalogo_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qa_servicos_com_exame: {
         Row: {
@@ -4741,30 +7761,335 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_servicos_documentos: {
+        Row: {
+          ativo: boolean
+          condicao_profissional: string | null
+          created_at: string
+          emissor: string
+          etapa: string
+          exemplo_url: string | null
+          formato_aceito: string[]
+          id: string
+          instrucoes: string | null
+          link_emissao: string | null
+          modelo_url: string | null
+          nome_documento: string
+          obrigatorio: boolean
+          obrigatorio_etapa02: boolean
+          observacoes_cliente: string | null
+          ordem: number
+          orgao_emissor: string | null
+          prazo_recomendado_dias: number | null
+          regra_validacao: Json | null
+          servico_id: number
+          tipo_documento: string
+          updated_at: string
+          validade_dias: number | null
+        }
+        Insert: {
+          ativo?: boolean
+          condicao_profissional?: string | null
+          created_at?: string
+          emissor?: string
+          etapa?: string
+          exemplo_url?: string | null
+          formato_aceito?: string[]
+          id?: string
+          instrucoes?: string | null
+          link_emissao?: string | null
+          modelo_url?: string | null
+          nome_documento: string
+          obrigatorio?: boolean
+          obrigatorio_etapa02?: boolean
+          observacoes_cliente?: string | null
+          ordem?: number
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
+          regra_validacao?: Json | null
+          servico_id: number
+          tipo_documento: string
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Update: {
+          ativo?: boolean
+          condicao_profissional?: string | null
+          created_at?: string
+          emissor?: string
+          etapa?: string
+          exemplo_url?: string | null
+          formato_aceito?: string[]
+          id?: string
+          instrucoes?: string | null
+          link_emissao?: string | null
+          modelo_url?: string | null
+          nome_documento?: string
+          obrigatorio?: boolean
+          obrigatorio_etapa02?: boolean
+          observacoes_cliente?: string | null
+          ordem?: number
+          orgao_emissor?: string | null
+          prazo_recomendado_dias?: number | null
+          regra_validacao?: Json | null
+          servico_id?: number
+          tipo_documento?: string
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_documentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_solicitacao_eventos: {
+        Row: {
+          ator: string | null
+          ator_id: string | null
+          cliente_id: number | null
+          created_at: string
+          descricao: string | null
+          email_enviado_em: string | null
+          evento: string
+          id: string
+          metadata: Json | null
+          solicitacao_id: string
+          status_anterior: string | null
+          status_novo: string | null
+        }
+        Insert: {
+          ator?: string | null
+          ator_id?: string | null
+          cliente_id?: number | null
+          created_at?: string
+          descricao?: string | null
+          email_enviado_em?: string | null
+          evento: string
+          id?: string
+          metadata?: Json | null
+          solicitacao_id: string
+          status_anterior?: string | null
+          status_novo?: string | null
+        }
+        Update: {
+          ator?: string | null
+          ator_id?: string | null
+          cliente_id?: number | null
+          created_at?: string
+          descricao?: string | null
+          email_enviado_em?: string | null
+          evento?: string
+          id?: string
+          metadata?: Json | null
+          solicitacao_id?: string
+          status_anterior?: string | null
+          status_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_solicitacao_eventos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_solicitacoes_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_solicitacao_eventos_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_status_divergencias"
+            referencedColumns: ["solicitacao_id"]
+          },
+        ]
+      }
+      qa_solicitacoes_servico: {
+        Row: {
+          arquivado: boolean
+          arquivado_em: string | null
+          arquivado_por: string | null
+          cadastro_publico_id: string | null
+          categoria_atendimento: string
+          cliente_id: number
+          created_at: string
+          id: string
+          item_venda_id: number | null
+          motivo_arquivamento: string | null
+          observacoes: string | null
+          origem: string
+          pendente_classificacao: boolean
+          processo_id: number | null
+          sem_checklist_configurado: boolean
+          service_name: string
+          service_slug: string
+          servico_id: number | null
+          servico_interesse_raw: string | null
+          status_financeiro: string
+          status_processo: string
+          status_servico: string
+          updated_at: string
+          venda_id: number | null
+        }
+        Insert: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
+          cadastro_publico_id?: string | null
+          categoria_atendimento?: string
+          cliente_id: number
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          motivo_arquivamento?: string | null
+          observacoes?: string | null
+          origem?: string
+          pendente_classificacao?: boolean
+          processo_id?: number | null
+          sem_checklist_configurado?: boolean
+          service_name: string
+          service_slug: string
+          servico_id?: number | null
+          servico_interesse_raw?: string | null
+          status_financeiro?: string
+          status_processo?: string
+          status_servico?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Update: {
+          arquivado?: boolean
+          arquivado_em?: string | null
+          arquivado_por?: string | null
+          cadastro_publico_id?: string | null
+          categoria_atendimento?: string
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          item_venda_id?: number | null
+          motivo_arquivamento?: string | null
+          observacoes?: string | null
+          origem?: string
+          pendente_classificacao?: boolean
+          processo_id?: number | null
+          sem_checklist_configurado?: boolean
+          service_name?: string
+          service_slug?: string
+          servico_id?: number | null
+          servico_interesse_raw?: string | null
+          status_financeiro?: string
+          status_processo?: string
+          status_servico?: string
+          updated_at?: string
+          venda_id?: number | null
+        }
+        Relationships: []
+      }
+      qa_status_eventos: {
+        Row: {
+          campo_status: string
+          cliente_id: number | null
+          criado_em: string
+          detalhes: Json | null
+          documento_id: string | null
+          entidade: string
+          entidade_id: string
+          id: string
+          motivo: string | null
+          origem: string
+          processo_id: string | null
+          solicitacao_id: string | null
+          status_anterior: string | null
+          status_novo: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          campo_status: string
+          cliente_id?: number | null
+          criado_em?: string
+          detalhes?: Json | null
+          documento_id?: string | null
+          entidade: string
+          entidade_id: string
+          id?: string
+          motivo?: string | null
+          origem: string
+          processo_id?: string | null
+          solicitacao_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          campo_status?: string
+          cliente_id?: number | null
+          criado_em?: string
+          detalhes?: Json | null
+          documento_id?: string | null
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          motivo?: string | null
+          origem?: string
+          processo_id?: string | null
+          solicitacao_id?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       qa_status_servico: {
         Row: {
           ativo: boolean
+          codigo: string
+          cor: string | null
           created_at: string
+          descricao: string | null
+          exige_data_protocolo: boolean
+          exige_numero_protocolo: boolean
+          finalizador: boolean
           id: string
           nome: string
           ordem: number
           updated_at: string
+          visivel_cliente: boolean
+          visivel_equipe: boolean
         }
         Insert: {
           ativo?: boolean
+          codigo: string
+          cor?: string | null
           created_at?: string
+          descricao?: string | null
+          exige_data_protocolo?: boolean
+          exige_numero_protocolo?: boolean
+          finalizador?: boolean
           id?: string
           nome: string
           ordem?: number
           updated_at?: string
+          visivel_cliente?: boolean
+          visivel_equipe?: boolean
         }
         Update: {
           ativo?: boolean
+          codigo?: string
+          cor?: string | null
           created_at?: string
+          descricao?: string | null
+          exige_data_protocolo?: boolean
+          exige_numero_protocolo?: boolean
+          finalizador?: boolean
           id?: string
           nome?: string
           ordem?: number
           updated_at?: string
+          visivel_cliente?: boolean
+          visivel_equipe?: boolean
         }
         Relationships: []
       }
@@ -4783,6 +8108,54 @@ export type Database = {
           id?: number
           nome_status?: string
           tipo_status?: string
+        }
+        Relationships: []
+      }
+      qa_template_placeholder_config: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          exemplo_placeholder: string | null
+          grupo_visual: string | null
+          id: string
+          label_cliente: string | null
+          obrigatorio_override: boolean | null
+          ordem: number | null
+          pergunta_cliente: string | null
+          placeholder: string
+          texto_ajuda: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          exemplo_placeholder?: string | null
+          grupo_visual?: string | null
+          id?: string
+          label_cliente?: string | null
+          obrigatorio_override?: boolean | null
+          ordem?: number | null
+          pergunta_cliente?: string | null
+          placeholder: string
+          texto_ajuda?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          exemplo_placeholder?: string | null
+          grupo_visual?: string | null
+          id?: string
+          label_cliente?: string | null
+          obrigatorio_override?: boolean | null
+          ordem?: number | null
+          pergunta_cliente?: string | null
+          placeholder?: string
+          texto_ajuda?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -4918,56 +8291,296 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_validacao_config: {
+        Row: {
+          alimenta_aprendizado: boolean
+          ativo: boolean
+          campos_obrigatorios_json: Json
+          limite_analise_humana: number
+          limite_aprovacao_auto: number
+          observacoes: string | null
+          palavras_chave_esperadas_json: Json
+          permite_aprovacao_auto: boolean
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          alimenta_aprendizado?: boolean
+          ativo?: boolean
+          campos_obrigatorios_json?: Json
+          limite_analise_humana?: number
+          limite_aprovacao_auto?: number
+          observacoes?: string | null
+          palavras_chave_esperadas_json?: Json
+          permite_aprovacao_auto?: boolean
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          alimenta_aprendizado?: boolean
+          ativo?: boolean
+          campos_obrigatorios_json?: Json
+          limite_analise_humana?: number
+          limite_aprovacao_auto?: number
+          observacoes?: string | null
+          palavras_chave_esperadas_json?: Json
+          permite_aprovacao_auto?: boolean
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_validade_documentos: {
+        Row: {
+          base_legal: string | null
+          observacao: string | null
+          tipo_documento: string
+          updated_at: string
+          validade_dias: number
+        }
+        Insert: {
+          base_legal?: string | null
+          observacao?: string | null
+          tipo_documento: string
+          updated_at?: string
+          validade_dias: number
+        }
+        Update: {
+          base_legal?: string | null
+          observacao?: string | null
+          tipo_documento?: string
+          updated_at?: string
+          validade_dias?: number
+        }
+        Relationships: []
+      }
+      qa_vencimentos_alertas_enviados: {
+        Row: {
+          canal: string
+          cliente_id: number | null
+          data_referencia: string
+          destinatario: string | null
+          detalhes: Json | null
+          enviado_em: string
+          erro_mensagem: string | null
+          fonte: string
+          id: string
+          marco_dias: number
+          ref_id: string
+          status: string
+        }
+        Insert: {
+          canal: string
+          cliente_id?: number | null
+          data_referencia: string
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          fonte: string
+          id?: string
+          marco_dias: number
+          ref_id: string
+          status?: string
+        }
+        Update: {
+          canal?: string
+          cliente_id?: number | null
+          data_referencia?: string
+          destinatario?: string | null
+          detalhes?: Json | null
+          enviado_em?: string
+          erro_mensagem?: string | null
+          fonte?: string
+          id?: string
+          marco_dias?: number
+          ref_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      qa_venda_eventos: {
+        Row: {
+          ator: string | null
+          cliente_id: number | null
+          created_at: string
+          dados_json: Json
+          descricao: string | null
+          id: string
+          qa_cliente_id: number | null
+          tipo_evento: string
+          user_id: string | null
+          venda_id: number
+        }
+        Insert: {
+          ator?: string | null
+          cliente_id?: number | null
+          created_at?: string
+          dados_json?: Json
+          descricao?: string | null
+          id?: string
+          qa_cliente_id?: number | null
+          tipo_evento: string
+          user_id?: string | null
+          venda_id: number
+        }
+        Update: {
+          ator?: string | null
+          cliente_id?: number | null
+          created_at?: string
+          dados_json?: Json
+          descricao?: string | null
+          id?: string
+          qa_cliente_id?: number | null
+          tipo_evento?: string
+          user_id?: string | null
+          venda_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_venda_eventos_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "qa_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_vendas: {
         Row: {
-          cliente_id: number | null
+          aprovado_em: string | null
+          aprovado_por: string | null
+          asaas_bank_slip_url: string | null
+          asaas_customer_id: string | null
+          asaas_due_date: string | null
+          asaas_invoice_url: string | null
+          asaas_payment_id: string | null
+          asaas_pix_payload: string | null
+          asaas_subscription_id: string | null
+          checkout_token_expires_at: string | null
+          checkout_token_hash: string | null
+          cliente_id: number
+          cobranca_confirmada_em: string | null
+          cobranca_gerada_em: string | null
+          cobranca_origem: string | null
+          cobranca_status: string | null
           created_at: string
           data_cadastro: string | null
           data_deferimento: string | null
           data_protocolo: string | null
           data_ultima_atualizacao: string | null
           desconto: number | null
+          encargos_fracao: number | null
+          encargos_reais: number | null
           forma_pagamento: string | null
           id: number
           id_legado: number
+          motivo_correcao: string | null
           numero_processo: string | null
-          status: string | null
+          origem_proposta: string | null
+          parcelas_cobranca: number | null
+          solicitacao_id: string | null
+          status: string
+          status_validacao_valor: string | null
+          validacao_valor_atualizado_em: string | null
           valor_a_pagar: number | null
           valor_aberto: number
+          valor_aprovado: number | null
+          valor_cobrado: number | null
+          valor_informado_cliente: number | null
         }
         Insert: {
-          cliente_id?: number | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          asaas_bank_slip_url?: string | null
+          asaas_customer_id?: string | null
+          asaas_due_date?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          asaas_pix_payload?: string | null
+          asaas_subscription_id?: string | null
+          checkout_token_expires_at?: string | null
+          checkout_token_hash?: string | null
+          cliente_id: number
+          cobranca_confirmada_em?: string | null
+          cobranca_gerada_em?: string | null
+          cobranca_origem?: string | null
+          cobranca_status?: string | null
           created_at?: string
           data_cadastro?: string | null
           data_deferimento?: string | null
           data_protocolo?: string | null
           data_ultima_atualizacao?: string | null
           desconto?: number | null
-          forma_pagamento?: string | null
-          id?: number
-          id_legado: number
-          numero_processo?: string | null
-          status?: string | null
-          valor_a_pagar?: number | null
-          valor_aberto?: number
-        }
-        Update: {
-          cliente_id?: number | null
-          created_at?: string
-          data_cadastro?: string | null
-          data_deferimento?: string | null
-          data_protocolo?: string | null
-          data_ultima_atualizacao?: string | null
-          desconto?: number | null
+          encargos_fracao?: number | null
+          encargos_reais?: number | null
           forma_pagamento?: string | null
           id?: number
           id_legado?: number
+          motivo_correcao?: string | null
           numero_processo?: string | null
-          status?: string | null
+          origem_proposta?: string | null
+          parcelas_cobranca?: number | null
+          solicitacao_id?: string | null
+          status?: string
+          status_validacao_valor?: string | null
+          validacao_valor_atualizado_em?: string | null
           valor_a_pagar?: number | null
           valor_aberto?: number
+          valor_aprovado?: number | null
+          valor_cobrado?: number | null
+          valor_informado_cliente?: number | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          asaas_bank_slip_url?: string | null
+          asaas_customer_id?: string | null
+          asaas_due_date?: string | null
+          asaas_invoice_url?: string | null
+          asaas_payment_id?: string | null
+          asaas_pix_payload?: string | null
+          asaas_subscription_id?: string | null
+          checkout_token_expires_at?: string | null
+          checkout_token_hash?: string | null
+          cliente_id?: number
+          cobranca_confirmada_em?: string | null
+          cobranca_gerada_em?: string | null
+          cobranca_origem?: string | null
+          cobranca_status?: string | null
+          created_at?: string
+          data_cadastro?: string | null
+          data_deferimento?: string | null
+          data_protocolo?: string | null
+          data_ultima_atualizacao?: string | null
+          desconto?: number | null
+          encargos_fracao?: number | null
+          encargos_reais?: number | null
+          forma_pagamento?: string | null
+          id?: number
+          id_legado?: number
+          motivo_correcao?: string | null
+          numero_processo?: string | null
+          origem_proposta?: string | null
+          parcelas_cobranca?: number | null
+          solicitacao_id?: string | null
+          status?: string
+          status_validacao_valor?: string | null
+          validacao_valor_atualizado_em?: string | null
+          valor_a_pagar?: number | null
+          valor_aberto?: number
+          valor_aprovado?: number | null
+          valor_cobrado?: number | null
+          valor_informado_cliente?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_qa_vendas__cliente_legado"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id_legado"]
+          },
           {
             foreignKeyName: "qa_vendas_cliente_id_fk"
             columns: ["cliente_id"]
@@ -4981,6 +8594,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "qa_clientes"
             referencedColumns: ["id_legado"]
+          },
+          {
+            foreignKeyName: "qa_vendas_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_solicitacoes_servico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_vendas_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_status_divergencias"
+            referencedColumns: ["solicitacao_id"]
           },
         ]
       }
@@ -5033,74 +8660,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      relationship_members: {
-        Row: {
-          consent_at: string | null
-          consent_given: boolean
-          created_at: string
-          id: string
-          relationship_id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          consent_at?: string | null
-          consent_given?: boolean
-          created_at?: string
-          id?: string
-          relationship_id: string
-          role?: string
-          user_id?: string
-        }
-        Update: {
-          consent_at?: string | null
-          consent_given?: boolean
-          created_at?: string
-          id?: string
-          relationship_id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "relationship_members_relationship_id_fkey"
-            columns: ["relationship_id"]
-            isOneToOne: false
-            referencedRelation: "relationships"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      relationships: {
-        Row: {
-          created_at: string
-          created_by: string
-          id: string
-          invite_code: string
-          partner_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string
-          id?: string
-          invite_code?: string
-          partner_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          id?: string
-          invite_code?: string
-          partner_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       revenue_intelligence: {
         Row: {
@@ -5417,59 +8976,6 @@ export type Database = {
         }
         Relationships: []
       }
-      test_run_events: {
-        Row: {
-          created_at: string
-          duration_ms: number | null
-          error_message: string | null
-          event_type: string
-          id: string
-          payload: Json | null
-          run_id: string
-          spec_name: string | null
-          stack_trace: string | null
-          status: string | null
-          test_name: string | null
-          url: string | null
-        }
-        Insert: {
-          created_at?: string
-          duration_ms?: number | null
-          error_message?: string | null
-          event_type: string
-          id?: string
-          payload?: Json | null
-          run_id: string
-          spec_name?: string | null
-          stack_trace?: string | null
-          status?: string | null
-          test_name?: string | null
-          url?: string | null
-        }
-        Update: {
-          created_at?: string
-          duration_ms?: number | null
-          error_message?: string | null
-          event_type?: string
-          id?: string
-          payload?: Json | null
-          run_id?: string
-          spec_name?: string | null
-          stack_trace?: string | null
-          status?: string | null
-          test_name?: string | null
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "test_run_events_run_id_fkey"
-            columns: ["run_id"]
-            isOneToOne: false
-            referencedRelation: "test_runs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       test_runs: {
         Row: {
           base_url: string | null
@@ -5631,89 +9137,44 @@ export type Database = {
         }
         Relationships: []
       }
-      user_streaks: {
-        Row: {
-          consistency_score: number | null
-          created_at: string
-          current_streak: number
-          id: string
-          last_entry_date: string | null
-          longest_streak: number
-          total_days_logged: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          consistency_score?: number | null
-          created_at?: string
-          current_streak?: number
-          id?: string
-          last_entry_date?: string | null
-          longest_streak?: number
-          total_days_logged?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          consistency_score?: number | null
-          created_at?: string
-          current_streak?: number
-          id?: string
-          last_entry_date?: string | null
-          longest_streak?: number
-          total_days_logged?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      voice_emotion_logs: {
-        Row: {
-          anger_probability_estimate: number | null
-          confidence_score: number | null
-          created_at: string
-          day_key: string
-          id: string
-          pitch_mean: number | null
-          pitch_variation: number | null
-          session_id: string | null
-          source: string
-          speech_rate_estimate: number | null
-          tension_score: number | null
-          voice_energy: number | null
-        }
-        Insert: {
-          anger_probability_estimate?: number | null
-          confidence_score?: number | null
-          created_at?: string
-          day_key?: string
-          id?: string
-          pitch_mean?: number | null
-          pitch_variation?: number | null
-          session_id?: string | null
-          source?: string
-          speech_rate_estimate?: number | null
-          tension_score?: number | null
-          voice_energy?: number | null
-        }
-        Update: {
-          anger_probability_estimate?: number | null
-          confidence_score?: number | null
-          created_at?: string
-          day_key?: string
-          id?: string
-          pitch_mean?: number | null
-          pitch_variation?: number | null
-          session_id?: string | null
-          source?: string
-          speech_rate_estimate?: number | null
-          tension_score?: number | null
-          voice_energy?: number | null
-        }
-        Relationships: []
-      }
     }
     Views: {
+      qa_arsenal_fila_revisao: {
+        Row: {
+          arquivo_nome: string | null
+          cliente_id: number | null
+          created_at: string | null
+          documento_id: string | null
+          ia_dados: Json | null
+          origem_tabela: string | null
+          status: string | null
+          storage_path: string | null
+        }
+        Relationships: []
+      }
+      qa_cliente_armas: {
+        Row: {
+          arma_uid: string | null
+          calibre: string | null
+          created_at: string | null
+          fonte: string | null
+          marca: string | null
+          modelo: string | null
+          needs_review: boolean | null
+          numero_autorizacao_compra: string | null
+          numero_craf: string | null
+          numero_serie: string | null
+          numero_sigma: string | null
+          numero_sinarm: string | null
+          qa_cliente_id: number | null
+          sistema: string | null
+          status_documental: string | null
+          tipo_arma: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       qa_exames_cliente_status: {
         Row: {
           cadastrado_por: string | null
@@ -5760,16 +9221,255 @@ export type Database = {
           tipo?: string | null
           updated_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_exames__cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_municoes_em_revisao: {
+        Row: {
+          calibre: string | null
+          cliente_id: number | null
+          created_at: string | null
+          data_movimentacao: string | null
+          documento_nome: string | null
+          documento_url: string | null
+          ia_dados_extraidos: Json | null
+          ia_status: string | null
+          id: string | null
+          lote: string | null
+          marca: string | null
+          quantidade: number | null
+          revisao_obrigatoria: boolean | null
+          tipo: string | null
+        }
+        Insert: {
+          calibre?: string | null
+          cliente_id?: number | null
+          created_at?: string | null
+          data_movimentacao?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string | null
+          id?: string | null
+          lote?: string | null
+          marca?: string | null
+          quantidade?: number | null
+          revisao_obrigatoria?: boolean | null
+          tipo?: string | null
+        }
+        Update: {
+          calibre?: string | null
+          cliente_id?: number | null
+          created_at?: string | null
+          data_movimentacao?: string | null
+          documento_nome?: string | null
+          documento_url?: string | null
+          ia_dados_extraidos?: Json | null
+          ia_status?: string | null
+          id?: string | null
+          lote?: string | null
+          marca?: string | null
+          quantidade?: number | null
+          revisao_obrigatoria?: boolean | null
+          tipo?: string | null
+        }
+        Relationships: []
+      }
+      qa_municoes_saldos: {
+        Row: {
+          calibre: string | null
+          cliente_id: number | null
+          data_fabricacao: string | null
+          data_validade: string | null
+          lote: string | null
+          marca: string | null
+          saldo: number | null
+          total_entradas: number | null
+          total_saidas: number | null
+          ultima_movimentacao: string | null
+        }
+        Relationships: []
+      }
+      qa_senha_gov_incident_audit: {
+        Row: {
+          cadastro_cr_id: number | null
+          cliente_atual: string | null
+          cliente_id_atual: number | null
+          cliente_id_migracao: number | null
+          cliente_migracao: string | null
+          migrado_em: string | null
+          numero_cr: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_qa_senha_gov__cliente"
+            columns: ["cliente_id_migracao"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_cadastro_cr_cliente_id_fkey"
+            columns: ["cliente_id_atual"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_servico_documentos_obrigatorios: {
+        Row: {
+          ativo: boolean | null
+          condicao_profissional: string | null
+          etapa: string | null
+          id: string | null
+          nome_documento: string | null
+          obrigatorio: boolean | null
+          ordem: number | null
+          servico_id: number | null
+          tipo_documento: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          condicao_profissional?: string | null
+          etapa?: string | null
+          id?: string | null
+          nome_documento?: string | null
+          obrigatorio?: boolean | null
+          ordem?: number | null
+          servico_id?: number | null
+          tipo_documento?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          condicao_profissional?: string | null
+          etapa?: string | null
+          id?: string | null
+          nome_documento?: string | null
+          obrigatorio?: boolean | null
+          ordem?: number | null
+          servico_id?: number | null
+          tipo_documento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_servicos_documentos_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "qa_servicos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_status_divergencias: {
+        Row: {
+          cliente_id: number | null
+          solicitacao_id: string | null
+          solicitacao_updated_at: string | null
+          status_esperado: string | null
+          status_solicitacao: string | null
+          status_venda: string | null
+          valor_aberto: number | null
+          venda_id: number | null
+        }
         Relationships: []
       }
     }
     Functions: {
+      _qa_diag_release_token: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["lp_app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      match_qa_modelos_aprovados: {
+        Args: {
+          filtro_tipo: string
+          match_limit?: number
+          query_embedding: string
+        }
+        Returns: {
+          campos_esperados_json: Json
+          id: string
+          nome_modelo: string
+          origem_emissora: string
+          palavras_chave_json: Json
+          similaridade: number
+          tipo_documento: string
+        }[]
+      }
+      qa_admin_destravar_cancel_pending_sale: {
+        Args: { p_cliente_id: number }
+        Returns: Json
+      }
+      qa_admin_destravar_reset_total: {
+        Args: { p_cliente_id: number; p_confirm_cpf: string }
+        Returns: Json
+      }
+      qa_aproveitar_endereco_cadastro_publico: {
+        Args: { p_processo_id: string }
+        Returns: number
+      }
+      qa_arma_manual_upsert: {
+        Args: {
+          p_calibre: string
+          p_cliente_id: number
+          p_dados_extraidos_json?: Json
+          p_marca: string
+          p_modelo: string
+          p_numero_autorizacao_compra: string
+          p_numero_craf: string
+          p_numero_serie: string
+          p_numero_sigma: string
+          p_numero_sinarm: string
+          p_origem: string
+          p_sistema: string
+          p_tipo_arma: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      qa_arma_norm: { Args: { s: string }; Returns: string }
+      qa_arsenal_criar_venda_pendente: {
+        Args: {
+          p_catalogo_slug: string
+          p_observacoes?: string
+          p_qa_cliente_id: number
+          p_valor: number
+        }
+        Returns: Json
+      }
+      qa_arsenal_processar_pagamento_venda: {
+        Args: { p_venda_id: number }
+        Returns: Json
+      }
+      qa_atualizar_dados_basicos_cliente: {
+        Args: {
+          p_bairro?: string
+          p_cep?: string
+          p_cidade?: string
+          p_cliente_id: number
+          p_complemento?: string
+          p_endereco?: string
+          p_estado?: string
+          p_estado_civil?: string
+          p_numero?: string
+          p_profissao?: string
+        }
+        Returns: boolean
+      }
+      qa_avancar_proximo_servico_venda: {
+        Args: { p_processo_id: string }
+        Returns: string
       }
       qa_busca_auxiliar_caso: {
         Args: {
@@ -5800,11 +9500,242 @@ export type Database = {
           texto_chunk: string
         }[]
       }
+      qa_cadastro_publico_excluir_total: {
+        Args: { p_cadastro_id: string }
+        Returns: Json
+      }
+      qa_calcular_progresso: {
+        Args: { _solicitacao_id: string }
+        Returns: {
+          sem_checklist: boolean
+          x_progresso: number
+          x_valido: number
+          y: number
+        }[]
+      }
+      qa_categoria_documento: { Args: { tipo: string }; Returns: string }
+      qa_cliente_arquivar: {
+        Args: { p_cliente_id: number; p_motivo?: string }
+        Returns: Json
+      }
+      qa_cliente_criar_conta_publica: {
+        Args: {
+          p_cpf: string
+          p_email: string
+          p_nome: string
+          p_telefone?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      qa_cliente_criar_contratacao: {
+        Args: {
+          p_catalogo_slug: string
+          p_observacoes?: string
+          p_valor_informado: number
+        }
+        Returns: Json
+      }
+      qa_cliente_criar_contratacao_publico: {
+        Args: {
+          p_catalogo_slug: string
+          p_cpf: string
+          p_email: string
+          p_nome: string
+          p_observacoes?: string
+          p_telefone: string
+          p_valor_informado: number
+        }
+        Returns: Json
+      }
+      qa_cliente_dependencias: { Args: { p_cliente_id: number }; Returns: Json }
+      qa_cliente_excluir_total: {
+        Args: { p_cliente_id: number }
+        Returns: Json
+      }
+      qa_cliente_excluir_total_v2: {
+        Args: { p_cliente_id: number }
+        Returns: Json
+      }
+      qa_cliente_restaurar: { Args: { p_cliente_id: number }; Returns: Json }
+      qa_confirmar_pagamento_processo: {
+        Args: { p_origem?: string; p_processo_id: string }
+        Returns: Json
+      }
+      qa_create_processo_from_venda: {
+        Args: { p_servico_id: number; p_venda_id: number }
+        Returns: Json
+      }
+      qa_criar_processo_logado: {
+        Args: {
+          p_catalogo_slug: string
+          p_cliente_id: number
+          p_observacoes?: string
+        }
+        Returns: string
+      }
+      qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_derive_status_financeiro: {
+        Args: { p_status_venda: string; p_valor_aberto: number }
+        Returns: string
+      }
+      qa_email_existe_em_auth: { Args: { p_email: string }; Returns: boolean }
+      qa_ensure_cliente_from_auth: {
+        Args: {
+          p_cpf?: string
+          p_email?: string
+          p_nome?: string
+          p_telefone?: string
+        }
+        Returns: Json
+      }
+      qa_etapa_documento: { Args: { tipo: string }; Returns: number }
+      qa_evento_ja_notificado: {
+        Args: { _evento: string; _solicitacao_id: string; _status_novo: string }
+        Returns: boolean
+      }
+      qa_explodir_checklist_processo: {
+        Args: { p_processo_id: string }
+        Returns: {
+          inseridos: number
+          ja_existentes: number
+          pre_validados: number
+          reaproveitados_cofre: number
+        }[]
+      }
+      qa_gen_temp_password: { Args: never; Returns: string }
+      qa_gerar_protocolo: { Args: { p_venda_id: number }; Returns: string }
+      qa_get_senha_gov_source: {
+        Args: { p_cadastro_cr_id?: number; p_cliente_id: number }
+        Returns: {
+          cadastro_cr_id: number
+          credencial_id: number
+          source: string
+          tem_senha: boolean
+        }[]
+      }
+      qa_gov_recon_cpf_summary: {
+        Args: never
+        Returns: {
+          acao_sugerida: string
+          status: string
+          total: number
+        }[]
+      }
+      qa_gte_match_armas: { Args: { _gte_id: string }; Returns: Json }
+      qa_has_qa_perfil: {
+        Args: { _perfis: string[]; _uid: string }
+        Returns: boolean
+      }
+      qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
+      qa_is_owner_of_cliente: {
+        Args: { _cliente_id: number }
+        Returns: boolean
+      }
+      qa_kb_article_audit_complete: {
+        Args: {
+          _audit_ready_at: string
+          _audit_status: string
+          _checklist_audited_at: string
+          _knowledge_base_audited_at: string
+          _procedure_tested_at: string
+        }
+        Returns: boolean
+      }
+      qa_kb_article_has_approved_real_image: {
+        Args: { _article_id: string }
+        Returns: boolean
+      }
+      qa_kb_search_hybrid: {
+        Args: {
+          _audience?: string
+          _limit?: number
+          _qemb?: string
+          _query: string
+        }
+        Returns: {
+          audience: string
+          body: string
+          category: string
+          id: string
+          module: string
+          rank: number
+          slug: string
+          symptoms: string[]
+          tags: string[]
+          title: string
+        }[]
+      }
+      qa_kb_search_text: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          body: string
+          category: string
+          id: string
+          module: string
+          rank: number
+          slug: string
+          symptoms: string[]
+          tags: string[]
+          title: string
+        }[]
+      }
       qa_listar_municipios_por_uf: {
         Args: { p_uf: string }
         Returns: {
           municipio: string
         }[]
+      }
+      qa_log_tentativa_bloqueada: {
+        Args: {
+          _ator: string
+          _cliente_id: number
+          _motivo: string
+          _solicitacao_id: string
+          _status_anterior: string
+          _status_tentado: string
+        }
+        Returns: undefined
+      }
+      qa_norm_cr: { Args: { p_cr: string }; Returns: string }
+      qa_norm_doc: { Args: { p_doc: string }; Returns: string }
+      qa_norm_email: { Args: { p_email: string }; Returns: string }
+      qa_norm_nome: { Args: { p_nome: string }; Returns: string }
+      qa_pos_pagamento_protocolar: {
+        Args: { p_processo_id: string }
+        Returns: Json
+      }
+      qa_processo_trocar_servico: {
+        Args: {
+          p_dry_run?: boolean
+          p_motivo?: string
+          p_novo_servico_id: number
+          p_processo_id: string
+        }
+        Returns: Json
+      }
+      qa_proximo_protocolo: {
+        Args: { p_ano: number; p_sigla: string }
+        Returns: number
+      }
+      qa_recalcular_prazos_processo: {
+        Args: { p_processo_id: string }
+        Returns: undefined
+      }
+      qa_recalcular_status_servico: {
+        Args: { _solicitacao_id: string }
+        Returns: undefined
+      }
+      qa_remove_bg_usage_mes: {
+        Args: never
+        Returns: {
+          mes_referencia: string
+          total: number
+        }[]
+      }
+      qa_resolve_cliente_id_real: {
+        Args: { p_cliente_id_legado: number }
+        Returns: number
       }
       qa_resolver_circunscricao_pf: {
         Args: { p_municipio: string; p_uf: string }
@@ -5816,6 +9747,65 @@ export type Database = {
           uf: string
           unidade_pf: string
         }[]
+      }
+      qa_seed_endereco_5_anos: {
+        Args: { p_processo_id: string }
+        Returns: number
+      }
+      qa_servico_divergencia_catalogo: {
+        Args: { p_servico_id: number }
+        Returns: {
+          exigencias_faltando: number
+          exigencias_removidas_pendentes: number
+          processos_ativos: number
+          processos_divergentes: number
+        }[]
+      }
+      qa_sincronizar_checklist_processos_servico: {
+        Args: { p_servico_id: number }
+        Returns: {
+          documentos_preservados: number
+          exigencias_adicionadas: number
+          exigencias_arquivadas: number
+          exigencias_atualizadas: number
+          processos_processados: number
+        }[]
+      }
+      qa_sweep_indeferimento_por_prazo: {
+        Args: never
+        Returns: {
+          itens_atualizados: number
+        }[]
+      }
+      qa_venda_aprovar_valor: { Args: { p_venda_id: number }; Returns: Json }
+      qa_venda_corrigir_valor: {
+        Args: {
+          p_motivo: string
+          p_valor_corrigido: number
+          p_venda_id: number
+        }
+        Returns: Json
+      }
+      qa_venda_excluir_total: { Args: { p_venda_id: number }; Returns: Json }
+      qa_venda_propor_valor: {
+        Args: { p_origem?: string; p_valor: number; p_venda_id: number }
+        Returns: Json
+      }
+      qa_venda_reprovar_valor: {
+        Args: { p_motivo: string; p_venda_id: number }
+        Returns: Json
+      }
+      qa_venda_to_processo: {
+        Args: {
+          p_observacoes?: string
+          p_servico_id: number
+          p_venda_id: number
+        }
+        Returns: Json
+      }
+      qa_verificar_cliente_pode_contratar: {
+        Args: { p_catalogo_slug: string; p_cliente_id: number }
+        Returns: Json
       }
       unaccent: { Args: { "": string }; Returns: string }
     }
@@ -5846,6 +9836,24 @@ export type Database = {
         | "processed"
         | "failed"
         | "ignored"
+      qa_categoria_erro_ia:
+        | "enderecamento_errado"
+        | "circunscricao_errada"
+        | "fundamento_juridico_incorreto"
+        | "tese_inadequada"
+        | "excesso_linguagem"
+        | "omissao_fato_relevante"
+        | "uso_dado_inexistente"
+        | "confusao_posse_porte"
+        | "confusao_sinarm_sigma"
+        | "confusao_pf_exercito"
+        | "prazo_administrativo_errado"
+        | "redacao_fraca"
+        | "pedido_final_incorreto"
+        | "conclusao_desalinhada"
+        | "outro"
+      qa_ia_prioridade: "baixa" | "media" | "alta" | "critica"
+      qa_ia_tipo_registro: "correcao_erro" | "treinamento_direto"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6003,6 +10011,25 @@ export const Constants = {
         "failed",
         "ignored",
       ],
+      qa_categoria_erro_ia: [
+        "enderecamento_errado",
+        "circunscricao_errada",
+        "fundamento_juridico_incorreto",
+        "tese_inadequada",
+        "excesso_linguagem",
+        "omissao_fato_relevante",
+        "uso_dado_inexistente",
+        "confusao_posse_porte",
+        "confusao_sinarm_sigma",
+        "confusao_pf_exercito",
+        "prazo_administrativo_errado",
+        "redacao_fraca",
+        "pedido_final_incorreto",
+        "conclusao_desalinhada",
+        "outro",
+      ],
+      qa_ia_prioridade: ["baixa", "media", "alta", "critica"],
+      qa_ia_tipo_registro: ["correcao_erro", "treinamento_direto"],
     },
   },
 } as const
