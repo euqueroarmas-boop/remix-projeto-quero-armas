@@ -102,6 +102,11 @@ async function findCatalog(sb: any, marca: string, modelo: string, calibre: stri
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const body = await req.json().catch(() => ({}));
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 

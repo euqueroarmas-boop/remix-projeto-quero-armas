@@ -9,19 +9,11 @@ export function QAFooter() {
         color: "hsl(220 10% 45%)",
       }}
     >
-      © {year} · Criado e desenvolvido por{" "}
+      © {year} ·{" "}
       <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>
-        WMTi Tecnologia da Informação
+        Quero Armas
       </span>
       . Todos os direitos reservados.
-      <span className="mx-2">·</span>
-      <a
-        href="tel:+5511963166915"
-        className="font-semibold hover:underline"
-        style={{ color: "hsl(220 20% 25%)" }}
-      >
-        +55 (11) 96316-6915
-      </a>
     </footer>
   );
 }

@@ -1,0 +1,13 @@
+{
+  "name": "qa-kb-audit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run": "bun run run.ts"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.48.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "playwright": "^1.48.0"
+  }
+}

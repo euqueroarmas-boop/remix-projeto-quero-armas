@@ -1,11 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { ensureClientAccess, generateTempPassword } from "../_shared/post-purchase.ts";
+import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const jsonResponse = (body: Record<string, unknown>, status = 200) =>
@@ -23,6 +24,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // 🔒 Onda 6: only admin users or internal callers may create payments
+  const guard = await requireAdminOrInternal(req);
+  if (!guard.ok) return guard.response;
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

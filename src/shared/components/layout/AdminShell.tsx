@@ -64,12 +64,12 @@ export const AdminShell = ({ children }: { children: ReactNode }) => {
   const handleSignOut = async () => { setOpen(false); await signOut(); navigate('/'); };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
+    <div className="grid min-h-screen w-full grid-cols-[auto_minmax(0,1fr)] items-start bg-background">
+      <aside className="sticky top-0 z-20 hidden h-[100dvh] max-h-[100dvh] w-64 shrink-0 self-start flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar md:flex">
         <SidebarBody email={user?.email} onSignOut={handleSignOut} />
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-border bg-sidebar px-4 md:hidden">
           <div className="flex items-center gap-3">
             <Sheet open={open} onOpenChange={setOpen}>

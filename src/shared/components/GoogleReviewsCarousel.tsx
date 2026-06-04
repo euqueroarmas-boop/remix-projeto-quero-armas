@@ -88,9 +88,9 @@ export const GoogleReviewsCarousel = () => {
   const showSkeletons = loading;
 
   return (
-    <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
+    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom,hsl(var(--accent)/0.12),transparent_60%)]" />
-      <div className="mx-auto w-full max-w-full box-border px-4 sm:container sm:px-6 lg:px-8">
+      <div className="w-full box-border px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="mb-8 flex flex-col gap-4 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">

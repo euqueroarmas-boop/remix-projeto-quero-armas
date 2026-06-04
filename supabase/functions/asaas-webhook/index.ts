@@ -728,6 +728,104 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── QA Processo: promover de aguardando_pagamento → aguardando_documentos ──
+    if (event === "PAYMENT_RECEIVED" || event === "PAYMENT_CONFIRMED") {
+      try {
+        const { data: qaProcs } = await supabase
+          .from("qa_processos")
+          .select("id, status, cliente_id")
+          .eq("pagamento_id", String(payment.id));
+
+        for (const proc of qaProcs ?? []) {
+          if (proc.status === "aguardando_pagamento") {
+            // FASE 10.1: usa RPC central (mesma regra da confirmação manual)
+            const { data: confirmRes, error: confirmErr } = await supabase.rpc(
+              "qa_confirmar_pagamento_processo",
+              { p_processo_id: proc.id, p_origem: "asaas_webhook" },
+            );
+            if (confirmErr) {
+              console.error("[asaas-webhook] qa_confirmar_pagamento_processo falhou:", confirmErr.message);
+              await supabase.from("integration_logs").insert({
+                integration_name: "qa_processo",
+                operation_name: "confirmacao_pagamento_falhou",
+                request_payload: { processo_id: proc.id, payment_id: payment.id, event },
+                status: "error",
+                error_message: confirmErr.message,
+              });
+            } else {
+              await supabase.from("integration_logs").insert({
+                integration_name: "qa_processo",
+                operation_name: "pagamento_confirmado_webhook",
+                request_payload: { processo_id: proc.id, payment_id: payment.id, event, result: confirmRes },
+                status: "success",
+              });
+              // Wave 3D — Pós-pagamento: gera protocolo + status de produção (best-effort)
+              try {
+                const { data: posRes, error: posErr } = await supabase.rpc(
+                  "qa_pos_pagamento_protocolar",
+                  { p_processo_id: proc.id },
+                );
+                if (posErr) {
+                  console.error("[asaas-webhook] qa_pos_pagamento_protocolar falhou:", posErr.message);
+                } else {
+                  console.log("[asaas-webhook] protocolo:", posRes);
+                }
+              } catch (e) {
+                console.warn("[asaas-webhook] qa_pos_pagamento_protocolar exception:", e);
+              }
+              // Auditoria universal de status (não bloqueante)
+              try {
+                await supabase.from("qa_status_eventos").insert([
+                  {
+                    cliente_id: proc.cliente_id ?? null,
+                    processo_id: proc.id,
+                    origem: "webhook",
+                    entidade: "processo",
+                    entidade_id: String(proc.id),
+                    campo_status: "pagamento_status",
+                    status_anterior: "aguardando",
+                    status_novo: "confirmado",
+                    motivo: null,
+                    detalhes: { contexto: "asaas-webhook", payment_id: String(payment.id), event },
+                  },
+                  {
+                    cliente_id: proc.cliente_id ?? null,
+                    processo_id: proc.id,
+                    origem: "webhook",
+                    entidade: "processo",
+                    entidade_id: String(proc.id),
+                    campo_status: "status",
+                    status_anterior: proc.status ?? null,
+                    status_novo: "aguardando_documentos",
+                    motivo: null,
+                    detalhes: { contexto: "asaas-webhook", payment_id: String(payment.id), event },
+                  },
+                ]);
+              } catch (_auditErr) {
+                // best-effort; nunca bloqueia o webhook
+              }
+            }
+
+            // Dispara notificação ao cliente solicitando documentos
+            supabase.functions
+              .invoke("qa-processo-notificar", {
+                body: { processo_id: proc.id, evento: "pagamento_confirmado" },
+              })
+              .catch((e) => console.warn("[asaas-webhook] qa-processo-notificar falhou:", e));
+          }
+        }
+      } catch (qaErr) {
+        console.error("[asaas-webhook] Erro ao promover qa_processo:", qaErr);
+        await supabase.from("integration_logs").insert({
+          integration_name: "qa_processo",
+          operation_name: "promocao_falhou",
+          request_payload: { payment_id: payment.id, event },
+          status: "error",
+          error_message: String(qaErr),
+        });
+      }
+    }
+
     // ── Payment overdue ──
     if (event === "PAYMENT_OVERDUE" && paymentRecord.quote_id) {
       console.log("[asaas-webhook] Pagamento vencido. Marcando contrato como INADIMPLENTE.");

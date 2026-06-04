@@ -1,0 +1,1431 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  Save,
+  Copy as CopyIcon,
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  Upload,
+  X,
+  FileText,
+  FilePlus2,
+  EyeOff,
+  GripVertical,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  ListOrdered,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import DocumentoViewerModal from "@/components/quero-armas/DocumentoViewerModal";
+import QAServicoDocumentosRefs from "./QAServicoDocumentosRefs";
+import QAServicoDocumentosLinks from "./QAServicoDocumentosLinks";
+import { WIZARD_REGISTRY } from "@/lib/quero-armas/checklistWizardGate";
+
+/* =============================================================================
+ * QAServicoDocumentosModal — Editor de DOCUMENTOS EXIGIDOS de um serviço.
+ *
+ * Camada ADITIVA: CRUD em `qa_servicos_documentos` (template por servico_id).
+ * Não toca em edge functions, schema, nem em qualquer outro fluxo.
+ *
+ * Visual: Premium Light (#7A1F2B sobre #f6f5f1 / branco).
+ * Linguagem: "Equipe Quero Armas" — sem usar a palavra "admin" na UI.
+ * ============================================================================= */
+
+const BUCKET = "qa-documentos";
+const TEMPLATE_FOLDER = "servico-documentos-templates";
+
+type ExigenciaRow = {
+  id: string;
+  servico_id: number;
+  tipo_documento: string;
+  nome_documento: string;
+  etapa: string;
+  obrigatorio: boolean;
+  validade_dias: number | null;
+  formato_aceito: string[];
+  regra_validacao: any | null;
+  link_emissao: string | null;
+  condicao_profissional: string | null;
+  ordem: number;
+  ativo: boolean;
+  instrucoes: string | null;
+  observacoes_cliente: string | null;
+  modelo_url: string | null;
+  exemplo_url: string | null;
+  orgao_emissor: string | null;
+  prazo_recomendado_dias: number | null;
+  emissor: "cliente" | "quero_armas";
+};
+
+type Patch = Partial<Omit<ExigenciaRow, "id" | "servico_id">>;
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  servicoId: number | null;
+  servicoNome: string;
+}
+
+const ETAPAS = ["base", "complementar", "pos_protocolo", "renda", "outros"];
+const EMISSORES: Array<ExigenciaRow["emissor"]> = ["cliente", "quero_armas"];
+
+const EMPTY_NEW: Patch = {
+  tipo_documento: "documento",
+  nome_documento: "NOVO DOCUMENTO",
+  etapa: "base",
+  obrigatorio: true,
+  formato_aceito: ["pdf", "jpg", "jpeg", "png"],
+  ordem: 0,
+  ativo: true,
+  emissor: "cliente",
+};
+
+/* ----------------------------- helpers tipo --------------------------------- */
+
+function normalizeSlug(s: string): string {
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function sameCondicao(a: string | null | undefined, b: string | null | undefined) {
+  return (a ?? "") === (b ?? "");
+}
+
+/** Garante um tipo_documento único dentro de (servico_id, condicao_profissional).
+ *  Tenta primeiro `${base}_<próximoAno>`, depois `${base}_2`, `_3`, etc. */
+function uniqueTipo(
+  base: string,
+  condicao: string | null | undefined,
+  existing: ExigenciaRow[],
+  excludeId?: string,
+): string {
+  const baseSlug = normalizeSlug(base) || "documento";
+  const taken = new Set(
+    existing
+      .filter((r) => r.id !== excludeId && sameCondicao(r.condicao_profissional, condicao))
+      .map((r) => (r.tipo_documento ?? "").toLowerCase()),
+  );
+  if (!taken.has(baseSlug)) return baseSlug;
+  // 1) tentar sufixo por ano (próximo ano não usado, indo para trás)
+  const yearNow = new Date().getFullYear();
+  for (let y = yearNow; y >= yearNow - 10; y--) {
+    const cand = `${baseSlug}_${y}`;
+    if (!taken.has(cand)) return cand;
+  }
+  // 2) fallback _2, _3...
+  let i = 2;
+  while (taken.has(`${baseSlug}_${i}`)) i++;
+  return `${baseSlug}_${i}`;
+}
+
+export default function QAServicoDocumentosModal({ open, onClose, servicoId, servicoNome }: Props) {
+  const [rows, setRows] = useState<ExigenciaRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [patches, setPatches] = useState<Record<string, Patch>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [viewer, setViewer] = useState<{ bucket: string; path: string; fileName?: string } | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [reordenando, setReordenando] = useState(false);
+  const [templates, setTemplates] = useState<string[]>([]);
+  const [divergencia, setDivergencia] = useState<{
+    processos_ativos: number;
+    processos_divergentes: number;
+    exigencias_faltando: number;
+    exigencias_removidas_pendentes: number;
+  } | null>(null);
+  const [sincronizando, setSincronizando] = useState(false);
+
+  const carregarDivergencia = useCallback(async () => {
+    if (!servicoId) return;
+    const { data, error } = await supabase.rpc(
+      "qa_servico_divergencia_catalogo" as any,
+      { p_servico_id: servicoId } as any,
+    );
+    if (error) {
+      setDivergencia(null);
+      return;
+    }
+    const row = Array.isArray(data) ? (data[0] as any) : (data as any);
+    setDivergencia(row ?? null);
+  }, [servicoId]);
+
+  async function sincronizarProcessos() {
+    if (!servicoId) return;
+    if (!window.confirm(
+      "Isso atualizará os processos ATIVOS deste serviço para refletir o catálogo atual.\n\n" +
+      "• Exigências novas serão adicionadas.\n" +
+      "• Exigências removidas do catálogo serão dispensadas (apenas se o cliente ainda não enviou nada).\n" +
+      "• Documentos já enviados ou aprovados NÃO serão apagados.\n\n" +
+      "Continuar?"
+    )) return;
+    setSincronizando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "qa-sincronizar-checklist-servico",
+        { body: { servico_id: servicoId } },
+      );
+      if (error) throw error;
+      const r = (data as any)?.resumo ?? {};
+      toast.success(
+        `SINCRONIZADO — ${r.processos_processados ?? 0} PROCESSO(S): ` +
+          `+${r.exigencias_adicionadas ?? 0} ADICIONADAS · ` +
+          `${r.exigencias_atualizadas ?? 0} ATUALIZADAS · ` +
+          `${r.exigencias_arquivadas ?? 0} ARQUIVADAS · ` +
+          `${r.documentos_preservados ?? 0} PRESERVADAS COM ARQUIVO`,
+      );
+      await carregarDivergencia();
+    } catch (e: any) {
+      toast.error("FALHA AO SINCRONIZAR — " + (e?.message ?? "ERRO").toUpperCase());
+    } finally {
+      setSincronizando(false);
+    }
+  }
+
+  /* carrega lista de templates .docx disponíveis */
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.storage
+        .from("qa-templates")
+        .list("declaracoes", { limit: 1000, sortBy: { column: "name", order: "asc" } });
+      if (cancelled) return;
+      const keys = (data ?? [])
+        .filter((o: any) => o.name?.toLowerCase().endsWith(".docx") && !o.name.startsWith("."))
+        .map((o: any) => o.name.replace(/\.docx$/i, ""));
+      setTemplates(keys);
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  const load = useCallback(async () => {
+    if (!servicoId) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .select("*")
+      .eq("servico_id", servicoId)
+      .order("ordem", { ascending: true })
+      .order("nome_documento", { ascending: true });
+    if (error) {
+      toast.error("FALHA AO CARREGAR EXIGÊNCIAS — " + error.message.toUpperCase());
+      setRows([]);
+    } else {
+      setRows(((data ?? []) as unknown) as ExigenciaRow[]);
+    }
+    setPatches({});
+    setLoading(false);
+  }, [servicoId]);
+
+  useEffect(() => {
+    if (open && servicoId) {
+      void load();
+      void carregarDivergencia();
+    }
+    if (!open) {
+      setPatches({});
+      setPreviewOpen(false);
+      setViewer(null);
+      setExpandedIds(new Set());
+      setDivergencia(null);
+    }
+  }, [open, servicoId, load, carregarDivergencia]);
+
+  const merged = useMemo<ExigenciaRow[]>(() => {
+    return rows.map((r) => ({ ...r, ...patches[r.id] }));
+  }, [rows, patches]);
+
+  function patch(id: string, p: Patch) {
+    setPatches((prev) => ({ ...prev, [id]: { ...prev[id], ...p } }));
+  }
+
+  function isDirty(id: string) {
+    return !!patches[id] && Object.keys(patches[id]).length > 0;
+  }
+
+  async function saveRow(row: ExigenciaRow) {
+    const p = patches[row.id];
+    if (!p) return;
+
+    // valida duplicidade de tipo_documento no cliente (mesma condição)
+    const novoTipo = (p.tipo_documento ?? row.tipo_documento ?? "").toLowerCase();
+    const novaCond = p.condicao_profissional !== undefined ? p.condicao_profissional : row.condicao_profissional;
+    const colide = rows.some(
+      (r) =>
+        r.id !== row.id &&
+        (r.tipo_documento ?? "").toLowerCase() === novoTipo &&
+        sameCondicao(r.condicao_profissional, novaCond),
+    );
+    if (colide) {
+      toast.error("JÁ EXISTE UMA EXIGÊNCIA COM ESSE TIPO PARA ESTE SERVIÇO");
+      return;
+    }
+
+    // garante regra_validacao como JSON válido (não persiste string crua)
+    const payload: Patch = { ...p };
+    if (payload.regra_validacao !== undefined && typeof payload.regra_validacao === "string") {
+      try {
+        payload.regra_validacao = JSON.parse(payload.regra_validacao as unknown as string);
+      } catch {
+        toast.error("REGRA DE VALIDAÇÃO COM JSON INVÁLIDO");
+        return;
+      }
+    }
+
+    setSavingId(row.id);
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update(payload)
+      .eq("id", row.id);
+    setSavingId(null);
+    if (error) {
+      toast.error("FALHA AO SALVAR — " + error.message.toUpperCase());
+      return;
+    }
+    toast.success("EXIGÊNCIA SALVA");
+    setRows((prev) => prev.map((r) => (r.id === row.id ? ({ ...r, ...payload } as ExigenciaRow) : r)));
+    setPatches((prev) => {
+      const { [row.id]: _drop, ...rest } = prev;
+      return rest;
+    });
+  }
+
+  async function addNew(source?: ExigenciaRow) {
+    if (!servicoId) return;
+    const baseTipo = source ? normalizeSlug(source.tipo_documento || "documento") : "documento";
+    const tipoUnico = source ? uniqueTipo(baseTipo, source.condicao_profissional, rows) : "documento";
+    const base: any = source
+      ? {
+          servico_id: servicoId,
+          tipo_documento: tipoUnico,
+          nome_documento: (source.nome_documento || "DOCUMENTO") + " (CÓPIA)",
+          etapa: source.etapa,
+          obrigatorio: source.obrigatorio,
+          validade_dias: source.validade_dias,
+          formato_aceito: source.formato_aceito,
+          regra_validacao: {
+            ...(source.regra_validacao && typeof source.regra_validacao === "object" ? source.regra_validacao : {}),
+            tipo_base: baseTipo,
+          },
+          link_emissao: source.link_emissao,
+          condicao_profissional: source.condicao_profissional,
+          ordem: (source.ordem ?? 0) + 1,
+          ativo: true,
+          instrucoes: source.instrucoes,
+          observacoes_cliente: source.observacoes_cliente,
+          modelo_url: source.modelo_url,
+          exemplo_url: source.exemplo_url,
+          orgao_emissor: source.orgao_emissor,
+          prazo_recomendado_dias: source.prazo_recomendado_dias,
+          emissor: source.emissor,
+        }
+      : {
+          servico_id: servicoId,
+          ...EMPTY_NEW,
+          ordem: (rows.length + 1) * 10,
+        };
+    const { data, error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .insert(base)
+      .select("*")
+      .single();
+    if (error) {
+      toast.error("FALHA AO CRIAR — " + error.message.toUpperCase());
+      return;
+    }
+    toast.success(source ? "DUPLICADA — REVISE O TIPO ANTES DE SALVAR" : "EXIGÊNCIA CRIADA");
+    setRows((prev) => [...prev, (data as unknown) as ExigenciaRow]);
+    if (source) {
+      // marca dirty no novo registro para destacar e forçar revisão do tipo
+      const created = data as unknown as ExigenciaRow;
+      patch(created.id, { tipo_documento: tipoUnico });
+    }
+  }
+
+  /** Expande uma exigência em N linhas, uma por ano informado.
+   *  Cada linha vira `${tipoCanonico}_${ano}` e `${nomeBase} ${ano}`. */
+  async function expandirPorAnos(row: ExigenciaRow, anos: number[]) {
+    if (!servicoId || anos.length === 0) return;
+    const tipoCanonico = normalizeSlug(row.tipo_documento || "documento");
+    const nomeBase = (row.nome_documento || "DOCUMENTO").replace(/\s+\d{4}\s*$/, "").trim();
+    const baseOrdem = row.ordem ?? 0;
+    const sortedAnos = [...new Set(anos)].sort((a, b) => b - a); // mais recente primeiro
+    const existentes = new Set(
+      rows
+        .filter((r) => sameCondicao(r.condicao_profissional, row.condicao_profissional))
+        .map((r) => (r.tipo_documento ?? "").toLowerCase()),
+    );
+    const payloads: any[] = [];
+    const ignorados: number[] = [];
+    sortedAnos.forEach((ano, i) => {
+      const tipo = `${tipoCanonico}_${ano}`;
+      if (existentes.has(tipo)) {
+        ignorados.push(ano);
+        return;
+      }
+      existentes.add(tipo);
+      payloads.push({
+        servico_id: servicoId,
+        tipo_documento: tipo,
+        nome_documento: `${nomeBase} ${ano}`.toUpperCase(),
+        etapa: row.etapa,
+        obrigatorio: row.obrigatorio,
+        validade_dias: row.validade_dias,
+        formato_aceito: row.formato_aceito,
+        regra_validacao: {
+          ...(row.regra_validacao && typeof row.regra_validacao === "object" ? row.regra_validacao : {}),
+          tipo_base: tipoCanonico,
+          ano_competencia: ano,
+        },
+        link_emissao: row.link_emissao,
+        condicao_profissional: row.condicao_profissional,
+        ordem: baseOrdem + i + 1,
+        ativo: true,
+        instrucoes: row.instrucoes,
+        observacoes_cliente: row.observacoes_cliente,
+        modelo_url: row.modelo_url,
+        exemplo_url: row.exemplo_url,
+        orgao_emissor: row.orgao_emissor,
+        prazo_recomendado_dias: row.prazo_recomendado_dias,
+        emissor: row.emissor,
+      });
+    });
+    if (payloads.length === 0) {
+      toast.error("TODOS OS ANOS INFORMADOS JÁ EXISTEM PARA ESTE SERVIÇO");
+      return;
+    }
+    const { data, error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .insert(payloads)
+      .select("*");
+    if (error) {
+      toast.error("FALHA AO EXPANDIR — " + error.message.toUpperCase());
+      return;
+    }
+    toast.success(
+      `${payloads.length} EXIGÊNCIA(S) CRIADA(S)` +
+        (ignorados.length ? ` — IGNORADOS: ${ignorados.join(", ")}` : ""),
+    );
+    setRows((prev) => [...prev, ...((data ?? []) as unknown as ExigenciaRow[])]);
+  }
+
+  async function removeRow(row: ExigenciaRow) {
+    if (!confirm(`EXCLUIR "${row.nome_documento}"?`)) return;
+    const { error } = await supabase.from("qa_servicos_documentos" as any).delete().eq("id", row.id);
+    if (error) {
+      toast.error("FALHA AO EXCLUIR — " + error.message.toUpperCase());
+      return;
+    }
+    toast.success("EXIGÊNCIA EXCLUÍDA");
+    setRows((prev) => prev.filter((r) => r.id !== row.id));
+    setPatches((prev) => {
+      const { [row.id]: _d, ...rest } = prev;
+      return rest;
+    });
+  }
+
+  async function moveRow(row: ExigenciaRow, dir: -1 | 1) {
+    const idx = merged.findIndex((r) => r.id === row.id);
+    const next = idx + dir;
+    if (next < 0 || next >= merged.length) return;
+    const newOrder = arrayMove(merged.slice(), idx, next);
+    await persistirOrdem(newOrder.map((r) => r.id));
+  }
+
+  /** Persiste nova ordem normalizada (10, 20, 30…) para os ids na sequência dada.
+   *  Atualiza linha-a-linha (em paralelo) e o estado local. */
+  async function persistirOrdem(orderedIds: string[]) {
+    setReordenando(true);
+    try {
+      const updates = orderedIds.map((id, i) => ({ id, ordem: (i + 1) * 10 }));
+      const byId = new Map(updates.map((u) => [u.id, u.ordem]));
+      const results = await Promise.all(
+        updates.map((u) =>
+          supabase.from("qa_servicos_documentos" as any).update({ ordem: u.ordem }).eq("id", u.id),
+        ),
+      );
+      const erro = results.find((r) => r.error)?.error;
+      if (erro) {
+        toast.error("FALHA AO REORDENAR — " + erro.message.toUpperCase());
+        void load();
+        return;
+      }
+      setRows((prev) => {
+        const next = prev.map((r) => ({ ...r, ordem: byId.get(r.id) ?? r.ordem }));
+        next.sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0));
+        return next;
+      });
+      // limpa qualquer patch pendente de `ordem` para não reescrever em cima
+      setPatches((prev) => {
+        const out: Record<string, Patch> = {};
+        for (const [k, v] of Object.entries(prev)) {
+          const { ordem: _o, ...rest } = v;
+          if (Object.keys(rest).length) out[k] = rest;
+        }
+        return out;
+      });
+      toast.success("ORDEM ATUALIZADA");
+    } finally {
+      setReordenando(false);
+    }
+  }
+
+  async function ordenarAutomaticamente() {
+    // mantém a sequência atual (já ordenada por ordem asc / nome asc) e normaliza 10/20/30…
+    const orderedIds = merged.slice().map((r) => r.id);
+    await persistirOrdem(orderedIds);
+  }
+
+  function expandAll() {
+    setExpandedIds(new Set(rows.map((r) => r.id)));
+  }
+  function collapseAll() {
+    setExpandedIds(new Set());
+  }
+  function toggleExpand(id: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIdx = merged.findIndex((r) => r.id === String(active.id));
+    const newIdx = merged.findIndex((r) => r.id === String(over.id));
+    if (oldIdx < 0 || newIdx < 0) return;
+    const orderedIds = arrayMove(merged.slice(), oldIdx, newIdx).map((r) => r.id);
+    void persistirOrdem(orderedIds);
+  }
+
+  async function uploadModeloOuExemplo(row: ExigenciaRow, campo: "modelo_url" | "exemplo_url", file: File) {
+    if (!servicoId) return;
+    setUploadingId(row.id + ":" + campo);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${TEMPLATE_FOLDER}/${servicoId}/${row.id}/${campo}-${Date.now()}-${safe}`;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+        upsert: true,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+      const { error: upErr } = await supabase
+        .from("qa_servicos_documentos" as any)
+        .update({ [campo]: path })
+        .eq("id", row.id);
+      if (upErr) throw upErr;
+      toast.success(campo === "modelo_url" ? "MODELO ENVIADO" : "EXEMPLO ENVIADO");
+      setRows((prev) => prev.map((r) => (r.id === row.id ? ({ ...r, [campo]: path } as ExigenciaRow) : r)));
+    } catch (e: any) {
+      toast.error("FALHA NO UPLOAD — " + (e?.message ?? "ERRO").toUpperCase());
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
+  async function clearArquivo(row: ExigenciaRow, campo: "modelo_url" | "exemplo_url") {
+    if (!row[campo]) return;
+    if (!confirm("REMOVER ARQUIVO?")) return;
+    const { error } = await supabase
+      .from("qa_servicos_documentos" as any)
+      .update({ [campo]: null })
+      .eq("id", row.id);
+    if (error) {
+      toast.error("FALHA — " + error.message.toUpperCase());
+      return;
+    }
+    setRows((prev) => prev.map((r) => (r.id === row.id ? ({ ...r, [campo]: null } as ExigenciaRow) : r)));
+    toast.success("ARQUIVO REMOVIDO DO TEMPLATE");
+  }
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="max-w-5xl bg-[#f6f5f1] border-slate-200 max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="uppercase tracking-tight text-slate-900 text-sm font-bold flex items-center gap-2">
+              <FileText className="h-4 w-4 text-[#7A1F2B]" />
+              DOCUMENTOS EXIGIDOS — {servicoNome}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-[11px] uppercase tracking-wider text-slate-500">
+              CADA LINHA É UMA EXIGÊNCIA — A ORDEM AQUI É A ORDEM QUE O CLIENTE VÊ NO ASSISTENTE.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={collapseAll}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                title="Recolher todos"
+              >
+                <ChevronsDownUp className="h-3.5 w-3.5" /> RECOLHER
+              </button>
+              <button
+                type="button"
+                onClick={expandAll}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+                title="Expandir todos"
+              >
+                <ChevronsUpDown className="h-3.5 w-3.5" /> EXPANDIR
+              </button>
+              <button
+                type="button"
+                onClick={() => void ordenarAutomaticamente()}
+                disabled={reordenando || merged.length === 0}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+                title="Normalizar ordem em 10, 20, 30…"
+              >
+                {reordenando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ListOrdered className="h-3.5 w-3.5" />}
+                ORDENAR 10/20/30
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen((v) => !v)}
+                className="h-9 inline-flex items-center gap-1.5 px-2.5 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+              >
+                {previewOpen ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                {previewOpen ? "OCULTAR PRÉ-VIA" : "PRÉ-VIA CLIENTE"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void addNew()}
+                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+              >
+                <Plus className="h-3.5 w-3.5" /> NOVA EXIGÊNCIA
+              </button>
+            </div>
+          </div>
+
+          {previewOpen && (
+            <ClientePreview rows={merged.filter((r) => r.ativo)} />
+          )}
+
+          {divergencia && divergencia.processos_divergentes > 0 && (
+            <div className="mb-3 flex flex-col gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-700 shrink-0" />
+                <div className="text-[11px] uppercase tracking-wider text-amber-900 leading-relaxed">
+                  <div className="font-bold">
+                    EXISTEM {divergencia.processos_divergentes} PROCESSO(S) ATIVO(S) COM CHECKLIST DIFERENTE DESTE CATÁLOGO.
+                  </div>
+                  <div className="font-normal normal-case mt-0.5 text-amber-800">
+                    {divergencia.exigencias_faltando} exigência(s) faltando · {divergencia.exigencias_removidas_pendentes} item(ns) removido(s) ainda pendente(s) no cliente.
+                    Sincronize para que esses processos passem a refletir o catálogo atual. Documentos já enviados não serão apagados.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void sincronizarProcessos()}
+                disabled={sincronizando}
+                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+              >
+                {sincronizando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                SINCRONIZAR PROCESSOS EXISTENTES
+              </button>
+            </div>
+          )}
+
+          {divergencia && divergencia.processos_divergentes === 0 && divergencia.processos_ativos > 0 && (
+            <div className="mb-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] uppercase tracking-wider text-emerald-800">
+              {divergencia.processos_ativos} PROCESSO(S) ATIVO(S) — TODOS EM DIA COM O CATÁLOGO ATUAL.
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto -mx-2 px-2">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 text-[#7A1F2B] animate-spin" />
+              </div>
+            ) : merged.length === 0 ? (
+              <div className="text-center py-16 text-slate-500 text-xs uppercase tracking-wider">
+                NENHUMA EXIGÊNCIA CADASTRADA. CLIQUE EM "NOVA EXIGÊNCIA".
+              </div>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                <SortableContext items={merged.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2">
+                    {merged.map((row, idx) => (
+                      <SortableExigenciaItem
+                        key={row.id}
+                        row={row}
+                        expanded={expandedIds.has(row.id)}
+                        dirty={isDirty(row.id)}
+                        saving={savingId === row.id}
+                        uploadingId={uploadingId}
+                        canMoveUp={idx > 0}
+                        canMoveDown={idx < merged.length - 1}
+                        templates={templates}
+                        onToggleExpand={() => toggleExpand(row.id)}
+                        onPatch={(p) => patch(row.id, p)}
+                        onSave={() => void saveRow(row)}
+                        onDuplicate={() => void addNew(row)}
+                        onDelete={() => void removeRow(row)}
+                        onMoveUp={() => void moveRow(row, -1)}
+                        onMoveDown={() => void moveRow(row, 1)}
+                        onUpload={(campo, file) => void uploadModeloOuExemplo(row, campo, file)}
+                        onClearArquivo={(campo) => void clearArquivo(row, campo)}
+                        onView={(path, fileName) => setViewer({ bucket: BUCKET, path, fileName })}
+                        onExpandirAnos={(anos) => void expandirPorAnos(row, anos)}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
+
+          <div className="pt-3 mt-2 border-t border-slate-200 flex items-center justify-between">
+            <div className="text-[10px] uppercase tracking-wider text-slate-500">
+              ALTERAÇÕES SÃO SALVAS LINHA-A-LINHA. CAMPO COM <span className="text-[#7A1F2B] font-bold">PONTO</span> = NÃO SALVO.
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50"
+            >
+              <X className="h-3.5 w-3.5 inline mr-1" /> FECHAR
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <DocumentoViewerModal
+        open={!!viewer}
+        onClose={() => setViewer(null)}
+        source={viewer ? { kind: "storage", bucket: viewer.bucket, path: viewer.path, fileName: viewer.fileName } : null}
+        title="ARQUIVO DO TEMPLATE"
+      />
+    </>
+  );
+}
+
+/* ----------------------------- subcomponentes ----------------------------- */
+
+interface CardProps {
+  row: ExigenciaRow;
+  dirty: boolean;
+  saving: boolean;
+  uploadingId: string | null;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  templates: string[];
+  onPatch: (p: Patch) => void;
+  onSave: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onUpload: (campo: "modelo_url" | "exemplo_url", file: File) => void;
+  onClearArquivo: (campo: "modelo_url" | "exemplo_url") => void;
+  onView: (path: string, fileName?: string) => void;
+  onExpandirAnos: (anos: number[]) => void;
+}
+
+function ExigenciaCard({
+  row,
+  dirty,
+  saving,
+  uploadingId,
+  canMoveUp,
+  canMoveDown,
+  templates,
+  onPatch,
+  onSave,
+  onDuplicate,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  onUpload,
+  onClearArquivo,
+  onView,
+  onExpandirAnos,
+}: CardProps) {
+  const [repeteAberto, setRepeteAberto] = useState(false);
+  const [anosTxt, setAnosTxt] = useState(() => {
+    const y = new Date().getFullYear();
+    return `${y}, ${y - 1}, ${y - 2}, ${y - 3}, ${y - 4}, ${y - 5}`;
+  });
+  const anosParsed = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          anosTxt
+            .split(/[,\s]+/)
+            .map((s) => parseInt(s.trim(), 10))
+            .filter((n) => Number.isFinite(n) && n >= 1900 && n <= 2100),
+        ),
+      ).sort((a, b) => b - a),
+    [anosTxt],
+  );
+
+  const mostraSeletorTemplate = /^(declaracao_|dsa_|compromisso_)/i.test(row.tipo_documento || "");
+  const currentTemplateKey = (row.regra_validacao as any)?.template_key ?? "";
+
+  function setRegraTemplateKey(value: string) {
+    const rv = row.regra_validacao && typeof row.regra_validacao === "object" ? { ...row.regra_validacao } : {};
+    if (value) {
+      rv.template_key = value;
+    } else {
+      delete (rv as any).template_key;
+    }
+    onPatch({ regra_validacao: rv });
+  }
+
+  const currentWizardKey =
+    (row.regra_validacao as any)?.wizard_pre_documento?.wizard_key ?? "";
+
+  function setRegraWizardPreDocumento(wizardKey: string) {
+    const rv =
+      row.regra_validacao && typeof row.regra_validacao === "object"
+        ? { ...(row.regra_validacao as any) }
+        : {};
+    if (wizardKey) {
+      rv.wizard_pre_documento = {
+        enabled: true,
+        wizard_key: wizardKey,
+        required: true,
+        bloquear_documento_ate_responder: true,
+      };
+    } else {
+      delete rv.wizard_pre_documento;
+    }
+    onPatch({ regra_validacao: rv });
+  }
+
+  return (
+    <div className="p-2">
+      <div className="flex items-start gap-2 mb-2">
+        <div className="flex-1 grid grid-cols-12 gap-2">
+          <Field label="NOME DO DOCUMENTO" colSpan={6}>
+            <input
+              value={row.nome_documento ?? ""}
+              onChange={(e) => onPatch({ nome_documento: e.target.value.toUpperCase() })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="TIPO (SLUG)" colSpan={4}>
+            <input
+              value={row.tipo_documento ?? ""}
+              onChange={(e) => onPatch({ tipo_documento: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_") })}
+              className={inputCls + " font-mono lowercase"}
+              style={{ textTransform: "lowercase" }}
+            />
+          </Field>
+          <Field label="ORDEM" colSpan={2}>
+            <input
+              type="number"
+              value={row.ordem ?? 0}
+              onChange={(e) => onPatch({ ordem: Number(e.target.value) || 0 })}
+              className={inputCls + " font-mono text-right"}
+            />
+          </Field>
+
+          <Field label="ETAPA" colSpan={3}>
+            <select
+              value={row.etapa ?? "base"}
+              onChange={(e) => onPatch({ etapa: e.target.value })}
+              className={inputCls}
+            >
+              {ETAPAS.map((s) => (
+                <option key={s} value={s}>{s.toUpperCase()}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="CONDIÇÃO PROFISSIONAL" colSpan={3}>
+            <input
+              value={row.condicao_profissional ?? ""}
+              onChange={(e) => onPatch({ condicao_profissional: e.target.value.trim() ? e.target.value.toLowerCase() : null })}
+              placeholder="OPCIONAL"
+              className={inputCls + " lowercase"}
+              style={{ textTransform: "lowercase" }}
+            />
+          </Field>
+          <Field label="EMISSOR" colSpan={2}>
+            <select
+              value={row.emissor ?? "cliente"}
+              onChange={(e) => onPatch({ emissor: e.target.value as ExigenciaRow["emissor"] })}
+              className={inputCls}
+            >
+              {EMISSORES.map((s) => (
+                <option key={s} value={s}>{s.toUpperCase()}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="ÓRGÃO EMISSOR" colSpan={4}>
+            <input
+              value={row.orgao_emissor ?? ""}
+              onChange={(e) => onPatch({ orgao_emissor: e.target.value || null })}
+              className={inputCls}
+            />
+          </Field>
+
+          <Field label="FORMATOS (vírgula)" colSpan={4}>
+            <input
+              value={(row.formato_aceito ?? []).join(", ")}
+              onChange={(e) =>
+                onPatch({
+                  formato_aceito: e.target.value
+                    .split(",")
+                    .map((s) => s.trim().toLowerCase())
+                    .filter(Boolean),
+                })
+              }
+              className={inputCls + " font-mono lowercase"}
+              style={{ textTransform: "lowercase" }}
+            />
+          </Field>
+          <Field label="VALIDADE (DIAS)" colSpan={2}>
+            <input
+              type="number"
+              value={row.validade_dias ?? ""}
+              onChange={(e) => onPatch({ validade_dias: e.target.value === "" ? null : Number(e.target.value) })}
+              className={inputCls + " font-mono text-right"}
+            />
+          </Field>
+          <Field label="PRAZO RECOMENDADO (DIAS)" colSpan={2}>
+            <input
+              type="number"
+              value={row.prazo_recomendado_dias ?? ""}
+              onChange={(e) => onPatch({ prazo_recomendado_dias: e.target.value === "" ? null : Number(e.target.value) })}
+              className={inputCls + " font-mono text-right"}
+            />
+          </Field>
+          <Field label="LINK DE EMISSÃO" colSpan={4}>
+            <input
+              value={row.link_emissao ?? ""}
+              onChange={(e) => onPatch({ link_emissao: e.target.value || null })}
+              placeholder="https://"
+              className={inputCls + " normal-case"}
+              style={{ textTransform: "none" }}
+            />
+          </Field>
+
+          <Field label="INSTRUÇÕES (INTERNAS)" colSpan={6}>
+            <textarea
+              value={row.instrucoes ?? ""}
+              onChange={(e) => onPatch({ instrucoes: e.target.value || null })}
+              rows={2}
+              className={textareaCls}
+              style={{ textTransform: "none" }}
+            />
+          </Field>
+          <Field label="OBSERVAÇÕES PARA O CLIENTE" colSpan={6}>
+            <textarea
+              value={row.observacoes_cliente ?? ""}
+              onChange={(e) => onPatch({ observacoes_cliente: e.target.value || null })}
+              rows={2}
+              className={textareaCls}
+              style={{ textTransform: "none" }}
+            />
+          </Field>
+
+          <Field label="REGRA DE VALIDAÇÃO (JSON)" colSpan={12}>
+            <textarea
+              value={row.regra_validacao ? JSON.stringify(row.regra_validacao, null, 2) : ""}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                if (!v) {
+                  onPatch({ regra_validacao: null });
+                  return;
+                }
+                try {
+                  onPatch({ regra_validacao: JSON.parse(v) });
+                } catch {
+                  // mantém digitação, mas não persiste inválido
+                  onPatch({ regra_validacao: v as any });
+                }
+              }}
+              rows={2}
+              className={textareaCls + " font-mono"}
+              style={{ textTransform: "none" }}
+              placeholder='{ "exemplo": true }'
+            />
+          </Field>
+
+          {/* Seletor de template preenchível (.docx) */}
+          {mostraSeletorTemplate && (
+            <div className="col-span-12">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                TEMPLATE PREENCHÍVEL (.DOCX)
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={currentTemplateKey}
+                  onChange={(e) => setRegraTemplateKey(e.target.value)}
+                  className={inputCls + " flex-1 normal-case"}
+                  style={{ textTransform: "none" }}
+                >
+                  <option value="">— NENHUM —</option>
+                  {templates.map((k) => (
+                    <option key={k} value={k}>{k}</option>
+                  ))}
+                </select>
+                <a
+                  href="/modelos-declaracao"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-3 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white text-[11px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-50 shrink-0"
+                >
+                  GERENCIAR
+                </a>
+              </div>
+              <p className="mt-1 text-[10px] text-slate-500 normal-case">
+                Quando definido, o cliente vê o botão "BAIXAR DECLARAÇÃO PREENCHIDA" no assistente guiado, gerado com os dados dele a partir do template.
+              </p>
+            </div>
+          )}
+
+          {/* Wizard de Perguntas vinculado — bloqueia o documento até resolver */}
+          <div className="col-span-12">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+              WIZARD OBRIGATÓRIO ANTES DESTE DOCUMENTO
+            </div>
+            <select
+              value={currentWizardKey}
+              onChange={(e) => setRegraWizardPreDocumento(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">— NENHUM —</option>
+              {WIZARD_REGISTRY.map((w) => (
+                <option key={w.key} value={w.key}>{w.label}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-[10px] text-slate-500 normal-case">
+              Quando definido, o cliente precisa responder este wizard antes de baixar,
+              anexar, reaproveitar ou concluir o documento.
+            </p>
+          </div>
+
+          {/* Anexos do template */}
+          <div className="col-span-12 grid grid-cols-2 gap-2">
+            <AnexoBox
+              titulo="MODELO (PARA O CLIENTE BAIXAR)"
+              value={row.modelo_url}
+              uploading={uploadingId === row.id + ":modelo_url"}
+              onFile={(f) => onUpload("modelo_url", f)}
+              onView={() => row.modelo_url && onView(row.modelo_url, "MODELO")}
+              onClear={() => onClearArquivo("modelo_url")}
+            />
+            <AnexoBox
+              titulo="EXEMPLO (PREENCHIDO)"
+              value={row.exemplo_url}
+              uploading={uploadingId === row.id + ":exemplo_url"}
+              onFile={(f) => onUpload("exemplo_url", f)}
+              onView={() => row.exemplo_url && onView(row.exemplo_url, "EXEMPLO")}
+              onClear={() => onClearArquivo("exemplo_url")}
+            />
+          </div>
+
+          {/* Modelos de referência (alimentam a IA) */}
+          {row.tipo_documento && row.servico_id ? (
+            <QAServicoDocumentosRefs
+              servicoId={row.servico_id}
+              tipoDocumento={row.tipo_documento}
+            />
+          ) : null}
+
+          {/* Links de emissão (botões reaproveitados) */}
+          {row.tipo_documento ? (
+            <QAServicoDocumentosLinks tipoDocumento={row.tipo_documento} />
+          ) : null}
+
+          {/* Repete por período/ano (opcional) */}
+          <div className="col-span-12 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
+            <label className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={repeteAberto}
+                onChange={(e) => setRepeteAberto(e.target.checked)}
+                className="accent-[#7A1F2B]"
+              />
+              ESTE DOCUMENTO SE REPETE POR PERÍODO / ANO?
+            </label>
+            {repeteAberto && (
+              <div className="mt-2 grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-8">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">
+                    ANOS (separe por vírgula — ex.: 2026, 2025, 2024)
+                  </div>
+                  <input
+                    value={anosTxt}
+                    onChange={(e) => setAnosTxt(e.target.value)}
+                    className={inputCls + " font-mono"}
+                    placeholder="2026, 2025, 2024"
+                  />
+                </div>
+                <div className="col-span-4 flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                    {anosParsed.length} ANO(S)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (anosParsed.length === 0) {
+                        toast.error("INFORME AO MENOS UM ANO VÁLIDO");
+                        return;
+                      }
+                      onExpandirAnos(anosParsed);
+                      setRepeteAberto(false);
+                    }}
+                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                  >
+                    <Plus className="h-3 w-3" /> GERAR 1 EXIGÊNCIA POR ANO
+                  </button>
+                </div>
+                <div className="col-span-12 text-[10px] uppercase tracking-wider text-slate-500">
+                  CRIA NOVAS LINHAS COM TIPO_DOCUMENTO ÚNICO POR ANO (EX.: <span className="font-mono">{normalizeSlug(row.tipo_documento || "documento")}_2026</span>).
+                  A LINHA ATUAL NÃO É ALTERADA.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider">
+          <label className="inline-flex items-center gap-1.5 text-slate-700 font-bold">
+            <input
+              type="checkbox"
+              checked={!!row.obrigatorio}
+              onChange={(e) => onPatch({ obrigatorio: e.target.checked })}
+              className="accent-[#7A1F2B]"
+            />
+            OBRIGATÓRIO
+          </label>
+          <label className="inline-flex items-center gap-1.5 text-slate-700 font-bold">
+            <input
+              type="checkbox"
+              checked={!!row.ativo}
+              onChange={(e) => onPatch({ ativo: e.target.checked })}
+              className="accent-[#7A1F2B]"
+            />
+            ATIVO
+          </label>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onDuplicate}
+            title="Duplicar exigência"
+            className="h-8 px-2 inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B]"
+          >
+            <CopyIcon className="h-3.5 w-3.5" /> DUPLICAR
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Excluir"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md bg-slate-100 text-slate-500 hover:bg-rose-100 hover:text-rose-700"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={!dirty || saving}
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-40"
+          >
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} SALVAR
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AnexoBox({
+  titulo,
+  value,
+  uploading,
+  onFile,
+  onView,
+  onClear,
+}: {
+  titulo: string;
+  value: string | null;
+  uploading: boolean;
+  onFile: (f: File) => void;
+  onView: () => void;
+  onClear: () => void;
+}) {
+  const inputId = `anx-${titulo.replace(/\s+/g, "_")}-${Math.random().toString(36).slice(2, 7)}`;
+  return (
+    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-2">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{titulo}</div>
+      {value ? (
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-[11px] font-mono text-slate-700 truncate" title={value}>
+            {value.split("/").pop()}
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={onView}
+              className="h-7 px-2 inline-flex items-center gap-1 rounded bg-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100"
+            >
+              <Eye className="h-3 w-3" /> VER
+            </button>
+            <label
+              htmlFor={inputId}
+              className="h-7 px-2 inline-flex items-center gap-1 rounded bg-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-700 hover:bg-slate-100 cursor-pointer"
+            >
+              {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} TROCAR
+            </label>
+            <button
+              type="button"
+              onClick={onClear}
+              className="h-7 w-7 inline-flex items-center justify-center rounded bg-white border border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+              title="Remover"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <label
+          htmlFor={inputId}
+          className="flex items-center justify-center gap-1.5 h-9 rounded bg-white border border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:bg-slate-100 cursor-pointer"
+        >
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <FilePlus2 className="h-3 w-3" />}
+          {uploading ? "ENVIANDO…" : "ENVIAR ARQUIVO"}
+        </label>
+      )}
+      <input
+        id={inputId}
+        type="file"
+        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onFile(f);
+          e.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+function ClientePreview({ rows }: { rows: ExigenciaRow[] }) {
+  return (
+    <div className="rounded-xl border border-[#7A1F2B]/20 bg-white p-3 mb-3">
+      <div className="text-[10px] font-bold uppercase tracking-widest text-[#7A1F2B] mb-2">
+        PRÉ-VIA — ORDEM EM QUE O CLIENTE VERÁ
+      </div>
+      {rows.length === 0 ? (
+        <div className="text-[11px] uppercase tracking-wider text-slate-500">SEM EXIGÊNCIAS ATIVAS.</div>
+      ) : (
+        <ol className="space-y-1.5">
+          {rows
+            .slice()
+            .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+            .map((r, i) => (
+              <li key={r.id} className="flex items-start gap-2 text-[12px]">
+                <span className="inline-flex shrink-0 w-5 h-5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B] text-[10px] font-bold items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-slate-900">
+                    {r.nome_documento}
+                    {r.obrigatorio ? (
+                      <span className="ml-2 text-[9px] font-bold uppercase text-[#7A1F2B]">OBRIGATÓRIO</span>
+                    ) : (
+                      <span className="ml-2 text-[9px] font-bold uppercase text-slate-400">OPCIONAL</span>
+                    )}
+                    {r.condicao_profissional ? (
+                      <span className="ml-2 text-[9px] font-mono uppercase text-slate-500">[{r.condicao_profissional}]</span>
+                    ) : null}
+                  </div>
+                  {r.observacoes_cliente ? (
+                    <div className="text-[11px] text-slate-600">{r.observacoes_cliente}</div>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+function Field({ label, children, colSpan = 12 }: { label: string; children: React.ReactNode; colSpan?: number }) {
+  const cls = `col-span-${colSpan}`;
+  return (
+    <div className={cls}>
+      <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">{label}</div>
+      {children}
+    </div>
+  );
+}
+
+/* -------------------- SortableExigenciaItem (DnD + colapso) -------------------- */
+
+interface SortableProps extends CardProps {
+  expanded: boolean;
+  onToggleExpand: () => void;
+}
+
+function SortableExigenciaItem(props: SortableProps) {
+  const { row, expanded, dirty, saving, canMoveUp, canMoveDown, onToggleExpand, onPatch, onMoveUp, onMoveDown, onDelete } = props;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 20 : "auto",
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-xl border bg-white transition ${
+        dirty ? "border-[#7A1F2B]/40 shadow-[0_0_0_3px_rgba(122,31,43,0.06)]" : "border-slate-200"
+      }`}
+    >
+      {/* CABEÇALHO COMPACTO — sempre visível */}
+      <div className="flex items-center gap-2 px-2.5 py-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Arrastar para reordenar"
+          title="Arraste para reordenar"
+          className="h-7 w-6 inline-flex items-center justify-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+          title={expanded ? "Recolher" : "Expandir"}
+          aria-expanded={expanded}
+        >
+          {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+
+        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+          <div className="text-[12.5px] font-bold uppercase tracking-tight text-slate-900 truncate" title={row.nome_documento}>
+            {row.nome_documento || "—"}
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+            {row.etapa || "base"}
+          </span>
+          <span className="text-[10px] font-mono lowercase text-slate-500 truncate max-w-[200px]" title={row.tipo_documento}>
+            {row.tipo_documento}
+          </span>
+          {row.obrigatorio ? (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
+          ) : (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">OPC</span>
+          )}
+          {!row.ativo && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">INATIVO</span>
+          )}
+          {dirty && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">• NÃO SALVO</span>
+          )}
+        </div>
+
+        {/* ordem editável inline */}
+        <div className="flex items-center gap-1">
+          <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">ORD</label>
+          <input
+            type="number"
+            value={row.ordem ?? 0}
+            onChange={(e) => onPatch({ ordem: Number(e.target.value) || 0 })}
+            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[11px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
+            title="Ordem — edite e clique fora para salvar via SALVAR"
+          />
+        </div>
+
+        <div className="flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+            title="Subir"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+            title="Descer"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Excluir"
+            className="h-7 w-7 inline-flex items-center justify-center rounded text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* CORPO COMPLETO — só quando expandido */}
+      {expanded && (
+        <div className="border-t border-slate-100 px-2 pb-2 pt-1">
+          <ExigenciaCard {...props} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+const inputCls =
+  "h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15";
+const textareaCls =
+  "w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15";

@@ -11,6 +11,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!

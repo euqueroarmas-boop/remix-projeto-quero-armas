@@ -26,7 +26,7 @@ const COLORS = {
   emerald: "#10b981",
   amber: "#f59e0b",
   red: "#ef4444",
-  blue: "#3b82f6",
+  blue: "#7A1F2B",
   purple: "#8b5cf6",
   pink: "#ec4899",
   indigo: "#6366f1",
@@ -80,8 +80,8 @@ function MetricCard({ label, value, subtitle, icon: Icon, color, trend, bgColor,
 function SectionTitle({ icon: Icon, title, subtitle }: { icon: any; title: string; subtitle?: string }) {
   return (
     <div className="flex items-center gap-2.5 mb-4">
-      <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center">
-        <Icon className="h-4 w-4 text-indigo-600" />
+      <div className="h-8 w-8 rounded-lg bg-[#FBF3F4] flex items-center justify-center">
+        <Icon className="h-4 w-4 text-[#7A1F2B]" />
       </div>
       <div>
         <h3 className="text-sm font-bold text-slate-800 tracking-tight">{title}</h3>
@@ -106,7 +106,7 @@ function ExpandableChartCard({ children, title, subtitle, icon, detailContent, d
         <div className="flex items-center justify-between mb-4">
           <SectionTitle icon={icon} title={title} subtitle={subtitle} />
           {detailContent && (
-            <button className="flex items-center gap-1 text-[10px] font-medium text-indigo-500 hover:text-indigo-700 px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors">
+            <button className="flex items-center gap-1 text-[10px] font-medium text-[#7A1F2B] hover:text-[#7A1F2B] px-2 py-1 rounded-md hover:bg-[#FBF3F4] transition-colors">
               {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
               {expanded ? "Recolher" : "Expandir detalhes"}
             </button>
@@ -159,7 +159,7 @@ function MonthSelector({ months, selected, onSelect }: {
           onClick={() => setOpen(!open)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors min-w-[140px] justify-center"
         >
-          <CalendarDays className="h-4 w-4 text-indigo-500" />
+          <CalendarDays className="h-4 w-4 text-[#7A1F2B]" />
           <span className="text-sm font-semibold text-slate-700">{selectedLabel}</span>
           <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
@@ -179,7 +179,7 @@ function MonthSelector({ months, selected, onSelect }: {
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
             <button
               onClick={() => { onSelect(null); setOpen(false); }}
-              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selected ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${!selected ? "bg-[#FBF3F4] text-[#7A1F2B] font-semibold" : "text-slate-600 hover:bg-slate-50"}`}
             >
               Todos os meses
             </button>
@@ -191,7 +191,7 @@ function MonthSelector({ months, selected, onSelect }: {
                 <button
                   key={m}
                   onClick={() => { onSelect(m); setOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${isActive ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-600 hover:bg-slate-50"}`}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${isActive ? "bg-[#FBF3F4] text-[#7A1F2B] font-semibold" : "text-slate-600 hover:bg-slate-50"}`}
                 >
                   {label}
                 </button>
@@ -236,6 +236,7 @@ export default function QAFinanceiroPage() {
   const [servicos, setServicos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedYear, setSelectedYear] = useState<string | null>(String(new Date().getFullYear()));
 
   const load = async () => {
     setLoading(true);
@@ -281,11 +282,26 @@ export default function QAFinanceiroPage() {
     return Array.from(set).sort();
   }, [vendas]);
 
+  // All years available
+  const allYears = useMemo(() => {
+    const set = new Set<string>();
+    vendas.forEach(v => {
+      const y = (v.data_cadastro || "").slice(0, 4);
+      if (y) set.add(y);
+    });
+    return Array.from(set).sort().reverse();
+  }, [vendas]);
+
   // Filtered vendas/itens by selected month
   const filteredVendas = useMemo(() => {
-    if (!selectedMonth) return vendas;
-    return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedMonth));
-  }, [vendas, selectedMonth]);
+    if (selectedMonth) {
+      return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedMonth));
+    }
+    if (selectedYear) {
+      return vendas.filter(v => (v.data_cadastro || "").startsWith(selectedYear));
+    }
+    return vendas;
+  }, [vendas, selectedMonth, selectedYear]);
 
   const filteredItens = useMemo(() => {
     if (!selectedMonth) return itens;
@@ -491,13 +507,15 @@ export default function QAFinanceiroPage() {
 
   const selectedMonthLabel = selectedMonth
     ? (() => { const [y, m] = selectedMonth.split("-"); return `${MONTH_NAMES[+m - 1]} ${y}`; })()
-    : "Todos os meses";
+    : selectedYear
+    ? `Ano ${selectedYear}`
+    : "Todos os períodos";
 
   if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-indigo-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
           <span className="text-xs text-slate-400 tracking-wider">Carregando painel financeiro...</span>
         </div>
       </div>
@@ -522,8 +540,40 @@ export default function QAFinanceiroPage() {
 
       {/* Month Selector */}
       <div className="rounded-xl border border-slate-200/80 bg-white p-4">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-3">Filtrar por período</p>
-        <MonthSelector months={allMonths} selected={selectedMonth} onSelect={setSelectedMonth} />
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Filtrar por período</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {allYears.map(y => (
+              <button
+                key={y}
+                onClick={() => { setSelectedYear(y); setSelectedMonth(null); }}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all ${
+                  selectedYear === y && !selectedMonth
+                    ? "bg-[#7A1F2B] text-white"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                }`}
+              >
+                {y}
+              </button>
+            ))}
+            <button
+              onClick={() => { setSelectedYear(null); setSelectedMonth(null); }}
+              className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all ${
+                !selectedYear && !selectedMonth
+                  ? "bg-slate-800 text-white"
+                  : "bg-white text-slate-500 hover:bg-slate-50 border border-slate-200"
+              }`}
+              title="Liberar visualização completa do faturamento (todos os anos)"
+            >
+              VER TUDO
+            </button>
+          </div>
+        </div>
+        <MonthSelector
+          months={selectedYear ? allMonths.filter(m => m.startsWith(selectedYear)) : allMonths}
+          selected={selectedMonth}
+          onSelect={setSelectedMonth}
+        />
       </div>
 
       {/* ─── KPI Row 1: Revenue ─── */}
@@ -532,7 +582,7 @@ export default function QAFinanceiroPage() {
           color="text-emerald-600" bgColor="bg-emerald-50"
           subtitle={`${metrics.totalPagas} vendas pagas`} />
         <MetricCard label={selectedMonth ? "Receita do Período" : "Receita do Mês"} value={fmt(selectedMonth ? metrics.totalReceita : metrics.thisMonthRev)} icon={TrendingUp}
-          color="text-indigo-600" bgColor="bg-indigo-50"
+          color="text-[#7A1F2B]" bgColor="bg-[#FBF3F4]"
           trend={!selectedMonth && metrics.lastMonthRev > 0 ? { value: metrics.monthTrend, label: "vs mês ant." } : undefined} />
         <MetricCard label="Ticket Médio" value={fmt(metrics.ticketMedio)} icon={CreditCard}
           color="text-purple-600" bgColor="bg-purple-50"
@@ -551,14 +601,14 @@ export default function QAFinanceiroPage() {
       {/* ─── KPI Row 2: Operational ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard label="Total de Vendas" value={String(metrics.totalVendas)} icon={ShoppingCart}
-          color="text-blue-600" bgColor="bg-blue-50" subtitle={`${metrics.totalPagas} pagas · ${metrics.totalNaoPagas} não pagas`} />
+          color="text-[#7A1F2B]" bgColor="bg-[#FBF3F4]" subtitle={`${metrics.totalPagas} pagas · ${metrics.totalNaoPagas} não pagas`} />
         <MetricCard label="Serviços Vendidos" value={String(metrics.totalServicosVendidos)} icon={FileText}
           color="text-teal-600" bgColor="bg-teal-50"
           subtitle={`${revenueByService.length} tipos diferentes`} />
         <MetricCard label="Taxa de Conversão" value={`${metrics.taxaConversao.toFixed(1)}%`} icon={CheckCircle2}
           color="text-emerald-600" bgColor="bg-emerald-50" subtitle="vendas pagas / total" />
         <MetricCard label="Clientes Ativos" value={String(clientes.length)} icon={Users}
-          color="text-indigo-600" bgColor="bg-indigo-50"
+          color="text-[#7A1F2B]" bgColor="bg-[#FBF3F4]"
           subtitle={`${metrics.clientesUnicos} compradores no período`} />
       </div>
 
@@ -789,7 +839,7 @@ export default function QAFinanceiroPage() {
                     </div>
                     <div className="bg-slate-50 rounded p-2">
                       <p className="text-slate-400">% Faturamento</p>
-                      <p className="font-bold text-indigo-600 mt-0.5">{pct.toFixed(1)}%</p>
+                      <p className="font-bold text-[#7A1F2B] mt-0.5">{pct.toFixed(1)}%</p>
                     </div>
                     <div className="bg-slate-50 rounded p-2">
                       <p className="text-slate-400">Clientes</p>
@@ -797,7 +847,7 @@ export default function QAFinanceiroPage() {
                     </div>
                   </div>
                   <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                    <div className="h-full bg-[#7A1F2B] rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -833,7 +883,7 @@ export default function QAFinanceiroPage() {
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                            <div className="h-full bg-[#7A1F2B] rounded-full" style={{ width: `${pct}%` }} />
                           </div>
                           <span className="text-[10px] text-slate-400 w-10 text-right">{pct.toFixed(1)}%</span>
                         </div>
@@ -885,7 +935,7 @@ export default function QAFinanceiroPage() {
                     </div>
                     <div className="ml-8.5 mt-1">
                       <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-400 rounded-full transition-all group-hover:bg-indigo-500" style={{ width: `${pct}%` }} />
+                        <div className="h-full bg-[#7A1F2B] rounded-full transition-all group-hover:bg-[#7A1F2B]" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   </div>

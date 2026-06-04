@@ -331,6 +331,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const { storage_path, user_id } = await req.json();
     if (!storage_path) {
       return new Response(JSON.stringify({ error: "storage_path required" }), {

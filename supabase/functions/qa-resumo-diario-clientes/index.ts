@@ -42,6 +42,14 @@ function diasDesde(d: string | null | undefined): number | null {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  // Auth: accept staff JWT OR cron token
+  const { requireQAStaff, requireCronToken } = await import("../_shared/qaAuth.ts");
+  const cronCheck = requireCronToken(req);
+  if (!cronCheck.ok) {
+    const staffCheck = await requireQAStaff(req);
+    if (!staffCheck.ok) return staffCheck.response;
+  }
+
   const sb = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,

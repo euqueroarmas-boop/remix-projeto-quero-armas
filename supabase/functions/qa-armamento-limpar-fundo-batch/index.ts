@@ -127,6 +127,11 @@ async function removeBg(bytes: Uint8Array, mime: string): Promise<{ bytes: Uint8
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    // Auth: require active QA staff
+    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
+    const guard = await requireQAStaff(req);
+    if (!guard.ok) return guard.response;
+
     const body = await req.json().catch(() => ({}));
     const onlyId: string | undefined = body?.id;
     const force: boolean = body?.force !== false; // default true

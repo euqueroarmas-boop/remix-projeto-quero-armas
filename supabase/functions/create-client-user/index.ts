@@ -336,7 +336,68 @@ async function syncAllLinks(
   await Promise.all([
     syncCustomerLinks(supabase, params),
     syncQaClientLinks(supabase, params),
+    syncClienteAuthLink(supabase, params),
   ]);
+}
+
+/**
+ * Garante a existência (e atividade) do vínculo em `cliente_auth_links`
+ * entre o Auth User e o cliente (qa_clientes/customers). Idempotente.
+ *
+ * Sem essa linha, o login do portal falha com "Conta sem vínculo de cliente ativo",
+ * pois `QAClienteLoginPage` consulta `cliente_auth_links` por (user_id, status='active').
+ */
+async function syncClienteAuthLink(
+  supabase: SupabaseClient,
+  params: {
+    qaClientId?: number | null;
+    customerId?: string | null;
+    userId?: string | null;
+    email?: string | null;
+    document?: string | null;
+  },
+) {
+  if (!params.userId) return;
+  const email = normalizeEmail(params.email);
+  const documento = (params.document || "").replace(/\D/g, "") || null;
+
+  try {
+    // 1) Procura link existente do Auth User
+    const { data: existing } = await supabase
+      .from("cliente_auth_links")
+      .select("id, status, qa_cliente_id, customer_id, email")
+      .eq("user_id", params.userId)
+      .limit(5);
+
+    const exact = (existing || []).find(
+      (l: any) =>
+        (params.qaClientId ? l.qa_cliente_id === params.qaClientId : true) &&
+        (params.customerId ? l.customer_id === params.customerId : true),
+    ) || (existing && existing[0]) || null;
+
+    const updatePayload = {
+      qa_cliente_id: params.qaClientId ?? (exact?.qa_cliente_id ?? null),
+      customer_id: params.customerId ?? (exact?.customer_id ?? null),
+      email: email || exact?.email || null,
+      documento_normalizado: documento,
+      status: "active",
+      activated_at: new Date().toISOString(),
+      motivo: null,
+      email_pendente: null,
+    };
+
+    if (exact?.id) {
+      await supabase.from("cliente_auth_links").update(updatePayload).eq("id", exact.id);
+      return;
+    }
+
+    await supabase.from("cliente_auth_links").insert({
+      user_id: params.userId,
+      ...updatePayload,
+    });
+  } catch (err) {
+    console.error("[create-client-user] syncClienteAuthLink falhou:", err);
+  }
 }
 
 async function resolveAuthUser(
@@ -360,15 +421,21 @@ async function sendInviteEmail(
   email: string,
   name: string,
   password: string,
+  opts?: { qaClientId?: number | null; eventoLabel?: string; ator?: string | null },
 ) {
   try {
     const portalOrigin = req.headers.get("origin") || "https://wmti.com.br";
+    const isQA = !!opts?.qaClientId;
+    const portalPath = isQA ? "/quero-armas/area-do-cliente/login" : "/area-do-cliente";
     await supabase.functions.invoke("notify-user-invite", {
       body: {
         customer_email: email,
         customer_name: name,
         temp_password: password,
-        portal_url: `${portalOrigin.replace(/\/$/, "")}/area-do-cliente`,
+        portal_url: `${portalOrigin.replace(/\/$/, "")}${portalPath}`,
+        qa_client_id: opts?.qaClientId || undefined,
+        evento_label: opts?.eventoLabel,
+        ator: opts?.ator || undefined,
       },
     });
   } catch (emailErr) {
@@ -581,6 +648,19 @@ Deno.serve(async (req) => {
         payload: { email: data.user.email, customer_id: canonicalCustomer?.id || customer_id, qa_client_id: qaClient?.id || qa_client_id },
       });
 
+      // Reenvia e-mail com a nova senha (e registra evento senha_resetada na timeline QA, se aplicável)
+      await sendInviteEmail(
+        supabase,
+        req,
+        data.user.email!,
+        name || qaClient?.nome_completo || canonicalCustomer?.razao_social || data.user.email || "",
+        newPassword,
+        {
+          qaClientId: qaClient?.id || qa_client_id || null,
+          eventoLabel: "senha_resetada",
+        },
+      );
+
       return new Response(JSON.stringify({
         success: true,
         email: normalizeEmail(data.user.email),
@@ -588,6 +668,81 @@ Deno.serve(async (req) => {
         user_id: data.user.id,
         customer_id: canonicalCustomer?.id || customer_id || null,
         qa_client_id: qaClient?.id || qa_client_id || null,
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "resend_credentials") {
+      const authUser = await resolveAuthUser(supabase, {
+        userId: customer?.user_id,
+        fallbackUserId: qaClient?.user_id,
+        email: normalizedEmail || customer?.email || qaClient?.email,
+      });
+
+      if (!authUser) {
+        return new Response(JSON.stringify({ error: "Usuário não possui conta no portal. Crie o acesso primeiro." }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const meta = (authUser.user_metadata && typeof authUser.user_metadata === "object")
+        ? authUser.user_metadata as Record<string, unknown>
+        : {};
+      const existingTemp = typeof meta.temp_password === "string" ? meta.temp_password : "";
+
+      // Idempotência: se não temos a senha temporária armazenada, geramos uma nova
+      // e atualizamos no Auth (necessário, senão cliente não consegue logar).
+      let passwordToSend = existingTemp;
+      if (!passwordToSend) {
+        passwordToSend = generateTempPassword();
+        const { error: updErr } = await supabase.auth.admin.updateUserById(authUser.id, {
+          password: passwordToSend,
+          user_metadata: {
+            ...meta,
+            temp_password: passwordToSend,
+            password_change_required: true,
+          },
+        });
+        if (updErr) {
+          return new Response(JSON.stringify({ error: updErr.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const recipientEmail = authUser.email || normalizedEmail || customer?.email || qaClient?.email || "";
+      const recipientName = (typeof meta.name === "string" ? meta.name : "")
+        || name || qaClient?.nome_completo || customer?.razao_social || recipientEmail;
+
+      await sendInviteEmail(
+        supabase,
+        req,
+        recipientEmail,
+        recipientName,
+        passwordToSend,
+        {
+          qaClientId: qaClient?.id || qa_client_id || null,
+          eventoLabel: "credenciais_enviadas",
+        },
+      );
+
+      await logSistemaBackend({
+        tipo: "admin",
+        status: "success",
+        mensagem: "Credenciais reenviadas para o cliente",
+        payload: { email: recipientEmail, qa_client_id: qaClient?.id || qa_client_id },
+      });
+
+      return new Response(JSON.stringify({
+        success: true,
+        email: normalizeEmail(recipientEmail),
+        user_id: authUser.id,
+        qa_client_id: qaClient?.id || qa_client_id || null,
+        regenerated_password: !existingTemp,
       }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -690,6 +845,20 @@ Deno.serve(async (req) => {
       document: normalizedDocument || canonicalCustomer.cnpj_ou_cpf || qaClient?.cpf,
     });
 
+    // Marca portal_provisionado_em na 1ª criação (idempotente: só seta se for null)
+    const effectiveQaClientId = qaClient?.id || qa_client_id || null;
+    if (effectiveQaClientId && !reused) {
+      try {
+        await supabase
+          .from("qa_clientes")
+          .update({ portal_provisionado_em: new Date().toISOString() })
+          .eq("id", effectiveQaClientId)
+          .is("portal_provisionado_em", null);
+      } catch (markErr) {
+        console.error("[create-client-user] erro ao marcar portal_provisionado_em:", markErr);
+      }
+    }
+
     await supabase.from("client_events").insert({
       customer_id: canonicalCustomer.id,
       event_type: "cadastro",
@@ -716,6 +885,10 @@ Deno.serve(async (req) => {
       normalizedEmail,
       name || qaClient?.nome_completo || canonicalCustomer.razao_social || normalizedEmail,
       password,
+      {
+        qaClientId: effectiveQaClientId,
+        eventoLabel: reused ? "credenciais_enviadas" : "portal_provisionado",
+      },
     );
 
     return new Response(JSON.stringify({
@@ -746,12 +919,16 @@ Deno.serve(async (req) => {
 });
 
 function generateTempPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let pwd = "";
-  const arr = new Uint8Array(10);
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#%*-_";
+  const chars = `${upper}${lower}${digits}${symbols}`;
+  let pwd = "QA!7";
+  const arr = new Uint8Array(16);
   crypto.getRandomValues(arr);
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < arr.length; i++) {
     pwd += chars[arr[i] % chars.length];
   }
-  return pwd + "!1";
+  return pwd;
 }

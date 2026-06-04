@@ -13,6 +13,109 @@ export type WeaponKind =
   | "submetralhadora"
   | "outra";
 
+/**
+ * Status visual agregado das GTEs do cliente para o KPI do Arsenal.
+ *
+ * Precedência: vencida > próxima > válida > neutro.
+ * Janela: vencida (<0d), próxima (0..30d), em dia (>30d).
+ * GTEs sem `data_validade` ou ainda em processamento entram em "neutro".
+ */
+export interface GteKpiInput {
+  data_validade?: string | null;
+  status_processamento?: string | null;
+}
+
+export interface GteKpiStatus {
+  total: number;
+  validas: number;
+  proximas: number;
+  vencidas: number;
+  semData: number;
+  statusVisual: "ok" | "warn" | "danger" | "muted";
+  labelSecundaria: string;
+}
+
+export function getGteKpiStatus(gtes: GteKpiInput[] | null | undefined): GteKpiStatus {
+  const list = Array.isArray(gtes) ? gtes : [];
+  const total = list.length;
+
+  if (total === 0) {
+    return {
+      total: 0,
+      validas: 0,
+      proximas: 0,
+      vencidas: 0,
+      semData: 0,
+      statusVisual: "muted",
+      labelSecundaria: "Sem GTE cadastrada",
+    };
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  let validas = 0;
+  let proximas = 0;
+  let vencidas = 0;
+  let semData = 0;
+
+  for (const g of list) {
+    const status = (g?.status_processamento || "").toLowerCase();
+    // Exclui documentos em revisão obrigatória / pendente revisão da contagem de "válidas".
+    if (
+      status === "revisao_obrigatoria" ||
+      status === "pendente_revisao" ||
+      status === "aguardando_revisao_equipe"
+    ) {
+      semData++;
+      continue;
+    }
+    if (!g?.data_validade || (status && status !== "concluido")) {
+      semData++;
+      continue;
+    }
+    const v = new Date(`${g.data_validade}T00:00:00`);
+    if (Number.isNaN(v.getTime())) {
+      semData++;
+      continue;
+    }
+    const dias = Math.floor((v.getTime() - hoje.getTime()) / 86400000);
+    if (dias < 0) vencidas++;
+    else if (dias <= 30) proximas++;
+    else validas++;
+  }
+
+  // Precedência: vencida > próxima > válida > neutro
+  if (vencidas > 0) {
+    return {
+      total, validas, proximas, vencidas, semData,
+      statusVisual: "danger",
+      labelSecundaria: vencidas === 1 ? "Vencida" : `${vencidas} vencidas`,
+    };
+  }
+  if (proximas > 0) {
+    return {
+      total, validas, proximas, vencidas, semData,
+      statusVisual: "warn",
+      labelSecundaria: proximas === 1 ? "Próxima do vencimento" : `${proximas} p/ vencer`,
+    };
+  }
+  if (validas > 0) {
+    return {
+      total, validas, proximas, vencidas, semData,
+      statusVisual: "ok",
+      labelSecundaria: "Tudo em dia",
+    };
+  }
+  // Só tem semData
+  return {
+    total, validas, proximas, vencidas, semData,
+    statusVisual: "muted",
+    labelSecundaria: "Aguardando leitura",
+  };
+}
+
+
 export interface WeaponInfo {
   kind: WeaponKind;
   label: string;
@@ -36,6 +139,23 @@ const KIND_HINTS: { kind: WeaponKind; tokens: string[] }[] = [
   { kind: "fuzil", tokens: ["FUZIL", "AR15", "AR-15", "AR10", "AR-10", "T4", "M4", ".223", ".308", "7.62"] },
   { kind: "submetralhadora", tokens: ["SUB", "SMG", "MP5", "UZI"] },
 ];
+
+/**
+ * Mapeia uma "espécie/tipo" textual extraída de documento (CRAF/SINARM/SIGMA)
+ * para o `WeaponKind` canônico. Retorna `null` quando não reconhecida.
+ * Espécie do documento é PROVA — sempre prevalece sobre inferência por nome.
+ */
+export function kindFromEspecie(especie: string | null | undefined): WeaponKind | null {
+  const s = NORM(especie || "");
+  if (!s) return null;
+  if (s.includes("ESPINGARDA")) return "espingarda";
+  if (s.includes("REVOLVER") || s.includes("REVÓLVER")) return "revolver";
+  if (s.includes("PISTOLA")) return "pistola";
+  if (s.includes("CARABINA")) return "carabina";
+  if (s.includes("FUZIL") || s.includes("RIFLE")) return "fuzil";
+  if (s.includes("SUBMETRALHADORA") || s === "SMG") return "submetralhadora";
+  return null;
+}
 
 export function inferWeaponKind(...inputs: (string | null | undefined)[]): WeaponKind {
   const blob = NORM(inputs.filter(Boolean).join(" "));
@@ -62,6 +182,27 @@ export function extractCalibre(...inputs: (string | null | undefined)[]): string
   return raw.startsWith(".") ? raw : raw;
 }
 
+/** Normalização canônica usada em KPIs, cards e estoque de munições. */
+export function normalizeCalibre(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let s = String(raw).toUpperCase();
+  s = s.replace(/CALIBRE|CAL\.?/g, "");
+  s = s.replace(/[^0-9A-Z.]/g, "");
+  if (/^\.?12(GA)?$/.test(s)) return "12";
+  if (/^\.?20(GA)?$/.test(s)) return "20";
+  if (/^\.?9(MM|X19|LUGER|PARA)?$/.test(s)) return "9MM";
+  if (/^\.?40(SW|S\.?W\.?)?$/.test(s)) return ".40";
+  if (/^\.?380(ACP)?$/.test(s)) return ".380";
+  if (/^\.?45(ACP|AUTO)?$/.test(s)) return ".45";
+  if (/^\.?38(SPL|SPECIAL)?$/.test(s)) return ".38";
+  if (/^\.?357(MAGNUM|MAG)?$/.test(s)) return ".357";
+  if (/^\.?22(LR)?$/.test(s)) return ".22";
+  if (/^\.?44(MAGNUM|MAG)?$/.test(s)) return ".44";
+  if (/^\.?32$/.test(s)) return ".32";
+  s = s.replace(/(ACP|AUTO|MAGNUM|MAG|SW|GA|SPL|SPECIAL|LR|LUGER|PARA)/g, "");
+  return s || null;
+}
+
 export function extractMarcaModelo(nome: string | null | undefined): { marca: string | null; modelo: string | null } {
   if (!nome) return { marca: null, modelo: null };
   const cleaned = nome.replace(CALIBRE_REGEX, "").trim();
@@ -71,10 +212,20 @@ export function extractMarcaModelo(nome: string | null | undefined): { marca: st
   return { marca: parts[0], modelo: parts.slice(1).join(" ") };
 }
 
-export function buildWeaponInfo(nomeArma: string | null | undefined, hint?: string | null): WeaponInfo {
+export function buildWeaponInfo(
+  nomeArma: string | null | undefined,
+  hint?: string | null,
+  /**
+   * Espécie/tipo extraído do documento (CRAF/SINARM/SIGMA). Quando informada
+   * e reconhecível (ESPINGARDA, REVÓLVER, PISTOLA, CARABINA, FUZIL,
+   * SUBMETRALHADORA), prevalece sobre qualquer inferência feita pelo nome.
+   */
+  especie?: string | null,
+): WeaponInfo {
   const calibre = extractCalibre(nomeArma, hint);
   const { marca, modelo } = extractMarcaModelo(nomeArma);
-  const kind = inferWeaponKind(nomeArma, hint);
+  const kindFromDoc = kindFromEspecie(especie);
+  const kind = kindFromDoc || inferWeaponKind(nomeArma, hint);
   return {
     kind,
     label: nomeArma?.trim() || "Arma sem identificação",
@@ -90,6 +241,21 @@ export function maskSerial(serial: string | null | undefined): string {
   const s = serial.toString().trim();
   if (s.length <= 3) return s;
   return `${"•".repeat(Math.max(3, s.length - 3))} ${s.slice(-3)}`;
+}
+
+/**
+ * Valida o campo `modelo` de uma arma. Modelo nunca pode ser:
+ *  - vazio / nulo
+ *  - apenas números, pontos, traços ou barras (= número de doc/registro/CRAF/SINARM)
+ *  - palavra-rótulo isolada (CRAF, SINARM, SIGMA, REGISTRO, DOCUMENTO, PROTOCOLO)
+ */
+export function isInvalidWeaponModel(value: string | null | undefined): boolean {
+  if (!value) return true;
+  const v = value.toString().trim();
+  if (v.length < 2) return true;
+  if (/^[0-9.\-\/\s]+$/.test(v)) return true;
+  if (/^(CRAF|SINARM|SIGMA|REGISTRO|DOCUMENTO|PROTOCOLO|ARMA)$/i.test(v)) return true;
+  return false;
 }
 
 /** Cores táticas reutilizadas em todo o Arsenal. */
@@ -120,3 +286,188 @@ export const WEAPON_KIND_LABEL: Record<WeaponKind, string> = {
   submetralhadora: "SUBMETRALHADORA",
   outra: "ARMAMENTO",
 };
+
+/**
+ * Define se a GTE (Guia de Tráfego) é exigível como documento permanente
+ * vinculado à arma.
+ *
+ * Regra de domínio (Lei 10.826/03):
+ *  - Arma SINARM registrada para DEFESA PESSOAL → GTE NÃO é exigível.
+ *    Sua ausência não é irregularidade nem alerta.
+ *  - Arma SIGMA / CAC / acervo de tiro, caça ou colecionamento, ou vinculada
+ *    ao Exército → GTE/guia equivalente é exigível.
+ *  - Casos indefinidos → conservadoramente retornar `false` (não exigir),
+ *    para não gerar falso alerta. Movimentação/transporte específico de arma
+ *    SINARM é tratado por outro evento, não como GTE permanente.
+ */
+export interface WeaponRegimeInput {
+  sistema?: string | null;
+  origem_registro?: string | null;
+  origem?: string | null;
+  tipo_acervo?: string | null;
+  finalidade?: string | null;
+  categoria?: string | null;
+  tipo_uso?: string | null;
+  source?: string | null;
+  /** Regime canônico já decidido (SINARM/SIGMA/REVISAR) — prevalece sobre heurística. */
+  sistema_registro?: string | null;
+  /** Nº Cad. SINARM extraído do CRAF. Presença => SINARM. */
+  numero_cad_sinarm?: string | null;
+  /** Nº de registro SIGMA explícito (Exército/CAC). */
+  numero_registro_sigma?: string | null;
+}
+
+const _norm = (s: string | null | undefined) =>
+  String(s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase();
+
+export function isGteExigivelParaArma(arma: WeaponRegimeInput | null | undefined): boolean {
+  if (!arma) return false;
+  const sistema = _norm([arma.sistema, arma.origem_registro, arma.origem, arma.tipo_acervo].filter(Boolean).join(" "));
+  const finalidade = _norm([arma.finalidade, arma.categoria, arma.tipo_uso].filter(Boolean).join(" "));
+
+  // SINARM + Defesa Pessoal → NÃO exigível.
+  if (sistema.includes("SINARM") && (finalidade.includes("DEFESA") || !finalidade)) return false;
+
+  // SIGMA / CAC / Tiro / Caça / Colecionamento / Exército → exigível.
+  if (
+    sistema.includes("SIGMA") ||
+    sistema.includes("EXERCITO") ||
+    finalidade.includes("CAC") ||
+    finalidade.includes("TIRO") ||
+    finalidade.includes("CACA") ||
+    finalidade.includes("COLECIONAMENTO")
+  ) return true;
+
+  // Indefinido → não exigir (evita falso alerta).
+  return false;
+}
+
+export function gteExigibilidadeLabel(exigivel: boolean): string {
+  return exigivel ? "AUSENTE" : "NÃO EXIGÍVEL";
+}
+
+/**
+ * Regime canônico da arma para exibição no card e drawer.
+ * Tri-state explícito — "REVISAR" indica falta de informação confiável.
+ *
+ * Critérios:
+ *  - SIGMA: campo `sistema` contém SIGMA/EXÉRCITO; finalidade CAC/Tiro/Caça/
+ *    Colecionamento; ou existe vínculo com GT/GTE/SIGMA (passado como flag).
+ *  - SINARM: campo `sistema` contém SINARM e finalidade DEFESA PESSOAL
+ *    explícita. SINARM sem finalidade clara também é tratado como SINARM
+ *    (registro PF padrão), mas sem mascarar SIGMA com CRAF.
+ *  - REVISAR: nenhum indício confiável.
+ */
+export type WeaponRegime = "SIGMA" | "SINARM" | "REVISAR";
+
+export interface WeaponRegimeHints {
+  hasGteVinculada?: boolean;
+  hasGtVinculada?: boolean;
+  /**
+   * @deprecated `numero_sigma` é um campo genérico de registro e NÃO classifica
+   * regime sozinho (no CRAF SINARM, "Nº do Registro" também aparece). Mantido
+   * apenas para compatibilidade — não é usado para inferir SIGMA.
+   */
+  numeroSigma?: string | null;
+  /** Indicador explícito SINARM (presença de "Nº Cad. SINARM"). */
+  numeroCadSinarm?: string | null;
+  /** Indicador explícito SIGMA (Exército/CAC). */
+  numeroRegistroSigma?: string | null;
+}
+
+export function getWeaponRegime(
+  arma: WeaponRegimeInput | null | undefined,
+  hints?: WeaponRegimeHints,
+): WeaponRegime {
+  if (!arma) return "REVISAR";
+
+  // 1) Regime canônico já persistido tem prioridade absoluta.
+  const persistido = String(arma.sistema_registro || "").toUpperCase().trim();
+  if (persistido === "SINARM" || persistido === "SIGMA") return persistido as WeaponRegime;
+
+  // 2) "Nº Cad. SINARM" é a única prova autossuficiente de SINARM.
+  if (arma.numero_cad_sinarm || hints?.numeroCadSinarm) return "SINARM";
+
+  // 3) Indicador SIGMA explícito (Exército/CAC) — número SIGMA dedicado.
+  if (arma.numero_registro_sigma || hints?.numeroRegistroSigma) return "SIGMA";
+
+  const sistema = _norm([arma.sistema, arma.origem_registro, arma.origem, arma.tipo_acervo].filter(Boolean).join(" "));
+  const finalidade = _norm([arma.finalidade, arma.categoria, arma.tipo_uso].filter(Boolean).join(" "));
+
+  // 4) Indícios fortes de SIGMA/CAC (texto + vínculo com GT/GTE).
+  // ATENÇÃO: `numeroSigma` (Nº do Registro genérico) NÃO é mais usado para inferir SIGMA.
+  if (
+    sistema.includes("SIGMA") ||
+    sistema.includes("EXERCITO") ||
+    finalidade.includes("CAC") ||
+    finalidade.includes("TIRO") ||
+    finalidade.includes("CACA") ||
+    finalidade.includes("COLECIONAMENTO") ||
+    hints?.hasGteVinculada ||
+    hints?.hasGtVinculada
+  ) {
+    return "SIGMA";
+  }
+
+  // 5) SINARM explícito por texto (sem cad SINARM, mas com indicação PF/SINARM).
+  if (sistema.includes("SINARM") || finalidade.includes("DEFESA")) {
+    return "SINARM";
+  }
+
+  return "REVISAR";
+}
+
+export const WEAPON_REGIME_LABEL: Record<WeaponRegime, string> = {
+  SIGMA: "SISTEMA · SIGMA",
+  SINARM: "SISTEMA · SINARM",
+  REVISAR: "SISTEMA · REVISAR",
+};
+
+export function regimeChipTone(regime: WeaponRegime): "ok" | "warn" | "muted" {
+  if (regime === "SIGMA") return "ok";
+  if (regime === "SINARM") return "ok";
+  return "warn";
+}
+
+/**
+ * GT (Guia de Tráfego de retirada/transporte inicial da loja) NÃO é o mesmo
+ * que GTE (Guia de Tráfego Especial — SIGMA/CAC). A GT é informativa /
+ * histórica e sua ausência NUNCA pode pintar a KPI ARMAS de vermelho nem
+ * gerar alerta crítico automático. Status possíveis:
+ *   - enviada | aprovada | em_analise | nao_enviada | nao_possuo | revisar
+ */
+export type GtDocStatus =
+  | "enviada"
+  | "aprovada"
+  | "em_analise"
+  | "nao_enviada"
+  | "nao_possuo"
+  | "revisar";
+
+export const GT_STATUS_LABEL: Record<GtDocStatus, string> = {
+  enviada: "ENVIADA",
+  aprovada: "APROVADA",
+  em_analise: "EM ANÁLISE",
+  nao_enviada: "NÃO ENVIADA",
+  nao_possuo: "NÃO POSSUO MAIS",
+  revisar: "REVISAR DOCUMENTO",
+};
+
+/**
+ * Tom visual de chip da GT — sempre informativo, nunca vermelho.
+ * O vermelho da KPI ARMAS é reservado a CRAF essencial e GTE exigível.
+ */
+export function gtChipTone(status: GtDocStatus): "ok" | "warn" | "muted" {
+  if (status === "aprovada" || status === "enviada") return "ok";
+  if (status === "em_analise" || status === "revisar") return "warn";
+  // nao_enviada e nao_possuo são informativos (cinza), não críticos.
+  return "muted";
+}
+
+/** Chave estável para declaração local "não possuo mais a GT". */
+export function gtDeclaracaoKey(clienteId: number | string, weaponKey: string): string {
+  return `qa.gt-nao-possui.${clienteId}.${weaponKey}`;
+}

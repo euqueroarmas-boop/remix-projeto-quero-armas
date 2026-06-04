@@ -6,6 +6,9 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Note: this endpoint is reachable by the post-checkout flow before the
+  // customer has logged in. Authorization is enforced inside ensureClientAccess()
+  // by validating that the quote_id corresponds to an actually paid order.
   try {
     const { quote_id } = await req.json();
     if (!quote_id) {

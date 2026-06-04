@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, Trash2, Shield, Crosshair, FileCheck, ShoppingCart, Users, CalendarDays, Hash, Key, CheckCircle2 } from "lucide-react";
+import { Loader2, Save, Trash2, Archive, Shield, Crosshair, FileCheck, ShoppingCart, Users, CalendarDays, Hash, Key, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { TrocaServicoConfirmDialog, TrocaServicoPreview } from "./TrocaServicoConfirmDialog";
+import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
+// Eventos operacionais são gerados pela trigger qa_dispatch_notify_event.
 
 /* ─── Date helpers ─── */
 const applyDateMask = (raw: string): string => {
@@ -29,6 +32,16 @@ const brToIso = (br: string): string | null => {
   return `${m[3]}-${m[2]}-${m[1]}`;
 };
 
+const slugifyServico = (nome: string, id: number) => {
+  const base = nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return base || `servico-${id}`;
+};
+
 /* ─── Shared Premium Input ─── */
 function PremiumField({ label, value, onChange, type = "text", placeholder, icon: Icon, required }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; icon?: any; required?: boolean;
@@ -37,7 +50,7 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
   return (
     <div className="group flex-1">
       <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">
-        {Icon && <Icon className="h-3 w-3 text-indigo-400" />}
+        {Icon && <Icon className="h-3 w-3 text-[#7A1F2B]" />}
         {label}
         {required && <span className="text-red-400">*</span>}
       </label>
@@ -56,8 +69,8 @@ function PremiumField({ label, value, onChange, type = "text", placeholder, icon
         className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg
           placeholder:text-slate-300 font-medium
           transition-all duration-200
-          hover:border-indigo-300 hover:bg-white
-          focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus-visible:ring-offset-0 focus-visible:border-indigo-400 focus-visible:bg-white"
+          hover:border-[#E5C2C6] hover:bg-white
+          focus-visible:ring-2 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0 focus-visible:border-[#7A1F2B] focus-visible:bg-white"
       />
     </div>
   );
@@ -140,7 +153,7 @@ function ModalActions({ onClose, onSave, saving, saveLabel = "Salvar" }: {
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="h-9 px-5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+        className="h-9 px-5 text-xs rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white shadow-sm disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
         {saveLabel}
@@ -181,7 +194,7 @@ export function CrafModal({ open, onClose, onSaved, clienteId, craf }: CrafModal
   };
 
   return (
-    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar CRAF" : "Novo CRAF"} icon={Shield} accentColor="bg-indigo-600">
+    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar CRAF" : "Novo CRAF"} icon={Shield} accentColor="bg-[#7A1F2B]">
       <div className="space-y-4">
         <PremiumField label="Nome da Arma" value={f.nome_arma} onChange={v => setF(p => ({ ...p, nome_arma: v }))} icon={Crosshair} required />
         <PremiumField label="Nome CRAF" value={f.nome_craf} onChange={v => setF(p => ({ ...p, nome_craf: v }))} icon={FileCheck} />
@@ -252,35 +265,69 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
   const isEdit = !!cadastro;
   const [saving, setSaving] = useState(false);
   const [f, setF] = useState({ numero_cr: "", validade_cr: "", validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "", check_laudo_psi: false, check_exame_tiro: false });
+  const [loadingSenha, setLoadingSenha] = useState(false);
 
   useEffect(() => {
-    if (cadastro) setF({
-      numero_cr: cadastro.numero_cr || "", validade_cr: isoToBr(cadastro.validade_cr),
-      validade_laudo_psicologico: isoToBr(cadastro.validade_laudo_psicologico),
-      validade_exame_tiro: isoToBr(cadastro.validade_exame_tiro), senha_gov: cadastro.senha_gov || "",
-      check_laudo_psi: cadastro.check_laudo_psi || false, check_exame_tiro: cadastro.check_exame_tiro || false,
-    });
-    else setF({ numero_cr: "", validade_cr: "", validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "", check_laudo_psi: false, check_exame_tiro: false });
+    if (cadastro) {
+      setF({
+        numero_cr: cadastro.numero_cr || "", validade_cr: isoToBr(cadastro.validade_cr),
+        validade_laudo_psicologico: isoToBr(cadastro.validade_laudo_psicologico),
+        validade_exame_tiro: isoToBr(cadastro.validade_exame_tiro), senha_gov: "",
+        check_laudo_psi: cadastro.check_laudo_psi || false, check_exame_tiro: cadastro.check_exame_tiro || false,
+      });
+      // Busca a Senha Gov de forma segura (descriptografada na edge function)
+      if (open && cadastro.id) {
+        setLoadingSenha(true);
+        import("./senhaGovApi").then(({ getSenhaGov }) =>
+          getSenhaGov(cadastro.id, "edição CrModal", clienteId)
+            .then((s) => setF((p) => ({ ...p, senha_gov: s || "" })))
+            .catch((e) => {
+              if (e?.name !== "SenhaGovAuthError" && e?.name !== "SenhaGovForbiddenError") {
+                toast.error("Senha Gov: " + e.message);
+              }
+            })
+            .finally(() => setLoadingSenha(false))
+        );
+      }
+    } else setF({ numero_cr: "", validade_cr: "", validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "", check_laudo_psi: false, check_exame_tiro: false });
   }, [cadastro, open]);
 
   const save = async () => {
     setSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, any> = {
         numero_cr: f.numero_cr,
         validade_cr: brToIso(f.validade_cr),
         validade_laudo_psicologico: brToIso(f.validade_laudo_psicologico),
         validade_exame_tiro: brToIso(f.validade_exame_tiro),
-        senha_gov: f.senha_gov,
         check_laudo_psi: f.check_laudo_psi,
         check_exame_tiro: f.check_exame_tiro,
       };
+      const { setSenhaGov } = await import("./senhaGovApi");
+      let cadastroId: number | null = null;
       if (isEdit) {
         const { error } = await supabase.from("qa_cadastro_cr" as any).update(payload).eq("id", cadastro.id);
         if (error) throw error;
+        cadastroId = cadastro.id;
       } else {
-        const { error } = await supabase.from("qa_cadastro_cr" as any).insert({ ...payload, cliente_id: clienteId });
+        const { data: inserted, error } = await supabase
+          .from("qa_cadastro_cr" as any)
+          .insert({ ...payload, cliente_id: clienteId })
+          .select("id")
+          .single();
         if (error) throw error;
+        cadastroId = (inserted as any)?.id ?? null;
+      }
+      // Senha Gov passa pela edge function (cifragem + auditoria)
+      if (cadastroId != null && f.senha_gov) {
+        try {
+          await setSenhaGov(cadastroId, f.senha_gov, isEdit ? "edit CrModal" : "create CrModal");
+        } catch (e: any) {
+          // Portal de cliente não pode gravar Senha Gov — ignora silenciosamente.
+          if (e?.name !== "SenhaGovForbiddenError" && e?.name !== "SenhaGovAuthError") {
+            throw e;
+          }
+        }
       }
       toast.success(isEdit ? "CR atualizado" : "CR cadastrado");
       onSaved(); onClose();
@@ -297,7 +344,12 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
         </div>
         <div className="grid grid-cols-2 gap-3">
           <PremiumField label="Validade Exame Tiro" value={f.validade_exame_tiro} onChange={v => setF(p => ({ ...p, validade_exame_tiro: v }))} type="date" icon={CalendarDays} />
-          <PremiumField label="Senha Gov" value={f.senha_gov} onChange={v => setF(p => ({ ...p, senha_gov: v }))} icon={Key} />
+          <PremiumField
+            label={loadingSenha ? "Senha Gov (carregando…)" : "Senha Gov"}
+            value={f.senha_gov}
+            onChange={v => setF(p => ({ ...p, senha_gov: v }))}
+            icon={Key}
+          />
         </div>
 
         {/* Premium checkboxes */}
@@ -333,25 +385,78 @@ export function CrModal({ open, onClose, onSaved, clienteId, cadastro }: CrModal
 interface VendaModalProps {
   open: boolean; onClose: () => void; onSaved: () => void;
   clienteId: number; venda?: any;
+  /**
+   * Quando preenchido, vincula a venda criada à solicitação (qa_solicitacoes_servico)
+   * e atualiza o status_servico daquela solicitação para 'contratado'.
+   */
+  solicitacaoId?: string | null;
 }
-export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaModalProps) {
+export function VendaModal({ open, onClose, onSaved, clienteId, venda, solicitacaoId }: VendaModalProps) {
   const isEdit = !!venda;
   const [saving, setSaving] = useState(false);
-  const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number }[]>([]);
+  const [servicos, setServicos] = useState<{ id: number; nome_servico: string; valor_servico: number; slug: string; categoria: string; descricao_curta?: string | null }[]>([]);
+  const [servicoSearch, setServicoSearch] = useState("");
   const [selectedServicos, setSelectedServicos] = useState<Map<number, { valor: number; checked: boolean; cortesia: boolean; cortesia_motivo: string; status: string | null }>>(new Map());
   const [f, setF] = useState({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: "", valor_aberto: "0" });
+  const [originalPrimaryServicoId, setOriginalPrimaryServicoId] = useState<number | null>(null);
+  const [trocaPreview, setTrocaPreview] = useState<TrocaServicoPreview | null>(null);
+  const [trocaProcessoId, setTrocaProcessoId] = useState<string | null>(null);
+  const [trocaOpen, setTrocaOpen] = useState(false);
+  const [trocaSaving, setTrocaSaving] = useState(false);
+
+  const getDefaultItemStatus = () => (f.status === "NÃO PAGOU" ? "NÃO PAGOU" : "PAGO");
 
   useEffect(() => {
-    supabase.from("qa_servicos" as any).select("*").order("nome_servico").then(({ data }) => {
-      setServicos((data as any[]) ?? []);
-    });
-  }, []);
+    // REGRA GLOBAL: a lista e os preços de serviços vêm SEMPRE do catálogo
+    // (qa_servicos_catalogo). Um trigger no banco garante que cada item ativo
+    // do catálogo está vinculado a uma linha em qa_servicos com nome/preço
+    // sincronizados. Aqui listamos apenas o catálogo ativo.
+    //
+    // Compatibilidade: se a venda em edição contém serviços que NÃO estão no
+    // catálogo ativo (vendas históricas), eles são adicionados ao final para
+    // não sumirem da tela — mas com seu preço original.
+    (async () => {
+      const { data: catalogo } = await supabase
+        .from("qa_servicos_catalogo" as any)
+        .select("servico_id, nome, preco, display_order, slug, categoria, descricao_curta")
+        .eq("ativo", true)
+        .not("servico_id", "is", null)
+        .order("nome", { ascending: true });
+
+      // REGRA: somente itens com slug válido e preço numérico (>= 0).
+      // Itens sem slug ou sem preço definido são EXCLUÍDOS da lista de venda.
+      const lista = ((catalogo as any[]) ?? [])
+        .filter((c) => c?.servico_id != null && c?.slug && c?.nome)
+        .filter((c) => c?.preco != null && !Number.isNaN(Number(c.preco)))
+        .map((c) => ({
+          id: Number(c.servico_id),
+          nome_servico: String(c.nome),
+          valor_servico: Number(c.preco),
+          slug: String(c.slug),
+          categoria: String(c.categoria || ""),
+          descricao_curta: c.descricao_curta ?? null,
+        }));
+
+      // Ordenação alfabética por nome do serviço (pt-BR, sem case-sensitive).
+      lista.sort((a, b) =>
+        a.nome_servico.localeCompare(b.nome_servico, "pt-BR", { sensitivity: "base" })
+      );
+
+      // REGRA GLOBAL: somente catálogo ativo. Itens legados fora do catálogo
+      // não são exibidos nem editáveis aqui.
+      setServicos(lista);
+    })();
+  }, [open]);
 
   useEffect(() => {
     if (venda) {
+      // Normaliza status legado: o constraint do banco aceita "PAGO" ou "NÃO PAGOU".
+      // Qualquer rótulo informal ("EM ABERTO", vazio, etc.) vira "NÃO PAGOU".
+      const rawStatus = String(venda.status || "").trim().toUpperCase();
+      const normalizedStatus = rawStatus === "PAGO" ? "PAGO" : "NÃO PAGOU";
       setF({
         forma_pagamento: venda.forma_pagamento || "", desconto: String(venda.desconto || 0),
-        status: venda.status || "",
+        status: normalizedStatus,
         data_cadastro: isoToBr(venda.data_cadastro) || isoToBr(new Date().toISOString().slice(0, 10)),
         valor_aberto: String(venda.valor_aberto || 0),
       });
@@ -368,12 +473,15 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
           });
         });
         setSelectedServicos(map);
+        const firstId = ((data as any[]) ?? [])[0]?.servico_id ?? null;
+        setOriginalPrimaryServicoId(firstId ? Number(firstId) : null);
       });
     } else {
       const today = new Date();
       const todayBr = `${String(today.getDate()).padStart(2,'0')}/${String(today.getMonth()+1).padStart(2,'0')}/${today.getFullYear()}`;
       setF({ forma_pagamento: "", desconto: "0", status: "", data_cadastro: todayBr, valor_aberto: "0" });
       setSelectedServicos(new Map());
+      setOriginalPrimaryServicoId(null);
     }
   }, [venda, open]);
 
@@ -419,10 +527,71 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
 
   const save = async () => {
     if (selectedServicos.size === 0) { toast.error("Selecione ao menos um serviço"); return; }
+    if (!f.status) { toast.error("Selecione o status da venda"); return; }
+    if (!f.forma_pagamento) { toast.error("Selecione a forma de pagamento"); return; }
+
+    // Validação obrigatória: re-checar catálogo no momento do save para
+    // garantir que todos os serviços selecionados ainda estão ativos e que
+    // o preço bate com o catálogo atual. Desconto deve ser lançado no campo
+    // próprio; o valor do item é sempre snapshot do Catálogo de Preços.
+    const ids = Array.from(selectedServicos.keys());
+    const { data: vivos, error: catErr } = await supabase
+      .from("qa_servicos_catalogo" as any)
+      .select("servico_id, ativo, preco")
+      .in("servico_id", ids);
+    if (catErr) { toast.error("Falha ao revalidar catálogo: " + catErr.message); return; }
+    const map = new Map<number, { ativo: boolean; preco: number }>(
+      ((vivos as any[]) ?? []).map((v) => [Number(v.servico_id), { ativo: !!v.ativo, preco: Number(v.preco) }]),
+    );
+    for (const [id, sel] of selectedServicos.entries()) {
+      const v = map.get(id);
+      if (!v || !v.ativo || Number.isNaN(v.preco)) {
+        toast.error("Catálogo desatualizado: serviço removido, desativado ou sem preço. Recarregue a tela.");
+        return;
+      }
+      if (!sel.cortesia && Number(sel.valor) !== Number(v.preco)) {
+        toast.error("Preço divergente do Catálogo de Preços. Recarregue o catálogo antes de salvar.");
+        return;
+      }
+    }
+
+    // ── Detectar troca de serviço em venda já com processo aberto ──
+    if (isEdit && originalPrimaryServicoId) {
+      const novoPrimary = Array.from(selectedServicos.keys())[0];
+      if (novoPrimary && novoPrimary !== originalPrimaryServicoId) {
+        // qa_processos.venda_id referencia qa_vendas.id (PK real),
+        // NÃO id_legado. Bug histórico fazia o lookup falhar e o modal
+        // de troca nunca abria, deixando o operador trocar o serviço
+        // sem regenerar checklist.
+        const vendaPkId = Number(venda.id);
+        const { data: procRaw } = await supabase
+          .from("qa_processos" as any)
+          .select("id")
+          .eq("venda_id", vendaPkId)
+          .maybeSingle();
+        const proc = procRaw as unknown as { id: string } | null;
+        if (proc?.id) {
+          // Roda dry_run da RPC para mostrar o impacto antes de salvar.
+          const { data: previewData, error: previewErr } = await supabase.rpc(
+            "qa_processo_trocar_servico" as any,
+            { p_processo_id: proc.id, p_novo_servico_id: novoPrimary, p_dry_run: true } as any,
+          );
+          if (previewErr) { toast.error("Não foi possível pré-visualizar a troca: " + previewErr.message); return; }
+          setTrocaProcessoId(proc.id);
+          setTrocaPreview(previewData as any);
+          setTrocaOpen(true);
+          return; // só salva depois que o operador confirmar
+        }
+      }
+    }
+    await persistSave();
+  };
+
+  const persistSave = async () => {
     setSaving(true);
     try {
       const dataCadIso = brToIso(f.data_cadastro) || new Date().toISOString().slice(0, 10);
-      const valorAberto = f.status === "EM ABERTO" ? (Number(f.valor_aberto) || 0) : 0;
+      const valorAberto = f.status === "NÃO PAGOU" ? (Number(f.valor_aberto) || 0) : 0;
       const payload: any = { ...f, data_cadastro: dataCadIso, desconto: desconto, valor_a_pagar: total, valor_aberto: valorAberto };
       let vendaId: number;
       if (isEdit) {
@@ -431,12 +600,97 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         vendaId = venda.id_legado ?? venda.id;
         await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaId);
       } else {
-        const { data, error } = await supabase.from("qa_vendas" as any).insert({ ...payload, cliente_id: clienteId }).select("id, id_legado").single();
+        const insertPayload: any = { ...payload, cliente_id: clienteId };
+        if (solicitacaoId) insertPayload.solicitacao_id = solicitacaoId;
+        const { data, error } = await supabase.from("qa_vendas" as any).insert(insertPayload).select("id, id_legado").single();
         if (error) throw error;
         vendaId = (data as any).id_legado ?? (data as any).id;
+        // Marca solicitação canônica como contratada (única fonte de verdade).
+        // Propaga status financeiro e operacional conforme a venda recém-criada.
+        if (solicitacaoId) {
+          const vendaPk = (data as any).id;
+          const primaryServicoId = Array.from(selectedServicos.keys())[0];
+          if (!primaryServicoId) {
+            throw new Error("Falha ao classificar solicitação: nenhum serviço principal selecionado.");
+          }
+          const primaryServico = servicos.find((svc) => svc.id === primaryServicoId);
+          const { data: catalogoServico } = await supabase
+            .from("qa_servicos_catalogo" as any)
+            .select("slug, nome")
+            .eq("servico_id", primaryServicoId)
+            .maybeSingle();
+          const serviceName = (catalogoServico as any)?.nome || primaryServico?.nome_servico || "Serviço contratado";
+          const serviceSlug = (catalogoServico as any)?.slug || slugifyServico(serviceName, primaryServicoId);
+          // Snapshot do status anterior para auditoria (best-effort).
+          let statusServicoAnterior: string | null = null;
+          try {
+            const { data: prevSol } = await supabase
+              .from("qa_solicitacoes_servico" as any)
+              .select("status_servico")
+              .eq("id", solicitacaoId)
+              .maybeSingle();
+            statusServicoAnterior = (prevSol as any)?.status_servico ?? null;
+          } catch { /* não bloqueia */ }
+          // Atualiza solicitação canônica → fonte única de verdade do dashboard.
+          // Falha NÃO pode ser silenciosa: se o update não confirmar, lança erro.
+          const { data: updRows, error: updErr } = await supabase
+            .from("qa_solicitacoes_servico" as any)
+            .update({
+              // Novo padrão (15 status) — substitui o antigo "contratado".
+              // Após a venda gerada, o serviço entra em montagem da pasta.
+              status_servico: "montando_pasta",
+              servico_id: primaryServicoId,
+              service_slug: serviceSlug,
+              service_name: serviceName,
+              pendente_classificacao: false,
+              // status_financeiro NÃO é setado aqui: é DERIVADO de qa_vendas.
+              // A trigger trg_qa_vendas_propagate_status já propagou o valor
+              // correto para esta solicitação no INSERT da venda acima.
+              // status_processo só muda quando o processo é aberto
+              // (RPC qa_venda_to_processo).
+              venda_id: vendaPk,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", solicitacaoId)
+            .select("id");
+          if (updErr) throw updErr;
+          if (!updRows || (updRows as any[]).length === 0) {
+            throw new Error(
+              "Falha ao finalizar solicitação: nenhum registro atualizado em qa_solicitacoes_servico."
+            );
+          }
+          // Auditoria universal (não bloqueia)
+          try {
+            const { data: userRes } = await supabase.auth.getUser();
+            await registrarStatusEvento({
+              origem: "equipe",
+              entidade: "solicitacao_servico",
+              entidade_id: solicitacaoId,
+              solicitacao_id: solicitacaoId,
+              cliente_id: clienteId,
+              campo_status: "status_servico",
+              status_anterior: statusServicoAnterior,
+              status_novo: "montando_pasta",
+              usuario_id: userRes?.user?.id ?? null,
+              detalhes: {
+                contexto: "SubEntityModals.persistSave",
+                service_slug: serviceSlug,
+                service_name: serviceName,
+                venda_id: vendaPk,
+              },
+            });
+          } catch { /* não bloqueia */ }
+          // Notificação 'montando_pasta' é disparada automaticamente pela
+          // trigger ao detectar a transição de status no banco.
+        }
       }
+      const defaultItemStatus = getDefaultItemStatus();
+      // Validação agora é feita pelo trigger trg_qa_itens_venda_validate_status
+      // contra qa_status_servico (fonte única, editável em Configurações).
+      // Aqui apenas garantimos um fallback para itens sem status definido.
       const items = Array.from(selectedServicos.entries()).map(([servicoId, { valor, cortesia, cortesia_motivo, status }]) => ({
-        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor, status: status || null,
+        venda_id: vendaId, servico_id: servicoId, valor: cortesia ? 0 : valor,
+        status: (status && String(status).trim()) ? status : defaultItemStatus,
         cortesia, cortesia_motivo: cortesia ? (cortesia_motivo || null) : null,
       }));
       if (items.length > 0) {
@@ -448,13 +702,53 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
     } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
   };
 
+  const confirmarTroca = async () => {
+    if (!trocaProcessoId || !trocaPreview) return;
+    setTrocaSaving(true);
+    try {
+      const { data, error } = await supabase.rpc(
+        "qa_processo_trocar_servico" as any,
+        {
+          p_processo_id: trocaProcessoId,
+          p_novo_servico_id: trocaPreview.servico_novo.id,
+          p_dry_run: false,
+          p_motivo: "Troca via edição de venda",
+        } as any,
+      );
+      if (error) throw error;
+      const r = data as any;
+      toast.success(
+        `Processo atualizado: ${r.reaproveitados ?? 0} reaproveitados, ${r.descartados ?? 0} descartados, ${r.novos_inseridos ?? 0} novos.`,
+      );
+      // Atualiza a referência para evitar disparar o modal de novo nesta mesma sessão.
+      const novoPrimary = Array.from(selectedServicos.keys())[0];
+      if (novoPrimary) setOriginalPrimaryServicoId(novoPrimary);
+      setTrocaOpen(false);
+      setTrocaPreview(null);
+      setTrocaProcessoId(null);
+      // Persiste a venda em si (itens + valores).
+      await persistSave();
+    } catch (e: any) {
+      toast.error("Falha ao trocar serviço: " + e.message);
+    } finally {
+      setTrocaSaving(false);
+    }
+  };
+
+  const cancelarTroca = () => {
+    setTrocaOpen(false);
+    setTrocaPreview(null);
+    setTrocaProcessoId(null);
+  };
+
   return (
+    <>
     <PremiumModalShell
       open={open}
       onClose={onClose}
       title={isEdit ? "Editar Venda" : "Nova Venda"}
       icon={ShoppingCart}
-      accentColor="bg-blue-600"
+      accentColor="bg-[#7A1F2B]"
       footer={
         <div className="space-y-3">
           {/* Totals */}
@@ -472,12 +766,12 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                 placeholder="0"
                 value={f.desconto}
                 onChange={e => setF(p => ({ ...p, desconto: e.target.value }))}
-                className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0"
+                className="h-8 w-24 text-xs text-right bg-white border-slate-300 text-slate-700 px-2 rounded-md font-mono focus-visible:ring-1 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0"
               />
             </div>
             <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-200/80">
               <span className="text-slate-800 font-bold">Total</span>
-              <span className="text-indigo-700 font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
+              <span className="text-[#7A1F2B] font-bold font-mono text-sm">R$ {total.toLocaleString('pt-BR')}</span>
             </div>
           </div>
           {/* Actions */}
@@ -494,7 +788,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
               type="button"
               onClick={save}
               disabled={saving}
-              className="h-11 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+              className="h-11 text-xs rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white shadow-sm disabled:opacity-60"
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
               {isEdit ? "Salvar" : "Cadastrar Venda"}
@@ -511,7 +805,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
           <div className="flex-1 min-w-0">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Forma Pagamento</label>
             <Select value={f.forma_pagamento} onValueChange={v => setF(p => ({ ...p, forma_pagamento: v }))}>
-              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-[#E5C2C6] hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-[#7A1F2B] focus:ring-offset-0 focus:border-[#7A1F2B]">
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl z-[100]">
@@ -530,16 +824,19 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
           <div className="flex-1 min-w-0">
             <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">Status</label>
             <Select value={f.status} onValueChange={v => setF(p => ({ ...p, status: v }))}>
-              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+              <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-[#E5C2C6] hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-[#7A1F2B] focus:ring-offset-0 focus:border-[#7A1F2B]">
                 <SelectValue placeholder="Selecionar" />
               </SelectTrigger>
               <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
-                {["PAGO", "EM ABERTO"].map(s => (
-                  <SelectItem key={s} value={s} className="text-sm text-slate-700">{s}</SelectItem>
+                {[
+                  { value: "PAGO", label: "PAGO" },
+                  { value: "NÃO PAGOU", label: "NÃO PAGO" },
+                ].map(s => (
+                  <SelectItem key={s.value} value={s.value} className="text-sm text-slate-700">{s.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {f.status === "EM ABERTO" && (
+            {f.status === "NÃO PAGOU" && (
               <div className="mt-2">
                 <label className="flex items-center gap-1.5 text-[10px] font-semibold text-amber-600 uppercase tracking-[0.1em] mb-1">Valor em aberto (R$)</label>
                 <input
@@ -560,10 +857,52 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
         <div>
           <div className="flex items-center justify-between mb-2.5">
             <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em]">Serviços Contratados</label>
-            <span className="text-[10px] text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded-full">{selectedServicos.size} sel.</span>
+            <span className="text-[10px] text-[#7A1F2B] font-bold bg-[#FBF3F4] px-2 py-0.5 rounded-full">{selectedServicos.size} sel.</span>
           </div>
+          <Input
+            type="text"
+            value={servicoSearch}
+            onChange={(e) => setServicoSearch(e.target.value)}
+            placeholder="Pesquisar serviço (nome, slug, categoria)…"
+            className="h-9 mb-2 text-xs bg-white border-slate-200 text-slate-700 rounded-md focus-visible:ring-1 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0"
+          />
           <div className="max-h-[44vh] sm:max-h-[220px] overflow-y-auto space-y-1 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2">
-            {servicos.map(svc => {
+            {(() => {
+              const q = servicoSearch.trim().toLowerCase();
+              const filtered = q
+                ? servicos.filter((s) =>
+                    [s.nome_servico, s.slug, s.categoria, s.descricao_curta || ""]
+                      .some((f) => String(f).toLowerCase().includes(q)),
+                  )
+                : servicos;
+              if (filtered.length === 0) {
+                return (
+                  <div className="text-center py-6 text-[11px] text-slate-500 uppercase tracking-wider">
+                    Nenhum serviço encontrado no catálogo
+                  </div>
+                );
+              }
+              // Agrupa por categoria (sistema/órgão) e ordena grupos + itens
+              const groups = new Map<string, typeof filtered>();
+              for (const s of filtered) {
+                const key = (s.categoria || "OUTROS").toUpperCase();
+                if (!groups.has(key)) groups.set(key, [] as any);
+                (groups.get(key) as any).push(s);
+              }
+              const orderedKeys = Array.from(groups.keys()).sort((a, b) =>
+                a.localeCompare(b, "pt-BR", { sensitivity: "base" })
+              );
+              return orderedKeys.map((groupKey) => {
+                const items = (groups.get(groupKey) || []).slice().sort((a, b) =>
+                  a.nome_servico.localeCompare(b.nome_servico, "pt-BR", { sensitivity: "base" })
+                );
+                return (
+                  <div key={groupKey} className="space-y-1">
+                    <div className="sticky top-0 z-10 -mx-2 px-3 py-1 bg-[#7A1F2B] text-white text-[9px] font-bold uppercase tracking-[0.12em] rounded-md shadow-sm">
+                      {groupKey}
+                      <span className="ml-2 opacity-70 font-normal">({items.length})</span>
+                    </div>
+                    {items.map((svc) => {
               const isChecked = selectedServicos.has(svc.id);
               const svcData = selectedServicos.get(svc.id);
               return (
@@ -571,18 +910,20 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                   key={svc.id}
                   className={`rounded-lg px-2.5 py-2 text-xs transition-all duration-200 ${
                     isChecked
-                      ? "bg-indigo-50 border border-indigo-200/60 text-slate-800 shadow-sm"
+                      ? "bg-[#FBF3F4] border border-[#E5C2C6] text-slate-800 shadow-sm"
                       : "text-slate-500 hover:bg-white border border-transparent"
                   }`}
                 >
                   <label className="flex items-center gap-2 cursor-pointer">
                     <div className={`h-4 w-4 rounded flex items-center justify-center shrink-0 transition-colors ${
-                      isChecked ? "bg-indigo-600 text-white" : "bg-slate-200"
+                      isChecked ? "bg-[#7A1F2B] text-white" : "bg-slate-200"
                     }`}>
                       {isChecked && <CheckCircle2 className="h-3 w-3" />}
                     </div>
                     <input type="checkbox" checked={isChecked} onChange={() => toggleServico(svc)} className="sr-only" />
-                    <span className="flex-1 min-w-0 truncate font-medium">{svc.nome_servico}</span>
+                   <span className="flex-1 min-w-0 truncate font-medium uppercase">
+                      {svc.nome_servico}
+                    </span>
                     {isChecked ? (
                       <Input
                         type="number"
@@ -591,7 +932,7 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                         onChange={e => updateServicoValor(svc.id, Number(e.target.value) || 0)}
                         onClick={e => e.preventDefault()}
                         disabled={!!svcData?.cortesia}
-                        className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-indigo-400 focus-visible:ring-offset-0 font-mono disabled:opacity-50 disabled:line-through"
+                        className="h-7 w-16 sm:w-20 text-xs text-right bg-white border-slate-200 text-slate-700 px-1.5 shrink-0 rounded-md focus-visible:ring-1 focus-visible:ring-[#7A1F2B] focus-visible:ring-offset-0 font-mono disabled:opacity-50 disabled:line-through"
                       />
                     ) : (
                       <span className="text-[10px] text-slate-400 font-mono shrink-0">R$ {svc.valor_servico}</span>
@@ -623,11 +964,23 @@ export function VendaModal({ open, onClose, onSaved, clienteId, venda }: VendaMo
                   )}
                 </div>
               );
-            })}
+                    })}
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       </div>
     </PremiumModalShell>
+    <TrocaServicoConfirmDialog
+      open={trocaOpen}
+      preview={trocaPreview}
+      saving={trocaSaving}
+      onConfirm={confirmarTroca}
+      onCancel={cancelarTroca}
+    />
+    </>
   );
 }
 
@@ -676,16 +1029,16 @@ export function FiliacaoModal({ open, onClose, onSaved, clienteId, filiacao }: F
   };
 
   return (
-    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Filiação" : "Nova Filiação"} icon={Users} accentColor="bg-violet-600">
+    <PremiumModalShell open={open} onClose={onClose} title={isEdit ? "Editar Filiação" : "Nova Filiação"} icon={Users} accentColor="bg-[#7A1F2B]">
       <div className="space-y-4">
         <div>
           <label className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-[0.1em] mb-2">
-            <Users className="h-3 w-3 text-indigo-400" />
+            <Users className="h-3 w-3 text-[#7A1F2B]" />
             Clube de Tiro
             <span className="text-red-400">*</span>
           </label>
           <Select value={f.clube_id} onValueChange={v => setF(p => ({ ...p, clube_id: v }))}>
-            <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-indigo-300 hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 focus:border-indigo-400">
+            <SelectTrigger className="h-10 text-sm bg-slate-50/80 border-slate-200/80 text-slate-800 rounded-lg font-medium hover:border-[#E5C2C6] hover:bg-white transition-all duration-200 focus:ring-2 focus:ring-[#7A1F2B] focus:ring-offset-0 focus:border-[#7A1F2B]">
               <SelectValue placeholder="Selecionar clube" />
             </SelectTrigger>
             <SelectContent className="bg-white border-slate-200 rounded-lg shadow-xl">
@@ -708,17 +1061,28 @@ export function FiliacaoModal({ open, onClose, onSaved, clienteId, filiacao }: F
 interface DeleteConfirmProps {
   open: boolean; onClose: () => void; onConfirm: () => void;
   title: string; description: string; loading?: boolean;
+  mode?: "delete" | "archive";
 }
-export function DeleteConfirm({ open, onClose, onConfirm, title, description, loading }: DeleteConfirmProps) {
+export function DeleteConfirm({ open, onClose, onConfirm, title, description, loading, mode = "delete" }: DeleteConfirmProps) {
+  const isArchive = mode === "archive";
+  const accent = isArchive ? "amber" : "red";
+  const Icon = isArchive ? Archive : Trash2;
+  const btnText = isArchive ? "Arquivar" : "Excluir";
+  const topBar = isArchive ? "bg-amber-500" : "bg-red-500";
+  const titleText = isArchive ? "text-amber-700" : "text-red-600";
+  const iconBg = isArchive ? "bg-amber-500" : "bg-red-500";
+  const btnBg = isArchive ? "bg-amber-600 hover:bg-amber-700" : "bg-red-600 hover:bg-red-700";
+  const shadow = isArchive ? "shadow-amber-200/50" : "shadow-red-200/50";
+
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-sm border-0 shadow-2xl shadow-red-100/30 rounded-2xl overflow-hidden p-0 bg-white">
-        <div className="h-1 w-full bg-red-500" />
+      <DialogContent className={`max-w-sm border-0 shadow-2xl rounded-2xl overflow-hidden p-0 bg-white ${isArchive ? "shadow-amber-100/30" : "shadow-red-100/30"}`}>
+        <div className={`h-1 w-full ${topBar}`} />
         <div className="p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5 text-base font-bold text-red-600 tracking-tight">
-              <div className="h-8 w-8 rounded-lg bg-red-500 flex items-center justify-center">
-                <Trash2 className="h-4 w-4 text-white" />
+            <DialogTitle className={`flex items-center gap-2.5 text-base font-bold ${titleText} tracking-tight`}>
+              <div className={`h-8 w-8 rounded-lg ${iconBg} flex items-center justify-center`}>
+                <Icon className="h-4 w-4 text-white" />
               </div>
               {title}
             </DialogTitle>
@@ -735,10 +1099,10 @@ export function DeleteConfirm({ open, onClose, onConfirm, title, description, lo
             <Button
               onClick={onConfirm}
               disabled={loading}
-              className="h-9 px-5 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md shadow-red-200/50"
+              className={`h-9 px-5 text-xs font-semibold ${btnBg} text-white rounded-lg shadow-md ${shadow}`}
             >
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Trash2 className="h-3.5 w-3.5 mr-1.5" />}
-              Excluir
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Icon className="h-3.5 w-3.5 mr-1.5" />}
+              {btnText}
             </Button>
           </div>
         </div>

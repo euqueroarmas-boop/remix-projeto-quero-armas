@@ -19,6 +19,10 @@ import {
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { logSistema } from "@/lib/logSistema";
 import DraftingView, { type DraftingResult } from "@/components/quero-armas/DraftingView";
+import { TIPOS_PECA as TIPOS_PECA_CATALOG } from "@/components/quero-armas/tiposPeca";
+import PecaCorrectionTools from "@/components/quero-armas/PecaCorrectionTools";
+import CorrecoesAlertaPanel from "@/components/quero-armas/CorrecoesAlertaPanel";
+import type { CorrecaoAlerta } from "@/components/quero-armas/DraftingView";
 
 /* ── Types ── */
 type DocUploadStage = "pending" | "queued" | "uploading" | "saved" | "extracting" | "processing" | "done" | "failed";
@@ -102,12 +106,7 @@ const TIPOS_DOC_AUXILIAR = [
   { value: "outro", label: "Outro documento probatório" },
 ];
 
-const TIPOS_PECA = [
-  { value: "defesa_posse_arma", label: "Defesa para Posse de Arma" },
-  { value: "defesa_porte_arma", label: "Defesa para Porte de Arma" },
-  { value: "recurso_administrativo", label: "Recurso Administrativo" },
-  { value: "resposta_a_notificacao", label: "Resposta à Notificação" },
-];
+const TIPOS_PECA = TIPOS_PECA_CATALOG;
 
 // TIPOS_SERVICO removido — redundante com TIPOS_PECA
 
@@ -254,7 +253,7 @@ function stageProgress(s: DocUploadStage): number {
 function stageColor(s: DocUploadStage): string {
   if (s === "done") return "text-emerald-400";
   if (s === "failed") return "text-red-400";
-  return "text-blue-600";
+  return "text-[#7A1F2B]";
 }
 
 function ElapsedTime({ startedAt }: { startedAt?: number }) {
@@ -299,6 +298,30 @@ export default function QAGerarPecaPage() {
   // Editing existing case
   const [casoId, setCasoId] = useState<string | null>(null);
 
+  // ── Indeferimento (recurso_administrativo) ──
+  const [indeferimentoTexto, setIndeferimentoTexto] = useState("");
+  const [indeferimentoAnalise, setIndeferimentoAnalise] = useState<any | null>(null);
+  const [analisandoIndef, setAnalisandoIndef] = useState(false);
+  const indefFileRef = useRef<HTMLInputElement>(null);
+  // Cliente vinculado ao caso (preservado entre carregamento e geração)
+  const [clienteIdVinculado, setClienteIdVinculado] = useState<number | null>(null);
+
+  // ── Fase 1: Autopreenchimento a partir do serviço/processo ──
+  type OrigemCampo = "manual" | "servico" | "historico" | "calculo" | null;
+  const [origemDataNotif, setOrigemDataNotif] = useState<OrigemCampo>(null);
+  const [origemNumReq, setOrigemNumReq] = useState<OrigemCampo>(null);
+  const [origemTempest, setOrigemTempest] = useState<OrigemCampo>(null);
+  const [autoPreenchInfo, setAutoPreenchInfo] = useState<{
+    itemId?: number;
+    numero_processo?: string | null;
+    prazoFonte?: string;
+    diasRestantes?: number;
+    sugestao?: { dataNotificacao?: string; numeroRequerimento?: string; infoTempestividade?: string } | null;
+  }>({});
+  const [autoPreenchLoading, setAutoPreenchLoading] = useState(false);
+  const autoPreenchReqRef = useRef(0);
+  const ultimoAutoServicoRef = useRef<string>(""); // chave clienteId|tipoPeca já aplicada
+
   // CEP
   const [cepStatus, setCepStatus] = useState<CepStatus>("idle");
   const cepTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -337,6 +360,196 @@ export default function QAGerarPecaPage() {
 
   const needsTempestividade = tipoPeca === "recurso_administrativo" || tipoPeca === "resposta_a_notificacao";
 
+  /* ── Helpers de autopreenchimento (Fase 1) ── */
+  const onChangeDataNotificacao = (v: string) => {
+    setDataNotificacao(v);
+    setOrigemDataNotif("manual");
+  };
+  const onChangeNumeroRequerimento = (v: string) => {
+    setNumeroRequerimento(v);
+    setOrigemNumReq("manual");
+  };
+  const onChangeInfoTempestividade = (v: string) => {
+    setInfoTempestividade(v);
+    setOrigemTempest("manual");
+  };
+
+  const formatBR = (iso?: string | null) => {
+    if (!iso) return "";
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso);
+  };
+
+  const calcularTempestividade = (
+    baseISO: string,
+    prazoDias: number,
+    descrEvento: string,
+    fontePrazo: string,
+  ): { texto: string; diasRestantes: number } => {
+    const base = new Date(baseISO + "T00:00:00");
+    const fim = new Date(base);
+    fim.setDate(fim.getDate() + prazoDias);
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((fim.getTime() - hoje.getTime()) / 86400000);
+    let txt = "";
+    if (diff > 0) {
+      txt = `Tempestividade verificada com base na ${descrEvento} ocorrida em ${formatBR(baseISO)}. Considerando o prazo aplicável de ${prazoDias} dias (${fontePrazo}), o prazo final ocorre em ${formatBR(fim.toISOString().slice(0,10))}, restando ${diff} dia(s), razão pela qual a presente manifestação/recurso é tempestiva.`;
+    } else if (diff === 0) {
+      txt = `Tempestividade verificada com base na ${descrEvento} ocorrida em ${formatBR(baseISO)}. O prazo final se encerra na presente data, razão pela qual a manifestação/recurso deve ser protocolada imediatamente.`;
+    } else {
+      txt = `Alerta: o prazo de ${prazoDias} dias (${fontePrazo}) calculado com base na ${descrEvento} de ${formatBR(baseISO)} indica possível intempestividade (vencido há ${Math.abs(diff)} dia(s)). Revisar manualmente antes de gerar a peça.`;
+    }
+    return { texto: txt, diasRestantes: diff };
+  };
+
+  const buscarPrazoConfigurado = async (tipoPecaKey: string) => {
+    const { data } = await supabase
+      .from("qa_prazos_procedimentos" as any)
+      .select("prazo_dias, base_calculo, tipo_peca, procedimento_servico, descricao")
+      .eq("ativo", true)
+      .or(`tipo_peca.eq.${tipoPecaKey},procedimento_servico.eq.${tipoPecaKey}`)
+      .order("prioridade", { ascending: true })
+      .limit(1);
+    return (data && data[0]) ? (data[0] as any) : null;
+  };
+
+  const autopreencherDoServico = useCallback(async (opts: { force?: boolean } = {}) => {
+    if (!clienteIdVinculado) return;
+    const reqId = ++autoPreenchReqRef.current;
+    setAutoPreenchLoading(true);
+    try {
+      // 1) Busca itens de venda do cliente (via vendas)
+      const { data: vendas } = await supabase
+        .from("qa_vendas" as any)
+        .select("id")
+        .eq("cliente_id", clienteIdVinculado);
+      const vendaIds = (vendas as any[] | null)?.map(v => v.id) ?? [];
+      if (reqId !== autoPreenchReqRef.current) return;
+      if (!vendaIds.length) {
+        setAutoPreenchInfo({ sugestao: null });
+        return;
+      }
+      const { data: itens } = await supabase
+        .from("qa_itens_venda" as any)
+        .select("id, venda_id, numero_requerimento, numero_processo, data_notificacao, data_indeferimento, data_indeferimento_recurso, data_recurso_administrativo, status, tipo_venda, data_ultima_atualizacao")
+        .in("venda_id", vendaIds)
+        .order("data_ultima_atualizacao", { ascending: false, nullsFirst: false });
+      if (reqId !== autoPreenchReqRef.current) return;
+      const arr = (itens as any[] | null) ?? [];
+      if (!arr.length) {
+        setAutoPreenchInfo({ sugestao: null });
+        return;
+      }
+
+      // 2) Seleciona melhor item conforme tipo de peça
+      let candidato: any = null;
+      if (tipoPeca === "recurso_administrativo") {
+        candidato = arr.find(i => i.data_indeferimento_recurso) || arr.find(i => i.data_indeferimento) || arr[0];
+      } else if (tipoPeca === "resposta_a_notificacao") {
+        candidato = arr.find(i => i.data_notificacao) || arr[0];
+      } else {
+        candidato = arr.find(i => i.numero_requerimento || i.data_notificacao) || arr[0];
+      }
+      if (!candidato) { setAutoPreenchInfo({ sugestao: null }); return; }
+
+      // 3) Determina datas-base
+      const dataNotifSugestao: string | null =
+        candidato.data_notificacao || candidato.data_indeferimento || candidato.data_indeferimento_recurso || null;
+      const numReqSugestao: string | null = candidato.numero_requerimento || candidato.numero_processo || null;
+
+      // 4) Busca prazo configurado
+      let infoTempestSugestao: string | undefined;
+      let prazoFonte = "";
+      let diasRestantes: number | undefined;
+      if (needsTempestividade && dataNotifSugestao) {
+        const prazo = await buscarPrazoConfigurado(tipoPeca);
+        if (reqId !== autoPreenchReqRef.current) return;
+        if (prazo) {
+          const evento = tipoPeca === "recurso_administrativo" ? "ciência do indeferimento" : "notificação";
+          prazoFonte = prazo.tipo_peca === tipoPeca
+            ? "prazo configurado para o tipo de peça"
+            : "prazo configurado no procedimento";
+          const calc = calcularTempestividade(dataNotifSugestao, prazo.prazo_dias, evento, prazoFonte);
+          infoTempestSugestao = calc.texto;
+          diasRestantes = calc.diasRestantes;
+        } else {
+          infoTempestSugestao = `Prazo não configurado no sistema. Configure em "Prazos & Procedimentos" ou preencha manualmente. Data de referência: ${formatBR(dataNotifSugestao)}.`;
+        }
+      }
+
+      setAutoPreenchInfo({
+        itemId: candidato.id,
+        numero_processo: candidato.numero_processo,
+        prazoFonte,
+        diasRestantes,
+        sugestao: {
+          dataNotificacao: dataNotifSugestao || undefined,
+          numeroRequerimento: numReqSugestao || undefined,
+          infoTempestividade: infoTempestSugestao,
+        },
+      });
+
+      // 5) Aplica respeitando preenchimento manual
+      const force = !!opts.force;
+      if (dataNotifSugestao && (force || (!dataNotificacao && origemDataNotif !== "manual"))) {
+        setDataNotificacao(dataNotifSugestao);
+        setOrigemDataNotif("servico");
+      }
+      if (numReqSugestao && (force || (!numeroRequerimento && origemNumReq !== "manual"))) {
+        setNumeroRequerimento(numReqSugestao);
+        setOrigemNumReq("servico");
+      }
+      if (infoTempestSugestao && (force || (!infoTempestividade && origemTempest !== "manual"))) {
+        setInfoTempestividade(infoTempestSugestao);
+        setOrigemTempest("calculo");
+      }
+    } catch (err) {
+      console.warn("[QAGerarPeca] autopreencherDoServico falhou:", err);
+    } finally {
+      if (reqId === autoPreenchReqRef.current) setAutoPreenchLoading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteIdVinculado, tipoPeca, needsTempestividade, dataNotificacao, numeroRequerimento, infoTempestividade, origemDataNotif, origemNumReq, origemTempest]);
+
+  // Dispara autopreenchimento quando cliente vinculado ou tipo de peça mudam
+  useEffect(() => {
+    if (!clienteIdVinculado) return;
+    const key = `${clienteIdVinculado}|${tipoPeca}`;
+    if (ultimoAutoServicoRef.current === key) return;
+    ultimoAutoServicoRef.current = key;
+    void autopreencherDoServico();
+  }, [clienteIdVinculado, tipoPeca, autopreencherDoServico]);
+
+  const recalcularTempestividade = async () => {
+    if (!dataNotificacao) {
+      toast.error("Informe a data da notificação/decisão para recalcular.");
+      return;
+    }
+    const prazo = await buscarPrazoConfigurado(tipoPeca);
+    if (!prazo) {
+      toast.warning("Prazo não configurado no sistema para este tipo de peça. Cadastre em 'Prazos & Procedimentos'.");
+      return;
+    }
+    const evento = tipoPeca === "recurso_administrativo" ? "ciência do indeferimento" : "notificação";
+    const fonte = prazo.tipo_peca === tipoPeca ? "prazo configurado para o tipo de peça" : "prazo configurado no procedimento";
+    const calc = calcularTempestividade(dataNotificacao, prazo.prazo_dias, evento, fonte);
+    setInfoTempestividade(calc.texto);
+    setOrigemTempest("calculo");
+    toast.success(`Tempestividade recalculada (${prazo.prazo_dias} dias, ${calc.diasRestantes} dia(s) restantes).`);
+  };
+
+  const labelOrigem = (o: OrigemCampo) =>
+    o === "servico" ? "preenchido pelo serviço"
+      : o === "historico" ? "preenchido pelo histórico"
+      : o === "calculo" ? "calculado automaticamente"
+      : o === "manual" ? "preenchido manualmente"
+      : "";
+  const corOrigem = (o: OrigemCampo) =>
+    o === "manual" ? "text-slate-400"
+      : o === "calculo" ? "text-amber-600"
+      : o ? "text-emerald-600" : "text-slate-400";
+
   // Doc counters
   const docTotal = arquivosAuxiliares.length;
   const docDone = arquivosAuxiliares.filter(a => a.stage === "done").length;
@@ -354,7 +567,7 @@ export default function QAGerarPecaPage() {
       if (!data) return;
       const c = data as any;
       setCasoId(c.id);
-      // titulo auto-gerado a partir do nome
+      // 1) Hidrata pelo snapshot histórico do caso (sempre presente)
       setNomeRequerente(c.nome_requerente || "");
       setCpfCnpj(c.cpf_cnpj || "");
       setEntradaCaso(c.descricao_caso || "");
@@ -373,6 +586,32 @@ export default function QAGerarPecaPage() {
       if (c.unidade_pf) {
         setCircunscricaoResolvida({ unidade_pf: c.unidade_pf, sigla_unidade: c.sigla_unidade_pf || "", tipo_unidade: "", municipio_sede: "", uf: c.uf || "", base_legal: "" });
         setCircunscricaoStatus("resolved");
+      }
+      if (c.indeferimento_texto) setIndeferimentoTexto(c.indeferimento_texto);
+      if (c.indeferimento_analise) setIndeferimentoAnalise(c.indeferimento_analise);
+
+      // 2) Se houver vínculo real com cliente, hidrata dados frescos (sobrepõe snapshot apenas onde houver valor)
+      if (c.cliente_id) {
+        setClienteIdVinculado(Number(c.cliente_id));
+        try {
+          const { data: clienteData } = await supabase
+            .from("qa_clientes" as any)
+            .select("nome_completo, cpf, cidade, estado, cep, endereco, bairro")
+            .eq("id", c.cliente_id)
+            .maybeSingle();
+          if (clienteData) {
+            const cl = clienteData as any;
+            if (cl.nome_completo) setNomeRequerente(cl.nome_completo);
+            if (cl.cpf) setCpfCnpj(cl.cpf);
+            if (cl.cidade) setClienteCidade(cl.cidade);
+            if (cl.estado) setClienteUf(cl.estado);
+            if (cl.cep) setClienteCep(cl.cep);
+            if (cl.endereco) setClienteEndereco(cl.endereco);
+            if (cl.bairro) setClienteBairro(cl.bairro);
+          }
+        } catch (err) {
+          console.warn("[QAGerarPeca] Falha ao hidratar cliente vinculado:", err);
+        }
       }
     };
     loadCase();
@@ -569,6 +808,48 @@ export default function QAGerarPecaPage() {
     await resolverCircunscricao(clienteCidade, clienteUf);
   };
 
+  /* ── Indeferimento — análise ── */
+  const handleIndefFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Arquivo acima de 5MB. Cole o texto manualmente."); return; }
+    const ext = file.name.toLowerCase().split(".").pop() || "";
+    if (ext === "txt") {
+      const txt = await file.text();
+      setIndeferimentoTexto(txt);
+      toast.success("Texto carregado. Revise e clique em ANALISAR.");
+      return;
+    }
+    toast.info("PDF/imagem detectados — anexe também na seção Documentos Auxiliares (tipo Indeferimento) para que o texto seja extraído. Aqui, cole o conteúdo no campo abaixo.");
+  };
+
+  const analisarIndeferimento = async () => {
+    const texto = indeferimentoTexto.trim();
+    if (texto.length < 100) { toast.error("Cole o conteúdo do indeferimento (mínimo 100 caracteres)."); return; }
+    setAnalisandoIndef(true);
+    try {
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess?.session?.access_token;
+      if (!token) throw new Error("Sessão expirada.");
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-analisar-indeferimento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ texto, caso_id: casoId || null }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || `Falha na análise (${res.status})`);
+      setIndeferimentoAnalise(json.analise);
+      toast.success("Indeferimento analisado. A peça será gerada rebatendo ponto a ponto.");
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao analisar indeferimento");
+    } finally {
+      setAnalisandoIndef(false);
+    }
+  };
+
   /* ── File name sanitization ── */
   const sanitizeFileName = (name: string): string => {
     let s = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -711,12 +992,15 @@ export default function QAGerarPecaPage() {
       // Direct fetch with timeout for reliable mobile execution
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 15000);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) throw new Error("Sessão expirada. Faça login novamente.");
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "Authorization": `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ storage_path: storagePath, user_id: user?.id || null }),
         signal: controller.signal,
@@ -843,12 +1127,15 @@ export default function QAGerarPecaPage() {
         // Direct fetch for retry (same as dispatchDocumentIngestion)
         const retryController = new AbortController();
         const retryTimer = setTimeout(() => retryController.abort(), 15000);
+        const { data: retrySession } = await supabase.auth.getSession();
+        const retryToken = retrySession?.session?.access_token;
+        if (!retryToken) throw new Error("Sessão expirada. Faça login novamente.");
         const retryRes = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-ingest-document`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Authorization": `Bearer ${retryToken}`,
           },
           body: JSON.stringify({ storage_path: arq.storagePath, user_id: user?.id || null }),
           signal: retryController.signal,
@@ -881,6 +1168,7 @@ export default function QAGerarPecaPage() {
 
       const casoData: Record<string, any> = {
         titulo: `Caso ${nomeRequerente || "sem título"}`,
+        cliente_id: clienteIdVinculado ?? null,
         nome_requerente: nomeRequerente,
         cpf_cnpj: cpfCnpj || null,
         tipo_peca: tipoPeca,
@@ -901,6 +1189,11 @@ export default function QAGerarPecaPage() {
         usuario_id: user?.id || null,
         updated_at: new Date().toISOString(),
       };
+
+      if (tipoPeca === "recurso_administrativo") {
+        casoData.indeferimento_texto = indeferimentoTexto.trim() || null;
+        casoData.indeferimento_analise = indeferimentoAnalise || null;
+      }
 
       if (geracaoResult?.geracao_id) {
         casoData.geracao_id = geracaoResult.geracao_id;
@@ -933,6 +1226,22 @@ export default function QAGerarPecaPage() {
 
       if (persistedGeracaoId) {
         setResultado((prev) => prev ? { ...prev, geracao_id: persistedGeracaoId } : prev);
+      }
+
+      // Reforço de integridade: garante que a peça gerada esteja vinculada ao caso/cliente
+      // (cobre o cenário em que o caso foi criado AGORA, depois da chamada à edge function).
+      if (persistedGeracaoId) {
+        const { error: linkGeracaoError } = await supabase
+          .from("qa_geracoes_pecas" as any)
+          .update({
+            caso_id: savedId,
+            cliente_id: clienteIdVinculado ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", persistedGeracaoId);
+        if (linkGeracaoError) {
+          console.warn("[saveCaso] Falha ao reforçar vínculo da peça com o caso:", linkGeracaoError);
+        }
       }
 
       if (auxiliarDocIds.length > 0) {
@@ -1031,17 +1340,24 @@ export default function QAGerarPecaPage() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
       const response = await fetch(`${supabaseUrl}/functions/v1/qa-gerar-peca`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`,
+          "Authorization": `Bearer ${accessToken}`,
           "apikey": supabaseKey,
         },
         body: JSON.stringify({
           stream: true,
           usuario_id: user?.id, caso_titulo: nomeRequerente, entrada_caso: entradaCaso,
           tipo_peca: tipoPeca, foco, caso_id: casoId || null,
+          cliente_id: clienteIdVinculado ?? null,
           cliente_cidade: clienteCidade.trim(), cliente_uf: clienteUf.trim(),
           cliente_endereco: clienteEndereco.trim() || null, cliente_cep: clienteCep.trim() || null,
           nome_requerente: nomeRequerente.trim(),
@@ -1055,6 +1371,8 @@ export default function QAGerarPecaPage() {
           info_tempestividade: infoTempestividade.trim() || null,
           numero_requerimento: numeroRequerimento.trim() || null,
           documentos_auxiliares_ids: auxiliarDocIds.length > 0 ? auxiliarDocIds : null,
+          indeferimento_texto: tipoPeca === "recurso_administrativo" ? (indeferimentoTexto.trim() || null) : null,
+          indeferimento_analise: tipoPeca === "recurso_administrativo" ? (indeferimentoAnalise || null) : null,
         }),
       });
 
@@ -1362,7 +1680,7 @@ export default function QAGerarPecaPage() {
                       <CommandGroup>
                         {municipiosList.map(m => (
                           <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
-                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-slate-800/10 data-[selected=true]:text-blue-600">
+                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-[#FBF3F4] data-[selected=true]:text-[#7A1F2B]">
                             <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
                             {toTitleCase(m)}
                           </CommandItem>
@@ -1435,23 +1753,53 @@ export default function QAGerarPecaPage() {
             <Label className="text-slate-500 text-[11px]">Nº do Requerimento <span className="text-slate-400">(opcional)</span></Label>
             <Input
               value={numeroRequerimento}
-              onChange={e => setNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
+              onChange={e => onChangeNumeroRequerimento(e.target.value.replace(/[^0-9a-zA-Z.\/\-]/g, ""))}
               className="bg-white border-slate-200 text-slate-700 h-9 text-sm"
               placeholder="Ex: 2026/001234-5"
             />
+            {origemNumReq && (
+              <span className={`text-[10px] ${corOrigem(origemNumReq)}`}>{labelOrigem(origemNumReq)}</span>
+            )}
           </div>
         </div>
 
         {/* ── Tempestividade ── */}
         {needsTempestividade && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-amber-500/5 border border-amber-500/10 rounded p-3">
-            <div className="space-y-1.5">
-              <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
-              <Input type="date" value={dataNotificacao} onChange={e => setDataNotificacao(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" />
+          <div className="space-y-2 bg-amber-500/5 border border-amber-500/10 rounded p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-amber-400/70 text-[11px]">Data da notificação / decisão</Label>
+                <Input type="date" value={dataNotificacao} onChange={e => onChangeDataNotificacao(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" />
+                {origemDataNotif && (
+                  <span className={`text-[10px] ${corOrigem(origemDataNotif)}`}>{labelOrigem(origemDataNotif)}</span>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo / tempestividade</Label>
+                <Textarea value={infoTempestividade} onChange={e => onChangeInfoTempestividade(e.target.value)} className="bg-white border-slate-200 text-slate-700 min-h-[60px] text-sm" placeholder="Calculado automaticamente a partir do serviço, ou preencha manualmente." />
+                {origemTempest && (
+                  <span className={`text-[10px] ${corOrigem(origemTempest)}`}>{labelOrigem(origemTempest)}</span>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-amber-400/70 text-[11px]">Informações sobre prazo</Label>
-              <Input value={infoTempestividade} onChange={e => setInfoTempestividade(e.target.value)} className="bg-white border-slate-200 text-slate-700 h-9 text-sm" placeholder="Ex: prazo de 15 dias" />
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {clienteIdVinculado && (
+                <Button type="button" variant="outline" size="sm"
+                  className="bg-white border-slate-200 text-slate-600 h-7 text-[10px]"
+                  onClick={() => autopreencherDoServico({ force: true })}
+                  disabled={autoPreenchLoading}>
+                  {autoPreenchLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                  Usar dados do serviço
+                </Button>
+              )}
+              <Button type="button" variant="outline" size="sm"
+                className="bg-white border-slate-200 text-slate-600 h-7 text-[10px]"
+                onClick={recalcularTempestividade}>
+                <Clock className="h-3 w-3 mr-1" /> Recalcular tempestividade
+              </Button>
+              {autoPreenchInfo.sugestao === null && clienteIdVinculado && (
+                <span className="text-[10px] text-slate-400">Nenhum serviço com dados encontrados para este cliente.</span>
+              )}
             </div>
           </div>
         )}
@@ -1464,6 +1812,110 @@ export default function QAGerarPecaPage() {
             placeholder="Descreva detalhadamente os fatos, a situação jurídica, o histórico do caso..." />
         </div>
 
+        {/* ── Decisão Administrativa / Indeferimento (somente recurso_administrativo) ── */}
+        {tipoPeca === "recurso_administrativo" && (
+          <div className="space-y-3 border border-[#7A1F2B]/20 bg-[#FBF3F4] rounded p-3">
+            <div className="flex items-center gap-2">
+              <Gavel className="h-3.5 w-3.5 text-[#7A1F2B]" />
+              <span className="text-[10px] text-[#7A1F2B] uppercase tracking-[0.15em] font-semibold">
+                Decisão Administrativa / Indeferimento
+              </span>
+              {indeferimentoAnalise && (
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded">
+                  ✓ Analisado
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-slate-500">
+              Cole a decisão da PF abaixo. A IA extrairá os fundamentos do indeferimento e gerará seções específicas
+              ("DA NULIDADE DO INDEFERIMENTO" e "DO ENFRENTAMENTO DOS FUNDAMENTOS") rebatendo ponto a ponto.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={indefFileRef}
+                type="file"
+                accept=".txt,.pdf,.png,.jpg,.jpeg,.webp"
+                className="hidden"
+                onChange={e => { handleIndefFile(e.target.files?.[0] || null); e.target.value = ""; }}
+              />
+              <Button
+                type="button" variant="outline" size="sm"
+                className="bg-white border-slate-200 text-slate-600 h-7 text-[11px]"
+                onClick={() => indefFileRef.current?.click()}
+              >
+                <Upload className="h-3 w-3 mr-1.5" /> Anexar decisão da delegacia (indeferimento)
+              </Button>
+              <span className="text-[9px] text-slate-400">.txt carrega direto. PDF/imagem: cole o texto manualmente abaixo.</span>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-slate-500 text-[11px]">Conteúdo do indeferimento *</Label>
+              <Textarea
+                value={indeferimentoTexto}
+                onChange={e => { setIndeferimentoTexto(e.target.value); if (indeferimentoAnalise) setIndeferimentoAnalise(null); }}
+                className="bg-white border-slate-200 text-slate-700 min-h-[160px] text-sm font-mono text-[12px]"
+                placeholder="Cole aqui a decisão completa da Polícia Federal..."
+              />
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[10px] text-slate-400">{indeferimentoTexto.trim().length} caracteres</span>
+                <Button
+                  type="button" size="sm"
+                  disabled={analisandoIndef || indeferimentoTexto.trim().length < 100}
+                  onClick={analisarIndeferimento}
+                  className="bg-[#7A1F2B] hover:bg-[#641722] text-white h-7 text-[11px] disabled:opacity-40"
+                >
+                  {analisandoIndef ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Scale className="h-3 w-3 mr-1.5" />}
+                  ANALISAR INDEFERIMENTO COM IA
+                </Button>
+              </div>
+            </div>
+
+            {indeferimentoAnalise && (
+              <div className="space-y-2 bg-white border border-slate-200 rounded p-2.5 text-[11px] text-slate-700">
+                {indeferimentoAnalise.resumo_decisao && (
+                  <div><span className="font-semibold text-[#7A1F2B]">Resumo:</span> {indeferimentoAnalise.resumo_decisao}</div>
+                )}
+                {Array.isArray(indeferimentoAnalise.fundamentos_de_indef) && indeferimentoAnalise.fundamentos_de_indef.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Fundamentos do indeferimento ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
+                    <ul className="list-decimal list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.fundamentos_de_indef.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.artigos_citados) && indeferimentoAnalise.artigos_citados.length > 0 && (
+                  <div><span className="font-semibold text-[#7A1F2B]">Dispositivos citados:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
+                )}
+                {Array.isArray(indeferimentoAnalise.falhas_logicas) && indeferimentoAnalise.falhas_logicas.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Falhas lógicas:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.falhas_logicas.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.vicios_formais) && indeferimentoAnalise.vicios_formais.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Vícios formais:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.vicios_formais.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {Array.isArray(indeferimentoAnalise.pontos_nao_enfrentados) && indeferimentoAnalise.pontos_nao_enfrentados.length > 0 && (
+                  <div>
+                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Pontos não enfrentados pela autoridade:</div>
+                    <ul className="list-disc list-inside space-y-0.5 text-slate-600">
+                      {indeferimentoAnalise.pontos_nao_enfrentados.map((f: string, i: number) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── Auxiliary Documents ── */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -1471,7 +1923,7 @@ export default function QAGerarPecaPage() {
               <Paperclip className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-[10px] text-slate-400 uppercase tracking-[0.15em] font-medium">Documentos Auxiliares</span>
               {docTotal > 0 && (
-                <span className="text-[9px] bg-slate-800 text-slate-500 px-2 py-0.5 rounded">
+                <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
                   {docDone}/{docTotal}
                   {docFailed > 0 && <span className="text-red-400 ml-1">• {docFailed} falha(s)</span>}
                 </span>
@@ -1549,7 +2001,7 @@ export default function QAGerarPecaPage() {
         {docTotal > 0 && (
           <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
-            docActive > 0 ? "border-slate-300/30 bg-slate-800/5 text-blue-600" :
+            docActive > 0 ? "border-slate-300/30 bg-[#FBF3F4] text-[#7A1F2B]" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-neutral-700 bg-slate-100/50 text-slate-600"
@@ -1578,7 +2030,7 @@ export default function QAGerarPecaPage() {
           </div>
         )}
 
-        <Button onClick={gerar} disabled={!canGenerate} className="bg-slate-800 hover:bg-slate-900 text-slate-700 border border-slate-200 w-full md:w-auto h-9 text-sm disabled:opacity-40">
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#7A1F2B] hover:bg-[#641722] text-white border border-[#7A1F2B] w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>
@@ -1601,6 +2053,67 @@ export default function QAGerarPecaPage() {
         validationErrors={validationErrors}
         isExporting={isExporting}
       />
+
+      {/* Fase 2 — captura de correções supervisionadas direto na peça gerada */}
+      <PecaCorrectionTools
+        enabled={showDraftingView && draftingStep === "done" && !isStreaming && streamedText.length > 0}
+        context={{
+          tipo_peca: tipoPeca,
+          foco_argumentativo: foco,
+          cliente_id: clienteIdVinculado ?? null,
+          caso_id: savedCasoId || casoId || null,
+          peca_id: resultado?.geracao_id || null,
+        }}
+      />
+
+      {/* Fase 3 — alertas pós-geração de correções já catalogadas */}
+      {showDraftingView && draftingStep === "done" && (resultado?.correcoes_ia_alertas?.length ?? 0) > 0 && (
+        <div className="mt-3">
+          <CorrecoesAlertaPanel
+            alertas={resultado!.correcoes_ia_alertas as CorrecaoAlerta[]}
+            onAplicar={(a) => {
+              // Substitui no texto exibido. Tenta primeiro o trecho_suspeito; se falhar, tenta trecho_errado.
+              let aplicado = false;
+              const replaceOnce = (txt: string, needle: string, replacement: string) => {
+                if (!needle) return txt;
+                const idx = txt.toLowerCase().indexOf(needle.toLowerCase());
+                if (idx < 0) return txt;
+                aplicado = true;
+                return txt.slice(0, idx) + replacement + txt.slice(idx + needle.length);
+              };
+              setStreamedText((prev) => {
+                let next = replaceOnce(prev, a.trecho_suspeito, a.trecho_correto);
+                if (!aplicado) next = replaceOnce(prev, a.trecho_errado, a.trecho_correto);
+                return next;
+              });
+              setResultado((prev) => {
+                if (!prev) return prev;
+                let nextMin = prev.minuta_gerada || "";
+                let appliedHere = false;
+                const replaceOnce2 = (txt: string, needle: string, replacement: string) => {
+                  if (!needle) return txt;
+                  const idx = txt.toLowerCase().indexOf(needle.toLowerCase());
+                  if (idx < 0) return txt;
+                  appliedHere = true;
+                  return txt.slice(0, idx) + replacement + txt.slice(idx + needle.length);
+                };
+                nextMin = replaceOnce2(nextMin, a.trecho_suspeito, a.trecho_correto);
+                if (!appliedHere) nextMin = replaceOnce2(nextMin, a.trecho_errado, a.trecho_correto);
+                return { ...prev, minuta_gerada: nextMin };
+              });
+              if (aplicado) {
+                toast.success("Correção aplicada à peça");
+              } else {
+                toast.warning("Trecho não localizado para substituição automática — edite manualmente");
+              }
+              return aplicado;
+            }}
+            onIgnorar={() => {
+              // Apenas fechar o alerta — não desativa a correção original.
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

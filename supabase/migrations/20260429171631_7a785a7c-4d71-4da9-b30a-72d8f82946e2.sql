@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS public.qa_fase10_1_e2e_report;

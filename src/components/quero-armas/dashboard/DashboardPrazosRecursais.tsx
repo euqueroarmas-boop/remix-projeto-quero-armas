@@ -1,10 +1,12 @@
 /**
  * Dashboard — Prazos Recursais (PF: Posse, Porte e CRAF)
  *
- * Trigger: item com data_indeferimento preenchida E serviço sendo
- * Posse PF (id=2), Porte PF (id=3) ou CRAF PF (id=26).
- * Janela: D = data_indeferimento; prazo = D+10 (Lei 9.784/99 art. 59 +
- * Decreto 9.847/19 art. 10). Vencidos NÃO aparecem (filtra diasRestantes >= 0).
+ * Trigger: QUALQUER item com data_notificacao, data_indeferimento ou
+ * data_restituicao preenchida (independente do serviço — todos abrem prazo
+ * administrativo de 10 dias para manifestação/recurso).
+ * Janela: D = data mais recente entre notificação/indeferimento; prazo = D+10
+ * (Lei 9.784/99 art. 59 + Decreto 9.847/19 art. 10).
+ * Vencidos APARECEM (são alertas críticos da equipe).
  * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
  *
  * FKs em produção:
@@ -14,7 +16,7 @@
  * Layout: grid de até 9 cards pequenos (mais antigo → mais novo). 10º card "+N".
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2, Plus, Copy } from "lucide-react";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
@@ -22,6 +24,45 @@ import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
+import { extrairPrazoDoItem } from "@/lib/quero-armas/prazosProcessuais";
+
+/**
+ * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
+ * fora de gestos síncronos. Faz fallback via textarea + execCommand('copy').
+ */
+function copyTextFallback(text: string): boolean {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+async function copyTextSafe(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fallback abaixo */
+  }
+  return copyTextFallback(text);
+}
 
 interface ItemRow {
   id: number;
@@ -29,8 +70,14 @@ interface ItemRow {
   servico_id: number | null;
   status: string | null;
   data_indeferimento: string | null;
+  data_notificacao: string | null;
   data_recurso_administrativo: string | null;
+  data_indeferimento_recurso: string | null;
   numero_processo: string | null;
+  numero_requerimento: string | null;
+  numero_posse: string | null;
+  numero_porte: string | null;
+  numero_craf: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
 interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; cpf: string | null; }
@@ -41,60 +88,46 @@ interface PrazoRow {
   clienteId: number | null;
   clienteNome: string;
   cpf: string | null;
-  senhaGov: string | null;
+  cadastroCrId: number | null;
   protocolo: string | null;
-  tipo: "Posse" | "Porte" | "CRAF";
-  dataIndeferimento: string;
+  tipo: string;
+  /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
+  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO" | "MANDADO DE SEGURANÇA";
+  /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
+  status: string | null;
+  dataEvento: string;
   dataLimite: string;
   diasRestantes: number;
 }
 
 const MAX_CARDS = 9; // 9 cards individuais + 1 card "+N"
-// IDs dos serviços PF que disparam prazo recursal
-const SERVICOS_PF_RECURSO: Record<number, "Posse" | "Porte" | "CRAF"> = {
+// Mapa de tipo curto para os serviços conhecidos (rótulo no card).
+// Demais serviços usam o nome do próprio serviço como rótulo.
+const TIPO_CURTO: Record<number, string> = {
   2: "Posse",   // Posse na Polícia Federal
   3: "Porte",   // Porte na Polícia Federal
   26: "CRAF",   // CRAF na Polícia Federal
 };
 
-// Hoje no fuso local (evita drift UTC que joga o dia para trás em BRT/-03)
-const todayISO = () => {
-  const n = new Date();
-  const y = n.getFullYear();
-  const m = String(n.getMonth() + 1).padStart(2, "0");
-  const d = String(n.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
-// Diferença em dias usando UTC puro nas duas pontas (sem efeito de timezone)
-const diffDays = (a: string, b: string) => {
-  const [ay, am, ad] = a.split("-").map(Number);
-  const [by, bm, bd] = b.split("-").map(Number);
-  const aUTC = Date.UTC(ay, am - 1, ad);
-  const bUTC = Date.UTC(by, bm - 1, bd);
-  return Math.round((bUTC - aUTC) / 86_400_000);
-};
-const addDaysISO = (iso: string, days: number) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d + days));
-  const yy = dt.getUTCFullYear();
-  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getUTCDate()).padStart(2, "0");
-  return `${yy}-${mm}-${dd}`;
-};
-
 function toneFor(dias: number) {
-  // dias = dias restantes até o limite (D+10). Sempre 0..10 aqui (vencidos já filtrados).
+  if (dias < 0)  return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
   if (dias <= 4) return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
   if (dias <= 7) return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
   return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
 }
 
 export default function DashboardPrazosRecursais() {
+  const [govSenhas, setGovSenhas] = useState<Record<number, string>>({});
+  const [govLoading, setGovLoading] = useState<Record<number, boolean>>({});
+  const prefetchedRef = useRef<Set<number>>(new Set());
+
   const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
     const snapshot = await loadQADashboardSnapshot(signal);
-    const servicoIdsPF = Object.keys(SERVICOS_PF_RECURSO).map(Number);
     const itensList = snapshot.itens.filter(
-      (item) => item.data_indeferimento && item.servico_id != null && servicoIdsPF.includes(item.servico_id)
+      (item) =>
+        item.data_indeferimento ||
+        item.data_notificacao ||
+        item.data_indeferimento_recurso,
     ) as ItemRow[];
     if (!itensList.length) return [];
 
@@ -108,45 +141,65 @@ export default function DashboardPrazosRecursais() {
     const vMap = new Map(vendas.map(v => [v.id_legado, v]));
     const cMap = new Map(clientes.map(c => [c.id_legado, c]));
 
-    // Busca senhas gov dos clientes envolvidos (qa_cadastro_cr.cliente_id → qa_clientes.id)
+    // Mapa cliente_id -> cadastro_cr.id (para revelação on-demand via edge function)
     const clienteInternalIds = clientes.map(c => c.id);
-    const senhaMap = new Map<number, string>();
+    const cadastroMap = new Map<number, number>();
     if (clienteInternalIds.length) {
       const { data: crRows } = await supabase
         .from("qa_cadastro_cr" as any)
-        .select("cliente_id, senha_gov")
+        .select("id, cliente_id")
         .in("cliente_id", clienteInternalIds as any);
       for (const row of (crRows as any[] | null) || []) {
-        if (row?.cliente_id && row?.senha_gov && !senhaMap.has(row.cliente_id)) {
-          senhaMap.set(row.cliente_id, String(row.senha_gov));
+        if (row?.cliente_id && row?.id && !cadastroMap.has(row.cliente_id)) {
+          cadastroMap.set(row.cliente_id, Number(row.id));
         }
       }
     }
 
-    const today = todayISO();
     const built: PrazoRow[] = [];
     for (const it of itensList) {
-      const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
-      if (!tipo) continue;
       const venda = vMap.get(it.venda_id);
       const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
       if (!cliente) continue;
-      const dIndef = it.data_indeferimento!;
-      const dLimite = addDaysISO(dIndef, 10);
-      const diasRestantes = diffDays(today, dLimite);
-      if (diasRestantes < 0 || diasRestantes > 10) continue;
+      const prazo = extrairPrazoDoItem({
+        id: it.id,
+        servico_id: it.servico_id,
+        status: it.status,
+        numero_processo: it.numero_processo,
+        data_notificacao: it.data_notificacao,
+        data_indeferimento: it.data_indeferimento,
+        data_recurso_administrativo: it.data_recurso_administrativo,
+        data_indeferimento_recurso: it.data_indeferimento_recurso,
+      });
+      if (!prazo) continue;
+      const tipoCurto = it.servico_id ? TIPO_CURTO[it.servico_id] ?? "ADM" : "ADM";
       built.push({
         itemId: it.id,
         clienteIdLegado: cliente.id_legado ?? null,
         clienteId: cliente.id ?? null,
         clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
         cpf: cliente.cpf ?? null,
-        senhaGov: cliente.id != null ? senhaMap.get(cliente.id) ?? null : null,
-        protocolo: it.numero_processo ?? null,
-        tipo,
-        dataIndeferimento: dIndef,
-        dataLimite: dLimite,
-        diasRestantes,
+        cadastroCrId: cliente.id != null ? cadastroMap.get(cliente.id) ?? null : null,
+        protocolo:
+          (it.servico_id === 2
+            ? it.numero_posse
+            : it.servico_id === 3
+              ? it.numero_requerimento
+              : it.servico_id === 26
+                ? it.numero_craf
+                : it.numero_processo) ??
+          it.numero_processo ??
+          it.numero_requerimento ??
+          it.numero_posse ??
+          it.numero_porte ??
+          it.numero_craf ??
+          null,
+        tipo: tipoCurto,
+        evento: prazo.evento,
+        status: it.status ?? null,
+        dataEvento: prazo.dataEvento,
+        dataLimite: prazo.dataLimite,
+        diasRestantes: prazo.diasRestantes,
       });
     }
     built.sort((a, b) => a.diasRestantes - b.diasRestantes);
@@ -157,11 +210,50 @@ export default function DashboardPrazosRecursais() {
   const visible = useMemo(() => rows.slice(0, MAX_CARDS), [rows]);
   const overflow = useMemo(() => rows.slice(MAX_CARDS), [rows]);
 
+  /**
+   * Pré-carrega as Senhas Gov dos cards visíveis assim que o usuário está
+   * autenticado e o widget renderizou os dados. Isso garante que, ao clicar
+   * para copiar, a cópia aconteça de forma SÍNCRONA dentro do gesto do usuário
+   * — requisito do Safari iOS. As senhas ficam apenas em memória (state),
+   * são purgadas no refresh/logout e cada acesso é auditado pela edge
+   * function (qa_senha_gov_acessos).
+   */
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // só pré-carrega se houver sessão ativa
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) return;
+
+      const targets = visible
+        .filter((r) => !!r.cadastroCrId && !!r.clienteId && !prefetchedRef.current.has(r.cadastroCrId as number))
+        .map((r) => ({ id: r.cadastroCrId as number, clienteId: r.clienteId as number }));
+      if (!targets.length) return;
+
+      await Promise.all(
+        targets.map(async ({ id, clienteId }) => {
+          prefetchedRef.current.add(id);
+          try {
+            const senha = await getSenhaGov(id, "Prazos Recursais (prefetch)", clienteId);
+            if (cancelled || !senha) return;
+            setGovSenhas((prev) => (prev[id] ? prev : { ...prev, [id]: senha }));
+          } catch {
+            // falha silenciosa — usuário ainda pode tentar manualmente
+            prefetchedRef.current.delete(id);
+          }
+        }),
+      );
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
+
   if (state === "loading") {
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Recursos Administrativos — Prazo de 10 Dias (PF)</h3>
+          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)</h3>
           <p className="text-[11px] text-slate-500 mt-0.5">Carregando…</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center justify-center shadow-sm">
@@ -174,7 +266,7 @@ export default function DashboardPrazosRecursais() {
   if (state === "error" || state === "timeout") {
     return (
       <WidgetStateView
-        title="Recursos Administrativos — Prazo de 10 Dias (PF)"
+        title="Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)"
         state={state}
         onRetry={reload}
       />
@@ -188,10 +280,10 @@ export default function DashboardPrazosRecursais() {
       {/* Header — mesmo padrão do Monitoramento de Exames */}
       <div>
         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-          Recursos Administrativos — Prazo de 10 Dias (PF)
+          Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)
         </h3>
         <p className="text-[11px] text-slate-500 mt-0.5">
-          {rows.length} cliente(s) em prazo de recurso · ordenado do mais antigo ao mais novo
+          {rows.length} cliente(s) em prazo legal de manifestação · ordenado do mais antigo ao mais novo
         </p>
       </div>
 
@@ -222,7 +314,7 @@ export default function DashboardPrazosRecursais() {
               <Link
                 key={r.itemId}
                 to={link}
-                title={`${r.clienteNome} — ${r.tipo} PF · prazo fatal ${dataLimiteBr}`}
+                title={`${r.clienteNome} — ${r.tipo} PF · ${r.evento} · prazo fatal ${dataLimiteBr}`}
                 className={`group flex flex-col gap-1.5 px-3 py-3 ${tone.bg} hover:bg-slate-50 transition-colors min-h-[88px]`}
               >
                 <div className="flex items-center gap-1.5">
@@ -231,9 +323,17 @@ export default function DashboardPrazosRecursais() {
                     {tone.label}
                   </span>
                 </div>
-                <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-blue-700 group-hover:underline uppercase">
+                <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-[#7A1F2B] group-hover:underline uppercase">
                   {r.clienteNome}
                 </div>
+                <div className="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 leading-none">
+                  {r.tipo} PF · {r.evento}
+                </div>
+                {r.status && (
+                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-[#7A1F2B] leading-none truncate">
+                    Status: {r.status}
+                  </div>
+                )}
                 <div className="flex flex-col gap-0.5 -mx-1">
                   <button
                     type="button"
@@ -255,12 +355,64 @@ export default function DashboardPrazosRecursais() {
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => handleCopy(e, "Senha Gov", r.senhaGov)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!r.cadastroCrId) {
+                        toast.error("Sem CR cadastrado");
+                        return;
+                      }
+                      const cached = govSenhas[r.cadastroCrId];
+                      // Caminho SÍNCRONO (compatível com Safari iOS): se a
+                      // senha já foi pré-carregada após o login, copia agora.
+                      if (cached) {
+                        // copyTextFallback é síncrono; só cai para clipboard
+                        // async como tentativa adicional não-bloqueante.
+                        const ok = copyTextFallback(cached);
+                        if (ok) {
+                          toast.success("Senha Gov copiada");
+                        } else {
+                          // tentativa async como último recurso
+                          copyTextSafe(cached).then((ok2) => {
+                            if (ok2) toast.success("Senha Gov copiada");
+                            else toast.error("Não foi possível copiar");
+                          });
+                        }
+                        return;
+                      }
+                      // Sem cache → autentica/decripta agora (1 toque) e
+                      // já tenta copiar em seguida.
+                      const id = r.cadastroCrId;
+                      setGovLoading((prev) => ({ ...prev, [id]: true }));
+                      getSenhaGov(id, "Prazos Recursais", r.clienteId)
+                        .then(async (senha) => {
+                          if (!senha) {
+                            toast.info("Sem Senha Gov cadastrada");
+                            return;
+                          }
+                          setGovSenhas((prev) => ({ ...prev, [id]: senha }));
+                          const ok = await copyTextSafe(senha);
+                          if (ok) toast.success("Senha Gov copiada");
+                          else toast.success("Senha Gov liberada — toque novamente para copiar");
+                        })
+                        .catch((err: any) => {
+                          toast.error("Senha Gov: " + (err?.message || "erro"));
+                        })
+                        .finally(() => {
+                          setGovLoading((prev) => ({ ...prev, [id]: false }));
+                        });
+                    }}
                     className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
-                    title={r.senhaGov ? "Copiar Senha Gov" : "Sem senha gov"}
+                    title={r.cadastroCrId ? (govSenhas[r.cadastroCrId] ? "Copiar Senha Gov" : "Autenticar e copiar Senha Gov") : "Sem CR"}
                   >
-                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
-                    <span className="truncate">GOV: {r.senhaGov ? "••••••" : "—"}</span>
+                    {r.cadastroCrId && govLoading[r.cadastroCrId] ? (
+                      <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-slate-400" />
+                    ) : (
+                      <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    )}
+                    <span className="truncate select-text">
+                      GOV: {r.cadastroCrId ? govSenhas[r.cadastroCrId] || "•••• autenticar" : "—"}
+                    </span>
                   </button>
                 </div>
                 <div className="mt-auto flex items-baseline gap-1">

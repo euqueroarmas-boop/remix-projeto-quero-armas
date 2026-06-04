@@ -41,6 +41,7 @@ export interface Service {
   base_price_cents: number;
   is_active: boolean;
   display_order: number;
+  base_legal?: string | null;
 }
 
 export interface CartItem {

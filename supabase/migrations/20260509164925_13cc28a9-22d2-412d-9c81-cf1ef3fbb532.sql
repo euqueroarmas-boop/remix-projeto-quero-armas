@@ -1,0 +1,33 @@
+ALTER TABLE public.qa_clientes
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_data_nascimento date,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_naturalidade text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_nacionalidade text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_estado_civil text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_profissao text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_cep text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_logradouro text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_numero text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_complemento text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_bairro text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_cidade text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_estado text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_geolocalizacao text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_reside_desde date,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_residiu_ate date;
+
+ALTER TABLE public.qa_cadastro_publico
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_data_nascimento date,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_naturalidade text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_nacionalidade text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_estado_civil text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_profissao text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_cep text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_logradouro text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_numero text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_complemento text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_bairro text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_cidade text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_estado text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_geolocalizacao text,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_reside_desde date,
+  ADD COLUMN IF NOT EXISTS responsavel_endereco_residiu_ate date;

@@ -79,7 +79,7 @@ export default function QAIAPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-          <Bot className="h-6 w-6" style={{ color: "hsl(230 80% 56%)" }} /> IA Jurídica
+          <Bot className="h-6 w-6" style={{ color: "hsl(352 60% 30%)" }} /> IA Jurídica
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>Consulta assistida com base viva de conhecimento</p>
       </div>
@@ -176,7 +176,7 @@ export default function QAIAPage() {
                   <div key={i} className="flex items-center gap-2 text-xs">
                     {f.tipo === "norma" && <Scale className="h-3.5 w-3.5 text-emerald-500" />}
                     {f.tipo === "jurisprudencia" && <Gavel className="h-3.5 w-3.5 text-purple-500" />}
-                    {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-blue-500" />}
+                    {f.tipo === "documento" && <BookOpen className="h-3.5 w-3.5 text-[#7A1F2B]" />}
                     {f.tipo === "referencia_aprovada" && <CheckCircle className="h-3.5 w-3.5 text-amber-500" />}
                     <span className="flex-1 uppercase" style={{ color: "hsl(220 20% 18%)" }}>{f.titulo || f.referencia}</span>
                     <span className="tabular-nums" style={{ color: "hsl(220 10% 55%)" }}>

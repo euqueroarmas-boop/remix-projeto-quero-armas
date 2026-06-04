@@ -97,7 +97,7 @@ export default function FeedbackAprendizadoPanel({ geracaoId, userId, existingFe
   return (
     <div className="space-y-3 p-4 rounded-xl border" style={{ borderColor: "hsl(220 13% 91%)", background: "hsl(220 20% 98%)" }}>
       <div className="flex items-center gap-2">
-        <TrendingUp className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+        <TrendingUp className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 20% 18%)" }}>
           Feedback de Aprendizado
         </span>

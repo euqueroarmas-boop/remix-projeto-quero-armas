@@ -13,6 +13,7 @@ const LABELS: Record<string, string> = {
   legislacao: "Legislação",
   jurisprudencia: "Jurisprudência",
   "modelos-docx": "Modelos DOCX",
+  "modelos-declaracao": "Modelos de Declaração",
   "gerar-peca": "Gerar Peça",
   casos: "Casos",
   historico: "Histórico",
@@ -23,6 +24,7 @@ const LABELS: Record<string, string> = {
   relatorios: "Relatórios",
   auditoria: "Auditoria",
   "recursos-administrativos": "Recursos Administrativos",
+  "precos-servicos": "Catálogo de Preços",
 };
 
 const labelOf = (slug: string) =>
@@ -51,7 +53,7 @@ export function QABreadcrumb() {
         to="/dashboard"
         className="flex items-center gap-1.5 font-semibold uppercase tracking-wider transition-colors"
         style={{ color: "hsl(220 20% 18%)" }}
-        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(230 80% 56%)")}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(352 60% 30%)")}
         onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(220 20% 18%)")}
       >
         <ChevronLeft className="h-3.5 w-3.5" />
@@ -72,7 +74,7 @@ export function QABreadcrumb() {
                 to={href}
                 className="uppercase tracking-wider transition-colors"
                 style={{ color: "hsl(220 10% 52%)" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(230 80% 56%)")}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(352 60% 30%)")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(220 10% 52%)")}
               >
                 {labelOf(slug)}

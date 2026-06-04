@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_clientes ALTER COLUMN id_legado DROP NOT NULL;

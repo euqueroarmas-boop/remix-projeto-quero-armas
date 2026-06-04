@@ -88,9 +88,10 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 
 interface Props {
   cliente: { id: number; nome_completo?: string | null };
+  onChanged?: () => void | Promise<void>;
 }
 
-export default function ClienteExames({ cliente }: Props) {
+export default function ClienteExames({ cliente, onChanged }: Props) {
   const { user } = useQAAuthContext();
   const [exames, setExames] = useState<ExameComStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +154,7 @@ export default function ClienteExames({ cliente }: Props) {
       toast.success(`${TIPO_LABEL[tipo]} registrado`);
       setNovo((p) => ({ ...p, [tipo]: { data: todayISO(), obs: "" } }));
       await load();
+      try { await onChanged?.(); } catch {}
     } catch (err: any) {
       console.error("[ClienteExames] insert:", err);
       toast.error(err?.message || "Falha ao salvar exame");
@@ -168,6 +170,7 @@ export default function ClienteExames({ cliente }: Props) {
       if (error) throw error;
       toast.success("Lançamento removido");
       await load();
+      try { await onChanged?.(); } catch {}
     } catch (err: any) {
       toast.error(err?.message || "Falha ao remover");
     }
@@ -186,7 +189,7 @@ export default function ClienteExames({ cliente }: Props) {
       {/* Header */}
       <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2.5 rounded-lg shadow-sm">
+          <div className="bg-gradient-to-br from-[#7A1F2B] to-[#641722] p-2.5 rounded-lg shadow-sm">
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -238,9 +241,9 @@ export default function ClienteExames({ cliente }: Props) {
 
 const COLOR_MAP = {
   violet: {
-    headerBg: "from-violet-500 to-purple-600",
-    accent: "text-violet-700",
-    ring: "ring-violet-200",
+    headerBg: "from-[#7A1F2B] to-purple-600",
+    accent: "text-[#7A1F2B]",
+    ring: "ring-[#7A1F2B]",
   },
   orange: {
     headerBg: "from-orange-500 to-amber-600",
@@ -371,7 +374,7 @@ function ExameCard({ tipo, icon: Icon, color, historico, vigente, novo, setNovo,
                           <SIcon className="h-2.5 w-2.5 mr-0.5" /> {sb.label}
                         </Badge>
                         {isLatest && (
-                          <Badge className="text-[8px] bg-blue-50 text-blue-700 border-blue-200 border">
+                          <Badge className="text-[8px] bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6] border">
                             ATUAL
                           </Badge>
                         )}

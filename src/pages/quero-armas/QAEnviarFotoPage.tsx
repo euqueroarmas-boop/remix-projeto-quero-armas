@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle } from "lucide-react";
+import { Camera, Loader2, CheckCircle, RotateCcw, Search, Shield, Upload, AlertCircle, Trash2 } from "lucide-react";
 import { QALogo } from "@/components/quero-armas/QALogo";
-import { BackButton } from "@/shared/components/BackButton";
 
 function maskCpf(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 11);
@@ -20,8 +20,29 @@ interface FoundData {
 }
 
 export default function QAEnviarFotoPage() {
+  const location = useLocation() as any;
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const presetCpf: string = location?.state?.cpf || "";
+
+  // Resolve returnTo: state -> ?returnTo -> ?next -> /area-do-cliente
+  // Apenas caminhos internos (começando com "/" e sem "//" ou esquema).
+  const sanitizeReturnTo = (v: string | null | undefined): string | null => {
+    if (!v) return null;
+    const s = String(v).trim();
+    if (!s.startsWith("/")) return null;
+    if (s.startsWith("//")) return null;
+    if (/^https?:\/\//i.test(s)) return null;
+    return s;
+  };
+  const returnTo: string =
+    sanitizeReturnTo(location?.state?.returnTo) ||
+    sanitizeReturnTo(searchParams.get("returnTo")) ||
+    sanitizeReturnTo(searchParams.get("next")) ||
+    "/area-do-cliente";
+
   const [step, setStep] = useState<Step>("cpf");
-  const [cpf, setCpf] = useState("");
+  const [cpf, setCpf] = useState(presetCpf ? maskCpf(presetCpf) : "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [found, setFound] = useState<FoundData | null>(null);
@@ -33,6 +54,21 @@ export default function QAEnviarFotoPage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => () => { stream?.getTracks().forEach(t => t.stop()); }, [stream]);
+
+  const handleVoltar = () => {
+    try { stream?.getTracks().forEach(t => t.stop()); } catch {}
+    setStream(null);
+    setSelfie("");
+    navigate(returnTo, { replace: true });
+  };
+
+  // Auto-lookup quando vem da Área do Cliente com CPF pré-preenchido
+  useEffect(() => {
+    if (presetCpf && presetCpf.replace(/\D/g, "").length === 11 && step === "cpf") {
+      lookup();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const lookup = async () => {
     setError(null);
@@ -120,19 +156,41 @@ export default function QAEnviarFotoPage() {
     }
   };
 
+  const remove = async () => {
+    if (!confirm("Remover sua foto atual? Você voltará a ver as iniciais.")) return;
+    setLoading(true); setError(null);
+    try {
+      const cpfDigits = cpf.replace(/\D/g, "");
+      const { data, error } = await supabase.functions.invoke("qa-atualizar-foto", {
+        body: { action: "remove", cpf: cpfDigits },
+      });
+      if (error || !data?.success) throw new Error(data?.error || error?.message || "Erro ao remover");
+      setStep("ok");
+    } catch (e: any) {
+      setError(e?.message || "Erro ao remover foto");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const nome = found?.cadastro?.nome_completo || found?.cliente?.nome_completo || "";
+  const hasCurrentPhoto = !!(found?.cadastro?.selfie_path || found?.cliente?.imagem);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(135deg, hsl(220 20% 97%) 0%, hsl(230 20% 94%) 100%)" }}>
       <div className="max-w-md w-full mx-auto px-4 py-8 flex-1">
-        <div className="mb-4 flex justify-start">
-          <BackButton fallback="/" />
-        </div>
         <div className="flex justify-center mb-6"><QALogo /></div>
 
         <div className="qa-card rounded-2xl p-6 md:p-8">
           {step === "cpf" && (
             <>
+              <button
+                onClick={handleVoltar}
+                className="text-xs uppercase tracking-wide mb-3"
+                style={{ color: "hsl(220 10% 50%)" }}
+              >
+                ← Voltar para Área do Cliente
+              </button>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>ENVIAR APENAS FOTO</h1>
               <p className="text-sm mb-6" style={{ color: "hsl(220 10% 46%)" }}>
                 Já fez seu cadastro? Atualize ou envie sua foto sem precisar refazer o formulário.
@@ -143,7 +201,7 @@ export default function QAEnviarFotoPage() {
                 value={cpf}
                 onChange={e => setCpf(maskCpf(e.target.value))}
                 placeholder="000.000.000-00"
-                className="w-full h-12 px-4 rounded-lg border outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full h-12 px-4 rounded-lg border outline-none focus:ring-2 focus:ring-[#7A1F2B]"
                 style={{ borderColor: "hsl(220 13% 88%)" }}
                 onKeyDown={e => e.key === "Enter" && lookup()}
               />
@@ -156,13 +214,13 @@ export default function QAEnviarFotoPage() {
                 onClick={lookup}
                 disabled={loading}
                 className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}
+                style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 CONTINUAR
               </button>
               <div className="mt-6 pt-4 border-t text-[11px] flex items-start gap-2" style={{ borderColor: "hsl(220 13% 90%)", color: "hsl(220 10% 50%)" }}>
-                <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "hsl(230 80% 56%)" }} />
+                <Shield className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "hsl(352 60% 30%)" }} />
                 Seus dados são tratados conforme a LGPD. A foto é usada apenas para identificação no atendimento.
               </div>
             </>
@@ -170,19 +228,25 @@ export default function QAEnviarFotoPage() {
 
           {step === "selfie" && (
             <>
-              <button onClick={() => { setStep("cpf"); setSelfie(""); stream?.getTracks().forEach(t => t.stop()); setStream(null); }} className="text-xs uppercase tracking-wide mb-3" style={{ color: "hsl(220 10% 50%)" }}>← Voltar</button>
+              <button onClick={handleVoltar} className="text-xs uppercase tracking-wide mb-3" style={{ color: "hsl(220 10% 50%)" }}>← Voltar</button>
               <h1 className="text-xl font-bold mb-1" style={{ color: "hsl(220 20% 18%)" }}>ATUALIZAR FOTO</h1>
               {nome && <p className="text-sm mb-5 font-medium" style={{ color: "hsl(220 20% 35%)" }}>{nome}</p>}
 
               {!selfie && !stream && (
                 <div className="space-y-3">
-                  <button onClick={startCamera} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}>
+                  <button onClick={startCamera} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}>
                     <Camera className="w-4 h-4" /> ABRIR CÂMERA
                   </button>
                   <button onClick={() => fileRef.current?.click()} className="w-full h-12 rounded-lg font-semibold border flex items-center justify-center gap-2" style={{ borderColor: "hsl(220 13% 80%)", color: "hsl(220 20% 25%)" }}>
                     <Upload className="w-4 h-4" /> ENVIAR DO DISPOSITIVO
                   </button>
                   <input ref={fileRef} type="file" accept="image/*" capture="user" hidden onChange={onFile} />
+                  {hasCurrentPhoto && (
+                    <button onClick={remove} disabled={loading} className="w-full h-11 rounded-lg font-semibold border flex items-center justify-center gap-2 disabled:opacity-50" style={{ borderColor: "hsl(0 70% 70%)", color: "hsl(0 70% 40%)" }}>
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                      REMOVER FOTO ATUAL
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -191,7 +255,7 @@ export default function QAEnviarFotoPage() {
                   <div className="rounded-xl overflow-hidden bg-black aspect-square">
                     <video ref={videoRef} playsInline muted className="w-full h-full object-cover" style={{ transform: "scaleX(-1)" }} />
                   </div>
-                  <button onClick={capture} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(230 80% 56%), hsl(240 80% 60%))" }}>
+                  <button onClick={capture} className="w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2" style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}>
                     <Camera className="w-4 h-4" /> CAPTURAR
                   </button>
                 </div>
@@ -228,15 +292,21 @@ export default function QAEnviarFotoPage() {
                 <CheckCircle className="w-8 h-8" style={{ color: "hsl(152 60% 42%)" }} />
               </div>
               <h1 className="text-xl font-bold mb-2" style={{ color: "hsl(220 20% 18%)" }}>FOTO ATUALIZADA</h1>
-              <p className="text-sm" style={{ color: "hsl(220 10% 46%)" }}>Sua foto foi recebida com sucesso e já está disponível para nossa equipe.</p>
+              <p className="text-sm" style={{ color: "hsl(220 10% 46%)" }}>Sua foto foi atualizada com sucesso.</p>
+              <button
+                  onClick={handleVoltar}
+                  className="mt-5 w-full h-12 rounded-lg font-semibold text-white flex items-center justify-center gap-2"
+                  style={{ background: "linear-gradient(135deg, hsl(352 60% 30%), hsl(352 64% 24%))" }}
+                >
+                  VOLTAR PARA ÁREA DO CLIENTE
+                </button>
             </div>
           )}
         </div>
 
         <div className="text-center mt-6 text-[11px]" style={{ color: "hsl(220 10% 50%)" }}>
-          © {new Date().getFullYear()} · Criado e desenvolvido por{" "}
-          <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>WMTi Tecnologia da Informação</span>. Todos os direitos reservados.
-          <div className="mt-1">+55 (11) 96316-6915</div>
+          © {new Date().getFullYear()} ·{" "}
+          <span className="font-semibold" style={{ color: "hsl(220 20% 25%)" }}>Quero Armas</span>. Todos os direitos reservados.
         </div>
       </div>
     </div>

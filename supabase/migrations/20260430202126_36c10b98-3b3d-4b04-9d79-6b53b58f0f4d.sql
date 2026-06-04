@@ -1,0 +1,1 @@
+ALTER FUNCTION public.qa_validar_transicao_status() SET search_path = public;

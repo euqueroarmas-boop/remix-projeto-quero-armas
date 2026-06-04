@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getSenhaGov } from "./senhaGovApi";
 
 function csvEscape(val: any): string {
   if (val == null) return "";
@@ -20,8 +21,8 @@ function downloadCsv(filename: string, headers: string[], rows: string[][]) {
 export async function exportClientes() {
   const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo");
   if (!data?.length) { toast.error("Nenhum cliente"); return; }
-  const headers = ["Nome", "CPF", "RG", "Celular", "Email", "Cidade", "UF", "Status", "Lions"];
-  const rows = (data as any[]).map(c => [c.nome_completo, c.cpf, c.rg, c.celular, c.email, c.cidade, c.estado, c.status, c.cliente_lions ? "Sim" : "Não"]);
+  const headers = ["Nome", "CPF", "RG", "Celular", "Email", "Cidade", "UF", "Status"];
+  const rows = (data as any[]).map(c => [c.nome_completo, c.cpf, c.rg, c.celular, c.email, c.cidade, c.estado, c.status]);
   downloadCsv("clientes_queroarmas.csv", headers, rows);
   toast.success("CSV exportado");
 }
@@ -48,8 +49,14 @@ export async function exportCr(clienteId: number, nomeCliente: string) {
   const { data } = await supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", clienteId).limit(1);
   if (!data?.length) { toast.info("Nenhum CR"); return; }
   const cr = (data as any[])[0];
+  let senhaGov = "";
+  try {
+    senhaGov = (await getSenhaGov(cr.id, `export CSV CR — ${nomeCliente}`, clienteId)) || "";
+  } catch (e: any) {
+    toast.error("Senha Gov não exportada: " + (e?.message || "erro"));
+  }
   const headers = ["Nº CR", "Validade CR", "Laudo Psicológico", "Exame Tiro", "Senha Gov"];
-  const rows = [[cr.numero_cr, cr.validade_cr, cr.validade_laudo_psicologico, cr.validade_exame_tiro, cr.senha_gov]];
+  const rows = [[cr.numero_cr, cr.validade_cr, cr.validade_laudo_psicologico, cr.validade_exame_tiro, senhaGov]];
   downloadCsv(`cr_${nomeCliente.replace(/\s/g, "_")}.csv`, headers, rows);
   toast.success("CR exportado");
 }

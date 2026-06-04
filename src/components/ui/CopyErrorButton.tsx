@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { copyErrorToClipboard, type WmtiError } from "@/lib/errorLogger";
+import { copyErrorToClipboard, type AppError } from "@/lib/errorLogger";
 
 interface Props {
-  error: WmtiError;
+  error: AppError;
   label?: string;
   variant?: "default" | "outline" | "ghost" | "destructive";
   size?: "default" | "sm" | "icon";

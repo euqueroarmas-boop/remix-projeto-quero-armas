@@ -127,6 +127,14 @@ serve(async (req) => {
   }
 
   try {
+    // Auth: accept staff JWT OR cron token
+    const { requireQAStaff, requireCronToken } = await import("../_shared/qaAuth.ts");
+    const cronCheck = requireCronToken(req);
+    if (!cronCheck.ok) {
+      const staffCheck = await requireQAStaff(req);
+      if (!staffCheck.ok) return staffCheck.response;
+    }
+
     let body: any = {};
     try { body = await req.json(); } catch { /* empty body from cron */ }
     console.log("[qa-whatsapp-alerts] body received:", JSON.stringify(body));

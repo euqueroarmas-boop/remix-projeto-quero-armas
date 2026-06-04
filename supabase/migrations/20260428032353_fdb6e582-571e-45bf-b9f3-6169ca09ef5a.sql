@@ -1,0 +1,1 @@
+ALTER TABLE public.qa_cadastro_publico ADD COLUMN IF NOT EXISTS categoria_titular text;

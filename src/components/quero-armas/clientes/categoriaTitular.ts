@@ -125,12 +125,17 @@ export interface ExigenciasDocumentais {
 }
 
 export const EXIGENCIAS_POR_CATEGORIA: Record<CategoriaTitular, ExigenciasDocumentais> = {
-  // Cidadão comum: TUDO exigido
+  // Cidadão comum (CAC e demais titulares PF):
+  // - Efetiva necessidade NÃO é exigida para CR/CAC (SIGMA/Exército).
+  //   Base: Decreto 11.615/23 + Lei 10.826/03 art. 6º — para os fins do
+  //   CR (caçador, atirador, colecionador) há presunção legal de necessidade.
+  //   A efetiva necessidade só é cobrada nos serviços de Posse/Porte na PF,
+  //   tratados por outras matrizes específicas e fora desta categoria.
   pessoa_fisica: {
     laudo_psicologico: true,
     exame_tiro: true,
     antecedentes_criminais: true,
-    comprovante_efetiva_necessidade: true,
+    comprovante_efetiva_necessidade: false,
     comprovante_residencia: true,
     comprovante_ocupacao_licita: true,
     contrato_social: false,

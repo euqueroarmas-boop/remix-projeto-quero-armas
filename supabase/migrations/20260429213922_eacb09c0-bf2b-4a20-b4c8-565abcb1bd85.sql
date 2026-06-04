@@ -1,0 +1,2 @@
+DELETE FROM public.qa_processo_documentos WHERE processo_id = 'a80d45fe-b445-44a5-92e4-5f81778a9942';
+DELETE FROM public.qa_processos WHERE id = 'a80d45fe-b445-44a5-92e4-5f81778a9942' AND observacoes_admin = 'TESTE FASE 12 - PROPAGACAO CAMPOS CATALOGO';

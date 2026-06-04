@@ -26,12 +26,8 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("A senha deve ter pelo menos 8 caracteres.");
-      return;
-    }
-    if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-      toast.error("Use letras e números na nova senha.");
+    if (password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
       return;
     }
     if (password !== confirm) {
@@ -53,17 +49,9 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
       onSuccess();
     } catch (err: any) {
       const raw = (err?.message || "").toLowerCase();
-      if (
-        raw.includes("weak") ||
-        raw.includes("pwned") ||
-        raw.includes("known") ||
-        raw.includes("compromis")
-      ) {
-        toast.error(
-          "Esta senha aparece em vazamentos públicos e é considerada fraca. Escolha uma senha única, com letras, números e símbolos.",
-          { duration: 7000 }
-        );
-      } else if (raw.includes("should be at least") || raw.includes("password")) {
+      if (raw.includes("should be at least") || raw.includes("at least 6")) {
+        toast.error("A senha deve ter pelo menos 6 caracteres.");
+      } else if (raw.includes("password")) {
         toast.error(err.message);
       } else {
         toast.error(err?.message || "Não foi possível atualizar a senha.");
@@ -92,9 +80,8 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">
-            Por segurança, é necessário escolher uma senha pessoal antes de
-            acessar o seu arsenal. Use no mínimo <strong>8 caracteres</strong>,
-            combinando letras e números.
+            Por segurança, escolha uma senha pessoal antes de acessar o seu
+            arsenal. Use no mínimo <strong>6 caracteres</strong>.
           </p>
 
           <div className="space-y-1.5">
@@ -109,7 +96,7 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-9 pr-10"
-                placeholder="Mínimo 8 caracteres"
+                placeholder="Mínimo 6 caracteres"
                 autoFocus
                 required
               />
@@ -145,7 +132,7 @@ export function ForcePasswordChangeModal({ open, onSuccess }: Props) {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white uppercase tracking-wider text-xs font-bold"
+            className="w-full bg-[#7A1F2B] hover:bg-[#641722] text-white uppercase tracking-wider text-xs font-bold"
           >
             {loading ? "Salvando..." : "Salvar nova senha"}
           </Button>

@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public._qa_diag_release_token() TO anon, authenticated, service_role;

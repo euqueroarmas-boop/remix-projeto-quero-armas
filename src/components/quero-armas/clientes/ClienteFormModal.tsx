@@ -3,11 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBrasilApiLookup } from "@/hooks/useBrasilApiLookup";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Save, User, Users, Phone, MapPin, Home, Settings, ChevronLeft, ChevronRight, CheckCircle2, Camera, X, Shield, AlertTriangle } from "lucide-react";
+import { Loader2, Save, User, Users, MapPin, Home, Settings, Camera, X, Shield, AlertTriangle, Crosshair, Phone, Activity, FileBadge, CheckCircle2, Stethoscope, Target } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { CATEGORIAS, CATEGORIA_OPTIONS, CATEGORIA_MAP, type CategoriaTitular } from "./categoriaTitular";
+import {
+  isValidCpf,
+  isValidEmail,
+  isValidTelefone,
+  rgNotEqualCpf,
+  cinEqualsCpf,
+} from "@/shared/quero-armas/clienteSchema";
+import { SenhaGovField } from "./SenhaGovField";
+import ClienteAIPrefill, { type PrefillFields } from "./ClienteAIPrefill";
+import { setSenhaGov } from "./senhaGovApi";
 
 interface ClienteFormModalProps {
   open: boolean;
@@ -18,6 +28,11 @@ interface ClienteFormModalProps {
 
 const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "Separado(a)", "União Estável"];
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RS","SC","SE","SP","TO"];
+const SEXO_OPTIONS = [
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Feminino" },
+  { value: "Outro", label: "Outro" },
+];
 
 const estadoCivilOptions = ESTADOS_CIVIS.map(e => ({ value: e, label: e }));
 const ufOptions = UFS.map(u => ({ value: u, label: u }));
@@ -46,46 +61,109 @@ const normalizeDateInput = (value: string) => {
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
 };
 
-const formatDateForDatabase = (value: string) => {
-  if (!value) return "";
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return value;
+const formatDateForDatabase = (value: string): string | null => {
+  // Postgres `date` columns rejeitam string vazia. Sempre devolvemos null
+  // quando o campo está vazio ou parcialmente preenchido.
+  if (!value || !value.trim()) return null;
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const match = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
   const [, day, month, year] = match;
   return `${year}-${month}-${day}`;
 };
-
-/* ── Steps Config ── */
-const STEPS = [
-  { key: "identificacao", label: "Identificação", icon: User },
-  { key: "filiacao", label: "Filiação & Contato", icon: Users },
-  { key: "endereco1", label: "Endereço", icon: MapPin },
-  { key: "endereco2", label: "End. Secundário", icon: Home },
-  { key: "config", label: "Configurações", icon: Settings },
-] as const;
 
 /* ── Reusable Field Components ── */
 function Field({ label, children, span }: { label: string; children: React.ReactNode; span?: boolean }) {
   return (
     <div className={cn("space-y-1.5", span && "col-span-full")}>
-      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{label}</label>
+      <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputClass = "w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all uppercase";
-const selectClass = "w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all appearance-none cursor-pointer";
+const inputClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all uppercase";
+const inputClassPreserveCase = inputClass.replace(" uppercase", "");
+const selectClass = "w-full h-9 px-3 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all appearance-none cursor-pointer";
 
-function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled }: {
+function sanitizeEmailForDb(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const normalized = value
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+  if (!normalized) return null;
+
+  const emailRegex = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/;
+
+  return emailRegex.test(normalized) ? normalized : null;
+}
+
+const EMPTY_FORM = {
+  nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", expedicao_rg: "",
+  data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
+  nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
+  email: "", celular: "", titulo_eleitor: "",
+  endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
+  endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
+  end2_tipo: "", end2_observacao: "",
+  geolocalizacao: "", geolocalizacao2: "",
+  observacao: "", status: "ATIVO",
+  categoria_titular: "" as CategoriaTitular | "",
+  subcategoria: "",
+  orgao_vinculado: "",
+  matricula_funcional: "",
+  sexo: "",
+  tipo_documento_identidade: "RG" as "RG" | "CIN",
+  naturalidade_municipio: "",
+  naturalidade_uf: "",
+  naturalidade_pais: "Brasil",
+  cnh: "",
+  ctps: "",
+  validade_laudo_psicologico: "",
+  validade_exame_tiro: "",
+  senha_gov: "",
+  // Comprovante de endereço (em nome do titular ou de terceiro)
+  comprovante_endereco_em_nome_proprio: "" as "" | "sim" | "nao",
+  responsavel_endereco_nome: "",
+  responsavel_endereco_cpf: "",
+  responsavel_endereco_rg_cin: "",
+  responsavel_endereco_telefone: "",
+  responsavel_endereco_email: "",
+  responsavel_endereco_vinculo: "",
+  responsavel_endereco_declaracao_path: "",
+  responsavel_endereco_comprovante_path: "",
+  responsavel_endereco_data_nascimento: "",
+  responsavel_endereco_naturalidade: "",
+  responsavel_endereco_nacionalidade: "Brasileira",
+  responsavel_endereco_estado_civil: "",
+  responsavel_endereco_profissao: "",
+  responsavel_endereco_cep: "",
+  responsavel_endereco_logradouro: "",
+  responsavel_endereco_numero: "",
+  responsavel_endereco_complemento: "",
+  responsavel_endereco_bairro: "",
+  responsavel_endereco_cidade: "",
+  responsavel_endereco_estado: "",
+  responsavel_endereco_geolocalizacao: "",
+  responsavel_endereco_reside_desde: "",
+  responsavel_endereco_residiu_ate: "",
+};
+
+function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLength, span, disabled, error, preserveCase, type = "text" }: {
   label: string; value: string; onChange: (v: string) => void; onBlur?: () => void;
   placeholder?: string; inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
-  maxLength?: number; span?: boolean; disabled?: boolean;
+  maxLength?: number; span?: boolean; disabled?: boolean; error?: string; preserveCase?: boolean;
+  type?: React.HTMLInputTypeAttribute;
 }) {
   return (
     <Field label={label} span={span}>
       <input
-        type="text"
+        type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         onBlur={onBlur}
@@ -93,22 +171,24 @@ function FInput({ label, value, onChange, onBlur, placeholder, inputMode, maxLen
         inputMode={inputMode}
         maxLength={maxLength}
         disabled={disabled}
-        className={cn(inputClass, disabled && "opacity-50 cursor-not-allowed")}
+        className={cn(preserveCase ? inputClassPreserveCase : inputClass, disabled && "opacity-50 cursor-not-allowed", error && "border-red-500 ring-1 ring-red-500")}
       />
+      {error && <p className="text-[10px] text-red-600 mt-1 uppercase">{error}</p>}
     </Field>
   );
 }
 
-function FSelect({ label, value, onChange, options, placeholder = "Selecionar..." }: {
+function FSelect({ label, value, onChange, options, placeholder = "Selecionar...", error }: {
   label: string; value: string; onChange: (v: string) => void;
-  options: { value: string; label: string }[]; placeholder?: string;
+  options: { value: string; label: string }[]; placeholder?: string; error?: string;
 }) {
   return (
     <Field label={label}>
-      <select value={value} onChange={e => onChange(e.target.value)} className={selectClass}>
+      <select value={value} onChange={e => onChange(e.target.value)} className={cn(selectClass, error && "border-red-500 ring-1 ring-red-500")}>
         <option value="">{placeholder}</option>
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
+      {error && <p className="text-[10px] text-red-600 mt-1 uppercase">{error}</p>}
     </Field>
   );
 }
@@ -117,14 +197,24 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
   const isEdit = !!cliente;
   const existingPhotoUrl = usePrivateStorageUrl("qa-documentos", cliente?.imagem || null);
   const [saving, setSaving] = useState(false);
-  const [step, setStep] = useState(0);
-  const { lookupCep, cepLoading } = useBrasilApiLookup();
+  const { lookupCep, cepLoading, lookupGeocode, geocodeLoading } = useBrasilApiLookup();
 
   // Photo upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [requiredErrors, setRequiredErrors] = useState<Record<string, boolean>>({});
+  const [aiSenhaGovFromAI, setAiSenhaGovFromAI] = useState(false);
+  const [aiSenhaGovNeedsReview, setAiSenhaGovNeedsReview] = useState(false);
+  const [aiEmissorRgNeedsReview, setAiEmissorRgNeedsReview] = useState(false);
+
+  // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
+  const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
+  // Chave que força a remontagem do bloco "Preencher com IA" sempre que o
+  // modal é fechado/reaberto — garante que nenhum arquivo, texto ou
+  // resultado de extração anterior fique em memória.
+  const [aiPrefillKey, setAiPrefillKey] = useState(0);
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,6 +222,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     if (!file.type.startsWith("image/")) { toast.error("Selecione um arquivo de imagem"); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
     setPhotoFile(file);
+    setRequiredErrors(p => ({ ...p, photo: false }));
     const reader = new FileReader();
     reader.onload = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -174,27 +265,105 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   }, [lookupCep]);
 
-  const [f, setF] = useState({
-    nome_completo: "", cpf: "", rg: "", emissor_rg: "", expedicao_rg: "",
-    data_nascimento: "", naturalidade: "", nacionalidade: "Brasileira",
-    nome_mae: "", nome_pai: "", estado_civil: "", profissao: "", escolaridade: "",
-    email: "", celular: "", titulo_eleitor: "",
-    endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
-    endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
-    observacao: "", status: "ATIVO", cliente_lions: false,
-    // Categorização legal (Lei 10.826/03 art. 6º)
-    categoria_titular: "" as CategoriaTitular | "",
-    subcategoria: "",
-    orgao_vinculado: "",
-    matricula_funcional: "",
-  });
+  // Máscara visual de CEP — sempre formata como "XX.XXX-XXX".
+  // Aceita qualquer entrada (com ou sem pontuação) e devolve a forma padronizada.
+  const formatCepMask = (raw: string): string => {
+    const d = String(raw ?? "").replace(/\D/g, "").slice(0, 8);
+    if (d.length <= 2) return d;
+    if (d.length <= 5) return `${d.slice(0, 2)}.${d.slice(2)}`;
+    return `${d.slice(0, 2)}.${d.slice(2, 5)}-${d.slice(5)}`;
+  };
+
+  const resolveGeoloc = useCallback(async (prefix: "" | "2") => {
+    setF(prev => {
+      // lê valores atuais e dispara fora do setter
+      const street = (prev as any)[`endereco${prefix}`];
+      const number = (prev as any)[`numero${prefix}`];
+      const city = (prev as any)[`cidade${prefix}`];
+      const state = (prev as any)[`estado${prefix}`];
+      if (!street || !city) return prev;
+      lookupGeocode({ street, number, city, state }).then((g) => {
+        if (!g) {
+          toast.warning(`Não foi possível resolver geolocalização do endereço${prefix === "2" ? " secundário" : ""}. Reprocesse manualmente.`);
+          return;
+        }
+        const value = `${g.latitude},${g.longitude}`;
+        setF((p2) => ({
+          ...p2,
+          [`geolocalizacao${prefix}`]: value,
+        }));
+      }).catch(() => {});
+      return prev;
+    });
+  }, [lookupGeocode]);
+
+  // Auto-resolve geolocation directly from passed values (sem depender do state).
+  const autoResolveGeoloc = useCallback(async (
+    prefix: "" | "2",
+    addr: { street?: string; number?: string; city?: string; state?: string }
+  ) => {
+    if (!addr.street || !addr.city) return;
+    try {
+      const g = await lookupGeocode({
+        street: addr.street,
+        number: addr.number || "",
+        city: addr.city,
+        state: addr.state || "",
+      });
+      if (!g) return;
+      const value = `${g.latitude},${g.longitude}`;
+      setF((p2) => ({ ...p2, [`geolocalizacao${prefix}`]: value }));
+    } catch { /* silencioso */ }
+  }, [lookupGeocode]);
+
+  const [f, setF] = useState(EMPTY_FORM);
+
+  // Auto-resolve geolocalização sempre que endereço completo mudar (principal e secundário).
+  // Debounce simples para não chamar a API a cada tecla.
+  useEffect(() => {
+    if (!open) return;
+    const street = f.endereco?.trim();
+    const city = f.cidade?.trim();
+    if (!street || !city) return;
+    if (f.geolocalizacao?.trim()) return; // não sobrescreve valor já resolvido/manual
+    const t = setTimeout(() => {
+      autoResolveGeoloc("", { street, number: f.numero, city, state: f.estado });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [open, f.endereco, f.numero, f.bairro, f.cidade, f.estado, f.cep, f.geolocalizacao, autoResolveGeoloc]);
 
   useEffect(() => {
-    if (!open) { setStep(0); setPhotoFile(null); setPhotoPreview(null); return; }
+    if (!open) return;
+    const street = f.endereco2?.trim();
+    const city = f.cidade2?.trim();
+    if (!street || !city) return;
+    if (f.geolocalizacao2?.trim()) return;
+    const t = setTimeout(() => {
+      autoResolveGeoloc("2", { street, number: f.numero2, city, state: f.estado2 });
+    }, 800);
+    return () => clearTimeout(t);
+  }, [open, f.endereco2, f.numero2, f.bairro2, f.cidade2, f.estado2, f.cep2, f.geolocalizacao2, autoResolveGeoloc]);
+
+  useEffect(() => {
+    if (!open) {
+      // Reset COMPLETO ao fechar: nenhum dado temporário pode persistir
+      // entre aberturas do formulário.
+      setF(EMPTY_FORM);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setRequiredErrors({});
+      setCadastroCrId(null);
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
+      setAiPrefillKey(k => k + 1);
+      return;
+    }
     if (cliente) {
       setF({
         nome_completo: cliente.nome_completo || "", cpf: cliente.cpf || "",
         rg: cliente.rg || "", emissor_rg: cliente.emissor_rg || "",
+        uf_emissor_rg: cliente.uf_emissor_rg || "",
         expedicao_rg: formatDateForDisplay(cliente.expedicao_rg || ""),
         data_nascimento: formatDateForDisplay(cliente.data_nascimento || ""),
         naturalidade: cliente.naturalidade || "", nacionalidade: cliente.nacionalidade || "Brasileira",
@@ -205,42 +374,425 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         titulo_eleitor: cliente.titulo_eleitor || "",
         endereco: cliente.endereco || "", numero: cliente.numero || "",
         complemento: cliente.complemento || "", bairro: cliente.bairro || "",
-        cep: cliente.cep || "", cidade: cliente.cidade || "", estado: cliente.estado || "",
+        cep: formatCepMask(cliente.cep || ""),
+        cidade: cliente.cidade || "", estado: cliente.estado || "",
         pais: cliente.pais || "Brasil",
         endereco2: cliente.endereco2 || "", numero2: cliente.numero2 || "",
         complemento2: cliente.complemento2 || "", bairro2: cliente.bairro2 || "",
-        cep2: cliente.cep2 || "", cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
+        cep2: formatCepMask(cliente.cep2 || ""), cidade2: cliente.cidade2 || "", estado2: cliente.estado2 || "",
         pais2: cliente.pais2 || "",
+        end2_tipo: cliente.end2_tipo || "",
+        end2_observacao: cliente.end2_observacao || "",
+        geolocalizacao: cliente.geolocalizacao || "",
+        geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
-        cliente_lions: cliente.cliente_lions || false,
         categoria_titular: (cliente.categoria_titular || "") as CategoriaTitular | "",
         subcategoria: cliente.subcategoria || "",
         orgao_vinculado: cliente.orgao_vinculado || "",
         matricula_funcional: cliente.matricula_funcional || "",
+        sexo: cliente.sexo || "",
+        tipo_documento_identidade: ((cliente.tipo_documento_identidade as "RG" | "CIN") || "RG"),
+        naturalidade_municipio: cliente.naturalidade_municipio || "",
+        naturalidade_uf: cliente.naturalidade_uf || "",
+        naturalidade_pais: cliente.naturalidade_pais || "Brasil",
+        cnh: cliente.cnh || "",
+        ctps: cliente.ctps || "",
+        validade_laudo_psicologico: "",
+        validade_exame_tiro: "",
+        senha_gov: "",
+        comprovante_endereco_em_nome_proprio: ((cliente.comprovante_endereco_em_nome_proprio as "sim" | "nao") || "") as "" | "sim" | "nao",
+        responsavel_endereco_nome: cliente.responsavel_endereco_nome || "",
+        responsavel_endereco_cpf: cliente.responsavel_endereco_cpf || "",
+        responsavel_endereco_rg_cin: cliente.responsavel_endereco_rg_cin || "",
+        responsavel_endereco_telefone: cliente.responsavel_endereco_telefone || "",
+        responsavel_endereco_email: cliente.responsavel_endereco_email || "",
+        responsavel_endereco_vinculo: cliente.responsavel_endereco_vinculo || "",
+        responsavel_endereco_declaracao_path: cliente.responsavel_endereco_declaracao_path || "",
+        responsavel_endereco_comprovante_path: cliente.responsavel_endereco_comprovante_path || "",
+        responsavel_endereco_data_nascimento: (cliente as any).responsavel_endereco_data_nascimento || "",
+        responsavel_endereco_naturalidade: (cliente as any).responsavel_endereco_naturalidade || "",
+        responsavel_endereco_nacionalidade: (cliente as any).responsavel_endereco_nacionalidade || "Brasileira",
+        responsavel_endereco_estado_civil: (cliente as any).responsavel_endereco_estado_civil || "",
+        responsavel_endereco_profissao: (cliente as any).responsavel_endereco_profissao || "",
+        responsavel_endereco_cep: formatCepMask((cliente as any).responsavel_endereco_cep || ""),
+        responsavel_endereco_logradouro: (cliente as any).responsavel_endereco_logradouro || "",
+        responsavel_endereco_numero: (cliente as any).responsavel_endereco_numero || "",
+        responsavel_endereco_complemento: (cliente as any).responsavel_endereco_complemento || "",
+        responsavel_endereco_bairro: (cliente as any).responsavel_endereco_bairro || "",
+        responsavel_endereco_cidade: (cliente as any).responsavel_endereco_cidade || "",
+        responsavel_endereco_estado: (cliente as any).responsavel_endereco_estado || "",
+        responsavel_endereco_geolocalizacao: (cliente as any).responsavel_endereco_geolocalizacao || "",
+        responsavel_endereco_reside_desde: (cliente as any).responsavel_endereco_reside_desde || "",
+        responsavel_endereco_residiu_ate: (cliente as any).responsavel_endereco_residiu_ate || "",
       });
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
       // Load existing photo preview
       if (cliente.imagem) {
         setPhotoPreview(existingPhotoUrl || null);
       } else {
         setPhotoPreview(null);
       }
+      // Pós-P0: NÃO pré-carrega senha GOV. Apenas resolve o cadastro_cr_id
+      // (filtrando duplicatas consolidadas) para o componente SenhaGovField.
+      (async () => {
+        try {
+          const { data: row } = await supabase
+            .from("qa_cadastro_cr" as any)
+            .select("id, validade_laudo_psicologico, validade_exame_tiro")
+            .eq("cliente_id", cliente.id)
+            .is("consolidado_em", null)
+            .order("id", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          setCadastroCrId((row as any)?.id ?? null);
+          if (row) {
+            setF(prev => ({
+              ...prev,
+              validade_laudo_psicologico: formatDateForDisplay((row as any).validade_laudo_psicologico || ""),
+              validade_exame_tiro: formatDateForDisplay((row as any).validade_exame_tiro || ""),
+            }));
+          }
+        } catch {
+          setCadastroCrId(null);
+        }
+        // estado de senha não é mais mantido aqui; SenhaGovField gerencia tudo.
+      })();
     } else {
-      setF(prev => ({ ...prev, nome_completo: "", cpf: "", rg: "", email: "", celular: "" }));
+      setF(prev => ({
+        ...prev,
+        nome_completo: "", cpf: "", rg: "", emissor_rg: "", uf_emissor_rg: "", email: "", celular: "",
+        validade_laudo_psicologico: "", validade_exame_tiro: "", senha_gov: "",
+      }));
       setPhotoPreview(null);
+      setCadastroCrId(null);
+      setAiSenhaGovFromAI(false);
+      setAiSenhaGovNeedsReview(false);
+      setAiEmissorRgNeedsReview(false);
     }
   }, [cliente, existingPhotoUrl, open]);
 
-  const set = (key: string, val: any) => setF(prev => ({ ...prev, [key]: val }));
+  const set = (key: string, val: any) => {
+    setF(prev => ({ ...prev, [key]: val }));
+    if (val) setRequiredErrors(p => (p[key] ? { ...p, [key]: false } : p));
+  };
+
+  // Aplica os dados extraídos pela IA no formulário existente, sem destruir
+  // valores já preenchidos manualmente. Dispara CEP lookup quando aplicável,
+  // e adiciona warnings/acervo nas observações para revisão humana.
+  const applyAIPrefill = useCallback(async (p: PrefillFields) => {
+    const onlyDigits = (s: any) => String(s ?? "").replace(/\D/g, "");
+    // IA SEMPRE sobrescreve valores existentes quando tem valor extraído.
+    // Mantém o valor manual SOMENTE se a IA não trouxe nada para o campo.
+    const setIfEmpty = (cur: string, next: any) => {
+      const nextStr = next == null ? "" : String(next).trim();
+      return nextStr ? String(next) : cur;
+    };
+
+    // Normaliza sexo para os valores aceitos pelo select (M/F/Outro).
+    const normSexo = (v: any): string => {
+      const s = String(v ?? "").trim().toUpperCase();
+      if (!s) return "";
+      if (s === "M" || s.startsWith("MASC")) return "M";
+      if (s === "F" || s.startsWith("FEM")) return "F";
+      if (s === "OUTRO" || s === "O") return "Outro";
+      return "";
+    };
+    // Normaliza estado civil para os valores aceitos pelo select.
+    const normEstadoCivil = (v: any): string => {
+      const s = String(v ?? "").trim().toLowerCase();
+      if (!s) return "";
+      if (s.startsWith("solt")) return "Solteiro(a)";
+      if (s.startsWith("cas")) return "Casado(a)";
+      if (s.startsWith("div")) return "Divorciado(a)";
+      if (s.startsWith("viú") || s.startsWith("viu")) return "Viúvo(a)";
+      if (s.startsWith("sep")) return "Separado(a)";
+      if (s.includes("união") || s.includes("uniao") || s.includes("estável") || s.includes("estavel")) return "União Estável";
+      return "";
+    };
+
+    // Detecta divergência de endereço (CEP vs endereço extraído)
+    let addressDivergence: string | null = null;
+    let extractedCep = onlyDigits(p.cep);
+    const extractedCep2 = onlyDigits((p as any).cep_secundario);
+    const senhaGovRaw = typeof (p as any).senha_gov_raw === "string" ? (p as any).senha_gov_raw : (p as any).senha_gov;
+    const senhaGovConfidence = typeof (p as any).senha_gov_confidence === "number" ? (p as any).senha_gov_confidence : (p.confidence?.senha_gov_raw ?? p.confidence?.senha_gov ?? 0);
+    const canFillSenhaGov = typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && senhaGovConfidence >= 0.9 && !(p as any).senha_gov_needs_review;
+    const senhaGovShouldReview = Boolean((p as any).senha_gov_needs_review) || (typeof senhaGovRaw === "string" && senhaGovRaw.length > 0 && !canFillSenhaGov);
+    setAiSenhaGovFromAI(canFillSenhaGov);
+    setAiSenhaGovNeedsReview(senhaGovShouldReview);
+    setAiEmissorRgNeedsReview(Boolean((p as any).emissor_rg_needs_review));
+    if (canFillSenhaGov) {
+      toast.warning("Confira a senha GOV.BR caractere por caractere antes de salvar.");
+    } else if ((p as any).senha_gov_needs_review) {
+      toast.warning("Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.");
+    }
+    if ((p as any).emissor_rg_needs_review) {
+      toast.warning("Verificar emissor do RG. Extração possivelmente incorreta.");
+    }
+
+    setF(prev => {
+      const cinDetected = String(p.tipo_documento_identidade || "").toUpperCase() === "CIN";
+      const cpfDigits = onlyDigits(p.cpf);
+      const rgValue = String(p.rg ?? "");
+      // Separa "SSP/SP" → emissor="SSP", uf="SP" (mantém compatibilidade caso vier separado)
+      const rawEmissor = String(p.emissor_rg ?? "").trim();
+      const rawUfEmissor = String((p as any).uf_emissor_rg ?? "").trim().toUpperCase();
+      let parsedEmissor = rawEmissor;
+      let parsedUfEmissor = rawUfEmissor;
+      const m = rawEmissor.match(/^(.+?)[\/\-\s]+([A-Z]{2})$/i);
+      if (m && !parsedUfEmissor) {
+        parsedEmissor = m[1].trim().toUpperCase();
+        parsedUfEmissor = m[2].toUpperCase();
+      }
+      return {
+        ...prev,
+        nome_completo: setIfEmpty(prev.nome_completo, p.nome_completo),
+        cpf: setIfEmpty(prev.cpf, cpfDigits),
+        tipo_documento_identidade: cinDetected ? "CIN" : prev.tipo_documento_identidade,
+        rg: setIfEmpty(prev.rg, rgValue),
+        emissor_rg: setIfEmpty(prev.emissor_rg, parsedEmissor),
+        uf_emissor_rg: setIfEmpty(prev.uf_emissor_rg, parsedUfEmissor),
+        expedicao_rg: setIfEmpty(prev.expedicao_rg, p.data_expedicao_rg),
+        data_nascimento: setIfEmpty(prev.data_nascimento, p.data_nascimento),
+        sexo: setIfEmpty(prev.sexo, normSexo(p.sexo)),
+        nome_mae: setIfEmpty(prev.nome_mae, p.nome_mae),
+        nome_pai: setIfEmpty(prev.nome_pai, p.nome_pai),
+        nacionalidade: setIfEmpty(prev.nacionalidade, p.nacionalidade) || prev.nacionalidade,
+        estado_civil: setIfEmpty(prev.estado_civil, normEstadoCivil(p.estado_civil)),
+        profissao: setIfEmpty(prev.profissao, p.profissao),
+        escolaridade: setIfEmpty(prev.escolaridade, p.escolaridade),
+        naturalidade_municipio: setIfEmpty(prev.naturalidade_municipio, p.naturalidade_municipio),
+        naturalidade_uf: setIfEmpty(prev.naturalidade_uf, p.naturalidade_uf),
+        naturalidade_pais: setIfEmpty(prev.naturalidade_pais, p.naturalidade_pais) || prev.naturalidade_pais,
+        titulo_eleitor: setIfEmpty(prev.titulo_eleitor, p.titulo_eleitor),
+        cnh: setIfEmpty(prev.cnh, p.cnh),
+        ctps: setIfEmpty(prev.ctps, p.ctps),
+        celular: setIfEmpty(prev.celular, p.celular ? onlyDigits(p.celular) : ""),
+        email: setIfEmpty(prev.email, p.email),
+        cep: setIfEmpty(prev.cep, extractedCep ? formatCepMask(extractedCep) : ""),
+        endereco: setIfEmpty(prev.endereco, p.endereco),
+        numero: setIfEmpty(prev.numero, p.numero),
+        complemento: setIfEmpty(prev.complemento, p.complemento),
+        bairro: setIfEmpty(prev.bairro, p.bairro),
+        cidade: setIfEmpty(prev.cidade, p.cidade),
+        estado: setIfEmpty(prev.estado, p.estado),
+        pais: setIfEmpty(prev.pais, p.pais) || prev.pais,
+        cep2: setIfEmpty(prev.cep2, extractedCep2 ? formatCepMask(extractedCep2) : ""),
+        endereco2: setIfEmpty(prev.endereco2, (p as any).endereco_secundario),
+        numero2: setIfEmpty(prev.numero2, (p as any).numero_secundario),
+        complemento2: setIfEmpty(prev.complemento2, (p as any).complemento_secundario),
+        bairro2: setIfEmpty(prev.bairro2, (p as any).bairro_secundario),
+        cidade2: setIfEmpty(prev.cidade2, (p as any).cidade_secundario),
+        estado2: setIfEmpty(prev.estado2, (p as any).estado_secundario),
+        pais2: setIfEmpty(prev.pais2, (p as any).pais_secundario),
+        validade_laudo_psicologico: setIfEmpty(prev.validade_laudo_psicologico, (p as any).data_realizacao_exame_psicologico ?? (p as any).validade_laudo_psicologico),
+        validade_exame_tiro: setIfEmpty(prev.validade_exame_tiro, (p as any).data_realizacao_exame_tiro ?? (p as any).validade_exame_tiro),
+        senha_gov: canFillSenhaGov ? senhaGovRaw : (senhaGovShouldReview ? "" : prev.senha_gov),
+        observacao: [
+          prev.observacao,
+          Array.isArray(p.warnings) && p.warnings.length
+            ? `\n\n⚠️ AVISOS DA IA:\n- ${p.warnings.join("\n- ")}`
+            : "",
+          Array.isArray(p.acervo) && p.acervo.length
+            ? `\n\n📦 ACERVO IDENTIFICADO PELA IA:\n${p.acervo.map((a: any, i: number) =>
+                `${i + 1}. ${[a.tipo_documento, a.arma_marca, a.arma_modelo, a.arma_calibre, a.arma_numero_serie]
+                  .filter(Boolean).join(" · ")}`).join("\n")}`
+            : "",
+          p.observacoes ? `\n\n📝 ${p.observacoes}` : "",
+        ].filter(Boolean).join("").trim(),
+      };
+    });
+
+    // CEP lookup automático + geocode encadeado (principal)
+    if (extractedCep && extractedCep.length === 8) {
+      try {
+        const result = await lookupCep(extractedCep);
+        if (result) {
+          const cepCity = (result.city || "").trim().toLowerCase();
+          const aiCity = String(p.cidade || "").trim().toLowerCase();
+          if (cepCity && aiCity && cepCity !== aiCity) {
+            addressDivergence = `Cidade do CEP (${result.city}) difere da cidade extraída (${p.cidade}).`;
+          }
+          const street1 = String(p.endereco || result.street || "");
+          const number1 = String(p.numero || "");
+          const city1 = String(p.cidade || result.city || "");
+          const state1 = String(p.estado || result.state || "");
+          setF(prev => ({
+            ...prev,
+            endereco: prev.endereco || result.street || "",
+            bairro: prev.bairro || result.neighborhood || "",
+            cidade: prev.cidade || result.city || "",
+            estado: prev.estado || result.state || "",
+          }));
+          // Geocode imediato com valores garantidos
+          autoResolveGeoloc("", { street: street1, number: number1, city: city1, state: state1 });
+        }
+      } catch { /* lookup falha silenciosa — usuário revê manualmente */ }
+    }
+
+    // CEP lookup automático + geocode encadeado (secundário)
+    if (extractedCep2 && extractedCep2.length === 8) {
+      try {
+        const result2 = await lookupCep(extractedCep2);
+        if (result2) {
+          const street2 = String((p as any).endereco_secundario || result2.street || "");
+          const number2 = String((p as any).numero_secundario || "");
+          const city2 = String((p as any).cidade_secundario || result2.city || "");
+          const state2 = String((p as any).estado_secundario || result2.state || "");
+          setF(prev => ({
+            ...prev,
+            endereco2: prev.endereco2 || result2.street || "",
+            bairro2: prev.bairro2 || result2.neighborhood || "",
+            cidade2: prev.cidade2 || result2.city || "",
+            estado2: prev.estado2 || result2.state || "",
+          }));
+          autoResolveGeoloc("2", { street: street2, number: number2, city: city2, state: state2 });
+        }
+      } catch { /* silencioso */ }
+    }
+
+    if (addressDivergence) {
+      toast.warning("Divergência de endereço detectada — revise.");
+      setF(prev => ({
+        ...prev,
+        observacao: `${prev.observacao}\n\n⚠️ ${addressDivergence}`.trim(),
+      }));
+    }
+
+    // Fallback: caso o CEP não tenha sido extraído mas o endereço sim,
+    // ainda tenta geocodar a partir dos campos já preenchidos pela IA.
+    setTimeout(() => {
+      setF(curr => {
+        if (!curr.geolocalizacao && curr.endereco && curr.cidade) {
+          autoResolveGeoloc("", { street: curr.endereco, number: curr.numero, city: curr.cidade, state: curr.estado });
+        }
+        if (!curr.geolocalizacao2 && curr.endereco2 && curr.cidade2) {
+          autoResolveGeoloc("2", { street: curr.endereco2, number: curr.numero2, city: curr.cidade2, state: curr.estado2 });
+        }
+        return curr;
+      });
+    }, 1500);
+  }, [lookupCep, autoResolveGeoloc]);
 
   const save = async () => {
-    if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); setStep(0); return; }
+    // Todos os campos são obrigatórios EXCETO: cnh, ctps, complementos,
+    // endereço secundário (todo), observação e geolocalização (auto).
+    if (!isEdit) {
+      const trimmed = (k: string) => !String((f as any)[k] || "").trim();
+      const errs: Record<string, boolean> = {
+        photo: !photoFile,
+        nome_completo: trimmed("nome_completo"),
+        cpf: trimmed("cpf"),
+        rg: trimmed("rg"),
+        emissor_rg: trimmed("emissor_rg"),
+        uf_emissor_rg: trimmed("uf_emissor_rg"),
+        expedicao_rg: trimmed("expedicao_rg"),
+        data_nascimento: trimmed("data_nascimento"),
+        sexo: trimmed("sexo"),
+        naturalidade_municipio: trimmed("naturalidade_municipio"),
+        naturalidade_uf: trimmed("naturalidade_uf"),
+        nacionalidade: trimmed("nacionalidade"),
+        estado_civil: trimmed("estado_civil"),
+        profissao: trimmed("profissao"),
+        escolaridade: trimmed("escolaridade"),
+        titulo_eleitor: trimmed("titulo_eleitor"),
+        nome_mae: trimmed("nome_mae"),
+        nome_pai: trimmed("nome_pai"),
+        celular: trimmed("celular"),
+        email: trimmed("email"),
+        cep: trimmed("cep"),
+        endereco: trimmed("endereco"),
+        numero: trimmed("numero"),
+        bairro: trimmed("bairro"),
+        cidade: trimmed("cidade"),
+        estado: trimmed("estado"),
+        categoria_titular: trimmed("categoria_titular"),
+      };
+      const hasErr = Object.values(errs).some(Boolean);
+      if (hasErr) {
+        setRequiredErrors(errs);
+        toast.error("Preencha todos os campos obrigatórios destacados");
+        return;
+      }
+      setRequiredErrors({});
+    } else {
+      if (!f.nome_completo.trim()) { toast.error("Nome completo é obrigatório"); return; }
+    }
+    // ── Validação compartilhada (clienteSchema) ──
+    if (f.cpf && !isValidCpf(f.cpf)) { toast.error("CPF inválido"); return; }
+    if (f.email && !isValidEmail(f.email)) { toast.error("E-mail inválido"); return; }
+    if (f.celular && !isValidTelefone(f.celular)) { toast.error("Telefone inválido"); return; }
+    // CIN substitui o RG e PODE ter o mesmo número do CPF (legal).
+    // Só bloqueia quando o tipo é RG tradicional.
+    if (f.tipo_documento_identidade !== "CIN" && !rgNotEqualCpf(f.rg, f.cpf)) {
+      toast.error("RG não pode ser igual ao CPF — se for CIN, mude o tipo de documento para 'CIN'");
+      return;
+    }
+    if (f.tipo_documento_identidade === "CIN" && !cinEqualsCpf(f.rg, f.cpf)) {
+      toast.error("CIN deve usar o mesmo número do CPF (mesmos dígitos)");
+      return;
+    }
     setSaving(true);
     try {
+      // Separa campos que pertencem ao CR/credenciais do payload do cliente
+      const { validade_laudo_psicologico, validade_exame_tiro, senha_gov, ...clienteFields } = f;
       const payload: any = {
-        ...f,
+        ...clienteFields,
+        numero_documento_identidade: f.rg || null,
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+      // Limpa pendências condicionais do responsável terceiro quando o titular
+      // declara que o comprovante está em seu próprio nome.
+      if (payload.comprovante_endereco_em_nome_proprio === "sim") {
+        payload.responsavel_endereco_nome = null;
+        payload.responsavel_endereco_cpf = null;
+        payload.responsavel_endereco_rg_cin = null;
+        payload.responsavel_endereco_telefone = null;
+        payload.responsavel_endereco_email = null;
+        payload.responsavel_endereco_vinculo = null;
+        payload.responsavel_endereco_declaracao_path = null;
+        payload.responsavel_endereco_comprovante_path = null;
+        payload.responsavel_endereco_data_nascimento = null;
+        payload.responsavel_endereco_naturalidade = null;
+        payload.responsavel_endereco_nacionalidade = null;
+        payload.responsavel_endereco_estado_civil = null;
+        payload.responsavel_endereco_profissao = null;
+        payload.responsavel_endereco_cep = null;
+        payload.responsavel_endereco_logradouro = null;
+        payload.responsavel_endereco_numero = null;
+        payload.responsavel_endereco_complemento = null;
+        payload.responsavel_endereco_bairro = null;
+        payload.responsavel_endereco_cidade = null;
+        payload.responsavel_endereco_estado = null;
+        payload.responsavel_endereco_geolocalizacao = null;
+        payload.responsavel_endereco_reside_desde = null;
+        payload.responsavel_endereco_residiu_ate = null;
+      } else if (payload.comprovante_endereco_em_nome_proprio === "nao") {
+        // Normaliza datas do responsável (date columns rejeitam string vazia).
+        payload.responsavel_endereco_data_nascimento = formatDateForDatabase(payload.responsavel_endereco_data_nascimento);
+        payload.responsavel_endereco_reside_desde = formatDateForDatabase(payload.responsavel_endereco_reside_desde);
+        payload.responsavel_endereco_residiu_ate = formatDateForDatabase(payload.responsavel_endereco_residiu_ate);
+      }
+      // Normaliza telefone para o formato (XX) XXXXX-XXXX
+      if (payload.celular) {
+        const d = String(payload.celular).replace(/\D/g, "").slice(-11);
+        if (d.length === 11) payload.celular = `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+        else if (d.length === 10) payload.celular = `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+      }
+      // Hardening: Postgres rejeita string vazia em colunas date/timestamp/numeric.
+      // Convertemos QUALQUER "" → null para evitar regressão se novos campos forem
+      // adicionados ao formulário no futuro. Booleans e zeros são preservados.
+      for (const k of Object.keys(payload)) {
+        if (payload[k] === "") payload[k] = null;
+      }
+      // Última barreira antes do insert/update: e-mail nunca pode seguir em
+      // uppercase nem com espaços invisíveis, pois a constraint do banco exige
+      // formato ASCII lowercase.
+      payload.email = sanitizeEmailForDb(payload.email);
+      payload.responsavel_endereco_email = sanitizeEmailForDb(payload.responsavel_endereco_email);
       let savedId: number | null = null;
       if (isEdit) {
         // Upload photo if new file selected
@@ -248,11 +800,16 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
           const path = await uploadPhoto(cliente.id);
           if (path) payload.imagem = path;
         }
+        console.log("[qa_clientes payload final]", payload.email, payload.responsavel_endereco_email, payload);
         const { error } = await supabase.from("qa_clientes" as any).update(payload).eq("id", cliente.id);
         if (error) throw error;
         savedId = cliente.id;
         toast.success("Cliente atualizado");
       } else {
+        // Marca origem='manual' para distinguir cadastros feitos pela equipe
+        // dos enviados via formulário público.
+        payload.origem = "manual";
+        console.log("[qa_clientes payload final]", payload.email, payload.responsavel_endereco_email, payload);
         const { data, error } = await supabase.from("qa_clientes" as any).insert(payload).select("id").single();
         if (error) throw error;
         savedId = (data as any)?.id;
@@ -265,6 +822,80 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         }
         toast.success("Cliente cadastrado");
       }
+      // Persiste datas de realização dos exames em qa_cadastro_cr (cria stub se necessário)
+      let persistedCrId = cadastroCrId;
+      if (savedId && (validade_laudo_psicologico || validade_exame_tiro)) {
+        try {
+          let crId = persistedCrId;
+          if (!crId) {
+            const { data: stub } = await supabase
+              .from("qa_cadastro_cr" as any)
+              .insert({ cliente_id: savedId })
+              .select("id")
+              .single();
+            crId = (stub as any)?.id ?? null;
+          }
+          if (crId) {
+            persistedCrId = crId;
+            await supabase.from("qa_cadastro_cr" as any).update({
+              validade_laudo_psicologico: formatDateForDatabase(validade_laudo_psicologico),
+              validade_exame_tiro: formatDateForDatabase(validade_exame_tiro),
+            }).eq("id", crId);
+          }
+        } catch (e: any) {
+          console.error("Falha ao salvar exames:", e);
+          toast.warning("Cliente salvo, mas datas de exames não foram persistidas");
+        }
+      }
+      // ── Sincronia automática com módulo Exames (qa_exames_cliente) ──
+      // Cria/atualiza registros oficiais a partir das datas extraídas pela IA
+      // ou digitadas no cadastro. Não duplica (mesma data+tipo) e preserva histórico.
+      if (savedId) {
+        try {
+          const { data: authData } = await supabase.auth.getUser();
+          const authUser = authData?.user ?? null;
+          const pares: Array<{ tipo: "psicologico" | "tiro"; dataISO: string | null }> = [
+            { tipo: "psicologico", dataISO: formatDateForDatabase(validade_laudo_psicologico) },
+            { tipo: "tiro", dataISO: formatDateForDatabase(validade_exame_tiro) },
+          ];
+          for (const { tipo, dataISO } of pares) {
+            if (!dataISO) continue;
+            // Calcula vencimento = data_realizacao + 365 dias (mesmo dia ano seguinte)
+            const [yy, mm, dd] = dataISO.split("-").map(Number);
+            const vencDate = new Date(yy + 1, (mm || 1) - 1, dd || 1);
+            const vencISO = `${vencDate.getFullYear()}-${String(vencDate.getMonth() + 1).padStart(2, "0")}-${String(vencDate.getDate()).padStart(2, "0")}`;
+            // Verifica duplicidade (mesma data+tipo)
+            const { data: existentes } = await supabase
+              .from("qa_exames_cliente" as any)
+              .select("id, data_realizacao")
+              .eq("cliente_id", savedId)
+              .eq("tipo", tipo)
+              .eq("data_realizacao", dataISO)
+              .limit(1);
+            if (existentes && existentes.length > 0) continue; // já existe, não duplica
+            await supabase.from("qa_exames_cliente" as any).insert({
+              cliente_id: savedId,
+              tipo,
+              data_realizacao: dataISO,
+              data_vencimento: vencISO,
+              observacoes: "Importado automaticamente do cadastro do cliente",
+              cadastrado_por: authUser?.id || null,
+              cadastrado_por_nome: authUser?.email || null,
+            });
+          }
+        } catch (e: any) {
+          console.error("Falha ao sincronizar módulo Exames:", e);
+          toast.warning("Cliente salvo, mas exames não foram sincronizados no módulo Exames");
+        }
+      }
+      if (savedId && senha_gov) {
+        try {
+          await setSenhaGov(persistedCrId ?? null, senha_gov, "ClienteFormModal:IA", savedId);
+        } catch (e: any) {
+          console.error("Falha ao salvar senha GOV importada:", e);
+          toast.warning("Cliente salvo, mas Senha GOV importada não foi persistida");
+        }
+      }
       onSaved();
       onClose();
     } catch (e: any) {
@@ -274,193 +905,431 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     }
   };
 
-  const canGoNext = step < STEPS.length - 1;
-  const canGoPrev = step > 0;
-  const isLast = step === STEPS.length - 1;
-
-  /* ── Step badge completeness ── */
-  const stepComplete = (idx: number): boolean => {
-    switch (idx) {
-      case 0: return !!(f.nome_completo && f.cpf);
-      case 1: return !!(f.nome_mae && f.celular);
-      case 2: return !!(f.endereco && f.cidade);
-      case 3: return true; // optional
-      case 4: return true;
-      default: return false;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="w-[96vw] max-w-3xl max-h-[90vh] overflow-hidden p-0 bg-white border-slate-200 text-slate-800 qa-premium gap-0">
+      <DialogContent className="w-[98vw] max-w-6xl max-h-[94dvh] overflow-hidden p-0 bg-[#fafaf9] border border-zinc-200 text-zinc-800 qa-premium gap-0">
 
-        {/* ── Header ── */}
-        <DialogHeader className="px-6 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-          <DialogTitle className="text-lg font-bold text-slate-800">
-            {isEdit ? "Editar Cliente" : "Novo Cliente"}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-slate-400">
-            Preencha os dados cadastrais • Etapa {step + 1} de {STEPS.length}
-          </DialogDescription>
+        {/* DialogHeader é obrigatório para acessibilidade — invisível visualmente */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{isEdit ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
+          <DialogDescription>Cadastro completo do titular em formulário único.</DialogDescription>
         </DialogHeader>
 
-        {/* ── Step Navigation ── */}
-        <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-100">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            {STEPS.map((s, i) => {
-              const Icon = s.icon;
-              const active = i === step;
-              const completed = stepComplete(i) && i !== step;
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => setStep(i)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium whitespace-nowrap transition-all",
-                    active
-                      ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
-                      : completed
-                        ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                        : "bg-white text-slate-400 hover:text-slate-600 hover:bg-slate-100 border border-slate-100"
-                  )}
-                >
-                  {completed && !active ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : (
-                    <Icon className="h-3.5 w-3.5" />
-                  )}
-                  <span className="hidden sm:inline">{s.label}</span>
-                  <span className="sm:hidden">{i + 1}</span>
-                </button>
-              );
-            })}
-          </div>
-          {/* Progress bar */}
-          <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-300"
-              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* ── Form Body ── */}
-        <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(90vh - 260px)" }}>
-          {/* Step 0: Identificação */}
-          {step === 0 && (
-            <div className="space-y-5">
-              {/* Photo upload */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div
+        {/* ── Body com layout de Dashboard (igual à tela do cliente) ── */}
+        <div className="px-5 sm:px-7 py-5 overflow-y-auto bg-[#fafaf9]" style={{ maxHeight: "calc(94vh - 80px)" }}>
+          <div className="space-y-5">
+            {/* ── Header Card (espelha o card de identificação do cliente) ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm overflow-hidden">
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-zinc-100" />
+              <div className="relative flex items-center gap-4 flex-wrap">
+                {/* Avatar / foto */}
+                <div className="relative flex-shrink-0">
+                  <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-20 h-20 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 flex items-center justify-center cursor-pointer overflow-hidden transition-colors bg-slate-50"
+                    className={cn(
+                      "relative h-24 aspect-[3/4] rounded-xl border border-dashed flex items-center justify-center overflow-hidden transition-colors",
+                      requiredErrors.photo ? "border-red-500 ring-2 ring-red-500 bg-red-50" : "border-zinc-300 hover:border-zinc-400 bg-zinc-50"
+                    )}
+                    aria-label="Adicionar foto"
                   >
                     {photoPreview ? (
-                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover" />
+                      <img src={photoPreview} alt="Foto" className="w-full h-full object-cover rounded-xl" />
                     ) : (
-                      <Camera className="h-6 w-6 text-slate-300" />
+                      <Camera className="h-7 w-7 text-zinc-400" />
                     )}
-                  </div>
+                  </button>
+                  {requiredErrors.photo && (
+                    <p className="text-[10px] text-red-600 mt-1 uppercase">Foto obrigatória</p>
+                  )}
                   {photoPreview && (
                     <button
+                      type="button"
                       onClick={removePhoto}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                      className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                      aria-label="Remover foto"
                     >
                       <X className="h-3 w-3" />
                     </button>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Foto do Cliente</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Clique para adicionar ou trocar a foto</p>
-                  {uploadingPhoto && <p className="text-[10px] text-blue-500 mt-0.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando...</p>}
+
+                {/* Identidade do cliente */}
+                <div className="flex-1 min-w-[220px]">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn(
+                      "inline-flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-[0.18em] px-2 py-0.5 rounded-full border",
+                      isEdit
+                        ? "bg-zinc-50 border-zinc-200 text-zinc-600"
+                        : "bg-zinc-50 border-zinc-200 text-zinc-600"
+                    )}>
+                      <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-[#7A1F2B]")} />
+                      {isEdit ? "Editando" : "Em cadastro"}
+                    </span>
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+                      ID {isEdit && cliente?.id ? `#${String(cliente.id).padStart(4, "0")}` : "#----"}
+                    </span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 uppercase mt-1 break-words">
+                    {f.nome_completo || (isEdit ? "Cliente" : "NOVO CLIENTE")}
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mt-0.5">
+                    CPF {f.cpf || "—"}
+                  </p>
+                </div>
+
+                {/* Ações */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="h-9 px-3.5 rounded-md border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 text-xs font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={save}
+                    disabled={saving}
+                    className="h-9 px-4 inline-flex items-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-xs font-semibold uppercase tracking-wide justify-center disabled:opacity-50 transition-colors shadow-sm"
+                  >
+                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                    {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
+                  </button>
                 </div>
               </div>
+
+              {/* KPIs (espelha a tira de KPIs do dashboard do cliente) */}
+              <div className="relative mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                <KpiCard icon={User} label="Identificação" value={kpiIdent(f)} tone={kpiTone(kpiIdent(f))} />
+                <KpiCard icon={Phone} label="Contato" value={kpiContato(f)} tone={kpiTone(kpiContato(f))} />
+                <KpiCard icon={MapPin} label="Endereço" value={kpiEndereco(f)} tone={kpiTone(kpiEndereco(f))} />
+                <KpiCard icon={Shield} label="Categoria" value={f.categoria_titular ? "OK" : "Pendente"} tone={f.categoria_titular ? "ok" : "warn"} />
+                <KpiCard icon={FileBadge} label="Status" value={isEdit ? "Edição" : "Novo"} tone={isEdit ? "ok" : "info"} />
+              </div>
+            </section>
+
+            {/* IA — bloco destacado, mesmo padrão dos cards */}
+            {!isEdit && (
+              <section className="relative rounded-xl border border-zinc-200 bg-white p-5 shadow-sm overflow-hidden">
+                <SectionTitle icon={Activity} label="Preencher com IA" />
+                <div className="mt-3">
+                  <ClienteAIPrefill
+                    key={aiPrefillKey}
+                    onApply={applyAIPrefill}
+                    onPhotoCandidate={(file) => {
+                      // Só assume a foto se ainda não houver uma selecionada.
+                      if (photoFile || photoPreview) return;
+                      setPhotoFile(file);
+                      setRequiredErrors((p) => ({ ...p, photo: false }));
+                      const reader = new FileReader();
+                      reader.onload = () => setPhotoPreview(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </div>
+              </section>
+            )}
+
+            <div className="space-y-5">
+            {/* ── Bloco: Identificação ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={User} label="Identificação" />
+              {uploadingPhoto && <p className="text-[10px] text-zinc-500 -mt-2 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Enviando foto...</p>}
               <div className="grid grid-cols-1 gap-4">
-                <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span />
+                <FInput label="Nome Completo *" value={f.nome_completo} onChange={v => set("nome_completo", v)} span error={requiredErrors.nome_completo ? "Obrigatório" : undefined} />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="CPF" value={f.cpf} onChange={v => set("cpf", v)} />
-                <FInput label="RG / CIN" value={f.rg} onChange={v => set("rg", v)} />
-                <FInput label="Emissor RG / CIN" value={f.emissor_rg} onChange={v => set("emissor_rg", v)} />
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <FInput label="CPF *" value={f.cpf} onChange={v => set("cpf", v)} error={requiredErrors.cpf ? "Obrigatório" : undefined} />
+                <FSelect
+                  label="Tipo de Documento"
+                  value={f.tipo_documento_identidade}
+                  onChange={v => set("tipo_documento_identidade", (v === "CIN" ? "CIN" : "RG"))}
+                  options={[
+                    { value: "RG", label: "RG" },
+                    { value: "CIN", label: "CIN (usa CPF)" },
+                  ]}
+                />
+                <FInput
+                  label={(f.tipo_documento_identidade === "CIN" ? "CIN (nº)" : "RG (nº)") + " *"}
+                  value={f.rg}
+                  onChange={v => set("rg", v)}
+                  error={requiredErrors.rg ? "Obrigatório" : undefined}
+                />
+                <FInput
+                  label={(f.tipo_documento_identidade === "CIN" ? "Emissor CIN" : "Emissor RG") + " *"}
+                  value={f.emissor_rg}
+                  onChange={v => { set("emissor_rg", v); setAiEmissorRgNeedsReview(false); }}
+                  error={requiredErrors.emissor_rg ? "Obrigatório" : undefined}
+                />
+                <FSelect
+                  label="UF Emissor *"
+                  value={f.uf_emissor_rg}
+                  onChange={v => set("uf_emissor_rg", v)}
+                  options={ufOptions}
+                  placeholder="UF..."
+                  error={requiredErrors.uf_emissor_rg ? "Obrigatório" : undefined}
+                />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="Expedição RG" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FInput label="Data de Nascimento" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} />
-                <FInput label="Naturalidade" value={f.naturalidade} onChange={v => set("naturalidade", v)} />
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <FInput label="Nacionalidade" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} />
-                <FSelect label="Estado Civil" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} />
-                <FInput label="Profissão" value={f.profissao} onChange={v => set("profissao", v)} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FInput label="Escolaridade" value={f.escolaridade} onChange={v => set("escolaridade", v)} />
-                <FInput label="Título de Eleitor" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} />
-              </div>
-            </div>
-          )}
-
-          {/* Step 1: Filiação & Contato */}
-          {step === 1 && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Filiação</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FInput label="Nome da Mãe" value={f.nome_mae} onChange={v => set("nome_mae", v)} />
-                  <FInput label="Nome do Pai" value={f.nome_pai} onChange={v => set("nome_pai", v)} />
+              {aiEmissorRgNeedsReview && (
+                <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 -mt-2">
+                  <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>Verificar emissor do RG. Extração possivelmente incorreta.</span>
                 </div>
+              )}
+              {f.tipo_documento_identidade === "CIN" && (
+                <p className="text-[10px] text-zinc-500 -mt-2">
+                  ℹ️ A Carteira de Identidade Nacional (CIN) substitui o RG e usa o mesmo número do CPF — é legal e esperado que coincidam.
+                </p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <FInput label="Expedição RG *" value={f.expedicao_rg} onChange={v => set("expedicao_rg", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} error={requiredErrors.expedicao_rg ? "Obrigatório" : undefined} />
+                <FInput label="Data de Nascimento *" value={f.data_nascimento} onChange={v => set("data_nascimento", normalizeDateInput(v))} placeholder="DD/MM/AAAA" inputMode="numeric" maxLength={10} error={requiredErrors.data_nascimento ? "Obrigatório" : undefined} />
+                <FSelect label="Sexo *" value={f.sexo} onChange={v => set("sexo", v)} options={SEXO_OPTIONS} placeholder="Selecionar..." error={requiredErrors.sexo ? "Obrigatório" : undefined} />
               </div>
-              <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Contato</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FInput label="Celular" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" />
-                  <FInput label="E-mail" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" />
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <FInput label="Naturalidade (Município) *" value={f.naturalidade_municipio} onChange={v => set("naturalidade_municipio", v)} error={requiredErrors.naturalidade_municipio ? "Obrigatório" : undefined} />
+                <FSelect label="Naturalidade (UF) *" value={f.naturalidade_uf} onChange={v => set("naturalidade_uf", v)} options={ufOptions} placeholder="UF" error={requiredErrors.naturalidade_uf ? "Obrigatório" : undefined} />
+                <FInput label="Nacionalidade *" value={f.nacionalidade} onChange={v => set("nacionalidade", v)} error={requiredErrors.nacionalidade ? "Obrigatório" : undefined} />
               </div>
-            </div>
-          )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <FSelect label="Estado Civil *" value={f.estado_civil} onChange={v => set("estado_civil", v)} options={estadoCivilOptions} error={requiredErrors.estado_civil ? "Obrigatório" : undefined} />
+                <FInput label="Profissão *" value={f.profissao} onChange={v => set("profissao", v)} error={requiredErrors.profissao ? "Obrigatório" : undefined} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <FInput label="Escolaridade *" value={f.escolaridade} onChange={v => set("escolaridade", v)} error={requiredErrors.escolaridade ? "Obrigatório" : undefined} />
+                <FInput label="Título de Eleitor *" value={f.titulo_eleitor} onChange={v => set("titulo_eleitor", v)} error={requiredErrors.titulo_eleitor ? "Obrigatório" : undefined} />
+                <FInput label="CNH" value={f.cnh} onChange={v => set("cnh", v)} />
+                <FInput label="CTPS" value={f.ctps} onChange={v => set("ctps", v)} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Field label="Senha Gov.br">
+                  {isEdit ? (
+                    <SenhaGovField
+                      cadastroCrId={cadastroCrId}
+                      clienteId={cliente?.id ?? null}
+                      contexto="ClienteFormModal"
+                      variant="row"
+                      autoReveal
+                      onCreateCadastro={async () => {
+                        if (!cliente?.id) return null;
+                        const { data: stub, error } = await supabase
+                          .from("qa_cadastro_cr" as any)
+                          .insert({ cliente_id: cliente.id })
+                          .select("id")
+                          .single();
+                        if (error) {
+                          toast.error("Falha ao preparar CR: " + error.message);
+                          return null;
+                        }
+                        const newId = (stub as any)?.id ?? null;
+                        setCadastroCrId(newId);
+                        return newId;
+                      }}
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={f.senha_gov}
+                          onChange={e => { set("senha_gov", e.target.value); setAiSenhaGovNeedsReview(false); }}
+                          placeholder="Senha GOV importada"
+                          className={cn(inputClassPreserveCase, aiSenhaGovFromAI && "pr-32")}
+                        />
+                        {aiSenhaGovFromAI && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-700">
+                            conferir senha GOV
+                          </span>
+                        )}
+                      </div>
+                      {aiSenhaGovFromAI && (
+                        <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Confira a senha GOV.BR caractere por caractere antes de salvar.</span>
+                        </div>
+                      )}
+                      {aiSenhaGovNeedsReview && (
+                        <div className="flex items-start gap-1.5 text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                          <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                          <span>Senha GOV.BR não preenchida automaticamente por baixa confiança. Conferir manualmente no documento.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Field>
+                <FInput
+                  label="Data de Realização Exame Psicológico"
+                  value={f.validade_laudo_psicologico}
+                  onChange={v => set("validade_laudo_psicologico", normalizeDateInput(v))}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
+                <FInput
+                  label="Data de Realização Exame de Tiro"
+                  value={f.validade_exame_tiro}
+                  onChange={v => set("validade_exame_tiro", normalizeDateInput(v))}
+                  placeholder="DD/MM/AAAA"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
+              </div>
+            </section>
 
-          {/* Step 2: Endereço Principal */}
-          {step === 2 && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Endereço Principal</p>
+            {/* ── Bloco: Filiação & Contato ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={Users} label="Filiação & Contato" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FInput label="Nome da Mãe *" value={f.nome_mae} onChange={v => set("nome_mae", v)} error={requiredErrors.nome_mae ? "Obrigatório" : undefined} />
+                <FInput label="Nome do Pai *" value={f.nome_pai} onChange={v => set("nome_pai", v)} error={requiredErrors.nome_pai ? "Obrigatório" : undefined} />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FInput label="Celular *" value={f.celular} onChange={v => set("celular", v)} placeholder="(00) 00000-0000" error={requiredErrors.celular ? "Obrigatório" : undefined} />
+                <FInput label="E-mail *" value={f.email} onChange={v => set("email", v)} placeholder="email@exemplo.com" error={requiredErrors.email ? "Obrigatório" : undefined} preserveCase type="email" />
+              </div>
+            </section>
+
+            {/* ── Bloco: Endereço Principal ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={MapPin} label="Endereço Principal" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep} onChange={v => set("cep", v)} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00000-000" />
+                  <FInput label={(cepLoading ? "CEP ⏳" : "CEP") + " *"} value={f.cep} onChange={v => set("cep", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep, "")} placeholder="00.000-000" maxLength={10} inputMode="numeric" error={requiredErrors.cep ? "Obrigatório" : undefined} />
                   <div className="col-span-2 sm:col-span-3">
-                    <FInput label="Logradouro" value={f.endereco} onChange={v => set("endereco", v)} span />
+                    <FInput label="Logradouro *" value={f.endereco} onChange={v => set("endereco", v)} span error={requiredErrors.endereco ? "Obrigatório" : undefined} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero} onChange={v => set("numero", v)} />
+                  <FInput label="Número *" value={f.numero} onChange={v => set("numero", v)} onBlur={() => resolveGeoloc("")} error={requiredErrors.numero ? "Obrigatório" : undefined} />
                   <FInput label="Complemento" value={f.complemento} onChange={v => set("complemento", v)} />
-                  <FInput label="Bairro" value={f.bairro} onChange={v => set("bairro", v)} />
+                  <FInput label="Bairro *" value={f.bairro} onChange={v => set("bairro", v)} error={requiredErrors.bairro ? "Obrigatório" : undefined} />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Cidade" value={f.cidade} onChange={v => set("cidade", v)} />
-                  <FSelect label="UF" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" />
+                  <FInput label="Cidade *" value={f.cidade} onChange={v => set("cidade", v)} error={requiredErrors.cidade ? "Obrigatório" : undefined} />
+                  <FSelect label="UF *" value={f.estado} onChange={v => set("estado", v)} options={ufOptions} placeholder="UF" error={requiredErrors.estado ? "Obrigatório" : undefined} />
                   <FInput label="País" value={f.pais} onChange={v => set("pais", v)} />
                 </div>
-              </div>
-            </div>
-          )}
+                <div>
+                  <FInput
+                    label={geocodeLoading ? "Geolocalização (lat,long) — resolvendo…" : "Geolocalização (lat,long) — automática"}
+                    value={f.geolocalizacao}
+                    onChange={v => set("geolocalizacao", v)}
+                    placeholder="Resolvida automaticamente após preencher o endereço"
+                    span
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { set("geolocalizacao", ""); resolveGeoloc(""); }}
+                    className="mt-2 text-[11px] uppercase font-semibold text-[#7A1F2B] hover:underline"
+                  >
+                    Reprocessar geolocalização
+                  </button>
+                </div>
+            </section>
 
-          {/* Step 3: Endereço Secundário */}
-          {step === 3 && (
-            <div className="space-y-5">
-              <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-4 space-y-4">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Endereço Secundário <span className="normal-case font-normal">(opcional)</span></p>
+            {/* ── Bloco: Comprovante de Endereço (titular ou terceiro) ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={FileBadge} label="Comprovante de Endereço" />
+              <div>
+                <label className="text-[11px] font-semibold text-zinc-600 uppercase tracking-wide">
+                  O comprovante de endereço está no nome do cliente?
+                </label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {([
+                    { v: "sim", label: "Sim, está no nome do cliente" },
+                    { v: "nao", label: "Não, está no nome de terceiro" },
+                  ] as const).map(({ v, label }) => {
+                    const active = f.comprovante_endereco_em_nome_proprio === v;
+                    return (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => set("comprovante_endereco_em_nome_proprio", v)}
+                        className={cn(
+                          "h-10 rounded-md border text-[12px] font-bold uppercase tracking-wider transition-colors",
+                          active
+                            ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
+                            : "bg-white text-zinc-700 border-zinc-200 hover:border-[#7A1F2B]"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {f.comprovante_endereco_em_nome_proprio === "nao" && (
+                <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50/40 p-4">
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-amber-900">
+                    Responsável pelo comprovante (terceiro)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Nome do Responsável *" value={f.responsavel_endereco_nome} onChange={v => set("responsavel_endereco_nome", v)} span />
+                    <FInput label="Vínculo *" value={f.responsavel_endereco_vinculo} onChange={v => set("responsavel_endereco_vinculo", v)} placeholder="Pai, mãe, cônjuge, locador…" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="CPF do Responsável *" value={f.responsavel_endereco_cpf} onChange={v => set("responsavel_endereco_cpf", v)} inputMode="numeric" />
+                    <FInput label="RG / CIN *" value={f.responsavel_endereco_rg_cin} onChange={v => set("responsavel_endereco_rg_cin", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FInput label="Data de Nascimento *" value={f.responsavel_endereco_data_nascimento} onChange={v => set("responsavel_endereco_data_nascimento", v)} placeholder="DD/MM/AAAA" inputMode="numeric" />
+                    <FInput label="Naturalidade *" value={f.responsavel_endereco_naturalidade} onChange={v => set("responsavel_endereco_naturalidade", v)} placeholder="Cidade/UF" />
+                    <FInput label="Nacionalidade *" value={f.responsavel_endereco_nacionalidade} onChange={v => set("responsavel_endereco_nacionalidade", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FSelect label="Estado Civil *" value={f.responsavel_endereco_estado_civil} onChange={v => set("responsavel_endereco_estado_civil", v)} options={estadoCivilOptions} />
+                    <FInput label="Profissão *" value={f.responsavel_endereco_profissao} onChange={v => set("responsavel_endereco_profissao", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Telefone *" value={f.responsavel_endereco_telefone} onChange={v => set("responsavel_endereco_telefone", v)} placeholder="(00) 00000-0000" />
+                    <FInput label="E-mail" value={f.responsavel_endereco_email} onChange={v => set("responsavel_endereco_email", v)} preserveCase type="email" />
+                  </div>
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-amber-900/90 pt-2">
+                    Endereço do imóvel comprovado pelo responsável
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <FInput label="CEP *" value={f.responsavel_endereco_cep} onChange={v => set("responsavel_endereco_cep", formatCepMask(v))} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
+                    <div className="col-span-2 sm:col-span-3">
+                      <FInput label="Logradouro *" value={f.responsavel_endereco_logradouro} onChange={v => set("responsavel_endereco_logradouro", v)} span />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FInput label="Número *" value={f.responsavel_endereco_numero} onChange={v => set("responsavel_endereco_numero", v)} />
+                    <FInput label="Complemento" value={f.responsavel_endereco_complemento} onChange={v => set("responsavel_endereco_complemento", v)} />
+                    <FInput label="Bairro *" value={f.responsavel_endereco_bairro} onChange={v => set("responsavel_endereco_bairro", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <FInput label="Cidade *" value={f.responsavel_endereco_cidade} onChange={v => set("responsavel_endereco_cidade", v)} />
+                    <FSelect label="UF *" value={f.responsavel_endereco_estado} onChange={v => set("responsavel_endereco_estado", v)} options={ufOptions} placeholder="UF" />
+                    <FInput label="Geolocalização (lat,long)" value={f.responsavel_endereco_geolocalizacao} onChange={v => set("responsavel_endereco_geolocalizacao", v)} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Reside Desde *" value={f.responsavel_endereco_reside_desde} onChange={v => set("responsavel_endereco_reside_desde", v)} placeholder="DD/MM/AAAA" inputMode="numeric" />
+                    <FInput label="Residiu Até (opcional)" value={f.responsavel_endereco_residiu_ate} onChange={v => set("responsavel_endereco_residiu_ate", v)} placeholder="DD/MM/AAAA" inputMode="numeric" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FInput label="Caminho da Declaração de Residência" value={f.responsavel_endereco_declaracao_path} onChange={v => set("responsavel_endereco_declaracao_path", v)} placeholder="Ex.: clientes/declaracoes/123.pdf" />
+                    <FInput label="Caminho do Comprovante (em nome do responsável)" value={f.responsavel_endereco_comprovante_path} onChange={v => set("responsavel_endereco_comprovante_path", v)} placeholder="Ex.: clientes/comprovantes/123.pdf" />
+                  </div>
+                  <p className="text-[10px] leading-snug text-amber-900/80 uppercase">
+                    Os arquivos devem ser enviados pelo módulo de Documentos do cliente. Os caminhos acima vinculam os arquivos enviados ao bloco do responsável.
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* ── Bloco: Endereço Secundário ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
+              <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", v)} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00000-000" />
+                  <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
                   <div className="col-span-2 sm:col-span-3">
                     <FInput label="Logradouro" value={f.endereco2} onChange={v => set("endereco2", v)} span />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
-                  <FInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} />
+                  <FInput label="Número" value={f.numero2} onChange={v => set("numero2", v)} onBlur={() => resolveGeoloc("2")} />
                   <FInput label="Complemento" value={f.complemento2} onChange={v => set("complemento2", v)} />
                   <FInput label="Bairro" value={f.bairro2} onChange={v => set("bairro2", v)} />
                 </div>
@@ -469,28 +1338,70 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <FSelect label="UF" value={f.estado2} onChange={v => set("estado2", v)} options={ufOptions} placeholder="UF" />
                   <FInput label="País" value={f.pais2} onChange={v => set("pais2", v)} />
                 </div>
-              </div>
-            </div>
-          )}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <FSelect
+                    label="Tipo do 2º Endereço"
+                    value={f.end2_tipo}
+                    onChange={v => set("end2_tipo", v)}
+                    options={[
+                      { value: "RURAL", label: "Rural" },
+                      { value: "URBANO", label: "Urbano" },
+                      { value: "COMERCIAL", label: "Comercial" },
+                      { value: "TRABALHO", label: "Trabalho" },
+                      { value: "TEMPORADA", label: "Temporada" },
+                      { value: "LAZER", label: "Lazer" },
+                      { value: "OUTRO", label: "Outro" },
+                    ]}
+                    placeholder="Selecionar..."
+                  />
+                  <div className="sm:col-span-2">
+                    <Field label="Observação do 2º Endereço">
+                      <textarea
+                        value={f.end2_observacao}
+                        onChange={e => set("end2_observacao", e.target.value)}
+                        rows={2}
+                        className={cn(inputClass, "h-auto py-2 resize-y")}
+                        placeholder="Detalhes do imóvel, referência, finalidade…"
+                      />
+                    </Field>
+                  </div>
+                </div>
+                <div>
+                  <FInput
+                    label={geocodeLoading ? "Geolocalização (lat,long) — resolvendo…" : "Geolocalização (lat,long) — automática"}
+                    value={f.geolocalizacao2}
+                    onChange={v => set("geolocalizacao2", v)}
+                    placeholder="Resolvida automaticamente após preencher o endereço"
+                    span
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { set("geolocalizacao2", ""); resolveGeoloc("2"); }}
+                    className="mt-2 text-[11px] uppercase font-semibold text-[#7A1F2B] hover:underline"
+                  >
+                    Reprocessar geolocalização
+                  </button>
+                </div>
+            </section>
 
-          {/* Step 4: Configurações */}
-          {step === 4 && (
-            <div className="space-y-5">
+            {/* ── Bloco: Configurações ── */}
+            <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-5 shadow-sm">
+              <SectionTitle icon={Settings} label="Configurações" />
               {/* Categoria Legal do Titular (Lei 10.826/03 art. 6º) */}
-              <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
+              <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <Shield className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <Shield className="h-4 w-4 text-zinc-500 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-amber-700">Categoria Legal do Titular</p>
-                    <p className="text-[10px] text-amber-600/80 mt-0.5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-700">Categoria Legal do Titular</p>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">
                       Define quais documentos/exames são exigidos. Base: Lei 10.826/03 art. 6º, Decreto 11.615/23.
                     </p>
                   </div>
                 </div>
                 {!f.categoria_titular && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-100/80 border border-amber-200">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-700 flex-shrink-0" />
-                    <span className="text-[11px] text-amber-800 font-medium">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#FBF3F4] border border-[#E5C2C6]">
+                    <AlertTriangle className="h-3.5 w-3.5 text-[#4F121C] flex-shrink-0" />
+                    <span className="text-[11px] text-[#3D0E16] font-medium">
                       Categoria não definida — sistema considerará todas as exigências.
                     </span>
                   </div>
@@ -498,43 +1409,48 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                 <FSelect
                   label="Categoria *"
                   value={f.categoria_titular}
-                  onChange={v => setF(prev => ({ ...prev, categoria_titular: v as CategoriaTitular | "", subcategoria: "" }))}
+                  onChange={v => {
+                    setF(prev => ({ ...prev, categoria_titular: v as CategoriaTitular | "", subcategoria: "" }));
+                    if (v) setRequiredErrors(p => (p.categoria_titular ? { ...p, categoria_titular: false } : p));
+                  }}
                   options={CATEGORIA_OPTIONS}
                   placeholder="Selecione a categoria do titular..."
+                  error={requiredErrors.categoria_titular ? "Categoria é obrigatória" : undefined}
                 />
                 {f.categoria_titular && (
                   <>
-                    <p className="text-[10px] text-amber-700/80 italic">
+                    <p className="text-[10px] text-zinc-500 italic">
                       {CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.descricao}
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <FSelect
-                        label="Subcategoria"
-                        value={f.subcategoria}
-                        onChange={v => set("subcategoria", v)}
-                        options={(CATEGORIA_MAP[f.categoria_titular as CategoriaTitular]?.subcategorias || []).map(s => ({ value: s, label: s }))}
-                        placeholder="Selecione..."
-                      />
-                      <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
-                    </div>
-                    <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
+                    {(() => {
+                      const cat = f.categoria_titular as CategoriaTitular;
+                      const isInstitucional = cat === "seguranca_publica";
+                      return (
+                        <>
+                          <div className={isInstitucional ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : ""}>
+                            <FSelect
+                              label="Subcategoria"
+                              value={f.subcategoria}
+                              onChange={v => set("subcategoria", v)}
+                              options={(CATEGORIA_MAP[cat]?.subcategorias || []).map(s => ({ value: s, label: s }))}
+                              placeholder="Selecione..."
+                            />
+                            {isInstitucional && (
+                              <FInput label="Órgão / Instituição" value={f.orgao_vinculado} onChange={v => set("orgao_vinculado", v)} placeholder="Ex: Polícia Civil/SP" />
+                            )}
+                          </div>
+                          {isInstitucional && (
+                            <FInput label="Matrícula Funcional" value={f.matricula_funcional} onChange={v => set("matricula_funcional", v)} placeholder="Identidade funcional" />
+                          )}
+                        </>
+                      );
+                    })()}
                   </>
                 )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FSelect label="Status do Cliente" value={f.status} onChange={v => set("status", v)} options={statusOptions} />
-                <Field label="Cliente Lions">
-                  <label className="flex items-center gap-3 h-10 px-3 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={f.cliente_lions}
-                      onChange={e => set("cliente_lions", e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-sm text-slate-700">🦁 Sim, é cliente Lions</span>
-                  </label>
-                </Field>
               </div>
               <Field label="Observações" span>
                 <textarea
@@ -542,60 +1458,95 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   onChange={e => set("observacao", e.target.value)}
                   rows={4}
                   placeholder="Informações adicionais sobre o cliente..."
-                  className="w-full px-3 py-2.5 rounded-lg border border-slate-200 bg-white text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none uppercase"
+                  className="w-full px-3 py-2.5 rounded-md border border-zinc-200 bg-white text-sm text-zinc-800 placeholder:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-300 focus:border-zinc-400 transition-all resize-none uppercase"
                 />
               </Field>
+            </section>
             </div>
-          )}
-        </div>
-
-        {/* ── Footer ── */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/40 flex items-center justify-between gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 text-xs"
-          >
-            Cancelar
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {canGoPrev && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setStep(s => s - 1)}
-                className="gap-1.5 text-xs border-slate-200 text-slate-600 hover:bg-slate-100"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Anterior
-              </Button>
-            )}
-            {canGoNext && (
-              <Button
-                size="sm"
-                onClick={() => setStep(s => s + 1)}
-                className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                Próximo
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            {isLast && (
-              <Button
-                size="sm"
-                onClick={save}
-                disabled={saving}
-                className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
-              >
-                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
-              </Button>
-            )}
           </div>
         </div>
+
       </DialogContent>
     </Dialog>
   );
+}
+
+/* ── Section title (Arsenal UI) ── */
+function SectionTitle({ icon: Icon, label }: { icon: React.ComponentType<{ className?: string }>; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-7 w-7 rounded-md border border-zinc-200 bg-zinc-50 flex items-center justify-center">
+        <Icon className="h-3.5 w-3.5 text-zinc-500" />
+      </div>
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-zinc-700">{label}</p>
+      <span className="ml-1 h-px flex-1 bg-zinc-100" />
+    </div>
+  );
+}
+
+/* ── KPI Card (espelha os cards KPI do dashboard) ── */
+function KpiCard({ icon: Icon, label, value, tone = "info" }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  tone?: "ok" | "warn" | "info";
+}) {
+  // Cor do glow esfumaçado no canto sup. direito — espelha o padrão Arsenal
+  const glow = tone === "ok"
+    ? "rgba(16, 185, 129, 0.55)"      // emerald-500
+    : tone === "warn"
+      ? "rgba(122, 31, 43, 0.55)"     // bordo
+      : "rgba(161, 161, 170, 0.45)";  // zinc-400
+  const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-[#7A1F2B]" : "bg-zinc-300";
+  const iconCls = tone === "ok" ? "text-emerald-600" : tone === "warn" ? "text-[#7A1F2B]" : "text-zinc-400";
+  return (
+    <div className="relative rounded-lg border border-zinc-200 bg-white p-3 shadow-sm overflow-hidden transition-colors">
+      {/* Glow esfumaçado animado no canto superior direito (padrão Arsenal) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40 blur-2xl transition-[background,opacity] duration-500 ease-out"
+        style={{ background: glow }}
+      />
+      <div className="relative flex items-start justify-between gap-2">
+        <Icon className={cn("h-4 w-4 transition-colors duration-500", iconCls)} />
+        <span className={cn("h-1.5 w-1.5 rounded-full transition-colors duration-500", dotCls)} />
+      </div>
+      <p className="relative text-lg font-bold tracking-tight mt-2 uppercase text-zinc-900">{value}</p>
+      <p className="relative text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-500 mt-0.5">{label}</p>
+    </div>
+  );
+}
+
+/* Calcula tom do KPI a partir de progresso "X/Y" */
+function kpiTone(value: string): "ok" | "warn" | "info" {
+  const m = value.match(/^(\d+)\/(\d+)$/);
+  if (!m) return "info";
+  const filled = Number(m[1]);
+  const total = Number(m[2]);
+  if (total === 0) return "info";
+  if (filled === 0) return "warn";
+  if (filled >= total) return "ok";
+  return "warn";
+}
+
+/* ── Compute KPIs ── */
+function kpiIdent(f: any): string {
+  const fields = [
+    "nome_completo", "cpf", "rg", "emissor_rg", "uf_emissor_rg", "expedicao_rg",
+    "data_nascimento", "sexo", "naturalidade_municipio", "naturalidade_uf",
+    "nacionalidade", "estado_civil", "profissao", "escolaridade", "titulo_eleitor",
+    "nome_mae", "nome_pai",
+  ];
+  const filled = fields.filter(k => String(f?.[k] || "").trim()).length;
+  return `${filled}/${fields.length}`;
+}
+function kpiContato(f: any): string {
+  const fields = ["celular", "email"];
+  const filled = fields.filter(k => String(f?.[k] || "").trim()).length;
+  return `${filled}/${fields.length}`;
+}
+function kpiEndereco(f: any): string {
+  const fields = ["cep", "endereco", "numero", "bairro", "cidade", "estado"];
+  const filled = fields.filter(k => String(f?.[k] || "").trim()).length;
+  return `${filled}/${fields.length}`;
 }

@@ -86,7 +86,7 @@ export default function QALegislacaoPage() {
                 <Plus className="h-3.5 w-3.5" /> Nova Norma
               </button>
             </DialogTrigger>
-            <DialogContent className="bg-white border-slate-200 text-slate-800 max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl">
+            <DialogContent className="bg-white border-slate-200 text-slate-800 max-w-2xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-xl">
               <DialogHeader>
                 <DialogTitle className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Cadastrar Norma</DialogTitle>
               </DialogHeader>
@@ -161,7 +161,7 @@ export default function QALegislacaoPage() {
           onChange={e => setBusca(e.target.value)}
           className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
           style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-          onFocus={e => e.currentTarget.style.borderColor = "hsl(230 80% 56%)"}
+          onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
           onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
         />
       </div>
@@ -169,7 +169,7 @@ export default function QALegislacaoPage() {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
         </div>
       ) : normas.length === 0 ? (
         <div className="text-center py-16">
