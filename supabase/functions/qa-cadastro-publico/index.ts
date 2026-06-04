@@ -21,8 +21,6 @@ const CadastroSchema = z.object({
   // Dados pessoais
   nome_completo: z.string().min(3).max(200),
   cpf: z.string().min(11).max(18),
-  tipo_documento_identidade: z.enum(["RG", "CIN"]).optional().default("RG"),
-  numero_documento_identidade: z.string().max(30).optional().nullable(),
   rg: z.string().max(30).optional().nullable(),
   emissor_rg: z.string().max(30).optional().nullable(),
   data_nascimento: z.string().optional().nullable(),
@@ -35,19 +33,6 @@ const CadastroSchema = z.object({
   nacionalidade: z.string().max(60).optional().nullable(),
   profissao: z.string().max(100).optional().nullable(),
   observacoes: z.string().max(2000).optional().nullable(),
-
-  // ── Identificação estendida (Entrega B) ──
-  sexo: z.string().max(20).optional().nullable(),
-  data_expedicao_rg: z.string().max(20).optional().nullable(),
-  naturalidade_municipio: z.string().max(120).optional().nullable(),
-  naturalidade_uf: z.string().max(2).optional().nullable(),
-  naturalidade_pais: z.string().max(60).optional().nullable(),
-  titulo_eleitor: z.string().max(40).optional().nullable(),
-  cnh: z.string().max(40).optional().nullable(),
-  ctps: z.string().max(40).optional().nullable(),
-  pis_pasep: z.string().max(40).optional().nullable(),
-  end1_pais: z.string().max(60).optional().nullable(),
-  categoria_titular: z.string().max(40).optional().nullable(),
 
   // Endereço 1
   end1_cep: z.string().max(10).optional().nullable(),
@@ -72,33 +57,6 @@ const CadastroSchema = z.object({
   end2_estado: z.string().max(2).optional().nullable(),
   end2_latitude: z.string().max(30).optional().nullable(),
   end2_longitude: z.string().max(30).optional().nullable(),
-  end2_observacao: z.string().max(500).optional().nullable(),
-
-  // ── Comprovante de endereço — em nome do titular OU de terceiro ──
-  comprovante_endereco_em_nome_proprio: z.enum(["sim", "nao"]).optional().nullable(),
-  responsavel_endereco_nome: z.string().max(200).optional().nullable(),
-  responsavel_endereco_cpf: z.string().max(20).optional().nullable(),
-  responsavel_endereco_rg_cin: z.string().max(30).optional().nullable(),
-  responsavel_endereco_telefone: z.string().max(20).optional().nullable(),
-  responsavel_endereco_email: z.string().max(255).optional().nullable(),
-  responsavel_endereco_vinculo: z.string().max(60).optional().nullable(),
-  responsavel_endereco_declaracao_path: z.string().max(500).optional().nullable(),
-  responsavel_endereco_comprovante_path: z.string().max(500).optional().nullable(),
-  responsavel_endereco_data_nascimento: z.string().max(20).optional().nullable(),
-  responsavel_endereco_naturalidade: z.string().max(120).optional().nullable(),
-  responsavel_endereco_nacionalidade: z.string().max(60).optional().nullable(),
-  responsavel_endereco_estado_civil: z.string().max(40).optional().nullable(),
-  responsavel_endereco_profissao: z.string().max(120).optional().nullable(),
-  responsavel_endereco_cep: z.string().max(15).optional().nullable(),
-  responsavel_endereco_logradouro: z.string().max(200).optional().nullable(),
-  responsavel_endereco_numero: z.string().max(20).optional().nullable(),
-  responsavel_endereco_complemento: z.string().max(120).optional().nullable(),
-  responsavel_endereco_bairro: z.string().max(120).optional().nullable(),
-  responsavel_endereco_cidade: z.string().max(120).optional().nullable(),
-  responsavel_endereco_estado: z.string().max(2).optional().nullable(),
-  responsavel_endereco_geolocalizacao: z.string().max(100).optional().nullable(),
-  responsavel_endereco_reside_desde: z.string().max(20).optional().nullable(),
-  responsavel_endereco_residiu_ate: z.string().max(20).optional().nullable(),
 
   // Vínculo empresarial
   vinculo_tipo: z.string().max(30).optional().nullable(),
@@ -149,7 +107,6 @@ const CadastroSchema = z.object({
   subtipo_servico: z.string().max(120).optional().nullable(),
   descricao_servico_livre: z.string().max(2000).optional().nullable(),
   origem_cadastro: z.string().max(50).optional().nullable(),
-  valor_servico: z.number().min(0).max(9999999).optional().nullable(),
 });
 
 Deno.serve(async (req) => {
@@ -234,8 +191,6 @@ Deno.serve(async (req) => {
     const updateExistingId = data.update_existing_id || null;
     // Remove campo de controle do payload de persistência
     const { update_existing_id: _u, ...persistData } = data;
-    const documentoNumero = data.numero_documento_identidade || data.rg || null;
-    const isCin = data.tipo_documento_identidade === "CIN";
 
     // Capture audit metadata
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
@@ -244,10 +199,6 @@ Deno.serve(async (req) => {
 
     // Clean CPF
     const cpfDigits = data.cpf.replace(/\D/g, "");
-    const docDigits = (documentoNumero || "").replace(/\D/g, "");
-    if (!isCin && cpfDigits && docDigits && cpfDigits === docDigits) {
-      return json({ error: "RG não pode ser igual ao CPF — se for CIN, selecione CIN" }, 400);
-    }
 
     // ── Caminho UPDATE ──
     if (updateExistingId) {
@@ -280,8 +231,6 @@ Deno.serve(async (req) => {
         .from("qa_cadastro_publico")
         .update({
           ...persistData,
-          numero_documento_identidade: documentoNumero,
-          rg: data.rg || documentoNumero,
           cpf: cpfDigits,
           consentimento_timestamp: now,
           consentimento_ip: ip.substring(0, 45),
@@ -316,36 +265,13 @@ Deno.serve(async (req) => {
     // ── Caminho INSERT — proteção contra duplicidade ──
     const { data: dup } = await supabase
       .from("qa_cadastro_publico")
-      .select("id, status, created_at, nome_completo, cpf, tipo_documento_identidade, numero_documento_identidade, rg, emissor_rg, data_nascimento, telefone_principal, email, end1_cep, end1_logradouro, end1_numero, end1_bairro, end1_cidade, end1_estado")
+      .select("id, status, created_at, nome_completo, cpf, rg, emissor_rg, data_nascimento, telefone_principal, email, end1_cep, end1_logradouro, end1_numero, end1_bairro, end1_cidade, end1_estado")
       .eq("cpf", cpfDigits)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (dup) {
-      // Regra: cadastros REJEITADOS são sobrescritos automaticamente.
-      // Apaga o registro antigo e segue para o INSERT normal — o cliente
-      // não vê o modal de duplicidade.
-      if (String(dup.status || "").toLowerCase() === "rejeitado") {
-        const { error: delErr } = await supabase
-          .from("qa_cadastro_publico")
-          .delete()
-          .eq("id", dup.id);
-        if (delErr) {
-          console.error("[qa-cadastro-publico] Falha ao sobrescrever rejeitado:", delErr);
-          return json({ error: "Erro ao reabrir cadastro rejeitado" }, 500);
-        }
-        await supabase.from("integration_logs").insert({
-          integration_name: "qa_cadastro_publico",
-          operation_name: "overwrite_rejected",
-          request_payload: {
-            cpf: cpfDigits.slice(0, 3) + "***",
-            previous_id: dup.id,
-          },
-          status: "success",
-        }).then();
-        // segue fluxo: cai no INSERT abaixo
-      } else {
       // Bloqueia o INSERT — o frontend deve oferecer atualizar
       return json({
         error: "duplicate_cpf",
@@ -355,15 +281,12 @@ Deno.serve(async (req) => {
         existing_created_at: dup.created_at,
         existing_data: dup,
       }, 409);
-      }
     }
 
     const { data: inserted, error } = await supabase
       .from("qa_cadastro_publico")
       .insert({
         ...persistData,
-        numero_documento_identidade: documentoNumero,
-        rg: data.rg || documentoNumero,
         cpf: cpfDigits,
         consentimento_timestamp: now,
         consentimento_ip: ip.substring(0, 45),

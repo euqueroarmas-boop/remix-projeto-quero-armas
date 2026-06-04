@@ -3,12 +3,10 @@ import {
   AlertTriangle, ShoppingBag, Crosshair, Shield, Calendar,
   DollarSign, Clock, CheckCircle, XCircle, TrendingUp, FileText,
   ArrowRight, Eye, Activity, Zap, Target, Bell, CreditCard,
-  ChevronRight, MapPin, Phone, Mail, Users, ShieldCheck, Info, ListChecks,
+  ChevronRight, MapPin, Phone, Mail, User,
 } from "lucide-react";
 import { computeExameStatus, formatExameCountdown } from "@/components/quero-armas/clientes/ClienteExames";
 import { useQAServicosMap } from "@/hooks/useQAServicosMap";
-import ClienteArsenalReview from "@/components/quero-armas/clientes/ClienteArsenalReview";
-import { calcularPrazosProcessuais } from "@/lib/quero-armas/prazosProcessuais";
 
 interface Props {
   cliente: any;
@@ -19,8 +17,6 @@ interface Props {
   filiacoes: any[];
   cadastro: any;
   examesAtuais?: any[]; // qa_exames_cliente_status — fonte de verdade
-  /** FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR). */
-  armasManual?: any[];
   onNavigate: (tab: string) => void;
 }
 
@@ -115,7 +111,7 @@ function StatPill({ label, value, color }: { label: string; value: string | numb
   );
 }
 
-export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais = [], armasManual = [], onNavigate }: Props) {
+export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais = [], onNavigate }: Props) {
   const { map: SERVICO_MAP, getNome: getServicoNome } = useQAServicosMap();
   const analysis = useMemo(() => {
     const totalServicos = itens.length;
@@ -124,8 +120,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const cancelados = itens.filter((i: any) => ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(i.status)).length;
     const totalVendas = vendas.reduce((acc: number, v: any) => acc + Number(v.valor_a_pagar || 0), 0);
     const totalDescontos = vendas.reduce((acc: number, v: any) => acc + Number(v.desconto || 0), 0);
-    const totalArmas = crafs.length + gtes.length + (armasManual?.length || 0);
-    const armasReview = (armasManual || []).filter((a: any) => a?.needs_review).length;
+    const totalArmas = crafs.length + gtes.length;
 
     const expDocs: ExpiringDoc[] = [];
     if (cadastro?.validade_cr) {
@@ -161,38 +156,6 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     filiacoes.forEach((f: any) => { if (f.validade_filiacao) expDocs.push({ label: `Filiação — ${f.nome_filiacao || `Clube #${f.clube_id}`}`, date: f.validade_filiacao, days: daysUntil(f.validade_filiacao), category: "FILIAÇÃO" }); });
     itens.forEach((it: any) => { if (it.data_vencimento) expDocs.push({ label: `Serviço — ${SERVICO_MAP[it.servico_id] || `#${it.servico_id}`}`, date: it.data_vencimento, days: daysUntil(it.data_vencimento), category: "SERVIÇO" }); });
 
-    // Prazos processuais administrativos: 10 dias (notificação / indeferimento /
-    // restituição) ou 120 dias (Mandado de Segurança após indeferimento do
-    // recurso administrativo). Fonte única: lib/quero-armas/prazosProcessuais.
-    const prazosProc = calcularPrazosProcessuais(
-      itens.map((it: any) => ({
-        id: it.id,
-        servico_id: it.servico_id,
-        servico_nome: SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`,
-        status: it.status,
-        numero_processo: it.numero_processo,
-        data_notificacao: it.data_notificacao,
-        data_indeferimento: it.data_indeferimento,
-        data_recurso_administrativo: it.data_recurso_administrativo,
-        data_indeferimento_recurso: it.data_indeferimento_recurso,
-      })),
-    );
-    for (const p of prazosProc) {
-      const nome = p.servicoNome || `Serviço #${p.servicoId ?? "?"}`;
-      const sufixoPrazo =
-        p.evento === "MANDADO DE SEGURANÇA"
-          ? "para impetração de MS (120d · art. 23 Lei 12.016/09)"
-          : p.evento === "RESTITUIÇÃO"
-            ? "para manifestação (10d)"
-            : "para recurso (10d)";
-      expDocs.push({
-        label: `${p.evento} — ${nome} · prazo ${sufixoPrazo}`,
-        date: p.dataLimite,
-        days: p.diasRestantes,
-        category: "PRAZO ADM",
-      });
-    }
-
     expDocs.sort((a, b) => {
       if (a.days === null && b.days === null) return 0;
       if (a.days === null) return 1;
@@ -204,8 +167,8 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     const vencidos = expDocs.filter(d => d.days !== null && d.days < 0);
     const validos = expDocs.filter(d => d.days !== null && d.days > 90);
 
-    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, armasReview, expDocs, alerts, vencidos, validos, prazosProc };
-  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais, armasManual, SERVICO_MAP]);
+    return { totalServicos, concluidos, emAndamento, cancelados, totalVendas, totalDescontos, totalArmas, expDocs, alerts, vencidos, validos };
+  }, [vendas, itens, crafs, gtes, filiacoes, cadastro, examesAtuais]);
 
   // Timeline events — ORDEM CRONOLÓGICA ASCENDENTE com TODOS os marcos por serviço
   const timeline = useMemo(() => {
@@ -233,7 +196,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         sublabel: servicosNomes ? `Serviços: ${servicosNomes}${v.forma_pagamento ? ` · ${v.forma_pagamento}` : ""}` : undefined,
         type: "venda",
         icon: CreditCard,
-        color: "hsl(352 60% 30%)",
+        color: "hsl(230 80% 56%)",
         vendaNum,
       });
     });
@@ -337,462 +300,328 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
     return events;
   }, [vendas, itens]);
 
-  /* ─── helpers de status do cliente ─── */
-  const statusCliente = String((cliente as any)?.status_cliente || "ativo").toLowerCase();
-  const isAtivo = !["inativo", "cancelado", "excluido_lgpd", "suspenso"].includes(statusCliente);
-  // Status operacional consolidado: considera TODOS os itens já agregados em expDocs
-  // (CR, CRAF, GTE, filiações, exames, serviços, prazos processuais administrativos).
-  // CRÍTICO: vencido ou prazo proc ≤ 0; ATENÇÃO: ≤30d ou prazo proc; EM DIA: > 30d.
-  const piorDias = analysis.expDocs
-    .map((d) => d.days)
-    .filter((d): d is number => d !== null)
-    .sort((a, b) => a - b)[0];
-  const temPrazoUrgente = analysis.prazosProc.some(
-    (p: any) => typeof p.diasRestantes === "number" && p.diasRestantes <= 10,
-  );
-  const temPendenciaBloqueante = itens.some((i: any) => {
-    const s = String(i?.status || "").toUpperCase();
-    return ["INDEFERIDO", "NOTIFICADO", "RESTITUÍDO", "AGUARDANDO_DOCUMENTACAO"].includes(s);
-  });
-  const statusOperacional: "CRITICO" | "ATENCAO" | "EM_DIA" =
-    piorDias !== undefined && piorDias < 0
-      ? "CRITICO"
-      : temPrazoUrgente
-        ? "CRITICO"
-        : piorDias !== undefined && piorDias <= 30
-          ? "ATENCAO"
-          : temPendenciaBloqueante
-            ? "ATENCAO"
-            : "EM_DIA";
-  const emDia = statusOperacional === "EM_DIA";
-  const totalArmasReais = crafs.length + gtes.length;
-  const armasReview = (armasManual || []).filter((a: any) => a?.needs_review).length;
-
-  /* ─── KPI principal: 4 cards ─── */
-  const kpis = [
-    { id: "servicos", icon: ShoppingBag, label: "SERVIÇOS", value: String(analysis.totalServicos), sub: `${analysis.concluidos} concluídos`, color: "#B91C1C", bg: "#FEE2E2", tab: "servicos" },
-    { id: "andamento", icon: Activity, label: "EM ANDAMENTO", value: String(analysis.emAndamento), sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancel.` : "nenhum cancel.", color: "#B45309", bg: "#FEF3C7", tab: "servicos" },
-    { id: "armas", icon: Crosshair, label: "ARMAS", value: String(analysis.totalArmas), sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "#6D28D9", bg: "#EDE9FE", tab: "arsenal" },
-    { id: "investido", icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "#047857", bg: "#D1FAE5", tab: "servicos" },
-  ];
-
-  const itemAtivo = itens.find((i: any) => !["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(String(i.status || "").toUpperCase())) || itens[0];
-
-  /* ─── Próximos passos REAIS — prioriza pendências concretas ───
-   * Ordem de prioridade:
-   * 1) Prazos processuais administrativos (recurso, MS, restituição)
-   * 2) Documentos / exames vencidos (days < 0)
-   * 3) Documentos a vencer ≤ 30d
-   * 4) Status do serviço ativo (aguardando doc, em análise, protocolado)
-   */
-  const proximosPassos: string[] = (() => {
-    const out: string[] = [];
-    // 1) Prazos processuais
-    for (const p of analysis.prazosProc.slice(0, 2)) {
-      const sufixo =
-        p.evento === "MANDADO DE SEGURANÇA"
-          ? "Impetrar Mandado de Segurança"
-          : p.evento === "RESTITUIÇÃO"
-            ? "Manifestar sobre restituição"
-            : "Protocolar recurso administrativo";
-      out.push(`${sufixo} (${p.servicoNome || "serviço"}) — ${typeof p.diasRestantes === "number" ? `${p.diasRestantes}d` : "sem prazo"}`);
-    }
-    // 2) Vencidos
-    for (const d of analysis.vencidos.slice(0, 2)) {
-      out.push(`Renovar ${d.label.toLowerCase()} (vencido)`);
-    }
-    // 3) A vencer
-    for (const d of analysis.expDocs.filter((x) => x.days !== null && x.days >= 0 && x.days <= 30).slice(0, 2)) {
-      out.push(`Atualizar ${d.label.toLowerCase()} (vence em ${d.days}d)`);
-    }
-    // 4) Status do serviço ativo
-    const statusItem = String(itemAtivo?.status || "").toUpperCase().replace(/\s+/g, "_");
-    const statusSteps: Record<string, string[]> = {
-      AGUARDANDO_DOCUMENTACAO: ["Aguardar envio de documentos", "Conferência interna", "Protocolar na PF"],
-      EM_ANALISE: ["Conferência de documentos", "Protocolar na PF", "Acompanhar análise"],
-      PROTOCOLADO: ["Acompanhar análise junto à PF", "Aguardar decisão", "Emitir documento final"],
-      INDEFERIDO: ["Protocolar recurso administrativo", "Acompanhar recurso", "Avaliar Mandado de Segurança"],
-      NOTIFICADO: ["Cumprir notificação no prazo", "Anexar documentos solicitados", "Reenviar à PF"],
-    };
-    for (const s of statusSteps[statusItem] || []) {
-      if (out.length >= 3) break;
-      if (!out.includes(s)) out.push(s);
-    }
-    if (out.length === 0) {
-      out.push("Nenhuma pendência identificada", "Manter documentos em dia", "Acompanhar validades");
-    }
-    return out.slice(0, 3);
-  })();
+  const statusText = cliente.status === "ATIVO" ? "ATIVO" : cliente.status || "—";
+  const statusColor = cliente.status === "ATIVO" ? "hsl(152 60% 42%)" : "hsl(38 92% 50%)";
 
   return (
-    <div className="space-y-3">
-      {/* CHIPS DE STATUS ─ alinhados à direita */}
-      <div className="flex flex-wrap items-center justify-end gap-2 px-1">
-        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: "#DBEAFE", borderColor: "#BFDBFE", color: "#1E40AF" }}>
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#1D4ED8" }} /> Auditoria
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: "#F1F5F9", borderColor: "#E2E8F0", color: "#475569" }}>
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#94A3B8" }} /> Visão 360°
-        </span>
-        <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: isAtivo ? "#D1FAE5" : "#FEE2E2", borderColor: isAtivo ? "#A7F3D0" : "#FCA5A5", color: isAtivo ? "#065F46" : "#7F1D1D" }}>
-          <CheckCircle className="h-3 w-3" /> Cliente {isAtivo ? "Ativo" : "Inativo"}
-        </span>
-        {(() => {
-          const tone =
-            statusOperacional === "CRITICO"
-              ? { bg: "#FEE2E2", bd: "#FCA5A5", fg: "#7F1D1D", icon: AlertTriangle, label: "Crítico" }
-              : statusOperacional === "ATENCAO"
-                ? { bg: "#FEF3C7", bd: "#FDE68A", fg: "#7C2D12", icon: Bell, label: "Atenção" }
-                : { bg: "#D1FAE5", bd: "#A7F3D0", fg: "#065F46", icon: CheckCircle, label: "Em Dia" };
-          const I = tone.icon;
-          return (
-            <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider" style={{ background: tone.bg, borderColor: tone.bd, color: tone.fg }}>
-              <I className="h-3 w-3" /> {tone.label}
-            </span>
-          );
-        })()}
+    <div className="space-y-4 md:space-y-5">
+      {/* ═══ STRATEGIC HEADER ═══ */}
+      <div className="qa-card overflow-hidden">
+        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, hsl(230 80% 56%), hsl(262 60% 55%), hsl(190 80% 42%))" }} />
+        <div className="p-4 md:p-5">
+          <div className="flex items-start gap-3 md:gap-4">
+            {/* Avatar & Name */}
+            <div className="w-11 h-11 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+              <User className="h-5 w-5 md:h-6 md:w-6" style={{ color: "hsl(230 80% 56%)" }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-[15px] md:text-lg font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{cliente.nome_completo}</h2>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${statusColor}14`, color: statusColor }}>
+                  {statusText}
+                </span>
+                {cliente.cpf && <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {cliente.cpf}</span>}
+                {cadastro?.numero_cr && <span className="text-[10px] font-mono" style={{ color: "hsl(262 60% 55%)" }}>CR: {cadastro.numero_cr}</span>}
+              </div>
+            </div>
+          </div>
+          {/* Contact pills — stacked on mobile */}
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {cliente.celular && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <Phone className="h-2.5 w-2.5" /> {cliente.celular}
+              </div>
+            )}
+            {cliente.email && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium truncate max-w-[180px] md:max-w-[200px]" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <Mail className="h-2.5 w-2.5 shrink-0" /> {cliente.email}
+              </div>
+            )}
+            {cliente.cidade && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 46%)" }}>
+                <MapPin className="h-2.5 w-2.5" /> {cliente.cidade}/{cliente.estado}
+              </div>
+            )}
+          </div>
+          {/* Quick stats row */}
+          <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 pt-3 border-t" style={{ borderColor: "hsl(220 13% 94%)" }}>
+            <StatPill label="Serviços" value={analysis.totalServicos} color="hsl(230 80% 56%)" />
+            <StatPill label="Andamento" value={analysis.emAndamento} color="hsl(38 92% 50%)" />
+            <StatPill label="Concluídos" value={analysis.concluidos} color="hsl(152 60% 42%)" />
+            <StatPill label="Armas" value={analysis.totalArmas} color="hsl(262 60% 55%)" />
+            <StatPill label="Investido" value={formatCurrency(analysis.totalVendas)} color="hsl(220 20% 25%)" />
+            {analysis.vencidos.length > 0 && <StatPill label="Vencidos" value={analysis.vencidos.length} color="hsl(0 72% 55%)" />}
+          </div>
+        </div>
       </div>
 
-      {/* LINHA 1 — KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {kpis.map((k) => {
-          const Icon = k.icon;
+      {/* ═══ ALERT BANNER ═══ */}
+      {analysis.alerts.length > 0 && (
+        <div className="qa-card p-0 overflow-hidden">
+          <div className="h-0.5 w-full" style={{ background: analysis.vencidos.length > 0 ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }} />
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="h-4 w-4" style={{ color: analysis.vencidos.length > 0 ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: analysis.vencidos.length > 0 ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }}>
+                {analysis.alerts.length} {analysis.alerts.length === 1 ? "Alerta" : "Alertas"} de Vencimento
+              </span>
+            </div>
+            <div className="space-y-1.5">
+              {analysis.alerts.slice(0, 6).map((a, i) => {
+                const Icon = urgencyIcon(a.days);
+                return (
+                  <div key={i} className={`flex items-start gap-2.5 px-3 py-2 rounded-lg border ${urgencyBg(a.days)}`}>
+                    <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${urgencyColor(a.days)}`} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] font-medium block truncate" style={{ color: "hsl(220 20% 18%)" }}>{a.label}</span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px]" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(a.date)}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${urgencyColor(a.days)}`}>
+                          {urgencyLabel(a.days)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ KPI CARDS ═══ */}
+      <div className="grid grid-cols-2 gap-2.5 md:gap-3 lg:grid-cols-4">
+        {[
+          { icon: ShoppingBag, label: "SERVIÇOS", value: analysis.totalServicos, sub: `${analysis.concluidos} concluídos`, color: "hsl(230 80% 56%)", tab: "servicos" },
+          { icon: Activity, label: "ANDAMENTO", value: analysis.emAndamento, sub: analysis.cancelados > 0 ? `${analysis.cancelados} cancel.` : "nenhum cancel.", color: "hsl(38 92% 50%)", tab: "servicos" },
+          { icon: Crosshair, label: "ARMAS", value: analysis.totalArmas, sub: `${crafs.length} CRAFs · ${gtes.length} GTEs`, color: "hsl(262 60% 55%)", tab: "armas" },
+          { icon: DollarSign, label: "INVESTIDO", value: formatCurrency(analysis.totalVendas), sub: analysis.totalDescontos > 0 ? `${formatCurrency(analysis.totalDescontos)} desc.` : "sem descontos", color: "hsl(152 60% 42%)", tab: "servicos" },
+        ].map((c) => {
+          const Icon = c.icon;
           return (
-            <button
-              key={k.id}
-              type="button"
-              onClick={() => onNavigate(k.tab)}
-              className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all group"
-              style={{ borderColor: "hsl(220 13% 90%)" }}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: k.bg, color: k.color }}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#7A1F2B]" />
+            <button key={c.label} onClick={() => onNavigate(c.tab)}
+              className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-12 h-12 rounded-full opacity-[0.04]" style={{ background: c.color, transform: "translate(30%, -30%)" }} />
+              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl flex items-center justify-center mb-2 md:mb-3" style={{ background: `${c.color}12` }}>
+                <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" style={{ color: c.color }} />
               </div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.14em] mt-3" style={{ color: "hsl(220 10% 50%)" }}>{k.label}</div>
-              <div className="text-[24px] font-bold leading-tight mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>{k.value}</div>
-              <div className="text-[11px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>{k.sub}</div>
+              <div className="text-lg md:text-xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>
+                {c.value}
+              </div>
+              <div className="text-[9px] md:text-[10px] font-bold tracking-[0.1em] mt-0.5" style={{ color: c.color }}>{c.label}</div>
+              <div className="text-[9px] md:text-[10px] mt-0.5" style={{ color: "hsl(220 10% 58%)" }}>{c.sub}</div>
             </button>
           );
         })}
       </div>
 
-      {/* LINHA 2 — Serviços e Andamento + Próximos passos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* SERVIÇOS E ANDAMENTO */}
-        <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Target className="h-4 w-4" style={{ color: "#B91C1C" }} />
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsl(220 20% 22%)" }}>Serviços e Andamento</h3>
-          </div>
-          {itens.length === 0 ? (
-            <div className="text-center py-6 text-[12px]" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço contratado.</div>
-          ) : itemAtivo ? (
-            <>
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#FEF3C7", color: "#B45309" }}>
-                  <Zap className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold" style={{ color: "hsl(220 20% 18%)" }}>
-                    {SERVICO_MAP[itemAtivo.servico_id] || `Serviço #${itemAtivo.servico_id}`}
+      {/* ═══ STEP FLOW / SERVICES ═══ */}
+      <div className="qa-card p-4 md:p-5">
+        <SectionHeader icon={Target} title="Serviços e Andamento" color="hsl(230 80% 56%)" action="Ver Todos" onAction={() => onNavigate("servicos")} />
+        {itens.length === 0 ? (
+          <div className="text-center py-10 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum serviço contratado ainda.</div>
+        ) : (
+          <div className="space-y-2">
+            {itens.slice(0, 10).map((it: any) => {
+              const statusDone = it.status === "CONCLUÍDO" || it.status === "DEFERIDO";
+              const statusBad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(it.status);
+              const progress = statusDone ? 100 : statusBad ? 0 : 60;
+              return (
+                <div key={it.id} className="group flex items-center gap-3 py-3 px-4 rounded-xl border transition-all hover:shadow-sm" style={{ borderColor: "hsl(220 13% 93%)" }}>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    statusDone ? "bg-emerald-50" : statusBad ? "bg-red-50" : "bg-amber-50"
+                  }`}>
+                    {statusDone ? <CheckCircle className="h-4 w-4 text-emerald-600" /> :
+                     statusBad ? <XCircle className="h-4 w-4 text-red-500" /> :
+                     <Zap className="h-4 w-4 text-amber-600" />}
                   </div>
-                  <div className="text-[11px] text-slate-500">Progresso do serviço</div>
-                </div>
-                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0" style={{ background: "#FEF3C7", borderColor: "#FDE68A", color: "#7C2D12" }}>
-                  {String(itemAtivo.status || "aguardando_documentacao").toLowerCase()}
-                </span>
-              </div>
-              {(() => {
-                const statusDone = ["CONCLUÍDO", "DEFERIDO"].includes(String(itemAtivo.status || "").toUpperCase());
-                const statusBad = ["INDEFERIDO", "DESISTIU", "RESTITUÍDO"].includes(String(itemAtivo.status || "").toUpperCase());
-                const progress = statusDone ? 100 : statusBad ? 0 : 68;
-                return (
-                  <div className="mt-3">
-                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${progress}%`, background: "linear-gradient(90deg, #F59E0B, #EA580C)" }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>
+                      {SERVICO_MAP[it.servico_id] || `Serviço #${it.servico_id}`}
                     </div>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-[12px] font-bold" style={{ color: "#B45309" }}>{progress}%</span>
-                      <div className="text-right">
-                        <div className="text-[10px] uppercase tracking-wider text-slate-500">Valor total</div>
-                        <div className="text-[14px] font-bold" style={{ color: "hsl(220 20% 18%)" }}>
-                          {formatCurrency(Number(itemAtivo.valor || 0))}
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-2 text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                      {it.numero_processo && <span className="font-mono">{it.numero_processo}</span>}
+                      {it.data_protocolo && <span>Prot: {formatDate(it.data_protocolo)}</span>}
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-1 rounded-full mt-2" style={{ background: "hsl(220 13% 94%)" }}>
+                      <div className="h-full rounded-full transition-all" style={{
+                        width: `${progress}%`,
+                        background: statusDone ? "hsl(152 60% 42%)" : statusBad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)",
+                      }} />
                     </div>
                   </div>
-                );
-              })()}
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => onNavigate("servicos")}
-                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] border-[#E5C2C6] bg-white hover:bg-[#FBF3F4]"
-                >
-                  Ver todos <ChevronRight className="h-3 w-3" />
-                </button>
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        {/* PRÓXIMOS PASSOS */}
-        <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center gap-2 mb-1">
-            <ListChecks className="h-4 w-4" style={{ color: "#6D28D9" }} />
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsl(220 20% 22%)" }}>Próximos Passos</h3>
-          </div>
-          <div className="text-[11px] text-slate-500 mb-3">O que está pendente</div>
-          <ol className="space-y-2.5">
-            {proximosPassos.map((step, i) => (
-              <li key={i} className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5" style={{ background: i === 0 ? "#FEF3C7" : "#F1F5F9", color: i === 0 ? "#B45309" : "#64748B" }}>
-                  {i === 0 ? <Clock className="h-3.5 w-3.5" /> : i === 1 ? <FileText className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      statusDone ? "text-emerald-700 bg-emerald-50" : statusBad ? "text-red-700 bg-red-50" : "text-amber-700 bg-amber-50"
+                    }`}>{it.status}</span>
+                    <span className="text-[11px] font-bold font-mono" style={{ color: "hsl(220 20% 25%)" }}>
+                      {formatCurrency(Number(it.valor || 0))}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>{step}</div>
-                </div>
-                {i === 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shrink-0" style={{ background: "#FEE2E2", borderColor: "#FCA5A5", color: "#7F1D1D" }}>
-                    Prioridade alta
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
-          <div className="mt-3">
-            <button
-              type="button"
-              onClick={() => onNavigate("servicos")}
-              className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] border-[#E5C2C6] bg-white hover:bg-[#FBF3F4]"
-            >
-              Ver todos os passos <ChevronRight className="h-3 w-3" />
-            </button>
+              );
+            })}
+            {itens.length > 10 && (
+              <button onClick={() => onNavigate("servicos")} className="w-full text-center py-2 text-[11px] font-semibold hover:underline" style={{ color: "hsl(230 80% 56%)" }}>
+                + {itens.length - 10} serviços adicionais
+              </button>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* LINHA 3 — Documentos e validades + Arsenal revisão */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* DOCUMENTOS E VALIDADES */}
-        <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <FileText className="h-4 w-4" style={{ color: "#6D28D9" }} />
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Documentos e Validades</h3>
-            </div>
-            <button onClick={() => onNavigate("hub")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
-              Gerenciar documentos
-            </button>
-          </div>
-          {analysis.expDocs.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-[11px] text-slate-500">
-              Nenhum documento com validade cadastrado.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {analysis.expDocs.slice(0, 4).map((doc, i) => {
-                const days = doc.days;
-                const tone = days === null ? { bg: "#F1F5F9", bd: "#E2E8F0", fg: "#475569", chip: "#64748B" }
-                  : days < 0 ? { bg: "#FEE2E2", bd: "#FCA5A5", fg: "#7F1D1D", chip: "#B91C1C" }
-                  : days <= 30 ? { bg: "#FEE2E2", bd: "#FCA5A5", fg: "#7F1D1D", chip: "#B91C1C" }
-                  : days <= 90 ? { bg: "#FEF3C7", bd: "#FDE68A", fg: "#7C2D12", chip: "#B45309" }
-                  : { bg: "#D1FAE5", bd: "#A7F3D0", fg: "#065F46", chip: "#047857" };
-                return (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border px-3 py-2.5" style={{ background: tone.bg, borderColor: tone.bd }}>
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-white shrink-0">
-                      <CheckCircle className="h-3.5 w-3.5" style={{ color: tone.chip }} />
+      {/* ═══ DOCUMENTS & EXPIRATIONS ═══ */}
+      <div className="qa-card p-4 md:p-5">
+        <SectionHeader icon={Calendar} title="Documentos e Validades" color="hsl(262 60% 55%)" action="Gerenciar" onAction={() => onNavigate("cr")} />
+        {analysis.expDocs.length === 0 ? (
+          <div className="text-center py-8 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum documento com validade cadastrado.</div>
+        ) : (
+          <div className="space-y-1.5">
+            {analysis.expDocs.map((doc, i) => {
+              const Icon = urgencyIcon(doc.days);
+              return (
+                <div key={i} className={`flex items-start gap-2.5 py-2 px-3 rounded-xl border ${urgencyBg(doc.days)} transition-all`}>
+                  <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${urgencyColor(doc.days)}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-white/70 shrink-0 uppercase" style={{ color: "hsl(220 10% 46%)" }}>{doc.category}</span>
+                      <span className="text-[10px] md:text-[11px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{doc.label}</span>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/70" style={{ color: tone.fg }}>{doc.category}</span>
-                        <span className="text-[12px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{doc.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(doc.date)}</span>
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-white/70" style={{ color: tone.fg }}>
-                          {urgencyLabel(days)}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[9px] font-mono" style={{ color: "hsl(220 10% 50%)" }}>{formatDate(doc.date)}</span>
+                      <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${urgencyColor(doc.days)} bg-white/60`}>
+                        {urgencyLabel(doc.days)}
+                      </span>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ARSENAL — REVISÃO */}
-        <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <Shield className="h-4 w-4" style={{ color: "#1D4ED8" }} />
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Arsenal — Revisão</h3>
-            </div>
-            <button onClick={() => onNavigate("arsenal")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
-              Ver detalhes
-            </button>
+                </div>
+              );
+            })}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {[
-              { label: "TOTAL", value: totalArmasReais },
-              { label: "CRAF (R/O)", value: crafs.length },
-              { label: "MANUAL/IA", value: armasManual.length },
-              { label: "REVISÃO", value: armasReview },
-            ].map((m) => (
-              <div key={m.label} className="rounded-lg border bg-slate-50 px-3 py-2" style={{ borderColor: "hsl(220 13% 92%)" }}>
-                <div className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsl(220 10% 50%)" }}>{m.label}</div>
-                <div className="text-[20px] font-bold leading-tight" style={{ color: "hsl(220 20% 18%)" }}>{m.value}</div>
-              </div>
-            ))}
-          </div>
-          {totalArmasReais === 0 && armasManual.length === 0 && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg bg-slate-50 border px-3 py-2 text-[11px] text-slate-500" style={{ borderColor: "hsl(220 13% 92%)" }}>
-              <Info className="h-3.5 w-3.5 shrink-0" />
-              Nenhuma arma cadastrada.
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* LINHA 4 — Linha do tempo + Histórico financeiro */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* LINHA DO TEMPO */}
-        <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <Activity className="h-4 w-4" style={{ color: "#1D4ED8" }} />
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Linha do Tempo</h3>
-            </div>
-            <button onClick={() => onNavigate("historico")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
-              Ver todos
-            </button>
+      {/* ═══ TIMELINE ═══ */}
+      {timeline.length > 0 && (
+        <div className="qa-card p-5">
+          <SectionHeader icon={Activity} title="Linha do Tempo" color="hsl(190 80% 42%)" />
+          <div className="text-[10px] mb-3" style={{ color: "hsl(220 10% 55%)" }}>
+            {timeline.length} eventos · ordem cronológica (mais antigo → mais recente)
           </div>
-          {timeline.length === 0 ? (
-            <div className="text-[11px] text-slate-500">Sem eventos registrados.</div>
-          ) : (
-            <ol className="space-y-3">
-              {(() => {
-                // Prioriza eventos críticos (indeferimento, recurso, restituição), depois mais recentes.
-                const isCritico = (t: string) => ["indeferimento", "recurso", "restituicao", "restituição"].includes(t);
-                const criticos = timeline.filter((e) => isCritico(e.type));
-                const recentes = [...timeline].reverse();
-                const out: typeof timeline = [];
-                for (const e of [...criticos.reverse(), ...recentes]) {
-                  if (out.length >= 3) break;
-                  if (!out.includes(e)) out.push(e);
-                }
-                return out;
-              })().map((ev, i) => {
+          <div className="relative pl-6">
+            <div className="absolute left-2.5 top-1 bottom-1 w-px" style={{ background: "hsl(220 13% 90%)" }} />
+            <div className="space-y-3">
+              {timeline.map((ev, i) => {
                 const Icon = ev.icon;
                 return (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ background: ev.color || "#B91C1C" }} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: ev.color || "#B91C1C" }}>
-                        {formatDate(ev.date)}
+                  <div key={i} className="relative flex items-start gap-3">
+                    <div className="absolute -left-3.5 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center z-10" style={{ background: `${ev.color}18` }}>
+                      <Icon className="h-2.5 w-2.5" style={{ color: ev.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0 pl-4">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold shrink-0" style={{ color: ev.color }}>
+                          {formatDate(ev.date)}
+                        </span>
+                        <span className="text-[11px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+                          {ev.label}
+                        </span>
                       </div>
-                      <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>{ev.label}</div>
                       {ev.sublabel && (
-                        <div className="text-[11px] text-slate-500 mt-0.5">{ev.sublabel}</div>
+                        <div className="text-[10px] mt-0.5" style={{ color: "hsl(220 10% 55%)" }}>
+                          {ev.sublabel}
+                        </div>
                       )}
                     </div>
-                  </li>
+                  </div>
                 );
               })}
-            </ol>
-          )}
-        </div>
-
-        {/* HISTÓRICO FINANCEIRO */}
-        <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <TrendingUp className="h-4 w-4" style={{ color: "#047857" }} />
-              <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Histórico Financeiro</h3>
             </div>
-            <button onClick={() => onNavigate("servicos")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
-              Ver todos
-            </button>
           </div>
-          {vendas.length === 0 ? (
-            <div className="text-[11px] text-slate-500">Sem vendas registradas.</div>
-          ) : (
-            <>
-              <div className="space-y-1">
-                {vendas.slice(0, 4).map((v: any) => {
-                  const vItens = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
-                  return (
-                    <div key={v.id} className="grid grid-cols-12 items-center gap-2 py-2 border-b last:border-0" style={{ borderColor: "hsl(220 13% 94%)" }}>
-                      <div className="col-span-4 min-w-0">
-                        <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Venda #{v.id_legado ?? v.id}</div>
-                        <div className="text-[10px] text-slate-500">{formatDate(v.data_cadastro)}</div>
-                      </div>
-                      <div className="col-span-3 text-[11px] text-slate-600">{vItens.length} {vItens.length === 1 ? "serviço" : "serviços"}</div>
-                      <div className="col-span-2 text-[11px] uppercase font-semibold text-slate-600">{v.forma_pagamento || "—"}</div>
-                      <div className="col-span-3 text-right text-[12px] font-bold font-mono" style={{ color: "hsl(220 20% 18%)" }}>
-                        {formatCurrency(Number(v.valor_a_pagar || 0))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="flex justify-between items-center pt-3 mt-2 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Investido</span>
-                <span className="text-[15px] font-bold font-mono" style={{ color: "#047857" }}>{formatCurrency(analysis.totalVendas)}</span>
-              </div>
-            </>
-          )}
         </div>
-      </div>
+      )}
 
-      {/* LINHA 5 — Resumo operacional inferior (3 cards compactos) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button onClick={() => onNavigate("hub")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#EDE9FE", color: "#6D28D9" }}>
-              <Shield className="h-4 w-4" />
+      {/* ═══ FINANCIAL SUMMARY ═══ */}
+      {vendas.length > 0 && (
+        <div className="qa-card p-5">
+          <SectionHeader icon={TrendingUp} title="Histórico Financeiro" color="hsl(152 60% 42%)" action="Ver Todos" onAction={() => onNavigate("servicos")} />
+          <div className="space-y-2">
+            {vendas.map((v: any) => {
+              const vItens = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
+              return (
+                <div key={v.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl border transition-all hover:shadow-sm" style={{ borderColor: "hsl(220 13% 93%)" }}>
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+                      Venda #{v.id_legado ?? v.id}
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px]" style={{ color: "hsl(220 10% 55%)" }}>
+                      <span>{formatDate(v.data_cadastro)}</span>
+                      <span>·</span>
+                      <span>{vItens.length} {vItens.length === 1 ? "serviço" : "serviços"}</span>
+                      {v.forma_pagamento && <><span>·</span><span>{v.forma_pagamento}</span></>}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[13px] font-bold font-mono" style={{ color: "hsl(220 20% 18%)" }}>
+                      {formatCurrency(Number(v.valor_a_pagar || 0))}
+                    </div>
+                    {Number(v.desconto) > 0 && (
+                      <div className="text-[10px] font-mono text-amber-600">
+                        -{formatCurrency(Number(v.desconto))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <div className="flex justify-between items-center pt-3 mt-1 border-t" style={{ borderColor: "hsl(220 13% 93%)" }}>
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "hsl(220 10% 46%)" }}>TOTAL INVESTIDO</span>
+              <span className="text-base font-bold font-mono" style={{ color: "hsl(220 20% 18%)" }}>
+                {formatCurrency(analysis.totalVendas)}
+              </span>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsl(220 10% 50%)" }}>CR</span>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ QUICK ACCESS ═══ */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-3">
+        <button onClick={() => onNavigate("cr")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Shield className="h-3.5 w-3.5" style={{ color: "hsl(262 60% 55%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(262 60% 55%)" }}>CR</span>
           </div>
           {cadastro ? (
             <>
-              <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+              <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
                 CR: {cadastro.numero_cr || "Sem nº"}
               </div>
-              <div className="text-[11px] font-bold mt-0.5" style={{ color: "#047857" }}>
+              <div className={`text-[9px] font-bold mt-0.5 ${urgencyColor(daysUntil(cadastro.validade_cr))}`}>
                 {cadastro.validade_cr ? `Val: ${formatDate(cadastro.validade_cr)}` : "Sem validade"}
               </div>
             </>
           ) : (
-            <div className="text-[11px] text-slate-500">Não cadastrado</div>
+            <div className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>Não cadastrado</div>
           )}
         </button>
 
-        <button onClick={() => onNavigate("arsenal")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>
-              <Crosshair className="h-4 w-4" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsl(220 10% 50%)" }}>Armas</span>
+        <button onClick={() => onNavigate("armas")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Crosshair className="h-3.5 w-3.5" style={{ color: "hsl(190 80% 42%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(190 80% 42%)" }}>ARMAS</span>
           </div>
-          <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
             {crafs.length} CRAFs · {gtes.length} GTEs
           </div>
         </button>
 
-        <button onClick={() => onNavigate("dados")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#FFEDD5", color: "#C2410C" }}>
-              <Users className="h-4 w-4" />
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "hsl(220 10% 50%)" }}>Filiações</span>
+        <button onClick={() => onNavigate("dados")} className="qa-card p-3 md:p-4 text-left hover:shadow-md active:scale-[0.98] transition-all group">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Eye className="h-3.5 w-3.5" style={{ color: "hsl(38 92% 50%)" }} />
+            <span className="text-[9px] uppercase tracking-wider font-bold" style={{ color: "hsl(38 92% 50%)" }}>FILIAÇÕES</span>
           </div>
-          <div className="text-[12px] font-semibold" style={{ color: "hsl(220 20% 18%)" }}>
+          <div className="text-[11px] font-medium" style={{ color: "hsl(220 20% 18%)" }}>
             {filiacoes.length} {filiacoes.length === 1 ? "filiação" : "filiações"}
           </div>
         </button>

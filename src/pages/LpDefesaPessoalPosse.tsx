@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Home, Shield, Skull, AlertTriangle, CheckCircle2, Lock, Scale, Target, Phone, X, FileCheck, Users } from 'lucide-react';
 
-const DEFESA_CHECKOUT = '/cadastro?servico=aquisicao-registro-posse-de-arma-de-fogo&origem=lp_defesa_pessoal&perfil_v2=defesa_pessoal&subperfil_v2=primeira_aquisicao';
-
 const LpDefesaPessoalPosse = () => (
   <SiteShell>
     <SEO
@@ -22,8 +20,8 @@ const LpDefesaPessoalPosse = () => (
         description: 'Processo completo de posse domiciliar conforme Lei 10.826/03 e Decreto 11.615/23.',
       }}
     />
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20 sm:py-28">
-      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
+    <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
+      <div className="container max-w-5xl text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">
           <Home className="size-3.5 text-accent" />
           <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent">Defesa Pessoal · Posse Domiciliar · Lei 10.826/03</span>
@@ -36,7 +34,7 @@ const LpDefesaPessoalPosse = () => (
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-            <Link to={DEFESA_CHECKOUT}>Quero minha posse legalizada <ArrowRight className="ml-2 size-4" /></Link>
+            <Link to="/servicos">Quero minha posse legalizada <ArrowRight className="ml-2 size-4" /></Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Falar com especialista</a>
@@ -53,8 +51,8 @@ const LpDefesaPessoalPosse = () => (
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-surface-elevated py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">O cenário real</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Você tem <span className="text-accent">três opções</span>. Só uma te mantém vivo.</h2>
@@ -79,8 +77,8 @@ const LpDefesaPessoalPosse = () => (
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-background py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Sem nós × Com nós</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">A diferença entre <span className="text-accent">tentar sozinho</span> e <span className="text-accent">ser conduzido</span></h2>
@@ -106,8 +104,8 @@ const LpDefesaPessoalPosse = () => (
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-surface-elevated py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">O que você leva</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Pacote <span className="text-accent">Posse Domiciliar</span> completo</h2>
@@ -133,13 +131,13 @@ const LpDefesaPessoalPosse = () => (
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background py-20">
-      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full bg-background py-20">
+      <div className="container max-w-3xl text-center">
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Sua família. Sua casa. <span className="text-accent">Sua decisão.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Lei 10.826/03 te ampara. Decreto 11.615/23 te garante. A gente te conduz.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={DEFESA_CHECKOUT}>Iniciar minha Posse <ArrowRight className="ml-2 size-4" /></Link></Button>
-          <Button asChild size="lg" variant="outline"><Link to="/cadastro">Começar meu cadastro</Link></Button>
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/servicos">Iniciar minha Posse <ArrowRight className="ml-2 size-4" /></Link></Button>
+          <Button asChild size="lg" variant="outline"><Link to="/descobrir-meu-caminho">Descobrir meu caminho</Link></Button>
         </div>
       </div>
     </section>

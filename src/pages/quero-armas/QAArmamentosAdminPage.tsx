@@ -6,14 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera, Eraser, Crosshair, Target, Layers, Flag, Shield } from "lucide-react";
-import { ImageOff, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Sparkles, Globe, Trash2, CheckCircle2, AlertCircle, Search, Image as ImageIcon, RefreshCcw, Camera } from "lucide-react";
 import { toast } from "sonner";
-import { LoadingState } from "@/components/quero-armas/LoadStates";
-import { ArmaSpecSheet } from "./ArmaSpecSheet";
 
 type Status = "rascunho" | "pendente_revisao" | "verificado" | "rejeitado";
 type Fonte = "curado" | "ia_gerado" | "scrape_fabricante" | "importado";
@@ -33,9 +30,6 @@ interface Arma {
   search_tokens: string | null;
   imagem: string | null;
   imagem_status: "pendente" | "gerando" | "pronta" | "erro" | null;
-  imagem_aprovada?: boolean | null;
-  imagem_validacao_motivo?: string | null;
-  imagens?: string[] | null;
 }
 
 const TIPOS = ["pistola","revolver","espingarda","carabina","fuzil","submetralhadora","outra"];
@@ -49,15 +43,6 @@ const FONTE_LABEL: Record<Fonte,string> = {
 const empty = (): Partial<Arma> => ({
   marca: "", modelo: "", tipo: "pistola", calibre: "", status_revisao: "rascunho", fonte_dados: "curado", ativo: true,
 });
-
-function montarGaleriaArma(item: Pick<Partial<Arma>, "imagem" | "imagens">): string[] {
-  const seen = new Set<string>();
-  return [item.imagem, ...(Array.isArray(item.imagens) ? item.imagens : [])].filter((url): url is string => {
-    if (!url || seen.has(url)) return false;
-    seen.add(url);
-    return true;
-  });
-}
 
 export default function QAArmamentosAdminPage() {
   const [items, setItems] = useState<Arma[]>([]);
@@ -74,26 +59,6 @@ export default function QAArmamentosAdminPage() {
   const [imgBusyId, setImgBusyId] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
-  const [bgBusy, setBgBusy] = useState(false);
-  const [semImagemFilter, setSemImagemFilter] = useState<boolean>(false);
-  const [auditBusy, setAuditBusy] = useState(false);
-  const [auditProgress, setAuditProgress] = useState<{ done: number; total: number } | null>(null);
-  const [revalBusyId, setRevalBusyId] = useState<string | null>(null);
-  const [bgBusyId, setBgBusyId] = useState<string | null>(null);
-  const [removeBgUsage, setRemoveBgUsage] = useState<number | null>(null);
-  const [imagensFabricante, setImagensFabricante] = useState<string[]>([]);
-  const [carregandoImagens, setCarregandoImagens] = useState(false);
-  const [showAllImagesModal, setShowAllImagesModal] = useState(false);
-  const [imagemFullscreen, setImagemFullscreen] = useState<{ galeria: string[]; idx: number; titulo: string } | null>(null);
-  const [imagemConfirm, setImagemConfirm] = useState<{ url: string; arma: { id: string; marca: string; modelo: string } } | null>(null);
-
-  async function loadRemoveBgUsage() {
-    const { data, error } = await supabase.rpc("qa_remove_bg_usage_mes" as any);
-    if (!error && Array.isArray(data) && data[0]) {
-      setRemoveBgUsage(Number((data[0] as any).total) || 0);
-    }
-  }
-  useEffect(() => { loadRemoveBgUsage(); }, []);
 
   async function load() {
     setLoading(true);
@@ -109,33 +74,17 @@ export default function QAArmamentosAdminPage() {
     return items.filter((it) => {
       if (tipoFilter !== "todos" && it.tipo !== tipoFilter) return false;
       if (statusFilter !== "todos" && it.status_revisao !== statusFilter) return false;
-      if (semImagemFilter && !!it.imagem) return false;
       if (!norm) return true;
       return [it.marca, it.modelo, it.apelido, it.calibre].filter(Boolean).join(" ").toLowerCase().includes(norm);
     });
-  }, [items, q, tipoFilter, statusFilter, semImagemFilter]);
+  }, [items, q, tipoFilter, statusFilter]);
 
   const stats = useMemo(() => ({
     total: items.length,
     pendentes: items.filter(i => i.status_revisao === "pendente_revisao").length,
     verificados: items.filter(i => i.status_revisao === "verificado").length,
     ia: items.filter(i => i.fonte_dados === "ia_gerado").length,
-    semImagem: items.filter(i => !i.imagem).length,
   }), [items]);
-
-  const filtrosAtivos = q.trim() !== "" || tipoFilter !== "todos" || statusFilter !== "todos" || semImagemFilter;
-  const decisaoImagem = (v: { valida?: boolean; confianca?: number; validacao_resultado?: string } | null | undefined) => {
-    if (v?.validacao_resultado === "correta" || v?.validacao_resultado === "incorreta") return v.validacao_resultado;
-    if (v?.valida) return "correta";
-    if (!v?.valida && (v?.confianca ?? 0) >= 80) return "incorreta";
-    return "correta";
-  };
-  const limparFiltros = () => {
-    setQ("");
-    setTipoFilter("todos");
-    setStatusFilter("todos");
-    setSemImagemFilter(false);
-  };
 
   function openNew() { setEditing(empty()); setScrapeUrl(""); setOpen(true); }
   function openEdit(it: Arma) { setEditing({ ...it }); setScrapeUrl(it.fonte_url || ""); setOpen(true); }
@@ -147,21 +96,7 @@ export default function QAArmamentosAdminPage() {
     setSaving(true);
     const payload: any = { ...editing };
     payload.search_tokens = `${payload.marca} ${payload.modelo} ${payload.apelido || ""} ${payload.calibre}`.toUpperCase();
-    const galeriaNormalizada = montarGaleriaArma(payload);
-    payload.imagem = galeriaNormalizada[0] || null;
-    payload.imagens = galeriaNormalizada.slice(1);
-    // Persiste a URL do repositório: prioriza o input "scrapeUrl" (campo do topo),
-    // caindo para editing.fonte_url quando não houver. Garante que trocar a URL
-    // sem rodar o scraper também salve.
-    const urlRepositorio = (scrapeUrl?.trim() || (payload.fonte_url as string | null | undefined)?.toString().trim()) || null;
-    payload.fonte_url = urlRepositorio;
-    // Esta página é exclusiva de admin → imagens entram já aprovadas.
-    if (payload.imagem) {
-      const { data: u } = await supabase.auth.getUser();
-      payload.imagem_aprovada = true;
-      payload.imagem_enviada_por = u.user?.id || null;
-      payload.imagem_enviada_em = new Date().toISOString();
-    }
+    if (payload.fonte_url !== undefined) payload.fonte_url = payload.fonte_url || null;
     const isUpdate = !!editing.id;
     const { error } = isUpdate
       ? await supabase.from("qa_armamentos_catalogo" as any).update(payload).eq("id", editing.id!)
@@ -193,61 +128,17 @@ export default function QAArmamentosAdminPage() {
       const { data, error } = await supabase.functions.invoke("qa-armamento-buscar-foto-real", { body: { id: it.id } });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`Foto real encontrada para ${it.marca} ${it.modelo}`);
       const url = (data as any)?.imagem as string | undefined;
       if (url) {
-        // pede confirmação antes de salvar definitivamente
-        setImagemConfirm({ url, arma: { id: it.id, marca: it.marca, modelo: it.modelo } });
+        setEditing((p) => (p && p.id === it.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
       }
+      load();
     } catch (e: any) {
       toast.error(`Não encontrei foto real para ${it.marca} ${it.modelo}: ${e?.message || e}`);
     } finally {
       setImgBusyId(null);
     }
-  }
-
-  async function confirmarImagem() {
-    if (!imagemConfirm) return;
-    const { url, arma } = imagemConfirm;
-    const { data: u } = await supabase.auth.getUser();
-    // Admin: persiste imagem aprovada imediatamente.
-    await supabase.from("qa_armamentos_catalogo" as any)
-      .update({
-        imagem: url,
-        imagem_status: "pronta",
-        imagem_aprovada: true,
-        imagem_enviada_por: u.user?.id || null,
-        imagem_enviada_em: new Date().toISOString(),
-      })
-      .eq("id", arma.id);
-    setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: url, imagem_status: "pronta" } : p));
-    setImagemConfirm(null);
-    toast.success(`Imagem confirmada para ${arma.marca} ${arma.modelo}`);
-    // remove fundo automaticamente via remove.bg
-    try {
-      const { data: rb, error: rbErr } = await supabase.functions.invoke(
-        "qa-armamento-remove-bg",
-        { body: { id: arma.id } },
-      );
-      if (rbErr) throw rbErr;
-      if ((rb as any)?.ok && (rb as any)?.imagem) {
-        const cleaned = (rb as any).imagem as string;
-        setEditing((p) => (p && p.id === arma.id ? { ...p, imagem: cleaned } : p));
-        loadRemoveBgUsage();
-      }
-    } catch (e: any) {
-      console.warn("remove.bg indisponível:", e?.message || e);
-    }
-    load();
-  }
-
-  function abrirGoogleImagens(it: { marca?: string | null; modelo?: string | null; tipo?: string | null }) {
-    const tipoMap: Record<string, string> = {
-      pistola: "pistol", revolver: "revolver", espingarda: "shotgun",
-      carabina: "carbine rifle", fuzil: "rifle", submetralhadora: "submachine gun",
-    };
-    const tipoEn = tipoMap[(it.tipo || "").toLowerCase()] || "";
-    const q = [it.marca, it.modelo, tipoEn, "firearm"].filter(Boolean).join(" ");
-    window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(q)}`, "_blank", "noopener");
   }
 
   /** Busca foto real para todas as armas que ainda não têm foto pronta. */
@@ -284,88 +175,6 @@ export default function QAArmamentosAdminPage() {
     load();
   }
 
-  /** Limpa o fundo (remove.bg) de UMA arma específica + todas as armas com mesma marca/modelo (duplicadas). */
-  async function limparFundoArma(it: Arma) {
-    if (!it.imagem) { toast.info("Esta arma não possui imagem."); return; }
-    // pega a arma + qualquer duplicata (mesma marca+modelo) que também tenha imagem
-    const grupo = items.filter(
-      (x) => !!x.imagem && (x.id === it.id || (
-        (x.marca || "").trim().toLowerCase() === (it.marca || "").trim().toLowerCase() &&
-        (x.modelo || "").trim().toLowerCase() === (it.modelo || "").trim().toLowerCase()
-      ))
-    );
-    const ids = Array.from(new Set(grupo.map((x) => x.id)));
-    setBgBusyId(it.id);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-armamento-remove-bg", {
-        body: ids.length > 1 ? { ids } : { id: it.id },
-      });
-      if (error) throw error;
-      const d = data as any;
-      if (Array.isArray(d?.results)) {
-        const ok = d.results.filter((r: any) => r.ok).length;
-        const fail = d.results.filter((r: any) => !r.ok).length;
-        toast.success(`Fundo limpo: ${ok} imagem(ns)${fail ? `, ${fail} falha(s)` : ""}.`);
-      } else if (d?.ok) {
-        toast.success("Fundo limpo com sucesso.");
-      } else {
-        toast.error("Falha: " + (d?.error || "erro desconhecido"));
-      }
-      load();
-      loadRemoveBgUsage();
-    } catch (e: any) {
-      toast.error("Erro ao limpar fundo: " + (e?.message || e));
-    } finally {
-      setBgBusyId(null);
-    }
-  }
-
-  /** Reprocessa o fundo (alpha real) de todas as armas que tenham imagem. */
-  async function limparFundoTodas() {
-    if (!confirm("Reprocessar o fundo de todas as armas com imagem? Pode levar alguns minutos.")) return;
-    setBgBusy(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-armamento-limpar-fundo-batch", {
-        body: { force: true, limit: 100 },
-      });
-      if (error) throw error;
-      const d = data as any;
-      const ok = (d?.results || []).filter((r: any) => r.ok).length;
-      const fail = (d?.results || []).filter((r: any) => !r.ok).length;
-      toast.success(`Fundo limpo em ${ok} arma(s)${fail ? `, ${fail} falha(s)` : ""}.`);
-      load();
-    } catch (e: any) {
-      toast.error("Erro ao limpar fundo: " + (e?.message || e));
-    } finally {
-      setBgBusy(false);
-    }
-  }
-
-  /** Remove o fundo via remove.bg (API premium) em todas as armas com imagem. */
-  async function removeBgTodas() {
-    const comImagem = items.filter((i) => !!i.imagem);
-    if (comImagem.length === 0) { toast.info("Nenhuma arma com imagem."); return; }
-    if (!confirm(`Enviar ${comImagem.length} imagem(ns) ao remove.bg? (1 crédito por imagem)`)) return;
-    setBgBusy(true);
-    try {
-      const ids = comImagem.map((i) => i.id);
-      const { data, error } = await supabase.functions.invoke("qa-armamento-remove-bg", {
-        body: { ids },
-      });
-      if (error) throw error;
-      const results = ((data as any)?.results || []) as Array<{ ok: boolean; error?: string }>;
-      const ok = results.filter((r) => r.ok).length;
-      const fail = results.filter((r) => !r.ok).length;
-      toast.success(`remove.bg concluído: ${ok} ok${fail ? `, ${fail} falha(s)` : ""}.`);
-      load();
-      loadRemoveBgUsage();
-    } catch (e: any) {
-      toast.error("Erro no remove.bg: " + (e?.message || e));
-    } finally {
-      setBgBusy(false);
-    }
-  }
-
   async function gerarComIA() {
     if (!editing?.marca || !editing?.modelo) { toast.error("Preencha marca e modelo primeiro"); return; }
     setAiBusy(true);
@@ -381,350 +190,61 @@ export default function QAArmamentosAdminPage() {
     toast.success("Dados gerados pela IA — revise antes de salvar");
   }
 
-  async function validarImagemItem(it: Arma) {
-    if (!it.imagem) throw new Error("Item sem imagem para validar");
-    const { data, error } = await supabase.functions.invoke("qa-armamento-validar-imagem", {
-      body: {
-        itemId: it.id,
-        imagemUrl: it.imagem,
-        marca: it.marca,
-        modelo: it.modelo,
-        tipo: it.tipo,
-        calibre: it.calibre,
-        origem: it.origem,
-      },
-    });
-    if (error) throw error;
-    const v = data as { valida: boolean; motivo: string; confianca: number; validacao_resultado?: "correta" | "incorreta" };
-    const resultado = decisaoImagem(v);
-    if (!v?.validacao_resultado) {
-      await supabase.from("qa_armamentos_catalogo" as any)
-        .update({
-          imagem_aprovada: resultado === "correta",
-          imagem_validacao_motivo: v?.motivo || null,
-          imagem_validada_em: new Date().toISOString(),
-        })
-        .eq("id", it.id);
-    }
-    return { ...v, validacao_resultado: resultado };
-  }
-
-  async function revalidarImagem(it: Arma) {
-    setRevalBusyId(it.id);
-    try {
-      const v = await validarImagemItem(it);
-      toast.success(v.validacao_resultado === "correta" ? "Imagem revalidada como correta" : "Imagem confirmada como incorreta");
-      load();
-    } catch (e: any) {
-      toast.error("Erro ao revalidar imagem: " + (e?.message || e));
-    } finally {
-      setRevalBusyId(null);
-    }
-  }
-
-  /** Audita TODAS as imagens já cadastradas com regra tolerante: só rejeita
-   * quando a IA diz incorreta com confiança >= 80. Dúvida razoável aprova. */
-  async function auditarImagens() {
-    const comImagem = items.filter((i) => !!i.imagem);
-    if (comImagem.length === 0) { toast.info("Nenhuma arma com imagem para auditar."); return; }
-    if (!confirm(`Auditar ${comImagem.length} imagem(ns) com IA? Cada item leva ~3s.`)) return;
-    setAuditBusy(true);
-    setAuditProgress({ done: 0, total: comImagem.length });
-    let okCount = 0;
-    let badCount = 0;
-    const incorretos: Array<{ id: string; marca: string; modelo: string; motivo: string }> = [];
-    for (let i = 0; i < comImagem.length; i++) {
-      const it = comImagem[i];
-      try {
-        const v = await validarImagemItem(it);
-        const aprovada = v.validacao_resultado === "correta";
-        if (aprovada) okCount++;
-        else { badCount++; incorretos.push({ id: it.id, marca: it.marca, modelo: it.modelo, motivo: v?.motivo || "—" }); }
-      } catch (e: any) {
-        console.warn(`Audit falhou em ${it.marca} ${it.modelo}:`, e?.message || e);
-      }
-      setAuditProgress({ done: i + 1, total: comImagem.length });
-    }
-    setAuditBusy(false);
-    setAuditProgress(null);
-    if (incorretos.length) {
-      console.table(incorretos);
-      toast.error(`Auditoria: ${okCount} ✅ corretas · ${badCount} ❌ incorretas (veja console).`, {
-        duration: 8000,
-      });
-    } else {
-      toast.success(`Auditoria concluída: todas as ${okCount} imagens estão corretas.`);
-    }
-    load();
-  }
-
-  async function revalidarSuspeitas() {
-    const suspeitas = items.filter((i) => !!i.imagem && i.imagem_aprovada === false);
-    if (suspeitas.length === 0) { toast.info("Nenhuma imagem suspeita para revalidar."); return; }
-    if (!confirm(`Revalidar ${suspeitas.length} imagem(ns) suspeita(s) com a nova regra?`)) return;
-    setAuditBusy(true);
-    setAuditProgress({ done: 0, total: suspeitas.length });
-    let okCount = 0;
-    let badCount = 0;
-    for (let i = 0; i < suspeitas.length; i++) {
-      try {
-        const v = await validarImagemItem(suspeitas[i]);
-        if (v.validacao_resultado === "correta") okCount++;
-        else badCount++;
-      } catch (e: any) {
-        console.warn(`Revalidação falhou em ${suspeitas[i].marca} ${suspeitas[i].modelo}:`, e?.message || e);
-      }
-      setAuditProgress({ done: i + 1, total: suspeitas.length });
-    }
-    setAuditBusy(false);
-    setAuditProgress(null);
-    toast.success(`Revalidação concluída: ${okCount} liberada(s), ${badCount} ainda suspeita(s).`);
-    load();
-  }
-
   async function scrapeFabricante() {
     if (!scrapeUrl) { toast.error("Informe a URL do fabricante"); return; }
     setScrapeBusy(true);
-    setCarregandoImagens(true);
-    setImagensFabricante([]);
-    const [scrapeRes, imgs] = await Promise.all([
-      supabase.functions.invoke("qa-armamento-scrape", {
-        body: { url: scrapeUrl, marca: editing?.marca, modelo: editing?.modelo },
-      }),
-      buscarImagensFabricante(scrapeUrl),
-    ]);
+    const { data, error } = await supabase.functions.invoke("qa-armamento-scrape", {
+      body: { url: scrapeUrl, marca: editing?.marca, modelo: editing?.modelo },
+    });
     setScrapeBusy(false);
-    setCarregandoImagens(false);
-    setImagensFabricante(imgs);
-    const { data, error } = scrapeRes;
-    if (error) { toast.error(error.message); }
-    else if ((data as any)?.error) { toast.error((data as any).error); }
-    else {
-      const d = (data as any)?.data;
-      if (d) {
-        setEditing((prev) => ({ ...(prev || {}), ...d, fonte_dados: "scrape_fabricante", fonte_url: scrapeUrl, status_revisao: "pendente_revisao" }));
-        toast.success("Dados extraídos do fabricante — revise antes de salvar");
-      }
-    }
-    if (imgs.length > 0) toast.success(`${imgs.length} imagens encontradas no fabricante`);
-  }
-
-  async function buscarImagensFabricante(url: string): Promise<string[]> {
-    try {
-      const { data, error } = await supabase.functions.invoke("qa-armamento-buscar-imagens", {
-        body: { url, marca: editing?.marca, modelo: editing?.modelo },
-      });
-      if (error) {
-        console.error("[buscarImagensFabricante] edge error", error);
-        toast.error("Falha ao buscar imagens do fabricante");
-        return [];
-      }
-      if ((data as any)?.error && (!Array.isArray((data as any)?.imagens) || (data as any).imagens.length === 0)) {
-        toast.error((data as any).error);
-        return [];
-      }
-      const imgs: string[] = Array.isArray((data as any)?.imagens) ? (data as any).imagens : [];
-      return imgs;
-    } catch (e) {
-      console.error("[buscarImagensFabricante]", e);
-      return [];
-    }
-  }
-
-  async function persistirGaleriaEdicao(next: Partial<Arma>) {
-    if (!next.id) return;
-    const galeria = montarGaleriaArma(next);
-    const { error } = await supabase.from("qa_armamentos_catalogo" as any)
-      .update({ imagem: galeria[0] || null, imagens: galeria.slice(1), imagem_status: galeria[0] ? "pronta" : null })
-      .eq("id", next.id);
-    if (error) { toast.error("Não salvei o álbum: " + error.message); return; }
-    setItems((prev) => prev.map((item) => item.id === next.id ? { ...item, imagem: galeria[0] || null, imagens: galeria.slice(1), imagem_status: galeria[0] ? "pronta" : null } : item));
-  }
-
-  /** Adiciona uma foto à galeria da arma; se ainda não houver capa, define como capa. */
-  function adicionarImagemGaleria(src: string) {
-    const base = editing || {};
-    const galeria = montarGaleriaArma(base);
-    if (galeria.includes(src)) { toast.info("Esta foto já está na galeria"); return; }
-    const next = (!base.imagem
-      ? { ...base, imagem: src, imagem_status: "pronta", imagem_fonte: "fabricante" }
-      : { ...base, imagens: [...galeria.slice(1), src] }) as Partial<Arma>;
-    setEditing(next);
-    toast.success(!base.imagem ? "Foto definida como capa" : `Foto adicionada ao álbum (${montarGaleriaArma(next).length} no total)`);
-    void persistirGaleriaEdicao(next);
-  }
-
-  /** Define uma foto da galeria como capa, mantendo a anterior na galeria. */
-  function definirComoCapa(src: string) {
-    const base = editing || {};
-    const next = { ...base, imagem: src, imagens: montarGaleriaArma(base).filter((u) => u !== src), imagem_status: "pronta" } as Partial<Arma>;
-    setEditing(next);
-    toast.success("Foto definida como capa");
-    void persistirGaleriaEdicao(next);
-  }
-
-  /** Remove uma foto (capa ou galeria). */
-  function removerImagem(src: string) {
-    const base = editing || {};
-    const total = montarGaleriaArma(base).length;
-    const msg = total <= 1
-      ? "Remover a única foto desta arma? Ela ficará sem imagem."
-      : "Remover esta foto da arma?";
-    if (!confirm(msg)) return;
-    const restante = montarGaleriaArma(base).filter((u) => u !== src);
-    const next = { ...base, imagem: restante[0] || null, imagens: restante.slice(1) } as Partial<Arma>;
-    setEditing(next);
-    void persistirGaleriaEdicao(next);
-  }
-
-  /** Remove uma foto específica de qualquer arma do catálogo (usado pelo card). */
-  async function removerFotoDeArma(arma: Arma, src: string) {
-    const galeria = montarGaleriaArma(arma);
-    const total = galeria.length;
-    const msg = total <= 1
-      ? `Remover a única foto de ${arma.marca} ${arma.modelo}? A arma ficará sem imagem.`
-      : `Remover esta foto de ${arma.marca} ${arma.modelo}?`;
-    if (!confirm(msg)) return;
-    const restante = galeria.filter((u) => u !== src);
-    const novaCapa = restante[0] || null;
-    const novasExtras = restante.slice(1);
-    const { error } = await supabase
-      .from("qa_armamentos_catalogo" as any)
-      .update({ imagem: novaCapa, imagens: novasExtras, imagem_status: novaCapa ? "pronta" : null })
-      .eq("id", arma.id);
-    if (error) { toast.error(`Falha ao remover foto: ${error.message}`); return; }
-    setItems((prev) => prev.map((p) => p.id === arma.id ? { ...p, imagem: novaCapa, imagens: novasExtras, imagem_status: novaCapa ? "pronta" : null } : p));
-    // Mantém o estado da edição em sincronia, caso a sheet esteja aberta na mesma arma
-    setEditing((p) => p && p.id === arma.id ? { ...p, imagem: novaCapa, imagens: novasExtras, imagem_status: novaCapa ? "pronta" : null } : p);
-    toast.success(novaCapa ? "Foto removida" : "Última foto removida — arma sem imagem");
-  }
-
-  /** Remove todas as fotos da arma sendo editada. */
-  function removerTodasFotos() {
-    const base = editing || {};
-    if (!base.id) return;
-    const total = montarGaleriaArma(base).length;
-    if (total === 0) { toast.info("Esta arma já está sem fotos"); return; }
-    if (!confirm(`Remover TODAS as ${total} foto(s) desta arma? Esta ação não pode ser desfeita.`)) return;
-    const next = { ...base, imagem: null, imagens: [] } as Partial<Arma>;
-    setEditing(next);
-    void persistirGaleriaEdicao(next);
-    toast.success("Todas as fotos foram removidas");
+    if (error) { toast.error(error.message); return; }
+    if ((data as any)?.error) { toast.error((data as any).error); return; }
+    const d = (data as any)?.data;
+    if (!d) { toast.error("Scrape não retornou dados"); return; }
+    setEditing((prev) => ({ ...(prev || {}), ...d, fonte_dados: "scrape_fabricante", fonte_url: scrapeUrl, status_revisao: "pendente_revisao" }));
+    toast.success("Dados extraídos do fabricante — revise antes de salvar");
   }
 
   function setF<K extends keyof Arma>(k: K, v: any) { setEditing((p) => ({ ...(p || {}), [k]: v })); }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f6f5f1] text-zinc-900">
-      <div className="mx-auto w-full max-w-7xl overflow-x-hidden px-3 py-6 sm:px-6 space-y-6">
-      {/* HEADER TÁTICO */}
-      <div className="relative overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-white via-[#fafaf7] to-[#f1efe9] p-6 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.08)]">
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(0,0,0,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,.5) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-        <div className="absolute -top-10 -right-10 w-56 h-56 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-lg border border-amber-500/50 bg-amber-500/10 grid place-items-center">
-              <Crosshair className="h-6 w-6 text-amber-600" />
-            </div>
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-amber-700">// ARSENAL · BASE TÉCNICA</div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-900">CATÁLOGO DE ARMAMENTOS</h1>
-              <p className="text-xs text-zinc-500 mt-0.5">Inventário técnico operacional · Armas reais utilizadas pelos clientes do Arsenal.</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
+    <div className="container max-w-7xl mx-auto p-6 space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">CATÁLOGO DE ARMAMENTOS</h1>
+          <p className="text-sm text-muted-foreground">Base técnica de armas reais usadas pelos clientes do Arsenal.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={buscarTodasFotos} disabled={bulkBusy} title="Busca foto real em fontes públicas para cada arma sem foto">
             {bulkBusy
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
-                : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
-            </Button>
-            <Button variant="outline" className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50" onClick={limparFundoTodas} disabled={bgBusy} title="Remove fundos brancos, cinzas e xadrez de todas as imagens (gera PNG com transparência real)">
-              {bgBusy
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Limpando fundo…</>
-                : <><Eraser className="h-4 w-4 mr-2" />Limpar fundo</>}
-            </Button>
-            <Button variant="outline" className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50" onClick={removeBgTodas} disabled={bgBusy} title="Envia todas as imagens ao remove.bg para gerar PNG com transparência perfeita (1 crédito por imagem)">
-              {bgBusy
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processando…</>
-                : <><Sparkles className="h-4 w-4 mr-2" />Remove.bg (lote)</>}
-            </Button>
-            <Button
-              variant="outline"
-              className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
-              onClick={auditarImagens}
-              disabled={auditBusy}
-              title="Audita por IA Vision se cada imagem corresponde ao modelo cadastrado. Marca incorretas com badge."
-            >
-              {auditBusy
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Auditando {auditProgress?.done}/{auditProgress?.total}</>
-                : <><Shield className="h-4 w-4 mr-2" />Auditar imagens</>}
-            </Button>
-            <Button
-              variant="outline"
-              className="border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
-              onClick={revalidarSuspeitas}
-              disabled={auditBusy || !items.some((i) => !!i.imagem && i.imagem_aprovada === false)}
-              title="Revalida em lote apenas as imagens marcadas como suspeitas"
-            >
-              {auditBusy
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Revalidando {auditProgress?.done}/{auditProgress?.total}</>
-                : <><RefreshCcw className="h-4 w-4 mr-2" />Revalidar suspeitas</>}
-            </Button>
-            <div
-              className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-mono text-amber-800"
-              title="Imagens processadas pelo remove.bg neste mês (zera no dia 1º). Plano gratuito = 50/mês."
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span className="uppercase tracking-wider">USO MÊS</span>
-              <span className="font-bold text-amber-900">
-                {removeBgUsage ?? "—"}
-                <span className="text-amber-700 font-normal">/50</span>
-              </span>
-            </div>
-            <Button onClick={openNew} className="bg-amber-500 text-white hover:bg-amber-600 font-semibold">
-              <Plus className="h-4 w-4 mr-2" />Nova arma
-            </Button>
-          </div>
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Buscando {bulkProgress?.done}/{bulkProgress?.total}</>
+              : <><Camera className="h-4 w-4 mr-2" />Buscar fotos reais</>}
+          </Button>
+          <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Nova arma</Button>
         </div>
       </div>
 
-      {/* KPIs HUD */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Kpi label="TOTAL" value={stats.total} icon={<Layers className="h-4 w-4" />} />
-        <Kpi label="VERIFICADOS" value={stats.verificados} tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
-        <Kpi label="PENDENTES" value={stats.pendentes} tone="warn" icon={<AlertCircle className="h-4 w-4" />} />
-        <Kpi label="GERADOS · IA" value={stats.ia} icon={<Sparkles className="h-4 w-4" />} />
-        <button
-          type="button"
-          onClick={() => { setSemImagemFilter(!semImagemFilter); setStatusFilter("todos"); setTipoFilter("todos"); }}
-          title="Clique para filtrar armas sem imagem"
-          className={`relative rounded-lg border bg-white p-3 text-left transition-all hover:shadow-sm ${
-            semImagemFilter ? "border-amber-500 ring-2 ring-amber-500/20" : "border-zinc-200"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className={`text-[10px] font-mono uppercase tracking-[0.2em] ${stats.semImagem > 0 ? "text-amber-700" : "text-zinc-500"}`}>SEM IMAGEM</span>
-            <ImageOff className={`h-4 w-4 ${stats.semImagem > 0 ? "text-amber-600" : "text-zinc-400"}`} />
-          </div>
-          <div className={`mt-1 text-2xl font-bold ${stats.semImagem > 0 ? "text-amber-700" : "text-zinc-700"}`}>{stats.semImagem}</div>
-        </button>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Total" value={stats.total} />
+        <Kpi label="Verificados" value={stats.verificados} tone="success" />
+        <Kpi label="Pendentes revisão" value={stats.pendentes} tone="warn" />
+        <Kpi label="Gerados por IA" value={stats.ia} />
       </div>
 
-      {/* BARRA DE FILTROS */}
-      <Card className="p-3 flex flex-col md:flex-row gap-3 bg-white border-zinc-200 shadow-sm">
+      <Card className="p-4 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-amber-600" />
-          <Input className="pl-9 bg-white border-zinc-200 text-zinc-900 placeholder:text-zinc-400 focus-visible:ring-amber-500/40" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input className="pl-9" placeholder="Buscar marca, modelo, calibre…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         <Select value={tipoFilter} onValueChange={setTipoFilter}>
-          <SelectTrigger className="md:w-48 bg-white border-zinc-200 text-zinc-900"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-48"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os tipos</SelectItem>
             {TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="md:w-56 bg-white border-zinc-200 text-zinc-900"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="md:w-56"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="todos">Todos os status</SelectItem>
             {Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
@@ -732,461 +252,222 @@ export default function QAArmamentosAdminPage() {
         </Select>
       </Card>
 
-      {/* LINHA DE CONTAGEM E LIMPAR FILTROS */}
-      <div className="flex items-center justify-between text-xs text-zinc-600 px-1 -mt-2">
-        <div className="font-mono uppercase tracking-wider">
-          {loading
-            ? "Carregando…"
-            : `${filtered.length} ${filtered.length === 1 ? "resultado" : "resultados"}${filtered.length !== stats.total ? ` · de ${stats.total} total` : ""}`}
-          {semImagemFilter && (
-            <span className="ml-2 inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700 border border-amber-200">
-              <ImageOff className="h-3 w-3" /> Sem imagem
-            </span>
-          )}
-        </div>
-        {filtrosAtivos && (
-          <button
-            type="button"
-            onClick={limparFiltros}
-            className="inline-flex items-center gap-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50"
-          >
-            <X className="h-3 w-3" /> Limpar filtros
-          </button>
-        )}
-      </div>
-
-      {/* GRID DE CARDS DARK-TACTICAL */}
-      {loading ? (
-        <LoadingState label="Carregando catálogo…" />
-      ) : filtered.length === 0 ? (
-        <Card className="p-16 text-center bg-white border-zinc-200 text-zinc-500">Nenhum armamento corresponde aos filtros.</Card>
-      ) : (
-        <div className="grid w-full min-w-0 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((it) => (
-            <WeaponCard
-              key={it.id}
-              it={it}
-              busy={imgBusyId === it.id}
-              onOpen={() => openEdit(it)}
-              onGerarImagem={() => gerarImagem(it)}
-              onVerificar={() => marcarVerificado(it)}
-              onRemove={() => remove(it)}
-              onFullscreen={(galeria, idx, titulo) => setImagemFullscreen({ galeria, idx, titulo })}
-              onRevalidarImagem={() => revalidarImagem(it)}
-              revalidando={revalBusyId === it.id}
-              onLimparFundo={() => limparFundoArma(it)}
-              limpandoFundo={bgBusyId === it.id}
-              onRemoverFoto={(src) => removerFotoDeArma(it, src)}
-            />
-          ))}
-        </div>
-      )}
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="right"
-          className="
-            p-0 gap-0 border-l border-zinc-300
-            bg-[#f6f5f1] text-zinc-900
-            w-full h-[100dvh] max-w-none
-            sm:max-w-[760px] md:max-w-[860px] lg:max-w-[1100px]
-            flex flex-col font-sans
-          "
-        >
-          {editing && <ArmaSpecSheet
-            editing={editing}
-            setF={setF}
-            scrapeUrl={scrapeUrl}
-            setScrapeUrl={(v: string) => {
-              setScrapeUrl(v);
-              // mantém o campo do banco em sincronia com o input do topo
-              setEditing((p) => ({ ...(p || {}), fonte_url: v }));
-            }}
-            aiBusy={aiBusy}
-            scrapeBusy={scrapeBusy}
-            saving={saving}
-            imgBusy={imgBusyId === editing.id}
-            onClose={() => setOpen(false)}
-            onSave={save}
-            onAI={gerarComIA}
-            onScrape={scrapeFabricante}
-            onGerarImagem={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
-            imagensFabricante={imagensFabricante}
-            carregandoImagens={carregandoImagens}
-            onSelecionarImagem={adicionarImagemGaleria}
-            onAbrirGaleria={() => setShowAllImagesModal(true)}
-            onBuscarGoogle={() => abrirGoogleImagens({ marca: editing.marca, modelo: editing.modelo, tipo: editing.tipo })}
-            onDefinirCapa={definirComoCapa}
-            onRemoverImagem={removerImagem}
-            onRemoverTodasFotos={removerTodasFotos}
-          />}
-        </SheetContent>
-      </Sheet>
-
-      {/* Modal — galeria completa de imagens do fabricante */}
-      {showAllImagesModal && (
-        <div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm p-3 sm:p-4" onClick={() => setShowAllImagesModal(false)}>
-          <div className="mx-auto flex h-[calc(100dvh-1.5rem)] w-full max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden bg-[#f6f5f1] border border-zinc-300 sm:h-[calc(100dvh-2rem)] sm:max-w-5xl" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between bg-[#f6f5f1] p-4 sm:p-6 pb-3 border-b border-zinc-300">
-              <div>
-                <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// GALERIA · FABRICANTE</div>
-                <h2 className="text-lg font-bold text-zinc-900 mt-1">{imagensFabricante.length} imagens encontradas</h2>
-              </div>
-              <button type="button" onClick={() => setShowAllImagesModal(false)} className="h-11 w-11 shrink-0 grid place-items-center border border-zinc-300 hover:border-[#7A1F2B] hover:bg-[#7A1F2B] hover:text-white transition-colors" aria-label="Fechar galeria">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 [-webkit-overflow-scrolling:touch]">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {imagensFabricante.map((src, idx) => {
-                const isCapa = editing?.imagem === src;
-                const naGaleria = Array.isArray(editing?.imagens) && editing!.imagens!.includes(src);
-                const selecionada = isCapa || naGaleria;
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => { adicionarImagemGaleria(src); }}
-                    className={`group relative overflow-hidden bg-white border-2 transition-all ${selecionada ? "border-amber-500 ring-2 ring-amber-500/30" : "border-zinc-300 hover:border-amber-500"}`}
-                  >
-                    <img src={src} alt={`Opção ${idx + 1}`} className="block h-40 w-full max-w-full object-contain p-2" loading="lazy" onError={(e) => ((e.currentTarget as HTMLImageElement).style.opacity = "0.2")} />
-                    {isCapa && (
-                      <div className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">CAPA</div>
-                    )}
-                    {!isCapa && naGaleria && (
-                      <div className="absolute top-1 right-1 bg-emerald-600 text-white text-[9px] font-mono font-bold uppercase px-1.5 py-0.5">NA GALERIA</div>
-                    )}
-                  </button>
-                );
-              })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* LIGHTBOX — imagem em tela cheia */}
-      {imagemFullscreen && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center animate-in fade-in duration-200"
-          onClick={() => setImagemFullscreen(null)}
-        >
-          <button
-            className="absolute top-6 right-6 text-white bg-white/10 rounded-full w-10 h-10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors z-10"
-            onClick={(e) => { e.stopPropagation(); setImagemFullscreen(null); }}
-            aria-label="Fechar"
-          >
-            ✕
-          </button>
-          {imagemFullscreen.galeria.length > 1 && (
-            <>
-              <button type="button" className="absolute left-4 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setImagemFullscreen((p) => p ? { ...p, idx: (p.idx - 1 + p.galeria.length) % p.galeria.length } : p); }} aria-label="Foto anterior"><ChevronLeft className="h-6 w-6" /></button>
-              <button type="button" className="absolute right-4 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20" onClick={(e) => { e.stopPropagation(); setImagemFullscreen((p) => p ? { ...p, idx: (p.idx + 1) % p.galeria.length } : p); }} aria-label="Próxima foto"><ChevronRight className="h-6 w-6" /></button>
-              <div className="absolute bottom-14 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-xs font-mono tracking-wider text-white/80">{imagemFullscreen.idx + 1}/{imagemFullscreen.galeria.length}</div>
-            </>
-          )}
-          <img
-            src={imagemFullscreen.galeria[imagemFullscreen.idx]}
-            alt={imagemFullscreen.titulo || "Visualização"}
-            className="max-w-[92vw] max-h-[85vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <p className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 text-xs tracking-widest uppercase font-mono">
-            Toque fora para fechar
-          </p>
-        </div>
-      )}
-
-      {/* MODAL — confirmação de imagem gerada/buscada */}
-      {imagemConfirm && (
-        <div className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center p-4" onClick={() => setImagemConfirm(null)}>
-          <div className="bg-white border border-zinc-300 w-full max-w-[calc(100vw-2rem)] sm:max-w-lg overflow-hidden p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// CONFIRMAÇÃO · IMAGEM</div>
-            <h2 className="text-base font-bold text-zinc-900 mt-1">
-              Esta é a imagem correta para {imagemConfirm.arma.marca} {imagemConfirm.arma.modelo}?
-            </h2>
-            <div className="mt-4 bg-zinc-50 border border-zinc-200 p-4 grid place-items-center min-h-[280px] overflow-hidden">
-              <img src={imagemConfirm.url} alt={`${imagemConfirm.arma.marca} ${imagemConfirm.arma.modelo}`} className="block max-h-[320px] max-w-full object-contain" />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 mt-5">
-              <button
-                onClick={confirmarImagem}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
-              >
-                ✓ Confirmar
-              </button>
-              <button
-                onClick={() => { const arma = imagemConfirm.arma; setImagemConfirm(null); gerarImagem(arma); }}
-                className="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
-              >
-                ↻ Gerar novamente
-              </button>
-              <button
-                onClick={() => { abrirGoogleImagens(imagemConfirm.arma); }}
-                className="flex-1 border border-zinc-300 hover:border-zinc-900 text-zinc-900 font-mono font-bold uppercase tracking-wider text-xs py-3 transition-colors"
-                title="Buscar manualmente no Google"
-              >
-                🔍 Google
-              </button>
-            </div>
-            <button onClick={() => setImagemConfirm(null)} className="mt-3 w-full text-[10px] font-mono uppercase tracking-wider text-zinc-500 hover:text-zinc-900">Cancelar</button>
-          </div>
-        </div>
-      )}
-      </div>
-    </div>
-  );
-}
-
-function Kpi({ label, value, tone, icon }: { label: string; value: number; tone?: "success" | "warn"; icon?: React.ReactNode }) {
-  const toneMap: Record<string,{ value: string; ring: string; bg: string }> = {
-    success: { value: "text-emerald-700", ring: "border-emerald-500/40", bg: "bg-emerald-500/10" },
-    warn:    { value: "text-amber-700",   ring: "border-amber-500/40",   bg: "bg-amber-500/10" },
-  };
-  const t = tone ? toneMap[tone] : { value: "text-zinc-900", ring: "border-zinc-200", bg: "bg-zinc-100" };
-  return (
-    <Card className={`p-4 bg-white border ${t.ring} relative overflow-hidden shadow-sm`}>
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-zinc-500">{label}</div>
-        <div className={`h-7 w-7 grid place-items-center rounded ${t.bg} ${t.value}`}>{icon}</div>
-      </div>
-      <div className={`text-3xl font-bold mt-2 tabular-nums ${t.value}`}>{value}</div>
-    </Card>
-  );
-}
-
-const TIPO_ICON: Record<string, string> = {
-  pistola: "🔫", revolver: "🔫", espingarda: "🪖", carabina: "🎯", fuzil: "🎯", submetralhadora: "🎯", outra: "⚙️",
-};
-
-function WeaponCard({
-  it, busy, onOpen, onGerarImagem, onVerificar, onRemove, onFullscreen, onRevalidarImagem, revalidando, onLimparFundo, limpandoFundo, onRemoverFoto,
-}: {
-  it: Arma;
-  busy: boolean;
-  onOpen: () => void;
-  onGerarImagem: () => void;
-  onVerificar: () => void;
-  onRemove: () => void;
-  onFullscreen: (galeria: string[], idx: number, titulo: string) => void;
-  onRevalidarImagem: () => void;
-  revalidando: boolean;
-  onLimparFundo: () => void;
-  limpandoFundo: boolean;
-  onRemoverFoto: (src: string) => void;
-}) {
-  const verificado = it.status_revisao === "verificado";
-  const pendente = it.status_revisao === "pendente_revisao";
-  // Galeria completa = capa + extras (sem duplicar)
-  const galeria = (() => {
-    const extras = Array.isArray(it.imagens) ? it.imagens.filter((u) => !!u && u !== it.imagem) : [];
-    return [it.imagem, ...extras].filter((u): u is string => !!u);
-  })();
-  const [fotoIdx, setFotoIdx] = useState(0);
-  // Reseta o índice quando a galeria muda de tamanho/conteúdo
-  useEffect(() => { setFotoIdx(0); }, [galeria.length, it.imagem]);
-  const fotoAtual = galeria[fotoIdx] || null;
-  const total = galeria.length;
-  const goPrev = (e: React.MouseEvent) => { e.stopPropagation(); setFotoIdx((i) => (i - 1 + total) % total); };
-  const goNext = (e: React.MouseEvent) => { e.stopPropagation(); setFotoIdx((i) => (i + 1) % total); };
-  return (
-    <div
-      onClick={onOpen}
-      className="group relative min-w-0 w-full max-w-full cursor-pointer rounded-xl border border-zinc-200 bg-white overflow-hidden hover:border-amber-500/60 shadow-[0_2px_12px_-6px_rgba(0,0,0,0.08)] hover:shadow-[0_0_0_1px_rgba(245,158,11,0.25),0_20px_50px_-20px_rgba(245,158,11,0.35)] transition-all duration-300"
-    >
-      {/* faixa superior tática */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#fafaf7] border-b border-zinc-200">
-        <div className="flex items-center gap-2">
-          <span className={`h-1.5 w-1.5 rounded-full ${verificado ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,.6)]" : pendente ? "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,.6)]" : "bg-zinc-400"}`} />
-          <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500">
-            ID·{it.id.slice(0, 6).toUpperCase()}
-          </span>
-        </div>
-        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-zinc-500">{FONTE_LABEL[it.fonte_dados]}</span>
-      </div>
-
-      {/* visual da arma */}
-      <div
-        className="relative w-full max-w-full overflow-hidden bg-white"
-        style={{ aspectRatio: "4/3" }}
-      >
-        {fotoAtual ? (
-          <>
-            <button
-              type="button"
-              className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer overflow-hidden px-2 pt-7 pb-7"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
-              aria-label={`Ampliar imagem de ${it.marca} ${it.modelo}`}
-            >
-              {/* Padrão: container 4/3 com limite de 85% em altura/largura.
-                  pt-7/pb-7 reservam espaço para a tag de tipo (topo) e badges (rodapé),
-                  evitando que a imagem fique sobre outros elementos.
-                  object-contain preserva a proporção original. */}
-              <img
-                src={fotoAtual}
-                alt={`${it.marca} ${it.modelo}`}
-                loading="lazy"
-                style={{ objectPosition: "center center" }}
-                className="block max-h-[85%] max-w-[85%] w-auto h-auto object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.15)] group-hover:scale-[1.03] transition-transform duration-500 select-none"
-              />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onFullscreen(galeria, fotoIdx, `${it.marca} ${it.modelo}`); }}
-              className="absolute top-2 right-2 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
-              title="Ampliar imagem"
-              aria-label="Ampliar imagem"
-            >
-              <Search className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); if (fotoAtual) onRemoverFoto(fotoAtual); }}
-              className="absolute top-2 right-10 z-20 h-7 w-7 grid place-items-center rounded-full bg-white/80 hover:bg-red-600 hover:text-white border border-zinc-300 text-zinc-700 backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
-              title="Remover esta foto"
-              aria-label="Remover esta foto"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-            {total > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={goPrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md backdrop-blur-sm transition-colors"
-                  title="Foto anterior"
-                  aria-label="Foto anterior"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={goNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-9 w-9 grid place-items-center rounded-full bg-white/90 hover:bg-white border border-zinc-300 text-zinc-700 hover:text-amber-600 shadow-md backdrop-blur-sm transition-colors"
-                  title="Próxima foto"
-                  aria-label="Próxima foto"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-zinc-900/70 text-white text-[10px] font-mono tracking-wider">
-                  {fotoIdx + 1}/{total}
-                </div>
-              </>
-            )}
-          </>
+      <Card className="overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-muted-foreground"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-300">
-            <Target className="h-10 w-10" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em]">SEM IMAGEM</span>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[64px]">Foto</TableHead>
+                <TableHead>Marca / Modelo</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Calibre</TableHead>
+                <TableHead>Capac.</TableHead>
+                <TableHead>Origem</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Fonte</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((it) => (
+                <TableRow key={it.id} className="cursor-pointer" onClick={() => openEdit(it)}>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    {it.imagem ? (
+                      <img src={it.imagem} alt={`${it.marca} ${it.modelo}`} className="h-10 w-16 object-contain rounded bg-black/80" />
+                    ) : (
+                      <div className="h-10 w-16 grid place-items-center rounded border border-dashed border-muted-foreground/30 text-muted-foreground">
+                        <ImageIcon className="h-4 w-4" />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="font-medium">{it.marca} {it.modelo}</div>
+                    {it.apelido && <div className="text-xs text-muted-foreground">"{it.apelido}"</div>}
+                  </TableCell>
+                  <TableCell className="capitalize">{it.tipo}</TableCell>
+                  <TableCell>{it.calibre}</TableCell>
+                  <TableCell>{it.capacidade_carregador ?? "—"}</TableCell>
+                  <TableCell>{it.origem ?? "—"}</TableCell>
+                  <TableCell><StatusBadge s={it.status_revisao} /></TableCell>
+                  <TableCell><Badge variant="outline">{FONTE_LABEL[it.fonte_dados]}</Badge></TableCell>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="ghost" onClick={() => gerarImagem(it)} title={it.imagem ? "Regerar imagem" : "Gerar imagem"} disabled={imgBusyId === it.id}>
+                      {imgBusyId === it.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />)}
+                    </Button>
+                    {it.status_revisao !== "verificado" && (
+                      <Button size="sm" variant="ghost" onClick={() => marcarVerificado(it)} title="Marcar verificado">
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => remove(it)} title="Excluir">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filtered.length === 0 && (
+                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhum resultado</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
         )}
+      </Card>
 
-        {/* tag de tipo */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full bg-amber-500/90 border border-amber-600 text-[9px] font-mono uppercase tracking-[0.25em] text-white shadow-sm">
-          {it.tipo}
-        </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing?.id ? "Editar arma" : "Nova arma"}</DialogTitle>
+          </DialogHeader>
 
-        {/* badge IMAGEM INCORRETA — quando reprovada na auditoria por IA */}
-        {fotoAtual && fotoIdx === 0 && it.imagem_aprovada === false && (
-          <div className="absolute bottom-2 left-2 right-2 z-20 flex flex-wrap items-center gap-1">
-            <div
-              className="px-2 py-0.5 rounded-md bg-red-600 border border-red-700 text-[9px] font-mono uppercase tracking-[0.2em] text-white shadow-md flex items-center gap-1"
-              title={it.imagem_validacao_motivo || "Imagem não corresponde ao modelo cadastrado"}
-            >
-              <AlertCircle className="h-3 w-3" /> IMAGEM INCORRETA
+          {editing && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" disabled={aiBusy} onClick={gerarComIA}>
+                  {aiBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  Gerar/Regerar com IA
+                </Button>
+                <div className="flex gap-2 flex-1 min-w-[260px]">
+                  <Input placeholder="URL fabricante (ex: taurusarmas.com.br/...)" value={scrapeUrl} onChange={(e) => setScrapeUrl(e.target.value)} />
+                  <Button type="button" variant="secondary" disabled={scrapeBusy} onClick={scrapeFabricante}>
+                    {scrapeBusy ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Globe className="h-4 w-4 mr-2" />}
+                    Buscar no fabricante
+                  </Button>
+                </div>
+              </div>
+              {editing.status_revisao === "pendente_revisao" && (
+                <div className="flex items-center gap-2 text-amber-600 text-sm bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-md p-3">
+                  <AlertCircle className="h-4 w-4" /> Dados pendentes de revisão. Confirme a precisão antes de marcar como verificado.
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Field label="Marca *"><Input value={editing.marca || ""} onChange={(e) => setF("marca", e.target.value)} /></Field>
+                <Field label="Modelo *"><Input value={editing.modelo || ""} onChange={(e) => setF("modelo", e.target.value)} /></Field>
+                <Field label="Apelido"><Input value={editing.apelido || ""} onChange={(e) => setF("apelido", e.target.value)} /></Field>
+                <Field label="Tipo *">
+                  <Select value={editing.tipo || "pistola"} onValueChange={(v) => setF("tipo", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{TIPOS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Calibre *"><Input value={editing.calibre || ""} onChange={(e) => setF("calibre", e.target.value)} /></Field>
+                <Field label="Origem"><Input value={editing.origem || ""} onChange={(e) => setF("origem", e.target.value)} /></Field>
+                <Field label="Classificação legal">
+                  <Select value={editing.classificacao_legal || ""} onValueChange={(v) => setF("classificacao_legal", v)}>
+                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Uso Permitido">Uso Permitido</SelectItem>
+                      <SelectItem value="Uso Restrito">Uso Restrito</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Capacidade carregador"><Input type="number" value={editing.capacidade_carregador ?? ""} onChange={(e) => setF("capacidade_carregador", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+                <Field label="Peso (g)"><Input type="number" value={editing.peso_gramas ?? ""} onChange={(e) => setF("peso_gramas", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+                <Field label="Comprimento cano (mm)"><Input type="number" value={editing.comprimento_cano_mm ?? ""} onChange={(e) => setF("comprimento_cano_mm", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+                <Field label="Alcance efetivo (m)"><Input type="number" value={editing.alcance_efetivo_m ?? ""} onChange={(e) => setF("alcance_efetivo_m", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+                <Field label="Velocidade (m/s)"><Input type="number" value={editing.velocidade_projetil_ms ?? ""} onChange={(e) => setF("velocidade_projetil_ms", e.target.value === "" ? null : Number(e.target.value))} /></Field>
+              </div>
+
+              <Field label="Descrição"><Textarea rows={2} value={editing.descricao || ""} onChange={(e) => setF("descricao", e.target.value)} /></Field>
+
+              <div>
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Stats (0-100)</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+                  {(["stat_dano","stat_precisao","stat_alcance","stat_cadencia","stat_mobilidade","stat_controle"] as const).map(k => (
+                    <Field key={k} label={k.replace("stat_","")}>
+                      <Input type="number" min={0} max={100} value={(editing as any)[k] ?? ""} onChange={(e) => setF(k as any, e.target.value === "" ? null : Number(e.target.value))} />
+                    </Field>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Field label="Status revisão">
+                  <Select value={editing.status_revisao || "rascunho"} onValueChange={(v) => setF("status_revisao", v as Status)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(STATUS_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Fonte dos dados">
+                  <Select value={editing.fonte_dados || "curado"} onValueChange={(v) => setF("fonte_dados", v as Fonte)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(FONTE_LABEL).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </Field>
+                <Field label="URL fonte"><Input value={editing.fonte_url || ""} onChange={(e) => setF("fonte_url", e.target.value)} /></Field>
+              </div>
+
+              <Field label="Observações internas"><Textarea rows={2} value={editing.observacoes || ""} onChange={(e) => setF("observacoes", e.target.value)} /></Field>
+
+              <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Imagem fotorrealista da arma</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Render fiel gerado por IA (Nano Banana Pro) com base em marca, modelo e calibre.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!editing.id || imgBusyId === editing.id}
+                    onClick={() => editing.id && gerarImagem({ id: editing.id, marca: editing.marca || "", modelo: editing.modelo || "" })}
+                  >
+                    {imgBusyId === editing.id ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : (editing.imagem ? <RefreshCcw className="h-4 w-4 mr-2" /> : <ImageIcon className="h-4 w-4 mr-2" />)}
+                    {editing.imagem ? "Regerar imagem" : "Gerar imagem"}
+                  </Button>
+                </div>
+                {editing.imagem ? (
+                  <div className="grid place-items-center bg-black rounded-md p-2">
+                    <img src={editing.imagem} alt={`${editing.marca} ${editing.modelo}`} className="max-h-48 object-contain" />
+                  </div>
+                ) : (
+                  <div className="grid place-items-center h-32 border border-dashed rounded-md text-muted-foreground text-sm">
+                    {editing.id ? "Nenhuma imagem ainda. Clique em 'Gerar imagem'." : "Salve a arma primeiro para gerar a imagem."}
+                  </div>
+                )}
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onRevalidarImagem(); }}
-              className="rounded-md border border-zinc-300 bg-white/95 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-[0.14em] text-zinc-800 shadow-md hover:border-amber-500 hover:text-amber-700 disabled:opacity-60"
-              disabled={revalidando}
-              title="Revalidar imagem com a nova regra tolerante"
-            >
-              {revalidando ? "Revalidando…" : "Revalidar imagem"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* corpo */}
-      <div className="p-3 space-y-3">
-        <div>
-          <div className="text-[10px] font-mono uppercase tracking-[0.25em] text-amber-700">{it.marca}</div>
-          <div className="text-base font-bold text-zinc-900 leading-tight truncate">{it.modelo}</div>
-          {it.apelido && <div className="text-[11px] text-zinc-500 italic mt-0.5">"{it.apelido}"</div>}
-        </div>
-
-        {/* specs em linha */}
-        <div className="grid grid-cols-3 gap-1.5 text-center">
-          <Spec icon={<Crosshair className="h-3 w-3" />} label="CAL" value={it.calibre || "—"} />
-          <Spec icon={<Layers className="h-3 w-3" />} label="CAP" value={it.capacidade_carregador != null ? String(it.capacidade_carregador) : "—"} />
-          <Spec icon={<Flag className="h-3 w-3" />} label="ORIG" value={it.origem || "—"} />
-        </div>
-
-        {/* status + classificação */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <StatusBadge s={it.status_revisao} />
-          {it.classificacao_legal && (
-            <span
-              className={`text-[9px] font-mono uppercase tracking-[0.2em] px-1.5 py-0.5 rounded border ${it.classificacao_legal === "Uso Restrito" ? "border-red-500/50 text-red-700 bg-red-500/10" : "border-emerald-500/50 text-emerald-700 bg-emerald-500/10"}`}
-              title={it.classificacao_legal === "Uso Restrito" ? "Calibre de USO RESTRITO — exige autorização do Exército (CR)" : "Calibre de USO PERMITIDO — autorizado pela Polícia Federal"}
-            >
-              {it.classificacao_legal === "Uso Restrito" ? "USO RESTRITO" : "USO PERMITIDO"}
-            </span>
           )}
-        </div>
 
-        {/* ações */}
-        <div className="flex items-center gap-1 pt-2 border-t border-zinc-200" onClick={(e) => e.stopPropagation()}>
-          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-amber-700 hover:bg-amber-500/10" onClick={onGerarImagem} disabled={busy} title={it.imagem ? "Regerar imagem" : "Gerar imagem"}>
-            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />)}
-          </Button>
-          {it.imagem && (
-            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-[#7A1F2B] hover:bg-[#7A1F2B]" onClick={onLimparFundo} disabled={limpandoFundo} title="Limpar fundo da imagem (remove.bg) — também processa duplicatas com mesma marca/modelo">
-            {limpandoFundo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eraser className="h-3.5 w-3.5" />}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={save} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}Salvar
             </Button>
-          )}
-          {!verificado && (
-            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-emerald-700 hover:bg-emerald-500/10" onClick={onVerificar} title="Marcar verificado">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-red-700 hover:bg-red-500/10" onClick={onRemove} title="Excluir">
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function Spec({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Kpi({ label, value, tone }: { label: string; value: number; tone?: "success" | "warn" }) {
+  const colorMap: Record<string,string> = { success: "text-emerald-600", warn: "text-amber-600" };
   return (
-    <div className="rounded border border-zinc-200 bg-[#fafaf7] px-1.5 py-1.5">
-      <div className="flex items-center justify-center gap-1 text-zinc-500 text-[8px] font-mono uppercase tracking-[0.2em]">
-        {icon}{label}
-      </div>
-      <div className="text-[11px] font-bold text-zinc-900 truncate mt-0.5">{value}</div>
-    </div>
+    <Card className="p-4">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className={`text-2xl font-bold mt-1 ${tone ? colorMap[tone] : ""}`}>{value}</div>
+    </Card>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <Label className="text-xs uppercase tracking-wide text-zinc-700">{label}</Label>
+      <Label className="text-xs uppercase tracking-wide text-muted-foreground">{label}</Label>
       {children}
     </div>
   );
 }
 
 function StatusBadge({ s }: { s: Status }) {
-  const map: Record<Status, { cls: string; label: string; hint: string }> = {
-    rascunho:         { cls: "border-zinc-300 text-zinc-600 bg-zinc-100",                  label: "RASCUNHO",   hint: "Cadastro em rascunho — ainda não submetido para revisão." },
-    pendente_revisao: { cls: "border-amber-500/50 text-amber-700 bg-amber-500/10",         label: "PENDENTE",   hint: "Pendente de revisão — dados gerados/importados aguardando validação manual da Equipe Quero Armas." },
-    verificado:       { cls: "border-emerald-500/50 text-emerald-700 bg-emerald-500/10",   label: "VERIFICADO", hint: "Verificado — dados conferidos e aprovados pela Equipe Quero Armas." },
-    rejeitado:        { cls: "border-red-500/50 text-red-700 bg-red-500/10",               label: "REJEITADO",  hint: "Rejeitado — dados inconsistentes ou imagem incorreta." },
+  const map: Record<Status, { variant: any; label: string }> = {
+    rascunho: { variant: "outline", label: "Rascunho" },
+    pendente_revisao: { variant: "secondary", label: "Pendente" },
+    verificado: { variant: "default", label: "Verificado" },
+    rejeitado: { variant: "destructive", label: "Rejeitado" },
   };
   const c = map[s];
-  return <span title={c.hint} className={`inline-flex items-center px-2 py-0.5 rounded border text-[9px] font-mono uppercase tracking-[0.2em] cursor-help ${c.cls}`}>{c.label}</span>;
+  return <Badge variant={c.variant}>{c.label}</Badge>;
 }

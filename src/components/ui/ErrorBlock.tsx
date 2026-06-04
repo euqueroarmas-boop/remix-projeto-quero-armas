@@ -1,12 +1,12 @@
 import { AlertTriangle, RefreshCw, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { type AppError, copyErrorToClipboard } from "@/lib/errorLogger";
+import { type WmtiError, copyErrorToClipboard } from "@/lib/errorLogger";
 import { useState } from "react";
 
 interface Props {
   title?: string;
   message: string;
-  error?: AppError | null;
+  error?: WmtiError | null;
   onRetry?: () => void;
   retryLabel?: string;
 }

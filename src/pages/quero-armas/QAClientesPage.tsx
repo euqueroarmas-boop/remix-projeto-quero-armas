@@ -10,11 +10,8 @@ import {
   Search, User, Phone, Mail, MapPin, FileText, Shield, ChevronLeft,
   Loader2, Eye, Plus, Crosshair, Edit, Trash2, Download, FileDown,
   ChevronDown, ChevronUp, Save, X, XCircle, CheckCircle, TrendingUp, KeyRound, PenTool,
-  HeartPulse, GripVertical, Camera, Upload, ShieldCheck, Clock, Pause, Play,
-  ShoppingCart, RefreshCw, Landmark,
-  Database, Briefcase, Wrench,
+  HeartPulse, GripVertical, Camera, Upload, ShieldCheck,
 } from "lucide-react";
-import { calcularSla } from "@/lib/qaSlaCadastro";
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, KeyboardSensor,
   useSensor, useSensors, type DragEndEvent,
@@ -26,74 +23,18 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 import { toast } from "sonner";
-import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
-import OrigemClienteCadastroPublico from "@/components/quero-armas/clientes/OrigemClienteCadastroPublico";
-import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
-import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
-// SolicitacaoStatusPopover removido — substituído pelo Select Light inline com lista canônica
-import { SolicitacaoTimeline } from "@/components/quero-armas/timeline/SolicitacaoTimeline";
-import SenhaGovField from "@/components/quero-armas/clientes/SenhaGovField";
+import { CrafModal, GteModal, CrModal, VendaModal, FiliacaoModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
-import { exportClientes, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
+import { exportClientes, exportCrafs, exportGtes, exportCr, exportVendas } from "@/components/quero-armas/clientes/ClienteExport";
 import ClienteAcessoPortal from "@/components/quero-armas/clientes/ClienteAcessoPortal";
-import ClienteDestravarCadastro from "@/components/quero-armas/clientes/ClienteDestravarCadastro";
 import ClientePecas from "@/components/quero-armas/clientes/ClientePecas";
-import { GerarProcessoButton } from "@/components/quero-armas/processos/GerarProcessoButton";
-import { AprovarValorButton } from "@/components/quero-armas/processos/AprovarValorButton";
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
-import ClienteDocsCadastroPublico from "@/components/quero-armas/clientes/ClienteDocsCadastroPublico";
-import ClienteSelfieAvatar from "@/components/quero-armas/clientes/ClienteSelfieAvatar";
-import ConferenciaHeader from "@/components/quero-armas/cadastro-publico/ConferenciaHeader";
-import ProximaAcaoPanel from "@/components/quero-armas/cadastro-publico/ProximaAcaoPanel";
-import SolicitarCorrecaoModal, {
-  type SolicitarCorrecaoPayload,
-} from "@/components/quero-armas/cadastro-publico/SolicitarCorrecaoModal";
-import HistoricoEventosPanel from "@/components/quero-armas/cadastro-publico/HistoricoEventosPanel";
-import DocumentosOperacionaisGrid from "@/components/quero-armas/cadastro-publico/DocumentosOperacionaisGrid";
-import OrigemCadastroBloco from "@/components/quero-armas/cadastro-publico/OrigemCadastroBloco";
-import BlocoSecao from "@/components/quero-armas/cadastro-publico/BlocoSecao";
-import {
-  QAOperationalSection,
-  QAInfoCard,
-  QAFieldRow,
-  QAFieldGrid,
-  QAStatusChip,
-} from "@/components/quero-armas/qa-operational";
-import { computeCadastroCompleteness } from "@/lib/quero-armas/cadastroCompleteness";
-
-/** Renderiza valor com badge âmbar "Obrigatório" quando vazio. */
-function renderObrig(value: any, isEmpty: boolean) {
-  if (!isEmpty) return value;
-  return (
-    <span className="inline-flex items-center gap-1.5 flex-wrap" data-pendente="true">
-      <span>—</span>
-      <span
-        className="inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider"
-        style={{ background: "#FEF3C7", borderColor: "#FDE68A", color: "#7C2D12" }}
-      >
-        Obrigatório
-      </span>
-    </span>
-  );
-}
-import {
-  computeConferenciaStatus,
-  decidirProximaAcao,
-  listarPendenciasCadastro,
-} from "@/components/quero-armas/cadastro-publico/conferenciaStatus";
-import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
-import ClienteSearchRow from "@/components/quero-armas/clientes/ClienteSearchRow";
-import { useClienteStatusAgregado } from "@/hooks/useClienteStatusAgregado";
-import { getClienteFK, getVendaFK, getClienteCadastroFK } from "@/components/quero-armas/clientes/clientFK";
-import { ArsenalView } from "@/components/quero-armas/arsenal/ArsenalView";
-import { useSolicitacoesPublicasDoCliente } from "@/components/quero-armas/clientes/useSolicitacoesPublicas";
+import { getClienteFK, getVendaFK } from "@/components/quero-armas/clientes/clientFK";
 import { usePrivateStorageUrl } from "@/hooks/usePrivateStorageUrl";
 import { useQAStatusServico } from "@/hooks/useQAStatusServico";
-import { STATUS_SERVICO_QA, STATUS_LABELS, statusBadgeClass } from "@/lib/quero-armas/statusServico";
-import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import { isDispensado, getBaseLegalDispensa, CATEGORIA_MAP, type CategoriaTitular } from "@/components/quero-armas/clientes/categoriaTitular";
 import { invalidateQADashboardSnapshot } from "@/components/quero-armas/dashboard/dashboardSnapshot";
 import { objetivoLabel, categoriaLabel } from "./qaServiceCatalog";
@@ -347,7 +288,7 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-[#7A1F2B] cursor-zoom-in" : "cursor-default"}`}
+        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Sem selfie"}
       >
@@ -411,7 +352,7 @@ function DocumentThumb({
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-[#7A1F2B] cursor-zoom-in" : "cursor-default"}`}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-blue-300 cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Não enviado"}
       >
@@ -676,9 +617,9 @@ function CadastroDocumentosCard({
         <DocumentThumb path={cadastro.documento_identidade_path} label="Documento de identidade" name={cadastro.nome_completo} kind="doc" />
         <DocumentThumb path={cadastro.comprovante_endereco_path} label="Comprovante de endereço" name={cadastro.nome_completo} kind="doc" />
       </div>
-      <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 sm:p-4 shadow-sm">
-        <p className="text-[11px] leading-relaxed text-slate-500 mb-3">
-          <span className="text-slate-800 font-semibold">Scanner de documentos.</span> Capture pela câmera <em>ou</em> importe
+      <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950 p-3 sm:p-4">
+        <p className="text-[11px] leading-relaxed text-slate-400 mb-3">
+          <span className="text-slate-200 font-semibold">Scanner de documentos.</span> Capture pela câmera <em>ou</em> importe
           um arquivo (JPG, PNG, PDF) já existente. O sistema detecta bordas, corrige perspectiva e gera um
           PDF com aparência de documento escaneado. Depois, o OCR preenche os campos vazios.
         </p>
@@ -688,25 +629,25 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openScanner("identidade")}
-            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold tracking-wider text-slate-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           >
-            <Camera className="w-3.5 h-3.5 text-emerald-600" />
+            <Camera className="w-3.5 h-3.5 text-emerald-400" />
             IDENTIDADE
           </button>
           <button
             type="button"
             onClick={() => openScanner("endereco")}
-            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold tracking-wider text-slate-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           >
-            <Camera className="w-3.5 h-3.5 text-emerald-600" />
+            <Camera className="w-3.5 h-3.5 text-emerald-400" />
             COMPROVANTE
           </button>
           <button
             type="button"
             onClick={() => openScanner("avulso")}
-            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] font-semibold tracking-wider text-slate-700 hover:bg-emerald-50 hover:border-emerald-400 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+            className="group h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-900 px-3 text-[11px] font-semibold tracking-wider text-slate-100 hover:bg-slate-800 hover:border-emerald-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
           >
-            <FileDown className="w-3.5 h-3.5 text-emerald-600" />
+            <FileDown className="w-3.5 h-3.5 text-emerald-400" />
             ESCANEAR & PDF
           </button>
 
@@ -714,7 +655,7 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openImportPicker("identidade")}
-            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-semibold tracking-wider text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
           >
             <Upload className="w-3.5 h-3.5" />
             IMPORTAR IDENT.
@@ -722,7 +663,7 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openImportPicker("endereco")}
-            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-semibold tracking-wider text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
           >
             <Upload className="w-3.5 h-3.5" />
             IMPORTAR COMP.
@@ -730,7 +671,7 @@ function CadastroDocumentosCard({
           <button
             type="button"
             onClick={() => openImportPicker("avulso")}
-            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 text-[11px] font-semibold tracking-wider text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300"
+            className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-800 bg-slate-900/60 px-3 text-[11px] font-semibold tracking-wider text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500/40"
           >
             <Upload className="w-3.5 h-3.5" />
             IMPORTAR ARQUIVO
@@ -738,12 +679,12 @@ function CadastroDocumentosCard({
         </div>
 
         {hasAnyDoc && (
-          <div className="mt-3 pt-3 border-t border-slate-200 flex justify-end">
+          <div className="mt-3 pt-3 border-t border-slate-800 flex justify-end">
             <button
               type="button"
               onClick={handleExtract}
               disabled={extracting}
-              className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-4 text-[11px] font-bold tracking-wider text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-sm"
+              className="h-9 inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-500 px-4 text-[11px] font-bold tracking-wider text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-300"
             >
               {extracting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Crosshair className="w-3.5 h-3.5" />}
               EXTRAIR DADOS VIA OCR
@@ -786,20 +727,6 @@ const formatCpf = (v: string | null | undefined): string => {
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 };
 
-const formatPhone = (v: string | null | undefined): string => {
-  if (!v) return "";
-  const d = v.replace(/\D/g, "").slice(-11);
-  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return v;
-};
-
-const daysUntilDate = (d: string | null | undefined): number | null => {
-  if (!d) return null;
-  const parsed = new Date(d);
-  return isNaN(parsed.getTime()) ? null : Math.ceil((parsed.getTime() - Date.now()) / 86400000);
-};
-
 const normalizeRgInput = (v: string | null | undefined): string => {
   const raw = (v ?? "").toUpperCase().replace(/[^0-9X]/g, "");
   const hasVerifierX = raw.endsWith("X");
@@ -821,10 +748,10 @@ const UF_LIST = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT
 interface Cliente {
   id: number; id_legado: number; nome_completo: string; cpf: string; rg: string; emissor_rg: string;
   uf_emissor_rg?: string;
-  data_nascimento: string; naturalidade: string; nacionalidade: string; sexo?: string; nome_mae: string; nome_pai: string;
+  data_nascimento: string; naturalidade: string; nacionalidade: string; nome_mae: string; nome_pai: string;
   estado_civil: string; profissao: string; email: string; celular: string; endereco: string; numero: string;
   bairro: string; cep: string; cidade: string; estado: string; observacao: string; complemento: string;
-  status: string; created_at: string; escolaridade?: string; titulo_eleitor?: string;
+  status: string; cliente_lions: boolean; created_at: string; escolaridade?: string; titulo_eleitor?: string;
   endereco2?: string; numero2?: string; bairro2?: string; cep2?: string; cidade2?: string; estado2?: string;
   complemento2?: string; pais?: string; pais2?: string; expedicao_rg?: string;
 }
@@ -901,26 +828,7 @@ interface CadastroPublico {
   selfie_path?: string | null;
   documento_identidade_path?: string | null;
   comprovante_endereco_path?: string | null;
-  cliente_id_vinculado?: number | null;
   created_at: string;
-}
-
-const CADASTRO_MIRA_PENDENTE_STATUSES = new Set([
-  "pendente",
-  "em_preenchimento",
-  "documentos_enviados",
-  "revisao_cliente",
-  "aguardando_pagamento",
-]);
-const CADASTRO_PUBLICO_APROVADO_STATUSES = new Set(["aprovado", "conferido", "validado", "formulario_conferido", "concluido"]);
-
-function cadastroPublicoStatusLabel(status: string | null | undefined): string {
-  const s = String(status || "").toLowerCase();
-  if (s === "em_preenchimento" || s === "documentos_enviados" || s === "revisao_cliente") return "PENDENTE";
-  if (s === "aguardando_pagamento") return "PENDENTE / AGUARDANDO PAGAMENTO";
-  if (s === "concluido") return "CONCLUÍDO";
-  if (s === "abandonado") return "ABANDONADO";
-  return String(status || "pendente").toUpperCase();
 }
 
 const normalizeDigits = (value: string | null | undefined) => (value ?? "").replace(/\D/g, "");
@@ -996,6 +904,7 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
     estado2: pickNew(estado2, cur?.estado2),
     observacao,
     status: cur?.status ?? "ATIVO",
+    cliente_lions: cur?.cliente_lions ?? false,
   };
 };
 
@@ -1042,116 +951,33 @@ function SortableServicoRow({ id, children }: { id: string; children: (handlePro
   );
 }
 
-/**
- * KPI inline da Circunscrição PF do cliente.
- * Resolve a unidade da Polícia Federal a partir de cidade/UF do cliente
- * usando a mesma RPC `qa_resolver_circunscricao_pf` já utilizada na geração
- * de peças (ver ClientePecas.tsx). Não cria arquitetura paralela.
- */
-function CircunscricaoKpi({ cidade, uf }: { cidade: string | null | undefined; uf: string | null | undefined }) {
-  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "empty" | "error">("idle");
-  const [data, setData] = useState<{ unidade_pf?: string; sigla_unidade?: string } | null>(null);
-
-  useEffect(() => {
-    const c = (cidade || "").replace(/\s+/g, " ").trim();
-    const u = (uf || "").trim().toUpperCase();
-    if (!c || !u) { setStatus("idle"); setData(null); return; }
-    let aborted = false;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
-    setStatus("loading");
-    (async () => {
-      try {
-        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/qa_resolver_circunscricao_pf`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ p_municipio: c, p_uf: u }),
-          signal: controller.signal,
-        });
-        clearTimeout(timer);
-        if (aborted) return;
-        if (!res.ok) { setStatus("error"); setData(null); return; }
-        const arr = await res.json();
-        if (!arr || arr.length === 0) { setStatus("empty"); setData(null); return; }
-        setData(arr[0]);
-        setStatus("ok");
-      } catch {
-        if (!aborted) { setStatus("error"); setData(null); }
-      }
-    })();
-    return () => { aborted = true; clearTimeout(timer); controller.abort(); };
-  }, [cidade, uf]);
-
-  const color = "hsl(220 70% 50%)";
-  const value =
-    status === "loading" ? "RESOLVENDO..." :
-    status === "ok" && data ? `${data.sigla_unidade || ""}${data.sigla_unidade && data.unidade_pf ? " — " : ""}${data.unidade_pf || ""}`.trim() :
-    status === "empty" ? "NÃO LOCALIZADA" :
-    status === "error" ? "FALHA AO RESOLVER" :
-    "—";
-  const tooltip = status === "ok" && data ? `${data.sigla_unidade || ""} — ${data.unidade_pf || ""}` : value;
-
-  return (
-    <div className="flex items-center gap-2.5 px-4 py-3 first:border-l-0">
-      <div
-        className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
-        style={{ background: `${color}14`, color, boxShadow: `inset 0 0 0 1px ${color}1f` }}
-      >
-        <Landmark className="h-3.5 w-3.5" />
-      </div>
-      <div className="min-w-0">
-        <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">CIRCUNSCRIÇÃO PF</div>
-        <div className="text-[12px] font-bold text-slate-800 uppercase leading-tight break-words" title={tooltip}>
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function QAClientesPage() {
   const { statuses: statusList } = useQAStatusServico();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<Error | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Cliente | null>(null);
   const [tab, setTab] = useState("resumo");
 
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
-  // Solicitações vindas do formulário público para o cliente selecionado.
-  // Apenas leitura; jamais cria pagamento. Usado para evitar "Serviços (0)"
-  // quando o cliente veio da internet com serviço informado.
-  const { solicitacoes: solicitacoesPublicas, reload: reloadSolicitacoes } =
-    useSolicitacoesPublicasDoCliente(selected?.id ?? null, itens);
-  // FASE 16-C — processos vinculados às vendas do cliente (para mostrar
-  // badge "Processo gerado" / botão "Abrir" e bloquear duplicidade na UI).
-  const [processosVenda, setProcessosVenda] = useState<any[]>([]);
   const [crafs, setCrafs] = useState<any[]>([]);
   const [gtes, setGtes] = useState<any[]>([]);
-  // FASE 4 — armas vindas de qa_cliente_armas_manual (cadastro manual / IA / OCR).
-  const [armasManual, setArmasManual] = useState<any[]>([]);
   const [filiacoes, setFiliacoes] = useState<any[]>([]);
   const [cadastro, setCadastro] = useState<any>(null);
   const [examesAtuais, setExamesAtuais] = useState<any[]>([]);
-  // Documentos enviados pelo cliente via portal/app/arsenal (qa_documentos_cliente).
-  const [docsCliente, setDocsCliente] = useState<any[]>([]);
   const [loadingSub, setLoadingSub] = useState(false);
 
   // Modal states
   const [clienteModal, setClienteModal] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
-  const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any; solicitacaoId?: string | null }>({ open: false });
-  const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string; mode?: "delete" | "archive" }>({ open: false, table: "", id: 0, title: "", desc: "" });
+  const [crafModal, setCrafModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [gteModal, setGteModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [crModal, setCrModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [vendaModal, setVendaModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [filiacaoModal, setFiliacaoModal] = useState<{ open: boolean; item?: any }>({ open: false });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; table: string; id: number; title: string; desc: string }>({ open: false, table: "", id: 0, title: "", desc: "" });
   const [deleting, setDeleting] = useState(false);
-  // Filtro de arquivamento — Ativos por padrão.
-  const [archivedFilter, setArchivedFilter] = useState<"ativos" | "arquivados" | "todos">("ativos");
   const [expandedItemId, setExpandedItemId] = useState<number | null>(null);
   const [itemEditForm, setItemEditForm] = useState<Record<string, string>>({});
   const [savingItem, setSavingItem] = useState(false);
@@ -1186,32 +1012,17 @@ export default function QAClientesPage() {
 
 
   // Serviços de Concessão de CR (Exército Brasileiro) — possuem apenas campos do CR
-  // REGRA: TODA variante de "Concessão de CR" usa o MESMO formulário de detalhes.
-  //   13 → Mudança de Serviço Contratado - Posse (PF) para Concessão de CR (EB)
-  //   20 → Concessão de CR no Exército Brasileiro sem clube / Militar
-  //   31 → Concessão de CR no Exército Brasileiro
-  // Mantemos 27/29 por compatibilidade defensiva caso voltem ao catálogo.
-  // CR EB — legado (13, 20, 27, 29, 31) + catálogo novo:
-  //   32 RENOVAÇÃO DE CR · 42 MUDANÇA DE SERVIÇO (POSSE→CR) · 44 CONCESSÃO DE CR
-  const SERVICOS_CR = [13, 20, 27, 29, 31, 32, 42, 44];
+  const SERVICOS_CR = [13, 20, 27, 29];
   // Serviços CAC (Colecionador, Atirador, Caçador) e correlatos onde campos SIGMA/CRAF/Porte/GTE são aplicáveis
   // OBS: Porte na Polícia Federal (id=3) NÃO é CAC — possui apenas Nº Porte, sem CRAF/GTE/CR/SIGMA/SINARM
-    // OBS: Concessão de CR (13, 20, 27, 31) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
+  // OBS: Concessão de CR (13, 20, 27) foi REMOVIDA daqui — possui apenas campos exclusivos do CR
   // OBS: Autorização de compra de arma de fogo no EB (5, 15) foi REMOVIDA daqui — possui apenas campos específicos da autorização
   // OBS: COMBO - Registro de arma de fogo CRAF no EB (id=6) foi REMOVIDA daqui — possui formulário próprio com dados da arma
-  // CAC — legado + catálogo novo:
-  //   33 REGISTRO E APOSTILAMENTO (CAC) · 34 GTE (CAC) · 45 APOSTILAMENTO
-  const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18, 33, 34, 45];
+  const SERVICOS_CAC = [4, 7, 8, 9, 10, 14, 16, 17, 18];
   // Serviços de Autorização de compra de arma de fogo no Exército Brasileiro
-  // Autorização de compra EB — legado (5, 15) + catálogo: 38 (AUTORIZAÇÃO CAC)
-  const SERVICOS_AUTORIZACAO_EB = [5, 15, 38];
+  const SERVICOS_AUTORIZACAO_EB = [5, 15];
   // Serviço de Posse na Polícia Federal
-  // POSSE PF — legado (2) + catálogo: 35 (AQUISIÇÃO/POSSE) e 36 (RENOVAÇÃO POSSE)
-  const SERVICOS_POSSE = [2, 35, 36];
-  // PORTE PF — legado (3) + catálogo: 41 (PORTE) e 37 (RENOVAÇÃO PORTE)
-  const SERVICOS_PORTE_PF = [3, 37, 41];
-  // CRAF PF (registro de arma de defesa pessoal) — legado (26) + catálogo: 43
-  const SERVICOS_CRAF_PF = [26, 43];
+  const SERVICOS_POSSE = [2];
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
 
@@ -1238,44 +1049,41 @@ export default function QAClientesPage() {
      * Posse PF (id=2) FOI REMOVIDA das listas abaixo — possui form próprio.
      * ================================================================ */
     { key: "data_protocolo", label: "Data Protocolo do CR", type: "date", servicos: SERVICOS_CR },
-    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB] },
+    { key: "data_protocolo", label: "Data Protocolo", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26] },
     // Nº do Requerimento — exclusivo de Porte na Polícia Federal
-    { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: SERVICOS_PORTE_PF },
-    // Data Notificação — Porte PF (3) e CRAF PF (26) também precisam exibir para
-    // controle do prazo recursal de 10 dias (Lei 9.784/99 art. 59).
-    { key: "data_notificacao", label: "Data da Notificação", type: "date", servicos: [...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF] },
+    { key: "numero_requerimento", label: "Nº do Requerimento", type: "text", servicos: [3] },
     { key: "data_deferimento", label: "Data Deferimento do CR", type: "date", servicos: SERVICOS_CR, condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
-    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
+    { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO (exceto Posse, que tem regra própria acima)
-    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27, 31, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB, ...SERVICOS_CR] },
+    { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27] },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
-    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26, ...SERVICOS_PORTE_PF, ...SERVICOS_CRAF_PF, ...SERVICOS_CAC] },
+    { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
     // Nº Processo — para CR é "Nº de Protocolo do CR"; demais usam "Nº Processo" (REMOVIDO de Posse PF)
     { key: "numero_processo", label: "Nº de Protocolo do CR", type: "text", servicos: SERVICOS_CR },
-    { key: "numero_processo", label: "Nº do Requerimento", type: "text", servicos: SERVICOS_CRAF_PF },
-    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, ...SERVICOS_CAC, ...SERVICOS_AUTORIZACAO_EB] },
+    { key: "numero_processo", label: "Nº do Requerimento", type: "text", servicos: [26] },
+    { key: "numero_processo", label: "Nº Processo", type: "text", servicos: [4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18] },
     // Campos exclusivos de CAC — NÃO aparecem em Posse na PF, Concessão de CR, nem CRAF EB (id=6)
     { key: "numero_craf", label: "Nº CRAF", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_gte", label: "Nº GTE", type: "text", servicos: SERVICOS_CAC },
     // Nº CR — aparece em CAC e em Concessão de CR (com rótulo "Nº de Certificado de Registro (CR)")
     { key: "numero_cr", label: "Nº de Certificado de Registro (CR)", type: "text", servicos: SERVICOS_CR },
     { key: "numero_cr", label: "Nº CR", type: "text", servicos: SERVICOS_CAC },
-    { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [...SERVICOS_PORTE_PF, ...SERVICOS_CAC] },
+    { key: "numero_porte", label: "Nº Porte", type: "text", servicos: [3, ...SERVICOS_CAC] },
     { key: "numero_sigma", label: "Nº SIGMA", type: "text", servicos: SERVICOS_CAC },
     { key: "numero_sinarm", label: "Nº SINARM", type: "text", servicos: SERVICOS_CAC },
     { key: "registro_cad", label: "Registro CAD", type: "text", servicos: SERVICOS_CAC },
     // Nº CAD SINARM — obrigatório em CRAF na Polícia Federal
-    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: SERVICOS_CRAF_PF, required: true },
+    { key: "registro_cad", label: "Nº CAD SINARM", type: "text", servicos: [26], required: true },
     // Autorização de compra EB (Posse PF tem campos próprios na seção dedicada acima)
-    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: SERVICOS_AUTORIZACAO_EB },
-    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: SERVICOS_AUTORIZACAO_EB },
+    { key: "numero_autorizacao", label: "Nº Autorização", type: "text", servicos: [5, 15] },
+    { key: "validade_autorizacao", label: "Validade Autorização", type: "date", servicos: [5, 15] },
     // CRAF na Polícia Federal — dados da arma
-    { key: "numero_registro", label: "Nº Registro", type: "text", servicos: SERVICOS_CRAF_PF },
-    { key: "numero_serie", label: "Nº Série", type: "text", servicos: SERVICOS_CRAF_PF },
-    { key: "fabricante", label: "Fabricante", type: "text", servicos: SERVICOS_CRAF_PF },
-    { key: "modelo", label: "Modelo", type: "text", servicos: SERVICOS_CRAF_PF },
-    { key: "calibre", label: "Calibre", type: "text", servicos: SERVICOS_CRAF_PF },
+    { key: "numero_registro", label: "Nº Registro", type: "text", servicos: [26] },
+    { key: "numero_serie", label: "Nº Série", type: "text", servicos: [26] },
+    { key: "fabricante", label: "Fabricante", type: "text", servicos: [26] },
+    { key: "modelo", label: "Modelo", type: "text", servicos: [26] },
+    { key: "calibre", label: "Calibre", type: "text", servicos: [26] },
     // COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro — dados da arma
     { key: "numero_serie", label: "Nº de Série da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
     { key: "fabricante", label: "Fabricante da Arma", type: "text", servicos: SERVICOS_CRAF_EB },
@@ -1417,19 +1225,6 @@ export default function QAClientesPage() {
       }
       const today = new Date();
       payload.data_ultima_atualizacao = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      // Regra automática: ao preencher data_indeferimento em serviços PF (Posse/Porte/CRAF),
-      // o status passa automaticamente para "RECURSO ADMINISTRATIVO" — assim o card de
-      // prazos do dashboard reflete a fase processual correta (Lei 9.784/99 art. 59).
-      const SERVICOS_PF_RECURSO_IDS = [2, 3, 26];
-      if (
-        servicoId && SERVICOS_PF_RECURSO_IDS.includes(servicoId) &&
-        Object.prototype.hasOwnProperty.call(payload, "data_indeferimento") &&
-        payload.data_indeferimento &&
-        payload.data_indeferimento !== currentItem?.data_indeferimento &&
-        String(currentItem?.status || "").toUpperCase() !== "RECURSO ADMINISTRATIVO"
-      ) {
-        payload.status = "RECURSO ADMINISTRATIVO";
-      }
       const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
       if (error) throw error;
       setItens(prev => prev.map((i: any) => i.id === expandedItemId ? { ...i, ...payload } : i));
@@ -1472,7 +1267,7 @@ export default function QAClientesPage() {
   };
 
   const [cadastrosPublicos, setCadastrosPublicos] = useState<CadastroPublico[]>([]);
-  const [tabView, setTabView] = useState<"clientes" | "manuais" | "arsenal_free" | "cadastros" | "rejeitados">("clientes");
+  const [tabView, setTabView] = useState<"clientes" | "cadastros" | "rejeitados">("clientes");
   const [cadastroFilter, setCadastroFilter] = useState<"pendente" | "aprovado">("pendente");
   const [selectedCadastroPublico, setSelectedCadastroPublico] = useState<CadastroPublico | null>(null);
   const [loadingCadastroPublico, setLoadingCadastroPublico] = useState(false);
@@ -1480,10 +1275,6 @@ export default function QAClientesPage() {
   const [editingCadastroPublico, setEditingCadastroPublico] = useState(false);
   const [cadastroEditForm, setCadastroEditForm] = useState<Record<string, any>>({});
   const [savingCadastroEdit, setSavingCadastroEdit] = useState(false);
-  const [correcaoModalOpen, setCorrecaoModalOpen] = useState(false);
-  const [savingCorrecao, setSavingCorrecao] = useState(false);
-  const [correcaoPreSelecionada, setCorrecaoPreSelecionada] = useState<string[]>([]);
-  const [historicoRefresh, setHistoricoRefresh] = useState(0);
   const [servicos, setServicos] = useState<{ id: number; nome_servico: string }[]>([]);
 
   const dataLoadedRef = useRef(false);
@@ -1494,26 +1285,10 @@ export default function QAClientesPage() {
     loadClientes(); loadCadastrosPublicos(); loadServicos();
   }, []);
 
-  // Re-busca clientes quando o filtro Ativos/Arquivados/Todos muda — DB é a verdade.
-  useEffect(() => {
-    if (!dataLoadedRef.current) return;
-    loadClientes(archivedFilter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [archivedFilter]);
-
   // Auto-abrir cliente via ?cliente=ID (vindo do Dashboard de Exames, etc.)
   const autoOpenedRef = useRef(false);
   useEffect(() => {
     const targetId = searchParams.get("cliente");
-    const cadastroPubId = searchParams.get("cadastro_publico");
-    if (cadastroPubId && !autoOpenedRef.current) {
-      autoOpenedRef.current = true;
-      openCadastroPublico(cadastroPubId);
-      const next = new URLSearchParams(searchParams);
-      next.delete("cadastro_publico");
-      setSearchParams(next, { replace: true });
-      return;
-    }
     if (!targetId || autoOpenedRef.current || clientes.length === 0) return;
     // O Monitor envia o FK canônico (id_legado). Buscamos por id_legado primeiro,
     // com fallback para id quando o cliente não tiver id_legado.
@@ -1537,184 +1312,27 @@ export default function QAClientesPage() {
     if (data) setServicos(data as any[]);
   };
 
-  const loadClientes = async (archivedOverride?: "ativos" | "arquivados" | "todos") => {
+  const loadClientes = async () => {
     setLoading(true);
-    setLoadError(null);
-    // Safety: nunca deixar o spinner principal eterno (12s).
-    const safety = setTimeout(() => {
-      console.warn("[QAClientes] safety timeout 12s — liberando UI com erro");
-      setLoadError(new Error("Tempo limite excedido ao carregar clientes."));
-      setLoading(false);
-    }, 12000);
     try {
-      const filtroArquivamento = archivedOverride ?? archivedFilter;
-      let q = supabase
-        .from("qa_clientes" as any)
-        .select("*")
-        .order("nome_completo", { ascending: true });
-      // Filtro server-side de arquivamento — fonte de verdade é o banco.
-      // "ativos": coalesce(arquivado,false) = false. "arquivados": arquivado = true.
-      if (filtroArquivamento === "ativos") {
-        q = q.or("arquivado.is.null,arquivado.eq.false");
-      } else if (filtroArquivamento === "arquivados") {
-        q = q.eq("arquivado", true);
-      }
-      const { data, error } = await q;
-      if (error) throw error;
-      const rows = (data as any[]) ?? [];
-
-      // Enriquece cada cliente com `selfie_path` do cadastro público em UMA única
-      // query (evita N consultas no avatar de cada linha da listagem).
-      try {
-        const cadIds = Array.from(new Set(rows.map((r: any) => r.cadastro_publico_id).filter(Boolean)));
-        const cliIds = Array.from(new Set(rows.map((r: any) => r.id).filter(Boolean)));
-        const selfieByCadId = new Map<string, string>();
-        const selfieByCliId = new Map<number, string>();
-        if (cadIds.length > 0) {
-          const { data: cads } = await supabase
-            .from("qa_cadastro_publico" as any)
-            .select("id, selfie_path")
-            .in("id", cadIds);
-          for (const c of (cads as any[]) || []) {
-            if (c?.selfie_path) selfieByCadId.set(c.id, c.selfie_path);
-          }
-        }
-        if (cliIds.length > 0) {
-          const { data: cads2 } = await supabase
-            .from("qa_cadastro_publico" as any)
-            .select("cliente_id_vinculado, selfie_path, created_at")
-            .in("cliente_id_vinculado", cliIds)
-            .not("selfie_path", "is", null)
-            .order("created_at", { ascending: false });
-          for (const c of (cads2 as any[]) || []) {
-            const cid = c?.cliente_id_vinculado;
-            if (cid && c?.selfie_path && !selfieByCliId.has(cid)) {
-              selfieByCliId.set(cid, c.selfie_path);
-            }
-          }
-        }
-        for (const r of rows) {
-          if (r.imagem) continue; // upload manual tem prioridade
-          const fromCad = r.cadastro_publico_id ? selfieByCadId.get(r.cadastro_publico_id) : null;
-          const fromCli = selfieByCliId.get(r.id);
-          const sp = fromCad || fromCli || null;
-          if (sp) (r as any).selfie_path = sp;
-        }
-
-        // Assina TODAS as URLs em batch (createSignedUrls) por bucket — evita
-        // N requisições sequenciais nos avatares da listagem (gargalo da UI).
-        try {
-          const manualPaths = Array.from(new Set(rows.map((r: any) => r.imagem).filter((p: any) => p && !/^https?:\/\//i.test(p))));
-          const selfiePaths = Array.from(new Set(rows.map((r: any) => (r as any).selfie_path).filter((p: any) => p && !/^https?:\/\//i.test(p))));
-          const urlByPath = new Map<string, string>();
-          const signBatch = async (bucket: string, paths: string[]) => {
-            if (paths.length === 0) return;
-            const { data } = await supabase.storage.from(bucket).createSignedUrls(paths, 3600);
-            for (const it of (data as any[]) || []) {
-              if (it?.signedUrl && it?.path) urlByPath.set(it.path, it.signedUrl);
-            }
-          };
-          await Promise.all([
-            signBatch("qa-documentos", manualPaths as string[]),
-            signBatch("qa-cadastro-selfies", selfiePaths as string[]),
-          ]);
-          for (const r of rows) {
-            const p = r.imagem || (r as any).selfie_path;
-            if (p) {
-              const u = /^https?:\/\//i.test(p) ? p : urlByPath.get(p);
-              if (u) (r as any).avatar_url = u;
-            }
-          }
-        } catch (signErr) {
-          console.warn("[QAClientes] batch sign URLs falhou (não crítico):", signErr);
-        }
-      } catch (enrichErr) {
-        console.warn("[QAClientes] selfie enrich falhou (não crítico):", enrichErr);
-      }
-
-      // Enriquece com lista de serviços contratados (em batch).
-      try {
-        const ids = rows.map((r: any) => r.id).filter(Boolean);
-        const idsLeg = rows.map((r: any) => r.id_legado).filter(Boolean);
-        const allCids = Array.from(new Set([...ids, ...idsLeg]));
-        const servicosByCli = new Map<number, Set<string>>();
-        if (allCids.length > 0) {
-          const { data: vendas } = await supabase
-            .from("qa_vendas" as any)
-            .select("id, id_legado, cliente_id")
-            .in("cliente_id", allCids);
-          const vendasArr = (vendas as any[]) || [];
-          const vendaIds = vendasArr.map((v: any) => v.id_legado ?? v.id).filter(Boolean);
-          const vendaToCli = new Map<number, number>();
-          vendasArr.forEach((v: any) => vendaToCli.set(v.id_legado ?? v.id, v.cliente_id));
-          if (vendaIds.length > 0) {
-            const { data: itens } = await supabase
-              .from("qa_itens_venda" as any)
-              .select("venda_id, servico_id")
-              .in("venda_id", vendaIds);
-            const servIds = Array.from(new Set(((itens as any[]) || []).map((i: any) => i.servico_id).filter(Boolean)));
-            const servNomes = new Map<number, string>();
-            if (servIds.length > 0) {
-              const { data: servs } = await supabase
-                .from("qa_servicos" as any)
-                .select("id, nome_servico")
-                .in("id", servIds);
-              ((servs as any[]) || []).forEach((s: any) => servNomes.set(s.id, s.nome_servico));
-            }
-            ((itens as any[]) || []).forEach((it: any) => {
-              const cid = vendaToCli.get(it.venda_id);
-              const nome = servNomes.get(it.servico_id);
-              if (!cid || !nome) return;
-              if (!servicosByCli.has(cid)) servicosByCli.set(cid, new Set());
-              servicosByCli.get(cid)!.add(nome);
-            });
-          }
-        }
-        for (const r of rows) {
-          const set = servicosByCli.get(r.id) || servicosByCli.get(r.id_legado);
-          (r as any).servicos_contratados = set ? Array.from(set) : [];
-        }
-      } catch (servErr) {
-        console.warn("[QAClientes] enrich serviços falhou (não crítico):", servErr);
-      }
-
-      // Numeração sequencial de exibição (1..N) por ordem cronológica de
-      // cadastro. NÃO altera a PK no banco — só o ID mostrado ao usuário.
-      // Conta TODOS os clientes cadastrados (Quero Armas + Arsenal).
-      // Formulários públicos pendentes não entram aqui (só viram qa_clientes
-      // quando aprovados).
-      const sortedAsc = [...rows].sort((a: any, b: any) => {
-        const ta = new Date(a.created_at || 0).getTime();
-        const tb = new Date(b.created_at || 0).getTime();
-        return ta - tb || (a.id - b.id);
-      });
-      const displayMap = new Map<number, number>();
-      sortedAsc.forEach((r: any, idx: number) => displayMap.set(r.id, idx + 1));
-      for (const r of rows) (r as any).display_id = displayMap.get((r as any).id) || (r as any).id;
-      setClientes(rows);
-      setLoadError(null);
-    } catch (err: any) {
+      const { data } = await supabase.from("qa_clientes" as any).select("*").order("nome_completo", { ascending: true });
+      setClientes((data as any[]) ?? []);
+    } catch (err) {
       console.error("[QAClientes] loadClientes error:", err);
-      setLoadError(err instanceof Error ? err : new Error(String(err?.message || err)));
     } finally {
-      clearTimeout(safety);
       setLoading(false);
     }
   };
 
   const loadCadastrosPublicos = async () => {
     const { data } = await supabase.from("qa_cadastro_publico" as any)
-      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro, documento_identidade_path, comprovante_endereco_path, selfie_path, cliente_id_vinculado")
-      .or("arquivado.is.null,arquivado.eq.false")
+      .select("id, nome_completo, cpf, telefone_principal, email, end1_cidade, end1_estado, servico_interesse, vinculo_tipo, status, pago, created_at, objetivo_principal, categoria_servico, servico_principal, subtipo_servico, servico_fechado_final, origem_cadastro")
       .order("created_at", { ascending: false });
     setCadastrosPublicos((data as unknown as CadastroPublico[]) ?? []);
   };
 
   const openCadastroPublico = async (cadastroId: string) => {
     setLoadingCadastroPublico(true);
-    // Limpa estado anterior — o ID da URL manda; nunca reabrir cliente em memória.
-    setSelected(null);
-    setSelectedCadastroPublico(null);
     try {
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
         .select("*")
@@ -1728,50 +1346,8 @@ export default function QAClientesPage() {
         return;
       }
 
-      const cad = data as any;
-      const cpfCadNorm = String(cad.cpf || "").replace(/\D/g, "");
-
-      // Se houver vínculo, RESOLVE pela PK real (qa_clientes.id) e VALIDA CPF
-      // antes de abrir o cliente. Nunca usa id_legado para esta resolução —
-      // id_legado pode colidir com id de outro cliente.
-      if (cad.cliente_id_vinculado) {
-        const { data: cliRow } = await supabase
-          .from("qa_clientes" as any)
-          .select("*")
-          .eq("id", cad.cliente_id_vinculado)
-          .limit(1)
-          .maybeSingle();
-        const cli = cliRow as any | null;
-        const cpfCliNorm = String(cli?.cpf || "").replace(/\D/g, "");
-        const cpfBate = cpfCadNorm && cpfCliNorm && cpfCadNorm === cpfCliNorm;
-
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.log("[AbrirClienteCadastroPublico:resolveVinculo]", {
-            cadastro_publico_id: cad.id,
-            nome_formulario: cad.nome_completo,
-            cpf_formulario_normalizado: cpfCadNorm,
-            cliente_id_vinculado: cad.cliente_id_vinculado,
-            cliente_nome_vinculado: cli?.nome_completo ?? null,
-            cliente_cpf_normalizado: cpfCliNorm,
-            resultado_validacao: cli ? (cpfBate ? "ok" : "cpf_divergente") : "cliente_nao_encontrado",
-          });
-        }
-
-        if (cli && cpfBate) {
-          // Vínculo válido — abre a ficha do cliente real.
-          setSelectedCadastroPublico(null);
-          openClient(cli);
-          return;
-        }
-
-        // Vínculo inconsistente — não abre cliente errado; mostra o cadastro
-        // público para correção manual.
-        toast.error("Vínculo inconsistente entre cadastro público e cliente. Reveja o vínculo.");
-      }
-
       setSelected(null);
-      setSelectedCadastroPublico(cad as unknown as CadastroPublico);
+      setSelectedCadastroPublico(data as unknown as CadastroPublico);
     } catch (e: any) {
       toast.error(e.message || "Erro ao abrir cadastro público");
     } finally {
@@ -1779,190 +1355,30 @@ export default function QAClientesPage() {
     }
   };
 
-  const togglePagoCadastroPublico = async (target?: CadastroPublico | null) => {
-    const alvo = target ?? selectedCadastroPublico;
-    if (!alvo) return;
-    const cadastroId = alvo.id;
-    const pagoAnterior = Boolean(alvo.pago);
-    const novoPago = !pagoAnterior;
-    setSavingCadastroPublicoStatus(`pago:${cadastroId}`);
-    setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: novoPago } : item));
-    setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: novoPago } : prev);
+  const togglePagoCadastroPublico = async () => {
+    if (!selectedCadastroPublico) return;
+    const novoPago = !selectedCadastroPublico.pago;
+    setSavingCadastroPublicoStatus("pago");
     try {
-      const updateBody: Record<string, any> = { pago: novoPago };
-      // Inicia o relógio de SLA na primeira marcação como pago
-      if (novoPago && !(alvo as any).pago_em) {
-        updateBody.pago_em = new Date().toISOString();
-      }
       const { data, error } = await supabase.from("qa_cadastro_publico" as any)
-        .update(updateBody)
-        .eq("id", cadastroId)
+        .update({ pago: novoPago })
+        .eq("id", selectedCadastroPublico.id)
         .select("*")
         .limit(1)
         .maybeSingle();
       if (error) throw error;
-      if (data) {
-        const updated = data as unknown as CadastroPublico;
-        setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
-        setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
+      if (!data) {
+        toast.error("Cadastro público não encontrado");
+        return;
       }
-      toast.success(novoPago ? "Marcado como pago" : "Marcado como não pagou");
-
-      // ── Propagação do status financeiro para a(s) solicitação(ões)
-      // vinculadas ao cadastro público (best-effort, NÃO bloqueia o fluxo).
-      // pago=true  → status_financeiro = 'pago' (libera fluxo operacional;
-      //               status_servico já é 'aguardando_documentacao' por
-      //               default, o que mantém o checklist liberado).
-      // pago=false → reverte para 'sem_cobranca_vinculada'.
-      // Não altera Asaas/webhook/qa_vendas/processos: somente reflete no
-      // painel operacional o que a Equipe acabou de marcar.
-      void (async () => {
-        try {
-          const novoFinanceiro = novoPago ? "pago" : "sem_cobranca_vinculada";
-          const { data: solsPrev } = await supabase
-            .from("qa_solicitacoes_servico" as any)
-            .select("id, cliente_id, service_slug, service_name, status_financeiro")
-            .eq("cadastro_publico_id", cadastroId);
-          const sols = (solsPrev as any[]) ?? [];
-          if (sols.length === 0) return;
-          const { error: updErr } = await supabase
-            .from("qa_solicitacoes_servico" as any)
-            .update({ status_financeiro: novoFinanceiro, updated_at: new Date().toISOString() })
-            .eq("cadastro_publico_id", cadastroId);
-          if (updErr) {
-            console.warn("[togglePagoCadastroPublico] propagar status_financeiro falhou:", updErr.message);
-            return;
-          }
-          const { data: userRes } = await supabase.auth.getUser();
-          const usuarioId = userRes?.user?.id ?? null;
-          // Auditoria do flag pago no próprio cadastro público
-          void registrarStatusEvento({
-            origem: "equipe",
-            entidade: "cadastro_publico",
-            entidade_id: cadastroId,
-            cliente_id: (alvo as any)?.cliente_id_vinculado ?? null,
-            campo_status: "pago",
-            status_anterior: pagoAnterior ? "true" : "false",
-            status_novo: novoPago ? "true" : "false",
-            usuario_id: usuarioId,
-            detalhes: { contexto: "QAClientesPage.togglePagoCadastroPublico" },
-          });
-          // Auditoria por solicitação afetada
-          for (const s of sols) {
-            if ((s.status_financeiro ?? null) === novoFinanceiro) continue;
-            void registrarStatusEvento({
-              origem: "equipe",
-              entidade: "solicitacao_servico",
-              entidade_id: s.id,
-              solicitacao_id: s.id,
-              cliente_id: s.cliente_id ?? null,
-              campo_status: "status_financeiro",
-              status_anterior: s.status_financeiro ?? null,
-              status_novo: novoFinanceiro,
-              usuario_id: usuarioId,
-              detalhes: {
-                contexto: "QAClientesPage.togglePagoCadastroPublico",
-                cadastro_publico_id: cadastroId,
-                service_slug: s.service_slug ?? null,
-                service_name: s.service_name ?? null,
-              },
-            });
-          }
-        } catch (err) {
-          console.warn("[togglePagoCadastroPublico] propagação best-effort falhou:", err);
-        }
-      })();
-    } catch (e: any) {
-      setCadastrosPublicos(prev => prev.map(item => item.id === cadastroId ? { ...item, pago: pagoAnterior } : item));
-      setSelectedCadastroPublico(prev => prev && prev.id === cadastroId ? { ...prev, pago: pagoAnterior } : prev);
-      toast.error(e.message || "Erro ao atualizar pagamento");
-    } finally {
-      setSavingCadastroPublicoStatus(null);
-    }
-  };
-
-  // ==== SLA: aguardar/retomar/concluir ====
-  const updateCadastroSla = async (patch: Record<string, any>, successMsg: string) => {
-    if (!selectedCadastroPublico) return;
-    const cadastroId = selectedCadastroPublico.id;
-    setSavingCadastroPublicoStatus("sla");
-    try {
-      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
-        .update(patch).eq("id", cadastroId).select("*").limit(1).maybeSingle();
-      if (error) throw error;
-      if (data) {
-        const updated = data as unknown as CadastroPublico;
-        setCadastrosPublicos(prev => prev.map(i => i.id === updated.id ? { ...i, ...updated } : i));
-        setSelectedCadastroPublico(prev => prev && prev.id === updated.id ? { ...prev, ...updated } : prev);
-      }
-      toast.success(successMsg);
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao atualizar SLA");
-    } finally {
-      setSavingCadastroPublicoStatus(null);
-    }
-  };
-
-  const handleAguardandoCliente = () => {
-    const desc = window.prompt("O que foi solicitado ao cliente? (Ex: comprovante de residência atualizado)");
-    if (desc === null) return;
-    const today = new Date().toISOString().split("T")[0];
-    void updateCadastroSla(
-      { aguardando_cliente_desde: today, ultima_solicitacao_cliente: desc?.toUpperCase() || null },
-      "Aguardando documentos do cliente. Relógio pausa após 1 dia."
-    );
-  };
-
-  const handleRetomarSla = () => {
-    if (!selectedCadastroPublico) return;
-    const c: any = selectedCadastroPublico;
-    if (!c.aguardando_cliente_desde) {
-      void updateCadastroSla({ ultima_solicitacao_cliente: null }, "Sem pendência registrada.");
-      return;
-    }
-    const desde = new Date(c.aguardando_cliente_desde);
-    const hoje = new Date();
-    const diasAguardando = Math.max(0, Math.floor((hoje.getTime() - desde.getTime()) / 86400000));
-    const pausaConsumida = Math.max(0, diasAguardando - 1); // 1 dia de tolerância
-    const novosPausados = (c.dias_pausados ?? 0) + pausaConsumida;
-    void updateCadastroSla(
-      { aguardando_cliente_desde: null, dias_pausados: novosPausados },
-      pausaConsumida > 0 ? `Relógio retomado. ${pausaConsumida}d de pausa contabilizados.` : "Relógio retomado."
-    );
-  };
-
-  const handleConcluirSla = () => {
-    if (!window.confirm("Concluir o serviço deste cliente? O contador de prazo será encerrado.")) return;
-    void updateCadastroSla(
-      { sla_concluido_em: new Date().toISOString() },
-      "Serviço concluído. Cliente removido do contador de prazo."
-    );
-  };
-
-  const excluirDefinitivamenteCadastroPublico = async () => {
-    if (!selectedCadastroPublico) return;
-    const c: any = selectedCadastroPublico;
-    const nome = c.nome_completo || "este cadastro";
-    const confirm1 = window.confirm(
-      `EXCLUSÃO DEFINITIVA\n\nDeseja remover permanentemente o cadastro público de "${nome}"?\n\nSe estiver vinculado a um cliente, o vínculo será removido. Esta ação NÃO pode ser desfeita. O CPF poderá ser usado em um novo cadastro.`,
-    );
-    if (!confirm1) return;
-    const confirm2 = window.prompt(
-      `Confirme digitando EXCLUIR para apagar definitivamente o cadastro de ${nome}.`,
-    );
-    if ((confirm2 || "").trim().toUpperCase() !== "EXCLUIR") {
-      toast.info("Exclusão cancelada.");
-      return;
-    }
-    setSavingCadastroPublicoStatus("excluindo");
-    try {
-      const { error } = await supabase.rpc("qa_cadastro_publico_excluir_total" as any, { p_cadastro_id: c.id });
-      if (error) throw error;
-      setCadastrosPublicos(prev => prev.filter(item => item.id !== c.id));
+      const updated = data as unknown as CadastroPublico;
+      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+      toast.success(novoPago ? "Marcado como pago" : "Marcado como não pago");
+      // Fecha o modal e volta para a lista de formulários
       setSelectedCadastroPublico(null);
-      toast.success("Cadastro excluído definitivamente.");
+      setEditingCadastroPublico(false);
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao excluir cadastro definitivamente.");
+      toast.error(e.message || "Erro ao atualizar pagamento");
     } finally {
       setSavingCadastroPublicoStatus(null);
     }
@@ -2031,60 +1447,27 @@ export default function QAClientesPage() {
           : "Aprovado sem vínculo automático.";
       }
 
-      // Vínculo reverso obrigatório: qa_clientes.cadastro_publico_id deve apontar
-      // para o cadastro público de origem. Sem isso, a varredura de pendências
-      // dispara "Cliente vindo do formulário sem vínculo reverso" para sempre.
-      if (status === "aprovado" && clienteVinculadoId) {
-        const { error: revErr } = await supabase
-          .from("qa_clientes" as any)
-          .update({
-            cadastro_publico_id: selectedCadastroPublico.id,
-            cadastro_publico_aplicado_em: new Date().toISOString(),
-          })
-          .eq("id", clienteVinculadoId);
-        if (revErr) {
-          console.error("[vinculo-reverso] erro ao gravar cadastro_publico_id:", revErr.message);
-          throw new Error(
-            "Falha ao gravar vínculo reverso no cliente: " + revErr.message,
-          );
-        }
-      }
-
-      // Update sem .select() para evitar "TypeError: Load failed" no Safari/iOS
-      // quando o segundo roundtrip embutido fica pendurado em rede instável.
-      const { error } = await supabase.from("qa_cadastro_publico" as any)
+      const { data, error } = await supabase.from("qa_cadastro_publico" as any)
         .update(updatePayload)
-        .eq("id", selectedCadastroPublico.id);
+        .eq("id", selectedCadastroPublico.id)
+        .select("*")
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
-
-      const updated = { ...selectedCadastroPublico, ...updatePayload } as CadastroPublico;
-      setSelectedCadastroPublico(updated);
-      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updatePayload } : item));
-      // Auditoria de mudança de status do cadastro público
-      try {
-        const { data: userRes } = await supabase.auth.getUser();
-        void registrarStatusEvento({
-          origem: "equipe",
-          entidade: "cadastro_publico",
-          entidade_id: selectedCadastroPublico.id,
-          cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
-          campo_status: "status",
-          status_anterior: selectedCadastroPublico.status ?? null,
-          status_novo: status,
-          usuario_id: userRes?.user?.id ?? null,
-          detalhes: { contexto: "QAClientesPage.updateCadastroPublicoStatus" },
-        });
-      } catch (auditErr) {
-        console.warn("[updateCadastroPublicoStatus] auditoria falhou:", auditErr);
+      if (!data) {
+        toast.error("Cadastro público não encontrado");
+        return;
       }
+
+      const updated = data as unknown as CadastroPublico;
+      setSelectedCadastroPublico(updated);
+      setCadastrosPublicos(prev => prev.map(item => item.id === updated.id ? { ...item, ...updated } : item));
       if (status === "aprovado") {
         await loadClientes();
         toast.success(clienteVinculadoId
           ? `Cadastro aprovado e sincronizado com o cliente #${clienteVinculadoId}.${historicoMsg}`
           : "Cadastro aprovado com sucesso");
-      } else if (status === "pendente" && ["aprovado", "conferido", "validado", "formulario_conferido"].includes(String(selectedCadastroPublico.status || "").toLowerCase())) {
-        toast.success("Conferência removida. Cadastro voltou para pendentes.");
       } else {
         toast.success(`Cadastro marcado como ${status}`);
       }
@@ -2092,79 +1475,6 @@ export default function QAClientesPage() {
       toast.error(e.message || "Erro ao atualizar cadastro público");
     } finally {
       setSavingCadastroPublicoStatus(null);
-    }
-  };
-
-  // ── Solicitar correção: registra evento, atualiza status, abre WA opcional ──
-  const handleSolicitarCorrecao = async (payload: SolicitarCorrecaoPayload) => {
-    if (!selectedCadastroPublico) return;
-    setSavingCorrecao(true);
-    try {
-      const cadastroId = selectedCadastroPublico.id;
-      const statusAnterior = selectedCadastroPublico.status ?? null;
-      const novoStatus = "pendente_correcao";
-      const today = new Date().toISOString().split("T")[0];
-      const resumo = payload.itensSelecionados.slice(0, 6).join(" | ");
-
-      const { error: upErr } = await supabase
-        .from("qa_cadastro_publico" as any)
-        .update({
-          status: novoStatus,
-          aguardando_cliente_desde: today,
-          ultima_solicitacao_cliente: resumo.slice(0, 500).toUpperCase(),
-        })
-        .eq("id", cadastroId);
-      if (upErr) throw upErr;
-
-      const updated = {
-        ...selectedCadastroPublico,
-        status: novoStatus,
-        aguardando_cliente_desde: today,
-        ultima_solicitacao_cliente: resumo,
-      } as CadastroPublico;
-      setSelectedCadastroPublico(updated);
-      setCadastrosPublicos((prev) =>
-        prev.map((i) => (i.id === cadastroId ? { ...i, ...updated } : i)),
-      );
-
-      try {
-        const { data: userRes } = await supabase.auth.getUser();
-        void registrarStatusEvento({
-          origem: "equipe",
-          entidade: "cadastro_publico",
-          entidade_id: cadastroId,
-          cliente_id: (selectedCadastroPublico as any)?.cliente_id_vinculado ?? null,
-          campo_status: "correcao_solicitada",
-          status_anterior: statusAnterior,
-          status_novo: novoStatus,
-          usuario_id: userRes?.user?.id ?? null,
-          motivo: payload.observacao || null,
-          detalhes: {
-            itens: payload.itensSelecionados,
-            mensagem: payload.mensagemFinal,
-            canal: payload.abrirWhatsapp ? "whatsapp" : "registro",
-          },
-        });
-      } catch (auditErr) {
-        console.warn("[handleSolicitarCorrecao] auditoria falhou:", auditErr);
-      }
-
-      setCorrecaoModalOpen(false);
-      setHistoricoRefresh((n) => n + 1);
-
-      if (payload.abrirWhatsapp) {
-        const tel = (selectedCadastroPublico.telefone_principal || "").replace(/\D/g, "");
-        if (tel.length >= 10) {
-          const num = tel.length <= 11 ? `55${tel}` : tel;
-          const url = `https://wa.me/${num}?text=${encodeURIComponent(payload.mensagemFinal)}`;
-          window.open(url, "_blank", "noopener,noreferrer");
-        }
-      }
-      toast.success("Correção solicitada e registrada no histórico.");
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao registrar solicitação de correção.");
-    } finally {
-      setSavingCorrecao(false);
     }
   };
 
@@ -2244,52 +1554,30 @@ export default function QAClientesPage() {
     loadingClientRef.current = c.id;
     setSelectedCadastroPublico(null);
     setSelected(c);
-    // Abas legadas (CRAFs/CR/Docs) removidas — abre no Arsenal Inteligente.
-    setTab("arsenal");
+    setTab("resumo");
     await loadSubData(c);
     loadingClientRef.current = null;
   };
 
-  const loadSubData = useCallback(async (c: Cliente, opts?: { silent?: boolean }) => {
-    const silent = opts?.silent === true;
-    if (!silent) setLoadingSub(true);
+  const loadSubData = useCallback(async (c: Cliente) => {
+    setLoadingSub(true);
     try {
-      // CHAVE CANÔNICA: vendas/crafs/gtes/filiações historicamente usam id_legado,
-      // mas o portal/app/arsenal grava com o id real (qa_clientes.id). Para garantir
-      // visibilidade total no admin (zero perda de dados criados pelo cliente),
-      // buscamos por AMBAS as chaves usando .in('cliente_id', [id, id_legado]).
-      // ⚠️ INCIDENTE P0: usar cidsCliente para qa_cadastro_cr causa CRUZAMENTO entre
-      // clientes quando id_legado de um == id real de outro (ex.: Weverton id_legado=46
-      // == Willian id=46). qa_cadastro_cr deve usar EXCLUSIVAMENTE o id real.
+      // CHAVE CANÔNICA APROVADA: vendas/itens/crafs/gtes/cr/filiações usam id_legado.
+      // Exames usam c.id (qa_exames_cliente.cliente_id ainda referencia o id real).
       const cid = getClienteFK(c);
-      const cidsCliente = Array.from(new Set([c.id, c.id_legado, cid].filter((n) => typeof n === "number" && Number.isFinite(n)))) as number[];
-      const clienteIdReal = c.id; // id real, único — usado para qa_cadastro_cr
       const examesQuery = supabase
         .from("qa_exames_cliente_status" as any)
         .select("*")
         .eq("cliente_id", c.id)
         .order("data_realizacao", { ascending: false });
 
-      const [vRes, cRes, gRes, fRes, cadRes, exRes, dRes] = await Promise.all([
-        supabase.from("qa_vendas" as any).select("*").in("cliente_id", cidsCliente).order("data_cadastro", { ascending: false }),
-        // P0 FIX: Tabelas de ARSENAL (crafs/gtes/filiacoes) usam SEMPRE id real
-        // (qa_clientes.id) — ver getClienteCadastroFK. Usar cidsCliente aqui causa
-        // cruzamento entre clientes quando id_legado de um == id real de outro.
-        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", clienteIdReal),
-        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", clienteIdReal),
-        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", clienteIdReal),
-        // P0 FIX: CR usa SOMENTE id real e ignora consolidados (CRs antigos de
-        // reconciliação). Sem isso, id_legado de um cliente colide com id de outro.
-        supabase
-          .from("qa_cadastro_cr" as any)
-          .select("*")
-          .eq("cliente_id", clienteIdReal)
-          .is("consolidado_em", null)
-          .order("id", { ascending: false })
-          .limit(1),
+      const [vRes, cRes, gRes, fRes, cadRes, exRes] = await Promise.all([
+        supabase.from("qa_vendas" as any).select("*").eq("cliente_id", cid).order("data_cadastro", { ascending: false }),
+        supabase.from("qa_crafs" as any).select("*").eq("cliente_id", cid),
+        supabase.from("qa_gtes" as any).select("*").eq("cliente_id", cid),
+        supabase.from("qa_filiacoes" as any).select("*").eq("cliente_id", cid),
+        supabase.from("qa_cadastro_cr" as any).select("*").eq("cliente_id", cid).limit(1),
         examesQuery,
-        // Documentos enviados pelo cliente no portal/app (qa_cliente_id = id real do cliente).
-        supabase.from("qa_documentos_cliente" as any).select("*").eq("qa_cliente_id", c.id).order("created_at", { ascending: false }),
       ]);
       const vendasData = (vRes.data as any[]) ?? [];
       setVendas(vendasData);
@@ -2298,127 +1586,48 @@ export default function QAClientesPage() {
       setFiliacoes((fRes.data as any[]) ?? []);
       setCadastro((cadRes.data as any[])?.[0] ?? null);
       setExamesAtuais((exRes.data as any[]) ?? []);
-      setDocsCliente((dRes.data as any[]) ?? []);
-      // FASE 4 — carrega armas manuais/IA em paralelo (não-bloqueante; falha silenciosa).
-      try {
-        const { data: amRes } = await supabase
-          .from("qa_cliente_armas_manual" as any)
-          .select("*")
-          .eq("qa_cliente_id", clienteIdReal)
-          .order("created_at", { ascending: false });
-        setArmasManual((amRes as any[]) ?? []);
-      } catch (e) {
-        console.warn("[loadSubData] armasManual falhou", e);
-        setArmasManual([]);
-      }
       if (vendasData.length > 0) {
         // qa_itens_venda.venda_id referencia qa_vendas.id_legado (chave canônica).
         const vendaIds = vendasData.map((v: any) => getVendaFK(v));
         const { data: itensData } = await supabase.from("qa_itens_venda" as any).select("*").in("venda_id", vendaIds).order("sort_order", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
         setItens((itensData as any[]) ?? []);
-        // FASE 16-C — processos por venda (qa_processos.venda_id = qa_vendas.id real).
-        try {
-          const realVendaIds = vendasData.map((v: any) => Number(v.id)).filter((n: number) => Number.isFinite(n));
-          if (realVendaIds.length > 0) {
-            const { data: procData } = await supabase
-              .from("qa_processos" as any)
-              .select("id, venda_id, servico_id, servico_nome")
-              .in("venda_id", realVendaIds);
-            setProcessosVenda((procData as any[]) ?? []);
-          } else {
-            setProcessosVenda([]);
-          }
-        } catch (e) {
-          console.warn("[loadSubData] processosVenda falhou", e);
-          setProcessosVenda([]);
-        }
       } else {
         setItens([]);
-        setProcessosVenda([]);
       }
     } catch (e: any) {
       console.error("[loadSubData] erro:", e.message);
       toast.error("Erro ao carregar dados do cliente");
     } finally {
-      if (!silent) setLoadingSub(false);
+      setLoadingSub(false);
     }
   }, []);
-
-  // ─── Auto-refresh global do cliente selecionado (1s) ───
-  // Atualiza KPIs e todos os dados atrelados (CRAFs, GTEs, CR, documentos,
-  // vendas, processos, exames, armas) sem qualquer interação do administrador.
-  // Pausa quando a aba do navegador está oculta para não desperdiçar requisições.
-  useEffect(() => {
-    if (!selected) return;
-    let inFlight = false;
-    const tick = async () => {
-      if (inFlight) return;
-      if (typeof document !== "undefined" && document.hidden) return;
-      inFlight = true;
-      try {
-        await loadSubData(selected, { silent: true });
-      } finally {
-        inFlight = false;
-      }
-    };
-    const id = window.setInterval(tick, 1000);
-    return () => window.clearInterval(id);
-  }, [selected, loadSubData]);
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
       if (deleteModal.table === "qa_clientes") {
+        // Cascade: delete sub-entities first
         const clienteObj = clientes.find(c => c.id === deleteModal.id);
-        // Modo ARQUIVAR (cliente com vínculos críticos).
-        if (deleteModal.mode === "archive") {
-          const { error } = await supabase.rpc("qa_cliente_arquivar" as any, {
-            p_cliente_id: deleteModal.id,
-            p_motivo: "Arquivado pela Equipe Quero Armas — possui vínculos críticos (vendas/processos/contratos/cobranças).",
-          });
-          if (error) throw error;
-          setSelected(null);
-          toast.success("Cliente arquivado com segurança.");
-          setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
-          await loadClientes(archivedFilter);
-          return;
+        const clienteId = clienteObj ? getClienteFK(clienteObj) : deleteModal.id;
+        const { data: vendasCliente } = await supabase.from("qa_vendas" as any).select("id, id_legado").eq("cliente_id", clienteId);
+        if (vendasCliente && vendasCliente.length > 0) {
+          const vendaIds = (vendasCliente as any[]).map(v => getVendaFK(v));
+          await supabase.from("qa_itens_venda" as any).delete().in("venda_id", vendaIds);
+          await supabase.from("qa_vendas" as any).delete().eq("cliente_id", clienteId);
         }
-        // Modo EXCLUIR físico (cliente sem vínculos críticos).
-        // Re-checa dependências server-side antes de tentar apagar.
-        const { data: depsData, error: depsErr } = await supabase.rpc("qa_cliente_dependencias" as any, { p_cliente_id: deleteModal.id });
-        if (depsErr) throw depsErr;
-        const deps: any = depsData ?? {};
-        if (deps.tem_vinculo_critico) {
-          throw new Error("Este cliente passou a ter vínculos críticos. Recarregue a lista e use 'Arquivar'.");
-        }
-        // Limpa apenas tabelas de cadastro/arsenal (sem FK restritiva).
-        const cidReal = clienteObj?.id ?? deleteModal.id;
-        const passos: Array<[string, any]> = [
-          ["qa_crafs", supabase.from("qa_crafs" as any).delete().eq("cliente_id", cidReal)],
-          ["qa_gtes", supabase.from("qa_gtes" as any).delete().eq("cliente_id", cidReal)],
-          ["qa_filiacoes", supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", cidReal)],
-        ];
-        for (const [tabela, promise] of passos) {
-          const { error: ePasso } = await promise;
-          if (ePasso) throw new Error(`Falha ao limpar ${tabela}: ${ePasso.message}`);
-        }
+        await Promise.all([
+          supabase.from("qa_crafs" as any).delete().eq("cliente_id", clienteId),
+          supabase.from("qa_gtes" as any).delete().eq("cliente_id", clienteId),
+          supabase.from("qa_filiacoes" as any).delete().eq("cliente_id", clienteId),
+        ]);
       }
       if (deleteModal.table === "qa_vendas") {
-        const { data, error } = await supabase.rpc("qa_venda_excluir_total" as any, { p_venda_id: deleteModal.id });
-        if (error) throw error;
-        if ((data as any)?.ok === false) throw new Error((data as any)?.message || "Falha ao excluir venda.");
-        toast.success("Venda excluída com sucesso");
-        if (selected) await loadSubData(selected);
-        setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
-        return;
+        const vendaObj = (vendas as any[]).find(v => v.id === deleteModal.id);
+        const vendaFk = vendaObj ? getVendaFK(vendaObj) : deleteModal.id;
+        await supabase.from("qa_itens_venda" as any).delete().eq("venda_id", vendaFk);
       }
       const { error } = await supabase.from(deleteModal.table as any).delete().eq("id", deleteModal.id);
-      if (error) {
-        if (deleteModal.table === "qa_clientes" && /foreign key|violates/i.test(String(error.message || ""))) {
-          throw new Error("Cliente possui vínculos protegidos. Por segurança, será necessário arquivá-lo em vez de excluir.");
-        }
-        throw error;
-      }
+      if (error) throw error;
       toast.success("Excluído com sucesso");
       if (deleteModal.table === "qa_clientes") {
         setClientes(prev => prev.filter(c => c.id !== deleteModal.id));
@@ -2427,87 +1636,10 @@ export default function QAClientesPage() {
         await loadSubData(selected);
       }
       setDeleteModal({ open: false, table: "", id: 0, title: "", desc: "" });
-    } catch (e: any) { toast.error(e?.message || "Falha na operação"); } finally { setDeleting(false); }
+    } catch (e: any) { toast.error(e.message); } finally { setDeleting(false); }
   };
 
-  // Decide ARQUIVAR vs EXCLUIR consultando dependências server-side.
-  const requestDeleteCliente = async (c: any) => {
-    try {
-      const { data, error } = await supabase.rpc("qa_cliente_dependencias" as any, { p_cliente_id: c.id });
-      if (error) throw error;
-      const deps: any = data ?? {};
-      const critico = !!deps.tem_vinculo_critico;
-      const detalhes: string[] = [];
-      if (deps.vendas) detalhes.push(`${deps.vendas} venda(s)`);
-      if (deps.processos) detalhes.push(`${deps.processos} processo(s)`);
-      if (deps.contracts) detalhes.push(`${deps.contracts} contrato(s)`);
-      if (deps.cobrancas_asaas) detalhes.push(`${deps.cobrancas_asaas} cobrança(s)`);
-      if (deps.documentos) detalhes.push(`${deps.documentos} documento(s)`);
-      if (deps.portal_links) detalhes.push(`${deps.portal_links} vínculo(s) de portal`);
-      setDeleteModal({
-        open: true,
-        table: "qa_clientes",
-        id: c.id,
-        title: critico ? "Arquivar Cliente" : "Excluir Cliente",
-        desc: critico
-          ? `Este cliente possui vendas/processos vinculados${detalhes.length ? ` (${detalhes.join(", ")})` : ""}. Por segurança jurídica e financeira, ele será ARQUIVADO, não excluído definitivamente. Deseja continuar?`
-          : `Excluir "${c.nome_completo}" definitivamente? Esta ação é irreversível.`,
-        mode: critico ? "archive" : "delete",
-      });
-    } catch (e: any) {
-      console.error("[qa_cliente_dependencias] erro:", e);
-      toast.error("Não foi possível verificar os vínculos do cliente. Tente novamente ou acione a Equipe Quero Armas.");
-    }
-  };
-
-  // Restaurar cliente arquivado.
-  const restaurarCliente = async (c: any) => {
-    try {
-      const { error } = await supabase.rpc("qa_cliente_restaurar" as any, { p_cliente_id: c.id });
-      if (error) throw error;
-      toast.success("Cliente restaurado.");
-      await loadClientes(archivedFilter);
-    } catch (e: any) {
-      toast.error(`Falha ao restaurar: ${e?.message || e}`);
-    }
-  };
-
-  // Exclusão LGPD definitiva — apaga TODOS os rastros (vendas, contratos,
-  // cobranças, processos, documentos, cadastros públicos, arsenal etc.).
-  // Exige cliente já ARQUIVADO e dupla confirmação (digitar EXCLUIR).
-  const excluirDefinitivamenteCliente = async (c: any) => {
-    if (!c?.arquivado) {
-      toast.error("Arquive o cliente antes de excluí-lo definitivamente.");
-      return;
-    }
-    const ok1 = window.confirm(
-      `EXCLUSÃO LGPD DEFINITIVA\n\n"${c.nome_completo}" e TODOS os rastros (vendas, contratos, cobranças, processos, documentos, formulários, arsenal) serão APAGADOS irreversivelmente.\n\nContinuar?`
-    );
-    if (!ok1) return;
-    const confirma = window.prompt('Para confirmar, digite EXCLUIR em maiúsculas:');
-    if ((confirma || "").trim() !== "EXCLUIR") {
-      toast.message("Operação cancelada.");
-      return;
-    }
-    try {
-      const { error } = await supabase.rpc("qa_cliente_excluir_total_v2" as any, { p_cliente_id: c.id });
-      if (error) throw error;
-      toast.success("Cliente e todos os rastros foram excluídos.");
-      setSelected(null);
-      setClientes(prev => prev.filter(x => x.id !== c.id));
-      await Promise.all([loadClientes(archivedFilter), loadCadastrosPublicos()]);
-    } catch (e: any) {
-      toast.error(`Falha na exclusão definitiva: ${e?.message || e}`);
-    }
-  };
-
-  // Aplica antes o filtro Ativos/Arquivados/Todos.
-  const clientesPorArquivamento = clientes.filter((c: any) =>
-    archivedFilter === "todos" ? true
-    : archivedFilter === "arquivados" ? !!c.arquivado
-    : !c.arquivado
-  );
-  const filtered = clientesPorArquivamento.filter(c => {
+  const filtered = clientes.filter(c => {
     const s = search.toLowerCase();
     const sDigits = s.replace(/\D/g, "");
     if (!s) return true;
@@ -2515,23 +1647,8 @@ export default function QAClientesPage() {
     if (c.email?.toLowerCase().includes(s)) return true;
     if (sDigits && c.cpf?.replace(/\D/g, "").includes(sDigits)) return true;
     if (sDigits && c.celular?.replace(/\D/g, "").includes(sDigits)) return true;
-    const servs = ((c as any).servicos_contratados as string[] | undefined) || [];
-    if (servs.some(srv => srv.toLowerCase().includes(s))) return true;
     return false;
   });
-
-  // Origem do cliente: "manual" = cadastrado pela equipe via formulário interno.
-  // Demais (formulario_publico, equipe legada, null) → "outros".
-  const isManual = (c: any) => String((c as any).origem || "") === "manual";
-  const filteredManuais = filtered.filter(isManual);
-
-  // App Arsenal Inteligente (FREE): clientes que estão usando o app na conta gratuita.
-  // Considera-se FREE quando arsenal_plano = 'free' (default no banco) e o cliente
-  // tem evidência de uso (ultimo acesso registrado OU vinculo auth ativo via user_id).
-  const isArsenalFree = (c: any) =>
-    String((c as any).arsenal_plano || "free").toLowerCase() === "free" &&
-    (!!(c as any).arsenal_ultimo_acesso_em || !!(c as any).user_id);
-  const filteredArsenalFree = filtered.filter(isArsenalFree);
 
   const matchSearch = (c: CadastroPublico) => {
     const s = search.toLowerCase();
@@ -2546,20 +1663,19 @@ export default function QAClientesPage() {
   const isRejeitado = (s: string | null | undefined) => String(s || "").toLowerCase() === "rejeitado";
   const cadastrosNaoRejeitados = cadastrosPublicos.filter(c => !isRejeitado(c.status));
   const cadastrosRejeitados = cadastrosPublicos.filter(c => isRejeitado(c.status));
-  const isAprovadoStatus = (s: string | null | undefined) =>
-    CADASTRO_PUBLICO_APROVADO_STATUSES.has(String(s || "").toLowerCase());
   const filteredCadastros = cadastrosNaoRejeitados.filter(c => {
     if (!matchSearch(c)) return false;
-    if (cadastroFilter === "aprovado") return isAprovadoStatus(c.status);
-    return CADASTRO_MIRA_PENDENTE_STATUSES.has(String(c.status || "").toLowerCase()) || !isAprovadoStatus(c.status); // pendente / em análise / status Mira
+    const status = String(c.status || "").toLowerCase();
+    if (cadastroFilter === "aprovado") return status === "aprovado";
+    return status !== "aprovado"; // pendente / em análise / etc.
   });
   const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
-  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-[#641722]";
+  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-amber-600";
   const svcStatusColor = (s: string) => {
     if (s === "DEFERIDO" || s === "CONCLUÍDO") return "text-emerald-700 bg-emerald-50";
     if (s === "INDEFERIDO") return "text-red-700 bg-red-50";
-    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-[#4F121C] bg-[#FBF3F4]";
+    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-amber-700 bg-amber-50";
     return "text-slate-600 bg-slate-100";
   };
   const formatDate = (d: string | null) => {
@@ -2614,62 +1730,58 @@ export default function QAClientesPage() {
   };
 
   const clienteIdForSub = selected ? getClienteFK(selected) : 0;
-  // FK para CR/CRAF/GTE/Filiações/exames — sempre id REAL (ver clientFK.ts).
-  const clienteCadastroIdForSub = selected ? getClienteCadastroFK(selected) : 0;
 
   // ── Detail View ──
   if (selected) {
     const c = selected;
-    const cadastroCompleteness = computeCadastroCompleteness(c as any);
-    const exigeResponsavelTerceiro =
-      String((c as any).comprovante_endereco_em_nome_proprio || "").toLowerCase() === "nao";
-    const temResponsavelTerceiroDado = [
-      "responsavel_endereco_nome", "responsavel_endereco_cpf", "responsavel_endereco_rg_cin",
-      "responsavel_endereco_telefone", "responsavel_endereco_email", "responsavel_endereco_vinculo",
-      "responsavel_endereco_declaracao_path", "responsavel_endereco_comprovante_path",
-      "responsavel_endereco_data_nascimento", "responsavel_endereco_naturalidade",
-      "responsavel_endereco_nacionalidade", "responsavel_endereco_estado_civil",
-      "responsavel_endereco_profissao", "responsavel_endereco_cep",
-      "responsavel_endereco_logradouro", "responsavel_endereco_numero",
-      "responsavel_endereco_complemento", "responsavel_endereco_bairro",
-      "responsavel_endereco_cidade", "responsavel_endereco_estado",
-      "responsavel_endereco_geolocalizacao", "responsavel_endereco_reside_desde",
-      "responsavel_endereco_residiu_ate",
-    ].some((k) => (c as any)?.[k]);
     return (
       <div className="space-y-3 md:space-y-4 px-0.5">
-        {/* Header — padrão ARSENAL (Premium KPI cluster) */}
-        <ClienteHeaderCard
-          cliente={c}
-          clienteCadastroIdForSub={clienteCadastroIdForSub}
-          vendasCount={vendas.length}
-          armasCount={crafs.length + gtes.length}
-          onBack={() => setSelected(null)}
-          onEdit={() => { setEditingCliente(c); setClienteModal(true); }}
-          onDelete={() => requestDeleteCliente(c)}
-          onRestore={(c as any).arquivado ? () => restaurarCliente(c) : undefined}
-          onPurge={(c as any).arquivado ? () => excluirDefinitivamenteCliente(c) : undefined}
-          arquivado={!!(c as any).arquivado}
-        />
+        {/* Header — mobile-optimized */}
+        <div className="flex items-start gap-2.5">
+          <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="text-slate-500 hover:text-slate-700 h-8 w-8 p-0 shrink-0 mt-0.5 rounded-xl border" style={{ borderColor: "hsl(220 13% 90%)" }}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          {/* Client photo or fallback */}
+          {(c as any).imagem ? <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-11 h-11 rounded-xl shrink-0 mt-0.5 object-cover border border-slate-200" /> : null}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[15px] md:text-base font-bold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</h1>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${statusColor(c.status)}`} style={{ background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)" }}>
+                {c.status}
+              </span>
+              <span className="text-[10px] font-mono" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
+              {c.cliente_lions && <span className="text-[10px]">🦁</span>}
+            </div>
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button variant="ghost" size="sm" onClick={() => { setEditingCliente(c); setClienteModal(true); }} className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 rounded-xl">
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados?` })} className="h-8 w-8 p-0 text-slate-300 hover:text-red-500 rounded-xl">
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
 
         <Tabs value={tab} onValueChange={setTab}>
           {/* Scrollable tabs for mobile */}
           <div className="overflow-x-auto -mx-0.5 px-0.5 scrollbar-none">
             <TabsList className="bg-white border border-slate-200 h-9 inline-flex w-auto min-w-full rounded-xl shadow-sm p-0.5 gap-0.5">
               {[
-                { value: "resumo", icon: TrendingUp, label: "Visão geral" },
-                { value: "arsenal", icon: Crosshair, label: "Arsenal" },
+                { value: "resumo", icon: TrendingUp, label: "Resumo" },
                 { value: "dados", icon: User, label: "Dados" },
                 { value: "historico", icon: FileText, label: "Histórico" },
-                { value: "servicos", icon: FileText, label: `Serviços (${itens.length + solicitacoesPublicas.filter(s => !s.ja_convertido).length})` },
-                { value: "exames", icon: HeartPulse, label: `Exames (${examesAtuais.length})` },
+                { value: "servicos", icon: FileText, label: `Serviços (${itens.length})` },
+                { value: "armas", icon: Crosshair, label: `Armas (${crafs.length + gtes.length})` },
+                { value: "cr", icon: Shield, label: "CR" },
+                { value: "docs", icon: FileDown, label: "Docs" },
+                { value: "exames", icon: HeartPulse, label: "Exames" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
-                { value: "destravar", icon: Wrench, label: "Destravar" },
               ].map(t => (
-                <TabsTrigger key={t.value} value={t.value} className="text-[12px] whitespace-nowrap px-3 data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white rounded-lg font-bold">
-                  <t.icon className="h-3.5 w-3.5 mr-1.5" /> {t.label}
+                <TabsTrigger key={t.value} value={t.value} className="text-[10px] whitespace-nowrap px-2.5 data-[state=active]:bg-slate-800 data-[state=active]:text-white rounded-lg font-semibold">
+                  <t.icon className="h-3 w-3 mr-1" /> {t.label}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -2682,454 +1794,99 @@ export default function QAClientesPage() {
             </div>
           ) : (
             <>
-              {/* ARSENAL INTELIGENTE */}
-              <TabsContent value="arsenal" className="mt-3">
-                <ArsenalView
-                  clienteId={c.id}
-                  clienteNome={c.nome_completo}
-                  clienteCidade={c.cidade}
-                  clienteUf={c.estado}
+              {/* RESUMO */}
+              <TabsContent value="resumo" className="mt-3">
+                <ClienteOverview
+                  cliente={c}
+                  vendas={vendas}
+                  itens={itens}
                   crafs={crafs}
                   gtes={gtes}
-                  cadastroCr={cadastro}
-                  meusDocs={docsCliente}
-                  isAdmin
-                  expDocs={[
-                    ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
-                    ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
-                    ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
-                  ]}
-                  alerts={[
-                    ...(cadastro?.validade_cr ? [{ label: "Certificado de Registro (CR)", date: cadastro.validade_cr, days: daysUntilDate(cadastro.validade_cr), category: "CR" }] : []),
-                    ...crafs.filter((cr: any) => cr.data_validade).map((cr: any) => ({ label: `CRAF — ${cr.nome_arma || cr.nome_craf || "Arma"}`, date: cr.data_validade, days: daysUntilDate(cr.data_validade), category: "CRAF" })),
-                    ...gtes.filter((g: any) => g.data_validade).map((g: any) => ({ label: `GTE — ${g.nome_arma || g.nome_gte || "Arma"}`, date: g.data_validade, days: daysUntilDate(g.data_validade), category: "GTE" })),
-                  ].filter((d) => d.days !== null && d.days <= 90)}
-                  onOpenAddDoc={() => setTab("hub")}
-                  onArsenalChanged={async () => {
-                    await loadSubData(c);
-                  }}
-                />
-              </TabsContent>
-
-              {/* VISÃO GERAL */}
-              <TabsContent value="resumo" className="mt-3 space-y-3">
-                <OrigemClienteCadastroPublico
-                  cliente={c}
-                  onAbrirCadastroPublico={(id) => {
-                    setSelected(null);
-                    openCadastroPublico(String(id));
-                  }}
-                />
-                <ClienteOverview
-                    cliente={c}
-                    vendas={vendas}
-                    itens={itens}
-                    crafs={crafs}
-                    gtes={gtes}
-                    filiacoes={filiacoes}
-                    cadastro={cadastro}
-                    examesAtuais={examesAtuais}
-                    armasManual={armasManual}
-                    onNavigate={setTab}
+                  filiacoes={filiacoes}
+                  cadastro={cadastro}
+                  examesAtuais={examesAtuais}
+                  onNavigate={setTab}
                 />
               </TabsContent>
 
               {/* DADOS */}
               <TabsContent value="dados" className="mt-3 space-y-4">
-                <DadosFormularioPublicoSection
-                    cliente={c as any}
-                    cadastroInterno={{
-                      preenchidos: cadastroCompleteness.preenchidos,
-                      total: cadastroCompleteness.total,
-                    }}
-                    onVerPendencias={() => {
-                      const el = document.querySelector('[data-pendente="true"]') as HTMLElement | null;
-                      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-                    }}
-                    onApplied={async () => {
-                      await loadSubData(c);
-                      await loadCadastrosPublicos();
-                    }}
-                />
-
-                {/* IDENTIFICAÇÃO */}
-                <QAOperationalSection
-                  icon={User}
-                  title="Identificação"
-                  status={(() => {
-                    const s = cadastroCompleteness.secoes.identificacao;
-                    return (
-                      <QAStatusChip
-                        label={`${s.preenchidos}/${s.total} preenchidos`}
-                        tone={s.preenchidos >= s.total ? "ok" : "warn"}
-                      />
-                    );
-                  })()}
-                >
-                  <QAInfoCard padding="md">
-                    <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Nome" value={renderObrig(c.nome_completo, !c.nome_completo)} />
-                      <QAFieldRow label="CPF" value={renderObrig(formatCpf(c.cpf), !c.cpf)} copyable copyValue={(c.cpf || "").replace(/\D/g, "")} />
-                      <div className="py-1">
-                        <SenhaGovField
-                          cadastroCrId={cadastro?.id}
-                          clienteId={c.id}
-                          variant="exposed"
-                          contexto="aba Dados"
-                        />
-                      </div>
-                      <QAFieldRow
-                        label="RG / CIN"
-                        value={renderObrig(
-                          c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : null,
-                          !c.rg
-                        )}
-                      />
-                      <QAFieldRow
-                        label="Expedição RG"
-                        value={renderObrig(formatDate((c as any).expedicao_rg), !(c as any).expedicao_rg)}
-                      />
-                      <QAFieldRow label="Nascimento" value={renderObrig(formatDate(c.data_nascimento), !c.data_nascimento)} />
-                      <QAFieldRow label="Sexo" value={renderObrig(c.sexo, !c.sexo)} />
-                      <QAFieldRow
-                        label="Naturalidade"
-                        value={(() => {
-                          const mun = (c as any).naturalidade_municipio || "";
-                          const uf = (c as any).naturalidade_uf || "";
-                          const composto = c.naturalidade || [mun, uf].filter(Boolean).join("/");
-                          return renderObrig(composto || null, !composto);
-                        })()}
-                      />
-                      <QAFieldRow label="Nacionalidade" value={renderObrig(c.nacionalidade, !c.nacionalidade)} />
-                      <QAFieldRow label="Estado Civil" value={renderObrig(c.estado_civil, !c.estado_civil)} />
-                      <QAFieldRow label="Profissão" value={renderObrig(c.profissao, !c.profissao)} />
-                      <QAFieldRow label="Escolaridade" value={renderObrig(c.escolaridade, !c.escolaridade)} />
-                      <QAFieldRow
-                        label="Título Eleitor"
-                        value={renderObrig(c.titulo_eleitor, !c.titulo_eleitor)}
-                        copyable
-                        copyValue={(c.titulo_eleitor || "").replace(/\D/g, "")}
-                      />
-                    </QAFieldGrid>
-                  </QAInfoCard>
-                </QAOperationalSection>
-
-                {/* FILIAÇÃO */}
-                <QAOperationalSection
-                  icon={User}
-                  title="Filiação"
-                  status={(() => {
-                    const s = cadastroCompleteness.secoes.filiacao;
-                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
-                  })()}
-                >
-                  <QAInfoCard padding="md">
-                    <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Mãe" value={renderObrig(c.nome_mae, !c.nome_mae)} />
-                      <QAFieldRow label="Pai" value={renderObrig(c.nome_pai, !c.nome_pai)} />
-                    </QAFieldGrid>
-                  </QAInfoCard>
-                </QAOperationalSection>
-
-                {/* CONTATO */}
-                <QAOperationalSection
-                  icon={Phone}
-                  title="Contato"
-                  status={(() => {
-                    const s = cadastroCompleteness.secoes.contato;
-                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
-                  })()}
-                >
-                  <QAInfoCard padding="md">
-                    <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Celular" value={renderObrig(c.celular, !c.celular)} icon={Phone} copyable copyValue={(c.celular || "").replace(/\D/g, "")} />
-                      <QAFieldRow label="E-mail" value={renderObrig(c.email, !c.email)} icon={Mail} copyable copyValue={c.email || ""} />
-                    </QAFieldGrid>
-                  </QAInfoCard>
-                </QAOperationalSection>
-
-                {/* ENDEREÇO PRINCIPAL */}
-                <QAOperationalSection
-                  icon={MapPin}
-                  title="Endereço Principal"
-                  status={(() => {
-                    const s = cadastroCompleteness.secoes.endereco;
-                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
-                  })()}
-                >
-                  <QAInfoCard padding="md">
-                    <QAFieldGrid cols={3}>
-                      <QAFieldRow label="Logradouro" value={renderObrig(c.endereco, !c.endereco)} icon={MapPin} />
-                      <QAFieldRow label="Número" value={renderObrig(c.numero, !c.numero)} />
-                      <QAFieldRow label="Complemento" value={renderObrig(c.complemento, !c.complemento)} />
-                      <QAFieldRow label="Bairro" value={renderObrig(c.bairro, !c.bairro)} />
-                      <QAFieldRow label="CEP" value={renderObrig(c.cep, !c.cep)} copyable copyValue={(c.cep || "").replace(/\D/g, "")} />
-                      <QAFieldRow label="Cidade/UF" value={renderObrig(`${c.cidade || "—"} / ${c.estado || "—"}`, !c.cidade)} />
-                    </QAFieldGrid>
-                  </QAInfoCard>
-                </QAOperationalSection>
-
-                {/* RESPONSÁVEL PELO COMPROVANTE — condicional */}
-                {(exigeResponsavelTerceiro || temResponsavelTerceiroDado) && (
-                  <QAOperationalSection
-                    icon={User}
-                    title="Responsável pelo comprovante de endereço"
-                    status={(() => {
-                      const s = cadastroCompleteness.secoes.responsavelEndereco;
-                      if (!s) return <QAStatusChip label="Informativo" tone="neutral" />;
-                      return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
-                    })()}
-                  >
-                    <QAInfoCard padding="md">
-                      <QAFieldGrid cols={2}>
-                        <QAFieldRow label="Nome" value={renderObrig((c as any).responsavel_endereco_nome, !((c as any).responsavel_endereco_nome) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="CPF" value={renderObrig((c as any).responsavel_endereco_cpf, !((c as any).responsavel_endereco_cpf) && exigeResponsavelTerceiro)} copyable copyValue={String((c as any).responsavel_endereco_cpf || "").replace(/\D/g, "")} />
-                        <QAFieldRow label="Nascimento" value={renderObrig(formatDate((c as any).responsavel_endereco_data_nascimento), !((c as any).responsavel_endereco_data_nascimento) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Naturalidade" value={renderObrig((c as any).responsavel_endereco_naturalidade, !((c as any).responsavel_endereco_naturalidade) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Nacionalidade" value={renderObrig((c as any).responsavel_endereco_nacionalidade, !((c as any).responsavel_endereco_nacionalidade) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Estado Civil" value={renderObrig((c as any).responsavel_endereco_estado_civil, !((c as any).responsavel_endereco_estado_civil) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Profissão" value={renderObrig((c as any).responsavel_endereco_profissao, !((c as any).responsavel_endereco_profissao) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="RG / CIN" value={renderObrig((c as any).responsavel_endereco_rg_cin, !((c as any).responsavel_endereco_rg_cin) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Telefone" value={renderObrig((c as any).responsavel_endereco_telefone, !((c as any).responsavel_endereco_telefone) && exigeResponsavelTerceiro)} icon={Phone} />
-                        <QAFieldRow label="E-mail" value={(c as any).responsavel_endereco_email || "—"} icon={Mail} />
-                        <QAFieldRow label="Vínculo" value={renderObrig((c as any).responsavel_endereco_vinculo, !((c as any).responsavel_endereco_vinculo) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="CEP" value={renderObrig((c as any).responsavel_endereco_cep, !((c as any).responsavel_endereco_cep) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Logradouro" value={renderObrig((c as any).responsavel_endereco_logradouro, !((c as any).responsavel_endereco_logradouro) && exigeResponsavelTerceiro)} icon={MapPin} />
-                        <QAFieldRow label="Número" value={renderObrig((c as any).responsavel_endereco_numero, !((c as any).responsavel_endereco_numero) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Complemento" value={(c as any).responsavel_endereco_complemento || "—"} />
-                        <QAFieldRow label="Bairro" value={renderObrig((c as any).responsavel_endereco_bairro, !((c as any).responsavel_endereco_bairro) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Cidade/UF" value={renderObrig(`${(c as any).responsavel_endereco_cidade || "—"} / ${(c as any).responsavel_endereco_estado || "—"}`, !((c as any).responsavel_endereco_cidade) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Geolocalização" value={(c as any).responsavel_endereco_geolocalizacao || "—"} />
-                        <QAFieldRow label="Reside desde" value={renderObrig(formatDate((c as any).responsavel_endereco_reside_desde), !((c as any).responsavel_endereco_reside_desde) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Residiu até" value={formatDate((c as any).responsavel_endereco_residiu_ate) || "—"} />
-                        <QAFieldRow label="Declaração de residência" value={renderObrig((c as any).responsavel_endereco_declaracao_path ? "Anexada" : null, !((c as any).responsavel_endereco_declaracao_path) && exigeResponsavelTerceiro)} />
-                        <QAFieldRow label="Comprovante" value={renderObrig((c as any).responsavel_endereco_comprovante_path ? "Anexado" : null, !((c as any).responsavel_endereco_comprovante_path) && exigeResponsavelTerceiro)} />
-                      </QAFieldGrid>
-                    </QAInfoCard>
-                  </QAOperationalSection>
+                <Section title="Identificação">
+                  <Field label="Nome" value={c.nome_completo} />
+                  <Field label="CPF" value={formatCpf(c.cpf)} copyable />
+                  {cadastro?.senha_gov && <Field label="Senha Gov" value={cadastro.senha_gov} copyable />}
+                  <Field label="RG / CIN" value={c.rg ? `${maskRg(c.rg)}${c.emissor_rg ? ` — ${c.emissor_rg}` : ""}${(c as any).uf_emissor_rg ? `/${(c as any).uf_emissor_rg}` : ""}` : "—"} />
+                  <Field label="Nascimento" value={formatDate(c.data_nascimento)} />
+                  <Field label="Naturalidade" value={c.naturalidade} />
+                  <Field label="Nacionalidade" value={c.nacionalidade} />
+                  <Field label="Estado Civil" value={c.estado_civil} />
+                  <Field label="Profissão" value={c.profissao} />
+                  <Field label="Escolaridade" value={c.escolaridade} />
+                  <Field label="Título Eleitor" value={c.titulo_eleitor} />
+                </Section>
+                <Section title="Filiação">
+                  <Field label="Mãe" value={c.nome_mae} />
+                  <Field label="Pai" value={c.nome_pai} />
+                </Section>
+                <Section title="Contato">
+                  <Field label="Celular" value={c.celular} icon={Phone} />
+                  <Field label="Email" value={c.email} icon={Mail} />
+                </Section>
+                <Section title="Endereço Principal">
+                  <Field label="Logradouro" value={`${c.endereco || ""}, ${c.numero || ""}`} icon={MapPin} />
+                  <Field label="Bairro" value={c.bairro} />
+                  <Field label="CEP" value={c.cep} />
+                  <Field label="Cidade/UF" value={`${c.cidade || ""} / ${c.estado || ""}`} />
+                  {c.complemento && <Field label="Complemento" value={c.complemento} />}
+                </Section>
+                {(c.endereco2 || c.cidade2) && (
+                  <Section title="Endereço Secundário">
+                    <Field label="Logradouro" value={`${c.endereco2 || ""}, ${c.numero2 || ""}`} icon={MapPin} />
+                    <Field label="Bairro" value={c.bairro2} />
+                    <Field label="Cidade/UF" value={`${c.cidade2 || ""} / ${c.estado2 || ""}`} />
+                  </Section>
                 )}
-
-                {(c.endereco2 || c.cidade2 || (c as any).end2_tipo) && (
-                  <QAOperationalSection
-                    icon={MapPin}
-                    title="Segundo Endereço do Imóvel"
-                    status={(() => {
-                      const s = cadastroCompleteness.secoes.segundoEndereco;
-                      return s
-                        ? <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />
-                        : <QAStatusChip label="Informativo" tone="neutral" />;
-                    })()}
-                  >
-                    <QAInfoCard padding="md">
-                      <QAFieldGrid cols={3}>
-                        <QAFieldRow label="Logradouro" value={c.endereco2} icon={MapPin} />
-                        <QAFieldRow label="Número" value={c.numero2} />
-                        <QAFieldRow label="Bairro" value={c.bairro2} />
-                        <QAFieldRow label="CEP" value={(c as any).cep2 || "—"} />
-                        <QAFieldRow label="Cidade/UF" value={`${c.cidade2 || "—"} / ${c.estado2 || "—"}`} />
-                        <QAFieldRow label="Tipo" value={(c as any).end2_tipo || "—"} />
-                        <QAFieldRow label="Observação" value={(c as any).end2_observacao || "—"} />
-                      </QAFieldGrid>
-                    </QAInfoCard>
-                  </QAOperationalSection>
-                )}
-
-                {/* DADOS COMPLEMENTARES */}
-                <QAOperationalSection
-                  icon={Database}
-                  title="Dados Complementares"
-                  status={(() => {
-                    const s = cadastroCompleteness.secoes.complementares;
-                    return <QAStatusChip label={`${s.preenchidos}/${s.total} preenchidos`} tone={s.preenchidos >= s.total ? "ok" : "warn"} />;
-                  })()}
-                >
-                  <QAInfoCard padding="md">
-                    <QAFieldGrid cols={2}>
-                      <QAFieldRow label="Origem do cadastro" value={renderObrig((c as any).origem_cadastro, !(c as any).origem_cadastro)} />
-                      <QAFieldRow label="Recebido em" value={renderObrig(formatDateTime(c.created_at), !c.created_at)} />
-                      <QAFieldRow label="Vínculo aplicado em" value={renderObrig(formatDateTime((c as any).cadastro_publico_aplicado_em), !(c as any).cadastro_publico_aplicado_em)} />
-                      <QAFieldRow label="Última atualização" value={renderObrig(formatDateTime((c as any).updated_at), !(c as any).updated_at)} />
-                    </QAFieldGrid>
-                  </QAInfoCard>
-                </QAOperationalSection>
-
                 {c.observacao && (
-                  <QAOperationalSection icon={FileText} title="Observações">
-                    <QAInfoCard padding="md">
-                      <div className="text-[12px] text-slate-700 whitespace-pre-wrap leading-relaxed font-medium">
-                        {c.observacao}
-                      </div>
-                    </QAInfoCard>
-                  </QAOperationalSection>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
+                    <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>Observações</div>
+                    <div className="text-[12px] text-slate-600 whitespace-pre-wrap leading-relaxed">{c.observacao}</div>
+                  </div>
                 )}
+                <Section title="Filiações a Clubes">
+                  <div className="flex items-center justify-end mb-1">
+                    <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
+                      <Plus className="h-3 w-3 mr-1" /> Nova Filiação
+                    </Button>
+                  </div>
+                  {filiacoes.length === 0 ? <Empty text="Nenhuma filiação." /> : filiacoes.map((f: any) => (
+                    <div key={f.id} className="flex items-center justify-between text-[10px] bg-white rounded px-2.5 py-1.5 border border-slate-200 mb-1">
+                      <div>
+                        <span className="text-slate-700">Filiação #{f.numero_filiacao || "—"}</span>
+                        <span className="text-slate-400 ml-2">Clube #{f.clube_id}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-500 text-[9px]">Val: {formatDate(f.validade_filiacao)}</span>
+                        <Button variant="ghost" size="sm" onClick={() => setFiliacaoModal({ open: true, item: f })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_filiacoes", id: f.id, title: "Excluir Filiação", desc: `Excluir filiação #${f.numero_filiacao}?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </Section>
               </TabsContent>
 
               {/* SERVIÇOS / VENDAS */}
               <TabsContent value="servicos" className="mt-3">
-                {/* Header padrão Arsenal Review */}
-                <div className="qa-card p-4 md:p-5 mb-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 60% 30% / 0.12)" }}>
-                        <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
-                      </div>
-                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(352 60% 30%)" }}>
-                        Serviços — Vendas e Processos
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:justify-end">
-                      <button
-                        onClick={() => exportVendas(clienteIdForSub, c.nome_completo)}
-                        className="text-[10px] flex items-center gap-1 hover:underline"
-                        style={{ color: "hsl(220 10% 50%)" }}
-                      >
-                        <Download className="h-3 w-3" /> EXPORTAR CSV
-                      </button>
-                      <button
-                        onClick={() => setVendaModal({ open: true })}
-                        className="text-[10px] flex items-center gap-1 px-2 py-1 rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold uppercase tracking-wider"
-                      >
-                        <Plus className="h-3 w-3" /> NOVA VENDA
-                      </button>
-                    </div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">Vendas</span>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => exportVendas(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
+                      <Download className="h-3 w-3 mr-1" /> CSV
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
+                      <Plus className="h-3 w-3 mr-1" /> Nova Venda
+                    </Button>
                   </div>
-                  {/* KPIs no topo — padrão Arsenal */}
-                  {(() => {
-                    const totalVendas = vendas.length;
-                    // Status é a fonte da verdade. forma_pagamento só indica o método escolhido,
-                    // mas a venda pode estar como NÃO PAGOU mesmo com método selecionado.
-                    const totalPagas = vendas.filter((v: any) => String(v.status || "").trim().toUpperCase() === "PAGO").length;
-                    const totalPendentes = totalVendas - totalPagas;
-                    const totalCortesia = vendas.filter((v: any) => {
-                      const its = itens.filter((i: any) => i.venda_id === (v.id_legado ?? v.id));
-                      return its.length > 0 && its.every((i: any) => i.cortesia);
-                    }).length;
-                    const valorTotalServicos = vendas.reduce(
-                      (acc: number, v: any) => acc + Number(v.valor_a_pagar || 0),
-                      0
-                    );
-                    const valorTotalPago = vendas
-                      .filter((v: any) => String(v.status || "").trim().toUpperCase() === "PAGO")
-                      .reduce((acc: number, v: any) => acc + Number(v.valor_a_pagar || 0), 0);
-                    const valorTotalPendente = valorTotalServicos - valorTotalPago;
-                    return (
-                      <>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[10px]">
-                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total</div>
-                          <div className="text-[14px] font-bold text-slate-800">{totalVendas}</div>
-                        </div>
-                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Pagas</div>
-                          <div className="text-[14px] font-bold" style={{ color: "hsl(352 60% 40%)" }}>{totalPagas}</div>
-                        </div>
-                        <div
-                          className="rounded-md border px-2 py-1.5"
-                          style={{
-                            background: totalPendentes > 0 ? "hsl(38 92% 50% / 0.10)" : "white",
-                            borderColor: totalPendentes > 0 ? "hsl(38 92% 50% / 0.40)" : "hsl(220 13% 90%)",
-                          }}
-                        >
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Pendentes</div>
-                          <div className="text-[14px] font-bold" style={{ color: totalPendentes > 0 ? "hsl(28 92% 32%)" : "hsl(220 10% 50%)" }}>
-                            {totalPendentes}
-                          </div>
-                        </div>
-                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Cortesia</div>
-                          <div className="text-[14px] font-bold" style={{ color: "hsl(152 60% 28%)" }}>{totalCortesia}</div>
-                        </div>
-                      </div>
-                      <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[10px]">
-                        <div className="rounded-md border px-2 py-1.5"
-                          style={{ background: "hsl(352 60% 30% / 0.06)", borderColor: "hsl(352 60% 30% / 0.30)" }}>
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Valor Total em Serviços</div>
-                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: "hsl(352 60% 30%)" }}>
-                            R$ {valorTotalServicos.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                        </div>
-                        <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total Pago</div>
-                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: "hsl(152 60% 28%)" }}>
-                            R$ {valorTotalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                        </div>
-                        <div className="rounded-md border px-2 py-1.5"
-                          style={{
-                            background: valorTotalPendente > 0 ? "hsl(38 92% 50% / 0.10)" : "white",
-                            borderColor: valorTotalPendente > 0 ? "hsl(38 92% 50% / 0.40)" : "hsl(220 13% 90%)",
-                          }}>
-                          <div className="text-[9px] uppercase tracking-wider text-slate-500">Total Pendente</div>
-                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: valorTotalPendente > 0 ? "hsl(28 92% 32%)" : "hsl(220 10% 50%)" }}>
-                            R$ {valorTotalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                        </div>
-                      </div>
-                      </>
-                    );
-                  })()}
                 </div>
-                {/* Solicitações de serviço vindas do formulário público
-                    — exibidas como leads operacionais; não criam pagamento. */}
-                {solicitacoesPublicas.filter(s => !s.ja_convertido).length > 0 && (
-                  <div className="mb-4 rounded-lg border border-[#E5C2C6] bg-[#7A1F2B]/60 p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#4F121C]">
-                        Solicitações — Formulário público
-                      </span>
-                      <span className="text-[10px] text-[#4F121C]">
-                        {solicitacoesPublicas.filter(s => !s.ja_convertido).length} aguardando contratação
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {solicitacoesPublicas.filter(s => !s.ja_convertido).map(s => (
-                        <div key={s.cadastro_publico_id} className="rounded-md border border-[#E5C2C6] bg-white p-2.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="text-[12px] font-semibold text-slate-800 truncate">
-                                {s.servico.nome}
-                              </div>
-                              <div className="text-[10px] text-slate-500 mt-0.5">
-                                Origem: <span className="font-semibold">Formulário público</span>
-                                {s.servico_interesse && (
-                                  <> · Texto do formulário: <span className="font-mono">{s.servico_interesse}</span></>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#F1D9DC] text-[#3D0E16] border border-[#E5C2C6]">
-                                  Aguardando contratação
-                                </span>
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                                  Sem cobrança vinculada
-                                </span>
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                                  Processo ainda não aberto
-                                </span>
-                                {s.servico.pendente_classificacao && (
-                                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200">
-                                    Classificação pendente
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            {!s.ja_convertido && (
-                              <Button
-                                size="sm"
-                                variant="default"
-                                className="h-7 text-[10px] shrink-0"
-                                onClick={() => {
-                                  setVendaModal({ open: true, solicitacaoId: s.solicitacao_id });
-                                }}
-                              >
-                                <Plus className="h-3 w-3 mr-1" /> Gerar venda
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 {vendas.length === 0 ? <Empty text="Nenhuma venda registrada." /> : (
                   <div className="space-y-3">
                     {vendas.map((v: any) => {
@@ -3143,79 +1900,22 @@ export default function QAClientesPage() {
                         });
                       return (
                         <div key={v.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 py-2 border-b border-slate-200 bg-slate-50/40">
-                            <div className="flex items-center gap-2 flex-wrap min-w-0">
-                              <span
-                                className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
-                                style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}
-                              >
-                                VENDA #{v.id_legado ?? v.id}
-                              </span>
-                              <span className="text-[12px] font-semibold text-slate-600">{formatDate(v.data_cadastro)}</span>
-                              <span className="flex justify-start sm:hidden">
-                                {(() => {
-                                  const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
-                                  const isPago = String(v.status || "").trim().toUpperCase() === "PAGO";
-                                  if (allCortesia) return (
-                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
-                                      CORTESIA
-                                    </span>
-                                  );
-                                  if (isPago) return (
-                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
-                                      PAGO
-                                    </span>
-                                  );
-                                  return (
-                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(38 92% 50% / 0.18)", color: "hsl(28 92% 32%)" }}>
-                                      PENDENTE
-                                    </span>
-                                  );
-                                })()}
-                              </span>
+                          <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+                            <div className="text-[11px]">
+                              <span className="text-slate-700 font-medium">Venda #{v.id_legado ?? v.id}</span>
+                              <span className="text-slate-400 ml-2">{formatDate(v.data_cadastro)}</span>
                             </div>
-                            <div className="flex items-center gap-1 sm:shrink-0 flex-wrap sm:flex-nowrap justify-end">
-                              <span className="hidden sm:flex w-[88px] justify-start">
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="w-[88px] flex justify-start">
                                 {(() => {
                                   const allCortesia = vItens.length > 0 && vItens.every((i: any) => i.cortesia);
-                                  const isPago = String(v.status || "").trim().toUpperCase() === "PAGO";
-                                  if (allCortesia) return (
-                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
-                                      CORTESIA
-                                    </span>
-                                  );
-                                  if (isPago) return (
-                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(152 60% 38% / 0.12)", color: "hsl(152 60% 28%)" }}>
-                                      PAGO
-                                    </span>
-                                  );
-                                  return (
-                                    <span className="px-1.5 py-[1px] rounded text-[9px] font-bold uppercase tracking-wider"
-                                      style={{ background: "hsl(38 92% 50% / 0.18)", color: "hsl(28 92% 32%)" }}>
-                                      PENDENTE
-                                    </span>
-                                  );
+                                  const isPago = v.status === "PAGO" || !!v.forma_pagamento;
+                                  if (allCortesia) return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">CORTESIA</span>;
+                                  if (isPago) return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-200">PAGO</span>;
+                                  return <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200">PENDENTE</span>;
                                 })()}
                               </span>
-                              <div className="flex items-center gap-0.5 flex-wrap justify-end">
-                                {/* FASE 16-C — Gerar processo a partir de venda aprovada */}
-                                {/* Aprovar valor em 1 clique (libera o checklist) */}
-                                <AprovarValorButton
-                                  venda={v}
-                                  onApproved={() => { loadSubData(selected!, { silent: true }); loadClientes(); }}
-                                />
-                                <GerarProcessoButton
-                                  venda={v}
-                                  itens={itens}
-                                  clienteNome={c.nome_completo}
-                                  processoExistente={processosVenda.find((p: any) => p.venda_id === v.id) || null}
-                                  onCreated={() => loadSubData(selected!, { silent: true })}
-                                />
+                              <div className="flex items-center gap-0.5">
                                 <Button variant="ghost" size="sm" onClick={() => setVendaModal({ open: true, item: v })} className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700">
                                   <Edit className="h-3.5 w-3.5" />
                                 </Button>
@@ -3282,21 +1982,19 @@ export default function QAClientesPage() {
                                           });
                                       }}
                                     >
-                                      <SelectTrigger
-                                        className={`h-6 w-auto min-w-0 px-2 text-[9px] font-mono rounded border bg-white text-gray-700 border-gray-200 hover:border-gray-300 gap-1 shadow-none ${statusBadgeClass(it.status)}`}
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
+                                      <SelectTrigger className={`h-5 w-auto min-w-0 px-1.5 text-[9px] font-mono border-0 bg-transparent gap-0.5 ${svcStatusColor(it.status)}`} onClick={(e) => e.stopPropagation()}>
                                         <SelectValue placeholder="SELECIONAR STATUS" />
                                       </SelectTrigger>
-                                      <SelectContent className="bg-white border border-gray-200 shadow-md">
-                                        {STATUS_SERVICO_QA.map(s => (
-                                          <SelectItem key={s} value={s} className="text-[10px] text-gray-700">
-                                            {STATUS_LABELS[s]}
-                                          </SelectItem>
+                                      <SelectContent>
+                                        {(statusList.length > 0
+                                          ? statusList.map(s => s.nome)
+                                          : ["EM ANÁLISE", "PRONTO PARA ANÁLISE", "À INICIAR", "À FAZER", "AGUARDANDO DOCUMENTAÇÃO", "PASTA FÍSICA - AGUARDANDO LIBERAÇÃO", "DEFERIDO", "INDEFERIDO", "RECURSO ADMINISTRATIVO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO"]
+                                        ).map(s => (
+                                          <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
                                         ))}
                                       </SelectContent>
                                     </Select>
-                                    <span className="text-[12px] font-bold text-slate-800 truncate uppercase tracking-tight">{getServicoNome(it.servico_id)}</span>
+                                    <span className="text-slate-700 truncate">{getServicoNome(it.servico_id)}</span>
                                     {(() => {
                                       // Número identificador exibido em coluna central de largura fixa para manter o alinhamento entre todos os serviços.
                                       const inlineNumero =
@@ -3304,7 +2002,7 @@ export default function QAClientesPage() {
                                         it.servico_id === 3 ? it.numero_requerimento :
                                         it.numero_processo;
                                       return (
-                                        <span className="hidden sm:flex w-[140px] shrink-0 justify-center text-slate-500 font-mono text-[11px] font-semibold tabular-nums">
+                                        <span className="hidden sm:flex w-[140px] shrink-0 justify-center text-slate-400 font-mono text-[9px] tabular-nums">
                                           {inlineNumero || ""}
                                         </span>
                                       );
@@ -3313,11 +2011,11 @@ export default function QAClientesPage() {
                                   <div className="flex items-center gap-1 shrink-0">
                                     <span className="w-[88px] flex justify-start">
                                       {it.cortesia ? (
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
+                                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200" title={it.cortesia_motivo || "Cortesia"}>
                                           CORTESIA
                                         </span>
                                       ) : (
-                                        <span className="text-slate-900 font-mono font-bold tabular-nums text-[14px]">R$ {Number(it.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span className="text-slate-600 font-mono tabular-nums text-[10px]">R$ {Number(it.valor || 0).toFixed(0)}</span>
                                       )}
                                     </span>
                                     <Button
@@ -3347,7 +2045,7 @@ export default function QAClientesPage() {
                                       </div>
                                     </div>
                                     {!isStatusDefinido(it.status) ? (
-                                      <div className="rounded-md border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-2 text-[10px] text-[#4F121C]">
+                                      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] text-amber-700">
                                         ⚠️ Selecione o <strong>status</strong> deste serviço para liberar o preenchimento do formulário.
                                       </div>
                                     ) : (
@@ -3367,7 +2065,7 @@ export default function QAClientesPage() {
                                                 setItemEditForm(prev => ({ ...prev, [field.key]: val }));
                                               }}
                                               placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-[#7A1F2B]"}`}
+                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-blue-500"}`}
                                             />
                                           </div>
                                         ))}
@@ -3382,25 +2080,14 @@ export default function QAClientesPage() {
                             ))}
                               </SortableContext>
                             </DndContext>
-                            <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
-                              <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">Total</span>
-                              <div className="flex gap-3 items-center">
-                                {Number(v.desconto) > 0 && <span className="text-[14px] font-bold text-[#641722] font-mono tabular-nums">Desc: R$ {Number(v.desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
-                                <span className="text-[17px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <div className="flex justify-between pt-1 border-t border-slate-200 text-[10px]">
+                              <span className="text-slate-400">Total</span>
+                              <div className="flex gap-3">
+                                {Number(v.desconto) > 0 && <span className="text-amber-400">Desc: R$ {Number(v.desconto).toFixed(0)}</span>}
+                                <span className="text-slate-700 font-medium">R$ {Number(v.valor_a_pagar).toFixed(0)}</span>
                               </div>
                             </div>
                           </div>
-                          {/* Timeline operacional — só quando há solicitação canônica vinculada */}
-                          {v.solicitacao_id && (
-                            <details className="border-t border-slate-100 px-3 py-2 bg-slate-50/40">
-                              <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-[#7A1F2B] select-none">
-                                Linha do tempo do serviço
-                              </summary>
-                              <div className="mt-3 pl-1">
-                                <SolicitacaoTimeline solicitacaoId={v.solicitacao_id} />
-                              </div>
-                            </details>
-                          )}
                         </div>
                       );
                     })}
@@ -3408,9 +2095,143 @@ export default function QAClientesPage() {
                 )}
               </TabsContent>
 
+              {/* ARMAS */}
+              <TabsContent value="armas" className="mt-3 space-y-4">
+                {/* CRAFs */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">CRAFs ({crafs.length})</span>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => exportCrafs(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
+                        <Download className="h-3 w-3 mr-1" /> CSV
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
+                        <Plus className="h-3 w-3 mr-1" /> Novo CRAF
+                      </Button>
+                    </div>
+                  </div>
+                  {crafs.length === 0 ? <Empty text="Nenhum CRAF." /> : crafs.map((cr: any) => (
+                    <div key={cr.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 mb-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-700 font-medium">{cr.nome_arma}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] text-slate-500">Val: {formatDate(cr.data_validade)}</span>
+                          <Button variant="ghost" size="sm" onClick={() => setCrafModal({ open: true, item: cr })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_crafs", id: cr.id, title: "Excluir CRAF", desc: `Excluir CRAF "${cr.nome_arma}"?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 mt-1 text-[9px] text-slate-500">
+                        {cr.numero_sigma && <span>SIGMA: {cr.numero_sigma}</span>}
+                        {cr.numero_arma && <span>Nº: {cr.numero_arma}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* GTEs */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">GTEs ({gtes.length})</span>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => exportGtes(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
+                        <Download className="h-3 w-3 mr-1" /> CSV
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true })} className="h-6 px-2 text-[9px] text-emerald-400">
+                        <Plus className="h-3 w-3 mr-1" /> Novo GTE
+                      </Button>
+                    </div>
+                  </div>
+                  {gtes.length === 0 ? <Empty text="Nenhum GTE." /> : gtes.map((g: any) => (
+                    <div key={g.id} className="bg-white border border-slate-200 rounded-lg px-3 py-2 mb-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-700 font-medium">{g.nome_arma}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] text-slate-500">Val: {formatDate(g.data_validade)}</span>
+                          <Button variant="ghost" size="sm" onClick={() => setGteModal({ open: true, item: g })} className="h-5 w-5 p-0 text-slate-400 hover:text-slate-700"><Edit className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setDeleteModal({ open: true, table: "qa_gtes", id: g.id, title: "Excluir GTE", desc: `Excluir GTE "${g.nome_arma}"?` })} className="h-5 w-5 p-0 text-slate-400 hover:text-red-400"><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 mt-1 text-[9px] text-slate-500">
+                        {g.numero_sigma && <span>SIGMA: {g.numero_sigma}</span>}
+                        {g.numero_arma && <span>Nº: {g.numero_arma}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* CR */}
+              <TabsContent value="cr" className="mt-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[9px] text-blue-600 uppercase tracking-[0.12em] font-semibold">Certificado de Registro</span>
+                  <div className="flex gap-1">
+                    {cadastro && (
+                      <Button variant="ghost" size="sm" onClick={() => exportCr(clienteIdForSub, c.nome_completo)} className="h-6 px-2 text-[9px] text-slate-500">
+                        <Download className="h-3 w-3 mr-1" /> CSV
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => setCrModal({ open: true, item: cadastro || undefined })} className="h-6 px-2 text-[9px] text-emerald-400">
+                      {cadastro ? <><Edit className="h-3 w-3 mr-1" /> Editar</> : <><Plus className="h-3 w-3 mr-1" /> Cadastrar CR</>}
+                    </Button>
+                  </div>
+                </div>
+                {!cadastro ? <Empty text="Nenhum cadastro CR encontrado." /> : (() => {
+                  const cat = (c as any).categoria_titular as CategoriaTitular | null | undefined;
+                  const dispensaLaudo = isDispensado(cat, "laudo_psicologico");
+                  const dispensaTiro = isDispensado(cat, "exame_tiro");
+                  const baseLegal = getBaseLegalDispensa(cat);
+                  const catLabel = cat ? CATEGORIA_MAP[cat]?.label : null;
+                  return (
+                    <div className="space-y-1">
+                      {catLabel && (
+                        <div className="mb-2 px-2 py-1.5 rounded-md bg-blue-50 border border-blue-100 flex items-center gap-1.5">
+                          <Shield className="h-3 w-3 text-blue-600" />
+                          <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">{catLabel}</span>
+                        </div>
+                      )}
+                      <Field label="Nº CR" value={cadastro.numero_cr} />
+                      <Field label="Validade CR" value={formatDate(cadastro.validade_cr)} />
+                      {dispensaLaudo ? (
+                        <div className="py-1.5">
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Laudo Psicológico</div>
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
+                            <Shield className="h-2.5 w-2.5 text-emerald-700" />
+                            <span className="text-[10px] font-bold text-emerald-700">DISPENSADO POR LEI</span>
+                          </div>
+                          {baseLegal && <div className="text-[9px] text-slate-400 mt-0.5 italic">{baseLegal}</div>}
+                        </div>
+                      ) : (
+                        <Field label="Laudo Psicológico" value={formatDate(cadastro.validade_laudo_psicologico)} />
+                      )}
+                      {dispensaTiro ? (
+                        <div className="py-1.5">
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Exame de Tiro</div>
+                          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200">
+                            <Shield className="h-2.5 w-2.5 text-emerald-700" />
+                            <span className="text-[10px] font-bold text-emerald-700">DISPENSADO POR LEI</span>
+                          </div>
+                          {baseLegal && <div className="text-[9px] text-slate-400 mt-0.5 italic">{baseLegal}</div>}
+                        </div>
+                      ) : (
+                        <Field label="Exame de Tiro" value={formatDate(cadastro.validade_exame_tiro)} />
+                      )}
+                      <Field label="Senha Gov" value={cadastro.senha_gov} />
+                      {/* Checks ✓ só aparecem se NÃO dispensado E marcado */}
+                      <div className="flex gap-4 mt-2 text-[10px]">
+                        {!dispensaLaudo && cadastro.check_laudo_psi && <span className="text-emerald-400">✓ Laudo Psicológico OK</span>}
+                        {!dispensaTiro && cadastro.check_exame_tiro && <span className="text-emerald-400">✓ Exame de Tiro OK</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </TabsContent>
+              {/* DOCUMENTOS */}
+              <TabsContent value="docs" className="mt-3">
+                <DocumentGenerator cliente={c} />
+              </TabsContent>
               {/* EXAMES */}
               <TabsContent value="exames" className="mt-3">
-                <ClienteExames cliente={c} onChanged={async () => { await loadSubData(c); }} />
+                <ClienteExames cliente={c} />
               </TabsContent>
               {/* PEÇAS JURÍDICAS */}
               <TabsContent value="pecas" className="mt-3">
@@ -3418,27 +2239,14 @@ export default function QAClientesPage() {
               </TabsContent>
               {/* HUB DO CLIENTE — documentos enviados pelo próprio cliente */}
               <TabsContent value="hub" className="mt-3">
-                <ClienteDocsCadastroPublico cliente={c} />
                 <ClienteDocsEnviados cliente={c} />
               </TabsContent>
               {/* ACESSO AO PORTAL */}
-              <TabsContent value="historico" className="mt-3 space-y-3">
-                <BlocoSecao
-                  icon={Clock}
-                  titulo="Linha do Tempo / Auditoria"
-                  statusTone="info"
-                  statusLabel="Histórico"
-                >
-                  <div className="qa-card p-4 md:p-5">
-                    <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
-                  </div>
-                </BlocoSecao>
+              <TabsContent value="historico" className="mt-3">
+                <HistoricoAtualizacoes clienteId={c.id} showSnapshot />
               </TabsContent>
               <TabsContent value="portal" className="mt-3">
                 <ClienteAcessoPortal cliente={c} />
-              </TabsContent>
-              <TabsContent value="destravar" className="mt-3">
-                <ClienteDestravarCadastro cliente={c} />
               </TabsContent>
             </>
           )}
@@ -3452,27 +2260,20 @@ export default function QAClientesPage() {
             if (data) setSelected(data as any);
           }
         }} cliente={editingCliente} />
-        <VendaModal
-          open={vendaModal.open}
-          onClose={() => setVendaModal({ open: false })}
-          onSaved={() => {
-            void loadSubData(selected!);
-            void reloadSolicitacoes();
-          }}
-          clienteId={clienteIdForSub}
-          venda={vendaModal.item}
-          solicitacaoId={vendaModal.solicitacaoId ?? null}
-        />
-        <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} mode={deleteModal.mode} />
+        <CrafModal open={crafModal.open} onClose={() => setCrafModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} craf={crafModal.item} />
+        <GteModal open={gteModal.open} onClose={() => setGteModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} gte={gteModal.item} />
+        <CrModal open={crModal.open} onClose={() => setCrModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} cadastro={crModal.item} />
+        <VendaModal open={vendaModal.open} onClose={() => setVendaModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} venda={vendaModal.item} />
+        <FiliacaoModal open={filiacaoModal.open} onClose={() => setFiliacaoModal({ open: false })} onSaved={() => loadSubData(selected!)} clienteId={clienteIdForSub} filiacao={filiacaoModal.item} />
+        <DeleteConfirm open={deleteModal.open} onClose={() => setDeleteModal({ ...deleteModal, open: false })} onConfirm={handleDelete} title={deleteModal.title} description={deleteModal.desc} loading={deleting} />
       </div>
     );
   }
 
   const cadastroStatusColor = (s: string) => {
-    const normalized = String(s || "").toLowerCase();
-    if (CADASTRO_PUBLICO_APROVADO_STATUSES.has(normalized)) return "text-emerald-600 bg-emerald-50";
-    if (CADASTRO_MIRA_PENDENTE_STATUSES.has(normalized)) return "text-[#641722] bg-[#FBF3F4]";
-    if (normalized === "rejeitado" || normalized === "abandonado") return "text-red-600 bg-red-50";
+    if (s === "aprovado") return "text-emerald-600 bg-emerald-50";
+    if (s === "pendente") return "text-amber-600 bg-amber-50";
+    if (s === "rejeitado") return "text-red-600 bg-red-50";
     return "text-slate-500 bg-slate-100";
   };
 
@@ -3493,7 +2294,7 @@ export default function QAClientesPage() {
         key={`edit-${fieldKey}`}
         value={ef[fieldKey] || ""}
         onChange={e => setEf(fieldKey, e.target.value.toUpperCase())}
-        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5"
+        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
         style={{ color: "hsl(220 20% 18%)" }}
       />
     );
@@ -3510,231 +2311,125 @@ export default function QAClientesPage() {
       return <DetailField label={label} value={value} copyable={opts?.copyable} />;
     };
 
-    const statusChips = computeConferenciaStatus(c as any);
-    const proxima = decidirProximaAcao(c as any);
-    const cidadeUf = [c.end1_cidade, c.end1_estado].filter(Boolean).join(" / ") || null;
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <button
+              onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
+              className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100 shrink-0"
+              style={{ border: "1px solid hsl(220 13% 90%)" }}
+            >
+              <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg md:text-xl font-bold tracking-tight break-words" style={{ color: "hsl(220 20% 14%)" }}>
+                {c.nome_completo}
+              </h1>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${cadastroStatusColor(c.status)}`}>
+                  {String(c.status || "").toUpperCase()}
+                </span>
+                <span
+                  className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
+                    c.pago
+                      ? "bg-emerald-500 text-white border-emerald-500"
+                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                  }`}
+                >
+                  {c.pago ? "PAGO" : "NÃO PAGO"}
+                </span>
+                <span className="text-[11px]" style={{ color: "hsl(220 10% 55%)" }}>CPF: {formatCpf(c.cpf)}</span>
+              </div>
+            </div>
+            <SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />
+          </div>
 
-    const backBtn = (
-      <button
-        onClick={() => { setSelectedCadastroPublico(null); setEditingCadastroPublico(false); }}
-        className="mt-0.5 w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-slate-100 shrink-0"
-        style={{ border: "1px solid hsl(220 13% 90%)" }}
-        title="Voltar"
-      >
-        <ChevronLeft className="h-4 w-4" style={{ color: "hsl(220 10% 46%)" }} />
-      </button>
-    );
-
-    const actionsPrimary = (
-      <>
-        {isEditing ? (
-          <>
-            <button
-              onClick={() => setEditingCadastroPublico(false)}
-              className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all hover:bg-slate-50 inline-flex items-center gap-1"
-              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-            >
-              <X className="h-3.5 w-3.5" /> Cancelar
-            </button>
-            <button
-              onClick={saveCadastroEdit}
-              disabled={savingCadastroEdit}
-              className="h-8 px-3 rounded-lg text-[11px] font-semibold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1"
-              style={{ background: "hsl(152 60% 40%)" }}
-            >
-              {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              Salvar
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
-              onClick={() => updateCadastroPublicoStatus("aprovado")}
-              className="h-8 px-3 rounded-lg text-[11px] font-bold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1.5"
-              style={{ background: "#7A1F2B" }}
-            >
-              {savingCadastroPublicoStatus === "aprovado" ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <CheckCircle className="h-3.5 w-3.5" />
-              )}
-              Validar cadastro
-            </button>
-            <button
-              disabled={!!savingCadastroPublicoStatus}
-              onClick={() => togglePagoCadastroPublico()}
-              className={`h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 ${
-                c.pago
-                  ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-              }`}
-              title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
-            >
-              {savingCadastroPublicoStatus?.startsWith("pago") ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                c.pago ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />
-              )}
-              {c.pago ? "Não pago" : "Marcar pago"}
-            </button>
-            <button
-              onClick={startEditCadastro}
-              className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all hover:bg-slate-50 inline-flex items-center gap-1.5"
-              style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
-            >
-              <Edit className="h-3.5 w-3.5" /> Editar
-            </button>
-            {(() => {
-              const isConferido = ["aprovado", "conferido", "validado", "formulario_conferido"]
-                .includes(String(c.status || "").toLowerCase());
-              if (!isConferido) return null;
-              return (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center md:flex-nowrap md:justify-end gap-1.5 md:gap-2">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => setEditingCadastroPublico(false)}
+                  className="h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-medium border transition-all hover:bg-slate-50 flex items-center justify-center gap-1"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  <X className="h-3.5 w-3.5" /> Cancelar
+                </button>
+                <button
+                  onClick={saveCadastroEdit}
+                  disabled={savingCadastroEdit}
+                  className="h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
+                  style={{ background: "hsl(152 60% 40%)" }}
+                >
+                  {savingCadastroEdit ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Salvar
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={startEditCadastro}
+                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all hover:bg-slate-50 flex items-center justify-center gap-1"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  <Edit className="h-3.5 w-3.5" /> Editar
+                </button>
+                <button
+                  disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
+                  onClick={() => updateCadastroPublicoStatus("rejeitado")}
+                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50 flex items-center justify-center gap-1"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                  Rejeitar
+                </button>
+                <button
+                  disabled={!!savingCadastroPublicoStatus || c.status === "pendente"}
+                  onClick={() => updateCadastroPublicoStatus("pendente")}
+                  className="h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-medium border transition-all disabled:opacity-40 hover:bg-slate-50 flex items-center justify-center gap-1"
+                  style={{ borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 30%)" }}
+                >
+                  {savingCadastroPublicoStatus === "pendente" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  Pendente
+                </button>
                 <button
                   disabled={!!savingCadastroPublicoStatus}
-                  onClick={() => updateCadastroPublicoStatus("pendente")}
-                  className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-[#FBF3F4] text-[#3D0E16] border-[#E5C2C6] hover:bg-[#F1D9DC]"
-                  title="Voltar para pendente (remove a conferência)"
+                  onClick={() => togglePagoCadastroPublico()}
+                  className={`h-8 md:h-9 px-2 md:px-3 rounded-lg text-[11px] md:text-xs font-semibold border transition-all disabled:opacity-40 flex items-center justify-center gap-1 ${
+                    c.pago
+                      ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+                      : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
+                  }`}
+                  title={c.pago ? "Marcar como NÃO pago" : "Marcar como pago"}
                 >
-                  {savingCadastroPublicoStatus === "pendente" ? (
+                  {savingCadastroPublicoStatus === "pago" ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <RefreshCw className="h-3.5 w-3.5" />
+                    <CheckCircle className="h-3.5 w-3.5" />
                   )}
-                  Remover conferência
+                  Pago
                 </button>
-              );
-            })()}
-          </>
-        )}
-      </>
-    );
-
-    const actionsDestructive = !isEditing ? (
-      <>
-        <button
-          disabled={!!savingCadastroPublicoStatus || c.status === "rejeitado"}
-          onClick={() => updateCadastroPublicoStatus("rejeitado")}
-          className="h-8 px-3 rounded-lg text-[11px] font-medium border transition-all disabled:opacity-40 hover:bg-red-50 inline-flex items-center gap-1.5 text-red-700 border-red-200"
-        >
-          {savingCadastroPublicoStatus === "rejeitado" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-          Rejeitar
-        </button>
-        {c.status === "rejeitado" && !(c as any).cliente_id_vinculado && (
-          <button
-            disabled={!!savingCadastroPublicoStatus}
-            onClick={() => excluirDefinitivamenteCadastroPublico()}
-            className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-            title="Excluir cadastro definitivamente (libera o CPF)"
-          >
-            {savingCadastroPublicoStatus === "excluindo" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Trash2 className="h-3.5 w-3.5" />
-            )}
-            Excluir
-          </button>
-        )}
-      </>
-    ) : null;
-
-    return (
-      <>
-      <div className="max-w-7xl mx-auto space-y-4">
-        <ConferenciaHeader
-          backSlot={backBtn}
-          selfieSlot={<SelfieThumb path={(c as any).selfie_path} name={c.nome_completo} />}
-          nome={c.nome_completo}
-          cpfFormatado={formatCpf(c.cpf)}
-          email={c.email}
-          telefone={c.telefone_principal}
-          cidadeUf={cidadeUf}
-          servicoInteresse={c.servico_interesse}
-          recebidoEm={formatDateTime(c.created_at)}
-          status={statusChips}
-          actionsPrimary={actionsPrimary}
-          actionsDestructive={actionsDestructive}
-          badges={
-            (c as any).cliente_id_vinculado ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-800">
-                <CheckCircle className="h-3 w-3" /> Cliente vinculado #{(c as any).cliente_id_vinculado}
-              </span>
-            ) : null
-          }
-        />
-
-        {/* Painel SLA — só aparece quando pago */}
-        {c.pago && (() => {
-          const sla = calcularSla({
-            pago_em: (c as any).pago_em,
-            aguardando_cliente_desde: (c as any).aguardando_cliente_desde,
-            dias_pausados: (c as any).dias_pausados,
-            sla_concluido_em: (c as any).sla_concluido_em,
-          });
-          if (!sla) return null;
-          const aguardando = (c as any).aguardando_cliente_desde;
-          const concluido = !!(c as any).sla_concluido_em;
-          return (
-            <div className="rounded-xl border p-3 md:p-4" style={{ background: sla.bg, borderColor: `${sla.cor}55` }}>
-              <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Clock className="h-4 w-4 flex-shrink-0" style={{ color: sla.cor }} />
-                  <span className="text-xs font-bold" style={{ color: sla.cor }}>SLA: {sla.label}</span>
-                </div>
-                <span className="text-[10px] text-slate-600">
-                  {sla.diasCorridos}d corridos · {sla.diasPausados}d em pausa
-                </span>
-              </div>
-              {(c as any).ultima_solicitacao_cliente && aguardando && (
-                <p className="text-[11px] mb-2 text-slate-700" style={{ overflowWrap: "anywhere" }}>
-                  ⏸ Pendência: <strong>{(c as any).ultima_solicitacao_cliente}</strong>
-                </p>
-              )}
-              {!concluido && (
-                <div className="flex flex-wrap gap-2">
-                  {!aguardando ? (
-                    <button
-                      disabled={savingCadastroPublicoStatus === "sla"}
-                      onClick={handleAguardandoCliente}
-                      className="h-8 px-3 rounded-lg text-[11px] font-semibold border bg-white hover:bg-slate-50 disabled:opacity-40 flex items-center gap-1"
-                      style={{ borderColor: "#cbd5e1", color: "#475569" }}
-                    >
-                      <Pause className="h-3.5 w-3.5" /> Aguardando cliente
-                    </button>
+                <button
+                  disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
+                  onClick={() => updateCadastroPublicoStatus("aprovado")}
+                  className="col-span-2 sm:col-span-1 h-8 md:h-9 px-2 md:px-4 rounded-lg text-[11px] md:text-xs font-semibold text-white transition-all disabled:opacity-40 flex items-center justify-center gap-1"
+                  style={{ background: "hsl(230 80% 56%)" }}
+                >
+                  {savingCadastroPublicoStatus === "aprovado" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <button
-                      disabled={savingCadastroPublicoStatus === "sla"}
-                      onClick={handleRetomarSla}
-                      className="h-8 px-3 rounded-lg text-[11px] font-semibold border bg-white hover:bg-slate-50 disabled:opacity-40 flex items-center gap-1"
-                      style={{ borderColor: "#6366f1", color: "#6366f1" }}
-                    >
-                      <Play className="h-3.5 w-3.5" /> Documentos recebidos
-                    </button>
+                    <CheckCircle className="h-3.5 w-3.5" />
                   )}
-                  <button
-                    disabled={savingCadastroPublicoStatus === "sla"}
-                    onClick={handleConcluirSla}
-                    className="h-8 px-3 rounded-lg text-[11px] font-semibold text-white hover:opacity-90 disabled:opacity-40 flex items-center gap-1"
-                    style={{ background: "#16a34a" }}
-                  >
-                    <CheckCircle className="h-3.5 w-3.5" /> Concluir serviço
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })()}
+                  Validar
+                </button>
+              </>
+            )}
+          </div>
+        </div>
 
-        {/* Content cards + Próxima Ação */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 items-start">
-          <div className="space-y-4 min-w-0">
-          {/* ── BLOCO: SERVIÇO SOLICITADO ── */}
-          <BlocoSecao
-            icon={Briefcase}
-            titulo="Serviço Solicitado"
-            statusLabel={statusChips.servico.label}
-            statusTone={statusChips.servico.kind === "ok" ? "ok" : statusChips.servico.kind === "warn" ? "warn" : statusChips.servico.kind === "danger" ? "danger" : statusChips.servico.kind === "info" ? "info" : "neutral"}
-          >
+        {/* Content cards */}
+        <div className="space-y-4">
           <DetailCard title="Resumo do Cadastro">
             <DetailGrid>
               <DetailField label="Recebido em" value={formatDateTime(c.created_at)} />
@@ -3744,7 +2439,7 @@ export default function QAClientesPage() {
                   <select
                     value={ef.servico_interesse || ""}
                     onChange={e => setEf("servico_interesse", e.target.value)}
-                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
                     style={{ color: "hsl(220 20% 18%)" }}
                   >
                     <option value="">Selecione...</option>
@@ -3778,7 +2473,7 @@ export default function QAClientesPage() {
                     value={ef.servico_fechado_final || ""}
                     onChange={e => setEf("servico_fechado_final", e.target.value)}
                     placeholder="Defina após negociação"
-                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
                     style={{ color: "hsl(220 20% 18%)" }}
                   />
                 </div>
@@ -3793,24 +2488,9 @@ export default function QAClientesPage() {
               </div>
             )}
           </DetailCard>
-          </BlocoSecao>
 
-          {/* ── BLOCO: DOCUMENTOS ENVIADOS ── */}
-          <BlocoSecao
-            icon={FileText}
-            titulo="Documentos Enviados"
-            statusLabel={statusChips.documentos.label}
-            statusTone={statusChips.documentos.kind === "ok" ? "ok" : statusChips.documentos.kind === "warn" ? "warn" : statusChips.documentos.kind === "danger" ? "danger" : "neutral"}
-          >
-            <DocumentosOperacionaisGrid
-              cadastro={c}
-              onSolicitarCorrecao={(item?: string) => {
-                setCorrecaoPreSelecionada(item ? [item] : []);
-                setCorrecaoModalOpen(true);
-              }}
-            />
-            {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
-              <DetailCard title="Scanner & OCR (ferramentas)">
+          {(c.selfie_path || c.documento_identidade_path || c.comprovante_endereco_path) && (
+            <DetailCard title="Documentos enviados pelo cliente">
               <CadastroDocumentosCard
                 cadastro={c}
                 onUpdated={(updated) => {
@@ -3818,85 +2498,8 @@ export default function QAClientesPage() {
                   setCadastrosPublicos(prev => prev.map(it => it.id === updated.id ? { ...it, ...updated } : it));
                 }}
               />
-              </DetailCard>
-            )}
-          </BlocoSecao>
-
-          {/* ── BLOCO: FINANCEIRO ── */}
-          <BlocoSecao
-            icon={Landmark}
-            titulo="Financeiro"
-            statusLabel={statusChips.financeiro.label}
-            statusTone={statusChips.financeiro.kind === "ok" ? "ok" : statusChips.financeiro.kind === "warn" ? "warn" : "neutral"}
-            acoes={
-              !isEditing ? (
-                <button
-                  type="button"
-                  disabled={!!savingCadastroPublicoStatus}
-                  onClick={() => togglePagoCadastroPublico()}
-                  className={`h-7 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider border transition-all disabled:opacity-40 inline-flex items-center gap-1 ${
-                    c.pago
-                      ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
-                      : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  {c.pago ? "Marcar não pago" : "Marcar pago"}
-                </button>
-              ) : null
-            }
-          >
-            <DetailCard title="Status financeiro">
-              <DetailGrid>
-                <DetailField label="Pago" value={c.pago ? "Sim" : "Não"} highlight={!!c.pago} />
-                <DetailField label="Pago em" value={formatDateTime((c as any).pago_em)} />
-                <DetailField label="Venda vinculada" value={(c as any).venda_id ? `#${(c as any).venda_id}` : "—"} />
-                <DetailField label="Cobrança" value={(c as any).asaas_cobranca_id || "—"} copyable={!!(c as any).asaas_cobranca_id} />
-              </DetailGrid>
-              {!c.pago && (
-                <p className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">
-                  Cobrança ainda não gerada. Cobrança automática segue regra do checkout principal.
-                </p>
-              )}
             </DetailCard>
-          </BlocoSecao>
-
-          {/* ── BLOCO: PROCESSO / CLIENTE VINCULADO ── */}
-          <BlocoSecao
-            icon={Shield}
-            titulo="Processo / Cliente Vinculado"
-            statusLabel={(c as any).cliente_id_vinculado ? "VINCULADO" : "NÃO VINCULADO"}
-            statusTone={(c as any).cliente_id_vinculado ? "ok" : "warn"}
-            acoes={
-              (c as any).cliente_id_vinculado ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
-                    if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
-                  }}
-                  className="h-7 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-white hover:bg-slate-50 transition-colors"
-                  style={{ color: "#7A1F2B", borderColor: "#E5C2C6" }}
-                >
-                  Abrir cliente
-                </button>
-              ) : null
-            }
-          >
-            <DetailCard title="Vínculo">
-              {(c as any).cliente_id_vinculado ? (
-                <DetailGrid>
-                  <DetailField label="Cliente canônico" value={`#${(c as any).cliente_id_vinculado}`} />
-                  <DetailField label="Vínculo aplicado em" value={formatDateTime((c as any).cadastro_publico_aplicado_em)} />
-                </DetailGrid>
-              ) : (
-                <p className="text-[12px] text-slate-600">
-                  Cliente canônico ainda não vinculado. Valide o cadastro para gerar/vincular o cliente.
-                </p>
-              )}
-            </DetailCard>
-          </BlocoSecao>
-
-          {/* ── BLOCO: AUDITORIA TÉCNICA (LGPD) ── */}
+          )}
           {(() => {
             const ua = (c as any).consentimento_user_agent as string | null | undefined;
             const ip = (c as any).consentimento_ip as string | null | undefined;
@@ -3915,8 +2518,6 @@ export default function QAClientesPage() {
             );
           })()}
 
-          {/* ── BLOCO: DADOS PESSOAIS ── */}
-          <BlocoSecao icon={User} titulo="Dados Pessoais">
           <DetailCard title="Identificação">
             <DetailGrid>
               {renderField("Nome", "nome_completo", c.nome_completo)}
@@ -3929,7 +2530,7 @@ export default function QAClientesPage() {
                       value={ef.rg || ""}
                       onChange={e => setEf("rg", maskRg(e.target.value))}
                       placeholder="00.000.000-X"
-                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5"
                       style={{ color: "hsl(220 20% 18%)" }}
                     />
                   </div>
@@ -3942,7 +2543,7 @@ export default function QAClientesPage() {
                     <select
                       value={ef.uf_emissor_rg || ""}
                       onChange={e => setEf("uf_emissor_rg", e.target.value)}
-                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-blue-500 py-0.5 uppercase"
                       style={{ color: "hsl(220 20% 18%)" }}
                     >
                       <option value="">Selecione</option>
@@ -3969,10 +2570,7 @@ export default function QAClientesPage() {
               {renderField("Email", "email", c.email, { copyable: true })}
             </DetailGrid>
           </DetailCard>
-          </BlocoSecao>
 
-          {/* ── BLOCO: ENDEREÇO ── */}
-          <BlocoSecao icon={MapPin} titulo="Endereço">
           <DetailCard title="Endereço Principal">
             <DetailGrid>
               {isEditing ? (
@@ -4023,11 +2621,7 @@ export default function QAClientesPage() {
               </DetailGrid>
             </DetailCard>
           )}
-          </BlocoSecao>
 
-          {/* ── BLOCO: VÍNCULOS PROFISSIONAIS ── */}
-          {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia || c.trab_cnpj_empresa || c.trab_nome_empresa || c.aut_atividade || c.aut_nome_profissional) && (
-            <BlocoSecao icon={Briefcase} titulo="Vínculos Profissionais">
           {(c.emp_cnpj || c.emp_razao_social || c.emp_nome_fantasia) && (() => {
             const cepMatch = c.emp_endereco?.match(/(\d{5}-?\d{3})/);
             const empCep = cepMatch ? cepMatch[1] : null;
@@ -4075,8 +2669,6 @@ export default function QAClientesPage() {
               </DetailGrid>
             </DetailCard>
           )}
-            </BlocoSecao>
-          )}
 
           {(c.observacoes || isEditing) && (
             <DetailCard title="Observações">
@@ -4085,7 +2677,7 @@ export default function QAClientesPage() {
                   value={ef.observacoes || ""}
                   onChange={e => setEf("observacoes", e.target.value.toUpperCase())}
                   rows={3}
-                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-[#7A1F2B]"
+                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-blue-500"
                   style={{ color: "hsl(220 20% 25%)", borderColor: "hsl(220 13% 88%)" }}
                 />
               ) : (
@@ -4096,47 +2688,8 @@ export default function QAClientesPage() {
               )}
             </DetailCard>
           )}
-
-          {/* ── BLOCO: ORIGEM DO CADASTRO PÚBLICO ── */}
-          <BlocoSecao icon={Database} titulo="Origem do Cadastro Público">
-            <OrigemCadastroBloco cadastro={c} />
-          </BlocoSecao>
-        </div>
-          <ProximaAcaoPanel
-            titulo={proxima.titulo}
-            descricao={proxima.descricao}
-            tone={proxima.tone}
-            pendencias={proxima.pendencias}
-            ctaLabel={proxima.ctaLabel}
-            ctaDisabled={!!savingCadastroPublicoStatus}
-            onCta={() => {
-              if (proxima.ctaAction === "validar") void updateCadastroPublicoStatus("aprovado");
-              else if (proxima.ctaAction === "gerar_cobranca") void togglePagoCadastroPublico();
-              else if (proxima.ctaAction === "solicitar_correcao") {
-                setCorrecaoPreSelecionada([]);
-                setCorrecaoModalOpen(true);
-              } else if (proxima.ctaAction === "abrir_cliente" && (c as any).cliente_id_vinculado) {
-                const cli = clientes.find((x) => x.id === (c as any).cliente_id_vinculado);
-                if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
-              }
-            }}
-          />
-          <div className="mt-3">
-            <HistoricoEventosPanel cadastroId={c.id} refreshKey={historicoRefresh} />
-          </div>
         </div>
       </div>
-      <SolicitarCorrecaoModal
-        open={correcaoModalOpen}
-        onOpenChange={(o) => { setCorrecaoModalOpen(o); if (!o) setCorrecaoPreSelecionada([]); }}
-        pendenciasAuto={listarPendenciasCadastro(c as any)}
-        pendenciasIniciais={correcaoPreSelecionada}
-        nomeCliente={c.nome_completo}
-        telefoneWhatsapp={c.telefone_principal}
-        saving={savingCorrecao}
-        onConfirm={handleSolicitarCorrecao}
-      />
-      </>
     );
   }
 
@@ -4163,7 +2716,7 @@ export default function QAClientesPage() {
         {/* Mobile: full-width primary CTA */}
         <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
           className="flex sm:hidden items-center justify-center gap-1.5 w-full h-10 rounded-xl text-xs font-bold tracking-wide"
-          style={{ background: "hsl(352 60% 30%)", color: "#fff" }}>
+          style={{ background: "hsl(230 80% 56%)", color: "#fff" }}>
           <Plus className="h-4 w-4" /> NOVO CLIENTE
         </button>
         {/* Desktop: inline actions */}
@@ -4173,7 +2726,7 @@ export default function QAClientesPage() {
           </Button>
           <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
             className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm"
-            style={{ background: "hsl(352 60% 30%)", color: "#ffffff" }}>
+            style={{ background: "hsl(230 80% 56%)", color: "#ffffff" }}>
             <Plus className="h-3.5 w-3.5" /> NOVO CLIENTE
           </button>
         </div>
@@ -4185,31 +2738,10 @@ export default function QAClientesPage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por nome, CPF, telefone, e-mail ou serviço..."
-          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
+          placeholder="Buscar por nome, CPF, telefone ou e-mail..."
+          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-blue-200 focus:border-blue-400"
           style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
         />
-      </div>
-
-      {/* Filtro Ativos / Arquivados / Todos */}
-      <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ background: "hsl(220 20% 96%)" }}>
-        {([
-          { key: "ativos", label: "Ativos" },
-          { key: "arquivados", label: "Arquivados" },
-          { key: "todos", label: "Todos" },
-        ] as const).map(opt => (
-          <button
-            key={opt.key}
-            onClick={() => setArchivedFilter(opt.key)}
-            className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
-            style={{
-              background: archivedFilter === opt.key ? "hsl(352 60% 30%)" : "transparent",
-              color: archivedFilter === opt.key ? "white" : "hsl(220 10% 55%)",
-            }}
-          >
-            {opt.label}
-          </button>
-        ))}
       </div>
 
       {/* Tabs */}
@@ -4222,17 +2754,7 @@ export default function QAClientesPage() {
             color: tabView === "clientes" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "clientes" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES ({filtered.length})
-        </button>
-        <button
-          onClick={() => setTabView("manuais")}
-          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all"
-          style={{
-            background: tabView === "manuais" ? "hsl(0 0% 100%)" : "transparent",
-            color: tabView === "manuais" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
-            boxShadow: tabView === "manuais" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-          }}>
-          <Plus className="h-3.5 w-3.5 inline mr-1" /> CADASTRO MANUAL ({filteredManuais.length})
+          <User className="h-3.5 w-3.5 inline mr-1" /> CLIENTES <br />({filtered.length})
         </button>
         <button
           onClick={() => setTabView("cadastros")}
@@ -4242,18 +2764,7 @@ export default function QAClientesPage() {
             color: tabView === "cadastros" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
             boxShadow: tabView === "cadastros" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>
-          <FileText className="h-3.5 w-3.5 inline mr-1" /> FORMULÁRIOS INTERNET ({filteredCadastros.length})
-        </button>
-        <button
-          onClick={() => setTabView("arsenal_free")}
-          className="flex-1 py-2 px-3 rounded-lg text-[11px] font-semibold transition-all inline-flex items-center justify-center gap-1.5 whitespace-nowrap overflow-hidden text-ellipsis"
-          style={{
-            background: tabView === "arsenal_free" ? "hsl(0 0% 100%)" : "transparent",
-            color: tabView === "arsenal_free" ? "hsl(220 20% 18%)" : "hsl(220 10% 55%)",
-            boxShadow: tabView === "arsenal_free" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
-          }}>
-          <Shield className="h-3.5 w-3.5 shrink-0" />
-          <span className="whitespace-nowrap">APP ARSENAL INTELIGENTE (FREE) ({filteredArsenalFree.length})</span>
+          <FileText className="h-3.5 w-3.5 inline mr-1" /> FORMULÁRIOS ({filteredCadastros.length})
         </button>
         <button
           onClick={() => setTabView("rejeitados")}
@@ -4292,63 +2803,68 @@ export default function QAClientesPage() {
       )}
 
       {loading ? (
-        <SkeletonList rows={6} />
-      ) : loadError ? (
-        <ErrorRetryState
-          error={loadError}
-          onRetry={loadClientes}
-          title="Não foi possível carregar os clientes"
-        />
-      ) : tabView === "clientes" || tabView === "manuais" || tabView === "arsenal_free" ? (
-        (() => {
-          const list =
-            tabView === "manuais"
-              ? filteredManuais
-              : tabView === "arsenal_free"
-              ? filteredArsenalFree
-              : filtered;
-          return (
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <span className="text-[11px] uppercase tracking-wider" style={{ color: "hsl(220 10% 62%)" }}>Carregando...</span>
+        </div>
+      ) : tabView === "clientes" ? (
         <div className="space-y-2">
-          {list.length === 0 && (
-            <EmptyState
-              icon={<User className="h-5 w-5" />}
-              title={
-                tabView === "manuais"
-                  ? "Nenhum cliente cadastrado manualmente"
-                  : tabView === "arsenal_free"
-                  ? "Nenhum usuário FREE do App Arsenal Inteligente"
-                  : "Nenhum cliente encontrado"
-              }
-              description={
-                tabView === "manuais"
-                  ? "Clientes cadastrados pela equipe via formulário interno aparecem aqui."
-                  : tabView === "arsenal_free"
-                  ? "Clientes que estão usando o App Arsenal Inteligente na conta gratuita aparecem aqui."
-                  : "Ajuste os filtros ou cadastre um novo cliente para começar."
-              }
-            />
-          )}
-          {list.map(c => (
-            <ClienteSearchRow
-              key={c.id}
-              c={c}
-              openClient={openClient}
-              setDeleteModal={setDeleteModal}
-              onRequestDelete={requestDeleteCliente}
-              onRestore={restaurarCliente}
-            />
+          {filtered.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cliente encontrado.</div>}
+          {filtered.map(c => (
+            <button key={c.id} onClick={() => openClient(c)}
+              className="w-full flex items-start gap-3 px-3 py-3 md:px-4 rounded-xl border transition-all hover:shadow-sm active:scale-[0.99] text-left group qa-card"
+              style={{ borderColor: "hsl(220 13% 93%)" }}>
+              {/* Avatar */}
+              {(c as any).imagem ? (
+                <ClientPhoto path={(c as any).imagem} name={c.nome_completo} className="w-9 h-9 md:w-10 md:h-10 rounded-xl shrink-0 mt-0.5 object-cover" />
+              ) : (
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: "hsl(230 80% 96%)" }}>
+                  <User className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
+                </div>
+              )}
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-semibold truncate" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_completo}</span>
+                  {c.cliente_lions && <span className="text-[10px] shrink-0">🦁</span>}
+                </div>
+                <div className="text-[11px] mt-0.5 font-mono" style={{ color: "hsl(220 10% 55%)" }}>
+                  {formatCpf(c.cpf)}
+                </div>
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                  {c.celular && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 50%)" }}>
+                      <Phone className="h-2.5 w-2.5" /> {c.celular}
+                    </span>
+                  )}
+                  {c.cidade && (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md" style={{ background: "hsl(220 15% 96%)", color: "hsl(220 10% 50%)" }}>
+                      <MapPin className="h-2.5 w-2.5" /> {c.cidade}/{c.estado}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {/* Status & actions */}
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${statusColor(c.status)}`} style={{ background: c.status === "ATIVO" ? "hsl(152 60% 95%)" : c.status === "DESISTENTE" ? "hsl(0 60% 95%)" : "hsl(38 80% 95%)" }}>
+                  {c.status}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteModal({ open: true, table: "qa_clientes", id: c.id, title: "Excluir Cliente", desc: `Excluir "${c.nome_completo}" e todos os dados vinculados (vendas, armas, filiações)?` });
+                  }}
+                  className="h-6 w-6 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all md:opacity-0 md:group-hover:opacity-100"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            </button>
           ))}
         </div>
-          );
-        })()
       ) : tabView === "cadastros" ? (
         <div className="space-y-1.5">
-          {filteredCadastros.length === 0 && (
-            <EmptyState
-              title="Nenhum cadastro público encontrado"
-              description="Cadastros enviados pela página pública aparecerão aqui para triagem."
-            />
-          )}
+          {filteredCadastros.length === 0 && <div className="text-center py-12 text-sm" style={{ color: "hsl(220 10% 62%)" }}>Nenhum cadastro público encontrado.</div>}
           {filteredCadastros.map(c => (
             <button
               key={c.id}
@@ -4371,7 +2887,7 @@ export default function QAClientesPage() {
                   <span>{c.email || "—"}</span>
                 </div>
                 {c.servico_interesse && (
-                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(352 60% 30%)" }}>🎯 {c.servico_interesse}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(230 80% 56%)" }}>🎯 {c.servico_interesse}</div>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -4383,31 +2899,14 @@ export default function QAClientesPage() {
                     {String(c.status || "").toUpperCase()}
                   </span>
                   <span
-                    role="button"
-                    tabIndex={0}
-                    aria-label={c.pago ? "Marcar como não pago" : "Marcar como pago"}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      if (savingCadastroPublicoStatus) return;
-                      void togglePagoCadastroPublico(c);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        if (savingCadastroPublicoStatus) return;
-                        void togglePagoCadastroPublico(c);
-                      }
-                    }}
-                    className={`cursor-pointer select-none text-[9px] px-1.5 py-0.5 rounded-full font-semibold border transition-all ${
+                    className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold border ${
                       c.pago
-                        ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
-                        : "bg-slate-50 text-slate-500 border-slate-300 hover:bg-slate-100"
-                    } ${savingCadastroPublicoStatus === `pago:${c.id}` ? "opacity-60" : ""}`}
-                    title={c.pago ? "Clique para marcar como NÃO pago" : "Clique para marcar como pago"}
+                        ? "bg-emerald-500 text-white border-emerald-500"
+                        : "bg-slate-50 text-slate-400 border-slate-200 opacity-60"
+                    }`}
+                    title={c.pago ? "Pagamento confirmado" : "Pagamento ainda não confirmado"}
                   >
-                    {savingCadastroPublicoStatus === `pago:${c.id}` ? "..." : (c.pago ? "PAGO" : "NÃO PAGO")}
+                    {c.pago ? "PAGO" : "NÃO PAGO"}
                   </span>
                   <span className="text-[10px]" style={{ color: "hsl(220 10% 62%)" }}>
                     {new Date(c.created_at).toLocaleDateString("pt-BR")} {new Date(c.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
@@ -4476,37 +2975,15 @@ export default function QAClientesPage() {
       )}
 
       <ClienteFormModal open={clienteModal} onClose={() => { setClienteModal(false); setEditingCliente(null); }} onSaved={loadClientes} cliente={editingCliente} />
-      <DeleteConfirm
-        open={deleteModal.open}
-        onClose={() => setDeleteModal({ ...deleteModal, open: false })}
-        onConfirm={handleDelete}
-        title={deleteModal.title}
-        description={deleteModal.desc}
-        loading={deleting}
-        mode={deleteModal.mode}
-      />
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="qa-card p-4 md:p-5">
-      <div className="flex items-center gap-2.5 mb-4">
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ background: "hsl(220 65% 48% / 0.12)" }}
-        >
-          <FileText className="h-3.5 w-3.5" style={{ color: "hsl(220 65% 48%)" }} />
-        </div>
-        <h3
-          className="text-[11px] uppercase tracking-[0.14em] font-bold"
-          style={{ color: "hsl(220 65% 48%)" }}
-        >
-          {title}
-        </h3>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">{children}</div>
+    <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5">
+      <div className="text-[11px] uppercase tracking-[0.14em] mb-3 font-bold" style={{ color: "hsl(220 65% 48%)" }}>{title}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">{children}</div>
     </div>
   );
 }
@@ -4545,12 +3022,8 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
         <span className="text-xs shrink-0" style={{ color: "hsl(220 10% 50%)", minWidth: "140px" }}>
           {label}:
         </span>
-        <span className={`text-[13px] font-bold uppercase min-w-0 flex-1 break-words ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
-          style={{
-            ...(isInvalid || highlight ? {} : { color: "hsl(220 20% 18%)" }),
-            wordBreak: "break-word",
-            overflowWrap: "anywhere",
-          }}>
+        <span className={`text-sm font-medium uppercase ${isInvalid ? "text-red-500" : ""} ${highlight ? "text-emerald-600" : ""}`}
+          style={!isInvalid && !highlight ? { color: "hsl(220 20% 18%)" } : undefined}>
           {displayValue}
         </span>
       </div>
@@ -4565,12 +3038,11 @@ function DetailField({ label, value, icon: Icon, copyable, highlight }: {
   );
 }
 
-function Field({ label, value, icon: Icon, copyable, copyValue }: { label: string; value?: string | null; icon?: any; copyable?: boolean; copyValue?: string | null }) {
+function Field({ label, value, icon: Icon, copyable }: { label: string; value?: string | null; icon?: any; copyable?: boolean }) {
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const toCopy = copyValue ?? value;
-    if (toCopy) {
-      navigator.clipboard.writeText(toCopy);
+    if (value) {
+      navigator.clipboard.writeText(value);
       toast.success(`${label} copiado!`);
     }
   };
@@ -4578,15 +3050,10 @@ function Field({ label, value, icon: Icon, copyable, copyValue }: { label: strin
     <div className={`flex flex-col gap-0.5 py-1 ${copyable && value ? "cursor-pointer active:opacity-60 group" : ""}`} onClick={copyable ? handleCopy : undefined}>
       <div className="flex items-center gap-1.5">
         {Icon && <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: "hsl(220 10% 55%)" }} />}
-        <span className="text-[10px] text-slate-500 uppercase tracking-[0.14em] font-bold">{label}</span>
+        <span className="text-[11px] text-slate-400 uppercase tracking-wide font-medium">{label}</span>
         {copyable && value && <span className="text-slate-300 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity ml-auto">📋</span>}
       </div>
-        <span
-          className="text-[14px] text-slate-900 font-bold uppercase pl-0.5 break-words leading-snug"
-          style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}
-        >
-          {value || "—"}
-        </span>
+      <span className="text-[13px] text-slate-800 font-semibold uppercase pl-0.5">{value || "—"}</span>
     </div>
   );
 }
@@ -4658,18 +3125,13 @@ function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico
         extra["[DATA SAÍDA]"] = dataSaida;
       }
 
-      const { data: sess } = await supabase.auth.getSession();
-      const token = sess?.session?.access_token;
-      if (!token) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-      }
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-fill-template`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({ template_key: templateKey, cliente_id: cliente.id, extra_fields: extra }),
@@ -4756,183 +3218,6 @@ function DocumentGenerator({ cliente, nomeServico }: { cliente: any; nomeServico
             </button>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-// ── ClienteHeaderCard ─────────────────────────────────────────────────────────
-// Card principal do cliente (detalhe). Cor do fundo/glow/borda reflete o
-// SEMÁFORO OPERACIONAL consolidado (CR · CRAFs · GTEs · Exames · Autorizações
-// · Processos · Documentos), não apenas o status cadastral ATIVO/DESISTENTE.
-// O selo "ATIVO" pequeno permanece verde — representa apenas o cadastro.
-function ClienteHeaderCard({
-  cliente: c,
-  clienteCadastroIdForSub,
-  vendasCount,
-  armasCount,
-  onBack,
-  onEdit,
-  onDelete,
-  onRestore,
-  onPurge,
-  arquivado,
-}: {
-  cliente: any;
-  clienteCadastroIdForSub: number;
-  vendasCount: number;
-  armasCount: number;
-  onBack: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onRestore?: () => void;
-  onPurge?: () => void;
-  arquivado?: boolean;
-}) {
-  const { data: agregado } = useClienteStatusAgregado(clienteCadastroIdForSub || c.id);
-  // Status cadastral (selo pequeno) — mantém comportamento legado
-  const statusCadastralTone =
-    c.status === "ATIVO" ? "hsl(152 60% 42%)"
-    : c.status === "DESISTENTE" ? "hsl(0 72% 55%)"
-    : "hsl(38 92% 50%)";
-  // Status operacional consolidado — pior cor entre todas as dimensões.
-  const tomOperacional = agregado?.tom_geral ?? null;
-  const operacionalTone =
-    tomOperacional === "vermelho" ? "hsl(0 72% 55%)" :
-    tomOperacional === "laranja" ? "hsl(20 90% 50%)" :
-    tomOperacional === "amarelo" ? "hsl(38 92% 50%)" :
-    tomOperacional === "azul" ? "hsl(210 80% 50%)" :
-    tomOperacional === "verde" ? "hsl(152 60% 42%)" :
-    statusCadastralTone;
-  // Quando o cadastro está DESISTENTE/PENDENTE, ele dita o card.
-  const statusTone = c.status === "ATIVO" ? operacionalTone : statusCadastralTone;
-  const cardBorderClass =
-    c.status === "ATIVO" && tomOperacional === "vermelho"
-      ? "border-red-200/80"
-      : c.status === "ATIVO" && (tomOperacional === "laranja" || tomOperacional === "amarelo")
-      ? "border-amber-200/80"
-      : "border-slate-200/80";
-
-  return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border bg-white shadow-sm ${cardBorderClass}`}
-      style={{ boxShadow: `inset 0 0 0 1px ${statusTone}14, 0 1px 2px rgba(15,23,42,0.04)` }}
-    >
-      <div
-        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
-        style={{ background: statusTone }}
-      />
-      <div className="relative flex items-center gap-3 px-4 py-4 md:px-5">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="h-8 w-8 p-0 shrink-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-          title="Voltar"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <ClienteSelfieAvatar cliente={c} size="xl" />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em]"
-              style={{ background: `${statusCadastralTone}14`, color: statusCadastralTone, boxShadow: `inset 0 0 0 1px ${statusCadastralTone}33` }}
-            >
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: statusCadastralTone }} />
-              {c.status}
-            </span>
-            <ClienteHealthBadge clienteId={clienteCadastroIdForSub || c.id} variant="full" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-slate-400">
-              ID #{String((c as any).display_id ?? c.id).padStart(4, "0")}
-            </span>
-            {arquivado && (
-              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] bg-slate-100 text-slate-600 border border-slate-200">
-                Arquivado
-              </span>
-            )}
-          </div>
-          <h1 className="text-[18px] md:text-[22px] font-black uppercase tracking-tight truncate leading-tight" style={{ color: "hsl(220 20% 12%)" }}>
-            {c.nome_completo}
-          </h1>
-          <div className="mt-0.5 text-[11px] font-mono tracking-wider text-slate-400">
-            CPF {formatCpf(c.cpf)}
-          </div>
-          {c.email && (
-            <div className="mt-0.5 text-[11px] text-slate-500 truncate">
-              {c.email}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#7A1F2B] hover:border-[#E5C2C6] hover:bg-[#FBF3F4]"
-            title="Editar cliente"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          {arquivado && onRestore ? (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onRestore}
-                className="h-9 px-3 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 text-[11px] font-bold uppercase tracking-wider"
-                title="Restaurar cliente"
-              >
-                Restaurar
-              </Button>
-              {onPurge && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onPurge}
-                  className="h-9 px-3 rounded-xl bg-white border border-red-200 text-red-700 hover:text-white hover:bg-red-600 hover:border-red-600 text-[11px] font-bold uppercase tracking-wider"
-                  title="Excluir definitivamente (LGPD) — apaga todos os rastros"
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Excluir LGPD
-                </Button>
-              )}
-            </>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
-              title="Excluir cliente"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-      <div className="relative grid grid-cols-2 md:grid-cols-5 border-t border-slate-200/80 divide-x divide-slate-200/80">
-        {[
-          { icon: Phone, color: "hsl(190 80% 45%)", label: "Telefone", value: c.celular || "—" },
-          { icon: MapPin, color: "hsl(220 20% 28%)", label: "Localização", value: c.cidade ? `${c.cidade}/${c.estado}` : "—" },
-          { icon: FileText, color: "hsl(152 60% 42%)", label: "Vendas", value: vendasCount },
-          { icon: Crosshair, color: "hsl(38 92% 50%)", label: "Armas", value: armasCount },
-        ].map((v, i) => (
-          <div key={i} className="flex items-center gap-2.5 px-4 py-3 first:border-l-0">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
-              style={{ background: `${v.color}14`, color: v.color, boxShadow: `inset 0 0 0 1px ${v.color}1f` }}
-            >
-              <v.icon className="h-3.5 w-3.5" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-500">{v.label}</div>
-              <div className="text-[13px] font-bold text-slate-800 truncate uppercase">
-                {v.value}
-              </div>
-            </div>
-          </div>
-        ))}
-        <CircunscricaoKpi cidade={c.cidade} uf={c.estado} />
       </div>
     </div>
   );

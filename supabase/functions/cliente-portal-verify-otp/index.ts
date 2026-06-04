@@ -15,12 +15,12 @@ const OTP_SALT = Deno.env.get("OTP_SALT") || "qa-portal-otp-v1";
 const MAX_ATTEMPTS = 5;
 
 function generatePassword(): string {
-  const arr = new Uint8Array(16);
+  const arr = new Uint8Array(12);
   crypto.getRandomValues(arr);
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#%*-_";
-  let p = "QA!7";
-  for (let i = 0; i < arr.length; i++) p += chars[arr[i] % chars.length];
-  return p;
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  let p = "";
+  for (let i = 0; i < 12; i++) p += chars[arr[i] % chars.length];
+  return p + "!2";
 }
 
 Deno.serve(async (req) => {

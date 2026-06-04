@@ -1,6 +1,6 @@
 import { logSistema } from "@/lib/logSistema";
 
-export interface AppError {
+export interface WmtiError {
   timestamp: string;
   route: string;
   action: string;
@@ -25,7 +25,7 @@ function getBrowserInfo(): string {
   }
 }
 
-export function buildAppError(params: {
+export function buildWmtiError(params: {
   action: string;
   message: string;
   technicalMessage?: string;
@@ -37,7 +37,7 @@ export function buildAppError(params: {
   functionName?: string;
   httpStatus?: number;
   responseBody?: string;
-}): AppError {
+}): WmtiError {
   const err = params.error instanceof Error ? params.error : null;
   return {
     timestamp: new Date().toISOString(),
@@ -57,8 +57,8 @@ export function buildAppError(params: {
   };
 }
 
-export function formatErrorForClipboard(err: AppError): string {
-  return `[ERRO QUERO ARMAS]
+export function formatErrorForClipboard(err: WmtiError): string {
+  return `[ERRO WMTI]
 Horário: ${err.timestamp}
 Rota: ${err.route}
 Ação: ${err.action}
@@ -74,33 +74,33 @@ Stack: ${err.stack || "—"}
 Contexto: ${err.browserInfo}`;
 }
 
-export async function logAndPersistError(params: Parameters<typeof buildAppError>[0]): Promise<AppError> {
-  const appErr = buildAppError(params);
+export async function logAndPersistError(params: Parameters<typeof buildWmtiError>[0]): Promise<WmtiError> {
+  const wmtiErr = buildWmtiError(params);
 
   await logSistema({
     tipo: "erro",
     status: "error",
     mensagem: `[${params.action}] ${params.message}`,
     payload: {
-      route: appErr.route,
-      action: appErr.action,
-      technical_message: appErr.technicalMessage,
-      stack: appErr.stack,
-      quote_id: appErr.quoteId,
-      contract_id: appErr.contractId,
-      customer_id: appErr.customerId,
-      payment_id: appErr.paymentId,
-      function_name: appErr.functionName,
-      http_status: appErr.httpStatus,
-      response_body: appErr.responseBody,
-      browser_info: appErr.browserInfo,
+      route: wmtiErr.route,
+      action: wmtiErr.action,
+      technical_message: wmtiErr.technicalMessage,
+      stack: wmtiErr.stack,
+      quote_id: wmtiErr.quoteId,
+      contract_id: wmtiErr.contractId,
+      customer_id: wmtiErr.customerId,
+      payment_id: wmtiErr.paymentId,
+      function_name: wmtiErr.functionName,
+      http_status: wmtiErr.httpStatus,
+      response_body: wmtiErr.responseBody,
+      browser_info: wmtiErr.browserInfo,
     },
   });
 
-  return appErr;
+  return wmtiErr;
 }
 
-export async function copyErrorToClipboard(err: AppError): Promise<boolean> {
+export async function copyErrorToClipboard(err: WmtiError): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(formatErrorForClipboard(err));
     return true;

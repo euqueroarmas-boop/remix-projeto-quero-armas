@@ -26,22 +26,17 @@ import {
   LayoutDashboard,
   LogIn,
   ChevronRight,
-  GraduationCap,
-  Clock,
-  Smartphone,
 } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
-import { coursesCatalog, courseCategories } from '@/shared/data/coursesCatalog';
+import { BackButton } from '@/shared/components/BackButton';
 
 interface SiteShellProps {
   children: ReactNode;
-  hideBackButton?: boolean;
 }
 
 const navItems = [
   { to: '/servicos', label: 'Serviços', icon: Briefcase },
-  { to: '/app-arsenal-gratuito', label: 'App Arsenal', icon: Smartphone },
-  { to: '/cadastro', label: 'Começar meu cadastro', icon: Stethoscope },
+  { to: '/descobrir-meu-caminho', label: 'Como Escolher', icon: Stethoscope },
 ];
 
 type NavLinkItem = { to: string; label: string; icon: typeof Briefcase };
@@ -50,7 +45,6 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   {
     label: 'Público',
     links: [
-      { to: '/app-arsenal-gratuito', label: 'App Arsenal Gratuito', icon: Smartphone },
       { to: '/cadastro', label: 'Cadastro de cliente', icon: UserPlus },
       { to: '/enviar-foto', label: 'Enviar foto', icon: Camera },
     ],
@@ -63,7 +57,7 @@ const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
   },
 ];
 
-export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }: SiteShellProps) => {
+export const SiteShell = ({ children }: SiteShellProps) => {
   const { user, isAdmin } = useAuth();
   const { itemCount } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -73,7 +67,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
       <div className="pointer-events-none fixed inset-0 z-0 bg-knurled opacity-60" />
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85">
-        <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:h-20 sm:px-6 lg:px-10 2xl:px-16">
+        <div className="container flex h-16 items-center justify-between gap-3 sm:h-20">
           <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Eu Quero Armas — Início">
             <img src={logoWhite} alt="Eu Quero Armas" className="h-8 w-auto sm:h-10" loading="eager" decoding="async" />
           </Link>
@@ -92,34 +86,6 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                 {item.label}
               </NavLink>
             ))}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
-                Cursos <ChevronDown className="size-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                {courseCategories.map((cat) => (
-                  <div key={cat.id}>
-                    <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
-                      {cat.label}
-                    </DropdownMenuLabel>
-                    {coursesCatalog
-                      .filter((c) => c.category === cat.id)
-                      .map((c) => (
-                        <DropdownMenuItem key={c.id} asChild disabled={c.status === 'em_breve'}>
-                          <Link to={`/cursos/${c.slug}`} className="flex items-center justify-between gap-2">
-                            <span>{c.title}</span>
-                            {c.status === 'em_breve' && (
-                              <span className="font-heading text-[10px] uppercase tracking-widest text-muted-foreground">
-                                em breve
-                              </span>
-                            )}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                  </div>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
                 Quero Armas <ChevronDown className="size-3.5" />
@@ -239,65 +205,6 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
 
                   {/* Grupos Quero Armas */}
                   <div className="mt-6">
-                    {/* Cursos */}
-                    <div className="mb-5">
-                      <div className="mb-2 flex items-center gap-2 px-2">
-                        <span className="h-px flex-1 bg-border/60" />
-                        <p className="font-heading text-[10px] uppercase tracking-[0.2em] text-accent">
-                          Cursos
-                        </p>
-                        <span className="h-px flex-1 bg-border/60" />
-                      </div>
-                      {courseCategories.map((cat) => (
-                        <div key={cat.id} className="mb-2">
-                          <p className="px-2 py-1 font-heading text-[11px] uppercase tracking-[0.18em] text-muted-foreground/80">
-                            {cat.label}
-                          </p>
-                          <div className="flex flex-col gap-0.5">
-                            {coursesCatalog
-                              .filter((c) => c.category === cat.id)
-                              .map((c) => {
-                                const disabled = c.status === 'em_breve';
-                                const Inner = (
-                                  <span className="flex flex-1 items-center justify-between gap-2">
-                                    <span className="flex items-center gap-3">
-                                      {disabled ? (
-                                        <Clock className="size-4 shrink-0 text-muted-foreground/60" />
-                                      ) : (
-                                        <GraduationCap className="size-4 shrink-0 text-accent" />
-                                      )}
-                                      <span>{c.title}</span>
-                                    </span>
-                                    {disabled && (
-                                      <span className="font-heading text-[9px] uppercase tracking-widest text-muted-foreground">
-                                        em breve
-                                      </span>
-                                    )}
-                                  </span>
-                                );
-                                return disabled ? (
-                                  <span
-                                    key={c.id}
-                                    className="flex cursor-not-allowed items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-muted-foreground/70"
-                                    aria-disabled="true"
-                                  >
-                                    {Inner}
-                                  </span>
-                                ) : (
-                                  <Link
-                                    key={c.id}
-                                    to={`/cursos/${c.slug}`}
-                                    onClick={() => setMenuOpen(false)}
-                                    className="flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-surface-elevated hover:text-accent"
-                                  >
-                                    {Inner}
-                                  </Link>
-                                );
-                              })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
                     {queroArmasGroups.map((group) => (
                       <div key={group.label} className="mb-5">
                         <div className="mb-2 flex items-center gap-2 px-2">
@@ -367,7 +274,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                     </div>
                   )}
                   <p className="mt-3 text-center font-heading text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
-                    Eu Quero Armas · Conformidade Legal
+                    Eu Quero Armas · Conformidade Total
                   </p>
                 </div>
               </SheetContent>
@@ -376,12 +283,15 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
         </div>
       </header>
 
-      <main className="relative z-10 w-full max-w-none flex-1 overflow-x-clip pt-16 sm:pt-20">
+      <main className="relative z-10 w-full max-w-full flex-1 overflow-x-clip pt-16 sm:pt-20">
+        <div className="container pt-3">
+          <BackButton />
+        </div>
         {children}
       </main>
 
-      <footer className="relative z-10 w-full max-w-none border-t border-border/60 bg-surface-overlay">
-        <div className="grid w-full gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 sm:py-12 md:grid-cols-3 lg:px-10 2xl:px-16">
+      <footer className="relative z-10 border-t border-border/60 bg-surface-overlay">
+        <div className="container grid gap-8 py-10 sm:grid-cols-2 sm:py-12 md:grid-cols-3">
           <div className="sm:col-span-2 md:col-span-1">
             <div className="mb-4 flex items-center">
               <img src={logoWhite} alt="Eu Quero Armas" className="h-9 w-auto" loading="lazy" decoding="async" />
@@ -407,7 +317,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
           </div>
         </div>
         <div className="border-t border-border/60">
-          <div className="w-full px-4 py-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-10 2xl:px-16">
+          <div className="container py-4 text-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} Eu Quero Armas. Todos os direitos reservados.
           </div>
         </div>

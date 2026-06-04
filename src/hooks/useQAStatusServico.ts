@@ -3,17 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface QAStatusServico {
   id: string;
-  codigo: string;
   nome: string;
-  descricao?: string | null;
   ordem: number;
-  cor?: string | null;
   ativo: boolean;
-  finalizador?: boolean;
-  exige_data_protocolo?: boolean;
-  exige_numero_protocolo?: boolean;
-  visivel_cliente?: boolean;
-  visivel_equipe?: boolean;
 }
 
 export function useQAStatusServico() {

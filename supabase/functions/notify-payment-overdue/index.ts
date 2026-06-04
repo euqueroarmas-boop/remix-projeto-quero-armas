@@ -1,12 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
 import { buildPaymentOverdueHtml, buildPaymentOverdueText } from "../_shared/emailTemplates.ts";
-import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 /**
@@ -18,10 +17,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
-
-  // 🔒 Onda 6
-  const guard = await requireAdminOrInternal(req);
-  if (!guard.ok) return guard.response;
 
   try {
     const body = await req.json();
@@ -47,9 +42,7 @@ Deno.serve(async (req) => {
 
     const subject = `⚠️ Cobrança vencida — WMTi`;
 
-    const internalToken = Deno.env.get("INTERNAL_FUNCTION_TOKEN") || "";
     const smtpRes = await supabase.functions.invoke("send-smtp-email", {
-      headers: internalToken ? { "x-internal-token": internalToken } : undefined,
       body: {
         to: customer_email,
         subject,

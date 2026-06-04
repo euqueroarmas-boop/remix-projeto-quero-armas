@@ -1,1 +1,0 @@
-ALTER TABLE public.qa_cadastro_publico ADD COLUMN IF NOT EXISTS motivo_recusa TEXT;

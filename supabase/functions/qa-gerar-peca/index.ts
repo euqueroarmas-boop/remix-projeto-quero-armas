@@ -41,381 +41,6 @@ const FORBIDDEN_TYPE_PATTERNS = [
   /contraraz[õo]es/i,
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// FASE 3 — INJEÇÃO DE CORREÇÕES SUPERVISIONADAS DA IA
-// Tabela: public.qa_ia_correcoes_juridicas
-// ═══════════════════════════════════════════════════════════════
-
-interface CorrecaoIA {
-  id: string;
-  tipo_peca: string;
-  foco_argumentativo: string | null;
-  categoria_erro: string;
-  trecho_errado: string | null;
-  trecho_correto: string | null;
-  explicacao: string | null;
-  regra_aplicavel: string | null;
-  aplicar_globalmente: boolean;
-  cliente_id: number | null;
-  caso_id: string | null;
-  peca_id: string | null;
-  ativo: boolean;
-  usado_vezes: number;
-  ultima_utilizacao: string | null;
-  updated_at: string;
-  // Treinamento jurídico direto
-  tipo_registro?: "correcao_erro" | "treinamento_direto" | null;
-  titulo?: string | null;
-  instrucao?: string | null;
-  servico_procedimento?: string | null;
-  categoria?: string | null;
-  exemplo_aplicacao?: string | null;
-  prioridade?: "baixa" | "media" | "alta" | "critica" | null;
-}
-
-interface CorrecaoComEscopo extends CorrecaoIA {
-  _escopo: "peca" | "caso" | "cliente" | "global";
-  _prioridade: number;
-}
-
-const CORRECOES_CATEGORIAS_CRITICAS = new Set<string>([
-  "enderecamento_errado",
-  "circunscricao_errada",
-  "confusao_posse_porte",
-  "confusao_sinarm_sigma",
-  "confusao_pf_exercito",
-  "pedido_final_incorreto",
-  "fundamento_juridico_incorreto",
-]);
-
-const MAX_CORRECOES_NO_PROMPT = 20;
-
-async function buscarCorrecoesRelevantes(
-  supabase: any,
-  params: {
-    tipo_peca: string;
-    foco_argumentativo?: string | null;
-    cliente_id?: number | null;
-    caso_id?: string | null;
-    peca_id?: string | null;
-  },
-): Promise<CorrecaoComEscopo[]> {
-  const { tipo_peca, foco_argumentativo, cliente_id, caso_id, peca_id } = params;
-  const acumulado = new Map<string, CorrecaoComEscopo>();
-
-  // Helper: marca correção com escopo e prioridade base
-  const addAll = (rows: CorrecaoIA[] | null, escopo: CorrecaoComEscopo["_escopo"], prioridade: number) => {
-    if (!rows) return;
-    for (const r of rows) {
-      if (!r?.id || !r.ativo) continue;
-      // Filtro de tipo de peça:
-      // - vazio = wildcard (regra serve a qualquer peça)
-      // - "todos" = wildcard explícito
-      // - igual ao tipo solicitado = ok
-      if (r.tipo_peca && r.tipo_peca !== tipo_peca && r.tipo_peca !== "todos") continue;
-      const existente = acumulado.get(r.id);
-      if (!existente || existente._prioridade < prioridade) {
-        acumulado.set(r.id, { ...r, _escopo: escopo, _prioridade: prioridade });
-      }
-    }
-  };
-
-  try {
-    // 1) Específicas por peça (prioridade máxima)
-    if (peca_id) {
-      const { data } = await supabase
-        .from("qa_ia_correcoes_juridicas")
-        .select("*")
-        .eq("ativo", true)
-        .eq("peca_id", peca_id)
-        .limit(50);
-      addAll(data as CorrecaoIA[] | null, "peca", 400);
-    }
-
-    // 2) Específicas por caso
-    if (caso_id) {
-      const { data } = await supabase
-        .from("qa_ia_correcoes_juridicas")
-        .select("*")
-        .eq("ativo", true)
-        .eq("caso_id", caso_id)
-        .limit(50);
-      addAll(data as CorrecaoIA[] | null, "caso", 300);
-    }
-
-    // 3) Específicas por cliente
-    if (typeof cliente_id === "number" && cliente_id > 0) {
-      const { data } = await supabase
-        .from("qa_ia_correcoes_juridicas")
-        .select("*")
-        .eq("ativo", true)
-        .eq("cliente_id", cliente_id)
-        .limit(50);
-      addAll(data as CorrecaoIA[] | null, "cliente", 200);
-    }
-
-    // 4) Globais (do tipo de peça OU wildcard "todos" / vazio)
-    {
-      const { data } = await supabase
-        .from("qa_ia_correcoes_juridicas")
-        .select("*")
-        .eq("ativo", true)
-        .eq("aplicar_globalmente", true)
-        .or(`tipo_peca.eq.${tipo_peca},tipo_peca.eq.todos,tipo_peca.is.null`)
-        .limit(200);
-      addAll(data as CorrecaoIA[] | null, "global", 100);
-    }
-  } catch (err) {
-    console.error("[qa-gerar-peca] Erro ao buscar correções:", err);
-    return [];
-  }
-
-  // Ranking final: prioridade base + foco + categoria crítica + uso recente
-  const focoNorm = (foco_argumentativo || "").trim().toLowerCase();
-  const todas = Array.from(acumulado.values()).map((c) => {
-    let score = c._prioridade;
-    if (focoNorm && (c.foco_argumentativo || "").toLowerCase() === focoNorm) score += 30;
-    if (CORRECOES_CATEGORIAS_CRITICAS.has(c.categoria_erro)) score += 25;
-    score += Math.min(15, c.usado_vezes || 0);
-    return { ...c, _prioridade: score };
-  });
-
-  todas.sort((a, b) => {
-    if (b._prioridade !== a._prioridade) return b._prioridade - a._prioridade;
-    // desempate: mais recente primeiro
-    const ua = a.updated_at ? Date.parse(a.updated_at) : 0;
-    const ub = b.updated_at ? Date.parse(b.updated_at) : 0;
-    return ub - ua;
-  });
-
-  return todas.slice(0, MAX_CORRECOES_NO_PROMPT);
-}
-
-function montarBlocoCorrecoesParaPrompt(correcoes: CorrecaoComEscopo[]): string {
-  // Apenas correções de erro entram neste bloco (treinamentos diretos têm bloco próprio)
-  const apenasCorrecoes = correcoes.filter(
-    (c) => (c.tipo_registro || "correcao_erro") === "correcao_erro"
-      && (c.trecho_errado || "").trim().length >= 5
-      && (c.trecho_correto || "").trim().length >= 5,
-  );
-  if (apenasCorrecoes.length === 0) return "";
-
-  const escopoLabel: Record<string, string> = {
-    peca: "específica desta peça",
-    caso: "específica deste caso",
-    cliente: "específica deste cliente",
-    global: "global do tipo de peça",
-  };
-
-  const linhas = apenasCorrecoes.map((c, idx) => {
-    const partes = [
-      `${idx + 1}. Categoria: ${c.categoria_erro}`,
-      `   Escopo: ${escopoLabel[c._escopo] || c._escopo}`,
-      `   Trecho errado que NÃO deve ser repetido:`,
-      `   "${(c.trecho_errado || "").trim()}"`,
-      `   Forma correta esperada:`,
-      `   "${(c.trecho_correto || "").trim()}"`,
-    ];
-    if (c.explicacao && c.explicacao.trim()) {
-      partes.push(`   Explicação: "${c.explicacao.trim()}"`);
-    }
-    if (c.regra_aplicavel && c.regra_aplicavel.trim()) {
-      partes.push(`   Regra aplicável: "${c.regra_aplicavel.trim()}"`);
-    }
-    return partes.join("\n");
-  });
-
-  return `\n\nCORREÇÕES JURÍDICAS SUPERVISIONADAS — OBRIGATÓRIAS
-A peça deve respeitar as correções abaixo. NÃO repita os trechos marcados como errados, nem variações equivalentes. Quando o tema aparecer, use a orientação correta, adaptando ao caso concreto sem mudar o sentido jurídico.
-
-${linhas.join("\n\n")}
-
-REGRA ABSOLUTA SOBRE CORREÇÕES:
-- Se houver conflito entre uma correção ativa e a tendência do modelo, OBEDEÇA à correção, desde que ela não contrarie lei, template fixo ou dados do caso.
-- NÃO reproduza, parafraseie ou normalize variações dos trechos marcados como errados.
-- NÃO invente fatos, jurisprudência ou fundamentos para "encaixar" a correção.
-- NÃO confunda posse com porte, PF com Exército, SINARM com SIGMA.
-- NÃO use circunscrição/delegacia errada quando houver dado correto fornecido no caso.
-- NÃO altere o tipo de peça solicitado.
-`;
-}
-
-// ─── Bloco separado: TREINAMENTOS JURÍDICOS DIRETOS (instruções positivas) ───
-function montarBlocoTreinamentosDiretos(regras: CorrecaoComEscopo[]): string {
-  const treinamentos = regras.filter(
-    (r) => r.tipo_registro === "treinamento_direto"
-      && (r.instrucao || "").trim().length >= 5,
-  );
-  if (treinamentos.length === 0) return "";
-
-  // ordena por prioridade (critica > alta > media > baixa) e depois por _prioridade já calculada
-  const pesoPrio: Record<string, number> = { critica: 4, alta: 3, media: 2, baixa: 1 };
-  treinamentos.sort((a, b) => {
-    const pa = pesoPrio[a.prioridade || "media"] || 2;
-    const pb = pesoPrio[b.prioridade || "media"] || 2;
-    if (pb !== pa) return pb - pa;
-    return (b._prioridade || 0) - (a._prioridade || 0);
-  });
-
-  const linhas = treinamentos.map((r, idx) => {
-    const partes = [
-      `${idx + 1}. ${(r.titulo || "Orientação interna").trim()}  [prioridade: ${r.prioridade || "media"}]`,
-      `   Instrução obrigatória: ${(r.instrucao || "").trim()}`,
-    ];
-    if (r.servico_procedimento && r.servico_procedimento.trim()) {
-      partes.push(`   Serviço/procedimento: ${r.servico_procedimento.trim()}`);
-    }
-    if (r.foco_argumentativo && r.foco_argumentativo.trim()) {
-      partes.push(`   Foco argumentativo: ${r.foco_argumentativo.trim()}`);
-    }
-    if (r.categoria && r.categoria.trim()) {
-      partes.push(`   Categoria: ${r.categoria.trim()}`);
-    }
-    if (r.regra_aplicavel && r.regra_aplicavel.trim()) {
-      partes.push(`   Norma/fundamento: ${r.regra_aplicavel.trim()}`);
-    }
-    if (r.exemplo_aplicacao && r.exemplo_aplicacao.trim()) {
-      partes.push(`   Exemplo de aplicação: ${r.exemplo_aplicacao.trim()}`);
-    }
-    return partes.join("\n");
-  });
-
-  return `\n\nREGRAS INTERNAS DA EQUIPE QUERO ARMAS — OBRIGATÓRIAS
-As orientações abaixo foram registradas pela Equipe Quero Armas como diretrizes jurídicas, técnicas, operacionais e textuais obrigatórias. Aplique-as com prioridade sobre tendências genéricas do modelo, desde que não contrariem norma legal expressa ou dados do caso concreto. Trate-as como instruções de estilo, tese, estrutura e interpretação operacional.
-
-${linhas.join("\n\n")}
-
-REGRA ABSOLUTA SOBRE ESTAS ORIENTAÇÕES:
-- OBEDEÇA às instruções acima; quando ambíguas, prefira a interpretação mais conservadora e tecnicamente fundamentada.
-- NÃO contradiga, NÃO relativize e NÃO substitua estas orientações por padrões genéricos.
-- Se uma orientação conflitar diretamente com lei expressa, registre o cumprimento legal mas mantenha o espírito da orientação no que for compatível.
-`;
-}
-
-// Normalização para comparação textual de erros pós-geração
-function normalizarTextoParaComparacao(s: string): string {
-  return (s || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/["“”'‘’`]/g, "")
-    .replace(/[.,;:!?(){}\[\]\-—–_/\\|]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function checarErrosConhecidosNaPeca(
-  textoGerado: string,
-  correcoes: CorrecaoComEscopo[],
-): Array<{
-  correcao_id: string;
-  categoria: string;
-  escopo: string;
-  trecho_errado: string;
-  trecho_correto: string;
-  explicacao: string | null;
-  regra_aplicavel: string | null;
-  trecho_suspeito: string;
-  metodo: "literal" | "normalizado";
-}> {
-  const alertas: ReturnType<typeof checarErrosConhecidosNaPeca> = [];
-  if (!textoGerado || correcoes.length === 0) return alertas;
-
-  const textoNorm = normalizarTextoParaComparacao(textoGerado);
-
-  for (const c of correcoes) {
-    const errado = (c.trecho_errado || "").trim();
-    if (errado.length < 8) continue;
-
-    // 1) match literal (case-insensitive)
-    const idxLiteral = textoGerado.toLowerCase().indexOf(errado.toLowerCase());
-    if (idxLiteral >= 0) {
-      alertas.push({
-        correcao_id: c.id,
-        categoria: c.categoria_erro,
-        escopo: c._escopo,
-        trecho_errado: errado,
-        trecho_correto: c.trecho_correto,
-        explicacao: c.explicacao,
-        regra_aplicavel: c.regra_aplicavel,
-        trecho_suspeito: textoGerado.substr(idxLiteral, errado.length),
-        metodo: "literal",
-      });
-      continue;
-    }
-
-    // 2) match normalizado (sem acentos / pontuação / case)
-    const erradoNorm = normalizarTextoParaComparacao(errado);
-    if (erradoNorm.length < 8) continue;
-    const idxNorm = textoNorm.indexOf(erradoNorm);
-    if (idxNorm >= 0) {
-      // tenta recuperar um trecho aproximado do texto original (heurística simples)
-      const palavras = errado.split(/\s+/).filter(Boolean);
-      const primeiraPalavra = palavras[0] || "";
-      const aprox = (() => {
-        if (!primeiraPalavra) return errado;
-        const re = new RegExp(primeiraPalavra.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-        const m = re.exec(textoGerado);
-        if (!m) return errado;
-        return textoGerado.substr(m.index, Math.min(errado.length + 40, textoGerado.length - m.index));
-      })();
-      alertas.push({
-        correcao_id: c.id,
-        categoria: c.categoria_erro,
-        escopo: c._escopo,
-        trecho_errado: errado,
-        trecho_correto: c.trecho_correto,
-        explicacao: c.explicacao,
-        regra_aplicavel: c.regra_aplicavel,
-        trecho_suspeito: aprox,
-        metodo: "normalizado",
-      });
-    }
-  }
-
-  // dedup por correcao_id
-  const seen = new Set<string>();
-  return alertas.filter((a) => {
-    if (seen.has(a.correcao_id)) return false;
-    seen.add(a.correcao_id);
-    return true;
-  });
-}
-
-async function registrarUsoCorrecoes(
-  supabase: any,
-  correcoes: CorrecaoComEscopo[],
-): Promise<void> {
-  if (!correcoes || correcoes.length === 0) return;
-  try {
-    const agora = new Date().toISOString();
-    // Atualização individual (volume baixo: máx 20 por geração)
-    await Promise.all(
-      correcoes.map((c) =>
-        supabase
-          .from("qa_ia_correcoes_juridicas")
-          .update({
-            usado_vezes: (c.usado_vezes || 0) + 1,
-            ultima_utilizacao: agora,
-          })
-          .eq("id", c.id),
-      ),
-    );
-  } catch (err) {
-    console.error("[qa-gerar-peca] Falha ao registrar uso de correções:", err);
-  }
-}
-
-function resumoCorrecoesParaMetadata(correcoes: CorrecaoComEscopo[]) {
-  const agora = new Date().toISOString();
-  return correcoes.map((c) => ({
-    id: c.id,
-    categoria: c.categoria_erro,
-    escopo: c._escopo,
-    usado_em: agora,
-  }));
-}
-
 // ═══ EVIDENTIARY DOCUMENT DETECTION & STRUCTURED EXTRACTION ═══
 
 type TipoDocProbatorio =
@@ -1078,11 +703,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsH });
 
   try {
-    // ── Auth: require active QA staff ──
-    const { requireQAStaff } = await import("../_shared/qaAuth.ts");
-    const guard = await requireQAStaff(req);
-    if (!guard.ok) return guard.response;
-
     const reqBody = await req.json();
     const {
       usuario_id, caso_titulo, entrada_caso, tipo_peca,
@@ -1093,16 +713,7 @@ Deno.serve(async (req) => {
       numero_requerimento, caso_id: req_caso_id,
       cliente_id: reqClienteId,
     } = reqBody;
-    // Análise estruturada do indeferimento, quando for recurso_administrativo.
-    const indeferimento_texto: string | null = reqBody.indeferimento_texto ? String(reqBody.indeferimento_texto) : null;
-    const indeferimento_analise: any = reqBody.indeferimento_analise || null;
     const wantStream = !!reqBody.stream;
-
-    // IDs de documentos auxiliares enviados explicitamente pelo front
-    // (mesmo que ainda não estejam vinculados ao caso_id no banco).
-    const documentos_auxiliares_ids: string[] = Array.isArray(reqBody.documentos_auxiliares_ids)
-      ? (reqBody.documentos_auxiliares_ids as any[]).filter(Boolean).map(String)
-      : [];
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -1248,49 +859,15 @@ Deno.serve(async (req) => {
     let fontesAuxiliares: any[] = [];
     let evidenceDocs: EvidenceDoc[] = [];
     const caso_id = req_caso_id?.trim() || null;
-    // Cliente vinculado: prioriza payload; se ausente e houver caso, deriva do qa_casos.cliente_id.
-    let cliente_id_final: number | null = (typeof reqClienteId === "number" || typeof reqClienteId === "string")
-      ? Number(reqClienteId) || null
-      : null;
-    if (!cliente_id_final && caso_id) {
-      const { data: casoRow } = await supabase
-        .from("qa_casos")
-        .select("cliente_id")
-        .eq("id", caso_id)
-        .maybeSingle();
-      if (casoRow?.cliente_id) cliente_id_final = Number(casoRow.cliente_id) || null;
-    }
 
-    if (caso_id || documentos_auxiliares_ids.length > 0) {
-      // 1) Documentos vinculados ao caso (via caso_id)
-      const auxDocsMap = new Map<string, any>();
-      if (caso_id) {
-        const { data: porCaso } = await supabase.from("qa_documentos_conhecimento")
-          .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
-          .eq("status_processamento", "concluido")
-          .eq("ativo", true)
-          .eq("papel_documento", "auxiliar_caso")
-          .eq("caso_id", caso_id)
-          .limit(30);
-        (porCaso || []).forEach((d: any) => auxDocsMap.set(d.id, d));
-      }
-
-      // 2) Documentos enviados explicitamente por ID (mesmo sem caso_id ainda)
-      if (documentos_auxiliares_ids.length > 0) {
-        const idsFaltantes = documentos_auxiliares_ids.filter(id => !auxDocsMap.has(id));
-        if (idsFaltantes.length > 0) {
-          const { data: porIds } = await supabase.from("qa_documentos_conhecimento")
-            .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
-            .eq("status_processamento", "concluido")
-            .eq("ativo", true)
-            .in("id", idsFaltantes)
-            .limit(30);
-          (porIds || []).forEach((d: any) => auxDocsMap.set(d.id, d));
-        }
-      }
-
-      const auxDocs = Array.from(auxDocsMap.values());
-      console.log(`[qa-gerar-peca] Auxiliary docs collected: ${auxDocs.length} (caso_id=${caso_id || "—"}, explicit_ids=${documentos_auxiliares_ids.length})`);
+    if (caso_id) {
+      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento")
+        .select("id, titulo, tipo_documento, texto_extraido, resumo_extraido, categoria")
+        .eq("status_processamento", "concluido")
+        .eq("ativo", true)
+        .eq("papel_documento", "auxiliar_caso")
+        .eq("caso_id", caso_id)
+        .limit(30);
 
       // Classify each doc by type
       const priorityDocs: typeof auxDocs = [];
@@ -1489,53 +1066,6 @@ Deno.serve(async (req) => {
     if (numero_requerimento) dadosAdicionais += `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}`;
     if (exameContextGerar) dadosAdicionais += exameContextGerar;
 
-    // ═══ INDEFERIMENTO — somente em recurso_administrativo ═══
-    let analiseIndefForUse: any = indeferimento_analise;
-    let textoIndefForUse: string | null = indeferimento_texto;
-    if (tipo_peca === "recurso_administrativo" && (!analiseIndefForUse || !textoIndefForUse) && caso_id) {
-      const { data: casoIndef } = await supabase
-        .from("qa_casos")
-        .select("indeferimento_texto, indeferimento_analise")
-        .eq("id", caso_id)
-        .maybeSingle();
-      if (casoIndef) {
-        if (!textoIndefForUse && casoIndef.indeferimento_texto) textoIndefForUse = casoIndef.indeferimento_texto;
-        if (!analiseIndefForUse && casoIndef.indeferimento_analise) analiseIndefForUse = casoIndef.indeferimento_analise;
-      }
-    }
-    if (tipo_peca === "recurso_administrativo" && analiseIndefForUse) {
-      const a = analiseIndefForUse;
-      const fundamentos = Array.isArray(a.fundamentos_de_indef) ? a.fundamentos_de_indef : [];
-      const artigos = Array.isArray(a.artigos_citados) ? a.artigos_citados : [];
-      const naoEnfrentados = Array.isArray(a.pontos_nao_enfrentados) ? a.pontos_nao_enfrentados : [];
-      const falhas = Array.isArray(a.falhas_logicas) ? a.falhas_logicas : [];
-      const vicios = Array.isArray(a.vicios_formais) ? a.vicios_formais : [];
-
-      let blocoIndef = "\n\n═══════════════════════════════════════════\n";
-      blocoIndef += "DECISÃO ADMINISTRATIVA DE INDEFERIMENTO — ANÁLISE OBRIGATÓRIA\n";
-      blocoIndef += "═══════════════════════════════════════════\n";
-      if (a.autoridade) blocoIndef += `AUTORIDADE/UNIDADE: ${a.autoridade}\n`;
-      if (a.resumo_decisao) blocoIndef += `RESUMO DA DECISÃO: ${a.resumo_decisao}\n`;
-      if (artigos.length) blocoIndef += `\nDISPOSITIVOS CITADOS PELA AUTORIDADE:\n${artigos.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
-      if (fundamentos.length) blocoIndef += `\nFUNDAMENTOS INVOCADOS PELA AUTORIDADE PARA INDEFERIR (REBATER PONTO A PONTO):\n${fundamentos.map((x: string, i: number) => `  P${i + 1}. ${x}`).join("\n")}\n`;
-      if (naoEnfrentados.length) blocoIndef += `\nPONTOS QUE A AUTORIDADE IGNOROU/NÃO ENFRENTOU:\n${naoEnfrentados.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
-      if (falhas.length) blocoIndef += `\nFALHAS LÓGICAS / EXTRAPOLAÇÃO DE DISCRICIONARIEDADE:\n${falhas.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
-      if (vicios.length) blocoIndef += `\nVÍCIOS FORMAIS (Lei 9.784/99 – motivação, ampla defesa):\n${vicios.map((x: string, i: number) => `  ${i + 1}. ${x}`).join("\n")}\n`;
-      if (textoIndefForUse) {
-        const corte = textoIndefForUse.length > 12000 ? textoIndefForUse.substring(0, 12000) + "\n[...trecho omitido por limite...]" : textoIndefForUse;
-        blocoIndef += `\nTEXTO INTEGRAL DA DECISÃO (referência factual — não copiar):\n────────\n${corte}\n────────\n`;
-      }
-      blocoIndef += `\nINSTRUÇÕES OBRIGATÓRIAS PARA ESTE RECURSO:\n` +
-        `1. Criar seção "DA NULIDADE DO INDEFERIMENTO" antes de DOS FATOS, expondo vícios formais e falhas (Lei 9.784/99 art. 2º, 50, 53; princípios da legalidade, motivação, razoabilidade, proporcionalidade).\n` +
-        `2. Criar seção "DO ENFRENTAMENTO DOS FUNDAMENTOS DO INDEFERIMENTO" estruturada como:\n` +
-        `   "P1 — [reproduzir o fundamento] → [resposta jurídica direta]" para CADA fundamento listado acima.\n` +
-        `3. Demonstrar que o requerente atende plenamente os requisitos legais (Lei 10.826/03, Decreto 11.615/23, IN 201/2021-DG/PF).\n` +
-        `4. Atacar diretamente: motivação genérica, ausência de análise individual, extrapolação de discricionariedade, omissão sobre documentos enviados.\n` +
-        `5. PROIBIDO ignorar qualquer fundamento listado — TODOS devem ser rebatidos.\n` +
-        `6. Tom firme, técnico, objetivo. Sem linguagem emocional. Sem inventar fatos ou jurisprudência.\n`;
-      dadosAdicionais += blocoIndef;
-    }
-
     // Evidence-specific instructions for the user prompt
     const bos = evidenceDocs.filter(d => d.tipo === "boletim_ocorrencia");
     const laudos = evidenceDocs.filter(d => ["laudo_medico", "laudo_psiquiatrico", "laudo_psicologico", "relatorio_clinico", "atestado_medico"].includes(d.tipo));
@@ -1579,21 +1109,6 @@ Deno.serve(async (req) => {
       ? ` — usar documentos probatórios como PROVA MATERIAL${bos.length > 0 ? " do risco concreto" : ""}${laudos.length > 0 ? " e do impacto clínico" : ""}`
       : "";
 
-    // ═══ FASE 3 — Buscar correções supervisionadas ANTES do prompt ═══
-    const correcoesAtivas = await buscarCorrecoesRelevantes(supabase, {
-      tipo_peca,
-      foco_argumentativo: foco,
-      cliente_id: cliente_id_final,
-      caso_id: caso_id,
-      peca_id: null, // a peça ainda não foi gerada nesta execução
-    });
-    const blocoCorrecoes = montarBlocoCorrecoesParaPrompt(correcoesAtivas);
-    const blocoTreinamentos = montarBlocoTreinamentosDiretos(correcoesAtivas);
-    console.log(`[qa-gerar-peca] Correções injetadas no prompt: ${correcoesAtivas.length} (tipo=${tipo_peca}, cliente=${cliente_id_final ?? "—"}, caso=${caso_id ?? "—"})`);
-    if (correcoesAtivas.length > 0) {
-      console.log(`[qa-gerar-peca] Correções IDs: ${correcoesAtivas.map(c => `${c.id}(${c._escopo})`).join(", ")}`);
-    }
-
     const aiMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -1607,7 +1122,7 @@ MUNICÍPIO DO CLIENTE: ${cliente_cidade || "não informado"}
 UF DO CLIENTE: ${cliente_uf || "não informado"}
 UNIDADE PF COMPETENTE: ${circunscricao ? `${circunscricao.unidade_pf} (${circunscricao.sigla_unidade}) — Base: ${circunscricao.base_legal}` : "NÃO RESOLVIDA — usar endereçamento com marcador pendente"}${numero_requerimento ? `\nNÚMERO DO REQUERIMENTO: ${numero_requerimento}` : ""}
 ${evidenceSummaryForPrompt}
-${parametros}${blocoCorrecoes}${blocoTreinamentos}
+${parametros}
 
 DESCRIÇÃO COMPLETA DO CASO:
 ${entrada_caso}
@@ -1755,16 +1270,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
               status: "gerado", status_revisao: "rascunho",
               profundidade: "tecnica_concisa", tom: "tecnico_padrao", foco: foco || "legalidade",
               score_confianca: scoreConfianca, versao: 1,
-              caso_id: caso_id || null,
-              cliente_id: cliente_id_final ?? null,
-              correcoes_ia_usadas_json: resumoCorrecoesParaMetadata(correcoesAtivas),
-              correcoes_ia_alertas_json: checarErrosConhecidosNaPeca(fullText, correcoesAtivas),
             }).select("id").single();
-
-            // Tracking de uso (somente após geração bem-sucedida)
-            await registrarUsoCorrecoes(supabase, correcoesAtivas);
-            const alertasCorrecoes = checarErrosConhecidosNaPeca(fullText, correcoesAtivas);
-            console.log(`[qa-gerar-peca] Pós-geração (stream): correcoes_injetadas=${correcoesAtivas.length}, alertas=${alertasCorrecoes.length}${alertasCorrecoes.length > 0 ? `, categorias=[${alertasCorrecoes.map(a => a.categoria).join(",")}]` : ""}`);
 
             await supabase.from("qa_logs_auditoria").insert({
               usuario_id, entidade: "qa_geracoes_pecas", entidade_id: geracaoData?.id || null,
@@ -1774,10 +1280,6 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
                 circunscricao_resolvida: circunscricao ? { unidade_pf: circunscricao.unidade_pf, sigla_unidade: circunscricao.sigla_unidade } : null,
                 fontes_count: fontesParaUsar.length, evidence_count: evidenceDocs.length,
                 score_confianca: scoreConfianca, quality_issues: qualityCheck.issues,
-                correcoes_ia_injetadas: correcoesAtivas.length,
-                correcoes_ia_ids: correcoesAtivas.map(c => c.id),
-                correcoes_ia_alertas: alertasCorrecoes.length,
-                correcoes_ia_alertas_categorias: alertasCorrecoes.map(a => a.categoria),
               },
             });
 
@@ -1805,8 +1307,6 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
                 count: evidenceDocs.length,
                 by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
               } : null,
-              correcoes_ia_alertas: alertasCorrecoes,
-              correcoes_ia_injetadas_count: correcoesAtivas.length,
             })}\n\n`));
 
             controller.close();
@@ -1913,15 +1413,7 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
       foco: foco || "legalidade",
       score_confianca: scoreConfianca,
       versao: 1,
-      caso_id: caso_id || null,
-      cliente_id: cliente_id_final ?? null,
-      correcoes_ia_usadas_json: resumoCorrecoesParaMetadata(correcoesAtivas),
-      correcoes_ia_alertas_json: checarErrosConhecidosNaPeca(minutaGerada, correcoesAtivas),
     }).select("id").single();
-
-    const alertasCorrecoesNS = checarErrosConhecidosNaPeca(minutaGerada, correcoesAtivas);
-    await registrarUsoCorrecoes(supabase, correcoesAtivas);
-    console.log(`[qa-gerar-peca] Pós-geração (json): correcoes_injetadas=${correcoesAtivas.length}, alertas=${alertasCorrecoesNS.length}`);
 
     await supabase.from("qa_logs_auditoria").insert({
       usuario_id,
@@ -1942,10 +1434,6 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
         evidence_structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, indicadores_risco: d.structured.indicadores_risco })),
         score_confianca: scoreConfianca,
         quality_issues: qualityCheck.issues,
-        correcoes_ia_injetadas: correcoesAtivas.length,
-        correcoes_ia_ids: correcoesAtivas.map(c => c.id),
-        correcoes_ia_alertas: alertasCorrecoesNS.length,
-        correcoes_ia_alertas_categorias: alertasCorrecoesNS.map(a => a.categoria),
       },
     });
 
@@ -1972,8 +1460,6 @@ IGNORE qualquer menção no contexto a tipos de peça diferentes. O tipo é FIXO
         by_type: Object.fromEntries([...new Set(evidenceDocs.map(d => d.tipo))].map(t => [t, evidenceDocs.filter(d => d.tipo === t).length])),
         structured: evidenceDocs.map(d => ({ titulo: d.titulo, tipo: d.tipo, structured: d.structured })),
       } : null,
-      correcoes_ia_alertas: alertasCorrecoesNS,
-      correcoes_ia_injetadas_count: correcoesAtivas.length,
     }), { headers: { ...corsH, "Content-Type": "application/json" } });
 
   } catch (err: any) {

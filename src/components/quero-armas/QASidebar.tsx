@@ -2,73 +2,41 @@ import { useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   LayoutDashboard, PenTool, FolderOpen, Scale, Gavel,
-  BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
-  PanelLeftOpen, Home, Crosshair, FileStack, Activity,
-  ClipboardList, Tags, GraduationCap,
-  History, LifeBuoy, FileSignature,
+  BookOpen, FileBox, History, Settings, LogOut, Shield, Users, Building2, BarChart3, DollarSign, ShieldCheck,
+  PanelLeftOpen, Home, Crosshair,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 
-// FASE 22-B: Menu reorganizado em 7 grupos.
-// Itens ocultados (rotas mantidas em QARoutes.tsx, acessíveis por URL direta):
-//   /contratacoes-pendentes, /historico, /acessos, /clubes
 const NAV_GROUPS = [
-  {
-    label: "Visão Geral",
-    items: [
-      { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-      { title: "Monitoramento", url: "/operacao/monitoramento", icon: Activity },
-    ],
-  },
   {
     label: "Operação",
     items: [
-      { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
-      { title: "Processos & Documentos", url: "/processos", icon: FileStack },
-      { title: "Alertas de Vencimento", url: "/operacao/alertas-vencimento", icon: Activity },
-      { title: "Histórico de Status", url: "/operacao/historico-status", icon: History },
-    ],
-  },
-  {
-    label: "Clientes",
-    items: [
-      { title: "Clientes", url: "/clientes", icon: Users },
-    ],
-  },
-  {
-    label: "Jurídico & IA",
-    items: [
-      { title: "Assistente IA", url: "/ia", icon: Shield },
+      { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
       { title: "Gerar Peça", url: "/gerar-peca", icon: PenTool },
       { title: "Casos", url: "/casos", icon: FolderOpen },
+      { title: "Clientes", url: "/clientes", icon: Users },
+      { title: "Clubes de Tiro", url: "/clubes", icon: Building2 },
+      { title: "Financeiro", url: "/financeiro", icon: DollarSign },
+      { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+      { title: "Assistente IA", url: "/ia", icon: Shield },
+    ],
+  },
+  {
+    label: "Acervo",
+    items: [
       { title: "Base Jurídica", url: "/base-conhecimento", icon: BookOpen },
       { title: "Legislação", url: "/legislacao", icon: Scale },
       { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel },
       { title: "Modelos DOCX", url: "/modelos-docx", icon: FileBox },
-      { title: "Modelos de Declaração", url: "/modelos-declaracao", icon: FileSignature },
-      { title: "Wizard de Perguntas", url: "/wizard-perguntas", icon: FileSignature },
-      { title: "Correções da IA", url: "/correcoes-ia", icon: GraduationCap },
-    ],
-  },
-  {
-    label: "Arsenal",
-    items: [
-      { title: "Catálogo de Modelos", url: "/armamentos", icon: Crosshair },
-    ],
-  },
-  {
-    label: "Financeiro",
-    items: [
-      { title: "Financeiro", url: "/financeiro", icon: DollarSign },
-      { title: "Catálogo de Preços", url: "/precos-servicos", icon: Tags },
-      { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
+      { title: "Catálogo de Armas", url: "/armamentos", icon: Crosshair },
     ],
   },
   {
     label: "Sistema",
     items: [
-      { title: "Base da Equipe", url: "/base-equipe", icon: LifeBuoy },
       { title: "Auditoria", url: "/auditoria", icon: ShieldCheck },
+      { title: "Acessos de Clientes", url: "/acessos", icon: ShieldCheck },
+      { title: "Histórico", url: "/historico", icon: History },
       { title: "Configurações", url: "/configuracoes", icon: Settings },
     ],
   },
@@ -88,7 +56,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
     location.pathname === url || location.pathname.startsWith(url + "/");
 
   const canAccess = (url: string) => {
-    if (perfil === "leitura_auditoria") return !["/gerar-peca", "/modelos-docx", "/modelos-declaracao", "/correcoes-ia"].includes(url);
+    if (perfil === "leitura_auditoria") return !["/gerar-peca", "/modelos-docx"].includes(url);
     if (perfil === "assistente_juridico") return url !== "/configuracoes";
     return true;
   };
@@ -97,16 +65,14 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
 
   return (
     <aside
-      data-qa-sidebar="true"
-      className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
+      className="shrink-0 border-r flex flex-col z-30 transition-[width] duration-200 self-start min-h-screen"
       style={{
-        width: collapsed ? "4.25rem" : "16rem",
-        minHeight: "100%",
+        width: collapsed ? "3.25rem" : "16rem",
         background: "hsl(0 0% 100%)",
         borderColor: "hsl(220 13% 91%)",
       }}
     >
-      <div className="py-3 flex flex-col">
+      <div className="py-3 flex flex-col flex-1">
         {/* Header / toggle */}
         {collapsed ? (
           <button
@@ -143,7 +109,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         )}
 
         {/* Nav groups */}
-        <nav className="overflow-x-hidden">
+        <nav className="flex-1 overflow-x-hidden">
           {NAV_GROUPS.map(group => {
             const visibleItems = group.items.filter(i => canAccess(i.url));
             if (visibleItems.length === 0) return null;
@@ -165,8 +131,8 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           title={collapsed ? item.title : undefined}
                           className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
                           style={{
-                            background: active ? "hsl(352 33% 97%)" : "transparent",
-                            color: active ? "hsl(352 60% 46%)" : "hsl(220 10% 46%)",
+                            background: active ? "hsl(230 80% 96%)" : "transparent",
+                            color: active ? "hsl(230 80% 46%)" : "hsl(220 10% 46%)",
                           }}
                           onMouseEnter={e => {
                             if (!active) {
@@ -182,7 +148,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           }}
                         >
                           <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{
-                            color: active ? "hsl(352 60% 30%)" : "hsl(220 10% 62%)",
+                            color: active ? "hsl(230 80% 56%)" : "hsl(220 10% 62%)",
                           }} />
                           {!collapsed && <span className="truncate">{item.title}</span>}
                         </Link>
@@ -200,7 +166,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1">
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                style={{ background: "hsl(352 60% 30%)" }}>
+                style={{ background: "hsl(230 80% 56%)" }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">

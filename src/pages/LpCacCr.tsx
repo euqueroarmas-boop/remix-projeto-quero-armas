@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
 import { ArrowRight, Trophy, Crosshair, Boxes, FileText, Shield, Award, Target, Phone, CheckCircle2, AlertTriangle, Bell, Calendar, Quote, HelpCircle } from 'lucide-react';
 
-const CAC_CHECKOUT = '/cadastro?servico=concessao-cr&origem=lp_cac_cr&perfil_v2=cac&subperfil_v2=concessao_cr';
-
 const LpCacCr = () => (
   <SiteShell>
     <SEO
@@ -22,8 +20,8 @@ const LpCacCr = () => (
         description: 'Filiação a clube, registro CR no Exército, aquisição de armas, controle de habitualidade e renovação.',
       }}
     />
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20 sm:py-28">
-      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
+    <section className="relative w-full overflow-hidden border-b border-border bg-background py-20 sm:py-28">
+      <div className="container max-w-5xl text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-sm border border-accent/40 bg-accent/10 px-3 py-1.5">
           <Trophy className="size-3.5 text-accent" />
           <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent">CR · Colecionador, Atirador e Caçador</span>
@@ -35,14 +33,14 @@ const LpCacCr = () => (
           Você quer construir <strong className="text-foreground">acervo</strong>, dominar a técnica e viver o universo armado dentro da lei. CR exige rotina, papel, prazo. A gente carrega tudo pra você focar no que importa: <strong className="text-foreground">atirar</strong>.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CAC_CHECKOUT}>Quero meu CR ativo <ArrowRight className="ml-2 size-4" /></Link></Button>
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/servicos">Quero meu CR ativo <ArrowRight className="ml-2 size-4" /></Link></Button>
           <Button asChild size="lg" variant="outline"><a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Especialista CAC</a></Button>
         </div>
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-surface-elevated py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">A verdade que ninguém te conta</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">CR não é só pegar o registro. <span className="text-accent">É manter.</span></h2>
@@ -62,8 +60,8 @@ const LpCacCr = () => (
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-background py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">O ecossistema CAC completo</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Do <span className="text-accent">primeiro CR</span> ao acervo dos sonhos</h2>
@@ -89,16 +87,16 @@ const LpCacCr = () => (
       </div>
     </section>
 
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-surface-elevated py-20">
-      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full bg-surface-elevated py-20">
+      <div className="container max-w-3xl text-center">
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Acervo na sua mão. <span className="text-accent">Papel na nossa.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Estatuto, IN 201, IN 311. CR Atirador a partir de R$ 1.127,00 — filiação inclusa.</p>
       </div>
     </section>
 
     {/* Jornada do CAC */}
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-background py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">Jornada CAC · 90 dias</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Da <span className="text-accent">primeira ficha</span> ao <span className="text-accent">CR ativo</span></h2>
@@ -121,8 +119,8 @@ const LpCacCr = () => (
     </section>
 
     {/* Objeções */}
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-surface-elevated py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">As 4 dúvidas que travam todo CAC novato</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Resposta direta. <span className="text-accent">Sem enrolação.</span></h2>
@@ -144,8 +142,8 @@ const LpCacCr = () => (
     </section>
 
     {/* Prova social */}
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-background py-20">
+      <div className="container max-w-5xl">
         <div className="mb-12 text-center">
           <div className="mb-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">CACs ativos que conduzimos</div>
           <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">A prova vem de quem <span className="text-accent">já está atirando</span></h2>
@@ -167,8 +165,8 @@ const LpCacCr = () => (
     </section>
 
     {/* Alerta habitualidade */}
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-surface-elevated py-16">
-      <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full border-b border-border bg-surface-elevated py-16">
+      <div className="container max-w-4xl">
         <div className="rounded-sm border border-accent/40 bg-accent/5 p-8 sm:p-10">
           <div className="flex flex-col items-start gap-6 sm:flex-row">
             <Bell className="size-10 shrink-0 text-accent" />
@@ -176,7 +174,7 @@ const LpCacCr = () => (
               <h3 className="font-heading text-2xl font-bold uppercase">Habitualidade não é detalhe. <span className="text-accent">É o que define se você continua CAC.</span></h3>
               <p className="mt-3 text-sm text-muted-foreground">Cada arma exige comprovação anual. Esquecer um relatório custa o direito de comprar munição. Nosso painel cliente envia <strong className="text-foreground">3 alertas escalonados</strong> (60, 30 e 7 dias antes) por e-mail e WhatsApp. Você nunca mais perde prazo.</p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/area-do-cliente">Acessar painel CAC <ArrowRight className="ml-2 size-3.5" /></Link></Button>
+                <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/portal">Acessar painel CAC <ArrowRight className="ml-2 size-3.5" /></Link></Button>
                 <Button asChild size="sm" variant="outline"><a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-3.5" /> Auditar meu acervo</a></Button>
               </div>
             </div>
@@ -186,14 +184,14 @@ const LpCacCr = () => (
     </section>
 
     {/* CTA final reforçado */}
-    <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden bg-background py-20">
-      <div className="w-full px-4 text-center sm:px-6 lg:px-10 2xl:px-16">
+    <section className="w-full bg-background py-20">
+      <div className="container max-w-3xl text-center">
         <Trophy className="mx-auto mb-4 size-10 text-accent" />
         <h2 className="font-heading text-3xl font-bold uppercase sm:text-4xl">Comece o CR. <span className="text-accent">Construa o acervo.</span></h2>
         <p className="mt-4 text-base text-muted-foreground">Estatuto · IN 201 · IN 311 · Decreto 11.615/23. Filiação a clube credenciado já incluída.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CAC_CHECKOUT}>Contratar concessÃ£o de CR <ArrowRight className="ml-2 size-4" /></Link></Button>
-          <Button asChild size="lg" variant="outline"><Link to="/cadastro">Começar meu cadastro</Link></Button>
+          <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to="/servicos">Ver pacotes CAC <ArrowRight className="ml-2 size-4" /></Link></Button>
+          <Button asChild size="lg" variant="outline"><Link to="/descobrir-meu-caminho">Descobrir meu caminho</Link></Button>
         </div>
       </div>
     </section>

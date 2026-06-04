@@ -1,1 +1,0 @@
-ALTER TABLE public.qa_servicos_catalogo ADD COLUMN IF NOT EXISTS base_legal TEXT NULL;

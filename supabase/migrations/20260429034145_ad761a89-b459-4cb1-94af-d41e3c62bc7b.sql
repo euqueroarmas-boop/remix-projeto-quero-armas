@@ -1,1 +1,0 @@
-DROP FUNCTION IF EXISTS public.qa_test_fase42_run();

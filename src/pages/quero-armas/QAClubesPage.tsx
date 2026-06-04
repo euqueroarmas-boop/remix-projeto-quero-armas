@@ -3,25 +3,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Edit, Trash2, Loader2, Save, Search, Building2, ShieldCheck, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Save, Search, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Clube {
   id: number; id_legado: number | null; nome_clube: string; cnpj: string | null;
   numero_cr: string | null; data_validade: string | null; endereco: string | null;
-  cidade: string | null; estado: string | null;
-  origem: string; status_verificacao: string;
-  processo_id_origem: string | null; cliente_id_origem: number | null;
 }
 
 export default function QAClubesPage() {
   const [clubes, setClubes] = useState<Clube[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"todos" | "pendente_revisao" | "verificado">("todos");
   const [modal, setModal] = useState<{ open: boolean; item?: Clube }>({ open: false });
   const [deleting, setDeleting] = useState<number | null>(null);
-  const [verifying, setVerifying] = useState<number | null>(null);
 
   const _loadedRef = useRef(false);
   useEffect(() => { if (_loadedRef.current) return; _loadedRef.current = true; load(); }, []);
@@ -29,7 +24,7 @@ export default function QAClubesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.from("qa_clubes" as any).select("*").order("status_verificacao", { ascending: true }).order("nome_clube");
+      const { data } = await supabase.from("qa_clubes" as any).select("*").order("nome_clube");
       setClubes((data as any[]) ?? []);
     } catch (err) {
       console.error("[QAClubes] load error:", err);
@@ -48,31 +43,10 @@ export default function QAClubesPage() {
     } catch (e: any) { toast.error(e.message); } finally { setDeleting(null); }
   };
 
-  const handleVerify = async (id: number) => {
-    setVerifying(id);
-    try {
-      const { error } = await supabase
-        .from("qa_clubes" as any)
-        .update({ status_verificacao: "verificado", atualizado_em: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-      toast.success("Clube marcado como verificado");
-      await load();
-    } catch (e: any) { toast.error(e.message); } finally { setVerifying(null); }
-  };
-
   const filtered = clubes.filter(c => {
     const s = search.toLowerCase();
-    const matchesSearch = !s
-      || c.nome_clube?.toLowerCase().includes(s)
-      || c.cnpj?.includes(s)
-      || c.cidade?.toLowerCase().includes(s)
-      || c.estado?.toLowerCase().includes(s);
-    const matchesStatus = statusFilter === "todos" || c.status_verificacao === statusFilter;
-    return matchesSearch && matchesStatus;
+    return !s || c.nome_clube?.toLowerCase().includes(s) || c.cnpj?.includes(s);
   });
-
-  const pendentesCount = clubes.filter(c => c.status_verificacao === "pendente_revisao").length;
 
   const formatDate = (d: string | null) => { if (!d) return "—"; try { return new Date(d).toLocaleDateString("pt-BR"); } catch { return d; } };
 
@@ -82,46 +56,21 @@ export default function QAClubesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight" style={{ color: "hsl(220 20% 18%)" }}>Clubes de Tiro</h1>
-          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
-            {clubes.length} cadastrados
-            {pendentesCount > 0 && <span className="ml-2 text-amber-700 font-semibold">· {pendentesCount} pendente{pendentesCount > 1 ? "s" : ""} de revisão</span>}
-          </p>
+          <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>{clubes.length} cadastrados</p>
         </div>
         <button onClick={() => setModal({ open: true })} className="qa-btn-primary flex items-center gap-1.5 no-glow">
           <Plus className="h-3.5 w-3.5" /> Novo Clube
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2">
-        {([
-          { key: "todos", label: "Todos" },
-          { key: "pendente_revisao", label: `Pendentes de revisão${pendentesCount ? ` (${pendentesCount})` : ""}` },
-          { key: "verificado", label: "Verificados" },
-        ] as const).map(opt => (
-          <button
-            key={opt.key}
-            onClick={() => setStatusFilter(opt.key)}
-            className={
-              "h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wide border transition-colors " +
-              (statusFilter === opt.key
-                ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
-                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50")
-            }
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "hsl(220 10% 55%)" }} />
         <input
-          value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome, CNPJ, cidade, UF..."
+          value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar clube..."
           className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
           style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-          onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
+          onFocus={e => e.currentTarget.style.borderColor = "hsl(230 80% 56%)"}
           onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
         />
       </div>
@@ -129,7 +78,7 @@ export default function QAClubesPage() {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
@@ -141,40 +90,19 @@ export default function QAClubesPage() {
           <div className="space-y-2">
             {filtered.map(c => (
               <div key={c.id} className="qa-card qa-hover-lift p-4 flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(352 33% 97%)" }}>
-                  <Building2 className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(230 80% 96%)" }}>
+                  <Building2 className="h-4 w-4" style={{ color: "hsl(230 80% 56%)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="text-[13px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_clube}</div>
-                    <StatusBadge status={c.status_verificacao} />
-                    <OrigemBadge origem={c.origem} />
-                  </div>
+                  <div className="text-[13px] font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>{c.nome_clube}</div>
                   <div className="flex items-center gap-3 text-[11px] mt-0.5 flex-wrap uppercase" style={{ color: "hsl(220 10% 55%)" }}>
                     {c.cnpj && <span>CNPJ: {c.cnpj}</span>}
                     {c.numero_cr && <span>CR: {c.numero_cr}</span>}
                     <span>Val: {formatDate(c.data_validade)}</span>
-                    {(c.cidade || c.estado) && <span>{[c.cidade, c.estado].filter(Boolean).join("/")}</span>}
                   </div>
                   {c.endereco && <div className="text-[11px] mt-0.5 truncate uppercase" style={{ color: "hsl(220 10% 62%)" }}>{c.endereco}</div>}
-                  {(c.processo_id_origem || c.cliente_id_origem) && (
-                    <div className="text-[10px] mt-1 text-slate-400 uppercase font-mono">
-                      Sugerido por cliente #{c.cliente_id_origem ?? "?"} · processo {c.processo_id_origem?.slice(0, 8) ?? "?"}
-                    </div>
-                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  {c.status_verificacao === "pendente_revisao" && (
-                    <button
-                      onClick={() => handleVerify(c.id)}
-                      disabled={verifying === c.id}
-                      title="Marcar como verificado"
-                      className="h-8 px-2 rounded-lg flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                    >
-                      {verifying === c.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                      Verificar
-                    </button>
-                  )}
                   <button onClick={() => setModal({ open: true, item: c })} className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 transition-colors" style={{ color: "hsl(220 10% 55%)" }}>
                     <Edit className="h-3.5 w-3.5" />
                   </button>
@@ -190,36 +118,6 @@ export default function QAClubesPage() {
 
       <ClubeFormModal open={modal.open} onClose={() => setModal({ open: false })} onSaved={load} clube={modal.item} />
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  if (status === "verificado") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
-        <ShieldCheck className="h-3 w-3" /> Verificado
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700">
-      <ShieldAlert className="h-3 w-3" /> Pendente
-    </span>
-  );
-}
-
-function OrigemBadge({ origem }: { origem: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    manual: { label: "Manual", cls: "bg-slate-100 text-slate-600 border border-slate-200" },
-    declaracao_filiacao_cliente: { label: "Declaração cliente", cls: "bg-blue-50 text-blue-700 border border-blue-200" },
-    lead_publico: { label: "Lead público", cls: "bg-purple-50 text-purple-700 border border-purple-200" },
-    importacao_legado: { label: "Legado", cls: "bg-slate-100 text-slate-500 border border-slate-200" },
-  };
-  const m = map[origem] ?? map.manual;
-  return (
-    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${m.cls}`}>
-      {m.label}
-    </span>
   );
 }
 

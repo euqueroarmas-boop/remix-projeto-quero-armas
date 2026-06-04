@@ -1,1 +1,0 @@
-ALTER TABLE public.qa_municoes ADD COLUMN IF NOT EXISTS data_fabricacao DATE NULL;

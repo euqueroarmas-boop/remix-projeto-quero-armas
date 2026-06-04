@@ -1,1 +1,0 @@
-DELETE FROM public.qa_cliente_armas_manual WHERE id = 5;

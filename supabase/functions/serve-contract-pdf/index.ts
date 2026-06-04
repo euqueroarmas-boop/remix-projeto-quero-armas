@@ -3,12 +3,11 @@
  * without exposing Supabase URLs to the client.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token",
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const BUCKET = "paid-contracts";
@@ -18,24 +17,6 @@ function createServiceClient() {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
-}
-
-async function getAuthenticatedUserId(req: Request): Promise<string | null> {
-  const authHeader = req.headers.get("Authorization") || "";
-  if (!authHeader.startsWith("Bearer ")) return null;
-  const token = authHeader.slice(7).trim();
-  try {
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } },
-    );
-    const { data, error } = await userClient.auth.getClaims(token);
-    if (error || !data?.claims?.sub) return null;
-    return data.claims.sub as string;
-  } catch {
-    return null;
-  }
 }
 
 Deno.serve(async (req) => {
@@ -52,20 +33,6 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    // 🔒 Onda 6: require admin/internal OR a valid authenticated user up-front.
-    // Ownership check happens after we load the contract (below).
-    const adminGuard = await requireAdminOrInternal(req);
-    let authenticatedUserId: string | null = null;
-    if (!adminGuard.ok) {
-      authenticatedUserId = await getAuthenticatedUserId(req);
-      if (!authenticatedUserId) {
-        return new Response(JSON.stringify({ error: "Não autorizado" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
     }
 
     const supabase = createServiceClient();
@@ -85,21 +52,6 @@ Deno.serve(async (req) => {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    // Ownership check for non-admin callers
-    if (!adminGuard.ok && authenticatedUserId) {
-      const { data: customer } = await supabase
-        .from("customers")
-        .select("user_id")
-        .eq("id", contract.customer_id)
-        .maybeSingle();
-      if (!customer || customer.user_id !== authenticatedUserId) {
-        return new Response(JSON.stringify({ error: "Acesso negado a este contrato" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
     }
 
     if (!contract.contract_pdf_path) {

@@ -10,9 +10,6 @@ import {
   Shield, BookOpen, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useResilientLoad } from "@/components/quero-armas/hooks/useResilientLoad";
-import { EmptyState, ErrorRetryState, SkeletonList } from "@/components/quero-armas/LoadStates";
-import { useSubmitAction } from "@/components/quero-armas/hooks/useSubmitAction";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos" },
@@ -27,35 +24,29 @@ const STATUS_OPTIONS = [
 
 export default function QACasosPage() {
   const navigate = useNavigate();
+  const [cases, setCases] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [detailCase, setDetailCase] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("casos");
   const [showNovoCaso, setShowNovoCaso] = useState(false);
 
-  const {
-    data: casesData,
-    status: loadStatus,
-    error: loadError,
-    reload: load,
-  } = useResilientLoad<any[]>(
-    async () => {
-      let query = supabase
-        .from("qa_casos" as any)
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+  const load = async () => {
+    setLoading(true);
+    try {
+      let query = supabase.from("qa_casos" as any).select("*").order("created_at", { ascending: false }).limit(100);
       if (statusFilter !== "todos") query = query.eq("status", statusFilter);
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data as any[]) ?? [];
-    },
-    [statusFilter],
-    { label: "QACasos.load", timeoutMs: 12000 },
-  );
-  const cases = casesData ?? [];
-  const loading = loadStatus === "loading";
-  const { submitting: changingStatus, run: runStatusChange } = useSubmitAction();
+      const { data } = await query;
+      setCases((data as any[]) ?? []);
+    } catch (err) {
+      console.error("[QACasos] load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [statusFilter]);
 
   const filtered = cases.filter(c => {
     if (!search) return true;
@@ -74,7 +65,7 @@ export default function QACasosPage() {
     if (s === "gerado" || s === "revisado") return { bg: "bg-emerald-50", text: "text-emerald-700" };
     if (s === "deferido") return { bg: "bg-green-50", text: "text-green-700" };
     if (s === "indeferido") return { bg: "bg-red-50", text: "text-red-600" };
-    if (s === "em_geracao") return { bg: "bg-[#FBF3F4]", text: "text-[#7A1F2B]" };
+    if (s === "em_geracao") return { bg: "bg-blue-50", text: "text-blue-600" };
     if (s === "arquivado") return { bg: "bg-slate-100", text: "text-slate-500" };
     if (s === "rascunho") return { bg: "bg-amber-50", text: "text-amber-700" };
     return { bg: "bg-slate-100", text: "text-slate-500" };
@@ -84,97 +75,51 @@ export default function QACasosPage() {
 
   const handleSetDeferido = useCallback(async (casoId: string) => {
     try {
-      await runStatusChange(
-        async () => {
-          const { error: upErr } = await supabase
-            .from("qa_casos" as any)
-            .update({ status: "deferido", updated_at: new Date().toISOString() })
-            .eq("id", casoId);
-          if (upErr) throw upErr;
-          const { data: auxDocs } = await supabase
-            .from("qa_documentos_conhecimento" as any)
-            .select("id")
-            .eq("caso_id", casoId)
-            .eq("papel_documento", "auxiliar_caso");
-          if (auxDocs && auxDocs.length > 0) {
-            const docIds = (auxDocs as any[]).map((d) => d.id);
-            await supabase
-              .from("qa_documentos_conhecimento" as any)
-              .update({ papel_documento: "aprendizado", ativo_na_ia: true, updated_at: new Date().toISOString() })
-              .in("id", docIds);
-          }
-          await supabase.from("qa_logs_auditoria" as any).insert({
-            entidade: "qa_casos",
-            entidade_id: casoId,
-            acao: "marcar_deferido",
-            detalhes_json: { docs_promovidos: auxDocs?.length || 0 },
-          });
-        },
-        {
-          loadingMessage: "Marcando como deferido…",
-          successMessage: "Caso marcado como deferido. Documentos promovidos para aprendizado da IA.",
-          errorMessage: (err) => (err instanceof Error && err.message) || "Erro ao atualizar status",
-        },
-      );
+      await supabase.from("qa_casos" as any).update({ status: "deferido", updated_at: new Date().toISOString() }).eq("id", casoId);
+      const { data: auxDocs } = await supabase.from("qa_documentos_conhecimento" as any)
+        .select("id").eq("caso_id", casoId).eq("papel_documento", "auxiliar_caso");
+      if (auxDocs && auxDocs.length > 0) {
+        const docIds = (auxDocs as any[]).map(d => d.id);
+        await supabase.from("qa_documentos_conhecimento" as any)
+          .update({ papel_documento: "aprendizado", ativo_na_ia: true, updated_at: new Date().toISOString() }).in("id", docIds);
+      }
+      await supabase.from("qa_logs_auditoria" as any).insert({
+        entidade: "qa_casos", entidade_id: casoId, acao: "marcar_deferido",
+        detalhes_json: { docs_promovidos: auxDocs?.length || 0 },
+      });
+      toast.success("Caso marcado como deferido. Documentos promovidos para aprendizado da IA.");
       setDetailCase(null);
       load();
-    } catch {
-      // toast já exibido
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao atualizar status");
     }
-  }, [runStatusChange, load]);
+  }, []);
 
   const handleSetIndeferido = useCallback(async (casoId: string) => {
     try {
-      await runStatusChange(
-        async () => {
-          const { error } = await supabase
-            .from("qa_casos" as any)
-            .update({ status: "indeferido", updated_at: new Date().toISOString() })
-            .eq("id", casoId);
-          if (error) throw error;
-        },
-        {
-          loadingMessage: "Marcando como indeferido…",
-          successMessage: "Caso marcado como indeferido.",
-          errorMessage: (err) => (err instanceof Error && err.message) || "Erro ao atualizar status",
-        },
-      );
+      await supabase.from("qa_casos" as any).update({ status: "indeferido", updated_at: new Date().toISOString() }).eq("id", casoId);
+      toast.success("Caso marcado como indeferido.");
       setDetailCase(null);
       load();
-    } catch {
-      // toast já exibido
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao atualizar status");
     }
-  }, [runStatusChange, load]);
+  }, []);
 
   const renderCaseList = (items: any[]) => {
     if (loading) {
-      return <SkeletonList rows={5} />;
-    }
-    if (loadStatus === "error") {
       return (
-        <ErrorRetryState
-          error={loadError}
-          onRetry={load}
-          title="Não foi possível carregar os casos"
-        />
+        <div className="flex justify-center py-12">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+        </div>
       );
     }
     if (items.length === 0) {
       return (
-        <EmptyState
-          icon={<FolderOpen className="h-5 w-5" />}
-          title={search || statusFilter !== "todos" ? "Nenhum caso corresponde aos filtros" : "Ainda não há casos cadastrados"}
-          description={search || statusFilter !== "todos"
-            ? "Ajuste a busca ou o status para ver outros resultados."
-            : "Crie um novo caso para começar a gerar peças e organizar requerentes."}
-          action={
-            !search && statusFilter === "todos" ? (
-              <button onClick={() => setShowNovoCaso(true)} className="qa-btn-primary inline-flex items-center gap-1.5 no-glow">
-                <Plus className="h-3.5 w-3.5" /> Novo Caso
-              </button>
-            ) : undefined
-          }
-        />
+        <div className="text-center py-16">
+          <FolderOpen className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 13% 85%)" }} />
+          <p className="text-sm" style={{ color: "hsl(220 10% 55%)" }}>Nenhum caso encontrado</p>
+        </div>
       );
     }
 
@@ -242,7 +187,7 @@ export default function QACasosPage() {
             value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
             className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
             style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-            onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
+            onFocus={e => e.currentTarget.style.borderColor = "hsl(230 80% 56%)"}
             onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
           />
         </div>
@@ -260,13 +205,13 @@ export default function QACasosPage() {
       <div className="flex gap-1 bg-white border rounded-xl p-1 w-fit" style={{ borderColor: "hsl(220 13% 91%)" }}>
         <button onClick={() => setActiveTab("casos")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "casos" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+            activeTab === "casos" ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           }`}>
           <FolderOpen className="h-3.5 w-3.5" /> Casos ({casosAtivos.length})
         </button>
         <button onClick={() => setActiveTab("servicos")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "servicos" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+            activeTab === "servicos" ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           }`}>
           <Shield className="h-3.5 w-3.5" /> Deferidos ({servicosConcluidos.length})
         </button>
@@ -275,11 +220,11 @@ export default function QACasosPage() {
       {/* Content */}
       {activeTab === "casos" ? renderCaseList(casosAtivos) : (
         servicosConcluidos.length === 0 ? (
-          <EmptyState
-            icon={<BookOpen className="h-5 w-5" />}
-            title="Nenhum serviço deferido ainda"
-            description='Marque um caso como "Deferido" para promovê-lo ao aprendizado da IA.'
-          />
+          <div className="text-center py-16">
+            <BookOpen className="h-12 w-12 mx-auto mb-3" style={{ color: "hsl(220 13% 85%)" }} />
+            <p className="text-sm" style={{ color: "hsl(220 10% 55%)" }}>Nenhum serviço deferido ainda</p>
+            <p className="text-xs mt-1" style={{ color: "hsl(220 10% 70%)" }}>Marque um caso como "Deferido" para promovê-lo ao aprendizado da IA.</p>
+          </div>
         ) : (
           <>
             <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl border bg-emerald-50 border-emerald-200">
@@ -293,7 +238,7 @@ export default function QACasosPage() {
 
       {/* Detail dialog */}
       <Dialog open={!!detailCase} onOpenChange={() => setDetailCase(null)}>
-        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] p-3 md:p-6 rounded-xl">
+        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[85vh] overflow-y-auto p-3 md:p-6 rounded-xl">
           {detailCase && (
             <CaseDetailPanel
               caso={detailCase}

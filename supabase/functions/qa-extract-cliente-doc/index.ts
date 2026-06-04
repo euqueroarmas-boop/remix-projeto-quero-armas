@@ -32,14 +32,7 @@ function buildTool(tipo: TipoDoc) {
 
   const armaProps: Record<string, unknown> = {
     arma_marca: { type: "string", description: "Marca/fabricante (ex: Taurus, Glock, CBC, IMBEL)." },
-    arma_modelo: {
-      type: "string",
-      description:
-        "Modelo COMERCIAL/TÉCNICO da arma (ex: G2C, PT838, 1911, G25, TS9, TX22, PUMP MILITARY 3.0). " +
-        "PROIBIDO preencher com número de série, número de registro, número de CRAF, número de SINARM, " +
-        "número de SIGMA, protocolo, ou qualquer valor apenas numérico. Se houver dúvida entre número e modelo, " +
-        "DEIXE VAZIO — não invente e nunca use número como modelo.",
-    },
+    arma_modelo: { type: "string", description: "Modelo (ex: G2C, PT838, 1911)." },
     arma_calibre: { type: "string", description: "Calibre (ex: .380 ACP, 9mm, .40 S&W, .38 SPL)." },
     arma_numero_serie: { type: "string", description: "Número de série da arma." },
     arma_especie: { type: "string", description: "Espécie/tipo (Pistola, Revólver, Carabina, Espingarda, Fuzil)." },
@@ -73,15 +66,7 @@ function systemPromptFor(tipo: TipoDoc): string {
     autorizacao_compra: "Você é especialista em documentos do Exército/PF. Extraia os dados da AUTORIZAÇÃO DE COMPRA (AC) de arma de fogo.",
     outro: "Você é especialista em documentos SIGMA/SINARM. Extraia todos os dados estruturados que conseguir identificar.",
   };
-  return (
-    `${map[tipo]} Responda exclusivamente chamando a função extrair_documento_cac. ` +
-    `Use null/vazio para campos não encontrados. Datas no formato DD/MM/AAAA. ` +
-    `REGRA CRÍTICA SOBRE arma_modelo: o campo arma_modelo deve conter SOMENTE o modelo comercial da arma ` +
-    `(ex: G25, TS9, TX22, PT838, PUMP MILITARY 3.0). É TERMINANTEMENTE PROIBIDO colocar em arma_modelo: ` +
-    `número de série, número de registro, número de CRAF, número de SINARM, número de SIGMA, protocolo, ` +
-    `ou qualquer valor puramente numérico. Esses números têm campos próprios: numero_documento, arma_numero_serie. ` +
-    `Se você não tiver certeza absoluta do modelo, deixe arma_modelo vazio.`
-  );
+  return `${map[tipo]} Responda exclusivamente chamando a função extrair_documento_cac. Use null/vazio para campos não encontrados. Datas no formato DD/MM/AAAA.`;
 }
 
 async function callVision(imageDataUrl: string, tipo: TipoDoc) {
@@ -135,20 +120,6 @@ function ddmmaaaaToISO(s?: string | null): string | null {
   return `${m[3]}-${m[2]}-${m[1]}`;
 }
 
-/**
- * Defesa server-side: o campo arma_modelo NUNCA pode receber número de
- * documento/registro/CRAF/SINARM/SIGMA/protocolo. Se a IA insistir em devolver
- * algo numérico, descartamos para que o cadastro fique pendente de revisão.
- */
-function sanitizeArmaModelo(value?: string | null): string | null {
-  if (!value) return null;
-  const v = String(value).trim();
-  if (v.length < 2) return null;
-  if (/^[0-9.\-\/\s]+$/.test(v)) return null;
-  if (/^(CRAF|SINARM|SIGMA|REGISTRO|DOCUMENTO|PROTOCOLO|ARMA)$/i.test(v)) return null;
-  return v;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -173,7 +144,7 @@ Deno.serve(async (req) => {
       data_validade: ddmmaaaaToISO(raw.data_validade),
       observacoes: raw.observacoes || null,
       arma_marca: raw.arma_marca || null,
-      arma_modelo: sanitizeArmaModelo(raw.arma_modelo),
+      arma_modelo: raw.arma_modelo || null,
       arma_calibre: raw.arma_calibre || null,
       arma_numero_serie: raw.arma_numero_serie || null,
       arma_especie: raw.arma_especie || null,

@@ -15,7 +15,6 @@ export const OBJETIVOS_PRINCIPAIS: { value: string; label: string }[] = [
   { value: "caca", label: "Caça" },
   { value: "clube_tiro", label: "Clube de tiro" },
   { value: "colecionamento", label: "Colecionamento" },
-  { value: "cursos", label: "Cursos e capacitação" },
   { value: "defesa_pessoal", label: "Defesa pessoal" },
   { value: "loja_armas", label: "Loja de armas" },
   { value: "orientacao", label: "Preciso de orientação" },
@@ -51,14 +50,6 @@ const SUBTIPOS_ACERVO = ["Atirador desportivo", "Caçador", "Colecionador"];
 
 export const CATEGORIAS_SERVICO: CategoriaOpcao[] = [
   {
-    value: "cursos_pratica",
-    label: "Cursos práticos",
-    servicos: [
-      { value: "curso_operador_pistola_n1", label: "Operador de Pistola — Nível I" },
-      { value: "curso_vip_operador_pistola_n1", label: "VIP — Operador de Pistola Nível I" },
-    ],
-  },
-  {
     value: "sinarm_pf",
     label: "SINARM / Polícia Federal",
     servicos: [
@@ -70,7 +61,7 @@ export const CATEGORIAS_SERVICO: CategoriaOpcao[] = [
       { value: "magistrado_mpf", label: "Magistrado / MPF" },
       { value: "porte_arma", label: "Porte de arma de fogo" },
       { value: "renovacao_porte", label: "Renovação de porte" },
-      { value: "renovacao_arma_fogo", label: "Renovação de Arma de Fogo" },
+      { value: "renovacao_registro", label: "Renovação de registro" },
       { value: "seguranca_publica", label: "Segurança pública" },
       { value: "segunda_via_craf", label: "Segunda via de CRAF" },
       { value: "transferencia_propriedade", label: "Transferência de propriedade" },
@@ -102,7 +93,6 @@ export const CATEGORIAS_SERVICO: CategoriaOpcao[] = [
       { value: "aquisicao_acervo", label: "Aquisição de arma para acervo CAC", subtipos: SUBTIPOS_ACERVO },
       { value: "inclusao_arma_acervo", label: "Inclusão de arma no acervo", subtipos: SUBTIPOS_ACERVO },
       { value: "transferencia_arma_acervo", label: "Transferência de arma no acervo", subtipos: SUBTIPOS_ACERVO },
-      { value: "renovacao_arma_fogo_cac", label: "Renovação de Arma de Fogo", subtipos: SUBTIPOS_ACERVO },
       { value: "guia_trafego", label: "Guia de tráfego", subtipos: SUBTIPOS_ACERVO },
     ],
   },
@@ -195,8 +185,6 @@ export const OBJETIVO_CATEGORIAS: Record<string, ObjetivoCategoriaRule[]> = {
         "atividade_de_risco",
         "magistrado_mpf",
         "porte_arma",
-        "renovacao_porte",
-        "renovacao_arma_fogo",
         "seguranca_publica",
       ],
     },
@@ -204,7 +192,6 @@ export const OBJETIVO_CATEGORIAS: Record<string, ObjetivoCategoriaRule[]> = {
   tiro_esportivo: [{ categoria: "sinarm_cac_cr" }],
   caca: [{ categoria: "sinarm_cac_cr" }],
   colecionamento: [{ categoria: "sinarm_cac_cr" }],
-  cursos: [{ categoria: "cursos_pratica" }],
   loja_armas: [{ categoria: "empresarial", servicos: ["assessoria_loja"] }],
   clube_tiro: [{ categoria: "empresarial", servicos: ["assessoria_clube"] }],
   atividade_profissional: [

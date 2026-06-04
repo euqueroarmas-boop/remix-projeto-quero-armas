@@ -1,56 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Autoplay from 'embla-carousel-autoplay';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useCart } from '@/shared/cart/CartProvider';
 import { listActiveServices, type ServiceWithCategory } from '@/shared/data/catalog';
 import { formatBRL } from '@/shared/lib/formatters';
-import { SEO } from '@/shared/components/SEO';
-import { ShareButton } from '@/shared/components/ShareButton';
-import { getPageMeta } from '@/shared/seo/pageMeta';
-import {
-  Carousel,
-  CarouselApi,
-  CarouselContent,
-  CarouselItem,
-} from '@/components/ui/carousel';
-import {
-  ArrowRight,
-  ArrowLeft,
-  Loader2,
-  Shield,
-  Award,
-  Boxes,
-  GraduationCap,
-  Wrench,
-  MessageSquare,
-  Layers,
-  MapPin,
-  FileCheck2,
-  HeadphonesIcon,
-  LayoutDashboard,
-  Tag,
-  Lock,
-  ShieldCheck,
-  Users,
-  Heart,
-  Phone,
-  ChevronDown,
-  ShoppingCart,
-  BadgeCheck,
-  Timer,
-  Sparkles,
-} from 'lucide-react';
-import heroWill from '@/assets/servicos-hero-will.png';
-import heroArsenal from '@/assets/hero-servicos-arsenal.png';
+import { ArrowRight, Loader2, Shield, Award, Boxes, GraduationCap, Wrench, MessageSquare, Layers } from 'lucide-react';
 
-const WHATSAPP_URL = 'https://wa.me/5511978481919?text=' + encodeURIComponent('Olá! Quero falar com um especialista da Quero Armas sobre os serviços.');
-
-const publicSectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden';
-const publicInnerCls = 'w-full px-4 sm:px-6 lg:px-10 2xl:px-16';
-
+/**
+ * Agrupamento curado por ENTIDADE (não por category_id puro).
+ * Permite consolidar serviços que vivem em mais de uma jurisdição
+ * (ex: transferência SIGMA↔SINARM) num grupo próprio.
+ */
 type GroupKey = 'sinarm' | 'sigma' | 'sigma-sinarm' | 'cursos' | 'equipamento' | 'consultoria' | 'outros';
 
 interface GroupDef {
@@ -127,85 +87,25 @@ const FALLBACK_GROUP: GroupDef = {
   match: () => true,
 };
 
-const compactDescription = (text?: string | null) => {
-  const value = String(text || '').trim();
-  if (!value) return 'Detalhes disponíveis na próxima etapa.';
-  return value.length > 150 ? `${value.slice(0, 147).trim()}...` : value;
-};
-
-const servicePriceLabel = (cents: number) => {
-  if (!cents || cents <= 0) return 'Valor sob consulta';
-  return formatBRL(cents);
-};
-
-const BENEFICIOS = [
-  { icon: MapPin, label: 'Atendimento nacional' },
-  { icon: FileCheck2, label: 'Processo legal e organizado' },
-  { icon: HeadphonesIcon, label: 'Acompanhamento técnico real' },
-  { icon: LayoutDashboard, label: 'Portal do cliente + Arsenal Digital' },
-  { icon: Tag, label: 'Preço claro' },
-];
-
-const ETAPAS = [
-  { n: 1, titulo: 'ESCOLHA SEU SERVIÇO', desc: 'Veja os serviços disponíveis com preço transparente e descrição completa.' },
-  { n: 2, titulo: 'ADICIONE AO CARRINHO', desc: 'Selecione o serviço ideal e adicione ao carrinho de compra.' },
-  { n: 3, titulo: 'FINALIZE SUA COMPRA', desc: 'Pagamento seguro e confirmação no portal.' },
-  { n: 4, titulo: 'COMECE SEU PROCESSO', desc: 'Acompanhamento, checklist, documentos e orientação até o resultado.' },
-];
-
-const SEGURANCA = [
-  { icon: Lock, label: 'Sua privacidade é nossa prioridade' },
-  { icon: ShieldCheck, label: 'Ambiente seguro' },
-  { icon: Users, label: 'Suporte especializado' },
-  { icon: Heart, label: 'Atendimento humanizado' },
-];
-
 const ServicesListPage = () => {
   const [services, setServices] = useState<ServiceWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<GroupKey | 'all'>('all');
-  const [api, setApi] = useState<CarouselApi | null>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { addItem } = useCart();
-
-  const autoplayRef = useRef(
-    Autoplay({ delay: 4500, stopOnInteraction: false, stopOnMouseEnter: true }),
-  );
 
   useEffect(() => {
     document.title = 'Serviços | Quero Armas';
-    let settled = false;
-    const timeout = window.setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        setLoading(false);
-        setError('timeout');
-      }
-    }, 8000);
     listActiveServices()
-      .then((list) => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timeout);
-        setServices(list);
-        setLoading(false);
-      })
-      .catch((e) => {
-        if (settled) return;
-        settled = true;
-        window.clearTimeout(timeout);
-        setError(e?.message ?? 'Erro ao carregar serviços.');
-        setLoading(false);
-      });
-    return () => window.clearTimeout(timeout);
+      .then(setServices)
+      .catch((e) => setError(e?.message ?? 'Erro ao carregar serviços.'))
+      .finally(() => setLoading(false));
   }, []);
 
   const grouped = useMemo(() => {
     const buckets = new Map<GroupKey, ServiceWithCategory[]>();
     GROUPS.forEach((g) => buckets.set(g.key, []));
     buckets.set('outros', []);
+
     const used = new Set<string>();
     for (const g of GROUPS) {
       for (const s of services) {
@@ -217,450 +117,162 @@ const ServicesListPage = () => {
       }
     }
     for (const s of services) if (!used.has(s.id)) buckets.get('outros')!.push(s);
+
+    // ordena cada bucket por display_order
     for (const [, list] of buckets) list.sort((a, b) => a.display_order - b.display_order);
     return buckets;
   }, [services]);
 
   const allGroups = [...GROUPS, FALLBACK_GROUP].filter((g) => (grouped.get(g.key)?.length ?? 0) > 0);
-
-  const visibleServices = useMemo(() => {
-    if (activeGroup === 'all') {
-      return allGroups.flatMap((g) => grouped.get(g.key) ?? []);
-    }
-    return grouped.get(activeGroup) ?? [];
-  }, [activeGroup, allGroups, grouped]);
-
-  const scrollToCatalogo = () => {
-    const el = document.getElementById('catalogo-servicos');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const stopAutoplay = () => {
-    autoplayRef.current?.stop();
-  };
-
-  // Stop autoplay also on drag interactions
-  useEffect(() => {
-    if (!api) return;
-    const handler = () => stopAutoplay();
-    api.on('pointerDown', handler);
-    return () => {
-      api.off('pointerDown', handler);
-    };
-  }, [api]);
-
-  const handleAddToCart = (s: ServiceWithCategory) => {
-    addItem({
-      service_id: s.id,
-      service_slug: s.slug,
-      service_name: s.name,
-      unit_price_cents: s.base_price_cents,
-      quantity: 1,
-    });
-    toast({
-      title: 'Serviço selecionado para contratação.',
-      description: s.name,
-    });
-    navigate('/carrinho');
-  };
-
-  const groupLabelOf = (s: ServiceWithCategory): string => {
-    for (const g of GROUPS) if (g.match(s)) return g.label;
-    return FALLBACK_GROUP.label;
-  };
+  const visibleGroups =
+    activeGroup === 'all' ? allGroups : allGroups.filter((g) => g.key === activeGroup);
 
   return (
     <SiteShell>
-      {(() => {
-        const m = getPageMeta('/servicos')!;
-        return <SEO title={m.title} description={m.description} image={m.image} canonical="/servicos" />;
-      })()}
-      {/* HERO */}
-      <section
-        className={`${publicSectionCls} min-h-[720px] border-b border-border bg-background lg:min-h-[760px] xl:min-h-[800px]`}
-      >
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-background" />
+      <section className="container py-10 sm:py-14">
+        <header className="mb-10 max-w-3xl">
+          <p className="font-heading text-xs uppercase tracking-[0.2em] text-accent">
+            Catálogo oficial · Quero Armas
+          </p>
+          <h1 className="mt-2 font-heading text-3xl font-bold uppercase leading-[1.05] tracking-tight sm:text-5xl">
+            Pare de tentar entender PF e Exército sozinho.{' '}
+            <span className="text-accent">A gente faz o processo certo, na entidade certa, com preço fechado.</span>
+          </h1>
+          <p className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Cada serviço abaixo tem <strong className="text-foreground">nome, preço e jurisdição definidos</strong> — sem orçamento misterioso, sem "depende", sem promessa vazia. Você escolhe, contrata e a gente conduz da papelada ao deferimento. Posse e Porte na <strong className="text-foreground">PF (SINARM)</strong>, CR e acervo no <strong className="text-foreground">Exército (SIGMA)</strong>, transferências entre os dois sistemas, cursos operacionais e equipamento tático — tudo num só lugar.
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            <span className="font-heading text-xs uppercase tracking-widest text-accent">Como funciona →</span>{' '}
+            Filtre pela entidade do seu caso, leia o que está incluso, contrate com 1 clique. Atendemos Brasil todo via assessoria à distância — sem sair de casa.
+          </p>
+        </header>
 
-        {/* Imagem cinematográfica do arsenal — desktop */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-[80vw] lg:block xl:w-[78vw] 2xl:w-[75vw]">
-          <img
-            src={heroArsenal}
-            alt="Especialista da Quero Armas no estande de tiro"
-            loading="eager"
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{
-              objectPosition: '85% 20%',
-              filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)',
-              WebkitMaskImage:
-                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 18%, #000 42%, #000 78%, rgba(0,0,0,0.6) 92%, transparent 100%)',
-              maskImage:
-                'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 18%, #000 42%, #000 78%, rgba(0,0,0,0.6) 92%, transparent 100%)',
-            }}
-          />
-          {/* Fade horizontal — mais leve, deixa a imagem respirar */}
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                'linear-gradient(to right, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 14%, hsl(var(--background) / 0.55) 32%, hsl(var(--background) / 0.18) 55%, hsl(var(--background) / 0.07) 74%, hsl(var(--background) / 0.025) 88%, transparent 100%)',
-            }}
-          />
-          {/* Fades verticais sutis — profundidade editorial */}
-          <div
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background/50 to-transparent"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/50 to-transparent"
-          />
-        </div>
-
-        <div className="relative z-10 flex min-h-[inherit] w-full flex-col justify-center px-4 py-10 sm:px-6 lg:px-10 lg:py-14 2xl:px-16">
-          <div className="max-w-[620px] 2xl:max-w-[680px]">
-            <p className="font-heading text-[11px] font-bold uppercase tracking-[0.32em] text-accent">
-              Serviços
-            </p>
-            <h1 className="mt-5 font-heading font-extrabold uppercase tracking-tight text-white text-[2.5rem] leading-[1.02] sm:text-5xl lg:text-[4.25rem] lg:leading-[0.96] xl:text-[4.7rem] 2xl:text-[5.25rem] 2xl:leading-[0.98]">
-              Você não precisa enfrentar a burocracia sozinho.
-            </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg lg:mt-4 2xl:mt-6">
-              A Quero Armas usa tecnologia, inteligência artificial e análise documental guiada
-              para acelerar sua contratação, revisar seus documentos e montar seu processo com
-              máxima agilidade.
-            </p>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-zinc-400">
-              Sem enrolação: você envia, nossa plataforma organiza, a IA ajuda a identificar
-              pendências e a Equipe Quero Armas corrige o que for necessário para deixar tudo
-              pronto o quanto antes.
-            </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row 2xl:mt-8">
-              <Button
-                size="lg"
-                onClick={scrollToCatalogo}
-                className="h-12 px-6 font-heading uppercase tracking-wide text-white shadow-lg shadow-black/40"
-                style={{ backgroundColor: '#5a6b3b' }}
-              >
-                Ver catálogo de serviços <ChevronDown className="ml-2 size-4" />
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 border-white/20 bg-transparent px-6 font-heading uppercase tracking-wide text-white hover:bg-white/5 hover:text-white"
-              >
-                <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                  <Phone className="mr-2 size-4" /> Falar com especialista
-                </a>
-              </Button>
-            </div>
-
-            {/* Trust strip */}
-            <ul className="mt-12 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4">
-              {[
-                { icon: Sparkles, title: 'IA Documental', desc: 'Análise inteligente dos documentos' },
-                { icon: Timer, title: 'Sem enrolação', desc: 'Processo organizado em poucos dias' },
-                { icon: BadgeCheck, title: 'Equipe especialista', desc: 'Correção técnica antes do envio' },
-                { icon: Lock, title: 'Segurança', desc: 'Dados e documentos protegidos' },
-              ].map(({ icon: Icon, title, desc }) => (
-                <li key={title} className="flex items-start gap-3">
-                  <Icon className="mt-0.5 size-5 shrink-0 text-accent" />
-                  <div>
-                    <p className="font-heading text-[11px] font-bold uppercase tracking-[0.18em] text-white">
-                      {title}
-                    </p>
-                    <p className="mt-1 text-[11px] leading-snug text-zinc-400">{desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+        {loading && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Carregando catálogo...
           </div>
+        )}
+        {error && <p className="text-destructive">{error}</p>}
 
-          {/* Imagem mobile/tablet */}
-          <div className="relative mt-10 overflow-hidden rounded-sm lg:hidden">
-            <img
-              src={heroArsenal}
-              alt="Especialista da Quero Armas no estande de tiro"
-              loading="eager"
-              className="h-[380px] w-full object-cover object-[center_top] sm:h-[460px]"
-              style={{ filter: 'saturate(0.9) brightness(1.05) contrast(1.03) hue-rotate(-4deg)' }}
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-background to-transparent"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background to-transparent"
-            />
-          </div>
-        </div>
-      </section>
+        {!loading && !error && (
+          <>
+            {/* Filtro por entidade */}
+            <nav className="mb-10 flex flex-wrap gap-2 border-b border-border pb-5">
+              <FilterChip active={activeGroup === 'all'} onClick={() => setActiveGroup('all')}>
+                Todos ({services.length})
+              </FilterChip>
+              {allGroups.map((g) => {
+                const count = grouped.get(g.key)?.length ?? 0;
+                return (
+                  <FilterChip
+                    key={g.key}
+                    active={activeGroup === g.key}
+                    onClick={() => setActiveGroup(g.key)}
+                  >
+                    {g.label} ({count})
+                  </FilterChip>
+                );
+              })}
+            </nav>
 
-      {/* BENEFÍCIOS */}
-      <section className={`${publicSectionCls} border-b border-border bg-surface-elevated/30`}>
-        <div className={`${publicInnerCls} py-10`}>
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {BENEFICIOS.map(({ icon: Icon, label }) => (
-              <li
-                key={label}
-                className="flex items-center gap-3 rounded-sm border border-border bg-background px-4 py-4"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10 text-accent">
-                  <Icon className="size-4" />
-                </span>
-                <span className="font-heading text-xs font-bold uppercase tracking-wide leading-tight">
-                  {label}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* COMO FUNCIONA */}
-      <section className={`${publicSectionCls} border-b border-border`}>
-        <div className={`${publicInnerCls} py-14 sm:py-20`}>
-          <div className="mb-10 max-w-2xl">
-            <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
-              Como funciona
-            </p>
-            <h2 className="mt-3 font-heading text-2xl font-bold uppercase tracking-tight sm:text-4xl">
-              4 passos. Sem mistério.
-            </h2>
-          </div>
-          <ol className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {ETAPAS.map((e) => (
-              <li key={e.n} className="relative rounded-sm border border-border bg-surface-elevated/40 p-6">
-                <div className="font-heading text-5xl font-bold leading-none text-accent/80">
-                  {String(e.n).padStart(2, '0')}
-                </div>
-                <h3 className="mt-4 font-heading text-base font-bold uppercase tracking-tight">
-                  {e.titulo}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{e.desc}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className={`${publicSectionCls} border-b border-border bg-gradient-to-br from-accent/15 via-background to-background`}>
-        <div className={`${publicInnerCls} flex flex-col items-start gap-6 py-12 sm:flex-row sm:items-center sm:justify-between sm:py-16`}>
-          <div className="max-w-xl">
-            <h2 className="font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">
-              Pronto para dar o próximo passo?
-            </h2>
-            <p className="mt-3 text-base text-muted-foreground">
-              Escolha o serviço ideal para seu caso e inicie agora sua contratação com a Quero Armas.
-            </p>
-          </div>
-          <Button
-            size="lg"
-            onClick={scrollToCatalogo}
-            className="font-heading uppercase tracking-wide"
-          >
-            Ver catálogo de serviços <ArrowRight className="ml-2 size-4" />
-          </Button>
-        </div>
-      </section>
-
-      {/* CATÁLOGO EM CARROSSEL */}
-      <section id="catalogo-servicos" className={`${publicSectionCls} scroll-mt-24 border-b border-border`}>
-        <div className={`${publicInnerCls} py-14 sm:py-20`}>
-          <div className="mb-8 max-w-3xl">
-            <p className="font-heading text-xs font-bold uppercase tracking-[0.3em] text-accent">
-              Catálogo
-            </p>
-            <h2 className="mt-3 font-heading text-3xl font-bold uppercase tracking-tight sm:text-4xl">
-              Serviços disponíveis
-            </h2>
-            <p className="mt-3 text-muted-foreground">
-              Filtre pela entidade do seu caso, leia o que está incluso e contrate com 1 clique.
-            </p>
-          </div>
-
-          {loading && (
-            <div
-              data-testid="services-loading"
-              className="flex items-center gap-2 text-muted-foreground"
-            >
-              <Loader2 className="size-4 animate-spin" /> Carregando catálogo...
-            </div>
-          )}
-
-          {!loading && (error || services.length === 0) && (
-            <div
-              data-testid="services-empty-state"
-              className="rounded-sm border border-border bg-surface-elevated/40 p-8 text-center"
-            >
-              <h3 className="font-heading text-xl font-bold uppercase tracking-tight text-foreground">
-                Não foi possível carregar o catálogo agora.
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Tente novamente ou fale com um especialista.
-              </p>
-              <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                <Button
-                  onClick={() => window.location.reload()}
-                  className="font-heading uppercase tracking-wide"
-                  data-testid="services-retry"
-                >
-                  Tentar novamente
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="font-heading uppercase tracking-wide"
-                  data-testid="services-talk-specialist"
-                >
-                  <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                    <Phone className="mr-2 size-4" /> Falar com especialista
-                  </a>
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {!loading && !error && services.length > 0 && (
-            <>
-              {/* Filtro por categoria/grupo */}
-              <nav
-                data-testid="services-catalog"
-                className="mb-8 flex flex-wrap gap-2 border-b border-border pb-5"
-              >
-                <FilterChip active={activeGroup === 'all'} onClick={() => setActiveGroup('all')}>
-                  Todos ({services.length})
-                </FilterChip>
-                {allGroups.map((g) => {
-                  const count = grouped.get(g.key)?.length ?? 0;
-                  return (
-                    <FilterChip
-                      key={g.key}
-                      active={activeGroup === g.key}
-                      onClick={() => setActiveGroup(g.key)}
-                    >
-                      {g.label} ({count})
-                    </FilterChip>
-                  );
-                })}
-              </nav>
-
-              {visibleServices.length === 0 ? (
-                <p className="text-muted-foreground">Nenhum serviço encontrado neste grupo.</p>
-              ) : (
-                <div className="relative">
-                <Carousel
-                  setApi={setApi}
-                  opts={{ align: 'start', loop: true }}
-                  plugins={[autoplayRef.current]}
-                  className="px-0"
-                >
-                  <CarouselContent className="-ml-4">
-                    {visibleServices.map((s) => (
-                      <CarouselItem
-                        key={s.id}
-                        className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
-                      >
-                        <article
-                          data-testid={`service-card-${s.slug}`}
-                          className="flex h-full min-h-[390px] flex-col rounded-sm border border-border bg-surface-elevated/40 p-5 transition-colors hover:border-accent/60"
-                        >
-                          <p className="font-heading text-[10px] font-bold uppercase tracking-[0.25em] text-accent">
-                            {groupLabelOf(s)}
-                          </p>
-                          <h3 className="mt-3 line-clamp-2 min-h-[3.25rem] font-heading text-lg font-bold uppercase leading-tight tracking-tight">
-                            {s.name}
-                          </h3>
-                          <p className="mt-3 line-clamp-3 min-h-[4.05rem] text-sm leading-relaxed text-muted-foreground">
-                            {compactDescription(s.short_description)}
-                          </p>
-                          {s.base_legal && (
-                            <p className="mt-1.5 text-[11px] italic leading-snug text-muted-foreground/80">
-                              {s.base_legal}
+            <div className="space-y-20 sm:space-y-28">
+              {visibleGroups.map((group) => {
+                const items = grouped.get(group.key) ?? [];
+                if (!items.length) return null;
+                const Icon = group.icon;
+                return (
+                  <section key={group.key} aria-labelledby={`grp-${group.key}`}>
+                    {/* Header da entidade — premium */}
+                    <div className="relative mb-7 overflow-hidden rounded-sm border border-border bg-gradient-to-br from-surface-elevated/80 via-background to-background">
+                      {/* Faixa lateral acentuada */}
+                      <div className="absolute inset-y-0 left-0 w-1 bg-accent" aria-hidden />
+                      {/* Marca d'água do ícone */}
+                      <Icon
+                        className="pointer-events-none absolute -right-6 -top-6 size-40 text-accent/[0.04]"
+                        strokeWidth={1.25}
+                        aria-hidden
+                      />
+                      <div className="relative flex items-center gap-6 px-6 py-8 sm:px-8 sm:py-10">
+                        <div className="flex size-16 shrink-0 items-center justify-center rounded-sm border border-accent/50 bg-accent/15 shadow-[0_0_0_1px_hsl(var(--accent)/0.1)_inset] sm:size-20">
+                          <Icon className="size-8 text-accent sm:size-10" strokeWidth={2} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <span className="h-px w-8 bg-accent" aria-hidden />
+                            <p className="font-heading text-sm font-bold uppercase tracking-[0.25em] text-accent sm:text-base">
+                              {group.entity}
+                            </p>
+                          </div>
+                          <h2
+                            id={`grp-${group.key}`}
+                            className="mt-3 font-heading text-3xl font-bold uppercase leading-none tracking-tight text-foreground sm:text-4xl"
+                          >
+                            {group.label}
+                          </h2>
+                          {group.blurb && (
+                            <p className="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+                              {group.blurb}
                             </p>
                           )}
-                          <div className="mt-4 min-h-[3.25rem]">
-                            <span className="block font-heading text-[10px] uppercase tracking-widest text-muted-foreground">
-                              {s.base_price_cents > 0 ? 'A partir de' : 'Investimento'}
-                            </span>
-                            <span className="font-heading text-2xl font-bold text-accent">
-                              {servicePriceLabel(s.base_price_cents)}
-                            </span>
-                          </div>
-                          <div className="mt-auto flex flex-col gap-2 pt-4 border-t border-border/60">
-                            <Button
-                              asChild
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                              data-testid={`service-details-${s.slug}`}
-                            >
-                              <Link to={`/servicos/${s.slug}`}>
-                                Ver detalhes <ArrowRight className="ml-1 size-4" />
-                              </Link>
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="w-full font-heading uppercase tracking-wide text-white"
-                              style={{ backgroundColor: '#5a6b3b' }}
-                              onClick={() => handleAddToCart(s)}
-                              data-testid={`service-contract-${s.slug}`}
-                            >
-                              <ShoppingCart className="mr-2 size-4" /> Contratar este serviço
-                            </Button>
-                          </div>
-                        </article>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                </Carousel>
-                <div className="mt-6 flex justify-center gap-3">
-                  <button
-                    type="button"
-                    aria-label="Anterior"
-                    onClick={() => { stopAutoplay(); api?.scrollPrev(); }}
-                    className="flex size-11 items-center justify-center rounded-full border border-border bg-background transition-colors hover:border-accent hover:text-accent"
-                  >
-                    <ArrowLeft className="size-4" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Próximo"
-                    onClick={() => { stopAutoplay(); api?.scrollNext(); }}
-                    className="flex size-11 items-center justify-center rounded-full border border-border bg-background transition-colors hover:border-accent hover:text-accent"
-                  >
-                    <ArrowRight className="size-4" />
-                  </button>
-                </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </section>
+                        </div>
+                        <div className="hidden shrink-0 flex-col items-end border-l border-border/60 pl-6 sm:flex">
+                          <span className="font-heading text-5xl font-bold leading-none text-foreground">
+                            {String(items.length).padStart(2, '0')}
+                          </span>
+                          <span className="mt-2 font-heading text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                            {items.length === 1 ? 'serviço' : 'serviços'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-      {/* SEGURANÇA */}
-      <section className={`${publicSectionCls} bg-surface-elevated/30`}>
-        <div className={`${publicInnerCls} py-10`}>
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {SEGURANCA.map(({ icon: Icon, label }) => (
-              <li
-                key={label}
-                className="flex items-center gap-3 rounded-sm border border-border bg-background px-4 py-4"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-sm border border-accent/40 bg-accent/10 text-accent">
-                  <Icon className="size-4" />
-                </span>
-                <span className="font-heading text-xs font-bold uppercase tracking-wide leading-tight">
-                  {label}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+                    {/* Lista densa — não-card */}
+                    <ul className="divide-y divide-border border-y border-border">
+                      {items.map((s) => (
+                        <li
+                          key={s.id}
+                          className="group grid grid-cols-1 gap-4 py-8 transition-colors hover:bg-surface-elevated/50 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-8 sm:px-3"
+                        >
+                          <div className="min-w-0">
+                            <Link
+                              to={`/servicos/${s.slug}`}
+                              className="block font-heading text-lg font-bold uppercase tracking-tight transition-colors group-hover:text-accent sm:text-xl"
+                            >
+                              {s.name}
+                            </Link>
+                            {s.short_description && (
+                              <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+                                {s.short_description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-col sm:items-end">
+                            <span className="font-heading text-xs uppercase tracking-widest text-muted-foreground">
+                              A partir de
+                            </span>
+                            <span className="font-heading text-xl font-bold text-accent sm:text-2xl">
+                              {formatBRL(s.base_price_cents)}
+                            </span>
+                          </div>
+                          <Button
+                            asChild
+                            size="default"
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                          >
+                            <Link to={`/servicos/${s.slug}`}>
+                              Detalhes <ArrowRight className="ml-1 size-4" />
+                            </Link>
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
+          </>
+        )}
       </section>
     </SiteShell>
   );

@@ -144,67 +144,6 @@ Deno.serve(async (req) => {
       return json({ success: true, cadastroAtualizado, clienteAtualizado });
     }
 
-    // ── Remove ──
-    if (action === "remove") {
-      const now = new Date().toISOString();
-      const ip = req.headers.get("x-forwarded-for") || "unknown";
-
-      const { data: cad } = await supabase
-        .from("qa_cadastro_publico")
-        .select("id")
-        .eq("cpf", cpfDigits)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      let cadastroAtualizado = false;
-      let clienteAtualizado = false;
-
-      if (cad?.id) {
-        const { error: e1 } = await supabase
-          .from("qa_cadastro_publico")
-          .update({
-            selfie_path: null,
-            updated_at: now,
-            notas_processamento: `[${now}] Foto removida pelo titular via fluxo rápido (IP ${ip.substring(0, 45)})`,
-          })
-          .eq("id", cad.id);
-        if (!e1) cadastroAtualizado = true;
-      }
-
-      const { data: cli } = await supabase
-        .from("qa_clientes")
-        .select("id")
-        .eq("cpf", cpfDigits)
-        .eq("excluido", false)
-        .maybeSingle();
-
-      if (cli?.id) {
-        const { error: e2 } = await supabase
-          .from("qa_clientes")
-          .update({ imagem: null, updated_at: now })
-          .eq("id", cli.id);
-        if (!e2) clienteAtualizado = true;
-      }
-
-      await supabase.from("integration_logs").insert({
-        integration_name: "qa_atualizar_foto",
-        operation_name: "remove",
-        request_payload: {
-          cpf: cpfDigits.slice(0, 3) + "***",
-          cadastro_id: cad?.id || null,
-          cliente_id: cli?.id || null,
-        },
-        status: "success",
-      });
-
-      if (!cadastroAtualizado && !clienteAtualizado) {
-        return json({ error: "Nenhum registro encontrado para este CPF" }, 404);
-      }
-
-      return json({ success: true, cadastroAtualizado, clienteAtualizado });
-    }
-
     return json({ error: "Ação inválida" }, 400);
   } catch (err: any) {
     console.error("[qa-atualizar-foto]", err);

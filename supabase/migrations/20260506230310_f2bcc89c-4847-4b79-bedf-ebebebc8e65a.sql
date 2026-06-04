@@ -1,1 +1,0 @@
-ALTER VIEW public.qa_arsenal_fila_revisao SET (security_invoker = true);

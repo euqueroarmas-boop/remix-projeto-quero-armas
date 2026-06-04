@@ -10,41 +10,57 @@ import { useEffect, useState } from "react";
  * e finaliza ao desmontar (quando o Suspense resolve).
  */
 export default function QATacticalLoader() {
-  const [stuck, setStuck] = useState(false);
+  const [progress, setProgress] = useState(4);
 
   useEffect(() => {
-    const stuckTimer = window.setTimeout(() => {
-      setStuck(true);
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `[QATacticalLoader] carregamento >8s em ${window.location.pathname}`
-        );
-      }
-    }, 8000);
+    let raf = 0;
+    let start = performance.now();
+    const tick = (now: number) => {
+      const elapsed = (now - start) / 1000; // segundos
+      // Curva assintótica: ~92% em ~3s, satura abaixo de 95%
+      const next = Math.min(95, 100 * (1 - Math.exp(-elapsed / 1.1)));
+      setProgress((p) => (next > p ? next : p));
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
     return () => {
-      window.clearTimeout(stuckTimer);
+      cancelAnimationFrame(raf);
+      // Snap visual final ao desmontar
+      setProgress(100);
     };
   }, []);
 
+  const pct = Math.floor(progress);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050505]">
-      <div
-        className="flex flex-col items-center gap-4"
-        role="status"
-        aria-live="polite"
-      >
-        <div className="h-1 w-40 overflow-hidden rounded-full bg-white/10">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-[#D6A64B]" />
+    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black">
+      <div className="relative w-[78%] max-w-md">
+        <div className="mb-3 flex items-end justify-between">
+          <span className="text-[11px] font-black uppercase tracking-[0.42em] text-white">
+            Carregando
+          </span>
+          <span className="font-mono text-[11px] font-bold tabular-nums text-white/70">
+            {pct.toString().padStart(3, "0")}%
+          </span>
         </div>
-        <span className="text-sm text-white/70">
-          Preparando sua experiência...
-        </span>
-        {stuck && (
-          <p className="mt-1 max-w-xs text-center text-xs text-white/60">
-            Ainda estamos carregando. Se continuar demorando, atualize a página.
-          </p>
-        )}
+
+        {/* Trilho */}
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-white transition-[width] duration-200 ease-out"
+            style={{
+              width: `${pct}%`,
+              boxShadow: "0 0 12px rgba(255,255,255,0.55)",
+            }}
+          />
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
+          <span className="font-mono text-[9px] uppercase tracking-[0.32em] text-white/40">
+            Inicializando módulos · Quero Armas
+          </span>
+        </div>
       </div>
     </div>
   );

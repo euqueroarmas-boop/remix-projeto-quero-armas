@@ -13,8 +13,6 @@ import {
 import { useQAAuthContext } from "@/components/quero-armas/QAAuthContext";
 import { downloadGeracaoDocx } from "@/lib/qaDocxDownload";
 import FeedbackAprendizadoPanel from "@/components/quero-armas/FeedbackAprendizadoPanel";
-import { EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
-import { Inbox } from "lucide-react";
 
 type TabType = "consultas" | "geracoes";
 
@@ -138,7 +136,7 @@ export default function QAHistoricoPage() {
     const map: Record<string, { bg: string; text: string }> = {
       rascunho: { bg: "bg-slate-100", text: "text-slate-600" },
       em_revisao: { bg: "bg-amber-50", text: "text-amber-700" },
-      corrigido: { bg: "bg-[#FBF3F4]", text: "text-[#7A1F2B]" },
+      corrigido: { bg: "bg-blue-50", text: "text-blue-700" },
       aprovado: { bg: "bg-emerald-50", text: "text-emerald-700" },
       aprovado_como_referencia: { bg: "bg-purple-50", text: "text-purple-700" },
       rejeitado: { bg: "bg-red-50", text: "text-red-600" },
@@ -157,26 +155,24 @@ export default function QAHistoricoPage() {
         <div className="flex gap-1 bg-white border rounded-xl p-1" style={{ borderColor: "hsl(220 13% 91%)" }}>
           <button onClick={() => setTab("geracoes")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              tab === "geracoes" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+              tab === "geracoes" ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}>Peças</button>
           <button onClick={() => setTab("consultas")}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-              tab === "consultas" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+              tab === "consultas" ? "bg-slate-800 text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
             }`}>Consultas</button>
         </div>
       </div>
 
       {/* Content */}
       {loading ? (
-        <SkeletonList rows={5} />
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+        </div>
       ) : items.length === 0 ? (
-        <EmptyState
-          icon={<Inbox className="h-5 w-5" />}
-          title={tab === "geracoes" ? "Nenhuma geração registrada" : "Nenhuma consulta no histórico"}
-          description={tab === "geracoes"
-            ? "Suas peças geradas aparecerão aqui para consulta, download e revisão."
-            : "Quando você consultar a base de conhecimento, o histórico será exibido aqui."}
-        />
+        <div className="text-center py-16" style={{ color: "hsl(220 10% 55%)" }}>
+          <p className="text-sm">Nenhum registro</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {items.map((item: any) => {
@@ -205,7 +201,7 @@ export default function QAHistoricoPage() {
                       <button
                         onClick={() => handleDownload(item)}
                         disabled={isDownloading}
-                        className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#FBF3F4] transition-colors"
+                        className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-blue-50 transition-colors"
                         style={{ color: "hsl(220 60% 50%)" }}
                         title="Baixar DOCX"
                       >
@@ -230,7 +226,7 @@ export default function QAHistoricoPage() {
 
       {/* Detail Dialog */}
       <Dialog open={!!detailItem} onOpenChange={() => setDetailItem(null)}>
-        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-xl">
+        <DialogContent className="bg-white border-slate-200 max-w-3xl max-h-[85vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold uppercase" style={{ color: "hsl(220 20% 18%)" }}>
               {detailItem?.titulo_geracao || detailItem?.caso_titulo || "Detalhes"}
@@ -261,7 +257,7 @@ export default function QAHistoricoPage() {
                 <div className="space-y-0.5 mt-1">
                   {(detailItem?.fontes_recuperadas_json || detailItem?.fundamentos_utilizados_json)?.map((f: any, i: number) => (
                     <div key={i} className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(220 10% 45%)" }}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#7A1F2B] shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
                       <span className="truncate uppercase">{f.titulo}</span>
                     </div>
                   ))}
@@ -281,7 +277,7 @@ export default function QAHistoricoPage() {
                 <button
                   onClick={() => handleDownload(detailItem)}
                   disabled={downloadingId === detailItem?.id}
-                  className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[#FBF3F4] text-[#7A1F2B] border border-[#E5C2C6] hover:bg-[#FBF3F4] transition-all"
+                  className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all"
                 >
                   {downloadingId === detailItem?.id ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Gerando...</>
@@ -303,7 +299,7 @@ export default function QAHistoricoPage() {
 
       {/* Review Dialog */}
       <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
-        <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[90dvh] overflow-y-auto overscroll-contain pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-xl">
+        <DialogContent className="bg-white border-slate-200 max-w-4xl max-h-[85vh] overflow-y-auto rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Revisão</DialogTitle>
           </DialogHeader>
@@ -328,7 +324,7 @@ export default function QAHistoricoPage() {
                 <Star className="h-3.5 w-3.5" /> Ref
               </button>
               <button onClick={() => submitReview("correcao")} disabled={saving}
-                className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[#FBF3F4] text-[#7A1F2B] border border-[#E5C2C6] hover:bg-[#FBF3F4] transition-all">
+                className="h-9 px-4 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-all">
                 <PenTool className="h-3.5 w-3.5" /> Corrigir
               </button>
               <button onClick={() => submitReview("rejeicao")} disabled={saving}

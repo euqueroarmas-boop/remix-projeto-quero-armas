@@ -1,38 +1,17 @@
 import { QASidebar } from "./QASidebar";
-import { Outlet, Navigate, useLocation } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
-import { lazy, Suspense } from "react";
-
-const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal"));
-
-/**
- * Guarda de rota por perfil — espelha as regras do QASidebar.canAccess
- * para impedir acesso direto via URL (não confiar só no menu lateral).
- * Mantém compatibilidade com perfil legado "administrador" (acesso total).
- */
-function canAccessRoute(perfil: string, pathname: string): boolean {
-  const blockedForLeitura = ["/gerar-peca", "/modelos-docx", "/modelos-declaracao", "/correcoes-ia", "/correcoes-ia/"];
-  const blockedForAssistente = ["/configuracoes"];
-  if (perfil === "leitura_auditoria") {
-    return !blockedForLeitura.some((p) => pathname === p || pathname.startsWith(p + "/"));
-  }
-  if (perfil === "assistente_juridico") {
-    return !blockedForAssistente.some((p) => pathname === p || pathname.startsWith(p + "/"));
-  }
-  return true;
-}
 
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
-  const location = useLocation();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(220 20% 97%)" }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
           <span className="text-xs text-slate-400 tracking-wider">Carregando...</span>
         </div>
       </div>
@@ -43,25 +22,18 @@ function QALayoutInner() {
     return <Navigate to="/login" replace />;
   }
 
-  // Per-route permission check by perfil. Rejeita acesso direto via URL.
-  if (!canAccessRoute(profile.perfil, location.pathname)) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   return (
-    <div className="qa-scope min-h-screen w-full grid grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-x-hidden" style={{ background: "hsl(220 20% 97%)" }}>
+    <div className="min-h-screen flex w-full" style={{ background: "hsl(220 20% 97%)" }}>
       <QASidebar perfil={profile.perfil} nome={profile.nome} signOut={signOut} />
-      <main className="min-w-0 min-h-screen flex flex-col" style={{ background: "hsl(220 20% 97%)" }}>
-        <QABreadcrumb />
-        <div className="flex-1 p-3 md:p-6 lg:p-8">
-          <Outlet />
-        </div>
-        <QAFooter />
-      </main>
-      {/* Painel automático de pendências essenciais (perfis internos). */}
-      <Suspense fallback={null}>
-        <PendenciasEssenciaisModal />
-      </Suspense>
+      <div className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1" style={{ background: "hsl(220 20% 97%)" }}>
+          <QABreadcrumb />
+          <div className="p-3 md:p-6 lg:p-8">
+            <Outlet />
+          </div>
+          <QAFooter />
+        </main>
+      </div>
     </div>
   );
 }

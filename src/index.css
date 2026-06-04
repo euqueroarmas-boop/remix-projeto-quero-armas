@@ -94,7 +94,6 @@
 
   html, body {
     overflow-x: hidden;
-    max-width: 100vw;
   }
 
   body {
@@ -136,63 +135,195 @@
    Objetivo: 100% preto tático, KPIs com texto branco, fontes legíveis.
    ===================================================================== */
 /* =====================================================================
-   QUERO ARMAS — PORTAL DO CLIENTE (Premium Light Standard)
-   Diretriz global: todas as telas internas/autenticadas devem seguir
-   o padrão BRANCO PREMIUM. O atributo [data-tactical-portal] é mantido
-   para compatibilidade, mas agora apenas reforça o tema light.
+   QUERO ARMAS — TACTICAL PORTAL THEME (Preto Absoluto + Dourado Militar)
    ===================================================================== */
 [data-tactical-portal] {
-  background: #f8fafc !important;
-  color: #0f172a !important;
+  --tac-bg: #050505;
+  --tac-surface: #0d0d0d;
+  --tac-surface-2: #131313;
+  --tac-surface-3: #1a1a1a;
+  --tac-border: #262626;
+  --tac-text: #ededed;
+  --tac-text-soft: #c4c4c4;
+  --tac-text-muted: #8a8a8a;
+  --tac-amber: #c9a961;
+  --tac-amber-soft: #b89645;
+
+  background: var(--tac-bg) !important;
+  color: var(--tac-text) !important;
+  font-size: 14px;
+  font-weight: 500;
+}
+[data-tactical-portal] *,
+[data-tactical-portal] *::before,
+[data-tactical-portal] *::after { border-color: var(--tac-border) !important; }
+
+/* Cobertura total de fundos brancos / claros */
+[data-tactical-portal] .bg-white,
+[data-tactical-portal] .bg-slate-50,
+[data-tactical-portal] .bg-slate-100,
+[data-tactical-portal] .bg-gray-50,
+[data-tactical-portal] .bg-gray-100,
+[data-tactical-portal] .bg-blue-50\/30,
+[data-tactical-portal] [class*="bg-white/"],
+[data-tactical-portal] [class*="from-white"],
+[data-tactical-portal] [class*="to-white"],
+[data-tactical-portal] [class*="via-white"],
+[data-tactical-portal] [class*="from-slate-50"],
+[data-tactical-portal] [class*="to-slate-50"],
+[data-tactical-portal] [class*="from-slate-100"],
+[data-tactical-portal] [class*="to-blue-50"] {
+  background: var(--tac-surface) !important;
+  background-image: none !important;
 }
 
-/* =====================================================================
-   QUERO ARMAS — Premium Light scope (.qa-scope)
-   Sobrescreve os tokens semânticos do shadcn (background, card, popover,
-   input, border, primary, etc.) APENAS dentro do container `.qa-scope`.
-   Isso evita que componentes shadcn (Button outline, Card, Dialog, Input,
-   Popover, Select) renderizem com fundos pretos herdados do tema Absolute
-   Dark do WMTi Core. O WMTi Core (regra Core de memória) permanece intacto.
-   ===================================================================== */
-.qa-scope {
-  --background: 220 20% 97%;
-  --foreground: 222 47% 11%;
+[data-tactical-portal] .bg-amber-50\/60,
+[data-tactical-portal] .bg-emerald-50\/60,
+[data-tactical-portal] .bg-red-50\/60,
+[data-tactical-portal] .bg-emerald-50,
+[data-tactical-portal] .bg-amber-50,
+[data-tactical-portal] .bg-red-50 {
+  background: var(--tac-surface-3) !important;
+}
 
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+/* Bordas claras → bordas táticas */
+[data-tactical-portal] [class*="border-slate-100"],
+[data-tactical-portal] [class*="border-slate-200"],
+[data-tactical-portal] [class*="border-amber-200"],
+[data-tactical-portal] [class*="border-emerald-200"],
+[data-tactical-portal] [class*="border-red-200"] {
+  border-color: var(--tac-border) !important;
+}
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+/* Tipografia: tudo legível e claro */
+[data-tactical-portal] .text-slate-400,
+[data-tactical-portal] .text-slate-500,
+[data-tactical-portal] .text-slate-600,
+[data-tactical-portal] .text-slate-700,
+[data-tactical-portal] .text-slate-800,
+[data-tactical-portal] .text-slate-900,
+[data-tactical-portal] .text-gray-400,
+[data-tactical-portal] .text-gray-500,
+[data-tactical-portal] .text-gray-600,
+[data-tactical-portal] .text-gray-700,
+[data-tactical-portal] .text-gray-800,
+[data-tactical-portal] .text-gray-900,
+[data-tactical-portal] .text-black {
+  color: var(--tac-text) !important;
+}
 
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 100%;
-  --primary-hover: 224 76% 48%;
+[data-tactical-portal] h1,
+[data-tactical-portal] h2,
+[data-tactical-portal] h3,
+[data-tactical-portal] h4 { color: #ffffff !important; font-weight: 700 !important; }
 
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
+/* Cores acentuadas viram dourado militar para coerência */
+[data-tactical-portal] .text-blue-500,
+[data-tactical-portal] .text-blue-600,
+[data-tactical-portal] .text-indigo-500,
+[data-tactical-portal] .text-indigo-600,
+[data-tactical-portal] .text-purple-500,
+[data-tactical-portal] .text-purple-600 { color: var(--tac-amber) !important; }
 
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
+/* Neutraliza qualquer gradiente azul/roxo/verde residual nos topos de cards */
+[data-tactical-portal] [style*="linear-gradient(90deg, hsl(230"],
+[data-tactical-portal] [style*="linear-gradient(135deg, hsl(220"],
+[data-tactical-portal] [style*="linear-gradient(135deg, hsl(230"] {
+  background: linear-gradient(90deg, var(--tac-amber), var(--tac-amber-soft)) !important;
+}
 
-  --accent: 210 40% 96%;
-  --accent-foreground: 222 47% 11%;
+/* KPIs / Quick stats — texto BRANCO obrigatório */
+[data-tactical-portal] .grid > div[style*="background"] {
+  background: var(--tac-surface-2) !important;
+}
+[data-tactical-portal] .grid > div[style*="background"] > div > div:first-child,
+[data-tactical-portal] .grid > div[style*="background"] > div > div:last-child {
+  color: #ffffff !important;
+}
+[data-tactical-portal] .grid > div[style*="background"] svg { color: var(--tac-amber) !important; }
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
+/* Tipografia mínima — corpo 14px / auxiliar 12px */
+[data-tactical-portal] .text-\[9px\],
+[data-tactical-portal] .text-\[10px\],
+[data-tactical-portal] .text-\[11px\],
+[data-tactical-portal] .text-xs { font-size: 12px !important; line-height: 1.4 !important; }
+[data-tactical-portal] .text-\[12px\],
+[data-tactical-portal] .text-sm { font-size: 13px !important; line-height: 1.45 !important; }
+[data-tactical-portal] .text-base { font-size: 14px !important; }
+[data-tactical-portal] .text-lg { font-size: 16px !important; }
+[data-tactical-portal] .text-xl { font-size: 18px !important; }
 
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 217 91% 60%;
+/* Pílulas de urgência — contraste reforçado sobre fundo preto */
+[data-tactical-portal] .text-amber-500,
+[data-tactical-portal] .text-amber-600,
+[data-tactical-portal] .text-orange-500,
+[data-tactical-portal] .text-orange-600 { color: #ffd86b !important; }
+[data-tactical-portal] .text-emerald-500,
+[data-tactical-portal] .text-emerald-600,
+[data-tactical-portal] .text-emerald-700 { color: #7dd3a3 !important; }
+[data-tactical-portal] .text-red-500,
+[data-tactical-portal] .text-red-600 { color: #ff8a8a !important; }
+[data-tactical-portal] p, [data-tactical-portal] span, [data-tactical-portal] div { font-weight: 500; }
 
-  --surface-elevated: 0 0% 100%;
-  --surface-overlay: 0 0% 100%;
+/* Sticky headers / blur backgrounds */
+[data-tactical-portal] header,
+[data-tactical-portal] .backdrop-blur-md,
+[data-tactical-portal] .backdrop-blur-lg {
+  background: rgba(10, 12, 16, 0.92) !important;
+  border-color: var(--tac-border) !important;
+}
 
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-primary: 217 91% 60%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222 47% 11%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 217 91% 60%;
+/* Botões escuros (slate-900) → âmbar */
+[data-tactical-portal] .bg-slate-900,
+[data-tactical-portal] .bg-slate-800 {
+  background: var(--tac-amber) !important;
+  color: #0a0c10 !important;
+}
+
+/* Header sticky reforçado */
+[data-tactical-portal] header {
+  border-bottom: 1px solid var(--tac-border) !important;
+  box-shadow: 0 1px 0 rgba(201, 169, 97, 0.08) !important;
+}
+
+/* Cards de status mantêm tom mas com base preta — preserva semântica */
+[data-tactical-portal] [class*="bg-emerald-50"] { background: rgba(125, 211, 163, 0.08) !important; }
+[data-tactical-portal] [class*="bg-amber-50"]   { background: rgba(255, 216, 107, 0.08) !important; }
+[data-tactical-portal] [class*="bg-red-50"]     { background: rgba(255, 138, 138, 0.08) !important; }
+
+/* Badge "Avatar tático ativo" e similares (bg-emerald-100) */
+[data-tactical-portal] .bg-emerald-100 { background: rgba(125, 211, 163, 0.15) !important; }
+[data-tactical-portal] .bg-amber-100   { background: rgba(201, 169, 97, 0.15) !important; }
+[data-tactical-portal] .bg-red-100     { background: rgba(255, 138, 138, 0.15) !important; }
+
+/* Anel dourado nos avatares táticos */
+[data-tactical-portal] [class*="ring-amber-400"],
+[data-tactical-portal] [class*="ring-amber-200"] {
+  --tw-ring-color: var(--tac-amber) !important;
+}
+[data-tactical-portal] [class*="ring-offset-white"] {
+  --tw-ring-offset-color: var(--tac-bg) !important;
+}
+
+/* Inputs */
+[data-tactical-portal] input,
+[data-tactical-portal] textarea,
+[data-tactical-portal] select {
+  background: var(--tac-surface-2) !important;
+  color: var(--tac-text) !important;
+  border-color: var(--tac-border) !important;
+}
+[data-tactical-portal] input::placeholder,
+[data-tactical-portal] textarea::placeholder { color: var(--tac-text-muted) !important; }
+
+/* Sombras "shadow-sm/md" perdem efeito branco em fundo preto — usar leve dourado */
+[data-tactical-portal] .shadow-sm,
+[data-tactical-portal] .shadow,
+[data-tactical-portal] .shadow-md {
+  box-shadow: 0 1px 0 rgba(201, 169, 97, 0.06), 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Mantém PDFs em fundo claro (impressão) */
+@media print {
+  [data-tactical-portal] { background: #ffffff !important; color: #000000 !important; }
 }

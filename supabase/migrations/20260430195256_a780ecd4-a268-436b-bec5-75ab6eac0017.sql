@@ -1,1 +1,0 @@
-ALTER VIEW public.qa_servico_documentos_obrigatorios SET (security_invoker = on);

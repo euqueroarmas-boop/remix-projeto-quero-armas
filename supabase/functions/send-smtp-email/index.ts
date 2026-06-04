@@ -1,11 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
-import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 const encoder = new TextEncoder();
@@ -200,7 +199,6 @@ async function sendViaSmtp(payload: {
   text?: string;
   reply_to?: string;
   trace_id?: string;
-  from_name?: string;
 }): Promise<SmtpSendResult> {
   const SMTP_HOST = Deno.env.get("SMTP_HOST");
   const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465", 10);
@@ -215,8 +213,7 @@ async function sendViaSmtp(payload: {
   const traceId = createTraceId(payload.trace_id);
   const to = sanitizeEmail(payload.to);
   const subject = sanitizeHeader(payload.subject);
-  const overrideName = typeof payload.from_name === "string" ? payload.from_name.trim() : "";
-  const fromName = overrideName || Deno.env.get("SMTP_FROM_NAME") || "Quero Armas";
+  const fromName = Deno.env.get("SMTP_FROM_NAME") || "Quero Armas";
   const fromEmail = sanitizeEmail(Deno.env.get("SMTP_FROM_EMAIL") || SMTP_USER);
   const fromDomain = fromEmail.split("@")[1] || "localhost";
   const messageId = `<${Date.now()}.${crypto.randomUUID()}@${fromDomain}>`;
@@ -271,15 +268,11 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // 🔒 Onda 6: only admin users or internal callers may send emails
-  const guard = await requireAdminOrInternal(req);
-  if (!guard.ok) return guard.response;
-
   const requestTraceId = createTraceId();
 
   try {
     const body = await req.json();
-    const { to, subject, html, text, reply_to, trace_id, from_name } = body;
+    const { to, subject, html, text, reply_to, trace_id } = body;
     const traceId = createTraceId(trace_id || requestTraceId);
 
     if (!to || !subject || (!html && !text)) {
@@ -298,7 +291,7 @@ Deno.serve(async (req) => {
       replyTo: reply_to ? sanitizeHeader(reply_to) : null,
     }));
 
-    const result = await sendViaSmtp({ to, subject, html, text, reply_to, trace_id: traceId, from_name });
+    const result = await sendViaSmtp({ to, subject, html, text, reply_to, trace_id: traceId });
 
     console.info(`[send-smtp-email][${result.traceId}] email_accepted`, JSON.stringify({
       to: sanitizeHeader(to),

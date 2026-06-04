@@ -73,11 +73,10 @@ export function isPaymentConfirmed(status?: string | null) {
 }
 
 export function generateTempPassword(length = 10): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#%*-_";
-  const size = Math.max(length, 16);
-  const array = new Uint8Array(size);
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
+  const array = new Uint8Array(length);
   crypto.getRandomValues(array);
-  return `QA!7${Array.from(array, (b) => chars[b % chars.length]).join("")}`;
+  return Array.from(array, (b) => chars[b % chars.length]).join("");
 }
 
 export function buildServiceName(context: PostPurchaseContext) {

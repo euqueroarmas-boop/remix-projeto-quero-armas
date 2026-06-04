@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel';
@@ -24,42 +23,9 @@ import {
   CheckCircle2, Target, Flame, Lock, Scale, Gavel, Swords, Home, Zap, Shield,
   Store, PackageX, Wrench, Boxes, Factory, Heart, KeyRound, Phone, UserCheck,
   GraduationCap, BookOpen, Coffee, Users, MapPin, Calendar, Award,
-  ClipboardList, FileSearch, FolderCheck, MonitorSmartphone, LogIn, Sparkles,
 } from 'lucide-react';
 
 const PORTAL_PATH = '/area-do-cliente/login';
-const CADASTRO_HERO = '/cadastro?origem=home_hero';
-const CADASTRO_COMO_FUNCIONA = '/cadastro?origem=home_como_funciona';
-const CADASTRO_CLIENTE_EXISTENTE = '/cadastro?origem=home_cliente_existente';
-const CADASTRO_STICKY = '/cadastro?origem=home_sticky';
-
-const HomeStickyCTA = () => {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 600);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  return (
-    <div
-      className={`fixed inset-x-0 bottom-0 z-40 border-t border-primary/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:hidden transition-transform duration-300 ${
-        visible ? 'translate-y-0' : 'translate-y-full'
-      }`}
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      aria-hidden={!visible}
-    >
-      <div className="flex items-stretch gap-2 px-3 py-2">
-        <Button asChild size="sm" className="flex-1 font-heading uppercase tracking-[0.08em]">
-          <Link to={CADASTRO_STICKY}>Começar análise</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline" className="flex-1 font-heading uppercase tracking-[0.08em]">
-          <Link to={PORTAL_PATH}>Acessar Arsenal</Link>
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 const pillars = [
   { icon: Swords, kicker: 'Pilar 01 · Armamento', title: 'Arma curta ou longa. A que vai salvar a sua família.', desc: 'Pistola pra andar com você. Espingarda pra dormir tranquilo. Revólver que nunca falha. Não é coleção. Não é hobby. É a ferramenta que decide se sua mulher vai dormir viúva ou se seus filhos vão crescer com pai. Te orientamos na escolha certa pro seu perfil, sua casa e a ameaça real do seu CEP.' },
@@ -98,8 +64,7 @@ const journey = [
 ];
 
 const HomePage = () => {
-  const sectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-x-clip';
-  const containerCls = 'w-full box-border px-4 sm:px-6 lg:px-10 2xl:px-16';
+  const containerCls = 'mx-auto w-full max-w-full box-border px-4 sm:container sm:px-6 lg:px-8';
   return (
     <SiteShell>
       <SEO
@@ -137,15 +102,15 @@ const HomePage = () => {
         ]}
       />
       {/* 1 · HERO */}
-      <section className={`${sectionCls} border-b border-border/60`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.18),transparent_60%)]" />
-        <div className={`${containerCls} relative flex flex-col items-stretch gap-8 py-8 sm:py-10 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-12`}>
+        <div className={`${containerCls} relative flex flex-col items-stretch gap-10 py-14 sm:py-20 lg:grid lg:grid-cols-12 lg:items-center lg:gap-12 lg:py-28`}>
           <div className="col-span-12 flex min-w-0 flex-col gap-6 sm:gap-8 lg:col-span-8">
             <div className="inline-flex w-fit items-center gap-2.5 rounded-sm border border-primary/50 bg-primary/10 px-3 py-1.5 sm:px-4">
               <Flame className="size-3.5 text-primary sm:size-4" />
               <span className="font-heading text-xs font-semibold uppercase tracking-[0.18em] text-primary-foreground/90 sm:tracking-[0.2em]">Sua arma · Sua casa · Seu direito</span>
             </div>
-            <h1 className="max-w-full text-pretty break-words font-heading text-[2rem] font-bold uppercase leading-[1.02] tracking-tight sm:text-balance sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl">
+            <h1 className="max-w-full text-pretty break-words font-heading text-[2rem] font-bold uppercase leading-[1.02] tracking-tight sm:text-balance sm:text-5xl md:text-6xl lg:text-[4.5rem] xl:text-[5.25rem]">
               Quando o bandido arrombar sua porta às 3 da manhã, <span className="text-tactical-gradient">você reza ou saca a sua arma?</span>
             </h1>
             <p className="w-full max-w-full text-base leading-relaxed text-muted-foreground text-pretty sm:max-w-[60ch] sm:text-lg">
@@ -153,15 +118,12 @@ const HomePage = () => {
             </p>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to={CADASTRO_HERO} data-testid="home-cta-cadastro">Começar meu cadastro <ArrowRight className="ml-2 size-5" /></Link>
+                <Link to="/servicos">Quero estar armado e legal <ArrowRight className="ml-2 size-5" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to={PORTAL_PATH} data-testid="home-cta-arsenal"><LogIn className="mr-2 size-5" />Acessar Arsenal</Link>
+                <Link to="/descobrir-meu-caminho">Descobrir meu caminho</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to="/servicos" data-testid="home-cta-servicos">Ver serviços</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
+              <Button asChild size="lg" variant="ghost" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
               </Button>
             </div>
@@ -192,7 +154,7 @@ const HomePage = () => {
       </section>
 
       {/* 2 · DOR */}
-      <section id="dor" className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section id="dor" className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">Diagnóstico tático</div>
@@ -234,7 +196,7 @@ const HomePage = () => {
       </section>
 
       {/* 3 · MANCHETES */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-8 max-w-3xl sm:mb-12">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -264,7 +226,7 @@ const HomePage = () => {
       </section>
 
       {/* 4 · COLAPSO */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -303,7 +265,7 @@ const HomePage = () => {
       </section>
 
       {/* 5 · PILARES */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A tríade não-negociável</div>
@@ -337,7 +299,7 @@ const HomePage = () => {
       </section>
 
       {/* 6 · LEI */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -409,7 +371,7 @@ const HomePage = () => {
       </section>
 
       {/* 7 · ARSENAL */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -436,7 +398,7 @@ const HomePage = () => {
       </section>
 
       {/* 8 · COLETE */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -477,7 +439,7 @@ const HomePage = () => {
       </section>
 
       {/* 9 · MUNIÇÃO */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -508,7 +470,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.5 · CAC + RECARGA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -544,7 +506,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.6 · FAMÍLIA / CÔNJUGE */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -581,7 +543,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.8 · PROTOCOLO PÓS-DISPARO */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -619,7 +581,7 @@ const HomePage = () => {
       </section>
 
       {/* 9.9 · MULHER ARMADA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="relative order-2 lg:order-1">
@@ -656,7 +618,7 @@ const HomePage = () => {
       </section>
 
       {/* 10 · LOJA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -692,7 +654,7 @@ const HomePage = () => {
       <GoogleReviewsCarousel />
 
       {/* 11 · JORNADA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-2xl sm:mb-14">
             <div className="mb-3 font-heading text-xs uppercase tracking-[0.2em] text-accent">A jornada operacional · 6 etapas</div>
@@ -719,7 +681,7 @@ const HomePage = () => {
       </section>
 
       {/* 11.5 · CURSO OPERADOR DE PISTOLA I */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-primary">
@@ -764,7 +726,19 @@ const HomePage = () => {
               <div className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/10 blur-3xl" />
               <article className="relative flex flex-col gap-6 rounded-sm border border-primary/40 bg-card p-6 shadow-deep sm:p-8">
                 <div className="absolute left-0 top-0 h-[3px] w-full bg-gradient-tactical" />
-                <div className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Operador de Pistola I · Quero Armas</div>
+                <div className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Investimento · Operador de Pistola I</div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-sm border border-border bg-background/40 p-5">
+                    <div className="font-heading text-xs uppercase tracking-[0.18em] text-muted-foreground">Turma</div>
+                    <div className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">R$ 1.890</div>
+                    <div className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Em até 18x no cartão*</div>
+                  </div>
+                  <div className="rounded-sm border border-accent/40 bg-accent/10 p-5">
+                    <div className="font-heading text-xs uppercase tracking-[0.18em] text-accent">VIP</div>
+                    <div className="mt-2 font-heading text-3xl font-bold tracking-tight sm:text-4xl">R$ 2.490</div>
+                    <div className="mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">Em até 18x no cartão*</div>
+                  </div>
+                </div>
                 <div className="rounded-sm border border-border bg-background/40 p-5">
                   <div className="font-heading text-xs uppercase tracking-[0.18em] text-accent">Tudo incluso</div>
                   <ul className="mt-3 grid gap-2 text-sm">
@@ -793,9 +767,9 @@ const HomePage = () => {
                   </div>
                 </div>
                 <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em]">
-                  <a href="/servicos">Ver investimento e modalidades <ArrowRight className="ml-2 size-5" /></a>
+                  <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer">Reservar minha vaga agora <ArrowRight className="ml-2 size-5" /></a>
                 </Button>
-                <p className="text-center font-heading text-xs uppercase tracking-[0.14em] text-muted-foreground">Vagas limitadas · Máx. 5 alunos por turma<br />Valores e condições centralizados na página de Serviços</p>
+                <p className="text-center font-heading text-xs uppercase tracking-[0.14em] text-muted-foreground">Vagas limitadas · Máx. 5 alunos por turma<br />*acréscimo da maquininha de cartão</p>
               </article>
             </div>
           </div>
@@ -803,7 +777,7 @@ const HomePage = () => {
       </section>
 
       {/* 11.6 · LEGISLAÇÃO COMPLETA */}
-      <section className={`${sectionCls} border-b border-border/60 bg-background py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-background py-14 sm:py-20">
         <div className={containerCls}>
           <div className="mb-10 max-w-3xl sm:mb-14">
             <div className="mb-3 inline-flex items-center gap-2 font-heading text-xs uppercase tracking-[0.2em] text-accent">
@@ -830,7 +804,7 @@ const HomePage = () => {
       </section>
 
       {/* 11.7 · PORTAL DO CLIENTE */}
-      <section className={`${sectionCls} border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
+      <section className="relative w-full max-w-full overflow-x-clip border-b border-border/60 bg-surface-overlay/40 py-14 sm:py-20">
         <div className={containerCls}>
           <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
             <div className="flex flex-col gap-6">
@@ -871,63 +845,8 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 11.5 · COMO FUNCIONA + JÁ É CLIENTE */}
-      <section id="como-funciona-mira" className={`${sectionCls} border-t border-border/60 bg-surface-overlay/40 py-14 sm:py-20`}>
-        <div className={containerCls}>
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-sm border border-primary/40 bg-primary/10 px-3 py-1.5">
-              <Sparkles className="size-3.5 text-primary" />
-              <span className="font-heading text-xs font-semibold uppercase tracking-[0.2em] text-primary">Como funciona</span>
-            </div>
-            <h2 className="mt-4 font-heading text-3xl font-bold uppercase leading-tight tracking-tight sm:text-4xl">Cadastro guiado em 4 passos</h2>
-            <p className="mt-3 text-base text-muted-foreground sm:text-lg">Rápido, sem burocracia e com seus dados protegidos no Arsenal Inteligente.</p>
-          </div>
-          <div className="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { icon: ClipboardList, n: '01', title: 'Responda algumas perguntas', desc: 'Conta pra gente seu perfil e objetivo: defesa, CAC, profissional ou curso.' },
-              { icon: FileSearch, n: '02', title: 'Envie ou reaproveite documentos', desc: 'Se já tem conta no Arsenal, reaproveitamos o que já foi enviado.' },
-              { icon: FolderCheck, n: '03', title: 'Revise os dados organizados', desc: 'Conferimos junto com você antes de seguir para qualquer protocolo.' },
-              { icon: MonitorSmartphone, n: '04', title: 'Acompanhe pelo Arsenal Inteligente', desc: 'Tudo num só lugar — gratuito, sempre acessível.' },
-            ].map(({ icon: Icon, n, title, desc }) => (
-              <article key={n} className="relative flex flex-col gap-3 rounded-sm border border-border bg-card p-5 sm:p-6">
-                <div className="absolute left-0 top-0 h-[2px] w-full bg-gradient-tactical" />
-                <div className="flex items-center justify-between">
-                  <span className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Passo {n}</span>
-                  <Icon className="size-5 text-primary" />
-                </div>
-                <h3 className="font-heading text-base font-bold uppercase leading-tight">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{desc}</p>
-              </article>
-            ))}
-          </div>
-          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
-            <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-              <Link to={CADASTRO_COMO_FUNCIONA}>Iniciar cadastro guiado <ArrowRight className="ml-2 size-5" /></Link>
-            </Button>
-          </div>
-
-          <div className="mx-auto mt-14 max-w-4xl rounded-sm border border-primary/40 bg-card p-6 shadow-deep sm:p-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <div className="font-heading text-xs uppercase tracking-[0.2em] text-primary">Já é cliente?</div>
-                <h3 className="mt-2 font-heading text-xl font-bold uppercase leading-tight sm:text-2xl">Já tem conta no Arsenal Inteligente?</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">Entre para reaproveitar seus dados e documentos já enviados.</p>
-              </div>
-              <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:gap-3">
-                <Button asChild size="lg" variant="outline" className="font-heading uppercase tracking-[0.08em]">
-                  <Link to={PORTAL_PATH}><LogIn className="mr-2 size-4" />Acessar Arsenal</Link>
-                </Button>
-                <Button asChild size="lg" className="font-heading uppercase tracking-[0.08em]">
-                  <Link to={CADASTRO_CLIENTE_EXISTENTE}>Reaproveitar meus dados</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 12 · CTA FINAL */}
-      <section className={`${sectionCls} py-16 sm:py-24`}>
+      <section className="relative w-full max-w-full overflow-x-clip py-16 sm:py-24">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,hsl(var(--primary)/0.18),transparent_70%)]" />
         <div className={containerCls}>
           <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center sm:gap-8">
@@ -959,7 +878,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-      <HomeStickyCTA />
     </SiteShell>
   );
 };
