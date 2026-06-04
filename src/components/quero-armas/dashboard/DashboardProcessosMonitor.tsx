@@ -234,7 +234,7 @@ export default function DashboardProcessosMonitor() {
   const { state, data, reload } = useWidgetLoader<MonitorRow[]>(async () => {
     const { data: itens, error: e1 } = await supabase
       .from("qa_itens_venda" as any)
-      .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_deferimento, data_recurso_administrativo")
+      .select("id, venda_id, servico_id, status, data_protocolo, data_ultima_atualizacao, data_indeferimento, data_notificacao, data_indeferimento_recurso, data_deferimento, data_recurso_administrativo")
       .not("status", "is", null);
     if (e1) throw e1;
 
