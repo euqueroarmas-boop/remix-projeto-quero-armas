@@ -22,7 +22,6 @@ import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { calcularPrazoProcessual } from "@/lib/quero-armas/prazosProcessuais";
 
 interface ItemRow {
   id: number;
@@ -30,9 +29,7 @@ interface ItemRow {
   servico_id: number | null;
   status: string | null;
   data_indeferimento: string | null;
-  data_notificacao: string | null;
   data_recurso_administrativo: string | null;
-  data_indeferimento_recurso: string | null;
   numero_processo: string | null;
 }
 interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
@@ -126,6 +123,7 @@ export default function DashboardPrazosRecursais() {
       }
     }
 
+    const today = todayISO();
     const built: PrazoRow[] = [];
     for (const it of itensList) {
       const tipo = it.servico_id ? SERVICOS_PF_RECURSO[it.servico_id] : null;
@@ -133,19 +131,10 @@ export default function DashboardPrazosRecursais() {
       const venda = vMap.get(it.venda_id);
       const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
       if (!cliente) continue;
-      // Motor único de prazos: respeita data_recurso_administrativo já protocolado
-      // e prioriza Mandado de Segurança se houver indeferimento do recurso.
-      const prazo = calcularPrazoProcessual({
-        data_notificacao: (it as any).data_notificacao ?? null,
-        data_indeferimento: it.data_indeferimento,
-        data_recurso_administrativo: it.data_recurso_administrativo,
-        data_indeferimento_recurso: (it as any).data_indeferimento_recurso ?? null,
-      });
-      // Sem prazo ativo (recurso já protocolado) ou expirado → não aparece.
-      if (!prazo || prazo.expirado || prazo.diasRestantes > 10) continue;
-      const dIndef = prazo.eventoBase;
-      const dLimite = prazo.dataLimite;
-      const diasRestantes = prazo.diasRestantes;
+      const dIndef = it.data_indeferimento!;
+      const dLimite = addDaysISO(dIndef, 10);
+      const diasRestantes = diffDays(today, dLimite);
+      if (diasRestantes < 0 || diasRestantes > 10) continue;
       built.push({
         itemId: it.id,
         clienteIdLegado: cliente.id_legado ?? null,
