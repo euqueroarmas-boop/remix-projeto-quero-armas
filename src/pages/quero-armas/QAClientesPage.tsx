@@ -1025,6 +1025,13 @@ export default function QAClientesPage() {
   const SERVICOS_POSSE = [2];
   // Serviço COMBO - Registro de arma de fogo (CRAF) no Exército Brasileiro
   const SERVICOS_CRAF_EB = [6];
+  // Serviços PF que possuem fluxo de Recurso Administrativo (Posse, Porte, CRAF PF)
+  const SERVICOS_PF_RECURSO = [2, 3, 26];
+  // True quando o item está em fase de Indeferimento ou Recurso Administrativo
+  const isEmFaseRecurso = (it?: any) => {
+    const s = String(it?.status || "").toUpperCase().trim();
+    return s === "INDEFERIDO" || s === "RECURSO ADMINISTRATIVO";
+  };
 
   const ITEM_EDIT_FIELDS: { key: string; label: string; type: "date" | "text"; servicos?: number[]; condition?: (form: Record<string, string>, item?: any) => boolean; required?: boolean }[] = [
     /* ================================================================
@@ -1056,6 +1063,10 @@ export default function QAClientesPage() {
     { key: "data_deferimento", label: "Data Deferimento", type: "date", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 17, 18, 26], condition: (_f, it) => (it?.status || "").toUpperCase() !== "INDEFERIDO" },
     // Data de Indeferimento — REGRA GLOBAL: aparece APENAS quando o status do item é INDEFERIDO (exceto Posse, que tem regra própria acima)
     { key: "data_indeferimento", label: "Data de Indeferimento", type: "date", condition: (_f, it) => (it?.status || "").toUpperCase() === "INDEFERIDO", servicos: [3, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 16, 17, 18, 20, 26, 27] },
+    // Recurso Administrativo (Porte PF id=3 e CRAF PF id=26) — exibe quando status é INDEFERIDO ou RECURSO ADMINISTRATIVO.
+    // (Posse PF id=2 já tem os campos próprios na seção dedicada acima.)
+    { key: "data_recurso_administrativo", label: "Data do Recurso Administrativo", type: "date", servicos: [3, 26], condition: (_f, it) => isEmFaseRecurso(it) },
+    { key: "data_indeferimento_recurso",  label: "Data de Indeferimento do Recurso", type: "date", servicos: [3, 26], condition: (_f, it) => isEmFaseRecurso(it) },
     { key: "data_vencimento", label: "Data Vencimento do CR", type: "date", servicos: SERVICOS_CR },
     // Data Vencimento — removida para Autorização de compra EB (5, 15); substituída por "Validade Autorização"
     { key: "data_vencimento", label: "Data Vencimento", type: "date", servicos: [3, 4, 6, 7, 8, 9, 10, 14, 16, 17, 18, 26] },
