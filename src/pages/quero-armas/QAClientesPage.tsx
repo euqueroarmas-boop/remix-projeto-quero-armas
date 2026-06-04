@@ -1236,6 +1236,19 @@ export default function QAClientesPage() {
       }
       const today = new Date();
       payload.data_ultima_atualizacao = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      // Auto-promove status para "RECURSO ADMINISTRATIVO" quando o usuário preencher
+      // data_recurso_administrativo num item PF (Posse/Porte/CRAF) que ainda está
+      // como INDEFERIDO. Garante coerência com o motor de prazos.
+      const recursoAntes = currentItem?.data_recurso_administrativo || null;
+      const recursoAgora = payload.data_recurso_administrativo;
+      const statusAtualUpper = String(currentItem?.status || "").toUpperCase().trim();
+      if (
+        SERVICOS_PF_RECURSO.includes(servicoId) &&
+        recursoAgora && !recursoAntes &&
+        statusAtualUpper !== "RECURSO ADMINISTRATIVO"
+      ) {
+        payload.status = "RECURSO ADMINISTRATIVO";
+      }
       const { error } = await supabase.from("qa_itens_venda" as any).update(payload).eq("id", expandedItemId);
       if (error) throw error;
       setItens(prev => prev.map((i: any) => i.id === expandedItemId ? { ...i, ...payload } : i));
