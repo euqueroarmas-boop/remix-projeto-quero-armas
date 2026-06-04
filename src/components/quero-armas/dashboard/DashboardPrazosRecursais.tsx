@@ -22,7 +22,7 @@ import WidgetStateView from "./WidgetStateView";
 import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { calcularPrazoProcessual, todayISO, diffDays as diffDaysProc } from "@/lib/quero-armas/prazosProcessuais";
+import { calcularPrazoProcessual } from "@/lib/quero-armas/prazosProcessuais";
 
 interface ItemRow {
   id: number;
