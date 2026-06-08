@@ -156,9 +156,6 @@ const HomePage = () => {
                 <Link to={CADASTRO_HERO} data-testid="home-cta-cadastro">Começar meu cadastro <ArrowRight className="ml-2 size-5" /></Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
-                <Link to={PORTAL_PATH} data-testid="home-cta-arsenal"><LogIn className="mr-2 size-5" />Acessar Arsenal</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <Link to="/servicos" data-testid="home-cta-servicos">Ver serviços</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
