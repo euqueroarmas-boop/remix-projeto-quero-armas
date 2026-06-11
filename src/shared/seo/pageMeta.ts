@@ -83,133 +83,133 @@ export const serviceMetaBySlug: Record<string, PageMeta> = {
     title: 'Posse de Arma de Fogo | Quero Armas',
     description:
       'Assessoria para aquisição legal, registro e posse de arma de fogo, com acompanhamento completo do processo.',
-    image: og('home.jpg'),
+    image: imageForSlug('posse-de-arma-de-fogo'),
   },
   'aquisicao-registro-posse-de-arma-de-fogo': {
     title: 'Aquisição, Registro e Posse de Arma de Fogo | Quero Armas',
     description:
       'Processo completo de aquisição, registro e posse de arma de fogo na Polícia Federal com acompanhamento jurídico-administrativo do início ao fim.',
-    image: og('home.jpg'),
+    image: imageForSlug('aquisicao-registro-posse-de-arma-de-fogo'),
   },
   'renovacao-posse-de-arma-de-fogo': {
     title: 'Renovação de Posse de Arma de Fogo | Quero Armas',
     description:
       'Renovação de posse de arma de fogo na Polícia Federal: análise documental, agendamento, exames e protocolo sem retrabalho.',
-    image: og('home.jpg'),
+    image: imageForSlug('renovacao-posse-de-arma-de-fogo'),
   },
   'renovacao-de-porte-de-arma-de-fogo': {
     title: 'Renovação de Porte de Arma de Fogo | Quero Armas',
     description:
       'Renovação de porte de arma de fogo com fundamentação técnica e jurídica completa, evitando indeferimento e exigências.',
-    image: og('home.jpg'),
+    image: imageForSlug('renovacao-de-porte-de-arma-de-fogo'),
   },
   'porte-de-arma-de-fogo-por-ameaca-grave-ameaca': {
     title: 'Porte de Arma por Ameaça / Grave Ameaça | Quero Armas',
     description:
       'Pedido de porte de arma de fogo por ameaça ou grave ameaça: BO, provas, fundamentação jurídica e acompanhamento na Polícia Federal.',
-    image: og('home.jpg'),
+    image: imageForSlug('porte-de-arma-de-fogo-por-ameaca-grave-ameaca'),
   },
   'porte-funcional-magistrado-ministerio-publico': {
     title: 'Porte Funcional — Magistrado e Ministério Público | Quero Armas',
     description:
       'Porte funcional de arma de fogo para magistrados e membros do Ministério Público com documentação e protocolo conforme a Lei Complementar.',
-    image: og('home.jpg'),
+    image: imageForSlug('porte-funcional-magistrado-ministerio-publico'),
   },
   'concessao-cr': {
     title: 'Concessão de CR (Atirador, Colecionador, Caçador) | Quero Armas',
     description:
       'Assessoria completa para concessão do CR no Exército Brasileiro: documentação, capacitação, vinculação a clube e acompanhamento até a emissão.',
-    image: og('home.jpg'),
+    image: imageForSlug('concessao-cr'),
   },
   'renovacao-cr': {
     title: 'Renovação de CR (Exército) | Quero Armas',
     description:
       'Renovação do Certificado de Registro de CAC no Exército com gestão do prazo, documentos e protocolo regularizado.',
-    image: og('home.jpg'),
+    image: imageForSlug('renovacao-cr'),
   },
   'autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac': {
     title: 'Autorização de Compra — Atirador Esportivo (CAC) | Quero Armas',
     description:
       'Autorização de compra de arma de fogo para atirador esportivo CAC: análise de acervo, documentação e protocolo no Exército.',
-    image: og('home.jpg'),
+    image: imageForSlug('autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac'),
   },
   'autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac': {
     title: 'Autorização de Compra — Caçador (CAC) | Quero Armas',
     description:
       'Autorização de compra de arma de fogo para caçador CAC com revisão de acervo, documentos exigidos e protocolo correto no Exército.',
-    image: og('home.jpg'),
+    image: imageForSlug('autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac'),
   },
   'guia-de-trafego-especial-cac': {
     title: 'Guia de Tráfego Especial (CAC) | Quero Armas',
     description:
       'Emissão da Guia de Tráfego Especial para CAC transportar armas e munições com cobertura nacional e validade ampliada.',
-    image: og('home.jpg'),
+    image: imageForSlug('guia-de-trafego-especial-cac'),
   },
   'guia-de-transito-gt': {
     title: 'Guia de Trânsito (GT) | Quero Armas',
     description:
       'Guia de Trânsito de arma de fogo para deslocamento legal entre clube, residência e estandes, com emissão rápida e regular.',
-    image: og('home.jpg'),
+    image: imageForSlug('guia-de-transito-gt'),
   },
   'registro-arma-fogo': {
     title: 'Registro de Arma de Fogo (Defesa Pessoal) | Quero Armas',
     description:
       'Registro de arma de fogo para defesa pessoal junto à Polícia Federal, com emissão e renovação do CRAF acompanhada por especialistas.',
-    image: og('home.jpg'),
+    image: imageForSlug('registro-arma-fogo'),
   },
   'registro-e-apostilamento-de-arma-de-fogo-cac': {
     title: 'Registro e Apostilamento de Arma (CAC) | Quero Armas',
     description:
       'Registro e apostilamento de arma de fogo de CAC no Exército, mantendo o acervo regular e atualizado para portar e transitar.',
-    image: og('home.jpg'),
+    image: imageForSlug('registro-e-apostilamento-de-arma-de-fogo-cac'),
   },
   'segunda-via-de-craf-digital': {
     title: 'Segunda Via de CRAF Digital | Quero Armas',
     description:
       'Emissão de segunda via do CRAF digital com agilidade, mantendo a regularidade da arma de fogo perante a Polícia Federal.',
-    image: og('home.jpg'),
+    image: imageForSlug('segunda-via-de-craf-digital'),
   },
   'operador-de-pistola-nivel-i': {
     title: 'Curso Operador de Pistola — Nível I | Quero Armas',
     description:
       'Treinamento Operador de Pistola Nível I: fundamentos, segurança, manuseio e tiro real com instrutores credenciados.',
-    image: og('home.jpg'),
+    image: imageForSlug('operador-de-pistola-nivel-i'),
   },
   'vip-operador-de-pistola-nivel-i': {
     title: 'VIP — Operador de Pistola Nível I | Quero Armas',
     description:
       'Versão VIP do Operador de Pistola Nível I: turma reduzida, atendimento personalizado e tempo dedicado de instrução.',
-    image: og('home.jpg'),
+    image: imageForSlug('vip-operador-de-pistola-nivel-i'),
   },
   'apostilamento-atualizacao': {
     title: 'Apostilamento — Atualização de Acervo (CAC) | Quero Armas',
     description:
       'Atualização e apostilamento do acervo CAC no Exército mantendo o cadastro 100% regular após cada nova aquisição.',
-    image: og('home.jpg'),
+    image: imageForSlug('apostilamento-atualizacao'),
   },
   'mandado-de-seguranca': {
     title: 'Mandado de Segurança em Matéria de Armas | Quero Armas',
     description:
       'Impetração de Mandado de Segurança contra atos ilegais ou abusivos da PF/EB em processos relacionados a armas de fogo.',
-    image: og('home.jpg'),
+    image: imageForSlug('mandado-de-seguranca'),
   },
   'recurso-administrativo': {
     title: 'Recurso Administrativo (PF / EB) | Quero Armas',
     description:
       'Recurso administrativo contra indeferimentos da Polícia Federal ou do Exército com fundamentação técnica e jurídica.',
-    image: og('home.jpg'),
+    image: imageForSlug('recurso-administrativo'),
   },
   'transferencia-de-propriedade-de-arma-de-fogo': {
     title: 'Transferência de Propriedade de Arma de Fogo | Quero Armas',
     description:
       'Transferência regular da propriedade de arma de fogo entre titulares, com toda a documentação e protocolo correto.',
-    image: og('home.jpg'),
+    image: imageForSlug('transferencia-de-propriedade-de-arma-de-fogo'),
   },
   'mudanca-servico': {
     title: 'Mudança de Serviço (Posse → CR) | Quero Armas',
     description:
       'Migração estratégica de Posse para CR, ampliando seu acervo e direitos como atirador, colecionador ou caçador.',
-    image: og('home.jpg'),
+    image: imageForSlug('mudanca-servico'),
   },
 };
 
