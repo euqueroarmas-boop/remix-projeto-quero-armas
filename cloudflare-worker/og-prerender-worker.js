@@ -24,6 +24,39 @@ const SITE_URL = "https://www.euqueroarmas.com.br";
 const SITE_NAME = "Quero Armas";
 const DEFAULT_IMAGE = `${SITE_URL}/og/home.jpg`;
 
+// Mapa slug → categoria de imagem OG. Imagens reais em /public/og/<categoria>.jpg.
+// Mantenha sincronizado com scripts/prerender-og.mjs e src/shared/seo/pageMeta.ts.
+const SLUG_CATEGORY = {
+  "posse-de-arma-de-fogo": "posse",
+  "aquisicao-registro-posse-de-arma-de-fogo": "posse",
+  "renovacao-posse-de-arma-de-fogo": "posse",
+  "renovacao-de-porte-de-arma-de-fogo": "porte",
+  "porte-de-arma-de-fogo-por-ameaca-grave-ameaca": "porte",
+  "porte-funcional-magistrado-ministerio-publico": "porte",
+  "concessao-cr": "cr-cac",
+  "renovacao-cr": "cr-cac",
+  "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": "cr-cac",
+  "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": "cr-cac",
+  "guia-de-trafego-especial-cac": "cr-cac",
+  "guia-de-transito-gt": "cr-cac",
+  "registro-e-apostilamento-de-arma-de-fogo-cac": "cr-cac",
+  "apostilamento-atualizacao": "cr-cac",
+  "mudanca-servico": "cr-cac",
+  "registro-arma-fogo": "registro",
+  "segunda-via-de-craf-digital": "registro",
+  "transferencia-de-propriedade-de-arma-de-fogo": "registro",
+  "operador-de-pistola-nivel-i": "cursos",
+  "vip-operador-de-pistola-nivel-i": "cursos",
+  "mandado-de-seguranca": "recursos",
+  "recurso-administrativo": "recursos",
+};
+
+function imageForSlug(slug) {
+  const category = SLUG_CATEGORY[slug];
+  if (category) return `${SITE_URL}/og/${category}.jpg`;
+  return DEFAULT_IMAGE;
+}
+
 // User-Agents de crawlers de prévia de link
 const CRAWLER_UA_REGEX = new RegExp(
   [
@@ -224,7 +257,7 @@ function resolveMeta(pathname) {
   const serviceMatch = path.match(/^\/servicos\/([^/]+)$/);
   if (serviceMatch) {
     const meta = SERVICE_META[serviceMatch[1]];
-    if (meta) return { ...meta, image: DEFAULT_IMAGE };
+    if (meta) return { ...meta, image: imageForSlug(serviceMatch[1]) };
   }
 
   return HOME_META;
