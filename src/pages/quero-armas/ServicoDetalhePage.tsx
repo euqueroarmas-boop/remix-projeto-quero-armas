@@ -15,6 +15,7 @@ import { ArrowLeft, ArrowRight, Loader2, ShoppingCart } from "lucide-react";
 import { SEO } from "@/shared/components/SEO";
 import { ShareButton } from "@/shared/components/ShareButton";
 import { buildServiceMeta } from "@/shared/seo/pageMeta";
+import { ConcessaoCrConteudo } from "@/components/quero-armas/servicos/ConcessaoCrConteudo";
 
 const sectionCls =
   "relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden";
@@ -253,6 +254,27 @@ export default function ServicoDetalhePage() {
       {/* CORPO TÉCNICO EDITORIAL */}
       <section className={`${sectionCls} border-b border-border`}>
         <div className={`${innerCls} py-12 sm:py-16`}>
+          {service.slug === "concessao-cr" ? (
+            <article className="mx-auto max-w-5xl">
+              <ConcessaoCrConteudo />
+              <hr className="my-10 border-border" />
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button asChild size="lg" className="font-heading uppercase tracking-wide">
+                  <Link to={cadastroHref}>
+                    Contratar este serviço <ArrowRight className="ml-2 size-4" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="font-heading uppercase tracking-wide"
+                >
+                  <Link to="/servicos">Ver outros serviços</Link>
+                </Button>
+              </div>
+            </article>
+          ) : (
           <article className={proseCls}>
             {details ? (
               <>
@@ -331,6 +353,7 @@ export default function ServicoDetalhePage() {
               </Button>
             </div>
           </article>
+          )}
         </div>
       </section>
     </SiteShell>
