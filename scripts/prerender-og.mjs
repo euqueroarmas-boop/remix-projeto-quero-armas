@@ -9,6 +9,41 @@ import { pathToFileURL } from "node:url";
 
 const SITE = "https://www.euqueroarmas.com.br";
 const OG_DEFAULT = `${SITE}/og/home.jpg`;
+
+// Mapa slug → categoria de imagem OG. Sincronizado com cloudflare-worker e pageMeta.ts.
+const SLUG_CATEGORY = {
+  "posse-de-arma-de-fogo": "posse",
+  "aquisicao-registro-posse-de-arma-de-fogo": "posse",
+  "renovacao-posse-de-arma-de-fogo": "posse",
+  "renovacao-de-porte-de-arma-de-fogo": "porte",
+  "porte-de-arma-de-fogo-por-ameaca-grave-ameaca": "porte",
+  "porte-funcional-magistrado-ministerio-publico": "porte",
+  "concessao-cr": "cr-cac",
+  "renovacao-cr": "cr-cac",
+  "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": "cr-cac",
+  "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": "cr-cac",
+  "guia-de-trafego-especial-cac": "cr-cac",
+  "guia-de-transito-gt": "cr-cac",
+  "registro-e-apostilamento-de-arma-de-fogo-cac": "cr-cac",
+  "apostilamento-atualizacao": "cr-cac",
+  "mudanca-servico": "cr-cac",
+  "registro-arma-fogo": "registro",
+  "segunda-via-de-craf-digital": "registro",
+  "transferencia-de-propriedade-de-arma-de-fogo": "registro",
+  "operador-de-pistola-nivel-i": "cursos",
+  "vip-operador-de-pistola-nivel-i": "cursos",
+  "mandado-de-seguranca": "recursos",
+  "recurso-administrativo": "recursos",
+  // Páginas estáticas
+  "servicos": "home",
+  "cadastro": "home",
+  "carrinho": "home",
+  "curso-operador-pistola": "cursos",
+  "defesa-pessoal-posse": "posse",
+  "cac-cr": "cr-cac",
+  "atividades-avulsas": "registro",
+};
+
 const DEFAULT_DIST = path.resolve(process.cwd(), "dist");
 let activeDist = DEFAULT_DIST;
 let templatePath = path.join(activeDist, "index.html");
@@ -170,9 +205,14 @@ const STATIC_PAGES = {
 };
 
 function ogImageFor(slug) {
-  // Imagem específica em /public/og/<slug>.jpg se existir, senão fallback.
-  const candidate = path.join(activeDist, "og", `${slug}.jpg`);
-  if (fs.existsSync(candidate)) return `${SITE}/og/${slug}.jpg`;
+  // 1) Imagem específica por slug se existir; 2) categoria mapeada; 3) fallback home.
+  const direct = path.join(activeDist, "og", `${slug}.jpg`);
+  if (fs.existsSync(direct)) return `${SITE}/og/${slug}.jpg`;
+  const category = SLUG_CATEGORY[slug];
+  if (category) {
+    const catFile = path.join(activeDist, "og", `${category}.jpg`);
+    if (fs.existsSync(catFile)) return `${SITE}/og/${category}.jpg`;
+  }
   return OG_DEFAULT;
 }
 
