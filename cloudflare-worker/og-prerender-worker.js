@@ -24,37 +24,14 @@ const SITE_URL = "https://www.euqueroarmas.com.br";
 const SITE_NAME = "Quero Armas";
 const DEFAULT_IMAGE = `${SITE_URL}/og/home.jpg`;
 
-// Mapa slug → categoria de imagem OG. Imagens reais em /public/og/<categoria>.jpg.
-// Mantenha sincronizado com scripts/prerender-og.mjs e src/shared/seo/pageMeta.ts.
-const SLUG_CATEGORY = {
-  "posse-de-arma-de-fogo": "posse",
-  "aquisicao-registro-posse-de-arma-de-fogo": "posse",
-  "renovacao-posse-de-arma-de-fogo": "posse",
-  "renovacao-de-porte-de-arma-de-fogo": "porte",
-  "porte-de-arma-de-fogo-por-ameaca-grave-ameaca": "porte",
-  "porte-funcional-magistrado-ministerio-publico": "porte",
-  "concessao-cr": "cr-cac",
-  "renovacao-cr": "cr-cac",
-  "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": "cr-cac",
-  "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": "cr-cac",
-  "guia-de-trafego-especial-cac": "cr-cac",
-  "guia-de-transito-gt": "cr-cac",
-  "registro-e-apostilamento-de-arma-de-fogo-cac": "cr-cac",
-  "apostilamento-atualizacao": "cr-cac",
-  "mudanca-servico": "cr-cac",
-  "registro-arma-fogo": "registro",
-  "segunda-via-de-craf-digital": "registro",
-  "transferencia-de-propriedade-de-arma-de-fogo": "registro",
-  "operador-de-pistola-nivel-i": "cursos",
-  "vip-operador-de-pistola-nivel-i": "cursos",
-  "mandado-de-seguranca": "recursos",
-  "recurso-administrativo": "recursos",
-};
-
+// Cada slug de serviço público em SERVICE_META possui /og/<slug>.jpg materializado
+// no repositório. O Worker não pode checar o filesystem; emitimos a URL por slug
+// e contamos com o arquivo existir. Se for adicionado um novo slug a SERVICE_META
+// sem subir o JPG, o crawler verá um 404 na imagem — por isso a regra: ao incluir
+// um serviço em SERVICE_META, sempre subir public/og/<slug>.jpg.
 function imageForSlug(slug) {
-  const category = SLUG_CATEGORY[slug];
-  if (category) return `${SITE_URL}/og/${category}.jpg`;
-  return DEFAULT_IMAGE;
+  if (!slug) return DEFAULT_IMAGE;
+  return `${SITE_URL}/og/${slug}.jpg`;
 }
 
 // User-Agents de crawlers de prévia de link
