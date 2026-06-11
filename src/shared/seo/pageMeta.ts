@@ -235,7 +235,7 @@ export function buildServiceMeta(
     description:
       fallback.short_description?.trim() ||
       `Assessoria especializada Quero Armas para ${fallback.name}.`,
-    image: FALLBACK_IMAGE,
+    image: imageForSlug(slug),
   };
 }
 
