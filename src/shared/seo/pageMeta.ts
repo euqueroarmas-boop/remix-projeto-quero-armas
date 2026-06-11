@@ -12,36 +12,12 @@ function og(file: string): string {
   return `${SITE_URL}/og/${file}`;
 }
 
-/** Mapa slug → categoria de imagem OG. Sincronizado com o Cloudflare Worker
- *  (cloudflare-worker/og-prerender-worker.js) e com scripts/prerender-og.mjs. */
-const SLUG_CATEGORY: Record<string, string> = {
-  'posse-de-arma-de-fogo': 'posse',
-  'aquisicao-registro-posse-de-arma-de-fogo': 'posse',
-  'renovacao-posse-de-arma-de-fogo': 'posse',
-  'renovacao-de-porte-de-arma-de-fogo': 'porte',
-  'porte-de-arma-de-fogo-por-ameaca-grave-ameaca': 'porte',
-  'porte-funcional-magistrado-ministerio-publico': 'porte',
-  'concessao-cr': 'cr-cac',
-  'renovacao-cr': 'cr-cac',
-  'autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac': 'cr-cac',
-  'autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac': 'cr-cac',
-  'guia-de-trafego-especial-cac': 'cr-cac',
-  'guia-de-transito-gt': 'cr-cac',
-  'registro-e-apostilamento-de-arma-de-fogo-cac': 'cr-cac',
-  'apostilamento-atualizacao': 'cr-cac',
-  'mudanca-servico': 'cr-cac',
-  'registro-arma-fogo': 'registro',
-  'segunda-via-de-craf-digital': 'registro',
-  'transferencia-de-propriedade-de-arma-de-fogo': 'registro',
-  'operador-de-pistola-nivel-i': 'cursos',
-  'vip-operador-de-pistola-nivel-i': 'cursos',
-  'mandado-de-seguranca': 'recursos',
-  'recurso-administrativo': 'recursos',
-};
-
+/** Resolve a URL absoluta da imagem OG por slug.
+ *  Cada slug ativo em serviceMetaBySlug tem um arquivo em public/og/<slug>.jpg.
+ *  Fallback defensivo para home quando o slug não estiver mapeado. */
 function imageForSlug(slug: string): string {
-  const category = SLUG_CATEGORY[slug];
-  return category ? og(`${category}.jpg`) : FALLBACK_IMAGE;
+  if (!slug) return FALLBACK_IMAGE;
+  return og(`${slug}.jpg`);
 }
 
 /**
