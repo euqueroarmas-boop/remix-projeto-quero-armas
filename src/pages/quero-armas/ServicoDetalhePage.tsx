@@ -237,7 +237,11 @@ export default function ServicoDetalhePage() {
               >
                 <ShoppingCart className="mr-2 size-4" /> Adicionar ao carrinho
               </Button>
-              <ShareButton size="lg" />
+              <ShareButton
+                size="lg"
+                title={meta.title}
+                description={meta.description}
+              />
               <div className="sm:ml-auto">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
                   A partir de
