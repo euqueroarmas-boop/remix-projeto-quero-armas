@@ -42,7 +42,7 @@ const questions: Question[] = [
     subtitle: 'Sem rodeio. Por que voce esta aqui?',
     options: [
       { id: 'defesa_casa', label: 'Defesa pessoal: defender minha família em casa', desc: 'Quero arma legalizada em casa. Dormir tranquilo. Proteger quem amo.', icon: Home, weight: { 'defesa-pessoal-posse': 3, 'cac-cr': 0, 'atividades-avulsas': 0 } },
-      { id: 'cac_objetivo', label: 'CAC: colecionar, atirar e caçar', desc: 'Quero CR no Exército. Construir acervo. Treinar habitualidade.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 1 } },
+      { id: 'cac_objetivo', label: 'CAC: colecionar, atirar e caçar', desc: 'Quero CR na Polícia Federal/SINARM-CAC. Construir acervo. Treinar habitualidade.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 1 } },
       { id: 'atirar_eventual', label: 'So quero atirar de vez em quando', desc: 'Curiosidade, lazer, experiencia no estande. Sem compromisso.', icon: Target, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
       { id: 'profissao', label: 'Profissao exige (seguranca, escolta, VIP)', desc: 'Trabalho na area. Preciso de capacitacao tecnica.', icon: Briefcase, weight: { 'defesa-pessoal-posse': 1, 'cac-cr': 1, 'atividades-avulsas': 2 } },
     ],
@@ -53,7 +53,7 @@ const questions: Question[] = [
     options: [
       { id: 'zero', label: 'Começando do zero (não tenho nada)', desc: 'Nunca dei entrada em nada.', icon: Shield, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 2, 'atividades-avulsas': 1 } },
       { id: 'posse_pf', label: 'Já tenho posse na PF', desc: 'Arma registrada em casa. Quero treinar mais ou expandir acervo.', icon: CheckCircle2, weight: { 'defesa-pessoal-posse': 2, 'cac-cr': 1, 'atividades-avulsas': 0 } },
-      { id: 'cr_ativo', label: 'Ja sou CAC com CR ativo', desc: 'Tenho CR no Exercito. Preciso de habitualidade e suporte.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 0 } },
+      { id: 'cr_ativo', label: 'Ja sou CAC com CR ativo', desc: 'Tenho CR ativo. Preciso de habitualidade e suporte.', icon: Trophy, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 3, 'atividades-avulsas': 0 } },
       { id: 'experimentar', label: 'So quero experimentar antes de decidir', desc: 'Quero atirar primeiro, depois decido.', icon: Target, weight: { 'defesa-pessoal-posse': 0, 'cac-cr': 0, 'atividades-avulsas': 3 } },
     ],
   },
@@ -141,7 +141,7 @@ function explainPath(answers: Partial<Record<Question['id'], AnswerId>>) {
 
     return {
       title: frequencia === 'semanal_operador' ? 'Caminho CAC do zero para operador' : 'Caminho CAC do zero',
-      description: 'Primeiro vem o CR ativo no Exercito. Depois entram compra, registro/apostilamento e GTE.',
+      description: 'Primeiro vem o CR ativo na Polícia Federal/SINARM-CAC. Depois entram compra, registro/apostilamento e GTE.',
       steps: ['Concessao de CR', 'Depois: autorizacao de compra', 'Depois: registro/apostilamento', 'Depois: GTE'],
       service: 'Concessao de CR',
     };
@@ -268,7 +268,7 @@ function resolveRecommendation(answers: Partial<Record<Question['id'], AnswerId>
       title: 'Comecar como CAC',
       desc: 'Como voce esta partindo para o CAC sem CR ativo, o primeiro servico indicado e a concessao de CR.',
       services: [
-        { name: 'Concessao de CR', desc: 'Concessao de Certificado de Registro junto ao Exercito Brasileiro.', price: 'R$ 1.239' },
+        { name: 'Concessao de CR', desc: 'Concessao de Certificado de Registro junto à Polícia Federal/SINARM-CAC.', price: 'R$ 1.239' },
       ],
       total: 'R$ 1.239',
     };
@@ -425,7 +425,7 @@ const QuizPage = () => {
     <div className="qa-refinado">
       <SEO
         title="Descobrir Meu Caminho - Diagnostico Tatico | Quero Armas"
-        description="Em 3 perguntas voce descobre o caminho certo: posse domiciliar, CR no Exercito ou curso de tiro. Diagnostico rapido e direto."
+        description="Em 3 perguntas voce descobre o caminho certo: posse domiciliar, CR na Polícia Federal/SINARM-CAC ou curso de tiro. Diagnostico rapido e direto."
         canonical="/descobrir-meu-caminho"
       />
       <QACadastroRefinadoHeader

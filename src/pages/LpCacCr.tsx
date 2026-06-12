@@ -9,8 +9,8 @@ const CAC_CHECKOUT = '/cadastro?servico=concessao-cr&origem=lp_cac_cr&perfil_v2=
 const LpCacCr = () => (
   <SiteShell>
     <SEO
-      title="CR no Exército · CAC Colecionador, Atirador e Caçador | Quero Armas"
-      description="CR ativo no Exército, acervo legal e habitualidade blindada. Documentação completa, controle de prazos e suporte CAC. Foco no tiro, papel é com a gente."
+      title="CR na Polícia Federal · CAC Colecionador, Atirador e Caçador | Quero Armas"
+      description="CR ativo na Polícia Federal/SINARM-CAC, acervo legal e habitualidade blindada. Documentação completa, controle de prazos e suporte CAC. Foco no tiro, papel é com a gente."
       canonical="/cac-cr"
       jsonLd={{
         '@context': 'https://schema.org',
@@ -18,8 +18,8 @@ const LpCacCr = () => (
         name: 'Registro CR — Colecionador, Atirador e Caçador',
         provider: { '@type': 'Organization', name: 'Quero Armas' },
         areaServed: 'BR',
-        serviceType: 'Documentação CAC/CR no Exército Brasileiro',
-        description: 'Filiação a clube, registro CR no Exército, aquisição de armas, controle de habitualidade e renovação.',
+        serviceType: 'Documentação CAC/CR na Polícia Federal/SINARM-CAC',
+        description: 'Filiação a clube, registro CR na Polícia Federal/SINARM-CAC, aquisição de armas, controle de habitualidade e renovação.',
       }}
     />
     <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border bg-background py-20 sm:py-28">
@@ -29,7 +29,7 @@ const LpCacCr = () => (
           <span className="font-heading text-xs uppercase tracking-[0.2em] text-accent">CR · Colecionador, Atirador e Caçador</span>
         </div>
         <h1 className="font-heading text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
-          CR no Exército. Acervo legal. <span className="text-accent">Habitualidade blindada.</span>
+          CR na Polícia Federal/SINARM-CAC. Acervo legal. <span className="text-accent">Habitualidade blindada.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-base text-muted-foreground sm:text-lg">
           Você quer construir <strong className="text-foreground">acervo</strong>, dominar a técnica e viver o universo armado dentro da lei. CR exige rotina, papel, prazo. A gente carrega tudo pra você focar no que importa: <strong className="text-foreground">atirar</strong>.
@@ -49,7 +49,7 @@ const LpCacCr = () => (
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {[
-            { title: 'Habitualidade vencida', desc: 'Esquece um ano de comprovação no Exército e perde o direito de comprar munição. Acervo travado.' },
+            { title: 'Habitualidade vencida', desc: 'Esquece a comprovação anual e perde o direito de comprar munição. Acervo travado.' },
             { title: 'GT, CRAF, psicotécnico', desc: 'Cada arma tem prazo. Cada laudo vence. Quem perde data, perde arma — e às vezes responde por porte ilegal.' },
             { title: 'Acervo sem controle', desc: 'Dez armas, dez prazos. Sem sistema, vira pesadelo. Com sistema, vira coleção legítima.' },
           ].map((p) => (
@@ -70,7 +70,7 @@ const LpCacCr = () => (
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {[
-            { icon: FileText, title: 'Concessão e renovação de CR', desc: 'Documentação no Exército. CR ativo em até 90 dias. Renovação a cada 3 anos com lembrete.' },
+            { icon: FileText, title: 'Concessão e renovação de CR', desc: 'Documentação na Polícia Federal/SINARM-CAC. CR ativo em até 90 dias. Renovação a cada 3 anos com lembrete.' },
             { icon: Boxes, title: 'Gestão digital do acervo', desc: 'Cada arma cadastrada com série, CRAF, GT, fotos, NF. Vencimentos com alerta automático.' },
             { icon: Crosshair, title: 'Habitualidade real', desc: 'Cronograma de treinos mensais e documentação correta. Relatório pronto para auditoria.' },
             { icon: Award, title: 'Cursos de evolução técnica', desc: 'Operador de Pistola I, II e III. Carabina. Tiro defensivo. Saque sob estresse.' },
@@ -106,8 +106,8 @@ const LpCacCr = () => (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { n: '01', t: 'Filiação ao clube', d: 'Inscrição em clube credenciado, ATA de admissão emitida em 7 dias.' },
-            { n: '02', t: 'Documentação Exército', d: 'Antecedentes, psicotécnico, capacitação técnica e dossiê SFPC montado.' },
-            { n: '03', t: 'Análise SFPC', d: 'Protocolo militar, acompanhamento semanal, resposta em até 60 dias.' },
+            { n: '02', t: 'Documentação Polícia Federal', d: 'Antecedentes, psicotécnico, capacitação técnica e dossiê administrativo montado.' },
+            { n: '03', t: 'Análise na Polícia Federal', d: 'Protocolo no sistema competente, acompanhamento semanal e resposta em até 60 dias.' },
             { n: '04', t: 'CR ativo + acervo', d: 'CR emitido, primeira GT, CRAF, gestão digital ligada e calendário de habitualidade.' },
           ].map((s) => (
             <div key={s.n} className="rounded-sm border border-border bg-card p-6">
@@ -131,8 +131,8 @@ const LpCacCr = () => (
           {[
             { q: '"O Decreto 11.615/23 não acabou com o CAC?"', a: 'Não. Reduziu acervo e impôs habitualidade. CR continua ativo, com regras mais rigorosas — e mais defensáveis juridicamente.' },
             { q: '"E se eu perder a habitualidade?"', a: 'Suspende o direito de comprar munição até regularizar. Nosso sistema dispara alerta 60 dias antes para zerar esse risco.' },
-            { q: '"Preciso atirar quantas vezes por ano?"', a: 'Mínimo de 4 sessões anuais por arma de uso permitido. Acompanhamos seu cronograma e geramos os relatórios para o Exército.' },
-            { q: '"Posso ter posse e CR juntos?"', a: 'Sim. São registros distintos — Posse na PF (defesa) e CR no Exército (esporte/coleção). Cuidamos dos dois sem conflito.' },
+            { q: '"Preciso atirar quantas vezes por ano?"', a: 'Mínimo de 4 sessões anuais por arma de uso permitido. Acompanhamos seu cronograma e organizamos os comprovantes de habitualidade.' },
+            { q: '"Posso ter posse e CR juntos?"', a: 'Sim. São registros distintos — posse para defesa pessoal e CR para atividade CAC, ambos no âmbito da Polícia Federal/SINARM-CAC. Cuidamos dos dois sem conflito.' },
           ].map((o) => (
             <div key={o.q} className="rounded-sm border border-border bg-card p-6">
               <div className="mb-2 flex items-start gap-2"><HelpCircle className="mt-0.5 size-4 shrink-0 text-accent" /><h3 className="font-heading text-sm font-bold uppercase text-accent">{o.q}</h3></div>

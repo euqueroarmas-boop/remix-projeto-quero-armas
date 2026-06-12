@@ -4,14 +4,14 @@
  * Regras:
  *  - Nenhum texto genérico repetido como corpo principal.
  *  - Cada slug tem conteúdo específico. Slug sem entrada => "em revisão".
- *  - Base normativa mínima: Lei 10.826/2003, Decreto 11.615/2023,
- *    normativos PF/SINARM e Exército/COLOG/DFPC/SIGMA.
+ *  - Base normativa mínima: Lei 10.826/2003, Decreto 11.615/2023
+ *    e normativos PF/SINARM-CAC aplicáveis.
  *  - Não promete deferimento, prazo legal garantido ou resultado.
  */
 
 export type SistemaAplicavel =
   | "SINARM_PF"
-  | "SIGMA_EXERCITO"
+  | "CAC_PF"
   | "JUDICIAL"
   | "CURSO_ESTANDE"
   | "INTERNO";
@@ -307,7 +307,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     ],
     pontosAtencao: [
       "Registro de defesa pessoal não habilita transporte habitual nem porte.",
-      "O CRAF de defesa pessoal não se confunde com o CRAF SIGMA (CAC).",
+      "O CRAF de defesa pessoal não se confunde com o CRAF de acervo CAC.",
     ],
     limitesQA:
       "A Quero Armas executa o registro técnico e o protocolo. " + DEFERIMENTO_NOTE,
@@ -317,7 +317,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     titulo: "Recurso Administrativo",
     sistema: "SINARM_PF",
     orgaoCompetente:
-      "Autoridade administrativa que proferiu a decisão (PF/SINARM ou Exército/SIGMA)",
+      "Autoridade administrativa que proferiu a decisão na Polícia Federal/SINARM-CAC",
     baseLegal: [
       "Lei nº 9.784/1999 (processo administrativo federal)",
       "Lei nº 10.826/2003",
@@ -402,21 +402,21 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       ADV_NOTE,
   },
 
-  // ───────────────────────── SIGMA / EXÉRCITO ─────────────────────────
+  // ───────────────────────── CAC / POLÍCIA FEDERAL ─────────────────────────
 
   "concessao-cr": {
     titulo: "Concessão de CR (Certificado de Registro)",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º, § 1º (CAC)",
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre Atirador, Caçador e Colecionador (SIGMA)",
+      "Instruções normativas DG/PF aplicáveis ao CAC e ao SINARM-CAC",
     ],
     oQueE:
-      "Concessão do Certificado de Registro (CR) pelo Exército, habilitando a pessoa física como Atirador Desportivo, Caçador ou Colecionador (CAC) no SIGMA.",
+      "Concessão do Certificado de Registro (CR) no âmbito da Polícia Federal/SINARM-CAC, habilitando a pessoa física como Atirador Desportivo, Caçador ou Colecionador (CAC).",
     quandoSeAplica:
-      "Quando o interessado deseja ingressar oficialmente em uma das categorias CAC para constituir acervo e praticar a atividade nos termos da norma do Exército.",
+      "Quando o interessado deseja ingressar oficialmente em uma das categorias CAC para constituir acervo e praticar a atividade nos termos das normas da Polícia Federal.",
     quemPodeSolicitar: [
       "Pessoa física com idade mínima exigida pela categoria pretendida",
       "Filiado a entidade de tiro reconhecida (Atirador) quando aplicável",
@@ -438,7 +438,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     etapas: [
       "Cadastro e checklist documental",
       "Conferência técnica dos requisitos da categoria",
-      "Protocolo do CR no SIGMA/SFPC",
+      "Protocolo do CR no sistema competente da Polícia Federal",
       "Acompanhamento até deferimento e emissão do CR",
     ],
     pontosAtencao: [
@@ -446,18 +446,18 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Habitualidade é exigida para manutenção da categoria Atirador e da renovação do CR.",
     ],
     limitesQA:
-      "A Quero Armas estrutura o pedido e protocola junto ao Exército. " +
+      "A Quero Armas estrutura o pedido e protocola junto à Polícia Federal/SINARM-CAC. " +
       DEFERIMENTO_NOTE,
   },
 
   "renovacao-cr": {
     titulo: "Renovação de CR",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º",
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre renovação e habitualidade CAC",
+      "Instruções normativas DG/PF aplicáveis à renovação e habitualidade CAC",
     ],
     oQueE:
       "Procedimento para manter a validade do CR já concedido, com atualização documental e demonstração da habitualidade quando exigida.",
@@ -482,7 +482,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     etapas: [
       "Conferência do CR e da habitualidade",
       "Atualização documental",
-      "Protocolo da renovação no SIGMA",
+      "Protocolo da renovação no sistema competente da Polícia Federal",
       "Acompanhamento até emissão do novo CR",
     ],
     pontosAtencao: [
@@ -490,20 +490,20 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Perder a janela pode obrigar a iniciar nova concessão.",
     ],
     limitesQA:
-      "A Quero Armas conduz a renovação e o protocolo no SIGMA. " +
+      "A Quero Armas conduz a renovação e o protocolo na Polícia Federal/SINARM-CAC. " +
       DEFERIMENTO_NOTE,
   },
 
   "apostilamento-atualizacao": {
     titulo: "Apostilamento — Atualização de Acervo",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre apostilamento e acervo CAC",
+      "Instruções normativas DG/PF aplicáveis ao apostilamento e acervo CAC",
     ],
     oQueE:
-      "Procedimento de inclusão, alteração ou atualização de itens do acervo CAC no CR, com registro formal pelo Exército.",
+      "Procedimento de inclusão, alteração ou atualização de itens do acervo CAC no CR, com registro formal na Polícia Federal/SINARM-CAC.",
     quandoSeAplica:
       "Sempre que houver entrada, baixa, transferência ou alteração de dados de item do acervo, e quando houver mudança de qualificação cadastral relevante.",
     quemPodeSolicitar: ["Titular do CR vigente"],
@@ -519,7 +519,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     etapas: [
       "Conferência do acervo e do item",
       "Montagem do pedido de apostilamento",
-      "Protocolo no SIGMA",
+      "Protocolo no sistema competente da Polícia Federal",
       "Atualização do CR/CRAF",
     ],
     pontosAtencao: [
@@ -532,17 +532,17 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
 
   "registro-e-apostilamento-de-arma-de-fogo-cac": {
     titulo: "Registro e Apostilamento de Arma de Fogo (CAC)",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º",
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre CRAF e acervo CAC",
+      "Instruções normativas DG/PF aplicáveis ao CRAF e acervo CAC",
     ],
     oQueE:
-      "Emissão do CRAF SIGMA da arma adquirida pelo CAC e respectivo apostilamento do item no CR.",
+      "Emissão do CRAF da arma adquirida pelo CAC e respectivo apostilamento do item no CR.",
     quandoSeAplica:
-      "Após a aquisição da arma com Autorização de Compra emitida pelo Exército, para registrá-la formalmente no acervo CAC.",
+      "Após a aquisição da arma com Autorização de Compra emitida pela autoridade competente, para registrá-la formalmente no acervo CAC.",
     quemPodeSolicitar: ["Titular de CR vigente com Autorização de Compra utilizada"],
     requisitos: [
       "CR vigente",
@@ -557,27 +557,27 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     ],
     etapas: [
       "Conferência da nota fiscal e do bem",
-      "Cadastro do registro no SIGMA",
+      "Cadastro do registro no sistema competente",
       "Apostilamento do item no CR",
-      "Emissão do CRAF SIGMA",
+      "Emissão do CRAF",
     ],
     pontosAtencao: [
-      "CRAF SIGMA é distinto do CRAF SINARM — o item passa a integrar o acervo CAC, com regramento próprio.",
+      "CRAF de acervo CAC possui regramento próprio e deve permanecer compatível com o CR vigente.",
       "Limites de acervo por categoria devem ser respeitados.",
     ],
     limitesQA:
-      "A Quero Armas executa o registro e o apostilamento no Exército. " +
+      "A Quero Armas executa o registro e o apostilamento junto à Polícia Federal/SINARM-CAC. " +
       DEFERIMENTO_NOTE,
   },
 
   "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": {
     titulo: "Autorização de Compra de Arma de Fogo — Atirador Esportivo (CAC)",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º, § 1º",
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre aquisição de arma e munição por Atirador Desportivo",
+      "Instruções normativas DG/PF aplicáveis à aquisição de arma e munição por Atirador Desportivo",
     ],
     oQueE:
       "Serviço de autorização de compra de arma de fogo para atiradores desportivos, dentro dos limites de calibre, quantidade e habitualidade da categoria.",
@@ -601,7 +601,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     etapas: [
       "Conferência do CR, habitualidade e acervo",
       "Montagem do pedido com fundamento da finalidade desportiva",
-      "Protocolo no SIGMA",
+      "Protocolo no sistema competente da Polícia Federal",
       "Emissão da Autorização de Compra",
     ],
     pontosAtencao: [
@@ -609,18 +609,18 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Calibre e quantidade devem respeitar as regras vigentes para Atirador.",
     ],
     limitesQA:
-      "A Quero Armas estrutura e protocola o pedido de compra no Exército. " +
+      "A Quero Armas estrutura e protocola o pedido de compra junto à Polícia Federal/SINARM-CAC. " +
       DEFERIMENTO_NOTE,
   },
 
   "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": {
     titulo: "Autorização de Compra de Arma de Fogo — Caçador (CAC)",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º, § 1º",
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre aquisição por Caçador",
+      "Instruções normativas DG/PF aplicáveis à aquisição por Caçador",
     ],
     oQueE:
       "Serviço de autorização de compra de arma de fogo para Caçadores CAC, respeitando finalidade, calibre e limites do acervo.",
@@ -642,7 +642,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     etapas: [
       "Conferência do CR e do acervo",
       "Justificativa da finalidade de caça",
-      "Protocolo no SIGMA",
+      "Protocolo no sistema competente da Polícia Federal",
       "Emissão da Autorização de Compra",
     ],
     pontosAtencao: [
@@ -656,32 +656,32 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
 
   "guia-de-trafego-especial-cac": {
     titulo: "Guia de Tráfego Especial (GTE) — CAC",
-    sistema: "SIGMA_EXERCITO",
-    orgaoCompetente: "Exército Brasileiro — DFPC/SFPC (SIGMA)",
+    sistema: "CAC_PF",
+    orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Portarias COLOG/DFPC sobre GTE e transporte de acervo CAC",
+      "Instruções normativas DG/PF aplicáveis à GTE e transporte de acervo CAC",
     ],
     oQueE:
-      "Autorização do Exército para transporte de arma e munição do acervo CAC, entre origem e destino determinados, dentro de prazo específico.",
+      "Autorização competente para transporte de arma e munição do acervo CAC, entre origem e destino determinados, dentro de prazo específico.",
     quandoSeAplica:
       "Para deslocamento autorizado do acervo: treinos, competições, manutenção, caça, mudança de endereço ou eventos previstos em norma.",
-    quemPodeSolicitar: ["Titular de CR vigente com acervo registrado no SIGMA"],
+    quemPodeSolicitar: ["Titular de CR vigente com acervo registrado no sistema competente"],
     requisitos: [
       "CR vigente",
-      "Item(ns) do acervo regularmente registrado(s) (CRAF SIGMA)",
+      "Item(ns) do acervo regularmente registrado(s) (CRAF)",
       "Justificativa de deslocamento compatível com a norma",
     ],
     documentos: [
       "CR vigente",
-      "CRAF SIGMA das armas a transportar",
+      "CRAF das armas a transportar",
       "Dados de origem, destino e período do deslocamento",
       "Comprovante do evento/finalidade quando aplicável",
     ],
     etapas: [
       "Conferência do acervo a transportar",
       "Montagem da GTE com origem, destino, calibres e quantidades",
-      "Protocolo no SIGMA",
+      "Protocolo no sistema competente da Polícia Federal",
       "Entrega da GTE ao titular",
     ],
     pontosAtencao: [
@@ -689,22 +689,22 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Munição e quantidade transportadas devem respeitar a GTE emitida.",
     ],
     limitesQA:
-      "A Quero Armas emite tecnicamente a GTE e a protocola no Exército. " +
+      "A Quero Armas emite tecnicamente a GTE e a protocola junto à Polícia Federal/SINARM-CAC. " +
       DEFERIMENTO_NOTE,
   },
 
   "mudanca-servico": {
     titulo: "Mudança de Serviço (Posse → CR)",
-    sistema: "SIGMA_EXERCITO",
+    sistema: "CAC_PF",
     orgaoCompetente:
-      "Polícia Federal (origem SINARM) e Exército Brasileiro (destino SIGMA)",
+      "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003",
       "Decreto nº 11.615/2023 e alterações vigentes",
-      "Atos PF/SINARM e portarias COLOG/DFPC sobre transferência entre sistemas",
+      "Atos PF/SINARM-CAC sobre regularização e transferência cadastral",
     ],
     oQueE:
-      "Procedimento de transferência de arma originalmente registrada no SINARM (posse/defesa pessoal) para o acervo CAC no SIGMA, ou mudança da modalidade de serviço do titular.",
+      "Procedimento de regularização ou alteração cadastral de arma originalmente registrada no SINARM para acervo CAC, ou mudança da modalidade de serviço do titular.",
     quandoSeAplica:
       "Quando o titular de arma SINARM deseja vinculá-la formalmente ao acervo CAC após obtenção do CR.",
     quemPodeSolicitar: [
@@ -724,15 +724,15 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     etapas: [
       "Diagnóstico da arma e da categoria CAC de destino",
       "Protocolo de baixa/transferência junto à PF (SINARM)",
-      "Protocolo de inclusão no SIGMA com apostilamento",
-      "Emissão do CRAF SIGMA correspondente",
+      "Protocolo de inclusão no acervo CAC com apostilamento",
+      "Emissão do CRAF correspondente",
     ],
     pontosAtencao: [
-      "Procedimento envolve dois órgãos distintos (PF e Exército) e exige sincronização documental.",
+      "Procedimento exige sincronização documental entre cadastro, CR, CRAF e acervo.",
       "Calibres restritos podem inviabilizar a transferência.",
     ],
     limitesQA:
-      "A Quero Armas conduz tecnicamente as duas pontas (PF e Exército). " +
+      "A Quero Armas conduz tecnicamente a regularização junto à Polícia Federal/SINARM-CAC. " +
       DEFERIMENTO_NOTE,
   },
 
@@ -816,7 +816,7 @@ export function getServiceLegalDetails(slug: string): ServiceLegalDetails | null
 
 export const sistemaLabel: Record<SistemaAplicavel, string> = {
   SINARM_PF: "SINARM / Polícia Federal",
-  SIGMA_EXERCITO: "SIGMA / Exército Brasileiro",
+  CAC_PF: "Polícia Federal / SINARM-CAC",
   JUDICIAL: "Esfera Judicial",
   CURSO_ESTANDE: "Curso operacional / estande",
   INTERNO: "Atendimento interno",

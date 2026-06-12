@@ -94,25 +94,25 @@ export const serviceMetaBySlug: Record<string, PageMeta> = {
   'concessao-cr': {
     title: 'Concessão de CR (Atirador, Colecionador, Caçador) | Quero Armas',
     description:
-      'Assessoria completa para concessão do CR no Exército Brasileiro: documentação, capacitação, vinculação a clube e acompanhamento até a emissão.',
+      'Assessoria completa para concessão do CR na Polícia Federal/SINARM-CAC: documentação, capacitação, vinculação a clube e acompanhamento até a emissão.',
     image: imageForSlug('concessao-cr'),
   },
   'renovacao-cr': {
-    title: 'Renovação de CR (Exército) | Quero Armas',
+    title: 'Renovação de CR (Polícia Federal) | Quero Armas',
     description:
-      'Renovação do Certificado de Registro de CAC no Exército com gestão do prazo, documentos e protocolo regularizado.',
+      'Renovação do Certificado de Registro de CAC na Polícia Federal/SINARM-CAC com gestão do prazo, documentos e protocolo regularizado.',
     image: imageForSlug('renovacao-cr'),
   },
   'autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac': {
     title: 'Autorização de Compra — Atirador Esportivo (CAC) | Quero Armas',
     description:
-      'Autorização de compra de arma de fogo para atirador esportivo CAC: análise de acervo, documentação e protocolo no Exército.',
+      'Autorização de compra de arma de fogo para atirador esportivo CAC: análise de acervo, documentação e protocolo na Polícia Federal/SINARM-CAC.',
     image: imageForSlug('autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac'),
   },
   'autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac': {
     title: 'Autorização de Compra — Caçador (CAC) | Quero Armas',
     description:
-      'Autorização de compra de arma de fogo para caçador CAC com revisão de acervo, documentos exigidos e protocolo correto no Exército.',
+      'Autorização de compra de arma de fogo para caçador CAC com revisão de acervo, documentos exigidos e protocolo correto na Polícia Federal/SINARM-CAC.',
     image: imageForSlug('autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac'),
   },
   'guia-de-trafego-especial-cac': {
@@ -136,7 +136,7 @@ export const serviceMetaBySlug: Record<string, PageMeta> = {
   'registro-e-apostilamento-de-arma-de-fogo-cac': {
     title: 'Registro e Apostilamento de Arma (CAC) | Quero Armas',
     description:
-      'Registro e apostilamento de arma de fogo de CAC no Exército, mantendo o acervo regular e atualizado para portar e transitar.',
+      'Registro e apostilamento de arma de fogo de CAC na Polícia Federal/SINARM-CAC, mantendo o acervo regular e atualizado para portar e transitar.',
     image: imageForSlug('registro-e-apostilamento-de-arma-de-fogo-cac'),
   },
   'segunda-via-de-craf-digital': {
@@ -160,19 +160,19 @@ export const serviceMetaBySlug: Record<string, PageMeta> = {
   'apostilamento-atualizacao': {
     title: 'Apostilamento — Atualização de Acervo (CAC) | Quero Armas',
     description:
-      'Atualização e apostilamento do acervo CAC no Exército mantendo o cadastro 100% regular após cada nova aquisição.',
+      'Atualização e apostilamento do acervo CAC na Polícia Federal/SINARM-CAC mantendo o cadastro 100% regular após cada nova aquisição.',
     image: imageForSlug('apostilamento-atualizacao'),
   },
   'mandado-de-seguranca': {
     title: 'Mandado de Segurança em Matéria de Armas | Quero Armas',
     description:
-      'Impetração de Mandado de Segurança contra atos ilegais ou abusivos da PF/EB em processos relacionados a armas de fogo.',
+      'Impetração de Mandado de Segurança contra atos ilegais ou abusivos da PF em processos relacionados a armas de fogo.',
     image: imageForSlug('mandado-de-seguranca'),
   },
   'recurso-administrativo': {
-    title: 'Recurso Administrativo (PF / EB) | Quero Armas',
+    title: 'Recurso Administrativo (Polícia Federal) | Quero Armas',
     description:
-      'Recurso administrativo contra indeferimentos da Polícia Federal ou do Exército com fundamentação técnica e jurídica.',
+      'Recurso administrativo contra indeferimentos da Polícia Federal com fundamentação técnica e jurídica.',
     image: imageForSlug('recurso-administrativo'),
   },
   'transferencia-de-propriedade-de-arma-de-fogo': {

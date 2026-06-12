@@ -63,7 +63,7 @@ const HomeStickyCTA = () => {
 
 const pillars = [
   { icon: Swords, kicker: 'Pilar 01 · Armamento', title: 'Arma curta ou longa. A que vai salvar a sua família.', desc: 'Pistola pra andar com você. Espingarda pra dormir tranquilo. Revólver que nunca falha. Não é coleção. Não é hobby. É a ferramenta que decide se sua mulher vai dormir viúva ou se seus filhos vão crescer com pai. Te orientamos na escolha certa pro seu perfil, sua casa e a ameaça real do seu CEP.' },
-  { icon: Scale, kicker: 'Pilar 02 · Lei', title: 'O direito de ter arma em casa é seu — e está escrito.', desc: 'Lei 10.826/03 (Estatuto do Desarmamento), Decreto 11.615/23, Instruções Normativas DG/PF 201 e 311. Você pode ter arma. Você pode comprar munição. Você pode defender sua casa. Conduzimos toda a documentação na PF e no Exército — você sai legalizado, registrado e blindado juridicamente.' },
+  { icon: Scale, kicker: 'Pilar 02 · Lei', title: 'O direito de ter arma em casa é seu — e está escrito.', desc: 'Lei 10.826/03 (Estatuto do Desarmamento), Decreto 11.615/23, Instruções Normativas DG/PF 201 e 311. Você pode ter arma. Você pode comprar munição. Você pode defender sua casa. Conduzimos toda a documentação na Polícia Federal — você sai legalizado, registrado e blindado juridicamente.' },
   { icon: Crosshair, kicker: 'Pilar 03 · Curso', title: 'Arma sem treino é arma do bandido.', desc: 'Não adianta ter Ferrari e não saber dirigir. O curso é complemento obrigatório — antes ou depois da compra, mas nunca opcional. Saque, mira sob estresse, decisão tática, defesa jurídica pós-disparo.' },
 ];
 
@@ -90,7 +90,7 @@ const arsenal = [
 
 const journey = [
   { n: '01', title: 'Diagnóstico tático', desc: 'Análise do seu perfil, ameaça real e arsenal ideal.' },
-  { n: '02', title: 'Documentação PF/Exército', desc: 'Conduzimos CAC e/ou Defesa Pessoal do início ao CRAF.' },
+  { n: '02', title: 'Documentação Polícia Federal', desc: 'Conduzimos CAC e/ou Defesa Pessoal do início ao CRAF.' },
   { n: '03', title: 'Aquisição do equipamento', desc: 'Recomendação técnica de calibre, marca, coldre e munição.' },
   { n: '04', title: 'Curso operacional', desc: 'Treino real em estande. Saque, tiro defensivo, decisão sob estresse.' },
   { n: '05', title: 'Protocolo pós-disparo', desc: 'Você sabe o que falar, o que calar e como agir após o disparo. Defesa jurídica é contratada à parte com criminalista de sua confiança.' },
@@ -104,7 +104,7 @@ const HomePage = () => {
     <SiteShell>
       <SEO
         title="Quero Armas · Posse, CAC/CR e Treinamento Tático Legalizado"
-        description="Posse domiciliar, CR no Exército, cursos de tiro e habitualidade. Documentação na PF e EB, treinamento real e suporte jurídico. Saia legalizado e armado."
+        description="Posse domiciliar, CR na Polícia Federal, cursos de tiro e habitualidade. Documentação na Polícia Federal, treinamento real e suporte jurídico. Saia legalizado e armado."
         canonical="/"
         type="website"
         jsonLd={[
@@ -173,7 +173,7 @@ const HomePage = () => {
               <h3 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-3xl">Arma + Lei +<br />Treino.</h3>
               <p className="text-sm leading-relaxed text-muted-foreground text-pretty">A tríade da defesa pessoal séria. Sem arma você reza. Sem lei você é preso. Sem treino você morre. Aqui você sai com os três.</p>
               <ul className="flex flex-col gap-3 text-sm font-medium">
-                {['Aquisição da sua arma de fogo longa / curta', 'Documentação PF e Exército blindada', 'Curso operacional em estande homologado'].map((item) => (
+                {['Aquisição da sua arma de fogo longa / curta', 'Documentação Polícia Federal blindada', 'Curso operacional em estande homologado'].map((item) => (
                   <li key={item} className="flex items-start gap-3"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" /><span>{item}</span></li>
                 ))}
               </ul>
@@ -442,7 +442,7 @@ const HomePage = () => {
               </div>
               <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">Arma sem colete é <span className="text-tactical-gradient">meia defesa</span>. O bandido também atira.</h2>
               <p className="text-base text-muted-foreground sm:text-lg">Você se preparou pra atirar. E pra <strong className="text-foreground">levar tiro</strong>? Em uma invasão, troca de tiros não é cinema. O primeiro projétil que pega você no peito encerra a defesa da sua família.</p>
-              <p className="text-base text-muted-foreground sm:text-lg">Vendemos colete balístico <strong className="text-foreground">Nível IIIA</strong> (todos os calibres de pistola até .44 Magnum) e <strong className="text-foreground">Nível III</strong> com placa rígida (fuzis 7.62 e .308). Conduzimos a autorização do Exército quando exigida.</p>
+              <p className="text-base text-muted-foreground sm:text-lg">Vendemos colete balístico <strong className="text-foreground">Nível IIIA</strong> (todos os calibres de pistola até .44 Magnum) e <strong className="text-foreground">Nível III</strong> com placa rígida (fuzis 7.62 e .308). Conduzimos a autorização competente quando exigida.</p>
               <Button asChild size="lg" className="w-fit font-heading uppercase tracking-[0.1em]">
                 <Link to="/servicos">Quero meu colete <ArrowRight className="ml-2 size-5" /></Link>
               </Button>
@@ -813,7 +813,7 @@ const HomePage = () => {
               { code: 'Lei 10.826/2003', name: 'Estatuto do Desarmamento', desc: 'Marco civil do armamento. Define posse (art. 4º), porte (art. 10), crimes e o Sinarm.' },
               { code: 'Decreto 11.615/2023', name: 'Regulamento atual em vigor', desc: 'Define art. 11 e 12 (uso permitido x restrito), art. 19 (limites de aquisição) e art. 36 (guarda doméstica).' },
               { code: 'IN DG/PF 201/2024', name: 'Posse · Aquisição · Sinarm', desc: 'Detalha o procedimento operacional na PF: documentos, exame psicológico, teste técnico, vistoria, CRAF.' },
-              { code: 'IN DG/PF 311/2024', name: 'CAC · Caçador · Atirador · Colecionador', desc: 'Regula o registro CAC junto ao Exército. Define níveis, calibres, GT, prazos e habitualidade.' },
+              { code: 'IN DG/PF 311/2024', name: 'CAC · Caçador · Atirador · Colecionador', desc: 'Regula o registro CAC junto à Polícia Federal/SINARM-CAC. Define níveis, calibres, GT, prazos e habitualidade.' },
             ].map((l) => (
               <article key={l.code} className="group relative flex flex-col gap-3 rounded-sm border border-border bg-card p-6 transition-colors hover:border-accent/50 sm:p-7">
                 <div className="absolute left-0 top-0 h-[2px] w-0 bg-accent transition-all duration-500 group-hover:w-full" />
@@ -847,7 +847,7 @@ const HomePage = () => {
                   { icon: Boxes, tag: 'Acervo e arsenal', title: 'Toda arma sua, em um painel.', desc: 'Cada arma com calibre, número de série, lote, marca e nota fiscal digitalizada.' },
                   { icon: Clock, tag: 'Controle de vencimentos', title: 'Alerta antes da PF te alertar.', desc: 'CR, CRAF, GT, exame psicológico, teste de tiro, habitualidade CAC. Avisos 90/60/30 dias antes.' },
                   { icon: Scale, tag: 'Legislação atualizada', title: 'A lei sempre na versão vigente.', desc: 'Lei 10.826/03, Decreto 11.615/23, IN PF 201, IN PF 311 sempre atualizadas.' },
-                  { icon: KeyRound, tag: 'Documentos e contratos', title: 'Cofre digital de tudo que importa.', desc: 'Laudos, exames, certificados, contratos, comprovantes da PF e Exército.' },
+                  { icon: KeyRound, tag: 'Documentos e contratos', title: 'Cofre digital de tudo que importa.', desc: 'Laudos, exames, certificados, contratos, comprovantes da Polícia Federal.' },
                 ].map((m) => {
                   const Icon = m.icon;
                   return (
@@ -936,7 +936,7 @@ const HomePage = () => {
             <h2 className="font-heading text-3xl font-bold uppercase leading-[1.05] tracking-tight text-balance sm:text-5xl lg:text-6xl">Você tem duas opções: <span className="text-tactical-gradient">torcer</span> ou <span className="text-tactical-gradient">se armar</span>.</h2>
             <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">Quem torce vira número no jornal. Quem se prepara — com arma, lei e treino — volta pra casa.</p>
             <div className="grid w-full max-w-3xl gap-3 text-left sm:grid-cols-3">
-              {['Documentação PF/Exército blindada', 'Arma + colete + munição certa', 'Curso operacional + protocolo pós-disparo'].map((item) => (
+              {['Documentação Polícia Federal blindada', 'Arma + colete + munição certa', 'Curso operacional + protocolo pós-disparo'].map((item) => (
                 <div key={item} className="flex items-start gap-2.5 rounded-sm border border-border bg-card/60 p-4">
                   <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
                   <span className="text-sm font-medium">{item}</span>

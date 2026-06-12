@@ -218,7 +218,7 @@ export const QA_V2_PATH_CAC: QAV2PathDefinition = {
   rota: "/cadastro-v2/cac",
   tituloBreadcrumb: "CAC (esporte / caça / coleção)",
   raiz: {
-    pergunta: "Você já tem o CR (Certificado de Registro do Exército)?",
+    pergunta: "Você já tem o CR (Certificado de Registro)?",
     subtitulo: "O CR é o documento base de todo CAC",
     opcoes: [
       {
@@ -474,7 +474,7 @@ export const QA_V2_PATH_ORIENTACAO: QAV2PathDefinition = {
         kind: "step",
         key: "cac_objetivo",
         titulo: "CAC: colecionar, atirar e caçar",
-        descricao: "Quero CR no Exército. Construir acervo. Treinar habitualidade.",
+        descricao: "Quero CR na Polícia Federal/SINARM-CAC. Construir acervo. Treinar habitualidade.",
       },
       {
         kind: "service",

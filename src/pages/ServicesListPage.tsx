@@ -76,9 +76,9 @@ const GROUPS: GroupDef[] = [
   },
   {
     key: 'sigma',
-    label: 'SIGMA',
-    entity: 'Exército Brasileiro',
-    blurb: 'CR de Atirador, Caçador, Colecionador, registro de arma CAC e gestão do acervo.',
+    label: 'SINARM-CAC',
+    entity: 'Polícia Federal',
+    blurb: 'CR, atividade CAC, registro de arma, GTE e gestão do acervo no SINARM-CAC.',
     icon: Award,
     match: (s) =>
       s.category?.slug === 'sigma-eb' &&
@@ -86,9 +86,9 @@ const GROUPS: GroupDef[] = [
   },
   {
     key: 'sigma-sinarm',
-    label: 'SIGMA + SINARM',
-    entity: 'Exército + Polícia Federal',
-    blurb: 'Serviços que cruzam as duas jurisdições — transferências, migrações e operações conjuntas.',
+    label: 'SINARM',
+    entity: 'Polícia Federal',
+    blurb: 'Serviços de regularização, transição e gestão cadastral no âmbito da Polícia Federal.',
     icon: Layers,
     match: (s) => /transferencia-arma-sigma/.test(s.slug),
   },
@@ -104,7 +104,7 @@ const GROUPS: GroupDef[] = [
     key: 'equipamento',
     label: 'Equipamento Tático',
     entity: 'Aquisição assessorada',
-    blurb: 'Coletes balísticos e equipamentos com autorização do Exército.',
+    blurb: 'Coletes balísticos e equipamentos com autorização competente.',
     icon: Boxes,
     match: (s) => s.category?.slug === 'equipamento',
   },

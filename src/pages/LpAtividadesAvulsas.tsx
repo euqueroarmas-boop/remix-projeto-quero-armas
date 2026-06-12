@@ -155,7 +155,7 @@ const LpAtividadesAvulsas = () => (
             { q: 'Tem idade mínima?', a: 'Sim, 18 anos completos com documento original. Menores de idade não atiram em hipótese alguma.' },
             { q: 'Posso levar minha esposa, namorada ou amigos?', a: 'Pode e queremos. Pacotes em dupla, grupo, casal e empresa. Estande pode ser reservado privativo.' },
             { q: 'Que calibres vou poder atirar?', a: '.22, .380, 9mm, .40 e calibres maiores conforme disponibilidade do estande do dia. Tudo combinado antes.' },
-            { q: 'O curso avulso vale como capacitação técnica?', a: 'Sim. O Curso Operador de Pistola I é reconhecido pela PF e Exército como capacitação técnica para Posse e CR.' },
+            { q: 'O curso avulso vale como capacitação técnica?', a: 'Sim. O Curso Operador de Pistola I é reconhecido pela PF como capacitação técnica para Posse e CR.' },
             { q: 'Quanto custa em média?', a: 'Experiência individual a partir de R$ 350. Curso completo a partir de R$ 690. Pacotes de grupo sob consulta.' },
           ].map((f) => (
             <details key={f.q} className="group rounded-sm border border-border bg-card p-5">
@@ -175,7 +175,7 @@ const LpAtividadesAvulsas = () => (
       <div className="w-full px-4 sm:px-6 lg:px-10 2xl:px-16">
         <div className="grid gap-4 sm:grid-cols-3">
           {[
-            { i: Shield, t: 'Estande credenciado', d: 'Habilitado pela PF e Exército, com vistoria de cofres e instrutores reconhecidos.' },
+            { i: Shield, t: 'Estande credenciado', d: 'Habilitado pela PF, com vistoria de cofres e instrutores reconhecidos.' },
             { i: Clock, t: 'Pontualidade', d: 'Reservamos estande na sua hora. Sem fila, sem atraso, sem improviso.' },
             { i: CheckCircle2, t: 'Satisfação garantida', d: 'Se a experiência não atender, devolvemos 100% sem perguntas. Já entendeu nosso padrão.' },
           ].map((g) => {
