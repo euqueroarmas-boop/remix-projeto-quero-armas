@@ -109,6 +109,15 @@ function CadastroV2Redirect({ extraParams }: { extraParams?: Record<string, stri
   return <Navigate to={`/cadastro${qs ? `?${qs}` : ""}`} replace />;
 }
 
+function CatchAllRedirect() {
+  const location = useLocation();
+  if (location.pathname.endsWith("/index.html")) {
+    const stripped = location.pathname.replace(/\/index\.html$/, "") || "/";
+    return <Navigate to={`${stripped}${location.search}${location.hash}`} replace />;
+  }
+  return <Navigate to="/" replace />;
+}
+
 /**
  * /cadastro (refinado é o PADRÃO):
  *  - default → QACadastroRefinadoPage (UI editorial 5 etapas)
@@ -231,7 +240,7 @@ export default function QARoutes() {
         </Route>
 
         {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<CatchAllRedirect />} />
       </Routes>
     </Suspense>
   );

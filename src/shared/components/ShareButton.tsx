@@ -22,6 +22,22 @@ interface ShareButtonProps {
  * Botão global de compartilhamento.
  * Usa Web Share API quando disponível (mobile); fallback para copiar link.
  */
+function shareableUrlForPreview(currentUrl: string): string {
+  try {
+    const parsed = new URL(currentUrl);
+    if (
+      parsed.pathname !== '/' &&
+      !parsed.pathname.endsWith('/') &&
+      !parsed.pathname.endsWith('/index.html')
+    ) {
+      parsed.pathname = `${parsed.pathname}/index.html`;
+    }
+    return parsed.toString();
+  } catch {
+    return currentUrl;
+  }
+}
+
 export function ShareButton({
   title,
   description,
@@ -36,7 +52,7 @@ export function ShareButton({
 
   async function handleShare() {
     if (typeof window === 'undefined') return;
-    const resolvedUrl = url || window.location.href;
+    const resolvedUrl = url || shareableUrlForPreview(window.location.href);
     const resolvedTitle = title || document.title;
     const resolvedDescription =
       description ||
