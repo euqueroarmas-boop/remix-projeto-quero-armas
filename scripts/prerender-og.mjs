@@ -39,6 +39,9 @@ const SLUG_CATEGORY = {
   "cadastro": "home",
   "carrinho": "home",
   "curso-operador-pistola": "cursos",
+  "operador-de-pistola-nivel-i": "operador-de-pistola-nivel-i",
+  "operador-de-pistola-nivel-ii": "cursos",
+  "operador-de-pistola-nivel-iii": "cursos",
   "defesa-pessoal-posse": "posse",
   "cac-cr": "cr-cac",
   "atividades-avulsas": "registro",
@@ -187,6 +190,36 @@ const STATIC_PAGES = {
     description:
       "Curso de Operador de Pistola Nível I com instrutores credenciados: fundamentos, segurança e tiro real.",
   },
+  "cursos/operador-de-pistola-nivel-i": {
+    title: "Operador de Pistola Nível I em Jacareí | Curso Quero Armas",
+    description:
+      "Curso Operador de Pistola Nível I em Jacareí/SP. Treinamento responsável com foco em segurança, fundamentos iniciais e prática supervisionada.",
+  },
+  "cursos/operador-de-pistola-nivel-ii": {
+    title: "Operador de Pistola Nível II — Em breve | Quero Armas",
+    description:
+      "Curso Operador de Pistola Nível II em breve. Fale com a equipe Quero Armas.",
+  },
+  "cursos/operador-de-pistola-nivel-iii": {
+    title: "Operador de Pistola Nível III — Em breve | Quero Armas",
+    description:
+      "Curso Operador de Pistola Nível III em breve. Fale com a equipe Quero Armas.",
+  },
+  "defesa-pessoal-posse": {
+    title: "Defesa Pessoal — Posse de Arma | Quero Armas",
+    description:
+      "Quem tem direito, o que precisa e como funciona a posse de arma de fogo para defesa pessoal dentro de casa.",
+  },
+  "cac-cr": {
+    title: "CAC e CR — Como se tornar CAC | Quero Armas",
+    description:
+      "Caminho completo para se tornar Atirador, Colecionador ou Caçador com CR emitido pelo Exército Brasileiro.",
+  },
+  "atividades-avulsas": {
+    title: "Atividades Avulsas em Armas | Quero Armas",
+    description:
+      "Serviços avulsos para regularização rápida: guia de tráfego, transferência, segunda via e recursos administrativos.",
+  },
   "lp/defesa-pessoal-posse": {
     title: "Defesa Pessoal — Posse de Arma | Quero Armas",
     description:
@@ -201,6 +234,16 @@ const STATIC_PAGES = {
     title: "Atividades Avulsas em Armas | Quero Armas",
     description:
       "Serviços avulsos para regularização rápida: guia de tráfego, transferência, segunda via e recursos administrativos.",
+  },
+  "app-arsenal-gratuito": {
+    title: "Arsenal Digital Gratuito | Quero Armas",
+    description:
+      "Organize armas, documentos, vencimentos e alertas do seu acervo em um painel gratuito da Quero Armas.",
+  },
+  "arsenal-digital-gratuito": {
+    title: "Arsenal Digital Gratuito | Quero Armas",
+    description:
+      "Organize armas, documentos, vencimentos e alertas do seu acervo em um painel gratuito da Quero Armas.",
   },
 };
 

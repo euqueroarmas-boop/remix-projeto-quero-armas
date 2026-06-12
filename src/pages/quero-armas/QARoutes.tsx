@@ -150,6 +150,9 @@ export default function QARoutes() {
           path="descobrir-meu-caminho"
           element={<CadastroV2Redirect extraParams={{ perfil_v2: "orientacao_necessaria", origem: "descobrir_meu_caminho" }} />}
         />
+        <Route path="defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
+        <Route path="cac-cr" element={<LpCacCr />} />
+        <Route path="atividades-avulsas" element={<LpAtividadesAvulsas />} />
         <Route path="lp/defesa-pessoal-posse" element={<LpDefesaPessoalPosse />} />
         <Route path="lp/cac-cr" element={<LpCacCr />} />
         <Route path="arsenal-digital-gratuito" element={<QAArsenalDigitalGratuitoPage />} />

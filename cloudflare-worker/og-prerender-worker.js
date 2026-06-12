@@ -6,14 +6,15 @@
  * Slack, Discord), reescreve o <head> com Open Graph específico
  * por rota. Usuários humanos recebem a resposta original intacta.
  *
- * INSTALAÇÃO:
- *   1. Cloudflare → Workers & Pages → Create Worker
- *   2. Cole este arquivo inteiro como código do Worker
- *   3. Deploy
- *   4. Em "Triggers" → "Routes", adicione DUAS rotas (zona euqueroarmas.com.br):
- *        - euqueroarmas.com.br/*
- *        - www.euqueroarmas.com.br/*
- *   5. Garanta que o DNS de @ e www esteja PROXIED (nuvem laranja).
+ * ATENÇÃO:
+ *   No domínio Lovable atual, NÃO ative proxy/Worker route em @ ou www
+ *   sem uma janela de manutenção. Isso pode derrubar a conexão do domínio
+ *   e exigir reconectar no Lovable. A solução principal de preview social
+ *   está em scripts/prerender-og.mjs + public/_redirects, sem mexer no DNS.
+ *
+ * INSTALAÇÃO DO WORKER:
+ *   Use este Worker apenas como fallback planejado, depois de validar o
+ *   comportamento de proxy em ambiente seguro.
  *
  * VALIDAÇÃO:
  *   curl -A "WhatsApp/2.0" https://www.euqueroarmas.com.br/servicos/posse-de-arma-de-fogo \
@@ -270,7 +271,7 @@ function buildHeadBlock(meta, canonicalUrl) {
 
 /**
  * Reescreve apenas as tags relevantes do <head>:
- * remove title/description/canonical/og:*/twitter:* existentes e injeta as nossas.
+ * remove title/description/canonical/metas og e twitter existentes e injeta as nossas.
  */
 function rewriteHead(html, meta, canonicalUrl) {
   const headBlock = buildHeadBlock(meta, canonicalUrl);
