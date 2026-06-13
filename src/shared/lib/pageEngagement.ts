@@ -10,6 +10,7 @@ type UsePageEngagementArgs = {
   pageKey: string;
   pageType?: string;
   title?: string;
+  enabled?: boolean;
 };
 
 const EMPTY_COUNTS: PageEngagementCounts = {
@@ -63,10 +64,16 @@ export function usePageEngagement({
   pageKey,
   pageType = "service",
   title,
+  enabled = true,
 }: UsePageEngagementArgs) {
   const [counts, setCounts] = useState<PageEngagementCounts>(EMPTY_COUNTS);
 
   useEffect(() => {
+    if (!enabled) {
+      setCounts(EMPTY_COUNTS);
+      return;
+    }
+
     let active = true;
 
     async function load() {
@@ -94,12 +101,13 @@ export function usePageEngagement({
     return () => {
       active = false;
     };
-  }, [pageKey, pageType, title]);
+  }, [enabled, pageKey, pageType, title]);
 
   const registerShare = useCallback(async () => {
+    if (!enabled) return;
     const nextCounts = await incrementMetric(pageKey, "share", pageType, title);
     setCounts(nextCounts);
-  }, [pageKey, pageType, title]);
+  }, [enabled, pageKey, pageType, title]);
 
   return {
     counts,

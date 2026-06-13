@@ -407,6 +407,17 @@ export default function ServicoDetalhePage() {
     }
   }, [state]);
 
+  const engagementPageKey =
+    state.status === "ok" ? `service:${state.service.slug}` : `service:${slug}`;
+  const engagementTitle =
+    state.status === "ok" ? state.details?.titulo ?? state.service.name : undefined;
+  const { counts, registerShare } = usePageEngagement({
+    pageKey: engagementPageKey,
+    pageType: "service",
+    title: engagementTitle,
+    enabled: state.status === "ok",
+  });
+
   if (state.status === "loading") {
     return (
       <SiteShell>
@@ -460,11 +471,6 @@ export default function ServicoDetalhePage() {
     short_description: service.short_description,
   });
   const shareBody = shareBodyForService(service.slug);
-  const { counts, registerShare } = usePageEngagement({
-    pageKey: `service:${service.slug}`,
-    pageType: "service",
-    title: details?.titulo ?? service.name,
-  });
 
   return (
     <SiteShell>
