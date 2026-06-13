@@ -48,12 +48,12 @@ async function incrementMetric(
   pageType: string,
   title?: string,
 ): Promise<PageEngagementCounts> {
-  const { data, error } = await (supabase.rpc as any)("qa_increment_page_engagement", {
+  const { data, error } = (await (supabase.rpc as any)("qa_increment_page_engagement", {
     p_page_key: pageKey,
     p_metric: metric,
     p_page_type: pageType,
     p_title: title ?? null,
-  });
+  })) as unknown as { data: EngagementRow[] | EngagementRow | null; error: any };
 
   if (error) return fetchCounts(pageKey);
 
