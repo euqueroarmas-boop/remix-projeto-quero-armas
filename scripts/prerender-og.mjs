@@ -65,7 +65,7 @@ const SERVICE_META = {
   "aquisicao-registro-posse-de-arma-de-fogo": {
     title: "Aquisição, Registro e Posse de Arma de Fogo | Quero Armas",
     description:
-      "Aquisição, registro e posse de arma de fogo com acompanhamento completo na Polícia Federal. Você entra com o pedido de forma mais organizada, técnica e segura. Analisamos a documentação antes do protocolo para evitar retrabalho. Orientamos cada etapa do processo com base na legislação aplicável. Apoiamos o enquadramento correto do seu pedido no Sinarm Defesa Pessoal. Reduzimos o risco de exigências por falhas documentais ou inconsistências. Acompanhamos o andamento administrativo do início ao fim. Você ganha clareza sobre os requisitos técnicos e psicológicos do processo. O foco é protocolar com precisão, coerência e estratégia. Assessoria especializada para quem quer regularizar tudo do jeito certo.",
+      "Regularize sua aquisição, registro e posse de arma de fogo com apoio especializado. Análise documental, orientação estratégica e condução técnica em cada etapa. Mais segurança para protocolar do jeito certo.",
   },
   "renovacao-posse-de-arma-de-fogo": {
     title: "Renovação de Posse de Arma de Fogo | Quero Armas",

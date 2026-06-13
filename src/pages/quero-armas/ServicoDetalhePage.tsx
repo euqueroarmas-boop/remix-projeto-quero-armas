@@ -74,6 +74,26 @@ function Paragraph({ children }: { children: React.ReactNode }) {
   );
 }
 
+function shareBodyForService(slug: string) {
+  switch (slug) {
+    case "aquisicao-registro-posse-de-arma-de-fogo":
+      return [
+        "Aquisição, registro e posse de arma de fogo com acompanhamento completo na Polícia Federal.",
+        "Você entra com o pedido de forma mais organizada, técnica e segura.",
+        "Analisamos a documentação antes do protocolo para evitar retrabalho.",
+        "Orientamos cada etapa do processo com base na legislação aplicável.",
+        "Apoiamos o enquadramento correto do seu pedido no Sinarm Defesa Pessoal.",
+        "Reduzimos o risco de exigências por falhas documentais ou inconsistências.",
+        "Acompanhamos o andamento administrativo do início ao fim.",
+        "Você ganha clareza sobre os requisitos técnicos e psicológicos do processo.",
+        "O foco é protocolar com precisão, coerência e estratégia.",
+        "Assessoria especializada para quem quer regularizar tudo do jeito certo.",
+      ].join("\n");
+    default:
+      return "";
+  }
+}
+
 export default function ServicoDetalhePage() {
   const { slug = "" } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -165,6 +185,7 @@ export default function ServicoDetalhePage() {
     name: details?.titulo ?? service.name,
     short_description: service.short_description,
   });
+  const shareBody = shareBodyForService(service.slug);
 
   return (
     <SiteShell>
@@ -241,6 +262,8 @@ export default function ServicoDetalhePage() {
                 size="lg"
                 title={meta.title}
                 description={meta.description}
+                shareText={shareBody}
+                includeTextInShare={Boolean(shareBody)}
               />
               <div className="sm:ml-auto">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">

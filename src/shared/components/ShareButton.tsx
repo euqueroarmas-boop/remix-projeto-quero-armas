@@ -9,6 +9,8 @@ interface ShareButtonProps {
   title?: string;
   /** Override da descrição. Padrão: meta[name=description] */
   description?: string;
+  /** Texto do corpo da mensagem compartilhada. */
+  shareText?: string;
   /** Quando true, envia o texto junto com a URL na Web Share API. */
   includeTextInShare?: boolean;
   /** Override da URL. Padrão: window.location.href */
@@ -43,6 +45,7 @@ function shareableUrlForPreview(currentUrl: string): string {
 export function ShareButton({
   title,
   description,
+  shareText,
   includeTextInShare = false,
   url,
   label = 'Compartilhar esta página',
@@ -61,14 +64,15 @@ export function ShareButton({
       description ||
       document.querySelector('meta[name="description"]')?.getAttribute('content') ||
       '';
+    const resolvedShareText = shareText || resolvedDescription;
 
     const shareData: ShareData = {
       title: resolvedTitle,
       url: resolvedUrl,
     };
 
-    if (includeTextInShare && resolvedDescription) {
-      shareData.text = resolvedDescription;
+    if (includeTextInShare && resolvedShareText) {
+      shareData.text = resolvedShareText;
     }
 
     try {
