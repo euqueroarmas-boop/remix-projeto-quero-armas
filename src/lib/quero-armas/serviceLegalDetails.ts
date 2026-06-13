@@ -815,8 +815,8 @@ export function getServiceLegalDetails(slug: string): ServiceLegalDetails | null
 }
 
 export const sistemaLabel: Record<SistemaAplicavel, string> = {
-  SINARM_PF: "SINARM / Polícia Federal",
-  CAC_PF: "Polícia Federal / SINARM-CAC",
+  SINARM_PF: "SINARM",
+  CAC_PF: "SINARM-CAC",
   JUDICIAL: "Esfera Judicial",
   CURSO_ESTANDE: "Curso operacional / estande",
   INTERNO: "Atendimento interno",

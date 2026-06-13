@@ -75,6 +75,13 @@ function Paragraph({ children }: { children: React.ReactNode }) {
   );
 }
 
+function orgaoCompetenteDisplay(details: ServiceLegalDetails) {
+  if (details.sistema === "SINARM_PF" || details.sistema === "CAC_PF") {
+    return "Polícia Federal";
+  }
+  return details.orgaoCompetente;
+}
+
 function shareBodyForService(slug: string) {
   switch (slug) {
     case "posse-de-arma-de-fogo":
@@ -605,7 +612,9 @@ export default function ServicoDetalhePage() {
                 <p className="font-heading text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
                   Órgão competente
                 </p>
-                <p className="mt-2 text-[15px] text-foreground">{details.orgaoCompetente}</p>
+                <p className="mt-2 text-[15px] text-foreground">
+                  {orgaoCompetenteDisplay(details)}
+                </p>
                 <p className="mt-4 font-heading text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
                   Sistema aplicável
                 </p>
