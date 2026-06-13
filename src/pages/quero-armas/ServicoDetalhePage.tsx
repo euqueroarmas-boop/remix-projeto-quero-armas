@@ -11,11 +11,12 @@ import {
   type ServiceLegalDetails,
 } from "@/lib/quero-armas/serviceLegalDetails";
 import { formatBRL } from "@/shared/lib/formatters";
-import { ArrowLeft, ArrowRight, Loader2, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Loader2, Share2, ShoppingCart } from "lucide-react";
 import { SEO } from "@/shared/components/SEO";
 import { ShareButton } from "@/shared/components/ShareButton";
 import { buildServiceMeta } from "@/shared/seo/pageMeta";
 import { ConcessaoCrConteudo } from "@/components/quero-armas/servicos/ConcessaoCrConteudo";
+import { usePageEngagement } from "@/shared/lib/pageEngagement";
 
 const sectionCls =
   "relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden";
@@ -459,6 +460,11 @@ export default function ServicoDetalhePage() {
     short_description: service.short_description,
   });
   const shareBody = shareBodyForService(service.slug);
+  const { counts, registerShare } = usePageEngagement({
+    pageKey: `service:${service.slug}`,
+    pageType: "service",
+    title: details?.titulo ?? service.name,
+  });
 
   return (
     <SiteShell>
@@ -537,6 +543,7 @@ export default function ServicoDetalhePage() {
                 description={meta.description}
                 shareText={shareBody}
                 includeTextInShare={Boolean(shareBody)}
+                onShareSuccess={registerShare}
               />
               <div className="sm:ml-auto">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
@@ -546,6 +553,16 @@ export default function ServicoDetalhePage() {
                   {preco}
                 </p>
               </div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Eye className="size-3.5" />
+                {counts.views.toLocaleString("pt-BR")} visualizações
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Share2 className="size-3.5" />
+                {counts.shares.toLocaleString("pt-BR")} compartilhamentos
+              </span>
             </div>
           </div>
         </div>

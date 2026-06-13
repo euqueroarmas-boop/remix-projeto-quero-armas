@@ -20,6 +20,7 @@ interface ShareButtonProps {
   className?: string;
   variant?: React.ComponentProps<typeof Button>['variant'];
   size?: React.ComponentProps<typeof Button>['size'];
+  onShareSuccess?: () => void | Promise<void>;
 }
 
 /**
@@ -52,6 +53,7 @@ export function ShareButton({
   className,
   variant = 'outline',
   size = 'sm',
+  onShareSuccess,
 }: ShareButtonProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -78,6 +80,7 @@ export function ShareButton({
     try {
       if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
         await navigator.share(shareData);
+        await onShareSuccess?.();
         return;
       }
     } catch (err) {
@@ -100,6 +103,7 @@ export function ShareButton({
         document.body.removeChild(ta);
       }
       setCopied(true);
+      await onShareSuccess?.();
       toast({ title: 'Link copiado', description: 'A URL desta página foi copiada.' });
       setTimeout(() => setCopied(false), 2500);
     } catch {
