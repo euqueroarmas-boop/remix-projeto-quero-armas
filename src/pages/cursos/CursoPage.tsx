@@ -4,6 +4,7 @@ import { CourseLandingPage } from '@/components/cursos/CourseLandingPage';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { SEO } from '@/shared/components/SEO';
 import { Button } from '@/components/ui/button';
+import { PublicPageEngagement } from '@/shared/components/PublicPageEngagement';
 import { ArrowLeft, MessageCircle, Clock } from 'lucide-react';
 
 export default function CursoPage() {
@@ -64,6 +65,16 @@ export default function CursoPage() {
                 Conhecer o Nível I
               </Link>
             </Button>
+          </div>
+          <div className="mx-auto mt-4 max-w-md">
+            <PublicPageEngagement
+              pageKey={`course:${course.slug}`}
+              pageType="course"
+              title={course.title}
+              shareLabel="Compartilhar curso"
+              buttonClassName="w-full sm:w-auto"
+              countsClassName="justify-center text-xs text-muted-foreground"
+            />
           </div>
         </div></section>
       </SiteShell>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SEO } from '@/shared/components/SEO';
+import { PublicPageEngagement } from '@/shared/components/PublicPageEngagement';
 import { ChevronRight, Shield, Target, Crosshair, Home, Trophy, Briefcase, CheckCircle2, X, RotateCcw } from 'lucide-react';
 import QACadastroRefinadoHeader from './quero-armas/cadastro-refinado/components/QACadastroRefinadoHeader';
 import QACadastroRefinadoFooter from './quero-armas/cadastro-refinado/components/QACadastroRefinadoFooter';
@@ -444,6 +445,14 @@ const QuizPage = () => {
                 <span className="qa-ref-caps qa-ref-eyebrow">CAMINHO RECOMENDADO</span>
                 <h1 className="qa-ref-title">SEU PRÓXIMO PASSO ESTÁ DEFINIDO</h1>
                 <p className="qa-ref-subtitle">{recommendation.desc}</p>
+                <div style={{ marginBottom: 16 }}>
+                  <PublicPageEngagement
+                    pageKey="page:descobrir-meu-caminho"
+                    title="Descobrir Meu Caminho"
+                    shareLabel="Compartilhar diagnóstico"
+                    buttonClassName="w-full"
+                  />
+                </div>
                 <div className="qa-ref-section">
                   <div className="qa-ref-opt-list">
                     {visibleServices.map((service, index) => {
@@ -562,6 +571,14 @@ const QuizPage = () => {
                 <p className="qa-ref-subtitle">
                   Três perguntas, uma confirmação final e o checkout do serviço correto.
                 </p>
+                <div style={{ marginBottom: 16 }}>
+                  <PublicPageEngagement
+                    pageKey="page:descobrir-meu-caminho"
+                    title="Descobrir Meu Caminho"
+                    shareLabel="Compartilhar diagnóstico"
+                    buttonClassName="w-full"
+                  />
+                </div>
                 <div className="qa-ref-section">
                   <h2
                     className="qa-ref-caps"

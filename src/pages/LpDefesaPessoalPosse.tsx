@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
+import { PublicPageEngagement } from '@/shared/components/PublicPageEngagement';
 import { ArrowRight, Home, Shield, Skull, AlertTriangle, CheckCircle2, Lock, Scale, Target, Phone, X, FileCheck, Users } from 'lucide-react';
 
 const DEFESA_CHECKOUT = '/cadastro?servico=aquisicao-registro-posse-de-arma-de-fogo&origem=lp_defesa_pessoal&perfil_v2=defesa_pessoal&subperfil_v2=primeira_aquisicao';
@@ -41,6 +42,15 @@ const LpDefesaPessoalPosse = () => (
           <Button asChild size="lg" variant="outline">
             <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Falar com especialista</a>
           </Button>
+        </div>
+        <div className="mx-auto mt-4 max-w-md">
+          <PublicPageEngagement
+            pageKey="page:defesa-pessoal-posse"
+            title="Posse de Arma para Defesa Domiciliar"
+            shareLabel="Compartilhar"
+            buttonClassName="w-full"
+            countsClassName="justify-center text-xs text-muted-foreground"
+          />
         </div>
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {[{v:'+800',l:'Posses concedidas'},{v:'60-120',l:'Dias até estar legal'},{v:'0',l:'Processos travados'}].map((s) => (

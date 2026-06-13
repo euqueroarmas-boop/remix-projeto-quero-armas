@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { SiteShell } from "@/shared/components/layout/SiteShell";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/shared/components/SEO";
+import { PublicPageEngagement } from "@/shared/components/PublicPageEngagement";
 import {
   ArrowRight,
   ShieldCheck,
@@ -127,6 +128,15 @@ const ArsenalDigitalGratuito = () => (
               <ShoppingBag className="mr-2 size-4" /> Contratar serviço com a Quero Armas
             </Link>
           </Button>
+        </div>
+        <div className="mx-auto mt-4 max-w-md">
+          <PublicPageEngagement
+            pageKey="page:arsenal-digital-gratuito"
+            title="Arsenal Digital Gratuito"
+            shareLabel="Compartilhar"
+            buttonClassName="w-full"
+            countsClassName="justify-center text-xs text-muted-foreground"
+          />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           Já tenho conta? <Link to="/area-do-cliente/login" className="text-accent hover:underline">Entrar no portal</Link>

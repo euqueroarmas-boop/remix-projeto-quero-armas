@@ -1,6 +1,7 @@
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { SEO } from '@/shared/components/SEO';
 import { Course } from '@/shared/data/coursesCatalog';
+import { PublicPageEngagement } from '@/shared/components/PublicPageEngagement';
 import { CourseHero } from './CourseHero';
 import { CourseSection } from './CourseSection';
 import { CourseBenefits } from './CourseBenefits';
@@ -51,6 +52,18 @@ export const CourseLandingPage = ({ course }: CourseLandingPageProps) => {
         type="website"
         jsonLd={jsonLd}
       />
+
+      <section className="relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-hidden border-b border-border/60 bg-background">
+        <div className="w-full px-4 py-4 sm:px-6 lg:px-10 2xl:px-16">
+          <PublicPageEngagement
+            pageKey={`course:${course.slug}`}
+            pageType="course"
+            title={course.title}
+            shareLabel="Compartilhar curso"
+            buttonClassName="w-full sm:w-auto"
+          />
+        </div>
+      </section>
 
       <CourseHero course={course} />
 

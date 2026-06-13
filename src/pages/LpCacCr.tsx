@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
+import { PublicPageEngagement } from '@/shared/components/PublicPageEngagement';
 import { ArrowRight, Trophy, Crosshair, Boxes, FileText, Shield, Award, Target, Phone, CheckCircle2, AlertTriangle, Bell, Calendar, Quote, HelpCircle } from 'lucide-react';
 
 const CAC_CHECKOUT = '/cadastro?servico=concessao-cr&origem=lp_cac_cr&perfil_v2=cac&subperfil_v2=concessao_cr';
@@ -37,6 +38,15 @@ const LpCacCr = () => (
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CAC_CHECKOUT}>Quero meu CR ativo <ArrowRight className="ml-2 size-4" /></Link></Button>
           <Button asChild size="lg" variant="outline"><a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Especialista CAC</a></Button>
+        </div>
+        <div className="mx-auto mt-4 max-w-md">
+          <PublicPageEngagement
+            pageKey="page:cac-cr"
+            title="CR na Polícia Federal · CAC"
+            shareLabel="Compartilhar"
+            buttonClassName="w-full"
+            countsClassName="justify-center text-xs text-muted-foreground"
+          />
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { SEO } from '@/shared/components/SEO';
+import { PublicPageEngagement } from '@/shared/components/PublicPageEngagement';
 import { ArrowRight, Target, Coffee, Users, CheckCircle2, Phone, Crosshair, GraduationCap, Calendar, Heart, Quote, HelpCircle, MapPin, Clock, Shield } from 'lucide-react';
 
 const CURSO_CHECKOUT = '/cadastro?servico=operador-de-pistola-nivel-i&origem=lp_atividades_avulsas&perfil_v2=orientacao_necessaria&subperfil_v2=curso_operador';
@@ -37,6 +38,15 @@ const LpAtividadesAvulsas = () => (
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90"><Link to={CURSO_CHECKOUT}>Ver experiências <ArrowRight className="ml-2 size-4" /></Link></Button>
           <Button asChild size="lg" variant="outline"><a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer"><Phone className="mr-2 size-4" /> Agendar visita</a></Button>
+        </div>
+        <div className="mx-auto mt-4 max-w-md">
+          <PublicPageEngagement
+            pageKey="page:atividades-avulsas"
+            title="Atividades Avulsas no Estande"
+            shareLabel="Compartilhar"
+            buttonClassName="w-full"
+            countsClassName="justify-center text-xs text-muted-foreground"
+          />
         </div>
       </div>
     </section>
