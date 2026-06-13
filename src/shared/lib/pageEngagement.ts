@@ -13,6 +13,11 @@ type UsePageEngagementArgs = {
   enabled?: boolean;
 };
 
+interface EngagementRow {
+  view_count: number;
+  share_count: number;
+}
+
 const EMPTY_COUNTS: PageEngagementCounts = {
   views: 0,
   shares: 0,
@@ -23,11 +28,11 @@ function sessionKey(pageKey: string) {
 }
 
 async function fetchCounts(pageKey: string): Promise<PageEngagementCounts> {
-  const { data, error } = await supabase
+  const { data, error } = (await supabase
     .from("qa_page_engagement_counters" as any)
     .select("view_count, share_count")
     .eq("page_key", pageKey)
-    .maybeSingle();
+    .maybeSingle()) as unknown as { data: EngagementRow | null; error: any };
 
   if (error || !data) return EMPTY_COUNTS;
 
@@ -43,12 +48,12 @@ async function incrementMetric(
   pageType: string,
   title?: string,
 ): Promise<PageEngagementCounts> {
-  const { data, error } = await (supabase.rpc as any)("qa_increment_page_engagement", {
+  const { data, error } = (await (supabase.rpc as any)("qa_increment_page_engagement", {
     p_page_key: pageKey,
     p_metric: metric,
     p_page_type: pageType,
     p_title: title ?? null,
-  });
+  })) as unknown as { data: EngagementRow[] | EngagementRow | null; error: any };
 
   if (error) return fetchCounts(pageKey);
 

@@ -6943,6 +6943,36 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_page_engagement_counters: {
+        Row: {
+          created_at: string
+          page_key: string
+          page_type: string
+          share_count: number
+          title: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          page_key: string
+          page_type?: string
+          share_count?: number
+          title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          page_key?: string
+          page_type?: string
+          share_count?: number
+          title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       qa_prazos_procedimentos: {
         Row: {
           ativo: boolean
@@ -9626,6 +9656,18 @@ export type Database = {
       qa_has_qa_perfil: {
         Args: { _perfis: string[]; _uid: string }
         Returns: boolean
+      }
+      qa_increment_page_engagement: {
+        Args: {
+          p_metric: string
+          p_page_key: string
+          p_page_type?: string
+          p_title?: string
+        }
+        Returns: {
+          share_count: number
+          view_count: number
+        }[]
       }
       qa_is_active_staff: { Args: { _uid: string }; Returns: boolean }
       qa_is_owner_of_cliente: {
