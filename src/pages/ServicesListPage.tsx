@@ -9,6 +9,7 @@ import { listActiveServices, type ServiceWithCategory } from '@/shared/data/cata
 import { formatBRL } from '@/shared/lib/formatters';
 import { SEO } from '@/shared/components/SEO';
 import { ShareButton } from '@/shared/components/ShareButton';
+import { usePageEngagement } from '@/shared/lib/pageEngagement';
 import { getPageMeta } from '@/shared/seo/pageMeta';
 import {
   Carousel,
@@ -42,6 +43,8 @@ import {
   BadgeCheck,
   Timer,
   Sparkles,
+  Eye,
+  Share2,
 } from 'lucide-react';
 import heroWill from '@/assets/servicos-hero-will.png';
 import heroArsenal from '@/assets/hero-servicos-arsenal.png';
@@ -169,6 +172,11 @@ const ServicesListPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addItem } = useCart();
+  const { counts, registerShare } = usePageEngagement({
+    pageKey: 'page:servicos',
+    pageType: 'page',
+    title: 'Serviços | Quero Armas',
+  });
 
   const autoplayRef = useRef(
     Autoplay({ delay: 4500, stopOnInteraction: false, stopOnMouseEnter: true }),
@@ -354,6 +362,23 @@ const ServicesListPage = () => {
                   <Phone className="mr-2 size-4" /> Falar com especialista
                 </a>
               </Button>
+              <ShareButton
+                label="Compartilhar"
+                size="lg"
+                variant="outline"
+                className="h-12 border-white/20 bg-transparent px-6 text-white hover:bg-white/5 hover:text-white"
+                onShareSuccess={registerShare}
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-zinc-400">
+              <span className="inline-flex items-center gap-1.5">
+                <Eye className="size-3.5" />
+                {counts.views} visualizações
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Share2 className="size-3.5" />
+                {counts.shares} compartilhamentos
+              </span>
             </div>
 
             {/* Trust strip */}

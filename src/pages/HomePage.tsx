@@ -4,6 +4,8 @@ import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel';
 import { SEO } from '@/shared/components/SEO';
+import { ShareButton } from '@/shared/components/ShareButton';
+import { usePageEngagement } from '@/shared/lib/pageEngagement';
 import homeArsenal from '@/assets/home-arsenal.jpg';
 import homeColete from '@/assets/home-colete.jpg';
 import homeMunicao from '@/assets/home-municao.jpg';
@@ -25,6 +27,7 @@ import {
   Store, PackageX, Wrench, Boxes, Factory, Heart, KeyRound, Phone, UserCheck,
   GraduationCap, BookOpen, Coffee, Users, MapPin, Calendar, Award,
   ClipboardList, FileSearch, FolderCheck, MonitorSmartphone, LogIn, Sparkles,
+  Eye, Share2,
 } from 'lucide-react';
 
 const PORTAL_PATH = '/area-do-cliente/login';
@@ -100,6 +103,12 @@ const journey = [
 const HomePage = () => {
   const sectionCls = 'relative left-1/2 w-dvw max-w-none -translate-x-1/2 overflow-x-clip';
   const containerCls = 'w-full box-border px-4 sm:px-6 lg:px-10 2xl:px-16';
+  const { counts, registerShare } = usePageEngagement({
+    pageKey: 'page:home',
+    pageType: 'page',
+    title: 'Quero Armas · Posse, CAC/CR e Treinamento Tático Legalizado',
+  });
+
   return (
     <SiteShell>
       <SEO
@@ -161,6 +170,23 @@ const HomePage = () => {
               <Button asChild size="lg" variant="outline" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
                 <a href="https://wa.me/5511978481919" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
               </Button>
+              <ShareButton
+                label="Compartilhar"
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onShareSuccess={registerShare}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Eye className="size-3.5" />
+                {counts.views} visualizações
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Share2 className="size-3.5" />
+                {counts.shares} compartilhamentos
+              </span>
             </div>
           </div>
           <div className="relative col-span-12 min-w-0 lg:col-span-4">
