@@ -60,112 +60,112 @@ const SERVICE_META = {
   "posse-de-arma-de-fogo": {
     title: "Posse de Arma de Fogo | Quero Armas",
     description:
-      "Assessoria para aquisição legal, registro e posse de arma de fogo, com acompanhamento completo do processo.",
+      "Estratégia documental e assessoria premium para viabilizar sua posse de arma de fogo com segurança jurídica, previsibilidade e condução técnica junto à Polícia Federal.",
   },
   "aquisicao-registro-posse-de-arma-de-fogo": {
     title: "Aquisição, Registro e Posse de Arma de Fogo | Quero Armas",
     description:
-      "Processo completo de aquisição, registro e posse de arma de fogo na Polícia Federal com acompanhamento jurídico-administrativo do início ao fim.",
+      "Assessoria premium para aquisição, registro e posse de arma de fogo, com estrutura documental, orientação estratégica e acompanhamento técnico do início ao deferimento.",
   },
   "renovacao-posse-de-arma-de-fogo": {
     title: "Renovação de Posse de Arma de Fogo | Quero Armas",
     description:
-      "Renovação de posse de arma de fogo na Polícia Federal: análise documental, agendamento, exames e protocolo sem retrabalho.",
+      "Renovação de posse com revisão técnica completa, organização documental e protocolo estratégico para reduzir exigências e preservar a regularidade do seu registro.",
   },
   "renovacao-de-porte-de-arma-de-fogo": {
     title: "Renovação de Porte de Arma de Fogo | Quero Armas",
     description:
-      "Renovação de porte de arma de fogo com fundamentação técnica e jurídica completa, evitando indeferimento e exigências.",
+      "Renovação de porte com fundamentação técnica qualificada, organização probatória e acompanhamento premium para sustentar um processo mais robusto perante a Polícia Federal.",
   },
   "porte-de-arma-de-fogo-por-ameaca-grave-ameaca": {
     title: "Porte de Arma por Ameaça / Grave Ameaça | Quero Armas",
     description:
-      "Pedido de porte de arma de fogo por ameaça ou grave ameaça: BO, provas, fundamentação jurídica e acompanhamento na Polícia Federal.",
+      "Construção estratégica do pedido de porte por ameaça ou grave ameaça, com prova documental, narrativa técnica e acompanhamento especializado na Polícia Federal.",
   },
   "porte-funcional-magistrado-ministerio-publico": {
     title: "Porte Funcional — Magistrado e Ministério Público | Quero Armas",
     description:
-      "Porte funcional de arma de fogo para magistrados e membros do Ministério Público, com documentação e protocolo conforme a Lei Complementar.",
+      "Assessoria executiva para porte funcional de magistrados e membros do Ministério Público, com condução técnica, discrição e conformidade documental.",
   },
   "concessao-cr": {
     title: "Concessão de CR (Atirador, Colecionador, Caçador) | Quero Armas",
     description:
-      "Assessoria completa para concessão do CR na Polícia Federal/SINARM-CAC: documentação, capacitação, vinculação a clube e acompanhamento até a emissão.",
+      "Assessoria premium para concessão de CR, com inteligência documental, alinhamento estratégico do processo e acompanhamento técnico até a emissão regular do certificado.",
   },
   "renovacao-cr": {
     title: "Renovação de CR (Polícia Federal) | Quero Armas",
     description:
-      "Renovação do Certificado de Registro de CAC na Polícia Federal/SINARM-CAC com gestão do prazo, documentos e protocolo regularizado.",
+      "Renovação de CR com gestão de prazo, revisão técnica do dossiê e condução estratégica para manter sua regularidade sem improviso e sem retrabalho.",
   },
   "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": {
     title: "Autorização de Compra — Atirador Esportivo (CAC) | Quero Armas",
     description:
-      "Autorização de compra de arma de fogo para atirador esportivo CAC: análise de acervo, documentação e protocolo na Polícia Federal/SINARM-CAC.",
+      "Autorização de compra para atirador esportivo com análise estratégica de acervo, documentação validada e protocolo técnico voltado à aprovação segura.",
   },
   "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": {
     title: "Autorização de Compra — Caçador (CAC) | Quero Armas",
     description:
-      "Autorização de compra de arma de fogo para caçador CAC com revisão de acervo, documentos exigidos e protocolo correto na Polícia Federal/SINARM-CAC.",
+      "Autorização de compra para caçador com revisão criteriosa do acervo, documentação consistente e condução técnica para um protocolo mais sólido.",
   },
   "guia-de-trafego-especial-cac": {
     title: "Guia de Tráfego Especial (CAC) | Quero Armas",
     description:
-      "Emissão da Guia de Tráfego Especial para CAC transportar armas e munições com cobertura nacional e validade ampliada.",
+      "Emissão estratégica da Guia de Tráfego Especial com organização documental e acompanhamento técnico para ampliar mobilidade e regularidade operacional.",
   },
   "guia-de-transito-gt": {
     title: "Guia de Trânsito (GT) | Quero Armas",
     description:
-      "Guia de Trânsito de arma de fogo para deslocamento legal entre clube, residência e estandes, com emissão rápida e regular.",
+      "Guia de Trânsito com condução técnica e protocolo correto para assegurar deslocamento regular, rastreabilidade documental e tranquilidade operacional.",
   },
   "registro-arma-fogo": {
     title: "Registro de Arma de Fogo (Defesa Pessoal) | Quero Armas",
     description:
-      "Registro de arma de fogo para defesa pessoal junto à Polícia Federal, com emissão e renovação do CRAF acompanhada por especialistas.",
+      "Registro para defesa pessoal com assessoria premium, controle documental e acompanhamento técnico para emissão regular perante a Polícia Federal.",
   },
   "registro-e-apostilamento-de-arma-de-fogo-cac": {
     title: "Registro e Apostilamento de Arma (CAC) | Quero Armas",
     description:
-      "Registro e apostilamento de arma de fogo de CAC na Polícia Federal/SINARM-CAC, mantendo o acervo regular e atualizado para portar e transitar.",
+      "Registro e apostilamento com revisão estratégica do acervo e condução técnica para manter sua situação regular, atualizada e pronta para fiscalização.",
   },
   "segunda-via-de-craf-digital": {
     title: "Segunda Via de CRAF Digital | Quero Armas",
     description:
-      "Emissão de segunda via do CRAF digital com agilidade, mantendo a regularidade da arma de fogo perante a Polícia Federal.",
+      "Segunda via de CRAF digital com atuação ágil e precisa para restabelecer sua documentação e preservar a regularidade do registro.",
   },
   "operador-de-pistola-nivel-i": {
     title: "Curso Operador de Pistola — Nível I | Quero Armas",
     description:
-      "Treinamento Operador de Pistola Nível I: fundamentos, segurança, manuseio e tiro real com instrutores credenciados.",
+      "Treinamento premium de operador de pistola com foco em segurança, técnica, domínio de fundamentos e experiência prática orientada por especialistas.",
   },
   "vip-operador-de-pistola-nivel-i": {
     title: "VIP — Operador de Pistola Nível I | Quero Armas",
     description:
-      "Versão VIP do Operador de Pistola Nível I: turma reduzida, atendimento personalizado e tempo dedicado de instrução.",
+      "Experiência VIP de operador de pistola com atendimento personalizado, ritmo individualizado e máxima qualidade técnica em cada etapa da instrução.",
   },
   "apostilamento-atualizacao": {
     title: "Apostilamento — Atualização de Acervo (CAC) | Quero Armas",
     description:
-      "Atualização e apostilamento do acervo CAC na Polícia Federal/SINARM-CAC mantendo o cadastro 100% regular após cada nova aquisição.",
+      "Atualização de acervo com apostilamento técnico e controle documental rigoroso para manter sua base cadastral íntegra, regular e pronta para conferência.",
   },
   "mandado-de-seguranca": {
     title: "Mandado de Segurança em Matéria de Armas | Quero Armas",
     description:
-      "Impetração de Mandado de Segurança contra atos ilegais ou abusivos da PF em processos relacionados a armas de fogo.",
+      "Atuação estratégica em mandado de segurança para enfrentar ilegalidades administrativas e recuperar o andamento do seu processo com força técnica.",
   },
   "recurso-administrativo": {
     title: "Recurso Administrativo (Polícia Federal) | Quero Armas",
     description:
-      "Recurso administrativo contra indeferimentos da Polícia Federal com fundamentação técnica e jurídica.",
+      "Recurso administrativo com tese técnica consistente, revisão do processo e argumentação estratégica para enfrentar indeferimentos com maior solidez.",
   },
   "transferencia-de-propriedade-de-arma-de-fogo": {
     title: "Transferência de Propriedade de Arma de Fogo | Quero Armas",
     description:
-      "Transferência regular da propriedade de arma de fogo entre titulares, com toda a documentação e protocolo correto.",
+      "Transferência de propriedade com segurança documental, condução técnica e protocolo correto para formalizar a operação sem risco de inconsistências.",
   },
   "mudanca-servico": {
     title: "Mudança de Serviço (Posse → CR) | Quero Armas",
     description:
-      "Migração estratégica de Posse para CR, ampliando seu acervo e direitos como atirador, colecionador ou caçador.",
+      "Reposicionamento estratégico de posse para CR com planejamento documental e condução técnica para ampliar possibilidades dentro da regularidade.",
   },
 };
 
