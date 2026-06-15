@@ -155,6 +155,13 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                     </Link>
                   </Button>
                 )}
+                {!isAdmin && (
+                  <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+                    <Link to="/login">
+                      <LayoutDashboard className="mr-2 size-4" /> Painel Admin
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="default" size="sm" className="hidden sm:inline-flex">
                   <Link to="/area-do-cliente">Meu Portal</Link>
                 </Button>
@@ -164,8 +171,24 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
               </>
             ) : (
               <>
+                <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+                  <Link to="/login">
+                    <LayoutDashboard className="mr-2 size-4" /> Painel Admin
+                  </Link>
+                </Button>
                 <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
                   <Link to="/area-do-cliente/login">Acesso Cliente</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  className="size-9 sm:hidden"
+                  aria-label="Painel Admin"
+                >
+                  <Link to="/login">
+                    <LayoutDashboard className="size-5" />
+                  </Link>
                 </Button>
                 <Button
                   asChild
@@ -335,15 +358,27 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                 {/* Footer com CTA */}
                 <div className="border-t border-border/60 bg-surface-overlay/80 p-4 backdrop-blur">
                   {!user ? (
-                    <Button
-                      asChild
-                      className="h-11 w-full font-heading uppercase tracking-[0.15em] shadow-tactical"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <Link to="/area-do-cliente/login">
-                        <LogIn className="mr-2 size-4" /> Acesso Cliente
-                      </Link>
-                    </Button>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="h-10 w-full font-heading uppercase tracking-[0.15em]"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link to="/login">
+                          <LayoutDashboard className="mr-2 size-4" /> Painel Admin
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        className="h-11 w-full font-heading uppercase tracking-[0.15em] shadow-tactical"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link to="/area-do-cliente/login">
+                          <LogIn className="mr-2 size-4" /> Acesso Cliente
+                        </Link>
+                      </Button>
+                    </div>
                   ) : (
                     <div className="flex flex-col gap-2">
                       <Button
