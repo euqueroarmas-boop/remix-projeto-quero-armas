@@ -163,9 +163,22 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                 </Button>
               </>
             ) : (
-              <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
-                <Link to="/area-do-cliente/login">Acesso Cliente</Link>
-              </Button>
+              <>
+                <Button asChild variant="outline" size="sm" className="hidden sm:inline-flex">
+                  <Link to="/area-do-cliente/login">Acesso Cliente</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  className="size-9 sm:hidden"
+                  aria-label="Acesso Cliente"
+                >
+                  <Link to="/area-do-cliente/login">
+                    <LogIn className="size-5" />
+                  </Link>
+                </Button>
+              </>
             )}
 
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
