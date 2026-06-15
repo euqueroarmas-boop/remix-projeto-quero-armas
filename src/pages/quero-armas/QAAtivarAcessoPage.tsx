@@ -122,7 +122,7 @@ export default function QAAtivarAcessoPage() {
         </div>
 
         <div className="flex flex-col items-center gap-3">
-          <img src={logoColor} alt="Eu Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
+          <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
           <div className="text-[11px] tracking-wider text-slate-500 px-3 py-1 border border-slate-200 rounded-full bg-slate-50">
             Ativar primeiro acesso
           </div>

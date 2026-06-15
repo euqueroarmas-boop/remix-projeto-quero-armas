@@ -27,7 +27,7 @@ function imageForSlug(slug: string): string {
  */
 export const pageMeta: Record<string, PageMeta> = {
   '/': {
-    title: 'Eu Quero Armas — Despachante de Armas, CAC, CR e Treinamentos',
+    title: 'Quero Armas — Despachante de Armas, CAC, CR e Treinamentos',
     description:
       'Assessoria especializada para posse, porte, CAC, CR, CRAF, autorização de compra, guia de tráfego e treinamentos com armas de fogo.',
     image: og('home.jpg'),
@@ -47,6 +47,42 @@ export const pageMeta: Record<string, PageMeta> = {
     title: 'Começar Meu Cadastro | Quero Armas',
     description:
       'Cadastro guiado para identificar o caminho legal correto para sua posse, porte, CR ou CAC com a Quero Armas.',
+    image: og('home.jpg'),
+  },
+  '/quem-somos': {
+    title: 'Quem Somos | Quero Armas',
+    description:
+      'Conheça a estrutura, o método e o posicionamento da Quero Armas na assessoria técnica, documental e administrativa.',
+    image: og('home.jpg'),
+  },
+  '/como-funciona': {
+    title: 'Como Funciona | Quero Armas',
+    description:
+      'Entenda a jornada da Quero Armas, do cadastro ao acompanhamento, com etapas claras e responsabilidade em cada fase.',
+    image: og('home.jpg'),
+  },
+  '/atendimento-nacional': {
+    title: 'Atendimento Nacional | Quero Armas',
+    description:
+      'Saiba como a Quero Armas atende clientes em todo o Brasil com estrutura digital, orientação responsável e etapas presenciais quando aplicável.',
+    image: og('home.jpg'),
+  },
+  '/limites-e-responsabilidades': {
+    title: 'Limites e Responsabilidades | Quero Armas',
+    description:
+      'Entenda com clareza o que a Quero Armas faz, o que depende do cliente e o que depende da autoridade competente.',
+    image: og('home.jpg'),
+  },
+  '/termos': {
+    title: 'Termos de Uso | Quero Armas',
+    description:
+      'Leia os Termos de Uso da Quero Armas para entender as condições de acesso, cadastro, contratação e uso da plataforma.',
+    image: og('home.jpg'),
+  },
+  '/privacidade': {
+    title: 'Política de Privacidade | Quero Armas',
+    description:
+      'Entenda como a Quero Armas coleta, utiliza, armazena e protege dados pessoais no site e na área do cliente.',
     image: og('home.jpg'),
   },
 };

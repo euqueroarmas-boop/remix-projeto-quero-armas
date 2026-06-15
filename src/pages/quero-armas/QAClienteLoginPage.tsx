@@ -218,7 +218,7 @@ export default function QAClienteLoginPage() {
         {/* Coluna esquerda — branding premium light */}
         <div className="hidden md:flex relative flex-col items-center justify-center p-10 lg:p-14 bg-white border-r border-slate-200">
           <div className="max-w-[480px] w-full flex flex-col gap-6">
-            <img src={logoColor} alt="Eu Quero Armas" className="h-16 w-auto object-contain" draggable={false} />
+            <img src={logoColor} alt="Quero Armas" className="h-16 w-auto object-contain" draggable={false} />
             <span className="inline-flex w-fit items-center gap-2 text-[10px] tracking-[0.18em] uppercase text-slate-500 px-2.5 py-1 border border-slate-200 rounded-md bg-slate-50">
               Protocolo Legal · Armamento
             </span>
@@ -241,7 +241,7 @@ export default function QAClienteLoginPage() {
               ))}
             </div>
             <div className="text-[10px] tracking-[0.2em] uppercase text-slate-400 mt-4">
-              © {new Date().getFullYear()} Eu Quero Armas
+              © {new Date().getFullYear()} Quero Armas
             </div>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function QAClienteLoginPage() {
         <div className="flex items-center justify-center p-4 sm:p-6 md:p-10 lg:p-14">
           <div className="w-full max-w-md flex flex-col gap-6">
             <div className="md:hidden flex flex-col items-center gap-3 mb-2">
-              <img src={logoColor} alt="Eu Quero Armas" className="h-12 w-auto object-contain" draggable={false} />
+              <img src={logoColor} alt="Quero Armas" className="h-12 w-auto object-contain" draggable={false} />
               <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
                 Protocolo Legal · Armamento
               </span>

@@ -29,9 +29,14 @@ import {
   GraduationCap,
   Clock,
   Smartphone,
+  FileText,
+  Info,
+  MapPinned,
+  ShieldAlert,
 } from 'lucide-react';
 import logoWhite from '@/assets/logo-white.png';
 import { coursesCatalog, courseCategories } from '@/shared/data/coursesCatalog';
+import { aboutNavLinks } from '@/pages/about/infoPages';
 
 interface SiteShellProps {
   children: ReactNode;
@@ -46,21 +51,13 @@ const navItems = [
 
 type NavLinkItem = { to: string; label: string; icon: typeof Briefcase };
 
-const queroArmasGroups: { label: string; links: NavLinkItem[] }[] = [
-  {
-    label: 'Público',
-    links: [
-      { to: '/app-arsenal-gratuito', label: 'App Arsenal Gratuito', icon: Smartphone },
-      { to: '/cadastro', label: 'Cadastro de cliente', icon: UserPlus },
-      { to: '/enviar-foto', label: 'Enviar foto', icon: Camera },
-    ],
-  },
-  {
-    label: 'Administração',
-    links: [
-      { to: '/dashboard', label: 'Painel Admin', icon: LayoutDashboard },
-    ],
-  },
+const aboutItems: NavLinkItem[] = [
+  { to: '/quem-somos', label: 'Quem somos', icon: Info },
+  { to: '/como-funciona', label: 'Como funciona', icon: FileText },
+  { to: '/atendimento-nacional', label: 'Atendimento nacional', icon: MapPinned },
+  { to: '/limites-e-responsabilidades', label: 'Limites e responsabilidades', icon: ShieldAlert },
+  { to: '/termos', label: 'Termos de uso', icon: FileText },
+  { to: '/privacidade', label: 'Política de privacidade', icon: ShieldCheck },
 ];
 
 export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }: SiteShellProps) => {
@@ -74,8 +71,8 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
 
       <header className="fixed inset-x-0 top-0 z-40 border-b border-border/60 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/85">
         <div className="flex h-16 w-full items-center justify-between gap-3 px-4 sm:h-20 sm:px-6 lg:px-10 2xl:px-16">
-          <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Eu Quero Armas — Início">
-            <img src={logoWhite} alt="Eu Quero Armas" className="h-8 w-auto sm:h-10" loading="eager" decoding="async" />
+          <Link to="/" className="flex shrink-0 items-center gap-2 sm:gap-3" aria-label="Quero Armas — Início">
+            <img src={logoWhite} alt="Quero Armas" className="h-8 w-auto sm:h-10" loading="eager" decoding="async" />
           </Link>
 
           <nav className="hidden gap-6 lg:flex xl:gap-8">
@@ -122,21 +119,16 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
             </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 font-heading text-sm uppercase tracking-[0.15em] text-muted-foreground transition-colors hover:text-foreground focus:outline-none">
-                Quero Armas <ChevronDown className="size-3.5" />
+                Sobre Nós <ChevronDown className="size-3.5" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-h-[80vh] w-64 overflow-y-auto">
-                {queroArmasGroups.map((group, idx) => (
-                  <div key={group.label}>
-                    {idx > 0 && <DropdownMenuSeparator />}
-                    <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
-                      {group.label}
-                    </DropdownMenuLabel>
-                    {group.links.map((link) => (
-                      <DropdownMenuItem key={link.to} asChild>
-                        <Link to={link.to}>{link.label}</Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </div>
+              <DropdownMenuContent align="end" className="max-h-[80vh] w-72 overflow-y-auto">
+                <DropdownMenuLabel className="text-xs uppercase tracking-widest text-accent">
+                  Institucional
+                </DropdownMenuLabel>
+                {aboutItems.map((link) => (
+                  <DropdownMenuItem key={link.to} asChild>
+                    <Link to={link.to}>{link.label}</Link>
+                  </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -193,9 +185,9 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                     to="/"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2"
-                    aria-label="Eu Quero Armas — Início"
+                    aria-label="Quero Armas — Início"
                   >
-                    <img src={logoWhite} alt="Eu Quero Armas" className="h-8 w-auto" />
+                    <img src={logoWhite} alt="Quero Armas" className="h-8 w-auto" />
                   </Link>
                   <button
                     type="button"
@@ -298,34 +290,32 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                         </div>
                       ))}
                     </div>
-                    {queroArmasGroups.map((group) => (
-                      <div key={group.label} className="mb-5">
-                        <div className="mb-2 flex items-center gap-2 px-2">
-                          <span className="h-px flex-1 bg-border/60" />
-                          <p className="font-heading text-[10px] uppercase tracking-[0.2em] text-accent">
-                            {group.label}
-                          </p>
-                          <span className="h-px flex-1 bg-border/60" />
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                          {group.links.map((link) => {
-                            const Icon = link.icon;
-                            return (
-                              <Link
-                                key={link.to}
-                                to={link.to}
-                                onClick={() => setMenuOpen(false)}
-                                className="group flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
-                              >
-                                <Icon className="size-4 shrink-0 text-muted-foreground/60 group-hover:text-accent" />
-                                <span className="flex-1">{link.label}</span>
-                                <ChevronRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-60" />
-                              </Link>
-                            );
-                          })}
-                        </div>
+                    <div className="mb-5">
+                      <div className="mb-2 flex items-center gap-2 px-2">
+                        <span className="h-px flex-1 bg-border/60" />
+                        <p className="font-heading text-[10px] uppercase tracking-[0.2em] text-accent">
+                          Sobre Nós
+                        </p>
+                        <span className="h-px flex-1 bg-border/60" />
                       </div>
-                    ))}
+                      <div className="flex flex-col gap-0.5">
+                        {aboutItems.map((link) => {
+                          const Icon = link.icon;
+                          return (
+                            <Link
+                              key={link.to}
+                              to={link.to}
+                              onClick={() => setMenuOpen(false)}
+                              className="group flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-elevated hover:text-foreground"
+                            >
+                              <Icon className="size-4 shrink-0 text-muted-foreground/60 group-hover:text-accent" />
+                              <span className="flex-1">{link.label}</span>
+                              <ChevronRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-60" />
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -367,7 +357,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                     </div>
                   )}
                   <p className="mt-3 text-center font-heading text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60">
-                    Eu Quero Armas · Conformidade Legal
+                    Quero Armas · Conformidade Legal
                   </p>
                 </div>
               </SheetContent>
@@ -384,7 +374,7 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
         <div className="grid w-full gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 sm:py-12 md:grid-cols-3 lg:px-10 2xl:px-16">
           <div className="sm:col-span-2 md:col-span-1">
             <div className="mb-4 flex items-center">
-              <img src={logoWhite} alt="Eu Quero Armas" className="h-9 w-auto" loading="lazy" decoding="async" />
+              <img src={logoWhite} alt="Quero Armas" className="h-9 w-auto" loading="lazy" decoding="async" />
             </div>
             <p className="max-w-sm text-sm text-muted-foreground">
               Assessoria documental especializada para CACs, atiradores e cidadãos.
@@ -399,16 +389,26 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
             </ul>
           </div>
           <div>
+            <h4 className="mb-3 font-heading text-xs uppercase tracking-widest text-accent">Sobre Nós</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {aboutNavLinks.slice(0, 4).map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to} className="hover:text-foreground">{link.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
             <h4 className="mb-3 font-heading text-xs uppercase tracking-widest text-accent">Legal</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Termos de uso</li>
-              <li>Política de privacidade</li>
+              <li><Link to="/termos" className="hover:text-foreground">Termos de uso</Link></li>
+              <li><Link to="/privacidade" className="hover:text-foreground">Política de privacidade</Link></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-border/60">
           <div className="w-full px-4 py-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-10 2xl:px-16">
-            © {new Date().getFullYear()} Eu Quero Armas. Todos os direitos reservados.
+            © {new Date().getFullYear()} Quero Armas. Todos os direitos reservados.
           </div>
         </div>
       </footer>

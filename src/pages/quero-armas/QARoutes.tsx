@@ -80,6 +80,12 @@ const LpDefesaPessoalPosse = lazyRetry(() => import("@/pages/LpDefesaPessoalPoss
 const LpCacCr = lazyRetry(() => import("@/pages/LpCacCr"), "LpCacCr");
 const LpAtividadesAvulsas = lazyRetry(() => import("@/pages/LpAtividadesAvulsas"), "LpAtividadesAvulsas");
 const CursoPage = lazyRetry(() => import("@/pages/cursos/CursoPage"), "CursoPage");
+const QuemSomosPage = lazyRetry(() => import("@/pages/about/AboutPages").then((m) => ({ default: m.QuemSomosPage })), "QuemSomosPage");
+const ComoFuncionaPage = lazyRetry(() => import("@/pages/about/AboutPages").then((m) => ({ default: m.ComoFuncionaPage })), "ComoFuncionaPage");
+const AtendimentoNacionalPage = lazyRetry(() => import("@/pages/about/AboutPages").then((m) => ({ default: m.AtendimentoNacionalPage })), "AtendimentoNacionalPage");
+const LimitesResponsabilidadesPage = lazyRetry(() => import("@/pages/about/AboutPages").then((m) => ({ default: m.LimitesResponsabilidadesPage })), "LimitesResponsabilidadesPage");
+const TermosPage = lazyRetry(() => import("@/pages/about/AboutPages").then((m) => ({ default: m.TermosPage })), "TermosPage");
+const PrivacidadePage = lazyRetry(() => import("@/pages/about/AboutPages").then((m) => ({ default: m.PrivacidadePage })), "PrivacidadePage");
 
 /**
  * Envolve rotas QA standalone (fora do QALayout) com a classe `qa-scope`,
@@ -168,6 +174,12 @@ export default function QARoutes() {
         <Route path="app-arsenal-gratuito" element={<QAArsenalDigitalGratuitoPage />} />
         <Route path="lp/atividades-avulsas" element={<LpAtividadesAvulsas />} />
         <Route path="cursos/:slug" element={<CursoPage />} />
+        <Route path="quem-somos" element={<QuemSomosPage />} />
+        <Route path="como-funciona" element={<ComoFuncionaPage />} />
+        <Route path="atendimento-nacional" element={<AtendimentoNacionalPage />} />
+        <Route path="limites-e-responsabilidades" element={<LimitesResponsabilidadesPage />} />
+        <Route path="termos" element={<TermosPage />} />
+        <Route path="privacidade" element={<PrivacidadePage />} />
         <Route path="login" element={<QAScope><QALoginPage /></QAScope>} />
         <Route path="redefinir-senha" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />
         <Route path="auth/callback" element={<QAScope><QARedefinirSenhaPage /></QAScope>} />

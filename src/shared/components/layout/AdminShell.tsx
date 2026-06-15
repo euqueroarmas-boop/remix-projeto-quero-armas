@@ -20,7 +20,7 @@ const SidebarBody = ({ email, onSignOut, onNavigate }: { email?: string; onSignO
       <Link to="/" className="flex items-center gap-3" onClick={onNavigate}>
         <span className="size-2 rounded-sm bg-accent shadow-brass" />
         <span className="font-heading text-sm font-bold uppercase tracking-widest text-sidebar-foreground">
-          Eu Quero Armas <span className="text-accent">/ Admin</span>
+          Quero Armas <span className="text-accent">/ Admin</span>
         </span>
       </Link>
     </div>
