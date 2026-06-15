@@ -150,8 +150,8 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
               <>
                 {isAdmin && (
                   <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
-                    <Link to="/admin">
-                      <ShieldCheck className="mr-2 size-4" /> Admin
+                    <Link to="/dashboard">
+                      <ShieldCheck className="mr-2 size-4" /> Painel da Equipe
                     </Link>
                   </Button>
                 )}
@@ -410,8 +410,8 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
                           className="h-10 w-full font-heading uppercase tracking-[0.15em]"
                           onClick={() => setMenuOpen(false)}
                         >
-                          <Link to="/admin">
-                            <ShieldCheck className="mr-2 size-4" /> Painel Admin
+                          <Link to="/dashboard">
+                            <ShieldCheck className="mr-2 size-4" /> Painel da Equipe
                           </Link>
                         </Button>
                       )}

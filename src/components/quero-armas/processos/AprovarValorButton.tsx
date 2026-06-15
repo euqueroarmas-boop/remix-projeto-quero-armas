@@ -30,10 +30,11 @@ interface VendaLite {
 
 interface Props {
   venda: VendaLite;
+  isCortesia?: boolean;
   onApproved?: () => void;
 }
 
-export function AprovarValorButton({ venda, onApproved }: Props) {
+export function AprovarValorButton({ venda, isCortesia = false, onApproved }: Props) {
   const [loading, setLoading] = useState(false);
 
   const isApproved =
@@ -46,14 +47,15 @@ export function AprovarValorButton({ venda, onApproved }: Props) {
 
   // Só aprovamos vendas que já foram pagas (regra de negócio).
   const isPago = String(venda.status || "").toUpperCase() === "PAGO";
-  if (!isPago) return null;
+  const canApprove = isPago || isCortesia;
+  if (!canApprove) return null;
 
   const handleApprove = async () => {
     if (loading) return;
     setLoading(true);
     try {
       const valor = Number(venda.valor_a_pagar || 0);
-      if (!Number.isFinite(valor) || valor <= 0) {
+      if (!Number.isFinite(valor) || valor < 0 || (!isCortesia && valor <= 0)) {
         toast.error("Venda sem valor definido — não é possível aprovar.");
         return;
       }
@@ -78,7 +80,7 @@ export function AprovarValorButton({ venda, onApproved }: Props) {
       } catch (e) {
         console.warn("[AprovarValorButton] auto-status itens falhou:", e);
       }
-      toast.success("Valor aprovado — checklist liberado");
+      toast.success(isCortesia ? "Cortesia aprovada — checklist liberado" : "Valor aprovado — checklist liberado");
       onApproved?.();
     } catch (e: any) {
       console.error("[AprovarValorButton] error:", e);
@@ -96,12 +98,12 @@ export function AprovarValorButton({ venda, onApproved }: Props) {
       onClick={handleApprove}
       disabled={loading}
       className="h-7 px-2 text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 hover:text-amber-800 rounded"
-      title="Aprovar valor desta venda em 1 clique (libera o checklist)"
+      title={isCortesia ? "Aprovar esta cortesia em 1 clique (libera o checklist)" : "Aprovar valor desta venda em 1 clique (libera o checklist)"}
     >
       {loading
         ? <Loader2 className="h-3 w-3 animate-spin mr-1" />
         : <ShieldCheck className="h-3 w-3 mr-1" />}
-      Aprovar valor
+      {isCortesia ? "Aprovar cortesia" : "Aprovar valor"}
     </Button>
   );
 }

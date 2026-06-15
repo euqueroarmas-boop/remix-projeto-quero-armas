@@ -214,6 +214,7 @@ export default function QARoutes() {
         
         {/* Protected admin routes */}
         <Route element={<QALayout />}>
+          <Route path="admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<QADashboardPage />} />
           <Route path="operacao/monitoramento" element={<QAMonitoramentoPage />} />
           <Route path="ia" element={<QAIAPage />} />

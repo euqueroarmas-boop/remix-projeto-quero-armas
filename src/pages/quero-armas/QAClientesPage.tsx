@@ -1206,8 +1206,8 @@ export default function QAClientesPage() {
   // Autorização de compra EB — legado (5, 15) + catálogo: 38 (AUTORIZAÇÃO CAC)
   const SERVICOS_AUTORIZACAO_EB = [5, 15, 38];
   // Serviço de Posse na Polícia Federal
-  // POSSE PF — legado (2) + catálogo: 35 (AQUISIÇÃO/POSSE) e 36 (RENOVAÇÃO POSSE)
-  const SERVICOS_POSSE = [2, 35, 36];
+  // POSSE PF — legado (2) + catálogo: 35/48 (AQUISIÇÃO/REGISTRO/POSSE) e 36 (RENOVAÇÃO POSSE)
+  const SERVICOS_POSSE = [2, 35, 36, 48];
   // PORTE PF — legado (3) + catálogo: 41 (PORTE) e 37 (RENOVAÇÃO PORTE)
   const SERVICOS_PORTE_PF = [3, 37, 41];
   // CRAF PF (registro de arma de defesa pessoal) — legado (26) + catálogo: 43
@@ -1389,7 +1389,26 @@ export default function QAClientesPage() {
       const payload: Record<string, any> = {};
       // Status que dispensam campos de "outorga" (deferimento) — ex.: INDEFERIDO, EM ANÁLISE, etc.
       const statusAtual = String(currentItem?.status || "").toLowerCase();
-      const dispensaDeferimento = ["indeferido", "cancelado", "em_analise", "pronto_para_analise", "a_iniciar", "montando_pasta", "aguardando_documentos"].includes(statusAtual);
+      const dispensaDeferimento = [
+        "indeferido",
+        "cancelado",
+        "a_iniciar",
+        "montando_pasta",
+        "aguardando_documentos",
+        "aguardando_documentacao",
+        "documentos_em_analise",
+        "documentos_incompletos",
+        "documentos_aprovados",
+        "em_verificacao",
+        "pronto_para_analise",
+        "pronto_para_protocolo",
+        "enviado_ao_orgao",
+        "em_analise",
+        "em_analise_orgao",
+        "notificado",
+        "restituido",
+        "recurso_administrativo",
+      ].includes(statusAtual);
       for (const f of applicableFields) {
         const v = itemEditForm[f.key]?.trim() || null;
         // Campos só obrigatórios quando o processo foi efetivamente DEFERIDO/CONCLUÍDO
@@ -3207,6 +3226,7 @@ export default function QAClientesPage() {
                                 {/* Aprovar valor em 1 clique (libera o checklist) */}
                                 <AprovarValorButton
                                   venda={v}
+                                  isCortesia={vItens.length > 0 && vItens.every((i: any) => i.cortesia)}
                                   onApproved={() => { loadSubData(selected!, { silent: true }); loadClientes(); }}
                                 />
                                 <GerarProcessoButton
