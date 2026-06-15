@@ -422,6 +422,13 @@ export const SiteShell = ({ children, hideBackButton: _hideBackButton = false }:
         <div className="border-t border-border/60">
           <div className="w-full px-4 py-4 text-center text-xs text-muted-foreground sm:px-6 lg:px-10 2xl:px-16">
             © {new Date().getFullYear()} Quero Armas. Todos os direitos reservados.
+            <span className="mx-2 opacity-40">·</span>
+            <Link
+              to="/login"
+              className="font-heading uppercase tracking-[0.15em] text-muted-foreground/70 hover:text-accent"
+            >
+              Acesso Equipe
+            </Link>
           </div>
         </div>
       </footer>
