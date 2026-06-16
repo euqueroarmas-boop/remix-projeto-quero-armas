@@ -100,6 +100,46 @@ export default function QACadastroRefinadoPage() {
   // Se cliente entrou direto via ?servico=, lembramos disso p/ Voltar levar para "/"
   const [enteredDirect] = useState<boolean>(() => Boolean(params.get("servico")));
   const [initialPerfil, setInitialPerfil] = useState<string | null>(() => params.get("perfil_v2"));
+  const clearStaleCheckoutResult = (
+    slugs: string[],
+    currentResult: CadastroRefinadoState["resultado"],
+  ): CadastroRefinadoState["resultado"] => {
+    if (!currentResult) return currentResult;
+    const nextKey = slugs.join(",");
+    const currentKey = currentResult.servico_slug_key || "";
+    const hasCheckoutState =
+      !!currentResult.venda_id ||
+      !!currentResult.checkout_token ||
+      !!currentResult.asaas_invoice_url ||
+      !!currentResult.asaas_payment_id ||
+      !!currentResult.asaas_pix_payload ||
+      !!currentResult.asaas_bank_slip_url;
+
+    if (!hasCheckoutState) {
+      return {
+        ...currentResult,
+        servico_slugs: slugs,
+        servico_slug_key: nextKey,
+      };
+    }
+
+    if (currentKey && currentKey === nextKey) {
+      return {
+        ...currentResult,
+        servico_slugs: slugs,
+        servico_slug_key: nextKey,
+      };
+    }
+
+    return {
+      cliente_id: currentResult.cliente_id,
+      solicitacao_id: currentResult.solicitacao_id,
+      numero_processo: currentResult.numero_processo,
+      numero_protocolo: currentResult.numero_protocolo,
+      servico_slugs: slugs,
+      servico_slug_key: nextKey,
+    };
+  };
 
   // Após aplicar o hard reset via URL, removemos as flags `novo`/`reset`
   // para não disparar reset em loop em re-renders. Preserva `servico=` e
@@ -144,6 +184,8 @@ export default function QACadastroRefinadoPage() {
       servicosSlugs: slugs,
       origem: params.get("origem") || state.origem,
       perfilV2: params.get("perfil_v2") || state.perfilV2,
+      aceiteContrato: false,
+      resultado: clearStaleCheckoutResult(slugs, state.resultado),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
@@ -273,10 +315,13 @@ export default function QACadastroRefinadoPage() {
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
   const handleSelectService = (slug: string, perfilV2?: string, subperfilV2?: string) => {
+    const nextSlugs = [slug];
     update({
-      servicosSlugs: [slug],
+      servicosSlugs: nextSlugs,
       perfilV2: perfilV2 ?? state.perfilV2,
       origem: state.origem ?? "etapa00",
+      aceiteContrato: false,
+      resultado: clearStaleCheckoutResult(nextSlugs, state.resultado),
     });
     // Reflete no contexto (subperfil é informativo)
     if (subperfilV2) {
@@ -296,6 +341,8 @@ export default function QACadastroRefinadoPage() {
       servicosSlugs: slugs,
       perfilV2: perfilV2 ?? state.perfilV2,
       origem: state.origem ?? "etapa00",
+      aceiteContrato: false,
+      resultado: clearStaleCheckoutResult(slugs, state.resultado),
     });
     if (subperfilV2) {
       try {

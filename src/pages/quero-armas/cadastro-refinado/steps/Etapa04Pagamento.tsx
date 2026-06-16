@@ -79,6 +79,15 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
   useEffect(() => {
     resultadoRef.current = state.resultado;
   }, [state.resultado]);
+  const serviceKey = useMemo(() => {
+    const slugs =
+      state.servicosSlugs && state.servicosSlugs.length > 0
+        ? state.servicosSlugs
+        : state.servicoSlug
+          ? [state.servicoSlug]
+          : [];
+    return slugs.join(",");
+  }, [state.servicosSlugs, state.servicoSlug]);
 
   useEffect(() => {
     const slugs =
@@ -135,6 +144,48 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       }
     })();
   }, [state.servicosSlugs?.join(","), state.servicoSlug]);
+
+  useEffect(() => {
+    const r: any = state.resultado || null;
+    if (!r) return;
+    const hasCheckoutState =
+      !!r.venda_id ||
+      !!r.checkout_token ||
+      !!r.asaas_invoice_url ||
+      !!r.asaas_payment_id ||
+      !!r.asaas_pix_payload ||
+      !!r.asaas_bank_slip_url;
+    if (!hasCheckoutState) return;
+
+    const resultKey = String(r.servico_slug_key || "");
+    if (!resultKey || resultKey === serviceKey) return;
+
+    if (pollRef.current) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    resumedRef.current = false;
+    setPay(null);
+    setStage("form");
+    setError(null);
+    setPollTimedOut(false);
+    update({
+      aceiteContrato: false,
+      resultado: {
+        cliente_id: r.cliente_id,
+        solicitacao_id: r.solicitacao_id,
+        numero_processo: r.numero_processo,
+        numero_protocolo: r.numero_protocolo,
+        servico_slugs:
+          state.servicosSlugs && state.servicosSlugs.length > 0
+            ? state.servicosSlugs
+            : state.servicoSlug
+              ? [state.servicoSlug]
+              : [],
+        servico_slug_key: serviceKey,
+      },
+    });
+  }, [serviceKey, state.resultado, state.servicosSlugs, state.servicoSlug, update]);
 
   /* ---- Cálculo de preview (frontend exibe, backend recalcula a verdade) ---- */
   const pricingPix = useMemo(
@@ -275,7 +326,8 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
       Number.isFinite(vendaIdNum) &&
       vendaIdNum > 0 &&
       token.length >= 16 &&
-      r.pagamento_status === "aguardando_pagamento"
+      r.pagamento_status === "aguardando_pagamento" &&
+      (!r.servico_slug_key || r.servico_slug_key === serviceKey)
     ) {
       resumedRef.current = true;
       const billing =
@@ -302,7 +354,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         if (!ok) startPolling(vendaIdNum, token);
       });
     }
-  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling, pay]);
+  }, [state.resultado, state.formaPagamento, checkPaymentOnce, startPolling, pay, serviceKey]);
 
   /**
    * Quando o usuário volta para a aba (após pagar no Asaas em outra aba),
@@ -429,6 +481,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         resultado: {
           ...(state.resultado || {}),
           cliente_id: qaClienteId,
+          servico_slugs:
+            state.servicosSlugs && state.servicosSlugs.length > 0
+              ? state.servicosSlugs
+              : state.servicoSlug
+                ? [state.servicoSlug]
+                : [],
+          servico_slug_key: serviceKey,
         },
         clienteExistente: !!contaData?.cpf_ja_possui_login || state.clienteExistente,
       });
@@ -471,6 +530,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           resultado: {
             ...(state.resultado || {}),
             cliente_id: clienteIdFinal,
+            servico_slugs:
+              state.servicosSlugs && state.servicosSlugs.length > 0
+                ? state.servicosSlugs
+                : state.servicoSlug
+                  ? [state.servicoSlug]
+                  : [],
+            servico_slug_key: serviceKey,
           },
         });
       }
@@ -571,6 +637,13 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
         resultado: {
           ...(state.resultado || {}),
           cliente_id: qaClienteId,
+          servico_slugs:
+            state.servicosSlugs && state.servicosSlugs.length > 0
+              ? state.servicosSlugs
+              : state.servicoSlug
+                ? [state.servicoSlug]
+                : [],
+          servico_slug_key: serviceKey,
           venda_id: String(vendaId),
           checkout_token: checkoutToken,
           asaas_invoice_url: payData.asaas_invoice_url ?? undefined,

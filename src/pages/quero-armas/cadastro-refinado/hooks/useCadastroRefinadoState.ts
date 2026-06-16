@@ -109,6 +109,11 @@ export interface CadastroRefinadoState {
     numero_processo?: string;
     numero_protocolo?: string;
     pagamento_url?: string;
+    /** Assinatura canônica dos serviços que originaram este checkout.
+     *  Usada para impedir reaproveitamento indevido de cobrança quando o
+     *  usuário troca de serviço no mesmo sessionStorage. */
+    servico_slugs?: string[];
+    servico_slug_key?: string;
     /* Campos de checkout 2C — persistidos pela Etapa04 para a Etapa05 derivar status real. */
     checkout_token?: string;
     asaas_invoice_url?: string;
