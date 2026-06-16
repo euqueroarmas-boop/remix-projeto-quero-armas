@@ -70,6 +70,11 @@ const SNAPSHOT_TTL_MS = 30_000;
 let snapshotCache: { data: QADashboardSnapshot; expiresAt: number } | null = null;
 let snapshotPromise: Promise<QADashboardSnapshot> | null = null;
 
+const ITEM_SELECT_BASE =
+  "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_recurso_administrativo, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf";
+const ITEM_SELECT_WITH_RESTITUICAO =
+  "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_restituicao, data_recurso_administrativo, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf";
+
 function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) {
     throw new DOMException("Aborted", "AbortError");
@@ -77,12 +82,40 @@ function throwIfAborted(signal?: AbortSignal) {
 }
 
 async function fetchDashboardSnapshot(): Promise<QADashboardSnapshot> {
-  const [itensRes, examesRes, servicosExameRes] = await Promise.all([
-    supabase
+  const fetchItens = async () => {
+    const withRestituicao = await supabase
       .from("qa_itens_venda" as any)
-      .select(
-        "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_restituicao, data_recurso_administrativo, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf"
-      ),
+      .select(ITEM_SELECT_WITH_RESTITUICAO);
+
+    if (!withRestituicao.error) {
+      return withRestituicao;
+    }
+
+    const message = String(withRestituicao.error.message || "");
+    const missingRestituicao =
+      message.includes("data_restituicao") ||
+      message.includes("column qa_itens_venda.data_restituicao does not exist");
+
+    if (!missingRestituicao) {
+      return withRestituicao;
+    }
+
+    const fallback = await supabase
+      .from("qa_itens_venda" as any)
+      .select(ITEM_SELECT_BASE);
+
+    if (!fallback.error && Array.isArray(fallback.data)) {
+      fallback.data = fallback.data.map((row: any) => ({
+        ...row,
+        data_restituicao: null,
+      }));
+    }
+
+    return fallback;
+  };
+
+  const [itensRes, examesRes, servicosExameRes] = await Promise.all([
+    fetchItens(),
     supabase
       .from("qa_exames_cliente" as any)
       .select("id, cliente_id, tipo, data_realizacao, data_vencimento, observacoes")
