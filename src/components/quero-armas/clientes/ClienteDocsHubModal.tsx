@@ -24,19 +24,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { isCurrentUserStaff } from "./docsAprovacao";
+import {
+  HUB_CATEGORIAS,
+  getHubCategoriaMeta,
+  getTipoDocumentoMeta,
+  inferEscopoDocumental,
+  inferHubCategoriaFromTipo,
+  isCategoriaArmaAcervo,
+  listTiposByCategoria,
+  type EscopoDocumental,
+  type HubCategoria,
+} from "@/lib/quero-armas/documentosHubCatalogo";
 // Notificações e auto-avanço são 100% backend-driven via triggers
 // (qa_doc_cliente_recalcular -> qa_recalcular_status_servico ->
 //  qa_dispatch_notify_event). Nada de notify aqui.
-
-const TIPOS = [
-  { value: "cr", label: "CR — Certificado de Registro", short: "CR · CAC" },
-  { value: "craf", label: "CRAF — Registro de Arma (Exército)", short: "CRAF · SIGMA" },
-  { value: "sinarm", label: "SINARM — Posse / Porte (PF)", short: "SINARM · PF" },
-  { value: "gt", label: "GT — Guia de Tráfego", short: "GT" },
-  { value: "gte", label: "GTE — Guia de Tráfego Especial", short: "GTE" },
-  { value: "autorizacao_compra", label: "AC — Autorização de Compra", short: "AC" },
-  { value: "outro", label: "Outro documento SIGMA / SINARM", short: "OUTRO" },
-] as const;
 
 // Mapeia o `tipoDetectado` retornado pela edge `qa-classificar-documento-arma`
 // para o `tipo_documento` salvo em `qa_documentos_cliente`.
@@ -294,10 +295,26 @@ interface Props {
   onSaved: () => void;
   /** Tipo de documento pré-selecionado ao abrir (ex.: "craf"). Default: "cr". */
   defaultTipo?: string;
+  mode?: "portal" | "arsenal";
 }
 
-export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, onSaved, defaultTipo }: Props) {
-  const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipo || EMPTY.tipo_documento });
+function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
+  if (defaultTipo) return defaultTipo;
+  return mode === "arsenal" ? "cr" : "rg_com_cpf";
+}
+
+export function ClienteDocsHubModal({
+  open,
+  onClose,
+  customerId,
+  qaClienteId,
+  onSaved,
+  defaultTipo,
+  mode = customerId ? "portal" : "arsenal",
+}: Props) {
+  const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
+  const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
+  const [categoriaHub, setCategoriaHub] = useState<HubCategoria>(inferHubCategoriaFromTipo(defaultTipoEfetivo));
   const [file, setFile] = useState<File | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -317,17 +334,25 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (open) {
-      setForm((prev) => ({ ...prev, tipo_documento: defaultTipo || prev.tipo_documento }));
+      const tipoInicial = getDefaultTipo(mode, defaultTipo);
+      setForm((prev) => ({ ...EMPTY, ...prev, tipo_documento: tipoInicial }));
+      setCategoriaHub(inferHubCategoriaFromTipo(tipoInicial));
       setClassificacao(null);
       setShowTipoOverride(false);
       setAutoResult(null);
       setIaExtraido({});
       setConfirmados({});
     }
-  }, [open, defaultTipo]);
+  }, [open, defaultTipo, mode]);
 
-  const showArmaFields = form.tipo_documento !== "cr";
-  const tipoAtual = TIPOS.find((tipo) => tipo.value === form.tipo_documento);
+  const tiposDisponiveis = listTiposByCategoria(categoriaHub);
+  const tipoAtual = getTipoDocumentoMeta(form.tipo_documento) ?? tiposDisponiveis[0] ?? null;
+  const categoriaAtualMeta = getHubCategoriaMeta(categoriaHub);
+  const showArmaFields = isCategoriaArmaAcervo(categoriaHub);
+  const escopoAtual: EscopoDocumental = inferEscopoDocumental({
+    tipo_documento: form.tipo_documento,
+    categoria_hub: categoriaHub,
+  });
   // Mostra campos SINARM quando: regime detectado SINARM, ou tipo = sinarm,
   // ou já existe um Nº Cad. SINARM preenchido (manual).
   const showSinarmFields =
@@ -348,6 +373,22 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     }
   }
 
+  function setCategoria(categoria: HubCategoria) {
+    setCategoriaHub(categoria);
+    const tipos = listTiposByCategoria(categoria);
+    const tipoAtualMeta = getTipoDocumentoMeta(form.tipo_documento);
+    if (!tipos.length) return;
+    if (!tipoAtualMeta || tipoAtualMeta.categoria !== categoria) {
+      setForm((prev) => ({
+        ...prev,
+        tipo_documento: tipos[0].value,
+        numero_cad_sinarm: categoria === "arma_acervo" ? prev.numero_cad_sinarm : "",
+        numero_registro_sigma: categoria === "arma_acervo" ? prev.numero_registro_sigma : "",
+        sistema_registro: categoria === "arma_acervo" ? prev.sistema_registro : "",
+      }));
+    }
+  }
+
   /** Marca um campo sensível como confirmado pelo humano (botão Confirmar). */
   function confirmField(key: SensitiveKey) {
     setConfirmados((prev) => ({ ...prev, [key]: true }));
@@ -356,6 +397,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
   /** Quais campos sensíveis são exigidos para o tipo atual. */
   function requiredSensitiveKeys(): SensitiveKey[] {
     const t = form.tipo_documento;
+    if (!showArmaFields) {
+      const base: SensitiveKey[] = [];
+      if (iaExtraido.numero_documento) base.push("numero_documento");
+      if (iaExtraido.data_validade) base.push("data_validade");
+      return base;
+    }
     if (t === "cr" || t === "autorizacao_compra") {
       return ["numero_documento", "data_validade"];
     }
@@ -432,6 +479,8 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       setClassificacao(ia);
 
       const tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
+      setCategoriaHub(categoriaIA);
       const campos = ia.camposExtraidos || {};
 
       // Regime canônico (espelha lógica do backend qa-arsenal-doc-autoinsert).
@@ -508,7 +557,11 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
 
       // 3) Se a IA estiver segura (>=0.85, identificou tipo e campos legíveis),
       //    o backend faz upload + auto-cadastro. Caso contrário devolve motivo.
-      await tryAutoInsert(target, ia);
+      if (inferHubCategoriaFromTipo(tipoIA) === "arma_acervo") {
+        await tryAutoInsert(target, ia);
+      } else {
+        setAutoResult(null);
+      }
     } catch (e: any) {
       console.error("[classify+extract] error:", e);
       toast.error(e?.message || "Falha ao processar o documento.");
@@ -620,7 +673,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
     setSaving(true);
     try {
       // Bloqueio de duplicidade
-      const tipoLabel = TIPOS.find((t) => t.value === form.tipo_documento)?.short || form.tipo_documento.toUpperCase();
+      const tipoLabel = (getTipoDocumentoMeta(form.tipo_documento)?.short || form.tipo_documento || "documento").toUpperCase();
       const numeroNorm = (form.numero_documento || "").replace(/\s+/g, "").toUpperCase();
 
       // CR: único por cliente (não importa número)
@@ -670,7 +723,7 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       if (file) {
         const safe = sanitize(file.name);
         const ownerKey = customerId ?? `qa-${qaClienteId}`;
-        const path = `cliente-docs/${ownerKey}/${form.tipo_documento}/${Date.now()}_${safe}`;
+        const path = `cliente-docs/${ownerKey}/${categoriaHub}/${form.tipo_documento}/${Date.now()}_${safe}`;
         const { error: upErr } = await supabase.storage
           .from("qa-documentos")
           .upload(path, file, { upsert: false, contentType: file.type });
@@ -683,6 +736,12 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
       const payload: any = {
         customer_id: customerId ?? null,
         qa_cliente_id: qaClienteId ?? null,
+        categoria_hub: categoriaHub,
+        subcategoria_hub: tipoAtual?.value ?? form.tipo_documento,
+        escopo_documental: escopoAtual,
+        reaproveitavel_global: escopoAtual !== "processo",
+        revisao_humana_obrigatoria: !!tipoAtual?.revisaoHumanaObrigatoria,
+        fonte_normativa: tipoAtual ? ["Lei 10.826/2003", ...(tipoAtual.categoria === "arma_acervo" || tipoAtual.categoria === "cac_atividade" ? ["Decreto 11.615/2023", "Decreto 12.345/2024", "IN DG/PF 311"] : ["IN DG/PF 201"])] : ["Lei 10.826/2003"],
         tipo_documento: form.tipo_documento,
         numero_documento: form.numero_documento || null,
         orgao_emissor: form.orgao_emissor || null,
@@ -972,19 +1031,54 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
                         </button>
                       )}
                       {showTipoOverride && !autoResult?.safe && (
-                        <div className="mt-2">
-                          <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
-                            <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="border-border bg-popover text-popover-foreground">
-                              {TIPOS.map((tipo) => (
-                                <SelectItem key={tipo.value} value={tipo.value} className="focus:bg-muted focus:text-foreground">
-                                  {tipo.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <div className="mt-3 space-y-2">
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <div className="space-y-1">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Categoria
+                              </div>
+                              <Select value={categoriaHub} onValueChange={(value) => setCategoria(value as HubCategoria)}>
+                                <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="border-border bg-popover text-popover-foreground">
+                                  {HUB_CATEGORIAS.map((categoria) => (
+                                    <SelectItem
+                                      key={categoria.value}
+                                      value={categoria.value}
+                                      className="focus:bg-muted focus:text-foreground"
+                                    >
+                                      {categoria.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Tipo
+                              </div>
+                              <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
+                                <SelectTrigger className={cn(inputClassName, "h-10 rounded-xl text-left text-sm font-medium")}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="border-border bg-popover text-popover-foreground">
+                                  {tiposDisponiveis.map((tipo) => (
+                                    <SelectItem
+                                      key={tipo.value}
+                                      value={tipo.value}
+                                      className="focus:bg-muted focus:text-foreground"
+                                    >
+                                      {tipo.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div className="rounded-xl border border-border bg-background/70 px-3 py-2 text-[11px] text-muted-foreground">
+                            {categoriaAtualMeta?.description}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1015,6 +1109,61 @@ export function ClienteDocsHubModal({ open, onClose, customerId, qaClienteId, on
             )}
 
             <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Categoria do documento">
+                  <Select value={categoriaHub} onValueChange={(value) => setCategoria(value as HubCategoria)}>
+                    <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-popover text-popover-foreground">
+                      {HUB_CATEGORIAS.map((categoria) => (
+                        <SelectItem
+                          key={categoria.value}
+                          value={categoria.value}
+                          className="focus:bg-muted focus:text-foreground"
+                        >
+                          {categoria.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <Field label="Tipo do documento">
+                  <Select value={form.tipo_documento} onValueChange={(value) => update("tipo_documento", value)}>
+                    <SelectTrigger className={cn(inputClassName, "h-11 rounded-xl text-left text-sm font-medium")}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-border bg-popover text-popover-foreground">
+                      {tiposDisponiveis.map((tipo) => (
+                        <SelectItem
+                          key={tipo.value}
+                          value={tipo.value}
+                          className="focus:bg-muted focus:text-foreground"
+                        >
+                          {tipo.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/35 px-4 py-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Escopo e reaproveitamento
+                </div>
+                <div className="mt-1 text-sm font-medium text-foreground">
+                  {categoriaAtualMeta?.label} · escopo {escopoAtual}
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {categoriaAtualMeta?.description}
+                  {escopoAtual === "processo"
+                    ? " Este documento tende a ficar vinculado ao processo atual."
+                    : " Este documento pode ser reaproveitado em outras jornadas quando continuar válido e compatível."}
+                </p>
+              </div>
+
               {showArmaFields ? (
                 <>
                   <Field

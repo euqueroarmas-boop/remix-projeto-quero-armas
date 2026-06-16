@@ -1,0 +1,226 @@
+import { isDocDeArma } from "./documentosDeArma";
+
+export type HubCategoria =
+  | "identificacao"
+  | "endereco"
+  | "renda_ocupacao"
+  | "antecedentes_regularidade"
+  | "declaracoes"
+  | "laudos_exames"
+  | "efetiva_necessidade"
+  | "arma_acervo"
+  | "cac_atividade"
+  | "documentos_processo"
+  | "juridico"
+  | "outros";
+
+export type EscopoDocumental = "permanente" | "arma" | "processo" | "cac_atividade";
+
+export interface HubCategoriaMeta {
+  value: HubCategoria;
+  label: string;
+  description: string;
+  escopoPadrao: EscopoDocumental;
+}
+
+export interface HubTipoDocumentoMeta {
+  value: string;
+  label: string;
+  short: string;
+  categoria: HubCategoria;
+  escopo: EscopoDocumental;
+  aceitaIA?: boolean;
+  aceitaVinculoArma?: boolean;
+  exigeValidade?: boolean;
+  revisaoHumanaObrigatoria?: boolean;
+}
+
+export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
+  {
+    value: "identificacao",
+    label: "Identificação",
+    description: "RG, CNH, CIN, CPF e documentos civis do titular.",
+    escopoPadrao: "permanente",
+  },
+  {
+    value: "endereco",
+    label: "Endereço",
+    description: "Comprovantes residenciais e declarações de vínculo com imóvel.",
+    escopoPadrao: "permanente",
+  },
+  {
+    value: "renda_ocupacao",
+    label: "Renda e ocupação",
+    description: "Comprovantes de atividade profissional, renda e benefício.",
+    escopoPadrao: "permanente",
+  },
+  {
+    value: "antecedentes_regularidade",
+    label: "Certidões e regularidade",
+    description: "Antecedentes e certidões utilizadas na triagem administrativa.",
+    escopoPadrao: "permanente",
+  },
+  {
+    value: "declaracoes",
+    label: "Declarações",
+    description: "Declarações pessoais, de guarda e de contexto do requerente.",
+    escopoPadrao: "permanente",
+  },
+  {
+    value: "laudos_exames",
+    label: "Laudos e exames",
+    description: "Laudos psicológicos, capacidade técnica e exames correlatos.",
+    escopoPadrao: "permanente",
+  },
+  {
+    value: "efetiva_necessidade",
+    label: "Justificativas",
+    description: "Comprovações e anexos de necessidade e contexto.",
+    escopoPadrao: "processo",
+  },
+  {
+    value: "arma_acervo",
+    label: "Armas e acervo",
+    description: "CR, CRAF, GTE, GT, autorizações de compra e documentos da arma.",
+    escopoPadrao: "arma",
+  },
+  {
+    value: "cac_atividade",
+    label: "CAC e atividade",
+    description: "Documentos de habitualidade, clube, competição e atividade CAC.",
+    escopoPadrao: "cac_atividade",
+  },
+  {
+    value: "documentos_processo",
+    label: "Documentos do processo",
+    description: "Protocolos, despachos, exigências, indeferimentos e peças do caso.",
+    escopoPadrao: "processo",
+  },
+  {
+    value: "juridico",
+    label: "Jurídico",
+    description: "Procurações, recursos, mandados e anexos estritamente jurídicos.",
+    escopoPadrao: "processo",
+  },
+  {
+    value: "outros",
+    label: "Outros",
+    description: "Anexos complementares que ainda não se encaixam no catálogo.",
+    escopoPadrao: "processo",
+  },
+] as const;
+
+export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
+  { value: "rg_com_cpf", label: "RG com CPF", short: "RG", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
+  { value: "cin", label: "CIN — Carteira de Identidade Nacional", short: "CIN", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
+  { value: "cnh", label: "CNH — Carteira Nacional de Habilitação", short: "CNH", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
+  { value: "cpf", label: "CPF", short: "CPF", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
+  { value: "comprovante_residencia", label: "Comprovante de residência", short: "END", categoria: "endereco", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "declaracao_responsavel_imovel", label: "Declaração do responsável pelo imóvel", short: "DECL. IMÓVEL", categoria: "endereco", escopo: "permanente" },
+  { value: "ctps", label: "Carteira de Trabalho (CTPS)", short: "CTPS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
+  { value: "renda_holerite_mes_atual", label: "Holerite mais recente", short: "HOLERITE", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "renda_holerite_funcionario_publico", label: "Holerite recente (servidor público)", short: "HOL. SERVIDOR", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "renda_cartao_cnpj", label: "Cartão CNPJ", short: "CNPJ", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
+  { value: "renda_contrato_social", label: "Contrato Social", short: "CONTRATO", categoria: "renda_ocupacao", escopo: "permanente" },
+  { value: "renda_cnpj_autonomo", label: "Cartão CNPJ (autônomo / MEI)", short: "MEI", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
+  { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "renda_comprovante_beneficio", label: "Comprovante de benefício", short: "BENEFÍCIO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "antecedentes_criminais", label: "Antecedentes criminais", short: "ANT.", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal", label: "Antecedentes federais", short: "ANT. FED", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual", label: "Antecedentes estaduais", short: "ANT. EST", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar", label: "Antecedentes militares", short: "ANT. MIL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_eleitoral", label: "Antecedentes eleitorais", short: "ANT. ELET", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
+  { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
+  { value: "declaracao_guarda_acervo_1endereco", label: "Declaração de guarda de acervo — 1 endereço", short: "GUARDA 1 END", categoria: "declaracoes", escopo: "cac_atividade", revisaoHumanaObrigatoria: true },
+  { value: "declaracao_guarda_acervo_2enderecos", label: "Declaração de guarda de acervo — 2 endereços", short: "GUARDA 2 END", categoria: "declaracoes", escopo: "cac_atividade", revisaoHumanaObrigatoria: true },
+  { value: "laudo_psicologico", label: "Laudo psicológico", short: "LAUDO PSI", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "cr", label: "CR — Certificado de Registro", short: "CR · CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
+  { value: "craf", label: "CRAF — Registro da arma", short: "CRAF", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "sinarm", label: "SINARM — Posse / porte (PF)", short: "SINARM", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "gt", label: "GT — Guia de Tráfego", short: "GT", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "gte", label: "GTE — Guia de Tráfego Especial", short: "GTE", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "autorizacao_compra", label: "Autorização de compra", short: "AC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
+  { value: "nota_fiscal_arma", label: "Nota fiscal da arma", short: "NF ARMA", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true },
+  { value: "comprovante_habitualidade", label: "Comprovante de habitualidade", short: "HABITUALIDADE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
+  { value: "comprovante_clube_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
+  { value: "comprovante_competicao", label: "Comprovante de competição / atividade", short: "COMPETIÇÃO", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
+  { value: "protocolo_processo", label: "Protocolo do processo", short: "PROTOCOLO", categoria: "documentos_processo", escopo: "processo" },
+  { value: "despacho", label: "Despacho / movimentação", short: "DESPACHO", categoria: "documentos_processo", escopo: "processo" },
+  { value: "exigencia", label: "Exigência administrativa", short: "EXIGÊNCIA", categoria: "documentos_processo", escopo: "processo" },
+  { value: "indeferimento", label: "Indeferimento", short: "INDEFER.", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "procuracao", label: "Procuração", short: "PROC.", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "recurso_administrativo_doc", label: "Recurso administrativo", short: "RECURSO", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "mandado_seguranca_doc", label: "Mandado de segurança / peça jurídica", short: "MS", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "outro", label: "Outro documento", short: "OUTRO", categoria: "outros", escopo: "processo" },
+] as const;
+
+const META_BY_TIPO = new Map(HUB_TIPOS_DOCUMENTO.map((item) => [item.value, item] as const));
+
+const CATEGORIA_BY_TIPO_PREFIX: Array<[RegExp, HubCategoria]> = [
+  [/^renda_/, "renda_ocupacao"],
+  [/^antecedentes_/, "antecedentes_regularidade"],
+  [/^declaracao_/, "declaracoes"],
+  [/^laudo_/, "laudos_exames"],
+];
+
+export function getHubCategoriaMeta(categoria: HubCategoria): HubCategoriaMeta {
+  return (
+    HUB_CATEGORIAS.find((item) => item.value === categoria) ?? HUB_CATEGORIAS[HUB_CATEGORIAS.length - 1]
+  );
+}
+
+export function getTipoDocumentoMeta(tipoDocumento: string | null | undefined): HubTipoDocumentoMeta | null {
+  if (!tipoDocumento) return null;
+  return META_BY_TIPO.get(String(tipoDocumento).trim().toLowerCase()) ?? null;
+}
+
+export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefined): HubCategoria {
+  const tipo = String(tipoDocumento || "").trim().toLowerCase();
+  if (!tipo) return "outros";
+  const meta = getTipoDocumentoMeta(tipo);
+  if (meta) return meta.categoria;
+  if (isDocDeArma(tipo)) return "arma_acervo";
+  if (tipo.includes("efetiva_necessidade")) return "efetiva_necessidade";
+  if (tipo.includes("procuracao") || tipo.includes("recurso") || tipo.includes("mandado")) return "juridico";
+  if (tipo.includes("protocolo") || tipo.includes("indeferimento") || tipo.includes("exigencia")) return "documentos_processo";
+  if (tipo.includes("habitualidade") || tipo.includes("clube") || tipo.includes("competicao")) return "cac_atividade";
+  for (const [pattern, categoria] of CATEGORIA_BY_TIPO_PREFIX) {
+    if (pattern.test(tipo)) return categoria;
+  }
+  return "outros";
+}
+
+export function inferEscopoDocumental(input: {
+  tipo_documento?: string | null;
+  categoria_hub?: HubCategoria | null;
+  arma_id?: string | null;
+}): EscopoDocumental {
+  const categoria = input.categoria_hub ?? inferHubCategoriaFromTipo(input.tipo_documento);
+  if (input.arma_id && String(input.arma_id).trim()) return "arma";
+  const meta = getTipoDocumentoMeta(String(input.tipo_documento || "").toLowerCase());
+  if (meta) return meta.escopo;
+  return getHubCategoriaMeta(categoria).escopoPadrao;
+}
+
+export function listTiposByCategoria(categoria: HubCategoria): HubTipoDocumentoMeta[] {
+  return HUB_TIPOS_DOCUMENTO.filter((item) => item.categoria === categoria);
+}
+
+export function isCategoriaArmaAcervo(categoria: HubCategoria | null | undefined): boolean {
+  return categoria === "arma_acervo";
+}
+
+export function isCategoriaPermanente(categoria: HubCategoria | null | undefined): boolean {
+  return (
+    categoria === "identificacao" ||
+    categoria === "endereco" ||
+    categoria === "renda_ocupacao" ||
+    categoria === "antecedentes_regularidade" ||
+    categoria === "declaracoes" ||
+    categoria === "laudos_exames"
+  );
+}

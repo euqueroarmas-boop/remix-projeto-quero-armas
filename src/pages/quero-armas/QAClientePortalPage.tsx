@@ -39,6 +39,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } fro
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-armas/cadastroCompleteness";
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
+import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import logoColor from "@/assets/logo-color.png";
 
 const formatDate = (d: string | null) => {
@@ -1744,8 +1745,8 @@ export default function QAClientePortalPage() {
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
                     {cliente?.tipo_cliente === "cliente_app" && !customerId
-                      ? "Envie aqui seus documentos de acervo, CR, CRAF, GTE, autorização de compra ou comprovantes para manter tudo organizado."
-                      : "Cadastre seus CR, CRAF/SINARM, GT, GTE e Autorizações de Compra. A IA pode preencher os campos a partir da foto."}
+                      ? "Envie documentos pessoais, comprovantes, laudos, peças do processo e documentos de acervo em um hub único e reaproveitável."
+                      : "Centralize identificação, endereço, laudos, documentos do processo e acervo. A IA ajuda na leitura inicial quando o arquivo permitir."}
                   </p>
                   <Button
                     size="sm"
@@ -1776,13 +1777,24 @@ export default function QAClientePortalPage() {
                   <div className="space-y-2">
                     {meusDocs.map((d: any) => {
                       const dias = daysUntil(d.data_validade);
-                      const cat = (d.tipo_documento || "outro").toUpperCase();
+                      const categoria = getHubCategoriaMeta((d.categoria_hub as any) || "outros");
+                      const tipoMeta = getTipoDocumentoMeta(d.tipo_documento);
+                      const escopo = inferEscopoDocumental({
+                        tipo_documento: d.tipo_documento,
+                        categoria_hub: (d.categoria_hub as any) || null,
+                        arma_id: d.arma_id || null,
+                      });
                       return (
                         <div key={d.id} className={`p-3 rounded-xl border ${urgencyBg(dias)}`}>
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-slate-600">{cat}</span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-slate-600">
+                                  {categoria.label.toUpperCase()}
+                                </span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                                  {escopo.toUpperCase()}
+                                </span>
                                 {d.status === "aprovado" && (
                                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
                                     <BadgeCheck className="h-2.5 w-2.5" /> APROVADO
@@ -1810,6 +1822,9 @@ export default function QAClientePortalPage() {
                                 )}
                               </div>
                               <div className="text-[12px] font-semibold text-slate-800 mt-1">
+                                {tipoMeta?.label || String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
+                              </div>
+                              <div className="text-[11px] text-slate-600 mt-0.5">
                                 {d.numero_documento || "Sem número"}
                                 {d.arma_modelo && (
                                   <span className="font-normal text-slate-500"> · {d.arma_marca} {d.arma_modelo}{d.arma_calibre ? ` (${d.arma_calibre})` : ""}</span>
@@ -2014,6 +2029,7 @@ export default function QAClientePortalPage() {
           onClose={() => setShowAddDoc(false)}
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
+          mode="portal"
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}

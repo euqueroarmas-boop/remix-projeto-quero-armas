@@ -1950,6 +1950,7 @@ export function ArsenalView({
         onClose={() => setCrafHubModal({ open: false })}
         customerId={null}
         qaClienteId={clienteId}
+        mode="arsenal"
         onSaved={refreshArsenal}
       />
       <GteModal
