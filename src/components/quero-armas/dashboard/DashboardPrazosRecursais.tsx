@@ -6,7 +6,8 @@
  * administrativo de 10 dias para manifestação/recurso).
  * Janela: D = data mais recente entre notificação/indeferimento; prazo = D+10
  * (Lei 9.784/99 art. 59 + Decreto 9.847/19 art. 10).
- * Vencidos APARECEM (são alertas críticos da equipe).
+ * Vencidos NÃO aparecem no card principal; são deslocados para a tela
+ * operacional "Prazos Expirados", onde a equipe trabalha a fila vencida.
  * Cores por dias restantes: 🟢 8–10 · 🟡 5–7 · 🔴 0–4.
  *
  * FKs em produção:
@@ -21,11 +22,10 @@ import { Link } from "react-router-dom";
 import { Loader2, Plus, Copy } from "lucide-react";
 import { useWidgetLoader } from "@/hooks/useWidgetLoader";
 import WidgetStateView from "./WidgetStateView";
-import { loadQADashboardSnapshot } from "./dashboardSnapshot";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getSenhaGov } from "@/components/quero-armas/clientes/senhaGovApi";
-import { extrairPrazoDoItem } from "@/lib/quero-armas/prazosProcessuais";
+import { loadQAPrazosEquipeRows, type QAPrazoEquipeRow } from "@/lib/quero-armas/prazosEquipe";
 
 /**
  * Copia texto compatível com Safari iOS, que bloqueia navigator.clipboard
@@ -64,50 +64,7 @@ async function copyTextSafe(text: string): Promise<boolean> {
   return copyTextFallback(text);
 }
 
-interface ItemRow {
-  id: number;
-  venda_id: number;            // → qa_vendas.id_legado
-  servico_id: number | null;
-  status: string | null;
-  data_indeferimento: string | null;
-  data_notificacao: string | null;
-  data_recurso_administrativo: string | null;
-  data_indeferimento_recurso: string | null;
-  numero_processo: string | null;
-  numero_requerimento: string | null;
-  numero_posse: string | null;
-  numero_porte: string | null;
-  numero_craf: string | null;
-}
-interface VendaRow { id: number; id_legado: number | null; cliente_id: number | null; }
-interface ClienteRow { id: number; id_legado: number | null; nome_completo: string | null; cpf: string | null; }
-
-interface PrazoRow {
-  itemId: number;
-  clienteIdLegado: number | null;
-  clienteId: number | null;
-  clienteNome: string;
-  cpf: string | null;
-  cadastroCrId: number | null;
-  protocolo: string | null;
-  tipo: string;
-  /** Tipo do evento que disparou a contagem (NOTIFICAÇÃO ou INDEFERIMENTO). */
-  evento: "NOTIFICAÇÃO" | "INDEFERIMENTO" | "RESTITUIÇÃO" | "MANDADO DE SEGURANÇA";
-  /** Status atual do serviço (ex.: "RECURSO ADMINISTRATIVO", "INDEFERIDO"). */
-  status: string | null;
-  dataEvento: string;
-  dataLimite: string;
-  diasRestantes: number;
-}
-
 const MAX_CARDS = 9; // 9 cards individuais + 1 card "+N"
-// Mapa de tipo curto para os serviços conhecidos (rótulo no card).
-// Demais serviços usam o nome do próprio serviço como rótulo.
-const TIPO_CURTO: Record<number, string> = {
-  2: "Posse",   // Posse na Polícia Federal
-  3: "Porte",   // Porte na Polícia Federal
-  26: "CRAF",   // CRAF na Polícia Federal
-};
 
 function toneFor(dias: number) {
   if (dias < 0)  return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
@@ -121,90 +78,11 @@ export default function DashboardPrazosRecursais() {
   const [govLoading, setGovLoading] = useState<Record<number, boolean>>({});
   const prefetchedRef = useRef<Set<number>>(new Set());
 
-  const { state, data, reload } = useWidgetLoader<PrazoRow[]>(async (signal) => {
-    const snapshot = await loadQADashboardSnapshot(signal);
-    const itensList = snapshot.itens.filter(
-      (item) =>
-        item.data_indeferimento ||
-        item.data_notificacao ||
-        item.data_indeferimento_recurso,
-    ) as ItemRow[];
-    if (!itensList.length) return [];
-
-    const vendaLegadoIds = Array.from(new Set(itensList.map(i => i.venda_id)));
-    const vendas = snapshot.vendas.filter((venda) => venda.id_legado != null && vendaLegadoIds.includes(venda.id_legado)) as VendaRow[];
-    const clienteLegadoIds = Array.from(new Set(vendas.map(v => v.cliente_id).filter(Boolean) as number[]));
-    const clientes = snapshot.clientes.filter(
-      (cliente) => cliente.id_legado != null && clienteLegadoIds.includes(cliente.id_legado)
-    ) as ClienteRow[];
-
-    const vMap = new Map(vendas.map(v => [v.id_legado, v]));
-    const cMap = new Map(clientes.map(c => [c.id_legado, c]));
-
-    // Mapa cliente_id -> cadastro_cr.id (para revelação on-demand via edge function)
-    const clienteInternalIds = clientes.map(c => c.id);
-    const cadastroMap = new Map<number, number>();
-    if (clienteInternalIds.length) {
-      const { data: crRows } = await supabase
-        .from("qa_cadastro_cr" as any)
-        .select("id, cliente_id")
-        .in("cliente_id", clienteInternalIds as any);
-      for (const row of (crRows as any[] | null) || []) {
-        if (row?.cliente_id && row?.id && !cadastroMap.has(row.cliente_id)) {
-          cadastroMap.set(row.cliente_id, Number(row.id));
-        }
-      }
-    }
-
-    const built: PrazoRow[] = [];
-    for (const it of itensList) {
-      const venda = vMap.get(it.venda_id);
-      const cliente = venda?.cliente_id != null ? cMap.get(venda.cliente_id) : null;
-      if (!cliente) continue;
-      const prazo = extrairPrazoDoItem({
-        id: it.id,
-        servico_id: it.servico_id,
-        status: it.status,
-        numero_processo: it.numero_processo,
-        data_notificacao: it.data_notificacao,
-        data_indeferimento: it.data_indeferimento,
-        data_recurso_administrativo: it.data_recurso_administrativo,
-        data_indeferimento_recurso: it.data_indeferimento_recurso,
-      });
-      if (!prazo) continue;
-      const tipoCurto = it.servico_id ? TIPO_CURTO[it.servico_id] ?? "ADM" : "ADM";
-      built.push({
-        itemId: it.id,
-        clienteIdLegado: cliente.id_legado ?? null,
-        clienteId: cliente.id ?? null,
-        clienteNome: cliente.nome_completo || `Cliente #${cliente.id}`,
-        cpf: cliente.cpf ?? null,
-        cadastroCrId: cliente.id != null ? cadastroMap.get(cliente.id) ?? null : null,
-        protocolo:
-          (it.servico_id === 2
-            ? it.numero_posse
-            : it.servico_id === 3
-              ? it.numero_requerimento
-              : it.servico_id === 26
-                ? it.numero_craf
-                : it.numero_processo) ??
-          it.numero_processo ??
-          it.numero_requerimento ??
-          it.numero_posse ??
-          it.numero_porte ??
-          it.numero_craf ??
-          null,
-        tipo: tipoCurto,
-        evento: prazo.evento,
-        status: it.status ?? null,
-        dataEvento: prazo.dataEvento,
-        dataLimite: prazo.dataLimite,
-        diasRestantes: prazo.diasRestantes,
-      });
-    }
-    built.sort((a, b) => a.diasRestantes - b.diasRestantes);
-    return built;
-  }, [], { timeoutMs: 6000 });
+  const { state, data, reload } = useWidgetLoader<QAPrazoEquipeRow[]>(
+    async (signal) => (await loadQAPrazosEquipeRows(signal)).filter((row) => row.diasRestantes >= 0),
+    [],
+    { timeoutMs: 6000 },
+  );
 
   const rows = data ?? [];
   const visible = useMemo(() => rows.slice(0, MAX_CARDS), [rows]);
@@ -283,7 +161,7 @@ export default function DashboardPrazosRecursais() {
           Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)
         </h3>
         <p className="text-[11px] text-slate-500 mt-0.5">
-          {rows.length} cliente(s) em prazo legal de manifestação · ordenado do mais antigo ao mais novo
+          {rows.length} cliente(s) com prazo ainda ativo de manifestação · ordenado do mais urgente ao menos urgente
         </p>
       </div>
 

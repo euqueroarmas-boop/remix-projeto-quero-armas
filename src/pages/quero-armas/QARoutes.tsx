@@ -58,6 +58,7 @@ const QAClientesTabsPage = lazyRetry(() => import("./QAClientesTabsPage"), "QACl
 const QAAuditoriaTabsPage = lazyRetry(() => import("./QAAuditoriaTabsPage"), "QAAuditoriaTabsPage");
 const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoesPage"), "QAClienteContratacoesPage");
 const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPage"), "QAAlertasVencimentoPage");
+const QAPrazosExpiradosPage = lazyRetry(() => import("./QAPrazosExpiradosPage"), "QAPrazosExpiradosPage");
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
 // ============================================================================
 // DEV-ONLY: Bancada visual do Wizard KYC (DocumentDataOnboardingWizard).
@@ -234,6 +235,7 @@ export default function QARoutes() {
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
           <Route path="operacao/contratacoes" element={<QAContratacoesTabsPage />} />
           <Route path="operacao/alertas-vencimento" element={<QAAlertasVencimentoPage />} />
+          <Route path="operacao/prazos-expirados" element={<QAPrazosExpiradosPage />} />
           <Route path="operacao/historico-status" element={<QAHistoricoStatusPage />} />
           <Route path="historico" element={<QAHistoricoPage />} />
           <Route path="configuracoes" element={<QAConfiguracoesPage />} />
