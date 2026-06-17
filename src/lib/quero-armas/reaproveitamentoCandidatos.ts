@@ -166,7 +166,7 @@ async function carregarRegraReaproveitamentoServico(
     console.warn("[reaproveitamento] regra por serviço indisponível", error);
     return null;
   }
-  const lista = (data ?? []) as RegraReaproveitamentoServico[];
+  const lista = (data ?? []) as unknown as RegraReaproveitamentoServico[];
   return (
     lista.find((item) => String(item.tipo_documento).toLowerCase() === String(tipoDestino).toLowerCase()) ??
     lista.find((item) => String(item.tipo_documento).toLowerCase() === tipoCompat) ??
@@ -326,7 +326,7 @@ export async function buscarCandidatosReaproveitamento(
     if (tipoCompatKey(row.tipo_documento) !== tipoCompat) continue;
     const escopoOrigem = escopoHubParaEscopoDocumento(row.escopo_documental);
     if (!escopoOrigem || escopoOrigem !== escopoDestino) continue;
-    if (escopoOrigem === "processo") continue;
+    if ((escopoOrigem as string) === "processo") continue;
     if (
       documentoForaDaRegra({
         dataValidade: row.data_validade ?? null,
