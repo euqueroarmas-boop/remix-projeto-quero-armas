@@ -120,27 +120,16 @@ const tool = {
           enum: TIPOS as unknown as string[],
           description:
             "Tipo identificado. " +
-            // Armas
             "CR=Certificado de Registro CAC (Exército). CRAF=Certificado de Registro de Arma de Fogo. SINARM=Registro/Posse/Porte PF. GT=Guia de Tráfego. GTE=Guia de Tráfego Especial. GUIA_TRANSITO=Guia de Trânsito SINARM/PF. AUTORIZACAO_COMPRA=Autorização de Compra arma/munição. NOTA_FISCAL_ARMA=NF-e de arma/munição. " +
-            // Identificação
             "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
-            // Endereço
             "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
-            // Renda
             "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal. CONTRATO_SOCIAL=contrato ou estatuto social de empresa. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
-            // Antecedentes
             "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão antecedentes PF/STF/STJ/TRF. ANTECEDENTES_ESTADUAL=certidão criminal de tribunal estadual (TJ). ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de quitação eleitoral / crimes eleitorais. " +
-            // Declarações
             "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
-            // Laudos
             "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
-            // Necessidade
             "COMPROVANTE_EFETIVA_NECESSIDADE=documento de comprovação de efetiva necessidade (segurança, ameaça etc.). DOCUMENTO_COMPLEMENTAR=documento complementar avulso do caso concreto. " +
-            // CAC
             "COMPROVANTE_HABITUALIDADE=comprovante de habitualidade de clube/entidade CAC. COMPROVANTE_CLUBE=comprovante de filiação/atividade em clube de tiro. COMPROVANTE_COMPETICAO=comprovante de participação em competição esportiva. " +
-            // Processos
             "PROTOCOLO_PROCESSO=protocolo ou número de processo administrativo. OFICIO=ofício administrativo. DESPACHO=despacho ou movimentação processual. EXIGENCIA=exigência administrativa formal. INDEFERIMENTO=decisão de indeferimento. " +
-            // Jurídico
             "PROCURACAO=procuração outorgada pelo titular. RECURSO_ADMINISTRATIVO=recurso administrativo. MANDADO_SEGURANCA=mandado de segurança ou outra peça jurídica. " +
             "DESCONHECIDO=documento ilegível, baixa confiança ou sem enquadramento.",
         },
@@ -218,7 +207,6 @@ const SYSTEM_PROMPT = [
   "• GTE: 'Guia de Tráfego Especial', Exército, acervo CAC/SIGMA, lista de armas, clubes/locais autorizados, validade prolongada.",
   "• GUIA_TRANSITO: 'Guia de Trânsito' SINARM/Polícia Federal — autorização de transporte/movimentação, origem/destino, validade.",
   "• AUTORIZACAO_COMPRA: 'Autorização de Compra' (AC) de arma ou munição, emitida pelo Exército ou PF, com prazo para execução.",
-  "• NOTA_FISCAL: NF-e/DANFE, chave de acesso de 44 dígitos, emitente, produto arma/munição.",
   "• NOTA_FISCAL_ARMA: NF-e/DANFE cujo produto seja arma de fogo ou munição; chave de acesso de 44 dígitos.",
   "",
   "=== IDENTIFICAÇÃO CIVIL ===",
@@ -321,7 +309,6 @@ const SYSTEM_PROMPT = [
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
   const x = String(t).trim().toUpperCase().replace(/[\s-]+/g, "_");
-  // Armas
   if (x === "CR") return "CR";
   if (x === "CRAF") return "CRAF";
   if (x === "SINARM" || x.includes("POSSE") || x.includes("PORTE")) return "SINARM";
@@ -330,50 +317,40 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("TRANSITO") || x.includes("TRÂNSITO") || x === "GUIA_TRANSITO") return "GUIA_TRANSITO";
   if (x.includes("AUTORIZ") || x === "AC") return "AUTORIZACAO_COMPRA";
   if ((x.includes("NOTA") || x === "NF" || x === "NFE" || x === "DANFE") && x.includes("ARMA")) return "NOTA_FISCAL_ARMA";
-  // Identificação
   if (x === "RG_COM_CPF" || x === "RG") return "RG_COM_CPF";
   if (x === "CIN") return "CIN";
   if (x === "CNH") return "CNH";
   if (x === "CPF") return "CPF";
-  // Endereço
   if (x === "COMPROVANTE_RESIDENCIA" || x.includes("RESIDENCIA") || x.includes("ENDERECO")) return "COMPROVANTE_RESIDENCIA";
   if (x.includes("RESPONSAVEL_IMOVEL") || x.includes("IMOVEL")) return "DECLARACAO_RESPONSAVEL_IMOVEL";
-  // Renda
   if (x === "CTPS" || x.includes("CARTEIRA_DE_TRABALHO")) return "CTPS";
   if (x === "HOLERITE" || x.includes("HOLERITE") || x.includes("CONTRACHEQUE")) return "HOLERITE";
   if (x === "CARTAO_CNPJ" || x.includes("CNPJ")) return "CARTAO_CNPJ";
   if (x.includes("CONTRATO_SOCIAL")) return "CONTRATO_SOCIAL";
   if (x.includes("BENEFICIO") || x.includes("BENEFÍCIO")) return "COMPROVANTE_BENEFICIO";
   if (x.includes("INSS")) return "EXTRATO_INSS";
-  // Antecedentes
   if (x === "ANTECEDENTES_CRIMINAIS" || (x.includes("ANTECEDENTE") && !x.includes("FED") && !x.includes("MIL") && !x.includes("ELEIT") && !x.includes("EST"))) return "ANTECEDENTES_CRIMINAIS";
   if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
   if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
   if (x.includes("ANTECEDENTE") && x.includes("MIL")) return "ANTECEDENTES_MILITAR";
   if (x.includes("ANTECEDENTE") && x.includes("ELEIT")) return "ANTECEDENTES_ELEITORAL";
-  // Declarações
   if (x.includes("NAO_INQUERITO") || x.includes("NÃO_INQUERITO")) return "DECLARACAO_NAO_INQUERITO";
   if (x.includes("GUARDA_RESPONSAVEL")) return "DECLARACAO_GUARDA_RESPONSAVEL";
   if (x.includes("GUARDA_ACERVO")) return "DECLARACAO_GUARDA_ACERVO";
   if (x.includes("DECLARACAO") || x.includes("DECLARAÇÃO")) return "DECLARACAO_CORRELATA";
-  // Laudos
   if (x.includes("PSICOL")) return "LAUDO_PSICOLOGICO";
   if (x.includes("CAPACIDADE") || x.includes("TECNICA") || x.includes("TÉCNICA")) return "LAUDO_CAPACIDADE_TECNICA";
   if (x.includes("LAUDO") || x.includes("EXAME")) return "LAUDO_PSICOLOGICO";
-  // Efetiva necessidade
   if (x.includes("EFETIVA") || x.includes("NECESSIDADE")) return "COMPROVANTE_EFETIVA_NECESSIDADE";
   if (x.includes("COMPLEMENTAR")) return "DOCUMENTO_COMPLEMENTAR";
-  // CAC
   if (x.includes("HABITUALIDADE")) return "COMPROVANTE_HABITUALIDADE";
   if (x.includes("CLUBE")) return "COMPROVANTE_CLUBE";
   if (x.includes("COMPETICAO") || x.includes("COMPETIÇÃO")) return "COMPROVANTE_COMPETICAO";
-  // Processuais
   if (x.includes("PROTOCOLO")) return "PROTOCOLO_PROCESSO";
   if (x === "OFICIO" || x === "OFÍCIO") return "OFICIO";
   if (x.includes("DESPACHO")) return "DESPACHO";
   if (x.includes("EXIGENCIA") || x.includes("EXIGÊNCIA")) return "EXIGENCIA";
   if (x.includes("INDEFERIMENTO")) return "INDEFERIMENTO";
-  // Jurídico
   if (x.includes("PROCURACAO") || x.includes("PROCURAÇÃO")) return "PROCURACAO";
   if (x.includes("RECURSO")) return "RECURSO_ADMINISTRATIVO";
   if (x.includes("MANDADO") || x.includes("HABEAS")) return "MANDADO_SEGURANCA";
@@ -483,10 +460,6 @@ Deno.serve(async (req) => {
     const tipoNorm = normalizeTipoSelecionado(tipoSelecionado);
     const divergencia = !!tipoNorm && tipoDetectado !== "DESCONHECIDO" && tipoNorm !== tipoDetectado;
 
-    // Recomendação:
-    //  >= 0.80 e sem divergência → aceitar
-    //  0.50–0.79 ou (>=0.80 com divergência) → confirmar (cliente confirma na tela)
-    //  < 0.50 ou DESCONHECIDO → revisao_obrigatoria
     let recomendacao: "aceitar" | "confirmar" | "revisao_obrigatoria";
     if (tipoDetectado === "DESCONHECIDO" || confianca < 0.5) {
       recomendacao = "revisao_obrigatoria";
