@@ -191,7 +191,7 @@ SET
   updated_at = now();
 
 WITH compat AS (
-  SELECT
+  SELECT DISTINCT ON (sd.servico_id::bigint, lower(sd.tipo_documento))
     sd.servico_id::bigint AS servico_id,
     lower(sd.tipo_documento) AS tipo_documento,
     sd.obrigatorio,
@@ -202,6 +202,11 @@ WITH compat AS (
   FROM public.qa_servicos_documentos sd
   JOIN public.qa_tipos_documento_catalogo c
     ON c.tipo_documento = lower(sd.tipo_documento)
+  ORDER BY
+    sd.servico_id::bigint,
+    lower(sd.tipo_documento),
+    coalesce(sd.ordem, 100),
+    sd.obrigatorio DESC
 )
 INSERT INTO public.qa_tipos_documento_servicos (
   servico_id,
