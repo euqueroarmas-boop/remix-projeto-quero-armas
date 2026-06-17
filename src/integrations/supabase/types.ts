@@ -4980,11 +4980,14 @@ export type Database = {
           arquivo_storage_path: string | null
           cadastro_publico_id: string | null
           campos_complementares_json: Json | null
+          categoria_hub: string | null
           created_at: string
           customer_id: string | null
           data_emissao: string | null
           data_validade: string | null
           endereco_em_nome_de_terceiro: boolean
+          escopo_documental: string | null
+          fonte_normativa: string[] | null
           ia_dados_extraidos: Json | null
           ia_processado_em: string | null
           ia_status: string
@@ -4998,10 +5001,14 @@ export type Database = {
           orgao_emissor: string | null
           origem: string
           qa_cliente_id: number | null
+          reaproveitavel_global: boolean
           reprovado_em: string | null
           reprovado_por: string | null
+          revisao_humana_obrigatoria: boolean
+          servicos_compativeis: string[] | null
           sistema_registro: string | null
           status: string
+          subcategoria_hub: string | null
           substitui_documento_id: string | null
           substituido_em: string | null
           substituido_por_documento_id: string | null
@@ -5013,6 +5020,7 @@ export type Database = {
           validado_em: string | null
           validado_por: string | null
           versao: number
+          vigencia_regra: string | null
         }
         Insert: {
           aprovado_em?: string | null
@@ -5027,11 +5035,14 @@ export type Database = {
           arquivo_storage_path?: string | null
           cadastro_publico_id?: string | null
           campos_complementares_json?: Json | null
+          categoria_hub?: string | null
           created_at?: string
           customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
           endereco_em_nome_de_terceiro?: boolean
+          escopo_documental?: string | null
+          fonte_normativa?: string[] | null
           ia_dados_extraidos?: Json | null
           ia_processado_em?: string | null
           ia_status?: string
@@ -5045,10 +5056,14 @@ export type Database = {
           orgao_emissor?: string | null
           origem?: string
           qa_cliente_id?: number | null
+          reaproveitavel_global?: boolean
           reprovado_em?: string | null
           reprovado_por?: string | null
+          revisao_humana_obrigatoria?: boolean
+          servicos_compativeis?: string[] | null
           sistema_registro?: string | null
           status?: string
+          subcategoria_hub?: string | null
           substitui_documento_id?: string | null
           substituido_em?: string | null
           substituido_por_documento_id?: string | null
@@ -5060,6 +5075,7 @@ export type Database = {
           validado_em?: string | null
           validado_por?: string | null
           versao?: number
+          vigencia_regra?: string | null
         }
         Update: {
           aprovado_em?: string | null
@@ -5074,11 +5090,14 @@ export type Database = {
           arquivo_storage_path?: string | null
           cadastro_publico_id?: string | null
           campos_complementares_json?: Json | null
+          categoria_hub?: string | null
           created_at?: string
           customer_id?: string | null
           data_emissao?: string | null
           data_validade?: string | null
           endereco_em_nome_de_terceiro?: boolean
+          escopo_documental?: string | null
+          fonte_normativa?: string[] | null
           ia_dados_extraidos?: Json | null
           ia_processado_em?: string | null
           ia_status?: string
@@ -5092,10 +5111,14 @@ export type Database = {
           orgao_emissor?: string | null
           origem?: string
           qa_cliente_id?: number | null
+          reaproveitavel_global?: boolean
           reprovado_em?: string | null
           reprovado_por?: string | null
+          revisao_humana_obrigatoria?: boolean
+          servicos_compativeis?: string[] | null
           sistema_registro?: string | null
           status?: string
+          subcategoria_hub?: string | null
           substitui_documento_id?: string | null
           substituido_em?: string | null
           substituido_por_documento_id?: string | null
@@ -5107,6 +5130,7 @@ export type Database = {
           validado_em?: string | null
           validado_por?: string | null
           versao?: number
+          vigencia_regra?: string | null
         }
         Relationships: [
           {
@@ -8287,6 +8311,110 @@ export type Database = {
           reside_desde?: string | null
         }
         Relationships: []
+      }
+      qa_tipos_documento_catalogo: {
+        Row: {
+          aceita_ia: boolean
+          aceita_vinculo_arma: boolean
+          ativo: boolean
+          categoria_hub: string
+          created_at: string
+          descricao_upload: string | null
+          escopo_documental: string
+          exige_validade: boolean
+          fonte_normativa: string[]
+          label_publico: string
+          ordem: number
+          reaproveitavel_global: boolean
+          revisao_humana_obrigatoria: boolean
+          subcategoria_hub: string | null
+          tipo_documento: string
+          updated_at: string
+        }
+        Insert: {
+          aceita_ia?: boolean
+          aceita_vinculo_arma?: boolean
+          ativo?: boolean
+          categoria_hub: string
+          created_at?: string
+          descricao_upload?: string | null
+          escopo_documental: string
+          exige_validade?: boolean
+          fonte_normativa?: string[]
+          label_publico: string
+          ordem?: number
+          reaproveitavel_global?: boolean
+          revisao_humana_obrigatoria?: boolean
+          subcategoria_hub?: string | null
+          tipo_documento: string
+          updated_at?: string
+        }
+        Update: {
+          aceita_ia?: boolean
+          aceita_vinculo_arma?: boolean
+          ativo?: boolean
+          categoria_hub?: string
+          created_at?: string
+          descricao_upload?: string | null
+          escopo_documental?: string
+          exige_validade?: boolean
+          fonte_normativa?: string[]
+          label_publico?: string
+          ordem?: number
+          reaproveitavel_global?: boolean
+          revisao_humana_obrigatoria?: boolean
+          subcategoria_hub?: string | null
+          tipo_documento?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qa_tipos_documento_servicos: {
+        Row: {
+          created_at: string
+          id: number
+          modo_reaproveitamento: string
+          obrigatorio: boolean
+          observacao_regra: string | null
+          ordem: number
+          servico_id: number
+          tipo_documento: string
+          updated_at: string
+          validade_dias: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          modo_reaproveitamento?: string
+          obrigatorio?: boolean
+          observacao_regra?: string | null
+          ordem?: number
+          servico_id: number
+          tipo_documento: string
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          modo_reaproveitamento?: string
+          obrigatorio?: boolean
+          observacao_regra?: string | null
+          ordem?: number
+          servico_id?: number
+          tipo_documento?: string
+          updated_at?: string
+          validade_dias?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_tipos_documento_servicos_tipo_documento_fkey"
+            columns: ["tipo_documento"]
+            isOneToOne: false
+            referencedRelation: "qa_tipos_documento_catalogo"
+            referencedColumns: ["tipo_documento"]
+          },
+        ]
       }
       qa_usuarios_perfis: {
         Row: {
