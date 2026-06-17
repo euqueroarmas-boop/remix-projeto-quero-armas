@@ -45,6 +45,7 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const TIPOS = [
+  // Armas / acervo
   "CR",
   "CRAF",
   "SINARM",
@@ -52,8 +53,55 @@ const TIPOS = [
   "GTE",
   "GUIA_TRANSITO",
   "AUTORIZACAO_COMPRA",
-  "NOTA_FISCAL",
-  "EXAME_LAUDO",
+  "NOTA_FISCAL_ARMA",
+  // Identificação civil
+  "RG_COM_CPF",
+  "CIN",
+  "CNH",
+  "CPF",
+  // Endereço
+  "COMPROVANTE_RESIDENCIA",
+  "DECLARACAO_RESPONSAVEL_IMOVEL",
+  // Renda / ocupação
+  "CTPS",
+  "HOLERITE",
+  "CARTAO_CNPJ",
+  "CONTRATO_SOCIAL",
+  "NOTA_FISCAL_AUTONOMO",
+  "COMPROVANTE_BENEFICIO",
+  "EXTRATO_INSS",
+  // Antecedentes
+  "ANTECEDENTES_CRIMINAIS",
+  "ANTECEDENTES_FEDERAL",
+  "ANTECEDENTES_ESTADUAL",
+  "ANTECEDENTES_MILITAR",
+  "ANTECEDENTES_ELEITORAL",
+  // Declarações
+  "DECLARACAO_NAO_INQUERITO",
+  "DECLARACAO_GUARDA_RESPONSAVEL",
+  "DECLARACAO_CORRELATA",
+  "DECLARACAO_GUARDA_ACERVO",
+  // Laudos
+  "LAUDO_PSICOLOGICO",
+  "LAUDO_CAPACIDADE_TECNICA",
+  // Efetiva necessidade
+  "COMPROVANTE_EFETIVA_NECESSIDADE",
+  "DOCUMENTO_COMPLEMENTAR",
+  // CAC / habitualidade
+  "COMPROVANTE_HABITUALIDADE",
+  "COMPROVANTE_CLUBE",
+  "COMPROVANTE_COMPETICAO",
+  // Documentos processuais
+  "PROTOCOLO_PROCESSO",
+  "OFICIO",
+  "DESPACHO",
+  "EXIGENCIA",
+  "INDEFERIMENTO",
+  // Jurídico
+  "PROCURACAO",
+  "RECURSO_ADMINISTRATIVO",
+  "MANDADO_SEGURANCA",
+  // Fallback
   "DESCONHECIDO",
 ] as const;
 type Tipo = typeof TIPOS[number];
@@ -63,7 +111,7 @@ const tool = {
   function: {
     name: "classificar_documento_arma",
     description:
-      "Classifica um documento de cliente CAC/atirador relacionado a armas: CRAF, GT (Guia de Tráfego), GTE (Guia de Tráfego Especial), Guia de Trânsito SINARM/PF, Nota Fiscal, Exame/Laudo, ou Desconhecido.",
+      "Classifica qualquer documento enviado por um cliente no Hub Documental brasileiro (armas, identificação civil, renda, antecedentes, declarações, laudos, CAC, processos administrativos e jurídicos).",
     parameters: {
       type: "object",
       properties: {
@@ -71,7 +119,30 @@ const tool = {
           type: "string",
           enum: TIPOS as unknown as string[],
           description:
-            "Tipo identificado. CR=Certificado de Registro CAC (Exército, sem arma específica). CRAF=Certificado de Registro de Arma de Fogo (Exército/SIGMA, vinculado a uma arma). SINARM=Registro/Posse/Porte da Polícia Federal (SINARM, vinculado a uma arma civil). GT=Guia de Tráfego (retirada na loja, transporte inicial). GTE=Guia de Tráfego Especial (Exército, acervo SIGMA/CAC, validade prolongada). GUIA_TRANSITO=Guia de Trânsito SINARM/PF (autorização de movimentação). AUTORIZACAO_COMPRA=Autorização de Compra de arma/munição emitida pelo Exército ou PF. NOTA_FISCAL=NF-e/DANFE de arma ou munição. EXAME_LAUDO=laudo psicológico/técnico/aptidão. DESCONHECIDO=baixa confiança ou ilegível.",
+            "Tipo identificado. " +
+            // Armas
+            "CR=Certificado de Registro CAC (Exército). CRAF=Certificado de Registro de Arma de Fogo. SINARM=Registro/Posse/Porte PF. GT=Guia de Tráfego. GTE=Guia de Tráfego Especial. GUIA_TRANSITO=Guia de Trânsito SINARM/PF. AUTORIZACAO_COMPRA=Autorização de Compra arma/munição. NOTA_FISCAL_ARMA=NF-e de arma/munição. " +
+            // Identificação
+            "RG_COM_CPF=RG com CPF ou documento de identidade estadual com CPF. CIN=Carteira de Identidade Nacional. CNH=Carteira Nacional de Habilitação. CPF=Cadastro de Pessoa Física (Receita Federal). " +
+            // Endereço
+            "COMPROVANTE_RESIDENCIA=conta de luz/água/gás/telefone/bancária com endereço. DECLARACAO_RESPONSAVEL_IMOVEL=declaração assinada pelo responsável pelo imóvel. " +
+            // Renda
+            "CTPS=Carteira de Trabalho (física ou digital). HOLERITE=contracheque/holerite/demonstrativo de pagamento. CARTAO_CNPJ=cartão CNPJ da Receita Federal. CONTRATO_SOCIAL=contrato ou estatuto social de empresa. NOTA_FISCAL_AUTONOMO=NF de autônomo/MEI. COMPROVANTE_BENEFICIO=comprovante INSS, previdência, benefício social. EXTRATO_INSS=extrato de contribuições INSS. " +
+            // Antecedentes
+            "ANTECEDENTES_CRIMINAIS=certidão de antecedentes criminais (PC estadual). ANTECEDENTES_FEDERAL=certidão antecedentes PF/STF/STJ/TRF. ANTECEDENTES_ESTADUAL=certidão criminal de tribunal estadual (TJ). ANTECEDENTES_MILITAR=certidão de antecedentes militares. ANTECEDENTES_ELEITORAL=certidão de quitação eleitoral / crimes eleitorais. " +
+            // Declarações
+            "DECLARACAO_NAO_INQUERITO=declaração de não responder a inquérito ou processo criminal. DECLARACAO_GUARDA_RESPONSAVEL=declaração de guarda responsável de arma. DECLARACAO_CORRELATA=outra declaração pessoal do titular. DECLARACAO_GUARDA_ACERVO=declaração de guarda de acervo CAC (1 ou 2 endereços). " +
+            // Laudos
+            "LAUDO_PSICOLOGICO=laudo psicológico de aptidão. LAUDO_CAPACIDADE_TECNICA=atestado de capacidade técnica. " +
+            // Necessidade
+            "COMPROVANTE_EFETIVA_NECESSIDADE=documento de comprovação de efetiva necessidade (segurança, ameaça etc.). DOCUMENTO_COMPLEMENTAR=documento complementar avulso do caso concreto. " +
+            // CAC
+            "COMPROVANTE_HABITUALIDADE=comprovante de habitualidade de clube/entidade CAC. COMPROVANTE_CLUBE=comprovante de filiação/atividade em clube de tiro. COMPROVANTE_COMPETICAO=comprovante de participação em competição esportiva. " +
+            // Processos
+            "PROTOCOLO_PROCESSO=protocolo ou número de processo administrativo. OFICIO=ofício administrativo. DESPACHO=despacho ou movimentação processual. EXIGENCIA=exigência administrativa formal. INDEFERIMENTO=decisão de indeferimento. " +
+            // Jurídico
+            "PROCURACAO=procuração outorgada pelo titular. RECURSO_ADMINISTRATIVO=recurso administrativo. MANDADO_SEGURANCA=mandado de segurança ou outra peça jurídica. " +
+            "DESCONHECIDO=documento ilegível, baixa confiança ou sem enquadramento.",
         },
         confianca: {
           type: "number",
@@ -136,9 +207,10 @@ const tool = {
 };
 
 const SYSTEM_PROMPT = [
-  "Você é especialista em documentos brasileiros de armas de fogo (Polícia Federal, Exército, SINARM, SIGMA, CAC).",
+  "Você é especialista em classificação de documentos brasileiros para processos administrativos de armas de fogo (SINARM, SIGMA, CAC, Polícia Federal, Exército) e documentos pessoais/civis do requerente.",
   "Sua tarefa é identificar o TIPO do documento enviado e extrair fielmente os campos principais.",
-  "Sinais por tipo:",
+  "",
+  "=== DOCUMENTOS DE ARMAS / ACERVO ===",
   "• CR: 'Certificado de Registro' de CAC (Exército), número do CR, sem vínculo a uma arma específica, validade longa.",
   "• CRAF: 'Certificado de Registro de Arma de Fogo', número do CRAF, dados da arma (marca/modelo/série/calibre), SIGMA ou SINARM, validade.",
   "• SINARM: registro/posse/porte da Polícia Federal, número SINARM, dados da arma civil.",
@@ -147,7 +219,65 @@ const SYSTEM_PROMPT = [
   "• GUIA_TRANSITO: 'Guia de Trânsito' SINARM/Polícia Federal — autorização de transporte/movimentação, origem/destino, validade.",
   "• AUTORIZACAO_COMPRA: 'Autorização de Compra' (AC) de arma ou munição, emitida pelo Exército ou PF, com prazo para execução.",
   "• NOTA_FISCAL: NF-e/DANFE, chave de acesso de 44 dígitos, emitente, produto arma/munição.",
-  "• EXAME_LAUDO: laudo psicológico, capacidade técnica, aptidão; profissional/instrutor/psicólogo.",
+  "• NOTA_FISCAL_ARMA: NF-e/DANFE cujo produto seja arma de fogo ou munição; chave de acesso de 44 dígitos.",
+  "",
+  "=== IDENTIFICAÇÃO CIVIL ===",
+  "• RG_COM_CPF: carteira de identidade estadual (RG) que traga o CPF impresso; órgãos como SSP, DETRAN, IIRGD.",
+  "• CIN: Carteira de Identidade Nacional — cabeçalho 'CARTEIRA DE IDENTIDADE NACIONAL' ou 'CIN'; emitida pelo governo federal a partir de 2023; traz QR-Code e número de 9 dígitos.",
+  "• CNH: Carteira Nacional de Habilitação; categorias (A, B, AB…); DETRAN ou SENATRAN; validade com prazo de renovação.",
+  "• CPF: documento emitido pela Receita Federal com o número de CPF; pode ser cartão físico, impresso ou extrato online.",
+  "",
+  "=== RESIDÊNCIA / ENDEREÇO ===",
+  "• COMPROVANTE_RESIDENCIA: conta de concessionária (luz, água, gás, telefone) ou extrato bancário/cartão com endereço do titular; data recente.",
+  "• DECLARACAO_RESPONSAVEL_IMOVEL: declaração assinada pelo proprietário/responsável do imóvel confirmando que o titular reside no local.",
+  "",
+  "=== RENDA / OCUPAÇÃO ===",
+  "• CTPS: Carteira de Trabalho e Previdência Social (física ou digital CTPS); registros de emprego, data de admissão.",
+  "• HOLERITE: contracheque, holerite ou demonstrativo de salário/pagamento; nome do empregador, mês/ano de competência, valor líquido.",
+  "• CARTAO_CNPJ: comprovante de inscrição CNPJ emitido pela Receita Federal; razão social, CNPJ, situação cadastral.",
+  "• CONTRATO_SOCIAL: contrato social, estatuto ou requerimento de empresário; cláusulas de objeto e sócios.",
+  "• NOTA_FISCAL_AUTONOMO: nota fiscal de prestação de serviço emitida por autônomo ou MEI.",
+  "• COMPROVANTE_BENEFICIO: comprovante de benefício do INSS (aposentadoria, pensão, auxílio); número do benefício.",
+  "• EXTRATO_INSS: extrato de contribuições ao INSS ou Carta de Concessão via Meu INSS.",
+  "",
+  "=== ANTECEDENTES / REGULARIDADE ===",
+  "• ANTECEDENTES_CRIMINAIS: certidão de antecedentes criminais emitida pela Polícia Civil estadual (PC/SSP); geralmente menciona 'nada consta' ou lista registros.",
+  "• ANTECEDENTES_FEDERAL: certidão criminal da Polícia Federal, STF, STJ ou TRF; menciona 'Polícia Federal', 'Tribunal Regional Federal', 'STJ' ou 'STF'.",
+  "• ANTECEDENTES_ESTADUAL: certidão criminal de Tribunal de Justiça estadual (TJ-SP, TJ-MG, TJ-RS…); cabeçalho do TJ.",
+  "• ANTECEDENTES_MILITAR: certidão de antecedentes de tribunal militar (TJM, STM) ou da Justiça Militar.",
+  "• ANTECEDENTES_ELEITORAL: certidão de quitação eleitoral ou certidão de crimes eleitorais emitida pelo TSE ou TRE.",
+  "",
+  "=== DECLARAÇÕES PESSOAIS ===",
+  "• DECLARACAO_NAO_INQUERITO: declaração pessoal assinada pelo titular afirmando não responder a inquérito policial nem a processo criminal.",
+  "• DECLARACAO_GUARDA_RESPONSAVEL: declaração de responsabilidade pela guarda e uso de arma de fogo.",
+  "• DECLARACAO_CORRELATA: outra declaração pessoal do titular (estado civil, capacidade, vínculos etc.).",
+  "• DECLARACAO_GUARDA_ACERVO: declaração de local de guarda do acervo CAC; menciona 1 ou 2 endereços autorizados.",
+  "",
+  "=== LAUDOS E EXAMES ===",
+  "• LAUDO_PSICOLOGICO: laudo de aptidão psicológica assinado por psicólogo CRP; menciona 'aptidão psicológica', 'avaliação psicológica', CRP.",
+  "• LAUDO_CAPACIDADE_TECNICA: atestado de capacidade técnica ou proficiência no manuseio de armas; assinado por instrutor credenciado.",
+  "",
+  "=== EFETIVA NECESSIDADE ===",
+  "• COMPROVANTE_EFETIVA_NECESSIDADE: boletim de ocorrência, decisão judicial de ameaça, declaração de risco ou outro documento que comprove necessidade efetiva de portar arma.",
+  "• DOCUMENTO_COMPLEMENTAR: qualquer documento avulso complementar que não se enquadra nos tipos anteriores mas foi anexado ao processo.",
+  "",
+  "=== CAC / HABITUALIDADE ===",
+  "• COMPROVANTE_HABITUALIDADE: comprovante de habitualidade emitido por clube ou entidade CAC conforme regulamento do Exército; menciona 'habitualidade', frequência de treinos.",
+  "• COMPROVANTE_CLUBE: comprovante de filiação ativa a clube de tiro ou federação esportiva.",
+  "• COMPROVANTE_COMPETICAO: diploma, certificado ou resultado de competição esportiva de tiro.",
+  "",
+  "=== DOCUMENTOS PROCESSUAIS ===",
+  "• PROTOCOLO_PROCESSO: protocolo de processo administrativo (número de protocolo, data, órgão receptor).",
+  "• OFICIO: ofício administrativo emitido por órgão público (PF, Exército, SSP); cabeçalho oficial, número do ofício, destinatário.",
+  "• DESPACHO: despacho ou movimentação em processo administrativo; numeração processual, data.",
+  "• EXIGENCIA: notificação de exigência administrativa — lista de pendências que o requerente deve cumprir.",
+  "• INDEFERIMENTO: decisão de indeferimento de requerimento; fundamentação legal, prazo para recurso.",
+  "",
+  "=== DOCUMENTOS JURÍDICOS ===",
+  "• PROCURACAO: instrumento de procuração outorgando poderes; outorgante, outorgado, qualificação, poderes específicos.",
+  "• RECURSO_ADMINISTRATIVO: petição de recurso administrativo com fundamentos, pedido e assinatura de advogado ou do próprio requerente.",
+  "• MANDADO_SEGURANCA: peça jurídica de mandado de segurança, habeas corpus ou outra ação judicial.",
+  "",
   "• DESCONHECIDO: quando não houver evidências fortes — use confianca < 0.5.",
   "REGRA DE OURO — EXTRAÇÃO FIEL:",
   "• Extraia EXATAMENTE como está escrito no documento. NÃO troque letras por números nem números por letras.",
@@ -191,16 +321,62 @@ const SYSTEM_PROMPT = [
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
   const x = String(t).trim().toUpperCase().replace(/[\s-]+/g, "_");
+  // Armas
   if (x === "CR") return "CR";
   if (x === "CRAF") return "CRAF";
   if (x === "SINARM" || x.includes("POSSE") || x.includes("PORTE")) return "SINARM";
   if (x === "GT" || x === "GUIA_DE_TRAFEGO" || x === "GUIA_TRAFEGO") return "GT";
   if (x === "GTE" || x === "GUIA_DE_TRAFEGO_ESPECIAL" || x === "GUIA_TRAFEGO_ESPECIAL") return "GTE";
   if (x.includes("TRANSITO") || x.includes("TRÂNSITO") || x === "GUIA_TRANSITO") return "GUIA_TRANSITO";
-  if (x.includes("NOTA") || x === "NF" || x === "NFE" || x === "DANFE" || x === "NOTA_FISCAL")
-    return "NOTA_FISCAL";
-  if (x.includes("EXAME") || x.includes("LAUDO") || x === "EXAME_LAUDO") return "EXAME_LAUDO";
   if (x.includes("AUTORIZ") || x === "AC") return "AUTORIZACAO_COMPRA";
+  if ((x.includes("NOTA") || x === "NF" || x === "NFE" || x === "DANFE") && x.includes("ARMA")) return "NOTA_FISCAL_ARMA";
+  // Identificação
+  if (x === "RG_COM_CPF" || x === "RG") return "RG_COM_CPF";
+  if (x === "CIN") return "CIN";
+  if (x === "CNH") return "CNH";
+  if (x === "CPF") return "CPF";
+  // Endereço
+  if (x === "COMPROVANTE_RESIDENCIA" || x.includes("RESIDENCIA") || x.includes("ENDERECO")) return "COMPROVANTE_RESIDENCIA";
+  if (x.includes("RESPONSAVEL_IMOVEL") || x.includes("IMOVEL")) return "DECLARACAO_RESPONSAVEL_IMOVEL";
+  // Renda
+  if (x === "CTPS" || x.includes("CARTEIRA_DE_TRABALHO")) return "CTPS";
+  if (x === "HOLERITE" || x.includes("HOLERITE") || x.includes("CONTRACHEQUE")) return "HOLERITE";
+  if (x === "CARTAO_CNPJ" || x.includes("CNPJ")) return "CARTAO_CNPJ";
+  if (x.includes("CONTRATO_SOCIAL")) return "CONTRATO_SOCIAL";
+  if (x.includes("BENEFICIO") || x.includes("BENEFÍCIO")) return "COMPROVANTE_BENEFICIO";
+  if (x.includes("INSS")) return "EXTRATO_INSS";
+  // Antecedentes
+  if (x === "ANTECEDENTES_CRIMINAIS" || (x.includes("ANTECEDENTE") && !x.includes("FED") && !x.includes("MIL") && !x.includes("ELEIT") && !x.includes("EST"))) return "ANTECEDENTES_CRIMINAIS";
+  if (x.includes("ANTECEDENTE") && x.includes("FED")) return "ANTECEDENTES_FEDERAL";
+  if (x.includes("ANTECEDENTE") && x.includes("EST")) return "ANTECEDENTES_ESTADUAL";
+  if (x.includes("ANTECEDENTE") && x.includes("MIL")) return "ANTECEDENTES_MILITAR";
+  if (x.includes("ANTECEDENTE") && x.includes("ELEIT")) return "ANTECEDENTES_ELEITORAL";
+  // Declarações
+  if (x.includes("NAO_INQUERITO") || x.includes("NÃO_INQUERITO")) return "DECLARACAO_NAO_INQUERITO";
+  if (x.includes("GUARDA_RESPONSAVEL")) return "DECLARACAO_GUARDA_RESPONSAVEL";
+  if (x.includes("GUARDA_ACERVO")) return "DECLARACAO_GUARDA_ACERVO";
+  if (x.includes("DECLARACAO") || x.includes("DECLARAÇÃO")) return "DECLARACAO_CORRELATA";
+  // Laudos
+  if (x.includes("PSICOL")) return "LAUDO_PSICOLOGICO";
+  if (x.includes("CAPACIDADE") || x.includes("TECNICA") || x.includes("TÉCNICA")) return "LAUDO_CAPACIDADE_TECNICA";
+  if (x.includes("LAUDO") || x.includes("EXAME")) return "LAUDO_PSICOLOGICO";
+  // Efetiva necessidade
+  if (x.includes("EFETIVA") || x.includes("NECESSIDADE")) return "COMPROVANTE_EFETIVA_NECESSIDADE";
+  if (x.includes("COMPLEMENTAR")) return "DOCUMENTO_COMPLEMENTAR";
+  // CAC
+  if (x.includes("HABITUALIDADE")) return "COMPROVANTE_HABITUALIDADE";
+  if (x.includes("CLUBE")) return "COMPROVANTE_CLUBE";
+  if (x.includes("COMPETICAO") || x.includes("COMPETIÇÃO")) return "COMPROVANTE_COMPETICAO";
+  // Processuais
+  if (x.includes("PROTOCOLO")) return "PROTOCOLO_PROCESSO";
+  if (x === "OFICIO" || x === "OFÍCIO") return "OFICIO";
+  if (x.includes("DESPACHO")) return "DESPACHO";
+  if (x.includes("EXIGENCIA") || x.includes("EXIGÊNCIA")) return "EXIGENCIA";
+  if (x.includes("INDEFERIMENTO")) return "INDEFERIMENTO";
+  // Jurídico
+  if (x.includes("PROCURACAO") || x.includes("PROCURAÇÃO")) return "PROCURACAO";
+  if (x.includes("RECURSO")) return "RECURSO_ADMINISTRATIVO";
+  if (x.includes("MANDADO") || x.includes("HABEAS")) return "MANDADO_SEGURANCA";
   return null;
 }
 

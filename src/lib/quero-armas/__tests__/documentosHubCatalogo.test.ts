@@ -29,10 +29,10 @@ describe("documentosHubCatalogo", () => {
     expect(isCategoriaPermanente("documentos_processo")).toBe(false);
   });
 
-  it("classifica documentos jurídicos como documentos processuais", () => {
-    expect(inferHubCategoriaFromTipo("procuracao")).toBe("documentos_processo");
-    expect(inferHubCategoriaFromTipo("recurso_administrativo_doc")).toBe("documentos_processo");
-    expect(inferHubCategoriaFromTipo("mandado_seguranca_doc")).toBe("documentos_processo");
+  it("classifica documentos jurídicos na categoria juridico, processuais em documentos_processo", () => {
+    expect(inferHubCategoriaFromTipo("procuracao")).toBe("juridico");
+    expect(inferHubCategoriaFromTipo("recurso_administrativo_doc")).toBe("juridico");
+    expect(inferHubCategoriaFromTipo("mandado_seguranca_doc")).toBe("juridico");
     expect(inferHubCategoriaFromTipo("oficio")).toBe("documentos_processo");
   });
 
@@ -43,11 +43,15 @@ describe("documentosHubCatalogo", () => {
 
   it("oferece tipos novos do catálogo expandido", () => {
     const docsProcesso = listTiposByCategoria("documentos_processo").map((item) => item.value);
+    const docsJuridicos = listTiposByCategoria("juridico").map((item) => item.value);
     const declaracoes = listTiposByCategoria("declaracoes").map((item) => item.value);
     const necessidade = listTiposByCategoria("efetiva_necessidade").map((item) => item.value);
 
     expect(docsProcesso).toContain("oficio");
-    expect(docsProcesso).toContain("procuracao");
+    // procuracao, recurso e mandado são peças jurídicas — pertencem à categoria "juridico"
+    expect(docsJuridicos).toContain("procuracao");
+    expect(docsJuridicos).toContain("recurso_administrativo_doc");
+    expect(docsJuridicos).toContain("mandado_seguranca_doc");
     expect(declaracoes).toContain("declaracao_correlata");
     expect(necessidade).toContain("documento_complementar_caso");
   });

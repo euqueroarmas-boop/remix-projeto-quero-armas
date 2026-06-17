@@ -98,7 +98,7 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
   {
     value: "juridico",
-    label: "Documentos processuais",
+    label: "Documentos jurídicos",
     description: "Procurações, recursos, mandados e demais peças jurídicas do caso.",
     escopoPadrao: "processo",
   },
@@ -155,9 +155,9 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "despacho", label: "Despacho / movimentação", short: "DESPACHO", categoria: "documentos_processo", escopo: "processo" },
   { value: "exigencia", label: "Exigência administrativa", short: "EXIGÊNCIA", categoria: "documentos_processo", escopo: "processo" },
   { value: "indeferimento", label: "Indeferimento", short: "INDEFER.", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "procuracao", label: "Procuração", short: "PROC.", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "recurso_administrativo_doc", label: "Recurso administrativo", short: "RECURSO", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "mandado_seguranca_doc", label: "Mandado de segurança / peça jurídica", short: "MS", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "procuracao", label: "Procuração", short: "PROC.", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "recurso_administrativo_doc", label: "Recurso administrativo", short: "RECURSO", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "mandado_seguranca_doc", label: "Mandado de segurança / peça jurídica", short: "MS", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "outro", label: "Outro documento", short: "OUTRO", categoria: "outros", escopo: "processo" },
 ] as const;
 
@@ -188,7 +188,7 @@ export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefin
   if (meta) return meta.categoria;
   if (isDocDeArma(tipo)) return "arma_acervo";
   if (tipo.includes("efetiva_necessidade")) return "efetiva_necessidade";
-  if (tipo.includes("procuracao") || tipo.includes("recurso") || tipo.includes("mandado")) return "documentos_processo";
+  if (tipo.includes("procuracao") || tipo.includes("recurso") || tipo.includes("mandado")) return "juridico";
   if (tipo.includes("protocolo") || tipo.includes("indeferimento") || tipo.includes("exigencia")) return "documentos_processo";
   if (tipo.includes("oficio") || tipo.includes("despacho")) return "documentos_processo";
   if (tipo.includes("habitualidade") || tipo.includes("clube") || tipo.includes("competicao")) return "cac_atividade";

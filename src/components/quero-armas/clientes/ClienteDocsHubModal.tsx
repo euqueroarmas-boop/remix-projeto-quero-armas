@@ -42,6 +42,7 @@ import {
 // Mapeia o `tipoDetectado` retornado pela edge `qa-classificar-documento-arma`
 // para o `tipo_documento` salvo em `qa_documentos_cliente`.
 const IA_TO_TIPO: Record<string, string> = {
+  // Armas / acervo
   CR: "cr",
   CRAF: "craf",
   SINARM: "sinarm",
@@ -49,8 +50,55 @@ const IA_TO_TIPO: Record<string, string> = {
   GTE: "gte",
   GUIA_TRANSITO: "gt",
   AUTORIZACAO_COMPRA: "autorizacao_compra",
-  NOTA_FISCAL: "outro",
-  EXAME_LAUDO: "outro",
+  NOTA_FISCAL_ARMA: "nota_fiscal_arma",
+  // Identificação
+  RG_COM_CPF: "rg_com_cpf",
+  CIN: "cin",
+  CNH: "cnh",
+  CPF: "cpf",
+  // Endereço
+  COMPROVANTE_RESIDENCIA: "comprovante_residencia",
+  DECLARACAO_RESPONSAVEL_IMOVEL: "declaracao_responsavel_imovel",
+  // Renda
+  CTPS: "ctps",
+  HOLERITE: "renda_holerite_mes_atual",
+  CARTAO_CNPJ: "renda_cartao_cnpj",
+  CONTRATO_SOCIAL: "renda_contrato_social",
+  NOTA_FISCAL_AUTONOMO: "renda_nf_recente",
+  COMPROVANTE_BENEFICIO: "renda_comprovante_beneficio",
+  EXTRATO_INSS: "renda_extrato_inss",
+  // Antecedentes
+  ANTECEDENTES_CRIMINAIS: "antecedentes_criminais",
+  ANTECEDENTES_FEDERAL: "antecedentes_federal",
+  ANTECEDENTES_ESTADUAL: "antecedentes_estadual",
+  ANTECEDENTES_MILITAR: "antecedentes_militar",
+  ANTECEDENTES_ELEITORAL: "antecedentes_eleitoral",
+  // Declarações
+  DECLARACAO_NAO_INQUERITO: "declaracao_sem_inquerito_processo_criminal",
+  DECLARACAO_GUARDA_RESPONSAVEL: "declaracao_guarda_responsavel",
+  DECLARACAO_CORRELATA: "declaracao_correlata",
+  DECLARACAO_GUARDA_ACERVO: "declaracao_guarda_acervo_1endereco",
+  // Laudos
+  LAUDO_PSICOLOGICO: "laudo_psicologico",
+  LAUDO_CAPACIDADE_TECNICA: "laudo_capacidade_tecnica",
+  // Efetiva necessidade
+  COMPROVANTE_EFETIVA_NECESSIDADE: "comprovante_efetiva_necessidade",
+  DOCUMENTO_COMPLEMENTAR: "documento_complementar_caso",
+  // CAC
+  COMPROVANTE_HABITUALIDADE: "comprovante_habitualidade",
+  COMPROVANTE_CLUBE: "comprovante_clube_tiro",
+  COMPROVANTE_COMPETICAO: "comprovante_competicao",
+  // Processuais
+  PROTOCOLO_PROCESSO: "protocolo_processo",
+  OFICIO: "oficio",
+  DESPACHO: "despacho",
+  EXIGENCIA: "exigencia",
+  INDEFERIMENTO: "indeferimento",
+  // Jurídico
+  PROCURACAO: "procuracao",
+  RECURSO_ADMINISTRATIVO: "recurso_administrativo_doc",
+  MANDADO_SEGURANCA: "mandado_seguranca_doc",
+  // Fallback
   DESCONHECIDO: "outro",
 };
 
