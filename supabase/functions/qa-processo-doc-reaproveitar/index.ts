@@ -10,7 +10,9 @@
 //   4) `tipo_documento` igual (case-insensitive) e não vazio.
 //   5) Escopo igual (espelho de getDocumentoEscopo do front).
 //   6) Escopo "processo" NUNCA reaproveita.
-//   7) Escopo "arma" exige `arma_id` igual em ambos.
+//   7) Escopo "arma" exige vínculo inequívoco com a arma.
+//   8) Escopo "cac_atividade" só reaproveita quando a matriz do serviço
+//      marcar o tipo como automático.
 //   8) Origem não vencida (data_validade_efetiva || data_validade).
 // Em sucesso: atualiza destino e registra evento auditável.
 // Não altera RLS, nem outros documentos, nem qa_clientes.
@@ -44,6 +46,13 @@ const TIPOS_CLIENTE = new Set<string>([
   "antecedentes_militar", "antecedentes_eleitoral",
   "certidao_casamento", "certidao_nascimento", "certidao_alteracao_nome",
 ]);
+const TIPOS_CAC_ATIVIDADE = new Set<string>([
+  "comprovante_habitualidade",
+  "comprovante_clube_tiro",
+  "comprovante_competicao",
+  "declaracao_guarda_acervo_1endereco",
+  "declaracao_guarda_acervo_2enderecos",
+]);
 const ETAPAS_PERMANENTES = new Set<string>([
   "identificacao", "endereco", "antecedentes", "declaracoes_gerais",
 ]);
@@ -54,12 +63,14 @@ function isDocDeArma(tipo: string): boolean {
     "gte", "gte_transporte", "registro_arma"].includes(t)) return true;
   return /^(craf|gte|nota_fiscal_arma|registro_arma|autorizacao_compra_arma)(_|$)/.test(t);
 }
-type Escopo = "cliente" | "arma" | "processo";
+type Escopo = "cliente" | "arma" | "cac_atividade" | "processo";
+type OrigemTipo = "processo" | "hub_cliente";
 function getEscopo(doc: { tipo_documento?: string | null; etapa?: string | null; arma_id?: string | null }): Escopo {
   const tipo = String(doc?.tipo_documento ?? "").trim().toLowerCase();
   const armaId = doc?.arma_id ? String(doc.arma_id).trim() : "";
   if (armaId || isDocDeArma(tipo)) return "arma";
   if (tipo && TIPOS_CLIENTE.has(tipo)) return "cliente";
+  if (tipo && TIPOS_CAC_ATIVIDADE.has(tipo)) return "cac_atividade";
   if (doc?.etapa && ETAPAS_PERMANENTES.has(String(doc.etapa))) return "cliente";
   return "processo";
 }
@@ -68,6 +79,119 @@ function vencido(data?: string | null): boolean {
   if (!data) return false;
   const t = new Date(data).getTime();
   return !isNaN(t) && t < Date.now();
+}
+
+function vencidoPorJanela(dataBase?: string | null, validadeDias?: number | null): boolean {
+  if (!dataBase || !validadeDias || validadeDias <= 0) return false;
+  const dt = new Date(dataBase);
+  if (Number.isNaN(dt.getTime())) return false;
+  dt.setDate(dt.getDate() + validadeDias);
+  return dt.getTime() < Date.now();
+}
+
+function documentoForaDaRegra(params: {
+  dataValidadeEfetiva?: string | null;
+  dataValidade?: string | null;
+  dataEmissao?: string | null;
+  dataValidacao?: string | null;
+  validadeDiasRegra?: number | null;
+  validadeDiasDocumento?: number | null;
+}): boolean {
+  if (vencido(params.dataValidadeEfetiva ?? params.dataValidade ?? null)) return true;
+  const janela = params.validadeDiasRegra ?? params.validadeDiasDocumento ?? null;
+  if (!janela) return false;
+  const base = params.dataValidacao ?? params.dataEmissao ?? null;
+  return vencidoPorJanela(base, janela);
+}
+
+function norm(v?: string | null): string {
+  return String(v ?? "").replace(/\s+/g, "").trim().toUpperCase();
+}
+
+function tipoCompatKey(tipo?: string | null): string {
+  const t = String(tipo ?? "").trim().toLowerCase();
+  if (!t) return "";
+  if (t === "rg") return "rg_com_cpf";
+  if (t === "foto") return "foto_3x4";
+  if (t.startsWith("comprovante_endereco") || t.startsWith("comprovante_residencia")) {
+    return "comprovante_residencia";
+  }
+  return t;
+}
+
+function escopoHubParaEscopoDocumento(escopo?: string | null): Escopo | null {
+  switch (String(escopo ?? "").trim().toLowerCase()) {
+    case "permanente":
+      return "cliente";
+    case "arma":
+      return "arma";
+    case "cac_atividade":
+      return "cac_atividade";
+    case "processo":
+      return "processo";
+    default:
+      return null;
+  }
+}
+
+async function carregarRegraReaproveitamentoServico(
+  admin: ReturnType<typeof createClient>,
+  servicoId: number | null | undefined,
+  tipoDestino: string,
+  tipoCompat: string,
+) {
+  if (!servicoId) return { regra: null, error: null };
+  const tipos = Array.from(new Set([tipoDestino, tipoCompat].filter(Boolean)));
+  const { data, error } = await admin
+    .from("qa_tipos_documento_servicos")
+    .select("tipo_documento, modo_reaproveitamento, validade_dias")
+    .eq("servico_id", servicoId)
+    .in("tipo_documento", tipos)
+    .limit(5);
+  if (error) return { regra: null, error };
+  const lista = (data ?? []) as Array<{
+    tipo_documento: string;
+    modo_reaproveitamento: string | null;
+    validade_dias: number | null;
+  }>;
+  return {
+    error: null,
+    regra:
+      lista.find((item) => String(item.tipo_documento).toLowerCase() === String(tipoDestino).toLowerCase()) ??
+      lista.find((item) => String(item.tipo_documento).toLowerCase() === tipoCompat) ??
+      null,
+  };
+}
+
+function docHubCasaComDestinoArma(
+  origem: {
+    arma_numero_serie?: string | null;
+    numero_documento?: string | null;
+    numero_cad_sinarm?: string | null;
+    numero_registro_sigma?: string | null;
+  },
+  destino: {
+    arma_numero_serie?: string | null;
+    numero_craf?: string | null;
+    numero_sinarm?: string | null;
+    numero_sigma?: string | null;
+  } | null,
+): boolean {
+  if (!destino) return false;
+  const serialDoc = norm(origem.arma_numero_serie);
+  const numeroDoc = norm(origem.numero_documento);
+  const cadSinarmDoc = norm(origem.numero_cad_sinarm);
+  const sigmaDoc = norm(origem.numero_registro_sigma);
+  const serialDestino = norm(destino.arma_numero_serie);
+  const crafDestino = norm(destino.numero_craf);
+  const sinarmDestino = norm(destino.numero_sinarm);
+  const sigmaDestino = norm(destino.numero_sigma);
+  return Boolean(
+    (serialDoc && serialDestino && serialDoc === serialDestino) ||
+      (numeroDoc && crafDestino && numeroDoc === crafDestino) ||
+      (cadSinarmDoc && sinarmDestino && cadSinarmDoc === sinarmDestino) ||
+      (sigmaDoc && sigmaDestino && sigmaDoc === sigmaDestino),
+  );
 }
 
 const STATUS_ORIGEM_OK = new Set(["aprovado", "validado"]);
@@ -95,25 +219,39 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const destinoId = String(body?.destino_documento_id ?? "").trim();
     const origemId = String(body?.origem_documento_id ?? "").trim();
+    const origemTipo = String(body?.origem_tipo ?? "processo").trim().toLowerCase() as OrigemTipo;
     if (!destinoId || !origemId) return json({ error: "documento_id_required" }, 400);
     if (destinoId === origemId) return json({ error: "mesmo_documento" }, 400);
+    if (!["processo", "hub_cliente"].includes(origemTipo)) {
+      return json({ error: "origem_tipo_invalido" }, 400);
+    }
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-    const [{ data: destino, error: dErr }, { data: origem, error: oErr }] = await Promise.all([
+    const [{ data: destino, error: dErr }, { data: origemProcesso, error: oErrProcesso }, { data: origemHub, error: oErrHub }] = await Promise.all([
       admin.from("qa_processo_documentos")
         .select("id, processo_id, cliente_id, tipo_documento, nome_documento, etapa, status, arma_id, metadados_documento_json")
         .eq("id", destinoId).maybeSingle(),
       admin.from("qa_processo_documentos")
-        .select("id, processo_id, cliente_id, tipo_documento, etapa, status, arma_id, arquivo_storage_key, data_validade, data_validade_efetiva")
-        .eq("id", origemId).maybeSingle(),
+        .select("id, processo_id, cliente_id, tipo_documento, etapa, status, arma_id, arquivo_storage_key, data_validade, data_validade_efetiva, data_emissao, data_validacao, validade_dias")
+        .eq("id", origemTipo === "processo" ? origemId : "__skip__").maybeSingle(),
+      admin.from("qa_documentos_cliente")
+        .select("id, qa_cliente_id, tipo_documento, status, arquivo_storage_path, data_validade, data_emissao, escopo_documental, reaproveitavel_global, arma_numero_serie, numero_documento, numero_cad_sinarm, numero_registro_sigma")
+        .eq("id", origemTipo === "hub_cliente" ? origemId : "__skip__").maybeSingle(),
     ]);
     if (dErr) return json({ error: dErr.message }, 500);
-    if (oErr) return json({ error: oErr.message }, 500);
+    if (oErrProcesso) return json({ error: oErrProcesso.message }, 500);
+    if (oErrHub) return json({ error: oErrHub.message }, 500);
     if (!destino) return json({ error: "destino_not_found" }, 404);
+
+    const origem = origemTipo === "hub_cliente" ? origemHub : origemProcesso;
     if (!origem) return json({ error: "origem_not_found" }, 404);
 
-    if (destino.cliente_id !== origem.cliente_id) {
+    const origemClienteId =
+      origemTipo === "hub_cliente"
+        ? origem.qa_cliente_id
+        : origem.cliente_id;
+    if (destino.cliente_id !== origemClienteId) {
       return json({ error: "cliente_diferente" }, 403);
     }
 
@@ -137,24 +275,73 @@ Deno.serve(async (req) => {
     if (!STATUS_ORIGEM_OK.has(stOrigem)) {
       return json({ error: "origem_invalida", status: stOrigem }, 409);
     }
-    if (vencido(origem.data_validade_efetiva ?? origem.data_validade)) {
-      return json({ error: "origem_vencida" }, 409);
-    }
-
     // Compatibilidade canônica.
-    const tipoO = String(origem.tipo_documento ?? "").trim().toLowerCase();
-    const tipoD = String(destino.tipo_documento ?? "").trim().toLowerCase();
+    const tipoO = tipoCompatKey(origem.tipo_documento);
+    const tipoD = tipoCompatKey(destino.tipo_documento);
     if (!tipoO || !tipoD || tipoO !== tipoD) {
       return json({ error: "tipo_incompativel", origem: tipoO, destino: tipoD }, 409);
     }
-    const escopoO = getEscopo(origem);
+    const { data: processoDestino, error: processoDestinoErr } = await admin
+      .from("qa_processos")
+      .select("servico_id")
+      .eq("id", destino.processo_id)
+      .maybeSingle();
+    if (processoDestinoErr) return json({ error: processoDestinoErr.message }, 500);
+    const regraResp = await carregarRegraReaproveitamentoServico(
+      admin,
+      processoDestino?.servico_id ?? null,
+      String(destino.tipo_documento ?? "").trim().toLowerCase(),
+      tipoD,
+    );
+    if (regraResp.error) return json({ error: regraResp.error.message }, 500);
+    if (
+      regraResp.regra &&
+      String(regraResp.regra.modo_reaproveitamento ?? "").toLowerCase() !== "automatico"
+    ) {
+      return json({ error: "reaproveitamento_assistido" }, 409);
+    }
+    if (
+      documentoForaDaRegra({
+        dataValidadeEfetiva:
+          origemTipo === "processo" ? origem.data_validade_efetiva ?? null : null,
+        dataValidade: origem.data_validade ?? null,
+        dataEmissao: origem.data_emissao ?? null,
+        dataValidacao:
+          origemTipo === "processo" ? origem.data_validacao ?? null : null,
+        validadeDiasRegra: regraResp.regra?.validade_dias ?? null,
+        validadeDiasDocumento:
+          origemTipo === "processo" ? origem.validade_dias ?? null : null,
+      })
+    ) {
+      return json({ error: "origem_vencida" }, 409);
+    }
+    const escopoO =
+      origemTipo === "hub_cliente"
+        ? escopoHubParaEscopoDocumento(origem.escopo_documental)
+        : getEscopo(origem);
     const escopoD = getEscopo(destino);
+    if (!escopoO) return json({ error: "escopo_origem_indefinido" }, 409);
     if (escopoO !== escopoD) return json({ error: "escopo_incompativel" }, 409);
     if (escopoD === "processo") return json({ error: "escopo_processo_nao_reaproveita" }, 409);
-    if (escopoD === "arma") {
+    if (origemTipo === "hub_cliente" && origem.reaproveitavel_global === false) {
+      return json({ error: "origem_nao_reaproveitavel" }, 409);
+    }
+    if (escopoD === "arma" && origemTipo === "processo") {
       const aO = origem.arma_id ? String(origem.arma_id).trim() : "";
       const aD = destino.arma_id ? String(destino.arma_id).trim() : "";
       if (!aO || !aD || aO !== aD) return json({ error: "arma_diferente" }, 409);
+    }
+    if (escopoD === "arma" && origemTipo === "hub_cliente") {
+      const { data: armaDestino, error: armaErr } = await admin
+        .from("qa_cliente_armas")
+        .select("arma_uid, numero_serie, numero_craf, numero_sigma, numero_sinarm")
+        .eq("qa_cliente_id", destino.cliente_id)
+        .eq("arma_uid", destino.arma_id)
+        .maybeSingle();
+      if (armaErr) return json({ error: armaErr.message }, 500);
+      if (!docHubCasaComDestinoArma(origem, armaDestino)) {
+        return json({ error: "arma_diferente" }, 409);
+      }
     }
 
     const nowIso = new Date().toISOString();
@@ -163,7 +350,8 @@ Deno.serve(async (req) => {
       : {};
     meta.reaproveitamento = {
       documento_reaproveitado_id: origem.id,
-      processo_origem_id: origem.processo_id,
+      processo_origem_id: origemTipo === "processo" ? origem.processo_id : null,
+      origem_tipo: origemTipo,
       reaproveitado_em: nowIso,
       escopo: escopoD,
     };
@@ -191,7 +379,8 @@ Deno.serve(async (req) => {
       ator: "cliente",
       dados_json: {
         origem_documento_id: origem.id,
-        origem_processo_id: origem.processo_id,
+        origem_processo_id: origemTipo === "processo" ? origem.processo_id : null,
+        origem_tipo: origemTipo,
         escopo: escopoD,
         tipo_documento: tipoD,
         arma_id: destino.arma_id ?? null,

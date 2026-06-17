@@ -83,6 +83,7 @@ import {
 import {
   buscarCandidatosReaproveitamento,
   aplicarReaproveitamento,
+  type BuscaReaproveitamentoResultado,
   type CandidatoReaproveitamento,
 } from "@/lib/quero-armas/reaproveitamentoCandidatos";
 
@@ -181,6 +182,8 @@ export default function ChecklistGuiadoModal({
     calibre: string | null;
     numero_serie: string | null;
     numero_craf: string | null;
+    numero_sigma?: string | null;
+    numero_sinarm?: string | null;
   }
   const [armaSelecionada, setArmaSelecionada] = useState<string | null>(null);
   const [armasCliente, setArmasCliente] = useState<ArmaCli[]>([]);
@@ -188,6 +191,7 @@ export default function ChecklistGuiadoModal({
 
   // ----- Bloco 12 — sugestões de reaproveitamento p/ o doc ativo -----
   const [candidatosReuso, setCandidatosReuso] = useState<CandidatoReaproveitamento[]>([]);
+  const [contextoReuso, setContextoReuso] = useState<BuscaReaproveitamentoResultado | null>(null);
   const [reusoCarregando, setReusoCarregando] = useState(false);
   const [reusoAplicando, setReusoAplicando] = useState<string | null>(null);
 
@@ -370,7 +374,7 @@ export default function ChecklistGuiadoModal({
   const loadArmasCliente = useCallback(async () => {
     const { data } = await supabase
       .from("qa_cliente_armas" as any)
-      .select("arma_uid, marca, modelo, calibre, numero_serie, numero_craf")
+      .select("arma_uid, marca, modelo, calibre, numero_serie, numero_craf, numero_sigma, numero_sinarm")
       .eq("qa_cliente_id", clienteId);
     return ((data ?? []) as unknown) as ArmaCli[];
   }, [clienteId]);
@@ -399,6 +403,7 @@ export default function ChecklistGuiadoModal({
   useEffect(() => {
     if (!docAtivo || tipoItemGuia(docAtivo) !== "documento") {
       setCandidatosReuso([]);
+      setContextoReuso(null);
       return;
     }
     // Não reaproveita por cima de docs em análise/aprovados/etc.
@@ -408,12 +413,14 @@ export default function ChecklistGuiadoModal({
       "em_analise", "enviado", "fila", "processando"].includes(st);
     if (!acionavel) {
       setCandidatosReuso([]);
+      setContextoReuso(null);
       return;
     }
     // Para docs de arma, só busca depois que a arma estiver selecionada
     // (senão `arma_id` do destino é nulo e nada bate).
     if (isDocDeArma(docAtivo.tipo_documento) && !armaSelecionada) {
       setCandidatosReuso([]);
+      setContextoReuso(null);
       return;
     }
     let cancel = false;
@@ -427,28 +434,41 @@ export default function ChecklistGuiadoModal({
           arma_id: isDocDeArma(docAtivo.tipo_documento) ? armaSelecionada ?? (docAtivo as any).arma_id ?? null : (docAtivo as any).arma_id ?? null,
           processo_id: carga?.processo.id,
         };
-        const lista = await buscarCandidatosReaproveitamento(destino, {
+        const armaAtual =
+          isDocDeArma(docAtivo.tipo_documento) && armaSelecionada
+            ? armasCliente.find((item) => item.arma_uid === armaSelecionada) ?? null
+            : null;
+        const resultado = await buscarCandidatosReaproveitamento(destino, {
           clienteId,
+          servicoId: carga?.processo.servico_id ?? null,
+          armaSelecionada: armaAtual,
         });
-        if (!cancel) setCandidatosReuso(lista);
+        if (!cancel) {
+          setCandidatosReuso(resultado.candidatos);
+          setContextoReuso(resultado);
+        }
       } catch (e) {
         console.warn("[ChecklistGuiado] reaproveitamento falhou (silencioso):", e);
-        if (!cancel) setCandidatosReuso([]);
+        if (!cancel) {
+          setCandidatosReuso([]);
+          setContextoReuso(null);
+        }
       } finally {
         if (!cancel) setReusoCarregando(false);
       }
     })();
     return () => { cancel = true; };
-  }, [docAtivo?.id, docAtivo?.tipo_documento, docAtivo?.status, armaSelecionada, clienteId, carga?.processo.id]);
+  }, [docAtivo?.id, docAtivo?.tipo_documento, docAtivo?.status, armaSelecionada, armasCliente, clienteId, carga?.processo.id]);
 
-  const handleReaproveitar = async (origemId: string) => {
+  const handleReaproveitar = async (candidato: CandidatoReaproveitamento) => {
     if (!docAtivo || !carga) return;
-    if (gateWizardPre(docAtivo, { tipo: "reaproveitar", payload: origemId })) return;
-    setReusoAplicando(origemId);
+    if (gateWizardPre(docAtivo, { tipo: "reaproveitar", payload: candidato.id })) return;
+    setReusoAplicando(candidato.id);
     setErroAcao(null);
     const r = await aplicarReaproveitamento({
       destinoDocumentoId: docAtivo.id,
-      origemDocumentoId: origemId,
+      origemDocumentoId: candidato.id,
+      origem: candidato.origem,
     });
     setReusoAplicando(null);
     if (!r.ok) {
@@ -1403,7 +1423,14 @@ export default function ChecklistGuiadoModal({
                                   {c.nome_documento ?? c.tipo_documento}
                                 </div>
                                 <div className="text-[10px] uppercase tracking-wider text-slate-500">
-                                  {c.escopo === "cliente" ? "Documento pessoal" : c.escopo === "arma" ? "Documento de arma" : "Documento"}
+                                  {c.escopo === "cliente"
+                                    ? "Documento pessoal"
+                                    : c.escopo === "arma"
+                                      ? "Documento de arma"
+                                      : c.escopo === "cac_atividade"
+                                        ? "Documento de atividade CAC"
+                                        : "Documento"}
+                                  {c.origem === "hub_cliente" ? " · hub do cliente" : " · processo anterior"}
                                   {c.data_envio
                                     ? ` · enviado em ${new Date(c.data_envio).toLocaleDateString("pt-BR")}`
                                     : ""}
@@ -1417,7 +1444,7 @@ export default function ChecklistGuiadoModal({
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      viewer.abrirStorage("qa-processo-docs", c.arquivo_storage_key!, {
+                                      viewer.abrirStorage(c.arquivo_bucket, c.arquivo_storage_key!, {
                                         fileName: c.nome_documento ?? c.tipo_documento,
                                         title: c.nome_documento ?? c.tipo_documento,
                                       })
@@ -1430,7 +1457,7 @@ export default function ChecklistGuiadoModal({
                                 <button
                                   type="button"
                                   disabled={reusoAplicando === c.id}
-                                  onClick={() => handleReaproveitar(c.id)}
+                                  onClick={() => handleReaproveitar(c)}
                                   className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
                                   style={{ background: MARROM }}
                                 >
@@ -1450,6 +1477,27 @@ export default function ChecklistGuiadoModal({
                     </div>
                   </div>
                 )}
+                {tipoItemGuia(docAtivo) === "documento" &&
+                  candidatosReuso.length === 0 &&
+                  contextoReuso?.modoReaproveitamento === "assistido" &&
+                  contextoReuso.mensagem && (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[12px] font-bold text-amber-900">
+                            Reaproveitamento assistido
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-amber-900/85">
+                            {contextoReuso.mensagem}
+                          </p>
+                          <div className="mt-2 text-[10px] text-amber-800/80">
+                            Se quiser, envie novamente por aqui e a equipe decide o melhor aproveitamento no processo.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 {tipoItemGuia(docAtivo) === "documento" && reusoCarregando && candidatosReuso.length === 0 && (
                   <div className="text-[10px] text-slate-400">Verificando se há documento reaproveitável…</div>
                 )}

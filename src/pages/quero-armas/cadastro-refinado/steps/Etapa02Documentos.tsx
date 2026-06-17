@@ -14,38 +14,6 @@ import {
 import { computeDocCardState } from "@/lib/quero-armas/docCardState";
 import { fetchChecklistEtapa02, type ChecklistDocItem } from "@/lib/quero-armas/etapa02Checklist";
 
-/**
- * Mapa: docKey da Etapa02 → conjunto de `tipo_documento` do Arsenal que
- * satisfazem aquele requisito. Tipos não mapeados aqui (CRAF, SINARM, GTE,
- * GT, AC, etc.) NÃO aparecem na Etapa02 porque são documentos históricos
- * gerados por processos anteriores — ficam visíveis no Arsenal do cliente.
- */
-const DOC_TIPOS_RELEVANTES_ETAPA02: Record<string, string[]> = {
-  doc_identidade: ["RG", "CNH", "CIN", "IDENTIDADE", "DOC_IDENTIDADE", "DOCUMENTO_IDENTIDADE"],
-  doc_endereco: ["COMPROVANTE_RESIDENCIA", "COMP_RESIDENCIA", "COMP_RES", "ENDERECO", "DOC_ENDERECO"],
-  doc_cpf: ["CPF"],
-  doc_cr: ["CR", "CERTIFICADO_REGISTRO"],
-  doc_clube: ["FILIACAO_CLUBE", "COMPROVANTE_CLUBE", "CLUBE"],
-  doc_psicologico: ["LAUDO_PSICOLOGICO", "PSICOLOGICO"],
-  doc_capacitacao: ["CERTIFICADO_CAPACITACAO", "CAPACITACAO_TECNICA", "CAPACITACAO"],
-};
-
-const TIPOS_RELEVANTES_FLAT = new Set(
-  Object.values(DOC_TIPOS_RELEVANTES_ETAPA02).flat().map((s) => s.toUpperCase()),
-);
-
-function arsenalDocMatchesKey(d: { tipo_documento: string }, key: string): boolean {
-  const tipos = DOC_TIPOS_RELEVANTES_ETAPA02[key];
-  if (!tipos) return false;
-  return tipos.includes(String(d.tipo_documento || "").toUpperCase());
-}
-
-function filtrarRelevantesEtapa02<T extends { tipo_documento: string }>(docs: T[] | undefined | null): T[] {
-  return (docs || []).filter((d) =>
-    TIPOS_RELEVANTES_FLAT.has(String(d.tipo_documento || "").toUpperCase()),
-  );
-}
-
 interface Props {
   state: CadastroRefinadoState;
   update: (patch: Partial<CadastroRefinadoState>) => void;
@@ -111,6 +79,25 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
   const [substituindoId, setSubstituindoId] = useState<string | null>(null);
   const [subErros, setSubErros] = useState<Record<string, string>>({});
   const [subSucesso, setSubSucesso] = useState<Record<string, string>>({});
+
+  const tiposCompativeisPorKey = new Map(
+    docs.map((doc) => [doc.key, doc.tiposCompativeis.map((t) => String(t || "").toUpperCase())]),
+  );
+
+  const tiposRelevantesFlat = new Set(
+    docs.flatMap((doc) => doc.tiposCompativeis.map((t) => String(t || "").toUpperCase())),
+  );
+
+  function arsenalDocMatchesKey(d: { tipo_documento: string }, key: string): boolean {
+    const tipos = tiposCompativeisPorKey.get(key) || [];
+    return tipos.includes(String(d.tipo_documento || "").toUpperCase());
+  }
+
+  function filtrarRelevantesEtapa02<T extends { tipo_documento: string }>(lista: T[] | undefined | null): T[] {
+    return (lista || []).filter((d) =>
+      tiposRelevantesFlat.has(String(d.tipo_documento || "").toUpperCase()),
+    );
+  }
 
   if (typeof window !== "undefined" && !(window as any).__qaCamHint) {
     (window as any).__qaCamHint = true;
@@ -203,6 +190,7 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
       return requisitoCumpridoPorReaproveitamento(
         key as RequisitoDoc,
         state.documentos_reaproveitados,
+        tiposCompativeisPorKey.get(key),
       );
     }
     return false;
@@ -529,8 +517,16 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
     const reuso = isPessoal && status !== "enviado"
       ? buscarReaproveitamento(d.key as RequisitoDoc, state.documentos_reaproveitados)
       : null;
-    const cumpridoPorReuso = !!(reuso && reuso.status === "valido" && reuso.documento);
-    if (cumpridoPorReuso && reuso?.documento) {
+    const reusoFiltrado = isPessoal && status !== "enviado"
+      ? buscarReaproveitamento(
+          d.key as RequisitoDoc,
+          state.documentos_reaproveitados,
+          tiposCompativeisPorKey.get(d.key),
+        )
+      : null;
+    const matchAtivo = reusoFiltrado || reuso;
+    const cumpridoPorReuso = !!(matchAtivo && matchAtivo.status === "valido" && matchAtivo.documento);
+    if (cumpridoPorReuso && matchAtivo?.documento) {
       return (
         <div key={d.key} className="qa-ref-upload-item is-done" data-reuso="1">
           <div className="qa-ref-upload-icon"><Check size={18} /></div>
@@ -543,8 +539,8 @@ export default function Etapa02Documentos({ state, update, updateDados, onNext, 
             </div>
             <div className="qa-ref-upload-hint">
               <span style={{ color: "var(--qa-ref-success)" }}>
-                ✓ {reuso.documento.arquivo_nome || (reuso.documento.tipo_documento || "Documento").toUpperCase()}
-                {reuso.documento.data_validade ? ` · validade ${reuso.documento.data_validade}` : " · sem validade informada"}
+                ✓ {matchAtivo.documento.arquivo_nome || (matchAtivo.documento.tipo_documento || "Documento").toUpperCase()}
+                {matchAtivo.documento.data_validade ? ` · validade ${matchAtivo.documento.data_validade}` : " · sem validade informada"}
               </span>
             </div>
           </div>

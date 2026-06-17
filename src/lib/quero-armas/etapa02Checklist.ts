@@ -19,6 +19,8 @@ export interface ChecklistDocItem {
   label: string;
   obrigatorio_etapa02: boolean;
   shortName?: string;
+  /** Tipos canônicos aceitos para reaproveitamento automático nesta etapa. */
+  tiposCompativeis: string[];
   /** Para tooltip/helper text quando vier do banco. */
   instrucoes?: string | null;
   /** Marca itens cuja origem é o catálogo (e não o fallback). */
@@ -30,25 +32,86 @@ const IDENTIDADE_TIPOS = new Set(["cnh", "rg_com_cpf"]);
 /** Tipo endereço → mapeado para chave única `doc_endereco`. */
 const ENDERECO_TIPOS = new Set(["comprovante_residencia"]);
 
+const TIPOS_IDENTIDADE_COMPATIVEIS = [
+  "RG_COM_CPF",
+  "CNH",
+  "CIN",
+  "DOC_IDENTIDADE",
+  "DOCUMENTO_IDENTIDADE",
+  "IDENTIDADE",
+];
+
+const TIPOS_ENDERECO_COMPATIVEIS = [
+  "COMPROVANTE_RESIDENCIA",
+  "COMP_RESIDENCIA",
+  "COMP_RES",
+  "DOC_ENDERECO",
+  "ENDERECO",
+];
+
 /** Fallback universal — comportamento legado do Etapa02Documentos. */
 const FALLBACK_UNIVERSAL: ChecklistDocItem[] = [
-  { key: "doc_identidade", label: "Documento de identidade — CIN, RG ou CNH (frente e verso)", obrigatorio_etapa02: true, shortName: "identidade", origem: "fallback" },
-  { key: "doc_endereco", label: "Comprovante de residência (últimos 90 dias)", obrigatorio_etapa02: true, shortName: "comprovante de residência", origem: "fallback" },
-  { key: "doc_cpf", label: "CPF (se não constar no documento de identidade)", obrigatorio_etapa02: false, origem: "fallback" },
+  {
+    key: "doc_identidade",
+    label: "Documento de identidade — CIN, RG ou CNH (frente e verso)",
+    obrigatorio_etapa02: true,
+    shortName: "identidade",
+    tiposCompativeis: TIPOS_IDENTIDADE_COMPATIVEIS,
+    origem: "fallback",
+  },
+  {
+    key: "doc_endereco",
+    label: "Comprovante de residência (últimos 90 dias)",
+    obrigatorio_etapa02: true,
+    shortName: "comprovante de residência",
+    tiposCompativeis: TIPOS_ENDERECO_COMPATIVEIS,
+    origem: "fallback",
+  },
+  {
+    key: "doc_cpf",
+    label: "CPF (se não constar no documento de identidade)",
+    obrigatorio_etapa02: false,
+    tiposCompativeis: ["CPF"],
+    origem: "fallback",
+  },
 ];
 
 function fallbackParaSlug(slug: string | null | undefined): ChecklistDocItem[] {
   const extras: ChecklistDocItem[] = [];
   if (slug && /cr|cac|acervo/.test(slug)) {
     extras.push(
-      { key: "doc_cr", label: "Certificado de Registro (CR) — se já tiver", obrigatorio_etapa02: false, origem: "fallback" },
-      { key: "doc_clube", label: "Comprovante de filiação ao clube de tiro", obrigatorio_etapa02: false, origem: "fallback" },
+      {
+        key: "doc_cr",
+        label: "Certificado de Registro (CR) — se já tiver",
+        obrigatorio_etapa02: false,
+        tiposCompativeis: ["CR", "CERTIFICADO_REGISTRO"],
+        origem: "fallback",
+      },
+      {
+        key: "doc_clube",
+        label: "Comprovante de filiação ao clube de tiro",
+        obrigatorio_etapa02: false,
+        tiposCompativeis: ["FILIACAO_CLUBE", "COMPROVANTE_CLUBE", "CLUBE"],
+        origem: "fallback",
+      },
     );
   }
   if (slug && /porte|posse/.test(slug)) {
     extras.push(
-      { key: "doc_psicologico", label: "Laudo psicológico (DPF)", obrigatorio_etapa02: false, origem: "fallback" },
-      { key: "doc_capacitacao", label: "Certificado de capacitação técnica", obrigatorio_etapa02: false, origem: "fallback" },
+      {
+        key: "doc_psicologico",
+        label: "Laudo psicológico (DPF)",
+        obrigatorio_etapa02: false,
+        tiposCompativeis: ["LAUDO_PSICOLOGICO", "PSICOLOGICO"],
+        origem: "fallback",
+      },
+      {
+        key: "doc_capacitacao",
+        label: "Certificado de capacitação técnica",
+        obrigatorio_etapa02: false,
+        tiposCompativeis: ["CERTIFICADO_CAPACITACAO", "CAPACITACAO_TECNICA", "CAPACITACAO"],
+        origem: "fallback",
+      },
     );
   }
   return [...FALLBACK_UNIVERSAL, ...extras];
@@ -81,6 +144,7 @@ function mapRows(rows: RawRow[]): ChecklistDocItem[] {
         label: "Documento de identidade — CIN, RG ou CNH (frente e verso)",
         obrigatorio_etapa02: true,
         shortName: "identidade",
+        tiposCompativeis: TIPOS_IDENTIDADE_COMPATIVEIS,
         instrucoes: r.instrucoes,
         origem: "banco",
       });
@@ -95,6 +159,7 @@ function mapRows(rows: RawRow[]): ChecklistDocItem[] {
         label: r.nome_documento || "Comprovante de residência (últimos 90 dias)",
         obrigatorio_etapa02: true,
         shortName: "comprovante de residência",
+        tiposCompativeis: TIPOS_ENDERECO_COMPATIVEIS,
         instrucoes: r.instrucoes,
         origem: "banco",
       });
@@ -105,6 +170,7 @@ function mapRows(rows: RawRow[]): ChecklistDocItem[] {
       key: `doc_${tipo}`,
       label: r.nome_documento || tipo,
       obrigatorio_etapa02: Boolean(r.obrigatorio_etapa02),
+      tiposCompativeis: [String(r.tipo_documento || "").toUpperCase()],
       instrucoes: r.instrucoes,
       origem: "banco",
     });

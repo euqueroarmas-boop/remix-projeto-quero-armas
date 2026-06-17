@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
+import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 
 /**
  * QAContratarConfirmarPage — Cliente logado.
@@ -138,20 +139,26 @@ export default function QAContratarConfirmarPage() {
         .maybeSingle();
       if (cli) setCliente(cli as any);
 
-      // Documentos reaproveitáveis (já validados em outros processos)
-      const { data: docs } = await supabase
-        .from("qa_processo_documentos")
-        .select("tipo_documento, nome_documento, status")
-        .eq("cliente_id", clienteId)
-        .in("status", ["validado", "aprovado"])
-        .limit(50);
-      if (docs) {
-        const uniques = Array.from(
-          new Map(
-            (docs as any[]).map((d) => [d.tipo_documento, d.nome_documento as string])
-          ).values()
+      // Documentos reaproveitáveis compatíveis com a matriz do serviço.
+      try {
+        const [checklist, docsResp] = await Promise.all([
+          fetchChecklistEtapa02(slug),
+          supabase.functions.invoke("qa-cadastro-carregar-cliente", { body: {} }),
+        ]);
+        const docsValidos = Array.isArray((docsResp.data as any)?.documentos_validos)
+          ? ((docsResp.data as any).documentos_validos as Array<{ tipo_documento?: string | null }>)
+          : [];
+        const itensCompativeis = checklist.filter((item) =>
+          docsValidos.some((doc) =>
+            item.tiposCompativeis.includes(String(doc.tipo_documento || "").toUpperCase()),
+          ),
         );
-        setDocsReaproveitados(uniques);
+        setDocsReaproveitados(
+          Array.from(new Set(itensCompativeis.map((item) => item.shortName || item.label))),
+        );
+      } catch (docsErr) {
+        console.warn("[contratar/confirmar] reaproveitamento do cliente indisponível", docsErr);
+        setDocsReaproveitados([]);
       }
 
       setLoading(false);

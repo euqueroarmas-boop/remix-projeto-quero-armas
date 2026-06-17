@@ -43,9 +43,15 @@ export interface DocumentoArsenal {
   id: string;
   tipo_documento: string;
   arquivo_nome?: string | null;
+  arquivo_storage_path?: string | null;
   data_validade?: string | null;
+  data_emissao?: string | null;
   status: string;
   validado_admin?: boolean;
+  substituido_em?: string | null;
+  origem?: string | null;
+  escopo_documental?: string | null;
+  reaproveitavel_global?: boolean;
 }
 
 export interface ServicoAnterior {

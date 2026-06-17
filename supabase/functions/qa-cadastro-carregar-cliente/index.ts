@@ -14,9 +14,11 @@ function json(body: unknown, status = 200) {
 }
 
 function classifyDoc(d: Record<string, unknown>) {
+  if (d.substituido_em) return "substituido";
   const validade = d.data_validade ? new Date(String(d.data_validade)) : null;
   const hoje = new Date();
   const status = String(d.status || "");
+  if (status === "reprovado" || status === "invalido") return "reprovado";
   if (validade && validade.getTime() < hoje.getTime()) return "vencido";
   if (status === "pendente_aprovacao" || status === "em_analise") return "pendente";
   if (status === "aprovado" || d.validado_admin === true) return "valido";
@@ -136,7 +138,7 @@ Deno.serve(async (req) => {
       supabaseAdmin
         .from("qa_documentos_cliente")
         .select(
-          "id, tipo_documento, arquivo_nome, data_validade, status, validado_admin, arma_numero_serie, created_at",
+          "id, tipo_documento, arquivo_nome, arquivo_storage_path, data_validade, data_emissao, status, validado_admin, arma_numero_serie, created_at, substituido_em, escopo_documental, reaproveitavel_global",
         )
         .eq("qa_cliente_id", qaClienteId)
         .order("created_at", { ascending: false })
@@ -165,13 +167,19 @@ Deno.serve(async (req) => {
         id: d.id,
         tipo_documento: d.tipo_documento,
         arquivo_nome: d.arquivo_nome,
+        arquivo_storage_path: d.arquivo_storage_path,
         data_validade: d.data_validade,
+        data_emissao: d.data_emissao,
         status: d.status,
         validado_admin: d.validado_admin,
+        substituido_em: d.substituido_em,
+        origem: "qa_documentos_cliente",
+        escopo_documental: d.escopo_documental,
+        reaproveitavel_global: d.reaproveitavel_global,
       };
       if (cls === "vencido") vencidos.push(entry);
       else if (cls === "pendente") pendentes.push(entry);
-      else validos.push(entry);
+      else if (cls === "valido") validos.push(entry);
     }
 
     let cadastroPublico: Record<string, unknown> | null = null;

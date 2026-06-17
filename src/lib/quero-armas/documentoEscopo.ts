@@ -15,6 +15,10 @@
  *   - "arma"     → documento de UMA arma específica do acervo (CRAF, GTE,
  *                  NF da arma, etc.). Só reaproveita entre exigências da
  *                  MESMA arma.
+ *   - "cac_atividade" → documento recorrente de atividade CAC
+ *                  (habitualidade, clube, competição, guarda de acervo).
+ *                  Pode ser reaproveitado entre serviços compatíveis quando
+ *                  a matriz do serviço permitir.
  *   - "processo" → documento específico do serviço/processo (declarações
  *                  geradas, contratos, comprovantes próprios do protocolo).
  *                  Não reaproveita automaticamente entre processos.
@@ -28,7 +32,7 @@
 import { isDocDeArma } from "./documentosDeArma";
 import { ETAPAS_PERMANENTES } from "./documentosCaixaClassifier";
 
-export type EscopoDocumento = "cliente" | "arma" | "processo";
+export type EscopoDocumento = "cliente" | "arma" | "cac_atividade" | "processo";
 
 export interface DocEscopavel {
   tipo_documento?: string | null;
@@ -58,6 +62,14 @@ const TIPOS_CLIENTE = new Set<string>([
   "certidao_alteracao_nome",
 ]);
 
+const TIPOS_CAC_ATIVIDADE = new Set<string>([
+  "comprovante_habitualidade",
+  "comprovante_clube_tiro",
+  "comprovante_competicao",
+  "declaracao_guarda_acervo_1endereco",
+  "declaracao_guarda_acervo_2enderecos",
+]);
+
 export function getDocumentoEscopo(doc: DocEscopavel | null | undefined): EscopoDocumento {
   if (!doc) return "processo";
   const tipo = String(doc.tipo_documento ?? "").trim().toLowerCase();
@@ -68,6 +80,9 @@ export function getDocumentoEscopo(doc: DocEscopavel | null | undefined): Escopo
 
   // 2) tipos permanentes do cofre do cliente
   if (tipo && TIPOS_CLIENTE.has(tipo)) return "cliente";
+
+  // 2.5) documentos recorrentes de atividade CAC
+  if (tipo && TIPOS_CAC_ATIVIDADE.has(tipo)) return "cac_atividade";
 
   // 3) etapas permanentes (mesmas das "3 caixas")
   if (doc.etapa && ETAPAS_PERMANENTES.has(doc.etapa)) return "cliente";
@@ -81,8 +96,10 @@ export function getDocumentoEscopo(doc: DocEscopavel | null | undefined): Escopo
  * exigência de destino. Regras:
  *   - escopos precisam ser iguais;
  *   - escopo "arma" exige `arma_id` igual (e não-vazio) em ambos;
- *   - escopo "processo" NUNCA reaproveita automaticamente — quem pertence a
- *     um processo é específico daquele protocolo;
+ *   - escopo "cac_atividade" reaproveita entre itens do mesmo grupo
+ *     quando o tipo também for o mesmo;
+ *   - escopo "processo" NUNCA reaproveita automaticamente — quem pertence
+ *     a um processo é específico daquele protocolo;
  *   - tipos diferentes nunca reaproveitam (a equivalência por sinônimo é
  *     responsabilidade da camada que conhece o catálogo).
  */
@@ -144,6 +161,10 @@ export function motivoReaproveitamentoBloqueado(
     const aD = destino.arma_id ? String(destino.arma_id).trim() : "";
     if (!aO || !aD) return "Documento de arma sem `arma_id` definido em um dos lados.";
     if (aO !== aD) return `Documento pertence a outra arma (origem ${aO} ≠ destino ${aD}).`;
+  }
+
+  if (escopoD === "cac_atividade") {
+    return "";
   }
 
   return "";

@@ -190,6 +190,19 @@ describe("cadastro-refinado · constraints", () => {
     expect(src).toContain('origem: "qa_cadastro_publico"');
   });
 
+  it("Edge function qa-cadastro-carregar-cliente expõe metadados ricos do hub documental", () => {
+    const src = readFileSync(
+      "supabase/functions/qa-cadastro-carregar-cliente/index.ts",
+      "utf8",
+    );
+    expect(src).toContain("arquivo_storage_path");
+    expect(src).toContain("data_emissao");
+    expect(src).toContain("substituido_em");
+    expect(src).toContain("escopo_documental");
+    expect(src).toContain("reaproveitavel_global");
+    expect(src).toContain('origem: "qa_documentos_cliente"');
+  });
+
   it("Etapa02Documentos expõe CTAs de substituição (Substituir / Enviar novo / Enviar outro)", () => {
     const src = readFileSync(join(ROOT, "steps/Etapa02Documentos.tsx"), "utf8");
     expect(src).toContain("qa-cadastro-substituir-documento");

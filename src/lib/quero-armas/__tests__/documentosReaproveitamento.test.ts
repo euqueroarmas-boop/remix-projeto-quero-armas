@@ -64,6 +64,13 @@ describe("Reaproveitamento de documentos pessoais — /cadastro Mira", () => {
     expect(requisitoCumpridoPorReaproveitamento("doc_endereco", [endereco])).toBe(true);
   });
 
+  it("Quando tipos compatíveis são informados, só aceita documento previsto na matriz", () => {
+    const rg = doc({ tipo_documento: "RG_COM_CPF", arquivo_nome: "rg.pdf" });
+    const cpf = doc({ tipo_documento: "CPF", arquivo_nome: "cpf.pdf" });
+    expect(requisitoCumpridoPorReaproveitamento("doc_identidade", [rg], ["RG_COM_CPF", "CNH"])).toBe(true);
+    expect(requisitoCumpridoPorReaproveitamento("doc_identidade", [cpf], ["RG_COM_CPF", "CNH"])).toBe(false);
+  });
+
   it("Documento vencido NÃO satisfaz — usuário precisa enviar novo", () => {
     const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const d = doc({ tipo_documento: "RG", status: "aprovado", validado_admin: true, data_validade: ontem });
@@ -102,6 +109,14 @@ describe("Reaproveitamento de documentos pessoais — /cadastro Mira", () => {
     const m = buscarReaproveitamento("doc_identidade", [venc, ok]);
     expect(m.status).toBe("valido");
     expect(m.documento?.id).toBe("b");
+  });
+
+  it("buscarReaproveitamento respeita tipos compatíveis ao escolher match", () => {
+    const cnh = doc({ id: "c", tipo_documento: "CNH", arquivo_nome: "cnh.pdf" });
+    const cpf = doc({ id: "d", tipo_documento: "CPF", arquivo_nome: "cpf.pdf" });
+    const m = buscarReaproveitamento("doc_identidade", [cpf, cnh], ["CNH"]);
+    expect(m.status).toBe("valido");
+    expect(m.documento?.id).toBe("c");
   });
 
   describe("Integração na Etapa 02", () => {

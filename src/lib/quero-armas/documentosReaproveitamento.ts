@@ -33,6 +33,10 @@ export interface ReaproveitamentoMatch {
   documento: DocumentoArsenal | null;
 }
 
+function tipoCanonico(d: DocumentoArsenal): string {
+  return String(d.tipo_documento || "").trim().toUpperCase();
+}
+
 /* ─────────── Heurísticas de classificação ─────────── */
 
 const RX_IDENTIDADE = /(cin|\brg\b|cnh|identidade|carteira\s*nacional|documento\s*identidade|doc[_-]?id)/i;
@@ -43,7 +47,16 @@ function txt(d: DocumentoArsenal): string {
   return [d.tipo_documento, d.arquivo_nome].filter(Boolean).join(" ").toLowerCase();
 }
 
-export function pertenceAoRequisito(d: DocumentoArsenal, req: RequisitoDoc): boolean {
+export function pertenceAoRequisito(
+  d: DocumentoArsenal,
+  req: RequisitoDoc,
+  tiposCompativeis?: string[] | null,
+): boolean {
+  if (Array.isArray(tiposCompativeis) && tiposCompativeis.length > 0) {
+    return tiposCompativeis
+      .map((t) => String(t || "").trim().toUpperCase())
+      .includes(tipoCanonico(d));
+  }
   const s = txt(d);
   if (!s) return false;
   if (req === "doc_identidade") return RX_IDENTIDADE.test(s);
@@ -76,11 +89,12 @@ export function classificarReaproveitavel(
 export function buscarReaproveitamento(
   req: RequisitoDoc,
   candidatos: DocumentoArsenal[] | undefined,
+  tiposCompativeis?: string[] | null,
 ): ReaproveitamentoMatch {
   const list = Array.isArray(candidatos) ? candidatos : [];
   let melhor: ReaproveitamentoMatch = { status: "nao_encontrado", documento: null };
   for (const d of list) {
-    if (!pertenceAoRequisito(d, req)) continue;
+    if (!pertenceAoRequisito(d, req, tiposCompativeis)) continue;
     const cls = classificarReaproveitavel(d as DocumentoArsenal & { substituido_em?: string | null });
     // Prioridade: valido > em_analise > revisar > vencido > reprovado > substituido
     const score = (s: ReaproveitamentoStatus) =>
@@ -104,6 +118,7 @@ export function buscarReaproveitamento(
 export function requisitoCumpridoPorReaproveitamento(
   req: RequisitoDoc,
   candidatos: DocumentoArsenal[] | undefined,
+  tiposCompativeis?: string[] | null,
 ): boolean {
-  return buscarReaproveitamento(req, candidatos).status === "valido";
+  return buscarReaproveitamento(req, candidatos, tiposCompativeis).status === "valido";
 }

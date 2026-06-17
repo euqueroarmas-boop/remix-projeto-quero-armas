@@ -24,6 +24,10 @@ describe("documentoEscopo — Bloco 11", () => {
       expect(getDocumentoEscopo({ tipo_documento: "outro", etapa: "identificacao" })).toBe("cliente");
       expect(getDocumentoEscopo({ tipo_documento: "outro", etapa: "endereco" })).toBe("cliente");
     });
+    it("classifica documentos de atividade CAC no escopo próprio", () => {
+      expect(getDocumentoEscopo({ tipo_documento: "comprovante_habitualidade" })).toBe("cac_atividade");
+      expect(getDocumentoEscopo({ tipo_documento: "comprovante_clube_tiro" })).toBe("cac_atividade");
+    });
     it("cai em processo quando nada bate", () => {
       expect(getDocumentoEscopo({ tipo_documento: "declaracao_especifica" })).toBe("processo");
       expect(getDocumentoEscopo(null)).toBe("processo");
@@ -59,6 +63,14 @@ describe("documentoEscopo — Bloco 11", () => {
           { tipo_documento: "declaracao_x" },
         ),
       ).toBe(false);
+    });
+    it("reaproveita documentos de atividade CAC do mesmo tipo", () => {
+      expect(
+        podeReaproveitarDocumento(
+          { tipo_documento: "comprovante_habitualidade" },
+          { tipo_documento: "comprovante_habitualidade" },
+        ),
+      ).toBe(true);
     });
     it("NÃO reaproveita tipos diferentes", () => {
       expect(

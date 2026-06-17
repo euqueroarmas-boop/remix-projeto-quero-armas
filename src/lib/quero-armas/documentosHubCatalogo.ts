@@ -38,19 +38,19 @@ export interface HubTipoDocumentoMeta {
 export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   {
     value: "identificacao",
-    label: "Identificação",
-    description: "RG, CNH, CIN, CPF e documentos civis do titular.",
+    label: "Identificação civil",
+    description: "RG com CPF, CNH, CIN, CPF e documentos civis do titular.",
     escopoPadrao: "permanente",
   },
   {
     value: "endereco",
-    label: "Endereço",
-    description: "Comprovantes residenciais e declarações de vínculo com imóvel.",
+    label: "Residência",
+    description: "Comprovantes residenciais e declarações relacionadas ao imóvel.",
     escopoPadrao: "permanente",
   },
   {
     value: "renda_ocupacao",
-    label: "Renda e ocupação",
+    label: "Renda / ocupação",
     description: "Comprovantes de atividade profissional, renda e benefício.",
     escopoPadrao: "permanente",
   },
@@ -62,8 +62,8 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
   {
     value: "declaracoes",
-    label: "Declarações",
-    description: "Declarações pessoais, de guarda e de contexto do requerente.",
+    label: "Declarações pessoais",
+    description: "Declarações do titular, de guarda responsável e declarações correlatas.",
     escopoPadrao: "permanente",
   },
   {
@@ -74,8 +74,8 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
   {
     value: "efetiva_necessidade",
-    label: "Justificativas",
-    description: "Comprovações e anexos de necessidade e contexto.",
+    label: "Justificativas / necessidade",
+    description: "Efetiva necessidade e documentos complementares do caso concreto.",
     escopoPadrao: "processo",
   },
   {
@@ -86,20 +86,20 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
   {
     value: "cac_atividade",
-    label: "CAC e atividade",
-    description: "Documentos de habitualidade, clube, competição e atividade CAC.",
+    label: "CAC / habitualidade",
+    description: "Documentos de habitualidade, clube, competição e atividade do CAC.",
     escopoPadrao: "cac_atividade",
   },
   {
     value: "documentos_processo",
-    label: "Documentos do processo",
-    description: "Protocolos, despachos, exigências, indeferimentos e peças do caso.",
+    label: "Documentos processuais",
+    description: "Protocolos, ofícios, despachos, exigências, indeferimentos, recursos e peças do caso.",
     escopoPadrao: "processo",
   },
   {
     value: "juridico",
-    label: "Jurídico",
-    description: "Procurações, recursos, mandados e anexos estritamente jurídicos.",
+    label: "Documentos processuais",
+    description: "Procurações, recursos, mandados e demais peças jurídicas do caso.",
     escopoPadrao: "processo",
   },
   {
@@ -133,11 +133,13 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "antecedentes_eleitoral", label: "Antecedentes eleitorais", short: "ANT. ELET", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
+  { value: "declaracao_correlata", label: "Declaração correlata", short: "DECLARAÇÃO", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_acervo_1endereco", label: "Declaração de guarda de acervo — 1 endereço", short: "GUARDA 1 END", categoria: "declaracoes", escopo: "cac_atividade", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_acervo_2enderecos", label: "Declaração de guarda de acervo — 2 endereços", short: "GUARDA 2 END", categoria: "declaracoes", escopo: "cac_atividade", revisaoHumanaObrigatoria: true },
   { value: "laudo_psicologico", label: "Laudo psicológico", short: "LAUDO PSI", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "documento_complementar_caso", label: "Documento complementar do caso", short: "COMPLEMENTAR", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "cr", label: "CR — Certificado de Registro", short: "CR · CAC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, exigeValidade: true },
   { value: "craf", label: "CRAF — Registro da arma", short: "CRAF", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "sinarm", label: "SINARM — Posse / porte (PF)", short: "SINARM", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
@@ -149,12 +151,13 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "comprovante_clube_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "comprovante_competicao", label: "Comprovante de competição / atividade", short: "COMPETIÇÃO", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "protocolo_processo", label: "Protocolo do processo", short: "PROTOCOLO", categoria: "documentos_processo", escopo: "processo" },
+  { value: "oficio", label: "Ofício", short: "OFÍCIO", categoria: "documentos_processo", escopo: "processo" },
   { value: "despacho", label: "Despacho / movimentação", short: "DESPACHO", categoria: "documentos_processo", escopo: "processo" },
   { value: "exigencia", label: "Exigência administrativa", short: "EXIGÊNCIA", categoria: "documentos_processo", escopo: "processo" },
   { value: "indeferimento", label: "Indeferimento", short: "INDEFER.", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "procuracao", label: "Procuração", short: "PROC.", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "recurso_administrativo_doc", label: "Recurso administrativo", short: "RECURSO", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
-  { value: "mandado_seguranca_doc", label: "Mandado de segurança / peça jurídica", short: "MS", categoria: "juridico", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "procuracao", label: "Procuração", short: "PROC.", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "recurso_administrativo_doc", label: "Recurso administrativo", short: "RECURSO", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
+  { value: "mandado_seguranca_doc", label: "Mandado de segurança / peça jurídica", short: "MS", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "outro", label: "Outro documento", short: "OUTRO", categoria: "outros", escopo: "processo" },
 ] as const;
 
@@ -185,8 +188,9 @@ export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefin
   if (meta) return meta.categoria;
   if (isDocDeArma(tipo)) return "arma_acervo";
   if (tipo.includes("efetiva_necessidade")) return "efetiva_necessidade";
-  if (tipo.includes("procuracao") || tipo.includes("recurso") || tipo.includes("mandado")) return "juridico";
+  if (tipo.includes("procuracao") || tipo.includes("recurso") || tipo.includes("mandado")) return "documentos_processo";
   if (tipo.includes("protocolo") || tipo.includes("indeferimento") || tipo.includes("exigencia")) return "documentos_processo";
+  if (tipo.includes("oficio") || tipo.includes("despacho")) return "documentos_processo";
   if (tipo.includes("habitualidade") || tipo.includes("clube") || tipo.includes("competicao")) return "cac_atividade";
   for (const [pattern, categoria] of CATEGORIA_BY_TIPO_PREFIX) {
     if (pattern.test(tipo)) return categoria;
