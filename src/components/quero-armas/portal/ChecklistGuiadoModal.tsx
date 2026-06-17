@@ -1114,7 +1114,7 @@ export default function ChecklistGuiadoModal({
       return;
     }
     if (acaoPendente.tipo === "reaproveitar" && typeof acaoPendente.payload === "string") {
-      void handleReaproveitar(acaoPendente.payload);
+      void handleReaproveitar(acaoPendente.payload as any);
       return;
     }
   };

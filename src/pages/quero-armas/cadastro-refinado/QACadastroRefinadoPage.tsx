@@ -5,6 +5,7 @@ import {
   useCadastroRefinadoState,
   clearCadastroRefinadoStorage,
 } from "./hooks/useCadastroRefinadoState";
+import type { CadastroRefinadoState } from "./hooks/useCadastroRefinadoState";
 import { useAuth } from "@/shared/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCPF, formatPhone } from "@/shared/lib/formatters";
