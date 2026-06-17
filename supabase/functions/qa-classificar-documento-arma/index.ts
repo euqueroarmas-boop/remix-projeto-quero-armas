@@ -1,5 +1,4 @@
 // Edge Function: qa-classificar-documento-arma
-//
 // Classifica automaticamente um documento enviado no Arsenal e o compara
 // com o tipo escolhido manualmente pelo cliente.
 //
@@ -22,7 +21,6 @@
 //  - service_role no servidor; valida JWT do chamador.
 //  - Não escreve em tabelas (decisão de salvar fica com o caller).
 //  - Modelo: google/gemini-3-flash-preview.
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -45,63 +43,17 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const TIPOS = [
-  // Armas / acervo
-  "CR",
-  "CRAF",
-  "SINARM",
-  "GT",
-  "GTE",
-  "GUIA_TRANSITO",
-  "AUTORIZACAO_COMPRA",
-  "NOTA_FISCAL_ARMA",
-  // Identificação civil
-  "RG_COM_CPF",
-  "CIN",
-  "CNH",
-  "CPF",
-  // Endereço
-  "COMPROVANTE_RESIDENCIA",
-  "DECLARACAO_RESPONSAVEL_IMOVEL",
-  // Renda / ocupação
-  "CTPS",
-  "HOLERITE",
-  "CARTAO_CNPJ",
-  "CONTRATO_SOCIAL",
-  "NOTA_FISCAL_AUTONOMO",
-  "COMPROVANTE_BENEFICIO",
-  "EXTRATO_INSS",
-  // Antecedentes
-  "ANTECEDENTES_CRIMINAIS",
-  "ANTECEDENTES_FEDERAL",
-  "ANTECEDENTES_ESTADUAL",
-  "ANTECEDENTES_MILITAR",
-  "ANTECEDENTES_ELEITORAL",
-  // Declarações
-  "DECLARACAO_NAO_INQUERITO",
-  "DECLARACAO_GUARDA_RESPONSAVEL",
-  "DECLARACAO_CORRELATA",
-  "DECLARACAO_GUARDA_ACERVO",
-  // Laudos
-  "LAUDO_PSICOLOGICO",
-  "LAUDO_CAPACIDADE_TECNICA",
-  // Efetiva necessidade
-  "COMPROVANTE_EFETIVA_NECESSIDADE",
-  "DOCUMENTO_COMPLEMENTAR",
-  // CAC / habitualidade
-  "COMPROVANTE_HABITUALIDADE",
-  "COMPROVANTE_CLUBE",
-  "COMPROVANTE_COMPETICAO",
-  // Documentos processuais
-  "PROTOCOLO_PROCESSO",
-  "OFICIO",
-  "DESPACHO",
-  "EXIGENCIA",
-  "INDEFERIMENTO",
-  // Jurídico
-  "PROCURACAO",
-  "RECURSO_ADMINISTRATIVO",
-  "MANDADO_SEGURANCA",
-  // Fallback
+  "CR","CRAF","SINARM","GT","GTE","GUIA_TRANSITO","AUTORIZACAO_COMPRA","NOTA_FISCAL_ARMA",
+  "RG_COM_CPF","CIN","CNH","CPF",
+  "COMPROVANTE_RESIDENCIA","DECLARACAO_RESPONSAVEL_IMOVEL",
+  "CTPS","HOLERITE","CARTAO_CNPJ","CONTRATO_SOCIAL","NOTA_FISCAL_AUTONOMO","COMPROVANTE_BENEFICIO","EXTRATO_INSS",
+  "ANTECEDENTES_CRIMINAIS","ANTECEDENTES_FEDERAL","ANTECEDENTES_ESTADUAL","ANTECEDENTES_MILITAR","ANTECEDENTES_ELEITORAL",
+  "DECLARACAO_NAO_INQUERITO","DECLARACAO_GUARDA_RESPONSAVEL","DECLARACAO_CORRELATA","DECLARACAO_GUARDA_ACERVO",
+  "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
+  "COMPROVANTE_EFETIVA_NECESSIDADE","DOCUMENTO_COMPLEMENTAR",
+  "COMPROVANTE_HABITUALIDADE","COMPROVANTE_CLUBE","COMPROVANTE_COMPETICAO",
+  "PROTOCOLO_PROCESSO","OFICIO","DESPACHO","EXIGENCIA","INDEFERIMENTO",
+  "PROCURACAO","RECURSO_ADMINISTRATIVO","MANDADO_SEGURANCA",
   "DESCONHECIDO",
 ] as const;
 type Tipo = typeof TIPOS[number];
@@ -110,8 +62,7 @@ const tool = {
   type: "function",
   function: {
     name: "classificar_documento_arma",
-    description:
-      "Classifica qualquer documento enviado por um cliente no Hub Documental brasileiro (armas, identificação civil, renda, antecedentes, declarações, laudos, CAC, processos administrativos e jurídicos).",
+    description: "Classifica qualquer documento enviado por um cliente no Hub Documental brasileiro (armas, identificação civil, renda, antecedentes, declarações, laudos, CAC, processos administrativos e jurídicos).",
     parameters: {
       type: "object",
       properties: {
@@ -139,20 +90,16 @@ const tool = {
         },
         justificativa: {
           type: "string",
-          description:
-            "Texto curto explicando os indícios encontrados (cabeçalho, órgão, campos, expressões).",
+          description: "Texto curto explicando os indícios encontrados (cabeçalho, órgão, campos, expressões).",
         },
         camposExtraidos: {
           type: "object",
           description: "Campos extraídos relevantes ao tipo detectado. Preencha APENAS os campos que existem no documento. Deixe vazio se não houver.",
           properties: {
-            // === CAMPOS UNIVERSAIS ===
             numero_documento: { type: "string", description: "Número principal do documento (RG, CNH, CIN, CR, CRAF, protocolo etc.)" },
             orgao_emissor: { type: "string", description: "Órgão/entidade que emitiu o documento" },
             data_emissao: { type: "string", description: "Data de emissão DD/MM/AAAA" },
             data_validade: { type: "string", description: "Data de validade DD/MM/AAAA" },
-
-            // === IDENTIFICAÇÃO DA PESSOA ===
             nome_completo: { type: "string", description: "Nome completo do titular do documento" },
             cpf: { type: "string", description: "CPF do titular (somente dígitos ou com pontuação original)" },
             data_nascimento: { type: "string", description: "Data de nascimento DD/MM/AAAA" },
@@ -161,17 +108,11 @@ const tool = {
             naturalidade: { type: "string", description: "Cidade/estado de nascimento" },
             nacionalidade: { type: "string", description: "Nacionalidade" },
             sexo: { type: "string", description: "Sexo (M/F) se constar no documento" },
-
-            // === CNH ===
             categoria_cnh: { type: "string", description: "Categoria(s) da CNH (ex.: AB, B, ACC)" },
             numero_registro_cnh: { type: "string", description: "Número de registro da CNH (diferente do número do documento)" },
             primeira_habilitacao: { type: "string", description: "Data da primeira habilitação DD/MM/AAAA" },
-
-            // === ENDEREÇO ===
             endereco_completo: { type: "string", description: "Endereço completo conforme consta no documento" },
             cep: { type: "string", description: "CEP" },
-
-            // === RENDA / OCUPAÇÃO ===
             numero_ctps: { type: "string", description: "Número da Carteira de Trabalho" },
             serie_ctps: { type: "string", description: "Série da Carteira de Trabalho" },
             empregador_nome: { type: "string", description: "Nome do empregador (holerite)" },
@@ -183,47 +124,24 @@ const tool = {
             razao_social: { type: "string", description: "Razão social da empresa" },
             situacao_cadastral: { type: "string", description: "Situação cadastral (ativa, inapta etc.)" },
             numero_beneficio: { type: "string", description: "Número do benefício INSS" },
-
-            // === ANTECEDENTES ===
             resultado_certidao: { type: "string", description: "Resultado da certidão: 'nada consta', 'possui registros' ou texto equivalente" },
-
-            // === DECLARAÇÕES ===
             nome_declarante: { type: "string", description: "Nome de quem assina a declaração" },
             cpf_declarante: { type: "string", description: "CPF de quem assina a declaração" },
-
-            // === LAUDOS ===
             nome_profissional: { type: "string", description: "Nome do psicólogo/instrutor que assina o laudo" },
             registro_profissional: { type: "string", description: "CRP, CRM ou registro do profissional" },
             resultado_laudo: { type: "string", description: "Resultado do laudo: 'apto', 'inapto' ou texto equivalente" },
-
-            // === ARMAS / ACERVO ===
             arma_marca: { type: "string" },
-            arma_modelo: {
-              type: "string",
-              description: "Modelo comercial somente se estiver escrito explicitamente no documento. NÃO preencher com TIPO/espécie. Se não houver modelo explícito, deixar vazio.",
-            },
+            arma_modelo: { type: "string", description: "Modelo comercial somente se estiver escrito explicitamente no documento. NÃO preencher com TIPO/espécie. Se não houver modelo explícito, deixar vazio." },
             arma_especie: { type: "string", description: "Tipo/espécie da arma (ex.: PISTOLA, REVÓLVER, CARABINA)" },
             arma_calibre: { type: "string" },
             arma_numero_serie: { type: "string" },
             sigma_ou_sinarm: { type: "string" },
-            numero_cad_sinarm: {
-              type: "string",
-              description: "OBRIGATÓRIO quando contiver 'Nº Cad. SINARM'. Copie o valor EXATO preservando barra e hífen (ex.: 2022/905178870-50).",
-            },
-            numero_registro_sigma: {
-              type: "string",
-              description: "Número de registro SIGMA apenas quando o documento for do Exército/SIGMA/CAC com indicação explícita.",
-            },
-            sistema_registro: {
-              type: "string",
-              enum: ["SINARM", "SIGMA", "REVISAR"],
-              description: "SINARM se houver 'Nº Cad. SINARM' ou PF/SINARM. SIGMA se Exército/SIGMA/CAC explícito. REVISAR caso contrário.",
-            },
+            numero_cad_sinarm: { type: "string", description: "OBRIGATÓRIO quando contiver 'Nº Cad. SINARM'. Copie o valor EXATO preservando barra e hífen (ex.: 2022/905178870-50)." },
+            numero_registro_sigma: { type: "string", description: "Número de registro SIGMA apenas quando o documento for do Exército/SIGMA/CAC com indicação explícita." },
+            sistema_registro: { type: "string", enum: ["SINARM", "SIGMA", "REVISAR"], description: "SINARM se houver 'Nº Cad. SINARM' ou PF/SINARM. SIGMA se Exército/SIGMA/CAC explícito. REVISAR caso contrário." },
             origem: { type: "string" },
             destino: { type: "string" },
             emitente: { type: "string" },
-
-            // === NOTA FISCAL ===
             nf_chave_acesso: { type: "string", description: "44 dígitos da NF-e" },
             nf_produto: { type: "string" },
             nf_calibre: { type: "string" },
