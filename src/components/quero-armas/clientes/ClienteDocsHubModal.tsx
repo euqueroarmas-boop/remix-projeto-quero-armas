@@ -559,7 +559,7 @@ export function ClienteDocsHubModal({
             const emissao = dataIsoFromBr(campos.data_emissao);
             if (emissao) {
               const d = new Date(emissao);
-              d.setMonth(d.getMonth() + 3);
+              d.setMonth(d.getMonth() + 1);
               return d.toISOString().slice(0, 10);
             }
           }
