@@ -825,6 +825,7 @@ export function ClienteDocsHubModal({
           ? {
               tipoDetectado: classificacao.tipoDetectado,
               confianca: classificacao.confianca,
+              recomendacao: classificacao.recomendacao,
               camposExtraidos: classificacao.camposExtraidos || {},
               avaliado_em: new Date().toISOString(),
               origem_fluxo: "arsenal_hub_documental",
@@ -846,15 +847,16 @@ export function ClienteDocsHubModal({
       };
 
       // Fluxo de aprovação:
-      // - admin sempre aprova
-      // - cliente: aprovado automaticamente quando a IA confia (recomendacao === "aceitar")
-      // - cliente: pendente_aprovacao nos demais casos
+      // - admin: aprovado direto
+      // - cliente: sempre insere como pendente_aprovacao (RLS exige)
+      //   a trigger qa_doc_auto_aprovar_por_ia_trigger promove para aprovado
+      //   no servidor quando ia_dados_extraidos.recomendacao = 'aceitar'
       const isStaff = await isCurrentUserStaff();
       const iaConfia = classificacao?.recomendacao === "aceitar";
-      if (isStaff || iaConfia) {
+      if (isStaff) {
         payload.status = "aprovado";
-        payload.origem = isStaff ? "admin" : "cliente";
-        payload.validado_admin = isStaff;
+        payload.origem = "admin";
+        payload.validado_admin = true;
         payload.aprovado_em = new Date().toISOString();
       } else {
         payload.status = "pendente_aprovacao";
@@ -869,7 +871,7 @@ export function ClienteDocsHubModal({
       // e e-mail são disparados pela trigger qa_doc_cliente_recalcular no banco.
 
       toast.success(
-        (await isCurrentUserStaff()) || iaConfia
+        isStaff || iaConfia
           ? "Documento aprovado e adicionado ao seu Hub."
           : "Documento enviado! Aguardando aprovação da equipe."
       );
