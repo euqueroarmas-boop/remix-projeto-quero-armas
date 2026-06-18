@@ -604,7 +604,9 @@ export function ClienteDocsHubModal({
           numero_documento: prev.numero_documento || sugestao.numero_documento || "",
           orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
           data_emissao: prev.data_emissao || sugestao.data_emissao || "",
-          data_validade: prev.data_validade || sugestao.data_validade || "",
+          // Para comprovante de residência, nunca usar data_validade da sugestão:
+          // a IA extrai o vencimento da conta (≈1 mês), não a validade do documento (90 dias).
+          data_validade: prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : sugestao.data_validade) || "",
           observacoes: prev.observacoes || sugestao.observacoes || "",
           arma_marca: prev.arma_marca || sugestao.arma_marca || "",
           arma_modelo: prev.arma_modelo || safeExtractedModel(sugestao.arma_modelo) || "",
