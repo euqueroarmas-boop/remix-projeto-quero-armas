@@ -8312,6 +8312,21 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_tipo_documento_aliases: {
+        Row: {
+          hub_tipo: string
+          processo_tipo: string
+        }
+        Insert: {
+          hub_tipo: string
+          processo_tipo: string
+        }
+        Update: {
+          hub_tipo?: string
+          processo_tipo?: string
+        }
+        Relationships: []
+      }
       qa_tipos_documento_catalogo: {
         Row: {
           aceita_ia: boolean
