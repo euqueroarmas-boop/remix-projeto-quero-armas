@@ -307,6 +307,42 @@ const SYSTEM_PROMPT = [
   "Responda EXCLUSIVAMENTE chamando a função classificar_documento_arma.",
 ].join("\n");
 
+async function fetchFewShotBlock(supabase: ReturnType<typeof createClient>): Promise<string> {
+  try {
+    const { data } = await supabase
+      .from("qa_exemplos_ia")
+      .select("tipo_documento, justificativa, campos_extraidos, confianca")
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    if (!data || data.length === 0) return "";
+
+    // Deduplica por tipo, mantendo o mais recente de cada
+    const seen = new Set<string>();
+    const deduped = data.filter((e: { tipo_documento: string }) => {
+      if (seen.has(e.tipo_documento)) return false;
+      seen.add(e.tipo_documento);
+      return true;
+    }).slice(0, 8);
+
+    const linhas = deduped.map((e: { tipo_documento: string; justificativa?: string; campos_extraidos?: Record<string, unknown> }) => {
+      const campos = Object.entries(e.campos_extraidos || {})
+        .filter(([, v]) => v !== null && v !== undefined && v !== "")
+        .map(([k, v]) => `${k}=${v}`)
+        .join(", ");
+      return `• [${e.tipo_documento}] ${e.justificativa || ""}${campos ? `\n  Campos extraídos: ${campos}` : ""}`;
+    });
+
+    return [
+      "",
+      "=== EXEMPLOS REAIS VALIDADOS PELA EQUIPE (use como referência de classificação) ===",
+      ...linhas,
+    ].join("\n");
+  } catch {
+    return "";
+  }
+}
+
 function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (!t) return null;
   const x = String(t).trim().toUpperCase().replace(/[\s-]+/g, "_");
@@ -374,7 +410,10 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
-    const body = await req.json().catch(() => ({}));
+    const [body, fewShotBlock] = await Promise.all([
+      req.json().catch(() => ({})),
+      fetchFewShotBlock(supabase),
+    ]);
     let imageDataUrl: string | undefined = body?.imageDataUrl;
     const tipoSelecionado: string | undefined = body?.tipoSelecionado;
     const storage_bucket: string | undefined = body?.storage_bucket;
@@ -408,7 +447,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: MODEL,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SYSTEM_PROMPT + fewShotBlock },
           {
             role: "user",
             content: [
