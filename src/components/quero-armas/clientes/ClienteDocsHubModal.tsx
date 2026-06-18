@@ -560,8 +560,16 @@ export function ClienteDocsHubModal({
         data_validade: (() => {
           const valExplicita = dataIsoFromBr(campos.data_validade);
           if (valExplicita) return valExplicita;
-          // Comprovante de residência: validade implícita de 90 dias a partir da emissão
-          if (tipoIA === "comprovante_residencia") {
+          // Comprovante de residência e certidões de antecedentes: validade = mesmo dia do próximo mês
+          const tiposValidade30dias = [
+            "comprovante_residencia",
+            "antecedentes_criminais",
+            "antecedentes_eleitoral",
+            "antecedentes_federal",
+            "antecedentes_estadual",
+            "antecedentes_militar",
+          ];
+          if (tiposValidade30dias.includes(tipoIA)) {
             const emissao = dataIsoFromBr(campos.data_emissao);
             if (emissao) {
               const d = new Date(emissao);
@@ -887,6 +895,16 @@ export function ClienteDocsHubModal({
 
       const { error: insertError } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
       if (insertError) throw insertError;
+
+      // Certidão eleitoral: copia número do documento → titulo_eleitor do cadastro do cliente
+      if (form.tipo_documento === "antecedentes_eleitoral" && form.numero_documento && qaClienteId) {
+        await supabase
+          .from("qa_clientes")
+          .update({ titulo_eleitor: form.numero_documento })
+          .eq("id", qaClienteId)
+          .is("titulo_eleitor", null);
+        // Se já tem titulo_eleitor cadastrado, não sobrescreve (só preenche quando vazio)
+      }
 
       // Recálculo, eventos (documento_recebido / todos_documentos_recebidos)
       // e e-mail são disparados pela trigger qa_doc_cliente_recalcular no banco.
