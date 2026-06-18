@@ -551,7 +551,20 @@ export function ClienteDocsHubModal({
         numero_documento: campos.numero_documento || prev.numero_documento,
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
         data_emissao: dataIsoFromBr(campos.data_emissao) || prev.data_emissao,
-        data_validade: dataIsoFromBr(campos.data_validade) || prev.data_validade,
+        data_validade: (() => {
+          const valExplicita = dataIsoFromBr(campos.data_validade);
+          if (valExplicita) return valExplicita;
+          // Comprovante de residência: validade implícita de 90 dias a partir da emissão
+          if (tipoIA === "comprovante_residencia") {
+            const emissao = dataIsoFromBr(campos.data_emissao);
+            if (emissao) {
+              const d = new Date(emissao);
+              d.setDate(d.getDate() + 90);
+              return d.toISOString().slice(0, 10);
+            }
+          }
+          return prev.data_validade;
+        })(),
         arma_marca: campos.arma_marca || prev.arma_marca,
         arma_modelo: modeloExtraidoSeguro || prev.arma_modelo,
         arma_calibre: campos.arma_calibre || prev.arma_calibre,
@@ -832,12 +845,16 @@ export function ClienteDocsHubModal({
           : null,
       };
 
-      // Fluxo de aprovação: admin lança como aprovado; cliente envia como pendente.
+      // Fluxo de aprovação:
+      // - admin sempre aprova
+      // - cliente: aprovado automaticamente quando a IA confia (recomendacao === "aceitar")
+      // - cliente: pendente_aprovacao nos demais casos
       const isStaff = await isCurrentUserStaff();
-      if (isStaff) {
+      const iaConfia = classificacao?.recomendacao === "aceitar";
+      if (isStaff || iaConfia) {
         payload.status = "aprovado";
-        payload.origem = "admin";
-        payload.validado_admin = true;
+        payload.origem = isStaff ? "admin" : "cliente";
+        payload.validado_admin = isStaff;
         payload.aprovado_em = new Date().toISOString();
       } else {
         payload.status = "pendente_aprovacao";
@@ -852,8 +869,8 @@ export function ClienteDocsHubModal({
       // e e-mail são disparados pela trigger qa_doc_cliente_recalcular no banco.
 
       toast.success(
-        (await isCurrentUserStaff())
-          ? "Documento adicionado com sucesso."
+        (await isCurrentUserStaff()) || iaConfia
+          ? "Documento aprovado e adicionado ao seu Hub."
           : "Documento enviado! Aguardando aprovação da equipe."
       );
       setForm(EMPTY);
