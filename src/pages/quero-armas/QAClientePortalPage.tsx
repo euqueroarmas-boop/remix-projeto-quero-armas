@@ -655,18 +655,20 @@ export default function QAClientePortalPage() {
     meusDocs.forEach((d: any) => {
       if (!d.data_validade) return;
       const tipoRaw = (d.tipo_documento || "outro").toLowerCase();
-      const cat = tipoRaw.toUpperCase();
       // Evita duplicar o CR já presente em qa_cadastro_cr (validade_cr)
       if (tipoRaw === "cr" && cadastro?.validade_cr) return;
-      // Para CRAFs, prioriza modelo (mais curto) sobre marca para não truncar em mobile
+      const tipoMeta = getTipoDocumentoMeta(tipoRaw);
+      const tipoLabel = tipoMeta?.short || tipoMeta?.label
+        || tipoRaw.replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
+      const catLabel = getHubCategoriaMeta(tipoMeta?.categoria || "outros").label;
       const armaInfo = d.arma_modelo
         ? ` — ${d.arma_modelo}${d.arma_calibre ? ` ${d.arma_calibre}` : ""}`
         : "";
       expDocs.push({
-        label: `${cat}${armaInfo}`,
+        label: `${tipoLabel}${armaInfo}`,
         date: d.data_validade,
         days: daysUntil(d.data_validade),
-        category: cat,
+        category: catLabel,
       });
     });
     expDocs.sort((a, b) => {
@@ -1697,179 +1699,133 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "documentos" && analysis && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <PortalScopeSelector hint="Documentos sem vínculo direto só aparecem em 'Todos os processos'." />
-            <SectionCard icon={FileText} title="Documentos com validade" color="hsl(262 60% 55%)">
-              <div className="mb-4 flex justify-end"><button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"><Upload className="h-4 w-4" /> Enviar documento</button></div>
-              {(() => {
-                // Documentos com validade: CR/CRAF/GTE/Exames/Hub não têm
-                // processo_id explícito no schema atual. Quando o escopo é um
-                // processo, mostramos somente os "serviço" associados àquele
-                // processo (via servico_id ↔ scope.processoId via processos[]).
-                let docs = analysis.expDocs;
-                if (currentScope.type === "processo") {
-                  const proc = processos.find((p) => String(p.id) === String(currentScope.processoId));
-                  const procServicoNome = proc
-                    ? (getQAServiceDisplayName({
-                        ...catalogoByServicoId[Number(proc.servico_id)],
-                        servico_id: proc.servico_id,
-                        servico_nome: proc.servico_nome || SERVICO_MAP[proc.servico_id],
-                      }) || proc.servico_nome)
-                    : null;
-                  docs = analysis.expDocs.filter((d) =>
-                    procServicoNome
-                      ? d.label.toLowerCase().includes(String(procServicoNome).toLowerCase())
-                      : false,
-                  );
-                }
-                return docs.length === 0 ? (
-                  <p className="py-8 text-center text-sm text-slate-500">
-                    {currentScope.type === "processo"
-                      ? "Nenhum documento com validade vinculado a este processo."
-                      : "Nenhum documento com validade cadastrado."}
-                  </p>
-                ) : (
-                  <div className="grid gap-2">{docs.map((doc, i) => <div key={i} className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${urgencyBg(doc.days)}`}><div className="min-w-0"><span className="mr-2 rounded bg-white/70 px-1.5 py-0.5 text-[9px] font-bold text-slate-500">{doc.category}</span><span className="text-[12px] font-semibold text-slate-800">{doc.label}</span></div><div className="shrink-0 text-right"><div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div><div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div></div></div>)}</div>
-                );
-              })()}
-            </SectionCard>
+
+            {/* ── Validades ── */}
+            {(() => {
+              let docs = analysis.expDocs;
+              if (currentScope.type === "processo") {
+                const proc = processos.find((p) => String(p.id) === String(currentScope.processoId));
+                const procServicoNome = proc
+                  ? (getQAServiceDisplayName({ ...catalogoByServicoId[Number(proc.servico_id)], servico_id: proc.servico_id, servico_nome: proc.servico_nome || SERVICO_MAP[proc.servico_id] }) || proc.servico_nome)
+                  : null;
+                docs = analysis.expDocs.filter((d) => procServicoNome ? d.label.toLowerCase().includes(String(procServicoNome).toLowerCase()) : false);
+              }
+              if (docs.length === 0) return null;
+              return (
+                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                      <FileText className="h-3 w-3" /> Validades
+                    </span>
+                    <button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] px-2.5 py-1 text-[10px] font-bold text-white">
+                      <Upload className="h-3 w-3" /> Enviar
+                    </button>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {docs.map((doc, i) => (
+                      <div key={i} className={`flex items-center justify-between gap-2 px-3 py-2 ${urgencyBg(doc.days)}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold bg-white/80 text-slate-500 border border-slate-200">{doc.category}</span>
+                          <span className="text-[11px] font-medium text-slate-800 truncate">{doc.label}</span>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-[10px] font-mono text-slate-500">{formatDate(doc.date)}</div>
+                          <div className={`text-[9px] font-bold ${urgencyColor(doc.days)}`}>{urgencyLabel(doc.days)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
             {(customerId || cliente?.id) && (
-              <SectionCard icon={FolderArchive} title="Meu Hub de Documentos" color="hsl(280 60% 50%)">
-                {currentScope.type === "processo" && (
-                  <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
-                    O Hub de Documentos do cliente é compartilhado entre processos.
-                    Itens sem vínculo direto continuam visíveis apenas em <strong>"Todos os processos"</strong>.
-                  </div>
-                )}
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] text-slate-500 leading-snug max-w-[70%]">
-                    {cliente?.tipo_cliente === "cliente_app" && !customerId
-                      ? "Envie documentos pessoais, comprovantes, laudos, peças do processo e documentos de acervo em um hub único e reaproveitável."
-                      : "Centralize identificação, endereço, laudos, documentos do processo e acervo. A IA ajuda na leitura inicial quando o arquivo permitir."}
-                  </p>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowAddDoc(true)}
-                    className="h-8 text-[10px] uppercase tracking-wider"
-                    style={{ background: "hsl(280 60% 50%)" }}
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Adicionar
-                  </Button>
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                {/* Cabeçalho */}
+                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <FolderArchive className="h-3 w-3" /> Hub de Documentos
+                  </span>
+                  <button type="button" onClick={() => setShowAddDoc(true)} className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[10px] font-bold text-white" style={{ background: "hsl(280 60% 50%)" }}>
+                    <Plus className="h-3 w-3" /> Adicionar
+                  </button>
                 </div>
 
-                {(() => {
-                  // qa_documentos_cliente não possui processo_id no schema atual.
-                  // Por isso, ao filtrar por processo, escondemos o hub completo
-                  // (já avisamos no banner acima). Em "Todos" mantemos a lista.
-                  if (currentScope.type === "processo") return null;
-                  return meusDocs.length === 0 ? (
-                  <div className="text-center py-8 border border-dashed border-slate-200 rounded-xl">
-                    <FolderArchive className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-[11px] text-slate-400">
-                      {cliente?.tipo_cliente === "cliente_app"
-                        ? "Você ainda não enviou documentos do acervo."
-                        : "Nenhum documento cadastrado ainda."}
-                    </p>
-                    <p className="text-[10px] text-slate-400 mt-1">Use o botão acima para começar.</p>
+                {currentScope.type === "processo" ? (
+                  <p className="px-3 py-2 text-[10px] text-amber-700 bg-amber-50 border-b border-amber-100">
+                    Hub compartilhado entre processos — visível apenas em "Todos os processos".
+                  </p>
+                ) : meusDocs.length === 0 ? (
+                  <div className="flex flex-col items-center gap-1 py-6 text-slate-400">
+                    <FolderArchive className="h-6 w-6 text-slate-300" />
+                    <p className="text-[11px]">Nenhum documento cadastrado.</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="divide-y divide-slate-100">
                     {meusDocs.map((d: any) => {
                       const dias = daysUntil(d.data_validade);
-                      const categoria = getHubCategoriaMeta((d.categoria_hub as any) || "outros");
                       const tipoMeta = getTipoDocumentoMeta(d.tipo_documento);
-                      const escopo = inferEscopoDocumental({
-                        tipo_documento: d.tipo_documento,
-                        categoria_hub: (d.categoria_hub as any) || null,
-                        arma_id: d.arma_id || null,
-                      });
+                      const nomeDoc = tipoMeta?.label || String(d.tipo_documento || "Documento").replace(/_/g, " ").replace(/\b\w/g, (l: string) => l.toUpperCase());
                       return (
-                        <div key={d.id} className={`p-3 rounded-xl border ${urgencyBg(dias)}`}>
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/70 text-slate-600">
-                                  {categoria.label.toUpperCase()}
+                        <div key={d.id} className={`flex items-center gap-2 px-3 py-2 ${urgencyBg(dias)}`}>
+                          {/* Status dot */}
+                          <div className={`shrink-0 h-2 w-2 rounded-full ${d.status === "aprovado" ? "bg-emerald-500" : d.status === "reprovado" ? "bg-red-500" : "bg-amber-400"}`} />
+
+                          {/* Info principal */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[11px] font-semibold text-slate-800 truncate">{nomeDoc}</span>
+                              {d.status === "aprovado" && (
+                                <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5 shrink-0">
+                                  <BadgeCheck className="h-2.5 w-2.5" /> aprovado
                                 </span>
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
-                                  {escopo.toUpperCase()}
-                                </span>
-                                {d.status === "aprovado" && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 inline-flex items-center gap-0.5">
-                                    <BadgeCheck className="h-2.5 w-2.5" /> APROVADO
-                                  </span>
-                                )}
-                                {d.status === "pendente_aprovacao" && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#F1D9DC] text-[#4F121C] inline-flex items-center gap-0.5">
-                                    AGUARDANDO ANÁLISE
-                                  </span>
-                                )}
-                                {d.status === "reprovado" && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 inline-flex items-center gap-0.5">
-                                    REPROVADO
-                                  </span>
-                                )}
-                                {d.ia_status === "sugerido" && d.status !== "aprovado" && (
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#FBF3F4] text-[#7A1F2B] inline-flex items-center gap-0.5">
-                                    <Sparkles className="h-2.5 w-2.5" /> IA
-                                  </span>
-                                )}
-                                {d.arquivo_storage_path && (
-                                  <span className="text-[9px] text-slate-500 inline-flex items-center gap-0.5">
-                                    <Paperclip className="h-2.5 w-2.5" /> anexo
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-[12px] font-semibold text-slate-800 mt-1">
-                                {tipoMeta?.label || String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
-                              </div>
-                              <div className="text-[11px] text-slate-600 mt-0.5">
-                                {d.numero_documento || "Sem número"}
-                                {d.arma_modelo && (
-                                  <span className="font-normal text-slate-500"> · {d.arma_marca} {d.arma_modelo}{d.arma_calibre ? ` (${d.arma_calibre})` : ""}</span>
-                                )}
-                              </div>
-                              {d.orgao_emissor && (
-                                <div className="text-[10px] text-slate-500 mt-0.5">{d.orgao_emissor}</div>
                               )}
-                              {d.status === "reprovado" && d.motivo_reprovacao && (
-                                <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-700">
-                                  <span className="font-bold uppercase">Motivo da reprovação:</span> {d.motivo_reprovacao}
-                                  <div className="mt-1 text-[9px] text-red-600">Reenvie o documento corrigido pelo botão Adicionar.</div>
-                                </div>
+                              {d.status === "pendente_aprovacao" && (
+                                <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-700 shrink-0">em análise</span>
                               )}
+                              {d.status === "reprovado" && (
+                                <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-100 text-red-700 shrink-0">reprovado</span>
+                              )}
+                              {d.arquivo_storage_path && <Paperclip className="h-2.5 w-2.5 text-slate-400 shrink-0" />}
                             </div>
-                            <div className="text-right shrink-0">
-                              <div className="text-[10px] text-slate-500 font-mono">{formatDate(d.data_validade)}</div>
-                              <div className={`text-[9px] font-bold ${urgencyColor(dias)}`}>{urgencyLabel(dias)}</div>
+                            <div className="text-[10px] text-slate-500 truncate">
+                              {[d.numero_documento, d.orgao_emissor].filter(Boolean).join(" · ") || "Sem número"}
                             </div>
+                            {d.status === "reprovado" && d.motivo_reprovacao && (
+                              <div className="text-[9px] text-red-600 mt-0.5 truncate">⚠ {d.motivo_reprovacao}</div>
+                            )}
                           </div>
-                          <div className="flex justify-end mt-2">
+
+                          {/* Validade + remover */}
+                          <div className="shrink-0 text-right flex flex-col items-end gap-1">
+                            {d.data_validade && (
+                              <div>
+                                <div className="text-[9px] font-mono text-slate-400">{formatDate(d.data_validade)}</div>
+                                <div className={`text-[9px] font-bold ${urgencyColor(dias)}`}>{urgencyLabel(dias)}</div>
+                              </div>
+                            )}
                             <button
                               type="button"
                               onClick={async () => {
                                 if (!confirm("Remover este documento?")) return;
-                                const { error } = await supabase
-                                  .from("qa_documentos_cliente" as any)
-                                  .delete()
-                                  .eq("id", d.id);
+                                const { error } = await supabase.from("qa_documentos_cliente" as any).delete().eq("id", d.id);
                                 if (error) { toast.error("Erro ao remover."); return; }
                                 toast.success("Documento removido.");
                                 setDocsReloadKey((k) => k + 1);
                               }}
-                              className="text-[10px] text-slate-400 hover:text-red-500 inline-flex items-center gap-1"
+                              className="text-[9px] text-slate-300 hover:text-red-400 inline-flex items-center gap-0.5"
                             >
-                              <Trash2 className="h-3 w-3" /> remover
+                              <Trash2 className="h-2.5 w-2.5" /> remover
                             </button>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                  );
-                })()}
-              </SectionCard>
+                )}
+              </div>
             )}
           </div>
         )}
