@@ -51,8 +51,19 @@ const daysUntil = (d: string | null): number | null => {
   if (!d) return null;
   try { const p = new Date(d); return isNaN(p.getTime()) ? null : Math.ceil((p.getTime() - Date.now()) / 86400000); } catch { return null; }
 };
-const urgencyColor = (d: number | null) => d === null ? "text-slate-400" : d < 0 ? "text-red-600" : d <= 30 ? "text-red-500" : d <= 90 ? "text-[#7A1F2B]" : "text-emerald-600";
-const urgencyBg = (d: number | null) => d === null ? "bg-slate-50 border-slate-200" : d < 0 ? "bg-red-50/60 border-red-200/60" : d <= 30 ? "bg-red-50/60 border-red-200/60" : d <= 90 ? "bg-[#7A1F2B]/60 border-[#7A1F2B]/60" : "bg-emerald-50/60 border-emerald-200/60";
+const urgencyColor = (d: number | null) =>
+  d === null ? "text-slate-400" :
+  d < 0     ? "text-red-700" :
+  d <= 7    ? "text-red-600" :
+  d <= 30   ? "text-amber-700" :
+  d <= 90   ? "text-slate-500" :
+              "text-emerald-600";
+const urgencyBg = (d: number | null) =>
+  d === null ? "" :
+  d < 0     ? "bg-red-50" :
+  d <= 7    ? "bg-red-50" :
+  d <= 30   ? "bg-amber-50" :
+              "";
 const urgencyLabel = (d: number | null) => d === null ? "SEM DATA" : d < 0 ? `VENCIDO HÁ ${Math.abs(d)}D` : d === 0 ? "VENCE HOJE" : `${d}D RESTANTES`;
 
 
