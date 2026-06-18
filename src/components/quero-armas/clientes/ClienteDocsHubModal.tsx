@@ -111,6 +111,93 @@ type IAClass = {
   revisao_obrigatoria?: boolean;
 };
 
+type ConformidadeStatus = "conforme" | "divergente" | "sem_referencia";
+type ConformidadeItem = {
+  campo: string;
+  label: string;
+  valorCertidao: string;
+  valorReferencia: string | null;
+  fonteReferencia: string | null;
+  status: ConformidadeStatus;
+};
+
+const TIPOS_CERTIDAO = new Set([
+  "antecedentes_criminais",
+  "antecedentes_federal",
+  "antecedentes_estadual",
+  "antecedentes_militar",
+  "antecedentes_eleitoral",
+]);
+
+function normalizeStr(s: string): string {
+  return s.trim().toUpperCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function normCpf(s: string): string {
+  return s.replace(/\D/g, "");
+}
+
+function normDate(s: string): string {
+  // Accepts DD/MM/YYYY or YYYY-MM-DD
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return s.trim();
+}
+
+function calcularConformidade(
+  campos: Record<string, string | undefined>,
+  clienteNome: string | null | undefined,
+  clienteCpf: string | null | undefined,
+  clienteDataNascimento: string | null | undefined,
+  clienteNomeMae: string | null | undefined,
+  docsAprovados: any[],
+): ConformidadeItem[] {
+  // Build reference from highest-trust approved ID docs first
+  type Ref = { valor: string; fonte: string };
+  const ref: Record<string, Ref> = {};
+
+  const idTipos = ["cin", "rg_com_cpf", "cnh"];
+  const idDocs = docsAprovados
+    .filter(d => idTipos.includes(d.tipo_documento) && d.status === "aprovado")
+    .sort((a, b) => (b.validado_admin ? 1 : 0) - (a.validado_admin ? 1 : 0));
+
+  for (const doc of idDocs) {
+    const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
+    const fonte = doc.validado_admin
+      ? `${getTipoDocumentoMeta(doc.tipo_documento)?.short || doc.tipo_documento} (aprovado equipe)`
+      : getTipoDocumentoMeta(doc.tipo_documento)?.short || doc.tipo_documento;
+    if (c.nome_completo && !ref.nome_completo) ref.nome_completo = { valor: c.nome_completo, fonte };
+    if (c.cpf && !ref.cpf) ref.cpf = { valor: c.cpf, fonte };
+    if (c.data_nascimento && !ref.data_nascimento) ref.data_nascimento = { valor: c.data_nascimento, fonte };
+    if (c.filiacao_mae && !ref.filiacao_mae) ref.filiacao_mae = { valor: c.filiacao_mae, fonte };
+  }
+
+  // Fallback: client registration data
+  if (!ref.nome_completo && clienteNome) ref.nome_completo = { valor: clienteNome, fonte: "Cadastro" };
+  if (!ref.cpf && clienteCpf) ref.cpf = { valor: clienteCpf, fonte: "Cadastro" };
+  if (!ref.data_nascimento && clienteDataNascimento) ref.data_nascimento = { valor: clienteDataNascimento, fonte: "Cadastro" };
+  if (!ref.filiacao_mae && clienteNomeMae) ref.filiacao_mae = { valor: clienteNomeMae, fonte: "Cadastro" };
+
+  const items: ConformidadeItem[] = [];
+
+  function pushItem(campo: string, label: string, valorCertidao: string | undefined, compare: (a: string, b: string) => boolean) {
+    if (!valorCertidao) return;
+    const r = ref[campo];
+    const status: ConformidadeStatus = !r ? "sem_referencia"
+      : compare(valorCertidao, r.valor) ? "conforme" : "divergente";
+    items.push({ campo, label, valorCertidao, valorReferencia: r?.valor ?? null, fonteReferencia: r?.fonte ?? null, status });
+  }
+
+  pushItem("nome_completo", "Nome completo", campos.nome_completo, (a, b) => normalizeStr(a) === normalizeStr(b));
+  pushItem("cpf", "CPF", campos.cpf, (a, b) => normCpf(a) === normCpf(b));
+  pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
+  pushItem("filiacao_mae", "Filiação materna", campos.filiacao_mae, (a, b) => normalizeStr(a) === normalizeStr(b));
+
+  return items;
+}
+
 type AutoResult =
   | { safe: true; documento_id: string | null; tipo_documento: string }
   | {
@@ -344,8 +431,16 @@ interface Props {
   /** Tipo de documento pré-selecionado ao abrir (ex.: "craf"). Default: "cr". */
   defaultTipo?: string;
   mode?: "portal" | "arsenal";
-  /** CPF do cliente cadastrado (somente dígitos). Usado para cruzar com o CPF extraído do comprovante de residência. */
+  /** CPF do cliente cadastrado (somente dígitos). */
   clienteCpf?: string | null;
+  /** Nome completo do cliente conforme cadastro. */
+  clienteNome?: string | null;
+  /** Data de nascimento ISO (YYYY-MM-DD) ou DD/MM/YYYY. */
+  clienteDataNascimento?: string | null;
+  /** Nome da mãe conforme cadastro. */
+  clienteNomeMae?: string | null;
+  /** Documentos já aprovados no hub — usados como referência de conformidade. */
+  docsAprovados?: any[];
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -362,6 +457,10 @@ export function ClienteDocsHubModal({
   defaultTipo,
   mode = customerId ? "portal" : "arsenal",
   clienteCpf,
+  clienteNome,
+  clienteDataNascimento,
+  clienteNomeMae,
+  docsAprovados = [],
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
@@ -377,6 +476,16 @@ export function ClienteDocsHubModal({
   const [iaExtraido, setIaExtraido] = useState<Partial<Record<SensitiveKey, string>>>({});
   /** Campos sensíveis que o humano confirmou explicitamente. */
   const [confirmados, setConfirmados] = useState<Partial<Record<SensitiveKey, boolean>>>({});
+  /** Conformidade cruzada para certidões de antecedentes. */
+  const [conformidade, setConformidade] = useState<ConformidadeItem[]>([]);
+  /** true quando a certidão tem resultado_certidao = "consta_apontamento". */
+  const [temApontamento, setTemApontamento] = useState(false);
+  /** null = não respondido; "sim" = reconhece; "nao" = não reconhece (homônimo). */
+  const [reconheceApontamento, setReconheceApontamento] = useState<"sim" | "nao" | null>(null);
+  /** true após o cliente assinar a declaração de homonímia nesta sessão. */
+  const [homonimiaSalva, setHomonimiaSalva] = useState(false);
+  /** true para expandir o preview da declaração de homonímia. */
+  const [showDeclaracao, setShowDeclaracao] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -393,6 +502,11 @@ export function ClienteDocsHubModal({
       setAutoResult(null);
       setIaExtraido({});
       setConfirmados({});
+      setConformidade([]);
+      setTemApontamento(false);
+      setReconheceApontamento(null);
+      setHomonimiaSalva(false);
+      setShowDeclaracao(false);
     }
   }, [open, defaultTipo, mode]);
 
@@ -560,22 +674,26 @@ export function ClienteDocsHubModal({
         data_validade: (() => {
           const valExplicita = dataIsoFromBr(campos.data_validade);
           if (valExplicita) return valExplicita;
-          // Comprovante de residência e certidões de antecedentes: validade = mesmo dia do próximo mês
-          const tiposValidade30dias = [
+          const emissao = dataIsoFromBr(campos.data_emissao);
+          if (!emissao) return prev.data_validade;
+          // Certidão militar: validade = 3 meses após emissão
+          if (tipoIA === "antecedentes_militar") {
+            const d = new Date(emissao);
+            d.setMonth(d.getMonth() + 3);
+            return d.toISOString().slice(0, 10);
+          }
+          // Comprovante de residência e demais certidões de antecedentes: + 1 mês
+          const tiposValidade1mes = [
             "comprovante_residencia",
             "antecedentes_criminais",
             "antecedentes_eleitoral",
             "antecedentes_federal",
             "antecedentes_estadual",
-            "antecedentes_militar",
           ];
-          if (tiposValidade30dias.includes(tipoIA)) {
-            const emissao = dataIsoFromBr(campos.data_emissao);
-            if (emissao) {
-              const d = new Date(emissao);
-              d.setMonth(d.getMonth() + 1);
-              return d.toISOString().slice(0, 10);
-            }
+          if (tiposValidade1mes.includes(tipoIA)) {
+            const d = new Date(emissao);
+            d.setMonth(d.getMonth() + 1);
+            return d.toISOString().slice(0, 10);
           }
           return prev.data_validade;
         })(),
@@ -606,6 +724,27 @@ export function ClienteDocsHubModal({
       });
       // Tudo começa como NÃO confirmado — exige clique do humano.
       setConfirmados({});
+
+      // Motor de conformidade: só para certidões de antecedentes.
+      if (TIPOS_CERTIDAO.has(tipoIA)) {
+        const items = calcularConformidade(
+          campos as Record<string, string | undefined>,
+          clienteNome,
+          clienteCpf,
+          clienteDataNascimento,
+          clienteNomeMae,
+          docsAprovados,
+        );
+        setConformidade(items);
+        const res = String(campos.resultado_certidao || "").toLowerCase();
+        setTemApontamento(res === "consta_apontamento");
+        setReconheceApontamento(null);
+        setHomonimiaSalva(false);
+        setShowDeclaracao(false);
+      } else {
+        setConformidade([]);
+        setTemApontamento(false);
+      }
 
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
       try {
@@ -747,6 +886,18 @@ export function ClienteDocsHubModal({
       return;
     }
 
+    // Trava de apontamento: se há apontamento na certidão, o cliente deve
+    // responder se reconhece ou não antes de salvar.
+    if (temApontamento && reconheceApontamento === null) {
+      toast.error("Responda se reconhece o apontamento criminal antes de salvar.");
+      return;
+    }
+    // Se não reconhece, precisa assinar a declaração de homonímia primeiro.
+    if (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva) {
+      toast.error("Assine a declaração de homonímia antes de salvar a certidão.");
+      return;
+    }
+
     setSaving(true);
     try {
       // Bloqueio de duplicidade
@@ -860,6 +1011,24 @@ export function ClienteDocsHubModal({
                 };
               })() : {}),
               revisao_humana: true,
+              // Dados de conformidade cruzada para certidões
+              ...(TIPOS_CERTIDAO.has(form.tipo_documento) ? {
+                conformidade_cruzada: conformidade.map(i => ({
+                  campo: i.campo,
+                  status: i.status,
+                  valor_certidao: i.valorCertidao,
+                  valor_referencia: i.valorReferencia,
+                  fonte_referencia: i.fonteReferencia,
+                })),
+                tem_divergencia: conformidade.some(i => i.status === "divergente"),
+                resultado_certidao: classificacao.camposExtraidos?.resultado_certidao || null,
+                // Certidão com apontamento criminal
+                ...(temApontamento ? {
+                  apontamento_criminal: true,
+                  apontamento_reconhecido: reconheceApontamento,
+                  declaracao_homonimia_salva: homonimiaSalva,
+                } : {}),
+              } : {}),
               campos_sensiveis: {
                 numero_documento: buildFieldAudit("numero_documento", form.numero_documento || null),
                 numero_cad_sinarm: buildFieldAudit("numero_cad_sinarm", form.numero_cad_sinarm || null),
@@ -881,7 +1050,10 @@ export function ClienteDocsHubModal({
       //   a trigger qa_doc_auto_aprovar_por_ia_trigger promove para aprovado
       //   no servidor quando ia_dados_extraidos.recomendacao = 'aceitar'
       const isStaff = await isCurrentUserStaff();
-      const iaConfia = classificacao?.recomendacao === "aceitar";
+      // Certidão com apontamento ou divergência de dados nunca é auto-aprovada,
+      // independentemente da confiança da IA — exige revisão humana.
+      const bloqueioRevisao = temApontamento || conformidade.some(i => i.status === "divergente");
+      const iaConfia = !bloqueioRevisao && classificacao?.recomendacao === "aceitar";
       if (isStaff) {
         payload.status = "aprovado";
         payload.origem = "admin";
@@ -914,6 +1086,65 @@ export function ClienteDocsHubModal({
       toast.error(e?.message || "Falha ao salvar documento.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAssinarHomonimia() {
+    if (!customerId && !qaClienteId) return;
+    const hoje = new Date().toLocaleDateString("pt-BR");
+    const nomeCliente = clienteNome || "Requerente";
+    const cpfCliente = clienteCpf ? clienteCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "não informado";
+    const nascimento = clienteDataNascimento
+      ? (() => {
+          const d = new Date(clienteDataNascimento + "T00:00:00");
+          return d.toLocaleDateString("pt-BR");
+        })()
+      : "não informado";
+    const tipoCertidaoLabel = getTipoDocumentoMeta(form.tipo_documento)?.label || form.tipo_documento;
+
+    const texto = [
+      "DECLARAÇÃO DE HOMONÍMIA",
+      "",
+      `Eu, ${nomeCliente}, portador(a) do CPF ${cpfCliente}, nascido(a) em ${nascimento}, venho por meio desta declaração afirmar que NÃO possuo qualquer vínculo com o apontamento constante na ${tipoCertidaoLabel}.`,
+      "",
+      "Declaro que as informações do referido apontamento não me pertencem, tratando-se de homonímia com outra pessoa de nome semelhante, e que não pratiquei qualquer ato que possa fundamentar tal registro.",
+      "",
+      "Declaro ainda estar ciente das penalidades legais decorrentes de declaração falsa, nos termos do Art. 299 do Código Penal Brasileiro.",
+      "",
+      `${hoje}`,
+      "",
+      `Assinante: ${nomeCliente}`,
+      `CPF: ${cpfCliente}`,
+    ].join("\n");
+
+    try {
+      const payload: any = {
+        customer_id: customerId ?? null,
+        qa_cliente_id: qaClienteId ?? null,
+        tipo_documento: "declaracao_homonimia",
+        categoria_hub: "declaracoes",
+        numero_documento: null,
+        orgao_emissor: "Declaração própria",
+        data_emissao: new Date().toISOString().slice(0, 10),
+        data_validade: null,
+        observacoes: texto,
+        status: "pendente_aprovacao",
+        origem: "cliente",
+        validado_admin: false,
+        ia_status: "nao_processado",
+        ia_dados_extraidos: {
+          origem_fluxo: "declaracao_homonimia_automatica",
+          certidao_origem: form.tipo_documento,
+          gerado_em: new Date().toISOString(),
+        },
+      };
+      const { error } = await supabase.from("qa_documentos_cliente" as any).insert(payload);
+      if (error) throw error;
+      setHomonimiaSalva(true);
+      toast.success("Declaração de homonímia registrada no seu Hub. A equipe irá analisar.");
+      onSaved();
+    } catch (e: any) {
+      toast.error("Erro ao salvar declaração: " + (e?.message || "tente novamente."));
     }
   }
 
@@ -1202,6 +1433,168 @@ export function ClienteDocsHubModal({
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* ── Painel de conformidade cruzada (certidões de antecedentes) ── */}
+            {conformidade.length > 0 && (
+              <div className={cn(
+                "rounded-2xl border p-3 text-xs",
+                conformidade.some(i => i.status === "divergente")
+                  ? "border-red-300 bg-red-50 text-red-900"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-900"
+              )}>
+                <div className="flex items-center gap-1.5 mb-2">
+                  {conformidade.some(i => i.status === "divergente")
+                    ? <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-600" />
+                    : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
+                  <span className="font-bold uppercase tracking-wide text-[10px]">
+                    Conformidade com cadastro e documentos aprovados
+                  </span>
+                </div>
+                <table className="w-full text-[10px]">
+                  <thead>
+                    <tr className="text-[9px] uppercase tracking-wider opacity-60">
+                      <th className="text-left pb-1 pr-2 font-semibold">Campo</th>
+                      <th className="text-left pb-1 pr-2 font-semibold">Na certidão</th>
+                      <th className="text-left pb-1 pr-2 font-semibold">Referência</th>
+                      <th className="text-left pb-1 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-black/5">
+                    {conformidade.map((item) => (
+                      <tr key={item.campo} className="align-top">
+                        <td className="py-1 pr-2 font-medium text-current opacity-70 whitespace-nowrap">{item.label}</td>
+                        <td className="py-1 pr-2 font-mono">{item.valorCertidao}</td>
+                        <td className="py-1 pr-2 opacity-70">
+                          {item.valorReferencia
+                            ? <span>{item.valorReferencia}<br/><span className="opacity-50 text-[8px]">{item.fonteReferencia}</span></span>
+                            : <span className="opacity-40">sem referência</span>}
+                        </td>
+                        <td className="py-1 whitespace-nowrap">
+                          {item.status === "conforme" && <span className="text-emerald-700 font-bold">✓ Conforme</span>}
+                          {item.status === "divergente" && <span className="text-red-700 font-bold">⚠ Divergência</span>}
+                          {item.status === "sem_referencia" && <span className="opacity-40">—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {conformidade.some(i => i.status === "divergente") && (
+                  <p className="mt-2 font-semibold text-red-800 text-[10px]">
+                    Atenção: há divergência de dados. Corrija o documento ou entre em contato com a equipe antes de prosseguir.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* ── Resultado da certidão / apontamento criminal ── */}
+            {classificacao && TIPOS_CERTIDAO.has(form.tipo_documento) && (
+              <div className={cn(
+                "rounded-2xl border p-3 text-xs",
+                temApontamento
+                  ? "border-red-400 bg-red-50 text-red-900"
+                  : classificacao.camposExtraidos?.resultado_certidao === "nada_consta"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                    : "border-border bg-card"
+              )}>
+                <div className="flex items-center gap-1.5 mb-1">
+                  {temApontamento
+                    ? <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-600" />
+                    : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
+                  <span className="font-bold uppercase tracking-wide text-[10px]">Resultado da certidão</span>
+                  <span className={cn(
+                    "ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded",
+                    temApontamento ? "bg-red-200 text-red-800" : "bg-emerald-100 text-emerald-800"
+                  )}>
+                    {temApontamento ? "CONSTA APONTAMENTO" : "NADA CONSTA"}
+                  </span>
+                </div>
+
+                {temApontamento && (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-[11px] text-red-800">
+                      Esta certidão indica a existência de apontamento criminal ou pendência.
+                      Antes de salvar, informe se você reconhece este apontamento:
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setReconheceApontamento("sim")}
+                        className={cn(
+                          "flex-1 rounded-xl px-3 py-2 text-[11px] font-bold border transition-colors",
+                          reconheceApontamento === "sim"
+                            ? "bg-red-600 text-white border-red-600"
+                            : "bg-white text-red-700 border-red-300 hover:bg-red-50"
+                        )}
+                      >
+                        Sim, reconheço
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setReconheceApontamento("nao"); setHomonimiaSalva(false); }}
+                        className={cn(
+                          "flex-1 rounded-xl px-3 py-2 text-[11px] font-bold border transition-colors",
+                          reconheceApontamento === "nao"
+                            ? "bg-slate-700 text-white border-slate-700"
+                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                        )}
+                      >
+                        Não é meu
+                      </button>
+                    </div>
+
+                    {reconheceApontamento === "sim" && (
+                      <p className="text-[10px] text-red-700 bg-red-100 rounded-lg p-2">
+                        O apontamento será registrado e a certidão encaminhada para análise da equipe.
+                      </p>
+                    )}
+
+                    {reconheceApontamento === "nao" && !homonimiaSalva && (
+                      <div className="rounded-xl border border-slate-300 bg-white p-3 space-y-2">
+                        <p className="text-[11px] text-slate-700 font-medium">
+                          Para prosseguir, você deverá assinar uma Declaração de Homonímia informando
+                          que o apontamento não lhe pertence.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowDeclaracao(v => !v)}
+                          className="text-[10px] text-slate-500 underline"
+                        >
+                          {showDeclaracao ? "Ocultar declaração" : "Ver declaração"}
+                        </button>
+                        {showDeclaracao && (
+                          <pre className="text-[9px] text-slate-600 bg-slate-50 rounded-lg p-2 whitespace-pre-wrap font-sans border border-slate-200 max-h-40 overflow-y-auto">
+                            {[
+                              "DECLARAÇÃO DE HOMONÍMIA",
+                              "",
+                              `Eu, ${clienteNome || "Requerente"}, portador(a) do CPF ${clienteCpf ? clienteCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "---"}, declaro que NÃO possuo qualquer vínculo com o apontamento constante na ${getTipoDocumentoMeta(form.tipo_documento)?.label || form.tipo_documento}.`,
+                              "",
+                              "Trata-se de homonímia com outra pessoa de nome semelhante.",
+                              "Declaro estar ciente das penalidades do Art. 299 do Código Penal.",
+                              "",
+                              new Date().toLocaleDateString("pt-BR"),
+                            ].join("\n")}
+                          </pre>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleAssinarHomonimia}
+                          className="w-full rounded-xl bg-slate-800 text-white text-[11px] font-bold py-2 hover:bg-slate-900 transition-colors"
+                        >
+                          Assinar eletronicamente e registrar declaração
+                        </button>
+                      </div>
+                    )}
+
+                    {reconheceApontamento === "nao" && homonimiaSalva && (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2 text-[11px] text-emerald-800 flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4 shrink-0" />
+                        Declaração de homonímia registrada. Agora você pode salvar a certidão.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1571,9 +1964,9 @@ export function ClienteDocsHubModal({
               disabled={
                 saving ||
                 extracting ||
-                // Bloqueia o save até que TODOS os campos sensíveis aplicáveis
-                // estejam confirmados (clique em Confirmar OU edição manual).
-                (!!classificacao && pendingSensitiveKeys().length > 0)
+                (!!classificacao && pendingSensitiveKeys().length > 0) ||
+                (temApontamento && reconheceApontamento === null) ||
+                (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
               }
               className="h-11 flex-[1.2] rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
@@ -1582,7 +1975,11 @@ export function ClienteDocsHubModal({
                 ? "Salvando..."
                 : classificacao && pendingSensitiveKeys().length > 0
                   ? `Confirme ${pendingSensitiveKeys().length} campo(s)`
-                  : "Salvar documento"}
+                  : temApontamento && reconheceApontamento === null
+                    ? "Responda sobre o apontamento"
+                    : temApontamento && reconheceApontamento === "nao" && !homonimiaSalva
+                      ? "Assine a declaração"
+                      : "Salvar documento"}
             </Button>
           </div>
           )}

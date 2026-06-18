@@ -136,6 +136,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "declaracao_correlata", label: "Declaração correlata", short: "DECLARAÇÃO", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_acervo_1endereco", label: "Declaração de guarda de acervo — 1 endereço", short: "GUARDA 1 END", categoria: "declaracoes", escopo: "cac_atividade", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_acervo_2enderecos", label: "Declaração de guarda de acervo — 2 endereços", short: "GUARDA 2 END", categoria: "declaracoes", escopo: "cac_atividade", revisaoHumanaObrigatoria: true },
+  { value: "declaracao_homonimia", label: "Declaração de homonímia", short: "HOMONÍMIA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "laudo_psicologico", label: "Laudo psicológico", short: "LAUDO PSI", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "laudo_capacidade_tecnica", label: "Atestado de capacidade técnica", short: "LAUDO TÉC.", categoria: "laudos_exames", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_efetiva_necessidade", label: "Comprovação de efetiva necessidade", short: "NECESSIDADE", categoria: "efetiva_necessidade", escopo: "processo", revisaoHumanaObrigatoria: true },

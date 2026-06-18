@@ -1987,6 +1987,10 @@ export default function QAClientePortalPage() {
           qaClienteId={cliente?.id ?? null}
           mode="portal"
           clienteCpf={String(cliente?.cpf || "").replace(/\D/g, "") || null}
+          clienteNome={cliente?.nome_completo || null}
+          clienteDataNascimento={cliente?.data_nascimento || null}
+          clienteNomeMae={cliente?.nome_mae || null}
+          docsAprovados={meusDocs.filter((d: any) => d.status === "aprovado")}
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
