@@ -146,6 +146,43 @@ function normDate(s: string): string {
   return s.trim();
 }
 
+// Hierarquia de confiança dos documentos como fonte de referência.
+// Nível 1 = maior confiança (governo primário); 3 = menor (empresa mercantil).
+const DOC_TRUST_TIER: Record<string, number> = {
+  // Nível 1 — Governo, documentos primários de identidade
+  cin: 1,
+  rg_com_cpf: 1,
+  cnh: 1,
+  // Nível 2 — Órgãos governamentais / instituições centralizadas e descentralizadas
+  cr: 2,
+  craf: 2,
+  gte: 2,
+  sinarm: 2,
+  gt: 2,
+  antecedentes_criminais: 2,
+  antecedentes_federal: 2,
+  antecedentes_estadual: 2,
+  antecedentes_militar: 2,
+  antecedentes_eleitoral: 2,
+  laudo_psicologico: 2,
+  laudo_capacidade_tecnica: 2,
+  renda_comprovante_beneficio: 2,
+  renda_extrato_inss: 2,
+  comprovante_habitualidade: 2,
+  comprovante_clube_tiro: 2,
+  // Nível 3 — Empresas mercantis / empregadores / concessionárias
+  comprovante_residencia: 3,
+  renda_holerite_mes_atual: 3,
+  renda_nf_recente: 3,
+  renda_cartao_cnpj: 3,
+  renda_contrato_social: 3,
+  ctps: 3,
+};
+
+function docTrustTier(tipo: string): number {
+  return DOC_TRUST_TIER[tipo] ?? 3;
+}
+
 function calcularConformidade(
   campos: Record<string, string | undefined>,
   clienteNome: string | null | undefined,
@@ -154,46 +191,65 @@ function calcularConformidade(
   clienteNomeMae: string | null | undefined,
   docsAprovados: any[],
 ): ConformidadeItem[] {
-  // Build reference from highest-trust approved ID docs first
-  type Ref = { valor: string; fonte: string };
+  type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
 
-  const idTipos = ["cin", "rg_com_cpf", "cnh"];
-  const idDocs = docsAprovados
-    .filter(d => idTipos.includes(d.tipo_documento) && d.status === "aprovado")
-    .sort((a, b) => (b.validado_admin ? 1 : 0) - (a.validado_admin ? 1 : 0));
+  // Ordena docs aprovados: equipe-validado primeiro, depois por tier crescente (1 = mais confiável)
+  const sorted = [...docsAprovados]
+    .filter(d => d.status === "aprovado")
+    .sort((a, b) => {
+      const tierA = docTrustTier(a.tipo_documento);
+      const tierB = docTrustTier(b.tipo_documento);
+      if (tierA !== tierB) return tierA - tierB;
+      return (b.validado_admin ? 1 : 0) - (a.validado_admin ? 1 : 0);
+    });
 
-  for (const doc of idDocs) {
+  for (const doc of sorted) {
     const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
-    const fonte = doc.validado_admin
-      ? `${getTipoDocumentoMeta(doc.tipo_documento)?.short || doc.tipo_documento} (aprovado equipe)`
-      : getTipoDocumentoMeta(doc.tipo_documento)?.short || doc.tipo_documento;
-    if (c.nome_completo && !ref.nome_completo) ref.nome_completo = { valor: c.nome_completo, fonte };
-    if (c.cpf && !ref.cpf) ref.cpf = { valor: c.cpf, fonte };
-    if (c.data_nascimento && !ref.data_nascimento) ref.data_nascimento = { valor: c.data_nascimento, fonte };
-    if (c.filiacao_mae && !ref.filiacao_mae) ref.filiacao_mae = { valor: c.filiacao_mae, fonte };
+    const tier = docTrustTier(doc.tipo_documento);
+    const meta = getTipoDocumentoMeta(doc.tipo_documento);
+    const nomeDoc = meta?.short || doc.tipo_documento;
+    const fonte = doc.validado_admin ? `${nomeDoc} (equipe)` : nomeDoc;
+
+    const trySet = (key: string, val: string | undefined) => {
+      if (!val) return;
+      if (!ref[key] || tier < ref[key].tier) ref[key] = { valor: val, fonte, tier };
+    };
+    trySet("nome_completo", c.nome_completo);
+    trySet("cpf", c.cpf);
+    trySet("data_nascimento", c.data_nascimento);
+    trySet("filiacao_mae", c.filiacao_mae);
+    trySet("filiacao_pai", c.filiacao_pai);
+    trySet("naturalidade", c.naturalidade);
+    trySet("sexo", c.sexo);
   }
 
-  // Fallback: client registration data
-  if (!ref.nome_completo && clienteNome) ref.nome_completo = { valor: clienteNome, fonte: "Cadastro" };
-  if (!ref.cpf && clienteCpf) ref.cpf = { valor: clienteCpf, fonte: "Cadastro" };
-  if (!ref.data_nascimento && clienteDataNascimento) ref.data_nascimento = { valor: clienteDataNascimento, fonte: "Cadastro" };
-  if (!ref.filiacao_mae && clienteNomeMae) ref.filiacao_mae = { valor: clienteNomeMae, fonte: "Cadastro" };
+  // Fallback: dados de cadastro do cliente (usados apenas se nenhum doc aprovado cobriu o campo)
+  const setFromCadastro = (key: string, val: string | null | undefined) => {
+    if (!ref[key] && val) ref[key] = { valor: val, fonte: "Cadastro", tier: 99 };
+  };
+  setFromCadastro("nome_completo", clienteNome);
+  setFromCadastro("cpf", clienteCpf);
+  setFromCadastro("data_nascimento", clienteDataNascimento);
+  setFromCadastro("filiacao_mae", clienteNomeMae);
 
   const items: ConformidadeItem[] = [];
 
-  function pushItem(campo: string, label: string, valorCertidao: string | undefined, compare: (a: string, b: string) => boolean) {
-    if (!valorCertidao) return;
+  function pushItem(campo: string, label: string, valorDoc: string | undefined, compare: (a: string, b: string) => boolean) {
+    if (!valorDoc) return;
     const r = ref[campo];
     const status: ConformidadeStatus = !r ? "sem_referencia"
-      : compare(valorCertidao, r.valor) ? "conforme" : "divergente";
-    items.push({ campo, label, valorCertidao, valorReferencia: r?.valor ?? null, fonteReferencia: r?.fonte ?? null, status });
+      : compare(valorDoc, r.valor) ? "conforme" : "divergente";
+    items.push({ campo, label, valorCertidao: valorDoc, valorReferencia: r?.valor ?? null, fonteReferencia: r?.fonte ?? null, status });
   }
 
   pushItem("nome_completo", "Nome completo", campos.nome_completo, (a, b) => normalizeStr(a) === normalizeStr(b));
   pushItem("cpf", "CPF", campos.cpf, (a, b) => normCpf(a) === normCpf(b));
   pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
   pushItem("filiacao_mae", "Filiação materna", campos.filiacao_mae, (a, b) => normalizeStr(a) === normalizeStr(b));
+  pushItem("filiacao_pai", "Filiação paterna", campos.filiacao_pai, (a, b) => normalizeStr(a) === normalizeStr(b));
+  pushItem("naturalidade", "Naturalidade", campos.naturalidade, (a, b) => normalizeStr(a) === normalizeStr(b));
+  pushItem("sexo", "Sexo", campos.sexo, (a, b) => a.trim().toUpperCase()[0] === b.trim().toUpperCase()[0]);
 
   return items;
 }
@@ -601,6 +657,10 @@ export function ClienteDocsHubModal({
     return requiredSensitiveKeys().filter((k) => !confirmados[k]);
   }
 
+  // Documento expirado: compara data_validade (ISO) com hoje sem depender de timezone.
+  const hoje = new Date().toISOString().slice(0, 10);
+  const docExpirado = !!form.data_validade && form.data_validade < hoje;
+
   function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
     const extraido = (iaExtraido[key] ?? "") || null;
     const final = (valorFinal ?? "") || null;
@@ -725,26 +785,27 @@ export function ClienteDocsHubModal({
       // Tudo começa como NÃO confirmado — exige clique do humano.
       setConfirmados({});
 
-      // Motor de conformidade: só para certidões de antecedentes.
+      // Motor de conformidade: todos os documentos que extraem dados pessoais.
+      const items = calcularConformidade(
+        campos as Record<string, string | undefined>,
+        clienteNome,
+        clienteCpf,
+        clienteDataNascimento,
+        clienteNomeMae,
+        docsAprovados,
+      );
+      setConformidade(items);
+
+      // Apontamento criminal: apenas certidões de antecedentes.
       if (TIPOS_CERTIDAO.has(tipoIA)) {
-        const items = calcularConformidade(
-          campos as Record<string, string | undefined>,
-          clienteNome,
-          clienteCpf,
-          clienteDataNascimento,
-          clienteNomeMae,
-          docsAprovados,
-        );
-        setConformidade(items);
         const res = String(campos.resultado_certidao || "").toLowerCase();
         setTemApontamento(res === "consta_apontamento");
-        setReconheceApontamento(null);
-        setHomonimiaSalva(false);
-        setShowDeclaracao(false);
       } else {
-        setConformidade([]);
         setTemApontamento(false);
       }
+      setReconheceApontamento(null);
+      setHomonimiaSalva(false);
+      setShowDeclaracao(false);
 
       // 2) Tenta enriquecer campos via extractor já existente, usando o tipo da IA.
       try {
@@ -1011,6 +1072,7 @@ export function ClienteDocsHubModal({
                 };
               })() : {}),
               revisao_humana: true,
+              documento_expirado: docExpirado,
               // Dados de conformidade cruzada para certidões
               ...(TIPOS_CERTIDAO.has(form.tipo_documento) ? {
                 conformidade_cruzada: conformidade.map(i => ({
@@ -1050,9 +1112,8 @@ export function ClienteDocsHubModal({
       //   a trigger qa_doc_auto_aprovar_por_ia_trigger promove para aprovado
       //   no servidor quando ia_dados_extraidos.recomendacao = 'aceitar'
       const isStaff = await isCurrentUserStaff();
-      // Certidão com apontamento ou divergência de dados nunca é auto-aprovada,
-      // independentemente da confiança da IA — exige revisão humana.
-      const bloqueioRevisao = temApontamento || conformidade.some(i => i.status === "divergente");
+      // Documento expirado, com apontamento ou com divergência nunca é auto-aprovado.
+      const bloqueioRevisao = docExpirado || temApontamento || conformidade.some(i => i.status === "divergente");
       const iaConfia = !bloqueioRevisao && classificacao?.recomendacao === "aceitar";
       if (isStaff) {
         payload.status = "aprovado";
@@ -1436,7 +1497,24 @@ export function ClienteDocsHubModal({
               </div>
             )}
 
-            {/* ── Painel de conformidade cruzada (certidões de antecedentes) ── */}
+            {/* ── Alerta de documento expirado ── */}
+            {docExpirado && (
+              <div className="rounded-2xl border border-red-400 bg-red-50 p-3 text-xs text-red-900">
+                <div className="flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-red-600" />
+                  <span className="font-bold uppercase tracking-wide text-[10px]">Documento vencido</span>
+                  <span className="ml-auto text-[9px] font-mono bg-red-100 px-1.5 py-0.5 rounded">
+                    {new Date(form.data_validade + "T00:00:00").toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
+                <p className="mt-1 text-[10px]">
+                  A validade deste documento expirou. Documentos vencidos são encaminhados para revisão
+                  humana e não serão aceitos no processo sem renovação.
+                </p>
+              </div>
+            )}
+
+            {/* ── Painel de conformidade cruzada (todos os documentos) ── */}
             {conformidade.length > 0 && (
               <div className={cn(
                 "rounded-2xl border p-3 text-xs",
@@ -1449,7 +1527,8 @@ export function ClienteDocsHubModal({
                     ? <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                     : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
                   <span className="font-bold uppercase tracking-wide text-[10px]">
-                    Conformidade com cadastro e documentos aprovados
+                    Conformidade com documentos aprovados
+                    {conformidade.some(i => i.fonteReferencia?.includes("equipe")) ? " (dupla verificação)" : ""}
                   </span>
                 </div>
                 <table className="w-full text-[10px]">
