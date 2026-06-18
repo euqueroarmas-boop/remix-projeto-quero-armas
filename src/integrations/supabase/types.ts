@@ -9875,6 +9875,10 @@ export type Database = {
         Args: { p_processo_id: string }
         Returns: Json
       }
+      qa_processo_rever_exigencias: {
+        Args: { p_cliente_id?: number }
+        Returns: number
+      }
       qa_processo_trocar_servico: {
         Args: {
           p_dry_run?: boolean
