@@ -2030,6 +2030,7 @@ export default function QAClientePortalPage() {
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
           mode="portal"
+          clienteCpf={String(cliente?.cpf || "").replace(/\D/g, "") || null}
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}

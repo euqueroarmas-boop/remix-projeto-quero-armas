@@ -344,6 +344,8 @@ interface Props {
   /** Tipo de documento pré-selecionado ao abrir (ex.: "craf"). Default: "cr". */
   defaultTipo?: string;
   mode?: "portal" | "arsenal";
+  /** CPF do cliente cadastrado (somente dígitos). Usado para cruzar com o CPF extraído do comprovante de residência. */
+  clienteCpf?: string | null;
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -359,6 +361,7 @@ export function ClienteDocsHubModal({
   onSaved,
   defaultTipo,
   mode = customerId ? "portal" : "arsenal",
+  clienteCpf,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   const [form, setForm] = useState<FormState>({ ...EMPTY, tipo_documento: defaultTipoEfetivo });
@@ -548,7 +551,10 @@ export function ClienteDocsHubModal({
         ...prev,
         // tipo definido pela IA; cliente pode sobrescrever depois
         tipo_documento: tipoIA,
-        numero_documento: campos.numero_documento || prev.numero_documento,
+        // Comprovante de residência: usa o CPF extraído como identificador do titular
+        numero_documento: tipoIA === "comprovante_residencia"
+          ? (campos.cpf || campos.numero_documento || prev.numero_documento)
+          : (campos.numero_documento || prev.numero_documento),
         orgao_emissor: campos.orgao_emissor || prev.orgao_emissor,
         data_emissao: dataIsoFromBr(campos.data_emissao) || prev.data_emissao,
         data_validade: (() => {
@@ -832,6 +838,19 @@ export function ClienteDocsHubModal({
               avaliado_em: new Date().toISOString(),
               origem_fluxo: "arsenal_hub_documental",
               auto_cadastro: false,
+              ...(form.tipo_documento === "comprovante_residencia" ? (() => {
+                const cpfDoc = String(classificacao.camposExtraidos?.cpf || "").replace(/\D/g, "");
+                const cpfCliente = String(clienteCpf || "").replace(/\D/g, "");
+                const titularNome = classificacao.camposExtraidos?.nome_completo || null;
+                const emNomeDoCliente = !!(cpfDoc && cpfCliente && cpfDoc === cpfCliente);
+                return {
+                  comprovante_residencia_cpf_titular: cpfDoc || null,
+                  comprovante_residencia_em_nome_do_cliente: emNomeDoCliente,
+                  comprovante_residencia_nome_titular: titularNome,
+                  // Se não está no nome do cliente, declaracao_responsavel_imovel será exigida ao iniciar serviço
+                  comprovante_residencia_exige_declaracao_responsavel: !emNomeDoCliente && !!(cpfDoc),
+                };
+              })() : {}),
               revisao_humana: true,
               campos_sensiveis: {
                 numero_documento: buildFieldAudit("numero_documento", form.numero_documento || null),
