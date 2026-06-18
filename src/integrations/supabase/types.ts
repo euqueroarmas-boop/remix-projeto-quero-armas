@@ -5004,6 +5004,7 @@ export type Database = {
           reaproveitavel_global: boolean
           reprovado_em: string | null
           reprovado_por: string | null
+          resultado_certidao: string | null
           revisao_humana_obrigatoria: boolean
           servicos_compativeis: string[] | null
           sistema_registro: string | null
@@ -5059,6 +5060,7 @@ export type Database = {
           reaproveitavel_global?: boolean
           reprovado_em?: string | null
           reprovado_por?: string | null
+          resultado_certidao?: string | null
           revisao_humana_obrigatoria?: boolean
           servicos_compativeis?: string[] | null
           sistema_registro?: string | null
@@ -5114,6 +5116,7 @@ export type Database = {
           reaproveitavel_global?: boolean
           reprovado_em?: string | null
           reprovado_por?: string | null
+          resultado_certidao?: string | null
           revisao_humana_obrigatoria?: boolean
           servicos_compativeis?: string[] | null
           sistema_registro?: string | null
