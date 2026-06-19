@@ -51,11 +51,6 @@ function jsonResp(body: unknown, status = 200) {
   });
 }
 
-function nowYearSeq() {
-  const d = new Date();
-  return `QA-${d.getFullYear()}-${Date.now().toString(36).toUpperCase()}`;
-}
-
 function strip(html: string | null | undefined) {
   return (html || "")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -248,14 +243,6 @@ Deno.serve(async (req) => {
 
   const sb = svc();
 
-  // Idempotência
-  const { data: existing } = await sb
-    .from("qa_contracts")
-    .select("id, status, contract_number, original_pdf_path")
-    .eq("venda_id", vendaId)
-    .maybeSingle();
-  if (existing) return jsonResp({ ok: true, idempotent: true, contract: existing });
-
   // Carrega venda
   const { data: venda, error: vErr } = await sb
     .from("qa_vendas")
@@ -268,6 +255,22 @@ Deno.serve(async (req) => {
   if (statusUp !== "PAGO") {
     return jsonResp({ error: `Venda ainda não está PAGO (status atual: ${venda.status})` }, 409);
   }
+
+  const { data: protocolNumber, error: protoErr } = await sb.rpc("qa_gerar_protocolo", {
+    p_venda_id: venda.id,
+  });
+  if (protoErr || !protocolNumber) {
+    return jsonResp({ error: "Falha ao gerar protocolo canônico", details: protoErr?.message }, 500);
+  }
+  const contractNumber = String(protocolNumber);
+
+  // Idempotência com autocorreção: contratos antigos usavam QA-ANO-CODIGOALEATORIO.
+  // O número aprovado é o protocolo canônico, ex.: QACR20260001.
+  const { data: existing } = await sb
+    .from("qa_contracts")
+    .select("id, status, contract_number, original_pdf_path, customer_uploaded_at, customer_signed_pdf_path")
+    .eq("venda_id", vendaId)
+    .maybeSingle();
 
   // Cliente
   const { data: cliente } = await sb
@@ -316,8 +319,6 @@ Deno.serve(async (req) => {
     return jsonResp({ error: "Venda sem itens — não é possível gerar contrato" }, 422);
   }
 
-  // PDF
-  const contractNumber = nowYearSeq();
   const pdfBytes = await buildPdf({
     contractNumber,
     cliente: {
@@ -342,6 +343,48 @@ Deno.serve(async (req) => {
 
   const originalSha = await sha256(pdfBytes);
   const path = `qa/${vendaId}/original.pdf`;
+
+  if (existing) {
+    const canRewriteOriginalPdf = !existing.customer_uploaded_at && !existing.customer_signed_pdf_path;
+    if (existing.contract_number === contractNumber) {
+      return jsonResp({ ok: true, idempotent: true, contract: existing });
+    }
+
+    if (canRewriteOriginalPdf) {
+      const { error: upErr } = await sb.storage
+        .from(BUCKET)
+        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
+      if (upErr) return jsonResp({ error: "Falha ao corrigir PDF do contrato", details: upErr.message }, 500);
+    }
+
+    const patch: Record<string, unknown> = {
+      contract_number: contractNumber,
+      original_sha256: canRewriteOriginalPdf ? originalSha : existing.original_pdf_path ? undefined : originalSha,
+    };
+    Object.keys(patch).forEach((key) => patch[key] === undefined && delete patch[key]);
+
+    const { data: repaired, error: repairErr } = await sb
+      .from("qa_contracts")
+      .update(patch)
+      .eq("id", existing.id)
+      .select("id, status, contract_number, original_pdf_path")
+      .single();
+    if (repairErr) {
+      return jsonResp({ error: "Falha ao corrigir número do contrato", details: repairErr.message }, 500);
+    }
+
+    await sb.from("qa_contract_events").insert({
+      contract_id: existing.id,
+      event_type: "contract_number_corrigido_para_protocolo_canonico",
+      event_payload: {
+        old_contract_number: existing.contract_number,
+        contract_number: contractNumber,
+        pdf_rewritten: canRewriteOriginalPdf,
+      },
+    });
+
+    return jsonResp({ ok: true, repaired: true, contract: repaired });
+  }
 
   const { error: upErr } = await sb.storage
     .from(BUCKET)

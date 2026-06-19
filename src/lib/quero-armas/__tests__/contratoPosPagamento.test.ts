@@ -136,9 +136,27 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/contrato_gerado_pos_pagamento/);
     });
 
+    it("edge usa protocolo canônico como número do contrato, sem gerador aleatório", () => {
+      const src = r("supabase/functions/qa-generate-contract/index.ts");
+      expect(src).toMatch(/qa_gerar_protocolo/);
+      expect(src).toMatch(/const contractNumber = String\(protocolNumber\)/);
+      expect(src).not.toMatch(/nowYearSeq/);
+      expect(src).not.toMatch(/Date\.now\(\)\.toString\(36\)/);
+      expect(src).not.toMatch(/QA-\$\{d\.getFullYear\(\)\}/);
+    });
+
     it("card registra evento contrato_disponibilizado_portal", () => {
       const src = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
       expect(src).toMatch(/contrato_disponibilizado_portal/);
+    });
+
+    it("migração canônica fixa protocolo sem traço com sequência de 4 dígitos", () => {
+      const src = r("supabase/migrations/20260619153000_qa_protocolos_seq4_contratos_canonicos.sql");
+      expect(src).toMatch(/QACR20260001/);
+      expect(src).toMatch(/LPAD\(v_seq::TEXT, 4, '0'\)/);
+      expect(src).toMatch(/LPAD\(sequencia_ano::TEXT, 4, '0'\)/);
+      expect(src).toMatch(/contract_number_corrigido|qa_contracts/);
+      expect(src).not.toMatch(/SEQ3/);
     });
   });
 });
