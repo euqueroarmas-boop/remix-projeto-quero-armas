@@ -132,7 +132,10 @@ const TIPOS_CERTIDAO = new Set([
 function normalizeStr(s: string): string {
   return s.trim().toUpperCase()
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/\s+/g, " ");
+    // Normaliza separadores variados (–, —, -, /, |) para espaço
+    .replace(/[–—\-\/|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function normCpf(s: string): string {
