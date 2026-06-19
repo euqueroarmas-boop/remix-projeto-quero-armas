@@ -83,8 +83,7 @@ export default function QAContratarConfirmarPage() {
   const [novoEstadoCivil, setNovoEstadoCivil] = useState("");
   const [novaProfissao, setNovaProfissao] = useState("");
 
-  // Observações livres para a equipe (valor agora vem direto do catálogo)
-  const [obsContratacao, setObsContratacao] = useState<string>("");
+  // Valor agora vem direto do catálogo — sem observações nem validação manual.
 
   // FASE 20-D: bloqueio de cliente legado pendente
   const [legadoBlock, setLegadoBlock] = useState<{
