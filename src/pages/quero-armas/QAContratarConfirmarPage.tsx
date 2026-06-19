@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
+import { useCart } from "@/shared/cart/CartProvider";
 
 /**
  * QAContratarConfirmarPage — Cliente logado.
@@ -59,6 +60,7 @@ const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)",
 export default function QAContratarConfirmarPage() {
   const navigate = useNavigate();
   const { slug = "" } = useParams();
+  const { addItem } = useCart();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
