@@ -121,6 +121,13 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
       expect(src.toUpperCase()).toMatch(/AGUARDANDO CONTRATO ASSINADO/);
       expect(src).toMatch(/qa-serve-contract-pdf|baixar|download/i);
     });
+
+    it("popup de contrato pendente leva para a seção de contratos", () => {
+      const src = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+      expect(src).toMatch(/goContractsSection/);
+      expect(src).toMatch(/\/area-do-cliente\?secao=contratos/);
+      expect(src).toMatch(/id="qa-portal-contratos"/);
+    });
   });
 
   describe("Reaproveitamento de fluxo existente (sem arquitetura paralela)", () => {

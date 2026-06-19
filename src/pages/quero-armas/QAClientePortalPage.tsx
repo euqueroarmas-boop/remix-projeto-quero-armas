@@ -930,6 +930,18 @@ export default function QAClientePortalPage() {
     // e o catch-all do router devolveria para "/". Mantemos a URL em /area-do-cliente.
   };
 
+  const goContractsSection = () => {
+    setShowContratoPopup(false);
+    setActiveSection("contratos");
+    setMobileNavOpen(false);
+    navigate("/area-do-cliente?secao=contratos", { replace: true });
+    window.setTimeout(() => {
+      const contratos = document.getElementById("qa-portal-contratos");
+      contratos?.scrollIntoView({ behavior: "smooth", block: "start" });
+      contratos?.focus({ preventScroll: true });
+    }, 80);
+  };
+
   const resumoState = useMemo(() => {
     const cadastroIncompleto = cadastroEstaIncompleto(cliente);
     const docsHubEmAnalise = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
@@ -2088,7 +2100,7 @@ export default function QAClientePortalPage() {
         )}
 
         {activeSection === "contratos" && (
-          <div className="space-y-4">
+          <div id="qa-portal-contratos" tabIndex={-1} className="space-y-4 outline-none">
             <PortalScopeSelector hint="Contratos são compartilhados entre processos do mesmo cliente." />
             <SectionCard icon={FileStack} title="Contratos" color="hsl(352 60% 30%)">
               {currentScope.type === "processo" && (
@@ -2186,10 +2198,7 @@ export default function QAClientePortalPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowContratoPopup(false);
-                    goSection("contratos");
-                  }}
+                  onClick={goContractsSection}
                   className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[12px] font-bold uppercase tracking-wider shadow-sm"
                 >
                   Assinar agora <ChevronRight className="h-3.5 w-3.5" />
