@@ -111,7 +111,7 @@ type IAClass = {
   revisao_obrigatoria?: boolean;
 };
 
-type ConformidadeStatus = "conforme" | "divergente" | "sem_referencia";
+type ConformidadeStatus = "conforme" | "divergente" | "sem_referencia" | "verificando";
 type ConformidadeItem = {
   campo: string;
   label: string;
@@ -175,6 +175,49 @@ function normDate(s: string): string {
   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
   return s.trim();
 }
+
+// ── Similaridade fuzzy para nomes ────────────────────────────────────────────
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  const prev = Array.from({ length: n + 1 }, (_, i) => i);
+  const curr = new Array(n + 1).fill(0);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      curr[j] = a[i - 1] === b[j - 1]
+        ? prev[j - 1]
+        : 1 + Math.min(prev[j - 1], prev[j], curr[j - 1]);
+    }
+    prev.splice(0, n + 1, ...curr);
+  }
+  return prev[n];
+}
+
+function levenshteinSim(a: string, b: string): number {
+  if (!a && !b) return 1;
+  if (!a || !b) return 0;
+  return 1 - levenshtein(a, b) / Math.max(a.length, b.length);
+}
+
+// Jaccard por palavras — lida com reordenação: "Carlos José" vs "José Carlos"
+function jaccardSim(a: string, b: string): number {
+  const words = (s: string) => new Set(s.split(" ").filter(w => w.length > 2));
+  const wa = words(a), wb = words(b);
+  const inter = [...wa].filter(w => wb.has(w)).length;
+  const union = new Set([...wa, ...wb]).size;
+  return union === 0 ? 1 : inter / union;
+}
+
+// Score combinado: o melhor dos dois algoritmos
+function nameSim(a: string, b: string): number {
+  const na = normalizeStr(a), nb = normalizeStr(b);
+  return Math.max(levenshteinSim(na, nb), jaccardSim(na, nb));
+}
+
+// Limites de decisão (sem IA / zona cinzenta / divergente)
+const SIM_HIGH = 0.88; // acima → conforme sem IA (typo/partícula omitida)
+const SIM_LOW  = 0.55; // abaixo → divergente sem IA (claramente diferente)
 
 // Hierarquia de confiança dos documentos como fonte de referência.
 // Nível 1 = maior confiança (governo primário); 3 = menor (empresa mercantil).
@@ -265,21 +308,48 @@ function calcularConformidade(
 
   const items: ConformidadeItem[] = [];
 
-  function pushItem(campo: string, label: string, valorDoc: string | undefined, compare: (a: string, b: string) => boolean) {
+  // compare retorna: true = conforme | false = divergente | "gray" = acionar IA
+  function pushItem(
+    campo: string, label: string, valorDoc: string | undefined,
+    compare: (a: string, b: string) => boolean | "gray",
+  ) {
     if (!valorDoc) return;
     const r = ref[campo];
-    const status: ConformidadeStatus = !r ? "sem_referencia"
-      : compare(valorDoc, r.valor) ? "conforme" : "divergente";
+    let status: ConformidadeStatus;
+    if (!r) {
+      status = "sem_referencia";
+    } else {
+      const res = compare(valorDoc, r.valor);
+      status = res === true ? "conforme" : res === "gray" ? "verificando" : "divergente";
+    }
     items.push({ campo, label, valorCertidao: valorDoc, valorReferencia: r?.valor ?? null, fonteReferencia: r?.fonte ?? null, status });
   }
 
-  pushItem("nome_completo", "Nome completo", campos.nome_completo, (a, b) => normalizeStr(a) === normalizeStr(b));
-  pushItem("cpf", "CPF", campos.cpf, (a, b) => normCpf(a) === normCpf(b));
+  // Comparador fuzzy para nomes: exato → conforme; alta sim → conforme; zona cinzenta → IA; baixa → divergente
+  const fuzzyName = (a: string, b: string): boolean | "gray" => {
+    if (normalizeStr(a) === normalizeStr(b)) return true;
+    const sim = nameSim(a, b);
+    if (sim >= SIM_HIGH) return true;
+    if (sim >= SIM_LOW) return "gray";
+    return false;
+  };
+
+  // Naturalidade: tenta match normalizado; se falhar, cai em fuzzy
+  const fuzzyNat = (a: string, b: string): boolean | "gray" => {
+    if (normNaturalidade(a) === normNaturalidade(b)) return true;
+    const sim = nameSim(normNaturalidade(a), normNaturalidade(b));
+    if (sim >= SIM_HIGH) return true;
+    if (sim >= SIM_LOW) return "gray";
+    return false;
+  };
+
+  pushItem("nome_completo",   "Nome completo",      campos.nome_completo,   fuzzyName);
+  pushItem("cpf",             "CPF",                campos.cpf,             (a, b) => normCpf(a) === normCpf(b));
   pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
-  pushItem("filiacao_mae", "Filiação materna", campos.filiacao_mae, (a, b) => normalizeStr(a) === normalizeStr(b));
-  pushItem("filiacao_pai", "Filiação paterna", campos.filiacao_pai, (a, b) => normalizeStr(a) === normalizeStr(b));
-  pushItem("naturalidade", "Naturalidade", campos.naturalidade, (a, b) => normNaturalidade(a) === normNaturalidade(b));
-  pushItem("sexo", "Sexo", campos.sexo, (a, b) => a.trim().toUpperCase()[0] === b.trim().toUpperCase()[0]);
+  pushItem("filiacao_mae",    "Filiação materna",   campos.filiacao_mae,    fuzzyName);
+  pushItem("filiacao_pai",    "Filiação paterna",   campos.filiacao_pai,    fuzzyName);
+  pushItem("naturalidade",    "Naturalidade",       campos.naturalidade,    fuzzyNat);
+  pushItem("sexo",            "Sexo",               campos.sexo,            (a, b) => a.trim().toUpperCase()[0] === b.trim().toUpperCase()[0]);
 
   return items;
 }
@@ -825,6 +895,31 @@ export function ClienteDocsHubModal({
         docsAprovados,
       );
       setConformidade(items);
+
+      // Para itens em zona cinzenta, aciona verificação semântica via IA em paralelo
+      const grayItems = items.filter(i => i.status === "verificando");
+      if (grayItems.length > 0) {
+        grayItems.forEach(async (item) => {
+          if (!item.valorReferencia) return;
+          try {
+            const { data, error } = await supabase.functions.invoke("qa-conformidade-semantica", {
+              body: { campo: item.label, valorA: item.valorCertidao, valorB: item.valorReferencia },
+            });
+            const equivalente = !error && data?.equivalente === true;
+            setConformidade(prev =>
+              prev.map(i => i.campo === item.campo
+                ? { ...i, status: equivalente ? "conforme" : "divergente" }
+                : i
+              )
+            );
+          } catch {
+            // Em caso de erro, marca como divergente por conservadorismo
+            setConformidade(prev =>
+              prev.map(i => i.campo === item.campo ? { ...i, status: "divergente" } : i)
+            );
+          }
+        });
+      }
 
       // Apontamento criminal: apenas certidões de antecedentes.
       if (TIPOS_CERTIDAO.has(tipoIA)) {
@@ -1584,6 +1679,9 @@ export function ClienteDocsHubModal({
                           {item.status === "conforme" && <span className="text-emerald-700 font-bold">✓ Conforme</span>}
                           {item.status === "divergente" && <span className="text-red-700 font-bold">⚠ Divergência</span>}
                           {item.status === "sem_referencia" && <span className="opacity-40">—</span>}
+                          {item.status === "verificando" && (
+                            <span className="text-blue-600 font-bold animate-pulse">⟳ IA verificando…</span>
+                          )}
                         </td>
                       </tr>
                     ))}
