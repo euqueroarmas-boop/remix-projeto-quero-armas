@@ -10,23 +10,14 @@ import {
   FileCheck2,
   AlertCircle,
   ChevronRight,
-  DollarSign,
+  BadgeDollarSign,
+  Check,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
-
-/**
- * QAContratarConfirmarPage — Cliente logado.
- * 3 passos curtos:
- *  1) Endereço ainda é o mesmo? (se não, atualiza)
- *  2) Estado civil / profissão mudaram? (se sim, atualiza)
- *  3) Confirma — cria processo + checklist (RPC qa_criar_processo_logado)
- *
- * Sem checkout (validação manual conforme decisão do gestor).
- * Reaproveita docs já enviados em outros processos do cliente (CNH, comprovantes etc).
- */
 
 interface Catalogo {
   id: string;
@@ -57,6 +48,69 @@ interface ClienteData {
 
 const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)", "UNIÃO ESTÁVEL"];
 
+function SectionBadge({ n, done }: { n: number; done: boolean }) {
+  return (
+    <div
+      className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-extrabold border transition-all ${
+        done
+          ? "bg-emerald-500 border-emerald-400 text-white"
+          : "bg-slate-100 border-slate-300 text-slate-500"
+      }`}
+    >
+      {done ? <Check className="h-3.5 w-3.5" /> : n}
+    </div>
+  );
+}
+
+type Confirmacao = "sim" | "nao" | null;
+
+function ConfirmButtons({
+  value,
+  onChange,
+  labelSim,
+  labelNao,
+}: {
+  value: Confirmacao;
+  onChange: (v: "sim" | "nao") => void;
+  labelSim: string;
+  labelNao: string;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 mt-3">
+      <button
+        type="button"
+        onClick={() => onChange("sim")}
+        className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-[12px] font-bold uppercase tracking-wider transition-all ${
+          value === "sim"
+            ? "border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm"
+            : "border-slate-200 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/50"
+        }`}
+      >
+        {value === "sim" && (
+          <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-emerald-500" />
+        )}
+        <Check className={`h-4 w-4 ${value === "sim" ? "text-emerald-500" : "text-slate-400"}`} />
+        {labelSim}
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("nao")}
+        className={`relative flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-[12px] font-bold uppercase tracking-wider transition-all ${
+          value === "nao"
+            ? "border-amber-400 bg-amber-50 text-amber-700 shadow-sm"
+            : "border-slate-200 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50"
+        }`}
+      >
+        {value === "nao" && (
+          <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-amber-500" />
+        )}
+        <Pencil className={`h-4 w-4 ${value === "nao" ? "text-amber-500" : "text-slate-400"}`} />
+        {labelNao}
+      </button>
+    </div>
+  );
+}
+
 export default function QAContratarConfirmarPage() {
   const navigate = useNavigate();
   const { slug = "" } = useParams();
@@ -68,8 +122,7 @@ export default function QAContratarConfirmarPage() {
   const [cliente, setCliente] = useState<ClienteData | null>(null);
   const [docsReaproveitados, setDocsReaproveitados] = useState<string[]>([]);
 
-  // Step 1: endereço
-  const [enderecoOk, setEnderecoOk] = useState<"sim" | "nao" | null>(null);
+  const [enderecoOk, setEnderecoOk] = useState<Confirmacao>(null);
   const [novoCep, setNovoCep] = useState("");
   const [novoEndereco, setNovoEndereco] = useState("");
   const [novoNumero, setNovoNumero] = useState("");
@@ -78,14 +131,10 @@ export default function QAContratarConfirmarPage() {
   const [novaCidade, setNovaCidade] = useState("");
   const [novoEstado, setNovoEstado] = useState("");
 
-  // Step 2: dados pessoais
-  const [dadosOk, setDadosOk] = useState<"sim" | "nao" | null>(null);
+  const [dadosOk, setDadosOk] = useState<Confirmacao>(null);
   const [novoEstadoCivil, setNovoEstadoCivil] = useState("");
   const [novaProfissao, setNovaProfissao] = useState("");
 
-  // Valor agora vem direto do catálogo — sem observações nem validação manual.
-
-  // FASE 20-D: bloqueio de cliente legado pendente
   const [legadoBlock, setLegadoBlock] = useState<{
     homologacao_status?: string | null;
     recadastramento_status?: string | null;
@@ -100,7 +149,6 @@ export default function QAContratarConfirmarPage() {
       }
       const uid = sess.session.user.id;
 
-      // Catálogo
       const { data: cat } = await supabase
         .from("qa_servicos_catalogo" as any)
         .select("id, slug, nome, descricao_curta, preco, recorrente, gera_processo, servico_id")
@@ -114,7 +162,6 @@ export default function QAContratarConfirmarPage() {
       }
       setCatalogo(cat as any);
 
-      // Cliente vinculado
       const { data: link } = await supabase
         .from("cliente_auth_links" as any)
         .select("qa_cliente_id")
@@ -139,7 +186,6 @@ export default function QAContratarConfirmarPage() {
         .maybeSingle();
       if (cli) setCliente(cli as any);
 
-      // Documentos reaproveitáveis compatíveis com a matriz do serviço.
       try {
         const [checklist, docsResp] = await Promise.all([
           fetchChecklistEtapa02(slug),
@@ -150,14 +196,13 @@ export default function QAContratarConfirmarPage() {
           : [];
         const itensCompativeis = checklist.filter((item) =>
           docsValidos.some((doc) =>
-            item.tiposCompativeis.includes(String(doc.tipo_documento || "").toUpperCase()),
-          ),
+            item.tiposCompativeis.includes(String(doc.tipo_documento || "").toUpperCase())
+          )
         );
         setDocsReaproveitados(
-          Array.from(new Set(itensCompativeis.map((item) => item.shortName || item.label))),
+          Array.from(new Set(itensCompativeis.map((item) => item.shortName || item.label)))
         );
-      } catch (docsErr) {
-        console.warn("[contratar/confirmar] reaproveitamento do cliente indisponível", docsErr);
+      } catch {
         setDocsReaproveitados([]);
       }
 
@@ -172,38 +217,36 @@ export default function QAContratarConfirmarPage() {
       cliente.numero,
       cliente.complemento,
       cliente.bairro,
-      cliente.cidade && cliente.estado ? `${cliente.cidade}/${cliente.estado}` : cliente.cidade,
+      cliente.cidade && cliente.estado ? `${cliente.cidade} / ${cliente.estado}` : cliente.cidade,
       cliente.cep,
     ]
       .filter(Boolean)
       .join(", ");
   }, [cliente]);
 
-  // Valor oficial do catálogo (sem entrada manual do cliente)
   const valorNumerico = useMemo(() => {
     const n = Number(catalogo?.preco ?? 0);
     return Number.isFinite(n) && n > 0 ? n : 0;
   }, [catalogo]);
 
   const podeConfirmar =
-    enderecoOk !== null &&
-    dadosOk !== null &&
-    !submitting &&
-    !loading &&
-    cliente &&
-    catalogo;
+    enderecoOk !== null && dadosOk !== null && !submitting && !loading && cliente && catalogo;
+
+  const iniciaisNome = useMemo(() => {
+    if (!cliente?.nome_completo) return "?";
+    const parts = cliente.nome_completo.trim().split(" ").filter(Boolean);
+    return parts.length >= 2
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`
+      : parts[0]?.[0] ?? "?";
+  }, [cliente]);
 
   async function handleConfirmar() {
     if (!cliente || !catalogo) return;
     setSubmitting(true);
     try {
-      // FASE 20-D: verificar se cliente pode contratar (bloqueia legado pendente)
       const { data: verifData, error: verifErr } = await supabase.rpc(
         "qa_verificar_cliente_pode_contratar" as any,
-        {
-          p_cliente_id: cliente.id,
-          p_catalogo_slug: catalogo.slug,
-        } as any,
+        { p_cliente_id: cliente.id, p_catalogo_slug: catalogo.slug } as any
       );
       if (verifErr) throw verifErr;
       const verif = (verifData ?? {}) as {
@@ -222,7 +265,6 @@ export default function QAContratarConfirmarPage() {
         return;
       }
 
-      // 1) Atualiza dados básicos se o cliente disse que mudou algo
       if (enderecoOk === "nao" || dadosOk === "nao") {
         const { error: errUpd } = await supabase.rpc(
           "qa_atualizar_dados_basicos_cliente" as any,
@@ -242,9 +284,6 @@ export default function QAContratarConfirmarPage() {
         if (errUpd) throw errUpd;
       }
 
-      // 2) Encaminhar direto para o checkout oficial (PIX/Boleto/Cartão).
-      //    O valor do catálogo é a fonte da verdade — sem validação manual,
-      //    sem aprovação prévia da equipe.
       if (!catalogo.servico_id || !valorNumerico) {
         toast.error("Serviço sem preço configurado no catálogo. Fale com a equipe.");
         return;
@@ -280,7 +319,7 @@ export default function QAContratarConfirmarPage() {
     const waLink =
       "https://wa.me/5562994040220?text=" +
       encodeURIComponent(
-        `Olá! Sou cliente antigo da Quero Armas (CPF ${cliente.cpf || "—"}) e quero atualizar meu cadastro para contratar o serviço ${catalogo.nome}.`,
+        `Olá! Sou cliente antigo da Quero Armas (CPF ${cliente.cpf || "—"}) e quero atualizar meu cadastro para contratar o serviço ${catalogo.nome}.`
       );
     return (
       <div data-tactical-portal className="min-h-screen">
@@ -295,8 +334,7 @@ export default function QAContratarConfirmarPage() {
                   </h1>
                   <p className="text-sm text-slate-600 mt-2 leading-relaxed">
                     Seu cadastro veio do sistema antigo da Quero Armas. Para comprar um novo
-                    serviço, precisamos atualizar seus documentos no sistema novo. Envie CR,
-                    CRAF, GTE, documentos pessoais e demais arquivos do acervo pelo portal.
+                    serviço, precisamos atualizar seus documentos no sistema novo.
                   </p>
                   <p className="text-[11px] text-slate-500 mt-3 uppercase tracking-wider">
                     Status: {legadoBlock.homologacao_status || "pendente"} ·{" "}
@@ -345,219 +383,232 @@ export default function QAContratarConfirmarPage() {
         recorrente: catalogo.recorrente,
       }}
     >
-          {/* Resumo do cliente */}
-          <div className="rounded-xl bg-white border border-slate-200 p-4">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">
-              <User className="h-3.5 w-3.5" /> Titular
+      {/* ── Titular ────────────────────────────────────────────────────────── */}
+      <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center gap-3">
+          <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center text-white text-[13px] font-extrabold uppercase tracking-wider select-none">
+            {iniciaisNome}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Titular
+              </span>
             </div>
-            <div className="text-sm font-bold text-slate-900 uppercase">{cliente.nome_completo}</div>
-            <div className="text-[12px] text-slate-600 mt-0.5">
+            <div className="text-[14px] font-extrabold text-slate-900 uppercase leading-tight mt-0.5 truncate">
+              {cliente.nome_completo}
+            </div>
+            <div className="text-[11px] text-slate-500 mt-0.5">
               CPF {cliente.cpf || "—"} · {cliente.email || "sem e-mail"}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Step 1: Endereço */}
-          <div className="rounded-xl bg-white border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin className="h-4 w-4 text-amber-600" />
-              <h2 className="text-sm font-bold text-slate-900 uppercase">1. Endereço</h2>
-            </div>
-            <div className="text-[12px] text-slate-600 mb-3 leading-relaxed">
-              {enderecoAtualLinha || <span className="italic">Sem endereço cadastrado.</span>}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setEnderecoOk("sim")}
-                className={`px-3 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider transition border ${
-                  enderecoOk === "sim"
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-emerald-300"
-                }`}
-              >
-                É o mesmo
-              </button>
-              <button
-                onClick={() => setEnderecoOk("nao")}
-                className={`px-3 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider transition border ${
-                  enderecoOk === "nao"
-                    ? "bg-amber-500 border-amber-500 text-white"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-amber-300"
-                }`}
-              >
-                Mudou
-              </button>
-            </div>
-            {enderecoOk === "nao" && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <input
-                  className="col-span-1 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="CEP"
-                  value={novoCep}
-                  onChange={(e) => setNovoCep(e.target.value)}
-                />
-                <input
-                  className="col-span-1 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Estado (UF)"
-                  maxLength={2}
-                  value={novoEstado}
-                  onChange={(e) => setNovoEstado(e.target.value.toUpperCase())}
-                />
-                <input
-                  className="col-span-2 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Endereço (rua/av)"
-                  value={novoEndereco}
-                  onChange={(e) => setNovoEndereco(e.target.value.toUpperCase())}
-                />
-                <input
-                  className="col-span-1 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Número"
-                  value={novoNumero}
-                  onChange={(e) => setNovoNumero(e.target.value)}
-                />
-                <input
-                  className="col-span-1 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Complemento"
-                  value={novoComplemento}
-                  onChange={(e) => setNovoComplemento(e.target.value.toUpperCase())}
-                />
-                <input
-                  className="col-span-1 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Bairro"
-                  value={novoBairro}
-                  onChange={(e) => setNovoBairro(e.target.value.toUpperCase())}
-                />
-                <input
-                  className="col-span-1 h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Cidade"
-                  value={novaCidade}
-                  onChange={(e) => setNovaCidade(e.target.value.toUpperCase())}
-                />
-              </div>
-            )}
+      {/* ── 1. Endereço ────────────────────────────────────────────────────── */}
+      <div
+        className={`rounded-xl bg-white border shadow-sm p-4 transition-all ${
+          enderecoOk ? "border-slate-200" : "border-slate-200"
+        }`}
+      >
+        <div className="flex items-center gap-2.5 mb-3">
+          <SectionBadge n={1} done={enderecoOk !== null} />
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <MapPin className="h-4 w-4 text-amber-600 shrink-0" />
+            <h2 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-tight">
+              Endereço
+            </h2>
           </div>
+          {enderecoOk === "sim" && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+              Confirmado
+            </span>
+          )}
+          {enderecoOk === "nao" && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+              Atualizar
+            </span>
+          )}
+        </div>
 
-          {/* Step 2: Estado civil / profissão */}
-          <div className="rounded-xl bg-white border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <User className="h-4 w-4 text-amber-600" />
-              <h2 className="text-sm font-bold text-slate-900 uppercase">2. Estado civil e profissão</h2>
-            </div>
-            <div className="text-[12px] text-slate-600 mb-3">
-              Atual: <strong className="uppercase">{cliente.estado_civil || "—"}</strong> ·{" "}
-              <strong className="uppercase">{cliente.profissao || "—"}</strong>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setDadosOk("sim")}
-                className={`px-3 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider transition border ${
-                  dadosOk === "sim"
-                    ? "bg-emerald-500 border-emerald-500 text-white"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-emerald-300"
-                }`}
-              >
-                Não mudou
-              </button>
-              <button
-                onClick={() => setDadosOk("nao")}
-                className={`px-3 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider transition border ${
-                  dadosOk === "nao"
-                    ? "bg-amber-500 border-amber-500 text-white"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-amber-300"
-                }`}
-              >
-                Mudou algo
-              </button>
-            </div>
-            {dadosOk === "nao" && (
-              <div className="mt-3 grid grid-cols-1 gap-2">
-                <select
-                  className="h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400 bg-white"
-                  value={novoEstadoCivil}
-                  onChange={(e) => setNovoEstadoCivil(e.target.value)}
-                >
-                  <option value="">Estado civil (manter o atual se vazio)</option>
-                  {ESTADOS_CIVIS.map((ec) => (
-                    <option key={ec} value={ec}>
-                      {ec}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  className="h-9 px-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-                  placeholder="Profissão (manter atual se vazio)"
-                  value={novaProfissao}
-                  onChange={(e) => setNovaProfissao(e.target.value.toUpperCase())}
-                />
-              </div>
-            )}
+        <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 text-[12px] text-slate-700 leading-relaxed">
+          {enderecoAtualLinha || <span className="italic text-slate-400">Sem endereço cadastrado.</span>}
+        </div>
+
+        <ConfirmButtons
+          value={enderecoOk}
+          onChange={setEnderecoOk}
+          labelSim="É o mesmo"
+          labelNao="Mudou"
+        />
+
+        {enderecoOk === "nao" && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {[
+              { col: 1, placeholder: "CEP", value: novoCep, setter: setNovoCep, transform: (v: string) => v },
+              { col: 1, placeholder: "Estado (UF)", value: novoEstado, setter: setNovoEstado, transform: (v: string) => v.toUpperCase(), maxLength: 2 },
+              { col: 2, placeholder: "Rua / Avenida", value: novoEndereco, setter: setNovoEndereco, transform: (v: string) => v.toUpperCase() },
+              { col: 1, placeholder: "Número", value: novoNumero, setter: setNovoNumero, transform: (v: string) => v },
+              { col: 1, placeholder: "Complemento", value: novoComplemento, setter: setNovoComplemento, transform: (v: string) => v.toUpperCase() },
+              { col: 1, placeholder: "Bairro", value: novoBairro, setter: setNovoBairro, transform: (v: string) => v.toUpperCase() },
+              { col: 1, placeholder: "Cidade", value: novaCidade, setter: setNovaCidade, transform: (v: string) => v.toUpperCase() },
+            ].map(({ col, placeholder, value, setter, transform, maxLength }) => (
+              <input
+                key={placeholder}
+                className={`${col === 2 ? "col-span-2" : "col-span-1"} h-9 px-3 text-[12px] uppercase border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 placeholder:text-slate-400`}
+                placeholder={placeholder}
+                value={value}
+                maxLength={maxLength}
+                onChange={(e) => setter(transform(e.target.value))}
+              />
+            ))}
           </div>
+        )}
+      </div>
 
-          {/* Step 3: Documentos reaproveitados */}
-          <div className="rounded-xl bg-white border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <FileCheck2 className="h-4 w-4 text-emerald-600" />
-              <h2 className="text-sm font-bold text-slate-900 uppercase">3. Documentos reaproveitados</h2>
-            </div>
-            {docsReaproveitados.length === 0 ? (
-              <div className="text-[12px] text-slate-500 italic">
-                Nenhum documento prévio validado — você enviará todos no processo novo.
-              </div>
-            ) : (
-              <ul className="space-y-1.5">
-                {docsReaproveitados.slice(0, 8).map((d) => (
-                  <li key={d} className="flex items-center gap-2 text-[12px] text-slate-700">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <span className="uppercase">{d}</span>
-                  </li>
-                ))}
-                {docsReaproveitados.length > 8 && (
-                  <li className="text-[11px] text-slate-500">
-                    +{docsReaproveitados.length - 8} outros documentos disponíveis.
-                  </li>
-                )}
-              </ul>
-            )}
+      {/* ── 2. Estado civil e profissão ─────────────────────────────────────── */}
+      <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center gap-2.5 mb-3">
+          <SectionBadge n={2} done={dadosOk !== null} />
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <User className="h-4 w-4 text-amber-600 shrink-0" />
+            <h2 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-tight">
+              Estado civil e profissão
+            </h2>
           </div>
+          {dadosOk === "sim" && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+              Confirmado
+            </span>
+          )}
+          {dadosOk === "nao" && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+              Atualizar
+            </span>
+          )}
+        </div>
 
-          {/* Valor do catálogo */}
-          <div className="rounded-xl bg-white border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="h-4 w-4 text-amber-600" />
-              <h2 className="text-sm font-bold text-slate-900 uppercase">
-                4. Valor do serviço
-              </h2>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-[11px] uppercase tracking-wider text-slate-500">Total</span>
-              <span className="text-xl font-extrabold text-slate-900">
-                {valorNumerico > 0
-                  ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
-                  : "—"}
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
-              Valor oficial do catálogo Quero Armas. Pagamento via PIX, boleto ou cartão na próxima etapa.
-            </p>
+        <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2.5 text-[12px] text-slate-700 flex gap-4">
+          <span><span className="text-slate-400 uppercase text-[10px] font-bold block">Estado civil</span>{cliente.estado_civil || "—"}</span>
+          <span><span className="text-slate-400 uppercase text-[10px] font-bold block">Profissão</span>{cliente.profissao || "—"}</span>
+        </div>
+
+        <ConfirmButtons
+          value={dadosOk}
+          onChange={setDadosOk}
+          labelSim="Não mudou"
+          labelNao="Mudou algo"
+        />
+
+        {dadosOk === "nao" && (
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            <select
+              className="h-9 px-3 text-[12px] uppercase border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 text-slate-700"
+              value={novoEstadoCivil}
+              onChange={(e) => setNovoEstadoCivil(e.target.value)}
+            >
+              <option value="">Estado civil (manter o atual se vazio)</option>
+              {ESTADOS_CIVIS.map((ec) => (
+                <option key={ec} value={ec}>{ec}</option>
+              ))}
+            </select>
+            <input
+              className="h-9 px-3 text-[12px] uppercase border border-slate-200 rounded-lg bg-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 placeholder:text-slate-400"
+              placeholder="Profissão (manter atual se vazio)"
+              value={novaProfissao}
+              onChange={(e) => setNovaProfissao(e.target.value.toUpperCase())}
+            />
           </div>
+        )}
+      </div>
 
-          {/* CTA */}
-          <button
-            disabled={!podeConfirmar}
-            onClick={handleConfirmar}
-            className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition ${
-              podeConfirmar
-                ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md"
-                : "bg-slate-200 text-slate-400 cursor-not-allowed"
-            }`}
-          >
-            {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
+      {/* ── 3. Documentos reaproveitados ───────────────────────────────────── */}
+      <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-4">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-emerald-500 border border-emerald-400">
+            <Check className="h-3.5 w-3.5 text-white" />
+          </div>
+          <div className="flex items-center gap-1.5 flex-1">
+            <FileCheck2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <h2 className="text-[13px] font-extrabold text-slate-900 uppercase tracking-tight">
+              Documentos reaproveitados
+            </h2>
+          </div>
+          {docsReaproveitados.length > 0 && (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+              {docsReaproveitados.length} doc{docsReaproveitados.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {docsReaproveitados.length === 0 ? (
+          <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-3 text-[12px] text-slate-500 italic">
+            Nenhum documento prévio validado — você enviará todos no processo novo.
+          </div>
+        ) : (
+          <ul className="space-y-1.5">
+            {docsReaproveitados.slice(0, 8).map((d) => (
+              <li key={d} className="flex items-center gap-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100 px-3 py-2 text-[12px]">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span className="uppercase font-bold text-emerald-800 tracking-wide">{d}</span>
+              </li>
+            ))}
+            {docsReaproveitados.length > 8 && (
+              <li className="text-[11px] text-slate-500 px-1">
+                +{docsReaproveitados.length - 8} outros documentos disponíveis.
+              </li>
             )}
-            Ir para pagamento
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          </ul>
+        )}
+      </div>
+
+      {/* ── 4. Valor ───────────────────────────────────────────────────────── */}
+      <div className="rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 shadow-sm p-4 text-white">
+        <div className="flex items-center gap-2 mb-3">
+          <BadgeDollarSign className="h-4 w-4 text-amber-400 shrink-0" />
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-300">
+            Valor do serviço
+          </h2>
+        </div>
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">
+              Total
+            </div>
+            <div className="text-3xl font-extrabold text-white leading-none">
+              {valorNumerico > 0
+                ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
+                : "—"}
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-full px-3 py-1">
+            Preço oficial
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-400 mt-3 leading-relaxed">
+          Pagamento via PIX, boleto ou cartão na próxima etapa. Processo iniciado após confirmação.
+        </p>
+      </div>
+
+      {/* ── CTA ─────────────────────────────────────────────────────────────── */}
+      <button
+        disabled={!podeConfirmar}
+        onClick={handleConfirmar}
+        className={`w-full inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl text-[14px] font-extrabold uppercase tracking-wider transition-all ${
+          podeConfirmar
+            ? "bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40"
+            : "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+        }`}
+      >
+        {submitting ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <Sparkles className="h-5 w-5" />
+        )}
+        Ir para pagamento
+        <ChevronRight className="h-5 w-5" />
+      </button>
     </CheckoutShell>
   );
 }
