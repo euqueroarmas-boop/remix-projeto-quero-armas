@@ -34,6 +34,7 @@ import { ensureClienteFromAuthUser } from "@/lib/quero-armas/ensureClienteFromAu
 import ArmaManualForm from "@/components/quero-armas/arsenal/ArmaManualForm";
 import { getQAServiceDisplayName } from "@/lib/quero-armas/serviceDisplay";
 import ClienteHealthBadge from "@/components/quero-armas/clientes/ClienteHealthBadge";
+import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
 import { calcularPrazosProcessuais, corPrazo } from "@/lib/quero-armas/prazosProcessuais";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
