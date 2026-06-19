@@ -224,7 +224,7 @@ export default function ClienteResumoKanban({
   return (
     <main className="qa-kanban-resumo">
       <style>{`
-        .qa-kanban-resumo{--paper:#f6f5f1;--paper-2:#efece4;--ink:#141414;--ink-2:#3a3a3a;--muted:#7a756c;--line:#d9d4c7;--line-2:#c4bea9;--bordo:#7A1F2B;--bordo-soft:#f1dee0;--amber:#a8741a;--amber-soft:#f5e6c8;--danger:#8a1414;--danger-soft:#f3d6d6;--ok:#1f4d2b;--ok-soft:#dfead9;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:18px 14px 24px;border:1px solid var(--line);border-radius:14px}
+        .qa-kanban-resumo{--paper:#ffffff;--paper-2:#f7f7f8;--ink:#141414;--ink-2:#3a3a3a;--muted:#7a7a82;--line:#e6e6ea;--line-2:#cfcfd6;--bordo:#7A1F2B;--bordo-soft:#fbeaec;--amber:#a8741a;--amber-soft:#fbf0d6;--danger:#8a1414;--danger-soft:#f8dada;--ok:#1f4d2b;--ok-soft:#e3efdd;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:18px 14px 24px;border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(15,15,20,.03)}
         .qa-kanban-resumo *{box-sizing:border-box}
         .qa-kanban-resumo__wrap{max-width:1400px;margin:0 auto}
         .qa-kanban-resumo__top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px}
