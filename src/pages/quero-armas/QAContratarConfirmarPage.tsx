@@ -22,29 +22,31 @@ import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
 
 /* =============================================================================
- * Design tokens — dark brass, alinhado com o checkout guiado (/cadastro).
+ * Design tokens — dark premium, vermelho bordô da empresa.
  * ============================================================================= */
 const D = {
   bg: "#050505",
   paper: "#171717",
   paper2: "#111111",
-  border: "rgba(255,255,255,0.08)",
+  border: "rgba(255,255,255,0.09)",
   borderSoft: "rgba(255,255,255,0.05)",
-  borderAccent: "rgba(214,166,75,0.35)",
-  ink: "#f8f5ef",
-  inkSoft: "#b9b2a7",
-  inkFaint: "#4a4540",
-  brass: "#d6a64b",
-  brassAlpha: "rgba(214,166,75,0.12)",
-  brassAlphaStrong: "rgba(214,166,75,0.3)",
+  ink: "#f0ece5",
+  inkSoft: "#ccc5b9",
+  inkFaint: "#6b6560",
+  /* vermelho bordô — cor da empresa */
+  red: "#c4253b",
+  redDeep: "#7A1F2B",
+  redAlpha: "rgba(196,37,59,0.12)",
+  redAlphaStrong: "rgba(196,37,59,0.30)",
+  redGlow: "rgba(196,37,59,0.40)",
   success: "#7fbf6a",
-  successAlpha: "rgba(127,191,106,0.1)",
-  successBorder: "rgba(127,191,106,0.25)",
+  successAlpha: "rgba(127,191,106,0.10)",
+  successBorder: "rgba(127,191,106,0.30)",
   warning: "#e0a030",
-  warningAlpha: "rgba(224,160,48,0.1)",
-  warningBorder: "rgba(224,160,48,0.3)",
+  warningAlpha: "rgba(224,160,48,0.10)",
+  warningBorder: "rgba(224,160,48,0.30)",
   danger: "#c0392b",
-  dangerAlpha: "rgba(192,57,43,0.1)",
+  dangerAlpha: "rgba(192,57,43,0.10)",
   dangerBorder: "rgba(192,57,43,0.25)",
 };
 
@@ -81,65 +83,71 @@ type Confirmacao = "sim" | "nao" | null;
 
 /* ── Primitivos de UI ───────────────────────────────────────────────────────── */
 
-function DarkCard({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
+function DarkCard({ children, accentLine = false, glowBorder = false }: {
+  children: React.ReactNode;
+  accentLine?: boolean;
+  glowBorder?: boolean;
+}) {
   return (
     <div style={{
       background: D.paper,
-      border: `1px solid ${accent ? D.borderAccent : D.border}`,
+      border: `1px solid ${glowBorder ? D.redAlphaStrong : D.border}`,
       borderRadius: 14,
       overflow: "hidden",
+      boxShadow: glowBorder ? `0 0 20px ${D.redAlpha}, inset 0 0 0 1px ${D.redAlpha}` : "none",
     }}>
-      {accent && (
-        <div style={{ height: "1.5px", background: `linear-gradient(to right, ${D.brass}, rgba(214,166,75,0.1))` }} />
+      {accentLine && (
+        <div style={{
+          height: "2px",
+          background: `linear-gradient(to right, ${D.red}, ${D.redDeep})`,
+          boxShadow: `0 0 10px ${D.redGlow}`,
+        }} />
       )}
-      <div style={{ padding: "14px 16px" }}>{children}</div>
+      <div style={{ padding: "16px" }}>{children}</div>
     </div>
   );
 }
 
 function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType }: {
-  n: number;
-  done: boolean;
-  icon: any;
-  label: string;
-  statusLabel?: string;
-  statusType?: "ok" | "edit";
+  n: number; done: boolean; icon: any; label: string;
+  statusLabel?: string; statusType?: "ok" | "edit";
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-      {/* number circle */}
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
       <div style={{
-        width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 10, fontWeight: 800,
-        background: done ? D.brass : D.brassAlpha,
-        border: `1.5px solid ${done ? D.brass : D.borderAccent}`,
-        color: done ? D.bg : D.brass,
+        fontSize: 11, fontWeight: 800,
+        background: done ? D.red : D.redAlpha,
+        border: `2px solid ${done ? D.red : D.redAlphaStrong}`,
+        color: done ? "#fff" : D.red,
+        boxShadow: done ? `0 0 10px ${D.redAlpha}` : "none",
         transition: "all .2s",
       }}>
-        {done ? <Check size={12} /> : n}
+        {done ? <Check size={13} /> : n}
       </div>
-      {/* icon box + label */}
-      <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
         <div style={{
-          width: 24, height: 24, borderRadius: 7, flexShrink: 0,
-          background: D.brassAlpha,
+          width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+          background: D.redAlpha,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <Icon size={13} color={D.brass} />
+          <Icon size={14} color={D.red} />
         </div>
-        <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: D.ink }}>
+        <span style={{
+          fontSize: 12, fontWeight: 700, textTransform: "uppercase",
+          letterSpacing: "0.07em", color: D.ink,
+        }}>
           {label}
         </span>
       </div>
       {statusLabel && (
         <span style={{
           fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-          padding: "2px 9px", borderRadius: 99,
+          padding: "3px 10px", borderRadius: 99, flexShrink: 0,
           color: statusType === "ok" ? D.success : D.warning,
           background: statusType === "ok" ? D.successAlpha : D.warningAlpha,
           border: `1px solid ${statusType === "ok" ? D.successBorder : D.warningBorder}`,
-          flexShrink: 0,
         }}>
           {statusLabel}
         </span>
@@ -151,13 +159,9 @@ function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType }: {
 function DataRow({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      background: D.paper2,
-      border: `1px solid ${D.borderSoft}`,
-      borderRadius: 8,
-      padding: "10px 12px",
-      fontSize: 12,
-      color: D.inkSoft,
-      lineHeight: 1.6,
+      background: D.paper2, border: `1px solid ${D.borderSoft}`,
+      borderRadius: 8, padding: "10px 14px",
+      fontSize: 13, color: D.inkSoft, lineHeight: 1.7,
     }}>
       {children}
     </div>
@@ -165,48 +169,32 @@ function DataRow({ children }: { children: React.ReactNode }) {
 }
 
 function DarkConfirmButtons({ value, onChange, labelSim, labelNao }: {
-  value: Confirmacao;
-  onChange: (v: "sim" | "nao") => void;
-  labelSim: string;
-  labelNao: string;
+  value: Confirmacao; onChange: (v: "sim" | "nao") => void;
+  labelSim: string; labelNao: string;
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
       {(["sim", "nao"] as const).map((opt) => {
         const isSelected = value === opt;
         const isOk = opt === "sim";
         return (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => onChange(opt)}
-            style={{
-              position: "relative",
-              display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-              borderRadius: 12, padding: "10px 12px",
-              fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
-              cursor: "pointer", transition: "all .15s",
-              background: isSelected
-                ? isOk ? D.successAlpha : D.warningAlpha
-                : D.paper2,
-              border: `1.5px solid ${isSelected
-                ? isOk ? D.successBorder : D.warningBorder
-                : D.borderSoft}`,
-              color: isSelected
-                ? isOk ? D.success : D.warning
-                : D.inkFaint,
-            }}
-          >
+          <button key={opt} type="button" onClick={() => onChange(opt)} style={{
+            position: "relative",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+            borderRadius: 10, padding: "12px 8px",
+            fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+            cursor: "pointer", transition: "all .15s",
+            background: isSelected ? (isOk ? D.successAlpha : D.warningAlpha) : D.paper2,
+            border: `2px solid ${isSelected ? (isOk ? D.successBorder : D.warningBorder) : D.borderSoft}`,
+            color: isSelected ? (isOk ? D.success : D.warning) : D.inkFaint,
+          }}>
             {isSelected && (
-              <CheckCircle2
-                size={14}
-                color={isOk ? D.success : D.warning}
-                style={{ position: "absolute", top: 8, right: 8 }}
-              />
+              <CheckCircle2 size={14} color={isOk ? D.success : D.warning}
+                style={{ position: "absolute", top: 8, right: 8 }} />
             )}
             {isOk
-              ? <Check size={15} color={isSelected ? D.success : D.inkFaint} />
-              : <Pencil size={15} color={isSelected ? D.warning : D.inkFaint} />
+              ? <Check size={16} color={isSelected ? D.success : D.inkFaint} />
+              : <Pencil size={16} color={isSelected ? D.warning : D.inkFaint} />
             }
             {opt === "sim" ? labelSim : labelNao}
           </button>
@@ -216,34 +204,34 @@ function DarkConfirmButtons({ value, onChange, labelSim, labelNao }: {
   );
 }
 
-function DarkInput({ placeholder, value, onChange, colSpan, maxLength }: {
-  placeholder: string; value: string;
-  onChange: (v: string) => void;
-  colSpan?: 2;
-  maxLength?: number;
+function DarkInput({ placeholder, value, onChange, wide, maxLength }: {
+  placeholder: string; value: string; onChange: (v: string) => void;
+  wide?: boolean; maxLength?: number;
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <input
       placeholder={placeholder}
       value={value}
       maxLength={maxLength}
       onChange={(e) => onChange(e.target.value)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      className={wide ? "qa-input-wide" : ""}
       style={{
-        gridColumn: colSpan === 2 ? "span 2" : "span 1",
-        height: 36, padding: "0 12px",
+        height: 40, padding: "0 14px",
         fontSize: 12, textTransform: "uppercase",
         background: D.paper2,
-        border: `1px solid ${D.border}`,
-        borderRadius: 8, color: D.ink,
-        outline: "none",
+        border: `1.5px solid ${focused ? D.red : D.border}`,
+        borderRadius: 8, color: D.ink, outline: "none", width: "100%", boxSizing: "border-box",
+        boxShadow: focused ? `0 0 0 3px ${D.redAlpha}` : "none",
+        transition: "border-color .15s, box-shadow .15s",
       }}
-      onFocus={(e) => { e.target.style.borderColor = D.brass; e.target.style.boxShadow = `0 0 0 2px ${D.brassAlpha}`; }}
-      onBlur={(e) => { e.target.style.borderColor = D.border; e.target.style.boxShadow = "none"; }}
     />
   );
 }
 
-/* ── Componente principal ───────────────────────────────────────────────────── */
+/* ── Página principal ───────────────────────────────────────────────────────── */
 
 export default function QAContratarConfirmarPage() {
   const navigate = useNavigate();
@@ -288,9 +276,7 @@ export default function QAContratarConfirmarPage() {
       const { data: cat } = await supabase
         .from("qa_servicos_catalogo" as any)
         .select("id, slug, nome, descricao_curta, preco, recorrente, gera_processo, servico_id")
-        .eq("slug", slug)
-        .eq("ativo", true)
-        .maybeSingle();
+        .eq("slug", slug).eq("ativo", true).maybeSingle();
       if (!cat) {
         toast.error("Serviço não encontrado.");
         navigate("/area-do-cliente/contratar", { replace: true });
@@ -301,11 +287,9 @@ export default function QAContratarConfirmarPage() {
       const { data: link } = await supabase
         .from("cliente_auth_links" as any)
         .select("qa_cliente_id")
-        .eq("user_id", uid)
-        .not("qa_cliente_id", "is", null)
+        .eq("user_id", uid).not("qa_cliente_id", "is", null)
         .order("activated_at", { ascending: false, nullsFirst: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1).maybeSingle();
       const clienteId = (link as any)?.qa_cliente_id;
       if (!clienteId) {
         toast.error("Cadastro de cliente não encontrado.");
@@ -315,11 +299,8 @@ export default function QAContratarConfirmarPage() {
 
       const { data: cli } = await supabase
         .from("qa_clientes")
-        .select(
-          "id, nome_completo, cpf, email, estado_civil, profissao, cep, endereco, numero, complemento, bairro, cidade, estado"
-        )
-        .eq("id", clienteId)
-        .maybeSingle();
+        .select("id, nome_completo, cpf, email, estado_civil, profissao, cep, endereco, numero, complemento, bairro, cidade, estado")
+        .eq("id", clienteId).maybeSingle();
       if (cli) setCliente(cli as any);
 
       try {
@@ -341,7 +322,6 @@ export default function QAContratarConfirmarPage() {
       } catch {
         setDocsReaproveitados([]);
       }
-
       setLoading(false);
     })();
   }, [slug, navigate]);
@@ -349,15 +329,10 @@ export default function QAContratarConfirmarPage() {
   const enderecoAtualLinha = useMemo(() => {
     if (!cliente) return "";
     return [
-      cliente.endereco,
-      cliente.numero,
-      cliente.complemento,
-      cliente.bairro,
+      cliente.endereco, cliente.numero, cliente.complemento, cliente.bairro,
       cliente.cidade && cliente.estado ? `${cliente.cidade} / ${cliente.estado}` : cliente.cidade,
       cliente.cep,
-    ]
-      .filter(Boolean)
-      .join(", ");
+    ].filter(Boolean).join(", ");
   }, [cliente]);
 
   const valorNumerico = useMemo(() => {
@@ -371,9 +346,7 @@ export default function QAContratarConfirmarPage() {
   const iniciaisNome = useMemo(() => {
     if (!cliente?.nome_completo) return "?";
     const parts = cliente.nome_completo.trim().split(" ").filter(Boolean);
-    return parts.length >= 2
-      ? `${parts[0][0]}${parts[parts.length - 1][0]}`
-      : parts[0]?.[0] ?? "?";
+    return parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0]?.[0] ?? "?";
   }, [cliente]);
 
   async function handleConfirmar() {
@@ -386,16 +359,11 @@ export default function QAContratarConfirmarPage() {
       );
       if (verifErr) throw verifErr;
       const verif = (verifData ?? {}) as {
-        pode_contratar?: boolean;
-        motivo?: string;
-        homologacao_status?: string | null;
-        recadastramento_status?: string | null;
+        pode_contratar?: boolean; motivo?: string;
+        homologacao_status?: string | null; recadastramento_status?: string | null;
       };
       if (verif.pode_contratar === false) {
-        setLegadoBlock({
-          homologacao_status: verif.homologacao_status ?? null,
-          recadastramento_status: verif.recadastramento_status ?? null,
-        });
+        setLegadoBlock({ homologacao_status: verif.homologacao_status ?? null, recadastramento_status: verif.recadastramento_status ?? null });
         toast.error("Recadastramento obrigatório antes de contratar.");
         setSubmitting(false);
         return;
@@ -420,20 +388,15 @@ export default function QAContratarConfirmarPage() {
         if (errUpd) throw errUpd;
       }
 
-      /* Registra aceite de contrato (best-effort, não bloqueia o fluxo) */
+      /* Registra aceite de contrato (best-effort) */
       try {
         await supabase.functions.invoke("qa-contract-aceite-registrar", {
           body: {
-            cliente_id: cliente.id,
-            venda_id: null,
-            solicitacao_id: null,
-            servico_slug: catalogo.slug,
-            servico_slugs: [catalogo.slug],
+            cliente_id: cliente.id, venda_id: null, solicitacao_id: null,
+            servico_slug: catalogo.slug, servico_slugs: [catalogo.slug],
             servico_preco: valorNumerico,
             dados_pessoais: {
-              nome_completo: cliente.nome_completo,
-              cpf: cliente.cpf,
-              email: cliente.email,
+              nome_completo: cliente.nome_completo, cpf: cliente.cpf, email: cliente.email,
               estado_civil: dadosOk === "nao" && novoEstadoCivil ? novoEstadoCivil : cliente.estado_civil,
               profissao: dadosOk === "nao" && novaProfissao ? novaProfissao : cliente.profissao,
             },
@@ -470,8 +433,8 @@ export default function QAContratarConfirmarPage() {
   if (loading) {
     return (
       <div style={{ background: D.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Loader2 size={24} color={D.brass} style={{ animation: "spin 1s linear infinite" }} />
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        <Loader2 size={26} color={D.red} style={{ animation: "qa-spin 1s linear infinite" }} />
+        <style>{`@keyframes qa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -480,26 +443,22 @@ export default function QAContratarConfirmarPage() {
 
   /* ── Bloqueio legacy ───────────────────────────────────────────────────── */
   if (legadoBlock) {
-    const waLink =
-      "https://wa.me/5562994040220?text=" +
-      encodeURIComponent(
-        `Olá! Sou cliente antigo da Quero Armas (CPF ${cliente.cpf || "—"}) e quero atualizar meu cadastro para contratar o serviço ${catalogo.nome}.`
-      );
+    const waLink = "https://wa.me/5562994040220?text=" +
+      encodeURIComponent(`Olá! Sou cliente antigo da Quero Armas (CPF ${cliente.cpf || "—"}) e quero atualizar meu cadastro para contratar o serviço ${catalogo.nome}.`);
     return (
       <div style={{ background: D.bg, minHeight: "100vh", padding: "40px 16px" }}>
         <div style={{ maxWidth: 520, margin: "0 auto" }}>
           <div style={{ background: D.paper, border: `1px solid ${D.dangerBorder}`, borderRadius: 16, padding: 24 }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: D.dangerAlpha, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <AlertCircle size={18} color={D.danger} />
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: D.dangerAlpha, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <AlertCircle size={20} color={D.danger} />
               </div>
               <div>
                 <h1 style={{ fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", color: D.ink, marginBottom: 8 }}>
                   Recadastramento obrigatório
                 </h1>
-                <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, margin: 0 }}>
-                  Seu cadastro veio do sistema antigo da Quero Armas. Para comprar um novo
-                  serviço, precisamos atualizar seus documentos no sistema novo.
+                <p style={{ fontSize: 13, color: D.inkSoft, lineHeight: 1.7, margin: 0 }}>
+                  Seu cadastro veio do sistema antigo da Quero Armas. Para comprar um novo serviço, precisamos atualizar seus documentos no sistema novo.
                 </p>
                 <p style={{ fontSize: 10, color: D.inkFaint, marginTop: 10, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                   Status: {legadoBlock.homologacao_status || "pendente"} · Recadastramento: {legadoBlock.recadastramento_status || "—"}
@@ -507,21 +466,18 @@ export default function QAContratarConfirmarPage() {
               </div>
             </div>
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                { label: "Enviar documentos agora", onClick: () => navigate("/area-do-cliente?secao=arsenal"), color: D.brass, textColor: D.bg },
-                { label: "Falar com a Equipe Quero Armas", href: waLink, color: "#22a559", textColor: "#fff" },
-                { label: "Voltar ao portal", onClick: () => navigate("/area-do-cliente"), color: D.paper2, textColor: D.inkSoft },
-              ].map(({ label, onClick, href, color, textColor }) =>
-                href ? (
-                  <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ display: "block", textAlign: "center", padding: "11px 16px", borderRadius: 10, background: color, color: textColor, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none" }}>
-                    {label}
-                  </a>
-                ) : (
-                  <button key={label} type="button" onClick={onClick} style={{ padding: "11px 16px", borderRadius: 10, background: color, color: textColor, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", width: "100%" }}>
-                    {label}
-                  </button>
-                )
-              )}
+              <button type="button" onClick={() => navigate("/area-do-cliente?secao=arsenal")}
+                style={{ padding: "12px 16px", borderRadius: 10, background: D.red, color: "#fff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: "none", cursor: "pointer", width: "100%", boxShadow: `0 0 16px ${D.redGlow}` }}>
+                Enviar documentos agora
+              </button>
+              <a href={waLink} target="_blank" rel="noopener noreferrer"
+                style={{ display: "block", textAlign: "center", padding: "12px 16px", borderRadius: 10, background: "#22a559", color: "#fff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none" }}>
+                Falar com a Equipe Quero Armas
+              </a>
+              <button type="button" onClick={() => navigate("/area-do-cliente")}
+                style={{ padding: "12px 16px", borderRadius: 10, background: D.paper2, color: D.inkSoft, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", border: `1px solid ${D.border}`, cursor: "pointer", width: "100%" }}>
+                Voltar ao portal
+              </button>
             </div>
           </div>
         </div>
@@ -531,288 +487,263 @@ export default function QAContratarConfirmarPage() {
 
   /* ── Render principal ──────────────────────────────────────────────────── */
   return (
-    <CheckoutShell
-      step={3}
-      slug={slug}
-      backTo="/area-do-cliente/contratar"
-      hideSidebar
-      summary={{
-        nome: catalogo.nome,
-        descricao_curta: catalogo.descricao_curta,
-        preco: catalogo.preco,
-        recorrente: catalogo.recorrente,
-      }}
-    >
+    <>
+      <style>{`
+        @keyframes qa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .qa-addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .qa-input-wide { grid-column: span 2 !important; }
+        @media (max-width: 480px) {
+          .qa-addr-grid { grid-template-columns: 1fr !important; }
+          .qa-input-wide { grid-column: span 1 !important; }
+        }
+      `}</style>
 
-      {/* ── Titular ─────────────────────────────────────────────────── */}
-      <DarkCard accent>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-            background: `linear-gradient(135deg, ${D.brass} 0%, rgba(122,31,43,0.8) 100%)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
-            color: D.bg, userSelect: "none",
-          }}>
-            {iniciaisNome}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 2 }}>
-              Titular
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: D.ink, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {cliente.nome_completo}
-            </div>
-            <div style={{ fontSize: 11, color: D.inkFaint, marginTop: 2 }}>
-              CPF {cliente.cpf || "—"} · {cliente.email || "sem e-mail"}
-            </div>
-          </div>
-        </div>
-      </DarkCard>
+      <CheckoutShell
+        step={3}
+        slug={slug}
+        backTo="/area-do-cliente/contratar"
+        hideSidebar
+        summary={{ nome: catalogo.nome, descricao_curta: catalogo.descricao_curta, preco: catalogo.preco, recorrente: catalogo.recorrente }}
+      >
 
-      {/* ── 1. Endereço ─────────────────────────────────────────────── */}
-      <DarkCard>
-        <SectionLabel
-          n={1} done={enderecoOk !== null} icon={MapPin} label="Endereço"
-          statusLabel={enderecoOk === "sim" ? "Confirmado" : enderecoOk === "nao" ? "Atualizar" : undefined}
-          statusType={enderecoOk === "sim" ? "ok" : "edit"}
-        />
-        <DataRow>
-          {enderecoAtualLinha || <span style={{ fontStyle: "italic", color: D.inkFaint }}>Sem endereço cadastrado.</span>}
-        </DataRow>
-        <DarkConfirmButtons
-          value={enderecoOk}
-          onChange={setEnderecoOk}
-          labelSim="É o mesmo"
-          labelNao="Mudou"
-        />
-        {enderecoOk === "nao" && (
-          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-            <DarkInput placeholder="CEP" value={novoCep} onChange={setNovoCep} />
-            <DarkInput placeholder="Estado (UF)" value={novoEstado} onChange={(v) => setNovoEstado(v.toUpperCase())} maxLength={2} />
-            <DarkInput placeholder="Rua / Avenida" value={novoEndereco} onChange={(v) => setNovoEndereco(v.toUpperCase())} colSpan={2} />
-            <DarkInput placeholder="Número" value={novoNumero} onChange={setNovoNumero} />
-            <DarkInput placeholder="Complemento" value={novoComplemento} onChange={(v) => setNovoComplemento(v.toUpperCase())} />
-            <DarkInput placeholder="Bairro" value={novoBairro} onChange={(v) => setNovoBairro(v.toUpperCase())} />
-            <DarkInput placeholder="Cidade" value={novaCidade} onChange={(v) => setNovaCidade(v.toUpperCase())} />
-          </div>
-        )}
-      </DarkCard>
-
-      {/* ── 2. Estado civil e profissão ─────────────────────────────── */}
-      <DarkCard>
-        <SectionLabel
-          n={2} done={dadosOk !== null} icon={User} label="Estado civil e profissão"
-          statusLabel={dadosOk === "sim" ? "Confirmado" : dadosOk === "nao" ? "Atualizar" : undefined}
-          statusType={dadosOk === "sim" ? "ok" : "edit"}
-        />
-        <DataRow>
-          <div style={{ display: "flex", gap: 24 }}>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: D.inkFaint, marginBottom: 2 }}>Estado civil</div>
-              {cliente.estado_civil || "—"}
-            </div>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: D.inkFaint, marginBottom: 2 }}>Profissão</div>
-              {cliente.profissao || "—"}
-            </div>
-          </div>
-        </DataRow>
-        <DarkConfirmButtons
-          value={dadosOk}
-          onChange={setDadosOk}
-          labelSim="Não mudou"
-          labelNao="Mudou algo"
-        />
-        {dadosOk === "nao" && (
-          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-            <select
-              value={novoEstadoCivil}
-              onChange={(e) => setNovoEstadoCivil(e.target.value)}
-              style={{
-                height: 36, padding: "0 12px",
-                fontSize: 12, textTransform: "uppercase",
-                background: D.paper2, border: `1px solid ${D.border}`,
-                borderRadius: 8, color: D.inkSoft, outline: "none",
-              }}
-            >
-              <option value="">Estado civil (manter o atual se vazio)</option>
-              {ESTADOS_CIVIS.map((ec) => <option key={ec} value={ec}>{ec}</option>)}
-            </select>
-            <DarkInput
-              placeholder="Profissão (manter atual se vazio)"
-              value={novaProfissao}
-              onChange={(v) => setNovaProfissao(v.toUpperCase())}
-              colSpan={2}
-            />
-          </div>
-        )}
-      </DarkCard>
-
-      {/* ── 3. Documentos reaproveitados ────────────────────────────── */}
-      <DarkCard>
-        <SectionLabel
-          n={3} done icon={FileCheck2} label="Documentos reaproveitados"
-          statusLabel={docsReaproveitados.length > 0 ? `${docsReaproveitados.length} doc${docsReaproveitados.length > 1 ? "s" : ""}` : undefined}
-          statusType="ok"
-        />
-        {docsReaproveitados.length === 0 ? (
-          <DataRow>
-            <span style={{ fontStyle: "italic", color: D.inkFaint }}>
-              Nenhum documento prévio validado — você enviará todos no processo novo.
-            </span>
-          </DataRow>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            {docsReaproveitados.slice(0, 8).map((d) => (
-              <div key={d} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                background: D.successAlpha, border: `1px solid ${D.successBorder}`,
-                borderRadius: 8, padding: "8px 12px",
-              }}>
-                <CheckCircle2 size={14} color={D.success} style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: D.success }}>
-                  {d}
-                </span>
-              </div>
-            ))}
-            {docsReaproveitados.length > 8 && (
-              <span style={{ fontSize: 10, color: D.inkFaint, padding: "0 4px" }}>
-                +{docsReaproveitados.length - 8} outros documentos disponíveis.
-              </span>
-            )}
-          </div>
-        )}
-      </DarkCard>
-
-      {/* ── 4. Valor do serviço ──────────────────────────────────────── */}
-      <DarkCard accent>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 7, background: D.brassAlpha, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <BadgeDollarSign size={13} color={D.brass} />
-          </div>
-          <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint }}>
-            Valor do serviço
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
-          <div>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 4 }}>Total</div>
-            <div style={{ fontSize: 30, fontWeight: 800, color: D.ink, lineHeight: 1 }}>
-              {valorNumerico > 0
-                ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
-                : "—"}
-            </div>
-          </div>
-          <span style={{
-            fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
-            color: D.success, background: D.successAlpha, border: `1px solid ${D.successBorder}`,
-            borderRadius: 99, padding: "3px 10px",
-          }}>
-            Preço oficial
-          </span>
-        </div>
-        <p style={{ fontSize: 11, color: D.inkFaint, marginTop: 10, lineHeight: 1.6 }}>
-          Pagamento via PIX, boleto ou cartão na próxima etapa. Processo iniciado após confirmação.
-        </p>
-      </DarkCard>
-
-      {/* ── 5. Contrato e aceite ─────────────────────────────────────── */}
-      <DarkCard>
-        <SectionLabel
-          n={5} done={aceiteContrato} icon={FileSignature} label="Contrato e aceite"
-          statusLabel={aceiteContrato ? "Aceito" : undefined}
-          statusType="ok"
-        />
-        <DataRow>
-          <p style={{ margin: 0, lineHeight: 1.7, color: D.inkSoft }}>
-            Ao avançar para o pagamento você declara que leu e concorda com os
-            {" "}
-            <a
-              href="/termos-de-servico"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: D.brass, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 3 }}
-            >
-              Termos de Serviço
-              <ExternalLink size={10} />
-            </a>
-            {" "}e a{" "}
-            <a
-              href="/politica-de-privacidade"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: D.brass, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 3 }}
-            >
-              Política de Privacidade
-              <ExternalLink size={10} />
-            </a>
-            {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a{" "}
-            Lei n.º 14.063/2020.
-          </p>
-        </DataRow>
-        <label
-          htmlFor="aceite-contrato"
-          style={{
-            display: "flex", alignItems: "flex-start", gap: 12,
-            marginTop: 12, cursor: "pointer",
-            background: aceiteContrato ? D.successAlpha : D.brassAlpha,
-            border: `1.5px solid ${aceiteContrato ? D.successBorder : D.borderAccent}`,
-            borderRadius: 10, padding: "12px 14px",
-            transition: "all .2s",
-          }}
-        >
-          <div
-            id="aceite-contrato"
-            role="checkbox"
-            aria-checked={aceiteContrato}
-            tabIndex={0}
-            onClick={() => setAceiteContrato((v) => !v)}
-            onKeyDown={(e) => e.key === " " && setAceiteContrato((v) => !v)}
-            style={{
-              width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
-              background: aceiteContrato ? D.brass : "transparent",
-              border: `2px solid ${aceiteContrato ? D.brass : D.borderAccent}`,
+        {/* ── Titular ─────────────────────────────────────────────────── */}
+        <DarkCard accentLine>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
+              background: `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`,
+              border: `2px solid ${D.redAlphaStrong}`,
+              boxShadow: `0 0 16px ${D.redAlpha}`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", transition: "all .15s",
+              fontSize: 16, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em",
+              color: "#fff", userSelect: "none",
+            }}>
+              {iniciaisNome}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: D.inkFaint, marginBottom: 3 }}>
+                Titular
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: D.ink, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {cliente.nome_completo}
+              </div>
+              <div style={{ fontSize: 12, color: D.inkFaint, marginTop: 3 }}>
+                CPF {cliente.cpf || "—"} · {cliente.email || "sem e-mail"}
+              </div>
+            </div>
+          </div>
+        </DarkCard>
+
+        {/* ── 1. Endereço ─────────────────────────────────────────────── */}
+        <DarkCard>
+          <SectionLabel
+            n={1} done={enderecoOk !== null} icon={MapPin} label="Endereço"
+            statusLabel={enderecoOk === "sim" ? "Confirmado" : enderecoOk === "nao" ? "Atualizar" : undefined}
+            statusType={enderecoOk === "sim" ? "ok" : "edit"}
+          />
+          <DataRow>
+            {enderecoAtualLinha || <span style={{ fontStyle: "italic", color: D.inkFaint }}>Sem endereço cadastrado.</span>}
+          </DataRow>
+          <DarkConfirmButtons value={enderecoOk} onChange={setEnderecoOk} labelSim="É o mesmo" labelNao="Mudou" />
+          {enderecoOk === "nao" && (
+            <div className="qa-addr-grid">
+              <DarkInput placeholder="CEP" value={novoCep} onChange={setNovoCep} />
+              <DarkInput placeholder="Estado (UF)" value={novoEstado} onChange={(v) => setNovoEstado(v.toUpperCase())} maxLength={2} />
+              <DarkInput placeholder="Rua / Avenida" value={novoEndereco} onChange={(v) => setNovoEndereco(v.toUpperCase())} wide />
+              <DarkInput placeholder="Número" value={novoNumero} onChange={setNovoNumero} />
+              <DarkInput placeholder="Complemento" value={novoComplemento} onChange={(v) => setNovoComplemento(v.toUpperCase())} />
+              <DarkInput placeholder="Bairro" value={novoBairro} onChange={(v) => setNovoBairro(v.toUpperCase())} />
+              <DarkInput placeholder="Cidade" value={novaCidade} onChange={(v) => setNovaCidade(v.toUpperCase())} />
+            </div>
+          )}
+        </DarkCard>
+
+        {/* ── 2. Estado civil e profissão ─────────────────────────────── */}
+        <DarkCard>
+          <SectionLabel
+            n={2} done={dadosOk !== null} icon={User} label="Estado civil e profissão"
+            statusLabel={dadosOk === "sim" ? "Confirmado" : dadosOk === "nao" ? "Atualizar" : undefined}
+            statusType={dadosOk === "sim" ? "ok" : "edit"}
+          />
+          <DataRow>
+            <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 2 }}>Estado civil</div>
+                <span style={{ color: D.ink }}>{cliente.estado_civil || "—"}</span>
+              </div>
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 2 }}>Profissão</div>
+                <span style={{ color: D.ink }}>{cliente.profissao || "—"}</span>
+              </div>
+            </div>
+          </DataRow>
+          <DarkConfirmButtons value={dadosOk} onChange={setDadosOk} labelSim="Não mudou" labelNao="Mudou algo" />
+          {dadosOk === "nao" && (
+            <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+              <select value={novoEstadoCivil} onChange={(e) => setNovoEstadoCivil(e.target.value)}
+                style={{ height: 40, padding: "0 14px", fontSize: 12, textTransform: "uppercase", background: D.paper2, border: `1.5px solid ${D.border}`, borderRadius: 8, color: D.inkSoft, outline: "none", width: "100%" }}>
+                <option value="">Estado civil (manter o atual se vazio)</option>
+                {ESTADOS_CIVIS.map((ec) => <option key={ec} value={ec}>{ec}</option>)}
+              </select>
+              <DarkInput placeholder="Profissão (manter atual se vazio)" value={novaProfissao} onChange={(v) => setNovaProfissao(v.toUpperCase())} wide />
+            </div>
+          )}
+        </DarkCard>
+
+        {/* ── 3. Documentos reaproveitados ────────────────────────────── */}
+        <DarkCard>
+          <SectionLabel
+            n={3} done icon={FileCheck2} label="Documentos reaproveitados"
+            statusLabel={docsReaproveitados.length > 0 ? `${docsReaproveitados.length} doc${docsReaproveitados.length > 1 ? "s" : ""}` : undefined}
+            statusType="ok"
+          />
+          {docsReaproveitados.length === 0 ? (
+            <DataRow>
+              <span style={{ fontStyle: "italic", color: D.inkFaint }}>
+                Nenhum documento prévio validado — você enviará todos no processo novo.
+              </span>
+            </DataRow>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {docsReaproveitados.slice(0, 8).map((d) => (
+                <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, background: D.successAlpha, border: `1px solid ${D.successBorder}`, borderRadius: 8, padding: "9px 14px" }}>
+                  <CheckCircle2 size={15} color={D.success} style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: D.success }}>{d}</span>
+                </div>
+              ))}
+              {docsReaproveitados.length > 8 && (
+                <span style={{ fontSize: 11, color: D.inkFaint, padding: "0 4px" }}>
+                  +{docsReaproveitados.length - 8} outros documentos disponíveis.
+                </span>
+              )}
+            </div>
+          )}
+        </DarkCard>
+
+        {/* ── 4. Valor do serviço ──────────────────────────────────────── */}
+        <DarkCard accentLine>
+          <SectionLabel n={4} done={valorNumerico > 0} icon={BadgeDollarSign} label="Valor do serviço" />
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginTop: -4 }}>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: D.inkFaint, marginBottom: 6 }}>Total</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: D.ink, lineHeight: 1 }}>
+                {valorNumerico > 0
+                  ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
+                  : "—"}
+              </div>
+            </div>
+            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: D.success, background: D.successAlpha, border: `1px solid ${D.successBorder}`, borderRadius: 99, padding: "4px 12px" }}>
+              Preço oficial
+            </span>
+          </div>
+          <p style={{ fontSize: 12, color: D.inkFaint, marginTop: 12, lineHeight: 1.6 }}>
+            Pagamento via PIX, boleto ou cartão na próxima etapa. Processo iniciado após confirmação.
+          </p>
+        </DarkCard>
+
+        {/* ── 5. Contrato e aceite ─────────────────────────────────────── */}
+        <DarkCard glowBorder={!aceiteContrato}>
+          <SectionLabel
+            n={5} done={aceiteContrato} icon={FileSignature} label="Contrato e aceite"
+            statusLabel={aceiteContrato ? "Aceito ✓" : "Obrigatório"}
+            statusType={aceiteContrato ? "ok" : "edit"}
+          />
+
+          {/* Destaque do serviço */}
+          <div style={{
+            background: D.paper2, border: `1px solid ${D.border}`,
+            borderRadius: 10, padding: "12px 14px", marginBottom: 14,
+          }}>
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 4 }}>
+              Serviço contratado
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", color: D.ink, marginBottom: 6 }}>
+              {catalogo.nome}
+            </div>
+            <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, margin: 0 }}>
+              Ao avançar para o pagamento você declara que leu e concorda com os{" "}
+              <a href="/termos-de-servico" target="_blank" rel="noopener noreferrer"
+                style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                Termos de Serviço <ExternalLink size={10} />
+              </a>
+              {" "}e a{" "}
+              <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer"
+                style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                Política de Privacidade <ExternalLink size={10} />
+              </a>
+              {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
+            </p>
+          </div>
+
+          {/* Checkbox de aceite */}
+          <button
+            type="button"
+            onClick={() => setAceiteContrato((v) => !v)}
+            style={{
+              width: "100%", display: "flex", alignItems: "flex-start", gap: 14,
+              cursor: "pointer", textAlign: "left",
+              background: aceiteContrato
+                ? D.successAlpha
+                : `rgba(196,37,59,0.06)`,
+              border: `2px solid ${aceiteContrato ? D.successBorder : D.redAlphaStrong}`,
+              borderRadius: 12, padding: "14px 16px",
+              transition: "all .25s",
+              boxShadow: aceiteContrato
+                ? `0 0 16px rgba(127,191,106,0.1)`
+                : `0 0 16px ${D.redAlpha}`,
             }}
           >
-            {aceiteContrato && <Check size={12} color={D.bg} />}
-          </div>
-          <span style={{ fontSize: 12, color: aceiteContrato ? D.success : D.inkSoft, lineHeight: 1.6, userSelect: "none" }}>
-            <strong style={{ color: aceiteContrato ? D.success : D.ink }}>Li e aceito</strong> os Termos de Serviço e a Política de Privacidade da Quero Armas. Estou ciente de que o processo será iniciado após a confirmação do pagamento.
-          </span>
-        </label>
-      </DarkCard>
+            {/* Checkbox visual */}
+            <div style={{
+              width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
+              background: aceiteContrato ? D.success : "transparent",
+              border: `2px solid ${aceiteContrato ? D.success : D.red}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all .2s",
+              boxShadow: aceiteContrato ? `0 0 8px rgba(127,191,106,0.3)` : `0 0 6px ${D.redAlpha}`,
+            }}>
+              {aceiteContrato && <Check size={13} color="#fff" />}
+            </div>
+            <span style={{ fontSize: 13, color: aceiteContrato ? D.success : D.inkSoft, lineHeight: 1.65, flex: 1 }}>
+              <strong style={{ color: aceiteContrato ? D.success : D.ink }}>Li e aceito</strong>{" "}
+              os Termos de Serviço e a Política de Privacidade da Quero Armas.
+              Estou ciente de que o processo será iniciado após a confirmação do pagamento.
+            </span>
+          </button>
+        </DarkCard>
 
-      {/* ── CTA ─────────────────────────────────────────────────────── */}
-      <button
-        disabled={!podeConfirmar}
-        onClick={handleConfirmar}
-        style={{
-          width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
-          padding: "16px 24px", borderRadius: 14, border: "none", cursor: podeConfirmar ? "pointer" : "not-allowed",
-          fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
-          background: podeConfirmar ? D.brass : D.paper2,
-          color: podeConfirmar ? D.bg : D.inkFaint,
-          boxShadow: podeConfirmar ? `0 6px 24px rgba(214,166,75,0.25)` : "none",
-          transition: "all .2s",
-        }}
-      >
-        {submitting
-          ? <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
-          : <Sparkles size={18} />}
-        {submitting ? "Processando…" : "Ir para pagamento"}
-        {!submitting && <ChevronRight size={18} />}
-      </button>
+        {/* ── CTA ─────────────────────────────────────────────────────── */}
+        <button
+          type="button"
+          disabled={!podeConfirmar}
+          onClick={handleConfirmar}
+          style={{
+            width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
+            padding: "18px 24px", borderRadius: 14, border: "none",
+            cursor: podeConfirmar ? "pointer" : "not-allowed",
+            fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+            background: podeConfirmar
+              ? `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`
+              : D.paper2,
+            color: podeConfirmar ? "#fff" : D.inkFaint,
+            boxShadow: podeConfirmar ? `0 6px 30px ${D.redGlow}, 0 0 0 1px ${D.redAlphaStrong}` : "none",
+            transition: "all .25s",
+          }}
+        >
+          {submitting
+            ? <Loader2 size={20} style={{ animation: "qa-spin 1s linear infinite" }} />
+            : <Sparkles size={20} />}
+          {submitting ? "Processando…" : "Ir para pagamento"}
+          {!submitting && <ChevronRight size={20} />}
+        </button>
 
-      {!aceiteContrato && (enderecoOk !== null || dadosOk !== null) && (
-        <p style={{ textAlign: "center", fontSize: 10, color: D.inkFaint, marginTop: -4 }}>
-          Aceite o contrato acima para continuar
-        </p>
-      )}
+        {!aceiteContrato && (enderecoOk !== null || dadosOk !== null) && (
+          <p style={{ textAlign: "center", fontSize: 11, color: D.red, marginTop: -6, opacity: 0.8 }}>
+            Aceite o contrato acima para liberar o pagamento
+          </p>
+        )}
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </CheckoutShell>
+      </CheckoutShell>
+    </>
   );
 }
