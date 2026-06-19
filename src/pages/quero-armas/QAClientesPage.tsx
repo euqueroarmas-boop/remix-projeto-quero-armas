@@ -2740,18 +2740,6 @@ export default function QAClientesPage() {
                     openCadastroPublico(String(id));
                   }}
                 />
-                <ClienteOverview
-                    cliente={c}
-                    vendas={vendas}
-                    itens={itens}
-                    crafs={crafs}
-                    gtes={gtes}
-                    filiacoes={filiacoes}
-                    cadastro={cadastro}
-                    examesAtuais={examesAtuais}
-                    armasManual={armasManual}
-                    onNavigate={setTab}
-                />
                 <ClienteResumoKanban
                     cliente={c}
                     vendas={vendas}
