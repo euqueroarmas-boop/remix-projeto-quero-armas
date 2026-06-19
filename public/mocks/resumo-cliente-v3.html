@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Resumo do Cliente — Timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f5f1;
+    --paper-2:#efece4;
+    --ink:#161616;
+    --ink-2:#3a3a3a;
+    --muted:#7a756c;
+    --line:#d9d4c7;
+    --bordo:#7A1F2B;
+    --bordo-2:#5a141c;
+    --amber:#a8741a;
+    --danger:#8a1414;
+    --ok:#1f4d2b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:32px 22px 80px}
+
+  /* Header */
+  .head{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:28px}
+  .eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .head h1{font-family:'Fraunces',serif;font-weight:600;font-size:34px;line-height:1.1;margin-top:8px;letter-spacing:-.01em}
+  .head .sub{margin-top:10px;color:var(--ink-2);font-size:14px}
+  .meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:18px;font-size:12px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+
+  /* Section title */
+  .section-title{display:flex;align-items:baseline;justify-content:space-between;margin:34px 0 16px}
+  .section-title h2{font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:-.01em}
+  .section-title .count{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+
+  /* Timeline */
+  .process{border:1px solid var(--line);background:#fff;border-radius:2px;margin-bottom:20px;overflow:hidden}
+  .process-head{padding:18px 20px;border-bottom:1px solid var(--line);background:var(--paper-2)}
+  .process-head .row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+  .process-head h3{font-family:'Fraunces',serif;font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .process-head .tag{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+  .pill{font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;padding:5px 9px;border-radius:1px;white-space:nowrap}
+  .pill.bordo{background:var(--bordo);color:#fff}
+  .pill.amber{background:#fff2dc;color:var(--amber);border:1px solid #e6cfa1}
+  .pill.ok{background:#e4ede5;color:var(--ok);border:1px solid #b9cfbd}
+
+  .timeline{padding:8px 20px 20px;position:relative}
+  .step{position:relative;padding:18px 0 18px 28px;border-left:1px solid var(--line);margin-left:6px}
+  .step:last-child{border-left:1px solid transparent}
+  .step::before{
+    content:"";position:absolute;left:-7px;top:22px;width:13px;height:13px;border-radius:50%;
+    background:#fff;border:2px solid var(--line);
+  }
+  .step.done::before{background:var(--ok);border-color:var(--ok)}
+  .step.current::before{background:var(--bordo);border-color:var(--bordo);box-shadow:0 0 0 4px rgba(122,31,43,.12)}
+  .step.pending::before{background:#fff;border-color:var(--line)}
+
+  .step-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .step-title{font-size:14px;font-weight:600;color:var(--ink);letter-spacing:.01em}
+  .step.done .step-title{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(0,0,0,.15)}
+  .step-date{font-size:11px;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+  .step-date b{color:var(--ink);font-weight:600}
+
+  .step-body{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .doc{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:7px 10px;background:var(--paper);border:1px solid var(--line);border-radius:2px}
+  .doc .name{display:flex;align-items:center;gap:8px;color:var(--ink-2)}
+  .doc .dot{width:6px;height:6px;border-radius:50%;background:var(--muted)}
+  .doc.expiring .dot{background:var(--amber)}
+  .doc.expired .dot{background:var(--danger)}
+  .doc.ok .dot{background:var(--ok)}
+  .doc .due{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .doc.expiring .due{color:var(--amber);font-weight:600}
+  .doc.expired .due{color:var(--danger);font-weight:600}
+
+  .step-note{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic;line-height:1.5}
+
+  /* Cumprido summary */
+  .summary{border:1px solid var(--line);background:#fff;padding:20px;border-radius:2px}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13px}
+  .summary-row:last-child{border-bottom:0}
+  .summary-row .left{display:flex;align-items:center;gap:10px;color:var(--ink-2)}
+  .check{width:18px;height:18px;border-radius:50%;background:var(--ok);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .summary-row .right{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  .footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);text-align:center;letter-spacing:.08em;text-transform:uppercase}
+
+  @media (max-width:560px){
+    .wrap{padding:20px 16px 60px}
+    .head h1{font-size:26px}
+    .process-head h3{font-size:16px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">Resumo do Cliente</div>
+    <h1>João Carlos Pereira da Silva</h1>
+    <p class="sub">Acompanhamento narrativo dos seus processos junto à Polícia Federal e ao Exército.</p>
+    <div class="meta">
+      <span><b>CPF</b> 123.456.789-00</span>
+      <span><b>Última atualização</b> 18/06/2026</span>
+      <span><b>Próximo prazo crítico</b> 28/06/2026</span>
+    </div>
+  </header>
+
+  <div class="section-title">
+    <h2>Processos em andamento</h2>
+    <span class="count">3 ativos</span>
+  </div>
+
+  <!-- PROCESSO 1 -->
+  <article class="process">
+    <div class="process-head">
+      <div class="row">
+        <div>
+          <h3>Aquisição de Pistola 9mm — CAC Atirador</h3>
+          <div class="tag">Polícia Federal · Protocolo 2026/04812</div>
+        </div>
+        <span class="pill bordo">Em análise PF</span>
+      </div>
+    </div>
+    <div class="timeline">
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">Cadastro e documentação inicial</span>
+          <span class="step-date">concluído <b>02/04/2026</b></span>
+        </div>
+        <p class="step-note">Documentos pessoais conferidos e digitalizados.</p>
+      </div>
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">Exames psicológico e de aptidão técnica</span>
+          <span class="step-date">concluído <b>21/04/2026</b></span>
+        </div>
+        <div class="step-body">
+          <div class="doc ok"><span class="name"><span class="dot"></span>Laudo psicológico</span><span class="due">válido até 21/04/2027</span></div>
+          <div class="doc ok"><span class="name"><span class="dot"></span>Certificado de capacidade técnica</span><span class="due">válido até 21/04/2027</span></div>
+        </div>
+      </div>
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">Protocolo de requerimento na PF</span>
+          <span class="step-date">protocolado <b>05/05/2026</b></span>
+        </div>
+      </div>
+
+      <div class="step current">
+        <div class="step-head">
+          <span class="step-title">Análise documental pela Polícia Federal</span>
+          <span class="step-date">previsão de resposta <b>28/06/2026</b></span>
+        </div>
+        <div class="step-body">
+          <div class="doc expiring"><span class="name"><span class="dot"></span>Certidão de antecedentes (Justiça Estadual)</span><span class="due">vence em 9 dias</span></div>
+        </div>
+        <p class="step-note">Aguardando deferimento. Mantenha as certidões atualizadas até a liberação.</p>
+      </div>
+
+      <div class="step pending">
+        <div class="step-head">
+          <span class="step-title">Emissão do CRAF e retirada da arma</span>
+          <span class="step-date">pendente</span>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- PROCESSO 2 -->
+  <article class="process">
+    <div class="process-head">
+      <div class="row">
+        <div>
+          <h3>Renovação de CR — Colecionador</h3>
+          <div class="tag">Exército Brasileiro · 11ª RM</div>
+        </div>
+        <span class="pill amber">Ação necessária</span>
+      </div>
+    </div>
+    <div class="timeline">
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">CR original emitido</span>
+          <span class="step-date">vigente desde <b>15/07/2023</b></span>
+        </div>
+      </div>
+
+      <div class="step current">
+        <div class="step-head">
+          <span class="step-title">Coleta de documentos para renovação</span>
+          <span class="step-date">prazo <b>10/07/2026</b></span>
+        </div>
+        <div class="step-body">
+          <div class="doc expiring"><span class="name"><span class="dot"></span>Comprovante de residência</span><span class="due">vence em 22 dias</span></div>
+          <div class="doc expired"><span class="name"><span class="dot"></span>Exame psicológico (renovação)</span><span class="due">vencido há 4 dias</span></div>
+          <div class="doc ok"><span class="name"><span class="dot"></span>Acervo declarado e fotos</span><span class="due">entregue 14/06/2026</span></div>
+        </div>
+        <p class="step-note">Refaça o exame psicológico antes de protocolar a renovação.</p>
+      </div>
+
+      <div class="step pending">
+        <div class="step-head">
+          <span class="step-title">Vistoria do acervo e protocolo na 11ª RM</span>
+          <span class="step-date">pendente</span>
+        </div>
+      </div>
+
+      <div class="step pending">
+        <div class="step-head">
+          <span class="step-title">Deferimento e novo CR</span>
+          <span class="step-date">pendente</span>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <!-- PROCESSO 3 -->
+  <article class="process">
+    <div class="process-head">
+      <div class="row">
+        <div>
+          <h3>Porte de Trânsito — Eventos de tiro</h3>
+          <div class="tag">Polícia Federal · Solicitação 2026/00921</div>
+        </div>
+        <span class="pill ok">Aprovado</span>
+      </div>
+    </div>
+    <div class="timeline">
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">Requerimento e justificativa</span>
+          <span class="step-date">enviado <b>12/02/2026</b></span>
+        </div>
+      </div>
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">Análise da Polícia Federal</span>
+          <span class="step-date">deferido <b>03/03/2026</b></span>
+        </div>
+      </div>
+
+      <div class="step done">
+        <div class="step-head">
+          <span class="step-title">Porte de trânsito ativo</span>
+          <span class="step-date">válido até <b>03/03/2027</b></span>
+        </div>
+        <div class="step-body">
+          <div class="doc ok"><span class="name"><span class="dot"></span>Guia de Tráfego</span><span class="due">válida até 03/03/2027</span></div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+  <div class="section-title">
+    <h2>Já cumprido</h2>
+    <span class="count">histórico recente</span>
+  </div>
+
+  <div class="summary">
+    <div class="summary-row">
+      <span class="left"><span class="check">✓</span>Curso de Tiro Defensivo — 16h</span>
+      <span class="right">18/03/2026</span>
+    </div>
+    <div class="summary-row">
+      <span class="left"><span class="check">✓</span>Cadastro SIGMA atualizado</span>
+      <span class="right">02/04/2026</span>
+    </div>
+    <div class="summary-row">
+      <span class="left"><span class="check">✓</span>Pagamento de GRU — Aquisição</span>
+      <span class="right">28/04/2026</span>
+    </div>
+    <div class="summary-row">
+      <span class="left"><span class="check">✓</span>Vistoria técnica do cofre residencial</span>
+      <span class="right">10/05/2026</span>
+    </div>
+  </div>
+
+  <div class="footer">Quero Armas · Resumo gerado em 19/06/2026</div>
+</div>
+</body>
+</html>
