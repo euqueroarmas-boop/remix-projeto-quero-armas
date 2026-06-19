@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mock · Resumo do Cliente — Quero Armas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f5f1;
+    --paper-2:#efece4;
+    --ink:#0a0a0a;
+    --ink-2:#1f1f1f;
+    --muted:#6b6962;
+    --line:#d9d4c7;
+    --line-strong:#1a1a1a;
+    --bordo:#7A1F2B;
+    --bordo-2:#5a121c;
+    --amber:#a8741a;
+    --amber-bg:#fbf1d9;
+    --ok:#1f4d2b;
+    --ok-bg:#e3ebe2;
+    --danger:#8a1414;
+    --danger-bg:#f3dcdc;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 28px 80px}
+  .mock-bar{position:sticky;top:0;z-index:10;background:#111;color:#f6f5f1;font:600 11px/1 Inter;letter-spacing:.18em;text-transform:uppercase;padding:10px 28px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #000}
+  .mock-bar span{opacity:.65}
+  h1,h2,h3,h4{font-family:Oswald,Inter,sans-serif;font-weight:600;letter-spacing:.04em;margin:0;text-transform:uppercase}
+  .eyebrow{font:600 11px/1 Inter;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+
+  /* Header */
+  .head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:22px;border-bottom:2px solid var(--line-strong)}
+  .head .left .eyebrow{margin-bottom:10px}
+  .head h1{font-size:34px;line-height:1.05}
+  .head .sub{margin-top:10px;color:var(--muted);font-size:14px;max-width:540px}
+  .stamp{border:1.5px solid var(--bordo);color:var(--bordo);padding:8px 14px;font:700 11px/1 Oswald;letter-spacing:.22em;text-transform:uppercase;transform:rotate(-2deg)}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0 30px}
+  .kpi{background:#fff;border:1px solid var(--line);padding:18px 18px 16px;position:relative}
+  .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ink)}
+  .kpi.bordo::before{background:var(--bordo)}
+  .kpi.amber::before{background:var(--amber)}
+  .kpi.danger::before{background:var(--danger)}
+  .kpi .lbl{font:600 10px/1 Inter;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .kpi .val{font:600 30px/1 Oswald;margin-top:10px}
+  .kpi .hint{margin-top:6px;font-size:12px;color:var(--muted)}
+
+  /* Section title */
+  .sec-title{display:flex;align-items:center;gap:14px;margin:34px 0 14px}
+  .sec-title h2{font-size:18px}
+  .sec-title .rule{flex:1;height:1px;background:var(--line-strong);opacity:.25}
+
+  /* Processo card */
+  .proc{background:#fff;border:1px solid var(--line);margin-bottom:18px}
+  .proc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:20px 22px;border-bottom:1px solid var(--line)}
+  .proc-head .titulo{font-family:Oswald;font-size:20px;letter-spacing:.05em;text-transform:uppercase}
+  .proc-head .meta{margin-top:6px;font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;font:700 10px/1 Inter;letter-spacing:.18em;text-transform:uppercase;border:1px solid currentColor}
+  .badge.bordo{color:var(--bordo);background:#fff}
+  .badge.ok{color:var(--ok);background:var(--ok-bg);border-color:transparent}
+  .badge.amber{color:var(--amber);background:var(--amber-bg);border-color:transparent}
+  .badge.danger{color:var(--danger);background:var(--danger-bg);border-color:transparent}
+  .badge.ink{color:#fff;background:var(--ink);border-color:var(--ink)}
+
+  /* Stepper */
+  .stepper{display:flex;gap:0;padding:22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fafaf6,transparent)}
+  .step{flex:1;position:relative;text-align:left;padding-right:10px}
+  .step .dot{width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--line-strong);display:inline-block;margin-bottom:8px}
+  .step.done .dot{background:var(--bordo);border-color:var(--bordo)}
+  .step.current .dot{background:#fff;border-color:var(--bordo);box-shadow:0 0 0 3px rgba(122,31,43,.18)}
+  .step .line{position:absolute;left:14px;top:6px;height:2px;background:var(--line);width:calc(100% - 14px)}
+  .step.done .line{background:var(--bordo)}
+  .step:last-child .line{display:none}
+  .step .lbl{font:700 10px/1.2 Inter;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+  .step .when{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.04em;text-transform:uppercase}
+  .step.pending .lbl{color:var(--muted)}
+
+  /* Lista documentos */
+  .docs{padding:8px 0}
+  .doc{display:grid;grid-template-columns:24px 1.4fr .9fr .8fr auto;gap:14px;align-items:center;padding:14px 22px;border-top:1px solid var(--paper-2)}
+  .doc:first-child{border-top:none}
+  .doc .ico{width:22px;height:22px;border:1.5px solid var(--ink);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 Oswald;letter-spacing:.05em}
+  .doc .nome{font:600 13px/1.25 Inter;letter-spacing:.02em;text-transform:uppercase}
+  .doc .nome small{display:block;font:400 11px/1.3 Inter;letter-spacing:.04em;color:var(--muted);text-transform:none;margin-top:3px}
+  .doc .prazo{font:700 12px/1 Oswald;letter-spacing:.06em;text-transform:uppercase}
+  .doc .prazo small{display:block;font:400 11px/1 Inter;color:var(--muted);margin-top:3px;letter-spacing:.04em;text-transform:none}
+  .doc .acao a{font:700 11px/1 Inter;letter-spacing:.14em;text-transform:uppercase;color:var(--bordo);border-bottom:1.5px solid var(--bordo);padding-bottom:2px;text-decoration:none}
+
+  .footnote{margin-top:30px;font-size:12px;color:var(--muted);text-align:center;letter-spacing:.06em;text-transform:uppercase}
+
+  @media (max-width:760px){
+    .kpis{grid-template-columns:repeat(2,1fr)}
+    .doc{grid-template-columns:22px 1fr;gap:8px}
+    .doc .prazo,.doc .acao,.doc .cat{grid-column:2}
+    .stepper{overflow-x:auto}
+  }
+</style>
+</head>
+<body>
+<div class="mock-bar"><span>MOCK ESTÁTICO · NÃO IMPLANTADO</span><span>QUERO ARMAS · RESUMO DO CLIENTE</span></div>
+<div class="wrap">
+
+  <header class="head">
+    <div class="left">
+      <div class="eyebrow">Portal do Cliente · Resumo</div>
+      <h1>Olá, Carlos Eduardo<br/>Souza Albuquerque</h1>
+      <p class="sub">Acompanhe abaixo os processos em andamento, os prazos dos seus documentos e exames, e as etapas já cumpridas com a Quero Armas.</p>
+    </div>
+    <div class="stamp">Atualizado 19/06</div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><div class="lbl">Processos ativos</div><div class="val">3</div><div class="hint">Posse · Porte Trânsito · CR Caçador</div></div>
+    <div class="kpi bordo"><div class="lbl">Etapas concluídas</div><div class="val">11/18</div><div class="hint">61% do caminho percorrido</div></div>
+    <div class="kpi amber"><div class="lbl">Vencendo em ≤ 30 dias</div><div class="val">2</div><div class="hint">Comprovante de endereço · Exame psicológico</div></div>
+    <div class="kpi danger"><div class="lbl">Vencidos</div><div class="val">1</div><div class="hint">Atestado de antecedentes</div></div>
+  </section>
+
+  <div class="sec-title"><h2>Processos em andamento</h2><div class="rule"></div></div>
+
+  <!-- Processo 1: Posse -->
+  <article class="proc">
+    <div class="proc-head">
+      <div>
+        <div class="titulo">Posse de Arma de Fogo</div>
+        <div class="meta">Protocolo PF-2026/00821 · Aberto em 04/03/2026</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="badge ok">Em conformidade</span>
+        <span class="badge bordo">Aguardando PF</span>
+      </div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Cadastro</div><div class="when">04/03</div></div>
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Documentação</div><div class="when">12/03</div></div>
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Exames</div><div class="when">28/03</div></div>
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Pagamento GRU</div><div class="when">02/04</div></div>
+      <div class="step current"><span class="dot"></span><span class="line"></span><div class="lbl">Protocolo PF</div><div class="when">Em análise</div></div>
+      <div class="step pending"><span class="dot"></span><div class="lbl">Deferimento</div><div class="when">—</div></div>
+    </div>
+    <div class="docs">
+      <div class="doc">
+        <div class="ico">D</div>
+        <div class="nome">Comprovante de Endereço<small>Aceito · CPFL Energia · 02/2026</small></div>
+        <div class="prazo" style="color:var(--ok)">Válido<small>até 02/08/2026</small></div>
+        <div class="cat"><span class="badge ok">90 dias restantes</span></div>
+        <div class="acao"><a href="#">Ver</a></div>
+      </div>
+      <div class="doc">
+        <div class="ico" style="border-color:var(--amber);color:var(--amber)">E</div>
+        <div class="nome">Exame Psicológico<small>Validade legal 12 meses</small></div>
+        <div class="prazo" style="color:var(--amber)">Vence 03/07/2026<small>14 dias restantes</small></div>
+        <div class="cat"><span class="badge amber">Atenção</span></div>
+        <div class="acao"><a href="#">Renovar</a></div>
+      </div>
+      <div class="doc">
+        <div class="ico" style="border-color:var(--danger);color:var(--danger)">D</div>
+        <div class="nome">Antecedentes Criminais — Justiça Federal<small>Validade 90 dias</small></div>
+        <div class="prazo" style="color:var(--danger)">Vencido em 28/05/2026<small>há 22 dias</small></div>
+        <div class="cat"><span class="badge danger">Reenviar</span></div>
+        <div class="acao"><a href="#">Anexar</a></div>
+      </div>
+    </div>
+  </article>
+
+  <!-- Processo 2: Porte Trânsito -->
+  <article class="proc">
+    <div class="proc-head">
+      <div>
+        <div class="titulo">Porte de Trânsito (CAC)</div>
+        <div class="meta">Protocolo EB-SIGMA 2026/4471 · Aberto em 18/04/2026</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="badge amber">Aguardando documentos</span>
+      </div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Cadastro</div><div class="when">18/04</div></div>
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">CR Vigente</div><div class="when">OK</div></div>
+      <div class="step current"><span class="dot"></span><span class="line"></span><div class="lbl">Documentação</div><div class="when">2 pendentes</div></div>
+      <div class="step pending"><span class="dot"></span><span class="line"></span><div class="lbl">Exames</div><div class="when">—</div></div>
+      <div class="step pending"><span class="dot"></span><span class="line"></span><div class="lbl">Protocolo EB</div><div class="when">—</div></div>
+      <div class="step pending"><span class="dot"></span><div class="lbl">Deferimento</div><div class="when">—</div></div>
+    </div>
+    <div class="docs">
+      <div class="doc">
+        <div class="ico">D</div>
+        <div class="nome">CRAF (SIGMA) da arma .380<small>Aceito · validade indeterminada</small></div>
+        <div class="prazo" style="color:var(--ok)">Válido<small>—</small></div>
+        <div class="cat"><span class="badge ok">OK</span></div>
+        <div class="acao"><a href="#">Ver</a></div>
+      </div>
+      <div class="doc">
+        <div class="ico" style="border-color:var(--amber);color:var(--amber)">E</div>
+        <div class="nome">Exame de capacidade técnica<small>Validade 12 meses</small></div>
+        <div class="prazo" style="color:var(--amber)">Vence 30/06/2026<small>11 dias restantes</small></div>
+        <div class="cat"><span class="badge amber">Atenção</span></div>
+        <div class="acao"><a href="#">Renovar</a></div>
+      </div>
+      <div class="doc">
+        <div class="ico">D</div>
+        <div class="nome">Comprovante de filiação ao clube de tiro<small>Aguardando upload</small></div>
+        <div class="prazo" style="color:var(--muted)">Pendente<small>solicitado 14/06</small></div>
+        <div class="cat"><span class="badge ink">Aguarda envio</span></div>
+        <div class="acao"><a href="#">Anexar</a></div>
+      </div>
+    </div>
+  </article>
+
+  <!-- Processo 3: CR -->
+  <article class="proc">
+    <div class="proc-head">
+      <div>
+        <div class="titulo">Registro CAC — Caçador</div>
+        <div class="meta">CR 074.215 · Renovação · Aberto em 05/06/2026</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="badge ok">Em dia</span>
+        <span class="badge bordo">Renovação em 90 dias</span>
+      </div>
+    </div>
+    <div class="stepper">
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Cadastro</div><div class="when">05/06</div></div>
+      <div class="step done"><span class="dot"></span><span class="line"></span><div class="lbl">Documentação</div><div class="when">12/06</div></div>
+      <div class="step current"><span class="dot"></span><span class="line"></span><div class="lbl">Exames</div><div class="when">Agendado 22/06</div></div>
+      <div class="step pending"><span class="dot"></span><span class="line"></span><div class="lbl">GRU</div><div class="when">—</div></div>
+      <div class="step pending"><span class="dot"></span><span class="line"></span><div class="lbl">Protocolo EB</div><div class="when">—</div></div>
+      <div class="step pending"><span class="dot"></span><div class="lbl">Deferimento</div><div class="when">—</div></div>
+    </div>
+    <div class="docs">
+      <div class="doc">
+        <div class="ico">D</div>
+        <div class="nome">CIN<small>Aceito · 03/2025</small></div>
+        <div class="prazo" style="color:var(--ok)">Válido<small>indeterminado</small></div>
+        <div class="cat"><span class="badge ok">OK</span></div>
+        <div class="acao"><a href="#">Ver</a></div>
+      </div>
+      <div class="doc">
+        <div class="ico" style="border-color:var(--amber);color:var(--amber)">E</div>
+        <div class="nome">Exame psicotécnico (renovação CR)<small>Agendado 22/06 — Clínica Mira Sul</small></div>
+        <div class="prazo" style="color:var(--amber)">Agendado<small>3 dias</small></div>
+        <div class="cat"><span class="badge amber">Comparecer</span></div>
+        <div class="acao"><a href="#">Detalhes</a></div>
+      </div>
+    </div>
+  </article>
+
+  <p class="footnote">Mock visual · sem dados reais · estilo de referência: papel #f6f5f1, preto, vermelho bordô #7A1F2B</p>
+
+</div>
+</body>
+</html>
