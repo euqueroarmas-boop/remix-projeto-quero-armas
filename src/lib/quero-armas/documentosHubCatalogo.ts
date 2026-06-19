@@ -126,7 +126,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_comprovante_beneficio", label: "Comprovante de benefício", short: "BENEFÍCIO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
-  { value: "antecedentes_criminais", label: "Antecedentes criminais", short: "ANT.", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_criminais", label: "Antecedente Criminal da Polícia Civil do Estado de São Paulo", short: "ANT. CIV", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_federal", label: "Antecedentes federais", short: "ANT. FED", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_estadual", label: "Antecedentes estaduais", short: "ANT. EST", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_militar", label: "Antecedentes militares", short: "ANT. MIL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
