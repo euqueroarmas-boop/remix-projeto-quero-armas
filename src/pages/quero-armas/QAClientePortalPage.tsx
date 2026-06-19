@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Fragment } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -1489,7 +1489,7 @@ export default function QAClientePortalPage() {
                   <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-3">Sua jornada</div>
                   <div className="flex items-center">
                     {steps.map((s, i) => (
-                      <React.Fragment key={s.label}>
+                      <Fragment key={s.label}>
                         <div className="flex flex-col items-center shrink-0">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold
                             ${s.state === "done" ? "bg-emerald-500 text-white" : s.state === "active" ? "bg-[#7A1F2B] text-white" : "bg-slate-100 text-slate-400"}`}>
@@ -1503,7 +1503,7 @@ export default function QAClientePortalPage() {
                         {i < steps.length - 1 && (
                           <div className={`flex-1 h-[2px] mb-4 ${s.state === "done" ? "bg-emerald-400" : "bg-slate-200"}`} />
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     ))}
                   </div>
                 </div>
