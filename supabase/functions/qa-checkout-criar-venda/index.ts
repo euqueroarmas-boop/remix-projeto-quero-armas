@@ -99,20 +99,45 @@ Deno.serve(async (req) => {
   }
 
   // Resolve preço SERVER-SIDE — fonte canônica do snapshot.
-  const ids = Array.from(new Set(body.cart.map((c) => c.servico_id)));
-  const { data: catRows, error: catErr } = await admin
-    .from("qa_servicos_catalogo")
-    .select("id, slug, nome, preco, ativo, servico_id")
-    .in("id", ids);
-  if (catErr) {
-    return new Response(JSON.stringify({ error: "catalog_query_failed", detail: catErr.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+  // Suporta tanto UUID (service_id novo) quanto ID numérico legado (fallback).
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const cartIds = Array.from(new Set(body.cart.map((c) => c.servico_id)));
+  const uuidIds = cartIds.filter((id) => UUID_RE.test(id));
+  const legacyIds = cartIds.filter((id) => !UUID_RE.test(id) && /^\d+$/.test(id)).map(Number);
+
+  // Keyed by whatever the cart sent (uuid ou numeric string) → catálogo row.
+  const byCartId = new Map<string, any>();
+
+  if (uuidIds.length > 0) {
+    const { data, error } = await admin
+      .from("qa_servicos_catalogo")
+      .select("id, slug, nome, preco, ativo, servico_id")
+      .in("id", uuidIds);
+    if (error) {
+      return new Response(JSON.stringify({ error: "catalog_query_failed", detail: error.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    (data ?? []).forEach((r: any) => byCartId.set(r.id, r));
+  }
+
+  if (legacyIds.length > 0) {
+    const { data, error } = await admin
+      .from("qa_servicos_catalogo")
+      .select("id, slug, nome, preco, ativo, servico_id")
+      .in("servico_id", legacyIds);
+    if (error) {
+      return new Response(JSON.stringify({ error: "catalog_query_failed", detail: error.message }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    (data ?? []).forEach((r: any) => {
+      if (r.servico_id != null) byCartId.set(String(r.servico_id), r);
     });
   }
-  const byId = new Map((catRows ?? []).map((r: any) => [r.id, r]));
+
   for (const it of body.cart) {
-    const r = byId.get(it.servico_id);
+    const r = byCartId.get(it.servico_id);
     if (!r || !r.ativo) {
       return new Response(JSON.stringify({ error: "service_unavailable", slug: it.slug }), {
         status: 400,
@@ -222,7 +247,7 @@ Deno.serve(async (req) => {
   // Calcula total snapshot.
   let totalCents = 0;
   const itensSnapshot = body.cart.map((it) => {
-    const r: any = byId.get(it.servico_id);
+    const r: any = byCartId.get(it.servico_id);
     const precoNum = Number(r.preco ?? 0);
     const valorUnit = Math.round(precoNum * 100);
     const sub = valorUnit * it.quantidade;
