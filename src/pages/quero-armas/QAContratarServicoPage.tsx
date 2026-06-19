@@ -71,7 +71,7 @@ export default function QAContratarServicoPage() {
   // trilha=continuidade  → depende da finalidade declarada
   //   finalidade=tiro_esportivo|caca|colecionamento → só SIGMA com exige_cr=true
   //   finalidade=defesa_pessoal                     → só PF com exige_acervo=true
-  const SIGMA_CAT = "Exército / SIGMA";
+  const SIGMA_CAT = "SINARM CAC";
   const itemsFiltrados = useMemo(() => {
     if (trilha === "inicial") {
       const sigma = items.filter((i) => i.categoria === SIGMA_CAT);

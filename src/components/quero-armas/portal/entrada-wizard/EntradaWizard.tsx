@@ -23,7 +23,7 @@ import {
  * EntradaWizard — Assistente de Entrada do portal
  *
  * Passo 1: objetivo (4 opções)
- *   inicial        → Tirar/renovar CR de CAC          (Exército/SIGMA)
+ *   inicial        → Tirar/renovar CR de CAC          (SINARM CAC)
  *   defesa_pessoal → Adquirir arma para defesa pessoal (PF/SINARM)
  *   continuidade   → Mexer em arma que já tenho
  *   indefinido     → Não tenho certeza (vai direto ao catálogo completo)
@@ -139,7 +139,7 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             <OptionCard
               icon={<FileSignature className="h-5 w-5" style={{ color: MARROM }} />}
               title="Tirar ou renovar meu CR de CAC"
-              subtitle="Concessão de CR, filiação a clube, declarações iniciais — Exército/SIGMA"
+              subtitle="Concessão de CR, filiação a clube, declarações iniciais — SINARM CAC"
               selected={objetivo === "inicial"}
               onClick={() => setObjetivo("inicial")}
             />
@@ -262,7 +262,7 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             </div>
 
             <p className="text-[10px] italic text-slate-500">
-              Isso determina quais serviços são mostrados (SIGMA para CAC, PF para defesa pessoal).
+              Isso determina quais serviços são mostrados (SINARM CAC para atirador/caçador/colecionador, PF para defesa pessoal).
             </p>
 
             <StepNavButtons
