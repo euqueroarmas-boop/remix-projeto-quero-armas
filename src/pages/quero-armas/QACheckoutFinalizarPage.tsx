@@ -156,11 +156,36 @@ export default function QACheckoutFinalizarPage() {
     if (!podeFinalizar) return;
     setSubmitting(true);
     try {
-      const cart = items.map((i) => ({ servico_id: i.service_id, slug: i.service_slug, quantidade: i.quantity }));
+      // Resolve UUIDs canônicos pelo slug — evita IDs legados numéricos ou "null"
+      // que estejam guardados no localStorage de sessões anteriores.
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const cart = await Promise.all(
+        items.map(async (i) => {
+          let servico_id = i.service_id;
+          if (!UUID_RE.test(servico_id)) {
+            const { data: cat } = await supabase
+              .from("qa_servicos_catalogo" as any)
+              .select("id")
+              .eq("slug", i.service_slug)
+              .eq("ativo", true)
+              .maybeSingle();
+            servico_id = (cat as any)?.id ?? servico_id;
+          }
+          return { servico_id, slug: i.service_slug, quantidade: i.quantity };
+        })
+      );
+
       const payload: any = { cart };
       if (!isLogged) payload.identificacao = { nome_completo: nome, cpf, email, celular };
+
       const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", { body: payload });
-      if (error) throw error;
+      if (error) {
+        // Extrai o corpo real do erro da edge function para diagnóstico
+        const body = await (error as any).context?.json?.().catch?.(() => null);
+        const detail = body?.error ?? body?.message ?? error.message;
+        console.error("[checkout/finalizar] edge error:", detail, body);
+        throw new Error(detail || "Não foi possível finalizar a compra.");
+      }
       const r = data as any;
       if (!r?.ok || !r?.venda_id || !r?.checkout_token) throw new Error(r?.error || "Falha ao criar venda");
       setVenda({ venda_id: r.venda_id, checkout_token: r.checkout_token, total: r.total });
