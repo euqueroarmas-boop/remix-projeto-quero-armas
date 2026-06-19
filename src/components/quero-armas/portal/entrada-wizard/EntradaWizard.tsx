@@ -14,30 +14,38 @@ import {
   HelpCircle,
   ShieldCheck,
   Shield,
+  Crosshair,
+  Archive,
+  Leaf,
 } from "lucide-react";
 
 /* =============================================================================
- * EntradaWizard — Assistente de Entrada do portal (Bloco 9)
+ * EntradaWizard — Assistente de Entrada do portal
  *
- * 2 perguntas:
- *  1) "O que você quer fazer hoje?"  -> objetivo: inicial | continuidade | indefinido
- *  2) "Você já possui arma de fogo registrada em seu nome?" -> sim | nao | nao_sei
+ * Passo 1: objetivo (4 opções)
+ *   inicial        → Tirar/renovar CR de CAC          (Exército/SIGMA)
+ *   defesa_pessoal → Adquirir arma para defesa pessoal (PF/SINARM)
+ *   continuidade   → Mexer em arma que já tenho
+ *   indefinido     → Não tenho certeza (vai direto ao catálogo completo)
  *
- * Ao concluir:
- *  - Persiste as duas respostas em qa_clientes (+ entrada_respondida_em=now()).
- *  - Chama onConcluido com as respostas.
+ * Passo 2:
+ *   inicial / defesa_pessoal → "Você já possui arma registrada?" (sim/nao/nao_sei)
+ *   continuidade              → "Qual é a finalidade?" (caca/tiro_esportivo/colecionamento/defesa_pessoal)
+ *   indefinido                → pula o passo 2, vai direto ao catálogo
  *
- * Visual: Arsenal Premium Light (#7A1F2B sobre papel #f6f5f1).
+ * onConcluido devolve { objetivo, possuiArma, finalidadeArma }.
  * ============================================================================= */
 
 const MARROM = "#7A1F2B";
 
 export type EntradaObjetivo = "inicial" | "defesa_pessoal" | "continuidade" | "indefinido";
 export type EntradaPossuiArma = "sim" | "nao" | "nao_sei";
+export type EntradaFinalidade = "caca" | "tiro_esportivo" | "colecionamento" | "defesa_pessoal";
 
 export interface EntradaWizardRespostas {
   objetivo: EntradaObjetivo;
-  possuiArma: EntradaPossuiArma;
+  possuiArma: EntradaPossuiArma | null;
+  finalidadeArma: EntradaFinalidade | null;
 }
 
 interface Props {
@@ -53,20 +61,29 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
   const [step, setStep] = useState<Step>(1);
   const [objetivo, setObjetivo] = useState<EntradaObjetivo | null>(null);
   const [possuiArma, setPossuiArma] = useState<EntradaPossuiArma | null>(null);
+  const [finalidadeArma, setFinalidadeArma] = useState<EntradaFinalidade | null>(null);
   const [salvando, setSalvando] = useState(false);
 
-  async function concluir(arma: EntradaPossuiArma) {
+  const precisaPasso2 = objetivo !== "indefinido";
+  const passo2EhFinalidade = objetivo === "continuidade";
+
+  async function concluir() {
     if (!objetivo || !clienteId) {
       toast.error("Não foi possível salvar suas respostas. Recarregue a página.");
       return;
     }
+    // Para continuidade, possuiArma é implicitamente "sim"
+    const possuiArmaFinal: EntradaPossuiArma | null =
+      objetivo === "continuidade" ? "sim" : possuiArma;
+
     setSalvando(true);
     try {
       const { error } = await supabase
         .from("qa_clientes" as any)
         .update({
           entrada_objetivo: objetivo,
-          entrada_possui_arma: arma,
+          entrada_possui_arma: possuiArmaFinal,
+          entrada_finalidade_arma: finalidadeArma,
           entrada_respondida_em: new Date().toISOString(),
         })
         .eq("id", clienteId);
@@ -75,13 +92,13 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
         setSalvando(false);
         return;
       }
-      onConcluido?.({ objetivo, possuiArma: arma });
+      onConcluido?.({ objetivo, possuiArma: possuiArmaFinal, finalidadeArma });
       onOpenChange(false);
-      // Reset para uma próxima abertura manual
       setTimeout(() => {
         setStep(1);
         setObjetivo(null);
         setPossuiArma(null);
+        setFinalidadeArma(null);
         setSalvando(false);
       }, 250);
     } catch {
@@ -89,6 +106,8 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
       setSalvando(false);
     }
   }
+
+  const passo2Completo = passo2EhFinalidade ? !!finalidadeArma : !!possuiArma;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !salvando && onOpenChange(o)}>
@@ -103,12 +122,13 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
                 Assistente de Entrada — Vamos achar o caminho certo pra você
               </DialogTitle>
               <div className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                Passo {step} de 2
+                Passo {step} de {precisaPasso2 ? "2" : "1"}
               </div>
             </div>
           </div>
         </DialogHeader>
 
+        {/* ── Passo 1: objetivo ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-3">
             <p className="text-[12px] text-slate-600">
@@ -149,18 +169,25 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
               <button
                 type="button"
                 disabled={!objetivo}
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  if (!objetivo) return;
+                  if (objetivo === "indefinido") {
+                    void concluir();
+                  } else {
+                    setStep(2);
+                  }
+                }}
                 className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
                 style={{ background: MARROM }}
               >
-                Continuar
-                <ChevronRight className="h-3.5 w-3.5" />
+                {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <>Continuar <ChevronRight className="h-3.5 w-3.5" /></>}
               </button>
             </div>
           </div>
         )}
 
-        {step === 2 && (
+        {/* ── Passo 2a: possuiArma (inicial / defesa_pessoal) ──────────── */}
+        {step === 2 && !passo2EhFinalidade && (
           <div className="space-y-3">
             <p className="text-[12px] text-slate-600">
               Você já possui arma de fogo registrada em seu nome?
@@ -188,35 +215,104 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             </div>
 
             <p className="text-[10px] italic text-slate-500">
-              Essa resposta serve para organizar seu Meu Arsenal. Não restringe
-              o que você pode fazer.
+              Essa resposta serve para organizar seu Meu Arsenal. Não restringe o que você pode fazer.
             </p>
 
-            <div className="flex items-center justify-between pt-1">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                disabled={salvando}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Voltar
-              </button>
-              <button
-                type="button"
-                disabled={!possuiArma || salvando}
-                onClick={() => possuiArma && concluir(possuiArma)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
-                style={{ background: MARROM }}
-              >
-                {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                Ver meus serviços
-              </button>
+            <StepNavButtons
+              salvando={salvando}
+              onVoltar={() => setStep(1)}
+              onConcluir={() => void concluir()}
+              disabled={!passo2Completo}
+            />
+          </div>
+        )}
+
+        {/* ── Passo 2b: finalidadeArma (continuidade) ───────────────────── */}
+        {step === 2 && passo2EhFinalidade && (
+          <div className="space-y-3">
+            <p className="text-[12px] text-slate-600">
+              Qual é a finalidade da arma que você quer regularizar ou renovar?
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <SmallOption
+                icon={<Crosshair className="h-4 w-4" style={{ color: MARROM }} />}
+                label="Tiro esportivo"
+                selected={finalidadeArma === "tiro_esportivo"}
+                onClick={() => setFinalidadeArma("tiro_esportivo")}
+              />
+              <SmallOption
+                icon={<Leaf className="h-4 w-4" style={{ color: MARROM }} />}
+                label="Caça"
+                selected={finalidadeArma === "caca"}
+                onClick={() => setFinalidadeArma("caca")}
+              />
+              <SmallOption
+                icon={<Archive className="h-4 w-4" style={{ color: MARROM }} />}
+                label="Colecionamento"
+                selected={finalidadeArma === "colecionamento"}
+                onClick={() => setFinalidadeArma("colecionamento")}
+              />
+              <SmallOption
+                icon={<Shield className="h-4 w-4" style={{ color: MARROM }} />}
+                label="Defesa pessoal"
+                selected={finalidadeArma === "defesa_pessoal"}
+                onClick={() => setFinalidadeArma("defesa_pessoal")}
+              />
             </div>
+
+            <p className="text-[10px] italic text-slate-500">
+              Isso determina quais serviços são mostrados (SIGMA para CAC, PF para defesa pessoal).
+            </p>
+
+            <StepNavButtons
+              salvando={salvando}
+              onVoltar={() => setStep(1)}
+              onConcluir={() => void concluir()}
+              disabled={!passo2Completo}
+            />
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ── Sub-components ─────────────────────────────────────────────────────────── */
+
+function StepNavButtons({
+  salvando,
+  onVoltar,
+  onConcluir,
+  disabled,
+}: {
+  salvando: boolean;
+  onVoltar: () => void;
+  onConcluir: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between pt-1">
+      <button
+        type="button"
+        onClick={onVoltar}
+        disabled={salvando}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Voltar
+      </button>
+      <button
+        type="button"
+        disabled={disabled || salvando}
+        onClick={onConcluir}
+        className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
+        style={{ background: "#7A1F2B" }}
+      >
+        {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+        Ver meus serviços
+      </button>
+    </div>
   );
 }
 
@@ -253,7 +349,7 @@ function OptionCard({
           selected ? "border-[#7A1F2B]" : "border-slate-300"
         }`}
       >
-        {selected && <span className="h-2 w-2 rounded-full" style={{ background: MARROM }} />}
+        {selected && <span className="h-2 w-2 rounded-full" style={{ background: "#7A1F2B" }} />}
       </span>
     </button>
   );

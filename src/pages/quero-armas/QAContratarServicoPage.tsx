@@ -37,8 +37,9 @@ function formatBRL(v: number | null) {
 export default function QAContratarServicoPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const trilha = searchParams.get("trilha"); // "inicial" | "continuidade" | null
+  const trilha = searchParams.get("trilha");       // "inicial" | "defesa_pessoal" | "continuidade" | null
   const possuiArma = searchParams.get("possuiArma"); // "sim" | "nao" | "nao_sei" | null
+  const finalidade = searchParams.get("finalidade"); // "caca" | "tiro_esportivo" | "colecionamento" | "defesa_pessoal" | null
   const [items, setItems] = useState<CatalogoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [logado, setLogado] = useState(false);
@@ -58,32 +59,51 @@ export default function QAContratarServicoPage() {
   }, []);
 
   // BLOCO 9 — Filtra catálogo pelas respostas do Assistente de Entrada.
-  // Cada trilha filtra a categoria correta para não misturar SIGMA com PF.
   //
   // trilha=inicial       → só "Exército / SIGMA"
-  //   + possuiArma=nao   → exige_acervo≠true AND exige_cr≠true (só concessao-cr)
-  //   + possuiArma=sim   → todos SIGMA sem exige_acervo
+  //   possuiArma=nao     → só concessao-cr (exige_acervo≠true AND exige_cr≠true)
+  //   possuiArma=sim/sei → todos SIGMA (renovação, apostilamento, etc.)
   //
-  // trilha=defesa_pessoal → só "Polícia Federal" (excl. SIGMA e Mudança)
-  //   + possuiArma=nao   → exige_acervo≠true (aquisição, posse, operador)
-  //   + possuiArma=sim   → todos PF
+  // trilha=defesa_pessoal → só "Polícia Federal" (exclui SIGMA e Mudança)
+  //   possuiArma=nao     → aquisição, posse, operador (exige_acervo≠true)
+  //   possuiArma=sim/sei → todos PF (renovação, registro, porte, etc.)
   //
-  // trilha=continuidade  → serviços que exigem acervo existente (qualquer categoria)
+  // trilha=continuidade  → depende da finalidade declarada
+  //   finalidade=tiro_esportivo|caca|colecionamento → só SIGMA com exige_cr=true
+  //   finalidade=defesa_pessoal                     → só PF com exige_acervo=true
   const SIGMA_CAT = "Exército / SIGMA";
   const itemsFiltrados = useMemo(() => {
     if (trilha === "inicial") {
       const sigma = items.filter((i) => i.categoria === SIGMA_CAT);
-      if (possuiArma === "nao") return sigma.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
-      return sigma.filter((i) => i.exige_acervo !== true);
+      if (possuiArma === "nao") {
+        // Sem arma e sem CR: só concessão de CR
+        return sigma.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
+      }
+      // Com arma ou incerto: todos os serviços SIGMA
+      return sigma;
     }
+
     if (trilha === "defesa_pessoal") {
       const pf = items.filter((i) => i.categoria !== SIGMA_CAT && i.categoria !== "Mudança de serviço");
-      if (possuiArma === "nao") return pf.filter((i) => i.exige_acervo !== true);
+      if (possuiArma === "nao") {
+        // Sem arma: só serviços de aquisição (sem exige_acervo)
+        return pf.filter((i) => i.exige_acervo !== true);
+      }
+      // Com arma: todos PF (renovação, porte, registro, etc.)
       return pf;
     }
-    if (trilha === "continuidade") return items.filter((i) => i.exige_acervo !== false);
+
+    if (trilha === "continuidade") {
+      if (finalidade === "defesa_pessoal") {
+        // Arma de defesa pessoal: serviços PF que exigem arma existente
+        return items.filter((i) => i.categoria !== SIGMA_CAT && i.exige_acervo === true);
+      }
+      // Tiro esportivo, caça ou colecionamento: serviços SIGMA que exigem CR
+      return items.filter((i) => i.categoria === SIGMA_CAT && i.exige_cr === true);
+    }
+
     return items;
-  }, [items, trilha, possuiArma]);
+  }, [items, trilha, possuiArma, finalidade]);
 
   const grupos = useMemo(() => {
     const map = new Map<string, CatalogoItem[]>();
@@ -99,18 +119,27 @@ export default function QAContratarServicoPage() {
     const next = new URLSearchParams(searchParams);
     next.delete("trilha");
     next.delete("possuiArma");
+    next.delete("finalidade");
     setSearchParams(next, { replace: true });
   }
 
+  const labelFinalidade: Record<string, string> = {
+    tiro_esportivo: "Tiro esportivo",
+    caca: "Caça",
+    colecionamento: "Colecionamento",
+    defesa_pessoal: "Defesa pessoal",
+  };
   const labelTrilha =
     trilha === "inicial" && possuiArma === "nao"
-      ? "Tirar CR · Sem arma"
+      ? "CR de CAC · Primeiro CR"
       : trilha === "inicial"
-      ? "Tirar/renovar meu CR"
+      ? "CR de CAC"
       : trilha === "defesa_pessoal" && possuiArma === "nao"
-      ? "Defesa pessoal · Sem arma"
+      ? "Defesa pessoal · Aquisição"
       : trilha === "defesa_pessoal"
       ? "Defesa pessoal"
+      : trilha === "continuidade" && finalidade
+      ? `Regularizar · ${labelFinalidade[finalidade] ?? finalidade}`
       : trilha === "continuidade"
       ? "Mexer em arma que já tenho"
       : null;

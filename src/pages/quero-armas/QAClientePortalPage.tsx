@@ -240,14 +240,14 @@ export default function QAClientePortalPage() {
     const trilha = respostas.objetivo;
     const params = new URLSearchParams();
     if (trilha !== "indefinido") params.set("trilha", trilha);
-    params.set("possuiArma", respostas.possuiArma);
+    if (respostas.possuiArma) params.set("possuiArma", respostas.possuiArma);
+    if (respostas.finalidadeArma) params.set("finalidade", respostas.finalidadeArma);
     const destino = `/area-do-cliente/contratar?${params.toString()}`;
 
     // BLOCO 12 — Cadastro mínimo de arma.
-    // Se o cliente declarou possuir arma E ainda não tem nada no acervo,
-    // ofereça o cadastro rápido ANTES de seguir para o catálogo. A intenção
-    // de navegação fica guardada e é executada quando o form fecha.
-    if (respostas.possuiArma === "sim") {
+    // Se o cliente declarou possuir arma (ou escolheu continuidade, que é implicitamente sim)
+    // E ainda não tem nada no acervo, ofereça o cadastro rápido antes de ir ao catálogo.
+    if (respostas.possuiArma === "sim" || respostas.objetivo === "continuidade") {
       void (async () => {
         try {
           const { count } = await supabase
