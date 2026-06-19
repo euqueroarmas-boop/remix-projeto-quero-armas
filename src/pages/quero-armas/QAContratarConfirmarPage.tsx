@@ -243,94 +243,22 @@ export default function QAContratarConfirmarPage() {
         if (errUpd) throw errUpd;
       }
 
-      // 2) Cria VENDA pendente via RPC (Fase 16-E)
-      //    NÃO cria processo. NÃO confirma pagamento. NÃO explode checklist.
-      const { data: rpcRes, error: errCreate } = await supabase.rpc(
-        "qa_cliente_criar_contratacao" as any,
-        {
-          p_catalogo_slug: catalogo.slug,
-          p_valor_informado: valorNumerico,
-          p_observacoes:
-            obsContratacao?.trim() ||
-            `Contratação via portal logado | Docs reaproveitados: ${docsReaproveitados.length}`,
-        } as any,
-      );
-      if (errCreate) throw errCreate;
-
-      const result = rpcRes as { venda_id?: number; ja_existia?: boolean } | null;
-      const vendaId = result?.venda_id;
-      const jaExistia = !!result?.ja_existia;
-
-      toast.success(
-        jaExistia
-          ? "Contratação já estava em fila — vamos validar o valor com você."
-          : "Contratação registrada! O valor informado será validado pela Equipe Quero Armas.",
-      );
-
-      // 3) Notificação ao admin (não bloqueia o fluxo se falhar)
-      if (vendaId) {
-        supabase.functions
-          .invoke("qa-notificar-admin-contratacao", {
-            body: { venda_id: vendaId },
-          })
-          .catch((e) => console.warn("[notif admin]", e));
+      // 2) Encaminhar direto para o checkout oficial (PIX/Boleto/Cartão).
+      //    O valor do catálogo é a fonte da verdade — sem validação manual,
+      //    sem aprovação prévia da equipe.
+      if (!catalogo.servico_id || !valorNumerico) {
+        toast.error("Serviço sem preço configurado no catálogo. Fale com a equipe.");
+        return;
       }
-
-      // 3b) E-mail de confirmação ao cliente (não bloqueia)
-      if (cliente.email) {
-        const valorBR = new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(valorNumerico);
-        const portalUrl = "https://www.euqueroarmas.com.br/area-do-cliente";
-        const html = `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;background:#f6f7f9;margin:0;padding:24px;color:#0f172a;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(15,23,42,0.06);">
-<tr><td style="background:#0f172a;padding:22px 28px;color:#fff;">
-  <div style="font-size:11px;letter-spacing:0.18em;color:#fbbf24;font-weight:700;">QUERO ARMAS</div>
-  <div style="font-size:20px;font-weight:700;margin-top:6px;">Recebemos sua contratação</div>
-</td></tr>
-<tr><td style="padding:24px 28px;">
-  <p style="margin:0 0 12px;font-size:14px;">Olá, <strong>${cliente.nome_completo}</strong>! Sua solicitação foi registrada com sucesso pela Equipe Quero Armas.</p>
-  <p style="margin:0 0 16px;font-size:13px;color:#475569;">Nenhuma cobrança automática foi gerada — vamos validar seus dados antes da continuidade.</p>
-  <table cellpadding="6" cellspacing="0" style="width:100%;font-size:13px;border-collapse:collapse;margin-top:8px;">
-    <tr><td style="color:#64748b;width:140px;">Serviço</td><td><strong>${catalogo.nome}</strong></td></tr>
-    <tr><td style="color:#64748b;">Valor informado</td><td><strong>${valorBR}</strong></td></tr>
-    <tr><td style="color:#64748b;">Protocolo</td><td>#${vendaId ?? "—"}</td></tr>
-    <tr><td style="color:#64748b;">Status</td><td><span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;">Aguardando validação</span></td></tr>
-  </table>
-  <h3 style="margin:24px 0 8px;font-size:14px;">Próximos passos</h3>
-  <ol style="margin:0;padding-left:18px;font-size:13px;color:#334155;line-height:1.7;">
-    <li>Nossa equipe validará os dados da contratação.</li>
-    <li>Você poderá receber uma cobrança autorizada.</li>
-    <li>Após o pagamento, seu portal e checklist serão liberados.</li>
-    <li>Iniciaremos o processo conforme o serviço contratado.</li>
-  </ol>
-  <p style="text-align:center;margin:24px 0 0;">
-    <a href="${portalUrl}" style="display:inline-block;background:#0ea5e9;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:10px;font-size:13px;text-transform:uppercase;letter-spacing:0.04em;">Acessar portal</a>
-  </p>
-</td></tr>
-<tr><td style="background:#f8fafc;padding:14px 28px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center;">© ${new Date().getFullYear()} Quero Armas. Todos os Direitos Reservados.</td></tr>
-</table></td></tr></table></body></html>`;
-        supabase.functions
-          .invoke("send-smtp-email", {
-            body: {
-              to: cliente.email,
-              subject: "Recebemos sua contratação — Quero Armas",
-              html,
-              text: `Olá, ${cliente.nome_completo}! Recebemos sua contratação de "${catalogo.nome}" (protocolo #${vendaId ?? "—"}, valor informado ${valorBR}). Nossa equipe validará os dados antes da continuidade. Acesse: ${portalUrl}`,
-            },
-          })
-          .catch((e) => console.warn("[email cliente]", e));
-      }
-
-      // BLOCO 9 — tela premium de sucesso pós-contratação
-      navigate(
-        `/area-do-cliente/contratar/${catalogo.slug}/sucesso${
-          vendaId ? `?venda=${vendaId}` : ""
-        }`,
-        { replace: true },
-      );
+      addItem({
+        service_id: String(catalogo.servico_id),
+        service_slug: catalogo.slug,
+        service_name: catalogo.nome,
+        unit_price_cents: Math.round(valorNumerico * 100),
+        quantity: 1,
+      });
+      toast.success("Tudo certo! Escolha como pagar.");
+      navigate("/checkout/finalizar");
     } catch (e: any) {
       console.error("[contratar/confirmar] erro:", e);
       toast.error(e?.message || "Não foi possível concluir a contratação.");
