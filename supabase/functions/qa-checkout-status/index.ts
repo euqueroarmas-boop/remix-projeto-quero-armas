@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
   const cobStatus = String(venda.cobranca_status || "").toLowerCase();
   const pago = statusUpper === "PAGO" || cobStatus === "confirmada";
 
-  // Protocolo oficial (QA-{SIGLA}-{ANO}-{SEQ}). Se a cobrança já está paga
+  // Protocolo oficial (QA{SIGLA}{ANO}{SEQ}). Se a cobrança já está paga
   // mas o webhook ainda não deixou o número gravado, gera aqui de forma
   // idempotente para a tela final nunca cair no identificador temporário.
   let numero_protocolo: string | null = null;

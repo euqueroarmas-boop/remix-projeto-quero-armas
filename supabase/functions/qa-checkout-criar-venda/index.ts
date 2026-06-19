@@ -42,6 +42,12 @@ function isValidCPF(cpf: string): boolean {
 function isValidEmail(e: string): boolean {
   return /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/.test((e || "").trim().toLowerCase());
 }
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+function isLegacyNumericId(value: string): boolean {
+  return /^\d+$/.test(value);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -59,6 +65,7 @@ Deno.serve(async (req) => {
 
   // Resolve user from JWT, se houver.
   let userId: string | null = null;
+  let userEmail: string | null = null;
   const authHeader = req.headers.get("Authorization") || "";
   if (authHeader.startsWith("Bearer ")) {
     try {
@@ -67,8 +74,10 @@ Deno.serve(async (req) => {
       });
       const { data } = await userClient.auth.getUser();
       userId = data?.user?.id ?? null;
+      userEmail = data?.user?.email ?? null;
     } catch {
       userId = null;
+      userEmail = null;
     }
   }
 
@@ -99,47 +108,63 @@ Deno.serve(async (req) => {
   }
 
   // Resolve preço SERVER-SIDE — fonte canônica do snapshot.
-  // Suporta tanto UUID (service_id novo) quanto ID numérico legado (fallback).
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const cartIds = Array.from(new Set(body.cart.map((c) => c.servico_id)));
-  const uuidIds = cartIds.filter((id) => UUID_RE.test(id));
-  const legacyIds = cartIds.filter((id) => !UUID_RE.test(id) && /^\d+$/.test(id)).map(Number);
+  // Compatibilidade: carrinhos antigos podem trazer servico_id legado numérico
+  // ou até "null"; nestes casos, resolvemos por servico_id ou slug.
+  const cartIds = Array.from(new Set(body.cart.map((c) => String(c.servico_id))));
+  const uuidIds = cartIds.filter(isUuid);
+  const legacyIds = cartIds.filter(isLegacyNumericId).map((id) => Number(id));
+  const slugs = Array.from(new Set(body.cart.map((c) => c.slug).filter(Boolean)));
+  const catRows: any[] = [];
 
-  // Keyed by whatever the cart sent (uuid ou numeric string) → catálogo row.
-  const byCartId = new Map<string, any>();
-
-  if (uuidIds.length > 0) {
-    const { data, error } = await admin
-      .from("qa_servicos_catalogo")
-      .select("id, slug, nome, preco, ativo, servico_id")
-      .in("id", uuidIds);
-    if (error) {
-      return new Response(JSON.stringify({ error: "catalog_query_failed", detail: error.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    (data ?? []).forEach((r: any) => byCartId.set(r.id, r));
+  async function appendCatalogRows(query: PromiseLike<{ data: any[] | null; error: any }>) {
+    const { data, error } = await query;
+    if (error) throw error;
+    for (const row of data ?? []) catRows.push(row);
   }
 
-  if (legacyIds.length > 0) {
-    const { data, error } = await admin
-      .from("qa_servicos_catalogo")
-      .select("id, slug, nome, preco, ativo, servico_id")
-      .in("servico_id", legacyIds);
-    if (error) {
-      return new Response(JSON.stringify({ error: "catalog_query_failed", detail: error.message }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+  try {
+    if (uuidIds.length > 0) {
+      await appendCatalogRows(
+        admin
+          .from("qa_servicos_catalogo")
+          .select("id, slug, nome, preco, ativo, servico_id")
+          .in("id", uuidIds),
+      );
     }
-    (data ?? []).forEach((r: any) => {
-      if (r.servico_id != null) byCartId.set(String(r.servico_id), r);
+    if (legacyIds.length > 0) {
+      await appendCatalogRows(
+        admin
+          .from("qa_servicos_catalogo")
+          .select("id, slug, nome, preco, ativo, servico_id")
+          .in("servico_id", legacyIds),
+      );
+    }
+    if (slugs.length > 0) {
+      await appendCatalogRows(
+        admin
+          .from("qa_servicos_catalogo")
+          .select("id, slug, nome, preco, ativo, servico_id")
+          .in("slug", slugs),
+      );
+    }
+  } catch (catErr: any) {
+    return new Response(JSON.stringify({ error: "catalog_query_failed", detail: catErr?.message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
+  const byCartId = new Map<string, any>();
+  const bySlug = new Map<string, any>();
+  for (const r of catRows) {
+    byCartId.set(String(r.id), r);
+    if (r.servico_id != null) byCartId.set(String(r.servico_id), r);
+    bySlug.set(String(r.slug), r);
+  }
   for (const it of body.cart) {
-    const r = byCartId.get(it.servico_id);
+    const r = byCartId.get(String(it.servico_id)) ?? bySlug.get(it.slug);
     if (!r || !r.ativo) {
-      return new Response(JSON.stringify({ error: "service_unavailable", slug: it.slug }), {
+      return new Response(JSON.stringify({ error: "service_unavailable", slug: it.slug, servico_id: it.servico_id }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -159,6 +184,24 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
     qaClienteId = (link as any)?.qa_cliente_id ?? null;
+  }
+
+  if (userId && !qaClienteId) {
+    const { data: clienteDireto } = await admin
+      .from("qa_clientes")
+      .select("id, status")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (clienteDireto && (clienteDireto as any).status !== "excluido_lgpd") {
+      qaClienteId = (clienteDireto as any).id;
+      await admin.from("cliente_auth_links").insert({
+        qa_cliente_id: qaClienteId,
+        user_id: userId,
+        email: userEmail,
+        status: "active",
+        activated_at: new Date().toISOString(),
+      });
+    }
   }
 
   if (!qaClienteId) {
@@ -247,7 +290,7 @@ Deno.serve(async (req) => {
   // Calcula total snapshot.
   let totalCents = 0;
   const itensSnapshot = body.cart.map((it) => {
-    const r: any = byCartId.get(it.servico_id);
+    const r: any = byCartId.get(String(it.servico_id)) ?? bySlug.get(it.slug);
     const precoNum = Number(r.preco ?? 0);
     const valorUnit = Math.round(precoNum * 100);
     const sub = valorUnit * it.quantidade;
