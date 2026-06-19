@@ -431,12 +431,12 @@ export default function QAContratarConfirmarPage() {
         console.warn("[confirmar] aceite-registrar falhou:", aceiteFail);
       }
 
-      if (!catalogo.servico_id || !valorNumerico) {
+      if (!valorNumerico) {
         toast.error("Serviço sem preço configurado no catálogo. Fale com a equipe.");
         return;
       }
       addItem({
-        service_id: String(catalogo.servico_id),
+        service_id: catalogo.id,          // UUID do catálogo (esperado pela edge function)
         service_slug: catalogo.slug,
         service_name: catalogo.nome,
         unit_price_cents: Math.round(valorNumerico * 100),
