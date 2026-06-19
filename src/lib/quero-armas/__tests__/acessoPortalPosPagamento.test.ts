@@ -128,6 +128,16 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
       expect(src).toMatch(/\/area-do-cliente\?secao=contratos/);
       expect(src).toMatch(/id="qa-portal-contratos"/);
     });
+
+    it("portal prioriza obrigações antes do assistente de compra", () => {
+      const src = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+      expect(src).toMatch(/portalStartupAction/);
+      expect(src).toMatch(/pendingContractsLoaded/);
+      expect(src).toMatch(/if \(pendingContracts > 0\) return \{ type: "contrato"/);
+      expect(src).toMatch(/entrada_wizard/);
+      expect(src.indexOf('type: "contrato"')).toBeLessThan(src.indexOf('type: "entrada_wizard"'));
+      expect(src).toMatch(/Obrigações do cliente sempre aparecem antes do assistente de compra/);
+    });
   });
 
   describe("Reaproveitamento de fluxo existente (sem arquitetura paralela)", () => {

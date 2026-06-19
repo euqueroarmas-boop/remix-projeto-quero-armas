@@ -173,6 +173,7 @@ export default function QAClientePortalPage() {
   const [showCadastroModal, setShowCadastroModal] = useState(false);
   const [docsReloadKey, setDocsReloadKey] = useState(0);
   const [pendingContracts, setPendingContracts] = useState<number>(0);
+  const [pendingContractsLoaded, setPendingContractsLoaded] = useState(false);
   const [showContratoPopup, setShowContratoPopup] = useState(false);
   const [generatingAvatar, setGeneratingAvatar] = useState(false);
   const [activeSection, setActiveSection] = useState<
@@ -211,20 +212,6 @@ export default function QAClientePortalPage() {
   const avatarResolving = Boolean((cliente as any)?.id) && (avatarLoading || avatarOficial === null);
   const activeTab: "arsenal" | "resumo" | null = activeSection === "arsenal" ? "arsenal" : activeSection === "resumo" ? "resumo" : null;
   const setActiveTab = (tab: "arsenal" | "resumo") => setActiveSection(tab);
-
-  // BLOCO 9 — Auto-abre o Assistente de Entrada para cliente novo que NUNCA
-  // respondeu (entrada_respondida_em IS NULL) E ainda não tem processo ativo.
-  // Clientes legados foram backfillados na migração; não vêem o wizard de surpresa.
-  useEffect(() => {
-    if (entradaAutoChecked) return;
-    if (!cliente) return;
-    const respondida = (cliente as any)?.entrada_respondida_em ?? null;
-    const semProcessos = !processos || processos.length === 0;
-    if (respondida == null && semProcessos) {
-      setEntradaWizardOpen(true);
-    }
-    setEntradaAutoChecked(true);
-  }, [cliente, processos, entradaAutoChecked]);
 
   function handleEntradaConcluido(respostas: EntradaWizardRespostas) {
     setCliente((prev: any) =>
@@ -980,16 +967,93 @@ export default function QAClientePortalPage() {
     return { cadastroIncompleto, docsHubEmAnalise, docsHubReprovados, checklistReproc, checklistPend, prazoCritico, totalPendencias, proximaAcao, aguardandoDocsReal: processoSnap.aguardandoAcaoCliente > 0 || docsHubReprovados > 0 };
   }, [cliente, meusDocs, processoDocs, processoSnap, analysis, navigate]);
 
+  const portalStartupAction = useMemo(() => {
+    if (loading || !cliente || !pendingContractsLoaded) return null;
+
+    if (pendingContracts > 0) return { type: "contrato" as const };
+    if (resumoState.checklistReproc) return { type: "checklist_reprovado" as const };
+    if (resumoState.docsHubReprovados > 0) return { type: "doc_hub_reprovado" as const };
+    if (resumoState.checklistPend) return { type: "checklist_pendente" as const };
+    if (resumoState.cadastroIncompleto) return { type: "cadastro" as const };
+    if (resumoState.prazoCritico) return { type: "prazo" as const };
+
+    const respondida = (cliente as any)?.entrada_respondida_em ?? null;
+    const semProcessos = !processos || processos.length === 0;
+    if (respondida == null && semProcessos) return { type: "entrada_wizard" as const };
+
+    return null;
+  }, [cliente, loading, pendingContracts, pendingContractsLoaded, processos, resumoState]);
+
+  // BLOCO 9 — Orquestrador de entrada do portal.
+  // Obrigações do cliente sempre aparecem antes do assistente de compra.
+  useEffect(() => {
+    if (entradaAutoChecked) return;
+    if (!portalStartupAction) return;
+
+    const idLegado = (cliente as any)?.id_legado ?? (cliente as any)?.id ?? "anon";
+    const key = `qa-portal-startup-${idLegado}-${portalStartupAction.type}`;
+    if (sessionStorage.getItem(key)) {
+      setEntradaAutoChecked(true);
+      return;
+    }
+    sessionStorage.setItem(key, "1");
+    setEntradaAutoChecked(true);
+
+    if (portalStartupAction.type === "contrato") {
+      setShowContratoPopup(true);
+      return;
+    }
+
+    if (portalStartupAction.type === "checklist_reprovado" && resumoState.checklistReproc) {
+      setActiveSection("pendencias");
+      window.setTimeout(() => abrirChecklistGuiado({
+        processoId: resumoState.checklistReproc.processo_id,
+        focusDocId: resumoState.checklistReproc.id,
+      }), 150);
+      return;
+    }
+
+    if (portalStartupAction.type === "checklist_pendente" && resumoState.checklistPend) {
+      setActiveSection("pendencias");
+      window.setTimeout(() => abrirChecklistGuiado({
+        processoId: resumoState.checklistPend.processo_id,
+        focusDocId: resumoState.checklistPend.id,
+      }), 150);
+      return;
+    }
+
+    if (portalStartupAction.type === "doc_hub_reprovado") {
+      setShowAddDoc(true);
+      return;
+    }
+
+    if (portalStartupAction.type === "cadastro") {
+      setShowCadastroModal(true);
+      return;
+    }
+
+    if (portalStartupAction.type === "prazo") {
+      setActiveSection("processos");
+      return;
+    }
+
+    if (portalStartupAction.type === "entrada_wizard") {
+      setEntradaWizardOpen(true);
+    }
+  }, [cliente, entradaAutoChecked, portalStartupAction, resumoState]);
+
   // Carrega contratos pós-pagamento pendentes de assinatura do cliente.
-  // Se houver pelo menos 1, abre popup automaticamente (uma vez por sessão)
-  // e força "Assinar contrato" como próxima ação prioritária.
+  // A abertura do popup é feita pelo orquestrador de entrada, para não
+  // concorrer com o assistente de compra.
   useEffect(() => {
     const idLegado = (cliente as any)?.id_legado as number | null | undefined;
     if (!idLegado) {
       setPendingContracts(0);
+      setPendingContractsLoaded(true);
       return;
     }
     let alive = true;
+    setPendingContractsLoaded(false);
     (async () => {
       try {
         const { data, error } = await supabase
@@ -1004,19 +1068,17 @@ export default function QAClientePortalPage() {
         if (!alive) return;
         if (error) {
           setPendingContracts(0);
+          setPendingContractsLoaded(true);
           return;
         }
         const count = Array.isArray(data) ? data.length : 0;
         setPendingContracts(count);
-        if (count > 0) {
-          const key = `qa-contract-signing-popup-${idLegado}`;
-          if (!sessionStorage.getItem(key)) {
-            sessionStorage.setItem(key, "1");
-            setShowContratoPopup(true);
-          }
-        }
+        setPendingContractsLoaded(true);
       } catch {
-        if (alive) setPendingContracts(0);
+        if (alive) {
+          setPendingContracts(0);
+          setPendingContractsLoaded(true);
+        }
       }
     })();
     return () => {
