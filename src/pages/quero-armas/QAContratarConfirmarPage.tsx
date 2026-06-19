@@ -520,35 +520,28 @@ export default function QAContratarConfirmarPage() {
             )}
           </div>
 
-          {/* Observações opcionais para a equipe (valor agora vem do catálogo) */}
+          {/* Valor do catálogo */}
           <div className="rounded-xl bg-white border border-slate-200 p-4">
             <div className="flex items-center gap-2 mb-2">
               <DollarSign className="h-4 w-4 text-amber-600" />
               <h2 className="text-sm font-bold text-slate-900 uppercase">
-                4. Observações (opcional)
+                4. Valor do serviço
               </h2>
             </div>
-            <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
-              O valor desta contratação é o do <strong>catálogo oficial</strong>
-              {valorNumerico > 0 ? (
-                <> — <strong>{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)}</strong></>
-              ) : null}
-              . Se quiser, deixe uma mensagem para a Equipe Quero Armas.
+            <div className="flex items-baseline justify-between">
+              <span className="text-[11px] uppercase tracking-wider text-slate-500">Total</span>
+              <span className="text-xl font-extrabold text-slate-900">
+                {valorNumerico > 0
+                  ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
+                  : "—"}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+              Valor oficial do catálogo Quero Armas. Pagamento via PIX, boleto ou cartão na próxima etapa.
             </p>
-            <textarea
-              rows={2}
-              placeholder="Observações para a equipe (opcional)"
-              value={obsContratacao}
-              onChange={(e) => setObsContratacao(e.target.value.toUpperCase())}
-              className="w-full px-3 py-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
-            />
           </div>
 
           {/* CTA */}
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            Seu processo começa após a confirmação do pagamento. Você receberá acesso
-            ao portal para acompanhar documentos, etapas e próximos passos.
-          </p>
           <button
             disabled={!podeConfirmar}
             onClick={handleConfirmar}
@@ -563,7 +556,7 @@ export default function QAContratarConfirmarPage() {
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            Enviar contratação para validação
+            Ir para pagamento
             <ChevronRight className="h-4 w-4" />
           </button>
     </CheckoutShell>
