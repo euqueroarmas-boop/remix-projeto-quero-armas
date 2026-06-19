@@ -18,8 +18,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
+import ContractPreviewCard from "@/pages/quero-armas/cadastro-refinado/components/ContractPreviewCard";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
+import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
 
 /* =============================================================================
  * Design tokens — dark premium, vermelho bordô da empresa.
@@ -349,6 +351,27 @@ export default function QAContratarConfirmarPage() {
     return parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0]?.[0] ?? "?";
   }, [cliente]);
 
+  /* Adapter para ContractPreviewCard — usa apenas dadosPessoais + slugs */
+  const contratoState = useMemo(() => ({
+    servicoSlug: catalogo?.slug ?? null,
+    servicosSlugs: catalogo?.slug ? [catalogo.slug] : [],
+    dadosPessoais: {
+      nome_completo: cliente?.nome_completo ?? "",
+      cpf: cliente?.cpf ?? "",
+      email: cliente?.email ?? "",
+      telefone: "",
+      data_nascimento: "",
+      endereco_cep: enderecoOk === "nao" && novoCep ? novoCep : cliente?.cep ?? "",
+      endereco_logradouro: enderecoOk === "nao" && novoEndereco ? novoEndereco : cliente?.endereco ?? "",
+      endereco_numero: enderecoOk === "nao" && novoNumero ? novoNumero : cliente?.numero ?? "",
+      endereco_complemento: enderecoOk === "nao" && novoComplemento ? novoComplemento : cliente?.complemento ?? "",
+      endereco_bairro: enderecoOk === "nao" && novoBairro ? novoBairro : cliente?.bairro ?? "",
+      endereco_cidade: enderecoOk === "nao" && novaCidade ? novaCidade : cliente?.cidade ?? "",
+      endereco_estado: enderecoOk === "nao" && novoEstado ? novoEstado : cliente?.estado ?? "",
+    },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }) as any, [cliente, catalogo, enderecoOk, novoCep, novoEndereco, novoNumero, novoComplemento, novoBairro, novaCidade, novoEstado]);
+
   async function handleConfirmar() {
     if (!cliente || !catalogo) return;
     setSubmitting(true);
@@ -649,31 +672,32 @@ export default function QAContratarConfirmarPage() {
             statusType={aceiteContrato ? "ok" : "edit"}
           />
 
-          {/* Destaque do serviço */}
-          <div style={{
-            background: D.paper2, border: `1px solid ${D.border}`,
-            borderRadius: 10, padding: "12px 14px", marginBottom: 14,
-          }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 4 }}>
-              Serviço contratado
+          {/* Minuta do contrato — leitura obrigatória antes do aceite */}
+          <div style={{ marginBottom: 14 }}>
+            {/* Wrapper .qa-refinado apenas para as CSS vars funcionarem no ContractPreviewCard */}
+            <div className="qa-refinado" style={{ background: "transparent", minHeight: "unset", color: "inherit" }}>
+              <ContractPreviewCard
+                state={contratoState}
+                precoServico={valorNumerico}
+                nomeServico={catalogo.nome}
+              />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", color: D.ink, marginBottom: 6 }}>
-              {catalogo.nome}
-            </div>
-            <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, margin: 0 }}>
-              Ao avançar para o pagamento você declara que leu e concorda com os{" "}
-              <a href="/termos-de-servico" target="_blank" rel="noopener noreferrer"
-                style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
-                Termos de Serviço <ExternalLink size={10} />
-              </a>
-              {" "}e a{" "}
-              <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer"
-                style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
-                Política de Privacidade <ExternalLink size={10} />
-              </a>
-              {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
-            </p>
           </div>
+
+          {/* Aviso e links legais */}
+          <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, marginBottom: 14 }}>
+            Ao avançar você declara que leu e concorda com o contrato acima e com os{" "}
+            <a href="/termos-de-servico" target="_blank" rel="noopener noreferrer"
+              style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              Termos de Serviço <ExternalLink size={10} />
+            </a>
+            {" "}e a{" "}
+            <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer"
+              style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              Política de Privacidade <ExternalLink size={10} />
+            </a>
+            {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
+          </p>
 
           {/* Checkbox de aceite */}
           <button
