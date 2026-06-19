@@ -142,6 +142,33 @@ function normCpf(s: string): string {
   return s.replace(/\D/g, "");
 }
 
+// Mapeia nome completo do estado → sigla (já sem acento, uppercase)
+const ESTADO_PARA_UF: Record<string, string> = {
+  "ACRE": "AC", "ALAGOAS": "AL", "AMAPA": "AP", "AMAZONAS": "AM",
+  "BAHIA": "BA", "CEARA": "CE", "DISTRITO FEDERAL": "DF",
+  "ESPIRITO SANTO": "ES", "GOIAS": "GO", "MARANHAO": "MA",
+  "MATO GROSSO DO SUL": "MS", "MATO GROSSO": "MT", "MINAS GERAIS": "MG",
+  "PARA": "PA", "PARAIBA": "PB", "PARANA": "PR", "PERNAMBUCO": "PE",
+  "PIAUI": "PI", "RIO DE JANEIRO": "RJ", "RIO GRANDE DO NORTE": "RN",
+  "RIO GRANDE DO SUL": "RS", "RONDONIA": "RO", "RORAIMA": "RR",
+  "SANTA CATARINA": "SC", "SAO PAULO": "SP", "SERGIPE": "SE",
+  "TOCANTINS": "TO",
+};
+
+// Normaliza naturalidade para comparação: remove formatação, expande/contrai UF
+function normNaturalidade(s: string): string {
+  let v = normalizeStr(s); // já: uppercase, sem acento, separadores → espaço
+  // Substitui nome completo do estado pela sigla (do maior para menor para evitar substring clash)
+  const sorted = Object.keys(ESTADO_PARA_UF).sort((a, b) => b.length - a.length);
+  for (const nome of sorted) {
+    if (v.includes(nome)) {
+      v = v.replace(nome, ESTADO_PARA_UF[nome]);
+      break;
+    }
+  }
+  return v.replace(/\s+/g, " ").trim();
+}
+
 function normDate(s: string): string {
   // Accepts DD/MM/YYYY or YYYY-MM-DD
   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -251,7 +278,7 @@ function calcularConformidade(
   pushItem("data_nascimento", "Data de nascimento", campos.data_nascimento, (a, b) => normDate(a) === normDate(b));
   pushItem("filiacao_mae", "Filiação materna", campos.filiacao_mae, (a, b) => normalizeStr(a) === normalizeStr(b));
   pushItem("filiacao_pai", "Filiação paterna", campos.filiacao_pai, (a, b) => normalizeStr(a) === normalizeStr(b));
-  pushItem("naturalidade", "Naturalidade", campos.naturalidade, (a, b) => normalizeStr(a) === normalizeStr(b));
+  pushItem("naturalidade", "Naturalidade", campos.naturalidade, (a, b) => normNaturalidade(a) === normNaturalidade(b));
   pushItem("sexo", "Sexo", campos.sexo, (a, b) => a.trim().toUpperCase()[0] === b.trim().toUpperCase()[0]);
 
   return items;
