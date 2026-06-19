@@ -81,8 +81,7 @@ export default function QAContratarConfirmarPage() {
   const [novoEstadoCivil, setNovoEstadoCivil] = useState("");
   const [novaProfissao, setNovaProfissao] = useState("");
 
-  // Step 3 (Fase 16-E): valor combinado informado pelo cliente
-  const [valorInformado, setValorInformado] = useState<string>("");
+  // Observações livres para a equipe (valor agora vem direto do catálogo)
   const [obsContratacao, setObsContratacao] = useState<string>("");
 
   // FASE 20-D: bloqueio de cliente legado pendente
@@ -179,15 +178,15 @@ export default function QAContratarConfirmarPage() {
       .join(", ");
   }, [cliente]);
 
+  // Valor oficial do catálogo (sem entrada manual do cliente)
   const valorNumerico = useMemo(() => {
-    const n = Number(valorInformado.replace(/\./g, "").replace(",", "."));
+    const n = Number(catalogo?.preco ?? 0);
     return Number.isFinite(n) && n > 0 ? n : 0;
-  }, [valorInformado]);
+  }, [catalogo]);
 
   const podeConfirmar =
     enderecoOk !== null &&
     dadosOk !== null &&
-    valorNumerico > 0 &&
     !submitting &&
     !loading &&
     cliente &&
