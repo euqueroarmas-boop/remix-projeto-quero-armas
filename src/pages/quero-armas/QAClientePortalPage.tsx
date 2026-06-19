@@ -1351,269 +1351,335 @@ export default function QAClientePortalPage() {
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
 
-        {/* ═══ HERO — PRÓXIMA AÇÃO ═══ */}
+        {/* ═══ RESUMO ═══ */}
         {(() => {
           const cadastroIncompleto = cadastroEstaIncompleto(cliente);
+          const docsAprovados   = meusDocs.filter((d: any) => d.status === "aprovado").length;
+          const docsAnalise     = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
           const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
-          const vencido = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
-          const venceHoje = analysis?.expDocs.find((d) => d.days === 0);
-          const checklistPend = processoDocs.find((d) => d.obrigatorio && isChecklistPendente(d.status));
+          const totalDocs       = meusDocs.length;
+          const vencido         = analysis?.expDocs.find((d) => d.days !== null && (d.days as number) < 0);
+          const venceHoje       = analysis?.expDocs.find((d) => d.days === 0);
+          const checklistPend   = processoDocs.find((d) => d.obrigatorio && isChecklistPendente(d.status));
           const checklistReproc = processoDocs.find((d) => d.obrigatorio && ["invalido", "reprovado", "divergente", "pendente_reenvio"].includes(String(d.status || "").toLowerCase()));
           const temPendChecklist = !!checklistPend || !!checklistReproc;
+          const acaoDoc = checklistReproc || checklistPend;
 
-          let titulo = "Tudo em dia";
-          let descricao = "Sem pendências no momento — você pode acompanhar seus processos a qualquer momento.";
-          let onClick: (() => void) | null = null;
-          let usaChecklistBotao = false;
+          // Ação prioritária
+          let acaoTitulo = "";
+          let acaoSub = "";
+          let acaoOnClick: (() => void) | null = null;
+          let acaoChecklistBotao = false;
 
           if (pendingContracts > 0) {
-            titulo = pendingContracts === 1
-              ? "Assinar seu contrato"
-              : `Assinar seus contratos (${pendingContracts})`;
-            descricao = "Pagamento confirmado. Assine digitalmente o contrato pelo GOV.BR ou ICP-Brasil para liberar a execução do serviço.";
-            onClick = () => goSection("contratos");
+            acaoTitulo = "Assinar contrato pendente";
+            acaoSub = "Pagamento confirmado. Assine digitalmente para liberar a execução.";
+            acaoOnClick = () => goSection("contratos");
           } else if (vencido) {
-            // Renovação de documento expirado pode envolver acervo geral OU
-            // um item de processo. Se houver checklistReproc/checklistPend
-            // referente, priorizamos o assistente; caso contrário, hub geral.
-            titulo = `Renovar ${vencido.label}`;
-            descricao = `Vencido há ${Math.abs(vencido.days as number)} dia(s) — regularize com urgência.`;
-            onClick = () => setShowAddDoc(true);
+            acaoTitulo = `Renovar: ${vencido.label}`;
+            acaoSub = `Vencido há ${Math.abs(vencido.days as number)} dia(s) — regularize com urgência.`;
+            acaoOnClick = () => setShowAddDoc(true);
           } else if (venceHoje) {
-            titulo = `Renovar ${venceHoje.label}`;
-            descricao = "Vence hoje — providencie a renovação imediatamente.";
-            onClick = () => setShowAddDoc(true);
+            acaoTitulo = `Renovar: ${venceHoje.label}`;
+            acaoSub = "Vence hoje — providencie a renovação imediatamente.";
+            acaoOnClick = () => setShowAddDoc(true);
           } else if (temPendChecklist) {
-            const d = (checklistReproc || checklistPend)!;
-            const tipo = String(d.tipo_documento || "documento").replace(/_/g, " ").toUpperCase();
-            titulo = checklistReproc ? `Reenviar ${tipo}` : `Enviar ${tipo}`;
-            descricao = checklistReproc
-              ? "Documento do processo precisa ser corrigido e reenviado."
-              : "Documento obrigatório do checklist ainda não enviado.";
-            usaChecklistBotao = true;
+            const tipo = String(acaoDoc?.tipo_documento || "documento").replace(/_/g, " ");
+            acaoTitulo = checklistReproc ? `Reenviar: ${tipo}` : `Enviar: ${tipo}`;
+            acaoSub = checklistReproc ? "Documento reprovado no processo — reenvie corrigido." : "Documento obrigatório ainda não enviado.";
+            acaoChecklistBotao = true;
           } else if (docsHubReprovados > 0) {
-            titulo = "Reenviar documento reprovado";
-            descricao = `${docsHubReprovados} documento(s) precisam ser corrigidos.`;
-            onClick = () => setShowAddDoc(true);
+            acaoTitulo = "Reenviar documento reprovado";
+            acaoSub = `${docsHubReprovados} documento(s) precisam ser corrigidos.`;
+            acaoOnClick = () => setShowAddDoc(true);
           } else if (cadastroIncompleto) {
-            titulo = "Completar seu cadastro";
-            descricao = resumoFaltantesCadastro(cliente) || "Dados básicos faltando.";
-            onClick = () => setShowCadastroModal(true);
+            acaoTitulo = "Completar cadastro";
+            acaoSub = resumoFaltantesCadastro(cliente) || "Dados básicos faltando.";
+            acaoOnClick = () => setShowCadastroModal(true);
           }
+          const temAcao = !!acaoOnClick || acaoChecklistBotao;
 
-          const temAcao = !!onClick || usaChecklistBotao;
+          // Anel de progresso
+          const pct = totalDocs > 0 ? Math.round((docsAprovados / totalDocs) * 100) : 0;
+          const circ = 188.5;
+          const dashoffset = circ * (1 - pct / 100);
+          const ringColor = pct >= 80 ? "#639922" : pct >= 50 ? "#BA7517" : "#E24B4A";
+
+          // Jornada
+          const hasProcess = processoSnap.ativos.length > 0;
+          const hasCompletedProcess = processoSnap.ativos.some((p: any) =>
+            ["concluido", "deferido", "finalizado"].includes(String(p.status || "").toLowerCase())
+          );
+          const steps: { label: string; state: "done" | "active" | "next" }[] = [
+            { label: "Cadastro",   state: cadastroIncompleto ? "active" : "done" },
+            { label: "Documentos", state: docsAprovados > 0 ? "done" : totalDocs > 0 ? "active" : "next" },
+            { label: "Análise",    state: hasProcess ? "done" : totalDocs > 0 ? "active" : "next" },
+            { label: "Processo",   state: hasCompletedProcess ? "done" : hasProcess ? "active" : "next" },
+            { label: "Conclusão",  state: hasCompletedProcess ? "done" : "next" },
+          ];
+
+          // Docs vencendo
+          const docsVencendoBreve = (analysis?.expDocs || []).filter(d => d.days !== null && (d.days as number) >= 0 && (d.days as number) <= 30);
+          const docsVencidos2 = (analysis?.expDocs || []).filter(d => d.days !== null && (d.days as number) < 0);
 
           return (
-            <div className="bg-white rounded-2xl border border-[#7A1F2B]/40 shadow-sm overflow-hidden">
-              <div className="h-1 w-full" style={{ background: temAcao ? "#7A1F2B" : "hsl(152 60% 42%)" }} />
-              <div className="p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${temAcao ? "bg-[#FBF3F4]" : "bg-emerald-50"}`}>
-                  {temAcao ? <AlertTriangle className="h-6 w-6 text-[#7A1F2B]" /> : <CheckCircle className="h-6 w-6 text-emerald-600" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#7A1F2B]">Próxima ação</div>
-                  <div className="text-[15px] md:text-lg font-bold text-slate-900 mt-1">
-                    Olá, {cliente.nome_completo.split(" ")[0]} — {titulo}
+            <>
+              {/* ── Hero card ── */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="p-5 flex items-center gap-5">
+                  {/* Anel */}
+                  <div className="relative w-[72px] h-[72px] shrink-0">
+                    <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="#f1f5f9" strokeWidth="7" />
+                      <circle cx="36" cy="36" r="30" fill="none"
+                        stroke={ringColor} strokeWidth="7"
+                        strokeDasharray={String(circ)}
+                        strokeDashoffset={String(dashoffset)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-[15px] font-bold text-slate-900 leading-none">{pct}%</span>
+                      <span className="text-[8px] text-slate-400 uppercase tracking-wide mt-0.5">pronto</span>
+                    </div>
                   </div>
-                  <div className="text-[12px] text-slate-600 mt-0.5">{descricao}</div>
+                  {/* Texto */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[15px] font-bold text-slate-900">
+                      {cliente.nome_completo.split(" ")[0]},{" "}
+                      {temAcao ? "há uma ação necessária" : docsVencendoBreve.length > 0 ? "atenção aos vencimentos" : "seu dossiê está em dia"}
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-1">
+                      {totalDocs} documento{totalDocs !== 1 ? "s" : ""} enviado{totalDocs !== 1 ? "s" : ""} · {docsAprovados} aprovado{docsAprovados !== 1 ? "s" : ""}{docsAnalise > 0 ? ` · ${docsAnalise} em análise` : ""}
+                    </div>
+                    {temAcao ? (
+                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-50 text-red-700">
+                        <AlertTriangle className="h-3 w-3" /> Ação necessária
+                      </span>
+                    ) : (
+                      <span className="mt-2 inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                        <CheckCircle className="h-3 w-3" /> Nenhuma ação necessária agora
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="shrink-0">
-                  {usaChecklistBotao ? (
-                    (() => {
-                      const d = (checklistReproc || checklistPend)!;
-                      return (
-                        <ChecklistGuiadoBotao
-                          processoId={d.processo_id}
-                          focusDocId={d.id}
-                        />
-                      );
-                    })()
-                  ) : onClick ? (
-                    <button
-                      type="button"
-                      onClick={onClick}
-                      className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[12px] font-bold uppercase tracking-wider transition shadow-sm"
-                    >
-                      Resolver agora <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-emerald-50 text-emerald-700 text-[12px] font-bold uppercase tracking-wider">
-                      <CheckCircle className="h-4 w-4" /> Em dia
-                    </span>
-                  )}
+
+                {/* Banner de ação (só quando tem) */}
+                {temAcao && (
+                  <div className="border-t border-slate-100 bg-[#7A1F2B]/5 px-5 py-3 flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] font-bold text-[#7A1F2B] truncate">{acaoTitulo}</div>
+                      <div className="text-[11px] text-slate-600 mt-0.5">{acaoSub}</div>
+                    </div>
+                    <div className="shrink-0">
+                      {acaoChecklistBotao && acaoDoc ? (
+                        <ChecklistGuiadoBotao processoId={acaoDoc.processo_id} focusDocId={acaoDoc.id} />
+                      ) : acaoOnClick ? (
+                        <button type="button" onClick={acaoOnClick}
+                          className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold transition">
+                          Resolver <ChevronRight className="h-3 w-3" />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+
+                {/* Jornada */}
+                <div className="border-t border-slate-100 px-5 py-4">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400 mb-3">Sua jornada</div>
+                  <div className="flex items-center">
+                    {steps.map((s, i) => (
+                      <React.Fragment key={s.label}>
+                        <div className="flex flex-col items-center shrink-0">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold
+                            ${s.state === "done" ? "bg-emerald-500 text-white" : s.state === "active" ? "bg-[#7A1F2B] text-white" : "bg-slate-100 text-slate-400"}`}>
+                            {s.state === "done" ? <CheckCircle className="h-3.5 w-3.5" /> : i + 1}
+                          </div>
+                          <div className={`text-[9px] mt-1 font-medium text-center w-14 leading-tight
+                            ${s.state === "done" ? "text-emerald-600" : s.state === "active" ? "text-[#7A1F2B]" : "text-slate-400"}`}>
+                            {s.label}
+                          </div>
+                        </div>
+                        {i < steps.length - 1 && (
+                          <div className={`flex-1 h-[2px] mb-4 ${s.state === "done" ? "bg-emerald-400" : "bg-slate-200"}`} />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
 
-        {/* ═══ 4 KPIs COMPACTOS ═══ */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {(() => {
-            const docsHubReprovados = meusDocs.filter((d: any) => d.status === "reprovado").length;
-            const totalPend = processoSnap.aguardandoAcaoCliente + docsHubReprovados;
-            const kpis: { label: string; value: React.ReactNode; icon: any; color: string; target: typeof activeSection }[] = [
-              { label: "Pendências", value: totalPend, icon: AlertTriangle, color: "#7A1F2B", target: "pendencias" },
-              { label: "Processos ativos", value: processoSnap.ativos.length, icon: BriefcaseBusiness, color: "hsl(220 65% 48%)", target: "processos" },
-              { label: "Documentos", value: meusDocs.length, icon: FileText, color: "hsl(262 60% 55%)", target: "documentos" },
-              { label: "Investido", value: analysis ? formatCurrency(analysis.totalVendas) : "—", icon: DollarSign, color: "hsl(152 60% 42%)", target: "financeiro" },
-            ];
-            return kpis.map((k) => {
-              const Icon = k.icon;
-              return (
-                <button
-                  key={k.label}
-                  type="button"
-                  onClick={() => setActiveSection(k.target)}
-                  className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 text-left hover:border-[#7A1F2B]/40 hover:shadow transition"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${k.color}14` }}>
-                      <Icon className="h-4 w-4" style={{ color: k.color }} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{k.label}</div>
-                      <div className="text-xl font-bold text-slate-900 mt-0.5 truncate">{k.value}</div>
-                      <div className="text-[10px] font-semibold text-[#7A1F2B] mt-1 inline-flex items-center gap-0.5">
-                        Ver detalhes <ChevronRight className="h-3 w-3" />
+              {/* ── Números de documentos ── */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5" /> Documentos
+                  </span>
+                  <button type="button" onClick={() => setActiveSection("documentos")}
+                    className="text-[11px] font-semibold text-[#7A1F2B] hover:underline flex items-center gap-0.5">
+                    Ver hub <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-4 divide-x divide-slate-100">
+                  {[
+                    { val: docsAprovados,          lbl: "Aprovados",  color: "#639922", w: totalDocs ? (docsAprovados / totalDocs) * 100 : 0 },
+                    { val: docsAnalise,             lbl: "Em análise", color: "#BA7517", w: totalDocs ? (docsAnalise / totalDocs) * 100 : 0 },
+                    { val: docsVencendoBreve.length, lbl: "Vencendo",  color: "#E24B4A", w: docsVencendoBreve.length > 0 ? 100 : 0 },
+                    { val: docsVencidos2.length,    lbl: "Vencidos",   color: "#888",    w: docsVencidos2.length > 0 ? 100 : 0 },
+                  ].map((k) => (
+                    <div key={k.lbl} className="p-3 flex flex-col gap-1">
+                      <div className="text-[22px] font-bold leading-none" style={{ color: k.val > 0 ? k.color : "#cbd5e1" }}>{k.val}</div>
+                      <div className="text-[9px] uppercase tracking-wide text-slate-400">{k.lbl}</div>
+                      <div className="h-[3px] rounded-full bg-slate-100 mt-1 overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${k.w}%`, background: k.color }} />
                       </div>
                     </div>
-                  </div>
-                </button>
-              );
-            });
-          })()}
-        </div>
-
-        {/* ═══ PROCESSOS EM ANDAMENTO ═══ */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-            <h3 className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-800 inline-flex items-center gap-2">
-              <BriefcaseBusiness className="h-3.5 w-3.5 text-[#7A1F2B]" /> Processos em andamento
-            </h3>
-            <button
-              type="button"
-              onClick={() => setActiveSection("processos")}
-              className="text-[11px] font-semibold text-[#7A1F2B] hover:underline inline-flex items-center gap-0.5"
-            >
-              Ver todos <ChevronRight className="h-3 w-3" />
-            </button>
-          </div>
-          <div className="p-5">
-            {processoSnap.ativos.length === 0 ? (
-              <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
-                <ShoppingBag className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-[12px] text-slate-500 mb-3">Nenhum processo em andamento.</p>
-                <button
-                  type="button"
-                  onClick={() => navigate("/area-do-cliente/contratar")}
-                  className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold uppercase tracking-wider"
-                >
-                  Contratar serviço
-                </button>
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {processoSnap.ativos.slice(0, 3).map((p: any) => {
-                  const meus = processoDocs.filter((d) => d.processo_id === p.id);
-                  const metrics = computeChecklistMetrics(meus);
-                  const sKey = String(p.status || "").toLowerCase();
-                  const done = ["concluido", "deferido", "finalizado"].includes(sKey);
-                  const prontoProto = sKey === "pronto_para_protocolar";
-                  const bad = ["indeferido", "cancelado"].includes(sKey);
-                  const badgeCls = done || prontoProto
-                    ? "bg-emerald-100 text-emerald-800"
-                    : bad
-                      ? "bg-red-100 text-red-800"
-                      : "bg-amber-100 text-amber-800";
-                  const badgeLabel = prontoProto
-                    ? "DOCUMENTAÇÃO COMPLETA"
-                    : (sKey.replace(/_/g, " ") || "ATIVO");
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setActiveSection("processos")}
-                      className="w-full text-left rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-slate-50 hover:border-[#7A1F2B]/30 transition p-3"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="text-[13px] font-bold text-slate-900 truncate">{p.servico_nome || "Serviço"}</div>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${badgeCls}`}>
-                          {badgeLabel}
+
+              {/* ── Vencendo em breve (condicional) ── */}
+              {docsVencendoBreve.length > 0 && (
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Atenção — vencendo em breve</span>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {docsVencendoBreve.slice(0, 4).map((doc, i) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${(doc.days as number) <= 7 ? "bg-red-500" : "bg-amber-400"}`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[12px] font-medium text-slate-800 truncate">{doc.label}</div>
+                          <div className="text-[9px] text-slate-400 uppercase tracking-wide">{doc.category}</div>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap
+                          ${(doc.days as number) <= 7 ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
+                          {doc.days === 0 ? "Vence hoje" : `${doc.days}D restantes`}
                         </span>
                       </div>
-                      <div className="mt-2 w-full h-1.5 rounded-full bg-slate-200">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${metrics.progresso}%`, background: (done || prontoProto) ? "hsl(152 60% 42%)" : bad ? "hsl(0 72% 55%)" : "hsl(38 92% 50%)" }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[10px] mt-1">
-                        <span className="text-slate-500">{metrics.cumpridos} de {metrics.total} documentos</span>
-                        <span className="font-bold text-slate-700">{metrics.progresso}%</span>
-                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-slate-100 px-4 py-2.5 bg-slate-50/60 flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-slate-500">Renove antes do vencimento para manter seu processo ativo.</span>
+                    <button type="button" onClick={() => setShowAddDoc(true)}
+                      className="text-[11px] font-bold text-[#7A1F2B] hover:underline flex items-center gap-0.5 shrink-0">
+                      Renovar <ChevronRight className="h-3 w-3" />
                     </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+                  </div>
+                </div>
+              )}
 
-        {/* ═══ RESUMO FINANCEIRO COMPACTO ═══ */}
-        {analysis && (
-          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
-              <h3 className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-800 inline-flex items-center gap-2">
-                <Wallet className="h-3.5 w-3.5 text-[#7A1F2B]" /> Resumo financeiro
-              </h3>
-              <button
-                type="button"
-                onClick={() => setActiveSection("financeiro")}
-                className="text-[11px] font-semibold text-[#7A1F2B] hover:underline inline-flex items-center gap-0.5"
-              >
-                Ver financeiro <ChevronRight className="h-3 w-3" />
-              </button>
-            </div>
-            <div className="p-5 grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total contratado</div>
-                <div className="text-lg font-bold font-mono text-slate-900 mt-1">{formatCurrency(analysis.totalVendas)}</div>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Cobranças</div>
-                <div className="text-lg font-bold text-slate-900 mt-1">{vendas.length}</div>
-              </div>
-            </div>
-          </div>
-        )}
+              {/* ── Processos + Financeiro ── */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 flex items-center gap-1.5">
+                      <BriefcaseBusiness className="h-3.5 w-3.5" /> Processos
+                    </span>
+                    {processoSnap.ativos.length > 0 && (
+                      <button type="button" onClick={() => setActiveSection("processos")}
+                        className="text-[11px] font-semibold text-[#7A1F2B] hover:underline flex items-center gap-0.5">
+                        Ver todos <ChevronRight className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                  {processoSnap.ativos.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2.5 py-7 px-4 text-center">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
+                        <BriefcaseBusiness className="h-5 w-5 text-slate-300" />
+                      </div>
+                      <p className="text-[12px] text-slate-500 leading-snug">Seu dossiê está pronto.<br />Inicie seu primeiro processo.</p>
+                      <button type="button" onClick={() => navigate("/area-do-cliente/contratar")}
+                        className="inline-flex items-center gap-1 h-8 px-4 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold transition">
+                        Contratar serviço
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {processoSnap.ativos.slice(0, 3).map((p: any) => {
+                        const meus = processoDocs.filter((d) => d.processo_id === p.id);
+                        const metrics = computeChecklistMetrics(meus);
+                        const sKey = String(p.status || "").toLowerCase();
+                        const done = ["concluido", "deferido", "finalizado"].includes(sKey);
+                        const bad = ["indeferido", "cancelado"].includes(sKey);
+                        return (
+                          <button key={p.id} type="button" onClick={() => setActiveSection("processos")}
+                            className="w-full text-left px-4 py-3 hover:bg-slate-50 transition">
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="text-[12px] font-bold text-slate-900 truncate">{p.servico_nome || "Serviço"}</div>
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0
+                                ${done ? "bg-emerald-100 text-emerald-800" : bad ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+                                {sKey.replace(/_/g, " ") || "ativo"}
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                              <div className="h-full rounded-full"
+                                style={{ width: `${metrics.progresso}%`, background: done ? "#639922" : bad ? "#E24B4A" : "#BA7517" }} />
+                            </div>
+                            <div className="flex justify-between text-[10px] mt-1 text-slate-400">
+                              <span>{metrics.cumpridos}/{metrics.total} documentos</span>
+                              <span className="font-bold">{metrics.progresso}%</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
-        {/* ═══ EQUIPE QUERO ARMAS ═══ */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100">
-            <h3 className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-800 inline-flex items-center gap-2">
-              <Shield className="h-3.5 w-3.5 text-[#7A1F2B]" /> Equipe Quero Armas
-            </h3>
-          </div>
-          <div className="p-5 flex flex-col md:flex-row md:items-center gap-3">
-            <p className="text-[12px] text-slate-600 flex-1">
-              Precisa falar com a gente? A equipe Quero Armas está disponível pelo WhatsApp para acompanhar seu processo.
-            </p>
-            <a
-              href="https://wa.me/5511973000060"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-[#7A1F2B] hover:bg-[#641722] text-white text-[12px] font-bold uppercase tracking-wider transition shadow-sm shrink-0"
-            >
-              <MessageCircle className="h-4 w-4" /> Falar no WhatsApp
-            </a>
-          </div>
-        </div>
+                {analysis && (
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 flex items-center gap-1.5">
+                        <Wallet className="h-3.5 w-3.5" /> Financeiro
+                      </span>
+                      <button type="button" onClick={() => setActiveSection("financeiro")}
+                        className="text-[11px] font-semibold text-[#7A1F2B] hover:underline flex items-center gap-0.5">
+                        Ver tudo <ChevronRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-[11px] text-slate-500">Total contratado</span>
+                        <span className="text-[13px] font-bold text-slate-900">{formatCurrency(analysis.totalVendas)}</span>
+                      </div>
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <span className="text-[11px] text-slate-500">Cobranças</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full
+                          ${vendas.length > 0 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                          {vendas.length > 0 ? `${vendas.length} em aberto` : "Em dia"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-        {/* Footer */}
-        <div className="text-center py-4">
-          <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
-        </div>
+              {/* ── Suporte ── */}
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+                    <MessageCircle className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] font-bold text-slate-800">Precisa de ajuda?</div>
+                    <div className="text-[11px] text-slate-500">Fale com a equipe Quero Armas pelo WhatsApp</div>
+                  </div>
+                  <a href="https://wa.me/5511973000060" target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 text-slate-700 text-[11px] font-bold hover:border-[#7A1F2B]/40 transition shrink-0">
+                    Falar agora
+                  </a>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="text-center py-4">
+                <p className="text-[10px] text-slate-300 tracking-wider">Quero Armas · Área do Cliente · Acesso seguro e auditado</p>
+              </div>
+            </>
+          );
+        })()}
         </div>
         )}
 
