@@ -58,48 +58,31 @@ export default function QAContratarServicoPage() {
     })();
   }, []);
 
-  // BLOCO 9 — Filtra catálogo pelas respostas do Assistente de Entrada.
-  //
-  // trilha=inicial       → só "Exército / SIGMA"
-  //   possuiArma=nao     → só concessao-cr (exige_acervo≠true AND exige_cr≠true)
-  //   possuiArma=sim/sei → todos SIGMA (renovação, apostilamento, etc.)
-  //
-  // trilha=defesa_pessoal → só "Polícia Federal" (exclui SIGMA e Mudança)
-  //   possuiArma=nao     → aquisição, posse, operador (exige_acervo≠true)
-  //   possuiArma=sim/sei → todos PF (renovação, registro, porte, etc.)
-  //
-  // trilha=continuidade  → depende da finalidade declarada
-  //   finalidade=tiro_esportivo|caca|colecionamento → só SIGMA com exige_cr=true
-  //   finalidade=defesa_pessoal                     → só PF com exige_acervo=true
-  const SIGMA_CAT = "SINARM CAC";
+  const CAT_SINARM = "SINARM CAC";
+  const CAT_PF = "Polícia Federal";
+
   const itemsFiltrados = useMemo(() => {
     if (trilha === "inicial") {
-      const sigma = items.filter((i) => i.categoria === SIGMA_CAT);
+      const sinarm = items.filter((i) => i.categoria === CAT_SINARM);
       if (possuiArma === "nao") {
-        // Sem arma e sem CR: só concessão de CR
-        return sigma.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
+        return sinarm.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
       }
-      // Com arma ou incerto: todos os serviços SIGMA
-      return sigma;
+      return sinarm;
     }
 
     if (trilha === "defesa_pessoal") {
-      const pf = items.filter((i) => i.categoria !== SIGMA_CAT && i.categoria !== "Mudança de serviço");
+      const pf = items.filter((i) => i.categoria === CAT_PF);
       if (possuiArma === "nao") {
-        // Sem arma: só serviços de aquisição (sem exige_acervo)
         return pf.filter((i) => i.exige_acervo !== true);
       }
-      // Com arma: todos PF (renovação, porte, registro, etc.)
       return pf;
     }
 
     if (trilha === "continuidade") {
       if (finalidade === "defesa_pessoal") {
-        // Arma de defesa pessoal: serviços PF que exigem arma existente
-        return items.filter((i) => i.categoria !== SIGMA_CAT && i.exige_acervo === true);
+        return items.filter((i) => i.categoria === CAT_PF && i.exige_acervo === true);
       }
-      // Tiro esportivo, caça ou colecionamento: serviços SIGMA que exigem CR
-      return items.filter((i) => i.categoria === SIGMA_CAT && i.exige_cr === true);
+      return items.filter((i) => i.categoria === CAT_SINARM && i.exige_cr === true);
     }
 
     return items;
