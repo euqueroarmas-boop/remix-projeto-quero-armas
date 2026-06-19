@@ -129,7 +129,7 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "antecedentes_criminais", label: "Antecedente Criminal da Polícia Civil do Estado de São Paulo", short: "ANT. CIV", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_federal", label: "Antecedentes federais", short: "ANT. FED", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_estadual", label: "Antecedentes estaduais", short: "ANT. EST", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar", label: "Antecedentes militares", short: "ANT. MIL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar", label: "Antecedente Criminal Militar do Estado de São Paulo", short: "ANT. MIL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_eleitoral", label: "Antecedentes eleitorais", short: "ANT. ELET", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
