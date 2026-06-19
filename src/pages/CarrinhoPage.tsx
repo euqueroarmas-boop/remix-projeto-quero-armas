@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/shared/auth/AuthProvider';
 import {
   ArrowRight,
   CheckCircle2,
@@ -31,6 +32,7 @@ const TRUST_ITEMS = [
 export default function CarrinhoPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { items, totalCents, itemCount, removeItem, clear } = useCart();
 
   const primaryItem = items[0];
@@ -54,11 +56,14 @@ export default function CarrinhoPage() {
   const handleCheckout = () => {
     const slugs = items.map((item) => item.service_slug).filter(Boolean);
     if (slugs.length === 0) return;
-    const params = new URLSearchParams({
-      servico: slugs.join(','),
-      origem: 'carrinho',
-    });
-    navigate(`/cadastro?${params.toString()}`);
+    if (user) {
+      // Logado: vai direto para a confirmação do serviço
+      navigate(`/area-do-cliente/contratar/${slugs[0]}/confirmar`);
+    } else {
+      // Visitante: wizard de cadastro guiado
+      const params = new URLSearchParams({ servico: slugs.join(','), origem: 'carrinho' });
+      navigate(`/cadastro?${params.toString()}`);
+    }
   };
 
   if (itemCount === 0) {

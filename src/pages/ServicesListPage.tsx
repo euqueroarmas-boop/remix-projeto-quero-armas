@@ -5,6 +5,7 @@ import { SiteShell } from '@/shared/components/layout/SiteShell';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/shared/cart/CartProvider';
+import { useAuth } from '@/shared/auth/AuthProvider';
 import { listActiveServices, type ServiceWithCategory } from '@/shared/data/catalog';
 import { formatBRL } from '@/shared/lib/formatters';
 import { SEO } from '@/shared/components/SEO';
@@ -171,6 +172,7 @@ const ServicesListPage = () => {
   const [api, setApi] = useState<CarouselApi | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { addItem } = useCart();
   const { counts, registerShare } = usePageEngagement({
     pageKey: 'page:servicos',
@@ -258,6 +260,12 @@ const ServicesListPage = () => {
   }, [api]);
 
   const handleAddToCart = (s: ServiceWithCategory) => {
+    if (user) {
+      // Logado: vai direto para a confirmação, sem passar pelo carrinho
+      navigate(`/area-do-cliente/contratar/${s.slug}/confirmar`);
+      return;
+    }
+    // Visitante: adiciona ao carrinho e segue para revisão
     addItem({
       service_id: s.id,
       service_slug: s.slug,
