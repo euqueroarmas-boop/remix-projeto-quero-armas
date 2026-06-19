@@ -158,7 +158,7 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
 
       {/* ── Stepper ────────────────────────────────────────────────────── */}
       <div style={{ background: "rgba(10,10,10,0.9)", borderBottom: `1px solid ${D.borderSoft}`, padding: "14px 20px", overflowX: "auto" }}>
-        <ol style={{ display: "flex", alignItems: "center", gap: 0, maxWidth: 620, listStyle: "none", margin: 0, padding: 0, minWidth: "fit-content" }}>
+        <ol style={{ display: "flex", alignItems: "center", gap: 0, maxWidth: 760, listStyle: "none", margin: 0, padding: 0, minWidth: "fit-content" }}>
           {STEPS.map((s, idx) => {
             const done = s.n < step;
             const active = s.n === step;
@@ -206,14 +206,15 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
       </div>
 
       {/* ── Body ───────────────────────────────────────────────────────── */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 20px" }}>
+      <main className="qa-checkout-main" style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 32px" }}>
         {hideSidebar ? (
-          <div className="qa-checkout-content" style={{ maxWidth: 640, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
+          /* Modo sem sidebar: usa a maior parte da largura disponível */
+          <div className="qa-checkout-content" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {children}
           </div>
         ) : (
-          <div className="qa-checkout-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
+          <div className="qa-checkout-grid" style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 28, alignItems: "start" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>{children}</div>
 
             {/* Sidebar */}
             <aside style={{ position: "sticky", top: 80 }}>
@@ -269,14 +270,35 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
       </main>
 
       <style>{`
+        /* ── Modo sem sidebar: ocupa toda a largura útil ────────────── */
+        .qa-checkout-content {
+          width: 100%;
+          max-width: 100%;
+          box-sizing: border-box;
+        }
+
+        /* ── Tablet (<= 1024px): colapsa grid, oculta sidebar ───────── */
+        @media (max-width: 1024px) {
+          .qa-checkout-grid {
+            grid-template-columns: 1fr !important;
+          }
+          .qa-checkout-grid aside {
+            display: none !important;
+          }
+          .qa-checkout-main {
+            padding: 20px 24px !important;
+          }
+        }
+
+        /* ── Mobile (<= 640px): padding menor, texto menor ──────────── */
         @media (max-width: 640px) {
           .qa-checkout-brand { display: none !important; }
           .qa-checkout-email { display: none !important; }
-          .qa-checkout-grid { grid-template-columns: 1fr !important; }
-          .qa-checkout-content { padding: 0 !important; }
-          .qa-checkout-shell main { padding: 16px 12px !important; }
-          .qa-step-label { font-size: 9px !important; }
+          .qa-checkout-main  { padding: 14px 12px !important; }
+          .qa-step-label     { font-size: 9px !important; }
         }
+
+        /* ── Mobile pequeno (<= 400px): só números no stepper ────────── */
         @media (max-width: 400px) {
           .qa-step-label { display: none !important; }
         }

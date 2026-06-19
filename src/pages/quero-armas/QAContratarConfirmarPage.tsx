@@ -513,8 +513,20 @@ export default function QAContratarConfirmarPage() {
     <>
       <style>{`
         @keyframes qa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .qa-addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-        .qa-input-wide { grid-column: span 2 !important; }
+
+        /* Grid de endereço: 3 cols em desktop, 2 em tablet, 1 em mobile */
+        .qa-addr-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px;
+          margin-top: 12px;
+        }
+        .qa-input-wide { grid-column: span 3 !important; }
+
+        @media (max-width: 768px) {
+          .qa-addr-grid { grid-template-columns: 1fr 1fr !important; }
+          .qa-input-wide { grid-column: span 2 !important; }
+        }
         @media (max-width: 480px) {
           .qa-addr-grid { grid-template-columns: 1fr !important; }
           .qa-input-wide { grid-column: span 1 !important; }
