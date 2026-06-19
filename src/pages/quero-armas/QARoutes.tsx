@@ -60,6 +60,7 @@ const QAClienteContratacoesPage = lazyRetry(() => import("./QAClienteContratacoe
 const QAAlertasVencimentoPage = lazyRetry(() => import("./QAAlertasVencimentoPage"), "QAAlertasVencimentoPage");
 const QAPrazosExpiradosPage = lazyRetry(() => import("./QAPrazosExpiradosPage"), "QAPrazosExpiradosPage");
 const QAHistoricoStatusPage = lazyRetry(() => import("./QAHistoricoStatusPage"), "QAHistoricoStatusPage");
+const ResumoClienteKanbanMockPage = lazyRetry(() => import("./mocks/ResumoClienteKanbanMockPage"), "ResumoClienteKanbanMockPage");
 // ============================================================================
 // DEV-ONLY: Bancada visual do Wizard KYC (DocumentDataOnboardingWizard).
 //   - Permite QA do fluxo de cadastro documental SEM login real, SEM cliente
@@ -144,6 +145,8 @@ export default function QARoutes() {
       <Routes>
         {/* Raiz: landing page principal pública */}
         <Route path="/" element={<HomePage />} />
+        <Route path="mocks/resumo-cliente-kanban" element={<ResumoClienteKanbanMockPage />} />
+        <Route path="mocks/resumo-cliente-kanban.html" element={<ResumoClienteKanbanMockPage />} />
 
         {/* DEV-ONLY: rota de QA visual do Wizard KYC (não montada em produção). */}
         {QAWizardKycPreviewPage && (
