@@ -162,6 +162,33 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
   const fileRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<Record<string, number>>({});
 
+  // Busca endereço via ViaCEP e preenche campos de endereço vazios.
+  const fetchViaCep = useCallback(async (cepRaw: string) => {
+    const digits = cepRaw.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.erro) return;
+      const candidates: Record<string, string> = {};
+      if (data.logradouro) candidates.endereco = String(data.logradouro).toUpperCase();
+      if (data.bairro)     candidates.bairro   = String(data.bairro).toUpperCase();
+      if (data.localidade) candidates.cidade   = String(data.localidade).toUpperCase();
+      if (data.uf)         candidates.estado   = String(data.uf).toUpperCase();
+      const toFill: Record<string, string> = {};
+      for (const [k, v] of Object.entries(candidates)) {
+        if (!v) continue;
+        const existing = cliente?.[k];
+        if (!existing || !String(existing).trim()) toFill[k] = v;
+      }
+      if (!Object.keys(toFill).length) return;
+      setValores((prev) => ({ ...prev, ...toFill }));
+      const r = await chamarAtualizarCadastro(toFill);
+      if (r.ok) onUpdated?.();
+    } catch { /* ViaCEP indisponível — continua sem erro */ }
+  }, [cliente, onUpdated]);
+
   useEffect(() => {
     if (open) {
       setModo("escolher");
@@ -173,12 +200,17 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
       setIaFile(null);
       setChecklistMatches([]);
       setChecklistSelecionados({});
+      // Se CEP já está salvo mas endereço está vazio, busca via ViaCEP automaticamente.
+      const cepSalvo = cliente?.cep;
+      if (cepSalvo && !cliente?.endereco) {
+        fetchViaCep(String(cepSalvo));
+      }
     }
     return () => {
       Object.values(timersRef.current).forEach((t) => window.clearTimeout(t));
       timersRef.current = {};
     };
-  }, [open]);
+  }, [open, fetchViaCep]);
 
   const progresso = useMemo(() => calcularProgressoCadastro(cliente), [cliente]);
   const faltantes = useMemo(() => getCamposFaltantesCadastro(cliente), [cliente]);
@@ -202,6 +234,11 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     setValores((prev) => ({ ...prev, [campo.key]: v }));
     setSavingState((prev) => ({ ...prev, [campo.key]: "idle" }));
 
+    // CEP completo → busca endereço automaticamente
+    if (campo.tipo === "cep" && raw.replace(/\D/g, "").length === 8) {
+      fetchViaCep(v);
+    }
+
     if (timersRef.current[campo.key]) window.clearTimeout(timersRef.current[campo.key]);
     const minLen =
       campo.tipo === "cep" ? 9 :
@@ -220,7 +257,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         setSavingState((prev) => ({ ...prev, [campo.key]: "error" }));
       }
     }, DEBOUNCE_MS);
-  }, [onUpdated]);
+  }, [onUpdated, fetchViaCep]);
 
   const handleEscolherArquivo = () => fileRef.current?.click();
 
