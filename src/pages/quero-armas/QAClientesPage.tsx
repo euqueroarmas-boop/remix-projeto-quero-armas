@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { LoadingState, ErrorRetryState, EmptyState, SkeletonList } from "@/components/quero-armas/LoadStates";
 import ClienteFormModal from "@/components/quero-armas/clientes/ClienteFormModal";
 import ClienteOverview from "@/components/quero-armas/clientes/ClienteOverview";
+import ClienteResumoKanban from "@/components/quero-armas/clientes/ClienteResumoKanban";
 import OrigemClienteCadastroPublico from "@/components/quero-armas/clientes/OrigemClienteCadastroPublico";
 import DadosFormularioPublicoSection from "@/components/quero-armas/clientes/DadosFormularioPublicoSection";
 import { VendaModal, DeleteConfirm } from "@/components/quero-armas/clientes/SubEntityModals";
