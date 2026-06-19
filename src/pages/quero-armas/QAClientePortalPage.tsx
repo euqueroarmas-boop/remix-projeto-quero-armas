@@ -1836,7 +1836,7 @@ export default function QAClientePortalPage() {
                               {/* Linha 1: categoria + nome */}
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="shrink-0 text-[8px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-slate-100 text-slate-500">
-                                  {catMeta.short || catMeta.label}
+                                  {catMeta.label}
                                 </span>
                                 <span className="text-[11px] font-semibold text-slate-800 truncate">{nomeDoc}</span>
                                 {d.arquivo_storage_path && <Paperclip className="h-2.5 w-2.5 text-slate-400 shrink-0" />}
