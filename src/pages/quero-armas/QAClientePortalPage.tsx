@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import {
   Shield, User, Phone, Mail, MapPin, LogOut, Calendar, DollarSign,
   CheckCircle, Clock, XCircle, AlertTriangle, Activity, FileText,
-  Crosshair, CreditCard, ChevronRight, Bell, Target, Zap, History,
+  Crosshair, CreditCard, ChevronRight, ChevronLeft, Bell, Target, Zap, History,
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
@@ -186,6 +186,7 @@ export default function QAClientePortalPage() {
     | "configuracoes"
   >("resumo");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
   const [avatarOficial, setAvatarOficial] = useState<ClienteAvatarOficial | null>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -1035,7 +1036,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <div className="min-h-dvh bg-slate-50 text-slate-900 lg:pl-72 overflow-x-hidden">
+    <div className={`min-h-dvh bg-slate-50 text-slate-900 overflow-x-hidden transition-[padding-left] duration-200 ${sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"}`}>
       <ForcePasswordChangeModal
         open={mustChangePassword}
         onSuccess={() => setMustChangePassword(false)}
@@ -1046,37 +1047,94 @@ export default function QAClientePortalPage() {
         clienteId={(cliente as any)?.id ?? null}
         onConcluido={handleEntradaConcluido}
       />
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-slate-200 bg-white/95 p-4 shadow-[12px_0_40px_rgba(15,23,42,0.04)]">
-        <div className="flex items-center justify-between h-20">
-          <img src={logoColor} alt="Quero Armas" className="h-10 w-auto object-contain" draggable={false} />
-          <button type="button" aria-label="Recolher menu lateral" className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-slate-500 inline-flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B]"><ChevronRight className="h-4 w-4 rotate-180" aria-hidden="true" /></button>
+      <aside className={`hidden lg:flex fixed inset-y-0 left-0 z-50 flex-col border-r border-slate-200 bg-white/95 shadow-[12px_0_40px_rgba(15,23,42,0.04)] transition-[width] duration-200 overflow-hidden ${sidebarCollapsed ? "w-16" : "w-72"}`}>
+        {/* ── Header: logo + botão de colapso ── */}
+        <div className={`flex items-center border-b border-slate-100 ${sidebarCollapsed ? "h-[76px] justify-center px-2" : "h-[76px] justify-between px-5"}`}>
+          {sidebarCollapsed ? (
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(false)}
+              aria-label="Expandir menu"
+              className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <Fragment>
+              <img src={logoColor} alt="Quero Armas" className="h-9 w-auto object-contain" draggable={false} />
+              <button
+                type="button"
+                onClick={() => setSidebarCollapsed(true)}
+                aria-label="Recolher menu"
+                className="flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </Fragment>
+          )}
         </div>
-        <nav className="mt-6 space-y-1">
+
+        {/* ── Navegação ── */}
+        <nav className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${sidebarCollapsed ? "px-2 space-y-1" : "px-3 space-y-1"}`}>
           {primaryNavItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
             return (
-              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 text-[13px] font-bold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}>
-                <Icon className="h-5 w-5" /> {item.label}
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goSection(item.key)}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[13px] font-bold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}
+              >
+                <Icon className={sidebarCollapsed ? "h-5 w-5" : "h-5 w-5 shrink-0"} />
+                {!sidebarCollapsed && item.label}
               </button>
             );
           })}
-          <div className="mt-4 mb-1 px-4 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Mais</div>
+          {!sidebarCollapsed && (
+            <div className="mt-4 mb-1 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Mais</div>
+          )}
+          {sidebarCollapsed && <div className="my-1 h-px bg-slate-100" />}
           {secondaryNavItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key;
             return (
-              <button key={item.key} type="button" onClick={() => goSection(item.key)} className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 text-[12px] font-semibold transition ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}>
-                <Icon className="h-4 w-4" /> {item.label}
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => goSection(item.key)}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[12px] font-semibold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}
+              >
+                <Icon className={sidebarCollapsed ? "h-4 w-4" : "h-4 w-4 shrink-0"} />
+                {!sidebarCollapsed && item.label}
               </button>
             );
           })}
         </nav>
-        <div className="mt-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900"><HelpCircle className="h-4 w-4" /> Precisa de ajuda?</div>
-          <p className="mt-2 text-[12px] text-slate-500">Fale com nosso time</p>
-          <button type="button" onClick={() => goSection("mensagens")} className="mt-3 h-10 w-full rounded-lg border border-[#7A1F2B] text-[12px] font-bold text-[#7A1F2B]">Abrir chat</button>
-        </div>
+
+        {/* ── Rodapé: ajuda ── */}
+        {!sidebarCollapsed ? (
+          <div className="px-3 pb-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900"><HelpCircle className="h-4 w-4" /> Precisa de ajuda?</div>
+              <p className="mt-2 text-[12px] text-slate-500">Fale com nosso time</p>
+              <button type="button" onClick={() => goSection("mensagens")} className="mt-3 h-10 w-full rounded-lg border border-[#7A1F2B] text-[12px] font-bold text-[#7A1F2B]">Abrir chat</button>
+            </div>
+          </div>
+        ) : (
+          <div className="pb-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => goSection("mensagens")}
+              title="Precisa de ajuda?"
+              className="flex items-center justify-center h-10 w-10 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition"
+            >
+              <HelpCircle className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </aside>
 
       {mobileNavOpen && (
