@@ -60,10 +60,11 @@ export default function QAContratarServicoPage() {
 
   const CAT_SINARM = "SINARM CAC";
   const CAT_PF = "Polícia Federal";
+  const CAT_GERAL = "Geral"; // serviços válidos para ambas as trilhas (ex: 2ª via CRAF)
 
   const itemsFiltrados = useMemo(() => {
     if (trilha === "inicial") {
-      const sinarm = items.filter((i) => i.categoria === CAT_SINARM);
+      const sinarm = items.filter((i) => i.categoria === CAT_SINARM || i.categoria === CAT_GERAL);
       if (possuiArma === "nao") {
         return sinarm.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
       }
@@ -71,7 +72,7 @@ export default function QAContratarServicoPage() {
     }
 
     if (trilha === "defesa_pessoal") {
-      const pf = items.filter((i) => i.categoria === CAT_PF);
+      const pf = items.filter((i) => i.categoria === CAT_PF || i.categoria === CAT_GERAL);
       if (possuiArma === "nao") {
         return pf.filter((i) => i.exige_acervo !== true);
       }
@@ -80,9 +81,13 @@ export default function QAContratarServicoPage() {
 
     if (trilha === "continuidade") {
       if (finalidade === "defesa_pessoal") {
-        return items.filter((i) => i.categoria === CAT_PF && i.exige_acervo === true);
+        return items.filter(
+          (i) => (i.categoria === CAT_PF || i.categoria === CAT_GERAL) && i.exige_acervo === true
+        );
       }
-      return items.filter((i) => i.categoria === CAT_SINARM && i.exige_cr === true);
+      return items.filter(
+        (i) => (i.categoria === CAT_SINARM || i.categoria === CAT_GERAL) && i.exige_cr === true
+      );
     }
 
     return items;
