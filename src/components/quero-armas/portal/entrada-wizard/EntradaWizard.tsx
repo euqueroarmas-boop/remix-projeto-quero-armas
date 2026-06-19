@@ -13,6 +13,7 @@ import {
   Wrench,
   HelpCircle,
   ShieldCheck,
+  Shield,
 } from "lucide-react";
 
 /* =============================================================================
@@ -31,7 +32,7 @@ import {
 
 const MARROM = "#7A1F2B";
 
-export type EntradaObjetivo = "inicial" | "continuidade" | "indefinido";
+export type EntradaObjetivo = "inicial" | "defesa_pessoal" | "continuidade" | "indefinido";
 export type EntradaPossuiArma = "sim" | "nao" | "nao_sei";
 
 export interface EntradaWizardRespostas {
@@ -118,9 +119,16 @@ export default function EntradaWizard({ open, onOpenChange, clienteId, onConclui
             <OptionCard
               icon={<FileSignature className="h-5 w-5" style={{ color: MARROM }} />}
               title="Tirar ou renovar meu CR de CAC"
-              subtitle="Concessão de CR, filiação a clube, declarações iniciais"
+              subtitle="Concessão de CR, filiação a clube, declarações iniciais — Exército/SIGMA"
               selected={objetivo === "inicial"}
               onClick={() => setObjetivo("inicial")}
+            />
+            <OptionCard
+              icon={<Shield className="h-5 w-5" style={{ color: MARROM }} />}
+              title="Adquirir uma arma para defesa pessoal"
+              subtitle="Posse, registro, porte, aquisição — Polícia Federal/SINARM"
+              selected={objetivo === "defesa_pessoal"}
+              onClick={() => setObjetivo("defesa_pessoal")}
             />
             <OptionCard
               icon={<Wrench className="h-5 w-5" style={{ color: MARROM }} />}

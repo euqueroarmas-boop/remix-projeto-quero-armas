@@ -58,15 +58,28 @@ export default function QAContratarServicoPage() {
   }, []);
 
   // BLOCO 9 — Filtra catálogo pelas respostas do Assistente de Entrada.
-  // trilha=inicial + possuiArma=nao → só serviços sem exige_acervo e sem exige_cr
-  // trilha=inicial + possuiArma=sim → serviços sem exige_acervo (já tem arma, pode ter CR)
-  // trilha=continuidade             → serviços que exigem acervo existente
+  // Cada trilha filtra a categoria correta para não misturar SIGMA com PF.
+  //
+  // trilha=inicial       → só "Exército / SIGMA"
+  //   + possuiArma=nao   → exige_acervo≠true AND exige_cr≠true (só concessao-cr)
+  //   + possuiArma=sim   → todos SIGMA sem exige_acervo
+  //
+  // trilha=defesa_pessoal → só "Polícia Federal" (excl. SIGMA e Mudança)
+  //   + possuiArma=nao   → exige_acervo≠true (aquisição, posse, operador)
+  //   + possuiArma=sim   → todos PF
+  //
+  // trilha=continuidade  → serviços que exigem acervo existente (qualquer categoria)
+  const SIGMA_CAT = "Exército / SIGMA";
   const itemsFiltrados = useMemo(() => {
     if (trilha === "inicial") {
-      if (possuiArma === "nao") {
-        return items.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
-      }
-      return items.filter((i) => i.exige_acervo !== true);
+      const sigma = items.filter((i) => i.categoria === SIGMA_CAT);
+      if (possuiArma === "nao") return sigma.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
+      return sigma.filter((i) => i.exige_acervo !== true);
+    }
+    if (trilha === "defesa_pessoal") {
+      const pf = items.filter((i) => i.categoria !== SIGMA_CAT && i.categoria !== "Mudança de serviço");
+      if (possuiArma === "nao") return pf.filter((i) => i.exige_acervo !== true);
+      return pf;
     }
     if (trilha === "continuidade") return items.filter((i) => i.exige_acervo !== false);
     return items;
@@ -94,6 +107,10 @@ export default function QAContratarServicoPage() {
       ? "Tirar CR · Sem arma"
       : trilha === "inicial"
       ? "Tirar/renovar meu CR"
+      : trilha === "defesa_pessoal" && possuiArma === "nao"
+      ? "Defesa pessoal · Sem arma"
+      : trilha === "defesa_pessoal"
+      ? "Defesa pessoal"
       : trilha === "continuidade"
       ? "Mexer em arma que já tenho"
       : null;
