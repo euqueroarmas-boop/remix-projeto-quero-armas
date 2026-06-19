@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Resumo do Cliente — Kanban</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f5f1;
+    --paper-2:#efece4;
+    --ink:#141414;
+    --ink-2:#3a3a3a;
+    --muted:#7a756c;
+    --line:#d9d4c7;
+    --line-2:#c4bea9;
+    --bordo:#7A1F2B;
+    --bordo-2:#5a141c;
+    --bordo-soft:#f1dee0;
+    --amber:#a8741a;
+    --amber-soft:#f5e6c8;
+    --danger:#8a1414;
+    --danger-soft:#f3d6d6;
+    --ok:#1f4d2b;
+    --ok-soft:#dfead9;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{padding:20px 16px 80px;max-width:1400px;margin:0 auto}
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
+  .brand{font-family:Fraunces,serif;font-weight:700;letter-spacing:-.01em;font-size:22px;color:var(--bordo)}
+  .crumb{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  h1{font-family:Fraunces,serif;font-weight:700;font-size:28px;line-height:1.1;margin:0}
+  .meta{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-2)}
+  .meta b{color:var(--ink)}
+  .meta .dot{width:6px;height:6px;border-radius:50%;background:var(--bordo);display:inline-block;margin-right:6px}
+
+  /* Toolbar */
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border:1px solid var(--line);background:#fff;color:var(--ink-2);border-radius:999px;cursor:pointer}
+  .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .chip .n{font-weight:700;color:inherit;opacity:.85}
+
+  /* Board */
+  .board{display:grid;grid-template-columns:repeat(4,minmax(260px,1fr));gap:14px}
+  .col{background:var(--paper-2);border:1px solid var(--line);border-radius:10px;padding:10px;min-height:300px;display:flex;flex-direction:column}
+  .col h2{margin:2px 4px 10px;font-family:Inter,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);display:flex;align-items:center;justify-content:space-between}
+  .col h2 .count{background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px 8px;font-size:10px;letter-spacing:.1em;color:var(--ink)}
+  .col.todo h2{color:var(--muted)}
+  .col.doing h2{color:var(--bordo)}
+  .col.review h2{color:var(--amber)}
+  .col.done h2{color:var(--ok)}
+  .col-strip{height:3px;border-radius:3px;background:var(--line-2);margin:-2px 4px 10px}
+  .col.doing .col-strip{background:var(--bordo)}
+  .col.review .col-strip{background:var(--amber)}
+  .col.done .col-strip{background:var(--ok)}
+
+  /* Card */
+  .card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:11px 12px 12px;margin-bottom:10px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  .card + .card{margin-top:0}
+  .card .tag{display:inline-block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:3px;background:var(--paper-2);color:var(--ink-2);border:1px solid var(--line);margin-bottom:6px}
+  .card .tag.bordo{background:var(--bordo-soft);color:var(--bordo);border-color:#e6c8cc}
+  .card .tag.amber{background:var(--amber-soft);color:#7a5410;border-color:#e6d3a3}
+  .card .tag.ok{background:var(--ok-soft);color:var(--ok);border-color:#c9dabd}
+  .card .tag.danger{background:var(--danger-soft);color:var(--danger);border-color:#e6c0c0}
+  .card h3{margin:2px 0 6px;font-size:14px;font-weight:600;line-height:1.25;letter-spacing:-.005em}
+  .card p{margin:0 0 8px;font-size:12px;color:var(--ink-2);line-height:1.45}
+  .card .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px dashed var(--line);padding-top:7px;margin-top:8px}
+  .due{font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
+  .due b{color:var(--ink)}
+  .due.warn{color:var(--amber)}
+  .due.bad{color:var(--danger)}
+  .ic{width:10px;height:10px;border-radius:2px;background:currentColor;opacity:.6}
+  .who{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-2)}
+  .avatar{width:18px;height:18px;border-radius:50%;background:var(--bordo);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;letter-spacing:.04em}
+  .avatar.b2{background:#3a3a3a}
+  .avatar.b3{background:var(--amber)}
+  .progress{height:4px;background:var(--paper-2);border-radius:2px;overflow:hidden;margin:4px 0 8px;border:1px solid var(--line)}
+  .progress span{display:block;height:100%;background:var(--bordo)}
+  .check{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--ink-2);margin:3px 0}
+  .check .box{width:11px;height:11px;border:1.5px solid var(--line-2);border-radius:2px;flex-shrink:0;background:#fff}
+  .check.ok .box{background:var(--ok);border-color:var(--ok);position:relative}
+  .check.ok .box::after{content:"";position:absolute;left:2px;top:0;width:4px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+  .check.ok span{text-decoration:line-through;color:var(--muted)}
+
+  /* Empty/add */
+  .add{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:center;padding:10px;border:1px dashed var(--line);border-radius:8px;margin-top:auto;cursor:pointer}
+  .add:hover{color:var(--bordo);border-color:var(--bordo)}
+
+  /* Footer summary */
+  .summary{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .sm{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .sm .k{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .sm .v{font-family:Fraunces,serif;font-size:22px;font-weight:700;color:var(--ink);margin-top:2px}
+  .sm .v small{font-family:Inter,sans-serif;font-size:11px;font-weight:500;color:var(--muted);margin-left:6px}
+
+  @media (max-width: 1100px){
+    .board{grid-template-columns:repeat(2,1fr)}
+    .summary{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width: 560px){
+    .board{grid-template-columns:1fr}
+    h1{font-size:22px}
+    .summary{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="crumb">Quero Armas · Resumo do Cliente</div>
+      <h1>João da Silva Mendes</h1>
+      <div class="meta" style="margin-top:6px">
+        <span><span class="dot"></span>CAC Ativo</span>
+        <span><b>CR</b> 12345-67</span>
+        <span><b>3</b> processos em andamento</span>
+      </div>
+    </div>
+    <div class="brand">Quero Armas</div>
+  </header>
+
+  <div class="toolbar">
+    <span class="chip on">Todos <span class="n">9</span></span>
+    <span class="chip">Aquisição <span class="n">3</span></span>
+    <span class="chip">Renovação <span class="n">2</span></span>
+    <span class="chip">Porte <span class="n">2</span></span>
+    <span class="chip">Documentos <span class="n">2</span></span>
+  </div>
+
+  <div class="board">
+    <!-- A FAZER -->
+    <section class="col todo">
+      <div class="col-strip"></div>
+      <h2>A Fazer <span class="count">2</span></h2>
+
+      <div class="card">
+        <span class="tag">Aquisição</span>
+        <h3>Cadastrar arma no SIGMA</h3>
+        <p>Aguardando emissão da Guia de Tráfego para protocolar o registro definitivo.</p>
+        <div class="foot">
+          <span class="due"><span class="ic"></span>Em <b>5 dias</b></span>
+          <span class="who"><span class="avatar">JM</span>Você</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag">Documentos</span>
+        <h3>Anexar comprovante de endereço</h3>
+        <p>Conta atualizada (últimos 90 dias) em nome do titular.</p>
+        <div class="foot">
+          <span class="due warn"><span class="ic"></span>Sem prazo definido</span>
+          <span class="who"><span class="avatar">JM</span>Você</span>
+        </div>
+      </div>
+
+      <div class="add">+ Nova tarefa</div>
+    </section>
+
+    <!-- EM ANDAMENTO -->
+    <section class="col doing">
+      <div class="col-strip"></div>
+      <h2>Em Andamento <span class="count">3</span></h2>
+
+      <div class="card">
+        <span class="tag bordo">Aquisição</span>
+        <h3>Pistola 9mm — CAC Atirador</h3>
+        <div class="progress"><span style="width:65%"></span></div>
+        <div class="check ok"><span class="box"></span><span>Pagamento confirmado</span></div>
+        <div class="check ok"><span class="box"></span><span>SIGMA preenchido</span></div>
+        <div class="check"><span class="box"></span><span>Certidões criminais</span></div>
+        <div class="foot">
+          <span class="due warn"><span class="ic"></span>Vence em <b>12 dias</b></span>
+          <span class="who"><span class="avatar b2">CA</span>Dr. Carlos</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag bordo">Renovação</span>
+        <h3>Renovação de CR — Colecionador</h3>
+        <div class="progress"><span style="width:30%"></span></div>
+        <p>Em análise pelo Exército. Próximo passo: agendar vistoria.</p>
+        <div class="foot">
+          <span class="due"><span class="ic"></span>Vence em <b>42 dias</b></span>
+          <span class="who"><span class="avatar b3">AN</span>Ana Souza</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag bordo">Porte</span>
+        <h3>Porte de Trânsito — Evento de tiro</h3>
+        <div class="progress"><span style="width:80%"></span></div>
+        <p>Guia de Tráfego emitida. Aguardando assinatura digital do despachante.</p>
+        <div class="foot">
+          <span class="due"><span class="ic"></span>Pronto em <b>2 dias</b></span>
+          <span class="who"><span class="avatar b2">CA</span>Dr. Carlos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- EM REVISÃO -->
+    <section class="col review">
+      <div class="col-strip"></div>
+      <h2>Em Revisão <span class="count">2</span></h2>
+
+      <div class="card">
+        <span class="tag amber">Documentos</span>
+        <h3>Certidão criminal estadual</h3>
+        <p>Validade expira em 8 dias. Recomendado renovar antes do protocolo.</p>
+        <div class="foot">
+          <span class="due bad"><span class="ic"></span>Expira em <b>8 dias</b></span>
+          <span class="who"><span class="avatar b3">AN</span>Ana Souza</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag amber">Renovação</span>
+        <h3>Comprovante de atividade — Clube de Tiro</h3>
+        <p>Aguardando assinatura do diretor técnico do clube.</p>
+        <div class="foot">
+          <span class="due warn"><span class="ic"></span>Vence em <b>15 dias</b></span>
+          <span class="who"><span class="avatar">JM</span>Você</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONCLUÍDO -->
+    <section class="col done">
+      <div class="col-strip"></div>
+      <h2>Concluído <span class="count">2</span></h2>
+
+      <div class="card">
+        <span class="tag ok">Aquisição</span>
+        <h3>Autorização de compra emitida</h3>
+        <div class="foot">
+          <span class="due"><span class="ic"></span>Concluído em <b>14/06</b></span>
+          <span class="who"><span class="avatar b2">CA</span>Dr. Carlos</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="tag ok">Documentos</span>
+        <h3>Laudo psicológico aprovado</h3>
+        <div class="foot">
+          <span class="due"><span class="ic"></span>Concluído em <b>02/06</b></span>
+          <span class="who"><span class="avatar b3">AN</span>Ana Souza</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="summary">
+    <div class="sm"><div class="k">Tarefas Abertas</div><div class="v">7 <small>de 9</small></div></div>
+    <div class="sm"><div class="k">Próximo Vencimento</div><div class="v">2 <small>dias</small></div></div>
+    <div class="sm"><div class="k">Documentos a Renovar</div><div class="v">1 <small>urgente</small></div></div>
+    <div class="sm"><div class="k">Processos Ativos</div><div class="v">3</div></div>
+  </div>
+</div>
+</body>
+</html>
