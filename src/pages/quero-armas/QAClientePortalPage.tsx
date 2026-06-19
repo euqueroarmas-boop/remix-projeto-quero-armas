@@ -9,7 +9,7 @@ import {
   FolderArchive, Plus, Trash2, Sparkles, BadgeCheck, Paperclip,
   ShoppingBag, FileStack, Image as ImageIcon, ClipboardCheck, Menu,
   MessageCircle, Settings, Wallet, BriefcaseBusiness, Grid2X2, HelpCircle,
-  ShieldCheck,
+  ShieldCheck, BellDot, FolderKanban, Files, ScrollText, Headphones, SlidersHorizontal,
 } from "lucide-react";
 import { getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { HistoricoAtualizacoes } from "@/components/quero-armas/clientes/HistoricoAtualizacoes";
@@ -42,6 +42,7 @@ import { cadastroEstaIncompleto, resumoFaltantesCadastro } from "@/lib/quero-arm
 import EntradaWizard, { type EntradaWizardRespostas } from "@/components/quero-armas/portal/entrada-wizard/EntradaWizard";
 import { getHubCategoriaMeta, inferEscopoDocumental, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import logoColor from "@/assets/logo-color.png";
+import logoIcon from "@/assets/logo-wmti-icon.webp";
 
 const formatDate = (d: string | null) => {
   if (!d) return "—";
@@ -237,7 +238,10 @@ export default function QAClientePortalPage() {
         : prev,
     );
     const trilha = respostas.objetivo;
-    const destino = `/area-do-cliente/contratar${trilha !== "indefinido" ? `?trilha=${trilha}` : ""}`;
+    const params = new URLSearchParams();
+    if (trilha !== "indefinido") params.set("trilha", trilha);
+    params.set("possuiArma", respostas.possuiArma);
+    const destino = `/area-do-cliente/contratar?${params.toString()}`;
 
     // BLOCO 12 — Cadastro mínimo de arma.
     // Se o cliente declarou possuir arma E ainda não tem nada no acervo,
@@ -856,18 +860,16 @@ export default function QAClientePortalPage() {
   // não é mais exposta como item de navegação — "Meus processos" cobre o
   // mesmo conteúdo na Fase 2.
   const navItems = useMemo(() => [
-    { key: "resumo" as const, label: "Resumo", icon: Grid2X2, path: "/area-do-cliente", group: "primary" as const },
-    { key: "pendencias" as const, label: "Pendências", icon: AlertTriangle, path: "/area-do-cliente/pendencias", group: "primary" as const },
-    { key: "processos" as const, label: "Meus processos", icon: BriefcaseBusiness, path: "/area-do-cliente/processos", group: "primary" as const },
-    { key: "financeiro" as const, label: "Financeiro", icon: Wallet, path: "/area-do-cliente/financeiro", group: "primary" as const },
-    { key: "documentos" as const, label: "Documentos", icon: FileText, path: "/area-do-cliente/documentos", group: "primary" as const },
-    { key: "contratos" as const, label: "Contratos", icon: FileStack, path: "/area-do-cliente/contratos", group: "primary" as const },
-    { key: "arsenal" as const, label: "Meu Arsenal", icon: Shield, path: "/area-do-cliente/arsenal", group: "secondary" as const },
-    { key: "mensagens" as const, label: "Suporte", icon: MessageCircle, path: "/area-do-cliente/mensagens", group: "secondary" as const },
-    { key: "configuracoes" as const, label: "Configurações", icon: Settings, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
+    { key: "resumo" as const, label: "Resumo", icon: LayoutDashboard, path: "/area-do-cliente", group: "primary" as const },
+    { key: "pendencias" as const, label: "Pendências", icon: BellDot, path: "/area-do-cliente/pendencias", group: "primary" as const },
+    { key: "processos" as const, label: "Meus processos", icon: FolderKanban, path: "/area-do-cliente/processos", group: "primary" as const },
+    { key: "financeiro" as const, label: "Financeiro", icon: CreditCard, path: "/area-do-cliente/financeiro", group: "primary" as const },
+    { key: "documentos" as const, label: "Documentos", icon: Files, path: "/area-do-cliente/documentos", group: "primary" as const },
+    { key: "contratos" as const, label: "Contratos", icon: ScrollText, path: "/area-do-cliente/contratos", group: "primary" as const },
+    { key: "arsenal" as const, label: "Meu Arsenal", icon: Crosshair, path: "/area-do-cliente/arsenal", group: "secondary" as const },
+    { key: "mensagens" as const, label: "Suporte", icon: Headphones, path: "/area-do-cliente/mensagens", group: "secondary" as const },
+    { key: "configuracoes" as const, label: "Configurações", icon: SlidersHorizontal, path: "/area-do-cliente/configuracoes", group: "secondary" as const },
   ], []);
-  const primaryNavItems = useMemo(() => navItems.filter((i) => i.group === "primary"), [navItems]);
-  const secondaryNavItems = useMemo(() => navItems.filter((i) => i.group === "secondary"), [navItems]);
 
   // Fase 3 — escopos exibidos no PortalScopeSelector. Um item por processo
   // do cliente, mais "Todos os processos" (injetado pelo provider se ausente).
@@ -1056,9 +1058,9 @@ export default function QAClientePortalPage() {
               type="button"
               onClick={() => setSidebarCollapsed(false)}
               aria-label="Expandir menu"
-              className="flex items-center justify-center h-9 w-9 rounded-lg text-slate-400 hover:text-[#7A1F2B] hover:bg-[#FBF3F4] transition"
+              className="flex items-center justify-center"
             >
-              <ChevronRight className="h-4 w-4" />
+              <img src={logoIcon} alt="Quero Armas" className="h-10 w-10 object-contain rounded-lg" draggable={false} />
             </button>
           ) : (
             <Fragment>
@@ -1077,7 +1079,7 @@ export default function QAClientePortalPage() {
 
         {/* ── Navegação ── */}
         <nav className={`flex-1 overflow-y-auto overflow-x-hidden py-4 ${sidebarCollapsed ? "px-2 space-y-1" : "px-3 space-y-1"}`}>
-          {primaryNavItems.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeSection === item.key || (item.key === "processos" && activeSection === "contratacoes");
             return (
@@ -1086,29 +1088,9 @@ export default function QAClientePortalPage() {
                 type="button"
                 onClick={() => goSection(item.key)}
                 title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[13px] font-bold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-700 hover:bg-slate-50"}`}
+                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[13px] font-semibold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}
               >
-                <Icon className={sidebarCollapsed ? "h-5 w-5" : "h-5 w-5 shrink-0"} />
-                {!sidebarCollapsed && item.label}
-              </button>
-            );
-          })}
-          {!sidebarCollapsed && (
-            <div className="mt-4 mb-1 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">Mais</div>
-          )}
-          {sidebarCollapsed && <div className="my-1 h-px bg-slate-100" />}
-          {secondaryNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = activeSection === item.key;
-            return (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => goSection(item.key)}
-                title={sidebarCollapsed ? item.label : undefined}
-                className={`w-full flex items-center rounded-lg transition ${sidebarCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3 py-2.5"} text-[12px] font-semibold ${active ? "bg-[#FBF3F4] text-[#7A1F2B]" : "text-slate-600 hover:bg-slate-50"}`}
-              >
-                <Icon className={sidebarCollapsed ? "h-4 w-4" : "h-4 w-4 shrink-0"} />
+                <Icon className="h-5 w-5 shrink-0" />
                 {!sidebarCollapsed && item.label}
               </button>
             );

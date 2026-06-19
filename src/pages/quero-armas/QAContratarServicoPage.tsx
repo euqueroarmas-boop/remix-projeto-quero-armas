@@ -26,6 +26,7 @@ interface CatalogoItem {
   ativo: boolean;
   display_order: number;
   exige_acervo: boolean | null;
+  exige_cr: boolean | null;
 }
 
 function formatBRL(v: number | null) {
@@ -37,6 +38,7 @@ export default function QAContratarServicoPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const trilha = searchParams.get("trilha"); // "inicial" | "continuidade" | null
+  const possuiArma = searchParams.get("possuiArma"); // "sim" | "nao" | "nao_sei" | null
   const [items, setItems] = useState<CatalogoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [logado, setLogado] = useState(false);
@@ -47,7 +49,7 @@ export default function QAContratarServicoPage() {
       setLogado(!!sess.session);
       const { data, error } = await supabase
         .from("qa_servicos_catalogo" as any)
-        .select("id, slug, nome, categoria, tipo, descricao_curta, preco, recorrente, gera_processo, exige_pagamento, ativo, display_order, exige_acervo")
+        .select("id, slug, nome, categoria, tipo, descricao_curta, preco, recorrente, gera_processo, exige_pagamento, ativo, display_order, exige_acervo, exige_cr")
         .eq("ativo", true)
         .order("display_order", { ascending: true });
       if (!error && data) setItems(data as any);
@@ -55,13 +57,20 @@ export default function QAContratarServicoPage() {
     })();
   }, []);
 
-  // BLOCO 9 — Filtra catálogo pela trilha escolhida no Assistente de Entrada.
-  // `inicial` → exige_acervo IN (false, null);  `continuidade` → IN (true, null).
+  // BLOCO 9 — Filtra catálogo pelas respostas do Assistente de Entrada.
+  // trilha=inicial + possuiArma=nao → só serviços sem exige_acervo e sem exige_cr
+  // trilha=inicial + possuiArma=sim → serviços sem exige_acervo (já tem arma, pode ter CR)
+  // trilha=continuidade             → serviços que exigem acervo existente
   const itemsFiltrados = useMemo(() => {
-    if (trilha === "inicial") return items.filter((i) => i.exige_acervo !== true);
+    if (trilha === "inicial") {
+      if (possuiArma === "nao") {
+        return items.filter((i) => i.exige_acervo !== true && i.exige_cr !== true);
+      }
+      return items.filter((i) => i.exige_acervo !== true);
+    }
     if (trilha === "continuidade") return items.filter((i) => i.exige_acervo !== false);
     return items;
-  }, [items, trilha]);
+  }, [items, trilha, possuiArma]);
 
   const grupos = useMemo(() => {
     const map = new Map<string, CatalogoItem[]>();
@@ -73,14 +82,17 @@ export default function QAContratarServicoPage() {
     return Array.from(map.entries());
   }, [itemsFiltrados]);
 
-  function limparTrilha() {
+  function limparFiltros() {
     const next = new URLSearchParams(searchParams);
     next.delete("trilha");
+    next.delete("possuiArma");
     setSearchParams(next, { replace: true });
   }
 
   const labelTrilha =
-    trilha === "inicial"
+    trilha === "inicial" && possuiArma === "nao"
+      ? "Tirar CR · Sem arma"
+      : trilha === "inicial"
       ? "Tirar/renovar meu CR"
       : trilha === "continuidade"
       ? "Mexer em arma que já tenho"
@@ -130,7 +142,7 @@ export default function QAContratarServicoPage() {
                 Trilha: {labelTrilha}
                 <button
                   type="button"
-                  onClick={limparTrilha}
+                  onClick={limparFiltros}
                   className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-[#7A1F2B]/10"
                   aria-label="Remover filtro de trilha"
                 >
