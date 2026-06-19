@@ -1409,9 +1409,18 @@ export default function QAClientePortalPage() {
 
         {activeTab === "resumo" && (
         <div className="qa-resumo-light space-y-4">
-
-        {/* ═══ RESUMO ═══ */}
-        {(() => {
+        <ClienteResumoKanban
+          cliente={cliente}
+          vendas={vendas}
+          itens={itens}
+          crafs={crafs}
+          gtes={gtes}
+          filiacoes={filiacoes}
+          cadastro={cadastro}
+          examesAtuais={examesCliente}
+          onNavigate={(tab) => setActiveSection(tab as any)}
+        />
+        {false && (() => {
           const cadastroIncompleto = cadastroEstaIncompleto(cliente);
           const docsAprovados   = meusDocs.filter((d: any) => d.status === "aprovado").length;
           const docsAnalise     = meusDocs.filter((d: any) => d.status === "pendente_aprovacao").length;
