@@ -158,6 +158,7 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
 
       {/* ── Stepper ────────────────────────────────────────────────────── */}
       <div style={{ background: "rgba(10,10,10,0.9)", borderBottom: `1px solid ${D.borderSoft}`, padding: "14px 20px", overflowX: "auto" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <ol style={{ display: "flex", alignItems: "center", gap: 0, maxWidth: 760, listStyle: "none", margin: 0, padding: 0, minWidth: "fit-content" }}>
           {STEPS.map((s, idx) => {
             const done = s.n < step;
@@ -203,6 +204,7 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
             );
           })}
         </ol>
+        </div>
       </div>
 
       {/* ── Body ───────────────────────────────────────────────────────── */}
