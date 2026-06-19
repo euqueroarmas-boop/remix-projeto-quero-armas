@@ -120,6 +120,16 @@ function CadastroV2Redirect({ extraParams }: { extraParams?: Record<string, stri
 
 function CatchAllRedirect() {
   const location = useLocation();
+  const normalizedPath = location.pathname.toLowerCase().replace(/\/+$/, "");
+
+  if (
+    normalizedPath.includes("resumo-cliente-foco") ||
+    normalizedPath.includes("foco-no-que-vence") ||
+    normalizedPath.includes("foco-em-quem-vence")
+  ) {
+    return <ResumoClienteFocoMockPage />;
+  }
+
   if (location.pathname.endsWith("/index.html")) {
     const stripped = location.pathname.replace(/\/index\.html$/, "") || "/";
     return <Navigate to={`${stripped}${location.search}${location.hash}`} replace />;
@@ -150,6 +160,12 @@ export default function QARoutes() {
         <Route path="mocks/resumo-cliente-kanban.html" element={<ResumoClienteKanbanMockPage />} />
         <Route path="mocks/resumo-cliente-foco" element={<ResumoClienteFocoMockPage />} />
         <Route path="mocks/resumo-cliente-foco.html" element={<ResumoClienteFocoMockPage />} />
+        <Route path="resumo-cliente-foco" element={<ResumoClienteFocoMockPage />} />
+        <Route path="resumo-cliente-foco.html" element={<ResumoClienteFocoMockPage />} />
+        <Route path="foco-no-que-vence" element={<ResumoClienteFocoMockPage />} />
+        <Route path="foco-no-que-vence.html" element={<ResumoClienteFocoMockPage />} />
+        <Route path="foco-em-quem-vence" element={<ResumoClienteFocoMockPage />} />
+        <Route path="foco-em-quem-vence.html" element={<ResumoClienteFocoMockPage />} />
 
         {/* DEV-ONLY: rota de QA visual do Wizard KYC (não montada em produção). */}
         {QAWizardKycPreviewPage && (
