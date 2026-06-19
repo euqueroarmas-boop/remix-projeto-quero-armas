@@ -1,49 +1,43 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
-  Loader2,
-  ShoppingCart,
-  Lock,
-  CheckCircle2,
-  AlertCircle,
-  QrCode,
-  Barcode,
-  CreditCard,
-  ExternalLink,
-  Copy,
+  Loader2, ShoppingCart, Lock, CheckCircle2, AlertCircle,
+  QrCode, Barcode, CreditCard, ExternalLink, Copy, ArrowLeft,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/shared/cart/CartProvider";
 import { useAuth } from "@/shared/auth/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { formatBRL } from "@/shared/lib/formatters";
-import {
-  isValidIdentificacao,
-  snapshotCart,
-} from "@/lib/quero-armas/checkoutSnapshot";
+import { isValidIdentificacao, snapshotCart } from "@/lib/quero-armas/checkoutSnapshot";
+import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 
-/**
- * FASE 2C-1 — Finalização do checkout Quero Armas.
- *
- * Cria qa_vendas + qa_itens_venda a partir do carrinho (snapshot de preço
- * congelado no momento da compra). NÃO gera cobrança Asaas, NÃO cria
- * contrato/processo/checklist e NÃO libera Arsenal nesta fase.
- *
- * Cliente logado → reaproveita qa_cliente vinculado.
- * Cliente público → coleta nome/CPF/e-mail/celular e a edge function
- * `qa-checkout-criar-venda` reaproveita por CPF/e-mail ou cria novo cadastro.
- */
+/* ── Design tokens (idênticos ao CheckoutShell) ──────────────────────────────── */
+const D = {
+  bg: "#050505",
+  paper: "#171717",
+  paper2: "#111111",
+  border: "rgba(255,255,255,0.09)",
+  borderSoft: "rgba(255,255,255,0.05)",
+  ink: "#f0ece5",
+  inkSoft: "#ccc5b9",
+  inkFaint: "#6b6560",
+  red: "#c4253b",
+  redDeep: "#7A1F2B",
+  redAlpha: "rgba(196,37,59,0.12)",
+  redAlphaStrong: "rgba(196,37,59,0.30)",
+  redGlow: "rgba(196,37,59,0.40)",
+  success: "#7fbf6a",
+  successAlpha: "rgba(127,191,106,0.10)",
+  successBorder: "rgba(127,191,106,0.30)",
+  warning: "#e0a030",
+  warningAlpha: "rgba(224,160,48,0.10)",
+  warningBorder: "rgba(224,160,48,0.30)",
+};
+
 type BillingType = "PIX" | "BOLETO" | "CREDIT_CARD";
 
-interface VendaCriada {
-  venda_id: number;
-  checkout_token: string;
-  total: number;
-}
-
+interface VendaCriada { venda_id: number; checkout_token: string; total: number; }
 interface CobrancaResult {
   asaas_payment_id?: string | null;
   asaas_invoice_url?: string | null;
@@ -54,6 +48,71 @@ interface CobrancaResult {
   billing_type?: BillingType;
   reused?: boolean;
 }
+
+/* ── Primitivos de UI ─────────────────────────────────────────────────────────── */
+
+function DarkCard({ children, accentLine = false, successBorder = false }: {
+  children: React.ReactNode; accentLine?: boolean; successBorder?: boolean;
+}) {
+  return (
+    <div style={{
+      background: D.paper,
+      border: `1px solid ${successBorder ? D.successBorder : D.border}`,
+      borderRadius: 14, overflow: "hidden",
+      boxShadow: successBorder ? `0 0 16px ${D.successAlpha}` : "none",
+    }}>
+      {accentLine && (
+        <div style={{ height: 2, background: `linear-gradient(to right, ${D.red}, ${D.redDeep})`, boxShadow: `0 0 10px ${D.redGlow}` }} />
+      )}
+      {successBorder && (
+        <div style={{ height: 2, background: `linear-gradient(to right, ${D.success}, rgba(127,191,106,0.1))` }} />
+      )}
+      <div style={{ padding: "18px 20px" }}>{children}</div>
+    </div>
+  );
+}
+
+function SectionTitle({ icon: Icon, label, variant = "default" }: {
+  icon: any; label: string; variant?: "default" | "success" | "accent";
+}) {
+  const color = variant === "success" ? D.success : variant === "accent" ? D.red : D.inkFaint;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+      <div style={{ width: 26, height: 26, borderRadius: 8, background: variant === "success" ? D.successAlpha : D.redAlpha, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Icon size={14} color={color} />
+      </div>
+      <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function DarkInput({ label, value, onChange, placeholder, type = "text" }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div>
+      <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint, marginBottom: 6 }}>{label}</div>
+      <input
+        type={type} value={value} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+        style={{
+          width: "100%", height: 40, padding: "0 14px",
+          fontSize: 13, background: D.paper2,
+          border: `1.5px solid ${focused ? D.red : D.border}`,
+          borderRadius: 8, color: D.ink, outline: "none",
+          boxShadow: focused ? `0 0 0 3px ${D.redAlpha}` : "none",
+          transition: "border-color .15s, box-shadow .15s", boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
+}
+
+/* ── Componente principal ─────────────────────────────────────────────────────── */
 
 export default function QACheckoutFinalizarPage() {
   const navigate = useNavigate();
@@ -82,36 +141,28 @@ export default function QACheckoutFinalizarPage() {
   const identificacaoOk = isLogged
     ? true
     : isValidIdentificacao({ nome_completo: nome, cpf, email, celular });
-
   const podeFinalizar = aceite && identificacaoOk && !submitting && itemCount > 0;
+
+  /* slug e summary para o CheckoutShell */
+  const primeiroSlug = items[0]?.service_slug ?? "";
+  const summary = items[0] ? {
+    nome: items.length > 1 ? `${items.length} serviços` : items[0].service_name,
+    descricao_curta: items.length > 1 ? items.map(i => i.service_name).join(", ") : null,
+    preco: totalCents / 100,
+    recorrente: false,
+  } : null;
 
   async function handleFinalizar() {
     if (!podeFinalizar) return;
     setSubmitting(true);
     try {
-      const cart = items.map((i) => ({
-        servico_id: i.service_id,
-        slug: i.service_slug,
-        quantidade: i.quantity,
-      }));
+      const cart = items.map((i) => ({ servico_id: i.service_id, slug: i.service_slug, quantidade: i.quantity }));
       const payload: any = { cart };
-      if (!isLogged) {
-        payload.identificacao = {
-          nome_completo: nome,
-          cpf,
-          email,
-          celular,
-        };
-      }
-      const { data, error } = await supabase.functions.invoke(
-        "qa-checkout-criar-venda",
-        { body: payload },
-      );
+      if (!isLogged) payload.identificacao = { nome_completo: nome, cpf, email, celular };
+      const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", { body: payload });
       if (error) throw error;
       const r = data as any;
-      if (!r?.ok || !r?.venda_id || !r?.checkout_token) {
-        throw new Error(r?.error || "Falha ao criar venda");
-      }
+      if (!r?.ok || !r?.venda_id || !r?.checkout_token) throw new Error(r?.error || "Falha ao criar venda");
       setVenda({ venda_id: r.venda_id, checkout_token: r.checkout_token, total: r.total });
       toast.success("Pedido registrado! Escolha como pagar.");
       clear();
@@ -127,21 +178,12 @@ export default function QACheckoutFinalizarPage() {
     if (!venda || paying) return;
     setPaying(true);
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "qa-checkout-iniciar-pagamento",
-        {
-          body: {
-            venda_id: venda.venda_id,
-            checkout_token: venda.checkout_token,
-            billing_type: billingType,
-          },
-        },
-      );
+      const { data, error } = await supabase.functions.invoke("qa-checkout-iniciar-pagamento", {
+        body: { venda_id: venda.venda_id, checkout_token: venda.checkout_token, billing_type: billingType },
+      });
       if (error) throw error;
       const r = data as any;
-      if (!r?.success && !r?.asaas_payment_id) {
-        throw new Error(r?.error || "Falha ao gerar cobrança");
-      }
+      if (!r?.success && !r?.asaas_payment_id) throw new Error(r?.error || "Falha ao gerar cobrança");
       setCobranca({
         asaas_payment_id: r.asaas_payment_id,
         asaas_invoice_url: r.asaas_invoice_url,
@@ -161,251 +203,278 @@ export default function QACheckoutFinalizarPage() {
     }
   }
 
-  function copy(text: string, label = "Copiado") {
-    if (!text) return;
+  function copyText(text: string, label = "Copiado") {
     navigator.clipboard?.writeText(text).then(() => toast.success(label));
   }
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-accent" />
+      <div style={{ background: D.bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Loader2 size={26} color={D.red} style={{ animation: "qa-fin-spin 1s linear infinite" }} />
+        <style>{`@keyframes qa-fin-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
-    <div className="qa-scope min-h-screen bg-background">
-      <div className="container max-w-3xl py-10">
-        <div className="mb-6">
-          <Link to="/carrinho" className="text-xs uppercase tracking-widest text-muted-foreground hover:text-accent">
-            ← Voltar ao carrinho
-          </Link>
-          <h1 className="mt-3 font-heading text-2xl font-bold uppercase tracking-tight sm:text-3xl">
-            Finalizar compra
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Confirme seus dados, crie o pedido e gere o pagamento.
-          </p>
-        </div>
+    <>
+      <style>{`
+        @keyframes qa-fin-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .qa-pay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        @media (max-width: 480px) { .qa-pay-grid { grid-template-columns: 1fr !important; } }
+        .qa-id-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .qa-id-full  { grid-column: span 2; }
+        @media (max-width: 540px) {
+          .qa-id-grid { grid-template-columns: 1fr !important; }
+          .qa-id-full { grid-column: span 1 !important; }
+        }
+      `}</style>
 
-        {/* PASSO 3 — cobrança gerada */}
+      <CheckoutShell step={4} slug={primeiroSlug} backTo="/carrinho" summary={summary}>
+
+        {/* ── PASSO 3 — Aguardando pagamento ────────────────────────── */}
         {cobranca && (
-          <div className="rounded-lg border border-border bg-surface-elevated/30 p-5 mb-5">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-emerald-600 mb-3">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Aguardando pagamento
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">
-              Pedido <strong>#{venda?.venda_id}</strong> ·{" "}
+          <DarkCard successBorder>
+            <SectionTitle icon={CheckCircle2} label="Aguardando pagamento" variant="success" />
+
+            <div style={{ fontSize: 13, color: D.inkSoft, marginBottom: 16 }}>
+              Pedido <strong style={{ color: D.ink }}>#{venda?.venda_id}</strong>
               {cobranca.asaas_due_date && (
-                <>Vencimento: <strong>{cobranca.asaas_due_date}</strong></>
+                <> · Vencimento: <strong style={{ color: D.ink }}>{cobranca.asaas_due_date}</strong></>
               )}
-            </p>
+            </div>
 
             {cobranca.billing_type === "PIX" && cobranca.asaas_pix_payload && (
-              <div className="rounded-md border border-border p-3 mb-3">
-                <div className="text-[11px] uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-2">
-                  <QrCode className="h-3.5 w-3.5" /> PIX copia e cola
+              <div style={{ background: D.paper2, border: `1px solid ${D.border}`, borderRadius: 10, padding: "14px 16px", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+                  <QrCode size={13} color={D.inkFaint} />
+                  <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint }}>PIX copia e cola</span>
                 </div>
                 <textarea
                   readOnly
-                  className="w-full text-xs font-mono p-2 border rounded bg-muted/40 break-all"
                   rows={4}
                   value={cobranca.asaas_pix_payload}
+                  style={{
+                    width: "100%", background: D.bg, border: `1px solid ${D.borderSoft}`,
+                    borderRadius: 6, color: D.inkSoft, fontSize: 11, fontFamily: "monospace",
+                    padding: "10px 12px", resize: "none", outline: "none", boxSizing: "border-box",
+                    lineHeight: 1.5, wordBreak: "break-all",
+                  }}
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => copy(cobranca.asaas_pix_payload!, "Código PIX copiado")}
+                <button
+                  type="button"
+                  onClick={() => copyText(cobranca.asaas_pix_payload!, "Código PIX copiado")}
+                  style={{
+                    marginTop: 10, display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "8px 16px", borderRadius: 8, border: `1px solid ${D.successBorder}`,
+                    background: D.successAlpha, color: D.success,
+                    fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer",
+                  }}
                 >
-                  <Copy className="mr-2 h-3.5 w-3.5" /> Copiar código PIX
-                </Button>
+                  <Copy size={13} /> Copiar código PIX
+                </button>
               </div>
             )}
 
             {cobranca.billing_type === "BOLETO" && cobranca.asaas_bank_slip_url && (
-              <a
-                href={cobranca.asaas_bank_slip_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm hover:bg-muted/40"
-              >
-                <Barcode className="h-4 w-4" /> Abrir boleto
-                <ExternalLink className="h-3.5 w-3.5" />
+              <a href={cobranca.asaas_bank_slip_url} target="_blank" rel="noopener noreferrer"
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: D.redAlpha, border: `1px solid ${D.redAlphaStrong}`, color: D.ink, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", textDecoration: "none" }}>
+                <Barcode size={15} /> Abrir boleto <ExternalLink size={12} />
               </a>
             )}
 
             {cobranca.asaas_invoice_url && (
-              <div className="mt-2">
-                <a
-                  href={cobranca.asaas_invoice_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-accent underline"
-                >
-                  Abrir fatura completa <ExternalLink className="h-3.5 w-3.5" />
+              <div style={{ marginTop: 14 }}>
+                <a href={cobranca.asaas_invoice_url} target="_blank" rel="noopener noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}` }}>
+                  Abrir fatura completa <ExternalLink size={12} />
                 </a>
               </div>
             )}
 
-            <p className="mt-4 text-xs text-muted-foreground">
-              Assim que confirmarmos seu pagamento, você receberá um e-mail e o acesso ao
-              portal será liberado.
+            <p style={{ marginTop: 16, fontSize: 11, color: D.inkFaint, lineHeight: 1.7 }}>
+              Assim que confirmarmos seu pagamento, você receberá um e-mail e o acesso ao portal será liberado automaticamente.
             </p>
-          </div>
+          </DarkCard>
         )}
 
-        {/* PASSO 2 — escolher forma de pagamento (após venda criada) */}
+        {/* ── PASSO 2 — Escolher forma de pagamento ─────────────────── */}
         {venda && !cobranca && (
-          <div className="rounded-lg border border-border bg-surface-elevated/30 p-5 mb-5">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-              Forma de pagamento
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {(["PIX", "BOLETO", "CREDIT_CARD"] as BillingType[]).map((t) => {
-                const Icon = t === "PIX" ? QrCode : t === "BOLETO" ? Barcode : CreditCard;
-                const label = t === "PIX" ? "PIX" : t === "BOLETO" ? "Boleto" : "Cartão";
+          <DarkCard accentLine>
+            <SectionTitle icon={CreditCard} label="Forma de pagamento" variant="accent" />
+
+            <div className="qa-pay-grid">
+              {([
+                { t: "PIX" as BillingType, Icon: QrCode, label: "PIX" },
+                { t: "BOLETO" as BillingType, Icon: Barcode, label: "Boleto" },
+                { t: "CREDIT_CARD" as BillingType, Icon: CreditCard, label: "Cartão" },
+              ]).map(({ t, Icon, label }) => {
                 const active = billingType === t;
                 return (
-                  <button
-                    key={t}
-                    onClick={() => setBillingType(t)}
-                    className={`flex flex-col items-center gap-1 rounded-md border px-3 py-3 text-xs font-bold uppercase tracking-wider transition ${
-                      active ? "border-accent bg-accent/10 text-accent" : "border-border text-muted-foreground hover:border-accent/40"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
+                  <button key={t} type="button" onClick={() => setBillingType(t)} style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                    padding: "16px 12px", borderRadius: 12, cursor: "pointer", transition: "all .15s",
+                    background: active ? D.redAlpha : D.paper2,
+                    border: `2px solid ${active ? D.red : D.borderSoft}`,
+                    color: active ? D.red : D.inkFaint,
+                    boxShadow: active ? `0 0 12px ${D.redAlpha}` : "none",
+                    fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+                  }}>
+                    <Icon size={20} />
                     {label}
                   </button>
                 );
               })}
             </div>
-            <Button
+
+            <button
+              type="button"
               onClick={handleIniciarPagamento}
               disabled={paying}
-              size="lg"
-              className="w-full mt-4 font-heading uppercase tracking-wide"
+              style={{
+                width: "100%", marginTop: 16, display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                padding: "16px 24px", borderRadius: 12, border: "none", cursor: paying ? "not-allowed" : "pointer",
+                fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+                background: paying ? D.paper2 : `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`,
+                color: paying ? D.inkFaint : "#fff",
+                boxShadow: paying ? "none" : `0 6px 24px ${D.redGlow}`,
+                transition: "all .2s",
+              }}
             >
-              {paying ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando cobrança...</>
-              ) : (
-                <><Lock className="mr-2 h-4 w-4" /> Gerar cobrança</>
-              )}
-            </Button>
-          </div>
+              {paying
+                ? <><Loader2 size={18} style={{ animation: "qa-fin-spin 1s linear infinite" }} /> Gerando cobrança…</>
+                : <><Lock size={18} /> Gerar cobrança</>}
+            </button>
+          </DarkCard>
         )}
 
-        {/* PASSO 1 — só se a venda ainda não foi criada */}
+        {/* ── PASSO 1 — Resumo + Identificação + Aceite ─────────────── */}
         {!venda && (
-        <>
+          <>
+            {/* Resumo do pedido */}
+            <DarkCard>
+              <SectionTitle icon={ShoppingCart} label="Resumo do pedido" />
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {snapshot.lines.map((l, i) => (
+                  <div key={l.service_id} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+                    padding: "12px 0",
+                    borderTop: i > 0 ? `1px solid ${D.borderSoft}` : "none",
+                  }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: D.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {l.service_name}
+                      </div>
+                      <div style={{ fontSize: 11, color: D.inkFaint, marginTop: 2 }}>
+                        {formatBRL(l.unit_price_cents)} × {l.quantity}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: D.red, flexShrink: 0 }}>
+                      {formatBRL(l.subtotal_cents)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 4, paddingTop: 14, borderTop: `1px solid ${D.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: D.inkFaint }}>Total</span>
+                <span style={{ fontSize: 26, fontWeight: 800, color: D.ink }}>{formatBRL(totalCents)}</span>
+              </div>
+            </DarkCard>
 
-        <div className="rounded-lg border border-border bg-surface-elevated/30 p-5 mb-5">
-          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-            <ShoppingCart className="h-3.5 w-3.5" /> Resumo do pedido
-          </div>
-          <ul className="divide-y divide-border">
-            {snapshot.lines.map((l) => (
-              <li key={l.service_id} className="py-2 flex items-center justify-between text-sm">
-                <div className="min-w-0">
-                  <div className="font-medium uppercase tracking-tight truncate">{l.service_name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatBRL(l.unit_price_cents)} × {l.quantity}
+            {/* Identificação */}
+            {isLogged ? (
+              <DarkCard>
+                <SectionTitle icon={CheckCircle2} label="Identificação" variant="success" />
+                <p style={{ fontSize: 13, color: D.inkSoft }}>
+                  Logado como <strong style={{ color: D.ink }}>{user?.email}</strong>. Vamos vincular o pedido ao seu cadastro.
+                </p>
+              </DarkCard>
+            ) : (
+              <DarkCard>
+                <SectionTitle icon={CheckCircle2} label="Identificação" />
+                <p style={{ fontSize: 12, color: D.inkFaint, marginBottom: 14 }}>
+                  Já tem conta?{" "}
+                  <Link to="/area-do-cliente/login" style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}` }}>
+                    Entrar
+                  </Link>
+                </p>
+                <div className="qa-id-grid">
+                  <div className="qa-id-full">
+                    <DarkInput label="Nome completo" value={nome} onChange={(v) => setNome(v.toUpperCase())} />
+                  </div>
+                  <DarkInput label="CPF" value={cpf} onChange={setCpf} placeholder="000.000.000-00" />
+                  <DarkInput label="Celular" value={celular} onChange={setCelular} placeholder="(00) 00000-0000" />
+                  <div className="qa-id-full">
+                    <DarkInput label="E-mail" value={email} onChange={setEmail} type="email" />
                   </div>
                 </div>
-                <div className="font-bold text-accent ml-3 shrink-0">
-                  {formatBRL(l.subtotal_cents)}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">Total</span>
-            <span className="text-xl font-extrabold text-accent">{formatBRL(totalCents)}</span>
-          </div>
-        </div>
-
-        {isLogged ? (
-          <div className="rounded-lg border border-border bg-surface-elevated/20 p-5 mb-5">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Identificação
-            </div>
-            <p className="text-sm">
-              Logado como <strong>{user?.email}</strong>. Vamos vincular o pedido ao seu cadastro.
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-lg border border-border bg-surface-elevated/20 p-5 mb-5 space-y-3">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              Identificação
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Já tem conta?{" "}
-              <Link to="/area-do-cliente/login" className="underline">
-                Entrar
-              </Link>
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="sm:col-span-2">
-                <Label>Nome completo</Label>
-                <Input value={nome} onChange={(e) => setNome(e.target.value.toUpperCase())} />
-              </div>
-              <div>
-                <Label>CPF</Label>
-                <Input value={cpf} onChange={(e) => setCpf(e.target.value)} placeholder="000.000.000-00" />
-              </div>
-              <div>
-                <Label>Celular</Label>
-                <Input value={celular} onChange={(e) => setCelular(e.target.value)} placeholder="(00) 00000-0000" />
-              </div>
-              <div className="sm:col-span-2">
-                <Label>E-mail</Label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
-              </div>
-            </div>
-            {!identificacaoOk && (nome || cpf || email || celular) && (
-              <div className="flex items-start gap-2 text-xs text-amber-600">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                Preencha nome, CPF, e-mail e celular válidos.
-              </div>
+                {!identificacaoOk && (nome || cpf || email || celular) && (
+                  <div style={{ marginTop: 12, display: "flex", alignItems: "flex-start", gap: 8, background: D.warningAlpha, border: `1px solid ${D.warningBorder}`, borderRadius: 8, padding: "10px 14px" }}>
+                    <AlertCircle size={14} color={D.warning} style={{ flexShrink: 0, marginTop: 1 }} />
+                    <span style={{ fontSize: 12, color: D.warning }}>Preencha nome, CPF, e-mail e celular válidos.</span>
+                  </div>
+                )}
+              </DarkCard>
             )}
-          </div>
+
+            {/* Aceite */}
+            <button
+              type="button"
+              onClick={() => setAceite((v) => !v)}
+              style={{
+                width: "100%", display: "flex", alignItems: "flex-start", gap: 14,
+                cursor: "pointer", textAlign: "left",
+                background: aceite ? D.successAlpha : D.paper,
+                border: `2px solid ${aceite ? D.successBorder : D.border}`,
+                borderRadius: 14, padding: "16px 18px",
+                transition: "all .2s",
+                boxShadow: aceite ? `0 0 16px ${D.successAlpha}` : "none",
+              }}
+            >
+              <div style={{
+                width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                background: aceite ? D.success : "transparent",
+                border: `2px solid ${aceite ? D.success : D.border}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                transition: "all .2s",
+              }}>
+                {aceite && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6l3 3 5-5" stroke="#050505" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <span style={{ fontSize: 13, color: aceite ? D.success : D.inkSoft, lineHeight: 1.65, flex: 1 }}>
+                <strong style={{ color: aceite ? D.success : D.ink }}>Confirmo os dados</strong> e autorizo a Quero Armas a iniciar o atendimento. O pagamento será gerado em seguida.
+              </span>
+            </button>
+
+            {/* CTA Finalizar */}
+            <button
+              type="button"
+              onClick={handleFinalizar}
+              disabled={!podeFinalizar}
+              style={{
+                width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                padding: "18px 24px", borderRadius: 14, border: "none",
+                cursor: podeFinalizar ? "pointer" : "not-allowed",
+                fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+                background: podeFinalizar
+                  ? `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`
+                  : D.paper2,
+                color: podeFinalizar ? "#fff" : D.inkFaint,
+                boxShadow: podeFinalizar ? `0 6px 30px ${D.redGlow}, 0 0 0 1px ${D.redAlphaStrong}` : "none",
+                transition: "all .25s",
+              }}
+            >
+              {submitting
+                ? <><Loader2 size={20} style={{ animation: "qa-fin-spin 1s linear infinite" }} /> Registrando pedido…</>
+                : <><Lock size={20} /> Finalizar compra</>}
+            </button>
+          </>
         )}
 
-        <label className="flex items-start gap-2 text-sm mb-5 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={aceite}
-            onChange={(e) => setAceite(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span className="text-muted-foreground">
-            Confirmo os dados e autorizo a Quero Armas a iniciar o atendimento. O pagamento será
-            gerado em seguida.
-          </span>
-        </label>
-
-        <Button
-          onClick={handleFinalizar}
-          disabled={!podeFinalizar}
-          size="lg"
-          className="w-full font-heading uppercase tracking-wide"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Registrando pedido...
-            </>
-          ) : (
-            <>
-              <Lock className="mr-2 h-4 w-4" />
-              Finalizar compra
-            </>
-          )}
-        </Button>
-        </>
-        )}
-      </div>
-    </div>
+      </CheckoutShell>
+    </>
   );
 }
