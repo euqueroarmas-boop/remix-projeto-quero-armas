@@ -3823,6 +3823,7 @@ export type Database = {
           endereco_titular_documento: string | null
           endereco_titular_nome: string | null
           endereco2: string | null
+          entrada_finalidade_arma: string | null
           entrada_objetivo: string | null
           entrada_possui_arma: string | null
           entrada_respondida_em: string | null
@@ -3947,6 +3948,7 @@ export type Database = {
           endereco_titular_documento?: string | null
           endereco_titular_nome?: string | null
           endereco2?: string | null
+          entrada_finalidade_arma?: string | null
           entrada_objetivo?: string | null
           entrada_possui_arma?: string | null
           entrada_respondida_em?: string | null
@@ -4071,6 +4073,7 @@ export type Database = {
           endereco_titular_documento?: string | null
           endereco_titular_nome?: string | null
           endereco2?: string | null
+          entrada_finalidade_arma?: string | null
           entrada_objetivo?: string | null
           entrada_possui_arma?: string | null
           entrada_respondida_em?: string | null
