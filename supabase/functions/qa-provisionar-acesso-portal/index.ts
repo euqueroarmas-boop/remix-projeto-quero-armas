@@ -191,9 +191,9 @@ Deno.serve(async (req) => {
   }
 
   // 4) Idempotência: só pulamos se já existe senha temporária ATIVA (TTL válido).
-  //    Sem isso o cliente recompra/recadastra e fica sem credenciais para mostrar
-  //    na tela de conclusão (Etapa 05). Quando a senha expirou ou nunca foi
-  //    persistida, geramos uma nova abaixo (resetando a senha do auth user).
+  //    Para usuários Auth já existentes, NUNCA resetamos a senha automaticamente:
+  //    o pós-pagamento só garante vínculo e portal. Credenciais temporárias são
+  //    geradas apenas quando a função cria um Auth User novo.
   const senhaAtiva =
     !!cliente.senha_temporaria &&
     !!cliente.senha_temporaria_expira_em &&
@@ -264,33 +264,6 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.warn("[qa-provisionar-acesso-portal] falha persistir senha temp:", e);
       }
-    }
-  }
-
-  // 6b) Usuário JÁ existia em auth.users e ainda não há senha temporária ativa
-  //     (primeira venda paga deste cliente, ou senha anterior expirou).
-  //     Resetamos a senha para uma nova temporária para que a Etapa 05 possa
-  //     exibir as credenciais prontas para copiar/colar. O cliente troca no 1º acesso.
-  if (!isNewUser && !senhaAtiva) {
-    const tempPwd = genStrongPassword();
-    try {
-      const { error: pwdErr } = await admin.auth.admin.updateUserById(authUser.id, {
-        password: tempPwd,
-      });
-      if (pwdErr) {
-        console.warn("[qa-provisionar-acesso-portal] falha reset senha:", pwdErr.message);
-      } else {
-        const expira = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-        await admin
-          .from("qa_clientes")
-          .update({
-            senha_temporaria: tempPwd,
-            senha_temporaria_expira_em: expira,
-          })
-          .eq("id", cliente.id);
-      }
-    } catch (e) {
-      console.warn("[qa-provisionar-acesso-portal] erro reset senha existente:", e);
     }
   }
 
