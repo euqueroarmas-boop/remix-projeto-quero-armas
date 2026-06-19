@@ -7701,6 +7701,7 @@ export type Database = {
           display_order: number
           exige_acervo: boolean | null
           exige_cadastro: boolean
+          exige_cr: boolean | null
           exige_pagamento: boolean
           gera_processo: boolean
           id: string
@@ -7729,6 +7730,7 @@ export type Database = {
           display_order?: number
           exige_acervo?: boolean | null
           exige_cadastro?: boolean
+          exige_cr?: boolean | null
           exige_pagamento?: boolean
           gera_processo?: boolean
           id?: string
@@ -7757,6 +7759,7 @@ export type Database = {
           display_order?: number
           exige_acervo?: boolean | null
           exige_cadastro?: boolean
+          exige_cr?: boolean | null
           exige_pagamento?: boolean
           gera_processo?: boolean
           id?: string
