@@ -136,6 +136,29 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/contrato_gerado_pos_pagamento/);
     });
 
+    it("edge renderiza o template principal vigente e filtra anexos pelos slugs contratados", () => {
+      const src = r("supabase/functions/qa-generate-contract/index.ts");
+      expect(src).toMatch(/qa_contract_templates/);
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+      expect(src).toMatch(/filterContractAnexosBySlugs/);
+      expect(src).toMatch(/service_slug_snapshot/);
+      expect(src).toMatch(/conteudo_renderizado/);
+      expect(src).toMatch(/template_codigo/);
+      expect(src).toMatch(/template_versao/);
+      expect(src).not.toMatch(/CLÁUSULAS GERAIS/);
+    });
+
+    it("migration atualiza fontes normativas do contrato principal", () => {
+      const src = r("supabase/migrations/20260620103000_qa_contract_template_fontes_normativas.sql");
+      expect(src).toMatch(/Lei nº 10\.826\/2003/);
+      expect(src).toMatch(/Decreto nº 11\.615\/2023/);
+      expect(src).toMatch(/Decreto nº 12\.345\/2024/);
+      expect(src).toMatch(/Instruções Normativas DG\/PF nº 201 e 311/);
+      expect(src).toMatch(/Portarias COLOG nº 166, 167 e 260/);
+      expect(src).toMatch(/Ofício Circular nº 08\/DELEARM/);
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+    });
+
     it("edge usa protocolo canônico como número do contrato, sem gerador aleatório", () => {
       const src = r("supabase/functions/qa-generate-contract/index.ts");
       expect(src).toMatch(/qa_gerar_protocolo/);
