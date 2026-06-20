@@ -146,6 +146,8 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/template_codigo/);
       expect(src).toMatch(/template_versao/);
       expect(src).not.toMatch(/CLÁUSULAS GERAIS/);
+      expect(src).not.toMatch(/pdf-lib|PDFDocument|StandardFonts|buildPdf|original\.pdf/);
+      expect(src).not.toMatch(/storage\s*\.\s*from\(BUCKET\)\s*\.\s*upload/);
     });
 
     it("download do cliente prioriza o contrato renderizado, não o PDF físico simplificado", () => {

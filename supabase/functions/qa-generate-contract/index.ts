@@ -7,14 +7,15 @@
  *    NUNCA mais é consultado para este contrato.
  *  - Renderiza o template vigente `CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS`
  *    com Anexo I filtrado pelos slugs dos serviços contratados.
- *  - Salva PDF em storage `paid-contracts/qa/<venda>/original.pdf`.
- *  - Calcula SHA-256 e registra qa_contract_events('generated').
+ *  - Grava apenas o snapshot HTML canônico em qa_contracts.conteudo_renderizado.
+ *    O download do cliente renderiza esse snapshot; esta função NÃO gera PDF
+ *    simplificado.
+ *  - Calcula hash do snapshot e registra qa_contract_events('generated').
  *  - status inicial: generated_pending_company_signature.
  *  - NÃO libera processo/checklist.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
-import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
@@ -23,20 +24,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token",
 };
 
-const BUCKET = "paid-contracts";
-
 function svc() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
-}
-
-async function sha256(bytes: Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 async function sha256Text(input: string): Promise<string> {
@@ -215,115 +207,6 @@ function filterContractAnexosBySlugs(
   return filterAnexoIByHeadings(bySections, slugSet);
 }
 
-function strip(html: string | null | undefined) {
-  return (html || "")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<br\s*\/?>(?!\s)/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/h[1-6]>/gi, "\n\n")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-async function buildPdf(opts: {
-  contractNumber: string;
-  html: string;
-}): Promise<Uint8Array> {
-  const pdf = await PDFDocument.create();
-  const helv = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  let page = pdf.addPage([595.28, 841.89]); // A4
-  const { width, height } = page.getSize();
-  const margin = 48;
-  let y = height - margin;
-
-  const black = rgb(0.06, 0.06, 0.06);
-  const bordo = rgb(0.478, 0.122, 0.169); // #7A1F2B
-  const muted = rgb(0.35, 0.35, 0.35);
-
-  const newPageIfNeeded = (need = 60) => {
-    if (y - need < margin) {
-      page = pdf.addPage([595.28, 841.89]);
-      y = page.getSize().height - margin;
-    }
-  };
-
-  const drawText = (
-    text: string,
-    opts: { size?: number; font?: typeof helv; color?: ReturnType<typeof rgb>; x?: number } = {},
-  ) => {
-    const size = opts.size ?? 10;
-    const font = opts.font ?? helv;
-    const color = opts.color ?? black;
-    const x = opts.x ?? margin;
-    const maxWidth = width - margin * 2 - (x - margin);
-    // wrap
-    const words = text.split(/\s+/);
-    let line = "";
-    for (const w of words) {
-      const test = line ? `${line} ${w}` : w;
-      if (font.widthOfTextAtSize(test, size) > maxWidth) {
-        newPageIfNeeded(size + 4);
-        page.drawText(line, { x, y, size, font, color });
-        y -= size + 3;
-        line = w;
-      } else {
-        line = test;
-      }
-    }
-    if (line) {
-      newPageIfNeeded(size + 4);
-      page.drawText(line, { x, y, size, font, color });
-      y -= size + 3;
-    }
-  };
-
-  const text = strip(opts.html);
-
-  page.drawRectangle({ x: 0, y: height - 64, width, height: 64, color: bordo });
-  page.drawText("QUERO ARMAS", { x: margin, y: height - 36, size: 18, font: bold, color: rgb(1, 1, 1) });
-  page.drawText("CONTRATO DE PRESTAÇÃO DE SERVIÇOS", { x: margin, y: height - 54, size: 9, font: helv, color: rgb(0.95, 0.92, 0.92) });
-  y = height - 90;
-
-  drawText(`CONTRATO Nº ${opts.contractNumber}`, { size: 12, font: bold });
-  drawText(`Emitido em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, { size: 9, color: muted });
-  y -= 8;
-
-  for (const rawBlock of text.split(/\n{2,}/)) {
-    const block = rawBlock.replace(/\s+/g, " ").trim();
-    if (!block) continue;
-    const isHeading = /^[A-Z0-9 .ºªÁÉÍÓÚÃÕÂÊÔÇ()\/—-]{8,}$/.test(block) && block.length <= 140;
-    drawText(block, {
-      size: isHeading ? 10.5 : 9,
-      font: isHeading ? bold : helv,
-      color: isHeading ? bordo : black,
-    });
-    if (isHeading) y -= 2;
-  }
-
-  // Footer
-  const pages = pdf.getPages();
-  pages.forEach((p, i) => {
-    p.drawText(`Página ${i + 1} de ${pages.length} — Contrato ${opts.contractNumber}`, {
-      x: margin,
-      y: 24,
-      size: 7,
-      font: helv,
-      color: muted,
-    });
-  });
-
-  return await pdf.save();
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -378,7 +261,7 @@ Deno.serve(async (req) => {
   // O número aprovado é o protocolo canônico, ex.: QACR20260001.
   const { data: existing } = await sb
     .from("qa_contracts")
-    .select("id, status, contract_number, original_pdf_path, customer_uploaded_at, customer_signed_pdf_path, template_codigo, conteudo_renderizado")
+    .select("id, status, contract_number, customer_uploaded_at, customer_signed_pdf_path, template_codigo, conteudo_renderizado")
     .eq("venda_id", vendaId)
     .maybeSingle();
 
@@ -473,17 +356,9 @@ Deno.serve(async (req) => {
     aceite_hash: "",
   });
   const aceiteHash = await sha256Text(`${conteudoRenderizado}|${aceiteDataIso}|${venda.cliente_id}`);
-
-  const pdfBytes = await buildPdf({
-    contractNumber,
-    html: conteudoRenderizado,
-  });
-
-  const originalSha = await sha256(pdfBytes);
-  const path = `qa/${vendaId}/original.pdf`;
+  const conteudoSha = await sha256Text(conteudoRenderizado);
 
   if (existing) {
-    const canRewriteOriginalPdf = !existing.customer_uploaded_at && !existing.customer_signed_pdf_path;
     const hasCanonicalTemplate =
       existing.contract_number === contractNumber &&
       existing.template_codigo === "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS" &&
@@ -493,16 +368,8 @@ Deno.serve(async (req) => {
       return jsonResp({ ok: true, idempotent: true, contract: existing });
     }
 
-    if (canRewriteOriginalPdf) {
-      const { error: upErr } = await sb.storage
-        .from(BUCKET)
-        .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
-      if (upErr) return jsonResp({ error: "Falha ao corrigir PDF do contrato", details: upErr.message }, 500);
-    }
-
     const patch: Record<string, unknown> = {
       contract_number: contractNumber,
-      original_sha256: canRewriteOriginalPdf ? originalSha : existing.original_pdf_path ? undefined : originalSha,
       template_id: (template as any).id,
       template_codigo: (template as any).codigo,
       template_versao: (template as any).versao,
@@ -517,7 +384,7 @@ Deno.serve(async (req) => {
       .from("qa_contracts")
       .update(patch)
       .eq("id", existing.id)
-      .select("id, status, contract_number, original_pdf_path")
+      .select("id, status, contract_number")
       .single();
     if (repairErr) {
       return jsonResp({ error: "Falha ao corrigir número do contrato", details: repairErr.message }, 500);
@@ -529,7 +396,7 @@ Deno.serve(async (req) => {
       event_payload: {
         old_contract_number: existing.contract_number,
         contract_number: contractNumber,
-        pdf_rewritten: canRewriteOriginalPdf,
+        rendered_snapshot_updated: true,
         template_codigo: (template as any).codigo,
         template_versao: (template as any).versao,
         slugs: slugsContratados,
@@ -539,11 +406,6 @@ Deno.serve(async (req) => {
     return jsonResp({ ok: true, repaired: true, contract: repaired });
   }
 
-  const { error: upErr } = await sb.storage
-    .from(BUCKET)
-    .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
-  if (upErr) return jsonResp({ error: "Falha ao gravar PDF", details: upErr.message }, 500);
-
   // Insert contract
   const { data: contract, error: cErr } = await sb
     .from("qa_contracts")
@@ -552,8 +414,6 @@ Deno.serve(async (req) => {
       cliente_id: venda.cliente_id,
       contract_number: contractNumber,
       status: "generated_pending_company_signature",
-      original_pdf_path: path,
-      original_sha256: originalSha,
       template_id: (template as any).id,
       template_codigo: (template as any).codigo,
       template_versao: (template as any).versao,
@@ -566,8 +426,6 @@ Deno.serve(async (req) => {
     .select("id")
     .single();
   if (cErr || !contract) {
-    // tentar limpar arquivo se falhou linha
-    await sb.storage.from(BUCKET).remove([path]).catch(() => {});
     return jsonResp({ error: "Falha ao criar contrato", details: cErr?.message }, 500);
   }
 
@@ -591,7 +449,7 @@ Deno.serve(async (req) => {
     event_type: "generated",
     event_payload: {
       contract_number: contractNumber,
-      sha256: originalSha,
+      conteudo_sha256: conteudoSha,
       items: snapshot.length,
       template_codigo: (template as any).codigo,
       template_versao: (template as any).versao,
@@ -616,8 +474,7 @@ Deno.serve(async (req) => {
     contract: {
       id: contract.id,
       contract_number: contractNumber,
-      original_pdf_path: path,
-      original_sha256: originalSha,
+      conteudo_sha256: conteudoSha,
       items: snapshot.length,
     },
   });
