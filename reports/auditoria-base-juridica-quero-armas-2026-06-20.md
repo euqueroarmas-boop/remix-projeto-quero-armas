@@ -51,7 +51,7 @@ Resultado: nao foi localizada fonte publica oficial indexada confirmando outros 
 ## Superficies auditadas no codigo
 
 - `src/lib/quero-armas/serviceLegalDetails.ts`: base legal e requisitos por servico.
-- `src/pages/HomePage.tsx`: textos comerciais e cards normativos.
+- `src/pages/HomePage.tsx`: textos comerciais e cards normativos, apenas como superficie auditada.
 - `supabase/functions/qa-generate-contract/index.ts`: geracao do contrato pago.
 - `supabase/migrations/*qa_contract_template*`: template contratual e anexos por slug.
 - `src/lib/quero-armas/documentosHubCatalogo.ts`, `etapa02Checklist.ts` e fluxos de checklist: aderencia documental geral.
@@ -63,9 +63,8 @@ Resultado: nao foi localizada fonte publica oficial indexada confirmando outros 
    - Sinarm/Defesa Pessoal.
    - Sinarm-CAC.
    - cursos/manuseio.
-3. `HomePage.tsx` passou a renderizar cards normativos pela base central e deixou de exibir referencias antigas como IN DG/PF 311/2024.
-4. Textos comerciais foram ajustados para evitar promessa juridica absoluta. Exemplo: "garante direito" foi substituido por "estabelece caminho legal condicionado ao cumprimento dos requisitos".
-5. Criada migration complementar para atualizar o template contratual vigente com:
+3. A HomePage foi preservada com o texto comercial aprovado pelo produto. A IN DG/PF 311 continua referenciada ali como norma valida.
+4. Criada migration complementar para atualizar o template contratual vigente com:
    - IN DG/PF 201/2021.
    - IN DG/PF 311/2025.
    - IN DG/PF 322/2025.
@@ -77,9 +76,9 @@ Resultado: nao foi localizada fonte publica oficial indexada confirmando outros 
 
 1. As Portarias COLOG 166, 167 e 260 foram incorporadas por determinacao do usuario, mas nao foram localizadas nesta rodada em fonte publica oficial indexada com o mesmo grau de confirmacao obtido na pagina de legislacao da PF.
 2. O Oficio Circular nº 08/DELEARM foi incorporado por determinacao do usuario; recomenda-se anexar uma copia/URL oficial interna ao repositorio documental do projeto, se houver.
-3. O sistema ainda contem textos editoriais agressivos na Home. Eles nao quebram a base normativa, mas devem ser revisados sob otica de risco reputacional, publicidade e promessa de resultado.
+3. O sistema ainda contem textos editoriais agressivos na Home por decisao de produto. Eles nao foram alterados nesta auditoria.
 4. Checklist e documentos obrigatorios parecem aderentes aos servicos Gov.br principais, mas uma matriz completa item-a-item por tipo de servico deve ser feita antes de tratar como auditoria juridica final.
 
 ## Conclusao
 
-O sistema ficou melhor alinhado a base juridica vigente e ao modelo oficial PF de separacao entre Sinarm - Defesa Pessoal e Sinarm-CAC. A principal correcao tecnica foi centralizar a base juridica e remover referencias antigas ou absolutas. A principal pendencia e documental: guardar fonte oficial ou copia controlada das Portarias COLOG 166/167/260 e do Oficio Circular 08/DELEARM para auditoria futura.
+O sistema ficou melhor alinhado a base juridica vigente e ao modelo oficial PF de separacao entre Sinarm - Defesa Pessoal e Sinarm-CAC. A principal correcao tecnica foi centralizar a base juridica para contrato e detalhes tecnicos dos servicos, preservando a HomePage conforme texto comercial aprovado. A principal pendencia e documental: guardar fonte oficial ou copia controlada das Portarias COLOG 166/167/260 e do Oficio Circular 08/DELEARM para auditoria futura.

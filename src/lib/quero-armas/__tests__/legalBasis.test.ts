@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  QA_BASE_LEGAL_HOME_CARDS,
   QA_BASE_LEGAL_SINARM_CAC,
   QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
 } from "../legalBasis";
@@ -31,13 +30,6 @@ describe("Base juridica Quero Armas", () => {
         "Ofício Circular nº 08/DELEARM",
       ]),
     );
-  });
-
-  it("Home usa a base central e nao revive ano antigo da IN 311", () => {
-    const src = r("src/pages/HomePage.tsx");
-    expect(src).toMatch(/QA_BASE_LEGAL_HOME_CARDS/);
-    expect(src).not.toMatch(/IN DG\/PF 311\/2024|IN PF 311\/2024/);
-    expect(QA_BASE_LEGAL_HOME_CARDS.map((c) => c.code).join(" ")).toMatch(/IN DG\/PF 311\/2025/);
   });
 
   it("migration complementar atualiza o contrato com IN 322 e Portaria 19040", () => {

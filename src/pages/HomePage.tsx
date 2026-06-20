@@ -6,7 +6,6 @@ import { GoogleReviewsCarousel } from '@/shared/components/GoogleReviewsCarousel
 import { SEO } from '@/shared/components/SEO';
 import { ShareButton } from '@/shared/components/ShareButton';
 import { usePageEngagement } from '@/shared/lib/pageEngagement';
-import { QA_BASE_LEGAL_HOME_CARDS } from '@/lib/quero-armas/legalBasis';
 import homeArsenal from '@/assets/home-arsenal.jpg';
 import homeColete from '@/assets/home-colete.jpg';
 import homeMunicao from '@/assets/home-municao.jpg';
@@ -67,7 +66,7 @@ const HomeStickyCTA = () => {
 
 const pillars = [
   { icon: Swords, kicker: 'Pilar 01 · Armamento', title: 'Arma curta ou longa. A que vai salvar a sua família.', desc: 'Pistola pra andar com você. Espingarda pra dormir tranquilo. Revólver que nunca falha. Não é coleção. Não é hobby. É a ferramenta que decide se sua mulher vai dormir viúva ou se seus filhos vão crescer com pai. Te orientamos na escolha certa pro seu perfil, sua casa e a ameaça real do seu CEP.' },
-  { icon: Scale, kicker: 'Pilar 02 · Lei', title: 'A lei existe — e precisa ser cumprida com precisão.', desc: 'Lei 10.826/03, Decreto 11.615/23, Decreto 12.345/24, IN DG/PF 201/2021, IN DG/PF 311/2025, IN 322/2025, Portarias COLOG 166/167/260 e Ofício Circular 08/DELEARM. Conduzimos a documentação na Polícia Federal com rastreabilidade e aderência normativa.' },
+  { icon: Scale, kicker: 'Pilar 02 · Lei', title: 'O direito de ter arma em casa é seu — e está escrito.', desc: 'Lei 10.826/03 (Estatuto do Desarmamento), Decreto 11.615/23, Instruções Normativas DG/PF 201 e 311. Você pode ter arma. Você pode comprar munição. Você pode defender sua casa. Conduzimos toda a documentação na Polícia Federal — você sai legalizado, registrado e blindado juridicamente.' },
   { icon: Crosshair, kicker: 'Pilar 03 · Curso', title: 'Arma sem treino é arma do bandido.', desc: 'Não adianta ter Ferrari e não saber dirigir. O curso é complemento obrigatório — antes ou depois da compra, mas nunca opcional. Saque, mira sob estresse, decisão tática, defesa jurídica pós-disparo.' },
 ];
 
@@ -159,7 +158,7 @@ const HomePage = () => {
               Quando o bandido arrombar sua porta às 3 da manhã, <span className="text-tactical-gradient">você reza ou saca a sua arma?</span>
             </h1>
             <p className="w-full max-w-full text-base leading-relaxed text-muted-foreground text-pretty sm:max-w-[60ch] sm:text-lg">
-              <strong className="text-foreground">Um homicídio a cada 9 minutos.</strong> Crime organizado entrando em casa. Polícia que chega depois. A <strong className="text-foreground">Lei 10.826/03</strong>, o <strong className="text-foreground">Decreto 11.615/23</strong> e o <strong className="text-foreground">Decreto 12.345/24</strong> estabelecem o caminho legal para aquisição, registro, posse, porte e atividades CAC, desde que cumpridos os requisitos. Nós conduzimos os três pilares: <strong className="text-foreground">arma, lei e treino</strong>.
+              <strong className="text-foreground">Um homicídio a cada 9 minutos.</strong> Crime organizado entrando em casa. Polícia que chega depois. A <strong className="text-foreground">Lei 10.826/03</strong> e o <strong className="text-foreground">Decreto 11.615/23</strong> te garantem o direito de <strong className="text-foreground">comprar arma, registrar, manter em casa e defender sua família</strong>. Nós conduzimos os três pilares: <strong className="text-foreground">arma, lei e treino</strong>.
             </p>
             <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Button asChild size="lg" className="w-full font-heading uppercase tracking-[0.1em] sm:w-auto">
@@ -368,14 +367,19 @@ const HomePage = () => {
               <Gavel className="size-3.5" />A lei está do seu lado · Pare de duvidar
             </div>
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">"Mas é <span className="text-tactical-gradient">legal</span> ter arma em casa?" — <span className="text-tactical-gradient">Sim. E está na lei.</span></h2>
-            <p className="mt-4 text-base text-muted-foreground sm:text-lg">Você não precisa ser policial. Não precisa ser militar. A legislação federal define caminhos administrativos para comprar, registrar e manter arma de fogo em casa para defesa pessoal, desde que os requisitos sejam comprovados:</p>
+            <p className="mt-4 text-base text-muted-foreground sm:text-lg">Você não precisa ser policial. Não precisa ser militar. Quatro normas dão a você, cidadão comum, o direito de comprar, registrar e manter arma de fogo em casa pra defesa pessoal:</p>
           </div>
           <div className="relative mb-8 overflow-hidden rounded-sm border border-border sm:mb-12">
             <img src={homeLei} alt="Martelo de juiz sobre livro jurídico azul ao lado de pistola Glock, com balança da justiça ao fundo" loading="lazy" width={1920} height={1080} className="aspect-[16/9] w-full object-cover" />
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 sm:gap-5">
-            {QA_BASE_LEGAL_HOME_CARDS.map((l) => (
+            {[
+              { code: 'Lei 10.826/03', name: 'Estatuto do Desarmamento', desc: 'O artigo 4º te dá o direito à posse: arma em casa pra defender você e sua família. Você só precisa cumprir os requisitos — e nós te conduzimos por todos eles.' },
+              { code: 'Decreto 11.615/23', name: 'Regulamento Atual', desc: 'Regulamenta o Estatuto. No art. 19, § 2º, autoriza o cidadão a adquirir até 2 armas de fogo para defesa pessoal e 50 munições por arma/ano. Sem ele você anda no escuro — com ele você anda armado e legal.' },
+              { code: 'IN DG/PF 201', name: 'Posse e Aquisição', desc: 'Detalha o passo a passo na Polícia Federal: documentos, exame psicológico, teste de tiro, certidões. É o caminho oficial — e a gente percorre junto com você.' },
+              { code: 'IN DG/PF 311', name: 'CAC e Atualizações', desc: 'Regula o registro de Caçador, Atirador e Colecionador, prazos de renovação e transporte. O atalho legal pra ter mais armas e calibres maiores.' },
+            ].map((l) => (
               <article key={l.code} className="group relative flex flex-col gap-3 rounded-sm border border-border bg-card p-6 transition-colors hover:border-accent/50 sm:p-7">
                 <div className="absolute left-0 top-0 h-[2px] w-0 bg-accent transition-all duration-500 group-hover:w-full" />
                 <div className="font-heading text-xs uppercase tracking-[0.18em] text-accent">{l.name}</div>
@@ -397,7 +401,7 @@ const HomePage = () => {
               <div className="rounded-sm border border-border bg-card p-4">
                 <div className="font-heading text-sm uppercase tracking-[0.18em] text-accent">Uso restrito · CAC</div>
                 <p className="mt-2 text-sm font-bold uppercase">9mm Luger · .40 S&W · .357 Magnum · .45 ACP · .44 Mag · 5.56 · 7.62 · .308</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Acima de 407 J (curtas) → uso restrito. <strong className="text-foreground">Acessíveis pelo fluxo CAC quando compatíveis com a norma vigente</strong> (IN DG/PF 311/2025 e alterações).</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Acima de 407 J (curtas) → uso restrito. <strong className="text-foreground">Acessíveis exclusivamente pelo registro CAC</strong> (IN DG/PF 311).</p>
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">Tradução prática: você quer pistola pra defesa em casa hoje? Posse + .380. Quer 9mm, .40 ou mais? Te conduzimos pelo CAC. <strong className="text-foreground">Os dois caminhos são legais — e nós dominamos os dois.</strong></p>
@@ -406,10 +410,10 @@ const HomePage = () => {
             <div className="mb-5 font-heading text-xs uppercase tracking-[0.2em] text-accent">Você está pensando isso agora — a gente responde:</div>
             <ul className="flex flex-col gap-5 sm:gap-6">
               {[
-                { q: '"E se eu for preso por ter arma?"', a: 'A posse regular depende de autorização, registro válido e cumprimento dos requisitos legais. A gente organiza o processo na PF antes da arma sair da loja.' },
+                { q: '"E se eu for preso por ter arma?"', a: 'Não vai. Posse é direito previsto na Lei 10.826/03. Crime é não ter registro. A gente legaliza tudo na PF antes da arma sair da loja.' },
                 { q: '"E se eu nunca atirei na vida?"', a: 'Melhor ainda. Você aprende do zero, do jeito certo, sem vícios. O curso é parte do programa.' },
                 { q: '"Não é caro demais?"', a: 'Caro é enterrar quem você ama. O programa cabe no bolso de quem entende que segurança da família não é luxo.' },
-                { q: '"E se a norma mudar?"', a: 'O controle de armas muda por lei, decreto e atos administrativos. Por isso acompanhamos a norma vigente e mantemos documentação, prazos e registros organizados.' },
+                { q: '"E se mudar o governo e proibirem?"', a: 'Quem registrou antes está protegido por direito adquirido. Hoje a janela está aberta. Amanhã ninguém garante.' },
               ].map((item) => (
                 <li key={item.q} className="flex flex-col gap-2 border-l-2 border-primary/60 pl-4 sm:pl-5">
                   <p className="font-heading text-base font-bold uppercase leading-snug tracking-tight sm:text-lg">{item.q}</p>
@@ -831,7 +835,12 @@ const HomePage = () => {
             <h2 className="font-heading text-2xl font-bold uppercase leading-tight tracking-tight sm:text-4xl lg:text-5xl">A lei não é opinião. É <span className="text-tactical-gradient">o que separa o cidadão armado do bandido</span>.</h2>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
-            {QA_BASE_LEGAL_HOME_CARDS.map((l) => (
+            {[
+              { code: 'Lei 10.826/2003', name: 'Estatuto do Desarmamento', desc: 'Marco civil do armamento. Define posse (art. 4º), porte (art. 10), crimes e o Sinarm.' },
+              { code: 'Decreto 11.615/2023', name: 'Regulamento atual em vigor', desc: 'Define art. 11 e 12 (uso permitido x restrito), art. 19 (limites de aquisição) e art. 36 (guarda doméstica).' },
+              { code: 'IN DG/PF 201/2024', name: 'Posse · Aquisição · Sinarm', desc: 'Detalha o procedimento operacional na PF: documentos, exame psicológico, teste técnico, vistoria, CRAF.' },
+              { code: 'IN DG/PF 311/2024', name: 'CAC · Caçador · Atirador · Colecionador', desc: 'Regula o registro CAC junto à Polícia Federal/SINARM-CAC. Define níveis, calibres, GT, prazos e habitualidade.' },
+            ].map((l) => (
               <article key={l.code} className="group relative flex flex-col gap-3 rounded-sm border border-border bg-card p-6 transition-colors hover:border-accent/50 sm:p-7">
                 <div className="absolute left-0 top-0 h-[2px] w-0 bg-accent transition-all duration-500 group-hover:w-full" />
                 <div className="font-heading text-xs uppercase tracking-[0.18em] text-accent">{l.name}</div>
@@ -863,7 +872,7 @@ const HomePage = () => {
                 {[
                   { icon: Boxes, tag: 'Acervo e arsenal', title: 'Toda arma sua, em um painel.', desc: 'Cada arma com calibre, número de série, lote, marca e nota fiscal digitalizada.' },
                   { icon: Clock, tag: 'Controle de vencimentos', title: 'Alerta antes da PF te alertar.', desc: 'CR, CRAF, GT, exame psicológico, teste de tiro, habitualidade CAC. Avisos 90/60/30 dias antes.' },
-                  { icon: Scale, tag: 'Legislação atualizada', title: 'A lei sempre na versão vigente.', desc: 'Lei 10.826/03, Decreto 11.615/23, Decreto 12.345/24, IN PF 201/2021, IN PF 311/2025, IN 322/2025, COLOG 166/167/260 e Ofício Circular 08/DELEARM.' },
+                  { icon: Scale, tag: 'Legislação atualizada', title: 'A lei sempre na versão vigente.', desc: 'Lei 10.826/03, Decreto 11.615/23, IN PF 201, IN PF 311 sempre atualizadas.' },
                   { icon: KeyRound, tag: 'Documentos e contratos', title: 'Cofre digital de tudo que importa.', desc: 'Laudos, exames, certificados, contratos, comprovantes da Polícia Federal.' },
                 ].map((m) => {
                   const Icon = m.icon;
