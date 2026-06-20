@@ -4,10 +4,17 @@
  * Regras:
  *  - Nenhum texto genérico repetido como corpo principal.
  *  - Cada slug tem conteúdo específico. Slug sem entrada => "em revisão".
- *  - Base normativa mínima: Lei 10.826/2003, Decreto 11.615/2023
- *    e normativos PF/SINARM-CAC aplicáveis.
+ *  - Base normativa mínima: Lei 10.826/2003, Decreto 11.615/2023,
+ *    Decreto 12.345/2024 e normativos PF/SINARM-CAC aplicáveis.
  *  - Não promete deferimento, prazo legal garantido ou resultado.
  */
+
+import {
+  QA_BASE_LEGAL_CURSO_E_MANUSEIO,
+  QA_BASE_LEGAL_NUCLEO,
+  QA_BASE_LEGAL_SINARM_CAC,
+  QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
+} from "./legalBasis";
 
 export type SistemaAplicavel =
   | "SINARM_PF"
@@ -46,8 +53,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM",
     baseLegal: [
       "Lei nº 10.826/2003, art. 4º a 6º (requisitos e posse)",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instrução Normativa nº 201/2021-DG/PF e atos PF correlatos",
+      ...QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
     ],
     oQueE:
       "Autorização da Polícia Federal para adquirir e manter arma de fogo de uso permitido no interior da residência ou em dependência dela, ou no local de trabalho de propriedade do interessado.",
@@ -97,8 +103,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM",
     baseLegal: [
       "Lei nº 10.826/2003, arts. 4º, 5º e 12",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instrução Normativa nº 201/2021-DG/PF",
+      ...QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
     ],
     oQueE:
       "Pacote completo que integra a autorização de posse, a autorização de aquisição da arma e o subsequente registro no SINARM, com emissão do CRAF.",
@@ -145,8 +150,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM",
     baseLegal: [
       "Lei nº 10.826/2003, art. 10 (porte e efetiva necessidade)",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instrução Normativa nº 201/2021-DG/PF e atos PF sobre porte",
+      ...QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
     ],
     oQueE:
       "Autorização excepcional e discricionária da Polícia Federal para portar arma de fogo de uso permitido fora da residência ou do local de trabalho.",
@@ -193,8 +197,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM",
     baseLegal: [
       "Lei nº 10.826/2003, art. 10",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Atos da Polícia Federal sobre renovação de porte",
+      ...QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
     ],
     oQueE:
       "Procedimento para manter a validade da autorização de porte de arma de fogo já concedida, com reapresentação de requisitos e nova análise pela PF.",
@@ -237,8 +240,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM",
     baseLegal: [
       "Lei nº 10.826/2003, arts. 5º e 12",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instrução Normativa nº 201/2021-DG/PF",
+      ...QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
     ],
     oQueE:
       "Renovação do Certificado de Registro de Arma de Fogo (CRAF) emitido pelo SINARM, mantendo a regularidade da posse já concedida.",
@@ -279,8 +281,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM",
     baseLegal: [
       "Lei nº 10.826/2003, art. 5º",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instrução Normativa nº 201/2021-DG/PF",
+      ...QA_BASE_LEGAL_SINARM_DEFESA_PESSOAL,
     ],
     oQueE:
       "Registro no SINARM da arma de fogo de uso permitido adquirida para defesa pessoal, com emissão do CRAF em nome do titular.",
@@ -320,8 +321,10 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Autoridade administrativa que proferiu a decisão na Polícia Federal/SINARM-CAC",
     baseLegal: [
       "Lei nº 9.784/1999 (processo administrativo federal)",
-      "Lei nº 10.826/2003",
-      "Decreto nº 11.615/2023 e atos do órgão competente",
+      ...QA_BASE_LEGAL_NUCLEO,
+      "Instrução Normativa nº 201/2021-DG/PF",
+      "Instrução Normativa DG/PF nº 311/2025",
+      "Ofício Circular nº 08/DELEARM",
     ],
     oQueE:
       "Peça administrativa de impugnação contra decisão de indeferimento, exigência ou ato administrativo proferido em processo de posse, porte, registro, CR, CRAF, GTE ou correlato.",
@@ -410,8 +413,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º, § 1º (CAC)",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis ao CAC e ao SINARM-CAC",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Concessão do Certificado de Registro (CR) no âmbito da Polícia Federal/SINARM-CAC, habilitando a pessoa física como Atirador Desportivo, Caçador ou Colecionador (CAC).",
@@ -456,8 +458,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis à renovação e habitualidade CAC",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Procedimento para manter a validade do CR já concedido, com atualização documental e demonstração da habitualidade quando exigida.",
@@ -499,8 +500,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     sistema: "CAC_PF",
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis ao apostilamento e acervo CAC",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Procedimento de inclusão, alteração ou atualização de itens do acervo CAC no CR, com registro formal na Polícia Federal/SINARM-CAC.",
@@ -536,8 +536,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis ao CRAF e acervo CAC",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Emissão do CRAF da arma adquirida pelo CAC e respectivo apostilamento do item no CR.",
@@ -576,8 +575,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º, § 1º",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis à aquisição de arma e munição por Atirador Desportivo",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Serviço de autorização de compra de arma de fogo para atiradores desportivos, dentro dos limites de calibre, quantidade e habitualidade da categoria.",
@@ -619,8 +617,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
       "Lei nº 10.826/2003, art. 6º, § 1º",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis à aquisição por Caçador",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Serviço de autorização de compra de arma de fogo para Caçadores CAC, respeitando finalidade, calibre e limites do acervo.",
@@ -659,8 +656,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     sistema: "CAC_PF",
     orgaoCompetente: "Polícia Federal — SINARM-CAC",
     baseLegal: [
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Instruções normativas DG/PF aplicáveis à GTE e transporte de acervo CAC",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Autorização competente para transporte de arma e munição do acervo CAC, entre origem e destino determinados, dentro de prazo específico.",
@@ -699,9 +695,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
     orgaoCompetente:
       "Polícia Federal — SINARM-CAC",
     baseLegal: [
-      "Lei nº 10.826/2003",
-      "Decreto nº 11.615/2023 e alterações vigentes",
-      "Atos PF/SINARM-CAC sobre regularização e transferência cadastral",
+      ...QA_BASE_LEGAL_SINARM_CAC,
     ],
     oQueE:
       "Procedimento de regularização ou alteração cadastral de arma originalmente registrada no SINARM para acervo CAC, ou mudança da modalidade de serviço do titular.",
@@ -745,7 +739,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Estande/instrutor credenciado (curso operacional, não é autorização estatal)",
     baseLegal: [
       "Conteúdo operacional alinhado a boas práticas de tiro defensivo e à legislação de armas vigente",
-      "Lei nº 10.826/2003 (referência ao manuseio responsável de arma de fogo)",
+      ...QA_BASE_LEGAL_CURSO_E_MANUSEIO,
     ],
     oQueE:
       "Curso operacional de manuseio e operação de pistola — fundamentos de segurança, saque, empunhadura, mira, gatilho, recargas e resolução de panes.",
@@ -781,7 +775,7 @@ const DETAILS: Record<string, ServiceLegalDetails> = {
       "Estande/instrutor credenciado em formato VIP (curso operacional, não é autorização estatal)",
     baseLegal: [
       "Conteúdo operacional alinhado a boas práticas de tiro defensivo e à legislação de armas vigente",
-      "Lei nº 10.826/2003 (referência ao manuseio responsável de arma de fogo)",
+      ...QA_BASE_LEGAL_CURSO_E_MANUSEIO,
     ],
     oQueE:
       "Versão VIP do Nível I, em formato reservado e personalizado, com atenção individual do instrutor, agenda flexível e maior aproveitamento por aluno.",
