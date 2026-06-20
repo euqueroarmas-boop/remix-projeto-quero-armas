@@ -156,6 +156,7 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/printableContractHtml/);
       expect(src).toMatch(/canServeRenderedHtml/);
       expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
+      expect(src).not.toMatch(/canServeRenderedHtml[\s\S]{0,180}company_signed_pdf_path/);
       expect(src).toMatch(/text\/html; charset=utf-8/);
     });
 

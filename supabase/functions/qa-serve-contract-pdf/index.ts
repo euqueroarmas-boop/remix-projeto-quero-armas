@@ -5,8 +5,9 @@
  *
  * Para contratos pós-pagamento com `conteudo_renderizado`, o documento
  * correto é o snapshot HTML do template canônico. O PDF físico legado em
- * `original_pdf_path` pode ter sido gerado por `pdf-lib` e ficar com cara
- * de recibo; por isso ele não deve ser a primeira opção para o cliente.
+ * `original_pdf_path` ou `company_signed_pdf_path` pode ter sido gerado pelo
+ * renderizador antigo e ficar com cara de recibo; por isso ele não deve ser a
+ * primeira opção para o cliente.
  *
  * Bucket NÃO é público.
  *
@@ -164,8 +165,7 @@ Deno.serve(async (req) => {
   const canServeRenderedHtml =
     variant !== "customer_signed" &&
     html &&
-    html.trim() &&
-    !((contract as any).company_signed_pdf_path);
+    html.trim();
 
   if (canServeRenderedHtml) {
     const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
@@ -185,7 +185,7 @@ Deno.serve(async (req) => {
   else if (variant === "customer_signed") path = (contract as any).customer_signed_pdf_path ?? null;
   else {
     // Contrato de adesão: cliente pode baixar assim que o contrato é emitido.
-    // Prioriza versão "assinada pela empresa" se existir, senão o PDF original emitido.
+    // Este caminho só é usado quando não há snapshot HTML canônico.
     path = (contract as any).company_signed_pdf_path ?? (contract as any).original_pdf_path ?? null;
   }
 
