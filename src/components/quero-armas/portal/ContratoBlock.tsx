@@ -5,6 +5,7 @@ import {
   FileSignature, ShieldCheck, Clock, AlertCircle, CheckCircle2, Loader2,
   Download, Upload, RefreshCw,
 } from "lucide-react";
+import { openRenderedContract } from "@/lib/quero-armas/renderedContractDownload";
 
 /**
  * BLOCO 10 (Pass A skeleton)
@@ -14,9 +15,11 @@ import {
 
 interface Contract {
   id: string;
+  venda_id: number;
   contract_number: string;
   status: string;
   validation_status: string | null;
+  conteudo_renderizado: string | null;
   issued_at: string | null;
   company_signed_at: string | null;
   customer_uploaded_at: string | null;
@@ -85,7 +88,7 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
       try {
         const { data, error } = await supabase
           .from("qa_contracts" as any)
-          .select("id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details, customer_signed_pdf_path")
+          .select("id, venda_id, contract_number, status, conteudo_renderizado, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details, customer_signed_pdf_path")
           .eq("cliente_id", clienteId)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -125,6 +128,15 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
     if (!contract) return;
     setDownloading(true);
     try {
+      if (variant === "company_signed" && openRenderedContract({
+        html: contract.conteudo_renderizado,
+        contractNumber: contract.contract_number,
+        vendaId: contract.venda_id,
+        fallbackId: contract.id,
+      })) {
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
       const resp = await fetch(url, {
@@ -140,7 +152,19 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
         const err = await resp.json().catch(() => ({}));
         throw new Error(err.error || `HTTP ${resp.status}`);
       }
+      const contentType = resp.headers.get("content-type") || "";
       const blob = await resp.blob();
+      if (contentType.includes("text/html")) {
+        const html = await blob.text();
+        const win = window.open("", "_blank");
+        if (!win) {
+          throw new Error("Pop-up bloqueado. Permita pop-ups para abrir o contrato.");
+        }
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        return;
+      }
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;

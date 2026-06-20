@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Clock, ShieldCheck, Upload, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { openRenderedContract } from "@/lib/quero-armas/renderedContractDownload";
 
 type Contract = {
   id: string;
@@ -12,6 +13,7 @@ type Contract = {
   status: string;
   original_pdf_path: string | null;
   original_sha256: string | null;
+  conteudo_renderizado: string | null;
   validation_status: string | null;
   validation_details: any;
   issued_at: string | null;
@@ -107,7 +109,7 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
     const { data: cs } = await supabase
       .from("qa_contracts" as any)
       .select(
-        "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, validation_status, validation_details, issued_at, created_at",
+        "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, conteudo_renderizado, validation_status, validation_details, issued_at, created_at",
       )
       .eq("cliente_id", clienteIdLegado)
       .order("created_at", { ascending: false });
@@ -125,7 +127,7 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
         const { data: cs } = await supabase
           .from("qa_contracts" as any)
           .select(
-            "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, validation_status, validation_details, issued_at, created_at",
+            "id, venda_id, cliente_id, contract_number, status, original_pdf_path, original_sha256, conteudo_renderizado, validation_status, validation_details, issued_at, created_at",
           )
           .eq("cliente_id", clienteIdLegado)
           .order("created_at", { ascending: false });
@@ -171,6 +173,16 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
 
   async function downloadContract(c: Contract) {
     setDownloadingId(c.id);
+    if (openRenderedContract({
+      html: c.conteudo_renderizado,
+      contractNumber: c.contract_number,
+      vendaId: c.venda_id,
+      fallbackId: c.id,
+    })) {
+      setDownloadingId(null);
+      return;
+    }
+
     // Abre a janela SÍNCRONA dentro do gesto do usuário (iOS Safari exige isso).
     const win = window.open("", "_blank");
     if (win) {
@@ -194,15 +206,25 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
         const err = await resp.json().catch(() => ({} as any));
         throw new Error(err.error || `HTTP ${resp.status}`);
       }
+      const contentType = resp.headers.get("content-type") || "";
       const blob = await resp.blob();
       const blobUrl = URL.createObjectURL(blob);
       if (win && !win.closed) {
-        win.location.href = blobUrl;
+        if (contentType.includes("text/html")) {
+          const html = await blob.text();
+          win.document.open();
+          win.document.write(html);
+          win.document.close();
+          URL.revokeObjectURL(blobUrl);
+        } else {
+          win.location.href = blobUrl;
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+        }
       } else {
         // Fallback (popup bloqueado): navega na própria aba.
         window.location.href = blobUrl;
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
       }
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e: any) {
       if (win && !win.closed) win.close();
       toast.error(`Falha ao baixar contrato: ${e?.message ?? "erro"}`);

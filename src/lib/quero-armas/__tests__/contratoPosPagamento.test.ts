@@ -160,6 +160,26 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/text\/html; charset=utf-8/);
     });
 
+    it("portal do cliente entrega conteudo_renderizado antes de chamar a edge de PDF", () => {
+      const card = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
+      const block = r("src/components/quero-armas/portal/ContratoBlock.tsx");
+      expect(card).toMatch(/conteudo_renderizado/);
+      expect(card).toMatch(/openRenderedContract/);
+      expect(card.indexOf("openRenderedContract")).toBeLessThan(card.indexOf("qa-serve-contract-pdf"));
+      expect(block).toMatch(/conteudo_renderizado/);
+      expect(block).toMatch(/openRenderedContract/);
+      expect(block.indexOf("openRenderedContract")).toBeLessThan(block.indexOf("qa-serve-contract-pdf"));
+    });
+
+    it("migration remove ponteiros de PDFs legados do contrato principal aprovado", () => {
+      const src = r("supabase/migrations/20260620134500_qa_contracts_remover_pdfs_legados.sql");
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+      expect(src).toMatch(/conteudo_renderizado IS NOT NULL/);
+      expect(src).toMatch(/original_pdf_path = NULL/);
+      expect(src).toMatch(/company_signed_pdf_path = NULL/);
+      expect(src).toMatch(/customer_signed_pdf_path IS NULL/);
+    });
+
     it("migration atualiza fontes normativas do contrato principal", () => {
       const src = r("supabase/migrations/20260620103000_qa_contract_template_fontes_normativas.sql");
       expect(src).toMatch(/Lei nº 10\.826\/2003/);
