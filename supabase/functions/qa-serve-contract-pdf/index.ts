@@ -1,7 +1,13 @@
 /**
  * qa-serve-contract-pdf — BLOCO 10 / Pass B
  *
- * Stream autenticado de PDFs de contrato Quero Armas (bucket `paid-contracts`).
+ * Stream autenticado de contratos Quero Armas.
+ *
+ * Para contratos pós-pagamento com `conteudo_renderizado`, o documento
+ * correto é o snapshot HTML do template canônico. O PDF físico legado em
+ * `original_pdf_path` pode ter sido gerado por `pdf-lib` e ficar com cara
+ * de recibo; por isso ele não deve ser a primeira opção para o cliente.
+ *
  * Bucket NÃO é público.
  *
  * Acesso:
@@ -50,6 +56,55 @@ function jsonResp(b: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function escapeHtml(s: string | null | undefined): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function sanitizeTechnicalJargon(html: string): string {
+  if (!html) return html;
+  return html
+    .replace(/Identificador\s*\(\s*slug\s*\)\s*:?/gi, "Identificador:")
+    .replace(/\(\s*slug\s*\)/gi, "")
+    .replace(/<li[^>]*>\s*slug[^<]*<\/li>/gi, "")
+    .replace(/\bslug\s*:\s*[a-z0-9_-]+/gi, "");
+}
+
+function printableContractHtml(contract: any, html: string): string {
+  const title = `Contrato ${contract.contract_number || contract.id} — Quero Armas`;
+  const generatedAt = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+  @page{size:A4;margin:18mm 16mm;}
+  *{box-sizing:border-box;}
+  body{font-family:Georgia,'Times New Roman',serif;color:#0a0a0a;max-width:780px;margin:32px auto;padding:0 24px;line-height:1.65;font-size:13px;background:#fff;}
+  h1{font-size:18px;text-align:center;text-transform:uppercase;letter-spacing:0.04em;margin:0 0 22px;}
+  h2,h3{font-size:13px;text-transform:uppercase;letter-spacing:0.04em;margin-top:24px;}
+  p{margin:10px 0;text-align:justify;}
+  ul,ol{padding-left:22px;} li{margin:6px 0;}
+  section[data-anexo-slug]{break-inside:avoid;}
+  .qa-ref-contract-anexo,.qa-anexo-aviso{background:#fdecee;border-left:3px solid #7a1f2b;padding:8px 12px;}
+  .qa-print-actions{position:sticky;top:0;display:flex;gap:10px;justify-content:flex-end;margin:-8px 0 22px;padding:10px 0;background:rgba(255,255,255,.95);border-bottom:1px solid #eee;}
+  .qa-print-actions button{border:1px solid #7a1f2b;background:#7a1f2b;color:#fff;border-radius:4px;padding:9px 14px;font:700 12px system-ui;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;}
+  .qa-print-note{font:12px system-ui;color:#555;margin:0 auto 18px;max-width:780px;}
+  .qa-rodape-probatorio{margin-top:36px;padding-top:14px;border-top:0.5px solid rgba(0,0,0,0.2);font-size:10.5px;color:#4a4a4a;text-align:left;}
+  @media print{
+    body{max-width:none;margin:0;padding:0;}
+    .qa-print-actions,.qa-print-note{display:none!important;}
+  }
+</style></head><body>
+<div class="qa-print-actions"><button type="button" onclick="window.print()">Salvar/assinar em PDF</button></div>
+<p class="qa-print-note">Este é o contrato completo. Para assinar pelo GOV.BR ou certificado ICP-Brasil, use "Salvar/assinar em PDF".</p>
+${sanitizeTechnicalJargon(html)}
+<div class="qa-rodape-probatorio">Documento gerado em ${escapeHtml(generatedAt)} · Contrato ${escapeHtml(contract.contract_number || contract.id)} · Pedido ${escapeHtml(String(contract.venda_id || "—"))}</div>
+</body></html>`;
 }
 
 Deno.serve(async (req) => {
@@ -105,6 +160,26 @@ Deno.serve(async (req) => {
     if (variant === "original") variant = "company_signed";
   }
 
+  const html = (contract as any).conteudo_renderizado as string | null;
+  const canServeRenderedHtml =
+    variant !== "customer_signed" &&
+    html &&
+    html.trim() &&
+    !((contract as any).company_signed_pdf_path);
+
+  if (canServeRenderedHtml) {
+    const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
+    return new Response(printableContractHtml(contract as any, html), {
+      status: 200,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": `inline; filename="${fname}"`,
+        "Cache-Control": "private, max-age=60",
+      },
+    });
+  }
+
   let path: string | null = null;
   if (variant === "original") path = (contract as any).original_pdf_path ?? null;
   else if (variant === "customer_signed") path = (contract as any).customer_signed_pdf_path ?? null;
@@ -117,28 +192,9 @@ Deno.serve(async (req) => {
   if (!path) {
     // Fallback contrato de adesão: sem PDF físico, devolve o snapshot HTML
     // renderizado (conteudo_renderizado) como documento baixável.
-    const html = (contract as any).conteudo_renderizado as string | null;
     if (variant !== "customer_signed" && html && html.trim()) {
       const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
-      // Envelopa o snapshot em documento HTML completo com <meta charset="utf-8">.
-      // Sem isso, navegadores (especialmente iOS Safari ao abrir via Blob URL)
-      // ignoram o charset do header e renderizam o conteúdo como Latin-1,
-      // produzindo mojibake do tipo "CONCESSÃƒO" / "CLÃ□USULA".
-      const titulo =
-        `Contrato ${(contract as any).contract_number || (contract as any).id} — Quero Armas`;
-      const isFullDoc = /<!doctype|<html[\s>]/i.test(html);
-      const body = isFullDoc
-        ? html
-        : `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">` +
-          `<meta name="viewport" content="width=device-width,initial-scale=1">` +
-          `<title>${titulo}</title><style>` +
-          `body{font-family:Georgia,'Times New Roman',serif;color:#0a0a0a;` +
-          `max-width:780px;margin:32px auto;padding:0 24px;line-height:1.65;font-size:13px;}` +
-          `h1{font-size:18px;text-align:center;text-transform:uppercase;letter-spacing:.04em;}` +
-          `h2,h3{font-size:13px;text-transform:uppercase;letter-spacing:.04em;margin-top:24px;}` +
-          `p{margin:10px 0;text-align:justify;}ul,ol{padding-left:22px;}li{margin:6px 0;}` +
-          `@media print{body{margin:0;}}` +
-          `</style></head><body>${html}</body></html>`;
+      const body = printableContractHtml(contract as any, html);
       return new Response(body, {
         status: 200,
         headers: {

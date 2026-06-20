@@ -148,6 +148,15 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).not.toMatch(/CLÁUSULAS GERAIS/);
     });
 
+    it("download do cliente prioriza o contrato renderizado, não o PDF físico simplificado", () => {
+      const src = r("supabase/functions/qa-serve-contract-pdf/index.ts");
+      expect(src).toMatch(/conteudo_renderizado/);
+      expect(src).toMatch(/printableContractHtml/);
+      expect(src).toMatch(/canServeRenderedHtml/);
+      expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
+      expect(src).toMatch(/text\/html; charset=utf-8/);
+    });
+
     it("migration atualiza fontes normativas do contrato principal", () => {
       const src = r("supabase/migrations/20260620103000_qa_contract_template_fontes_normativas.sql");
       expect(src).toMatch(/Lei nº 10\.826\/2003/);
