@@ -132,7 +132,6 @@ function buildPrintableDocument(args: {
     `Pedido nº ${escapeHtml(String(args.venda_id))}` +
     (args.cliente_id != null ? ` · Cliente ${escapeHtml(String(args.cliente_id))}` : "") +
     ` · Valor ${escapeHtml(valorFmt)}` +
-    ` · Template ${escapeHtml(args.template_codigo || "—")} v${escapeHtml(String(args.template_versao ?? "—"))}` +
     (args.contract_number ? ` · Nº ${escapeHtml(args.contract_number)}` : "") +
     (args.pagamento_status ? ` · Pagamento ${escapeHtml(args.pagamento_status)}` : "") +
     (args.status ? ` · Status contrato ${escapeHtml(args.status)}` : "") +

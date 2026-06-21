@@ -230,8 +230,7 @@ function printableContractHtml(contract: any, html: string): string {
     `Aceite eletrônico ${escapeHtml(aceiteData)} · ` +
     `IP ${escapeHtml(contract.aceite_ip || "—")} · ` +
     `Dispositivo ${escapeHtml(contract.aceite_user_agent || "—")} · ` +
-    `Hash ${escapeHtml(contract.aceite_hash || "—")} · ` +
-    `Template ${escapeHtml(contract.template_codigo || "—")} v${escapeHtml(String(contract.template_versao ?? "—"))}.`;
+    `Hash ${escapeHtml(contract.aceite_hash || "—")}.`;
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)}</title>
