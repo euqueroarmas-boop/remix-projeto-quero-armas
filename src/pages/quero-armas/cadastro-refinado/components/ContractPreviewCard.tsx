@@ -159,7 +159,7 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
       >
         <span>
           <span className="qa-ref-caps" style={{ display: "block", fontSize: 10.5, marginBottom: 4 }}>
-            Contrato de prestação de serviços {template ? `· v${template.versao}` : ""}
+            Contrato de adesão de serviços {template ? `· v${template.versao}` : ""}
           </span>
           <span className="qa-ref-serif" style={{ fontSize: 17 }}>
             {template?.titulo || "Carregando minuta…"}

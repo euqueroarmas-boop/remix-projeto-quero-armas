@@ -974,7 +974,7 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
             <span>
               Li e aceito o{" "}
               <a href="/termos" target="_blank" rel="noreferrer">
-                contrato de prestação de serviços
+                contrato de adesão de serviços
               </a>{" "}
               e a{" "}
               <a href="/privacidade" target="_blank" rel="noreferrer">
