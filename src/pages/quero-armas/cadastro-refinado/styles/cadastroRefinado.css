@@ -772,6 +772,55 @@
   padding-left: 28px;
 }
 
+/* ── Acordeão por cláusula (dentro do ContractPreviewCard) ───────────── */
+.qa-ref-contract-accordion {
+  margin-top: 14px;
+  border-top: 0.5px solid var(--qa-ref-border-soft);
+}
+.qa-ref-clause-item {
+  border-bottom: 0.5px solid var(--qa-ref-border-soft);
+}
+.qa-ref-clause-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 2px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+  color: var(--qa-ref-ink);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.qa-ref-clause-toggle:hover { color: var(--qa-ref-bordo); }
+.qa-ref-clause-body {
+  padding: 0 2px 14px;
+  max-height: 360px;
+}
+
+/* ── Resumo (objeto, valor, prazo) ao final do contrato ──────────────── */
+.qa-ref-contract-summary {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--qa-ref-paper-2);
+  border: 0.5px solid var(--qa-ref-border-soft);
+}
+.qa-ref-summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--qa-ref-ink-soft);
+  line-height: 1.5;
+}
+.qa-ref-summary-row + .qa-ref-summary-row { margin-top: 8px; }
+.qa-ref-summary-row svg { flex-shrink: 0; margin-top: 2px; color: var(--qa-ref-bordo); }
+
 /* ========== Inline payment sub-screen (Etapa 04) ========== */
 .qa-ref-pay-panel {
   border: 0.5px solid var(--qa-ref-border);

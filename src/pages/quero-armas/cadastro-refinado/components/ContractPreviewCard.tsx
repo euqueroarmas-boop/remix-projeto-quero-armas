@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, FileText, Wallet, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   filterContractAnexosBySlugs,
@@ -23,8 +23,34 @@ function renderVariables(html: string, vars: Record<string, string>) {
   return out;
 }
 
+interface ClauseSection {
+  title: string;
+  html: string;
+}
+
+/** Divide o HTML do contrato em: bloco introdutório (título, qualificação
+ * das partes) sempre visível + uma seção por <h2> a partir da Cláusula
+ * Primeira (cláusulas, assinatura, Anexo I, fim do instrumento), exibidas
+ * em acordeão. */
+function splitIntoSections(html: string): { introHtml: string; sections: ClauseSection[] } {
+  if (!html) return { introHtml: "", sections: [] };
+  const firstClauseIdx = html.indexOf("<h2>CLÁUSULA PRIMEIRA");
+  if (firstClauseIdx === -1) return { introHtml: html, sections: [] };
+  const introHtml = html.slice(0, firstClauseIdx);
+  const rest = html.slice(firstClauseIdx);
+  const parts = rest.split(/(?=<h2>)/g).filter(Boolean);
+  const sections = parts.map((part) => {
+    const m = part.match(/^<h2>([\s\S]*?)<\/h2>/);
+    const title = m ? m[1].replace(/<[^>]+>/g, "") : "Seção";
+    const sectionHtml = m ? part.slice(m[0].length) : part;
+    return { title, html: sectionHtml };
+  });
+  return { introHtml, sections };
+}
+
 export default function ContractPreviewCard({ state, precoServico, nomeServico }: Props) {
   const [open, setOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [template, setTemplate] = useState<{ titulo: string; corpo_html: string; versao: number } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -50,8 +76,8 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
     return () => { cancel = true; };
   }, []);
 
-  const renderedHtml = useMemo(() => {
-    if (!template) return "";
+  const { renderedHtml, servicoNomeFinal, precoFormatado } = useMemo(() => {
+    if (!template) return { renderedHtml: "", servicoNomeFinal: "", precoFormatado: "" };
     const d = state.dadosPessoais;
     const endereco = [
       d.endereco_logradouro,
@@ -128,8 +154,19 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
         ...debug,
       });
     }
-    return out;
+    return { renderedHtml: out, servicoNomeFinal, precoFormatado: preco };
   }, [template, state.dadosPessoais, state.servicoSlug, state.servicosSlugs, nomeServico, precoServico]);
+
+  const { introHtml, sections } = useMemo(() => splitIntoSections(renderedHtml), [renderedHtml]);
+
+  function toggleSection(idx: number) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  }
 
   function handleDownload() {
     if (!template) return;
@@ -177,7 +214,53 @@ export default function ContractPreviewCard({ state, precoServico, nomeServico }
           {erro && <div className="qa-ref-error-text">{erro}</div>}
           {!loading && template && (
             <>
-              <div className="qa-ref-contract-prose" dangerouslySetInnerHTML={{ __html: renderedHtml }} />
+              <div className="qa-ref-contract-prose" dangerouslySetInnerHTML={{ __html: introHtml }} />
+
+              <div className="qa-ref-contract-accordion">
+                {sections.map((sec, idx) => {
+                  const isOpen = openSections.has(idx);
+                  return (
+                    <div key={idx} className="qa-ref-clause-item">
+                      <button
+                        type="button"
+                        className="qa-ref-clause-toggle"
+                        onClick={() => toggleSection(idx)}
+                        aria-expanded={isOpen}
+                      >
+                        <span>{sec.title}</span>
+                        <ChevronDown
+                          size={14}
+                          style={{ transition: "transform .2s", transform: isOpen ? "rotate(180deg)" : "none", flexShrink: 0 }}
+                        />
+                      </button>
+                      {isOpen && (
+                        <div
+                          className="qa-ref-contract-prose qa-ref-clause-body"
+                          dangerouslySetInnerHTML={{ __html: sec.html }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Resumo — objeto, valor e prazo (sem o direito de arrependimento) */}
+              <div className="qa-ref-contract-summary">
+                <div className="qa-ref-caps" style={{ fontSize: 10, marginBottom: 10 }}>Resumo</div>
+                <div className="qa-ref-summary-row">
+                  <FileText size={14} />
+                  <span>{servicoNomeFinal}</span>
+                </div>
+                <div className="qa-ref-summary-row">
+                  <Wallet size={14} />
+                  <span>{precoFormatado} — pagamento integral à vista no checkout</span>
+                </div>
+                <div className="qa-ref-summary-row">
+                  <Clock size={14} />
+                  <span>7 a 25 dias úteis, a partir do recebimento da documentação completa</span>
+                </div>
+              </div>
+
               <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <button type="button" className="qa-ref-btn qa-ref-btn-ghost" onClick={handleDownload}>
                   Baixar PDF (imprimir)
