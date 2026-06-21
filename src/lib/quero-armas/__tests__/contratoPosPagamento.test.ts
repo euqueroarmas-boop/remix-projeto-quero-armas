@@ -161,9 +161,14 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/shortPersonName/);
       expect(src).toMatch(/rebuildRenderedContractHtml/);
       expect(src).toMatch(/contrato_renderizado_indisponivel/);
+      expect(src).toMatch(/logSistemaBackend/);
+      expect(src).toMatch(/failContractDownload/);
+      expect(src).toMatch(/contrato_canonico_indisponivel/);
+      expect(src).toMatch(/download bloqueado por fallback ou contrato canonico indisponivel/);
       expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
       expect(src).not.toMatch(/canServeRenderedHtml[\s\S]{0,180}company_signed_pdf_path/);
       expect(src).not.toMatch(/path = \(auditedContract as any\)\.company_signed_pdf_path \?\?/);
+      expect(src).not.toMatch(/Fallback contrato de adesão/);
       expect(src).toMatch(/text\/html; charset=utf-8/);
     });
 

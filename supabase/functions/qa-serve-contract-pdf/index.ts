@@ -22,6 +22,7 @@
  *  - "original": apenas staff.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logSistemaBackend } from "../_shared/logSistema.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,6 +59,45 @@ function jsonResp(b: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+async function failContractDownload(
+  req: Request,
+  user: { userId: string; email: string | null } | null,
+  contract: Record<string, unknown> | null,
+  variant: string,
+  reason: string,
+  status = 409,
+) {
+  const payload = {
+    reason,
+    variant,
+    contract_id: contract?.id ?? null,
+    contract_number: contract?.contract_number ?? null,
+    venda_id: contract?.venda_id ?? null,
+    cliente_id: contract?.cliente_id ?? null,
+    user_email: user?.email ?? null,
+    request_ip: requestIp(req),
+    user_agent: req.headers.get("user-agent"),
+    canonical_contract: "Minuta_Contrato_Quero_Armas_v1.md",
+  };
+
+  await logSistemaBackend({
+    tipo: "contrato",
+    status: "error",
+    mensagem: "qa-serve-contract-pdf: download bloqueado por fallback ou contrato canonico indisponivel",
+    payload,
+    user_id: user?.userId,
+  });
+
+  console.error("[qa-serve-contract-pdf] blocked contract download", payload);
+
+  return jsonResp({
+    error: "contrato_canonico_indisponivel",
+    reason,
+    message:
+      "Contrato canonico indisponivel. O download foi bloqueado e o administrador foi notificado para analise.",
+  }, status);
 }
 
 function escapeHtml(s: string | null | undefined): string {
@@ -466,35 +506,38 @@ Deno.serve(async (req) => {
   if (variant === "original") path = (auditedContract as any).original_pdf_path ?? null;
   else if (variant === "customer_signed") path = (auditedContract as any).customer_signed_pdf_path ?? null;
   else {
-    // Contrato de adesão NUNCA volta para PDF físico legado.
-    // Se não houver snapshot HTML, devolve erro controlado em vez do recibo antigo.
-    return jsonResp({
-      error: "contrato_renderizado_indisponivel",
-      message: "Contrato renderizado indisponível. Gere novamente o contrato antes de baixar.",
-    }, 409);
+    return await failContractDownload(
+      req,
+      user,
+      auditedContract as any,
+      variant,
+      "contrato_renderizado_indisponivel",
+      409,
+    );
   }
 
   if (!path) {
-    // Fallback contrato de adesão: sem PDF físico, devolve o snapshot HTML
-    // renderizado (conteudo_renderizado) como documento baixável.
-    if (variant !== "customer_signed" && html && html.trim()) {
-      const fname = contractDownloadFilename(auditedContract, "html");
-      const body = printableContractHtml(auditedContract as any, html);
-      return new Response(body, {
-        status: 200,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/html; charset=utf-8",
-          "Content-Disposition": `inline; filename="${fname}"`,
-          "Cache-Control": "private, max-age=60",
-        },
-      });
-    }
-    return jsonResp({ error: "PDF indisponível para esta variante" }, 404);
+    return await failContractDownload(
+      req,
+      user,
+      auditedContract as any,
+      variant,
+      `${variant}_path_indisponivel`,
+      404,
+    );
   }
 
   const { data: file, error: dlErr } = await sb.storage.from(BUCKET).download(path);
-  if (dlErr || !file) return jsonResp({ error: "Falha ao baixar arquivo", detail: dlErr?.message }, 500);
+  if (dlErr || !file) {
+    return await failContractDownload(
+      req,
+      user,
+      auditedContract as any,
+      variant,
+      `storage_download_failed:${dlErr?.message ?? "arquivo_ausente"}`,
+      500,
+    );
+  }
 
   const bytes = await file.arrayBuffer();
   const fname = contractDownloadFilename(auditedContract, "pdf");
