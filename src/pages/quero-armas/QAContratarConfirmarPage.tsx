@@ -18,10 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
-import ContractPreviewCard from "@/pages/quero-armas/cadastro-refinado/components/ContractPreviewCard";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
-import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
 
 /* =============================================================================
  * Design tokens — dark premium, vermelho bordô da empresa.
@@ -364,27 +362,6 @@ export default function QAContratarConfirmarPage() {
     return parts.length >= 2 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0]?.[0] ?? "?";
   }, [cliente]);
 
-  /* Adapter para ContractPreviewCard — usa apenas dadosPessoais + slugs */
-  const contratoState = useMemo(() => ({
-    servicoSlug: catalogo?.slug ?? null,
-    servicosSlugs: catalogo?.slug ? [catalogo.slug] : [],
-    dadosPessoais: {
-      nome_completo: cliente?.nome_completo ?? "",
-      cpf: cliente?.cpf ?? "",
-      email: cliente?.email ?? "",
-      telefone: "",
-      data_nascimento: "",
-      endereco_cep: enderecoOk === "nao" && novoCep ? novoCep : cliente?.cep ?? "",
-      endereco_logradouro: enderecoOk === "nao" && novoEndereco ? novoEndereco : cliente?.endereco ?? "",
-      endereco_numero: enderecoOk === "nao" && novoNumero ? novoNumero : cliente?.numero ?? "",
-      endereco_complemento: enderecoOk === "nao" && novoComplemento ? novoComplemento : cliente?.complemento ?? "",
-      endereco_bairro: enderecoOk === "nao" && novoBairro ? novoBairro : cliente?.bairro ?? "",
-      endereco_cidade: enderecoOk === "nao" && novaCidade ? novaCidade : cliente?.cidade ?? "",
-      endereco_estado: enderecoOk === "nao" && novoEstado ? novoEstado : cliente?.estado ?? "",
-    },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }) as any, [cliente, catalogo, enderecoOk, novoCep, novoEndereco, novoNumero, novoComplemento, novoBairro, novaCidade, novoEstado]);
-
   async function handleConfirmar() {
     if (!cliente || !catalogo) return;
     setSubmitting(true);
@@ -698,21 +675,12 @@ export default function QAContratarConfirmarPage() {
             tone="neutral"
           />
 
-          {/* Minuta do contrato — leitura obrigatória antes do aceite */}
-          <div style={{ marginBottom: 14 }}>
-            {/* Wrapper .qa-refinado apenas para as CSS vars funcionarem no ContractPreviewCard */}
-            <div className="qa-refinado" style={{ background: "transparent", minHeight: "unset", color: "inherit" }}>
-              <ContractPreviewCard
-                state={contratoState}
-                precoServico={valorNumerico}
-                nomeServico={catalogo.nome}
-              />
-            </div>
-          </div>
-
-          {/* Aviso e links legais */}
+          {/* Aviso e links legais — a leitura e o aceite do contrato completo
+              (acordeão por cláusula + resumo) acontecem na etapa de
+              Contrato e Pagamento, em /checkout/finalizar, igual ao fluxo
+              de quem não está logado. Não duplicamos a exibição aqui. */}
           <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, marginBottom: 14 }}>
-            Ao avançar você declara que leu e concorda com o contrato acima e com os{" "}
+            Você vai revisar e aceitar o contrato de adesão de serviços completo na etapa de pagamento. Ao confirmar aqui, você concorda com os{" "}
             <a href="/termos" target="_blank" rel="noopener noreferrer"
               style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Termos de Serviço <ExternalLink size={10} />
