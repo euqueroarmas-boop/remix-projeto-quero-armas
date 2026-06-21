@@ -3,8 +3,9 @@ import { useNavigate, Link } from "react-router-dom";
 import {
   Loader2, ShoppingCart, Lock, CheckCircle2, AlertCircle,
   QrCode, Barcode, CreditCard, ExternalLink, Copy,
-  LayoutDashboard,
+  LayoutDashboard, FileText,
 } from "lucide-react";
+import QRCodeLib from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/shared/cart/CartProvider";
 import { useAuth } from "@/shared/auth/AuthProvider";
@@ -132,7 +133,63 @@ export default function QACheckoutFinalizarPage() {
   const [billingType, setBillingType] = useState<BillingType>("PIX");
   const [venda, setVenda] = useState<VendaCriada | null>(null);
   const [cobranca, setCobranca] = useState<CobrancaResult | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [baixandoContrato, setBaixandoContrato] = useState(false);
+  const [erroBaixarContrato, setErroBaixarContrato] = useState<string | null>(null);
   const paymentConfirmedRef = useRef(false);
+
+  // Render QR code quando o payload PIX chega
+  useEffect(() => {
+    if (!cobranca || cobranca.billing_type !== "PIX" || !cobranca.asaas_pix_payload) {
+      setQrDataUrl(null);
+      return;
+    }
+    QRCodeLib.toDataURL(cobranca.asaas_pix_payload, {
+      margin: 1,
+      width: 220,
+      errorCorrectionLevel: "M",
+    })
+      .then(setQrDataUrl)
+      .catch((e) => console.warn("[QACheckoutFinalizar] QR gen failed:", e));
+  }, [cobranca?.asaas_pix_payload, cobranca?.billing_type]);
+
+  async function handleBaixarContrato() {
+    if (!venda) return;
+    setErroBaixarContrato(null);
+    setBaixandoContrato(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-baixar-contrato-aceite", {
+        body: { venda_id: venda.venda_id, checkout_token: venda.checkout_token },
+      });
+      if (error) {
+        const ctx: any = (error as any)?.context;
+        if (ctx?.status === 202) {
+          setErroBaixarContrato("Contrato sendo gerado. Tente novamente em instantes.");
+          return;
+        }
+        throw error;
+      }
+      if (!data?.ok || !data?.html_doc) {
+        setErroBaixarContrato(
+          data?.message || "Contrato ainda não disponível. Tente novamente em instantes.",
+        );
+        return;
+      }
+      const w = window.open("", "_blank", "width=900,height=1100");
+      if (!w) {
+        setErroBaixarContrato("Habilite pop-ups para baixar o contrato.");
+        return;
+      }
+      w.document.write(data.html_doc);
+      w.document.close();
+      setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 400);
+    } catch (e: any) {
+      console.error("[QACheckoutFinalizar] baixar contrato falhou:", e);
+      setErroBaixarContrato("Não foi possível baixar o contrato agora. Nossa equipe foi notificada.");
+    } finally {
+      setBaixandoContrato(false);
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && itemCount === 0 && !venda) {
@@ -331,6 +388,17 @@ export default function QACheckoutFinalizarPage() {
                   <QrCode size={13} color={D.inkFaint} />
                   <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: D.inkFaint }}>PIX copia e cola</span>
                 </div>
+                {qrDataUrl && (
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+                    <img
+                      src={qrDataUrl}
+                      alt="QR Code do PIX"
+                      width={180}
+                      height={180}
+                      style={{ borderRadius: 8, background: "#fff", padding: 8 }}
+                    />
+                  </div>
+                )}
                 <textarea
                   readOnly
                   rows={4}
@@ -370,6 +438,30 @@ export default function QACheckoutFinalizarPage() {
                   style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}` }}>
                   Abrir fatura completa <ExternalLink size={12} />
                 </a>
+              </div>
+            )}
+
+            {cobranca.pago && (
+              <div style={{ marginTop: 14 }}>
+                <button
+                  type="button"
+                  onClick={handleBaixarContrato}
+                  disabled={baixandoContrato}
+                  style={{
+                    width: "100%", display: "flex", alignItems: "center", justifyContent: "center",
+                    gap: 8, padding: "12px 18px", borderRadius: 10,
+                    border: `1px solid ${D.border}`, background: D.paper2, color: D.ink,
+                    fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+                    cursor: baixandoContrato ? "default" : "pointer", opacity: baixandoContrato ? 0.6 : 1,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {baixandoContrato ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />}
+                  {baixandoContrato ? "Gerando contrato…" : "Baixar contrato aceito"}
+                </button>
+                {erroBaixarContrato && (
+                  <p style={{ marginTop: 8, fontSize: 11, color: D.warning }}>{erroBaixarContrato}</p>
+                )}
               </div>
             )}
 
