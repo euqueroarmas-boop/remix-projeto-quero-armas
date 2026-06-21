@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { enviarSnapshotCadastroMira } from "@/lib/quero-armas/cadastroMiraSnapshot";
 import { useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
 import JsBarcode from "jsbarcode";
@@ -656,6 +657,10 @@ export default function Etapa04Pagamento({ state, update, onNext, onBack }: Prop
           pagamento_status: "aguardando_pagamento",
           pagamento_url: payData.asaas_invoice_url ?? undefined,
         },
+      });
+      void enviarSnapshotCadastroMira(state, "aguardando_pagamento", {
+        cliente_id_vinculado: clienteIdFinal,
+        venda_id: vendaId,
       });
       setStage("awaiting");
       startPolling(vendaId, checkoutToken);

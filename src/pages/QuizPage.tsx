@@ -543,9 +543,9 @@ const QuizPage = () => {
                     </button>
                     <button
                       type="button"
-                      aria-label="Voltar para serviços"
+                      aria-label="Refazer diagnóstico"
                       data-testid="quiz-secondary-cta"
-                      onClick={() => navigate('/servicos')}
+                      onClick={() => navigate('/como-escolher')}
                       style={{
                         padding: '12px 18px',
                         borderRadius: 'var(--qa-ref-radius)',

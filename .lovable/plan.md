@@ -1,4 +1,12 @@
 
+# Regras canônicas do sistema
+
+## Arsenal Inteligente
+- **Arsenal Inteligente é gratuito** e permanece acessível a todos os clientes independentemente do status de pagamento.
+- Nunca bloquear Arsenal por plano, trigger de upgrade ou gate de acesso.
+
+---
+
 # Plano: Simulação completa CR Atirador (cliente sintético)
 
 ## Identidade do teste

@@ -150,6 +150,7 @@ Deno.serve(async (req) => {
   let qaClienteId: number | null = null;
 
   if (userId) {
+    // 1) Tenta via cliente_auth_links (caminho normal)
     const { data: link } = await admin
       .from("cliente_auth_links")
       .select("qa_cliente_id")
@@ -159,6 +160,18 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
     qaClienteId = (link as any)?.qa_cliente_id ?? null;
+
+    // 2) Fallback: qa_clientes.user_id (mesmo que qa-cadastro-carregar-cliente usa)
+    if (!qaClienteId) {
+      const { data: cli } = await admin
+        .from("qa_clientes")
+        .select("id")
+        .eq("user_id", userId)
+        .neq("status", "excluido_lgpd")
+        .limit(1)
+        .maybeSingle();
+      qaClienteId = (cli as any)?.id ?? null;
+    }
   }
 
   if (!qaClienteId) {
