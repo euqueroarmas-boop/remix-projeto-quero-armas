@@ -150,27 +150,41 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/conteudo_renderizado/);
       expect(src).toMatch(/printableContractHtml/);
       expect(src).toMatch(/canServeRenderedHtml/);
+      expect(src).toMatch(/ensureRenderedContractAudit/);
+      expect(src).toMatch(/aceite_eletronico_data/);
+      expect(src).toMatch(/aceite_ip/);
+      expect(src).toMatch(/aceite_user_agent/);
+      expect(src).toMatch(/aceite_hash/);
       expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
       expect(src).not.toMatch(/canServeRenderedHtml[\s\S]{0,180}company_signed_pdf_path/);
       expect(src).toMatch(/text\/html; charset=utf-8/);
     });
 
-    it("portal do cliente baixa a minuta aprovada diretamente do SQL", () => {
+    it("portal do cliente usa a edge autenticada para baixar o contrato renderizado", () => {
       const card = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
       const block = r("src/components/quero-armas/portal/ContratoBlock.tsx");
       const helper = r("src/lib/quero-armas/minutaContratoDownload.ts");
 
       expect(card).toMatch(/openMinutaContratoQueroArmas/);
       expect(block).toMatch(/openMinutaContratoQueroArmas/);
-      expect(card).not.toMatch(/conteudo_renderizado|openRenderedContract|qa-serve-contract-pdf/);
-      expect(block).not.toMatch(/conteudo_renderizado|openRenderedContract|qa-serve-contract-pdf/);
+      expect(card).not.toMatch(/conteudo_renderizado|openRenderedContract/);
+      expect(block).not.toMatch(/conteudo_renderizado|openRenderedContract/);
 
       expect(helper).toMatch(/Minuta_Contrato_Quero_Armas_v1\.md/);
-      expect(helper).toMatch(/qa_contract_templates/);
+      expect(helper).toMatch(/qa-serve-contract-pdf/);
       expect(helper).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
-      expect(helper).toMatch(/corpo_html/);
-      expect(helper).toMatch(/observacoes/);
-      expect(helper).toMatch(/filterContractAnexosBySlugs/);
+      expect(helper).not.toMatch(/qa_contract_templates/);
+      expect(helper).not.toMatch(/corpo_html|observacoes|filterContractAnexosBySlugs/);
+    });
+
+    it("migration corrige Anexo I.6 para PF/SINARM-CAC no template e snapshots", () => {
+      const src = r("supabase/migrations/20260620212500_qa_contract_anexo_16_sinarm_cac.sql");
+      expect(src).toMatch(/I\.6\. CONCESSÃO DE CR/);
+      expect(src).toMatch(/Polícia Federal \/ SINARM-CAC/);
+      expect(src).toMatch(/Polícia Federal --- SINARM-CAC/);
+      expect(src).toMatch(/qa_contract_templates/);
+      expect(src).toMatch(/qa_contracts/);
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
     });
 
     it("migration remove ponteiros de PDFs legados do contrato principal aprovado", () => {

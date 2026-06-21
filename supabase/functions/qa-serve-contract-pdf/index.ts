@@ -67,6 +67,26 @@ function escapeHtml(s: string | null | undefined): string {
     .replace(/"/g, "&quot;");
 }
 
+function substitute(html: string, vars: Record<string, string>): string {
+  return html.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key) => vars[key] ?? "");
+}
+
+async function sha256Text(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function requestIp(req: Request): string | null {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    null
+  );
+}
+
 function sanitizeTechnicalJargon(html: string): string {
   if (!html) return html;
   return html
@@ -79,6 +99,18 @@ function sanitizeTechnicalJargon(html: string): string {
 function printableContractHtml(contract: any, html: string): string {
   const title = `Contrato ${contract.contract_number || contract.id} — Quero Armas`;
   const generatedAt = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  const aceiteData = contract.aceite_eletronico_data
+    ? new Date(contract.aceite_eletronico_data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+    : "—";
+  const rodape =
+    `Documento gerado em ${escapeHtml(generatedAt)} · ` +
+    `Contrato ${escapeHtml(contract.contract_number || contract.id)} · ` +
+    `Pedido ${escapeHtml(String(contract.venda_id || "—"))} · ` +
+    `Aceite eletrônico ${escapeHtml(aceiteData)} · ` +
+    `IP ${escapeHtml(contract.aceite_ip || "—")} · ` +
+    `Dispositivo ${escapeHtml(contract.aceite_user_agent || "—")} · ` +
+    `Hash ${escapeHtml(contract.aceite_hash || "—")} · ` +
+    `Template ${escapeHtml(contract.template_codigo || "—")} v${escapeHtml(String(contract.template_versao ?? "—"))}.`;
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)}</title>
@@ -104,8 +136,81 @@ function printableContractHtml(contract: any, html: string): string {
 <div class="qa-print-actions"><button type="button" onclick="window.print()">Salvar/assinar em PDF</button></div>
 <p class="qa-print-note">Este é o contrato completo. Para assinar pelo GOV.BR ou certificado ICP-Brasil, use "Salvar/assinar em PDF".</p>
 ${sanitizeTechnicalJargon(html)}
-<div class="qa-rodape-probatorio">Documento gerado em ${escapeHtml(generatedAt)} · Contrato ${escapeHtml(contract.contract_number || contract.id)} · Pedido ${escapeHtml(String(contract.venda_id || "—"))}</div>
+<div class="qa-rodape-probatorio">${rodape}</div>
 </body></html>`;
+}
+
+async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Request, contract: any) {
+  let html = String(contract.conteudo_renderizado || "");
+
+  if (html.includes("{{")) {
+    const { data: cliente } = await sb
+      .from("qa_clientes")
+      .select("nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep")
+      .eq("id_legado", contract.cliente_id)
+      .maybeSingle();
+    const enderecoCliente = cliente
+      ? [
+          (cliente as any).endereco,
+          (cliente as any).numero ? `nº ${(cliente as any).numero}` : null,
+          (cliente as any).complemento,
+          (cliente as any).bairro,
+          (cliente as any).cidade && (cliente as any).estado ? `${(cliente as any).cidade}/${(cliente as any).estado}` : (cliente as any).cidade,
+          (cliente as any).cep ? `CEP ${(cliente as any).cep}` : null,
+        ].filter(Boolean).join(", ")
+      : "";
+    html = substitute(html, {
+      cliente_nome: escapeHtml((cliente as any)?.nome_completo || ""),
+      cliente_cpf_cnpj: escapeHtml((cliente as any)?.cpf || ""),
+      cliente_endereco: escapeHtml(enderecoCliente),
+      cliente_email: escapeHtml((cliente as any)?.email || ""),
+      cliente_telefone: escapeHtml((cliente as any)?.celular || ""),
+      servico_slug: escapeHtml(contract.servico_slug || ""),
+      servico_nome: "",
+      servico_preco: contract.valor != null
+        ? `R$ ${Number(contract.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : "",
+      aceite_data: contract.aceite_eletronico_data || "",
+      aceite_ip: escapeHtml(contract.aceite_ip || ""),
+      aceite_user_agent: escapeHtml(contract.aceite_user_agent || ""),
+      aceite_hash: escapeHtml(contract.aceite_hash || ""),
+    });
+  }
+
+  const missingAudit =
+    !contract.aceite_eletronico_data ||
+    !contract.aceite_ip ||
+    !contract.aceite_user_agent ||
+    !contract.aceite_hash ||
+    html !== contract.conteudo_renderizado;
+
+  if (!missingAudit) return { ...contract, conteudo_renderizado: html };
+
+  const aceiteData = contract.aceite_eletronico_data || new Date().toISOString();
+  const aceiteIp = contract.aceite_ip || requestIp(req);
+  const aceiteUserAgent = contract.aceite_user_agent || req.headers.get("user-agent") || null;
+  const aceiteHash = contract.aceite_hash || await sha256Text(`${html}|${aceiteData}|${contract.cliente_id}`);
+  const patch = {
+    conteudo_renderizado: html,
+    aceite_eletronico_data: aceiteData,
+    aceite_ip: aceiteIp,
+    aceite_user_agent: aceiteUserAgent,
+    aceite_hash: aceiteHash,
+  };
+
+  await sb.from("qa_contracts").update(patch).eq("id", contract.id);
+  await sb.from("qa_contract_events").insert({
+    contract_id: contract.id,
+    event_type: "aceite_eletronico_registrado_download_portal",
+    event_payload: {
+      aceite_eletronico_data: aceiteData,
+      aceite_ip: aceiteIp,
+      user_agent_present: !!aceiteUserAgent,
+      aceite_hash: aceiteHash,
+    },
+  });
+
+  return { ...contract, ...patch };
 }
 
 Deno.serve(async (req) => {
@@ -146,7 +251,7 @@ Deno.serve(async (req) => {
   if (!contractId && !vendaId) return jsonResp({ error: "contract_id ou venda_id obrigatório" }, 400);
 
   let q = sb.from("qa_contracts").select(
-    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado"
+    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash"
   );
   if (contractId) q = q.eq("id", contractId);
   else q = q.eq("venda_id", vendaId!);
@@ -161,15 +266,16 @@ Deno.serve(async (req) => {
     if (variant === "original") variant = "company_signed";
   }
 
-  const html = (contract as any).conteudo_renderizado as string | null;
+  const auditedContract = await ensureRenderedContractAudit(sb, req, contract as any);
+  const html = auditedContract.conteudo_renderizado as string | null;
   const canServeRenderedHtml =
     variant !== "customer_signed" &&
     html &&
     html.trim();
 
   if (canServeRenderedHtml) {
-    const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
-    return new Response(printableContractHtml(contract as any, html), {
+    const fname = `Contrato ${(auditedContract as any).contract_number || (auditedContract as any).id} - Quero Armas.html`;
+    return new Response(printableContractHtml(auditedContract as any, html), {
       status: 200,
       headers: {
         ...corsHeaders,
@@ -181,20 +287,20 @@ Deno.serve(async (req) => {
   }
 
   let path: string | null = null;
-  if (variant === "original") path = (contract as any).original_pdf_path ?? null;
-  else if (variant === "customer_signed") path = (contract as any).customer_signed_pdf_path ?? null;
+  if (variant === "original") path = (auditedContract as any).original_pdf_path ?? null;
+  else if (variant === "customer_signed") path = (auditedContract as any).customer_signed_pdf_path ?? null;
   else {
     // Contrato de adesão: cliente pode baixar assim que o contrato é emitido.
     // Este caminho só é usado quando não há snapshot HTML canônico.
-    path = (contract as any).company_signed_pdf_path ?? (contract as any).original_pdf_path ?? null;
+    path = (auditedContract as any).company_signed_pdf_path ?? (auditedContract as any).original_pdf_path ?? null;
   }
 
   if (!path) {
     // Fallback contrato de adesão: sem PDF físico, devolve o snapshot HTML
     // renderizado (conteudo_renderizado) como documento baixável.
     if (variant !== "customer_signed" && html && html.trim()) {
-      const fname = `contrato-${(contract as any).contract_number || (contract as any).id}.html`;
-      const body = printableContractHtml(contract as any, html);
+      const fname = `Contrato ${(auditedContract as any).contract_number || (auditedContract as any).id} - Quero Armas.html`;
+      const body = printableContractHtml(auditedContract as any, html);
       return new Response(body, {
         status: 200,
         headers: {
@@ -212,7 +318,7 @@ Deno.serve(async (req) => {
   if (dlErr || !file) return jsonResp({ error: "Falha ao baixar arquivo", detail: dlErr?.message }, 500);
 
   const bytes = await file.arrayBuffer();
-  const fname = `contrato-${(contract as any).contract_number || (contract as any).id}-${variant}.pdf`;
+  const fname = `Contrato ${(auditedContract as any).contract_number || (auditedContract as any).id} - Quero Armas.pdf`;
   return new Response(bytes, {
     status: 200,
     headers: {
