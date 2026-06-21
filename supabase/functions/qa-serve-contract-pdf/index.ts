@@ -87,6 +87,42 @@ function requestIp(req: Request): string | null {
   );
 }
 
+function fileSafeName(value: string | null | undefined): string {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function titleCaseName(value: string): string {
+  return value
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) =>
+      ["da", "de", "do", "das", "dos", "e"].includes(part)
+        ? part
+        : part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1)
+    )
+    .join(" ");
+}
+
+function shortPersonName(value: string | null | undefined): string {
+  const parts = fileSafeName(value).split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return titleCaseName(parts.join(" "));
+  return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
+}
+
+function contractDownloadFilename(contract: any, ext: "html" | "pdf"): string {
+  const numero = fileSafeName(contract.contract_number || contract.id || "Contrato");
+  const cliente = shortPersonName(contract.cliente_nome || "");
+  const base = cliente
+    ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}`
+    : `${numero} - Contrato de Adesao Quero Armas`;
+  return `${base}.${ext}`;
+}
+
 function sanitizeTechnicalJargon(html: string): string {
   if (!html) return html;
   return html
@@ -175,6 +211,19 @@ async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Requ
       aceite_user_agent: escapeHtml(contract.aceite_user_agent || ""),
       aceite_hash: escapeHtml(contract.aceite_hash || ""),
     });
+
+    if ((cliente as any)?.nome_completo) {
+      contract.cliente_nome = (cliente as any).nome_completo;
+    }
+  }
+
+  if (!contract.cliente_nome) {
+    const { data: clienteNome } = await sb
+      .from("qa_clientes")
+      .select("nome_completo")
+      .eq("id_legado", contract.cliente_id)
+      .maybeSingle();
+    contract.cliente_nome = (clienteNome as any)?.nome_completo || null;
   }
 
   const missingAudit =
@@ -274,7 +323,7 @@ Deno.serve(async (req) => {
     html.trim();
 
   if (canServeRenderedHtml) {
-    const fname = `Contrato ${(auditedContract as any).contract_number || (auditedContract as any).id} - Quero Armas.html`;
+    const fname = contractDownloadFilename(auditedContract, "html");
     return new Response(printableContractHtml(auditedContract as any, html), {
       status: 200,
       headers: {
@@ -299,7 +348,7 @@ Deno.serve(async (req) => {
     // Fallback contrato de adesão: sem PDF físico, devolve o snapshot HTML
     // renderizado (conteudo_renderizado) como documento baixável.
     if (variant !== "customer_signed" && html && html.trim()) {
-      const fname = `Contrato ${(auditedContract as any).contract_number || (auditedContract as any).id} - Quero Armas.html`;
+      const fname = contractDownloadFilename(auditedContract, "html");
       const body = printableContractHtml(auditedContract as any, html);
       return new Response(body, {
         status: 200,
@@ -318,7 +367,7 @@ Deno.serve(async (req) => {
   if (dlErr || !file) return jsonResp({ error: "Falha ao baixar arquivo", detail: dlErr?.message }, 500);
 
   const bytes = await file.arrayBuffer();
-  const fname = `Contrato ${(auditedContract as any).contract_number || (auditedContract as any).id} - Quero Armas.pdf`;
+  const fname = contractDownloadFilename(auditedContract, "pdf");
   return new Response(bytes, {
     status: 200,
     headers: {
