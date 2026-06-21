@@ -50,6 +50,11 @@ const D = {
   danger: "#c0392b",
   dangerAlpha: "rgba(192,57,43,0.10)",
   dangerBorder: "rgba(192,57,43,0.25)",
+  /* neutro preto/cinza — usado na seção de contrato e aceite (sem bordô) */
+  neutral: "#d4d4d4",
+  neutralAlpha: "rgba(212,212,212,0.10)",
+  neutralAlphaStrong: "rgba(212,212,212,0.25)",
+  neutralGlow: "rgba(212,212,212,0.12)",
 };
 
 interface Catalogo {
@@ -85,24 +90,28 @@ type Confirmacao = "sim" | "nao" | null;
 
 /* ── Primitivos de UI ───────────────────────────────────────────────────────── */
 
-function DarkCard({ children, accentLine = false, glowBorder = false }: {
+function DarkCard({ children, accentLine = false, glowBorder = false, tone = "red" }: {
   children: React.ReactNode;
   accentLine?: boolean;
   glowBorder?: boolean;
+  tone?: "red" | "neutral";
 }) {
+  const c = tone === "neutral"
+    ? { main: D.neutral, mainDeep: D.neutral, alpha: D.neutralAlpha, alphaStrong: D.neutralAlphaStrong, glow: D.neutralGlow }
+    : { main: D.red, mainDeep: D.redDeep, alpha: D.redAlpha, alphaStrong: D.redAlphaStrong, glow: D.redGlow };
   return (
     <div style={{
       background: D.paper,
-      border: `1px solid ${glowBorder ? D.redAlphaStrong : D.border}`,
+      border: `1px solid ${glowBorder ? c.alphaStrong : D.border}`,
       borderRadius: 14,
       overflow: "hidden",
-      boxShadow: glowBorder ? `0 0 20px ${D.redAlpha}, inset 0 0 0 1px ${D.redAlpha}` : "none",
+      boxShadow: glowBorder ? `0 0 20px ${c.alpha}, inset 0 0 0 1px ${c.alpha}` : "none",
     }}>
       {accentLine && (
         <div style={{
           height: "2px",
-          background: `linear-gradient(to right, ${D.red}, ${D.redDeep})`,
-          boxShadow: `0 0 10px ${D.redGlow}`,
+          background: `linear-gradient(to right, ${c.main}, ${c.mainDeep})`,
+          boxShadow: `0 0 10px ${c.glow}`,
         }} />
       )}
       <div style={{ padding: "16px" }}>{children}</div>
@@ -110,20 +119,24 @@ function DarkCard({ children, accentLine = false, glowBorder = false }: {
   );
 }
 
-function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType }: {
+function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType, tone = "red" }: {
   n: number; done: boolean; icon: any; label: string;
   statusLabel?: string; statusType?: "ok" | "edit";
+  tone?: "red" | "neutral";
 }) {
+  const accent = tone === "neutral" ? D.neutral : D.red;
+  const accentAlpha = tone === "neutral" ? D.neutralAlpha : D.redAlpha;
+  const accentAlphaStrong = tone === "neutral" ? D.neutralAlphaStrong : D.redAlphaStrong;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
       <div style={{
         width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 11, fontWeight: 800,
-        background: done ? D.red : D.redAlpha,
-        border: `2px solid ${done ? D.red : D.redAlphaStrong}`,
-        color: done ? "#fff" : D.red,
-        boxShadow: done ? `0 0 10px ${D.redAlpha}` : "none",
+        background: done ? accent : accentAlpha,
+        border: `2px solid ${done ? accent : accentAlphaStrong}`,
+        color: done ? (tone === "neutral" ? "#000" : "#fff") : accent,
+        boxShadow: done ? `0 0 10px ${accentAlpha}` : "none",
         transition: "all .2s",
       }}>
         {done ? <Check size={13} /> : n}
@@ -131,10 +144,10 @@ function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType }: {
       <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
         <div style={{
           width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-          background: D.redAlpha,
+          background: accentAlpha,
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          <Icon size={14} color={D.red} />
+          <Icon size={14} color={accent} />
         </div>
         <span style={{
           fontSize: 12, fontWeight: 700, textTransform: "uppercase",
@@ -677,11 +690,12 @@ export default function QAContratarConfirmarPage() {
         </DarkCard>
 
         {/* ── 5. Contrato e aceite ─────────────────────────────────────── */}
-        <DarkCard glowBorder={!aceiteContrato}>
+        <DarkCard glowBorder={!aceiteContrato} tone="neutral">
           <SectionLabel
             n={5} done={aceiteContrato} icon={FileSignature} label="Contrato e aceite"
             statusLabel={aceiteContrato ? "Aceito ✓" : "Obrigatório"}
             statusType={aceiteContrato ? "ok" : "edit"}
+            tone="neutral"
           />
 
           {/* Minuta do contrato — leitura obrigatória antes do aceite */}
@@ -700,12 +714,12 @@ export default function QAContratarConfirmarPage() {
           <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, marginBottom: 14 }}>
             Ao avançar você declara que leu e concorda com o contrato acima e com os{" "}
             <a href="/termos-de-servico" target="_blank" rel="noopener noreferrer"
-              style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Termos de Serviço <ExternalLink size={10} />
             </a>
             {" "}e a{" "}
             <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer"
-              style={{ color: D.red, textDecoration: "none", borderBottom: `1px solid ${D.redAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Política de Privacidade <ExternalLink size={10} />
             </a>
             {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
