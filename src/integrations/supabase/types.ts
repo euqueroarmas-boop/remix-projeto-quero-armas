@@ -4559,6 +4559,8 @@ export type Database = {
           aceite_inicio_imediato: boolean | null
           aceite_ip: string | null
           aceite_user_agent: string | null
+          arquivado_em: string | null
+          arquivado_motivo: string | null
           cliente_id: number
           company_signed_at: string | null
           company_signed_pdf_path: string | null
@@ -4592,6 +4594,8 @@ export type Database = {
           aceite_inicio_imediato?: boolean | null
           aceite_ip?: string | null
           aceite_user_agent?: string | null
+          arquivado_em?: string | null
+          arquivado_motivo?: string | null
           cliente_id: number
           company_signed_at?: string | null
           company_signed_pdf_path?: string | null
@@ -4625,6 +4629,8 @@ export type Database = {
           aceite_inicio_imediato?: boolean | null
           aceite_ip?: string | null
           aceite_user_agent?: string | null
+          arquivado_em?: string | null
+          arquivado_motivo?: string | null
           cliente_id?: number
           company_signed_at?: string | null
           company_signed_pdf_path?: string | null

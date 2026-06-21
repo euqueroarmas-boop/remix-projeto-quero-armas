@@ -1,0 +1,26 @@
+ALTER TABLE public.qa_contracts
+  ADD COLUMN IF NOT EXISTS arquivado_em timestamptz,
+  ADD COLUMN IF NOT EXISTS arquivado_motivo text;
+
+COMMENT ON COLUMN public.qa_contracts.arquivado_em IS
+  'Quando preenchido, contrato é artefato histórico (ex.: teste sem venda real) — excluído de listagens e métricas de não-canônicos, mas mantido para auditoria.';
+
+DO $$
+DECLARE
+  v_total integer;
+BEGIN
+  UPDATE public.qa_contracts c
+     SET arquivado_em = now(),
+         arquivado_motivo = 'contrato_teste_sem_venda_real_confirmado_pelo_usuario'
+   WHERE c.arquivado_em IS NULL
+     AND c.template_codigo IS NULL
+     AND c.venda_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM public.qa_vendas v
+        WHERE v.id_legado = c.venda_id OR v.id = c.venda_id
+     );
+
+  GET DIAGNOSTICS v_total = ROW_COUNT;
+  RAISE NOTICE 'qa_contracts_arquivar_orfaos_teste: % contrato(s) de teste arquivado(s).', v_total;
+END;
+$$;
