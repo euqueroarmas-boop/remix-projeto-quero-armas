@@ -5,14 +5,17 @@
  *  - Idempotente (UNIQUE em qa_contracts.venda_id).
  *  - Congela snapshot dos itens (qa_contract_items) — depois disso o catálogo
  *    NUNCA mais é consultado para este contrato.
- *  - Renderiza PDF com pdf-lib e salva em storage `paid-contracts/qa/<venda>/original.pdf`.
- *  - Calcula SHA-256 e registra qa_contract_events('generated').
+ *  - Renderiza o template vigente `CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS`
+ *    com Anexo I filtrado pelos slugs dos serviços contratados.
+ *  - Grava apenas o snapshot HTML canônico em qa_contracts.conteudo_renderizado.
+ *    O download do cliente renderiza esse snapshot; esta função NÃO gera PDF
+ *    simplificado.
+ *  - Calcula hash do snapshot e registra qa_contract_events('generated').
  *  - status inicial: generated_pending_company_signature.
  *  - NÃO libera processo/checklist.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
-import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 import { requireAdminOrInternal } from "../_shared/internalAuth.ts";
 
 const corsHeaders = {
@@ -21,8 +24,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-internal-token, x-admin-token",
 };
 
-const BUCKET = "paid-contracts";
-
 function svc() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -30,8 +31,8 @@ function svc() {
   );
 }
 
-async function sha256(bytes: Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
+async function sha256Text(input: string): Promise<string> {
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
   return Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -51,172 +52,159 @@ function jsonResp(body: unknown, status = 200) {
   });
 }
 
-function nowYearSeq() {
-  const d = new Date();
-  return `QA-${d.getFullYear()}-${Date.now().toString(36).toUpperCase()}`;
+function esc(s: string | null | undefined): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
-function strip(html: string | null | undefined) {
-  return (html || "")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<br\s*\/?>(?!\s)/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/\s+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+function substitute(html: string, vars: Record<string, string>): string {
+  return html.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, k) => {
+    const v = vars[k];
+    return v == null ? "" : String(v);
+  });
 }
 
-async function buildPdf(opts: {
-  contractNumber: string;
-  cliente: { nome_completo: string; cpf?: string | null; cidade?: string | null; estado?: string | null };
-  venda: { id_legado: number; data_cadastro?: string | null; valor_aprovado?: number | null };
-  items: Array<{
-    name: string;
-    description: string | null;
-    quantity: number;
-    unit_price_cents: number;
-    total_price_cents: number;
-  }>;
-}): Promise<Uint8Array> {
-  const pdf = await PDFDocument.create();
-  const helv = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  let page = pdf.addPage([595.28, 841.89]); // A4
-  const { width, height } = page.getSize();
-  const margin = 48;
-  let y = height - margin;
+const AVISO_SEM_ANEXO_HTML =
+  '<section data-anexo-slug="__aviso__" class="qa-anexo-aviso" ' +
+  'style="border:1px solid #c9a84c;background:#fdf6e3;color:#5a4a1a;' +
+  'padding:12px 14px;margin:18px 0;font-size:12.5px;line-height:1.5;">' +
+  '<strong>Anexo específico do serviço não disponível neste contrato.</strong> ' +
+  "Os termos detalhados do serviço contratado serão entregues junto ao " +
+  "contrato final assinado." +
+  "</section>";
 
-  const black = rgb(0.06, 0.06, 0.06);
-  const bordo = rgb(0.478, 0.122, 0.169); // #7A1F2B
-  const muted = rgb(0.35, 0.35, 0.35);
+function normalizeContractSlug(value: string | null | undefined): string {
+  if (!value) return "";
+  let s = String(value);
+  s = s.replace(/<[^>]+>/g, " ");
+  s = s
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  s = s.toLowerCase();
+  s = s.replace(/[_\s]+/g, "-");
+  s = s.replace(/[^a-z0-9-]+/g, "");
+  s = s.replace(/-+/g, "-");
+  s = s.replace(/^-+|-+$/g, "");
+  return s;
+}
 
-  const newPageIfNeeded = (need = 60) => {
-    if (y - need < margin) {
-      page = pdf.addPage([595.28, 841.89]);
-      y = page.getSize().height - margin;
+function normalizeSlugs(slugs: string[] | null | undefined): string[] {
+  if (!Array.isArray(slugs)) return [];
+  return slugs
+    .filter((s): s is string => typeof s === "string")
+    .map((s) => normalizeContractSlug(s))
+    .filter(Boolean);
+}
+
+function extractSlugFromAnexoBlock(segment: string): string | null {
+  const rawRegexes: RegExp[] = [
+    /Identificador[\s\S]{0,40}?\(\s*slug\s*\)[^A-Za-z0-9<]{0,20}(?:<[^>]+>\s*)*([^<\n\r.;]+)/i,
+    /\(\s*slug\s*\)[\s\S]{0,20}?:[\s\S]{0,40}?([a-z0-9][\w\s\-]{1,80})/i,
+  ];
+  for (const r of rawRegexes) {
+    const m = segment.match(r);
+    if (m && m[1]) {
+      const slug = normalizeContractSlug(m[1]);
+      if (slug) return slug;
     }
-  };
-
-  const drawText = (
-    text: string,
-    opts: { size?: number; font?: typeof helv; color?: ReturnType<typeof rgb>; x?: number } = {},
-  ) => {
-    const size = opts.size ?? 10;
-    const font = opts.font ?? helv;
-    const color = opts.color ?? black;
-    const x = opts.x ?? margin;
-    const maxWidth = width - margin * 2 - (x - margin);
-    // wrap
-    const words = text.split(/\s+/);
-    let line = "";
-    for (const w of words) {
-      const test = line ? `${line} ${w}` : w;
-      if (font.widthOfTextAtSize(test, size) > maxWidth) {
-        newPageIfNeeded(size + 4);
-        page.drawText(line, { x, y, size, font, color });
-        y -= size + 3;
-        line = w;
-      } else {
-        line = test;
-      }
-    }
-    if (line) {
-      newPageIfNeeded(size + 4);
-      page.drawText(line, { x, y, size, font, color });
-      y -= size + 3;
-    }
-  };
-
-  // Header
-  page.drawRectangle({ x: 0, y: height - 64, width, height: 64, color: bordo });
-  page.drawText("QUERO ARMAS", { x: margin, y: height - 36, size: 18, font: bold, color: rgb(1, 1, 1) });
-  page.drawText("CONTRATO DE PRESTAÇÃO DE SERVIÇOS", { x: margin, y: height - 54, size: 9, font: helv, color: rgb(0.95, 0.92, 0.92) });
-  y = height - 90;
-
-  drawText(`CONTRATO Nº ${opts.contractNumber}`, { size: 12, font: bold });
-  drawText(`Venda nº ${opts.venda.id_legado} · Emitido em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, { size: 9, color: muted });
-  y -= 8;
-
-  // Partes
-  drawText("CONTRATANTE", { size: 11, font: bold, color: bordo });
-  drawText(`${opts.cliente.nome_completo.toUpperCase()}${opts.cliente.cpf ? ` — CPF ${opts.cliente.cpf}` : ""}`, { size: 10 });
-  if (opts.cliente.cidade) {
-    drawText(`${opts.cliente.cidade}${opts.cliente.estado ? "/" + opts.cliente.estado : ""}`, { size: 9, color: muted });
   }
-  y -= 6;
+  const text = segment
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ");
+  const tm = text.match(
+    /Identificador\s*\(\s*slug\s*\)\s*:?\s*([^.;<\n\r]+?)(?:\s|\.|;|<|$)/i,
+  );
+  if (tm && tm[1]) {
+    const slug = normalizeContractSlug(tm[1]);
+    if (slug) return slug;
+  }
+  return null;
+}
 
-  drawText("CONTRATADA", { size: 11, font: bold, color: bordo });
-  drawText("QUERO ARMAS — Equipe Quero Armas, prestadora de serviços jurídicos e administrativos.", { size: 10 });
-  y -= 10;
+function inferSlugFromAnexoTitle(titulo: string): string | null {
+  if (!titulo) return null;
+  const t = normalizeContractSlug(titulo);
+  const semPrefixo = t.replace(/^i-\d+-/, "");
+  const map: Array<{ test: RegExp; slug: string }> = [
+    { test: /concessao-de-cr|concessao-cr/, slug: "concessao-cr" },
+    { test: /renovacao-de-cr|renovacao-cr/, slug: "renovacao-cr" },
+    { test: /autorizacao-de-compra|autorizacao-compra/, slug: "autorizacao-compra" },
+    { test: /craf/, slug: "craf" },
+    { test: /gte|guia-de-trafego/, slug: "gte" },
+    { test: /porte/, slug: "porte" },
+    { test: /posse/, slug: "posse" },
+    { test: /apostilamento/, slug: "apostilamento" },
+    { test: /registro/, slug: "registro" },
+  ];
+  for (const m of map) {
+    if (m.test.test(semPrefixo) || m.test.test(t)) return m.slug;
+  }
+  return null;
+}
 
-  // Itens
-  drawText("OBJETO — SERVIÇOS CONTRATADOS", { size: 11, font: bold, color: bordo });
-  y -= 4;
+function filterAnexoIByHeadings(html: string, slugSet: Set<string>): string {
+  const headingRegex = /<h3[^>]*>\s*I\.\d+\.[^<]*<\/h3>/g;
+  const heads: { start: number; titulo: string }[] = [];
+  let m: RegExpExecArray | null;
+  while ((m = headingRegex.exec(html)) !== null) {
+    heads.push({ start: m.index, titulo: m[0].replace(/<[^>]+>/g, "").trim() });
+  }
+  if (heads.length === 0) return html;
 
-  let totalCents = 0;
-  opts.items.forEach((it, i) => {
-    newPageIfNeeded(72);
-    drawText(`${String(i + 1).padStart(2, "0")}. ${it.name.toUpperCase()}`, { size: 10, font: bold });
-    if (it.description) drawText(strip(it.description), { size: 9, color: muted });
-    drawText(
-      `Qtd: ${it.quantity}    Unit.: ${brl(it.unit_price_cents)}    Total: ${brl(it.total_price_cents)}`,
-      { size: 9 },
-    );
-    totalCents += it.total_price_cents;
-    y -= 4;
+  const tailH2 = html.slice(heads[heads.length - 1].start).search(/<h2[^>]*>/);
+  const lastEnd =
+    tailH2 >= 0 ? heads[heads.length - 1].start + tailH2 : html.length;
+
+  type Block = { start: number; end: number; slug: string | null };
+  const blocks: Block[] = heads.map((h, i) => {
+    const end = i + 1 < heads.length ? heads[i + 1].start : lastEnd;
+    const segment = html.slice(h.start, end);
+    const slugExtraido = extractSlugFromAnexoBlock(segment);
+    const slugInferido = slugExtraido ? null : inferSlugFromAnexoTitle(h.titulo);
+    return { start: h.start, end, slug: slugExtraido || slugInferido };
   });
 
-  // Total
-  newPageIfNeeded(40);
-  page.drawLine({ start: { x: margin, y: y - 2 }, end: { x: width - margin, y: y - 2 }, color: muted, thickness: 0.5 });
-  y -= 12;
-  drawText(`VALOR TOTAL DO CONTRATO: ${brl(totalCents)}`, { size: 12, font: bold });
-  y -= 12;
+  const kept = blocks.filter((b) => b.slug && slugSet.has(b.slug));
+  const head = html.slice(0, blocks[0].start);
+  const tail = html.slice(lastEnd);
+  const middle =
+    kept.length === 0
+      ? AVISO_SEM_ANEXO_HTML
+      : kept.map((b) => html.slice(b.start, b.end)).join("");
+  return head + middle + tail;
+}
 
-  // Cláusulas mínimas
-  drawText("CLÁUSULAS GERAIS", { size: 11, font: bold, color: bordo });
-  drawText(
-    "1. O presente contrato refere-se exclusivamente aos serviços listados acima, contratados na venda referenciada.",
-    { size: 9 },
-  );
-  drawText(
-    "2. A execução dos serviços inicia-se após validação criptográfica da assinatura do CONTRATANTE neste instrumento.",
-    { size: 9 },
-  );
-  drawText(
-    "3. Os valores aqui descritos correspondem ao acordado no checkout e refletem o snapshot imutável da contratação.",
-    { size: 9 },
-  );
-  drawText(
-    "4. A CONTRATADA assina o presente instrumento por meio de certificado digital ICP-Brasil ou representação legal Gov.br.",
-    { size: 9 },
-  );
-  drawText(
-    "5. O CONTRATANTE deverá assinar este contrato com Gov.br ou certificado ICP-Brasil próprio, e enviá-lo pelo Portal do Cliente.",
-    { size: 9 },
-  );
-  drawText(
-    "6. Aceite no checkout NÃO substitui a assinatura formal exigida nesta cláusula.",
-    { size: 9 },
-  );
-
-  // Footer
-  const pages = pdf.getPages();
-  pages.forEach((p, i) => {
-    p.drawText(`Página ${i + 1} de ${pages.length} — Contrato ${opts.contractNumber}`, {
-      x: margin,
-      y: 24,
-      size: 7,
-      font: helv,
-      color: muted,
-    });
+function filterContractAnexosBySlugs(
+  html: string,
+  slugsContratados: string[] | null | undefined,
+): string {
+  if (!html) return html;
+  const slugSet = new Set(normalizeSlugs(slugsContratados));
+  const sectionRegex =
+    /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
+  let foundAny = false;
+  let kept = 0;
+  const filtered = html.replace(sectionRegex, (full, s: string) => {
+    foundAny = true;
+    const sslug = normalizeContractSlug(s);
+    if (slugSet.has(sslug)) {
+      kept++;
+      return full;
+    }
+    return "";
   });
-
-  return await pdf.save();
+  const bySections = foundAny
+    ? kept === 0
+      ? filtered + AVISO_SEM_ANEXO_HTML
+      : filtered
+    : html;
+  return filterAnexoIByHeadings(bySections, slugSet);
 }
 
 Deno.serve(async (req) => {
@@ -248,14 +236,6 @@ Deno.serve(async (req) => {
 
   const sb = svc();
 
-  // Idempotência
-  const { data: existing } = await sb
-    .from("qa_contracts")
-    .select("id, status, contract_number, original_pdf_path")
-    .eq("venda_id", vendaId)
-    .maybeSingle();
-  if (existing) return jsonResp({ ok: true, idempotent: true, contract: existing });
-
   // Carrega venda
   const { data: venda, error: vErr } = await sb
     .from("qa_vendas")
@@ -269,10 +249,26 @@ Deno.serve(async (req) => {
     return jsonResp({ error: `Venda ainda não está PAGO (status atual: ${venda.status})` }, 409);
   }
 
+  const { data: protocolNumber, error: protoErr } = await sb.rpc("qa_gerar_protocolo", {
+    p_venda_id: venda.id,
+  });
+  if (protoErr || !protocolNumber) {
+    return jsonResp({ error: "Falha ao gerar protocolo canônico", details: protoErr?.message }, 500);
+  }
+  const contractNumber = String(protocolNumber);
+
+  // Idempotência com autocorreção: contratos antigos usavam QA-ANO-CODIGOALEATORIO.
+  // O número aprovado é o protocolo canônico, ex.: QACR20260001.
+  const { data: existing } = await sb
+    .from("qa_contracts")
+    .select("id, status, contract_number, customer_uploaded_at, customer_signed_pdf_path, template_codigo, conteudo_renderizado")
+    .eq("venda_id", vendaId)
+    .maybeSingle();
+
   // Cliente
   const { data: cliente } = await sb
     .from("qa_clientes")
-    .select("id_legado, nome_completo, cpf, cidade, estado")
+    .select("id_legado, nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep")
     .eq("id_legado", venda.cliente_id)
     .maybeSingle();
   if (!cliente) return jsonResp({ error: "Cliente não encontrado" }, 404);
@@ -316,37 +312,99 @@ Deno.serve(async (req) => {
     return jsonResp({ error: "Venda sem itens — não é possível gerar contrato" }, 422);
   }
 
-  // PDF
-  const contractNumber = nowYearSeq();
-  const pdfBytes = await buildPdf({
-    contractNumber,
-    cliente: {
-      nome_completo: cliente.nome_completo,
-      cpf: cliente.cpf,
-      cidade: cliente.cidade,
-      estado: cliente.estado,
-    },
-    venda: {
-      id_legado: venda.id_legado,
-      data_cadastro: venda.data_cadastro,
-      valor_aprovado: venda.valor_aprovado,
-    },
-    items: snapshot.map((s) => ({
-      name: s.service_name_snapshot,
-      description: s.service_description_snapshot,
-      quantity: s.quantity,
-      unit_price_cents: s.unit_price_cents,
-      total_price_cents: s.total_price_cents,
-    })),
+  const { data: template, error: tplErr } = await sb
+    .from("qa_contract_templates")
+    .select("id, codigo, versao, titulo, corpo_html")
+    .eq("codigo", "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS")
+    .eq("vigente", true)
+    .maybeSingle();
+  if (tplErr || !template) {
+    return jsonResp({ error: "Template vigente do contrato não encontrado", details: tplErr?.message }, 500);
+  }
+
+  const slugsContratados = Array.from(
+    new Set(snapshot.map((s) => s.service_slug_snapshot).filter((s): s is string => !!s)),
+  );
+  const servicoNomeFinal =
+    snapshot.length > 1
+      ? `${snapshot.length} serviços contratados em conjunto: ${snapshot.map((s) => s.service_name_snapshot).join("; ")}`
+      : snapshot[0]?.service_name_snapshot || "Serviço contratado";
+  const servicoSlugFinal = slugsContratados.length > 0 ? slugsContratados.join(",") : "";
+  const totalCents = snapshot.reduce((sum, s) => sum + Number(s.total_price_cents || 0), 0);
+  const enderecoCliente = [
+    cliente.endereco,
+    cliente.numero ? `nº ${cliente.numero}` : null,
+    cliente.complemento,
+    cliente.bairro,
+    cliente.cidade && cliente.estado ? `${cliente.cidade}/${cliente.estado}` : cliente.cidade,
+    cliente.cep ? `CEP ${cliente.cep}` : null,
+  ].filter(Boolean).join(", ");
+  const aceiteDataIso = new Date().toISOString();
+  const corpoFiltrado = filterContractAnexosBySlugs((template as any).corpo_html, slugsContratados);
+  const conteudoRenderizado = substitute(corpoFiltrado, {
+    cliente_nome: esc(cliente.nome_completo || ""),
+    cliente_cpf_cnpj: esc(cliente.cpf || ""),
+    cliente_endereco: esc(enderecoCliente || ""),
+    cliente_email: esc(cliente.email || ""),
+    cliente_telefone: esc(cliente.celular || ""),
+    servico_slug: esc(servicoSlugFinal),
+    servico_nome: esc(servicoNomeFinal),
+    servico_preco: brl(totalCents),
+    aceite_data: aceiteDataIso,
+    aceite_ip: "",
+    aceite_user_agent: "",
+    aceite_hash: "",
   });
+  const aceiteHash = await sha256Text(`${conteudoRenderizado}|${aceiteDataIso}|${venda.cliente_id}`);
+  const conteudoSha = await sha256Text(conteudoRenderizado);
 
-  const originalSha = await sha256(pdfBytes);
-  const path = `qa/${vendaId}/original.pdf`;
+  if (existing) {
+    const hasCanonicalTemplate =
+      existing.contract_number === contractNumber &&
+      existing.template_codigo === "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS" &&
+      typeof existing.conteudo_renderizado === "string" &&
+      existing.conteudo_renderizado.trim().length > 0;
+    if (hasCanonicalTemplate) {
+      return jsonResp({ ok: true, idempotent: true, contract: existing });
+    }
 
-  const { error: upErr } = await sb.storage
-    .from(BUCKET)
-    .upload(path, pdfBytes, { contentType: "application/pdf", upsert: true });
-  if (upErr) return jsonResp({ error: "Falha ao gravar PDF", details: upErr.message }, 500);
+    const patch: Record<string, unknown> = {
+      contract_number: contractNumber,
+      template_id: (template as any).id,
+      template_codigo: (template as any).codigo,
+      template_versao: (template as any).versao,
+      conteudo_renderizado: conteudoRenderizado,
+      servico_slug: servicoSlugFinal || null,
+      valor: totalCents / 100,
+      aceite_hash: aceiteHash,
+    };
+    Object.keys(patch).forEach((key) => patch[key] === undefined && delete patch[key]);
+
+    const { data: repaired, error: repairErr } = await sb
+      .from("qa_contracts")
+      .update(patch)
+      .eq("id", existing.id)
+      .select("id, status, contract_number")
+      .single();
+    if (repairErr) {
+      return jsonResp({ error: "Falha ao corrigir número do contrato", details: repairErr.message }, 500);
+    }
+
+    await sb.from("qa_contract_events").insert({
+      contract_id: existing.id,
+      event_type: "contract_number_corrigido_para_protocolo_canonico",
+      event_payload: {
+        old_contract_number: existing.contract_number,
+        contract_number: contractNumber,
+        rendered_snapshot_updated: true,
+        template_codigo: (template as any).codigo,
+        template_versao: (template as any).versao,
+        slugs: slugsContratados,
+      },
+    });
+
+    return jsonResp({ ok: true, repaired: true, contract: repaired });
+  }
 
   // Insert contract
   const { data: contract, error: cErr } = await sb
@@ -356,15 +414,18 @@ Deno.serve(async (req) => {
       cliente_id: venda.cliente_id,
       contract_number: contractNumber,
       status: "generated_pending_company_signature",
-      original_pdf_path: path,
-      original_sha256: originalSha,
+      template_id: (template as any).id,
+      template_codigo: (template as any).codigo,
+      template_versao: (template as any).versao,
+      conteudo_renderizado: conteudoRenderizado,
+      servico_slug: servicoSlugFinal || null,
+      valor: totalCents / 100,
+      aceite_hash: aceiteHash,
       issued_at: new Date().toISOString(),
     })
     .select("id")
     .single();
   if (cErr || !contract) {
-    // tentar limpar arquivo se falhou linha
-    await sb.storage.from(BUCKET).remove([path]).catch(() => {});
     return jsonResp({ error: "Falha ao criar contrato", details: cErr?.message }, 500);
   }
 
@@ -386,7 +447,14 @@ Deno.serve(async (req) => {
   await sb.from("qa_contract_events").insert({
     contract_id: contract.id,
     event_type: "generated",
-    event_payload: { contract_number: contractNumber, sha256: originalSha, items: snapshot.length },
+    event_payload: {
+      contract_number: contractNumber,
+      conteudo_sha256: conteudoSha,
+      items: snapshot.length,
+      template_codigo: (template as any).codigo,
+      template_versao: (template as any).versao,
+      slugs: slugsContratados,
+    },
   });
 
   // FASE 2C-4: evento de auditoria semântico do fluxo pós-pagamento
@@ -406,8 +474,7 @@ Deno.serve(async (req) => {
     contract: {
       id: contract.id,
       contract_number: contractNumber,
-      original_pdf_path: path,
-      original_sha256: originalSha,
+      conteudo_sha256: conteudoSha,
       items: snapshot.length,
     },
   });

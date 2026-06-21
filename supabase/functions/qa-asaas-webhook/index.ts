@@ -261,7 +261,7 @@ Deno.serve(async (req) => {
       payload: { event, paymentId, venda_id },
     });
 
-    // Gera protocolo oficial (QA-{SIGLA}-{ANO}-{SEQ}) — idempotente.
+    // Gera protocolo oficial (QA{SIGLA}{ANO}{SEQ}) — idempotente.
     // Best-effort: falha NÃO compromete o webhook.
     try {
       const { data: protoData, error: protoErr } = await supabase.rpc(

@@ -157,7 +157,7 @@ export default function Etapa05Conclusao({ state, update, onReset }: Props) {
 
   /* Prioridade de exibição do número de pedido/protocolo:
    * 1. número do processo PF/administrativo (numero_processo) — só depois de protocolado
-   * 2. protocolo OFICIAL da Quero Armas (QA-{SIGLA}-{ANO}-{SEQ}) gerado no webhook PAGO
+   * 2. protocolo OFICIAL da Quero Armas (QA{SIGLA}{ANO}{SEQ}) gerado no webhook PAGO
    * 3. número temporário derivado da venda enquanto webhook não confirmou */
   const numeroProcesso = r.numero_processo || null;
   const numeroProtocolo = r.numero_protocolo || null;

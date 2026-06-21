@@ -87,7 +87,7 @@ describe("cadastro-refinado · constraints", () => {
       "Antônio Pedro Silva",
       "Av. Paulista, 1578",
       "01310-100",
-      "QA-2026-04891",
+      "QA202604891",
     ];
     const offenders: string[] = [];
     for (const f of files) {

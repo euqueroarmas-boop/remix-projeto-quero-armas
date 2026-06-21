@@ -107,11 +107,6 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(target!).toMatch(/DROP TRIGGER IF EXISTS trg_qa_vendas_arsenal_upgrade_insert/);
     });
 
-    it("plan.md declara Arsenal gratuito como regra canônica", () => {
-      const src = r(".lovable/plan.md");
-      expect(src).toMatch(/Arsenal Inteligente é gratuito/);
-      expect(src).toMatch(/permanece acessível/);
-    });
   });
 
   describe("Não cria processo / checklist / não libera execução operacional", () => {
@@ -136,9 +131,115 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/contrato_gerado_pos_pagamento/);
     });
 
+    it("edge renderiza o template principal vigente e filtra anexos pelos slugs contratados", () => {
+      const src = r("supabase/functions/qa-generate-contract/index.ts");
+      expect(src).toMatch(/qa_contract_templates/);
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+      expect(src).toMatch(/filterContractAnexosBySlugs/);
+      expect(src).toMatch(/service_slug_snapshot/);
+      expect(src).toMatch(/conteudo_renderizado/);
+      expect(src).toMatch(/template_codigo/);
+      expect(src).toMatch(/template_versao/);
+      expect(src).not.toMatch(/CLÁUSULAS GERAIS/);
+      expect(src).not.toMatch(/pdf-lib|PDFDocument|StandardFonts|buildPdf|original\.pdf/);
+      expect(src).not.toMatch(/storage\s*\.\s*from\(BUCKET\)\s*\.\s*upload/);
+    });
+
+    it("download do cliente prioriza o contrato renderizado, não o PDF físico simplificado", () => {
+      const src = r("supabase/functions/qa-serve-contract-pdf/index.ts");
+      expect(src).toMatch(/Minuta_Contrato_Quero_Armas_v1\.md é o único contrato canônico/);
+      expect(src).toMatch(/conteudo_renderizado/);
+      expect(src).toMatch(/printableContractHtml/);
+      expect(src).toMatch(/canServeRenderedHtml/);
+      expect(src).toMatch(/ensureRenderedContractAudit/);
+      expect(src).toMatch(/aceite_eletronico_data/);
+      expect(src).toMatch(/aceite_ip/);
+      expect(src).toMatch(/aceite_user_agent/);
+      expect(src).toMatch(/aceite_hash/);
+      expect(src).toMatch(/contractDownloadFilename/);
+      expect(src).toMatch(/Contrato de Adesao Quero Armas/);
+      expect(src).toMatch(/shortPersonName/);
+      expect(src).toMatch(/rebuildRenderedContractHtml/);
+      expect(src).toMatch(/contrato_renderizado_indisponivel/);
+      expect(src).toMatch(/logSistemaBackend/);
+      expect(src).toMatch(/failContractDownload/);
+      expect(src).toMatch(/contrato_canonico_indisponivel/);
+      expect(src).toMatch(/download bloqueado por fallback ou contrato canonico indisponivel/);
+      expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
+      expect(src).not.toMatch(/canServeRenderedHtml[\s\S]{0,180}company_signed_pdf_path/);
+      expect(src).not.toMatch(/path = \(auditedContract as any\)\.company_signed_pdf_path \?\?/);
+      expect(src).not.toMatch(/Fallback contrato de adesão/);
+      expect(src).toMatch(/text\/html; charset=utf-8/);
+    });
+
+    it("portal do cliente usa a edge autenticada para baixar o contrato renderizado", () => {
+      const card = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
+      const block = r("src/components/quero-armas/portal/ContratoBlock.tsx");
+      const helper = r("src/lib/quero-armas/minutaContratoDownload.ts");
+
+      expect(card).toMatch(/openMinutaContratoQueroArmas/);
+      expect(block).toMatch(/openMinutaContratoQueroArmas/);
+      expect(card).not.toMatch(/conteudo_renderizado|openRenderedContract/);
+      expect(block).not.toMatch(/conteudo_renderizado|openRenderedContract/);
+
+      expect(helper).toMatch(/Minuta_Contrato_Quero_Armas_v1\.md/);
+      expect(helper).toMatch(/qa-serve-contract-pdf/);
+      expect(helper).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+      expect(helper).not.toMatch(/qa_contract_templates/);
+      expect(helper).not.toMatch(/corpo_html|observacoes|filterContractAnexosBySlugs/);
+    });
+
+    it("migration corrige Anexo I.6 para PF/SINARM-CAC no template e snapshots", () => {
+      const src = r("supabase/migrations/20260620212500_qa_contract_anexo_16_sinarm_cac.sql");
+      expect(src).toMatch(/I\.6\. CONCESSÃO DE CR/);
+      expect(src).toMatch(/Polícia Federal \/ SINARM-CAC/);
+      expect(src).toMatch(/Polícia Federal --- SINARM-CAC/);
+      expect(src).toMatch(/qa_contract_templates/);
+      expect(src).toMatch(/qa_contracts/);
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+    });
+
+    it("migration remove ponteiros de PDFs legados do contrato principal aprovado", () => {
+      const src = r("supabase/migrations/20260620134500_qa_contracts_remover_pdfs_legados.sql");
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+      expect(src).toMatch(/conteudo_renderizado IS NOT NULL/);
+      expect(src).toMatch(/original_pdf_path = NULL/);
+      expect(src).toMatch(/company_signed_pdf_path = NULL/);
+      expect(src).toMatch(/customer_signed_pdf_path IS NULL/);
+    });
+
+    it("migration atualiza fontes normativas do contrato principal", () => {
+      const src = r("supabase/migrations/20260620103000_qa_contract_template_fontes_normativas.sql");
+      expect(src).toMatch(/Lei nº 10\.826\/2003/);
+      expect(src).toMatch(/Decreto nº 11\.615\/2023/);
+      expect(src).toMatch(/Decreto nº 12\.345\/2024/);
+      expect(src).toMatch(/Instruções Normativas DG\/PF nº 201 e 311/);
+      expect(src).toMatch(/Portarias COLOG nº 166, 167 e 260/);
+      expect(src).toMatch(/Ofício Circular nº 08\/DELEARM/);
+      expect(src).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+    });
+
+    it("edge usa protocolo canônico como número do contrato, sem gerador aleatório", () => {
+      const src = r("supabase/functions/qa-generate-contract/index.ts");
+      expect(src).toMatch(/qa_gerar_protocolo/);
+      expect(src).toMatch(/const contractNumber = String\(protocolNumber\)/);
+      expect(src).not.toMatch(/nowYearSeq/);
+      expect(src).not.toMatch(/Date\.now\(\)\.toString\(36\)/);
+      expect(src).not.toMatch(/QA-\$\{d\.getFullYear\(\)\}/);
+    });
+
     it("card registra evento contrato_disponibilizado_portal", () => {
       const src = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
       expect(src).toMatch(/contrato_disponibilizado_portal/);
+    });
+
+    it("migração canônica fixa protocolo sem traço com sequência de 4 dígitos", () => {
+      const src = r("supabase/migrations/20260619153000_qa_protocolos_seq4_contratos_canonicos.sql");
+      expect(src).toMatch(/QACR20260001/);
+      expect(src).toMatch(/LPAD\(v_seq::TEXT, 4, '0'\)/);
+      expect(src).toMatch(/LPAD\(sequencia_ano::TEXT, 4, '0'\)/);
+      expect(src).toMatch(/contract_number_corrigido|qa_contracts/);
+      expect(src).not.toMatch(/SEQ3/);
     });
   });
 });

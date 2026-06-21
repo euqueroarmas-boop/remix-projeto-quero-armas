@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Loader2, ShoppingCart, Lock, CheckCircle2, AlertCircle,
-  QrCode, Barcode, CreditCard, ExternalLink, Copy, ArrowLeft,
+  QrCode, Barcode, CreditCard, ExternalLink, Copy,
+  LayoutDashboard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/shared/cart/CartProvider";
@@ -47,6 +48,8 @@ interface CobrancaResult {
   cobranca_status?: string | null;
   billing_type?: BillingType;
   reused?: boolean;
+  pago?: boolean;
+  numero_protocolo?: string | null;
 }
 
 /* ── Primitivos de UI ─────────────────────────────────────────────────────────── */
@@ -129,6 +132,7 @@ export default function QACheckoutFinalizarPage() {
   const [billingType, setBillingType] = useState<BillingType>("PIX");
   const [venda, setVenda] = useState<VendaCriada | null>(null);
   const [cobranca, setCobranca] = useState<CobrancaResult | null>(null);
+  const paymentConfirmedRef = useRef(false);
 
   useEffect(() => {
     if (!authLoading && itemCount === 0 && !venda) {
@@ -142,6 +146,50 @@ export default function QACheckoutFinalizarPage() {
     ? true
     : isValidIdentificacao({ nome_completo: nome, cpf, email, celular });
   const podeFinalizar = aceite && identificacaoOk && !submitting && itemCount > 0;
+  const portalPath = isLogged
+    ? "/area-do-cliente"
+    : `/area-do-cliente/login?next=${encodeURIComponent("/area-do-cliente")}`;
+
+  useEffect(() => {
+    if (!venda || !cobranca) return;
+    let cancelled = false;
+
+    const checkStatus = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("qa-checkout-status", {
+          body: {
+            venda_id: venda.venda_id,
+            checkout_token: venda.checkout_token,
+          },
+        });
+        if (cancelled || error || !data) return;
+        const status = data as any;
+        setCobranca((prev) => prev ? {
+          ...prev,
+          pago: !!status.pago,
+          numero_protocolo: status.numero_protocolo ?? prev.numero_protocolo ?? null,
+          cobranca_status: status.cobranca_status ?? prev.cobranca_status ?? null,
+          asaas_invoice_url: status.asaas_invoice_url ?? prev.asaas_invoice_url ?? null,
+          asaas_bank_slip_url: status.asaas_bank_slip_url ?? prev.asaas_bank_slip_url ?? null,
+          asaas_pix_payload: status.asaas_pix_payload ?? prev.asaas_pix_payload ?? null,
+          asaas_due_date: status.asaas_due_date ?? prev.asaas_due_date ?? null,
+        } : prev);
+        if (status.pago && !paymentConfirmedRef.current) {
+          paymentConfirmedRef.current = true;
+          toast.success("Pagamento confirmado. Seu portal já pode ser acessado.");
+        }
+      } catch {
+        // Polling auxiliar: falha silenciosa para não travar o acesso ao portal.
+      }
+    };
+
+    void checkStatus();
+    const interval = window.setInterval(checkStatus, 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [venda, cobranca?.asaas_payment_id]);
 
   /* slug e summary para o CheckoutShell */
   const primeiroSlug = items[0]?.service_slug ?? "";
@@ -260,11 +308,19 @@ export default function QACheckoutFinalizarPage() {
         {/* ── PASSO 3 — Aguardando pagamento ────────────────────────── */}
         {cobranca && (
           <DarkCard successBorder>
-            <SectionTitle icon={CheckCircle2} label="Aguardando pagamento" variant="success" />
+            <SectionTitle
+              icon={CheckCircle2}
+              label={cobranca.pago ? "Pagamento confirmado" : "Aguardando pagamento"}
+              variant="success"
+            />
 
             <div style={{ fontSize: 13, color: D.inkSoft, marginBottom: 16 }}>
-              Pedido <strong style={{ color: D.ink }}>#{venda?.venda_id}</strong>
-              {cobranca.asaas_due_date && (
+              {cobranca.numero_protocolo ? (
+                <>Protocolo <strong style={{ color: D.ink }}>{cobranca.numero_protocolo}</strong></>
+              ) : (
+                <>Pedido temporário <strong style={{ color: D.ink }}>#{venda?.venda_id}</strong></>
+              )}
+              {!cobranca.pago && cobranca.asaas_due_date && (
                 <> · Vencimento: <strong style={{ color: D.ink }}>{cobranca.asaas_due_date}</strong></>
               )}
             </div>
@@ -318,8 +374,35 @@ export default function QACheckoutFinalizarPage() {
             )}
 
             <p style={{ marginTop: 16, fontSize: 11, color: D.inkFaint, lineHeight: 1.7 }}>
-              Assim que confirmarmos seu pagamento, você receberá um e-mail e o acesso ao portal será liberado automaticamente.
+              {cobranca.pago
+                ? "Acompanhe os próximos passos, documentos e mensagens pela área do cliente."
+                : "Assim que confirmarmos seu pagamento, você receberá um e-mail e o acesso ao portal será liberado automaticamente."}
             </p>
+            <Link
+              to={portalPath}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                padding: "14px 18px",
+                borderRadius: 12,
+                background: `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`,
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                textDecoration: "none",
+                boxShadow: `0 6px 24px ${D.redGlow}`,
+                boxSizing: "border-box",
+              }}
+            >
+              <LayoutDashboard size={17} />
+              Ir para área do cliente
+            </Link>
           </DarkCard>
         )}
 

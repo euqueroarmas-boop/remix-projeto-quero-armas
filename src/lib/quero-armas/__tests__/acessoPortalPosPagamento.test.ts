@@ -43,6 +43,11 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
       expect(src).toMatch(/excluido_lgpd/);
     });
 
+    it("não reseta senha de Auth User existente no pós-pagamento", () => {
+      expect(src).not.toMatch(/updateUserById\([\s\S]*password:\s*tempPwd/);
+      expect(src).toMatch(/NUNCA resetamos a senha automaticamente/);
+    });
+
     it("não envia senha em texto puro no e-mail", () => {
       // O e-mail é montado via templates qaArsenalWelcomeHtml/Text que
       // recebem apenas { name, email, servicoInteresse } — sem senha.
@@ -115,6 +120,23 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
       const src = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
       expect(src.toUpperCase()).toMatch(/AGUARDANDO CONTRATO ASSINADO/);
       expect(src).toMatch(/qa-serve-contract-pdf|baixar|download/i);
+    });
+
+    it("popup de contrato pendente leva para a seção de contratos", () => {
+      const src = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+      expect(src).toMatch(/goContractsSection/);
+      expect(src).toMatch(/\/area-do-cliente\?secao=contratos/);
+      expect(src).toMatch(/id="qa-portal-contratos"/);
+    });
+
+    it("portal prioriza obrigações antes do assistente de compra", () => {
+      const src = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+      expect(src).toMatch(/portalStartupAction/);
+      expect(src).toMatch(/pendingContractsLoaded/);
+      expect(src).toMatch(/if \(pendingContracts > 0\) return \{ type: "contrato"/);
+      expect(src).toMatch(/entrada_wizard/);
+      expect(src.indexOf('type: "contrato"')).toBeLessThan(src.indexOf('type: "entrada_wizard"'));
+      expect(src).toMatch(/Obrigações do cliente sempre aparecem antes do assistente de compra/);
     });
   });
 
