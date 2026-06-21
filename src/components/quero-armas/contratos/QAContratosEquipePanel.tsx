@@ -136,6 +136,7 @@ export default function QAContratosEquipePanel() {
         .select(
           "id, venda_id, cliente_id, contract_number, status, servico_slug, original_sha256, created_at, company_signed_at, customer_signature_validated_at",
         )
+        .is("arquivado_em", null)
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
