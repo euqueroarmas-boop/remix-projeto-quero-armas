@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { FileText, Download, Clock, ShieldCheck, Upload, CheckCircle2, XCircle, Loader2, AlertTriangle } from "lucide-react";
+import { Download, Clock, ShieldCheck, Upload, CheckCircle2, XCircle, Loader2, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 
@@ -41,31 +40,73 @@ const formatDate = (d: string | null) => {
   }
 };
 
-type Tone = "warn" | "ok" | "info" | "danger";
-const STATUS_LABELS: Record<string, { label: string; tone: Tone }> = {
-  generated_pending_company_signature: { label: "DISPONÍVEL PARA SUA ASSINATURA", tone: "info" },
-  pending_customer_signature: { label: "AGUARDANDO SUA ASSINATURA", tone: "info" },
-  customer_signature_uploaded: { label: "CONTRATO ENVIADO — EM VALIDAÇÃO", tone: "info" },
-  validating: { label: "VALIDANDO ASSINATURA", tone: "info" },
-  validated: { label: "ASSINADO E VALIDADO", tone: "ok" },
-  rejected: { label: "CONTRATO INVÁLIDO — REENVIE", tone: "danger" },
-  pending_manual_review: { label: "EM REVISÃO MANUAL", tone: "info" },
+/* ── Design tokens — mesma linguagem visual do checkout (CheckoutShell /
+ * QACheckoutFinalizarPage), traduzida para o modo claro do portal. ──────── */
+const D = {
+  paper: "#ffffff",
+  paper2: "#fafafa",
+  border: "rgba(15,23,42,0.10)",
+  borderSoft: "rgba(15,23,42,0.06)",
+  ink: "#1c1c1c",
+  inkSoft: "#52525b",
+  inkFaint: "#94a3b8",
+  red: "#c4253b",
+  redDeep: "#7A1F2B",
+  redAlpha: "rgba(196,37,59,0.08)",
+  redAlphaStrong: "rgba(196,37,59,0.22)",
+  redGlow: "rgba(196,37,59,0.20)",
+  success: "#1e8a4c",
+  successAlpha: "rgba(30,138,76,0.08)",
+  successBorder: "rgba(30,138,76,0.25)",
+  warning: "#b8770f",
+  warningAlpha: "rgba(184,119,15,0.08)",
+  warningBorder: "rgba(184,119,15,0.25)",
+  danger: "#b3203a",
+  dangerAlpha: "rgba(179,32,58,0.08)",
+  dangerBorder: "rgba(179,32,58,0.25)",
 };
 
-const TONE_CLASS: Record<Tone, string> = {
-  warn: "bg-amber-100 text-amber-800",
-  ok: "bg-emerald-100 text-emerald-800",
-  info: "bg-sky-100 text-sky-800",
-  danger: "bg-rose-100 text-rose-800",
+type Tone = "warning" | "success" | "neutral" | "danger";
+const STATUS_LABELS: Record<string, { label: string; tone: Tone }> = {
+  generated_pending_company_signature: { label: "Disponível para sua assinatura", tone: "neutral" },
+  pending_customer_signature: { label: "Aguardando sua assinatura", tone: "warning" },
+  customer_signature_uploaded: { label: "Contrato enviado — em validação", tone: "neutral" },
+  validating: { label: "Validando assinatura", tone: "neutral" },
+  validated: { label: "Assinado e validado", tone: "success" },
+  rejected: { label: "Contrato inválido — reenvie", tone: "danger" },
+  pending_manual_review: { label: "Em revisão manual", tone: "warning" },
 };
 
 const ITEM_LABEL: Record<string, { label: string; tone: Tone; icon: any }> = {
-  validated: { label: "CONTRATO VALIDADO — APTO PARA LIBERAÇÃO", tone: "ok", icon: CheckCircle2 },
-  customer_signature_uploaded: { label: "AGUARDANDO VALIDAÇÃO", tone: "info", icon: Loader2 },
-  validating: { label: "VALIDANDO", tone: "info", icon: Loader2 },
-  rejected: { label: "CONTRATO INVÁLIDO", tone: "danger", icon: XCircle },
-  pending_manual_review: { label: "REVISÃO MANUAL", tone: "info", icon: AlertTriangle },
+  validated: { label: "Apto para liberação", tone: "success", icon: CheckCircle2 },
+  customer_signature_uploaded: { label: "Aguardando validação", tone: "neutral", icon: Loader2 },
+  validating: { label: "Validando", tone: "neutral", icon: Loader2 },
+  rejected: { label: "Contrato inválido", tone: "danger", icon: XCircle },
+  pending_manual_review: { label: "Revisão manual", tone: "warning", icon: AlertTriangle },
 };
+
+function toneColors(tone: Tone) {
+  switch (tone) {
+    case "success": return { color: D.success, bg: D.successAlpha, border: D.successBorder };
+    case "warning": return { color: D.warning, bg: D.warningAlpha, border: D.warningBorder };
+    case "danger": return { color: D.danger, bg: D.dangerAlpha, border: D.dangerBorder };
+    default: return { color: D.inkFaint, bg: D.paper2, border: D.border };
+  }
+}
+
+function StatusPill({ tone, label }: { tone: Tone; label: string }) {
+  const c = toneColors(tone);
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", whiteSpace: "nowrap",
+      fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+      color: c.color, background: c.bg, border: `1px solid ${c.border}`,
+      borderRadius: 99, padding: "4px 10px",
+    }}>
+      {label}
+    </span>
+  );
+}
 
 function isUploadable(status: string): boolean {
   return [
@@ -238,11 +279,15 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
   }
 
   if (loading) {
-    return <div className="text-[11px] text-slate-500">Carregando contratos…</div>;
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: D.inkFaint }}>
+        <Loader2 size={14} className="animate-spin" /> Carregando contratos…
+      </div>
+    );
   }
   if (!contracts.length) {
     return (
-      <div className="text-[11px] text-slate-500">
+      <div style={{ fontSize: 11, color: D.inkFaint }}>
         Nenhum contrato pós-pagamento gerado ainda. Quando uma venda for paga, o contrato aparecerá
         aqui automaticamente.
       </div>
@@ -250,142 +295,167 @@ export default function ContratosPosPagamentoCard({ clienteIdLegado }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50/60">
-        <ShieldCheck className="h-4 w-4 text-amber-700 shrink-0 mt-0.5" />
-        <div className="text-[11px] text-amber-900 leading-relaxed">
-          <strong className="uppercase tracking-wide">Como assinar:</strong> baixe o contrato,
-          assine digitalmente pelo <strong>GOV.BR</strong> ou certificado <strong>ICP-Brasil</strong>{" "}
-          e envie o PDF assinado pelo botão de upload do contrato. O Arsenal Inteligente continua
-          gratuito e acessível independentemente desta etapa.
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div style={{
+        display: "flex", alignItems: "flex-start", gap: 10,
+        padding: "10px 14px", borderRadius: 10,
+        background: D.warningAlpha, border: `1px solid ${D.warningBorder}`,
+      }}>
+        <ShieldCheck size={15} color={D.warning} style={{ flexShrink: 0, marginTop: 1 }} />
+        <div style={{ fontSize: 11, color: D.inkSoft, lineHeight: 1.6 }}>
+          <strong style={{ textTransform: "uppercase", letterSpacing: "0.06em", color: D.warning }}>Como assinar:</strong>{" "}
+          baixe o contrato, assine digitalmente pelo <strong>GOV.BR</strong> ou certificado{" "}
+          <strong>ICP-Brasil</strong> e envie o PDF assinado pelo botão de upload do contrato. O
+          Arsenal Inteligente continua gratuito e acessível independentemente desta etapa.
         </div>
       </div>
 
       {contracts.map((c) => {
         const its = items.filter((i) => i.contract_id === c.id);
         const total = its.reduce((s, i) => s + (i.total_price_cents ?? 0), 0);
-        const st = STATUS_LABELS[c.status] ?? { label: c.status.toUpperCase(), tone: "warn" as const };
-        const itemMeta = ITEM_LABEL[c.status] ?? { label: "AGUARDANDO CONTRATO ASSINADO", tone: "warn" as const, icon: Clock };
+        const st = STATUS_LABELS[c.status] ?? { label: c.status.toUpperCase(), tone: "neutral" as const };
+        const itemMeta = ITEM_LABEL[c.status] ?? { label: "Aguardando contrato assinado", tone: "warning" as const, icon: Clock };
         const ItemIcon = itemMeta.icon;
         const canUpload = isUploadable(c.status);
         const rejectionReason = c.status === "rejected"
           ? (c.validation_details?.motivo_falha || c.validation_details?.motivo || "Assinatura digital não pôde ser validada.")
           : null;
+        const itemTone = toneColors(itemMeta.tone);
+
         return (
-          <div
-            key={c.id}
-            className="rounded-xl border border-slate-200/70 bg-white p-3 space-y-2"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-3.5 w-3.5 text-[#7A1F2B]" />
-                  <div className="text-[12px] font-bold text-slate-800">
-                    {c.contract_number ?? `Contrato ${c.id.slice(0, 8)}`}
+          <div key={c.id} style={{
+            background: D.paper, border: `1px solid ${D.border}`, borderRadius: 14,
+            overflow: "hidden",
+          }}>
+            <div style={{ height: 2, background: `linear-gradient(to right, ${D.red}, ${D.redDeep})` }} />
+            <div style={{ padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 8, background: D.redAlpha,
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <FileText size={13} color={D.red} />
                   </div>
-                </div>
-                <div className="text-[10px] text-slate-500 mt-0.5">
-                  Venda #{c.venda_id} • emitido em {formatDate(c.issued_at ?? c.created_at)}
-                </div>
-              </div>
-              <span
-                className={`text-[9px] font-bold px-2 py-1 rounded uppercase tracking-wider whitespace-nowrap ${TONE_CLASS[st.tone]}`}
-              >
-                {st.label}
-              </span>
-            </div>
-
-            {rejectionReason && (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1.5 text-[10px] text-rose-800">
-                <strong className="uppercase tracking-wide">Motivo: </strong>{rejectionReason}
-              </div>
-            )}
-
-            {its.length > 0 && (
-              <div className="space-y-1.5 pt-1 border-t border-slate-100">
-                {its.map((i) => (
-                  <div
-                    key={i.id}
-                    className="flex items-center justify-between gap-2 py-1"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-[11px] font-semibold text-slate-700 truncate">
-                        {i.service_name_snapshot ?? "Serviço"}
-                      </div>
-                      <div className="text-[9px] text-slate-500 mt-0.5">
-                        {brl(i.total_price_cents)}
-                      </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: D.ink, lineHeight: 1.3 }}>
+                      {c.contract_number ?? `Contrato ${c.id.slice(0, 8)}`}
                     </div>
-                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider whitespace-nowrap inline-flex items-center gap-1 ${TONE_CLASS[itemMeta.tone]}`}>
-                      <ItemIcon className="h-2.5 w-2.5" />
-                      {itemMeta.label}
-                    </span>
+                    <div style={{ fontSize: 10, color: D.inkFaint, marginTop: 1 }}>
+                      Venda #{c.venda_id} · emitido em {formatDate(c.issued_at ?? c.created_at)}
+                    </div>
                   </div>
-                ))}
-                <div className="flex justify-between items-center pt-1 border-t border-slate-100">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                    TOTAL
-                  </span>
-                  <span className="text-[12px] font-bold font-mono text-slate-800">
-                    {brl(total)}
-                  </span>
                 </div>
+                <StatusPill tone={st.tone} label={st.label} />
               </div>
-            )}
 
-            <div className="flex justify-end gap-2 flex-wrap">
+              {rejectionReason && (
+                <div style={{
+                  marginTop: 10, padding: "8px 10px", borderRadius: 8,
+                  background: D.dangerAlpha, border: `1px solid ${D.dangerBorder}`,
+                  fontSize: 10.5, color: D.danger,
+                }}>
+                  <strong style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}>Motivo: </strong>
+                  {rejectionReason}
+                </div>
+              )}
+
+              {its.length > 0 && (
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${D.borderSoft}`, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {its.map((i) => (
+                    <div key={i.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: D.inkSoft, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {i.service_name_snapshot ?? "Serviço"}
+                        </div>
+                        <div style={{ fontSize: 9.5, color: D.inkFaint, marginTop: 1 }}>{brl(i.total_price_cents)}</div>
+                      </div>
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 4, whiteSpace: "nowrap",
+                        fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em",
+                        color: itemTone.color, background: itemTone.bg, border: `1px solid ${itemTone.border}`,
+                        borderRadius: 99, padding: "3px 8px",
+                      }}>
+                        <ItemIcon size={10} /> {itemMeta.label}
+                      </span>
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: `1px solid ${D.borderSoft}` }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: D.inkFaint }}>Total</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: D.ink }}>{brl(total)}</span>
+                  </div>
+                </div>
+              )}
+
               <input
                 ref={(el) => (fileInputs.current[c.id] = el)}
                 type="file"
                 accept="application/pdf,.pdf"
-                className="hidden"
+                style={{ display: "none" }}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) void handleUpload(c, f);
                   e.target.value = "";
                 }}
               />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => downloadContract(c)}
-                disabled={downloadingId === c.id}
-                className="h-8 text-[11px]"
-              >
-                <Download className="h-3 w-3 mr-1.5" />
-                {downloadingId === c.id ? "Baixando…" : "BAIXAR CONTRATO"}
-              </Button>
-              {c.status === "rejected" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => revalidate(c)}
-                  disabled={revalidatingId === c.id}
-                  className="h-8 text-[11px] border-rose-300 text-rose-800 hover:bg-rose-50"
+
+              <div style={{ marginTop: 14, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => downloadContract(c)}
+                  disabled={downloadingId === c.id}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "8px 14px", borderRadius: 8, border: `1px solid ${D.redAlphaStrong}`,
+                    background: D.paper, color: D.redDeep,
+                    fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em",
+                    cursor: downloadingId === c.id ? "default" : "pointer",
+                    opacity: downloadingId === c.id ? 0.6 : 1,
+                  }}
                 >
-                  {revalidatingId === c.id ? (
-                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                  ) : (
-                    <ShieldCheck className="h-3 w-3 mr-1.5" />
-                  )}
-                  {revalidatingId === c.id ? "REVALIDANDO…" : "REVALIDAR ASSINATURA"}
-                </Button>
-              )}
-              {canUpload && (
-                <Button
-                  size="sm"
-                  onClick={() => fileInputs.current[c.id]?.click()}
-                  disabled={uploadingId === c.id}
-                  className="h-8 text-[11px] bg-[#7A1F2B] hover:bg-[#5e1721] text-white"
-                >
-                  {uploadingId === c.id ? (
-                    <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
-                  ) : (
-                    <Upload className="h-3 w-3 mr-1.5" />
-                  )}
-                  {uploadingId === c.id ? "ENVIANDO…" : "ENVIAR CONTRATO ASSINADO"}
-                </Button>
-              )}
+                  {downloadingId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                  {downloadingId === c.id ? "Baixando…" : "Baixar contrato"}
+                </button>
+
+                {c.status === "rejected" && (
+                  <button
+                    type="button"
+                    onClick={() => revalidate(c)}
+                    disabled={revalidatingId === c.id}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      padding: "8px 14px", borderRadius: 8, border: `1px solid ${D.dangerBorder}`,
+                      background: D.dangerAlpha, color: D.danger,
+                      fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em",
+                      cursor: revalidatingId === c.id ? "default" : "pointer",
+                      opacity: revalidatingId === c.id ? 0.6 : 1,
+                    }}
+                  >
+                    {revalidatingId === c.id ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} />}
+                    {revalidatingId === c.id ? "Revalidando…" : "Revalidar assinatura"}
+                  </button>
+                )}
+
+                {canUpload && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputs.current[c.id]?.click()}
+                    disabled={uploadingId === c.id}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      padding: "8px 16px", borderRadius: 8, border: "none",
+                      background: `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`, color: "#fff",
+                      fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em",
+                      cursor: uploadingId === c.id ? "default" : "pointer",
+                      opacity: uploadingId === c.id ? 0.7 : 1,
+                      boxShadow: `0 4px 14px ${D.redGlow}`,
+                    }}
+                  >
+                    {uploadingId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                    {uploadingId === c.id ? "Enviando…" : "Enviar contrato assinado"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         );
