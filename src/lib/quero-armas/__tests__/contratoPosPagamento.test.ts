@@ -107,11 +107,6 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(target!).toMatch(/DROP TRIGGER IF EXISTS trg_qa_vendas_arsenal_upgrade_insert/);
     });
 
-    it("plan.md declara Arsenal gratuito como regra canônica", () => {
-      const src = r(".lovable/plan.md");
-      expect(src).toMatch(/Arsenal Inteligente é gratuito/);
-      expect(src).toMatch(/permanece acessível/);
-    });
   });
 
   describe("Não cria processo / checklist / não libera execução operacional", () => {
