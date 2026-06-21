@@ -30,6 +30,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileText,
+  RotateCw,
 } from "lucide-react";
 
 type ContractStatus =
@@ -125,6 +126,7 @@ export default function QAContratosEquipePanel() {
   const [rows, setRows] = useState<ContratoRow[]>([]);
   const [confirmRow, setConfirmRow] = useState<ContratoRow | null>(null);
   const [signingId, setSigningId] = useState<string | null>(null);
+  const [reprocessingId, setReprocessingId] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -175,6 +177,27 @@ export default function QAContratosEquipePanel() {
     () => rows.filter((r) => r.status === "generated_pending_company_signature").length,
     [rows],
   );
+
+  const reprocessar = async (row: ContratoRow) => {
+    if (!row.venda_id) {
+      toast.error("Contrato sem venda_id — não é possível reprocessar.");
+      return;
+    }
+    setReprocessingId(row.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-generate-contract", {
+        body: { venda_id: row.venda_id, force: true },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Contrato reprocessado com o template vigente atual.");
+      await carregar();
+    } catch (e: any) {
+      toast.error("Falha ao reprocessar: " + (e?.message ?? "erro desconhecido"));
+    } finally {
+      setReprocessingId(null);
+    }
+  };
 
   const assinar = async (row: ContratoRow) => {
     setSigningId(row.id);
@@ -276,19 +299,33 @@ export default function QAContratosEquipePanel() {
                         {shortHash(r.original_sha256)}
                       </td>
                       <td className="px-3 py-2.5 align-top text-right">
-                        {canSign ? (
+                        <div className="flex items-center justify-end gap-2">
+                          {canSign && (
+                            <Button
+                              size="sm"
+                              onClick={() => setConfirmRow(r)}
+                              disabled={signingId === r.id}
+                              className="bg-slate-900 text-white hover:bg-slate-800"
+                            >
+                              <FileSignature className="mr-1.5 h-3.5 w-3.5" />
+                              Assinar pela Quero Armas
+                            </Button>
+                          )}
                           <Button
                             size="sm"
-                            onClick={() => setConfirmRow(r)}
-                            disabled={signingId === r.id}
-                            className="bg-slate-900 text-white hover:bg-slate-800"
+                            variant="outline"
+                            onClick={() => reprocessar(r)}
+                            disabled={reprocessingId === r.id || !r.venda_id}
+                            title="Reconstrói o conteúdo do contrato a partir do template vigente atual, preservando a prova de aceite original"
                           >
-                            <FileSignature className="mr-1.5 h-3.5 w-3.5" />
-                            Assinar pela Quero Armas
+                            {reprocessingId === r.id ? (
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <RotateCw className="mr-1.5 h-3.5 w-3.5" />
+                            )}
+                            Reprocessar
                           </Button>
-                        ) : (
-                          <span className="text-[11px] text-slate-400">—</span>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   );

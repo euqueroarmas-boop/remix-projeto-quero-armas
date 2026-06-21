@@ -13,6 +13,15 @@
  *  - Calcula hash do snapshot e registra qa_contract_events('generated').
  *  - status inicial: generated_pending_company_signature.
  *  - NÃO libera processo/checklist.
+ *
+ *  Reprocessamento de contratos já existentes: se o template vigente tiver
+ *  uma versão (template_versao) diferente da gravada no contrato, o
+ *  conteudo_renderizado é automaticamente reconstruído a partir do template
+ *  atual nesta mesma chamada (idempotência por versão, não só por código).
+ *  Envie { force: true } para reprocessar mesmo sem mudança de versão. Em
+ *  ambos os casos a data/IP/user-agent do aceite eletrônico original são
+ *  preservados (prova de quando o cliente realmente aceitou); apenas o hash
+ *  é recalculado para corresponder ao conteúdo corrigido.
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.208.0/crypto/mod.ts";
@@ -225,13 +234,14 @@ Deno.serve(async (req) => {
     if (!guard.ok) return guard.response;
   }
 
-  let body: { venda_id?: number };
+  let body: { venda_id?: number; force?: boolean };
   try {
     body = await req.json();
   } catch {
     return jsonResp({ error: "JSON inválido" }, 400);
   }
   const vendaId = Number(body.venda_id);
+  const force = body.force === true;
   if (!vendaId || Number.isNaN(vendaId)) return jsonResp({ error: "venda_id obrigatório" }, 400);
 
   const sb = svc();
@@ -261,7 +271,9 @@ Deno.serve(async (req) => {
   // O número aprovado é o protocolo canônico, ex.: QACR20260001.
   const { data: existing } = await sb
     .from("qa_contracts")
-    .select("id, status, contract_number, customer_uploaded_at, customer_signed_pdf_path, template_codigo, conteudo_renderizado")
+    .select(
+      "id, status, contract_number, customer_uploaded_at, customer_signed_pdf_path, template_codigo, template_versao, conteudo_renderizado, aceite_eletronico_data, aceite_ip, aceite_user_agent",
+    )
     .eq("venda_id", vendaId)
     .maybeSingle();
 
@@ -359,7 +371,10 @@ Deno.serve(async (req) => {
   const conteudoSha = await sha256Text(conteudoRenderizado);
 
   if (existing) {
+    const templateDesatualizado = existing.template_versao !== (template as any).versao;
     const hasCanonicalTemplate =
+      !force &&
+      !templateDesatualizado &&
       existing.contract_number === contractNumber &&
       existing.template_codigo === "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS" &&
       typeof existing.conteudo_renderizado === "string" &&
@@ -367,6 +382,14 @@ Deno.serve(async (req) => {
     if (hasCanonicalTemplate) {
       return jsonResp({ ok: true, idempotent: true, contract: existing });
     }
+
+    // Reprocessamento: preserva a prova de aceite original (data/IP/user-agent
+    // do clique do cliente na Etapa 04) e recalcula o hash sobre o conteúdo
+    // corrigido — o hash deve sempre corresponder ao que está sendo servido.
+    const aceiteDataParaHash = existing.aceite_eletronico_data || aceiteDataIso;
+    const aceiteHashReprocessado = await sha256Text(
+      `${conteudoRenderizado}|${aceiteDataParaHash}|${venda.cliente_id}`,
+    );
 
     const patch: Record<string, unknown> = {
       contract_number: contractNumber,
@@ -376,7 +399,7 @@ Deno.serve(async (req) => {
       conteudo_renderizado: conteudoRenderizado,
       servico_slug: servicoSlugFinal || null,
       valor: totalCents / 100,
-      aceite_hash: aceiteHash,
+      aceite_hash: aceiteHashReprocessado,
     };
     Object.keys(patch).forEach((key) => patch[key] === undefined && delete patch[key]);
 
@@ -387,19 +410,21 @@ Deno.serve(async (req) => {
       .select("id, status, contract_number")
       .single();
     if (repairErr) {
-      return jsonResp({ error: "Falha ao corrigir número do contrato", details: repairErr.message }, 500);
+      return jsonResp({ error: "Falha ao reprocessar contrato", details: repairErr.message }, 500);
     }
 
     await sb.from("qa_contract_events").insert({
       contract_id: existing.id,
-      event_type: "contract_number_corrigido_para_protocolo_canonico",
+      event_type: force ? "contrato_reprocessado_manual" : "contrato_reprocessado_template_desatualizado",
       event_payload: {
         old_contract_number: existing.contract_number,
         contract_number: contractNumber,
-        rendered_snapshot_updated: true,
+        old_template_versao: existing.template_versao,
+        new_template_versao: (template as any).versao,
+        new_aceite_hash: aceiteHashReprocessado,
         template_codigo: (template as any).codigo,
-        template_versao: (template as any).versao,
         slugs: slugsContratados,
+        forced: force,
       },
     });
 
