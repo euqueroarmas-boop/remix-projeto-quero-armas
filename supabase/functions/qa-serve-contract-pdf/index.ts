@@ -155,13 +155,16 @@ function shortPersonName(value: string | null | undefined): string {
   return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
 }
 
-function contractDownloadFilename(contract: any, ext: "html" | "pdf"): string {
+function contractDownloadBaseName(contract: any): string {
   const numero = fileSafeName(contract.contract_number || contract.id || "Contrato");
   const cliente = shortPersonName(contract.cliente_nome || "");
-  const base = cliente
+  return cliente
     ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}`
     : `${numero} - Contrato de Adesao Quero Armas`;
-  return `${base}.${ext}`;
+}
+
+function contractDownloadFilename(contract: any, ext: "html" | "pdf"): string {
+  return `${contractDownloadBaseName(contract)}.${ext}`;
 }
 
 function sanitizeTechnicalJargon(html: string): string {
@@ -212,7 +215,10 @@ function filterContractAnexosBySlugs(html: string, slugsContratados: string[]): 
 }
 
 function printableContractHtml(contract: any, html: string): string {
-  const title = `Contrato ${contract.contract_number || contract.id} — Quero Armas`;
+  // O <title> da página é o que o navegador sugere como nome de arquivo no
+  // diálogo "Salvar como PDF" (Content-Disposition não se aplica nesse fluxo
+  // de impressão) — por isso usa o mesmo padrão de contractDownloadFilename.
+  const title = contractDownloadBaseName(contract);
   const generatedAt = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
   const aceiteData = contract.aceite_eletronico_data
     ? new Date(contract.aceite_eletronico_data).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })

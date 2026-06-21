@@ -57,6 +57,44 @@ function sanitizeTechnicalJargon(html: string): string {
     .replace(/\bslug\s*:\s*[a-z0-9_-]+/gi, "");
 }
 
+function fileSafeName(value: string | null | undefined): string {
+  return String(value || "")
+    .normalize("NFKC")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function titleCaseName(value: string): string {
+  return value
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) =>
+      ["da", "de", "do", "das", "dos", "e"].includes(part)
+        ? part
+        : part.charAt(0).toLocaleUpperCase("pt-BR") + part.slice(1)
+    )
+    .join(" ");
+}
+
+function shortPersonName(value: string | null | undefined): string {
+  const parts = fileSafeName(value).split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return titleCaseName(parts.join(" "));
+  return titleCaseName(`${parts[0]} ${parts[parts.length - 1]}`);
+}
+
+/** Mesmo padrão usado em qa-serve-contract-pdf: "{numero} - Contrato de
+ * Adesao Quero Armas - {Cliente}". É o nome usado tanto no <title> (default
+ * do "Salvar como PDF" do navegador) quanto no file_name retornado. */
+function contractDownloadBaseName(contractNumber: string | null, vendaId: number, clienteNome: string | null): string {
+  const numero = fileSafeName(contractNumber || `Venda${vendaId}`);
+  const cliente = shortPersonName(clienteNome || "");
+  return cliente
+    ? `${numero} - Contrato de Adesao Quero Armas - ${cliente}`
+    : `${numero} - Contrato de Adesao Quero Armas`;
+}
+
 function buildPrintableDocument(args: {
   conteudo_renderizado: string;
   contract_number: string | null;
@@ -70,6 +108,7 @@ function buildPrintableDocument(args: {
   servico_slug: string | null;
   venda_id: number;
   cliente_id: number | null;
+  cliente_nome: string | null;
   valor: number | null;
   pagamento_status: string | null;
 }): string {
@@ -99,8 +138,10 @@ function buildPrintableDocument(args: {
     (args.status ? ` · Status contrato ${escapeHtml(args.status)}` : "") +
     `.`;
 
+  const title = contractDownloadBaseName(args.contract_number, args.venda_id, args.cliente_nome);
+
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-<title>Contrato aceito${args.contract_number ? ` — ${escapeHtml(args.contract_number)}` : ""} — Quero Armas</title>
+<title>${escapeHtml(title)}</title>
 <style>
   body{font-family:Georgia,'Times New Roman',serif;color:#0a0a0a;max-width:780px;margin:32px auto;padding:0 24px;line-height:1.65;font-size:13px;}
   h1{font-size:18px;text-align:center;text-transform:uppercase;letter-spacing:0.04em;}
@@ -280,6 +321,16 @@ Deno.serve(async (req) => {
     Number((venda as any).valor_a_pagar) ||
     null;
 
+  let clienteNome: string | null = null;
+  if (contract.cliente_id != null) {
+    const { data: clienteRow } = await sb
+      .from("qa_clientes")
+      .select("nome_completo")
+      .eq("id_legado", contract.cliente_id)
+      .maybeSingle();
+    clienteNome = (clienteRow as any)?.nome_completo || null;
+  }
+
   const html = buildPrintableDocument({
     conteudo_renderizado: contract.conteudo_renderizado,
     contract_number: contract.contract_number,
@@ -293,6 +344,7 @@ Deno.serve(async (req) => {
     servico_slug: contract.servico_slug,
     venda_id,
     cliente_id: contract.cliente_id,
+    cliente_nome: clienteNome,
     valor: Number.isFinite(valorFinal as any) ? (valorFinal as number) : null,
     pagamento_status: pago ? "confirmado" : (venda.cobranca_status || venda.status || null),
   });
@@ -314,6 +366,6 @@ Deno.serve(async (req) => {
       venda_id,
     },
     html_doc: html,
-    file_name: `contrato-aceito-${contract.contract_number || venda_id}.html`,
+    file_name: `${contractDownloadBaseName(contract.contract_number, venda_id, clienteNome)}.html`,
   });
 });
