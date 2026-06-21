@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { formatBRL } from "@/shared/lib/formatters";
 import { isValidIdentificacao, snapshotCart } from "@/lib/quero-armas/checkoutSnapshot";
 import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
+import ContractPreviewCard from "@/pages/quero-armas/cadastro-refinado/components/ContractPreviewCard";
+import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
 
 /* ── Design tokens (idênticos ao CheckoutShell) ──────────────────────────────── */
 const D = {
@@ -136,7 +138,37 @@ export default function QACheckoutFinalizarPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [baixandoContrato, setBaixandoContrato] = useState(false);
   const [erroBaixarContrato, setErroBaixarContrato] = useState<string | null>(null);
+  const [clienteLogado, setClienteLogado] = useState<{
+    nome_completo: string | null; cpf: string | null; email: string | null; celular: string | null;
+    cep: string | null; endereco: string | null; numero: string | null; complemento: string | null;
+    bairro: string | null; cidade: string | null; estado: string | null;
+  } | null>(null);
   const paymentConfirmedRef = useRef(false);
+
+  // Carrega dados do cliente já cadastrado para qualificar o contrato (nome, CPF, endereço)
+  useEffect(() => {
+    if (!user) { setClienteLogado(null); return; }
+    let cancel = false;
+    (async () => {
+      const { data: link } = await supabase
+        .from("cliente_auth_links" as any)
+        .select("qa_cliente_id")
+        .eq("user_id", user.id)
+        .not("qa_cliente_id", "is", null)
+        .order("activated_at", { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      const clienteId = (link as any)?.qa_cliente_id;
+      if (!clienteId) return;
+      const { data: cli } = await supabase
+        .from("qa_clientes")
+        .select("nome_completo, cpf, email, celular, cep, endereco, numero, complemento, bairro, cidade, estado")
+        .eq("id", clienteId)
+        .maybeSingle();
+      if (!cancel && cli) setClienteLogado(cli as any);
+    })();
+    return () => { cancel = true; };
+  }, [user]);
 
   // Render QR code quando o payload PIX chega
   useEffect(() => {
@@ -256,6 +288,30 @@ export default function QACheckoutFinalizarPage() {
     preco: totalCents / 100,
     recorrente: false,
   } : null;
+
+  /* Adapter para ContractPreviewCard — usa apenas dadosPessoais + slugs */
+  const contratoState = useMemo(() => {
+    const slugsBundle = items.map((i) => i.service_slug).filter(Boolean);
+    return {
+      servicoSlug: slugsBundle[0] ?? null,
+      servicosSlugs: slugsBundle,
+      dadosPessoais: {
+        nome_completo: (isLogged ? clienteLogado?.nome_completo : nome) || "",
+        cpf: (isLogged ? clienteLogado?.cpf : cpf) || "",
+        email: (isLogged ? clienteLogado?.email : email) || "",
+        telefone: (isLogged ? clienteLogado?.celular : celular) || "",
+        data_nascimento: "",
+        endereco_cep: clienteLogado?.cep || "",
+        endereco_logradouro: clienteLogado?.endereco || "",
+        endereco_numero: clienteLogado?.numero || "",
+        endereco_complemento: clienteLogado?.complemento || "",
+        endereco_bairro: clienteLogado?.bairro || "",
+        endereco_cidade: clienteLogado?.cidade || "",
+        endereco_estado: clienteLogado?.estado || "",
+      },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+  }, [items, isLogged, clienteLogado, nome, cpf, email, celular]);
 
   async function handleFinalizar() {
     if (!podeFinalizar) return;
@@ -617,6 +673,15 @@ export default function QACheckoutFinalizarPage() {
               </DarkCard>
             )}
 
+            {/* Minuta do contrato — leitura obrigatória antes do aceite */}
+            <div className="qa-refinado" style={{ background: "transparent", minHeight: "unset", color: "inherit" }}>
+              <ContractPreviewCard
+                state={contratoState}
+                precoServico={totalCents / 100}
+                nomeServico={items.length === 1 ? items[0]?.service_name ?? null : null}
+              />
+            </div>
+
             {/* Aceite */}
             <button
               type="button"
@@ -645,7 +710,7 @@ export default function QACheckoutFinalizarPage() {
                 )}
               </div>
               <span style={{ fontSize: 13, color: aceite ? D.success : D.inkSoft, lineHeight: 1.65, flex: 1 }}>
-                <strong style={{ color: aceite ? D.success : D.ink }}>Confirmo os dados</strong> e autorizo a Quero Armas a iniciar o atendimento. O pagamento será gerado em seguida.
+                <strong style={{ color: aceite ? D.success : D.ink }}>Li e aceito</strong> o contrato de adesão de serviços acima e autorizo a Quero Armas a iniciar o atendimento após a confirmação do pagamento.
               </span>
             </button>
 

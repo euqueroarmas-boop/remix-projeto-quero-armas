@@ -713,12 +713,12 @@ export default function QAContratarConfirmarPage() {
           {/* Aviso e links legais */}
           <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, marginBottom: 14 }}>
             Ao avançar você declara que leu e concorda com o contrato acima e com os{" "}
-            <a href="/termos-de-servico" target="_blank" rel="noopener noreferrer"
+            <a href="/termos" target="_blank" rel="noopener noreferrer"
               style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Termos de Serviço <ExternalLink size={10} />
             </a>
             {" "}e a{" "}
-            <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer"
+            <a href="/privacidade" target="_blank" rel="noopener noreferrer"
               style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Política de Privacidade <ExternalLink size={10} />
             </a>
