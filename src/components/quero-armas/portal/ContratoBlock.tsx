@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  FileSignature, ShieldCheck, Clock, AlertCircle, CheckCircle2, Loader2,
+  FileSignature, Clock, AlertCircle, CheckCircle2, Loader2,
   Download, Upload, RefreshCw,
 } from "lucide-react";
-import { openRenderedContract } from "@/lib/quero-armas/renderedContractDownload";
+import { openMinutaContratoQueroArmas } from "@/lib/quero-armas/minutaContratoDownload";
 
 /**
  * BLOCO 10 (Pass A skeleton)
@@ -19,13 +19,11 @@ interface Contract {
   contract_number: string;
   status: string;
   validation_status: string | null;
-  conteudo_renderizado: string | null;
   issued_at: string | null;
   company_signed_at: string | null;
   customer_uploaded_at: string | null;
   customer_signature_validated_at?: string | null;
   validation_details?: any;
-  customer_signed_pdf_path?: string | null;
 }
 
 const STATUS_MAP: Record<string, { label: string; tone: "muted" | "info" | "warn" | "ok" | "err" }> = {
@@ -88,7 +86,7 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
       try {
         const { data, error } = await supabase
           .from("qa_contracts" as any)
-          .select("id, venda_id, contract_number, status, conteudo_renderizado, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details, customer_signed_pdf_path")
+          .select("id, venda_id, contract_number, status, validation_status, issued_at, company_signed_at, customer_uploaded_at, customer_signature_validated_at, validation_details")
           .eq("cliente_id", clienteId)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -124,53 +122,15 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
     return () => { supabase.removeChannel(ch); };
   }, [contract?.id]);
 
-  async function handleDownload(variant: "company_signed" | "customer_signed") {
+  async function handleDownload() {
     if (!contract) return;
     setDownloading(true);
     try {
-      if (variant === "company_signed" && openRenderedContract({
-        html: contract.conteudo_renderizado,
+      await openMinutaContratoQueroArmas({
+        contractId: contract.id,
         contractNumber: contract.contract_number,
         vendaId: contract.venda_id,
-        fallbackId: contract.id,
-      })) {
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/qa-serve-contract-pdf`;
-      const resp = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token ?? ""}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({ contract_id: contract.id, variant }),
       });
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error || `HTTP ${resp.status}`);
-      }
-      const contentType = resp.headers.get("content-type") || "";
-      const blob = await resp.blob();
-      if (contentType.includes("text/html")) {
-        const html = await blob.text();
-        const win = window.open("", "_blank");
-        if (!win) {
-          throw new Error("Pop-up bloqueado. Permita pop-ups para abrir o contrato.");
-        }
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
-        return;
-      }
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `contrato-${contract.contract_number}-${variant}.pdf`;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     } catch (e: any) {
       toast.error(e?.message || "Falha ao baixar contrato");
     } finally {
@@ -284,23 +244,12 @@ function ContratoBlockInner({ clienteId }: { clienteId: number | null }) {
         <button
           type="button"
           disabled={!canDownloadCompany || downloading}
-          onClick={() => handleDownload("company_signed")}
+          onClick={() => handleDownload()}
           className="inline-flex items-center justify-center gap-2 rounded-md bg-[#7A1F2B] px-3 py-2 text-[12px] font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
           Baixar contrato
         </button>
-
-        {contract.customer_signed_pdf_path && (
-          <button
-            type="button"
-            disabled={downloading}
-            onClick={() => handleDownload("customer_signed")}
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-neutral-300 bg-white px-3 py-2 text-[12px] font-bold text-neutral-800 disabled:opacity-50"
-          >
-            <Download className="h-3.5 w-3.5" /> Meu PDF assinado
-          </button>
-        )}
 
         {canUpload && (
           <>

@@ -160,15 +160,22 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/text\/html; charset=utf-8/);
     });
 
-    it("portal do cliente entrega conteudo_renderizado antes de chamar a edge de PDF", () => {
+    it("portal do cliente baixa a minuta aprovada diretamente do SQL", () => {
       const card = r("src/components/quero-armas/portal/ContratosPosPagamentoCard.tsx");
       const block = r("src/components/quero-armas/portal/ContratoBlock.tsx");
-      expect(card).toMatch(/conteudo_renderizado/);
-      expect(card).toMatch(/openRenderedContract/);
-      expect(card.indexOf("openRenderedContract")).toBeLessThan(card.indexOf("qa-serve-contract-pdf"));
-      expect(block).toMatch(/conteudo_renderizado/);
-      expect(block).toMatch(/openRenderedContract/);
-      expect(block.indexOf("openRenderedContract")).toBeLessThan(block.indexOf("qa-serve-contract-pdf"));
+      const helper = r("src/lib/quero-armas/minutaContratoDownload.ts");
+
+      expect(card).toMatch(/openMinutaContratoQueroArmas/);
+      expect(block).toMatch(/openMinutaContratoQueroArmas/);
+      expect(card).not.toMatch(/conteudo_renderizado|openRenderedContract|qa-serve-contract-pdf/);
+      expect(block).not.toMatch(/conteudo_renderizado|openRenderedContract|qa-serve-contract-pdf/);
+
+      expect(helper).toMatch(/Minuta_Contrato_Quero_Armas_v1\.md/);
+      expect(helper).toMatch(/qa_contract_templates/);
+      expect(helper).toMatch(/CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS/);
+      expect(helper).toMatch(/corpo_html/);
+      expect(helper).toMatch(/observacoes/);
+      expect(helper).toMatch(/filterContractAnexosBySlugs/);
     });
 
     it("migration remove ponteiros de PDFs legados do contrato principal aprovado", () => {
