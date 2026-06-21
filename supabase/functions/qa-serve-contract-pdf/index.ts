@@ -3,11 +3,12 @@
  *
  * Stream autenticado de contratos Quero Armas.
  *
- * Para contratos pós-pagamento com `conteudo_renderizado`, o documento
- * correto é o snapshot HTML do template canônico. O PDF físico legado em
- * `original_pdf_path` ou `company_signed_pdf_path` pode ter sido gerado pelo
- * renderizador antigo e ficar com cara de recibo; por isso ele não deve ser a
- * primeira opção para o cliente.
+ * Minuta_Contrato_Quero_Armas_v1.md é o único contrato canônico de
+ * contratação de serviços da Quero Armas. Para contratos pós-pagamento, o
+ * documento correto é o snapshot HTML renderizado do template canônico. PDF
+ * físico legado em `original_pdf_path` ou `company_signed_pdf_path` pode ter
+ * sido gerado pelo renderizador antigo e não pode ser servido como contrato
+ * de adesão.
  *
  * Bucket NÃO é público.
  *
@@ -132,6 +133,44 @@ function sanitizeTechnicalJargon(html: string): string {
     .replace(/\bslug\s*:\s*[a-z0-9_-]+/gi, "");
 }
 
+const AVISO_SEM_ANEXO_HTML =
+  '<section data-anexo-slug="__aviso__" class="qa-anexo-aviso">' +
+  '<strong>Anexo específico do serviço não disponível neste contrato.</strong> ' +
+  "Os termos detalhados do serviço contratado serão entregues junto ao contrato final assinado." +
+  "</section>";
+
+function normalizeContractSlug(value: string | null | undefined): string {
+  if (!value) return "";
+  return String(value)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^a-z0-9-]+/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function filterContractAnexosBySlugs(html: string, slugsContratados: string[]): string {
+  const slugSet = new Set(slugsContratados.map(normalizeContractSlug).filter(Boolean));
+  const sectionRegex =
+    /<section\s+[^>]*data-anexo-slug="([^"]+)"[^>]*>[\s\S]*?<\/section>\s*/g;
+  let foundAny = false;
+  let kept = 0;
+  const filtered = html.replace(sectionRegex, (full, slug) => {
+    foundAny = true;
+    if (slugSet.has(normalizeContractSlug(slug))) {
+      kept++;
+      return full;
+    }
+    return "";
+  });
+  if (foundAny && kept === 0) return filtered + AVISO_SEM_ANEXO_HTML;
+  return filtered;
+}
+
 function printableContractHtml(contract: any, html: string): string {
   const title = `Contrato ${contract.contract_number || contract.id} — Quero Armas`;
   const generatedAt = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
@@ -176,25 +215,106 @@ ${sanitizeTechnicalJargon(html)}
 </body></html>`;
 }
 
+async function loadCliente(sb: ReturnType<typeof svc>, clienteId: number | string | null | undefined) {
+  if (clienteId == null) return null;
+  const { data } = await sb
+    .from("qa_clientes")
+    .select("nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep")
+    .eq("id_legado", clienteId)
+    .maybeSingle();
+  return data as any | null;
+}
+
+function formatEnderecoCliente(cliente: any): string {
+  if (!cliente) return "";
+  return [
+    cliente.endereco,
+    cliente.numero ? `nº ${cliente.numero}` : null,
+    cliente.complemento,
+    cliente.bairro,
+    cliente.cidade && cliente.estado ? `${cliente.cidade}/${cliente.estado}` : cliente.cidade,
+    cliente.cep ? `CEP ${cliente.cep}` : null,
+  ].filter(Boolean).join(", ");
+}
+
+async function rebuildRenderedContractHtml(sb: ReturnType<typeof svc>, contract: any) {
+  const [{ data: template }, { data: items }, cliente] = await Promise.all([
+    sb
+      .from("qa_contract_templates")
+      .select("id, codigo, versao, corpo_html")
+      .eq("codigo", "CONTRATO_PRINCIPAL_MVP_QUERO_ARMAS")
+      .eq("vigente", true)
+      .maybeSingle(),
+    sb
+      .from("qa_contract_items")
+      .select("service_slug_snapshot, service_name_snapshot, total_price_cents")
+      .eq("contract_id", contract.id),
+    loadCliente(sb, contract.cliente_id),
+  ]);
+
+  if (!(template as any)?.corpo_html) return { html: "", cliente };
+
+  const rows = ((items as any[]) || []);
+  const slugs = rows
+    .map((item) => String(item.service_slug_snapshot || "").trim())
+    .filter(Boolean);
+  const servicoNome =
+    rows.length > 1
+      ? `${rows.length} serviços contratados em conjunto: ${rows.map((item) => item.service_name_snapshot || "Serviço").join("; ")}`
+      : rows[0]?.service_name_snapshot || "Serviço contratado";
+  const totalCents = rows.reduce((sum, item) => sum + Number(item.total_price_cents || 0), 0);
+  const valorContrato = contract.valor != null
+    ? Number(contract.valor)
+    : totalCents / 100;
+  const corpoFiltrado = filterContractAnexosBySlugs(String((template as any).corpo_html), slugs);
+  const html = substitute(corpoFiltrado, {
+    cliente_nome: escapeHtml(cliente?.nome_completo || ""),
+    cliente_cpf_cnpj: escapeHtml(cliente?.cpf || ""),
+    cliente_endereco: escapeHtml(formatEnderecoCliente(cliente)),
+    cliente_email: escapeHtml(cliente?.email || ""),
+    cliente_telefone: escapeHtml(cliente?.celular || ""),
+    servico_slug: escapeHtml(slugs.join(",")),
+    servico_nome: escapeHtml(servicoNome),
+    servico_preco: Number.isFinite(valorContrato)
+      ? `R$ ${valorContrato.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : "",
+    aceite_data: contract.aceite_eletronico_data || "",
+    aceite_ip: escapeHtml(contract.aceite_ip || ""),
+    aceite_user_agent: escapeHtml(contract.aceite_user_agent || ""),
+    aceite_hash: escapeHtml(contract.aceite_hash || ""),
+  });
+
+  return {
+    html,
+    cliente,
+    template_id: (template as any).id,
+    template_codigo: (template as any).codigo,
+    template_versao: (template as any).versao,
+    servico_slug: slugs.join(",") || contract.servico_slug || null,
+    valor: Number.isFinite(valorContrato) ? valorContrato : contract.valor,
+  };
+}
+
 async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Request, contract: any) {
   let html = String(contract.conteudo_renderizado || "");
+  let rebuilt: Awaited<ReturnType<typeof rebuildRenderedContractHtml>> | null = null;
+
+  if (!html.trim()) {
+    rebuilt = await rebuildRenderedContractHtml(sb, contract);
+    html = rebuilt.html;
+    if (rebuilt.cliente?.nome_completo) contract.cliente_nome = rebuilt.cliente.nome_completo;
+    if (rebuilt.template_codigo) {
+      contract.template_id = rebuilt.template_id;
+      contract.template_codigo = rebuilt.template_codigo;
+      contract.template_versao = rebuilt.template_versao;
+      contract.servico_slug = rebuilt.servico_slug;
+      contract.valor = rebuilt.valor;
+    }
+  }
 
   if (html.includes("{{")) {
-    const { data: cliente } = await sb
-      .from("qa_clientes")
-      .select("nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep")
-      .eq("id_legado", contract.cliente_id)
-      .maybeSingle();
-    const enderecoCliente = cliente
-      ? [
-          (cliente as any).endereco,
-          (cliente as any).numero ? `nº ${(cliente as any).numero}` : null,
-          (cliente as any).complemento,
-          (cliente as any).bairro,
-          (cliente as any).cidade && (cliente as any).estado ? `${(cliente as any).cidade}/${(cliente as any).estado}` : (cliente as any).cidade,
-          (cliente as any).cep ? `CEP ${(cliente as any).cep}` : null,
-        ].filter(Boolean).join(", ")
-      : "";
+    const cliente = rebuilt?.cliente || await loadCliente(sb, contract.cliente_id);
+    const enderecoCliente = formatEnderecoCliente(cliente);
     html = substitute(html, {
       cliente_nome: escapeHtml((cliente as any)?.nome_completo || ""),
       cliente_cpf_cnpj: escapeHtml((cliente as any)?.cpf || ""),
@@ -212,8 +332,8 @@ async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Requ
       aceite_hash: escapeHtml(contract.aceite_hash || ""),
     });
 
-    if ((cliente as any)?.nome_completo) {
-      contract.cliente_nome = (cliente as any).nome_completo;
+    if (cliente?.nome_completo) {
+      contract.cliente_nome = cliente.nome_completo;
     }
   }
 
@@ -231,7 +351,8 @@ async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Requ
     !contract.aceite_ip ||
     !contract.aceite_user_agent ||
     !contract.aceite_hash ||
-    html !== contract.conteudo_renderizado;
+    html !== contract.conteudo_renderizado ||
+    !!rebuilt?.template_codigo;
 
   if (!missingAudit) return { ...contract, conteudo_renderizado: html };
 
@@ -241,11 +362,17 @@ async function ensureRenderedContractAudit(sb: ReturnType<typeof svc>, req: Requ
   const aceiteHash = contract.aceite_hash || await sha256Text(`${html}|${aceiteData}|${contract.cliente_id}`);
   const patch = {
     conteudo_renderizado: html,
+    template_id: rebuilt?.template_id ?? contract.template_id,
+    template_codigo: rebuilt?.template_codigo ?? contract.template_codigo,
+    template_versao: rebuilt?.template_versao ?? contract.template_versao,
+    servico_slug: rebuilt?.servico_slug ?? contract.servico_slug,
+    valor: rebuilt?.valor ?? contract.valor,
     aceite_eletronico_data: aceiteData,
     aceite_ip: aceiteIp,
     aceite_user_agent: aceiteUserAgent,
     aceite_hash: aceiteHash,
   };
+  Object.keys(patch).forEach((key) => (patch as any)[key] === undefined && delete (patch as any)[key]);
 
   await sb.from("qa_contracts").update(patch).eq("id", contract.id);
   await sb.from("qa_contract_events").insert({
@@ -300,7 +427,7 @@ Deno.serve(async (req) => {
   if (!contractId && !vendaId) return jsonResp({ error: "contract_id ou venda_id obrigatório" }, 400);
 
   let q = sb.from("qa_contracts").select(
-    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash"
+    "id, venda_id, cliente_id, status, original_pdf_path, company_signed_pdf_path, customer_signed_pdf_path, contract_number, conteudo_renderizado, template_id, template_codigo, template_versao, servico_slug, valor, aceite_eletronico_data, aceite_ip, aceite_user_agent, aceite_hash"
   );
   if (contractId) q = q.eq("id", contractId);
   else q = q.eq("venda_id", vendaId!);
@@ -339,9 +466,12 @@ Deno.serve(async (req) => {
   if (variant === "original") path = (auditedContract as any).original_pdf_path ?? null;
   else if (variant === "customer_signed") path = (auditedContract as any).customer_signed_pdf_path ?? null;
   else {
-    // Contrato de adesão: cliente pode baixar assim que o contrato é emitido.
-    // Este caminho só é usado quando não há snapshot HTML canônico.
-    path = (auditedContract as any).company_signed_pdf_path ?? (auditedContract as any).original_pdf_path ?? null;
+    // Contrato de adesão NUNCA volta para PDF físico legado.
+    // Se não houver snapshot HTML, devolve erro controlado em vez do recibo antigo.
+    return jsonResp({
+      error: "contrato_renderizado_indisponivel",
+      message: "Contrato renderizado indisponível. Gere novamente o contrato antes de baixar.",
+    }, 409);
   }
 
   if (!path) {

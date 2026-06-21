@@ -147,6 +147,7 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
 
     it("download do cliente prioriza o contrato renderizado, não o PDF físico simplificado", () => {
       const src = r("supabase/functions/qa-serve-contract-pdf/index.ts");
+      expect(src).toMatch(/Minuta_Contrato_Quero_Armas_v1\.md é o único contrato canônico/);
       expect(src).toMatch(/conteudo_renderizado/);
       expect(src).toMatch(/printableContractHtml/);
       expect(src).toMatch(/canServeRenderedHtml/);
@@ -158,8 +159,11 @@ describe("FASE 2C-4 — Contrato pós-pagamento", () => {
       expect(src).toMatch(/contractDownloadFilename/);
       expect(src).toMatch(/Contrato de Adesao Quero Armas/);
       expect(src).toMatch(/shortPersonName/);
+      expect(src).toMatch(/rebuildRenderedContractHtml/);
+      expect(src).toMatch(/contrato_renderizado_indisponivel/);
       expect(src.indexOf("canServeRenderedHtml")).toBeLessThan(src.indexOf("storage.from(BUCKET).download"));
       expect(src).not.toMatch(/canServeRenderedHtml[\s\S]{0,180}company_signed_pdf_path/);
+      expect(src).not.toMatch(/path = \(auditedContract as any\)\.company_signed_pdf_path \?\?/);
       expect(src).toMatch(/text\/html; charset=utf-8/);
     });
 
