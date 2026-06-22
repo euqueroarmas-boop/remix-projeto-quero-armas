@@ -737,14 +737,13 @@ export default function QAContratarConfirmarPage() {
           onClick={handleConfirmar}
           style={{
             width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
-            padding: "18px 24px", borderRadius: 14, border: "none",
+            padding: "20px 24px", borderRadius: 4, border: "none",
             cursor: podeConfirmar ? "pointer" : "not-allowed",
-            fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
-            background: podeConfirmar
-              ? `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`
-              : D.paper2,
-            color: podeConfirmar ? "#fff" : D.inkFaint,
-            boxShadow: podeConfirmar ? `0 6px 30px ${D.redGlow}, 0 0 0 1px ${D.redAlphaStrong}` : "none",
+            fontFamily: "Oswald, sans-serif",
+            fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em",
+            background: podeConfirmar ? D.ink : D.paper2,
+            color: podeConfirmar ? "#000" : D.inkFaint,
+            border: podeConfirmar ? "none" : `1px solid ${D.border}`,
             transition: "all .25s",
           }}
         >
