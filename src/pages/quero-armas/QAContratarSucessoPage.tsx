@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Sparkles,
   ShieldCheck,
-  Clock,
   CreditCard,
   FileSignature,
   LayoutDashboard,
@@ -17,6 +16,8 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
+import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
+import { KanbanTag, KanbanCard } from "@/components/quero-armas/contratar/KanbanUI";
 
 /**
  * BLOCO 9 — Tela premium pós-contratação.
@@ -28,6 +29,9 @@ import {
  *  - Status operacional real (qa_vendas.status) quando ?venda=<id>
  *
  * NÃO cria nova arquitetura, NÃO altera CartProvider/catálogo/financeiro.
+ * Visual dark premium (.qa-refinado) + linguagem de cards de
+ * ResumoClienteKanbanMockPage, consistente com o restante do fluxo
+ * "Contratar serviço".
  */
 
 const WHATSAPP =
@@ -93,18 +97,14 @@ function statusToStep(s: string | null | undefined, v: string | null | undefined
   return 1;
 }
 
-function statusBadge(s: string | null | undefined, v: string | null | undefined) {
+function statusBadge(s: string | null | undefined, v: string | null | undefined): { label: string; tone: "ok" | "accent" | "danger" | "default" } {
   const st = (s || "").toUpperCase().trim();
   const vv = (v || "").toLowerCase().trim();
-  if (st === "PAGO")
-    return { label: "PAGAMENTO CONFIRMADO", cls: "bg-emerald-50 border-emerald-200 text-emerald-800" };
-  if (vv === "aprovado")
-    return { label: "PENDENTE DE PAGAMENTO", cls: "bg-amber-50 border-amber-200 text-amber-800" };
-  if (vv === "reprovado")
-    return { label: "VALOR REPROVADO — REVISÃO", cls: "bg-rose-50 border-rose-200 text-rose-800" };
-  if (vv === "corrigido")
-    return { label: "VALOR EM REVISÃO", cls: "bg-sky-50 border-sky-200 text-sky-800" };
-  return { label: "AGUARDANDO VALIDAÇÃO", cls: "bg-slate-100 border-slate-200 text-slate-700" };
+  if (st === "PAGO") return { label: "PAGAMENTO CONFIRMADO", tone: "ok" };
+  if (vv === "aprovado") return { label: "PENDENTE DE PAGAMENTO", tone: "accent" };
+  if (vv === "reprovado") return { label: "VALOR REPROVADO — REVISÃO", tone: "danger" };
+  if (vv === "corrigido") return { label: "VALOR EM REVISÃO", tone: "accent" };
+  return { label: "AGUARDANDO VALIDAÇÃO", tone: "default" };
 }
 
 export default function QAContratarSucessoPage() {
@@ -166,239 +166,223 @@ export default function QAContratarSucessoPage() {
   );
   const preco = formatBRL(venda?.valor_aprovado ?? catalogo?.preco ?? null);
 
+  const proximasAcoes = [
+    { Icon: ShieldCheck, title: "Validação dos dados", desc: "Nossa equipe revisará suas informações e o serviço contratado." },
+    { Icon: CreditCard, title: "Liberação da cobrança", desc: "Após validação, você poderá receber uma cobrança autorizada pela equipe." },
+    { Icon: LayoutDashboard, title: "Acesso ao portal", desc: "Após o pagamento, seu portal do cliente será liberado com o checklist." },
+    { Icon: FileSignature, title: "Contrato digital", desc: "Seu contrato será disponibilizado para assinatura no portal." },
+    { Icon: Rocket, title: "Início do processo", desc: "Iniciamos o atendimento conforme as etapas do serviço contratado." },
+  ];
+
   return (
-    <div data-tactical-portal className="min-h-screen bg-slate-50">
+    <div className="qa-refinado" style={{ minHeight: "100vh", background: "var(--qa-ref-bg)" }}>
       {/* HERO */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
-        <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_30%_20%,#fbbf24_0,transparent_45%),radial-gradient(circle_at_80%_80%,#10b981_0,transparent_45%)]" />
-        <div
-          className="relative max-w-5xl mx-auto px-4 pt-6 pb-10 md:pt-10 md:pb-14"
-          style={{ paddingTop: "max(env(safe-area-inset-top), 1.5rem)" }}
-        >
+      <header style={{ borderBottom: "0.5px solid var(--qa-ref-border-soft)", padding: "0 20px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 0 36px", paddingTop: "max(env(safe-area-inset-top), 24px)" }}>
           <button
             onClick={() => navigate("/servicos")}
-            className="inline-flex items-center gap-2 text-[11px] uppercase tracking-widest text-slate-300 hover:text-amber-300 transition mb-4"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 8, fontSize: 11, textTransform: "uppercase",
+              letterSpacing: "0.1em", color: "var(--qa-ref-ink-soft)", background: "none", border: "none",
+              cursor: "pointer", marginBottom: 16, padding: 0,
+            }}
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Voltar ao catálogo
+            <ArrowLeft size={14} /> Voltar ao catálogo
           </button>
 
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase tracking-widest mb-4">
-            <CheckCircle2 className="h-3.5 w-3.5" /> Recebido com sucesso
-          </div>
+          <KanbanTag tone="ok">
+            <CheckCircle2 size={11} style={{ display: "inline", marginRight: 4, verticalAlign: -1 }} /> Recebido com sucesso
+          </KanbanTag>
 
-          <h1 className="text-2xl md:text-4xl font-extrabold uppercase tracking-tight leading-tight">
+          <h1 style={{
+            fontSize: 28, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.01em", lineHeight: 1.1,
+            color: "var(--qa-ref-ink)", margin: "14px 0 8px", fontFamily: "var(--font-serif, Georgia, serif)",
+          }}>
             Contratação recebida
           </h1>
-          <p className="text-[13px] md:text-base text-slate-300 mt-2 max-w-2xl leading-relaxed">
+          <p style={{ fontSize: 13, color: "var(--qa-ref-ink-soft)", maxWidth: 560, lineHeight: 1.6, margin: 0 }}>
             Sua solicitação foi registrada com sucesso pela Equipe Quero Armas.
           </p>
-          <p className="text-[12px] md:text-sm text-slate-400 mt-3 max-w-2xl leading-relaxed">
+          <p style={{ fontSize: 12, color: "var(--qa-ref-ink-soft)", maxWidth: 560, lineHeight: 1.6, marginTop: 8 }}>
             Agora nossa equipe validará sua contratação e dará sequência ao fluxo
             adequado conforme o serviço contratado.
           </p>
 
-          {/* Aviso real do fluxo (sem cobrança automática) */}
-          <div className="mt-5 max-w-2xl flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[12px] text-amber-100">
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-amber-300" />
-            <p>
+          <div style={{
+            marginTop: 16, maxWidth: 560, display: "flex", alignItems: "flex-start", gap: 8,
+            borderRadius: 10, border: "1px solid var(--qa-ref-accent-strong)", background: "var(--qa-ref-accent-soft)",
+            padding: "10px 12px", fontSize: 12, color: "var(--qa-ref-accent)",
+          }}>
+            <AlertCircle size={15} style={{ marginTop: 1, flexShrink: 0 }} />
+            <p style={{ margin: 0 }}>
               Nenhuma cobrança automática foi gerada neste momento. A Equipe Quero
               Armas validará os dados antes da continuidade.
             </p>
           </div>
 
-          {/* Resumo + status */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-            <div className="rounded-xl bg-white/5 border border-white/10 backdrop-blur px-4 py-3">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
-                Serviço contratado
-              </div>
-              <div className="text-sm md:text-base font-bold uppercase mt-0.5">
+          <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+            <KanbanCard>
+              <KanbanTag tone="accent">Serviço contratado</KanbanTag>
+              <div style={{ fontSize: 14, fontWeight: 800, textTransform: "uppercase", color: "var(--qa-ref-ink)", marginTop: 6 }}>
                 {loading ? "Carregando…" : catalogo?.nome || slug.toUpperCase()}
               </div>
-              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-300">
+              <div style={{ display: "flex", gap: 14, marginTop: 6, fontSize: 11, color: "var(--qa-ref-ink-soft)", flexWrap: "wrap" }}>
                 {preco && (
                   <span>
-                    <span className="text-slate-400">Valor:</span>{" "}
-                    <strong className="text-white">{preco}</strong>
-                    {catalogo?.recorrente && <span className="text-slate-400"> /mês</span>}
+                    Valor: <strong style={{ color: "var(--qa-ref-ink)" }}>{preco}</strong>
+                    {catalogo?.recorrente && " /mês"}
                   </span>
                 )}
                 {venda?.id && (
                   <span>
-                    <span className="text-slate-400">Protocolo:</span>{" "}
-                    <strong className="text-white">#{venda.id}</strong>
+                    Protocolo: <strong style={{ color: "var(--qa-ref-ink)" }}>#{venda.id}</strong>
                   </span>
                 )}
               </div>
-            </div>
+            </KanbanCard>
 
-            <div
-              className={`self-stretch md:self-center inline-flex items-center justify-center rounded-xl border px-3 py-2 text-[10px] font-bold uppercase tracking-widest ${badge.cls}`}
-            >
-              {badge.label}
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <KanbanTag tone={badge.tone}>{badge.label}</KanbanTag>
             </div>
           </div>
         </div>
       </header>
 
       {/* CONTENT */}
-      <main className="max-w-5xl mx-auto px-4 py-8 md:py-12 space-y-8">
+      <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px 48px", display: "flex", flexDirection: "column", gap: 32 }}>
         {/* TIMELINE */}
-        <section className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5 md:p-7">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-sm md:text-base font-bold uppercase tracking-wider text-slate-900">
+        <section>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--qa-ref-ink)", margin: 0 }}>
               Sua jornada
             </h2>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
-              Etapa {currentStep} de {TIMELINE.length}
-            </span>
+            <KanbanTag tone="accent">Etapa {currentStep} de {TIMELINE.length}</KanbanTag>
           </div>
 
-          <ol className="grid grid-cols-1 md:grid-cols-7 gap-3 md:gap-2">
+          <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6 }}>
             {TIMELINE.map((t, i) => {
               const n = i + 1;
               const done = n < currentStep;
               const active = n === currentStep;
               return (
-                <li key={t.label} className="flex md:flex-col items-start md:items-center gap-3 md:gap-2">
-                  <div
-                    className={`shrink-0 w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center border-2 transition ${
-                      active
-                        ? "bg-amber-500 border-amber-400 text-white shadow-[0_0_0_5px_rgba(245,158,11,0.15)]"
-                        : done
-                          ? "bg-emerald-500 border-emerald-400 text-white"
-                          : "bg-slate-50 border-slate-200 text-slate-400"
-                    }`}
-                  >
-                    <t.Icon className="h-4 w-4 md:h-5 md:w-5" />
+                <div key={t.label} style={{ flex: "0 0 130px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, textAlign: "center" }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                    border: `2px solid ${active ? "var(--qa-ref-accent)" : done ? "var(--qa-ref-success)" : "var(--qa-ref-border)"}`,
+                    background: active ? "var(--qa-ref-accent)" : done ? "var(--qa-ref-success)" : "var(--qa-ref-paper-2)",
+                    color: active ? "#1a1206" : done ? "#0a1a0e" : "var(--qa-ref-ink-soft)",
+                  }}>
+                    <t.Icon size={17} />
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--qa-ref-ink-soft)" }}>
                       {String(n).padStart(2, "0")}
                     </div>
-                    <div
-                      className={`text-[12px] md:text-[11px] font-bold uppercase leading-tight ${
-                        active ? "text-amber-700" : done ? "text-emerald-700" : "text-slate-600"
-                      }`}
-                    >
+                    <div style={{
+                      fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", lineHeight: 1.3, marginTop: 2,
+                      color: active ? "var(--qa-ref-accent)" : done ? "var(--qa-ref-success)" : "var(--qa-ref-ink-soft)",
+                    }}>
                       {t.label}
                     </div>
                   </div>
-                </li>
+                </div>
               );
             })}
-          </ol>
+          </div>
         </section>
 
         {/* PRÓXIMAS AÇÕES */}
         <section>
-          <h2 className="text-sm md:text-base font-bold uppercase tracking-wider text-slate-900 mb-3">
+          <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--qa-ref-ink)", marginBottom: 12 }}>
             O que acontece agora
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              {
-                Icon: ShieldCheck,
-                title: "Validação dos dados",
-                desc: "Nossa equipe revisará suas informações e o serviço contratado.",
-              },
-              {
-                Icon: CreditCard,
-                title: "Liberação da cobrança",
-                desc: "Após validação, você poderá receber uma cobrança autorizada pela equipe.",
-              },
-              {
-                Icon: LayoutDashboard,
-                title: "Acesso ao portal",
-                desc: "Após o pagamento, seu portal do cliente será liberado com o checklist.",
-              },
-              {
-                Icon: FileSignature,
-                title: "Contrato digital",
-                desc: "Seu contrato será disponibilizado para assinatura no portal.",
-              },
-              {
-                Icon: Rocket,
-                title: "Início do processo",
-                desc: "Iniciamos o atendimento conforme as etapas do serviço contratado.",
-              },
-            ].map((c) => (
-              <div
-                key={c.title}
-                className="rounded-xl bg-white border border-slate-200 p-4 flex gap-3"
-              >
-                <div className="shrink-0 h-9 w-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-                  <c.Icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-[12px] font-bold uppercase tracking-wider text-slate-900">
-                    {c.title}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 10 }}>
+            {proximasAcoes.map((c) => (
+              <KanbanCard key={c.title}>
+                <div style={{ display: "flex", gap: 10 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: "var(--qa-ref-accent-soft)", color: "var(--qa-ref-accent)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <c.Icon size={15} />
                   </div>
-                  <p className="text-[12px] text-slate-600 leading-relaxed mt-0.5">{c.desc}</p>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", color: "var(--qa-ref-ink)" }}>
+                      {c.title}
+                    </div>
+                    <p style={{ fontSize: 11.5, color: "var(--qa-ref-ink-soft)", lineHeight: 1.5, margin: "3px 0 0" }}>{c.desc}</p>
+                  </div>
                 </div>
-              </div>
+              </KanbanCard>
             ))}
           </div>
         </section>
 
         {/* CTAs */}
-        <section
-          className="rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white p-5 md:p-7"
-          style={{ paddingBottom: "max(env(safe-area-inset-bottom), 1.25rem)" }}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-4 w-4 text-amber-300" />
-            <h2 className="text-sm md:text-base font-bold uppercase tracking-wider">
+        <section style={{
+          borderRadius: 16, background: "var(--qa-ref-paper)", border: "0.5px solid var(--qa-ref-border)", padding: 20,
+          paddingBottom: "max(env(safe-area-inset-bottom), 20px)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <Sparkles size={15} color="var(--qa-ref-accent)" />
+            <h2 style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--qa-ref-ink)", margin: 0 }}>
               Próximo passo
             </h2>
           </div>
-          <p className="text-[12px] md:text-sm text-slate-300 leading-relaxed max-w-2xl">
+          <p style={{ fontSize: 12, color: "var(--qa-ref-ink-soft)", lineHeight: 1.6, maxWidth: 560, margin: 0 }}>
             Você pode acompanhar o andamento pelo portal do cliente, falar com um
             especialista no WhatsApp ou voltar ao catálogo.
           </p>
 
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-2.5">
-            {hasPortal ? (
-              <button
-                onClick={() => navigate("/area-do-cliente")}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-[12px] font-bold uppercase tracking-wider transition"
-              >
-                <LayoutDashboard className="h-4 w-4" /> Ir para portal
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate("/area-do-cliente/login")}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-[12px] font-bold uppercase tracking-wider transition"
-              >
-                <LayoutDashboard className="h-4 w-4" /> Acessar portal
-              </button>
-            )}
+          <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10 }}>
+            <button
+              onClick={() => navigate(hasPortal ? "/area-do-cliente" : "/area-do-cliente/login")}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "12px 16px", borderRadius: 12, border: "none", cursor: "pointer",
+                background: "var(--qa-ref-accent)", color: "#1a1206",
+                fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
+              }}
+            >
+              <LayoutDashboard size={15} /> {hasPortal ? "Ir para portal" : "Acessar portal"}
+            </button>
 
             <a
               href={WHATSAPP}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-[12px] font-bold uppercase tracking-wider transition"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "12px 16px", borderRadius: 12, textDecoration: "none",
+                background: "var(--qa-ref-success)", color: "#0a1a0e",
+                fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
+              }}
             >
-              <MessageCircle className="h-4 w-4" /> Falar com especialista
+              <MessageCircle size={15} /> Falar com especialista
             </a>
 
             <button
               onClick={() => navigate("/servicos")}
-              className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-[12px] font-bold uppercase tracking-wider transition"
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                padding: "12px 16px", borderRadius: 12, cursor: "pointer",
+                background: "var(--qa-ref-paper-2)", border: "0.5px solid var(--qa-ref-border)", color: "var(--qa-ref-ink)",
+                fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
+              }}
             >
-              <ArrowLeft className="h-4 w-4" /> Voltar ao catálogo
+              <ArrowLeft size={15} /> Voltar ao catálogo
             </button>
           </div>
         </section>
 
         {loading && (
-          <div className="text-center text-[11px] text-slate-400 inline-flex items-center justify-center gap-2 w-full">
-            <Loader2 className="h-3 w-3 animate-spin" /> Carregando detalhes…
+          <div style={{ textAlign: "center", fontSize: 11, color: "var(--qa-ref-ink-soft)", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%" }}>
+            <Loader2 size={13} className="animate-spin" /> Carregando detalhes…
           </div>
         )}
 
-        <p className="text-center text-[10px] uppercase tracking-widest text-slate-400">
+        <p style={{ textAlign: "center", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--qa-ref-ink-soft)" }}>
           Equipe Quero Armas · Suporte e acompanhamento dedicado
         </p>
       </main>
