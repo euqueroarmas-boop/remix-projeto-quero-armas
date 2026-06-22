@@ -144,11 +144,10 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
         </div>
 
         {/* Progress bar */}
-        <div style={{ height: 2, background: D.borderSoft }}>
+        <div style={{ height: 1, background: D.border }}>
           <div style={{
-            height: 2, width: `${pct}%`,
-            background: `linear-gradient(to right, ${D.red}, ${D.redDeep})`,
-            boxShadow: `0 0 8px ${D.redGlow}`,
+            height: 1, width: `${pct}%`,
+            background: D.ink,
             transition: "width .5s ease",
           }} />
         </div>
