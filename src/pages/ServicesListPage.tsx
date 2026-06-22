@@ -8,7 +8,6 @@ import { useCart } from '@/shared/cart/CartProvider';
 import { useAuth } from '@/shared/auth/AuthProvider';
 import { listActiveServices, type ServiceWithCategory } from '@/shared/data/catalog';
 import { formatBRL } from '@/shared/lib/formatters';
-import { buildCheckoutGuiadoUrl } from '@/lib/quero-armas/checkoutGuiadoUrl';
 import { SEO } from '@/shared/components/SEO';
 import { ShareButton } from '@/shared/components/ShareButton';
 import { usePageEngagement } from '@/shared/lib/pageEngagement';
@@ -262,11 +261,8 @@ const ServicesListPage = () => {
 
   const handleAddToCart = (s: ServiceWithCategory) => {
     if (user) {
-      navigate(buildCheckoutGuiadoUrl(s.slug, {
-        origem: 'servicos_cliente_logado',
-        servicoConfirmado: true,
-        retomar: true,
-      }));
+      // Logado: vai direto para a confirmação, sem passar pelo carrinho
+      navigate(`/area-do-cliente/contratar/${s.slug}/confirmar`);
       return;
     }
     // Visitante: adiciona ao carrinho e segue para revisão

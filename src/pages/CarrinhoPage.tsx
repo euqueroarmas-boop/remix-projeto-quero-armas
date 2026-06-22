@@ -20,7 +20,6 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/shared/cart/CartProvider';
 import { formatBRL } from '@/shared/lib/formatters';
 import { useToast } from '@/hooks/use-toast';
-import { buildCheckoutGuiadoUrl } from '@/lib/quero-armas/checkoutGuiadoUrl';
 
 const TRUST_ITEMS = [
   { icon: MapPin, label: 'Atendimento nacional' },
@@ -58,13 +57,12 @@ export default function CarrinhoPage() {
     const slugs = items.map((item) => item.service_slug).filter(Boolean);
     if (slugs.length === 0) return;
     if (user) {
-      navigate(buildCheckoutGuiadoUrl(slugs, {
-        origem: 'carrinho_cliente_logado',
-        servicoConfirmado: true,
-        retomar: true,
-      }));
+      // Logado: vai direto para a confirmação do serviço
+      navigate(`/area-do-cliente/contratar/${slugs[0]}/confirmar`);
     } else {
-      navigate(buildCheckoutGuiadoUrl(slugs, { origem: 'carrinho' }));
+      // Visitante: wizard de cadastro guiado
+      const params = new URLSearchParams({ servico: slugs.join(','), origem: 'carrinho' });
+      navigate(`/cadastro?${params.toString()}`);
     }
   };
 

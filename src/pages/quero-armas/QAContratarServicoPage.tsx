@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, ShoppingBag, Sparkles, FileText, ChevronRight, Shield, Loader2, X } from "lucide-react";
-import { buildCheckoutGuiadoUrl } from "@/lib/quero-armas/checkoutGuiadoUrl";
 
 /* =============================================================================
  * QAContratarServicoPage — catálogo de serviços/produtos para o cliente.
@@ -134,16 +133,14 @@ export default function QAContratarServicoPage() {
       : null;
 
   const handleContratar = (slug: string) => {
-    navigate(buildCheckoutGuiadoUrl(slug, {
-      origem: logado ? "area_cliente_catalogo" : "catalogo_publico",
-      servicoConfirmado: true,
-      retomar: logado,
-      extra: {
-        trilha,
-        possuiArma,
-        finalidade,
-      },
-    }));
+    if (logado) {
+      // Cliente logado vai direto para a tela de revisão rápida (Fase 2)
+      navigate(`/area-do-cliente/contratar/${slug}/confirmar`);
+    } else {
+      // Visitante: vai DIRETO para o cadastro público com o serviço pré-selecionado.
+      // O próprio wizard mostra todas as opções do catálogo caso queira trocar.
+      navigate(`/cadastro?servico=${slug}`);
+    }
   };
 
   return (
