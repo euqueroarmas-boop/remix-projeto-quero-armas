@@ -41,22 +41,22 @@ function formatBRL(v: number | null) {
 
 const D = {
   bg: "#050505",
-  paper: "#171717",
-  paper2: "#111111",
-  border: "rgba(255,255,255,0.09)",
+  paper: "#0A0A0A",
+  paper2: "#141414",
+  border: "#2A2A2A",
   borderSoft: "rgba(255,255,255,0.05)",
-  ink: "#f0ece5",
-  inkSoft: "#ccc5b9",
-  inkFaint: "#6b6560",
-  /* vermelho bordô — cor da empresa */
-  red: "#c4253b",
-  redDeep: "#7A1F2B",
-  redAlpha: "rgba(196,37,59,0.12)",
-  redAlphaStrong: "rgba(196,37,59,0.30)",
-  redGlow: "rgba(196,37,59,0.40)",
-  success: "#7fbf6a",
-  successAlpha: "rgba(127,191,106,0.1)",
-  successBorder: "rgba(127,191,106,0.25)",
+  ink: "#C7C7C7",
+  inkSoft: "#C7C7C7",
+  inkFaint: "#5C5C5C",
+  /* monocromático editorial */
+  red: "#C7C7C7",
+  redDeep: "#8a8a8a",
+  redAlpha: "rgba(199,199,199,0.08)",
+  redAlphaStrong: "rgba(199,199,199,0.25)",
+  redGlow: "rgba(199,199,199,0.20)",
+  success: "#C7C7C7",
+  successAlpha: "rgba(199,199,199,0.08)",
+  successBorder: "rgba(199,199,199,0.30)",
 };
 
 export default function CheckoutShell({ step, slug, backTo = "/carrinho", children, summary, hideSidebar = false }: CheckoutShellProps) {
@@ -89,6 +89,7 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
 
   const preco = formatBRL(internal?.preco ?? null);
   const userInitials = userEmail ? userEmail.slice(0, 2).toUpperCase() : "?";
+  const isEditorial = true;
 
   return (
     <div className="qa-checkout-shell" style={{ background: D.bg, minHeight: "100vh", color: D.ink, WebkitFontSmoothing: "antialiased" }}>
@@ -118,8 +119,8 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
             </button>
             <div style={{ width: 1, height: 14, background: D.border, flexShrink: 0 }} />
             <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: D.red, boxShadow: `0 0 8px ${D.redGlow}`, flexShrink: 0 }} />
-              <span className="qa-checkout-brand" style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.14em", color: D.red }}>
+              <div style={{ width: 18, height: 1, background: D.ink, flexShrink: 0 }} />
+              <span className="qa-checkout-brand" style={{ fontFamily: "Oswald, sans-serif", fontSize: 10, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.32em", color: D.ink }}>
                 Checkout Quero Armas
               </span>
             </div>
@@ -131,79 +132,74 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
               <span className="qa-checkout-email" style={{ fontSize: 10, color: D.inkFaint, letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>
                 {userEmail}
               </span>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                background: `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`,
-                border: `1.5px solid ${D.redAlphaStrong}`,
-                boxShadow: `0 0 10px ${D.redAlpha}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 800, color: "#fff",
+              <span style={{
+                fontFamily: "Oswald, sans-serif",
+                fontSize: 11, fontWeight: 500, letterSpacing: "0.24em",
+                color: D.ink, textTransform: "uppercase",
               }}>
                 {userInitials}
-              </div>
+              </span>
             </div>
           )}
         </div>
 
         {/* Progress bar */}
-        <div style={{ height: 2, background: D.borderSoft }}>
+        <div style={{ height: 1, background: D.border }}>
           <div style={{
-            height: 2, width: `${pct}%`,
-            background: `linear-gradient(to right, ${D.red}, ${D.redDeep})`,
-            boxShadow: `0 0 8px ${D.redGlow}`,
+            height: 1, width: `${pct}%`,
+            background: D.ink,
             transition: "width .5s ease",
           }} />
         </div>
       </header>
 
       {/* ── Stepper ────────────────────────────────────────────────────── */}
-      <div style={{ background: "rgba(10,10,10,0.9)", borderBottom: `1px solid ${D.borderSoft}`, padding: "14px 20px", overflowX: "auto" }}>
+      <div style={{ background: "rgba(10,10,10,0.9)", borderBottom: `1px solid ${D.border}`, padding: "14px 20px", overflowX: "auto" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <ol style={{ display: "flex", alignItems: "center", gap: 0, maxWidth: 760, listStyle: "none", margin: 0, padding: 0, minWidth: "fit-content" }}>
-          {STEPS.map((s, idx) => {
-            const done = s.n < step;
-            const active = s.n === step;
-            return (
-              <li key={s.n} style={{ display: "flex", alignItems: "center", flex: idx < STEPS.length - 1 ? 1 : "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, padding: "2px 0" }}>
-                  {/* Circle */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0, maxWidth: 760, minWidth: "fit-content" }}>
+            {STEPS.map((s, idx) => {
+              const done = s.n < step;
+              const active = s.n === step;
+              const isFuture = s.n > step;
+              return (
+                <div key={s.n} style={{ display: "flex", alignItems: "center" }}>
                   <div style={{
-                    width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 11, fontWeight: 800,
-                    background: done ? D.red : "transparent",
-                    border: done
-                      ? `2px solid ${D.red}`
-                      : active
-                      ? `2px solid ${D.red}`
-                      : `1.5px solid ${D.border}`,
-                    color: done ? "#fff" : active ? D.red : D.inkFaint,
-                    boxShadow: (done || active) ? `0 0 10px ${D.redAlpha}` : "none",
-                    transition: "all .3s",
+                    display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6,
+                    paddingBottom: 4,
+                    borderBottom: done || active ? `1px solid ${D.ink}` : "1px solid transparent",
+                    transition: "border-color .3s",
                   }}>
-                    {done ? <Check size={13} /> : s.n}
+                    <span style={{
+                      fontFamily: "Oswald, sans-serif",
+                      fontSize: 18, fontWeight: 300, lineHeight: 1,
+                      letterSpacing: "0.02em",
+                      color: done || active ? D.ink : D.inkFaint,
+                    }}>
+                      {String(s.n).padStart(2, "0")}
+                    </span>
+                    <span className="qa-step-label" style={{
+                      fontFamily: "Oswald, sans-serif",
+                      fontSize: 10, fontWeight: 400, textTransform: "uppercase",
+                      letterSpacing: "0.32em",
+                      color: done || active ? D.ink : D.inkFaint,
+                      whiteSpace: "nowrap",
+                    }}>
+                      {s.label}
+                    </span>
                   </div>
-                  {/* Label */}
-                  <span className="qa-step-label" style={{
-                    fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
-                    color: done || active ? D.red : D.inkFaint,
-                    whiteSpace: "nowrap",
-                  }}>
-                    {s.label}
-                  </span>
+                  {idx < STEPS.length - 1 && (
+                    <span style={{
+                      fontFamily: "Oswald, sans-serif",
+                      fontSize: 14, fontWeight: 300,
+                      color: D.inkFaint,
+                      margin: "0 14px",
+                      lineHeight: 1,
+                    }}>·</span>
+                  )}
                 </div>
-                {/* Connector */}
-                {idx < STEPS.length - 1 && (
-                  <div style={{
-                    flex: 1, height: 1.5, margin: "0 10px",
-                    background: done ? `rgba(196,37,59,0.40)` : D.border,
-                    borderRadius: 1,
-                  }} />
-                )}
-              </li>
-            );
-          })}
-        </ol>
+              );
+            })}
+          </div>
         </div>
       </div>
 
