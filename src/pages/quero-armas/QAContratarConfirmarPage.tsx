@@ -25,34 +25,35 @@ import { useCart } from "@/shared/cart/CartProvider";
  * Design tokens — dark premium, vermelho bordô da empresa.
  * ============================================================================= */
 const D = {
-  bg: "#050505",
-  paper: "#171717",
-  paper2: "#111111",
-  border: "rgba(255,255,255,0.09)",
+  /* Paleta monocromática (preto + cinza chumbo) — Timeline editorial */
+  bg: "#000000",
+  paper: "#0A0A0A",
+  paper2: "#141414",
+  border: "#2A2A2A",
   borderSoft: "rgba(255,255,255,0.05)",
-  ink: "#f0ece5",
-  inkSoft: "#ccc5b9",
-  inkFaint: "#6b6560",
-  /* vermelho bordô — cor da empresa */
-  red: "#c4253b",
-  redDeep: "#7A1F2B",
-  redAlpha: "rgba(196,37,59,0.12)",
-  redAlphaStrong: "rgba(196,37,59,0.30)",
-  redGlow: "rgba(196,37,59,0.40)",
-  success: "#7fbf6a",
-  successAlpha: "rgba(127,191,106,0.10)",
-  successBorder: "rgba(127,191,106,0.30)",
-  warning: "#e0a030",
-  warningAlpha: "rgba(224,160,48,0.10)",
-  warningBorder: "rgba(224,160,48,0.30)",
-  danger: "#c0392b",
-  dangerAlpha: "rgba(192,57,43,0.10)",
-  dangerBorder: "rgba(192,57,43,0.25)",
-  /* neutro preto/cinza — usado na seção de contrato e aceite (sem bordô) */
-  neutral: "#d4d4d4",
-  neutralAlpha: "rgba(212,212,212,0.10)",
-  neutralAlphaStrong: "rgba(212,212,212,0.25)",
-  neutralGlow: "rgba(212,212,212,0.12)",
+  ink: "#C7C7C7",
+  inkSoft: "#C7C7C7",
+  inkFaint: "#5C5C5C",
+  /* "red" mantém o nome mas agora é o acento monocromático claro */
+  red: "#C7C7C7",
+  redDeep: "#8a8a8a",
+  redAlpha: "rgba(199,199,199,0.08)",
+  redAlphaStrong: "rgba(199,199,199,0.25)",
+  redGlow: "rgba(199,199,199,0.20)",
+  success: "#C7C7C7",
+  successAlpha: "rgba(199,199,199,0.08)",
+  successBorder: "rgba(199,199,199,0.30)",
+  warning: "#8a8a8a",
+  warningAlpha: "rgba(138,138,138,0.10)",
+  warningBorder: "rgba(138,138,138,0.35)",
+  danger: "#C7C7C7",
+  dangerAlpha: "rgba(199,199,199,0.08)",
+  dangerBorder: "rgba(199,199,199,0.30)",
+  /* neutro = mesma família */
+  neutral: "#C7C7C7",
+  neutralAlpha: "rgba(199,199,199,0.08)",
+  neutralAlphaStrong: "rgba(199,199,199,0.30)",
+  neutralGlow: "rgba(199,199,199,0.15)",
 };
 
 interface Catalogo {
