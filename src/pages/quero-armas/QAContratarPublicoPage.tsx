@@ -10,8 +10,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
-import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
-import { KanbanPageHeader, KanbanCard, KanbanTag } from "@/components/quero-armas/contratar/KanbanUI";
+import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 
 /**
  * QAContratarPublicoPage — Visitante NÃO logado solicita uma contratação.
@@ -38,12 +37,6 @@ function maskTel(v: string) {
   if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
-
-const inputStyle: React.CSSProperties = {
-  width: "100%", height: 40, padding: "0 12px", fontSize: 13,
-  background: "var(--qa-ref-paper)", border: "1px solid var(--qa-ref-border)",
-  borderRadius: 8, color: "var(--qa-ref-ink)", outline: "none", boxSizing: "border-box",
-};
 
 export default function QAContratarPublicoPage() {
   const navigate = useNavigate();
@@ -144,160 +137,137 @@ export default function QAContratarPublicoPage() {
 
   if (loading) {
     return (
-      <div className="qa-refinado" style={{ minHeight: "100vh", background: "var(--qa-ref-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Loader2 size={22} color="var(--qa-ref-accent)" className="animate-spin" />
+      <div data-tactical-portal className="min-h-screen qa-resumo-light flex items-center justify-center">
+        <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
       </div>
     );
   }
 
   if (done) {
     return (
-      <div className="qa-refinado" style={{ minHeight: "100vh", background: "var(--qa-ref-bg)" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "60px 20px" }}>
-          <KanbanCard>
-            <div style={{ textAlign: "center", padding: "12px 8px" }}>
-              <CheckCircle2 size={44} color="var(--qa-ref-success)" style={{ margin: "0 auto 10px" }} />
-              <h1 style={{ fontSize: 16, fontWeight: 700, textTransform: "uppercase", color: "var(--qa-ref-ink)", margin: 0 }}>
+      <div data-tactical-portal className="min-h-screen">
+        <div className="qa-resumo-light min-h-screen">
+          <div className="max-w-xl mx-auto px-4 py-10">
+            <div className="rounded-2xl bg-white border border-emerald-200 p-6 text-center">
+              <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto mb-3" />
+              <h1 className="text-lg font-bold text-slate-900 uppercase">
                 {done.jaExistia ? "Contratação já estava em fila" : "Contratação recebida"}
               </h1>
-              <p style={{ fontSize: 13, color: "var(--qa-ref-ink-soft)", marginTop: 10, lineHeight: 1.6 }}>
-                Sua solicitação para <strong style={{ color: "var(--qa-ref-ink)", textTransform: "uppercase" }}>{servicoNome}</strong> foi
-                registrada. A Equipe Quero Armas irá <strong>validar o valor</strong> e entrar em contato com você nas próximas horas.
+              <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                Sua solicitação para <strong className="uppercase">{servicoNome}</strong> foi
+                registrada. A Equipe Quero Armas irá <strong>validar o valor</strong>
+                {" "}e entrar em contato com você nas próximas horas.
               </p>
-              <p style={{ fontSize: 11, color: "var(--qa-ref-ink-soft)", marginTop: 10 }}>
+              <p className="text-[11px] text-slate-500 mt-3">
                 Nenhuma cobrança foi gerada. Nenhum processo foi aberto ainda.
               </p>
               <button
                 onClick={() => navigate("/area-do-cliente/contratar")}
-                style={{
-                  marginTop: 18, display: "inline-flex", alignItems: "center", gap: 8,
-                  padding: "10px 18px", borderRadius: 10, border: "none", cursor: "pointer",
-                  background: "var(--qa-ref-accent)", color: "#1a1206",
-                  fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
-                }}
+                className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 text-white text-[12px] font-bold uppercase tracking-wider hover:bg-amber-600"
               >
                 Voltar ao catálogo
               </button>
             </div>
-          </KanbanCard>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="qa-refinado" style={{ minHeight: "100vh", background: "var(--qa-ref-bg)" }}>
-      <KanbanPageHeader
-        crumb="Quero Armas · Contratar"
-        title="Seus dados de contato"
-        meta={<span>Serviço selecionado: <strong style={{ color: "var(--qa-ref-ink)" }}>{servicoNome}</strong></span>}
-        onBack={() => navigate(`/area-do-cliente/contratar/${slug}/identificar`)}
-      />
-
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 20px 32px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <KanbanCard>
-          <KanbanTag>Identificação</KanbanTag>
-          <p style={{ fontSize: 11.5, color: "var(--qa-ref-ink-soft)", margin: "4px 0 8px" }}>
-            Preencha com atenção — usaremos para identificar sua contratação.
-          </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <CheckoutShell step={2} slug={slug} backTo={`/area-do-cliente/contratar/${slug}/identificar`}>
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5 md:p-6">
+        <h2 className="text-base md:text-lg font-bold text-slate-900 uppercase tracking-tight">
+          Seus dados de contato
+        </h2>
+        <p className="text-[12px] text-slate-500 mt-1 mb-4">
+          Preencha com atenção — usaremos para identificar sua contratação.
+        </p>
+        <div className="space-y-3">
             <input
               placeholder="Nome completo"
               value={nome}
               onChange={(e) => setNome(e.target.value.toUpperCase())}
-              style={{ ...inputStyle, textTransform: "uppercase" }}
+              className="w-full h-10 px-3 text-sm uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
             />
             <input
               placeholder="CPF"
               value={cpf}
               onChange={(e) => setCpf(maskCpf(e.target.value))}
               inputMode="numeric"
-              style={inputStyle}
+              className="w-full h-10 px-3 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
             />
             <input
               placeholder="E-mail"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={inputStyle}
+              className="w-full h-10 px-3 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
             />
             <input
               placeholder="Celular com DDD"
               value={telefone}
               onChange={(e) => setTelefone(maskTel(e.target.value))}
               inputMode="tel"
-              style={inputStyle}
+              className="w-full h-10 px-3 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
             />
-          </div>
-        </KanbanCard>
-
-        <KanbanCard>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <DollarSign size={14} color="var(--qa-ref-accent)" />
-            <KanbanTag tone="accent">Valor combinado</KanbanTag>
-          </div>
-          <p style={{ fontSize: 11.5, color: "var(--qa-ref-ink-soft)", margin: "4px 0 8px", lineHeight: 1.5 }}>
-            Informe o valor combinado com a Quero Armas. Será <strong style={{ color: "var(--qa-ref-ink)" }}>validado pela
-            Equipe Quero Armas</strong> antes de virar processo.
-          </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--qa-ref-ink-soft)" }}>R$</span>
-            <input
-              inputMode="decimal"
-              placeholder="0,00"
-              value={valor}
-              onChange={(e) => setValor(e.target.value.replace(/[^0-9,.]/g, ""))}
-              style={{ ...inputStyle, flex: 1 }}
-            />
-          </div>
-          <textarea
-            rows={2}
-            placeholder="Observações para a equipe (opcional)"
-            value={obs}
-            onChange={(e) => setObs(e.target.value.toUpperCase())}
-            style={{
-              marginTop: 8, width: "100%", padding: "10px 12px", fontSize: 12, textTransform: "uppercase",
-              background: "var(--qa-ref-paper)", border: "1px solid var(--qa-ref-border)",
-              borderRadius: 8, color: "var(--qa-ref-ink)", outline: "none", boxSizing: "border-box",
-              resize: "vertical", fontFamily: "inherit",
-            }}
-          />
-        </KanbanCard>
-
-        <div style={{
-          display: "flex", alignItems: "flex-start", gap: 8, padding: "12px 14px", borderRadius: 10,
-          background: "var(--qa-ref-accent-soft)", border: "1px solid var(--qa-ref-accent-strong)",
-          fontSize: 11, color: "var(--qa-ref-accent)", lineHeight: 1.6,
-        }}>
-          <AlertCircle size={14} style={{ marginTop: 1, flexShrink: 0 }} />
-          <p style={{ margin: 0 }}>
-            Sem cobrança automática. Sua contratação ficará <strong>aguardando validação</strong> da
-            Equipe Quero Armas. Após validar o valor, geraremos seu processo.
-          </p>
         </div>
-
-        <p style={{ fontSize: 11, color: "var(--qa-ref-ink-soft)", lineHeight: 1.6 }}>
-          Seu processo começa após a confirmação do pagamento. Você receberá acesso ao
-          portal para acompanhar documentos, etapas e próximos passos.
-        </p>
-
-        <button
-          disabled={!podeEnviar}
-          onClick={enviar}
-          style={{
-            width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            padding: "14px 18px", borderRadius: 12, border: "none",
-            cursor: podeEnviar ? "pointer" : "not-allowed",
-            fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em",
-            background: podeEnviar ? "var(--qa-ref-accent)" : "var(--qa-ref-paper-2)",
-            color: podeEnviar ? "#1a1206" : "var(--qa-ref-ink-soft)",
-          }}
-        >
-          {submitting ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-          Avançar para confirmação
-          <ChevronRight size={16} />
-        </button>
       </div>
-    </div>
+
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5 md:p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="h-4 w-4 text-amber-600" />
+              <h2 className="text-sm font-bold text-slate-900 uppercase">Valor combinado</h2>
+            </div>
+            <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
+              Informe o valor combinado com a Quero Armas. Será <strong>validado pela
+              Equipe Quero Armas</strong> antes de virar processo.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-bold text-slate-700">R$</span>
+              <input
+                inputMode="decimal"
+                placeholder="0,00"
+                value={valor}
+                onChange={(e) => setValor(e.target.value.replace(/[^0-9,.]/g, ""))}
+                className="flex-1 h-10 px-3 text-sm border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+              />
+            </div>
+            <textarea
+              rows={2}
+              placeholder="Observações para a equipe (opcional)"
+              value={obs}
+              onChange={(e) => setObs(e.target.value.toUpperCase())}
+              className="mt-2 w-full px-3 py-2 text-[12px] uppercase border border-slate-200 rounded-md focus:outline-none focus:border-amber-400"
+            />
+      </div>
+
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+            <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <p>
+              Sem cobrança automática. Sua contratação ficará <strong>aguardando validação</strong>
+              {" "}da Equipe Quero Armas. Após validar o valor, geraremos seu processo.
+            </p>
+      </div>
+
+      <p className="text-[11px] text-slate-500 leading-relaxed">
+        Seu processo começa após a confirmação do pagamento. Você receberá acesso ao
+        portal para acompanhar documentos, etapas e próximos passos.
+      </p>
+
+      <button
+            disabled={!podeEnviar}
+            onClick={enviar}
+            className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition ${
+              podeEnviar
+                ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md"
+                : "bg-slate-200 text-slate-400 cursor-not-allowed"
+            }`}
+      >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Avançar para confirmação
+            <ChevronRight className="h-4 w-4" />
+      </button>
+    </CheckoutShell>
   );
 }

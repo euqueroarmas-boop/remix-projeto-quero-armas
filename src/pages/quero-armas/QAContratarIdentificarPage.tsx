@@ -1,18 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LogIn, UserPlus, Loader2, Sparkles, Zap, ChevronRight } from "lucide-react";
-import "@/pages/quero-armas/cadastro-refinado/styles/cadastroRefinado.css";
-import { KanbanPageHeader, KanbanCard, KanbanTag } from "@/components/quero-armas/contratar/KanbanUI";
+import { LogIn, UserPlus, Loader2, Sparkles, Zap } from "lucide-react";
+import CheckoutShell from "@/components/quero-armas/checkout/CheckoutShell";
 
 /**
  * QAContratarIdentificarPage — Visitante não logado escolheu um serviço.
  * Pergunta: já é cliente? -> /area-do-cliente/login?next=...
  *           sou novo?    -> /cadastro?servico=slug (wizard público completo)
- *
- * Visual dark premium (.qa-refinado) + linguagem de cards do
- * ResumoClienteKanbanMockPage, para ficar consistente com o restante do
- * fluxo "Contratar serviço".
  */
 export default function QAContratarIdentificarPage() {
   const navigate = useNavigate();
@@ -45,94 +40,74 @@ export default function QAContratarIdentificarPage() {
   const irParaCadastro = () => navigate(`/cadastro?servico=${slug}`);
   const irParaSolicitar = () => navigate(`/area-do-cliente/contratar/${slug}/solicitar`);
 
-  const opcoes = [
-    {
-      onClick: irParaLogin,
-      Icon: LogIn,
-      tag: "Mais rápido",
-      tagTone: "accent" as const,
-      title: "Continuar contratação — já sou cliente",
-      desc: "Faço login e contrato em segundos — só revisar dados.",
-    },
-    {
-      onClick: irParaCadastro,
-      Icon: UserPlus,
-      tag: "Cadastro guiado",
-      tagTone: "ok" as const,
-      title: "Sou novo aqui",
-      desc: "Faço o cadastro guiado em 5 etapas com o serviço já selecionado.",
-    },
-    {
-      onClick: irParaSolicitar,
-      Icon: Zap,
-      tag: "Sem login",
-      tagTone: "warn" as const,
-      title: "Solicitar agora",
-      desc: "Envio nome, CPF, e-mail, telefone e o valor combinado — equipe valida e me retorna.",
-    },
-  ];
-
   return (
-    <div className="qa-refinado" style={{ minHeight: "100vh", background: "var(--qa-ref-bg)" }}>
-      <KanbanPageHeader
-        crumb="Quero Armas · Contratar"
-        title="Você já é cliente?"
-        meta={<span>Serviço selecionado: <strong style={{ color: "var(--qa-ref-ink)" }}>{loading ? "…" : nome}</strong></span>}
-        onBack={() => navigate("/carrinho")}
-      />
+    <CheckoutShell step={1} slug={slug} backTo="/carrinho">
+      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-5 md:p-6">
+        <h2 className="text-base md:text-lg font-bold text-slate-900 uppercase tracking-tight">
+          Você já é cliente?
+        </h2>
+        <p className="text-[12px] text-slate-500 mt-1">
+          Serviço selecionado: <strong className="text-slate-700 uppercase">{loading ? "…" : nome}</strong>
+        </p>
 
-      <div style={{ maxWidth: 640, margin: "0 auto", padding: "24px 20px 32px", display: "flex", flexDirection: "column", gap: 12 }}>
         {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 0" }}>
-            <Loader2 size={22} color="var(--qa-ref-accent)" className="animate-spin" />
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 text-amber-500 animate-spin" />
           </div>
         ) : (
-          <>
-            {opcoes.map((op) => (
-              <button
-                key={op.title}
-                type="button"
-                onClick={op.onClick}
-                style={{ textAlign: "left", border: "none", background: "transparent", padding: 0, cursor: "pointer" }}
+          <div className="mt-5 space-y-3">
+            <button
+                onClick={irParaLogin}
+                className="w-full text-left rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition p-4 flex items-center gap-3"
               >
-                <KanbanCard>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <div style={{
-                      width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-                      background: "var(--qa-ref-accent-soft)", color: "var(--qa-ref-accent)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <op.Icon size={18} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <KanbanTag tone={op.tagTone}>{op.tag}</KanbanTag>
-                      <div style={{
-                        fontSize: 13, fontWeight: 700, textTransform: "uppercase", color: "var(--qa-ref-ink)",
-                        marginTop: 6,
-                      }}>
-                        {op.title}
-                      </div>
-                      <div style={{ fontSize: 11.5, color: "var(--qa-ref-ink-soft)", marginTop: 3, lineHeight: 1.5 }}>
-                        {op.desc}
-                      </div>
-                    </div>
-                    <ChevronRight size={16} color="var(--qa-ref-ink-soft)" style={{ flexShrink: 0, marginTop: 10 }} />
+                <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <LogIn className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-900 uppercase">Continuar contratação — já sou cliente</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Faço login e contrato em segundos — só revisar dados.
                   </div>
-                </KanbanCard>
+                </div>
+                <Sparkles className="h-4 w-4 text-amber-500" />
               </button>
-            ))}
 
-            <p style={{
-              fontSize: 11, color: "var(--qa-ref-ink-soft)", lineHeight: 1.6, marginTop: 8,
-              paddingTop: 12, borderTop: "0.5px solid var(--qa-ref-border-soft)",
-            }}>
-              <Sparkles size={11} style={{ display: "inline", marginRight: 4, verticalAlign: -1, color: "var(--qa-ref-accent)" }} />
+              <button
+                onClick={irParaCadastro}
+                className="w-full text-left rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition p-4 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-900 uppercase">Sou novo aqui</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Faço o cadastro guiado em 5 etapas com o serviço já selecionado.
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={irParaSolicitar}
+                className="w-full text-left rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:shadow-md transition p-4 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-900 uppercase">Solicitar agora</div>
+                  <div className="text-[11px] text-slate-500 mt-0.5">
+                    Envio nome, CPF, e-mail, telefone e o valor combinado — equipe valida e me retorna.
+                  </div>
+                </div>
+              </button>
+            <p className="text-[11px] text-slate-500 leading-relaxed pt-2 border-t border-slate-100">
               Seu processo começa após a confirmação do pagamento. Você receberá acesso ao portal
               para acompanhar documentos, etapas e próximos passos.
             </p>
-          </>
+          </div>
         )}
       </div>
-    </div>
+    </CheckoutShell>
   );
 }
