@@ -537,12 +537,11 @@ export default function QAContratarConfirmarPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{
               width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-              background: `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`,
-              border: `2px solid ${D.redAlphaStrong}`,
-              boxShadow: `0 0 16px ${D.redAlpha}`,
+              background: D.paper2,
+              border: `1px solid ${D.border}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 16, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em",
-              color: "#fff", userSelect: "none",
+              color: D.ink, userSelect: "none",
             }}>
               {iniciaisNome}
             </div>
