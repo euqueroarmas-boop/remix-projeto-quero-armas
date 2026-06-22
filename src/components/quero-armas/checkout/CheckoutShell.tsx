@@ -132,16 +132,13 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
               <span className="qa-checkout-email" style={{ fontSize: 10, color: D.inkFaint, letterSpacing: "0.04em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 180 }}>
                 {userEmail}
               </span>
-              <div style={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                background: `linear-gradient(135deg, ${D.red} 0%, ${D.redDeep} 100%)`,
-                border: `1.5px solid ${D.redAlphaStrong}`,
-                boxShadow: `0 0 10px ${D.redAlpha}`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 800, color: "#fff",
+              <span style={{
+                fontFamily: "Oswald, sans-serif",
+                fontSize: 11, fontWeight: 500, letterSpacing: "0.24em",
+                color: D.ink, textTransform: "uppercase",
               }}>
                 {userInitials}
-              </div>
+              </span>
             </div>
           )}
         </div>
