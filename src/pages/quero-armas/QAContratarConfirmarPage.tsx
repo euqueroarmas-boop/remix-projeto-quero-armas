@@ -504,32 +504,29 @@ export default function QAContratarConfirmarPage() {
         summary={{ nome: catalogo.nome, descricao_curta: catalogo.descricao_curta, preco: catalogo.preco, recorrente: catalogo.recorrente }}
       >
 
-        {/* ── Titular ─────────────────────────────────────────────────── */}
-        <DarkCard accentLine>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: "50%", flexShrink: 0,
-              background: D.paper2,
-              border: `1px solid ${D.border}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em",
-              color: D.ink, userSelect: "none",
-            }}>
-              {iniciaisNome}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: D.inkFaint, marginBottom: 3 }}>
-                Titular
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: D.ink, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {cliente.nome_completo}
-              </div>
-              <div style={{ fontSize: 12, color: D.inkFaint, marginTop: 3 }}>
-                CPF {cliente.cpf || "—"} · {cliente.email || "sem e-mail"}
-              </div>
-            </div>
+        {/* ── Titular (cabeçalho editorial) ──────────────────────────── */}
+        <div style={{ padding: "8px 0 36px", borderBottom: `1px solid ${D.border}` }}>
+          <div style={{
+            fontFamily: "Oswald, sans-serif",
+            fontSize: 10, fontWeight: 500, textTransform: "uppercase",
+            letterSpacing: "0.4em", color: D.inkFaint, marginBottom: 14,
+          }}>
+            Confirmação · Titular
           </div>
-        </DarkCard>
+          <div style={{
+            fontFamily: "Oswald, sans-serif",
+            fontSize: 32, fontWeight: 400, letterSpacing: "0.04em",
+            textTransform: "uppercase", color: D.ink, lineHeight: 1.1,
+          }}>
+            {cliente.nome_completo}
+          </div>
+          <div style={{
+            fontSize: 12, color: D.inkFaint, marginTop: 12,
+            letterSpacing: "0.06em",
+          }}>
+            CPF {cliente.cpf || "—"} &nbsp;·&nbsp; {cliente.email || "sem e-mail"}
+          </div>
+        </div>
 
         {/* ── 1. Endereço ─────────────────────────────────────────────── */}
         <DarkCard>
