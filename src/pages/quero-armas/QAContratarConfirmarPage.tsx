@@ -89,31 +89,21 @@ type Confirmacao = "sim" | "nao" | null;
 
 /* ── Primitivos de UI ───────────────────────────────────────────────────────── */
 
-function DarkCard({ children, accentLine = false, glowBorder = false, tone = "red" }: {
+/* Timeline editorial: cada seção é apenas um bloco vertical com um filete
+   inferior, sem caixa, sem borda arredondada. */
+function DarkCard({ children, last = false }: {
   children: React.ReactNode;
   accentLine?: boolean;
   glowBorder?: boolean;
   tone?: "red" | "neutral";
+  last?: boolean;
 }) {
-  const c = tone === "neutral"
-    ? { main: D.neutral, mainDeep: D.neutral, alpha: D.neutralAlpha, alphaStrong: D.neutralAlphaStrong, glow: D.neutralGlow }
-    : { main: D.red, mainDeep: D.redDeep, alpha: D.redAlpha, alphaStrong: D.redAlphaStrong, glow: D.redGlow };
   return (
     <div style={{
-      background: D.paper,
-      border: `1px solid ${glowBorder ? c.alphaStrong : D.border}`,
-      borderRadius: 14,
-      overflow: "hidden",
-      boxShadow: glowBorder ? `0 0 20px ${c.alpha}, inset 0 0 0 1px ${c.alpha}` : "none",
+      padding: "28px 0",
+      borderBottom: last ? "none" : `1px solid ${D.border}`,
     }}>
-      {accentLine && (
-        <div style={{
-          height: "2px",
-          background: `linear-gradient(to right, ${c.main}, ${c.mainDeep})`,
-          boxShadow: `0 0 10px ${c.glow}`,
-        }} />
-      )}
-      <div style={{ padding: "16px" }}>{children}</div>
+      {children}
     </div>
   );
 }
@@ -123,45 +113,32 @@ function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType, ton
   statusLabel?: string; statusType?: "ok" | "edit";
   tone?: "red" | "neutral";
 }) {
-  const accent = tone === "neutral" ? D.neutral : D.red;
-  const accentAlpha = tone === "neutral" ? D.neutralAlpha : D.redAlpha;
-  const accentAlphaStrong = tone === "neutral" ? D.neutralAlphaStrong : D.redAlphaStrong;
+  const numStr = String(n).padStart(2, "0");
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-      <div style={{
-        width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 11, fontWeight: 800,
-        background: done ? accent : accentAlpha,
-        border: `2px solid ${done ? accent : accentAlphaStrong}`,
-        color: done ? (tone === "neutral" ? "#000" : "#fff") : accent,
-        boxShadow: done ? `0 0 10px ${accentAlpha}` : "none",
-        transition: "all .2s",
+    <div style={{ display: "flex", alignItems: "baseline", gap: 20, marginBottom: 18 }}>
+      <span style={{
+        fontFamily: "Oswald, sans-serif",
+        fontSize: 36, fontWeight: 300, lineHeight: 1,
+        letterSpacing: "0.02em",
+        color: done ? D.ink : D.inkFaint,
+        flexShrink: 0, width: 56,
+        transition: "color .2s",
       }}>
-        {done ? <Check size={13} /> : n}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
-        <div style={{
-          width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-          background: accentAlpha,
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <Icon size={14} color={accent} />
-        </div>
-        <span style={{
-          fontSize: 12, fontWeight: 700, textTransform: "uppercase",
-          letterSpacing: "0.07em", color: D.ink,
-        }}>
-          {label}
-        </span>
-      </div>
+        {numStr}
+      </span>
+      <span style={{
+        flex: 1, minWidth: 0,
+        fontFamily: "Oswald, sans-serif",
+        fontSize: 11, fontWeight: 500, textTransform: "uppercase",
+        letterSpacing: "0.32em", color: D.ink,
+      }}>
+        {label}
+      </span>
       {statusLabel && (
         <span style={{
-          fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-          padding: "3px 10px", borderRadius: 99, flexShrink: 0,
-          color: statusType === "ok" ? D.success : D.warning,
-          background: statusType === "ok" ? D.successAlpha : D.warningAlpha,
-          border: `1px solid ${statusType === "ok" ? D.successBorder : D.warningBorder}`,
+          fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.2em",
+          flexShrink: 0,
+          color: statusType === "ok" ? D.ink : D.inkFaint,
         }}>
           {statusLabel}
         </span>
@@ -173,9 +150,9 @@ function SectionLabel({ n, done, icon: Icon, label, statusLabel, statusType, ton
 function DataRow({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      background: D.paper2, border: `1px solid ${D.borderSoft}`,
-      borderRadius: 8, padding: "10px 14px",
-      fontSize: 13, color: D.inkSoft, lineHeight: 1.7,
+      paddingLeft: 76,
+      fontSize: 14, color: D.inkSoft, lineHeight: 1.7,
+      fontWeight: 300,
     }}>
       {children}
     </div>
@@ -187,29 +164,23 @@ function DarkConfirmButtons({ value, onChange, labelSim, labelNao }: {
   labelSim: string; labelNao: string;
 }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 12 }}>
+    <div style={{
+      marginTop: 18, paddingLeft: 76,
+      display: "flex", alignItems: "center", gap: 28,
+    }}>
       {(["sim", "nao"] as const).map((opt) => {
         const isSelected = value === opt;
-        const isOk = opt === "sim";
         return (
           <button key={opt} type="button" onClick={() => onChange(opt)} style={{
-            position: "relative",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-            borderRadius: 10, padding: "12px 8px",
-            fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
-            cursor: "pointer", transition: "all .15s",
-            background: isSelected ? (isOk ? D.successAlpha : D.warningAlpha) : D.paper2,
-            border: `2px solid ${isSelected ? (isOk ? D.successBorder : D.warningBorder) : D.borderSoft}`,
-            color: isSelected ? (isOk ? D.success : D.warning) : D.inkFaint,
+            background: "transparent", border: "none", padding: "4px 0",
+            cursor: "pointer",
+            fontFamily: "Oswald, sans-serif",
+            fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+            letterSpacing: "0.24em",
+            color: isSelected ? D.ink : D.inkFaint,
+            borderBottom: `1px solid ${isSelected ? D.ink : "transparent"}`,
+            transition: "color .15s, border-color .15s",
           }}>
-            {isSelected && (
-              <CheckCircle2 size={14} color={isOk ? D.success : D.warning}
-                style={{ position: "absolute", top: 8, right: 8 }} />
-            )}
-            {isOk
-              ? <Check size={16} color={isSelected ? D.success : D.inkFaint} />
-              : <Pencil size={16} color={isSelected ? D.warning : D.inkFaint} />
-            }
             {opt === "sim" ? labelSim : labelNao}
           </button>
         );
@@ -233,13 +204,13 @@ function DarkInput({ placeholder, value, onChange, wide, maxLength }: {
       onBlur={() => setFocused(false)}
       className={wide ? "qa-input-wide" : ""}
       style={{
-        height: 40, padding: "0 14px",
-        fontSize: 12, textTransform: "uppercase",
-        background: D.paper2,
-        border: `1.5px solid ${focused ? D.red : D.border}`,
-        borderRadius: 8, color: D.ink, outline: "none", width: "100%", boxSizing: "border-box",
-        boxShadow: focused ? `0 0 0 3px ${D.redAlpha}` : "none",
-        transition: "border-color .15s, box-shadow .15s",
+        height: 38, padding: "0 2px",
+        fontSize: 12, textTransform: "uppercase", letterSpacing: "0.06em",
+        background: "transparent",
+        border: "none",
+        borderBottom: `1px solid ${focused ? D.ink : D.border}`,
+        color: D.ink, outline: "none", width: "100%", boxSizing: "border-box",
+        transition: "border-color .15s",
       }}
     />
   );
