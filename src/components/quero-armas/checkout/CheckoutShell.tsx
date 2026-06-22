@@ -89,6 +89,7 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
 
   const preco = formatBRL(internal?.preco ?? null);
   const userInitials = userEmail ? userEmail.slice(0, 2).toUpperCase() : "?";
+  const isEditorial = true;
 
   return (
     <div className="qa-checkout-shell" style={{ background: D.bg, minHeight: "100vh", color: D.ink, WebkitFontSmoothing: "antialiased" }}>
