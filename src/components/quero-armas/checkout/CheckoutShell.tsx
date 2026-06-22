@@ -55,7 +55,7 @@ const D = {
   redAlphaStrong: "rgba(199,199,199,0.25)",
   redGlow: "rgba(199,199,199,0.20)",
   success: "#C7C7C7",
-  successAlpha: "rgba(199,199,199celeb,0.08)",
+  successAlpha: "rgba(199,199,199,0.08)",
   successBorder: "rgba(199,199,199,0.30)",
 };
 
