@@ -598,15 +598,19 @@ export default function QAContratarConfirmarPage() {
               </span>
             </DataRow>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ paddingLeft: 76, display: "flex", flexDirection: "column", gap: 10 }}>
               {docsReaproveitados.slice(0, 8).map((d) => (
-                <div key={d} style={{ display: "flex", alignItems: "center", gap: 10, background: D.successAlpha, border: `1px solid ${D.successBorder}`, borderRadius: 8, padding: "9px 14px" }}>
-                  <CheckCircle2 size={15} color={D.success} style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: D.success }}>{d}</span>
+                <div key={d} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <span style={{ width: 18, height: 1, background: D.ink, flexShrink: 0 }} />
+                  <span style={{
+                    fontFamily: "Oswald, sans-serif",
+                    fontSize: 12, fontWeight: 500, textTransform: "uppercase",
+                    letterSpacing: "0.18em", color: D.ink,
+                  }}>{d}</span>
                 </div>
               ))}
               {docsReaproveitados.length > 8 && (
-                <span style={{ fontSize: 11, color: D.inkFaint, padding: "0 4px" }}>
+                <span style={{ fontSize: 11, color: D.inkFaint, letterSpacing: "0.06em" }}>
                   +{docsReaproveitados.length - 8} outros documentos disponíveis.
                 </span>
               )}
@@ -615,28 +619,34 @@ export default function QAContratarConfirmarPage() {
         </DarkCard>
 
         {/* ── 4. Valor do serviço ──────────────────────────────────────── */}
-        <DarkCard accentLine>
+        <DarkCard>
           <SectionLabel n={4} done={valorNumerico > 0} icon={BadgeDollarSign} label="Valor do serviço" />
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginTop: -4 }}>
-            <div>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.14em", color: D.inkFaint, marginBottom: 6 }}>Total</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: D.ink, lineHeight: 1 }}>
+          <div style={{ paddingLeft: 76 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
+              <div style={{
+                fontFamily: "Oswald, sans-serif",
+                fontSize: 48, fontWeight: 300, color: D.ink, lineHeight: 1,
+                letterSpacing: "0.01em",
+              }}>
                 {valorNumerico > 0
                   ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorNumerico)
                   : "—"}
               </div>
+              <span style={{
+                fontSize: 9, fontWeight: 600, textTransform: "uppercase",
+                letterSpacing: "0.32em", color: D.inkFaint,
+              }}>
+                Preço oficial
+              </span>
             </div>
-            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: D.success, background: D.successAlpha, border: `1px solid ${D.successBorder}`, borderRadius: 99, padding: "4px 12px" }}>
-              Preço oficial
-            </span>
+            <p style={{ fontSize: 12, color: D.inkFaint, marginTop: 14, lineHeight: 1.7, fontWeight: 300, maxWidth: 520 }}>
+              Pagamento via PIX, boleto ou cartão na próxima etapa. Processo iniciado após confirmação.
+            </p>
           </div>
-          <p style={{ fontSize: 12, color: D.inkFaint, marginTop: 12, lineHeight: 1.6 }}>
-            Pagamento via PIX, boleto ou cartão na próxima etapa. Processo iniciado após confirmação.
-          </p>
         </DarkCard>
 
         {/* ── 5. Contrato e aceite ─────────────────────────────────────── */}
-        <DarkCard glowBorder={!aceiteContrato} tone="neutral">
+        <DarkCard last>
           <SectionLabel
             n={5} done={aceiteContrato} icon={FileSignature} label="Contrato e aceite"
             statusLabel={aceiteContrato ? "Aceito ✓" : "Obrigatório"}
@@ -648,15 +658,15 @@ export default function QAContratarConfirmarPage() {
               (acordeão por cláusula + resumo) acontecem na etapa de
               Contrato e Pagamento, em /checkout/finalizar, igual ao fluxo
               de quem não está logado. Não duplicamos a exibição aqui. */}
-          <p style={{ fontSize: 12, color: D.inkSoft, lineHeight: 1.7, marginBottom: 14 }}>
+          <p style={{ paddingLeft: 76, fontSize: 13, color: D.inkSoft, lineHeight: 1.75, marginBottom: 20, fontWeight: 300, maxWidth: 620 }}>
             Você vai revisar e aceitar o contrato de adesão de serviços completo na etapa de pagamento. Ao confirmar aqui, você concorda com os{" "}
             <a href="/termos" target="_blank" rel="noopener noreferrer"
-              style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.border}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Termos de Serviço <ExternalLink size={10} />
             </a>
             {" "}e a{" "}
             <a href="/privacidade" target="_blank" rel="noopener noreferrer"
-              style={{ color: D.neutral, textDecoration: "none", borderBottom: `1px solid ${D.neutralAlphaStrong}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
+              style={{ color: D.ink, textDecoration: "none", borderBottom: `1px solid ${D.border}`, display: "inline-flex", alignItems: "center", gap: 3 }}>
               Política de Privacidade <ExternalLink size={10} />
             </a>
             {" "}da Quero Armas. O aceite eletrônico possui validade jurídica conforme a Lei n.º 14.063/2020.
@@ -667,32 +677,27 @@ export default function QAContratarConfirmarPage() {
             type="button"
             onClick={() => setAceiteContrato((v) => !v)}
             style={{
-              width: "100%", display: "flex", alignItems: "flex-start", gap: 14,
+              marginLeft: 76, width: "calc(100% - 76px)",
+              display: "flex", alignItems: "flex-start", gap: 16,
               cursor: "pointer", textAlign: "left",
-              background: aceiteContrato
-                ? D.successAlpha
-                : `rgba(196,37,59,0.06)`,
-              border: `2px solid ${aceiteContrato ? D.successBorder : D.redAlphaStrong}`,
-              borderRadius: 12, padding: "14px 16px",
-              transition: "all .25s",
-              boxShadow: aceiteContrato
-                ? `0 0 16px rgba(127,191,106,0.1)`
-                : `0 0 16px ${D.redAlpha}`,
+              background: "transparent",
+              border: "none",
+              padding: "4px 0",
+              transition: "all .2s",
             }}
           >
             {/* Checkbox visual */}
             <div style={{
-              width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
-              background: aceiteContrato ? D.success : "transparent",
-              border: `2px solid ${aceiteContrato ? D.success : D.red}`,
+              width: 18, height: 18, flexShrink: 0, marginTop: 3,
+              background: aceiteContrato ? D.ink : "transparent",
+              border: `1px solid ${D.ink}`,
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all .2s",
-              boxShadow: aceiteContrato ? `0 0 8px rgba(127,191,106,0.3)` : `0 0 6px ${D.redAlpha}`,
             }}>
-              {aceiteContrato && <Check size={13} color="#fff" />}
+              {aceiteContrato && <Check size={12} color="#000" strokeWidth={3} />}
             </div>
-            <span style={{ fontSize: 13, color: aceiteContrato ? D.success : D.inkSoft, lineHeight: 1.65, flex: 1 }}>
-              <strong style={{ color: aceiteContrato ? D.success : D.ink }}>Li e aceito</strong>{" "}
+            <span style={{ fontSize: 13, color: D.inkSoft, lineHeight: 1.7, flex: 1, fontWeight: 300 }}>
+              <strong style={{ color: D.ink, fontWeight: 600 }}>Li e aceito</strong>{" "}
               os Termos de Serviço e a Política de Privacidade da Quero Armas.
               Estou ciente de que o processo será iniciado após a confirmação do pagamento.
             </span>
@@ -700,34 +705,42 @@ export default function QAContratarConfirmarPage() {
         </DarkCard>
 
         {/* ── CTA ─────────────────────────────────────────────────────── */}
-        <button
-          type="button"
-          disabled={!podeConfirmar}
-          onClick={handleConfirmar}
-          style={{
-            width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
-            padding: "20px 24px", borderRadius: 4,
-            cursor: podeConfirmar ? "pointer" : "not-allowed",
-            fontFamily: "Oswald, sans-serif",
-            fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em",
-            background: podeConfirmar ? D.ink : D.paper2,
-            color: podeConfirmar ? "#000" : D.inkFaint,
-            border: podeConfirmar ? "none" : `1px solid ${D.border}`,
-            transition: "all .25s",
-          }}
-        >
-          {submitting
-            ? <Loader2 size={20} style={{ animation: "qa-spin 1s linear infinite" }} />
-            : <Sparkles size={20} />}
-          {submitting ? "Processando…" : "Ir para pagamento"}
-          {!submitting && <ChevronRight size={20} />}
-        </button>
+        <div style={{ marginTop: 40, borderTop: `1px solid ${D.border}`, paddingTop: 28 }}>
+          <button
+            type="button"
+            disabled={!podeConfirmar}
+            onClick={handleConfirmar}
+            style={{
+              width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 4px", border: "none",
+              background: "transparent",
+              cursor: podeConfirmar ? "pointer" : "not-allowed",
+              fontFamily: "Oswald, sans-serif",
+              fontSize: 16, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.32em",
+              color: podeConfirmar ? D.ink : D.inkFaint,
+              transition: "color .2s, opacity .2s",
+              opacity: podeConfirmar ? 1 : 0.5,
+            }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+              {submitting
+                ? <Loader2 size={16} style={{ animation: "qa-spin 1s linear infinite" }} />
+                : <Sparkles size={14} />}
+              {submitting ? "Processando" : "Ir para pagamento"}
+            </span>
+            {!submitting && <ChevronRight size={20} />}
+          </button>
 
-        {!aceiteContrato && (enderecoOk !== null || dadosOk !== null) && (
-          <p style={{ textAlign: "center", fontSize: 11, color: D.red, marginTop: -6, opacity: 0.8 }}>
-            Aceite o contrato acima para liberar o pagamento
-          </p>
-        )}
+          {!aceiteContrato && (enderecoOk !== null || dadosOk !== null) && (
+            <p style={{
+              textAlign: "center", fontSize: 10, color: D.inkFaint,
+              marginTop: 14, letterSpacing: "0.24em", textTransform: "uppercase",
+              fontFamily: "Oswald, sans-serif",
+            }}>
+              Aceite o contrato acima para liberar o pagamento
+            </p>
+          )}
+        </div>
 
       </CheckoutShell>
     </>
