@@ -476,12 +476,13 @@ export default function QAContratarConfirmarPage() {
       <style>{`
         @keyframes qa-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* Grid de endereço: 3 cols em desktop, 2 em tablet, 1 em mobile */
+        /* Grid de endereço: timeline editorial — inputs underline, indent 76px */
         .qa-addr-grid {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 8px;
-          margin-top: 12px;
+          gap: 18px 28px;
+          margin-top: 22px;
+          padding-left: 76px;
         }
         .qa-input-wide { grid-column: span 3 !important; }
 
@@ -490,7 +491,7 @@ export default function QAContratarConfirmarPage() {
           .qa-input-wide { grid-column: span 2 !important; }
         }
         @media (max-width: 480px) {
-          .qa-addr-grid { grid-template-columns: 1fr !important; }
+          .qa-addr-grid { grid-template-columns: 1fr !important; padding-left: 0 !important; }
           .qa-input-wide { grid-column: span 1 !important; }
         }
       `}</style>
