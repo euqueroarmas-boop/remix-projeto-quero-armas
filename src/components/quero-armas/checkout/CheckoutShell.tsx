@@ -41,22 +41,22 @@ function formatBRL(v: number | null) {
 
 const D = {
   bg: "#050505",
-  paper: "#171717",
-  paper2: "#111111",
-  border: "rgba(255,255,255,0.09)",
+  paper: "#0A0A0A",
+  paper2: "#141414",
+  border: "#2A2A2A",
   borderSoft: "rgba(255,255,255,0.05)",
-  ink: "#f0ece5",
-  inkSoft: "#ccc5b9",
-  inkFaint: "#6b6560",
-  /* vermelho bordô — cor da empresa */
-  red: "#c4253b",
-  redDeep: "#7A1F2B",
-  redAlpha: "rgba(196,37,59,0.12)",
-  redAlphaStrong: "rgba(196,37,59,0.30)",
-  redGlow: "rgba(196,37,59,0.40)",
-  success: "#7fbf6a",
-  successAlpha: "rgba(127,191,106,0.1)",
-  successBorder: "rgba(127,191,106,0.25)",
+  ink: "#C7C7C7",
+  inkSoft: "#C7C7C7",
+  inkFaint: "#5C5C5C",
+  /* monocromático editorial */
+  red: "#C7C7C7",
+  redDeep: "#8a8a8a",
+  redAlpha: "rgba(199,199,199,0.08)",
+  redAlphaStrong: "rgba(199,199,199,0.25)",
+  redGlow: "rgba(199,199,199,0.20)",
+  success: "#C7C7C7",
+  successAlpha: "rgba(199,199,199celeb,0.08)",
+  successBorder: "rgba(199,199,199,0.30)",
 };
 
 export default function CheckoutShell({ step, slug, backTo = "/carrinho", children, summary, hideSidebar = false }: CheckoutShellProps) {
