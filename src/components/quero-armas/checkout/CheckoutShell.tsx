@@ -119,8 +119,8 @@ export default function CheckoutShell({ step, slug, backTo = "/carrinho", childr
             </button>
             <div style={{ width: 1, height: 14, background: D.border, flexShrink: 0 }} />
             <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-              <div style={{ width: 8, height: 8, borderRadius: "50%", background: D.red, boxShadow: `0 0 8px ${D.redGlow}`, flexShrink: 0 }} />
-              <span className="qa-checkout-brand" style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.14em", color: D.red }}>
+              <div style={{ width: 18, height: 1, background: D.ink, flexShrink: 0 }} />
+              <span className="qa-checkout-brand" style={{ fontFamily: "Oswald, sans-serif", fontSize: 10, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.32em", color: D.ink }}>
                 Checkout Quero Armas
               </span>
             </div>
