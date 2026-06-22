@@ -737,7 +737,7 @@ export default function QAContratarConfirmarPage() {
           onClick={handleConfirmar}
           style={{
             width: "100%", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 10,
-            padding: "20px 24px", borderRadius: 4, border: "none",
+            padding: "20px 24px", borderRadius: 4,
             cursor: podeConfirmar ? "pointer" : "not-allowed",
             fontFamily: "Oswald, sans-serif",
             fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em",
