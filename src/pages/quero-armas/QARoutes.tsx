@@ -1,8 +1,9 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import QARouteFallback from "@/components/quero-armas/QARouteFallback";
 import { isCadastroRefinadoEnabled } from "@/lib/quero-armas/cadastroRefinadoFlag";
+import { buildCheckoutGuiadoUrl } from "@/lib/quero-armas/checkoutGuiadoUrl";
 
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
 const QALoginPage = lazyRetry(() => import("./QALoginPage"), "QALoginPage");
@@ -47,10 +48,6 @@ const QAClientePortalPage = lazyRetry(() => import("./QAClientePortalPage"), "QA
 const QAAtivarAcessoPage = lazyRetry(() => import("./QAAtivarAcessoPage"), "QAAtivarAcessoPage");
 const QARedefinirSenhaPage = lazyRetry(() => import("./QARedefinirSenhaPage"), "QARedefinirSenhaPage");
 const QAContratarServicoPage = lazyRetry(() => import("./QAContratarServicoPage"), "QAContratarServicoPage");
-const QAContratarConfirmarPage = lazyRetry(() => import("./QAContratarConfirmarPage"), "QAContratarConfirmarPage");
-const QAContratarIdentificarPage = lazyRetry(() => import("./QAContratarIdentificarPage"), "QAContratarIdentificarPage");
-const QAContratarPublicoPage = lazyRetry(() => import("./QAContratarPublicoPage"), "QAContratarPublicoPage");
-const QAContratarSucessoPage = lazyRetry(() => import("./QAContratarSucessoPage"), "QAContratarSucessoPage");
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
 const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
 const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"), "QAContratacoesTabsPage");
@@ -150,6 +147,26 @@ function CadastroRouteSwitch() {
     : <QAScope><QACadastroPublicoPage /></QAScope>;
 }
 
+function ClienteContratarSlugRedirect({
+  origem,
+  retomar = true,
+}: {
+  origem: string;
+  retomar?: boolean;
+}) {
+  const { slug = "" } = useParams();
+  return (
+    <Navigate
+      to={buildCheckoutGuiadoUrl(slug, {
+        origem,
+        servicoConfirmado: true,
+        retomar,
+      })}
+      replace
+    />
+  );
+}
+
 export default function QARoutes() {
   return (
     <Suspense fallback={<QARouteFallback />}>
@@ -225,10 +242,10 @@ export default function QARoutes() {
         <Route path="area-do-cliente" element={<QAScope><QAClientePortalPage /></QAScope>} />
         <Route path="area-do-cliente/contratar" element={<QAScope><QAContratarServicoPage /></QAScope>} />
         <Route path="area-do-cliente/contratacoes" element={<QAScope><QAClienteContratacoesPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAScope><QAContratarIdentificarPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/sucesso" element={<QAScope><QAContratarSucessoPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/identificar" element={<ClienteContratarSlugRedirect origem="area_cliente_identificar_legado" retomar={false} />} />
+        <Route path="area-do-cliente/contratar/:slug/solicitar" element={<ClienteContratarSlugRedirect origem="area_cliente_solicitar_legado" retomar={false} />} />
+        <Route path="area-do-cliente/contratar/:slug/confirmar" element={<ClienteContratarSlugRedirect origem="area_cliente_confirmar_legado" />} />
+        <Route path="area-do-cliente/contratar/:slug/sucesso" element={<ClienteContratarSlugRedirect origem="area_cliente_sucesso_legado" />} />
         <Route path="ativar-acesso" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         <Route path="portal/acessar" element={<QAScope><QAAtivarAcessoPage /></QAScope>} />
         {/* Legacy redirects */}
