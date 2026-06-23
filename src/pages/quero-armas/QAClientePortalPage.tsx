@@ -79,10 +79,10 @@ interface ClienteAvatarOficial {
   hasPhoto: boolean;
 }
 
-function SectionCard({ icon: Icon, title, color, children }: { icon: any; title: string; color: string; children: React.ReactNode }) {
+function SectionCard({ icon: Icon, title, color, children, containerClassName, headerClassName }: { icon: any; title: string; color: string; children: React.ReactNode; containerClassName?: string; headerClassName?: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100">
+    <div className={containerClassName ?? "bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"}>
+      <div className={headerClassName ?? "flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100"}>
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}12` }}>
           <Icon className="h-3.5 w-3.5" style={{ color }} />
         </div>
