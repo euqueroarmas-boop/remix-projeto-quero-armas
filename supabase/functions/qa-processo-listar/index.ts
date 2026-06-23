@@ -74,6 +74,9 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (!link?.qa_cliente_id) return json({ processos: [], total: 0 });
       query = query.eq("cliente_id", link.qa_cliente_id);
+      // Cliente nunca vê processos órfãos/cancelados por reconciliação.
+      // Apenas staff (admin) consegue auditar esses registros.
+      query = query.not("status", "in", "(cancelado,arquivado)");
     } else {
       if (filtroCliente) query = query.eq("cliente_id", parseInt(filtroCliente, 10));
     }
