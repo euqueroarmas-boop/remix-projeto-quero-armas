@@ -82,6 +82,9 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
         .from("qa_processos")
         .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
         .eq("cliente_id", clienteId)
+        // Processos cancelados/arquivados pela reconciliação (sem venda/contrato real)
+        // NUNCA devem aparecer para o cliente final. Apenas staff vê na auditoria.
+        .not("status", "in", "(cancelado,arquivado)")
         .order("data_criacao", { ascending: false });
       if (error) throw error;
 
