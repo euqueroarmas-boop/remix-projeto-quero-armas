@@ -6,6 +6,12 @@ import { getStatusProcesso, formatDate } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
 import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 
+/* =============================================================================
+ * ClienteProcessosSection — Estilo Catálogo Light
+ * Paleta: Page #FAFAFA | Paper #FFFFFF | Ink #0A0A0A | Border #E4E4E4
+ *         Secondary #6A6A6A | Micro-dots RGB apenas para status (8px)
+ * ============================================================================= */
+
 interface Processo {
   id: string;
   servico_nome: string;
@@ -24,7 +30,6 @@ interface Processo {
 
 interface Props {
   clienteId: number;
-  /** Quando preenchido, filtra a lista para mostrar apenas o processo indicado. */
   processoIdFiltro?: string | null;
 }
 
@@ -43,12 +48,24 @@ const diasRestantes = (d?: string | null): number | null => {
   return Math.ceil((t - Date.now()) / 86400000);
 };
 
-const prazoTone = (dias: number | null) => {
-  if (dias === null) return { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700", chip: "bg-slate-200 text-slate-800" };
-  if (dias < 0) return { bg: "bg-red-50", border: "border-red-300", text: "text-red-800", chip: "bg-red-600 text-white" };
-  if (dias <= 7) return { bg: "bg-red-50", border: "border-red-300", text: "text-red-800", chip: "bg-red-600 text-white" };
-  if (dias <= 30) return { bg: "bg-amber-50", border: "border-amber-300", text: "text-amber-900", chip: "bg-amber-500 text-white" };
-  return { bg: "bg-emerald-50", border: "border-emerald-300", text: "text-emerald-900", chip: "bg-emerald-600 text-white" };
+/** Catálogo Light: apenas micro-dot + cor de texto neutra. Sem fundos coloridos. */
+const prazoDot = (dias: number | null) => {
+  if (dias === null) return { dot: "#6A6A6A", text: "text-[#6A6A6A]" };
+  if (dias < 0) return { dot: "#FF5F57", text: "text-[#0A0A0A]" };
+  if (dias <= 7) return { dot: "#FF5F57", text: "text-[#0A0A0A]" };
+  if (dias <= 30) return { dot: "#FEBC2E", text: "text-[#0A0A0A]" };
+  return { dot: "#28C840", text: "text-[#0A0A0A]" };
+};
+
+/** Mapeia status para micro-dot RGB discreto (8px). */
+const statusDotColor = (status: string) => {
+  const green = new Set(["concluido", "aprovado", "pronto_para_protocolar", "deferido", "protocolado", "em_analise_orgao", "em_validacao_ia"]);
+  const yellow = new Set(["em_revisao_humana", "em_andamento", "aguardando_documentos"]);
+  const red = new Set(["aguardando_pagamento", "indeferido", "bloqueado", "cancelado"]);
+  if (green.has(status)) return "#28C840";
+  if (yellow.has(status)) return "#FEBC2E";
+  if (red.has(status)) return "#FF5F57";
+  return "#6A6A6A";
 };
 
 export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: Props) {
@@ -74,8 +91,6 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
       const enriched: Processo[] = (procs ?? []).map((p: any) => {
         const myDocs = (docs ?? []).filter((d: any) => d.processo_id === p.id);
         const total = myDocs.length;
-        // Bloco 13: usa os mesmos helpers canônicos do Admin/drawer para que
-        // o card do cliente reflita EXATAMENTE o checklist do processo.
         const pendentes = myDocs.filter((d: any) => d.obrigatorio && isChecklistPendente(d.status)).length;
         const aprovados = myDocs.filter((d: any) => isChecklistCumprido(d.status)).length;
         const docCritico = p.prazo_critico_doc_id ? myDocs.find((d: any) => d.id === p.prazo_critico_doc_id) : null;
@@ -105,18 +120,18 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
     ? processosRaw.filter((p) => p.id === processoIdFiltro)
     : processosRaw;
 
-  if (loading) return <div className="text-xs uppercase tracking-wider text-slate-400 text-center py-6">CARREGANDO PROCESSOS...</div>;
+  if (loading) return <div className="text-xs uppercase tracking-wider text-[#6A6A6A] text-center py-6">CARREGANDO PROCESSOS…</div>;
 
   if (processos.length === 0) {
     return (
       <div className="text-center py-8">
-        <FileStack className="h-8 w-8 mx-auto text-slate-300 mb-2" />
-        <p className="text-xs uppercase tracking-wider text-slate-400">VOCÊ AINDA NÃO POSSUI PROCESSOS ATIVOS</p>
+        <FileStack className="h-8 w-8 mx-auto text-[#E4E4E4] mb-2" />
+        <p className="text-xs uppercase tracking-wider text-[#6A6A6A]">VOCÊ AINDA NÃO POSSUI PROCESSOS ATIVOS</p>
       </div>
     );
   }
 
-  // Banner global: menor prazo entre todos os processos ativos
+  // Banner global: menor prazo entre todos os processos ativos — estilo Catálogo Light
   const ativos = processos.filter((p) => p.status !== "concluido" && p.pagamento_status !== "aguardando");
   const comPrazo = ativos.filter((p) => !!p.prazo_critico_data);
   const menor = comPrazo.length
@@ -127,30 +142,31 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
       })
     : null;
   const menorDias = diasRestantes(menor?.prazo_critico_data);
-  const tone = prazoTone(menorDias);
+  const menorTone = prazoDot(menorDias);
 
   return (
     <div className="space-y-2.5">
       {menor && menorDias !== null && (
-        <div className={`rounded-xl border ${tone.border} ${tone.bg} p-4`}>
+        <div className="rounded-sm border border-[#E4E4E4] bg-[#FFFFFF] p-4">
           <div className="flex items-start gap-3">
-            <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${tone.chip}`}>
-              <Timer className="h-4 w-4" />
+            <div className="shrink-0 w-9 h-9 rounded-sm flex items-center justify-center border border-[#E4E4E4]">
+              <Timer className="h-4 w-4 text-[#6A6A6A]" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-[10px] uppercase tracking-[0.14em] font-bold ${tone.text}`}>PRAZO CRÍTICO DA SUA DOCUMENTAÇÃO</span>
-                <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${tone.chip}`}>
+                <span className="w-2 h-2 rounded-full" style={{ background: menorTone.dot }} aria-hidden="true" />
+                <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[#6A6A6A]">PRAZO CRÍTICO DA SUA DOCUMENTAÇÃO</span>
+                <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] text-[#0A0A0A]">
                   {menorDias < 0 ? `VENCIDO HÁ ${Math.abs(menorDias)}D` : menorDias === 0 ? "VENCE HOJE" : `${menorDias} DIAS RESTANTES`}
                 </span>
               </div>
-              <p className={`text-[12px] leading-relaxed mt-1.5 ${tone.text}`}>
+              <p className="text-[12px] leading-relaxed mt-1.5 text-[#0A0A0A]">
                 Você precisa enviar todos os documentos antes de <strong>{formatDate(menor.prazo_critico_data!)}</strong>.
                 {menor.prazo_critico_doc_label ? (
                   <> Documento mais próximo do vencimento: <strong>{menor.prazo_critico_doc_label}</strong>.</>
                 ) : null}
               </p>
-              <p className={`text-[11px] leading-relaxed mt-1 normal-case ${tone.text}/80 opacity-80`}>
+              <p className="text-[11px] leading-relaxed mt-1 normal-case text-[#6A6A6A]">
                 Se algum documento vencer antes do protocolo, será necessário emitir uma versão atualizada e reenviar.
               </p>
             </div>
@@ -159,55 +175,66 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
       )}
 
       <div className="flex items-center justify-end">
-        <button onClick={carregar} className="text-[10px] uppercase tracking-wider font-bold text-slate-500 hover:text-slate-700 inline-flex items-center gap-1">
+        <button onClick={carregar} className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A] hover:text-[#0A0A0A] inline-flex items-center gap-1 transition">
           <RefreshCw className="h-3 w-3" /> ATUALIZAR
         </button>
       </div>
+
       {processos.map((p) => {
         const st = getStatusProcesso(p.status);
         const precisaAcao = (p.pendentes ?? 0) > 0 || p.status === "aguardando_documentos";
         const aguardandoPagto = p.pagamento_status === "aguardando";
         const dias = diasRestantes(p.prazo_critico_data);
-        const tonePr = prazoTone(dias);
+        const prTone = prazoDot(dias);
         const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
+        const sDot = statusDotColor(p.status);
+
         return (
           <button
             key={p.id}
             onClick={() => setOpenId(p.id)}
-            className={`w-full text-left bg-white border rounded-xl p-4 hover:shadow-md transition ${aguardandoPagto ? "border-[#E5C2C6] ring-1 ring-[#7A1F2B]" : precisaAcao ? "border-amber-300 ring-1 ring-amber-200" : "border-slate-200"}`}
+            className="w-full text-left bg-[#FFFFFF] border border-[#E4E4E4] rounded-sm p-4 hover:border-[#0A0A0A] transition shadow-sm"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <FileText className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">PROCESSO · {formatDate(p.data_criacao)}</span>
+                  <FileText className="h-3.5 w-3.5 text-[#6A6A6A]" />
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">PROCESSO · {formatDate(p.data_criacao)}</span>
                 </div>
-                <h4 className="font-bold text-sm text-slate-800 uppercase mt-1 line-clamp-2">{p.servico_nome}</h4>
+                <h4 className="font-bold text-sm text-[#0A0A0A] uppercase mt-1 line-clamp-2">{p.servico_nome}</h4>
+
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${st.bg} ${st.text} border ${st.border}`}>{st.label}</span>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#0A0A0A]">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: sDot }} aria-hidden="true" />
+                    {st.label}
+                  </span>
                   {(p.total_docs ?? 0) > 0 && !aguardandoPagto && (
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#6A6A6A]">
                       {p.aprovados}/{p.total_docs} DOCS APROVADOS
                     </span>
                   )}
                   {!aguardandoPagto && (
-                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm bg-[#FAFAFA] text-[#6A6A6A] border border-[#E4E4E4]">
                       ETAPA {etapa}/5 · {ETAPA_LABELS[etapa]}
                     </span>
                   )}
                 </div>
+
                 {!aguardandoPagto && dias !== null && (
-                  <div className={`mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold ${tonePr.text}`}>
-                    <CalendarClock className="h-3 w-3" />
+                  <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: prTone.dot }} aria-hidden="true" />
+                    <CalendarClock className="h-3 w-3 text-[#6A6A6A]" />
                     PRAZO: {dias < 0 ? `VENCIDO HÁ ${Math.abs(dias)}D` : dias === 0 ? "VENCE HOJE" : `${dias}D`} · ATÉ {formatDate(p.prazo_critico_data!)}
                   </div>
                 )}
+
                 {aguardandoPagto ? (
-                  <div className="mt-3 rounded-lg bg-[#FBF3F4] border border-[#E5C2C6] p-3">
-                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#7A1F2B]">
-                      <CreditCard className="h-3 w-3" /> AGUARDANDO PAGAMENTO
+                  <div className="mt-3 rounded-sm bg-[#FFFFFF] border border-[#E4E4E4] p-3">
+                    <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
+                      <span className="w-2 h-2 rounded-full shrink-0 bg-[#FF5F57]" aria-hidden="true" />
+                      <CreditCard className="h-3 w-3 text-[#6A6A6A]" /> AGUARDANDO PAGAMENTO
                     </div>
-                    <p className="text-[11px] text-[#7A1F2B] mt-1 leading-relaxed normal-case">
+                    <p className="text-[11px] text-[#6A6A6A] mt-1 leading-relaxed normal-case">
                       Cadastro recebido. Nossa Equipe Quero Armas validará os dados e confirmará o pagamento manualmente. Após a confirmação, o checklist documental será liberado.
                     </p>
                     <a
@@ -215,18 +242,19 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] uppercase tracking-wider font-bold"
+                      className="mt-2 inline-flex items-center gap-1.5 h-8 px-3 rounded-sm bg-[#0A0A0A] hover:bg-[#1A1A1A] text-white text-[11px] uppercase tracking-wider font-bold transition"
                     >
                       Falar no WhatsApp
                     </a>
                   </div>
                 ) : precisaAcao && (
-                  <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-amber-700">
-                    <AlertTriangle className="h-3 w-3" /> {p.acao}
+                  <div className="mt-2 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-[#0A0A0A]">
+                    <span className="w-2 h-2 rounded-full shrink-0 bg-[#FEBC2E]" aria-hidden="true" />
+                    <AlertTriangle className="h-3 w-3 text-[#6A6A6A]" /> {p.acao}
                   </div>
                 )}
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400 shrink-0 mt-1" />
+              <ChevronRight className="h-4 w-4 text-[#6A6A6A] shrink-0 mt-1" />
             </div>
           </button>
         );

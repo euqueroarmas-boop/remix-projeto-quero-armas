@@ -79,10 +79,10 @@ interface ClienteAvatarOficial {
   hasPhoto: boolean;
 }
 
-function SectionCard({ icon: Icon, title, color, children }: { icon: any; title: string; color: string; children: React.ReactNode }) {
+function SectionCard({ icon: Icon, title, color, children, containerClassName, headerClassName }: { icon: any; title: string; color: string; children: React.ReactNode; containerClassName?: string; headerClassName?: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100">
+    <div className={containerClassName ?? "bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden"}>
+      <div className={headerClassName ?? "flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100"}>
         <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${color}12` }}>
           <Icon className="h-3.5 w-3.5" style={{ color }} />
         </div>
@@ -1810,22 +1810,28 @@ export default function QAClientePortalPage() {
         {(activeSection === "contratacoes" || activeSection === "processos") && (
           <div className="space-y-4">
             <PortalScopeSelector hint="Filtra histórico, linha do tempo e cards de processo." />
-            <SectionCard icon={BriefcaseBusiness} title="Meus processos" color="hsl(352 60% 30%)">
+            <SectionCard
+              icon={BriefcaseBusiness}
+              title="Meus processos"
+              color="#0A0A0A"
+              containerClassName="bg-[#FFFFFF] rounded-sm border border-[#E4E4E4] shadow-sm overflow-hidden"
+              headerClassName="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#E4E4E4]"
+            >
               <div className="mb-4 flex justify-end">
                 <button
                   type="button"
                   onClick={() => setEntradaWizardOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-bold text-white"
+                  className="inline-flex items-center gap-2 rounded-sm bg-[#0A0A0A] px-4 py-2 text-[12px] font-bold text-white hover:bg-[#1A1A1A] transition"
                 >
                   <ShoppingBag className="h-4 w-4" /> Iniciar novo serviço
                 </button>
               </div>
               {cliente?.id ? (
-                <div className="mb-4 rounded-2xl border border-[#7A1F2B]/20 bg-gradient-to-br from-[#7A1F2B]/5 to-white p-4">
+                <div className="mb-4 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
-                      <div className="text-[13px] font-bold text-slate-900">Envie seus documentos com o assistente guiado</div>
-                      <p className="mt-0.5 text-[11px] text-slate-600">Um item por vez, com validação automática por IA. Igual à abertura de conta de um banco.</p>
+                      <div className="text-[13px] font-bold text-[#0A0A0A]">Envie seus documentos com o assistente guiado</div>
+                      <p className="mt-0.5 text-[11px] text-[#6A6A6A]">Um item por vez, com validação automática por IA. Igual à abertura de conta de um banco.</p>
                     </div>
                     <ChecklistGuiadoBotao />
                   </div>
