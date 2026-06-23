@@ -9,3 +9,5 @@ export type {
   CockpitZ6ChecklistItem,
 } from "./CockpitZ6MeusProcessos";
 export { buildCockpitZ6MockData } from "./mockData";
+export { buildCockpitZ6FromReal } from "./buildFromReal";
+export type { BuildCockpitZ6FromRealInput } from "./buildFromReal";
