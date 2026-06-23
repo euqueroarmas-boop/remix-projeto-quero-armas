@@ -131,6 +131,50 @@ Deno.serve(async (req) => {
           409,
         );
       }
+
+      // ── GATE DE CONTRATO ASSINADO ────────────────────────────────────
+      // Quando o processo nasce vinculado a uma venda, exige contrato
+      // 'validated' (assinado pelas duas partes) para essa venda. Permite
+      // override administrativo via body.forcarSemContrato=true APENAS para
+      // o perfil 'administrador' — registrado em auditoria.
+      const { data: ctValidado } = await supabase
+        .from("qa_contracts")
+        .select("id")
+        .eq("venda_id", venda_id)
+        .eq("status", "validated")
+        .limit(1)
+        .maybeSingle();
+
+      const forcarSemContrato = body?.forcarSemContrato === true;
+      if (!ctValidado && !forcarSemContrato) {
+        await logSistemaBackend({
+          tipo: "erro",
+          status: "warning",
+          mensagem: "qa-processo-criar bloqueado: contrato da venda não está validated",
+          payload: { venda_id, cliente_id, servico_id: Number(servico_id) },
+        });
+        return json(
+          {
+            error: `Venda ${venda_id} não possui contrato assinado (status 'validated'). Criação do processo bloqueada.`,
+            code: "CONTRACT_NOT_VALIDATED",
+          },
+          409,
+        );
+      }
+      if (!ctValidado && forcarSemContrato) {
+        if (guard.perfil !== "administrador") {
+          return json(
+            { error: "Override de contrato requer perfil 'administrador'.", code: "FORBIDDEN_BYPASS" },
+            403,
+          );
+        }
+        await logSistemaBackend({
+          tipo: "admin",
+          status: "warning",
+          mensagem: "qa-processo-criar: criação SEM contrato validated (override administrativo)",
+          payload: { venda_id, cliente_id, servico_id: Number(servico_id), ator: guard.userId },
+        });
+      }
     }
 
     // Log de auditoria de slug (sem PII além de IDs já manuseados)
